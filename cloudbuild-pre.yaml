@@ -1,0 +1,116 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+substitutions:
+  _REGION: europe-west1
+  _REPO: verifactu-repo
+
+# Detecta qué directorios cambiaron y despliega sólo los necesarios
+steps:
+# --- API ---
+- id: "API: build"
+  name: gcr.io/cloud-builders/docker
+  dir: api
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      if git diff --name-only HEAD~1 HEAD | grep -q "^api/"; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-backend:$(date +%Y%m%d-%H%M%S)"
+        docker build -t "$IMAGE" .
+        docker push "$IMAGE"
+        echo "$IMAGE" > /workspace/api_image.txt
+      else
+        echo "NO_CHANGES" > /workspace/api_image.txt
+      fi
+
+- id: "API: deploy"
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      IMG=$(cat /workspace/api_image.txt)
+      if [ "$IMG" != "NO_CHANGES" ]; then
+        gcloud run deploy verifactu-backend \
+          --image "$IMG" \
+          --region "$_REGION" \
+          --platform managed \
+          --service-account "run-exec@$PROJECT_ID.iam.gserviceaccount.com" \
+          --port 8080 \
+          --allow-unauthenticated \
+          --set-env-vars "NODE_ENV=production,AEAT_CERT_PATH=/var/secrets/aeat_cert/cert.p12,AEAT_CERT_PASS_PATH=/var/secrets/aeat_pass/cert_pass.txt,AEAT_WSDL_FILE=/var/secrets/aeat_wsdl/wsdl_url.txt" \
+          --update-secrets "/var/secrets/aeat_cert/cert.p12=AEAT_CERT:latest,/var/secrets/aeat_pass/cert_pass.txt=AEAT_CERT_PASS:latest,/var/secrets/aeat_wsdl/wsdl_url.txt=AEAT_WSDL_URL:latest"
+      else
+        echo "API: sin cambios, no despliega."
+      fi
+
+# --- APP ---
+- id: "APP: build"
+  name: gcr.io/cloud-builders/docker
+  dir: app
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      if git diff --name-only HEAD~1 HEAD | grep -q "^app/"; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-app:$(date +%Y%m%d-%H%M%S)"
+        docker build -t "$IMAGE" .
+        docker push "$IMAGE"
+        echo "$IMAGE" > /workspace/app_image.txt
+      else
+        echo "NO_CHANGES" > /workspace/app_image.txt
+      fi
+
+- id: "APP: deploy"
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      IMG=$(cat /workspace/app_image.txt)
+      if [ "$IMG" != "NO_CHANGES" ]; then
+        gcloud run deploy verifactu-app-pre \
+          --image "$IMG" \
+          --region "$_REGION" \
+          --platform managed \
+          --port 8080 \
+          --allow-unauthenticated \
+          --set-env-vars "NEXT_PUBLIC_API_BASE=https://pre.api.verifactu.business"
+      else
+        echo "APP: sin cambios, no despliega."
+      fi
+
+# --- LANDING ---
+- id: "LANDING: build"
+  name: gcr.io/cloud-builders/docker
+  dir: landing
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      if git diff --name-only HEAD~1 HEAD | grep -q "^landing/"; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-landing:$(date +%Y%m%d-%H%M%S)"
+        docker build -t "$IMAGE" .
+        docker push "$IMAGE"
+        echo "$IMAGE" > /workspace/landing_image.txt
+      else
+        echo "NO_CHANGES" > /workspace/landing_image.txt
+      fi
+
+- id: "LANDING: deploy"
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      IMG=$(cat /workspace/landing_image.txt)
+      if [ "$IMG" != "NO_CHANGES" ]; then
+        gcloud run deploy verifactu-landing-pre \
+          --image "$IMG" \
+          --region "$_REGION" \
+          --platform managed \
+          --port 8080 \
+          --allow-unauthenticated
+      else
+        echo "LANDING: sin cambios, no despliega."
+      fi
