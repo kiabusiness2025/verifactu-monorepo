@@ -1,0 +1,13 @@
+{
+  "displayName": "Alerta · Uptime VERIFACTU (API+Landing)",
+  "documentation": { "content": "Fallo de Uptime check (API o Landing)", "mimeType": "text/markdown" },
+  "conditions": [{
+    "displayName": "Uptime check failed",
+    "conditionMonitoringQueryLanguage": {
+      "query": "fetch uptime_url | metric 'monitoring.googleapis.com/uptime_check/check_passed' | group_by 1m, [val: mean(value.check_passed)] | condition val < 1"
+    }
+  }],
+  "combiner": "OR",
+  "notificationChannels": ["projects/verifactu-prod/notificationChannels/710997706005417179"],
+  "enabled": true
+}

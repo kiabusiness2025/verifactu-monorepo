@@ -2,10 +2,33 @@ import express from "express";
 import pino from "pino";
 import fs from "fs";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
+import { registerInvoice } from "./soap-client.js";
 
 const log = pino();
 const app = express();
 app.use(express.json({ limit: "1mb" }));
+
+// Limiter robusto
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false
+});
+app.use("/api", limiter);
+
+// --- Security headers (básicos) ---
+app.use((req, res, next) => {
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  // CSP mínima; ajusta si sirves assets externos:
+  res.setHeader("Content-Security-Policy",
+    "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'");
+  next();
+});
 
 // --- CORS con paquete 'cors' ---
 const ALLOWED_ORIGINS = [
@@ -60,6 +83,20 @@ app.get("/api/verifactu/ops", (_req, res) => {
   } catch (e) {
     log.error(e);
     return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post("/api/verifactu/register-invoice", async (req, res) => {
+  try {
+    const invoice = req.body;
+    if (!invoice) {
+      return res.status(400).json({ ok: false, error: "Missing invoice data" });
+    }
+    const result = await registerInvoice(invoice);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    log.error(error);
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 

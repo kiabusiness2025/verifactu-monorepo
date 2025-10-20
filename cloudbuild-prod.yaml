@@ -5,9 +5,6 @@ substitutions:
   _REGION: europe-west1
   _REPO: verifactu-prod
 
-# Paso 0: aprobación manual
-approvalRequired: true
-
 steps:
 # --- API ---
 - id: "API: build"
@@ -16,11 +13,11 @@ steps:
   args:
     - -lc
     - |
-      if [ "$(/workspace/scripts/check-changes.sh api)" == "true" ]; then
+      if [ "$$(/workspace/scripts/check-changes.sh api)" == "true" ]; then
         IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-backend:$SHORT_SHA"
-        docker build -t "$IMAGE" ./api
-        docker push "$IMAGE"
-        echo "$IMAGE" > /workspace/api_image.txt
+        docker build -t "$$IMAGE" ./api
+        docker push "$$IMAGE"
+        echo "$$IMAGE" > /workspace/api_image.txt
       else
         echo "NO_CHANGES" > /workspace/api_image.txt
       fi
@@ -31,10 +28,10 @@ steps:
   args:
     - -lc
     - |
-      IMG=$(cat /workspace/api_image.txt)
-      if [ "$IMG" != "NO_CHANGES" ]; then
+      IMG=$$(cat /workspace/api_image.txt)
+      if [ "$$IMG" != "NO_CHANGES" ]; then
         gcloud run deploy verifactu-backend-prod \
-          --image "$IMG" \
+          --image "$$IMG" \
           --region "$_REGION" \
           --platform managed \
           --service-account "run-exec@$PROJECT_ID.iam.gserviceaccount.com" \
@@ -53,11 +50,11 @@ steps:
   args:
     - -lc
     - |
-      if [ "$(/workspace/scripts/check-changes.sh app)" == "true" ]; then
+      if [ "$$(/workspace/scripts/check-changes.sh app)" == "true" ]; then
         IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-app:$SHORT_SHA"
-        docker build -t "$IMAGE" ./app
-        docker push "$IMAGE"
-        echo "$IMAGE" > /workspace/app_image.txt
+        docker build -t "$$IMAGE" ./app
+        docker push "$$IMAGE"
+        echo "$$IMAGE" > /workspace/app_image.txt
       else
         echo "NO_CHANGES" > /workspace/app_image.txt
       fi
@@ -68,10 +65,10 @@ steps:
   args:
     - -lc
     - |
-      IMG=$(cat /workspace/app_image.txt)
-      if [ "$IMG" != "NO_CHANGES" ]; then
+      IMG=$$(cat /workspace/app_image.txt)
+      if [ "$$IMG" != "NO_CHANGES" ]; then
         gcloud run deploy verifactu-app-prod \
-          --image "$IMG" \
+          --image "$$IMG" \
           --region "$_REGION" \
           --platform managed \
           --port 8080 \
@@ -88,11 +85,11 @@ steps:
   args:
     - -lc
     - |
-      if [ "$(/workspace/scripts/check-changes.sh landing)" == "true" ]; then
+      if [ "$$(/workspace/scripts/check-changes.sh landing)" == "true" ]; then
         IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-landing:$SHORT_SHA"
-        docker build -t "$IMAGE" ./landing
-        docker push "$IMAGE"
-        echo "$IMAGE" > /workspace/landing_image.txt
+        docker build -t "$$IMAGE" ./landing
+        docker push "$$IMAGE"
+        echo "$$IMAGE" > /workspace/landing_image.txt
       else
         echo "NO_CHANGES" > /workspace/landing_image.txt
       fi
@@ -103,10 +100,10 @@ steps:
   args:
     - -lc
     - |
-      IMG=$(cat /workspace/landing_image.txt)
-      if [ "$IMG" != "NO_CHANGES" ]; then
+      IMG=$$(cat /workspace/landing_image.txt)
+      if [ "$$IMG" != "NO_CHANGES" ]; then
         gcloud run deploy verifactu-landing \
-          --image "$IMG" \
+          --image "$$IMG" \
           --region "$_REGION" \
           --platform managed \
           --port 8080 \
