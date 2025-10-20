@@ -3,7 +3,7 @@ options:
   substitutionOption: ALLOW_LOOSE
 substitutions:
   _REGION: europe-west1
-  _REPO: verifactu-repo
+  _REPO: verifactu-prod
 
 # Paso 0: aprobación manual
 approvalRequired: true
@@ -12,14 +12,13 @@ steps:
 # --- API ---
 - id: "API: build"
   name: gcr.io/cloud-builders/docker
-  dir: api
   entrypoint: bash
   args:
     - -lc
     - |
-      if git diff --name-only HEAD~1 HEAD | grep -q "^api/"; then
-        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-backend:$(date +%Y%m%d-%H%M%S)"
-        docker build -t "$IMAGE" .
+      if [ "$(/workspace/scripts/check-changes.sh api)" == "true" ]; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-backend:$SHORT_SHA"
+        docker build -t "$IMAGE" ./api
         docker push "$IMAGE"
         echo "$IMAGE" > /workspace/api_image.txt
       else
@@ -50,14 +49,13 @@ steps:
 # --- APP ---
 - id: "APP: build"
   name: gcr.io/cloud-builders/docker
-  dir: app
   entrypoint: bash
   args:
     - -lc
     - |
-      if git diff --name-only HEAD~1 HEAD | grep -q "^app/"; then
-        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-app:$(date +%Y%m%d-%H%M%S)"
-        docker build -t "$IMAGE" .
+      if [ "$(/workspace/scripts/check-changes.sh app)" == "true" ]; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-app:$SHORT_SHA"
+        docker build -t "$IMAGE" ./app
         docker push "$IMAGE"
         echo "$IMAGE" > /workspace/app_image.txt
       else
@@ -86,14 +84,13 @@ steps:
 # --- LANDING ---
 - id: "LANDING: build"
   name: gcr.io/cloud-builders/docker
-  dir: landing
   entrypoint: bash
   args:
     - -lc
     - |
-      if git diff --name-only HEAD~1 HEAD | grep -q "^landing/"; then
-        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-landing:$(date +%Y%m%d-%H%M%S)"
-        docker build -t "$IMAGE" .
+      if [ "$(/workspace/scripts/check-changes.sh landing)" == "true" ]; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-landing:$SHORT_SHA"
+        docker build -t "$IMAGE" ./landing
         docker push "$IMAGE"
         echo "$IMAGE" > /workspace/landing_image.txt
       else
