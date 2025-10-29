@@ -2,21 +2,13 @@ FROM node:20-alpine
 
 WORKDIR /usr/src/app
 
-# Create and use a non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
 # Copy package files from the 'api' subdirectory
 COPY api/package*.json ./
-
-# Copy package files from the 'api' subdirectory and set ownership
-COPY --chown=appuser:appgroup api/package*.json ./
 
 # Install production dependencies
 # We run this as root to ensure node_modules can be created
 RUN npm install --omit=dev
 
-# Copy the rest of the application code from the 'api' subdirectory and set ownership
-COPY --chown=appuser:appgroup api/ .
 # Copy the rest of the application code from the 'api' subdirectory
 COPY api/ .
 
