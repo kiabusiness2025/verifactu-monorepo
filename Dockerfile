@@ -4,17 +4,16 @@ WORKDIR /usr/src/app
 
 # Create and use a non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-RUN chown -R appuser:appgroup /usr/src/app
 USER appuser
 
-# Copy package files from the 'api' subdirectory
-COPY api/package*.json ./
+# Copy package files from the 'api' subdirectory and set ownership
+COPY --chown=appuser:appgroup api/package*.json ./
 
 # Install production dependencies
 RUN npm install --omit=dev
 
-# Copy the rest of the application code from the 'api' subdirectory
-COPY api/ .
+# Copy the rest of the application code from the 'api' subdirectory and set ownership
+COPY --chown=appuser:appgroup api/ .
 
 # Set environment variables
 ENV NODE_ENV=production
