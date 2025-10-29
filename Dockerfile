@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 COPY api/package*.json ./
 
 # Install production dependencies
-# We run this as root to ensure node_modules can be created
+# We run this as root to ensure node_modules can be created without permission issues
 RUN npm install --omit=dev
 
 # Copy the rest of the application code from the 'api' subdirectory
