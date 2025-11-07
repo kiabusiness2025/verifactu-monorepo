@@ -1,1 +1,13 @@
+<<<<<<< HEAD
 node_modules
+=======
+node_modules/
+.next/
+dist/
+out/
+.env*
+.DS_Store
+*.log
+.vscode/
+coverage/
+>>>>>>> 283877ca (chore(api): bootstrap Express + README (staging verifactu-pre))
