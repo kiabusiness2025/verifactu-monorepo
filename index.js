@@ -3,7 +3,7 @@ import pino from "pino";
 import fs from "fs";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
-import { registerInvoice, queryInvoice } from "./soap-client.js";
+import { registerInvoice, queryInvoice } from "./apps/api/soap-client.js";
 
 const log = pino();
 const app = express();

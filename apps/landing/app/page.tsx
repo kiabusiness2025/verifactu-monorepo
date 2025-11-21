@@ -1,5 +1,8 @@
 "use client";
 
+import PricingCalculator from "@/app/components/PricingCalculator";
+import Faq from "@/app/components/Faq";
+import { useSession } from "next-auth/react";
 import React, { useEffect, useMemo, useState } from "react";
 
 type Plan = {
@@ -11,6 +14,7 @@ type Plan = {
   ctaLabel: string;
   ctaHref: string;
   highlight?: boolean;
+  priceId?: string;
 };
 
 type ChatMessage = {
@@ -24,66 +28,6 @@ type LeadStatus = {
   message: string;
 };
 
-const PRICING_PLANS: Plan[] = [
-  {
-    name: "Starter",
-    price: 9.9,
-    variablePct: 0.005,
-    users: "1 usuario",
-    ctaLabel: "Probar gratis",
-    ctaHref: "/app/signup",
-    features: [
-      "Envío AEAT VeriFactu",
-      "Soporte básico",
-      "Isaak IA (básico)",
-      "30 días gratis. Sin compromiso ni datos de pago.",
-    ],
-  },
-  {
-    name: "Professional",
-    price: 24.9,
-    variablePct: 0.003,
-    users: "3 usuarios",
-    ctaLabel: "Empezar",
-    ctaHref: "/app/signup",
-    features: [
-      "Dashboard avanzado",
-      "Informes automáticos IA",
-      "Integración nubes/correos",
-      "30 días gratis. Sin compromiso ni datos de pago.",
-    ],
-    highlight: true,
-  },
-  {
-    name: "Business Plus",
-    price: 49.9,
-    variablePct: 0.002,
-    users: "Hasta 10 usuarios",
-    ctaLabel: "Solicitar demo",
-    ctaHref: "/demo",
-    features: [
-      "Multiempresa",
-      "API avanzada",
-      "Soporte prioritario",
-      "30 días gratis. Sin compromiso ni datos de pago.",
-    ],
-  },
-  {
-    name: "Enterprise",
-    price: 0,
-    variablePct: 0.001,
-    users: "Ilimitado",
-    ctaLabel: "Contactar",
-    ctaHref: "/contact",
-    features: [
-      "Integraciones a medida",
-      "Auditoría fiscal avanzada",
-      "Agente Isaak dedicado",
-      "30 días gratis. Sin compromiso ni datos de pago.",
-    ],
-  },
-];
-
 const PROACTIVE_MESSAGES = [
   "Hola 👋 soy Isaak. ¿Quieres que configuremos tus envíos VeriFactu?",
   "Puedo analizar tus márgenes y detectar ahorros fiscales en minutos.",
@@ -93,10 +37,6 @@ const PROACTIVE_MESSAGES = [
 const ISAAC_API_KEY = process.env.NEXT_PUBLIC_ISAAC_API_KEY;
 const ISAAC_ASSISTANT_ID = process.env.NEXT_PUBLIC_ISAAC_ASSISTANT_ID;
 
-function currency(value: number) {
-  return value.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
-}
-
 function sanitizeSales(value: number) {
   if (!Number.isFinite(value) || value < 0) return 0;
   return value;
@@ -104,7 +44,6 @@ function sanitizeSales(value: number) {
 
 export default function Page() {
   const [monthlySales, setMonthlySales] = useState(10000);
-  const [leadOpen, setLeadOpen] = useState(false);
   const [leadInterest, setLeadInterest] = useState("register");
   const [leadStatus, setLeadStatus] = useState<LeadStatus>({
     tone: "idle",
@@ -112,33 +51,15 @@ export default function Page() {
   });
   const [leadSubmitting, setLeadSubmitting] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-
-  const computedPlans = useMemo(
-    () =>
-      PRICING_PLANS.map((plan) => {
-        const variableFee = plan.variablePct * monthlySales;
-        const total = (plan.price || 0) + variableFee;
-        return { ...plan, variableFee, total };
-      }),
-    [monthlySales],
-  );
+  const { data: session } = useSession();
 
   useEffect(() => {
     setChatMessages(
       PROACTIVE_MESSAGES.map((text) => ({ from: "Isaak", text })),
     );
   }, []);
-
-  const handleSalesChange = (value: number) => {
-    setMonthlySales(sanitizeSales(value));
-  };
-
-  const handleLeadOpen = (interest: string) => {
-    setLeadInterest(interest);
-    setLeadOpen(true);
-    setLeadStatus({ tone: "idle", message: "" });
-  };
 
   const handleLeadSubmit: React.FormEventHandler<HTMLFormElement> = async (
     event,
@@ -251,36 +172,75 @@ export default function Page() {
 
   return (
     <div className="page">
+      {mobileMenuOpen && (
+        <div
+          className="mobile-menu-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <header className="header">
         <div className="container header__inner">
           <a href="#hero" className="brand" aria-label="Volver al inicio">
             <img
-              src="/assets/logo-verifactu-business.svg"
+              src="/assets/verifactu-logo-animated.svg"
               alt="VeriFactu Business"
               className="brand__image"
             />
           </a>
-          <nav className="nav">
-            <a href="#features">Producto</a>
-            <a href="#workflow">VeriFactu</a>
-            <a href="#pricing">Planes</a>
-            <a href="#resources">Recursos</a>
-          </nav>
-          <div className="header__cta">
-            <button
-              className="btn btn--ghost"
-              type="button"
-              onClick={() => handleLeadOpen("login")}
+           <div className="header__nav-wrapper">
+             <button
+              className="header__mobile-toggle"
+              aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              Acceder
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {mobileMenuOpen ? (
+                  <path
+                    d="M18 6L6 18M6 6l12 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                ) : (
+                  <path
+                    d="M4 6h16M4 12h16M4 18h16"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                )}
+              </svg>
             </button>
-            <button
-              className="btn btn--primary"
-              type="button"
-              onClick={() => handleLeadOpen("demo")}
-            >
+             <nav className={`nav ${mobileMenuOpen ? "is-open" : ""}`}>
+               <a href="#features" onClick={() => setMobileMenuOpen(false)}>Producto</a>
+               <a href="#workflow" onClick={() => setMobileMenuOpen(false)}>VeriFactu</a>
+               <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Planes</a>
+               <a href="#resources" onClick={() => setMobileMenuOpen(false)}>Recursos</a>
+             </nav>
+           </div>
+           <div className={`header__cta ${mobileMenuOpen ? "is-open" : ""}`}>
+            {session ? (
+              <a className="btn btn--ghost" href="/dashboard">
+                Ir al panel
+              </a>
+            ) : (
+              <a className="btn btn--ghost" href="/api/auth/signin">
+                Acceder
+              </a>
+            )}
+            <a className="btn btn--primary" href="/contact">
               Solicitar demo
-            </button>
+            </a>
           </div>
         </div>
       </header>
@@ -294,25 +254,20 @@ export default function Page() {
                 Cumple con VeriFactu y haz crecer tu negocio.
               </p>
               <h1>La forma más inteligente de automatizar tu facturación.</h1>
+              <h2 className="hero__subtitle">
+                Software VeriFactu certificado con IA para asesorías, pymes y autónomos.
+              </h2>
               <p className="hero__description">
-                Isaak centraliza la emisión, valida con AEAT y te sugiere cómo
+                Isaak centraliza la emisión, valida con la AEAT y te sugiere cómo
                 mejorar tus márgenes automáticamente.
               </p>
               <div className="hero__actions">
-                <button
-                  className="btn btn--primary"
-                  type="button"
-                  onClick={() => handleLeadOpen("register")}
-                >
-                  Comenzar ahora
-                </button>
-                <button
-                  className="btn btn--ghost"
-                  type="button"
-                  onClick={() => handleLeadOpen("demo")}
-                >
+                <a className="btn btn--primary" href="/auth/signup">
+                  Probar gratis 30 días
+                </a>
+                <a className="btn btn--ghost" href="/contact">
                   Solicitar demo
-                </button>
+                </a>
               </div>
               <div className="hero__trust">
                 <span>
@@ -325,7 +280,7 @@ export default function Page() {
               <div className="mockup mockup--assistant">
                 <header className="mockup__header">
                   <div>
-                    <span className="mockup__badge">Isaak IA</span>
+                    <span className="mockup__badge">Isaak</span>
                     <p className="mockup__title">Estado diario del negocio</p>
                   </div>
                   <span className="mockup__status">Conectado</span>
@@ -336,7 +291,7 @@ export default function Page() {
                     <div>
                       <p className="mockup__label">Isaak</p>
                       <p className="mockup__text">
-                        Ingresos del mes +18% vs. objetivo. ¿Agendamos revisión
+                        Ingresos del mes +12% vs. objetivo. ¿Agendamos revisión
                         para impuestos?
                       </p>
                     </div>
@@ -346,7 +301,7 @@ export default function Page() {
                     <div>
                       <p className="mockup__label">Isaak</p>
                       <p className="mockup__text">
-                        Tu envío VeriFactu se ha validado. Preparando informe de
+                        Tu envío VeriFactu se ha validado. Preparando el informe de
                         márgenes.
                       </p>
                     </div>
@@ -356,8 +311,8 @@ export default function Page() {
                     <div>
                       <p className="mockup__label">Isaak</p>
                       <p className="mockup__text">
-                        Detecté suscripciones duplicadas. Ahorro potencial de
-                        240 € trimestrales.
+                        Detecté suscripciones duplicadas. Ahorro potencial de 240€
+                        trimestrales.
                       </p>
                     </div>
                   </article>
@@ -372,9 +327,9 @@ export default function Page() {
                 <div className="snapshot__grid">
                   <div>
                     <p className="snapshot__label">Beneficio neto</p>
-                    <p className="snapshot__value">12.450 €</p>
+                    <p className="snapshot__value">8.450€</p>
                     <span className="snapshot__trend snapshot__trend--up">
-                      +18% mensual
+                      +12% mensual
                     </span>
                   </div>
                   <div>
@@ -413,7 +368,7 @@ export default function Page() {
                   </div>
                   <div>
                     <dt>AEAT</dt>
-                    <dd>Enviada</dd>
+                    <dd>Validada</dd>
                   </div>
                 </dl>
                 <div className="invoice__footer">
@@ -443,7 +398,7 @@ export default function Page() {
               <div>
                 <p className="stat__value">24/7</p>
                 <p className="stat__label">
-                  Asistencia y recomendaciones con Isaak
+                  Asistencia y recomendaciones con IA
                 </p>
               </div>
             </div>
@@ -453,7 +408,7 @@ export default function Page() {
         <section id="features" className="section features">
           <div className="container">
             <div className="section__header">
-              <h2>Una plataforma creada para liderar tu VeriFactu.</h2>
+              <h2>Una plataforma para liderar tu cumplimiento VeriFactu.</h2>
               <p>
                 Centraliza la emisión, validación y análisis de tu facturación
                 con paneles diseñados para asesorías, despachos y empresas que
@@ -480,7 +435,7 @@ export default function Page() {
               <article className="feature-card">
                 <h3>Insights accionables</h3>
                 <p>
-                  Analiza márgenes, cashflow y proyecciones con escenarios
+                  Analiza márgenes, flujo de caja y proyecciones con escenarios
                   sugeridos por IA.
                 </p>
                 <span>Informes listos para clientes</span>
@@ -502,7 +457,7 @@ export default function Page() {
             <div className="section__header">
               <h2>Del envío al cobro en tres pasos.</h2>
               <p>
-                Conecta tu ERP o empieza desde cero: Isaak guía a tu equipo,
+                Conecta tu ERP o empieza desde cero. Isaak guía a tu equipo,
                 automatiza verificaciones y mantiene el control fiscal sin
                 esfuerzo.
               </p>
@@ -520,7 +475,7 @@ export default function Page() {
                 <span className="step__number">2</span>
                 <h3>Emite y valida</h3>
                 <p>
-                  Genera la factura, firma automáticamente y envíala a AEAT
+                  Genera la factura, fírmala automáticamente y envíala a la AEAT
                   VeriFactu sin abandonar la plataforma.
                 </p>
               </article>
@@ -533,6 +488,18 @@ export default function Page() {
                 </p>
               </article>
             </div>
+          </div>
+        </section>
+
+        <section id="verifactu-explainer" className="section">
+          <div className="container section__header">
+            <h2>¿Qué es VeriFactu y cómo te afecta?</h2>
+            <p style={{lineHeight: 1.7}}>
+              VeriFactu es el nuevo sistema de facturación electrónica obligatorio en España, regulado por el Real Decreto 1007/2023. Su objetivo es digitalizar y estandarizar la emisión de facturas para luchar contra el fraude fiscal. Afecta a prácticamente todas las empresas y autónomos, que deberán usar un software de facturación certificado que cumpla con los requisitos técnicos de la Agencia Tributaria (AEAT), como la inclusión de un código QR y la firma digital de cada factura.
+            </p>
+            <p style={{marginTop: "1rem", lineHeight: 1.7}}>
+              Con VeriFactu Business, no solo cumples con la normativa, sino que aprovechas la transición para automatizar tus procesos, reducir errores y obtener una visión financiera más clara gracias al análisis de Isaak.
+            </p>
           </div>
         </section>
 
@@ -560,33 +527,27 @@ export default function Page() {
                       <span className="dashboard__metric-label">
                         Ventas del mes
                       </span>
-                      <strong className="dashboard__metric-value">
-                        €48.230
-                      </strong>
+                      <strong className="dashboard__metric-value">€48.230</strong>
                       <span className="dashboard__metric-trend">
                         +8,2% vs. febrero
                       </span>
                     </div>
                     <div className="dashboard__metric">
                       <span className="dashboard__metric-label">
-                        Cobros Stripe
+                        Cobros con Stripe
                       </span>
-                      <strong className="dashboard__metric-value">
-                        €36.900
-                      </strong>
+                      <strong className="dashboard__metric-value">€36.900</strong>
                       <span className="dashboard__metric-trend">
                         12 facturas por conciliar
                       </span>
                     </div>
                     <div className="dashboard__metric">
                       <span className="dashboard__metric-label">
-                        Beneficio neto
+                        Beneficio Neto
                       </span>
-                      <strong className="dashboard__metric-value">
-                        €12.410
-                      </strong>
+                      <strong className="dashboard__metric-value">€8.450</strong>
                       <span className="dashboard__metric-trend">
-                        Impuesto estimado: €2.136
+                        Impuesto estimado: 2.136€
                       </span>
                     </div>
                   </div>
@@ -594,7 +555,7 @@ export default function Page() {
                     <p>
                       Hola, soy Isaak 👋 He detectado tickets pendientes de
                       gasto. ¿Quieres que los contabilice y programe
-                      recordatorios de pago?
+                      recordatorios?
                     </p>
                     <div className="dashboard__actions">
                       <button type="button">Revisar con Isaak</button>
@@ -642,7 +603,7 @@ export default function Page() {
                   Soporte proactivo y gestión total desde cualquier dispositivo.
                 </h3>
                 <p>
-                  Accede con registro tradicional o Google OAuth y deja que
+                  Accede con tu email o Google y deja que
                   Isaak personalice el espacio de trabajo: bases de datos,
                   flujos de cobros y toda la documentación disponible para tu
                   equipo.
@@ -654,7 +615,7 @@ export default function Page() {
                   </li>
                   <li>
                     <strong>Importación / exportación guiada:</strong> Isaak
-                    limpia y clasifica datos de clientes, proveedores, productos
+                    limpia y clasifica datos de clientes, proveedores y
                     y tarifas.
                   </li>
                   <li>
@@ -669,11 +630,11 @@ export default function Page() {
                   </li>
                 </ul>
                 <div className="dashboard__cta">
-                  <a className="btn btn--primary" href="/app/signup">
+                  <a className="btn btn--primary" href="/auth/signup">
                     Probar gratis 30 días
                   </a>
                   <p>
-                    Sin compromiso ni datos de pago. Isaak te guía en soporte,
+                    Sin compromiso. Isaak te guía en soporte,
                     formación y automatización desde el primer acceso.
                   </p>
                 </div>
@@ -687,7 +648,7 @@ export default function Page() {
             <div className="compliance__content">
               <h2>100% cumplimiento VeriFactu certificado.</h2>
               <p>
-                Desarrollado por Expert Estudios Profesionales S.L.U.,
+                Desarrollado por Expertia Asesores S.L.U.,
                 colaborador social de la AEAT, Veri*Factu Business cumple con el
                 Real Decreto 1007/2023 y mantiene tu evidencia fiscal siempre
                 actualizada.
@@ -700,7 +661,7 @@ export default function Page() {
               </ul>
             </div>
             <div className="compliance__badge" aria-hidden="true">
-              <div className="compliance__shield">VeriFactu</div>
+              <img src="/assets/verifactu-oficial.svg" alt="Logo oficial de VeriFactu" style={{width: "160px", height: "auto"}} />
               <p>Cumplimiento verificado</p>
             </div>
           </div>
@@ -708,160 +669,12 @@ export default function Page() {
 
         <section
           id="pricing"
-          className="container"
-          style={{ maxWidth: 1100, margin: "0 auto", padding: "64px 16px" }}
+          className="section"
         >
-          <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <h2 style={{ fontSize: 32, fontWeight: 600, margin: 0 }}>
-              Planes y precios
-            </h2>
-            <p style={{ color: "#475569", margin: "8px 0 0" }}>
-              Elige cuota fija y deja que Isaak calcule el % sobre tus ventas.
-            </p>
-            <p style={{ color: "#1e293b", margin: "12px 0 0", fontSize: 15 }}>
-              Todos los planes incluyen 30 días gratis, sin compromiso y sin
-              datos de pago.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              maxWidth: 560,
-              margin: "0 auto 24px",
-              padding: 16,
-              border: "1px solid #e2e8f0",
-              borderRadius: 12,
-              background: "#fff",
-              boxShadow: "0 1px 3px rgba(0,0,0,.04)",
-            }}
-          >
-            <label
-              htmlFor="vf-sales"
-              style={{ fontSize: 14, color: "#64748b" }}
-            >
-              Ventas mensuales estimadas
-            </label>
-            <input
-              id="vf-sales"
-              type="number"
-              min={0}
-              step={100}
-              value={monthlySales}
-              onChange={(event) =>
-                handleSalesChange(Number(event.target.value))
-              }
-              style={{
-                marginLeft: "auto",
-                width: 180,
-                border: "1px solid #cbd5e1",
-                borderRadius: 10,
-                padding: "8px 10px",
-                textAlign: "right",
-              }}
-            />
-            <span style={{ color: "#334155" }}>€</span>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: 16,
-            }}
-          >
-            {computedPlans.map((plan) => (
-              <div
-                key={plan.name}
-                style={{
-                  border: `1px solid ${plan.highlight ? "#2563EB" : "#e2e8f0"}`,
-                  borderRadius: 16,
-                  padding: 24,
-                  background: "#fff",
-                  boxShadow: plan.highlight
-                    ? "0 0 0 3px rgba(37,99,235,.12)"
-                    : "0 1px 3px rgba(0,0,0,.04)",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "baseline",
-                    marginBottom: 8,
-                  }}
-                >
-                  <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>
-                    {plan.name}
-                  </h3>
-                  <span style={{ fontSize: 12, color: "#64748b" }}>
-                    {plan.users}
-                  </span>
-                </div>
-                <div style={{ marginBottom: 12 }}>
-                  {plan.price > 0 ? (
-                    <div style={{ fontSize: 24, fontWeight: 600 }}>
-                      {currency(plan.price)}{" "}
-                      <span style={{ fontSize: 12, color: "#64748b" }}>
-                        /mes
-                      </span>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: 24, fontWeight: 600 }}>
-                      A medida
-                    </div>
-                  )}
-                  <div style={{ fontSize: 13, color: "#334155", marginTop: 4 }}>
-                    Comisión variable:{" "}
-                    <strong>{(plan.variablePct * 100).toFixed(1)}%</strong>{" "}
-                    sobre ventas
-                  </div>
-                  <div style={{ fontSize: 13, color: "#334155", marginTop: 4 }}>
-                    Estimación variable:{" "}
-                    <strong>{currency(plan.variableFee)}</strong> / mes
-                  </div>
-                  <div style={{ fontSize: 13, color: "#0f172a", marginTop: 4 }}>
-                    Total estimado: <strong>{currency(plan.total)}</strong> /
-                    mes
-                  </div>
-                </div>
-                <ul
-                  style={{
-                    fontSize: 13,
-                    color: "#334155",
-                    margin: "0 0 16px 18px",
-                  }}
-                >
-                  {plan.features.map((feature) => (
-                    <li key={feature}>{feature}</li>
-                  ))}
-                </ul>
-                <a
-                  href={plan.ctaHref}
-                  style={{
-                    display: "inline-flex",
-                    justifyContent: "center",
-                    width: "100%",
-                    padding: "10px 14px",
-                    borderRadius: 12,
-                    color: "#fff",
-                    background: plan.highlight ? "#2563EB" : "#0F172A",
-                    textDecoration: "none",
-                  }}
-                >
-                  {plan.ctaLabel}
-                </a>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ fontSize: 12, color: "#64748b", marginTop: 8 }}>
-            * El % se aplica únicamente a ventas facturadas en la app. Cálculo
-            orientativo.
-          </div>
+          <PricingCalculator />
         </section>
+
+        <Faq />
 
         <section id="resources" className="section resources">
           <div className="container">
@@ -876,7 +689,7 @@ export default function Page() {
               <article className="resource-card">
                 <h3>Guía de puesta en marcha</h3>
                 <p>
-                  Checklist para activar VeriFactu en menos de 1 día con Isaak.
+                  Checklist para activar VeriFactu en menos de 1 día.
                 </p>
                 <a href="/docs/guia-verifactu.pdf">Descargar</a>
               </article>
@@ -908,16 +721,12 @@ export default function Page() {
                 importante.
               </p>
               <div className="cta__actions">
-                <a className="btn btn--primary" href="/app/signup">
-                  Hablar con Isaak
+                <a className="btn btn--primary" href="/auth/signup">
+                  Probar gratis 30 días
                 </a>
-                <button
-                  className="btn btn--ghost"
-                  type="button"
-                  onClick={() => handleLeadOpen("register")}
-                >
-                  Probar gratis durante 30 días
-                </button>
+                <a className="btn btn--ghost" href="/contact">
+                  Solicitar demo
+                </a>
               </div>
             </div>
             <div className="cta__badge" aria-hidden="true">
@@ -932,7 +741,7 @@ export default function Page() {
         <div className="container footer__inner">
           <div>
             <img
-              src="/assets/logo-verifactu-business.svg"
+              src="/assets/verifactu-logo-animated.svg"
               alt="VeriFactu Business"
               className="footer__logo"
             />
@@ -941,8 +750,8 @@ export default function Page() {
             </p>
           </div>
           <div className="footer__links">
-            <a href="mailto:soporte @verifactu.bisiness">
-              soporte @verifactu.bisiness
+            <a href="mailto:soporte@verifactu.business">
+              soporte@verifactu.business
             </a>
             <a href="/privacy">Política de Privacidad</a>
             <a href="/terms">Condiciones de Uso</a>
@@ -1069,7 +878,7 @@ export default function Page() {
           <div>
             <span className="isaak-chat__avatar">🤖</span>
             <div>
-              <p className="isaak-chat__title">Isaak, asistente fiscal</p>
+              <p className="isaak-chat__title">Isaak, tu asistente fiscal</p>
               <p className="isaak-chat__status">Proactivo · Conectado a AEAT</p>
             </div>
           </div>

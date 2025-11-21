@@ -1,4 +1,4 @@
-function invoiceToVeriFactuXML(invoice) {
+export function invoiceToVeriFactuXML(invoice) {
   const { id, number, issueDate, total, tax, customer, issuer } = invoice;
 
   const xml = `
@@ -26,7 +26,3 @@ function invoiceToVeriFactuXML(invoice) {
 
   return xml;
 }
-
-module.exports = {
-  invoiceToVeriFactuXML,
-};

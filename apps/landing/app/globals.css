@@ -88,11 +88,27 @@ a {
   height: 36px;
 }
 
+.header__nav-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.header__mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--color-slate-800);
+  cursor: pointer;
+  z-index: 100;
+}
+
 .nav {
   display: flex;
   gap: 24px;
   font-size: 15px;
   color: var(--color-slate-600);
+  transition: transform 0.3s ease-in-out;
 }
 
 .nav a {
@@ -108,6 +124,7 @@ a {
   display: flex;
   gap: 12px;
   align-items: center;
+  transition: transform 0.3s ease-in-out;
 }
 
 .btn {
@@ -1431,12 +1448,55 @@ a {
   .header__inner {
     flex-wrap: wrap;
     justify-content: center;
-    gap: 16px;
+  }
+
+  .header__nav-wrapper {
+    order: 3;
+    width: 100%;
+  }
+
+  .header__mobile-toggle {
+    display: block;
+    order: 2;
   }
 
   .nav {
-    flex-wrap: wrap;
-    justify-content: center;
+    position: absolute;
+    top: 97px;
+    left: 0;
+    right: 0;
+    background: white;
+    flex-direction: column;
+    padding: 24px;
+    border-bottom: 1px solid var(--color-slate-200);
+    transform: translateY(-100%);
+    z-index: 50;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      opacity 0.3s ease-in-out;
+  }
+
+  .nav.is-open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .mobile-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.6);
+    z-index: 49; /* Just below the menu */
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .header__cta {
+    order: 2;
+    transform: translateY(0);
   }
 
   .hero {
