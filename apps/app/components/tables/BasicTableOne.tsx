@@ -5,9 +5,9 @@ import {
   TableCell,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from "@verifactu/ui";
 
-import Badge from "../ui/badge/Badge";
+import { Badge } from "@verifactu/ui";
 import Image from "next/image";
 
 interface Order {

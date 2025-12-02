@@ -1,0 +1,15 @@
+{
+  "name": "@verifactu/utils",
+  "version": "0.0.0",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0"
+  },
+  "devDependencies": {
+    "@verifactu/eslint-config": "file:../eslint-config",
+    "@verifactu/typescript-config": "file:../typescript-config",
+    "typescript": "^5.3.3"
+  }
+}

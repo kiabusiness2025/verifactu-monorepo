@@ -1,0 +1,15 @@
+{
+  "name": "@verifactu/ui",
+  "version": "0.0.0",
+  "main": "./index.tsx",
+  "types": "./index.tsx",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0"
+  },
+  "devDependencies": {
+    "@verifactu/eslint-config": "file:../eslint-config",
+    "@verifactu/typescript-config": "file:../typescript-config",
+    "typescript": "^5.3.3"
+  }
+}

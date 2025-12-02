@@ -4,8 +4,8 @@ import {
   TableCell,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import Badge from "../ui/badge/Badge";
+} from "@verifactu/ui";
+import { Badge } from "@verifactu/ui";
 import Image from "next/image";
 
 // Define the TypeScript interface for the table rows

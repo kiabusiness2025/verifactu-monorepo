@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import Badge from "../ui/badge/Badge";
+import { Badge } from "@verifactu/ui";
 import { ArrowDownIcon, ArrowUpIcon, BoxIconLine, GroupIcon } from "@/icons";
 
 export const EcommerceMetrics = () => {
