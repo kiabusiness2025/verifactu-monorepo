@@ -4,29 +4,38 @@ import React, { useState } from "react";
 
 const FAQ_DATA = [
   {
-    question: "¿Qué es exactamente VeriFactu?",
+    question: "¿Necesito tarjeta para registrarme?",
     answer:
-      "VeriFactu es un sistema de emisión de facturas verificables que exige la Agencia Tributaria (AEAT) en España, según el Real Decreto 1007/2023. Obliga a que todo el software de facturación genere facturas con una firma digital y un código QR para garantizar su integridad y trazabilidad.",
+      "No. El plan Free es completamente gratuito y sin compromiso.",
   },
   {
-    question: "¿Estoy obligado a usar un software VeriFactu?",
-    answer:
-      "Sí, prácticamente todas las empresas y autónomos que emiten facturas en España deberán usar un software adaptado a VeriFactu. La obligatoriedad se implementará de forma progresiva, pero es fundamental adaptarse cuanto antes para evitar sanciones.",
+    question: "¿Puedo conectar varias empresas?",
+    answer: "Sí, desde el plan Profesional.",
   },
   {
-    question: "¿Qué hace VeriFactu Business por mí?",
+    question: "¿Cómo funciona la integración bancaria?",
     answer:
-      "VeriFactu Business no solo te ayuda a cumplir la ley. Nuestra plataforma, con el asistente Isaak, automatiza todo el ciclo: emite, firma y envía las facturas a la AEAT, y además analiza tus datos para darte informes y sugerencias que te ayudarán a mejorar los márgenes de tu negocio.",
+      "Usamos proveedores PSD2 certificados. La conexión es segura y puedes darte de baja en cualquier momento.",
   },
   {
-    question: "¿Es seguro utilizar la plataforma?",
+    question: "¿Isaak sustituye a una gestoría?",
     answer:
-      "Totalmente. La seguridad es nuestra máxima prioridad. Utilizamos cifrado de extremo a extremo para todas las comunicaciones, almacenamos tus datos en la nube con los más altos estándares de seguridad y realizamos copias de seguridad automáticas para que tu información fiscal esté siempre protegida.",
+      "Isaak automatiza procesos, cálculos y preparación de datos. Puedes usarlo con o sin gestoría externa.",
   },
   {
-    question: "Ya uso otro programa de contabilidad, ¿puedo integrarlo?",
+    question: "¿Qué implica el cumplimiento Verifactu?",
     answer:
-      "Sí. VeriFactu Business está diseñado para integrarse con otras herramientas. Puedes conectar tu ERP, software de contabilidad o incluso carpetas en la nube (Drive, Dropbox) para que Isaak importe y procese tus datos de forma automática, centralizando toda tu operativa.",
+      "Tus facturas quedan registradas automáticamente según los requisitos oficiales de integridad, trazabilidad y seguridad.",
+  },
+  {
+    question: "¿Puedo contratar trámites adicionales desde la app?",
+    answer:
+      "Sí. Tienes un marketplace interno con constituciones, certificados, servicios notariales y gestiones fiscales.",
+  },
+  {
+    question: "¿Es seguro subir mis documentos?",
+    answer:
+      "Sí. Utilizamos cifrado extremo a extremo y almacenamiento seguro con control de acceso por empresa.",
   },
 ];
 
@@ -80,8 +89,7 @@ export default function Faq() {
         <div className="section__header">
           <h2>Preguntas Frecuentes</h2>
           <p>
-            Resolvemos las dudas más comunes sobre VeriFactu y cómo nuestra
-            plataforma puede ayudarte.
+            Resolvemos dudas sobre registro, integraciones, seguridad y cómo Isaak automatiza tu operativa.
           </p>
         </div>
         <div className="faq-list">
