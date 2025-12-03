@@ -1,8 +1,7 @@
 "use client";
 import React from "react";
 import { useModal } from "../../hooks/useModal";
-import { Modal } from "../ui/modal";
-import Button from "../ui/button/Button";
+import { Modal, Button } from "@verifactu/ui";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 
@@ -69,9 +68,10 @@ export default function UserInfoCard() {
           </div>
         </div>
 
-        <button
+        <Button
           onClick={openModal}
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
+          variant="outline"
+          className="w-full lg:w-auto"
         >
           <svg
             className="fill-current"
@@ -89,7 +89,7 @@ export default function UserInfoCard() {
             />
           </svg>
           Edit
-        </button>
+        </Button>
       </div>
 
       <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
