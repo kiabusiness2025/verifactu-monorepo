@@ -1,0 +1,17 @@
+<svg width="420" height="120" viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="420" height="120" fill="white"/>
+  <g transform="translate(12 18)">
+    <g>
+      <defs>
+        <linearGradient id="gradLogo" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#4F8BFF"/>
+          <stop offset="1" stop-color="#1B6BFF"/>
+        </linearGradient>
+      </defs>
+      <path d="M72 0L0 24V68C0 97.2 19.8 123.1 60 138.7C100.2 123.1 120 97.2 120 68V24L72 0Z" transform="scale(0.55)" fill="url(#gradLogo)"/>
+      <path d="M52 78L27 57L35 47L52 61L87 33L95 43L52 78Z" transform="scale(0.55)" fill="white"/>
+    </g>
+    <text x="130" y="52" fill="#0F172A" font-family="'Inter', 'Segoe UI', system-ui" font-size="32" font-weight="700">VeriFactu</text>
+    <text x="130" y="82" fill="#1B6BFF" font-family="'Inter', 'Segoe UI', system-ui" font-size="28" font-weight="600">Business</text>
+  </g>
+</svg>

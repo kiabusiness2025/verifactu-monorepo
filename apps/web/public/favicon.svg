@@ -1,0 +1,10 @@
+<svg width="64" height="64" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradFav" x1="32" y1="32" x2="224" y2="224" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F8BFF"/>
+      <stop offset="1" stop-color="#1B6BFF"/>
+    </linearGradient>
+  </defs>
+  <path d="M128 16L40 48V120C40 172 73.6 218.1 128 240C182.4 218.1 216 172 216 120V48L128 16Z" fill="url(#gradFav)"/>
+  <path d="M109 150L74 120L86 106L109 126L170 76L182 92L109 150Z" fill="white"/>
+</svg>
