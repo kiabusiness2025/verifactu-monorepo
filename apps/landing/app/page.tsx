@@ -251,15 +251,14 @@ export default function Page() {
           <div className="container hero__inner">
             <div className="hero__copy">
               <p className="hero__eyebrow">
-                Cumple con VeriFactu y haz crecer tu negocio.
+                verifactu.business · Infraestructura fiscal-as-a-service
               </p>
-              <h1>La forma más inteligente de automatizar tu facturación.</h1>
+              <h1>El hub operativo para facturar, conciliar y cumplir en una sola app.</h1>
               <h2 className="hero__subtitle">
-                Software VeriFactu certificado con IA para asesorías, pymes y autónomos.
+                Multiempresa, multiusuario y listo para Drive, bancos PSD2, Isaak e identidad digital.
               </h2>
               <p className="hero__description">
-                Isaak centraliza la emisión, valida con la AEAT y te sugiere cómo
-                mejorar tus márgenes automáticamente.
+                Emite VeriFactu, conecta cuentas bancarias, sincroniza documentos y agenda fiscal. Isaak orquesta los datos, prevalida modelos y desbloquea tus trámites sin salir del dashboard.
               </p>
               <div className="hero__actions">
                 <a className="btn btn--primary" href="/auth/signup">
@@ -271,7 +270,7 @@ export default function Page() {
               </div>
               <div className="hero__trust">
                 <span>
-                  Equipos fiscales, asesorías y despachos confían en Isaak.
+                  Asesorías, despachos y pymes confían en Isaak para operar con la AEAT.
                 </span>
               </div>
             </div>
@@ -401,6 +400,54 @@ export default function Page() {
                   Asistencia y recomendaciones con IA
                 </p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="ecosystem" className="section features">
+          <div className="container">
+            <div className="section__header">
+              <h2>Un landing ejecutivo para verifactu.business.</h2>
+              <p>
+                Presenta el ecosistema completo: núcleo VeriFactu, integraciones PSD2 y Drive, calendario fiscal y operaciones orquestadas por Isaak.
+              </p>
+            </div>
+            <div className="features__grid">
+              <article className="feature-card">
+                <h3>Core</h3>
+                <ul>
+                  <li>Next.js (UI + API) y arquitectura multiempresa.</li>
+                  <li>Cloud Run + Cloud SQL con despliegue continuo.</li>
+                  <li>Scheduler + Pub/Sub para sincronizaciones.</li>
+                </ul>
+              </article>
+              <article className="feature-card">
+                <h3>Integraciones críticas</h3>
+                <ul>
+                  <li>Drive + OCR para documentos y gastos.</li>
+                  <li>Conector bancario PSD2 para movimientos.</li>
+                  <li>Facturación VeriFactu y envío AEAT.</li>
+                  <li>Calendario fiscal con Google Calendar.</li>
+                </ul>
+              </article>
+              <article className="feature-card">
+                <h3>Identidad y asistentes</h3>
+                <ul>
+                  <li>Isaak fiscal/contable con contexto multiempresa.</li>
+                  <li>Certificado digital ACCV/FNMT y Google/Email login.</li>
+                  <li>Roles avanzados (cliente, asesor, admin).</li>
+                </ul>
+              </article>
+              <article className="feature-card">
+                <h3>Resultados para el cliente</h3>
+                <ul>
+                  <li>Facturas emitidas y validadas en Verifactu.</li>
+                  <li>Gastos importados con OCR desde Drive.</li>
+                  <li>Movimientos bancarios integrados y conciliados.</li>
+                  <li>Contabilidad automática y modelos 303–130–111 prevalidados.</li>
+                  <li>Impuesto estimado del ejercicio y trámites dentro de la app.</li>
+                </ul>
+              </article>
             </div>
           </div>
         </section>
