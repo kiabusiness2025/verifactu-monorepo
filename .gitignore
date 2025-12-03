@@ -10,4 +10,4 @@ coverage/
 landing/.next
 landing/node_modules
 landing/.env
-landing/dist
+landing/dist*.pem
