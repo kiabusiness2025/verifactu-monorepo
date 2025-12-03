@@ -23,6 +23,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT }}
+          version: latest
 
       - name: Deploy using Cloud Build
-        run: gcloud builds submit --config=cloudbuild-prod.yaml .
+        run: gcloud builds submit --config=cloudbuild-prod.yaml --timeout=1200 .
