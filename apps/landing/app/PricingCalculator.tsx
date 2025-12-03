@@ -21,12 +21,12 @@ const PRICING_PLANS: Plan[] = [
     ctaLabel: "Crear cuenta",
     ctaHref: "/auth/signup",
     features: [
-      "Emisión VeriFactu básica",
-      "Sin bancos ni Drive masivo",
-      "Autocompletado simple con Isaak",
-      "Soporte por email",
+      "Facturación básica",
+      "Subida manual de documentos",
+      "Hasta 20 documentos al mes",
+      "Chat Isaak limitado",
     ],
-    note: "Ideal para probar el flujo VeriFactu sin integraciones.",
+    note: "Para probar la plataforma sin compromiso.",
   },
   {
     name: "ESENCIAL",
@@ -35,16 +35,19 @@ const PRICING_PLANS: Plan[] = [
     ctaLabel: "Empezar ahora",
     ctaHref: "/auth/signup",
     features: [
+      "Drive integrado",
+      "Facturación Verifactu completa",
+      "OCR + gastos automáticos",
       "Integración bancaria (1 cuenta)",
-      "Conciliación básica",
-      "Contabilidad automática sencilla",
-      "Diseñado para autónomos y microempresas",
+      "Calendario fiscal sincronizado",
+      "Resultados e impuestos estimados",
     ],
+    note: "29 €/mes o 290 €/año.",
   },
   {
     name: "PROFESIONAL",
     price: 69,
-    users: "Hasta 3 empresas · varias cuentas",
+    users: "Multiempresa (2 incluidas)",
     ctaLabel: "Solicitar demo",
     ctaHref: "/contact",
     features: [
@@ -52,21 +55,25 @@ const PRICING_PLANS: Plan[] = [
       "Conciliación avanzada",
       "Prevalidación de modelos 303/130/111",
       "Libros contables automáticos",
-      "Dashboard financiero completo",
+      "Dashboard financiero avanzado",
+      "Estimación del Impuesto de Sociedades",
     ],
     highlight: true,
+    note: "69 €/mes o 690 €/año.",
   },
   {
     name: "ENTERPRISE",
     price: 149,
-    users: "Por empresa · ilimitado en usuarios",
+    users: "149 €/mes por empresa",
     ctaLabel: "Hablar con ventas",
     ctaHref: "/contact",
     features: [
-      "Conectores ilimitados (Drive, bancos, calendario)",
-      "Roles avanzados y auditoría",
-      "API privada y firma electrónica",
-      "Delegaciones automáticas con certificado digital",
+      "Multiempresa ilimitada",
+      "Acceso por certificado digital",
+      "Firma electrónica integrada",
+      "API privada",
+      "Delegaciones electrónicas automáticas",
+      "Soporte prioritario",
     ],
     note: "Infraestructura fiscal completa para grupos y franquicias.",
   },
@@ -80,8 +87,8 @@ export default function PricingCalculator() {
   return (
     <section id="pricing" className="pricing-section">
       <div className="section__header">
-        <h2>Planes y precios con bancos integrados</h2>
-        <p>Adapta la infraestructura fiscal-as-a-service a tu tamaño de empresa.</p>
+        <h2>Planes y precios</h2>
+        <p>Infraestructura fiscal-as-a-service con bancos, Drive, Verifactu e Isaak.</p>
         <p className="pricing-section__sub-header">Todos los planes incluyen demo guiada y activación VeriFactu.</p>
       </div>
 
