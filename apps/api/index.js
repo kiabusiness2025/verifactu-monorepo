@@ -42,7 +42,7 @@ const ALLOWED_ORIGINS = [
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (e.g., mobile apps, curl, server-to-server)
-    // and requests from whitelisted origins
+    // and requests from whitelisted origins. See REVIEW.md for security assessment.
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
@@ -104,19 +104,20 @@ app.post("/api/verifactu/register-invoice", async (req, res) => {
 
 app.get("/api/verifactu/test-aeat", async (_req, res) => {
   try {
-    // NOTE: Replace with your actual company NIF and Name for a real test
+    // Test query using environment variables or defaults
+    // WARNING: These are test credentials only - replace with real values for production testing
     const testQuery = {
       Cabecera: {
         IDVersion: "1.0",
         ObligadoEmision: {
-          NombreRazon: "MI EMPRESA DE PRUEBAS",
-          NIF: "A12345678",
+          NombreRazon: process.env.AEAT_TEST_COMPANY_NAME || "MI EMPRESA DE PRUEBAS",
+          NIF: process.env.AEAT_TEST_NIF || "A12345678",
         },
       },
       FiltroConsulta: {
         PeriodoImputacion: {
-          Ejercicio: "2025",
-          Periodo: "10",
+          Ejercicio: process.env.AEAT_TEST_YEAR || "2025",
+          Periodo: process.env.AEAT_TEST_PERIOD || "10",
         },
       },
     };

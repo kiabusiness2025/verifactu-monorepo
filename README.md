@@ -93,6 +93,15 @@ Each application is deployed to Google Cloud Run with automatic change detection
 - `NODE_ENV`: Environment (development/production)
 - `PORT`: Server port (default: 8080)
 
+### API Test Endpoint (Optional)
+
+The `/api/verifactu/test-aeat` endpoint supports optional environment variables for testing:
+
+- `AEAT_TEST_COMPANY_NAME`: Company name for test queries (default: "MI EMPRESA DE PRUEBAS")
+- `AEAT_TEST_NIF`: Tax ID for test queries (default: "A12345678")
+- `AEAT_TEST_YEAR`: Year for test queries (default: "2025")
+- `AEAT_TEST_PERIOD`: Period for test queries (default: "10")
+
 ## Security
 
 - Certificate-based authentication with AEAT
