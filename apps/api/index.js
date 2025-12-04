@@ -3,7 +3,7 @@ import pino from "pino";
 import fs from "fs";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
-import { registerInvoice } from "./soap-client.js";
+import { registerInvoice, queryInvoice } from "./soap-client.js";
 
 const log = pino();
 const app = express();
@@ -41,6 +41,8 @@ const ALLOWED_ORIGINS = [
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps, curl, server-to-server)
+    // and requests from whitelisted origins
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
@@ -88,29 +90,44 @@ app.get("/api/verifactu/ops", (_req, res) => {
 
 app.post("/api/verifactu/register-invoice", async (req, res) => {
   try {
-    const invoice = {
-      id: "F2023-0001",
-      number: "F2023-0001",
-      issueDate: new Date().toISOString(),
-      total: 121,
-      tax: {
-        rate: 0.21,
-        amount: 21,
-      },
-      customer: {
-        name: "Cliente de Prueba",
-        nif: "12345678Z",
-      },
-      issuer: {
-        name: "Mi Empresa",
-        nif: "A12345678",
-      },
-    };
+    const invoice = req.body;
+    if (!invoice) {
+      return res.status(400).json({ ok: false, error: "Missing invoice data" });
+    }
     const result = await registerInvoice(invoice);
     res.json({ ok: true, data: result });
   } catch (error) {
     log.error(error);
     res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get("/api/verifactu/test-aeat", async (_req, res) => {
+  try {
+    // NOTE: Replace with your actual company NIF and Name for a real test
+    const testQuery = {
+      Cabecera: {
+        IDVersion: "1.0",
+        ObligadoEmision: {
+          NombreRazon: "MI EMPRESA DE PRUEBAS",
+          NIF: "A12345678",
+        },
+      },
+      FiltroConsulta: {
+        PeriodoImputacion: {
+          Ejercicio: "2025",
+          Periodo: "10",
+        },
+      },
+    };
+
+    log.info("Performing AEAT test query...");
+    const result = await queryInvoice(testQuery);
+    log.info("AEAT test query successful.");
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    log.error({ err: error }, "AEAT Test Error");
+    res.status(500).json({ ok: false, error: error.message, details: error.stack });
   }
 });
 
