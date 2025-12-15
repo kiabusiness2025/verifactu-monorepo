@@ -1,0 +1,121 @@
+# Google Cloud Build configuration for verifactu monorepo
+# This file defines the build and deployment pipeline for both applications
+
+steps:
+  # Build verifactu-landing Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-landing'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/verifactu-landing:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/verifactu-landing:latest'
+      - '-f'
+      - 'apps/landing/Dockerfile'
+      - 'apps/landing'
+    waitFor: ['-']
+
+  # Build verifactu-app Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-app'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/verifactu-app:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/verifactu-app:latest'
+      - '-f'
+      - 'apps/app/Dockerfile'
+      - 'apps/app'
+    waitFor: ['-']
+
+  # Push verifactu-landing image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-landing'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'gcr.io/$PROJECT_ID/verifactu-landing'
+    waitFor: ['build-landing']
+
+  # Push verifactu-app image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-app'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'gcr.io/$PROJECT_ID/verifactu-app'
+    waitFor: ['build-app']
+
+  # Deploy verifactu-landing to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-landing'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'verifactu-landing'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/verifactu-landing:$COMMIT_SHA'
+      - '--platform'
+      - 'managed'
+      - '--region'
+      - 'europe-west1'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '10'
+      - '--timeout'
+      - '60'
+      - '--set-env-vars'
+      - 'NODE_ENV=production'
+    waitFor: ['push-landing']
+
+  # Deploy verifactu-app to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-app'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'verifactu-app'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/verifactu-app:$COMMIT_SHA'
+      - '--platform'
+      - 'managed'
+      - '--region'
+      - 'europe-west1'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '10'
+      - '--timeout'
+      - '60'
+      - '--set-env-vars'
+      - 'NODE_ENV=production'
+    waitFor: ['push-app']
+
+# Build timeout (30 minutes)
+timeout: 1800s
+
+# Images to push to Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/verifactu-landing:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/verifactu-landing:latest'
+  - 'gcr.io/$PROJECT_ID/verifactu-app:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/verifactu-app:latest'
+
+# Build options
+options:
+  machineType: 'N1_HIGHCPU_8'
+  diskSizeGb: 100
+  logging: CLOUD_LOGGING_ONLY

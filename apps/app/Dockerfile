@@ -1,23 +1,52 @@
-FROM node:20-alpine AS deps
+# Optimized multi-stage Dockerfile for Google Cloud Run
+# Build stage
+FROM node:18-alpine AS builder
+
+# Install dependencies for native modules
+RUN apk add --no-cache libc6-compat python3 make g++
+
 WORKDIR /app
+
+# Copy package files
 COPY package*.json ./
+
+# Install all dependencies
 RUN npm ci
 
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy application code
 COPY . .
+
+# Disable telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Build the application with standalone output
 RUN npm run build
 
-FROM node:20-alpine AS runner
+# Production stage
+FROM node:18-alpine AS runner
+
 WORKDIR /app
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy standalone build
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Switch to non-root user
+USER nextjs
+
+# Expose port 8080 (Cloud Run requirement)
+EXPOSE 8080
+
+# Set environment variables
 ENV NODE_ENV=production
 ENV PORT=8080
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
+ENV HOSTNAME="0.0.0.0"
 
-COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
-EXPOSE 8080
-CMD ["npm","run","start"]
+# Start the application
+CMD ["node", "server.js"]
+
