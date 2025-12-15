@@ -1,42 +1,18 @@
 import type { Metadata } from "next";
-import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
-import React from "react";
-import MonthlyTarget from "@/components/ecommerce/MonthlyTarget";
-import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "@/components/ecommerce/StatisticsChart";
-import RecentOrders from "@/components/ecommerce/RecentOrders";
-import DemographicCard from "@/components/ecommerce/DemographicCard";
 
 export const metadata: Metadata = {
-  title:
-    "Next.js E-commerce Dashboard | TailAdmin - Next.js Dashboard Template",
-  description: "This is Next.js Home for TailAdmin Dashboard Template",
+  title: "admin | verifactu",
+  description: "Sección en actualización. Próximamente añadiremos el contenido definitivo.",
 };
 
-export default function Ecommerce() {
+export default function PlaceholderPage() {
   return (
-    <div className="grid grid-cols-12 gap-4 md:gap-6">
-      <div className="col-span-12 space-y-6 xl:col-span-7">
-        <EcommerceMetrics />
-
-        <MonthlySalesChart />
-      </div>
-
-      <div className="col-span-12 xl:col-span-5">
-        <MonthlyTarget />
-      </div>
-
-      <div className="col-span-12">
-        <StatisticsChart />
-      </div>
-
-      <div className="col-span-12 xl:col-span-5">
-        <DemographicCard />
-      </div>
-
-      <div className="col-span-12 xl:col-span-7">
-        <RecentOrders />
-      </div>
+    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-10 shadow-sm">
+      <h1 className="mb-3 text-2xl font-semibold text-slate-900">admin</h1>
+      <p className="text-sm text-slate-700">
+        Estamos preparando esta sección para el nuevo panel fiscal. Mientras tanto puedes
+        seguir trabajando con las funcionalidades principales del dashboard.
+      </p>
     </div>
   );
 }

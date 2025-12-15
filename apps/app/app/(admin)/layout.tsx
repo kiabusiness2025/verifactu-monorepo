@@ -1,9 +1,3 @@
-"use client";
-
-import { useSidebar } from "@/context/SidebarContext";
-import AppHeader from "@/layout/AppHeader";
-import AppSidebar from "@/layout/AppSidebar";
-import Backdrop from "@/layout/Backdrop";
 import React from "react";
 
 export default function AdminLayout({
@@ -11,28 +5,20 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isExpanded, isHovered, isMobileOpen } = useSidebar();
-
-  // Dynamic class for main content margin based on sidebar state
-  const mainContentMargin = isMobileOpen
-    ? "ml-0"
-    : isExpanded || isHovered
-    ? "lg:ml-[290px]"
-    : "lg:ml-[90px]";
-
   return (
-    <div className="min-h-screen xl:flex">
-      {/* Sidebar and Backdrop */}
-      <AppSidebar />
-      <Backdrop />
-      {/* Main Content Area */}
-      <div
-        className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
-      >
-        {/* Header */}
-        <AppHeader />
-        {/* Page Content */}
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</div>
+    <div className="min-h-screen bg-slate-50 px-4 py-6">
+      <div className="mx-auto max-w-5xl space-y-4">
+        <header>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Panel administrativo
+          </p>
+          <h1 className="text-3xl font-bold text-slate-900">verifactu</h1>
+          <p className="text-sm text-slate-700">
+            Secciones del panel en modo placeholder mientras completamos la migración del
+            dashboard.
+          </p>
+        </header>
+        <main>{children}</main>
       </div>
     </div>
   );

@@ -1,8 +1,7 @@
 "use client";
 
-import PricingCalculator from "@/app/components/PricingCalculator";
-import Faq from "@/app/components/Faq";
-import { useSession } from "next-auth/react";
+import PricingCalculator from "./PricingCalculator";
+import Faq from "./Faq";
 import React, { useEffect, useState } from "react";
 
 type ChatMessage = {
@@ -24,8 +23,6 @@ export default function Page() {
   const [chatOpen, setChatOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const { data: session } = useSession();
-
   useEffect(() => {
     setChatMessages(PROACTIVE_MESSAGES.map((text) => ({ from: "Isaak", text })));
   }, []);
@@ -166,15 +163,9 @@ export default function Page() {
             </nav>
           </div>
           <div className={`header__cta ${mobileMenuOpen ? "is-open" : ""}`}>
-            {session ? (
-              <a className="btn btn--ghost" href="/dashboard">
-                Ir al panel
-              </a>
-            ) : (
-              <a className="btn btn--ghost" href="/api/auth/signin">
-                Acceder
-              </a>
-            )}
+            <a className="btn btn--ghost" href="/api/auth/signin">
+              Acceder
+            </a>
             <a className="btn btn--primary" href="/contact">
               Solicitar demo
             </a>

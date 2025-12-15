@@ -1,20 +1,18 @@
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import VideosExample from "@/components/ui/video/VideosExample";
-import { Metadata } from "next";
-import React from "react";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Next.js Videos | TailAdmin - Next.js Dashboard Template",
-  description:
-    "This is Next.js Videos page for TailAdmin - Next.js Tailwind CSS Admin Dashboard Template",
+  title: "videos | verifactu",
+  description: "Sección en actualización. Próximamente añadiremos el contenido definitivo.",
 };
 
-export default function VideoPage() {
+export default function PlaceholderPage() {
   return (
-    <div>
-      <PageBreadcrumb pageTitle="Videos" />
-
-      <VideosExample />
+    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-10 shadow-sm">
+      <h1 className="mb-3 text-2xl font-semibold text-slate-900">videos</h1>
+      <p className="text-sm text-slate-700">
+        Estamos preparando esta sección para el nuevo panel fiscal. Mientras tanto puedes
+        seguir trabajando con las funcionalidades principales del dashboard.
+      </p>
     </div>
   );
 }

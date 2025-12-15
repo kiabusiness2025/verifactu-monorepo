@@ -1,33 +1,18 @@
-import ComponentCard from "@/components/common/ComponentCard";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import ResponsiveImage from "@/components/ui/images/ResponsiveImage";
-import ThreeColumnImageGrid from "@/components/ui/images/ThreeColumnImageGrid";
-import TwoColumnImageGrid from "@/components/ui/images/TwoColumnImageGrid";
-import { Metadata } from "next";
-import React from "react";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Next.js Images | TailAdmin - Next.js Dashboard Template",
-  description:
-    "This is Next.js Images page for TailAdmin - Next.js Tailwind CSS Admin Dashboard Template",
-  // other metadata
+  title: "images | verifactu",
+  description: "Sección en actualización. Próximamente añadiremos el contenido definitivo.",
 };
 
-export default function Images() {
+export default function PlaceholderPage() {
   return (
-    <div>
-      <PageBreadcrumb pageTitle="Images" />
-      <div className="space-y-5 sm:space-y-6">
-        <ComponentCard title="Responsive image">
-          <ResponsiveImage />
-        </ComponentCard>
-        <ComponentCard title="Image in 2 Grid">
-          <TwoColumnImageGrid />
-        </ComponentCard>
-        <ComponentCard title="Image in 3 Grid">
-          <ThreeColumnImageGrid />
-        </ComponentCard>
-      </div>
+    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-10 shadow-sm">
+      <h1 className="mb-3 text-2xl font-semibold text-slate-900">images</h1>
+      <p className="text-sm text-slate-700">
+        Estamos preparando esta sección para el nuevo panel fiscal. Mientras tanto puedes
+        seguir trabajando con las funcionalidades principales del dashboard.
+      </p>
     </div>
   );
 }

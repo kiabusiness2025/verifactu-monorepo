@@ -1,14 +1,13 @@
-import React, { Suspense } from "react";
-import { SessionProvider } from "next-auth/react";
-import CookieBanner from "./components/CookieBanner";
+import React from "react";
 
 const title = "Veri*Factu Business - Automatiza tu facturación con IA";
-const description = "Cumple con VeriFactu y haz crecer tu negocio. Isaak centraliza la emisión, valida con AEAT y te sugiere cómo mejorar tus márgenes automáticamente.";
+const description =
+  "Cumple con VeriFactu y haz crecer tu negocio. Isaak centraliza la emisión, valida con AEAT y te sugiere cómo mejorar tus márgenes automáticamente.";
 const url = "https://verifactu.business";
 
 export const metadata = {
-  title: "Veri*Factu Business - Automatiza tu facturación con IA",
-  description: "Cumple con VeriFactu y haz crecer tu negocio. Isaak centraliza la emisión, valida con AEAT y te sugiere cómo mejorar tus márgenes automáticamente.",
+  title,
+  description,
   icons: [{ rel: "icon", url: "/assets/favicon.svg" }],
   metadataBase: new URL(url),
   openGraph: {
@@ -26,23 +25,19 @@ export const metadata = {
     description,
     images: ["/og-image.png"],
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
   themeColor: "#2563eb",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body>
-        <SessionProvider>
-          <Suspense>{children}</Suspense>
-          <CookieBanner />
-        </SessionProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

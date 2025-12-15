@@ -1,25 +1,18 @@
-import ComponentCard from "@/components/common/ComponentCard";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import BasicTableOne from "@/components/tables/BasicTableOne";
-import { Metadata } from "next";
-import React from "react";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Next.js Basic Table | TailAdmin - Next.js Dashboard Template",
-  description:
-    "This is Next.js Basic Table  page for TailAdmin  Tailwind CSS Admin Dashboard Template",
-  // other metadata
+  title: "basic-tables | verifactu",
+  description: "Sección en actualización. Próximamente añadiremos el contenido definitivo.",
 };
 
-export default function BasicTables() {
+export default function PlaceholderPage() {
   return (
-    <div>
-      <PageBreadcrumb pageTitle="Basic Table" />
-      <div className="space-y-6">
-        <ComponentCard title="Basic Table 1">
-          <BasicTableOne />
-        </ComponentCard>
-      </div>
+    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-10 shadow-sm">
+      <h1 className="mb-3 text-2xl font-semibold text-slate-900">basic-tables</h1>
+      <p className="text-sm text-slate-700">
+        Estamos preparando esta sección para el nuevo panel fiscal. Mientras tanto puedes
+        seguir trabajando con las funcionalidades principales del dashboard.
+      </p>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { signIn } from "next-auth/react";
 
 type Status = {
   tone: "idle" | "success" | "error";
@@ -19,44 +18,15 @@ export default function SignUpPage() {
 
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name");
-    const email = formData.get("email");
-    const password = formData.get("password");
 
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
+    await new Promise((resolve) => setTimeout(resolve, 400));
 
-      const data = await response.json();
+    setStatus({
+      tone: "success",
+      message: `Hemos recibido tu solicitud, ${name || ""}. Te contactaremos en breve para activar tu cuenta.`,
+    });
 
-      if (!response.ok) {
-        throw new Error(data.error || "Algo salió mal durante el registro.");
-      }
-
-      // Si el registro es exitoso, iniciamos sesión automáticamente
-      const result = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-      });
-
-      if (result?.error) {
-        setStatus({ tone: "error", message: "Registro exitoso, pero no se pudo iniciar sesión. Por favor, accede manualmente." });
-      } else {
-        // Redirigir al dashboard o a la página principal tras el éxito
-        window.location.href = "/";
-      }
-
-    } catch (error) {
-      setStatus({
-        tone: "error",
-        message: error instanceof Error ? error.message : "Error desconocido.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsSubmitting(false);
   };
 
   return (

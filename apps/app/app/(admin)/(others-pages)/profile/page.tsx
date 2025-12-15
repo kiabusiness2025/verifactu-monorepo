@@ -1,28 +1,18 @@
-import UserAddressCard from "@/components/user-profile/UserAddressCard";
-import UserInfoCard from "@/components/user-profile/UserInfoCard";
-import UserMetaCard from "@/components/user-profile/UserMetaCard";
-import { Metadata } from "next";
-import React from "react";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Next.js Profile | TailAdmin - Next.js Dashboard Template",
-  description:
-    "This is Next.js Profile page for TailAdmin - Next.js Tailwind CSS Admin Dashboard Template",
+  title: "profile | verifactu",
+  description: "Sección en actualización. Próximamente añadiremos el contenido definitivo.",
 };
 
-export default function Profile() {
+export default function PlaceholderPage() {
   return (
-    <div>
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
-        <h3 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-7">
-          Profile
-        </h3>
-        <div className="space-y-6">
-          <UserMetaCard />
-          <UserInfoCard />
-          <UserAddressCard />
-        </div>
-      </div>
+    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-10 shadow-sm">
+      <h1 className="mb-3 text-2xl font-semibold text-slate-900">profile</h1>
+      <p className="text-sm text-slate-700">
+        Estamos preparando esta sección para el nuevo panel fiscal. Mientras tanto puedes
+        seguir trabajando con las funcionalidades principales del dashboard.
+      </p>
     </div>
   );
 }
