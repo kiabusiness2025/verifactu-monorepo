@@ -114,3 +114,75 @@ steps:
       else
         echo "LANDING: sin cambios, no despliega."
       fi
+
+# --- INVOICES SERVICE ---
+- id: "INVOICES: build"
+  name: gcr.io/cloud-builders/docker
+  dir: services/invoices
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      if git diff --name-only HEAD~1 HEAD | grep -q "^services/invoices/"; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-invoices:$(date +%Y%m%d-%H%M%S)"
+        docker build -t "$IMAGE" .
+        docker push "$IMAGE"
+        echo "$IMAGE" > /workspace/invoices_image.txt
+      else
+        echo "NO_CHANGES" > /workspace/invoices_image.txt
+      fi
+
+- id: "INVOICES: deploy"
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      IMG=$(cat /workspace/invoices_image.txt)
+      if [ "$IMG" != "NO_CHANGES" ]; then
+        gcloud run deploy verifactu-invoices-pre \
+          --image "$IMG" \
+          --region "$_REGION" \
+          --platform managed \
+          --port 8081 \
+          --allow-unauthenticated \
+          --set-env-vars "NODE_ENV=production"
+      else
+        echo "INVOICES: sin cambios, no despliega."
+      fi
+
+# --- NOTIFICATIONS SERVICE ---
+- id: "NOTIFICATIONS: build"
+  name: gcr.io/cloud-builders/docker
+  dir: services/notifications
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      if git diff --name-only HEAD~1 HEAD | grep -q "^services/notifications/"; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-notifications:$(date +%Y%m%d-%H%M%S)"
+        docker build -t "$IMAGE" .
+        docker push "$IMAGE"
+        echo "$IMAGE" > /workspace/notifications_image.txt
+      else
+        echo "NO_CHANGES" > /workspace/notifications_image.txt
+      fi
+
+- id: "NOTIFICATIONS: deploy"
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      IMG=$(cat /workspace/notifications_image.txt)
+      if [ "$IMG" != "NO_CHANGES" ]; then
+        gcloud run deploy verifactu-notifications-pre \
+          --image "$IMG" \
+          --region "$_REGION" \
+          --platform managed \
+          --port 8082 \
+          --allow-unauthenticated \
+          --set-env-vars "NODE_ENV=production"
+      else
+        echo "NOTIFICATIONS: sin cambios, no despliega."
+      fi

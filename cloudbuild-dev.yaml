@@ -109,3 +109,73 @@ steps:
       else
         echo "LANDING: sin cambios, no despliega."
       fi
+
+# --- INVOICES SERVICE ---
+- id: "INVOICES: build"
+  name: gcr.io/cloud-builders/docker
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      if [ "$$(/workspace/scripts/check-changes.sh services/invoices)" == "true" ]; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-invoices:$SHORT_SHA"
+        docker build -t "$$IMAGE" ./services/invoices
+        docker push "$$IMAGE"
+        echo "$$IMAGE" > /workspace/invoices_image.txt
+      else
+        echo "NO_CHANGES" > /workspace/invoices_image.txt
+      fi
+
+- id: "INVOICES: deploy"
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      IMG=$$(cat /workspace/invoices_image.txt)
+      if [ "$$IMG" != "NO_CHANGES" ]; then
+        gcloud run deploy verifactu-invoices-dev \
+          --image "$$IMG" \
+          --region "$_REGION" \
+          --platform managed \
+          --port 8081 \
+          --allow-unauthenticated \
+          --set-env-vars "NODE_ENV=development"
+      else
+        echo "INVOICES: sin cambios, no despliega."
+      fi
+
+# --- NOTIFICATIONS SERVICE ---
+- id: "NOTIFICATIONS: build"
+  name: gcr.io/cloud-builders/docker
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      if [ "$$(/workspace/scripts/check-changes.sh services/notifications)" == "true" ]; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-notifications:$SHORT_SHA"
+        docker build -t "$$IMAGE" ./services/notifications
+        docker push "$$IMAGE"
+        echo "$$IMAGE" > /workspace/notifications_image.txt
+      else
+        echo "NO_CHANGES" > /workspace/notifications_image.txt
+      fi
+
+- id: "NOTIFICATIONS: deploy"
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+    - -lc
+    - |
+      IMG=$$(cat /workspace/notifications_image.txt)
+      if [ "$$IMG" != "NO_CHANGES" ]; then
+        gcloud run deploy verifactu-notifications-dev \
+          --image "$$IMG" \
+          --region "$_REGION" \
+          --platform managed \
+          --port 8082 \
+          --allow-unauthenticated \
+          --set-env-vars "NODE_ENV=development"
+      else
+        echo "NOTIFICATIONS: sin cambios, no despliega."
+      fi
