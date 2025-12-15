@@ -143,5 +143,3 @@ export const Alert: React.FC<AlertProps> = ({
     </div>
   );
 };
-
-
