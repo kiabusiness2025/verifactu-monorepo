@@ -1,7 +1,7 @@
 "use client";
 
-import PricingCalculator from "@/app/components/PricingCalculator";
-import Faq from "@/app/components/Faq";
+import PricingCalculator from "./PricingCalculator";
+import Faq from "./Faq";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
 

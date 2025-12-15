@@ -1,13 +1,12 @@
-import NextAuth from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { User } from "next-auth";
 
-export default NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -25,7 +24,7 @@ export default NextAuth({
             name: "Usuario de Prueba",
             email: credentials.email,
             role: "ADMIN",
-          } as User;
+          } as any;
         }
         // Si las credenciales no son válidas, devolvemos null
         return null;
@@ -39,13 +38,17 @@ export default NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
+        token.id = user.id;
+        token.role = (user as any).role;
       }
       return token;
     },
     async session({ session, token }) {
-      session.user.role = token.role as "ADMIN" | "USER";
+      if (session.user) {
+        (session.user as any).id = token.id;
+        (session.user as any).role = token.role as "ADMIN" | "USER";
+      }
       return session;
     },
   },
-});
+};

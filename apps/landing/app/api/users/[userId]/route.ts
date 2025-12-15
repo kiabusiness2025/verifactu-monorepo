@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { db } from "@/lib/db";
-import NextAuthOptions from "@/app/[...nextauth]";
+import { db } from "@/app/db";
+import { authOptions } from "@/app/lib/auth";
 
 export async function PUT(
   req: Request,
   { params }: { params: { userId: string } },
 ) {
-  const session = await getServerSession(NextAuthOptions);
+  const session = await getServerSession(authOptions);
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
@@ -25,7 +25,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: { userId: string } },
 ) {
-  const session = await getServerSession(NextAuthOptions);
+  const session = await getServerSession(authOptions);
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }

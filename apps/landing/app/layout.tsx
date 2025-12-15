@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
-import { SessionProvider } from "next-auth/react";
-import CookieBanner from "./components/CookieBanner";
+import AuthProvider from "./AuthProvider";
+import CookieBanner from "./CookieBanner";
 
 const title = "Veri*Factu Business - Automatiza tu facturación con IA";
 const description = "Cumple con VeriFactu y haz crecer tu negocio. Isaak centraliza la emisión, valida con AEAT y te sugiere cómo mejorar tus márgenes automáticamente.";
@@ -26,22 +26,23 @@ export const metadata = {
     description,
     images: ["/og-image.png"],
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
   themeColor: "#2563eb",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
       <body>
-        <SessionProvider>
+        <AuthProvider>
           <Suspense>{children}</Suspense>
           <CookieBanner />
-        </SessionProvider>
+        </AuthProvider>
       </body>
     </html>
   );
