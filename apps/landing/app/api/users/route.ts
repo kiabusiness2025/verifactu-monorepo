@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hash } from "bcrypt";
+import prisma from "@/app/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,44 +32,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Implement actual database logic here
-    // For now, this is a mock implementation
-    // In production, you should:
-    // 1. Hash the password using bcrypt or similar
-    // 2. Check if email already exists in database
-    // 3. Store user in database
-    // 4. Send verification email (optional)
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    // Mock: Check if user already exists
-    // In reality, query your database here
-    // const existingUser = await db.user.findUnique({ where: { email } });
-    // if (existingUser) {
-    //   return NextResponse.json(
-    //     { error: "Este email ya está registrado" },
-    //     { status: 409 }
-    //   );
-    // }
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Este email ya está registrado" },
+        { status: 409 }
+      );
+    }
 
-    // Mock: Create user in database
-    // const hashedPassword = await bcrypt.hash(password, 10);
-    // const user = await db.user.create({
-    //   data: {
-    //     name,
-    //     email,
-    //     password: hashedPassword,
-    //     company,
-    //   },
-    // });
+    // Hash password with bcrypt (10 rounds)
+    const hashedPassword = await hash(password, 10);
 
-    // For now, return success
+    // Create user in database
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        company,
+      },
+    });
+
+    // Return user without password
     return NextResponse.json(
       {
         message: "Usuario creado exitosamente",
         user: {
-          id: "mock-id",
-          name,
-          email,
-          company,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          company: user.company,
         },
       },
       { status: 201 }

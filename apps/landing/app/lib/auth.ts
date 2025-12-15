@@ -1,8 +1,12 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { compare } from "bcrypt";
+import prisma from "./prisma";
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -15,22 +19,45 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Contraseña", type: "password" },
       },
       async authorize(credentials) {
-        // Aquí iría la lógica para validar el usuario contra tu base de datos.
-        // Por ahora, es una simulación que acepta a cualquier usuario.
-        // Asignamos 'ADMIN' al primer usuario para pruebas.
-        if (credentials?.email) {
-          return {
-            id: "1",
-            name: "Usuario de Prueba",
-            email: credentials.email,
-            role: "ADMIN",
-          } as any;
+        if (!credentials?.email || !credentials?.password) {
+          return null;
         }
-        // Si las credenciales no son válidas, devolvemos null
-        return null;
+
+        // Find user in database
+        const user = await prisma.user.findUnique({
+          where: {
+            email: credentials.email,
+          },
+        });
+
+        // Check if user exists and has a password
+        if (!user || !user.password) {
+          return null;
+        }
+
+        // Verify password
+        const isPasswordValid = await compare(
+          credentials.password,
+          user.password
+        );
+
+        if (!isPasswordValid) {
+          return null;
+        }
+
+        // Return user object for NextAuth
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        };
       },
     }),
   ],
+  session: {
+    strategy: "jwt",
+  },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/auth/signin",
@@ -39,14 +66,12 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id;
-        (session.user as any).role = token.role as "ADMIN" | "USER";
       }
       return session;
     },
