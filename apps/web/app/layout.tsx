@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -9,9 +9,12 @@ export const metadata: Metadata = {
   description:
     "Gestión fiscal y contable automatizada con Verifactu, bancos, Google Drive e Isaak en un único panel inteligente.",
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/brand/logo-icon.svg", media: "(prefers-color-scheme: dark)" },
+    ],
     shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    apple: "/brand/logo-icon.svg",
   },
   metadataBase: new URL("https://verifactu.business"),
   openGraph: {
@@ -27,6 +30,12 @@ export const metadata: Metadata = {
         height: 120,
         alt: "VeriFactu Business",
       },
+      {
+        url: "/brand/logo-dark.svg",
+        width: 420,
+        height: 120,
+        alt: "VeriFactu Business (tema oscuro)",
+      },
     ],
     locale: "es_ES",
     type: "website",
@@ -38,7 +47,13 @@ export const metadata: Metadata = {
       "IA fiscal que entiende tu negocio: facturación Verifactu, bancos, Drive, calendario fiscal y servicios on-demand.",
     images: ["/brand/logo-light.svg"],
   },
-  themeColor: "#0f172a",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0f172a" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1224" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

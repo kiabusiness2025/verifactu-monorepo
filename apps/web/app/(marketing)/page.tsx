@@ -17,6 +17,9 @@ export default function LandingPage() {
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm md:flex">
+            <a href="#propuesta" className="hover:text-slate-900 text-slate-600">
+              Propuesta de valor
+            </a>
             <a href="#funcionalidades" className="hover:text-slate-900 text-slate-600">
               Funcionalidades
             </a>
