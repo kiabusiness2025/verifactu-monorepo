@@ -3,6 +3,9 @@ import './globals.css';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 
+// Force dynamic rendering for all pages to avoid build-time errors
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: Readonly<{

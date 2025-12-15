@@ -14,7 +14,11 @@ const nextConfig = {
         ]
       }
     ];
-  }
+  },
+  // Disable static page generation for demo pages with interactive components
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
 };
 
 export default nextConfig;

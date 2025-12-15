@@ -1,3 +1,5 @@
+"use client";
+
 import React, { ReactNode } from "react";
 
 interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
