@@ -10,8 +10,8 @@ This is the monorepo for the VeriFactu project.
 
 ## Services
 
-*   `invoices`: The invoices service.
-*   `notifications`: The notifications service.
+*   `invoices`: Express microservice exposing full CRUD for invoices with filtering by customer.
+*   `notifications`: Express microservice to create, list, and mark user notifications as read/unread.
 
 ## Packages
 
