@@ -20,7 +20,8 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build the application with standalone output
-RUN npm run build
+# Use npx to call next directly to avoid npm script resolution issues with turbo
+RUN npx next build
 
 # Production stage
 FROM node:18-alpine AS runner
