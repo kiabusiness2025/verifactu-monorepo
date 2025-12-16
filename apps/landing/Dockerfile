@@ -16,7 +16,8 @@ RUN npm ci
 # Copy application code
 COPY . .
 
-# Build the application with standalone output
+# Build the Next.js application
+# Note: next.config.js already has output: 'standalone' configured
 RUN npm run build
 
 # Production stage
