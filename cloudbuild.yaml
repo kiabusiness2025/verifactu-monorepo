@@ -1,11 +1,11 @@
 steps:
   # Build landing
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/web-app', '-f', 'apps/landing/Dockerfile', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/web-app', '-f', 'apps/landing/Dockerfile', 'apps/landing']
   
   # Build app
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/verifactu-app', '-f', 'apps/app/Dockerfile', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/verifactu-app', '-f', 'apps/app/Dockerfile', 'apps/app']
   
   # Push images
   - name: 'gcr.io/cloud-builders/docker'
