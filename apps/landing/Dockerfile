@@ -18,7 +18,8 @@ COPY . .
 
 # Build the Next.js application
 # Note: next.config.js already has output: 'standalone' configured
-RUN npm run build
+# Run commands directly to avoid turbo resolution
+RUN npx prisma generate && npx next build
 
 # Production stage
 FROM node:18-alpine AS runner
