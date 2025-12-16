@@ -1,10 +1,13 @@
-FROM node:20-alpine
+FROM node:18-alpine
+
 WORKDIR /usr/src/app
+
 COPY package*.json ./
-RUN npm install --omit=dev
+
+RUN npm install
+
 COPY . .
-ENV NODE_ENV=production
-ENV PORT=8080
+
 EXPOSE 8080
-RUN ls -la
-CMD ["npm", "run", "start"]
+
+CMD [ "node", "index.js" ]

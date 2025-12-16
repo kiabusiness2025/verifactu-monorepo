@@ -1,8 +1,7 @@
 "use client";
 
-import PricingCalculator from "@/app/components/PricingCalculator";
-import Faq from "@/app/components/Faq";
-import { useSession } from "next-auth/react";
+import PricingCalculator from "./components/PricingCalculator";
+import Faq from "./components/Faq";
 import React, { useEffect, useState } from "react";
 
 type ChatMessage = {
@@ -24,7 +23,6 @@ export default function Page() {
   const [chatOpen, setChatOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const { data: session } = useSession();
 
   useEffect(() => {
     setChatMessages(PROACTIVE_MESSAGES.map((text) => ({ from: "Isaak", text })));
@@ -52,22 +50,18 @@ export default function Page() {
     }
 
     try {
-      const response = await fetch("https://api.openai.com/v1/responses", {
+      // Se mueve la lógica a una API Route para mayor seguridad y control
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${ISAAC_API_KEY}`,
         },
-        body: JSON.stringify({
-          model: "gpt-4.1-mini",
-          assistant_id: ISAAC_ASSISTANT_ID,
-          input: [{ role: "user", content: prompt }],
-        }),
+        body: JSON.stringify({ prompt }),
       });
 
       const data = await response.json();
       const text =
-        data?.output?.[0]?.content?.[0]?.text?.value ||
+        data.text ||
         "Tengo dificultades para responder ahora mismo, ¿puedes intentarlo de nuevo en unos minutos?";
 
       setChatMessages((prev) => [
@@ -166,15 +160,9 @@ export default function Page() {
             </nav>
           </div>
           <div className={`header__cta ${mobileMenuOpen ? "is-open" : ""}`}>
-            {session ? (
-              <a className="btn btn--ghost" href="/dashboard">
-                Ir al panel
-              </a>
-            ) : (
-              <a className="btn btn--ghost" href="/api/auth/signin">
-                Acceder
-              </a>
-            )}
+            <a className="btn btn--ghost" href="/auth/signup">
+              Acceder
+            </a>
             <a className="btn btn--primary" href="/contact">
               Solicitar demo
             </a>
