@@ -11,3 +11,6 @@ landing/.next
 landing/node_modules
 landing/.env
 landing/dist*.pem
+
+# Vercel (not used - we deploy to Google Cloud Run)
+.vercel
