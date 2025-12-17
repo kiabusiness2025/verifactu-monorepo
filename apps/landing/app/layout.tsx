@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import AuthProvider from "./AuthProvider";
 import CookieBanner from "./CookieBanner";
+import "./globals.css";
 
 const title = "Veri*Factu Business - Automatiza tu facturación con IA";
 const description = "Cumple con VeriFactu y haz crecer tu negocio. Isaak centraliza la emisión, valida con AEAT y te sugiere cómo mejorar tus márgenes automáticamente.";
