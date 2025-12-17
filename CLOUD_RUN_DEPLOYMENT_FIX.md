@@ -16,17 +16,17 @@ Pero el error menciona `web-app`, lo que sugiere un desajuste de nombres.
 
 ### Opción 1: Corregir el Nombre del Servicio en Cloud Run (Recomendado)
 
-El servicio `verifactu-web` está buscando una imagen llamada `web-app`, pero debe buscar `verifactu-landing` o `verifactu-app`.
+El servicio debe usar el nombre correcto de imagen `verifactu-landing` o `verifactu-app`.
 
 ```bash
-# Si verifactu-web debería ser la landing page:
-gcloud run services update verifactu-web \
+# Para la landing page (servicio verifactu-landing):
+gcloud run services update verifactu-landing \
   --image gcr.io/verifactu-business-480212/verifactu-landing:latest \
   --region europe-west1 \
   --project verifactu-business-480212
 
-# O si debería ser el app:
-gcloud run services update verifactu-web \
+# Para el app (servicio verifactu-app):
+gcloud run services update verifactu-app \
   --image gcr.io/verifactu-business-480212/verifactu-app:latest \
   --region europe-west1 \
   --project verifactu-business-480212
@@ -66,11 +66,18 @@ Esto construirá y subirá:
 - `gcr.io/verifactu-business-480212/verifactu-landing:latest`
 - `gcr.io/verifactu-business-480212/verifactu-app:latest`
 
-Luego actualiza el servicio `verifactu-web`:
+Luego actualiza los servicios:
 
 ```bash
-gcloud run services update verifactu-web \
+# Actualizar landing
+gcloud run services update verifactu-landing \
   --image gcr.io/verifactu-business-480212/verifactu-landing:latest \
+  --region europe-west1 \
+  --project verifactu-business-480212
+
+# Actualizar app
+gcloud run services update verifactu-app \
+  --image gcr.io/verifactu-business-480212/verifactu-app:latest \
   --region europe-west1 \
   --project verifactu-business-480212
 ```
@@ -126,18 +133,30 @@ gcloud builds submit --config cloudbuild.yaml --project verifactu-business-48021
 gcloud container images list --project verifactu-business-480212
 ```
 
-### 3. Actualizar el servicio verifactu-web
+### 3. Actualizar los servicios
 ```bash
-# Actualizar a landing page (más probable)
-gcloud run services update verifactu-web \
+# Actualizar landing page
+gcloud run services update verifactu-landing \
   --image gcr.io/verifactu-business-480212/verifactu-landing:latest \
+  --region europe-west1 \
+  --project verifactu-business-480212
+
+# Actualizar app
+gcloud run services update verifactu-app \
+  --image gcr.io/verifactu-business-480212/verifactu-app:latest \
   --region europe-west1 \
   --project verifactu-business-480212
 ```
 
 ### 4. Verificar el despliegue
 ```bash
-gcloud run services describe verifactu-web \
+# Verificar landing
+gcloud run services describe verifactu-landing \
+  --region europe-west1 \
+  --project verifactu-business-480212
+
+# Verificar app
+gcloud run services describe verifactu-app \
   --region europe-west1 \
   --project verifactu-business-480212
 ```
