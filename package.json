@@ -1,12 +1,6 @@
 {
   "name": "verifactu-monorepo",
   "private": true,
-  "packageManager": "npm@11.6.2",
-  "workspaces": [
-    "apps/*",
-    "services/*",
-    "packages/*"
-  ],
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
@@ -20,5 +14,6 @@
     "chai": "^6.2.1",
     "mocha": "^11.7.5",
     "supertest": "^7.1.4"
-  }
+  },
+  "packageManager": "pnpm@9.5.0"
 }

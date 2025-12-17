@@ -25,7 +25,9 @@
     cursor: pointer;
   }
   body {
-    @apply relative font-normal font-outfit z-1 bg-gray-50;
+    position: relative;
+    font-weight: 400;
+    z-index: 1;
   }
 }
 

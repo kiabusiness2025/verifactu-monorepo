@@ -3,4 +3,8 @@
 .gitignore
 .env
 .next/
+!apps/
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!package.json
 node_modules/

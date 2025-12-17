@@ -1,20 +1,21 @@
 steps:
   # Build landing
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/web-app', '-f', 'apps/landing/Dockerfile', 'apps/landing']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/verifactu-landing', '-f', 'apps/landing/Dockerfile', '.']
   
   # Build app
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/verifactu-app', '-f', 'apps/app/Dockerfile', 'apps/app']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/verifactu-app', '-f', 'apps/app/Dockerfile', '.']
   
   # Push images
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/web-app']
+    args: ['push', 'gcr.io/$PROJECT_ID/verifactu-landing']
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/verifactu-app']
   
   # Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['run', 'deploy', 'verifactu-web', 
-           '--image', 'gcr.io/$PROJECT_ID/web-app',
-           '--platform', 'managed', '--region', 'europe-west1']
+           '--image', 'gcr.io/$PROJECT_ID/verifactu-landing',
+           '--platform', 'managed', '--region', 'europe-west1',
+           '--allow-unauthenticated']
