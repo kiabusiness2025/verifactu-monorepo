@@ -5,12 +5,11 @@ COPY package.json pnpm-lock.yaml ./
 COPY . .
 RUN pnpm install --filter verifactu-landing
 RUN pnpm run build --filter=verifactu-landing
+RUN pnpm deploy --filter verifactu-landing /prod
 
 FROM node:20-slim AS runner
 WORKDIR /app
-COPY --from=base /app/apps/landing/.next/standalone ./.next/standalone
-COPY --from=base /app/apps/landing/.next/static ./.next/static
-COPY --from=base /app/apps/landing/public ./public
+COPY --from=base /prod .
 ENV NODE_ENV=production
-EXPOSE 3000
-CMD ["ls", "-lR"]
+EXPOSE 8080
+CMD ["npm", "start"]
