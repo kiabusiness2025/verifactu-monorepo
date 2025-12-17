@@ -71,9 +71,11 @@ steps:
       - '--max-instances'
       - '10'
       - '--timeout'
-      - '60'
+      - '300'
       - '--set-env-vars'
       - 'NODE_ENV=production'
+      - '--port'
+      - '8080'
     waitFor: ['push-landing']
 
   # Deploy verifactu-app to Cloud Run
@@ -99,9 +101,11 @@ steps:
       - '--max-instances'
       - '10'
       - '--timeout'
-      - '60'
+      - '300'
       - '--set-env-vars'
       - 'NODE_ENV=production'
+      - '--port'
+      - '8080'
     waitFor: ['push-app']
 
 # Build timeout (30 minutes)
