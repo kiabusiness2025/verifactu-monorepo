@@ -15,7 +15,7 @@ steps:
   
   # Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['run', 'deploy', 'verifactu-web', 
+    args: ['run', 'deploy', 'verifactu-landing', 
            '--image', 'gcr.io/$PROJECT_ID/verifactu-landing',
            '--platform', 'managed', '--region', 'europe-west1',
            '--allow-unauthenticated']
