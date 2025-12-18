@@ -109,7 +109,7 @@ export default function Page() {
         <div className="container header__inner">
           <a href="#hero" className="brand" aria-label="Volver al inicio">
             <img
-              src="/assets/verifactu-logo-animated.svg"
+              src="/assets/verifactu.business logo.png"
               alt="VeriFactu Business"
               className="brand__image"
             />
@@ -476,7 +476,7 @@ export default function Page() {
         <div className="container footer__inner">
           <div>
             <img
-              src="/assets/verifactu-logo-animated.svg"
+              src="/assets/verifactu.business logo.png"
               alt="VeriFactu Business"
               className="footer__logo"
             />
