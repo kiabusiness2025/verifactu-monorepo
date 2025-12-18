@@ -1,0 +1,4 @@
+
+# --- Cloud Run build fix: ensure npm ci has lockfile ---
+!package-lock.json
+!package.json
