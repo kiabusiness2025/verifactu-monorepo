@@ -15,7 +15,7 @@ steps:
     - |
       if [ "$$(/workspace/scripts/check-changes.sh api)" == "true" ]; then
         IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-backend:$SHORT_SHA"
-        docker build -t "$$IMAGE" ./api
+        docker build -t "$$IMAGE" ./apps/api
         docker push "$$IMAGE"
         echo "$$IMAGE" > /workspace/api_image.txt
       else
@@ -50,7 +50,7 @@ steps:
     - |
       if [ "$$(/workspace/scripts/check-changes.sh app)" == "true" ]; then
         IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-app:$SHORT_SHA"
-        docker build -t "$$IMAGE" ./app
+        docker build -t "$$IMAGE" ./apps/app
         docker push "$$IMAGE"
         echo "$$IMAGE" > /workspace/app_image.txt
       else
@@ -85,7 +85,7 @@ steps:
     - |
       if [ "$$(/workspace/scripts/check-changes.sh landing)" == "true" ]; then
         IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-landing:$SHORT_SHA"
-        docker build -t "$$IMAGE" ./landing
+        docker build -t "$$IMAGE" ./apps/landing
         docker push "$$IMAGE"
         echo "$$IMAGE" > /workspace/landing_image.txt
       else

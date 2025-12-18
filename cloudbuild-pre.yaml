@@ -1,24 +1,23 @@
 options:
   logging: CLOUD_LOGGING_ONLY
+  substitutionOption: ALLOW_LOOSE
 substitutions:
   _REGION: europe-west1
   _REPO: verifactu-repo
 
-# Detecta qué directorios cambiaron y despliega sólo los necesarios
 steps:
 # --- API ---
 - id: "API: build"
   name: gcr.io/cloud-builders/docker
-  dir: apps/api
   entrypoint: bash
   args:
     - -lc
     - |
-      if git diff --name-only HEAD~1 HEAD | grep -q "^apps/api/"; then
-        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-backend:$(date +%Y%m%d-%H%M%S)"
-        docker build -t "$IMAGE" .
-        docker push "$IMAGE"
-        echo "$IMAGE" > /workspace/api_image.txt
+      if [ "$$(/workspace/scripts/check-changes.sh apps/api)" == "true" ]; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-backend:$SHORT_SHA"
+        docker build -t "$$IMAGE" ./apps/api
+        docker push "$$IMAGE"
+        echo "$$IMAGE" > /workspace/api_image.txt
       else
         echo "NO_CHANGES" > /workspace/api_image.txt
       fi
@@ -29,10 +28,10 @@ steps:
   args:
     - -lc
     - |
-      IMG=$(cat /workspace/api_image.txt)
-      if [ "$IMG" != "NO_CHANGES" ]; then
+      IMG=$$(cat /workspace/api_image.txt)
+      if [ "$$IMG" != "NO_CHANGES" ]; then
         gcloud run deploy verifactu-backend \
-          --image "$IMG" \
+          --image "$$IMG" \
           --region "$_REGION" \
           --platform managed \
           --service-account "run-exec@$PROJECT_ID.iam.gserviceaccount.com" \
@@ -47,16 +46,15 @@ steps:
 # --- APP ---
 - id: "APP: build"
   name: gcr.io/cloud-builders/docker
-  dir: apps/app
   entrypoint: bash
   args:
     - -lc
     - |
-      if git diff --name-only HEAD~1 HEAD | grep -q "^apps/app/"; then
-        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-app:$(date +%Y%m%d-%H%M%S)"
-        docker build -t "$IMAGE" .
-        docker push "$IMAGE"
-        echo "$IMAGE" > /workspace/app_image.txt
+      if [ "$$(/workspace/scripts/check-changes.sh apps/app)" == "true" ]; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-app:$SHORT_SHA"
+        docker build -t "$$IMAGE" ./apps/app
+        docker push "$$IMAGE"
+        echo "$$IMAGE" > /workspace/app_image.txt
       else
         echo "NO_CHANGES" > /workspace/app_image.txt
       fi
@@ -67,10 +65,10 @@ steps:
   args:
     - -lc
     - |
-      IMG=$(cat /workspace/app_image.txt)
-      if [ "$IMG" != "NO_CHANGES" ]; then
+      IMG=$$(cat /workspace/app_image.txt)
+      if [ "$$IMG" != "NO_CHANGES" ]; then
         gcloud run deploy verifactu-app-pre \
-          --image "$IMG" \
+          --image "$$IMG" \
           --region "$_REGION" \
           --platform managed \
           --port 8080 \
@@ -83,16 +81,15 @@ steps:
 # --- LANDING ---
 - id: "LANDING: build"
   name: gcr.io/cloud-builders/docker
-  dir: apps/landing
   entrypoint: bash
   args:
     - -lc
     - |
-      if git diff --name-only HEAD~1 HEAD | grep -q "^apps/landing/"; then
-        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-landing:$(date +%Y%m%d-%H%M%S)"
-        docker build -t "$IMAGE" .
-        docker push "$IMAGE"
-        echo "$IMAGE" > /workspace/landing_image.txt
+      if [ "$$(/workspace/scripts/check-changes.sh apps/landing)" == "true" ]; then
+        IMAGE="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/verifactu-landing:$SHORT_SHA"
+        docker build -t "$$IMAGE" ./apps/landing
+        docker push "$$IMAGE"
+        echo "$$IMAGE" > /workspace/landing_image.txt
       else
         echo "NO_CHANGES" > /workspace/landing_image.txt
       fi
@@ -103,10 +100,10 @@ steps:
   args:
     - -lc
     - |
-      IMG=$(cat /workspace/landing_image.txt)
-      if [ "$IMG" != "NO_CHANGES" ]; then
+      IMG=$$(cat /workspace/landing_image.txt)
+      if [ "$$IMG" != "NO_CHANGES" ]; then
         gcloud run deploy verifactu-landing-pre \
-          --image "$IMG" \
+          --image "$$IMG" \
           --region "$_REGION" \
           --platform managed \
           --port 8080 \

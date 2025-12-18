@@ -3,3 +3,7 @@ npm-debug.log
 .next/cache
 .env*
 .git
+
+# --- FIX: ensure npm lockfile is included in Docker build context ---
+!package.json
+!package-lock.json
