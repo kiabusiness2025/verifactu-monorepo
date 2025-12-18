@@ -1,15 +1,24 @@
-FROM node:20-slim AS base
-RUN corepack enable
+FROM node:20-slim AS deps
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM node:20-slim AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm install --filter verifactu-landing
-RUN pnpm run build --filter=verifactu-landing
-RUN pnpm deploy --filter verifactu-landing /prod
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
 
 FROM node:20-slim AS runner
 WORKDIR /app
-COPY --from=base /prod .
 ENV NODE_ENV=production
+ENV PORT=8080
 EXPOSE 8080
-CMD ["npm", "start"]
+
+# Next.js standalone output
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+CMD ["node","server.js"]
