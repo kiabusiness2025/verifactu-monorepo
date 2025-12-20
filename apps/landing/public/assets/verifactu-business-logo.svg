@@ -1,0 +1,13 @@
+<svg width="240" height="48" viewBox="0 0 240 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VeriFactu Business logo">
+  <defs>
+    <linearGradient id="vf_accent" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563EB" />
+      <stop offset="1" stop-color="#06B6D4" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="12" fill="url(#vf_accent)" />
+  <path d="M14 32.5L21.2 15h5.6L34 32.5h-4.8l-3-8.5-3 8.5H14Z" fill="#F8FAFC" />
+  <path d="M30.25 14.5c-2.07 0-3.75 1.68-3.75 3.75 0 2.07 1.68 3.75 3.75 3.75s3.75-1.68 3.75-3.75c0-2.07-1.68-3.75-3.75-3.75Zm0 2.1c.92 0 1.65.74 1.65 1.65 0 .91-.73 1.65-1.65 1.65-.91 0-1.65-.74-1.65-1.65 0-.91.74-1.65 1.65-1.65Z" fill="#F8FAFC" />
+  <text x="62" y="24" fill="#0F172A" font-family="'Inter', 'Segoe UI', Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="0.2px">VeriFactu</text>
+  <text x="62" y="40" fill="#1E293B" font-family="'Inter', 'Segoe UI', Arial, sans-serif" font-size="14" font-weight="600" letter-spacing="0.15px">Business</text>
+</svg>

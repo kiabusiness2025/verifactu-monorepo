@@ -9,7 +9,10 @@ const url = "https://verifactu.business";
 export const metadata = {
   title: "Veri*Factu Business - Automatiza tu facturación con IA",
   description: "Cumple con VeriFactu y haz crecer tu negocio. Isaak centraliza la emisión, valida con AEAT y te sugiere cómo mejorar tus márgenes automáticamente.",
-  icons: [{ rel: "icon", url: "/assets/favicon.svg" }],
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-icon.svg",
+  },
   metadataBase: new URL(url),
   openGraph: {
     title,
