@@ -1,0 +1,5172 @@
+commit f8356fa3fa1e7d0c3060c484b5cefd0ef4114512
+Author: Codex <codex@openai.com>
+Date:   Mon Dec 22 11:29:11 2025 +0000
+
+    Codex-generated pull request
+    
+    Codex generated this pull request, but encountered an unexpected error after generation. This is a placeholder PR message.
+
+diff --git a/.gitignore b/.gitignore
+index 3774eace..c4ad2e87 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -11,3 +11,4 @@ landing/.next
+ landing/node_modules
+ landing/.env
+ landing/dist*.pem
++artifacts/
+diff --git a/apps/app/package.json b/apps/app/package.json
+index fb725590..0dbe59dd 100644
+--- a/apps/app/package.json
++++ b/apps/app/package.json
+@@ -23,7 +23,7 @@
+     "apexcharts": "^4.3.0",
+     "autoprefixer": "^10.4.20",
+     "flatpickr": "^4.6.13",
+-    "next": "14.2.33",
++    "next": "^14.2.35",
+     "react": "^18.2.0",
+     "react-apexcharts": "^1.7.0",
+     "react-dnd": "^16.0.1",
+@@ -35,6 +35,7 @@
+   },
+   "devDependencies": {
+     "@eslint/eslintrc": "^3",
++    "@swc/helpers": "^0.5.11",
+     "@types/node": "^20",
+     "@types/react": "^18",
+     "@types/react-dom": "^18",
+@@ -43,7 +44,6 @@
+     "eslint-config-next": "16.0.7",
+     "postcss": "^8",
+     "tailwindcss": "^4.0.0",
+-    "typescript": "^5",
+-    "@swc/helpers": "^0.5.11"
++    "typescript": "^5"
+   }
+ }
+diff --git a/apps/app/public/icono_verifactu.business.png b/apps/app/public/icono_verifactu.business.png
+deleted file mode 100644
+index 27edd169..00000000
+Binary files a/apps/app/public/icono_verifactu.business.png and /dev/null differ
+diff --git a/apps/landing/app/apple-icon.svg b/apps/landing/app/apple-icon.svg
+new file mode 100644
+index 00000000..be686824
+--- /dev/null
++++ b/apps/landing/app/apple-icon.svg
+@@ -0,0 +1,5 @@
++<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VeriFactu Business">
++  <rect width="180" height="180" rx="48" fill="#0E1B3D"/>
++  <path d="M54 68L80 128H90L116 68H104L86 112L68 68H54Z" fill="#F5F7FB"/>
++  <path d="M120 68H136V128H120V68Z" fill="#F5F7FB"/>
++</svg>
+diff --git a/apps/landing/app/components/CookieBanner.tsx b/apps/landing/app/components/CookieBanner.tsx
+new file mode 100644
+index 00000000..98cf1792
+--- /dev/null
++++ b/apps/landing/app/components/CookieBanner.tsx
+@@ -0,0 +1,25 @@
++"use client";
++
++import React, { useState } from "react";
++
++export default function CookieBanner() {
++  const [visible, setVisible] = useState(true);
++
++  if (!visible) return null;
++
++  return (
++    <div className="cookie-banner" role="alert" aria-live="polite">
++      <p>
++        Usamos cookies para mejorar tu experiencia. Puedes continuar navegando o cerrar este mensaje.
++      </p>
++      <div className="cookie-banner__actions">
++        <button type="button" className="btn btn--ghost" onClick={() => setVisible(false)}>
++          Rechazar
++        </button>
++        <button type="button" className="btn btn--primary" onClick={() => setVisible(false)}>
++          Aceptar
++        </button>
++      </div>
++    </div>
++  );
++}
+diff --git a/apps/landing/app/globals.css b/apps/landing/app/globals.css
+index 4343f83d..aee874b6 100644
+--- a/apps/landing/app/globals.css
++++ b/apps/landing/app/globals.css
+@@ -1,32 +1,22 @@
+ :root {
+   color-scheme: light;
+-  --font-family:
+-    "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+-    sans-serif;
++  --font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+   --color-slate-900: #0f172a;
+-  --color-slate-800: #1e293b;
+   --color-slate-700: #334155;
+   --color-slate-600: #475569;
+   --color-slate-500: #64748b;
+-  --color-slate-200: #e2e8f0;
+-  --color-slate-100: #f1f5f9;
++  --color-slate-100: #eef2ff;
+   --color-white: #ffffff;
+-  --color-primary-700: #1d4ed8;
+-  --color-primary-600: #2563eb;
+-  --color-primary-500: #3b82f6;
+-  --color-primary-100: #dbeafe;
+-  --color-accent-100: #ede9fe;
+-  --color-gradient-start: #eef2ff;
+-  --color-gradient-mid: #e0eaff;
+-  --color-gradient-end: #f5f3ff;
+-  --shadow-soft: 0 20px 60px -25px rgba(37, 99, 235, 0.35);
+-  --shadow-card: 0 18px 45px -20px rgba(15, 23, 42, 0.25);
+-  --shadow-border: 0 1px 0 rgba(148, 163, 184, 0.3) inset;
++  --color-primary-700: #1f3bce;
++  --color-primary-600: #4363ff;
++  --color-primary-500: #5c7bff;
++  --color-purple-100: #eae7ff;
++  --shadow-card: 0 25px 70px rgba(33, 70, 185, 0.18);
++  --shadow-soft: 0 18px 45px rgba(37, 99, 235, 0.18);
+   --radius-lg: 32px;
+   --radius-md: 24px;
+-  --radius-base: 18px;
+-  --radius-sm: 12px;
+-  --container-width: min(1120px, 92vw);
++  --radius: 18px;
++  --container-width: min(1180px, 92vw);
+ }
+ 
+ * {
+@@ -39,11 +29,12 @@ body {
+   padding: 0;
+   font-family: var(--font-family);
+   color: var(--color-slate-900);
+-  background: var(--color-white);
++  background: #f6f7fb;
+ }
+ 
+-body.is-modal-open {
+-  overflow: hidden;
++a {
++  color: inherit;
++  text-decoration: none;
+ }
+ 
+ img {
+@@ -51,11 +42,6 @@ img {
+   display: block;
+ }
+ 
+-a {
+-  color: inherit;
+-  text-decoration: none;
+-}
+-
+ .container {
+   width: var(--container-width);
+   margin: 0 auto;
+@@ -73,1499 +59,644 @@ a {
+   z-index: 10;
+   background: rgba(255, 255, 255, 0.92);
+   backdrop-filter: blur(18px);
+-  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
++  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+ }
+ 
+ .header__inner {
+-  display: flex;
++  display: grid;
++  grid-template-columns: auto 1fr auto;
+   align-items: center;
+-  justify-content: space-between;
+   gap: 24px;
+-  padding: 20px 0;
++  padding: 18px 0;
+ }
+ 
+ .brand__image {
+   height: 36px;
+ }
+ 
+-.header__nav-wrapper {
+-  display: flex;
+-  align-items: center;
+-  gap: 24px;
+-}
+-
+-.header__mobile-toggle {
+-  display: none;
+-  background: none;
+-  border: none;
+-  color: var(--color-slate-800);
+-  cursor: pointer;
+-  z-index: 100;
+-}
+-
+ .nav {
+   display: flex;
+-  gap: 24px;
+-  font-size: 15px;
++  gap: 18px;
++  justify-content: center;
++  font-weight: 600;
+   color: var(--color-slate-600);
+-  transition: transform 0.3s ease-in-out;
+-}
+-
+-.nav a {
+-  transition: color 0.2s ease;
++  font-size: 15px;
+ }
+ 
+-.nav a:hover,
+-.nav a:focus {
++.nav a:hover {
+   color: var(--color-primary-600);
+ }
+ 
+ .header__cta {
+   display: flex;
+-  gap: 12px;
+   align-items: center;
+-  transition: transform 0.3s ease-in-out;
++  gap: 12px;
+ }
+ 
+ .btn {
+   font-family: inherit;
+   border: 0;
+   border-radius: 999px;
+-  padding: 12px 24px;
+-  font-weight: 600;
++  padding: 12px 20px;
++  font-weight: 700;
+   font-size: 15px;
+   cursor: pointer;
+-  transition:
+-    transform 0.2s ease,
+-    box-shadow 0.2s ease,
+-    background 0.2s ease,
+-    color 0.2s ease;
++  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+ }
+ 
+ .btn--primary {
+-  background: linear-gradient(
+-    135deg,
+-    var(--color-primary-600),
+-    var(--color-primary-500)
+-  );
++  background: linear-gradient(135deg, var(--color-primary-700), var(--color-primary-500));
+   color: var(--color-white);
+-  box-shadow: 0 12px 25px -12px rgba(37, 99, 235, 0.6);
++  box-shadow: var(--shadow-soft);
+ }
+ 
+ .btn--primary:hover,
+ .btn--primary:focus {
+   transform: translateY(-1px);
+-  box-shadow: 0 18px 28px -12px rgba(37, 99, 235, 0.6);
+ }
+ 
+ .btn--ghost {
+   background: transparent;
+-  color: var(--color-primary-600);
+-  border: 1px solid rgba(37, 99, 235, 0.2);
++  color: var(--color-primary-700);
++  border: 1px solid rgba(67, 99, 255, 0.25);
+ }
+ 
+ .btn--ghost:hover,
+ .btn--ghost:focus {
+-  background: rgba(37, 99, 235, 0.08);
+-}
+-
+-.btn--outline {
+-  background: var(--color-white);
+-  color: var(--color-primary-600);
+-  border: 1px solid rgba(37, 99, 235, 0.3);
++  background: rgba(67, 99, 255, 0.08);
+ }
+ 
+-.btn--outline:hover,
+-.btn--outline:focus {
+-  border-color: var(--color-primary-600);
+-  background: rgba(37, 99, 235, 0.08);
++.btn--full {
++  width: 100%;
++  text-align: center;
+ }
+ 
+ .hero {
+   position: relative;
+-  padding: 110px 0 64px;
++  padding: 80px 0 40px;
+   overflow: hidden;
+ }
+ 
+ .hero__background {
+   position: absolute;
+   inset: 0;
+-  background: linear-gradient(
+-    140deg,
+-    var(--color-gradient-start),
+-    var(--color-gradient-mid) 45%,
+-    var(--color-gradient-end)
+-  );
+-  z-index: -2;
+-}
+-
+-.hero::after {
+-  content: "";
+-  position: absolute;
+-  inset: 18% 6% -20% 50%;
+-  background: radial-gradient(
+-    ellipse at center,
+-    rgba(59, 130, 246, 0.22),
+-    rgba(59, 130, 246, 0)
+-  );
++  background: radial-gradient(circle at 20% 20%, #d6ddff, transparent 45%),
++    radial-gradient(circle at 80% 10%, #e8e1ff, transparent 40%),
++    linear-gradient(135deg, #ffffff 0%, #f4f6ff 60%, #eef2ff 100%);
+   z-index: -1;
+ }
+ 
+-.hero__inner {
++.hero__grid {
+   display: grid;
+-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+-  gap: 64px;
++  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
++  gap: 40px;
+   align-items: center;
+ }
+ 
+-.hero__copy {
++.hero__content {
+   display: flex;
+   flex-direction: column;
+-  gap: 20px;
++  gap: 16px;
+ }
+ 
+-.hero__eyebrow {
+-  font-weight: 600;
+-  color: var(--color-primary-600);
+-  letter-spacing: 0.08em;
+-  text-transform: uppercase;
++.hero__badge {
++  display: inline-flex;
++  align-items: center;
++  padding: 8px 14px;
++  border-radius: 999px;
++  background: rgba(67, 99, 255, 0.14);
++  color: var(--color-primary-700);
++  font-weight: 700;
+   font-size: 13px;
++  text-transform: uppercase;
++  letter-spacing: 0.08em;
+ }
+ 
+ .hero h1 {
+-  font-size: clamp(2.8rem, 5vw, 3.4rem);
+-  line-height: 1.05;
++  font-size: clamp(2.6rem, 4vw, 3rem);
++  line-height: 1.08;
+   margin: 0;
+ }
+ 
+-.hero__description {
+-  color: var(--color-slate-600);
++.hero__lead {
++  margin: 0;
+   font-size: 1.05rem;
++  color: var(--color-slate-700);
+   line-height: 1.6;
+-  max-width: 560px;
+ }
+ 
+-.hero__actions {
++.hero__metrics {
++  list-style: none;
++  padding: 0;
++  margin: 8px 0 0;
+   display: flex;
+-  gap: 16px;
+   flex-wrap: wrap;
++  gap: 16px;
+ }
+ 
+-.hero__trust {
+-  font-size: 14px;
+-  color: var(--color-slate-500);
++.hero__metrics li {
++  background: var(--color-white);
++  border-radius: var(--radius-md);
++  padding: 14px 18px;
++  box-shadow: var(--shadow-card);
++  display: grid;
++  gap: 4px;
++  min-width: 170px;
+ }
+ 
+-.hero__mockup {
+-  display: grid;
+-  grid-template-columns: repeat(2, minmax(0, 1fr));
+-  gap: 24px;
+-  align-items: stretch;
++.hero__metrics strong {
++  font-size: 1.4rem;
+ }
+ 
+-.mockup {
+-  background: var(--color-white);
+-  border-radius: var(--radius-md);
+-  padding: 24px;
+-  box-shadow: var(--shadow-card);
+-  border: 1px solid rgba(255, 255, 255, 0.5);
++.hero__metrics span {
++  color: var(--color-slate-600);
+ }
+ 
+-.mockup--assistant {
+-  grid-column: 1 / -1;
+-  display: flex;
+-  flex-direction: column;
+-  gap: 20px;
++.hero__bullets {
++  list-style: disc;
++  padding-left: 18px;
++  margin: 8px 0;
++  color: var(--color-slate-700);
++  display: grid;
++  gap: 6px;
+ }
+ 
+-.mockup__header {
++.hero__actions {
+   display: flex;
+-  justify-content: space-between;
+-  align-items: center;
+   gap: 12px;
++  flex-wrap: wrap;
++}
++
++.hero__microcopy {
++  margin: 0;
++  color: var(--color-slate-600);
++  font-weight: 600;
++}
++
++.hero__card {
++  background: var(--color-white);
++  border-radius: var(--radius-lg);
++  padding: 26px;
++  box-shadow: var(--shadow-card);
++  border: 1px solid rgba(148, 163, 184, 0.25);
++  display: grid;
++  gap: 16px;
+ }
+ 
+-.mockup__badge {
++.card__badge {
+   display: inline-flex;
+   align-items: center;
+-  gap: 6px;
+-  background: rgba(37, 99, 235, 0.12);
+-  color: var(--color-primary-600);
+-  font-weight: 600;
+-  font-size: 13px;
++  background: rgba(67, 99, 255, 0.1);
++  color: var(--color-primary-700);
+   padding: 6px 12px;
+   border-radius: 999px;
++  font-weight: 700;
++  letter-spacing: 0.02em;
+ }
+ 
+-.mockup__title {
++.card__title {
++  margin: 10px 0 0;
++  font-weight: 700;
++  font-size: 1.2rem;
++}
++
++.card__subtitle {
+   margin: 6px 0 0;
++  color: var(--color-slate-600);
++}
++
++.card__form {
++  display: grid;
++  gap: 12px;
++}
++
++.card__form label {
++  display: grid;
++  gap: 8px;
+   font-weight: 600;
+   color: var(--color-slate-700);
+ }
+ 
+-.mockup__status {
+-  font-size: 13px;
+-  font-weight: 600;
+-  color: var(--color-primary-600);
++.card__form input,
++.card__form select {
++  border: 1px solid rgba(148, 163, 184, 0.35);
++  border-radius: 12px;
++  padding: 12px 14px;
++  font-size: 15px;
++  font-family: inherit;
++  background: #f9fbff;
+ }
+ 
+-.mockup__body {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 16px;
++.card__footer {
++  margin: 0;
++  color: var(--color-slate-600);
++  font-weight: 600;
++  text-align: center;
+ }
+ 
+-.mockup__message {
+-  display: flex;
+-  gap: 12px;
+-  align-items: flex-start;
+-  padding: 16px;
+-  border-radius: var(--radius-base);
+-  background: rgba(37, 99, 235, 0.08);
+-  color: var(--color-slate-800);
++.section {
++  padding: 80px 0;
+ }
+ 
+-.mockup__message--light {
+-  background: rgba(148, 163, 184, 0.14);
++.section__header {
++  text-align: center;
++  max-width: 740px;
++  margin: 0 auto 48px;
+ }
+ 
+-.mockup__avatar {
+-  font-size: 22px;
++.section__header h2 {
++  margin: 0 0 12px;
++  font-size: clamp(2.1rem, 3.4vw, 2.6rem);
+ }
+ 
+-.mockup__label {
+-  font-size: 13px;
+-  font-weight: 600;
++.section__header p {
++  margin: 0;
+   color: var(--color-slate-600);
+-  margin: 0 0 4px;
++  line-height: 1.6;
+ }
+ 
+-.mockup__text {
+-  margin: 0;
+-  color: var(--color-slate-700);
+-  line-height: 1.5;
++.highlights__grid {
++  display: grid;
++  gap: 18px;
++  grid-template-columns: repeat(3, minmax(0, 1fr));
+ }
+ 
+-.mockup--snapshot {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 16px;
++.tile {
++  background: var(--color-white);
++  border-radius: var(--radius-md);
++  padding: 26px;
++  box-shadow: var(--shadow-card);
++  border: 1px solid rgba(148, 163, 184, 0.2);
+ }
+ 
+-.mockup--snapshot header {
+-  display: flex;
+-  justify-content: space-between;
+-  align-items: center;
++.tile h3 {
++  margin: 0 0 10px;
+ }
+ 
+-.snapshot__title {
+-  font-weight: 600;
+-  color: var(--color-slate-700);
++.tile p {
++  margin: 0;
++  color: var(--color-slate-600);
+ }
+ 
+-.snapshot__chip {
+-  font-size: 12px;
+-  font-weight: 600;
+-  padding: 6px 12px;
+-  border-radius: 999px;
+-  background: rgba(59, 130, 246, 0.12);
+-  color: var(--color-primary-600);
++.platform {
++  background: linear-gradient(180deg, #eef2ff 0%, #f9f9ff 100%);
+ }
+ 
+-.snapshot__grid {
++.platform__grid {
+   display: grid;
+-  gap: 16px;
++  gap: 18px;
++  grid-template-columns: repeat(4, minmax(0, 1fr));
+ }
+ 
+-.snapshot__label {
+-  margin: 0;
+-  font-size: 13px;
+-  color: var(--color-slate-500);
+-  text-transform: uppercase;
+-  letter-spacing: 0.08em;
++.card {
++  background: var(--color-white);
++  border-radius: var(--radius-md);
++  padding: 22px;
++  box-shadow: var(--shadow-card);
++  border: 1px solid rgba(148, 163, 184, 0.2);
++  display: grid;
++  gap: 10px;
+ }
+ 
+-.snapshot__value {
+-  margin: 8px 0 4px;
+-  font-weight: 700;
+-  font-size: 1.6rem;
++.card h3 {
++  margin: 0;
+ }
+ 
+-.snapshot__trend {
+-  font-size: 13px;
++.card p {
++  margin: 0;
+   color: var(--color-slate-600);
++  line-height: 1.6;
+ }
+ 
+-.snapshot__trend--up {
+-  color: #16a34a;
++.process {
++  background: linear-gradient(180deg, #f7f9ff 0%, #ffffff 100%);
+ }
+ 
+-.snapshot__trend--safe {
+-  color: #2563eb;
++.process__steps {
++  display: grid;
++  gap: 16px;
++  grid-template-columns: repeat(3, minmax(0, 1fr));
+ }
+ 
+-.mockup--invoice {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 20px;
+-  background: linear-gradient(
+-    180deg,
+-    rgba(255, 255, 255, 0.98),
+-    rgba(229, 231, 235, 0.65)
+-  );
++.step {
++  background: var(--color-white);
++  border-radius: var(--radius-md);
++  padding: 22px;
++  box-shadow: var(--shadow-card);
++  border: 1px solid rgba(148, 163, 184, 0.25);
++  display: grid;
++  grid-template-columns: auto 1fr;
++  gap: 14px;
++  align-items: center;
+ }
+ 
+-.mockup--invoice header {
+-  display: flex;
+-  justify-content: space-between;
+-  align-items: center;
+-  gap: 16px;
++.step__number {
++  width: 44px;
++  height: 44px;
++  border-radius: 12px;
++  display: grid;
++  place-items: center;
++  background: rgba(67, 99, 255, 0.12);
++  color: var(--color-primary-700);
++  font-weight: 800;
+ }
+ 
+-.invoice__title {
+-  font-weight: 600;
+-  font-size: 16px;
++.step h3 {
++  margin: 0 0 6px;
+ }
+ 
+-.invoice__subtitle {
+-  margin: 4px 0 0;
+-  font-size: 13px;
+-  color: var(--color-slate-500);
++.step p {
++  margin: 0;
++  color: var(--color-slate-600);
+ }
+ 
+-.invoice__status {
+-  font-size: 13px;
+-  font-weight: 600;
+-  padding: 6px 12px;
+-  border-radius: 999px;
+-  background: rgba(22, 163, 74, 0.14);
+-  color: #15803d;
++.solutions {
++  background: linear-gradient(180deg, #eef2ff 0%, #ffffff 100%);
+ }
+ 
+-.invoice__details {
++.solutions__grid {
++  display: grid;
++  gap: 18px;
++  grid-template-columns: repeat(2, minmax(0, 1fr));
++}
++
++.solution {
++  background: var(--color-white);
++  border-radius: var(--radius-lg);
++  padding: 26px;
++  box-shadow: var(--shadow-card);
++  border: 1px solid rgba(148, 163, 184, 0.2);
+   display: grid;
+-  grid-template-columns: repeat(3, minmax(0, 1fr));
+   gap: 12px;
+-  margin: 0;
+ }
+ 
+-.invoice__details div {
+-  background: rgba(148, 163, 184, 0.16);
+-  padding: 12px;
+-  border-radius: var(--radius-sm);
++.solution--custom {
++  background: #1c2359;
++  color: var(--color-white);
++  border: 1px solid rgba(255, 255, 255, 0.18);
+ }
+ 
+-.invoice__details dt {
++.solution__eyebrow {
+   margin: 0;
+-  font-size: 12px;
+-  letter-spacing: 0.08em;
++  color: var(--color-slate-600);
++  font-weight: 700;
+   text-transform: uppercase;
+-  color: var(--color-slate-500);
++  letter-spacing: 0.08em;
+ }
+ 
+-.invoice__details dd {
+-  margin: 8px 0 0;
+-  font-weight: 600;
++.solution--custom .solution__eyebrow {
++  color: #d8ddff;
+ }
+ 
+-.invoice__footer {
+-  display: flex;
+-  align-items: center;
+-  gap: 16px;
+-  font-size: 13px;
+-  color: var(--color-slate-600);
++.solution ul {
++  list-style: none;
++  padding: 0;
++  margin: 0;
++  display: grid;
++  gap: 6px;
++  color: inherit;
+ }
+ 
+-.invoice__qr {
+-  width: 72px;
+-  height: 72px;
+-  border-radius: 12px;
+-  background:
+-    repeating-linear-gradient(90deg, #1f2937 0 6px, transparent 6px 12px),
+-    repeating-linear-gradient(#1f2937 0 6px, transparent 6px 12px);
+-  position: relative;
++.solution__note {
++  margin: 0;
++  color: var(--color-slate-600);
+ }
+ 
+-.invoice__qr::after {
+-  content: "";
+-  position: absolute;
+-  inset: 18px;
+-  border: 2px solid var(--color-white);
++.solution--custom .solution__note {
++  color: #dce2ff;
+ }
+ 
+-.hero__stats {
+-  margin-top: 72px;
++.cta {
++  padding: 80px 0;
++  background: linear-gradient(135deg, #e9e6ff, #f4f7ff);
+ }
+ 
+-.hero__stats-grid {
++.cta__inner {
+   display: grid;
+-  grid-template-columns: repeat(3, minmax(0, 1fr));
+-  gap: 24px;
+-  padding: 28px;
+-  border-radius: var(--radius-lg);
+-  background: rgba(255, 255, 255, 0.85);
+-  box-shadow: var(--shadow-soft);
+-}
+-
+-.stat__value {
+-  margin: 0;
+-  font-size: 2rem;
+-  font-weight: 700;
+-  color: var(--color-primary-600);
+-}
+-
+-.stat__label {
+-  margin: 8px 0 0;
+-  color: var(--color-slate-600);
+-}
+-
+-.section {
+-  padding: 96px 0;
+-}
+-
+-.section__header {
+-  text-align: center;
+-  max-width: 680px;
+-  margin: 0 auto 48px;
+-}
+-
+-.section__header h2 {
+-  margin: 0 0 16px;
+-  font-size: clamp(2.1rem, 4vw, 2.5rem);
+-}
+-
+-.section__header p {
+-  margin: 0;
+-  color: var(--color-slate-600);
+-  line-height: 1.6;
+-}
+-
+-.features__grid {
+-  display: grid;
+-  grid-template-columns: repeat(4, minmax(0, 1fr));
+-  gap: 24px;
+-}
+-
+-.feature-card {
+-  background: var(--color-white);
+-  border-radius: var(--radius-md);
+-  padding: 28px;
+-  box-shadow: var(--shadow-soft);
+-  border: 1px solid rgba(226, 232, 240, 0.7);
+-  display: flex;
+-  flex-direction: column;
+-  gap: 16px;
+-}
+-
+-.feature-card h3 {
+-  margin: 0;
+-  font-size: 1.2rem;
+-}
+-
+-.feature-card p {
+-  margin: 0;
+-  color: var(--color-slate-600);
+-  line-height: 1.6;
+-}
+-
+-.feature-card span {
+-  font-size: 0.95rem;
+-  color: var(--color-primary-600);
+-  font-weight: 600;
+-}
+-
+-.resources {
+-  background: linear-gradient(180deg, #f8faff 0%, #ffffff 100%);
+-}
+-
+-.resources__grid {
+-  display: grid;
+-  grid-template-columns: repeat(3, minmax(0, 1fr));
+-  gap: 24px;
+-}
+-
+-.resource-card {
+-  background: var(--color-white);
+-  border-radius: var(--radius-md);
+-  padding: 32px;
+-  display: flex;
+-  flex-direction: column;
+-  gap: 18px;
+-  border: 1px solid rgba(226, 232, 240, 0.8);
+-  box-shadow: var(--shadow-soft);
+-}
+-
+-.resource-card__category {
+-  display: inline-flex;
+-  align-items: center;
+-  justify-content: center;
+-  padding: 6px 14px;
+-  border-radius: 999px;
+-  font-size: 0.85rem;
+-  font-weight: 600;
+-  color: var(--color-primary-600);
+-  background: rgba(37, 99, 235, 0.1);
+-  text-transform: uppercase;
+-  letter-spacing: 0.08em;
+-}
+-
+-.resource-card h3 {
+-  margin: 0;
+-  font-size: 1.3rem;
+-}
+-
+-.resource-card p {
+-  margin: 0;
+-  color: var(--color-slate-600);
+-  line-height: 1.6;
+-}
+-
+-.resource-card__action {
+-  align-self: flex-start;
+-  border: 0;
+-  border-radius: 999px;
+-  padding: 12px 22px;
+-  font-weight: 600;
+-  font-size: 0.95rem;
+-  background: rgba(37, 99, 235, 0.1);
+-  color: var(--color-primary-600);
+-  cursor: pointer;
+-  transition:
+-    background 0.2s ease,
+-    transform 0.2s ease;
+-}
+-
+-.resource-card__action:hover,
+-.resource-card__action:focus {
+-  background: rgba(37, 99, 235, 0.18);
+-  transform: translateY(-1px);
+-}
+-
+-.workflow {
+-  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+-}
+-
+-.workflow__steps {
+-  display: grid;
+-  grid-template-columns: repeat(3, minmax(0, 1fr));
+-  gap: 24px;
+-}
+-
+-.dashboard {
+-  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 60%, #e0e7ff 100%);
+-}
+-
+-.dashboard__layout {
+-  display: grid;
+-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+-  grid-template-areas: "preview content";
+-  gap: 48px;
+-  align-items: stretch;
+-}
+-
+-.dashboard__preview {
+-  grid-area: preview;
+-  display: flex;
+-  justify-content: center;
+-  align-items: stretch;
+-}
+-
+-.dashboard__screen {
+-  width: 100%;
+-  display: flex;
+-  flex-direction: column;
+-  gap: 24px;
+-  background: var(--color-white);
+-  border-radius: var(--radius-lg);
+-  padding: 36px;
+-  box-shadow: var(--shadow-card);
+-  border: 1px solid rgba(37, 99, 235, 0.12);
+-}
+-
+-.dashboard__screen-header {
+-  display: flex;
+-  justify-content: space-between;
+-  align-items: center;
+-  gap: 16px;
+-  font-weight: 600;
+-  color: var(--color-slate-800);
+-}
+-
+-.dashboard__badge {
+-  display: inline-flex;
+-  align-items: center;
+-  gap: 8px;
+-  padding: 6px 14px;
+-  border-radius: 999px;
+-  background: rgba(37, 99, 235, 0.12);
+-  color: var(--color-primary-600);
+-  font-size: 0.9rem;
+-  font-weight: 600;
+-}
+-
+-.dashboard__metrics {
+-  display: grid;
+-  grid-template-columns: repeat(3, minmax(0, 1fr));
+-  gap: 18px;
+-}
+-
+-.dashboard__metric {
+-  background: rgba(241, 245, 249, 0.85);
+-  border-radius: var(--radius-base);
+-  padding: 18px 20px;
+-  display: flex;
+-  flex-direction: column;
+-  gap: 6px;
+-  border: 1px solid rgba(148, 163, 184, 0.25);
+-}
+-
+-.dashboard__metric-label {
+-  font-size: 0.85rem;
+-  color: var(--color-slate-600);
+-  text-transform: uppercase;
+-  letter-spacing: 0.04em;
+-}
+-
+-.dashboard__metric-value {
+-  font-size: 1.6rem;
+-  font-weight: 700;
+-  color: var(--color-slate-900);
+-}
+-
+-.dashboard__metric-trend {
+-  font-size: 0.9rem;
+-  color: var(--color-primary-600);
+-}
+-
+-.dashboard__assistant-bubble {
+-  background: rgba(37, 99, 235, 0.08);
+-  border-radius: var(--radius-md);
+-  padding: 20px 24px;
+-  display: flex;
+-  flex-direction: column;
+-  gap: 16px;
+-  color: var(--color-slate-700);
+-  border: 1px solid rgba(37, 99, 235, 0.16);
+-}
+-
+-.dashboard__assistant-bubble p {
+-  margin: 0;
+-  line-height: 1.6;
+-}
+-
+-.dashboard__actions {
+-  display: flex;
+-  gap: 12px;
+-  flex-wrap: wrap;
+-}
+-
+-.dashboard__actions button {
+-  border: 0;
+-  border-radius: 999px;
+-  padding: 10px 18px;
+-  font-weight: 600;
+-  font-family: inherit;
+-  cursor: pointer;
+-  transition:
+-    transform 0.2s ease,
+-    box-shadow 0.2s ease;
+-  background: var(--color-primary-600);
+-  color: var(--color-white);
+-}
+-
+-.dashboard__actions button:hover,
+-.dashboard__actions button:focus {
+-  transform: translateY(-1px);
+-  box-shadow: 0 12px 24px -18px rgba(37, 99, 235, 0.6);
+-}
+-
+-.dashboard__actions .ghost {
+-  background: rgba(15, 23, 42, 0.05);
+-  color: var(--color-slate-700);
+-  border: 1px solid rgba(148, 163, 184, 0.4);
+-}
+-
+-.dashboard__panels {
+-  display: grid;
+-  grid-template-columns: repeat(2, minmax(0, 1fr));
+-  gap: 18px;
+-}
+-
+-.dashboard__panel {
+-  background: var(--color-white);
+-  border-radius: var(--radius-base);
+-  padding: 20px 22px;
+-  border: 1px solid rgba(148, 163, 184, 0.25);
+-  box-shadow: 0 14px 40px -28px rgba(15, 23, 42, 0.35);
+-}
+-
+-.dashboard__panel h4 {
+-  margin: 0 0 12px;
+-  font-size: 1rem;
+-}
+-
+-.dashboard__panel ul {
+-  margin: 0;
+-  padding-left: 18px;
+-  color: var(--color-slate-700);
+-  display: grid;
+-  gap: 8px;
+-}
+-
+-.dashboard__content {
+-  grid-area: content;
+-  display: flex;
+-  flex-direction: column;
+-  gap: 24px;
+-}
+-
+-.dashboard__content h3 {
+-  margin: 0;
+-  font-size: clamp(1.8rem, 3.2vw, 2.2rem);
+-}
+-
+-.dashboard__content p {
+-  margin: 0;
+-  color: var(--color-slate-600);
+-  line-height: 1.7;
+-}
+-
+-.dashboard__list {
+-  list-style: none;
+-  margin: 0;
+-  padding: 0;
+-  display: grid;
+-  gap: 16px;
+-}
+-
+-.dashboard__list li {
+-  background: rgba(255, 255, 255, 0.6);
+-  border: 1px solid rgba(226, 232, 240, 0.8);
+-  border-radius: var(--radius-base);
+-  padding: 16px 18px;
+-  color: var(--color-slate-700);
+-  line-height: 1.6;
+-}
+-
+-.dashboard__list strong {
+-  color: var(--color-slate-900);
+-}
+-
+-.dashboard__cta {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 12px;
+-}
+-
+-.dashboard__cta p {
+-  font-size: 0.95rem;
+-  color: var(--color-slate-600);
+-}
+-
+-.step {
+-  background: var(--color-white);
+-  border-radius: var(--radius-md);
+-  padding: 32px;
+-  box-shadow: var(--shadow-soft);
+-  border: 1px solid rgba(226, 232, 240, 0.7);
+-  display: flex;
+-  flex-direction: column;
+-  gap: 16px;
+-}
+-
+-.step__number {
+-  width: 48px;
+-  height: 48px;
+-  border-radius: 14px;
+-  display: grid;
+-  place-items: center;
+-  background: rgba(37, 99, 235, 0.1);
+-  color: var(--color-primary-600);
+-  font-weight: 700;
+-  font-size: 20px;
+-}
+-
+-.step h3 {
+-  margin: 0;
+-}
+-
+-.step p {
+-  margin: 0;
+-  color: var(--color-slate-600);
+-  line-height: 1.6;
+-}
+-
+-.compliance {
+-  background: linear-gradient(
+-    135deg,
+-    rgba(37, 99, 235, 0.08),
+-    rgba(124, 58, 237, 0.08)
+-  );
+-}
+-
+-.compliance__inner {
+-  display: grid;
+-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+-  gap: 48px;
+-  align-items: center;
+-}
+-
+-.compliance__content {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 20px;
+-}
+-
+-.compliance__content h2 {
+-  margin: 0;
+-  font-size: clamp(2rem, 3.6vw, 2.4rem);
+-}
+-
+-.compliance__content p {
+-  margin: 0;
+-  color: var(--color-slate-600);
+-  line-height: 1.6;
+-}
+-
+-.compliance__list {
+-  list-style: none;
+-  margin: 0;
+-  padding: 0;
+-  display: grid;
+-  gap: 12px;
+-  font-weight: 500;
+-  color: var(--color-slate-700);
+-}
+-
+-.compliance__badge {
+-  background: var(--color-white);
+-  border-radius: var(--radius-lg);
+-  padding: 40px;
+-  box-shadow: var(--shadow-card);
+-  text-align: center;
+-}
+-
+-.compliance__shield {
+-  margin: 0 auto 16px;
+-  width: 128px;
+-  height: 128px;
+-  border-radius: 32px;
+-  background: radial-gradient(
+-    circle at 30% 30%,
+-    rgba(37, 99, 235, 0.2),
+-    rgba(37, 99, 235, 0)
+-  );
+-  display: grid;
+-  place-items: center;
+-  color: var(--color-primary-600);
+-  font-weight: 700;
+-  letter-spacing: 0.08em;
+-  text-transform: uppercase;
+-}
+-
+-.final-cta {
+-  background: linear-gradient(
+-    140deg,
+-    var(--color-gradient-start),
+-    rgba(59, 130, 246, 0.08)
+-  );
+-  padding: 80px 0;
+-}
+-
+-.final-cta__inner {
+-  display: flex;
+-  justify-content: space-between;
+-  align-items: center;
+-  gap: 32px;
+-  flex-wrap: wrap;
+-}
+-
+-.final-cta__content h2 {
+-  margin: 0 0 12px;
+-  font-size: clamp(2.2rem, 4vw, 2.8rem);
+-}
+-
+-.final-cta__content p {
+-  margin: 0;
+-  color: var(--color-slate-600);
+-  max-width: 520px;
+-}
+-
+-.final-cta__actions {
+-  display: flex;
+-  gap: 16px;
+-  flex-wrap: wrap;
+-}
+-
+-.footer {
+-  margin-top: auto;
+-  background: #0b1220;
+-  color: rgba(255, 255, 255, 0.82);
+-  padding: 64px 0 32px;
+-}
+-
+-.footer__grid {
+-  display: grid;
+-  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+-  gap: 48px;
+-  align-items: flex-start;
+-}
+-
+-.footer__brand {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 18px;
+-}
+-
+-.footer__brand .brand__image {
+-  height: 38px;
+-  filter: brightness(125%);
+-}
+-
+-.footer__brand p {
+-  margin: 0;
+-  color: rgba(255, 255, 255, 0.7);
+-  line-height: 1.6;
+-}
+-
+-.footer__contact {
+-  color: var(--color-white);
+-  font-weight: 600;
+-}
+-
+-.footer__column h4 {
+-  margin: 0 0 16px;
+-  font-size: 1rem;
+-  color: var(--color-white);
+-}
+-
+-.footer__column ul {
+-  list-style: none;
+-  margin: 0;
+-  padding: 0;
+-  display: grid;
+-  gap: 12px;
+-}
+-
+-.footer__column a,
+-.footer__link-button {
+-  color: rgba(255, 255, 255, 0.7);
+-  font-size: 0.95rem;
+-  background: none;
+-  border: 0;
+-  padding: 0;
+-  text-align: left;
+-  cursor: pointer;
+-  font-family: inherit;
+-  line-height: 1.6;
+-}
+-
+-.footer__column a:hover,
+-.footer__column a:focus,
+-.footer__link-button:hover,
+-.footer__link-button:focus {
+-  color: var(--color-white);
++  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
++  gap: 32px;
++  align-items: center;
+ }
+ 
+-.footer__bottom {
+-  display: flex;
+-  justify-content: space-between;
+-  align-items: center;
+-  gap: 24px;
+-  margin-top: 48px;
+-  flex-wrap: wrap;
+-  color: rgba(255, 255, 255, 0.6);
+-  font-size: 0.9rem;
++.cta__inner h2 {
++  margin: 0 0 12px;
++  font-size: clamp(2.1rem, 3.6vw, 2.6rem);
+ }
+ 
+-.footer__bottom p {
+-  margin: 0;
++.cta__inner p {
++  margin: 0 0 14px;
++  color: var(--color-slate-700);
+ }
+ 
+-.footer__legal-links {
++.cta__actions {
+   display: flex;
+-  gap: 18px;
++  gap: 12px;
+   flex-wrap: wrap;
+ }
+ 
+-.footer__legal-links a {
+-  color: rgba(255, 255, 255, 0.6);
+-}
+-
+-.footer__legal-links a:hover,
+-.footer__legal-links a:focus {
+-  color: var(--color-white);
+-}
+-
+-.lead-modal {
+-  position: fixed;
+-  inset: 0;
++.cta__badge {
++  background: var(--color-white);
++  border-radius: var(--radius-lg);
++  padding: 24px;
++  box-shadow: var(--shadow-card);
+   display: grid;
+-  place-items: center;
+-  visibility: hidden;
+-  opacity: 0;
+-  transition:
+-    opacity 0.2s ease,
+-    visibility 0.2s ease;
+-  z-index: 50;
++  gap: 10px;
++  text-align: center;
+ }
+ 
+-.lead-modal[aria-hidden="false"] {
+-  visibility: visible;
+-  opacity: 1;
++.cta__pill {
++  display: inline-flex;
++  justify-content: center;
++  align-items: center;
++  padding: 8px 12px;
++  border-radius: 999px;
++  background: rgba(67, 99, 255, 0.12);
++  color: var(--color-primary-700);
++  font-weight: 700;
+ }
+ 
+-.lead-modal__backdrop {
+-  position: absolute;
+-  inset: 0;
+-  background: rgba(15, 23, 42, 0.55);
++.columns__grid {
++  display: grid;
++  gap: 18px;
++  grid-template-columns: repeat(4, minmax(0, 1fr));
+ }
+ 
+-.lead-modal__dialog {
+-  position: relative;
++.column-card {
+   background: var(--color-white);
+   border-radius: var(--radius-md);
+-  padding: 36px;
+-  width: min(560px, 90vw);
+-  max-height: 90vh;
+-  overflow-y: auto;
++  padding: 22px;
+   box-shadow: var(--shadow-card);
++  border: 1px solid rgba(148, 163, 184, 0.18);
++  display: grid;
++  gap: 12px;
+ }
+ 
+-.lead-modal__close {
+-  position: absolute;
+-  top: 16px;
+-  right: 16px;
+-  border: 0;
+-  background: rgba(226, 232, 240, 0.65);
+-  width: 36px;
+-  height: 36px;
+-  border-radius: 50%;
+-  font-size: 22px;
+-  cursor: pointer;
+-}
+-
+-.lead-modal__intro {
++.column__eyebrow {
++  margin: 0;
++  text-transform: uppercase;
++  letter-spacing: 0.08em;
+   color: var(--color-slate-600);
++  font-weight: 700;
++  font-size: 12px;
+ }
+ 
+-.lead-form {
++.column-card ul {
++  padding-left: 18px;
++  margin: 0;
++  color: var(--color-slate-700);
+   display: grid;
+-  gap: 20px;
++  gap: 6px;
+ }
+ 
+-.lead-form__grid {
+-  display: grid;
+-  grid-template-columns: repeat(2, minmax(0, 1fr));
+-  gap: 16px;
++.deep-features {
++  background: linear-gradient(180deg, #eef2ff 0%, #f7f9ff 100%);
+ }
+ 
+-.lead-form__field {
++.deep-features__grid {
+   display: grid;
+-  gap: 8px;
+-  font-size: 0.95rem;
+-  color: var(--color-slate-600);
+-}
+-
+-.lead-form__field input,
+-.lead-form__field textarea {
+-  border: 1px solid rgba(148, 163, 184, 0.4);
+-  border-radius: 12px;
+-  padding: 12px 14px;
+-  font-size: 0.95rem;
+-  font-family: inherit;
+-  transition:
+-    border-color 0.2s ease,
+-    box-shadow 0.2s ease;
+-}
+-
+-.lead-form__field input:focus,
+-.lead-form__field textarea:focus {
+-  outline: none;
+-  border-color: var(--color-primary-600);
+-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+-}
+-
+-.lead-form__footer {
+-  display: flex;
+-  flex-direction: column;
+-  gap: 16px;
+-  font-size: 0.85rem;
+-  color: var(--color-slate-500);
+-}
+-
+-.lead-form__status {
+-  min-height: 18px;
+-  font-size: 0.9rem;
+-}
+-
+-.lead-form__status.is-success {
+-  color: #16a34a;
+-}
+-
+-.lead-form__status.is-error {
+-  color: #dc2626;
+-}
+-
+-.lead-form__status.is-pending {
+-  color: var(--color-primary-600);
+-}
+-
+-.isaak-fab {
+-  position: fixed;
+-  bottom: 24px;
+-  right: 24px;
+-  border: 0;
+-  background: linear-gradient(
+-    140deg,
+-    var(--color-primary-600),
+-    var(--color-primary-500)
+-  );
+-  color: var(--color-white);
+-  padding: 14px 22px;
+-  border-radius: 999px;
+-  display: flex;
+-  align-items: center;
+-  gap: 10px;
+-  font-weight: 600;
+-  box-shadow: 0 18px 38px -18px rgba(37, 99, 235, 0.7);
+-  cursor: pointer;
+-  z-index: 40;
+-}
+-
+-.isaak-fab__avatar {
+-  font-size: 20px;
++  gap: 18px;
++  grid-template-columns: repeat(3, minmax(0, 1fr));
+ }
+ 
+-.isaak-chat {
+-  position: fixed;
+-  bottom: 104px;
+-  right: 24px;
+-  width: min(360px, 88vw);
++.deep-card {
+   background: var(--color-white);
+   border-radius: var(--radius-md);
++  padding: 22px;
+   box-shadow: var(--shadow-card);
+-  border: 1px solid rgba(226, 232, 240, 0.9);
+-  display: flex;
+-  flex-direction: column;
+-  overflow: hidden;
+-  transform: translateY(16px);
+-  opacity: 0;
+-  visibility: hidden;
+-  transition:
+-    transform 0.2s ease,
+-    opacity 0.2s ease,
+-    visibility 0.2s ease;
+-  z-index: 40;
+-}
+-
+-.isaak-chat[aria-hidden="false"] {
+-  transform: translateY(0);
+-  opacity: 1;
+-  visibility: visible;
+-}
+-
+-.isaak-chat__header {
+-  display: flex;
+-  justify-content: space-between;
+-  align-items: center;
+-  padding: 18px;
+-  background: linear-gradient(
+-    135deg,
+-    rgba(37, 99, 235, 0.12),
+-    rgba(59, 130, 246, 0.12)
+-  );
+-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+-}
+-
+-.isaak-chat__avatar {
+-  font-size: 22px;
+-}
+-
+-.isaak-chat__title {
+-  margin: 0;
+-  font-weight: 600;
+-  color: var(--color-slate-800);
+-}
+-
+-.isaak-chat__status {
+-  margin: 2px 0 0;
+-  font-size: 12px;
+-  color: var(--color-slate-500);
+-}
+-
+-.isaak-chat__close {
+-  border: 0;
+-  background: transparent;
+-  font-size: 22px;
+-  cursor: pointer;
+-}
+-
+-.isaak-chat__proactive {
+-  padding: 16px 18px 0;
++  border: 1px solid rgba(148, 163, 184, 0.18);
+   display: grid;
+   gap: 10px;
+ }
+ 
+-.isaak-chat__proactive-bubble {
+-  background: rgba(37, 99, 235, 0.08);
+-  border-radius: 16px;
+-  padding: 10px 14px;
+-  font-size: 0.9rem;
+-  color: var(--color-slate-600);
+-}
+-
+-.isaak-chat__messages {
+-  flex: 1;
+-  padding: 18px;
+-  display: grid;
+-  gap: 14px;
+-  max-height: 280px;
+-  overflow-y: auto;
+-}
+-
+-.isaak-chat__message {
+-  display: flex;
+-  gap: 12px;
+-  align-items: flex-start;
+-}
+-
+-.isaak-chat__message-avatar {
+-  font-size: 20px;
+-}
+-
+-.isaak-chat__message-label {
++.deep-card p {
+   margin: 0;
+-  font-size: 13px;
+-  font-weight: 600;
+-  color: var(--color-slate-600);
+-}
+-
+-.isaak-chat__message-text {
+-  margin: 4px 0 0;
+-  font-size: 0.95rem;
+-  line-height: 1.4;
+   color: var(--color-slate-700);
++  line-height: 1.6;
+ }
+ 
+-.isaak-chat__message.is-pending .isaak-chat__message-text {
+-  color: var(--color-primary-600);
++.footer {
++  padding: 40px 0;
++  background: #0f172a;
++  color: #e2e8f0;
+ }
+ 
+-.isaak-chat__form {
++.footer__inner {
+   display: flex;
+-  padding: 16px 18px 20px;
+-  gap: 12px;
+-  border-top: 1px solid rgba(226, 232, 240, 0.8);
++  justify-content: space-between;
++  align-items: center;
++  gap: 18px;
++  flex-wrap: wrap;
+ }
+ 
+-.isaak-chat__form input {
+-  flex: 1;
+-  border: 1px solid rgba(148, 163, 184, 0.4);
+-  border-radius: 12px;
+-  padding: 10px 14px;
+-  font-family: inherit;
+-  font-size: 0.95rem;
++.footer__logo {
++  height: 32px;
+ }
+ 
+-.isaak-chat__form input:focus {
+-  outline: none;
+-  border-color: var(--color-primary-600);
+-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
++.footer__tagline {
++  margin: 10px 0 0;
++  color: #cbd5e1;
+ }
+ 
+-.isaak-chat__form button {
+-  border: 0;
+-  background: var(--color-primary-600);
+-  color: var(--color-white);
+-  border-radius: 12px;
+-  padding: 10px 16px;
++.footer__links {
++  display: flex;
++  gap: 16px;
++  flex-wrap: wrap;
+   font-weight: 600;
+-  cursor: pointer;
+ }
+ 
+-.sr-only {
+-  position: absolute;
+-  width: 1px;
+-  height: 1px;
+-  padding: 0;
+-  margin: -1px;
+-  overflow: hidden;
+-  clip: rect(0, 0, 0, 0);
+-  white-space: nowrap;
+-  border: 0;
++.footer__links a {
++  color: #e2e8f0;
+ }
+ 
+- @media (max-width: 1080px) {
+-  .hero__inner {
+-    grid-template-columns: 1fr;
+-  }
+-
+-  .hero__mockup {
+-    grid-template-columns: repeat(2, minmax(0, 1fr));
+-  }
+-
+-  .mockup--assistant {
+-    grid-column: 1 / -1;
+-  }
+-
+-  .hero__stats-grid,
+-  .features__grid,
+-  .workflow__steps,
+-  .dashboard__metrics,
+-  .dashboard__panels,
+-  .resources__grid {
+-    grid-template-columns: repeat(2, minmax(0, 1fr));
+-  }
+-
+-  .dashboard__layout {
+-    grid-template-columns: 1fr;
+-    grid-template-areas:
+-      "content"
+-      "preview";
+-  }
++.footer__legal {
++  margin: 18px 0 0;
++  text-align: center;
++  color: #cbd5e1;
++}
+ 
+-  .compliance__inner {
++@media (max-width: 1024px) {
++  .hero__grid,
++  .cta__inner {
+     grid-template-columns: 1fr;
+-    text-align: center;
+   }
+ 
+-  .compliance__badge {
+-    margin: 0 auto;
+-  }
+-
+-  .final-cta__inner {
+-    flex-direction: column;
+-    text-align: center;
+-  }
+-
+-  .footer__grid {
++  .platform__grid,
++  .process__steps,
++  .solutions__grid,
++  .columns__grid,
++  .deep-features__grid,
++  .highlights__grid {
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+   }
+ }
+ 
+- @media (max-width: 768px) {
++@media (max-width: 720px) {
+   .header__inner {
+-    flex-wrap: wrap;
+-    justify-content: center;
+-  }
+-
+-  .header__nav-wrapper {
+-    order: 3;
+-    width: 100%;
+-  }
+-
+-  .header__mobile-toggle {
+-    display: block;
+-    order: 2;
++    grid-template-columns: 1fr;
++    justify-items: center;
+   }
+ 
+   .nav {
+-    position: absolute;
+-    top: 97px;
+-    left: 0;
+-    right: 0;
+-    background: white;
+-    flex-direction: column;
+-    padding: 24px;
+-    border-bottom: 1px solid var(--color-slate-200);
+-    transform: translateY(-100%);
+-    z-index: 50;
+-    opacity: 0;
+-    visibility: hidden;
+-    transition:
+-      transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+-      opacity 0.3s ease-in-out;
+-  }
+-
+-  .nav.is-open {
+-    transform: translateY(0);
+-    opacity: 1;
+-    visibility: visible;
+-  }
+-
+-  .mobile-menu-backdrop {
+-    position: fixed;
+-    inset: 0;
+-    background-color: rgba(15, 23, 42, 0.6);
+-    z-index: 49; /* Just below the menu */
+-    opacity: 1;
+-    transition: opacity 0.3s ease-in-out;
+-    -webkit-tap-highlight-color: transparent;
+-  }
+-
+-  .header__cta {
+-    order: 2;
+-    transform: translateY(0);
++    flex-wrap: wrap;
+   }
+ 
+   .hero {
+-    padding-top: 88px;
+-  }
+-
+-  .hero__mockup {
+-    grid-template-columns: 1fr;
+-  }
+-
+-  .hero__stats-grid,
+-  .features__grid,
+-  .workflow__steps,
+-  .dashboard__metrics,
+-  .dashboard__panels,
+-  .resources__grid {
+-    grid-template-columns: 1fr;
+-  }
+-
+-  .dashboard__actions {
+-    flex-direction: column;
+-    align-items: stretch;
+-  }
+-
+-  .dashboard__actions button {
+-    width: 100%;
+-    justify-content: center;
+-  }
+-
+-  .invoice__details {
+-    grid-template-columns: 1fr;
++    padding: 60px 0 30px;
+   }
+ 
+-  .lead-form__grid {
+-    grid-template-columns: 1fr;
++  .hero__metrics li {
++    min-width: unset;
+   }
+ 
+-  .footer__grid {
++  .platform__grid,
++  .process__steps,
++  .solutions__grid,
++  .columns__grid,
++  .deep-features__grid,
++  .highlights__grid {
+     grid-template-columns: 1fr;
+   }
+-
+-  .footer__bottom {
+-    flex-direction: column;
+-    text-align: center;
+-  }
+ }
+ 
+- @media (max-width: 520px) {
+-  .header__cta {
+-    width: 100%;
+-    justify-content: center;
+-  }
++.cookie-banner {
++  position: fixed;
++  bottom: 1.5rem;
++  right: 1.5rem;
++  left: 1.5rem;
++  max-width: 480px;
++  margin: 0 auto;
++  padding: 1rem 1.25rem;
++  background: rgba(18, 24, 38, 0.9);
++  color: #e5edff;
++  border: 1px solid rgba(255, 255, 255, 0.08);
++  border-radius: 16px;
++  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
++  display: grid;
++  gap: 0.75rem;
++  z-index: 1000;
++}
+ 
+-  .btn {
+-    width: 100%;
+-    justify-content: center;
+-  }
++.cookie-banner p {
++  margin: 0;
++  font-size: 0.95rem;
++  line-height: 1.5;
++}
+ 
+-  .hero__actions {
+-    flex-direction: column;
+-  }
++.cookie-banner__actions {
++  display: flex;
++  gap: 0.5rem;
++  justify-content: flex-end;
++}
+ 
+-  .isaak-fab {
+-    right: 16px;
+-    bottom: 16px;
++@media (max-width: 640px) {
++  .cookie-banner {
++    left: 1rem;
++    right: 1rem;
++    max-width: none;
+   }
+ 
+-  .isaak-chat {
+-    right: 12px;
+-    bottom: 84px;
++  .cookie-banner__actions {
++    flex-wrap: wrap;
++    justify-content: flex-start;
+   }
+ }
+diff --git a/apps/landing/app/icon.svg b/apps/landing/app/icon.svg
+new file mode 100644
+index 00000000..0e8d08ad
+--- /dev/null
++++ b/apps/landing/app/icon.svg
+@@ -0,0 +1,5 @@
++<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VeriFactu Business">
++  <rect width="512" height="512" rx="120" fill="#0E1B3D"/>
++  <path d="M152 194L226 352H252L326 194H292L239 320L186 194H152Z" fill="#F5F7FB"/>
++  <path d="M318 194H360V352H318V194Z" fill="#F5F7FB"/>
++</svg>
+diff --git a/apps/landing/app/layout.tsx b/apps/landing/app/layout.tsx
+index d19b74ff..2d2b7f4c 100644
+--- a/apps/landing/app/layout.tsx
++++ b/apps/landing/app/layout.tsx
+@@ -9,7 +9,10 @@ const url = "https://verifactu.business";
+ export const metadata = {
+   title: "Veri*Factu Business - Automatiza tu facturación con IA",
+   description: "Cumple con VeriFactu y haz crecer tu negocio. Isaak centraliza la emisión, valida con AEAT y te sugiere cómo mejorar tus márgenes automáticamente.",
+-  icons: [{ rel: "icon", url: "/assets/favicon.svg" }],
++  icons: {
++    icon: "/icon.svg",
++    apple: "/apple-icon.svg",
++  },
+   metadataBase: new URL(url),
+   openGraph: {
+     title,
+@@ -45,4 +48,4 @@ export default function RootLayout({ children }: { children: React.ReactNode })
+       </body>
+     </html>
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/apps/landing/app/page.tsx b/apps/landing/app/page.tsx
+index e39ae2e6..7abb5db2 100644
+--- a/apps/landing/app/page.tsx
++++ b/apps/landing/app/page.tsx
+@@ -1,182 +1,172 @@
+ "use client";
+ 
+-import PricingCalculator from "@/app/components/PricingCalculator";
+-import Faq from "@/app/components/Faq";
+ import { useSession } from "next-auth/react";
+-import React, { useEffect, useState } from "react";
+ 
+-type ChatMessage = {
+-  from: "Isaak" | "Tú";
+-  text: string;
+-  pending?: boolean;
+-};
+-
+-const PROACTIVE_MESSAGES = [
+-  "Hola 👋 soy Isaak. ¿Quieres que configuremos tus envíos VeriFactu?",
+-  "Puedo analizar tus márgenes y detectar ahorros fiscales en minutos.",
+-  "¿Te guío paso a paso para validar tu siguiente envío a la AEAT?",
++const heroMetrics = [
++  { label: "Alta y validación VeriFactu", value: "1 día" },
++  { label: "Libros contables actualizados", value: "24/7" },
++  { label: "Métricas de negocio", value: "En minutos" },
+ ];
+ 
+-const ISAAC_API_KEY = process.env.NEXT_PUBLIC_ISAAC_API_KEY;
+-const ISAAC_ASSISTANT_ID = process.env.NEXT_PUBLIC_ISAAC_ASSISTANT_ID;
+-
+-export default function Page() {
+-  const [chatOpen, setChatOpen] = useState(false);
+-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+-  const { data: session } = useSession();
+-
+-  useEffect(() => {
+-    setChatMessages(PROACTIVE_MESSAGES.map((text) => ({ from: "Isaak", text })));
+-  }, []);
+-
+-  const sendIsaakMessage = async (prompt: string) => {
+-    setChatMessages((prev) => [...prev, { from: "Tú", text: prompt }]);
++const activationHighlights = [
++  {
++    title: "Activación inmediata",
++    description:
++      "Alta, configuración y validación con VeriFactu en menos de 24 h.",
++  },
++  {
++    title: "Gana en eficiencia y seguridad",
++    description:
++      "Ciclo fiscal y contable automatizado, reducción de errores y duplicidades.",
++  },
++  {
++    title: "Ventaja competitiva",
++    description:
++      "Información para decidir: facturación, margenes, previsión y pagos en tiempo real.",
++  },
++];
+ 
+-    const placeholder: ChatMessage = {
+-      from: "Isaak",
+-      text: "Isaak está escribiendo...",
+-      pending: true,
+-    };
+-    setChatMessages((prev) => [...prev, placeholder]);
++const platformFeatures = [
++  {
++    title: "Libros contables siempre listos",
++    description:
++      "Libros de ingresos, gastos e IVA actualizados automáticamente con cada operación.",
++  },
++  {
++    title: "Contabilidad automática con banca integrada",
++    description:
++      "Conciliación y registro contable conectado a tus bancos y tarjetas bajo PSD2.",
++  },
++  {
++    title: "Carga masiva de documentos",
++    description:
++      "Importa facturas y tickets desde Drive y correo con OCR avanzado y clasificación.",
++  },
++  {
++    title: "Estadísticas en tiempo real",
++    description:
++      "Panel financiero y calendario fiscal con alertas previas a cada obligación.",
++  },
++];
+ 
+-    if (!ISAAC_API_KEY || !ISAAC_ASSISTANT_ID) {
+-      setChatMessages((prev) => [
+-        ...prev,
+-        {
+-          from: "Isaak",
+-          text: "Configura las variables NEXT_PUBLIC_ISAAC_API_KEY y NEXT_PUBLIC_ISAAC_ASSISTANT_ID.",
+-        },
+-      ]);
+-      return;
+-    }
++const steps = [
++  {
++    title: "Te damos de alta en VeriFactu",
++    description:
++      "Configuración y documentación completa para que puedas emitir sin fricciones.",
++  },
++  {
++    title: "Conectamos tus sistemas",
++    description:
++      "Bancos, Drive y email listos para conciliar facturas, gastos y movimientos.",
++  },
++  {
++    title: "Modelos presentados",
++    description:
++      "Libros contables al día, modelos generados y calendario fiscal con alertas.",
++  },
++];
+ 
+-    try {
+-      const response = await fetch("https://api.openai.com/v1/responses", {
+-        method: "POST",
+-        headers: {
+-          "Content-Type": "application/json",
+-          Authorization: `Bearer ${ISAAC_API_KEY}`,
+-        },
+-        body: JSON.stringify({
+-          model: "gpt-4.1-mini",
+-          assistant_id: ISAAC_ASSISTANT_ID,
+-          input: [{ role: "user", content: prompt }],
+-        }),
+-      });
++const solutions = [
++  {
++    title: "Tarifa fija para autónomos y pymes",
++    badges: ["Soporte y configuración", "Migración VeriFactu", "Asesoría y alta AEAT"],
++    accent: "fixed",
++    note: "*Todas las modalidades incluyen alta en VeriFactu",
++  },
++  {
++    title: "A medida para gestorías",
++    badges: ["Plataforma personalizada", "Accesos por cliente", "Presentación masiva"],
++    accent: "custom",
++  },
++];
+ 
+-      const data = await response.json();
+-      const text =
+-        data?.output?.[0]?.content?.[0]?.text?.value ||
+-        "Tengo dificultades para responder ahora mismo, ¿puedes intentarlo de nuevo en unos minutos?";
++const featureColumns = [
++  {
++    title: "Usabilidad",
++    items: [
++      "Tableros claros con métricas de negocio relevantes",
++      "Seguimiento de márgenes por factura, cliente y cuenta",
++      "Alertas y recordatorios preventivos",
++    ],
++  },
++  {
++    title: "Integraciones",
++    items: [
++      "Google Drive y correo para entrada de facturas",
++      "Conciliación bancaria bajo PSD2",
++      "Integración con sistemas de facturación",
++    ],
++  },
++  {
++    title: "Documentos",
++    items: [
++      "OCR avanzado con clasificación automática",
++      "Facturas y tickets de gasto en Drive y mail",
++      "Archivados automáticamente en la nube",
++    ],
++  },
++  {
++    title: "Preparado para AEAT",
++    items: [
++      "Conectado con VeriFactu",
++      "Libros contables y modelos fiscales",
++      "Presentación a la AEAT sin salir del panel",
++    ],
++  },
++];
+ 
+-      setChatMessages((prev) => [
+-        ...prev.filter((msg) => !msg.pending),
+-        { from: "Isaak", text },
+-      ]);
+-    } catch (error) {
+-      console.error("Error comunicando con Isaak", error);
+-      setChatMessages((prev) => [
+-        ...prev.filter((msg) => !msg.pending),
+-        {
+-          from: "Isaak",
+-          text: "No puedo conectarme con Isaak ahora mismo. Inténtalo más tarde.",
+-        },
+-      ]);
+-    }
+-  };
++const deepFeatures = [
++  {
++    title: "OCR inteligente y conciliación",
++    description:
++      "Automatiza la entrada de facturas desde Drive y email, clasifícalas y concílialas con tus bancos sin esfuerzo.",
++  },
++  {
++    title: "Asesoramiento real-time",
++    description:
++      "Análisis de márgenes, previsión de impuestos y alertas de liquidez para decidir con datos fiables.",
++  },
++  {
++    title: "VeriFactu y modelos AEAT",
++    description:
++      "Emite facturas, lleva los libros oficiales y presenta modelos 303, 130, 111 y SOC sin abandonar la plataforma.",
++  },
++];
+ 
+-  const handleChatSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
+-    event.preventDefault();
+-    const form = event.currentTarget;
+-    const formData = new FormData(form);
+-    const message = String(formData.get("message") || "").trim();
+-    if (!message) return;
+-    form.reset();
+-    sendIsaakMessage(message);
+-  };
++export default function Page() {
++  const { data: session } = useSession();
+ 
+   return (
+     <div className="page">
+-      {mobileMenuOpen && (
+-        <div
+-          className="mobile-menu-backdrop"
+-          onClick={() => setMobileMenuOpen(false)}
+-          aria-hidden="true"
+-        />
+-      )}
+       <header className="header">
+         <div className="container header__inner">
+           <a href="#hero" className="brand" aria-label="Volver al inicio">
+             <img
+-              src="/assets/verifactu-logo-animated.svg"
++              src="/assets/verifactu-business-logo.svg"
+               alt="VeriFactu Business"
+               className="brand__image"
+             />
+           </a>
+-          <div className="header__nav-wrapper">
+-            <button
+-              className="header__mobile-toggle"
+-              aria-label="Toggle menu"
+-              aria-expanded={mobileMenuOpen}
+-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+-            >
+-              <svg
+-                width="24"
+-                height="24"
+-                viewBox="0 0 24 24"
+-                fill="none"
+-                xmlns="http://www.w3.org/2000/svg"
+-              >
+-                {mobileMenuOpen ? (
+-                  <path
+-                    d="M18 6L6 18M6 6l12 12"
+-                    stroke="currentColor"
+-                    strokeWidth="2"
+-                    strokeLinecap="round"
+-                    strokeLinejoin="round"
+-                  />
+-                ) : (
+-                  <path
+-                    d="M4 6h16M4 12h16M4 18h16"
+-                    stroke="currentColor"
+-                    strokeWidth="2"
+-                    strokeLinecap="round"
+-                    strokeLinejoin="round"
+-                  />
+-                )}
+-              </svg>
+-            </button>
+-            <nav className={`nav ${mobileMenuOpen ? "is-open" : ""}`}>
+-              <a href="#value" onClick={() => setMobileMenuOpen(false)}>
+-                Propuesta
+-              </a>
+-              <a href="#key-features" onClick={() => setMobileMenuOpen(false)}>
+-                Funcionalidades
+-              </a>
+-              <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>
+-                Planes
+-              </a>
+-              <a href="#services" onClick={() => setMobileMenuOpen(false)}>
+-                Servicios
+-              </a>
+-              <a href="#faq" onClick={() => setMobileMenuOpen(false)}>
+-                FAQ
+-              </a>
+-            </nav>
+-          </div>
+-          <div className={`header__cta ${mobileMenuOpen ? "is-open" : ""}`}>
++          <nav className="nav">
++            <a href="#platform">VeriFactu</a>
++            <a href="#process">Process</a>
++            <a href="#solutions">Planes</a>
++            <a href="#features">Características</a>
++            <a href="#contact">Contacto</a>
++          </nav>
++          <div className="header__cta">
+             {session ? (
+               <a className="btn btn--ghost" href="/dashboard">
+                 Ir al panel
+               </a>
+             ) : (
+               <a className="btn btn--ghost" href="/api/auth/signin">
+-                Acceder
++                Accede
+               </a>
+             )}
+-            <a className="btn btn--primary" href="/contact">
+-              Solicitar demo
++            <a className="btn btn--primary" href="/auth/signup">
++              Comenzar gratis
+             </a>
+           </div>
+         </div>
+@@ -185,309 +175,215 @@ export default function Page() {
+       <main>
+         <section id="hero" className="hero">
+           <div className="hero__background" aria-hidden="true" />
+-          <div className="container hero__inner">
+-            <div className="hero__copy">
+-              <p className="hero__eyebrow">LANDING COMPLETA – verifactu.business</p>
+-              <h1>Gestión fiscal y contable automatizada para tu empresa</h1>
+-              <h2 className="hero__subtitle">
+-                La plataforma integral que conecta Verifactu, bancos, Google Drive y un asistente fiscal especializado en normativa española. Todo en un único panel inteligente.
+-              </h2>
+-              <p className="hero__description">
+-                Control financiero en tiempo real, calendario fiscal automático y contabilidad generada por IA.
++          <div className="container hero__grid">
++            <div className="hero__content">
++              <p className="hero__badge">Verifactu Business</p>
++              <h1>
++                La forma más rápida y segura de cumplir con VeriFactu mientras crece tu negocio
++              </h1>
++              <p className="hero__lead">
++                Emite facturas, lleva tus libros y presenta modelos a la AEAT con la misma plataforma. Sin cambios en tu operativa.
+               </p>
++              <ul className="hero__metrics">
++                {heroMetrics.map((metric) => (
++                  <li key={metric.label}>
++                    <strong>{metric.value}</strong>
++                    <span>{metric.label}</span>
++                  </li>
++                ))}
++              </ul>
++              <ul className="hero__bullets">
++                <li>Alta y validación con VeriFactu en 1 día.</li>
++                <li>Libros contables actualizados automáticamente.</li>
++                <li>Métricas de negocio y previsión de impuestos.</li>
++              </ul>
+               <div className="hero__actions">
+                 <a className="btn btn--primary" href="/auth/signup">
+-                  Crear cuenta gratuita
++                  Comenzar gratis
+                 </a>
+-                <a className="btn btn--ghost" href="#key-features">
+-                  Explorar funcionalidades
++                <a className="btn btn--ghost" href="/contact">
++                  Solicitar una demo
+                 </a>
+               </div>
+-              <p className="hero__microcopy">Sin tarjeta. Configuración inicial en menos de 2 minutos.</p>
+-              <p className="hero__description">
+-                IA fiscal que entiende tu negocio, automatiza tus procesos y te prepara para cada obligación tributaria.
+-              </p>
++              <p className="hero__microcopy">Sin fricción con AEAT. Sin modificar tus procesos actuales.</p>
+             </div>
+ 
+-            <div className="hero__mockup" aria-hidden="true">
+-              <div className="mockup mockup--assistant">
+-                <header className="mockup__header">
+-                  <div>
+-                    <span className="mockup__badge">Isaak</span>
+-                    <p className="mockup__title">Respuestas inmediatas</p>
+-                  </div>
+-                  <span className="mockup__status">Conectado a AEAT</span>
+-                </header>
+-                <div className="mockup__body">
+-                  <article className="mockup__message">
+-                    <span className="mockup__avatar">🙋</span>
+-                    <div>
+-                      <p className="mockup__label">Usuario</p>
+-                      <p className="mockup__text">
+-                        “¿Cómo voy este trimestre? Necesito el IVA estimado y si hay riesgos de descuadre.”
+-                      </p>
+-                    </div>
+-                  </article>
+-                  <article className="mockup__message mockup__message--light">
+-                    <span className="mockup__avatar">🤖</span>
+-                    <div>
+-                      <p className="mockup__label">Isaak</p>
+-                      <p className="mockup__text">
+-                        “Ingresos del 2T: 14.980 €. Gastos deducibles: 3.420 €. IVA devengado: 3.145 €. IVA soportado: 718 €. Previsión de cuota: 2.427 €. No detecto inconsistencias.”
+-                      </p>
+-                    </div>
+-                  </article>
+-                  <article className="mockup__message">
+-                    <span className="mockup__avatar">🙋</span>
+-                    <div>
+-                      <p className="mockup__label">Usuario</p>
+-                      <p className="mockup__text">
+-                        “Subo estas 12 facturas de gasto. Clasifícalas y cuéntame si alguna no es deducible.”
+-                      </p>
+-                    </div>
+-                  </article>
+-                  <article className="mockup__message mockup__message--light">
+-                    <span className="mockup__avatar">🤖</span>
+-                    <div>
+-                      <p className="mockup__label">Isaak</p>
+-                      <p className="mockup__text">
+-                        “11 facturas clasificadas correctamente. 1 factura no deducible: servicio de entretenimiento. Todo se ha registrado en tu libro de gastos.”
+-                      </p>
+-                    </div>
+-                  </article>
+-                  <article className="mockup__message">
+-                    <span className="mockup__avatar">🙋</span>
+-                    <div>
+-                      <p className="mockup__label">Usuario</p>
+-                      <p className="mockup__text">
+-                        “Concíliame los movimientos bancarios de esta semana y dime si queda algo pendiente de cobrar.”
+-                      </p>
+-                    </div>
+-                  </article>
+-                  <article className="mockup__message mockup__message--light">
+-                    <span className="mockup__avatar">🤖</span>
+-                    <div>
+-                      <p className="mockup__label">Isaak</p>
+-                      <p className="mockup__text">
+-                        “8 movimientos conciliados con tus facturas. 1 transferencia de 412 € pendiente de asociar. 2 facturas emitidas siguen sin cobro.”
+-                      </p>
+-                    </div>
+-                  </article>
+-                </div>
++            <div className="hero__card" aria-label="Formulario de interés">
++              <div className="card__header">
++                <p className="card__badge">Verifactu Business</p>
++                <p className="card__title">El asistente fiscal que no sólo envía.</p>
++                <p className="card__subtitle">
++                  Gestiona envíos, libros contables y modelos desde un único panel.
++                </p>
+               </div>
++              <form className="card__form">
++                <label>
++                  <span>Nombre de tu negocio o marca*</span>
++                  <input type="text" placeholder="Ej. Bar Botafumeiro" required />
++                </label>
++                <label>
++                  <span>Número de facturas a la semana</span>
++                  <select>
++                    <option value="">Elige una opción</option>
++                    <option value="10">Hasta 10</option>
++                    <option value="25">11 - 25</option>
++                    <option value="50">26 - 50</option>
++                    <option value="100">Más de 50</option>
++                  </select>
++                </label>
++                <label>
++                  <span>Provincia</span>
++                  <input type="text" placeholder="Ej. Madrid" />
++                </label>
++                <button type="submit" className="btn btn--primary btn--full">
++                  Empezar ahora
++                </button>
++              </form>
++              <p className="card__footer">Nosotros nos encargamos del resto.</p>
+             </div>
+           </div>
+         </section>
+ 
+-        <section id="value" className="section features">
+-          <div className="container">
+-            <div className="section__header">
+-              <h2>Centraliza toda la gestión fiscal y contable en un único sistema</h2>
+-              <p>
+-                Verifactu, bancos, gastos, documentos, calendario fiscal e inteligencia artificial especializada en España. Una infraestructura empresarial diseñada para maximizar control, eficiencia y seguridad.
+-              </p>
+-            </div>
+-            <div className="features__grid">
+-              <article className="feature-card">
+-                <h3>Beneficios clave</h3>
+-                <ul>
+-                  <li>Automatización completa del ciclo fiscal y contable.</li>
+-                  <li>Libros oficiales actualizados de forma continua.</li>
+-                  <li>Eliminación de errores y duplicidades.</li>
+-                  <li>Visión financiera 360º en tiempo real.</li>
+-                  <li>Preparación automatizada de los modelos 303, 130, 111 e Impuesto de Sociedades.</li>
+-                  <li>Cumplimiento nativo con Verifactu.</li>
+-                </ul>
+-              </article>
+-              <article className="feature-card">
+-                <h3>Core tecnológico</h3>
+-                <ul>
+-                  <li>Next.js (UI + API) sobre Cloud Run y Cloud SQL.</li>
+-                  <li>Integraciones Drive, PSD2, Verifactu y Google Calendar.</li>
+-                  <li>Isaak como asistente fiscal orquestado con datos en vivo.</li>
+-                  <li>Roles multiempresa y acceso con identidad digital.</li>
+-                </ul>
+-              </article>
+-            </div>
+-          </div>
+-        </section>
+-
+-        <section id="key-features" className="section features">
+-          <div className="container">
+-            <div className="section__header">
+-              <h2>Funcionalidades clave</h2>
+-              <p>Automatización VeriFactu, OCR, banca, contabilidad e IA fiscal en el mismo panel.</p>
+-            </div>
+-            <div className="features__grid">
+-              <article className="feature-card">
+-                <h3>Facturación Verifactu</h3>
+-                <ul>
+-                  <li>Emisión certificada y registro automático.</li>
+-                  <li>Control de cobros y vencimientos.</li>
+-                  <li>Envío profesional a clientes.</li>
+-                </ul>
+-              </article>
+-              <article className="feature-card">
+-                <h3>Gastos y OCR avanzado</h3>
+-                <ul>
+-                  <li>Integración con Google Drive.</li>
+-                  <li>OCR inteligente y clasificación automática.</li>
+-                  <li>Registro contable inmediato.</li>
+-                </ul>
+-              </article>
+-              <article className="feature-card">
+-                <h3>Integración bancaria (PSD2)</h3>
+-                <ul>
+-                  <li>Conexión segura con entidades españolas.</li>
+-                  <li>Importación automática de movimientos.</li>
+-                  <li>Conciliación con facturas y gastos.</li>
+-                  <li>Alertas financieras y de liquidez.</li>
+-                </ul>
++        <section className="section highlights">
++          <div className="container highlights__grid">
++            {activationHighlights.map((item) => (
++              <article key={item.title} className="tile">
++                <h3>{item.title}</h3>
++                <p>{item.description}</p>
+               </article>
+-              <article className="feature-card">
+-                <h3>Contabilidad automática</h3>
+-                <ul>
+-                  <li>Libros diario, mayor e IVA.</li>
+-                  <li>Conciliación completa.</li>
+-                  <li>Resultados del periodo en tiempo real.</li>
+-                  <li>Proyección de cierre anual.</li>
+-                </ul>
+-              </article>
+-              <article className="feature-card">
+-                <h3>Asistente fiscal “Isaak”</h3>
+-                <p>Asesoramiento guiado, análisis documental, explicaciones normativas, cálculos automáticos y soporte integral.</p>
+-              </article>
+-              <article className="feature-card">
+-                <h3>Calendario fiscal inteligente</h3>
+-                <ul>
+-                  <li>Generación automática de obligaciones.</li>
+-                  <li>Sincronización con Google Calendar.</li>
+-                  <li>Recordatorios previos a cada presentación.</li>
+-                </ul>
+-              </article>
+-            </div>
++            ))}
+           </div>
+         </section>
+ 
+-        <section id="audience" className="section features">
++        <section id="platform" className="section platform">
+           <div className="container">
+             <div className="section__header">
+-              <h2>¿Para quién es?</h2>
+-              <p>Experiencia adaptada a autónomos, pymes y gestorías con operativa multiempresa.</p>
++              <h2>Una plataforma creada para liderar la era VeriFactu</h2>
++              <p>Todo lo que necesitas para emitir, conciliar y presentar sin salir de un único panel.</p>
+             </div>
+-            <div className="features__grid">
+-              <article className="feature-card">
+-                <h3>Autónomos</h3>
+-                <p>Gestión simple, automática y sin fricciones.</p>
+-              </article>
+-              <article className="feature-card">
+-                <h3>Pymes</h3>
+-                <p>Control completo de facturación, bancos, impuestos y documentación.</p>
+-              </article>
+-              <article className="feature-card">
+-                <h3>Gestorías y despachos</h3>
+-                <p>Operativa multiempresa con automatización contable y fiscal de alto nivel.</p>
+-              </article>
++            <div className="platform__grid">
++              {platformFeatures.map((feature) => (
++                <article key={feature.title} className="card">
++                  <h3>{feature.title}</h3>
++                  <p>{feature.description}</p>
++                </article>
++              ))}
+             </div>
+           </div>
+         </section>
+ 
+-        <section id="pricing" className="section">
+-          <PricingCalculator />
+-          <div className="pricing-section__cta">
+-            <a className="btn btn--ghost" href="/contact">
+-              Comparar planes
+-            </a>
+-          </div>
+-        </section>
+-
+-        <section id="services" className="section features">
++        <section id="process" className="section process">
+           <div className="container">
+             <div className="section__header">
+-              <h2>Servicios adicionales on-demand</h2>
+-              <p>Contratación directa desde la aplicación sin abandonar el panel.</p>
++              <h2>De la emisión al cobro en tres pasos</h2>
++              <p>
++                VeriFactu listo en 24 h, conciliación bancaria automática y calendarios fiscales con recordatorios.
++              </p>
+             </div>
+-            <div className="features__grid">
+-              <article className="feature-card">
+-                <ul>
+-                  <li>Tramitación de certificados digitales.</li>
+-                  <li>Constitución de sociedades.</li>
+-                  <li>Servicios notariales online (más de 100 trámites).</li>
+-                  <li>Modificaciones estatutarias.</li>
+-                  <li>Altas de autónomos y cambios censales.</li>
+-                  <li>Presentación de modelos especiales.</li>
+-                  <li>Revisión documental y legalización.</li>
+-                  <li>Representación ante AEAT y Seguridad Social.</li>
+-                </ul>
+-                <a className="btn btn--dark" href="/contact">Ver catálogo completo</a>
+-              </article>
++            <div className="process__steps">
++              {steps.map((step, index) => (
++                <article key={step.title} className="step">
++                  <span className="step__number">{index + 1}</span>
++                  <div>
++                    <h3>{step.title}</h3>
++                    <p>{step.description}</p>
++                  </div>
++                </article>
++              ))}
+             </div>
+           </div>
+         </section>
+ 
+-        <section id="security" className="section features">
++        <section id="solutions" className="section solutions">
+           <div className="container">
+             <div className="section__header">
+-              <h2>Seguridad</h2>
+-              <p>Infraestructura diseñada para la normativa española.</p>
++              <h2>Elige la solución que mejor se adapta a tu organización</h2>
++              <p>Planes claros para equipos que quieren cumplir y crecer.</p>
+             </div>
+-            <div className="features__grid">
+-              <article className="feature-card">
+-                <ul>
+-                  <li>Cumplimiento Verifactu nativo.</li>
+-                  <li>Integración con bancos bajo PSD2.</li>
+-                  <li>Tokens cifrados y comunicaciones seguras.</li>
+-                  <li>Acceso con certificado digital en planes superiores.</li>
+-                  <li>Infraestructura desplegada en Google Cloud.</li>
+-                  <li>Control de accesos multiempresa.</li>
+-                </ul>
+-              </article>
++            <div className="solutions__grid">
++              {solutions.map((solution) => (
++                <article
++                  key={solution.title}
++                  className={`solution ${solution.accent === "custom" ? "solution--custom" : ""}`}
++                >
++                  <p className="solution__eyebrow">Verifactu Business</p>
++                  <h3>{solution.title}</h3>
++                  <ul>
++                    {solution.badges.map((badge) => (
++                      <li key={badge}>{badge}</li>
++                    ))}
++                  </ul>
++                  {solution.note && <p className="solution__note">{solution.note}</p>}
++                  <a className="btn btn--primary" href="/auth/signup">
++                    Comenzar ahora
++                  </a>
++                </article>
++              ))}
+             </div>
+           </div>
+         </section>
+ 
+-        <Faq />
+-
+-        <section className="section cta">
++        <section id="cta" className="cta">
+           <div className="container cta__inner">
+             <div>
+-              <h2>Optimiza tu gestión fiscal y contable hoy mismo</h2>
+-              <p>
+-                Automatiza procesos, elimina errores y accede a una visión financiera completa.
+-              </p>
++              <h2>Verifactu Business es la manera más rápida y segura de cumplir con VeriFactu</h2>
++              <p>Emite facturas, lleva tus libros y presenta modelos con la menor intervención humana.</p>
+               <div className="cta__actions">
+                 <a className="btn btn--primary" href="/auth/signup">
+-                  Crear cuenta gratuita
++                  Empezar ahora
+                 </a>
+                 <a className="btn btn--ghost" href="/contact">
+-                  Solicitar demostración
++                  Solicitar una demo
+                 </a>
+               </div>
+             </div>
+-            <div className="cta__badge" aria-hidden="true">
+-              <p className="cta__label">Infraestructura fiscal-as-a-service</p>
+-              <p className="cta__value">verifactu.business</p>
++            <div className="cta__badge">
++              <span className="cta__pill">Verifactu Business</span>
++              <strong>Cumplimiento y eficiencia con un menor coste.</strong>
+             </div>
+           </div>
+         </section>
++
++        <section id="features" className="section columns">
++          <div className="container columns__grid">
++            {featureColumns.map((column) => (
++              <article key={column.title} className="column-card">
++                <p className="column__eyebrow">verifactu.business</p>
++                <h3>{column.title}</h3>
++                <ul>
++                  {column.items.map((item) => (
++                    <li key={item}>{item}</li>
++                  ))}
++                </ul>
++              </article>
++            ))}
++          </div>
++        </section>
++
++        <section className="section deep-features">
++          <div className="container deep-features__grid">
++            {deepFeatures.map((item) => (
++              <article key={item.title} className="deep-card">
++                <h3>{item.title}</h3>
++                <p>{item.description}</p>
++              </article>
++            ))}
++          </div>
++        </section>
+       </main>
+ 
+-      <footer className="footer">
++      <footer id="contact" className="footer">
+         <div className="container footer__inner">
+           <div>
+             <img
+-              src="/assets/verifactu-logo-animated.svg"
++              src="/assets/verifactu-business-logo.svg"
+               alt="VeriFactu Business"
+               className="footer__logo"
+             />
+-            <p className="footer__tagline">
+-              Asistente IA Isaak · Cumple la normativa AEAT VeriFactu
+-            </p>
++            <p className="footer__tagline">Asistente IA Isaak · Cumple la normativa AEAT VeriFactu</p>
+           </div>
+           <div className="footer__links">
+-            <a href="mailto:soporte@verifactu.business">
+-              soporte@verifactu.business
+-            </a>
++            <a href="mailto:soporte@verifactu.business">soporte@verifactu.business</a>
+             <a href="/privacy">Política de Privacidad</a>
+             <a href="/terms">Condiciones de Uso</a>
+             <a href="/cookies">Cookies</a>
+@@ -495,79 +391,6 @@ export default function Page() {
+         </div>
+         <p className="footer__legal">© 2025 Veri*Factu Business</p>
+       </footer>
+-
+-      <button
+-        className="isaak-fab"
+-        type="button"
+-        aria-controls="isaak-chat"
+-        aria-expanded={chatOpen}
+-        onClick={() => setChatOpen((state) => !state)}
+-      >
+-        <span className="isaak-fab__avatar">🤖</span>
+-        <span className="isaak-fab__label">Habla con Isaak</span>
+-      </button>
+-
+-      <section className="isaak-chat" id="isaak-chat" aria-hidden={!chatOpen}>
+-        <header className="isaak-chat__header">
+-          <div>
+-            <span className="isaak-chat__avatar">🤖</span>
+-            <div>
+-              <p className="isaak-chat__title">Isaak, tu asistente fiscal</p>
+-              <p className="isaak-chat__status">Proactivo · Conectado a AEAT</p>
+-            </div>
+-          </div>
+-          <button
+-            className="isaak-chat__close"
+-            type="button"
+-            aria-label="Cerrar chat"
+-            onClick={() => setChatOpen(false)}
+-          >
+-            ×
+-          </button>
+-        </header>
+-        <div className="isaak-chat__proactive" role="log" aria-live="polite">
+-          {PROACTIVE_MESSAGES.map((text) => (
+-            <div className="isaak-chat__proactive-bubble" key={text}>
+-              {text}
+-            </div>
+-          ))}
+-        </div>
+-        <div className="isaak-chat__messages" role="list">
+-          {chatMessages.map((message, index) => (
+-            <div
+-              key={`${message.from}-${index}-${message.text}`}
+-              className={`isaak-chat__message ${message.from === "Isaak" ? "from-isaak" : "from-user"} ${
+-                message.pending ? "is-pending" : ""
+-              }`}
+-            >
+-              <span className="isaak-chat__message-avatar">
+-                {message.from === "Isaak" ? "🤖" : "🙋"}
+-              </span>
+-              <div>
+-                <p className="isaak-chat__message-label">{message.from}</p>
+-                <p className="isaak-chat__message-text">{message.text}</p>
+-              </div>
+-            </div>
+-          ))}
+-        </div>
+-        <form
+-          className="isaak-chat__form"
+-          autoComplete="off"
+-          onSubmit={handleChatSubmit}
+-        >
+-          <label className="sr-only" htmlFor="isaak-input">
+-            Escribe tu mensaje
+-          </label>
+-          <input
+-            id="isaak-input"
+-            name="message"
+-            type="text"
+-            placeholder="Pregunta a Isaak sobre tu facturación"
+-            required
+-          />
+-          <button type="submit">Enviar</button>
+-        </form>
+-      </section>
+     </div>
+   );
+ }
+diff --git a/apps/landing/app/route.ts b/apps/landing/app/route.ts
+index db16eedc..0da162f1 100644
+--- a/apps/landing/app/route.ts
++++ b/apps/landing/app/route.ts
+@@ -1,44 +1,21 @@
+ import { NextResponse } from "next/server";
+-import { getServerSession } from "next-auth/next";
+-import { db } from "@/lib/db";
+-import NextAuthOptions from "@/app/[...nextauth]";
+ 
++/**
++ * Stub handlers to keep the landing page build self-contained.
++ * Replace with real logic in the authenticated app.
++ */
+ export async function PUT(
+-  req: Request,
++  _req: Request,
+   { params }: { params: { userId: string } },
+ ) {
+-  const session = await getServerSession(NextAuthOptions);
+-  if (session?.user?.role !== "ADMIN") {
+-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+-  }
+-
+-  try {
+-    const { role } = await req.json();
+-    const updatedUser = await db.user.update(params.userId, { role });
+-    return NextResponse.json(updatedUser);
+-  } catch (error) {
+-    return NextResponse.json({ error: "Error al actualizar el usuario" }, { status: 500 });
+-  }
++  console.info("User update stub invoked", params);
++  return NextResponse.json({ message: "Usuario actualizado (demo)" });
+ }
+ 
+ export async function DELETE(
+-  req: Request,
++  _req: Request,
+   { params }: { params: { userId: string } },
+ ) {
+-  const session = await getServerSession(NextAuthOptions);
+-  if (session?.user?.role !== "ADMIN") {
+-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+-  }
+-
+-  // Prevenir que el admin se elimine a sí mismo
+-  if (session.user.id === params.userId) {
+-    return NextResponse.json({ error: "No puedes eliminar tu propia cuenta" }, { status: 400 });
+-  }
+-
+-  try {
+-    await db.user.delete(params.userId);
+-    return NextResponse.json({ message: "Usuario eliminado" });
+-  } catch (error) {
+-    return NextResponse.json({ error: "Error al eliminar el usuario" }, { status: 500 });
+-  }
++  console.info("User delete stub invoked", params);
++  return NextResponse.json({ message: "Usuario eliminado (demo)" });
+ }
+\ No newline at end of file
+diff --git a/apps/landing/package.json b/apps/landing/package.json
+index 28b9b9d0..7ecbaa50 100644
+--- a/apps/landing/package.json
++++ b/apps/landing/package.json
+@@ -6,21 +6,24 @@
+   "scripts": {
+     "dev": "next dev",
+     "build": "next build",
+-    "start": "next start -p 8080"
++    "start": "next start -p 8080",
++    "screenshot": "node scripts/capture-preview.js"
+   },
+   "dependencies": {
+-    "next": "^14.2.33",
++    "@stripe/stripe-js": "^4.1.0",
++    "bcrypt": "^5.1.1",
++    "next": "^14.2.35",
++    "next-auth": "^4.24.13",
+     "react": "18.2.0",
+     "react-dom": "18.2.0",
+     "resend": "^3.4.0",
+-    "bcrypt": "^5.1.1",
+-    "stripe": "^16.2.0",
+-    "@stripe/stripe-js": "^4.1.0"
++    "stripe": "^16.2.0"
+   },
+   "devDependencies": {
++    "@types/bcrypt": "^5.0.2",
+     "@types/node": "24.8.1",
+     "@types/react": "18",
+-    "typescript": "5.9.3",
+-    "@types/bcrypt": "^5.0.2"
++    "playwright": "^1.57.0",
++    "typescript": "5.9.3"
+   }
+ }
+diff --git a/apps/landing/public/assets/verifactu-business-logo.svg b/apps/landing/public/assets/verifactu-business-logo.svg
+new file mode 100644
+index 00000000..ea8f2958
+--- /dev/null
++++ b/apps/landing/public/assets/verifactu-business-logo.svg
+@@ -0,0 +1,13 @@
++<svg width="240" height="48" viewBox="0 0 240 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VeriFactu Business logo">
++  <defs>
++    <linearGradient id="vf_accent" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
++      <stop offset="0" stop-color="#2563EB" />
++      <stop offset="1" stop-color="#06B6D4" />
++    </linearGradient>
++  </defs>
++  <rect width="48" height="48" rx="12" fill="url(#vf_accent)" />
++  <path d="M14 32.5L21.2 15h5.6L34 32.5h-4.8l-3-8.5-3 8.5H14Z" fill="#F8FAFC" />
++  <path d="M30.25 14.5c-2.07 0-3.75 1.68-3.75 3.75 0 2.07 1.68 3.75 3.75 3.75s3.75-1.68 3.75-3.75c0-2.07-1.68-3.75-3.75-3.75Zm0 2.1c.92 0 1.65.74 1.65 1.65 0 .91-.73 1.65-1.65 1.65-.91 0-1.65-.74-1.65-1.65 0-.91.74-1.65 1.65-1.65Z" fill="#F8FAFC" />
++  <text x="62" y="24" fill="#0F172A" font-family="'Inter', 'Segoe UI', Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="0.2px">VeriFactu</text>
++  <text x="62" y="40" fill="#1E293B" font-family="'Inter', 'Segoe UI', Arial, sans-serif" font-size="14" font-weight="600" letter-spacing="0.15px">Business</text>
++</svg>
+diff --git a/apps/landing/public/verifactu.business logo blanco.png b/apps/landing/public/verifactu.business logo blanco.png
+deleted file mode 100644
+index 05539b98..00000000
+Binary files a/apps/landing/public/verifactu.business logo blanco.png and /dev/null differ
+diff --git a/apps/landing/public/verifactu.business logo.png b/apps/landing/public/verifactu.business logo.png
+deleted file mode 100644
+index 84ccb1c0..00000000
+Binary files a/apps/landing/public/verifactu.business logo.png and /dev/null differ
+diff --git a/apps/landing/route.ts b/apps/landing/route.ts
+index a184e641..75f4549a 100644
+--- a/apps/landing/route.ts
++++ b/apps/landing/route.ts
+@@ -1,41 +1,15 @@
+ import { NextResponse } from "next/server";
+-import Stripe from "stripe";
+-import { stripe } from "@/lib/stripe";
+-import { db } from "@/lib/db";
+-
+-const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
+ 
++/**
++ * Webhook stub to keep the landing self-contained during previews.
++ * Replace with real Stripe handling in the production API service.
++ */
+ export async function POST(req: Request) {
+   const body = await req.text();
+-  const sig = req.headers.get("stripe-signature")!;
+-
+-  let event: Stripe.Event;
+-
+-  try {
+-    event = stripe.webhooks.constructEvent(body, sig, WEBHOOK_SECRET);
+-  } catch (err) {
+-    const message = err instanceof Error ? err.message : "Unknown error";
+-    return NextResponse.json({ error: `Webhook Error: ${message}` }, { status: 400 });
+-  }
+ 
+-  // Gestionar eventos
+-  switch (event.type) {
+-    case "checkout.session.completed": {
+-      const session = event.data.object;
+-      const userId = session.metadata?.userId;
+-      const stripeSubscriptionId = session.subscription;
+-      // Lógica para actualizar la suscripción del usuario en tu BD
+-      console.log(`Usuario ${userId} ha iniciado la suscripción ${stripeSubscriptionId}`);
+-      break;
+-    }
+-    case "invoice.paid": {
+-      const invoice = event.data.object;
+-      // Lógica para registrar el pago y conciliar la factura
+-      console.log(`Factura ${invoice.id} pagada por ${invoice.customer_email}`);
+-      break;
+-    }
+-    // ... otros eventos
+-  }
++  console.info("Webhook request received (stub)", {
++    length: body.length,
++  });
+ 
+   return NextResponse.json({ received: true });
+ }
+\ No newline at end of file
+diff --git a/apps/landing/scripts/capture-preview.js b/apps/landing/scripts/capture-preview.js
+new file mode 100644
+index 00000000..00ba2287
+--- /dev/null
++++ b/apps/landing/scripts/capture-preview.js
+@@ -0,0 +1,26 @@
++import { mkdir } from "node:fs/promises";
++import { dirname, resolve } from "node:path";
++import { chromium } from "playwright";
++
++const url = process.argv[2] || process.env.LANDING_URL || "http://localhost:3000";
++const outputPath = process.argv[3] || process.env.OUTPUT_PATH || "artifacts/landing-preview.png";
++
++async function capture() {
++  const browser = await chromium.launch({ headless: true });
++  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
++
++  await page.goto(url, { waitUntil: "networkidle" });
++  await page.waitForTimeout(2000);
++
++  const absoluteOutput = resolve(outputPath);
++  await mkdir(dirname(absoluteOutput), { recursive: true });
++  await page.screenshot({ path: absoluteOutput, fullPage: true });
++
++  await browser.close();
++  console.log(`Screenshot saved to ${absoluteOutput}`);
++}
++
++capture().catch((error) => {
++  console.error("Failed to capture preview", error);
++  process.exitCode = 1;
++});
+diff --git a/package-lock.json b/package-lock.json
+index 599b980f..64839977 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -55,7 +55,7 @@
+         "apexcharts": "^4.3.0",
+         "autoprefixer": "^10.4.20",
+         "flatpickr": "^4.6.13",
+-        "next": "14.2.33",
++        "next": "^14.2.35",
+         "react": "^18.2.0",
+         "react-apexcharts": "^1.7.0",
+         "react-dnd": "^16.0.1",
+@@ -79,238 +79,14 @@
+         "typescript": "^5"
+       }
+     },
+-    "apps/app/node_modules/@eslint/js": {
+-      "version": "9.39.1",
+-      "resolved": "https://registry.npmjs.org/@eslint/js/-/js-9.39.1.tgz",
+-      "integrity": "sha512-S26Stp4zCy88tH94QbBv3XCuzRQiZ9yXofEILmglYTh/Ug/a9/umqvgFtYBAo3Lp0nsI/5/qH1CCrbdK3AP1Tw==",
+-      "dev": true,
+-      "license": "MIT",
+-      "engines": {
+-        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+-      },
+-      "funding": {
+-        "url": "https://eslint.org/donate"
+-      }
+-    },
+-    "apps/app/node_modules/@next/eslint-plugin-next": {
+-      "version": "16.0.7",
+-      "resolved": "https://registry.npmjs.org/@next/eslint-plugin-next/-/eslint-plugin-next-16.0.7.tgz",
+-      "integrity": "sha512-hFrTNZcMEG+k7qxVxZJq3F32Kms130FAhG8lvw2zkKBgAcNOJIxlljNiCjGygvBshvaGBdf88q2CqWtnqezDHA==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "fast-glob": "3.3.1"
+-      }
+-    },
+-    "apps/app/node_modules/brace-expansion": {
+-      "version": "1.1.12",
+-      "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.12.tgz",
+-      "integrity": "sha512-9T9UjW3r0UW5c1Q7GTwllptXwhvYmEzFhzMfZ9H7FQWt+uZePjZPjBP/W1ZEyZ1twGWom5/56TF4lPcqjnDHcg==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "balanced-match": "^1.0.0",
+-        "concat-map": "0.0.1"
+-      }
+-    },
+-    "apps/app/node_modules/eslint": {
+-      "version": "9.39.1",
+-      "resolved": "https://registry.npmjs.org/eslint/-/eslint-9.39.1.tgz",
+-      "integrity": "sha512-BhHmn2yNOFA9H9JmmIVKJmd288g9hrVRDkdoIgRCRuSySRUHH7r/DI6aAXW9T1WwUuY3DFgrcaqB+deURBLR5g==",
+-      "dev": true,
+-      "license": "MIT",
+-      "peer": true,
+-      "dependencies": {
+-        "@eslint-community/eslint-utils": "^4.8.0",
+-        "@eslint-community/regexpp": "^4.12.1",
+-        "@eslint/config-array": "^0.21.1",
+-        "@eslint/config-helpers": "^0.4.2",
+-        "@eslint/core": "^0.17.0",
+-        "@eslint/eslintrc": "^3.3.1",
+-        "@eslint/js": "9.39.1",
+-        "@eslint/plugin-kit": "^0.4.1",
+-        "@humanfs/node": "^0.16.6",
+-        "@humanwhocodes/module-importer": "^1.0.1",
+-        "@humanwhocodes/retry": "^0.4.2",
+-        "@types/estree": "^1.0.6",
+-        "ajv": "^6.12.4",
+-        "chalk": "^4.0.0",
+-        "cross-spawn": "^7.0.6",
+-        "debug": "^4.3.2",
+-        "escape-string-regexp": "^4.0.0",
+-        "eslint-scope": "^8.4.0",
+-        "eslint-visitor-keys": "^4.2.1",
+-        "espree": "^10.4.0",
+-        "esquery": "^1.5.0",
+-        "esutils": "^2.0.2",
+-        "fast-deep-equal": "^3.1.3",
+-        "file-entry-cache": "^8.0.0",
+-        "find-up": "^5.0.0",
+-        "glob-parent": "^6.0.2",
+-        "ignore": "^5.2.0",
+-        "imurmurhash": "^0.1.4",
+-        "is-glob": "^4.0.0",
+-        "json-stable-stringify-without-jsonify": "^1.0.1",
+-        "lodash.merge": "^4.6.2",
+-        "minimatch": "^3.1.2",
+-        "natural-compare": "^1.4.0",
+-        "optionator": "^0.9.3"
+-      },
+-      "bin": {
+-        "eslint": "bin/eslint.js"
+-      },
+-      "engines": {
+-        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+-      },
+-      "funding": {
+-        "url": "https://eslint.org/donate"
+-      },
+-      "peerDependencies": {
+-        "jiti": "*"
+-      },
+-      "peerDependenciesMeta": {
+-        "jiti": {
+-          "optional": true
+-        }
+-      }
+-    },
+-    "apps/app/node_modules/eslint-config-next": {
+-      "version": "16.0.7",
+-      "resolved": "https://registry.npmjs.org/eslint-config-next/-/eslint-config-next-16.0.7.tgz",
+-      "integrity": "sha512-WubFGLFHfk2KivkdRGfx6cGSFhaQqhERRfyO8BRx+qiGPGp7WLKcPvYC4mdx1z3VhVRcrfFzczjjTrbJZOpnEQ==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "@next/eslint-plugin-next": "16.0.7",
+-        "eslint-import-resolver-node": "^0.3.6",
+-        "eslint-import-resolver-typescript": "^3.5.2",
+-        "eslint-plugin-import": "^2.32.0",
+-        "eslint-plugin-jsx-a11y": "^6.10.0",
+-        "eslint-plugin-react": "^7.37.0",
+-        "eslint-plugin-react-hooks": "^7.0.0",
+-        "globals": "16.4.0",
+-        "typescript-eslint": "^8.46.0"
+-      },
+-      "peerDependencies": {
+-        "eslint": ">=9.0.0",
+-        "typescript": ">=3.3.1"
+-      },
+-      "peerDependenciesMeta": {
+-        "typescript": {
+-          "optional": true
+-        }
+-      }
+-    },
+-    "apps/app/node_modules/eslint-plugin-react-hooks": {
+-      "version": "7.0.1",
+-      "resolved": "https://registry.npmjs.org/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-7.0.1.tgz",
+-      "integrity": "sha512-O0d0m04evaNzEPoSW+59Mezf8Qt0InfgGIBJnpC0h3NH/WjUAR7BIKUfysC6todmtiZ/A0oUVS8Gce0WhBrHsA==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "@babel/core": "^7.24.4",
+-        "@babel/parser": "^7.24.4",
+-        "hermes-parser": "^0.25.1",
+-        "zod": "^3.25.0 || ^4.0.0",
+-        "zod-validation-error": "^3.5.0 || ^4.0.0"
+-      },
+-      "engines": {
+-        "node": ">=18"
+-      },
+-      "peerDependencies": {
+-        "eslint": "^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0"
+-      }
+-    },
+-    "apps/app/node_modules/eslint-scope": {
+-      "version": "8.4.0",
+-      "resolved": "https://registry.npmjs.org/eslint-scope/-/eslint-scope-8.4.0.tgz",
+-      "integrity": "sha512-sNXOfKCn74rt8RICKMvJS7XKV/Xk9kA7DyJr8mJik3S7Cwgy3qlkkmyS2uQB3jiJg6VNdZd/pDBJu0nvG2NlTg==",
+-      "dev": true,
+-      "license": "BSD-2-Clause",
+-      "dependencies": {
+-        "esrecurse": "^4.3.0",
+-        "estraverse": "^5.2.0"
+-      },
+-      "engines": {
+-        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+-      },
+-      "funding": {
+-        "url": "https://opencollective.com/eslint"
+-      }
+-    },
+-    "apps/app/node_modules/eslint-visitor-keys": {
+-      "version": "4.2.1",
+-      "resolved": "https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-4.2.1.tgz",
+-      "integrity": "sha512-Uhdk5sfqcee/9H/rCOJikYz67o0a2Tw2hGRPOG2Y1R2dg7brRe1uG0yaNQDHu+TO/uQPF/5eCapvYSmHUjt7JQ==",
+-      "dev": true,
+-      "license": "Apache-2.0",
+-      "engines": {
+-        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+-      },
+-      "funding": {
+-        "url": "https://opencollective.com/eslint"
+-      }
+-    },
+-    "apps/app/node_modules/file-entry-cache": {
+-      "version": "8.0.0",
+-      "resolved": "https://registry.npmjs.org/file-entry-cache/-/file-entry-cache-8.0.0.tgz",
+-      "integrity": "sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "flat-cache": "^4.0.0"
+-      },
+-      "engines": {
+-        "node": ">=16.0.0"
+-      }
+-    },
+-    "apps/app/node_modules/flat-cache": {
+-      "version": "4.0.1",
+-      "resolved": "https://registry.npmjs.org/flat-cache/-/flat-cache-4.0.1.tgz",
+-      "integrity": "sha512-f7ccFPK3SXFHpx15UIGyRJ/FJQctuKZ0zVuN3frBo4HnK3cay9VEW0R6yPYFHC0AgqhukPzKjq22t5DmAyqGyw==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "flatted": "^3.2.9",
+-        "keyv": "^4.5.4"
+-      },
+-      "engines": {
+-        "node": ">=16"
+-      }
+-    },
+-    "apps/app/node_modules/globals": {
+-      "version": "16.4.0",
+-      "resolved": "https://registry.npmjs.org/globals/-/globals-16.4.0.tgz",
+-      "integrity": "sha512-ob/2LcVVaVGCYN+r14cnwnoDPUufjiYgSqRhiFD0Q1iI4Odora5RE8Iv1D24hAz5oMophRGkGz+yuvQmmUMnMw==",
+-      "dev": true,
+-      "license": "MIT",
+-      "engines": {
+-        "node": ">=18"
+-      },
+-      "funding": {
+-        "url": "https://github.com/sponsors/sindresorhus"
+-      }
+-    },
+-    "apps/app/node_modules/minimatch": {
+-      "version": "3.1.2",
+-      "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-3.1.2.tgz",
+-      "integrity": "sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==",
+-      "dev": true,
+-      "license": "ISC",
+-      "dependencies": {
+-        "brace-expansion": "^1.1.7"
+-      },
+-      "engines": {
+-        "node": "*"
+-      }
+-    },
+     "apps/landing": {
+       "name": "verifactu-landing",
+       "version": "1.0.0",
+       "dependencies": {
+         "@stripe/stripe-js": "^4.1.0",
+         "bcrypt": "^5.1.1",
+-        "next": "^14.2.33",
++        "next": "^14.2.35",
++        "next-auth": "^4.24.13",
+         "react": "18.2.0",
+         "react-dom": "18.2.0",
+         "resend": "^3.4.0",
+@@ -320,6 +96,7 @@
+         "@types/bcrypt": "^5.0.2",
+         "@types/node": "24.8.1",
+         "@types/react": "18",
++        "playwright": "^1.57.0",
+         "typescript": "5.9.3"
+       }
+     },
+@@ -338,7 +115,6 @@
+       "resolved": "https://registry.npmjs.org/react/-/react-18.2.0.tgz",
+       "integrity": "sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==",
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "loose-envify": "^1.1.0"
+       },
+@@ -390,7 +166,6 @@
+       "integrity": "sha512-e7jT4DxYvIDLk1ZHmU/m/mB19rex9sv0c2ftBtjSBv+kVM/902eh0fINUzD7UwLLNR+jU585GxUJ8/EBfAM5fw==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "@babel/code-frame": "^7.27.1",
+         "@babel/generator": "^7.28.5",
+@@ -2183,6 +1958,19 @@
+         "eslint": "^6.0.0 || ^7.0.0 || >=8.0.0"
+       }
+     },
++    "node_modules/@eslint-community/eslint-utils/node_modules/eslint-visitor-keys": {
++      "version": "3.4.3",
++      "resolved": "https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-3.4.3.tgz",
++      "integrity": "sha512-wpc+LXeiyiisxPlEkUzU6svyS1frIO3Mgxj1fdy7Pm8Ygzguax2N3Fa/D/ag1WqbOprdI+uY6wMUl8/a2G+iag==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "engines": {
++        "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
++      },
++      "funding": {
++        "url": "https://opencollective.com/eslint"
++      }
++    },
+     "node_modules/@eslint-community/regexpp": {
+       "version": "4.12.2",
+       "resolved": "https://registry.npmjs.org/@eslint-community/regexpp/-/regexpp-4.12.2.tgz",
+@@ -2307,13 +2095,16 @@
+       }
+     },
+     "node_modules/@eslint/js": {
+-      "version": "8.57.1",
+-      "resolved": "https://registry.npmjs.org/@eslint/js/-/js-8.57.1.tgz",
+-      "integrity": "sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==",
++      "version": "9.39.2",
++      "resolved": "https://registry.npmjs.org/@eslint/js/-/js-9.39.2.tgz",
++      "integrity": "sha512-q1mjIoW1VX4IvSocvM/vbTiveKC4k9eLrajNEuSsmjymSDEbpGddtpfOoN7YGAqBK3NG+uqo8ia4PDTt8buCYA==",
+       "dev": true,
+       "license": "MIT",
+       "engines": {
+-        "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
++        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
++      },
++      "funding": {
++        "url": "https://eslint.org/donate"
+       }
+     },
+     "node_modules/@eslint/object-schema": {
+@@ -2345,7 +2136,6 @@
+       "resolved": "https://registry.npmjs.org/@fullcalendar/core/-/core-6.1.19.tgz",
+       "integrity": "sha512-z0aVlO5e4Wah6p6mouM0UEqtRf1MZZPt4mwzEyU6kusaNL+dlWQgAasF2cK23hwT4cmxkEmr4inULXgpyeExdQ==",
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "preact": "~10.12.1"
+       }
+@@ -2424,46 +2214,6 @@
+         "node": ">=18.18.0"
+       }
+     },
+-    "node_modules/@humanwhocodes/config-array": {
+-      "version": "0.13.0",
+-      "resolved": "https://registry.npmjs.org/@humanwhocodes/config-array/-/config-array-0.13.0.tgz",
+-      "integrity": "sha512-DZLEEqFWQFiyK6h5YIeynKx7JlvCYWL0cImfSRXZ9l4Sg2efkFGTuFf6vzXjK1cq6IYkU+Eg/JizXw+TD2vRNw==",
+-      "deprecated": "Use @eslint/config-array instead",
+-      "dev": true,
+-      "license": "Apache-2.0",
+-      "dependencies": {
+-        "@humanwhocodes/object-schema": "^2.0.3",
+-        "debug": "^4.3.1",
+-        "minimatch": "^3.0.5"
+-      },
+-      "engines": {
+-        "node": ">=10.10.0"
+-      }
+-    },
+-    "node_modules/@humanwhocodes/config-array/node_modules/brace-expansion": {
+-      "version": "1.1.12",
+-      "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.12.tgz",
+-      "integrity": "sha512-9T9UjW3r0UW5c1Q7GTwllptXwhvYmEzFhzMfZ9H7FQWt+uZePjZPjBP/W1ZEyZ1twGWom5/56TF4lPcqjnDHcg==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "balanced-match": "^1.0.0",
+-        "concat-map": "0.0.1"
+-      }
+-    },
+-    "node_modules/@humanwhocodes/config-array/node_modules/minimatch": {
+-      "version": "3.1.2",
+-      "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-3.1.2.tgz",
+-      "integrity": "sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==",
+-      "dev": true,
+-      "license": "ISC",
+-      "dependencies": {
+-        "brace-expansion": "^1.1.7"
+-      },
+-      "engines": {
+-        "node": "*"
+-      }
+-    },
+     "node_modules/@humanwhocodes/module-importer": {
+       "version": "1.0.1",
+       "resolved": "https://registry.npmjs.org/@humanwhocodes/module-importer/-/module-importer-1.0.1.tgz",
+@@ -2478,14 +2228,6 @@
+         "url": "https://github.com/sponsors/nzakas"
+       }
+     },
+-    "node_modules/@humanwhocodes/object-schema": {
+-      "version": "2.0.3",
+-      "resolved": "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-2.0.3.tgz",
+-      "integrity": "sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==",
+-      "deprecated": "Use @eslint/object-schema instead",
+-      "dev": true,
+-      "license": "BSD-3-Clause"
+-    },
+     "node_modules/@humanwhocodes/retry": {
+       "version": "0.4.3",
+       "resolved": "https://registry.npmjs.org/@humanwhocodes/retry/-/retry-0.4.3.tgz",
+@@ -3072,11 +2814,21 @@
+       }
+     },
+     "node_modules/@next/env": {
+-      "version": "14.2.33",
+-      "resolved": "https://registry.npmjs.org/@next/env/-/env-14.2.33.tgz",
+-      "integrity": "sha512-CgVHNZ1fRIlxkLhIX22flAZI/HmpDaZ8vwyJ/B0SDPTBuLZ1PJ+DWMjCHhqnExfmSQzA/PbZi8OAc7PAq2w9IA==",
++      "version": "14.2.35",
++      "resolved": "https://registry.npmjs.org/@next/env/-/env-14.2.35.tgz",
++      "integrity": "sha512-DuhvCtj4t9Gwrx80dmz2F4t/zKQ4ktN8WrMwOuVzkJfBilwAwGr6v16M5eI8yCuZ63H9TTuEU09Iu2HqkzFPVQ==",
+       "license": "MIT"
+     },
++    "node_modules/@next/eslint-plugin-next": {
++      "version": "16.0.7",
++      "resolved": "https://registry.npmjs.org/@next/eslint-plugin-next/-/eslint-plugin-next-16.0.7.tgz",
++      "integrity": "sha512-hFrTNZcMEG+k7qxVxZJq3F32Kms130FAhG8lvw2zkKBgAcNOJIxlljNiCjGygvBshvaGBdf88q2CqWtnqezDHA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "fast-glob": "3.3.1"
++      }
++    },
+     "node_modules/@next/swc-darwin-arm64": {
+       "version": "14.2.33",
+       "resolved": "https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-14.2.33.tgz",
+@@ -3287,6 +3039,15 @@
+       "integrity": "sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==",
+       "license": "MIT"
+     },
++    "node_modules/@panva/hkdf": {
++      "version": "1.2.1",
++      "resolved": "https://registry.npmjs.org/@panva/hkdf/-/hkdf-1.2.1.tgz",
++      "integrity": "sha512-6oclG6Y3PiDFcoyk8srjLfVKyMfVCKJ27JwNPViuXziFpmdz+MZnZN/aKY0JGXgYuO/VghU0jcOAZgWXZ1Dmrw==",
++      "license": "MIT",
++      "funding": {
++        "url": "https://github.com/sponsors/panva"
++      }
++    },
+     "node_modules/@paralleldrive/cuid2": {
+       "version": "2.3.1",
+       "resolved": "https://registry.npmjs.org/@paralleldrive/cuid2/-/cuid2-2.3.1.tgz",
+@@ -3482,7 +3243,6 @@
+       "resolved": "https://registry.npmjs.org/@svgdotjs/svg.js/-/svg.js-3.2.5.tgz",
+       "integrity": "sha512-/VNHWYhNu+BS7ktbYoVGrCmsXDh+chFMaONMwGNdIBcFHrWqk2jY8fNyr3DLdtQUIalvkPfM554ZSFa3dm3nxQ==",
+       "license": "MIT",
+-      "peer": true,
+       "funding": {
+         "type": "github",
+         "url": "https://github.com/sponsors/Fuzzyma"
+@@ -3506,7 +3266,6 @@
+       "resolved": "https://registry.npmjs.org/@svgdotjs/svg.select.js/-/svg.select.js-4.0.3.tgz",
+       "integrity": "sha512-qkMgso1sd2hXKd1FZ1weO7ANq12sNmQJeGDjs46QwDVsxSRcHmvWKL2NDF7Yimpwf3sl5esOLkPqtV2bQ3v/Jg==",
+       "license": "MIT",
+-      "peer": true,
+       "engines": {
+         "node": ">= 14.18"
+       },
+@@ -3657,9 +3416,9 @@
+       "license": "MIT"
+     },
+     "node_modules/@types/node": {
+-      "version": "20.19.25",
+-      "resolved": "https://registry.npmjs.org/@types/node/-/node-20.19.25.tgz",
+-      "integrity": "sha512-ZsJzA5thDQMSQO788d7IocwwQbI8B5OPzmqNvpf3NY/+MHDAS759Wo0gd2WQeXYt5AAAQjzcrTVC6SKCuYgoCQ==",
++      "version": "20.19.27",
++      "resolved": "https://registry.npmjs.org/@types/node/-/node-20.19.27.tgz",
++      "integrity": "sha512-N2clP5pJhB2YnZJ3PIHFk5RkygRX5WO/5f0WC08tp0wd+sv0rsJk3MqWn3CbNmT2J505a5336jaQj4ph1AdMug==",
+       "license": "MIT",
+       "dependencies": {
+         "undici-types": "~6.21.0"
+@@ -3684,7 +3443,6 @@
+       "integrity": "sha512-cisd7gxkzjBKU2GgdYrTdtQx1SORymWyaAFhaxQPK9bYO9ot3Y5OikQRvY0VYQtvwjeQnizCINJAenh/V7MK2w==",
+       "devOptional": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "@types/prop-types": "*",
+         "csstype": "^3.2.2"
+@@ -3735,18 +3493,17 @@
+       "license": "MIT"
+     },
+     "node_modules/@typescript-eslint/eslint-plugin": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/@typescript-eslint/eslint-plugin/-/eslint-plugin-8.48.1.tgz",
+-      "integrity": "sha512-X63hI1bxl5ohelzr0LY5coufyl0LJNthld+abwxpCoo6Gq+hSqhKwci7MUWkXo67mzgUK6YFByhmaHmUcuBJmA==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/@typescript-eslint/eslint-plugin/-/eslint-plugin-8.50.0.tgz",
++      "integrity": "sha512-O7QnmOXYKVtPrfYzMolrCTfkezCJS9+ljLdKW/+DCvRsc3UAz+sbH6Xcsv7p30+0OwUbeWfUDAQE0vpabZ3QLg==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+         "@eslint-community/regexpp": "^4.10.0",
+-        "@typescript-eslint/scope-manager": "8.48.1",
+-        "@typescript-eslint/type-utils": "8.48.1",
+-        "@typescript-eslint/utils": "8.48.1",
+-        "@typescript-eslint/visitor-keys": "8.48.1",
+-        "graphemer": "^1.4.0",
++        "@typescript-eslint/scope-manager": "8.50.0",
++        "@typescript-eslint/type-utils": "8.50.0",
++        "@typescript-eslint/utils": "8.50.0",
++        "@typescript-eslint/visitor-keys": "8.50.0",
+         "ignore": "^7.0.0",
+         "natural-compare": "^1.4.0",
+         "ts-api-utils": "^2.1.0"
+@@ -3759,7 +3516,7 @@
+         "url": "https://opencollective.com/typescript-eslint"
+       },
+       "peerDependencies": {
+-        "@typescript-eslint/parser": "^8.48.1",
++        "@typescript-eslint/parser": "^8.50.0",
+         "eslint": "^8.57.0 || ^9.0.0",
+         "typescript": ">=4.8.4 <6.0.0"
+       }
+@@ -3775,17 +3532,16 @@
+       }
+     },
+     "node_modules/@typescript-eslint/parser": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/@typescript-eslint/parser/-/parser-8.48.1.tgz",
+-      "integrity": "sha512-PC0PDZfJg8sP7cmKe6L3QIL8GZwU5aRvUFedqSIpw3B+QjRSUZeeITC2M5XKeMXEzL6wccN196iy3JLwKNvDVA==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/@typescript-eslint/parser/-/parser-8.50.0.tgz",
++      "integrity": "sha512-6/cmF2piao+f6wSxUsJLZjck7OQsYyRtcOZS02k7XINSNlz93v6emM8WutDQSXnroG2xwYlEVHJI+cPA7CPM3Q==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+-        "@typescript-eslint/scope-manager": "8.48.1",
+-        "@typescript-eslint/types": "8.48.1",
+-        "@typescript-eslint/typescript-estree": "8.48.1",
+-        "@typescript-eslint/visitor-keys": "8.48.1",
++        "@typescript-eslint/scope-manager": "8.50.0",
++        "@typescript-eslint/types": "8.50.0",
++        "@typescript-eslint/typescript-estree": "8.50.0",
++        "@typescript-eslint/visitor-keys": "8.50.0",
+         "debug": "^4.3.4"
+       },
+       "engines": {
+@@ -3801,14 +3557,14 @@
+       }
+     },
+     "node_modules/@typescript-eslint/project-service": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/@typescript-eslint/project-service/-/project-service-8.48.1.tgz",
+-      "integrity": "sha512-HQWSicah4s9z2/HifRPQ6b6R7G+SBx64JlFQpgSSHWPKdvCZX57XCbszg/bapbRsOEv42q5tayTYcEFpACcX1w==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/@typescript-eslint/project-service/-/project-service-8.50.0.tgz",
++      "integrity": "sha512-Cg/nQcL1BcoTijEWyx4mkVC56r8dj44bFDvBdygifuS20f3OZCHmFbjF34DPSi07kwlFvqfv/xOLnJ5DquxSGQ==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@typescript-eslint/tsconfig-utils": "^8.48.1",
+-        "@typescript-eslint/types": "^8.48.1",
++        "@typescript-eslint/tsconfig-utils": "^8.50.0",
++        "@typescript-eslint/types": "^8.50.0",
+         "debug": "^4.3.4"
+       },
+       "engines": {
+@@ -3823,14 +3579,14 @@
+       }
+     },
+     "node_modules/@typescript-eslint/scope-manager": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/@typescript-eslint/scope-manager/-/scope-manager-8.48.1.tgz",
+-      "integrity": "sha512-rj4vWQsytQbLxC5Bf4XwZ0/CKd362DkWMUkviT7DCS057SK64D5lH74sSGzhI6PDD2HCEq02xAP9cX68dYyg1w==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/@typescript-eslint/scope-manager/-/scope-manager-8.50.0.tgz",
++      "integrity": "sha512-xCwfuCZjhIqy7+HKxBLrDVT5q/iq7XBVBXLn57RTIIpelLtEIZHXAF/Upa3+gaCpeV1NNS5Z9A+ID6jn50VD4A==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@typescript-eslint/types": "8.48.1",
+-        "@typescript-eslint/visitor-keys": "8.48.1"
++        "@typescript-eslint/types": "8.50.0",
++        "@typescript-eslint/visitor-keys": "8.50.0"
+       },
+       "engines": {
+         "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+@@ -3841,9 +3597,9 @@
+       }
+     },
+     "node_modules/@typescript-eslint/tsconfig-utils": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/@typescript-eslint/tsconfig-utils/-/tsconfig-utils-8.48.1.tgz",
+-      "integrity": "sha512-k0Jhs4CpEffIBm6wPaCXBAD7jxBtrHjrSgtfCjUvPp9AZ78lXKdTR8fxyZO5y4vWNlOvYXRtngSZNSn+H53Jkw==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/@typescript-eslint/tsconfig-utils/-/tsconfig-utils-8.50.0.tgz",
++      "integrity": "sha512-vxd3G/ybKTSlm31MOA96gqvrRGv9RJ7LGtZCn2Vrc5htA0zCDvcMqUkifcjrWNNKXHUU3WCkYOzzVSFBd0wa2w==",
+       "dev": true,
+       "license": "MIT",
+       "engines": {
+@@ -3858,15 +3614,15 @@
+       }
+     },
+     "node_modules/@typescript-eslint/type-utils": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/@typescript-eslint/type-utils/-/type-utils-8.48.1.tgz",
+-      "integrity": "sha512-1jEop81a3LrJQLTf/1VfPQdhIY4PlGDBc/i67EVWObrtvcziysbLN3oReexHOM6N3jyXgCrkBsZpqwH0hiDOQg==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/@typescript-eslint/type-utils/-/type-utils-8.50.0.tgz",
++      "integrity": "sha512-7OciHT2lKCewR0mFoBrvZJ4AXTMe/sYOe87289WAViOocEmDjjv8MvIOT2XESuKj9jp8u3SZYUSh89QA4S1kQw==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@typescript-eslint/types": "8.48.1",
+-        "@typescript-eslint/typescript-estree": "8.48.1",
+-        "@typescript-eslint/utils": "8.48.1",
++        "@typescript-eslint/types": "8.50.0",
++        "@typescript-eslint/typescript-estree": "8.50.0",
++        "@typescript-eslint/utils": "8.50.0",
+         "debug": "^4.3.4",
+         "ts-api-utils": "^2.1.0"
+       },
+@@ -3883,9 +3639,9 @@
+       }
+     },
+     "node_modules/@typescript-eslint/types": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/@typescript-eslint/types/-/types-8.48.1.tgz",
+-      "integrity": "sha512-+fZ3LZNeiELGmimrujsDCT4CRIbq5oXdHe7chLiW8qzqyPMnn1puNstCrMNVAqwcl2FdIxkuJ4tOs/RFDBVc/Q==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/@typescript-eslint/types/-/types-8.50.0.tgz",
++      "integrity": "sha512-iX1mgmGrXdANhhITbpp2QQM2fGehBse9LbTf0sidWK6yg/NE+uhV5dfU1g6EYPlcReYmkE9QLPq/2irKAmtS9w==",
+       "dev": true,
+       "license": "MIT",
+       "engines": {
+@@ -3897,16 +3653,16 @@
+       }
+     },
+     "node_modules/@typescript-eslint/typescript-estree": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/@typescript-eslint/typescript-estree/-/typescript-estree-8.48.1.tgz",
+-      "integrity": "sha512-/9wQ4PqaefTK6POVTjJaYS0bynCgzh6ClJHGSBj06XEHjkfylzB+A3qvyaXnErEZSaxhIo4YdyBgq6j4RysxDg==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/@typescript-eslint/typescript-estree/-/typescript-estree-8.50.0.tgz",
++      "integrity": "sha512-W7SVAGBR/IX7zm1t70Yujpbk+zdPq/u4soeFSknWFdXIFuWsBGBOUu/Tn/I6KHSKvSh91OiMuaSnYp3mtPt5IQ==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@typescript-eslint/project-service": "8.48.1",
+-        "@typescript-eslint/tsconfig-utils": "8.48.1",
+-        "@typescript-eslint/types": "8.48.1",
+-        "@typescript-eslint/visitor-keys": "8.48.1",
++        "@typescript-eslint/project-service": "8.50.0",
++        "@typescript-eslint/tsconfig-utils": "8.50.0",
++        "@typescript-eslint/types": "8.50.0",
++        "@typescript-eslint/visitor-keys": "8.50.0",
+         "debug": "^4.3.4",
+         "minimatch": "^9.0.4",
+         "semver": "^7.6.0",
+@@ -3938,16 +3694,16 @@
+       }
+     },
+     "node_modules/@typescript-eslint/utils": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/@typescript-eslint/utils/-/utils-8.48.1.tgz",
+-      "integrity": "sha512-fAnhLrDjiVfey5wwFRwrweyRlCmdz5ZxXz2G/4cLn0YDLjTapmN4gcCsTBR1N2rWnZSDeWpYtgLDsJt+FpmcwA==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/@typescript-eslint/utils/-/utils-8.50.0.tgz",
++      "integrity": "sha512-87KgUXET09CRjGCi2Ejxy3PULXna63/bMYv72tCAlDJC3Yqwln0HiFJ3VJMst2+mEtNtZu5oFvX4qJGjKsnAgg==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+         "@eslint-community/eslint-utils": "^4.7.0",
+-        "@typescript-eslint/scope-manager": "8.48.1",
+-        "@typescript-eslint/types": "8.48.1",
+-        "@typescript-eslint/typescript-estree": "8.48.1"
++        "@typescript-eslint/scope-manager": "8.50.0",
++        "@typescript-eslint/types": "8.50.0",
++        "@typescript-eslint/typescript-estree": "8.50.0"
+       },
+       "engines": {
+         "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+@@ -3962,13 +3718,13 @@
+       }
+     },
+     "node_modules/@typescript-eslint/visitor-keys": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/@typescript-eslint/visitor-keys/-/visitor-keys-8.48.1.tgz",
+-      "integrity": "sha512-BmxxndzEWhE4TIEEMBs8lP3MBWN3jFPs/p6gPm/wkv02o41hI6cq9AuSmGAaTTHPtA1FTi2jBre4A9rm5ZmX+Q==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/@typescript-eslint/visitor-keys/-/visitor-keys-8.50.0.tgz",
++      "integrity": "sha512-Xzmnb58+Db78gT/CCj/PVCvK+zxbnsw6F+O1oheYszJbBSdEjVhQi3C/Xttzxgi/GLmpvOggRs1RFpiJ8+c34Q==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@typescript-eslint/types": "8.48.1",
++        "@typescript-eslint/types": "8.50.0",
+         "eslint-visitor-keys": "^4.2.1"
+       },
+       "engines": {
+@@ -3979,19 +3735,6 @@
+         "url": "https://opencollective.com/typescript-eslint"
+       }
+     },
+-    "node_modules/@typescript-eslint/visitor-keys/node_modules/eslint-visitor-keys": {
+-      "version": "4.2.1",
+-      "resolved": "https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-4.2.1.tgz",
+-      "integrity": "sha512-Uhdk5sfqcee/9H/rCOJikYz67o0a2Tw2hGRPOG2Y1R2dg7brRe1uG0yaNQDHu+TO/uQPF/5eCapvYSmHUjt7JQ==",
+-      "dev": true,
+-      "license": "Apache-2.0",
+-      "engines": {
+-        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+-      },
+-      "funding": {
+-        "url": "https://opencollective.com/eslint"
+-      }
+-    },
+     "node_modules/@ungap/structured-clone": {
+       "version": "1.3.0",
+       "resolved": "https://registry.npmjs.org/@ungap/structured-clone/-/structured-clone-1.3.0.tgz",
+@@ -4346,7 +4089,6 @@
+       "integrity": "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "bin": {
+         "acorn": "bin/acorn"
+       },
+@@ -4455,7 +4197,6 @@
+       "resolved": "https://registry.npmjs.org/apexcharts/-/apexcharts-4.7.0.tgz",
+       "integrity": "sha512-iZSrrBGvVlL+nt2B1NpqfDuBZ9jX61X9I2+XV0hlYXHtTwhwLTHDKGXjNXAgFBDLuvSYCB/rq2nPWVPRv2DrGA==",
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "@svgdotjs/svg.draggable.js": "^3.0.4",
+         "@svgdotjs/svg.filter.js": "^3.0.8",
+@@ -4715,9 +4456,9 @@
+       }
+     },
+     "node_modules/autoprefixer": {
+-      "version": "10.4.22",
+-      "resolved": "https://registry.npmjs.org/autoprefixer/-/autoprefixer-10.4.22.tgz",
+-      "integrity": "sha512-ARe0v/t9gO28Bznv6GgqARmVqcWOV3mfgUPn9becPHMiD3o9BwlRgaeccZnwTpZ7Zwqrm+c1sUSsMxIzQzc8Xg==",
++      "version": "10.4.23",
++      "resolved": "https://registry.npmjs.org/autoprefixer/-/autoprefixer-10.4.23.tgz",
++      "integrity": "sha512-YYTXSFulfwytnjAPlw8QHncHJmlvFKtczb8InXaAx9Q0LbfDnfEYDE55omerIJKihhmU61Ft+cAOSzQVaBUmeA==",
+       "funding": [
+         {
+           "type": "opencollective",
+@@ -4734,10 +4475,9 @@
+       ],
+       "license": "MIT",
+       "dependencies": {
+-        "browserslist": "^4.27.0",
+-        "caniuse-lite": "^1.0.30001754",
++        "browserslist": "^4.28.1",
++        "caniuse-lite": "^1.0.30001760",
+         "fraction.js": "^5.3.4",
+-        "normalize-range": "^0.1.2",
+         "picocolors": "^1.1.1",
+         "postcss-value-parser": "^4.2.0"
+       },
+@@ -4979,9 +4719,9 @@
+       "license": "MIT"
+     },
+     "node_modules/baseline-browser-mapping": {
+-      "version": "2.8.32",
+-      "resolved": "https://registry.npmjs.org/baseline-browser-mapping/-/baseline-browser-mapping-2.8.32.tgz",
+-      "integrity": "sha512-OPz5aBThlyLFgxyhdwf/s2+8ab3OvT7AdTNvKHBwpXomIYeXqpUUuT8LrdtxZSsWJ4R4CU1un4XGh5Ez3nlTpw==",
++      "version": "2.9.7",
++      "resolved": "https://registry.npmjs.org/baseline-browser-mapping/-/baseline-browser-mapping-2.9.7.tgz",
++      "integrity": "sha512-k9xFKplee6KIio3IDbwj+uaCLpqzOwakOgmqzPezM0sFJlFKcg30vk2wOiAJtkTSfx0SSQDSe8q+mWA/fSH5Zg==",
+       "license": "Apache-2.0",
+       "bin": {
+         "baseline-browser-mapping": "dist/cli.js"
+@@ -5082,9 +4822,9 @@
+       "license": "ISC"
+     },
+     "node_modules/browserslist": {
+-      "version": "4.28.0",
+-      "resolved": "https://registry.npmjs.org/browserslist/-/browserslist-4.28.0.tgz",
+-      "integrity": "sha512-tbydkR/CxfMwelN0vwdP/pLkDwyAASZ+VfWm4EOwlB6SWhx1sYnWLqo8N5j0rAzPfzfRaxt0mM/4wPU/Su84RQ==",
++      "version": "4.28.1",
++      "resolved": "https://registry.npmjs.org/browserslist/-/browserslist-4.28.1.tgz",
++      "integrity": "sha512-ZC5Bd0LgJXgwGqUknZY/vkUQ04r8NXnJZ3yYi4vDmSiZmC/pdSN0NbNRPxZpbtO4uAfDUAFffO8IZoM3Gj8IkA==",
+       "funding": [
+         {
+           "type": "opencollective",
+@@ -5100,13 +4840,12 @@
+         }
+       ],
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+-        "baseline-browser-mapping": "^2.8.25",
+-        "caniuse-lite": "^1.0.30001754",
+-        "electron-to-chromium": "^1.5.249",
++        "baseline-browser-mapping": "^2.9.0",
++        "caniuse-lite": "^1.0.30001759",
++        "electron-to-chromium": "^1.5.263",
+         "node-releases": "^2.0.27",
+-        "update-browserslist-db": "^1.1.4"
++        "update-browserslist-db": "^1.2.0"
+       },
+       "bin": {
+         "browserslist": "cli.js"
+@@ -5248,9 +4987,9 @@
+       }
+     },
+     "node_modules/caniuse-lite": {
+-      "version": "1.0.30001759",
+-      "resolved": "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001759.tgz",
+-      "integrity": "sha512-Pzfx9fOKoKvevQf8oCXoyNRQ5QyxJj+3O0Rqx2V5oxT61KGx8+n6hV/IUyJeifUci2clnmmKVpvtiqRzgiWjSw==",
++      "version": "1.0.30001760",
++      "resolved": "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001760.tgz",
++      "integrity": "sha512-7AAMPcueWELt1p3mi13HR/LHH0TJLT11cnwDJEs3xA4+CK/PLKeO9Kl1oru24htkyUKtkGCvAx4ohB0Ttry8Dw==",
+       "funding": [
+         {
+           "type": "opencollective",
+@@ -5913,16 +5652,16 @@
+       }
+     },
+     "node_modules/doctrine": {
+-      "version": "3.0.0",
+-      "resolved": "https://registry.npmjs.org/doctrine/-/doctrine-3.0.0.tgz",
+-      "integrity": "sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w==",
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/doctrine/-/doctrine-2.1.0.tgz",
++      "integrity": "sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==",
+       "dev": true,
+       "license": "Apache-2.0",
+       "dependencies": {
+         "esutils": "^2.0.2"
+       },
+       "engines": {
+-        "node": ">=6.0.0"
++        "node": ">=0.10.0"
+       }
+     },
+     "node_modules/dom-serializer": {
+@@ -6052,9 +5791,9 @@
+       "license": "MIT"
+     },
+     "node_modules/electron-to-chromium": {
+-      "version": "1.5.263",
+-      "resolved": "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.5.263.tgz",
+-      "integrity": "sha512-DrqJ11Knd+lo+dv+lltvfMDLU27g14LMdH2b0O3Pio4uk0x+z7OR+JrmyacTPN2M8w3BrZ7/RTwG3R9B7irPlg==",
++      "version": "1.5.267",
++      "resolved": "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.5.267.tgz",
++      "integrity": "sha512-0Drusm6MVRXSOJpGbaSVgcQsuB4hEkMpHXaVstcPmhu5LIedxs1xNK/nIxmQIU/RPC0+1/o0AVZfBTkTNJOdUw==",
+       "license": "ISC"
+     },
+     "node_modules/emittery": {
+@@ -6118,9 +5857,9 @@
+       }
+     },
+     "node_modules/es-abstract": {
+-      "version": "1.24.0",
+-      "resolved": "https://registry.npmjs.org/es-abstract/-/es-abstract-1.24.0.tgz",
+-      "integrity": "sha512-WSzPgsdLtTcQwm4CROfS5ju2Wa1QQcVeT37jFjYzdFz1r9ahadC8B8/a4qxJxM+09F18iumCdRmlr96ZYkQvEg==",
++      "version": "1.24.1",
++      "resolved": "https://registry.npmjs.org/es-abstract/-/es-abstract-1.24.1.tgz",
++      "integrity": "sha512-zHXBLhP+QehSSbsS9Pt23Gg964240DPd6QCf8WpkqEXxQ7fhdZzYsocOr5u7apWonsS5EjZDmTF+/slGMyasvw==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+@@ -6205,27 +5944,27 @@
+       }
+     },
+     "node_modules/es-iterator-helpers": {
+-      "version": "1.2.1",
+-      "resolved": "https://registry.npmjs.org/es-iterator-helpers/-/es-iterator-helpers-1.2.1.tgz",
+-      "integrity": "sha512-uDn+FE1yrDzyC0pCo961B2IHbdM8y/ACZsKD4dG6WqrjV53BADjwa7D+1aom2rsNVfLyDgU/eigvlJGJ08OQ4w==",
++      "version": "1.2.2",
++      "resolved": "https://registry.npmjs.org/es-iterator-helpers/-/es-iterator-helpers-1.2.2.tgz",
++      "integrity": "sha512-BrUQ0cPTB/IwXj23HtwHjS9n7O4h9FX94b4xc5zlTHxeLgTAdzYUDyy6KdExAl9lbN5rtfe44xpjpmj9grxs5w==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+         "call-bind": "^1.0.8",
+-        "call-bound": "^1.0.3",
++        "call-bound": "^1.0.4",
+         "define-properties": "^1.2.1",
+-        "es-abstract": "^1.23.6",
++        "es-abstract": "^1.24.1",
+         "es-errors": "^1.3.0",
+-        "es-set-tostringtag": "^2.0.3",
++        "es-set-tostringtag": "^2.1.0",
+         "function-bind": "^1.1.2",
+-        "get-intrinsic": "^1.2.6",
++        "get-intrinsic": "^1.3.0",
+         "globalthis": "^1.0.4",
+         "gopd": "^1.2.0",
+         "has-property-descriptors": "^1.0.2",
+         "has-proto": "^1.2.0",
+         "has-symbols": "^1.1.0",
+         "internal-slot": "^1.1.0",
+-        "iterator.prototype": "^1.1.4",
++        "iterator.prototype": "^1.1.5",
+         "safe-array-concat": "^1.1.3"
+       },
+       "engines": {
+@@ -6318,61 +6057,103 @@
+       }
+     },
+     "node_modules/eslint": {
+-      "version": "8.57.1",
+-      "resolved": "https://registry.npmjs.org/eslint/-/eslint-8.57.1.tgz",
+-      "integrity": "sha512-ypowyDxpVSYpkXr9WPv2PAZCtNip1Mv5KTW0SCurXv/9iOpcrH9PaqUElksqEB6pChqHGDRCFTyrZlGhnLNGiA==",
+-      "deprecated": "This version is no longer supported. Please see https://eslint.org/version-support for other options.",
++      "version": "9.39.2",
++      "resolved": "https://registry.npmjs.org/eslint/-/eslint-9.39.2.tgz",
++      "integrity": "sha512-LEyamqS7W5HB3ujJyvi0HQK/dtVINZvd5mAAp9eT5S/ujByGjiZLCzPcHVzuXbpJDJF/cxwHlfceVUDZ2lnSTw==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+-        "@eslint-community/eslint-utils": "^4.2.0",
+-        "@eslint-community/regexpp": "^4.6.1",
+-        "@eslint/eslintrc": "^2.1.4",
+-        "@eslint/js": "8.57.1",
+-        "@humanwhocodes/config-array": "^0.13.0",
++        "@eslint-community/eslint-utils": "^4.8.0",
++        "@eslint-community/regexpp": "^4.12.1",
++        "@eslint/config-array": "^0.21.1",
++        "@eslint/config-helpers": "^0.4.2",
++        "@eslint/core": "^0.17.0",
++        "@eslint/eslintrc": "^3.3.1",
++        "@eslint/js": "9.39.2",
++        "@eslint/plugin-kit": "^0.4.1",
++        "@humanfs/node": "^0.16.6",
+         "@humanwhocodes/module-importer": "^1.0.1",
+-        "@nodelib/fs.walk": "^1.2.8",
+-        "@ungap/structured-clone": "^1.2.0",
++        "@humanwhocodes/retry": "^0.4.2",
++        "@types/estree": "^1.0.6",
+         "ajv": "^6.12.4",
+         "chalk": "^4.0.0",
+-        "cross-spawn": "^7.0.2",
++        "cross-spawn": "^7.0.6",
+         "debug": "^4.3.2",
+-        "doctrine": "^3.0.0",
+         "escape-string-regexp": "^4.0.0",
+-        "eslint-scope": "^7.2.2",
+-        "eslint-visitor-keys": "^3.4.3",
+-        "espree": "^9.6.1",
+-        "esquery": "^1.4.2",
++        "eslint-scope": "^8.4.0",
++        "eslint-visitor-keys": "^4.2.1",
++        "espree": "^10.4.0",
++        "esquery": "^1.5.0",
+         "esutils": "^2.0.2",
+         "fast-deep-equal": "^3.1.3",
+-        "file-entry-cache": "^6.0.1",
++        "file-entry-cache": "^8.0.0",
+         "find-up": "^5.0.0",
+         "glob-parent": "^6.0.2",
+-        "globals": "^13.19.0",
+-        "graphemer": "^1.4.0",
+         "ignore": "^5.2.0",
+         "imurmurhash": "^0.1.4",
+         "is-glob": "^4.0.0",
+-        "is-path-inside": "^3.0.3",
+-        "js-yaml": "^4.1.0",
+         "json-stable-stringify-without-jsonify": "^1.0.1",
+-        "levn": "^0.4.1",
+         "lodash.merge": "^4.6.2",
+         "minimatch": "^3.1.2",
+         "natural-compare": "^1.4.0",
+-        "optionator": "^0.9.3",
+-        "strip-ansi": "^6.0.1",
+-        "text-table": "^0.2.0"
++        "optionator": "^0.9.3"
+       },
+       "bin": {
+         "eslint": "bin/eslint.js"
+       },
+       "engines": {
+-        "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
++        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+       },
+       "funding": {
+-        "url": "https://opencollective.com/eslint"
++        "url": "https://eslint.org/donate"
++      },
++      "peerDependencies": {
++        "jiti": "*"
++      },
++      "peerDependenciesMeta": {
++        "jiti": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/eslint-config-next": {
++      "version": "16.0.7",
++      "resolved": "https://registry.npmjs.org/eslint-config-next/-/eslint-config-next-16.0.7.tgz",
++      "integrity": "sha512-WubFGLFHfk2KivkdRGfx6cGSFhaQqhERRfyO8BRx+qiGPGp7WLKcPvYC4mdx1z3VhVRcrfFzczjjTrbJZOpnEQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@next/eslint-plugin-next": "16.0.7",
++        "eslint-import-resolver-node": "^0.3.6",
++        "eslint-import-resolver-typescript": "^3.5.2",
++        "eslint-plugin-import": "^2.32.0",
++        "eslint-plugin-jsx-a11y": "^6.10.0",
++        "eslint-plugin-react": "^7.37.0",
++        "eslint-plugin-react-hooks": "^7.0.0",
++        "globals": "16.4.0",
++        "typescript-eslint": "^8.46.0"
++      },
++      "peerDependencies": {
++        "eslint": ">=9.0.0",
++        "typescript": ">=3.3.1"
++      },
++      "peerDependenciesMeta": {
++        "typescript": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/eslint-config-next/node_modules/globals": {
++      "version": "16.4.0",
++      "resolved": "https://registry.npmjs.org/globals/-/globals-16.4.0.tgz",
++      "integrity": "sha512-ob/2LcVVaVGCYN+r14cnwnoDPUufjiYgSqRhiFD0Q1iI4Odora5RE8Iv1D24hAz5oMophRGkGz+yuvQmmUMnMw==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
+       }
+     },
+     "node_modules/eslint-import-resolver-node": {
+@@ -6515,19 +6296,6 @@
+         "ms": "^2.1.1"
+       }
+     },
+-    "node_modules/eslint-plugin-import/node_modules/doctrine": {
+-      "version": "2.1.0",
+-      "resolved": "https://registry.npmjs.org/doctrine/-/doctrine-2.1.0.tgz",
+-      "integrity": "sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==",
+-      "dev": true,
+-      "license": "Apache-2.0",
+-      "dependencies": {
+-        "esutils": "^2.0.2"
+-      },
+-      "engines": {
+-        "node": ">=0.10.0"
+-      }
+-    },
+     "node_modules/eslint-plugin-import/node_modules/minimatch": {
+       "version": "3.1.2",
+       "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-3.1.2.tgz",
+@@ -6628,6 +6396,26 @@
+         "eslint": "^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7"
+       }
+     },
++    "node_modules/eslint-plugin-react-hooks": {
++      "version": "7.0.1",
++      "resolved": "https://registry.npmjs.org/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-7.0.1.tgz",
++      "integrity": "sha512-O0d0m04evaNzEPoSW+59Mezf8Qt0InfgGIBJnpC0h3NH/WjUAR7BIKUfysC6todmtiZ/A0oUVS8Gce0WhBrHsA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/core": "^7.24.4",
++        "@babel/parser": "^7.24.4",
++        "hermes-parser": "^0.25.1",
++        "zod": "^3.25.0 || ^4.0.0",
++        "zod-validation-error": "^3.5.0 || ^4.0.0"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "peerDependencies": {
++        "eslint": "^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0"
++      }
++    },
+     "node_modules/eslint-plugin-react/node_modules/brace-expansion": {
+       "version": "1.1.12",
+       "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.12.tgz",
+@@ -6639,19 +6427,6 @@
+         "concat-map": "0.0.1"
+       }
+     },
+-    "node_modules/eslint-plugin-react/node_modules/doctrine": {
+-      "version": "2.1.0",
+-      "resolved": "https://registry.npmjs.org/doctrine/-/doctrine-2.1.0.tgz",
+-      "integrity": "sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==",
+-      "dev": true,
+-      "license": "Apache-2.0",
+-      "dependencies": {
+-        "esutils": "^2.0.2"
+-      },
+-      "engines": {
+-        "node": ">=0.10.0"
+-      }
+-    },
+     "node_modules/eslint-plugin-react/node_modules/minimatch": {
+       "version": "3.1.2",
+       "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-3.1.2.tgz",
+@@ -6684,9 +6459,9 @@
+       }
+     },
+     "node_modules/eslint-scope": {
+-      "version": "7.2.2",
+-      "resolved": "https://registry.npmjs.org/eslint-scope/-/eslint-scope-7.2.2.tgz",
+-      "integrity": "sha512-dOt21O7lTMhDM+X9mB4GX+DZrZtCUJPL/wlcTqxyrx5IvO0IYtILdtrQGQp+8n5S0gwSVmOf9NQrjMOgfQZlIg==",
++      "version": "8.4.0",
++      "resolved": "https://registry.npmjs.org/eslint-scope/-/eslint-scope-8.4.0.tgz",
++      "integrity": "sha512-sNXOfKCn74rt8RICKMvJS7XKV/Xk9kA7DyJr8mJik3S7Cwgy3qlkkmyS2uQB3jiJg6VNdZd/pDBJu0nvG2NlTg==",
+       "dev": true,
+       "license": "BSD-2-Clause",
+       "dependencies": {
+@@ -6694,102 +6469,34 @@
+         "estraverse": "^5.2.0"
+       },
+       "engines": {
+-        "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
++        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/eslint"
+       }
+     },
+     "node_modules/eslint-visitor-keys": {
+-      "version": "3.4.3",
+-      "resolved": "https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-3.4.3.tgz",
+-      "integrity": "sha512-wpc+LXeiyiisxPlEkUzU6svyS1frIO3Mgxj1fdy7Pm8Ygzguax2N3Fa/D/ag1WqbOprdI+uY6wMUl8/a2G+iag==",
+-      "dev": true,
+-      "license": "Apache-2.0",
+-      "engines": {
+-        "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
+-      },
+-      "funding": {
+-        "url": "https://opencollective.com/eslint"
+-      }
+-    },
+-    "node_modules/eslint/node_modules/@eslint/eslintrc": {
+-      "version": "2.1.4",
+-      "resolved": "https://registry.npmjs.org/@eslint/eslintrc/-/eslintrc-2.1.4.tgz",
+-      "integrity": "sha512-269Z39MS6wVJtsoUl10L60WdkhJVdPG24Q4eZTH3nnF6lpvSShEK3wQjDX9JRWAUPvPh7COouPpU9IrqaZFvtQ==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "ajv": "^6.12.4",
+-        "debug": "^4.3.2",
+-        "espree": "^9.6.0",
+-        "globals": "^13.19.0",
+-        "ignore": "^5.2.0",
+-        "import-fresh": "^3.2.1",
+-        "js-yaml": "^4.1.0",
+-        "minimatch": "^3.1.2",
+-        "strip-json-comments": "^3.1.1"
+-      },
+-      "engines": {
+-        "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
+-      },
+-      "funding": {
+-        "url": "https://opencollective.com/eslint"
+-      }
+-    },
+-    "node_modules/eslint/node_modules/ansi-regex": {
+-      "version": "5.0.1",
+-      "resolved": "https://registry.npmjs.org/ansi-regex/-/ansi-regex-5.0.1.tgz",
+-      "integrity": "sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==",
+-      "dev": true,
+-      "license": "MIT",
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+-    "node_modules/eslint/node_modules/brace-expansion": {
+-      "version": "1.1.12",
+-      "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.12.tgz",
+-      "integrity": "sha512-9T9UjW3r0UW5c1Q7GTwllptXwhvYmEzFhzMfZ9H7FQWt+uZePjZPjBP/W1ZEyZ1twGWom5/56TF4lPcqjnDHcg==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "balanced-match": "^1.0.0",
+-        "concat-map": "0.0.1"
+-      }
+-    },
+-    "node_modules/eslint/node_modules/espree": {
+-      "version": "9.6.1",
+-      "resolved": "https://registry.npmjs.org/espree/-/espree-9.6.1.tgz",
+-      "integrity": "sha512-oruZaFkjorTpF32kDSI5/75ViwGeZginGGy2NoOSg3Q9bnwlnmDm4HLnkl0RE3n+njDXR037aY1+x58Z/zFdwQ==",
++      "version": "4.2.1",
++      "resolved": "https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-4.2.1.tgz",
++      "integrity": "sha512-Uhdk5sfqcee/9H/rCOJikYz67o0a2Tw2hGRPOG2Y1R2dg7brRe1uG0yaNQDHu+TO/uQPF/5eCapvYSmHUjt7JQ==",
+       "dev": true,
+-      "license": "BSD-2-Clause",
+-      "dependencies": {
+-        "acorn": "^8.9.0",
+-        "acorn-jsx": "^5.3.2",
+-        "eslint-visitor-keys": "^3.4.1"
+-      },
++      "license": "Apache-2.0",
+       "engines": {
+-        "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
++        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/eslint"
+       }
+     },
+-    "node_modules/eslint/node_modules/globals": {
+-      "version": "13.24.0",
+-      "resolved": "https://registry.npmjs.org/globals/-/globals-13.24.0.tgz",
+-      "integrity": "sha512-AhO5QUcj8llrbG09iWhPU2B204J1xnPeL8kQmVorSsy+Sjj1sk8gIyh6cUocGmH4L0UuhAJy+hJMRA4mgA4mFQ==",
++    "node_modules/eslint/node_modules/brace-expansion": {
++      "version": "1.1.12",
++      "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.12.tgz",
++      "integrity": "sha512-9T9UjW3r0UW5c1Q7GTwllptXwhvYmEzFhzMfZ9H7FQWt+uZePjZPjBP/W1ZEyZ1twGWom5/56TF4lPcqjnDHcg==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "type-fest": "^0.20.2"
+-      },
+-      "engines": {
+-        "node": ">=8"
+-      },
+-      "funding": {
+-        "url": "https://github.com/sponsors/sindresorhus"
++        "balanced-match": "^1.0.0",
++        "concat-map": "0.0.1"
+       }
+     },
+     "node_modules/eslint/node_modules/minimatch": {
+@@ -6805,32 +6512,6 @@
+         "node": "*"
+       }
+     },
+-    "node_modules/eslint/node_modules/strip-ansi": {
+-      "version": "6.0.1",
+-      "resolved": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz",
+-      "integrity": "sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "ansi-regex": "^5.0.1"
+-      },
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+-    "node_modules/eslint/node_modules/type-fest": {
+-      "version": "0.20.2",
+-      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-0.20.2.tgz",
+-      "integrity": "sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==",
+-      "dev": true,
+-      "license": "(MIT OR CC0-1.0)",
+-      "engines": {
+-        "node": ">=10"
+-      },
+-      "funding": {
+-        "url": "https://github.com/sponsors/sindresorhus"
+-      }
+-    },
+     "node_modules/espree": {
+       "version": "10.4.0",
+       "resolved": "https://registry.npmjs.org/espree/-/espree-10.4.0.tgz",
+@@ -6849,19 +6530,6 @@
+         "url": "https://opencollective.com/eslint"
+       }
+     },
+-    "node_modules/espree/node_modules/eslint-visitor-keys": {
+-      "version": "4.2.1",
+-      "resolved": "https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-4.2.1.tgz",
+-      "integrity": "sha512-Uhdk5sfqcee/9H/rCOJikYz67o0a2Tw2hGRPOG2Y1R2dg7brRe1uG0yaNQDHu+TO/uQPF/5eCapvYSmHUjt7JQ==",
+-      "dev": true,
+-      "license": "Apache-2.0",
+-      "engines": {
+-        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+-      },
+-      "funding": {
+-        "url": "https://opencollective.com/eslint"
+-      }
+-    },
+     "node_modules/esprima": {
+       "version": "4.0.1",
+       "resolved": "https://registry.npmjs.org/esprima/-/esprima-4.0.1.tgz",
+@@ -7170,16 +6838,16 @@
+       }
+     },
+     "node_modules/file-entry-cache": {
+-      "version": "6.0.1",
+-      "resolved": "https://registry.npmjs.org/file-entry-cache/-/file-entry-cache-6.0.1.tgz",
+-      "integrity": "sha512-7Gps/XWymbLk2QLYK4NzpMOrYjMhdIxXuIvy2QBsLE6ljuodKvdkWs/cpyJJ3CVIVpH0Oi1Hvg1ovbMzLdFBBg==",
++      "version": "8.0.0",
++      "resolved": "https://registry.npmjs.org/file-entry-cache/-/file-entry-cache-8.0.0.tgz",
++      "integrity": "sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "flat-cache": "^3.0.4"
++        "flat-cache": "^4.0.0"
+       },
+       "engines": {
+-        "node": "^10.12.0 || >=12.0.0"
++        "node": ">=16.0.0"
+       }
+     },
+     "node_modules/file-selector": {
+@@ -7266,18 +6934,17 @@
+       }
+     },
+     "node_modules/flat-cache": {
+-      "version": "3.2.0",
+-      "resolved": "https://registry.npmjs.org/flat-cache/-/flat-cache-3.2.0.tgz",
+-      "integrity": "sha512-CYcENa+FtcUKLmhhqyctpclsq7QF38pKjZHsGNiSQF5r4FtoKDWabFDl3hzaEQMvT1LHEysw5twgLvpYYb4vbw==",
++      "version": "4.0.1",
++      "resolved": "https://registry.npmjs.org/flat-cache/-/flat-cache-4.0.1.tgz",
++      "integrity": "sha512-f7ccFPK3SXFHpx15UIGyRJ/FJQctuKZ0zVuN3frBo4HnK3cay9VEW0R6yPYFHC0AgqhukPzKjq22t5DmAyqGyw==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+         "flatted": "^3.2.9",
+-        "keyv": "^4.5.3",
+-        "rimraf": "^3.0.2"
++        "keyv": "^4.5.4"
+       },
+       "engines": {
+-        "node": "^10.12.0 || >=12.0.0"
++        "node": ">=16"
+       }
+     },
+     "node_modules/flatpickr": {
+@@ -7762,13 +7429,6 @@
+       "integrity": "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==",
+       "license": "ISC"
+     },
+-    "node_modules/graphemer": {
+-      "version": "1.4.0",
+-      "resolved": "https://registry.npmjs.org/graphemer/-/graphemer-1.4.0.tgz",
+-      "integrity": "sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==",
+-      "dev": true,
+-      "license": "MIT"
+-    },
+     "node_modules/has-bigints": {
+       "version": "1.1.0",
+       "resolved": "https://registry.npmjs.org/has-bigints/-/has-bigints-1.1.0.tgz",
+@@ -9398,6 +9058,15 @@
+         "node": "^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0"
+       }
+     },
++    "node_modules/jose": {
++      "version": "4.15.9",
++      "resolved": "https://registry.npmjs.org/jose/-/jose-4.15.9.tgz",
++      "integrity": "sha512-1vUQX+IdDMVPj4k8kOxgUqlcK518yluMuGZwqlr44FS1ppZB/5GWh4rZG89erpOBOJjU/OBsnCVFfapsRz6nEA==",
++      "license": "MIT",
++      "funding": {
++        "url": "https://github.com/sponsors/panva"
++      }
++    },
+     "node_modules/joycon": {
+       "version": "3.1.1",
+       "resolved": "https://registry.npmjs.org/joycon/-/joycon-3.1.1.tgz",
+@@ -9412,8 +9081,7 @@
+       "version": "3.7.1",
+       "resolved": "https://registry.npmjs.org/jquery/-/jquery-3.7.1.tgz",
+       "integrity": "sha512-m4avr8yL8kmFN8psrbFFFmB/If14iN5o9nw/NgnnM+kybDJpRsAynV2BsfpTYrTRysYUdADVD7CkUUizgkpLfg==",
+-      "license": "MIT",
+-      "peer": true
++      "license": "MIT"
+     },
+     "node_modules/js-beautify": {
+       "version": "1.15.4",
+@@ -10016,12 +9684,12 @@
+       }
+     },
+     "node_modules/next": {
+-      "version": "14.2.33",
+-      "resolved": "https://registry.npmjs.org/next/-/next-14.2.33.tgz",
+-      "integrity": "sha512-GiKHLsD00t4ACm1p00VgrI0rUFAC9cRDGReKyERlM57aeEZkOQGcZTpIbsGn0b562FTPJWmYfKwplfO9EaT6ng==",
++      "version": "14.2.35",
++      "resolved": "https://registry.npmjs.org/next/-/next-14.2.35.tgz",
++      "integrity": "sha512-KhYd2Hjt/O1/1aZVX3dCwGXM1QmOV4eNM2UTacK5gipDdPN/oHHK/4oVGy7X8GMfPMsUTUEmGlsy0EY1YGAkig==",
+       "license": "MIT",
+       "dependencies": {
+-        "@next/env": "14.2.33",
++        "@next/env": "14.2.35",
+         "@swc/helpers": "0.5.5",
+         "busboy": "1.6.0",
+         "caniuse-lite": "^1.0.30001579",
+@@ -10065,6 +9733,38 @@
+         }
+       }
+     },
++    "node_modules/next-auth": {
++      "version": "4.24.13",
++      "resolved": "https://registry.npmjs.org/next-auth/-/next-auth-4.24.13.tgz",
++      "integrity": "sha512-sgObCfcfL7BzIK76SS5TnQtc3yo2Oifp/yIpfv6fMfeBOiBJkDWF3A2y9+yqnmJ4JKc2C+nMjSjmgDeTwgN1rQ==",
++      "license": "ISC",
++      "dependencies": {
++        "@babel/runtime": "^7.20.13",
++        "@panva/hkdf": "^1.0.2",
++        "cookie": "^0.7.0",
++        "jose": "^4.15.5",
++        "oauth": "^0.9.15",
++        "openid-client": "^5.4.0",
++        "preact": "^10.6.3",
++        "preact-render-to-string": "^5.1.19",
++        "uuid": "^8.3.2"
++      },
++      "peerDependencies": {
++        "@auth/core": "0.34.3",
++        "next": "^12.2.5 || ^13 || ^14 || ^15 || ^16",
++        "nodemailer": "^7.0.7",
++        "react": "^17.0.2 || ^18 || ^19",
++        "react-dom": "^17.0.2 || ^18 || ^19"
++      },
++      "peerDependenciesMeta": {
++        "@auth/core": {
++          "optional": true
++        },
++        "nodemailer": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/next/node_modules/@swc/helpers": {
+       "version": "0.5.5",
+       "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.5.tgz",
+@@ -10307,15 +10007,6 @@
+         "node": ">=0.10.0"
+       }
+     },
+-    "node_modules/normalize-range": {
+-      "version": "0.1.2",
+-      "resolved": "https://registry.npmjs.org/normalize-range/-/normalize-range-0.1.2.tgz",
+-      "integrity": "sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==",
+-      "license": "MIT",
+-      "engines": {
+-        "node": ">=0.10.0"
+-      }
+-    },
+     "node_modules/npm-run-path": {
+       "version": "4.0.1",
+       "resolved": "https://registry.npmjs.org/npm-run-path/-/npm-run-path-4.0.1.tgz",
+@@ -10342,6 +10033,12 @@
+         "set-blocking": "^2.0.0"
+       }
+     },
++    "node_modules/oauth": {
++      "version": "0.9.15",
++      "resolved": "https://registry.npmjs.org/oauth/-/oauth-0.9.15.tgz",
++      "integrity": "sha512-a5ERWK1kh38ExDEfoO6qUHJb32rd7aYmPHuyCu3Fta/cnICvYmgd2uhuKXvPD+PXB+gCEYYEaQdIRAjCOwAKNA==",
++      "license": "MIT"
++    },
+     "node_modules/object-assign": {
+       "version": "4.1.1",
+       "resolved": "https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz",
+@@ -10351,6 +10048,15 @@
+         "node": ">=0.10.0"
+       }
+     },
++    "node_modules/object-hash": {
++      "version": "2.2.0",
++      "resolved": "https://registry.npmjs.org/object-hash/-/object-hash-2.2.0.tgz",
++      "integrity": "sha512-gScRMn0bS5fH+IuwyIFgnh9zBdo4DV+6GhygmWM9HyNJSgS0hScp1f5vjtm7oIIOiT9trXrShAkLFSc2IqKNgw==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 6"
++      }
++    },
+     "node_modules/object-inspect": {
+       "version": "1.13.4",
+       "resolved": "https://registry.npmjs.org/object-inspect/-/object-inspect-1.13.4.tgz",
+@@ -10463,6 +10169,15 @@
+         "url": "https://github.com/sponsors/ljharb"
+       }
+     },
++    "node_modules/oidc-token-hash": {
++      "version": "5.2.0",
++      "resolved": "https://registry.npmjs.org/oidc-token-hash/-/oidc-token-hash-5.2.0.tgz",
++      "integrity": "sha512-6gj2m8cJZ+iSW8bm0FXdGF0YhIQbKrfP4yWTNzxc31U6MOjfEmB1rHvlYvxI1B7t7BCi1F2vYTT6YhtQRG4hxw==",
++      "license": "MIT",
++      "engines": {
++        "node": "^10.13.0 || >=12.0.0"
++      }
++    },
+     "node_modules/on-exit-leak-free": {
+       "version": "2.1.2",
+       "resolved": "https://registry.npmjs.org/on-exit-leak-free/-/on-exit-leak-free-2.1.2.tgz",
+@@ -10509,6 +10224,33 @@
+         "url": "https://github.com/sponsors/sindresorhus"
+       }
+     },
++    "node_modules/openid-client": {
++      "version": "5.7.1",
++      "resolved": "https://registry.npmjs.org/openid-client/-/openid-client-5.7.1.tgz",
++      "integrity": "sha512-jDBPgSVfTnkIh71Hg9pRvtJc6wTwqjRkN88+gCFtYWrlP4Yx2Dsrow8uPi3qLr/aeymPF3o2+dS+wOpglK04ew==",
++      "license": "MIT",
++      "dependencies": {
++        "jose": "^4.15.9",
++        "lru-cache": "^6.0.0",
++        "object-hash": "^2.2.0",
++        "oidc-token-hash": "^5.0.3"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/panva"
++      }
++    },
++    "node_modules/openid-client/node_modules/lru-cache": {
++      "version": "6.0.0",
++      "resolved": "https://registry.npmjs.org/lru-cache/-/lru-cache-6.0.0.tgz",
++      "integrity": "sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==",
++      "license": "ISC",
++      "dependencies": {
++        "yallist": "^4.0.0"
++      },
++      "engines": {
++        "node": ">=10"
++      }
++    },
+     "node_modules/optionator": {
+       "version": "0.9.4",
+       "resolved": "https://registry.npmjs.org/optionator/-/optionator-0.9.4.tgz",
+@@ -10888,6 +10630,53 @@
+         "node": ">=8"
+       }
+     },
++    "node_modules/playwright": {
++      "version": "1.57.0",
++      "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.57.0.tgz",
++      "integrity": "sha512-ilYQj1s8sr2ppEJ2YVadYBN0Mb3mdo9J0wQ+UuDhzYqURwSoW4n1Xs5vs7ORwgDGmyEh33tRMeS8KhdkMoLXQw==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "dependencies": {
++        "playwright-core": "1.57.0"
++      },
++      "bin": {
++        "playwright": "cli.js"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "optionalDependencies": {
++        "fsevents": "2.3.2"
++      }
++    },
++    "node_modules/playwright-core": {
++      "version": "1.57.0",
++      "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.57.0.tgz",
++      "integrity": "sha512-agTcKlMw/mjBWOnD6kFZttAAGHgi/Nw0CZ2o6JqWSbMlI219lAFLZZCyqByTsvVAJq5XA5H8cA6PrvBRpBWEuQ==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "bin": {
++        "playwright-core": "cli.js"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/playwright/node_modules/fsevents": {
++      "version": "2.3.2",
++      "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz",
++      "integrity": "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==",
++      "dev": true,
++      "hasInstallScript": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^8.16.0 || ^10.6.0 || >=11.0.0"
++      }
++    },
+     "node_modules/possible-typed-array-names": {
+       "version": "1.1.0",
+       "resolved": "https://registry.npmjs.org/possible-typed-array-names/-/possible-typed-array-names-1.1.0.tgz",
+@@ -10917,7 +10706,6 @@
+         }
+       ],
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "nanoid": "^3.3.11",
+         "picocolors": "^1.1.1",
+@@ -10943,6 +10731,24 @@
+         "url": "https://opencollective.com/preact"
+       }
+     },
++    "node_modules/preact-render-to-string": {
++      "version": "5.2.6",
++      "resolved": "https://registry.npmjs.org/preact-render-to-string/-/preact-render-to-string-5.2.6.tgz",
++      "integrity": "sha512-JyhErpYOvBV1hEPwIxc/fHWXPfnEGdRKxc8gFdAZ7XV4tlzyzG847XAyEZqoDnynP88akM4eaHcSOzNcLWFguw==",
++      "license": "MIT",
++      "dependencies": {
++        "pretty-format": "^3.8.0"
++      },
++      "peerDependencies": {
++        "preact": ">=10"
++      }
++    },
++    "node_modules/preact-render-to-string/node_modules/pretty-format": {
++      "version": "3.8.0",
++      "resolved": "https://registry.npmjs.org/pretty-format/-/pretty-format-3.8.0.tgz",
++      "integrity": "sha512-WuxUnVtlWL1OfZFQFuqvnvs6MiAGk9UNsBostyBOB0Is9wb5uRESevA6rnl/rkksXaGX3GzZhPup5d6Vp1nFew==",
++      "license": "MIT"
++    },
+     "node_modules/prelude-ls": {
+       "version": "1.2.1",
+       "resolved": "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.2.1.tgz",
+@@ -11174,7 +10980,6 @@
+       "resolved": "https://registry.npmjs.org/react/-/react-18.3.1.tgz",
+       "integrity": "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==",
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "loose-envify": "^1.1.0"
+       },
+@@ -11239,7 +11044,6 @@
+       "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-18.3.1.tgz",
+       "integrity": "sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==",
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "loose-envify": "^1.1.0",
+         "scheduler": "^0.23.2"
+@@ -11737,9 +11541,9 @@
+       }
+     },
+     "node_modules/send": {
+-      "version": "0.19.1",
+-      "resolved": "https://registry.npmjs.org/send/-/send-0.19.1.tgz",
+-      "integrity": "sha512-p4rRk4f23ynFEfcD9LA0xRYngj+IyGiEYyqqOak8kaN0TvNmuxC2dcVeBn62GpCeR2CpWqyHCNScTP91QbAVFg==",
++      "version": "0.19.2",
++      "resolved": "https://registry.npmjs.org/send/-/send-0.19.2.tgz",
++      "integrity": "sha512-VMbMxbDeehAxpOtWJXlcUS5E8iXh6QmN+BkRX1GARS3wRaXEEgzCcB10gTQazO42tpNIya8xIyNx8fll1OFPrg==",
+       "license": "MIT",
+       "dependencies": {
+         "debug": "2.6.9",
+@@ -11748,13 +11552,13 @@
+         "encodeurl": "~2.0.0",
+         "escape-html": "~1.0.3",
+         "etag": "~1.8.1",
+-        "fresh": "0.5.2",
+-        "http-errors": "2.0.0",
++        "fresh": "~0.5.2",
++        "http-errors": "~2.0.1",
+         "mime": "1.6.0",
+         "ms": "2.1.3",
+-        "on-finished": "2.4.1",
++        "on-finished": "~2.4.1",
+         "range-parser": "~1.2.1",
+-        "statuses": "2.0.1"
++        "statuses": "~2.0.2"
+       },
+       "engines": {
+         "node": ">= 0.8.0"
+@@ -11775,22 +11579,6 @@
+       "integrity": "sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==",
+       "license": "MIT"
+     },
+-    "node_modules/send/node_modules/http-errors": {
+-      "version": "2.0.0",
+-      "resolved": "https://registry.npmjs.org/http-errors/-/http-errors-2.0.0.tgz",
+-      "integrity": "sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "depd": "2.0.0",
+-        "inherits": "2.0.4",
+-        "setprototypeof": "1.2.0",
+-        "statuses": "2.0.1",
+-        "toidentifier": "1.0.1"
+-      },
+-      "engines": {
+-        "node": ">= 0.8"
+-      }
+-    },
+     "node_modules/send/node_modules/mime": {
+       "version": "1.6.0",
+       "resolved": "https://registry.npmjs.org/mime/-/mime-1.6.0.tgz",
+@@ -11803,15 +11591,6 @@
+         "node": ">=4"
+       }
+     },
+-    "node_modules/send/node_modules/statuses": {
+-      "version": "2.0.1",
+-      "resolved": "https://registry.npmjs.org/statuses/-/statuses-2.0.1.tgz",
+-      "integrity": "sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==",
+-      "license": "MIT",
+-      "engines": {
+-        "node": ">= 0.8"
+-      }
+-    },
+     "node_modules/serialize-javascript": {
+       "version": "6.0.2",
+       "resolved": "https://registry.npmjs.org/serialize-javascript/-/serialize-javascript-6.0.2.tgz",
+@@ -11822,105 +11601,20 @@
+       }
+     },
+     "node_modules/serve-static": {
+-      "version": "1.16.2",
+-      "resolved": "https://registry.npmjs.org/serve-static/-/serve-static-1.16.2.tgz",
+-      "integrity": "sha512-VqpjJZKadQB/PEbEwvFdO43Ax5dFBZ2UECszz8bQ7pi7wt//PWe1P6MN7eCnjsatYtBT6EuiClbjSWP2WrIoTw==",
++      "version": "1.16.3",
++      "resolved": "https://registry.npmjs.org/serve-static/-/serve-static-1.16.3.tgz",
++      "integrity": "sha512-x0RTqQel6g5SY7Lg6ZreMmsOzncHFU7nhnRWkKgWuMTu5NN0DR5oruckMqRvacAN9d5w6ARnRBXl9xhDCgfMeA==",
+       "license": "MIT",
+       "dependencies": {
+         "encodeurl": "~2.0.0",
+         "escape-html": "~1.0.3",
+         "parseurl": "~1.3.3",
+-        "send": "0.19.0"
+-      },
+-      "engines": {
+-        "node": ">= 0.8.0"
+-      }
+-    },
+-    "node_modules/serve-static/node_modules/debug": {
+-      "version": "2.6.9",
+-      "resolved": "https://registry.npmjs.org/debug/-/debug-2.6.9.tgz",
+-      "integrity": "sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "ms": "2.0.0"
+-      }
+-    },
+-    "node_modules/serve-static/node_modules/debug/node_modules/ms": {
+-      "version": "2.0.0",
+-      "resolved": "https://registry.npmjs.org/ms/-/ms-2.0.0.tgz",
+-      "integrity": "sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==",
+-      "license": "MIT"
+-    },
+-    "node_modules/serve-static/node_modules/http-errors": {
+-      "version": "2.0.0",
+-      "resolved": "https://registry.npmjs.org/http-errors/-/http-errors-2.0.0.tgz",
+-      "integrity": "sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "depd": "2.0.0",
+-        "inherits": "2.0.4",
+-        "setprototypeof": "1.2.0",
+-        "statuses": "2.0.1",
+-        "toidentifier": "1.0.1"
+-      },
+-      "engines": {
+-        "node": ">= 0.8"
+-      }
+-    },
+-    "node_modules/serve-static/node_modules/mime": {
+-      "version": "1.6.0",
+-      "resolved": "https://registry.npmjs.org/mime/-/mime-1.6.0.tgz",
+-      "integrity": "sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==",
+-      "license": "MIT",
+-      "bin": {
+-        "mime": "cli.js"
+-      },
+-      "engines": {
+-        "node": ">=4"
+-      }
+-    },
+-    "node_modules/serve-static/node_modules/send": {
+-      "version": "0.19.0",
+-      "resolved": "https://registry.npmjs.org/send/-/send-0.19.0.tgz",
+-      "integrity": "sha512-dW41u5VfLXu8SJh5bwRmyYUbAoSB3c9uQh6L8h/KtsFREPWpbX1lrljJo186Jc4nmci/sGUZ9a0a0J2zgfq2hw==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "debug": "2.6.9",
+-        "depd": "2.0.0",
+-        "destroy": "1.2.0",
+-        "encodeurl": "~1.0.2",
+-        "escape-html": "~1.0.3",
+-        "etag": "~1.8.1",
+-        "fresh": "0.5.2",
+-        "http-errors": "2.0.0",
+-        "mime": "1.6.0",
+-        "ms": "2.1.3",
+-        "on-finished": "2.4.1",
+-        "range-parser": "~1.2.1",
+-        "statuses": "2.0.1"
++        "send": "~0.19.1"
+       },
+       "engines": {
+         "node": ">= 0.8.0"
+       }
+     },
+-    "node_modules/serve-static/node_modules/send/node_modules/encodeurl": {
+-      "version": "1.0.2",
+-      "resolved": "https://registry.npmjs.org/encodeurl/-/encodeurl-1.0.2.tgz",
+-      "integrity": "sha512-TPJXq8JqFaVYm2CWmPvnP2Iyo4ZSM7/QKcSmuMLDObfpH5fi7RUGmd/rTDf+rut/saiDiQEeVTNgAmJEdAOx0w==",
+-      "license": "MIT",
+-      "engines": {
+-        "node": ">= 0.8"
+-      }
+-    },
+-    "node_modules/serve-static/node_modules/statuses": {
+-      "version": "2.0.1",
+-      "resolved": "https://registry.npmjs.org/statuses/-/statuses-2.0.1.tgz",
+-      "integrity": "sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==",
+-      "license": "MIT",
+-      "engines": {
+-        "node": ">= 0.8"
+-      }
+-    },
+     "node_modules/set-blocking": {
+       "version": "2.0.0",
+       "resolved": "https://registry.npmjs.org/set-blocking/-/set-blocking-2.0.0.tgz",
+@@ -12124,12 +11818,12 @@
+       }
+     },
+     "node_modules/soap": {
+-      "version": "1.6.0",
+-      "resolved": "https://registry.npmjs.org/soap/-/soap-1.6.0.tgz",
+-      "integrity": "sha512-koOlNMAONSSVP38WakXEWz3WaYFupJJ08eicwrIvQsv9k2Qwz5JLLS6COqJVpIVCwffcqf8InMs+NYPw1bLOjA==",
++      "version": "1.6.1",
++      "resolved": "https://registry.npmjs.org/soap/-/soap-1.6.1.tgz",
++      "integrity": "sha512-nkxdKNtbI1EyGntUC/M1MoSWtJ90TaUjrR/8eNKn3QNBbe/xpKQmZaNc7zm7IIAjVor6uhiCECsy+OiYd24iXA==",
+       "license": "MIT",
+       "dependencies": {
+-        "axios": "^1.12.2",
++        "axios": "^1.13.1",
+         "axios-ntlm": "^1.4.6",
+         "debug": "^4.4.3",
+         "formidable": "^3.5.4",
+@@ -12699,11 +12393,10 @@
+       }
+     },
+     "node_modules/tailwindcss": {
+-      "version": "4.1.17",
+-      "resolved": "https://registry.npmjs.org/tailwindcss/-/tailwindcss-4.1.17.tgz",
+-      "integrity": "sha512-j9Ee2YjuQqYT9bbRTfTZht9W/ytp5H+jJpZKiYdP/bpnXARAuELt9ofP0lPnmHjbga7SNQIxdTAXCmtKVYjN+Q==",
+-      "license": "MIT",
+-      "peer": true
++      "version": "4.1.18",
++      "resolved": "https://registry.npmjs.org/tailwindcss/-/tailwindcss-4.1.18.tgz",
++      "integrity": "sha512-4+Z+0yiYyEtUVCScyfHCxOYP06L5Ne+JiHhY2IjR2KWMIWhJOYZKLSGZaP5HkZ8+bY0cxfzwDE5uOmzFXyIwxw==",
++      "license": "MIT"
+     },
+     "node_modules/tar": {
+       "version": "6.2.1",
+@@ -12792,13 +12485,6 @@
+         "node": "*"
+       }
+     },
+-    "node_modules/text-table": {
+-      "version": "0.2.0",
+-      "resolved": "https://registry.npmjs.org/text-table/-/text-table-0.2.0.tgz",
+-      "integrity": "sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==",
+-      "dev": true,
+-      "license": "MIT"
+-    },
+     "node_modules/thread-stream": {
+       "version": "3.1.0",
+       "resolved": "https://registry.npmjs.org/thread-stream/-/thread-stream-3.1.0.tgz",
+@@ -12849,7 +12535,6 @@
+       "integrity": "sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "engines": {
+         "node": ">=12"
+       },
+@@ -12958,27 +12643,27 @@
+       "license": "0BSD"
+     },
+     "node_modules/turbo": {
+-      "version": "2.6.1",
+-      "resolved": "https://registry.npmjs.org/turbo/-/turbo-2.6.1.tgz",
+-      "integrity": "sha512-qBwXXuDT3rA53kbNafGbT5r++BrhRgx3sAo0cHoDAeG9g1ItTmUMgltz3Hy7Hazy1ODqNpR+C7QwqL6DYB52yA==",
++      "version": "2.6.3",
++      "resolved": "https://registry.npmjs.org/turbo/-/turbo-2.6.3.tgz",
++      "integrity": "sha512-bf6YKUv11l5Xfcmg76PyWoy/e2vbkkxFNBGJSnfdSXQC33ZiUfutYh6IXidc5MhsnrFkWfdNNLyaRk+kHMLlwA==",
+       "dev": true,
+       "license": "MIT",
+       "bin": {
+         "turbo": "bin/turbo"
+       },
+       "optionalDependencies": {
+-        "turbo-darwin-64": "2.6.1",
+-        "turbo-darwin-arm64": "2.6.1",
+-        "turbo-linux-64": "2.6.1",
+-        "turbo-linux-arm64": "2.6.1",
+-        "turbo-windows-64": "2.6.1",
+-        "turbo-windows-arm64": "2.6.1"
++        "turbo-darwin-64": "2.6.3",
++        "turbo-darwin-arm64": "2.6.3",
++        "turbo-linux-64": "2.6.3",
++        "turbo-linux-arm64": "2.6.3",
++        "turbo-windows-64": "2.6.3",
++        "turbo-windows-arm64": "2.6.3"
+       }
+     },
+     "node_modules/turbo-darwin-64": {
+-      "version": "2.6.1",
+-      "resolved": "https://registry.npmjs.org/turbo-darwin-64/-/turbo-darwin-64-2.6.1.tgz",
+-      "integrity": "sha512-Dm0HwhyZF4J0uLqkhUyCVJvKM9Rw7M03v3J9A7drHDQW0qAbIGBrUijQ8g4Q9Cciw/BXRRd8Uzkc3oue+qn+ZQ==",
++      "version": "2.6.3",
++      "resolved": "https://registry.npmjs.org/turbo-darwin-64/-/turbo-darwin-64-2.6.3.tgz",
++      "integrity": "sha512-BlJJDc1CQ7SK5Y5qnl7AzpkvKSnpkfPmnA+HeU/sgny3oHZckPV2776ebO2M33CYDSor7+8HQwaodY++IINhYg==",
+       "cpu": [
+         "x64"
+       ],
+@@ -12990,9 +12675,9 @@
+       ]
+     },
+     "node_modules/turbo-darwin-arm64": {
+-      "version": "2.6.1",
+-      "resolved": "https://registry.npmjs.org/turbo-darwin-arm64/-/turbo-darwin-arm64-2.6.1.tgz",
+-      "integrity": "sha512-U0PIPTPyxdLsrC3jN7jaJUwgzX5sVUBsKLO7+6AL+OASaa1NbT1pPdiZoTkblBAALLP76FM0LlnsVQOnmjYhyw==",
++      "version": "2.6.3",
++      "resolved": "https://registry.npmjs.org/turbo-darwin-arm64/-/turbo-darwin-arm64-2.6.3.tgz",
++      "integrity": "sha512-MwVt7rBKiOK7zdYerenfCRTypefw4kZCue35IJga9CH1+S50+KTiCkT6LBqo0hHeoH2iKuI0ldTF2a0aB72z3w==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -13004,9 +12689,9 @@
+       ]
+     },
+     "node_modules/turbo-linux-64": {
+-      "version": "2.6.1",
+-      "resolved": "https://registry.npmjs.org/turbo-linux-64/-/turbo-linux-64-2.6.1.tgz",
+-      "integrity": "sha512-eM1uLWgzv89bxlK29qwQEr9xYWBhmO/EGiH22UGfq+uXr+QW1OvNKKMogSN65Ry8lElMH4LZh0aX2DEc7eC0Mw==",
++      "version": "2.6.3",
++      "resolved": "https://registry.npmjs.org/turbo-linux-64/-/turbo-linux-64-2.6.3.tgz",
++      "integrity": "sha512-cqpcw+dXxbnPtNnzeeSyWprjmuFVpHJqKcs7Jym5oXlu/ZcovEASUIUZVN3OGEM6Y/OTyyw0z09tOHNt5yBAVg==",
+       "cpu": [
+         "x64"
+       ],
+@@ -13018,9 +12703,9 @@
+       ]
+     },
+     "node_modules/turbo-linux-arm64": {
+-      "version": "2.6.1",
+-      "resolved": "https://registry.npmjs.org/turbo-linux-arm64/-/turbo-linux-arm64-2.6.1.tgz",
+-      "integrity": "sha512-MFFh7AxAQAycXKuZDrbeutfWM5Ep0CEZ9u7zs4Hn2FvOViTCzIfEhmuJou3/a5+q5VX1zTxQrKGy+4Lf5cdpsA==",
++      "version": "2.6.3",
++      "resolved": "https://registry.npmjs.org/turbo-linux-arm64/-/turbo-linux-arm64-2.6.3.tgz",
++      "integrity": "sha512-MterpZQmjXyr4uM7zOgFSFL3oRdNKeflY7nsjxJb2TklsYqiu3Z9pQ4zRVFFH8n0mLGna7MbQMZuKoWqqHb45w==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -13032,9 +12717,9 @@
+       ]
+     },
+     "node_modules/turbo-windows-64": {
+-      "version": "2.6.1",
+-      "resolved": "https://registry.npmjs.org/turbo-windows-64/-/turbo-windows-64-2.6.1.tgz",
+-      "integrity": "sha512-buq7/VAN7KOjMYi4tSZT5m+jpqyhbRU2EUTTvp6V0Ii8dAkY2tAAjQN1q5q2ByflYWKecbQNTqxmVploE0LVwQ==",
++      "version": "2.6.3",
++      "resolved": "https://registry.npmjs.org/turbo-windows-64/-/turbo-windows-64-2.6.3.tgz",
++      "integrity": "sha512-biDU70v9dLwnBdLf+daoDlNJVvqOOP8YEjqNipBHzgclbQlXbsi6Gqqelp5er81Qo3BiRgmTNx79oaZQTPb07Q==",
+       "cpu": [
+         "x64"
+       ],
+@@ -13046,9 +12731,9 @@
+       ]
+     },
+     "node_modules/turbo-windows-arm64": {
+-      "version": "2.6.1",
+-      "resolved": "https://registry.npmjs.org/turbo-windows-arm64/-/turbo-windows-arm64-2.6.1.tgz",
+-      "integrity": "sha512-7w+AD5vJp3R+FB0YOj1YJcNcOOvBior7bcHTodqp90S3x3bLgpr7tE6xOea1e8JkP7GK6ciKVUpQvV7psiwU5Q==",
++      "version": "2.6.3",
++      "resolved": "https://registry.npmjs.org/turbo-windows-arm64/-/turbo-windows-arm64-2.6.3.tgz",
++      "integrity": "sha512-dDHVKpSeukah3VsI/xMEKeTnV9V9cjlpFSUs4bmsUiLu3Yv2ENlgVEZv65wxbeE0bh0jjpmElDT+P1KaCxArQQ==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -13192,7 +12877,6 @@
+       "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==",
+       "dev": true,
+       "license": "Apache-2.0",
+-      "peer": true,
+       "bin": {
+         "tsc": "bin/tsc",
+         "tsserver": "bin/tsserver"
+@@ -13202,16 +12886,16 @@
+       }
+     },
+     "node_modules/typescript-eslint": {
+-      "version": "8.48.1",
+-      "resolved": "https://registry.npmjs.org/typescript-eslint/-/typescript-eslint-8.48.1.tgz",
+-      "integrity": "sha512-FbOKN1fqNoXp1hIl5KYpObVrp0mCn+CLgn479nmu2IsRMrx2vyv74MmsBLVlhg8qVwNFGbXSp8fh1zp8pEoC2A==",
++      "version": "8.50.0",
++      "resolved": "https://registry.npmjs.org/typescript-eslint/-/typescript-eslint-8.50.0.tgz",
++      "integrity": "sha512-Q1/6yNUmCpH94fbgMUMg2/BSAr/6U7GBk61kZTv1/asghQOWOjTlp9K8mixS5NcJmm2creY+UFfGeW/+OcA64A==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@typescript-eslint/eslint-plugin": "8.48.1",
+-        "@typescript-eslint/parser": "8.48.1",
+-        "@typescript-eslint/typescript-estree": "8.48.1",
+-        "@typescript-eslint/utils": "8.48.1"
++        "@typescript-eslint/eslint-plugin": "8.50.0",
++        "@typescript-eslint/parser": "8.50.0",
++        "@typescript-eslint/typescript-estree": "8.50.0",
++        "@typescript-eslint/utils": "8.50.0"
+       },
+       "engines": {
+         "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+@@ -13347,9 +13031,9 @@
+       }
+     },
+     "node_modules/update-browserslist-db": {
+-      "version": "1.1.4",
+-      "resolved": "https://registry.npmjs.org/update-browserslist-db/-/update-browserslist-db-1.1.4.tgz",
+-      "integrity": "sha512-q0SPT4xyU84saUX+tomz1WLkxUbuaJnR1xWt17M7fJtEJigJeWUNGUqrauFXsHnqev9y9JTRGwk13tFBuKby4A==",
++      "version": "1.2.2",
++      "resolved": "https://registry.npmjs.org/update-browserslist-db/-/update-browserslist-db-1.2.2.tgz",
++      "integrity": "sha512-E85pfNzMQ9jpKkA7+TJAi4TJN+tBCuWh5rUcS/sv6cFi+1q9LYDwDI5dpUL0u/73EElyQ8d3TEaeW4sPedBqYA==",
+       "funding": [
+         {
+           "type": "opencollective",
+@@ -13401,6 +13085,15 @@
+         "node": ">= 0.4.0"
+       }
+     },
++    "node_modules/uuid": {
++      "version": "8.3.2",
++      "resolved": "https://registry.npmjs.org/uuid/-/uuid-8.3.2.tgz",
++      "integrity": "sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==",
++      "license": "MIT",
++      "bin": {
++        "uuid": "dist/bin/uuid"
++      }
++    },
+     "node_modules/v8-to-istanbul": {
+       "version": "9.3.0",
+       "resolved": "https://registry.npmjs.org/v8-to-istanbul/-/v8-to-istanbul-9.3.0.tgz",
+@@ -13884,12 +13577,11 @@
+       }
+     },
+     "node_modules/zod": {
+-      "version": "4.1.13",
+-      "resolved": "https://registry.npmjs.org/zod/-/zod-4.1.13.tgz",
+-      "integrity": "sha512-AvvthqfqrAhNH9dnfmrfKzX5upOdjUVJYFqNSlkmGf64gRaTzlPwz99IHYnVs28qYAybvAlBV+H7pn0saFY4Ig==",
++      "version": "4.2.1",
++      "resolved": "https://registry.npmjs.org/zod/-/zod-4.2.1.tgz",
++      "integrity": "sha512-0wZ1IRqGGhMP76gLqz8EyfBXKk0J2qo2+H3fi4mcUP/KtTocoX08nmIAHl1Z2kJIZbZee8KOpBCSNPRgauucjw==",
+       "dev": true,
+       "license": "MIT",
+-      "peer": true,
+       "funding": {
+         "url": "https://github.com/sponsors/colinhacks"
+       }
