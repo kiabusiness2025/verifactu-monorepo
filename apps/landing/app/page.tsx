@@ -58,11 +58,30 @@ export default function Page() {
   );
 
   const [msgIndex, setMsgIndex] = useState(0);
+  const [pricingModel, setPricingModel] = useState<"fija" | "porcentaje" | "hibrido">("fija");
+  const [benefitTarget, setBenefitTarget] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => setMsgIndex((i) => (i + 1) % isaakMessages.length), 5200);
     return () => clearInterval(id);
   }, [isaakMessages.length]);
+
+  useEffect(() => {
+    // Contador animado para beneficio estimado en mockup
+    let frame = 0;
+    const target = 12450;
+    const duration = 1200;
+    const increment = target / (duration / 16);
+    const animate = () => {
+      frame++;
+      setBenefitTarget((prev) => {
+        const next = prev + increment;
+        return next >= target ? target : next;
+      });
+      if (frame * 16 < duration) requestAnimationFrame(animate);
+    };
+    animate();
+  }, []);
 
   const visibleMsgs = useMemo(() => {
     // Muestra 3 mensajes: el actual + 2 anteriores
@@ -91,24 +110,35 @@ export default function Page() {
                 Cumplimiento VeriFactu + IA para tu negocio
               </div>
 
-              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-                La forma más inteligente de automatizar tu facturación.
+              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
+                Factura en minutos.
+                <br />
+                <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                  Entiende tu beneficio hoy.
+                </span>
               </h1>
 
-              <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
-                Isaak centraliza emisión, valida cumplimiento VeriFactu, registra gastos con OCR desde Drive y te
-                muestra lo único que importa: <span className="font-semibold text-slate-900">ventas − gastos = beneficio</span>.
+              <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
+                Isaak automatiza tu facturación con <strong className="font-semibold text-slate-900">cumplimiento VeriFactu</strong>, 
+                registra gastos con OCR desde Drive y te propone <strong className="font-semibold text-slate-900">acciones</strong> para 
+                maximizar tu margen.
               </p>
 
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <PrimaryButton>
-                  Comenzar ahora <ArrowRight className="h-4 w-4" />
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <PrimaryButton className="group">
+                  Empezar gratis <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </PrimaryButton>
                 <SecondaryButton>Solicitar demo</SecondaryButton>
               </div>
 
-              <p className="mt-3 text-xs text-slate-500">
-                Sin tarjeta · 30 días gratis en planes de pago · Cancelación libre
+              <div className="mt-6 flex flex-wrap items-center gap-4">
+                <TrustBadge icon={<BadgeCheck className="h-4 w-4 text-blue-600" />} text="VeriFactu-ready" />
+                <TrustBadge icon={<UploadCloud className="h-4 w-4 text-blue-600" />} text="OCR desde Drive" />
+                <TrustBadge icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorios automáticos" />
+              </div>
+
+              <p className="mt-4 text-xs text-slate-500">
+                Sin tarjeta · 30 días gratis en todos los planes · Cancelación en cualquier momento
               </p>
             </motion.div>
 
@@ -118,7 +148,7 @@ export default function Page() {
               transition={{ duration: 0.65, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
               className="relative"
             >
-              <HeroMockup visibleMsgs={visibleMsgs} />
+              <HeroMockup visibleMsgs={visibleMsgs} benefitValue={benefitTarget} />
             </motion.div>
           </div>
 
@@ -132,16 +162,16 @@ export default function Page() {
       </section>
 
       {/* FEATURES */}
-      <section className="py-14">
+      <section className="py-16">
         <Container>
-          <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
             Una plataforma creada para liderar tu VeriFactu.
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-slate-600 sm:text-lg">
             Centraliza emisión, validación y análisis en un panel diseñado para autónomos, pymes y asesorías.
           </p>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <FeatureCard
               icon={<Sparkles className="h-5 w-5 text-blue-600" />}
               title="Automatización total"
@@ -166,8 +196,42 @@ export default function Page() {
         </Container>
       </section>
 
+      {/* Comandos reales con Isaak */}
+      <section className="py-16 bg-gradient-to-b from-slate-50 to-white">
+        <Container>
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
+              <Sparkles className="h-4 w-4" />
+              Comandos reales con Isaak
+            </div>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
+              Habla con Isaak como con un asesor.
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              Envía órdenes en lenguaje natural. Isaak entiende el contexto, ejecuta y te propone siguientes pasos.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+            <CommandExample
+              command="Emite una factura a López Ingeniería por 2.450 € con concepto Desarrollo módulo inventario"
+              response="Perfecto. He creado la factura VF-2032 para López Ingeniería S.L. (CIF B12345678) por 2.450,00 € + IVA. ¿La envío ahora por email o prefieres revisarla primero?"
+            />
+            <CommandExample
+              command="Registra este ticket de gasolina que subí a Drive ayer"
+              response="He registrado el gasto: 78,50 € en carburante (Repsol, 22/12/2025). Proveedor añadido automáticamente. Este mes llevas 340 € en desplazamientos. ¿Quieres ver el impacto en el beneficio?"
+            />
+            <CommandExample
+              command="Resumen del mes: ventas, gastos y beneficio"
+              response="Diciembre 2025: Ingresos 24.500 € | Gastos 12.100 € | Beneficio estimado 12.400 € (+8% vs mes anterior). Todas las facturas cumplen VeriFactu. ¿Quieres el desglose por cliente o categoría?"
+            />
+          </div>
+        </Container>
+      </section>
+
+      {/* FEATURES OLD POSITION - REMOVED, NOW ABOVE */}
       {/* 3 steps */}
-      <section className="py-14 bg-slate-50/60">
+      <section className="py-16 bg-white">
         <Container>
           <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
             Del envío al cobro en tres pasos.
@@ -391,6 +455,41 @@ export default function Page() {
 
 /* ----------------------------- UI Blocks ----------------------------- */
 
+function TrustBadge({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
+      {icon}
+      <span>{text}</span>
+    </div>
+  );
+}
+
+function CommandExample({ command, response }: { command: string; response: string }) {
+  return (
+    <div className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white ring-4 ring-slate-100">
+          <Sparkles className="h-4 w-4" />
+        </div>
+        <div className="flex-1">
+          <div className="text-xs font-semibold text-slate-500">Tu comando</div>
+          <p className="mt-1.5 text-sm font-medium leading-6 text-slate-900">{command}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-xl bg-gradient-to-br from-blue-50 to-slate-50 p-4 ring-1 ring-slate-200/50">
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-600">
+            <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+          </div>
+          <div className="text-xs font-semibold text-blue-900">Respuesta de Isaak</div>
+        </div>
+        <p className="mt-2 text-sm leading-6 text-slate-700">{response}</p>
+      </div>
+    </div>
+  );
+}
+
 function TopNav() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
@@ -424,7 +523,13 @@ function TopNav() {
   );
 }
 
-function HeroMockup({ visibleMsgs }: { visibleMsgs: IsaakMsg[] }) {
+function HeroMockup({ visibleMsgs, benefitValue }: { visibleMsgs: IsaakMsg[]; benefitValue: number }) {
+  const formattedBenefit = new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(benefitValue);
+
   return (
     <div className="relative">
       <div className="absolute -right-6 top-10 hidden h-40 w-40 rounded-full bg-blue-100 blur-3xl lg:block" />
@@ -470,7 +575,7 @@ function HeroMockup({ visibleMsgs }: { visibleMsgs: IsaakMsg[] }) {
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <MiniStat
             title="Resumen"
-            value="12.450 €"
+            value={formattedBenefit}
             sub="Beneficio estimado"
             badge="Completo"
           />
