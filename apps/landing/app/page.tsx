@@ -29,29 +29,29 @@ export default function Page() {
   const isaakMessages: IsaakMsg[] = useMemo(
     () => [
       {
-        type: "info",
-        title: "Estado diario del negocio",
-        body: "Ingresos del mes: +18% vs objetivo. ¿Revisamos el detalle por cliente?",
+        type: "ok",
+        title: "Estado del negocio",
+        body: "Esta semana tu beneficio va +8%. ¿Quieres ver qué clientes lo están impulsando?",
       },
       {
         type: "ok",
-        title: "VeriFactu validado",
-        body: "Todas las facturas emitidas hoy cumplen con VeriFactu y han sido validadas.",
-      },
-      {
-        type: "info",
-        title: "Gastos desde Drive (OCR)",
-        body: "He registrado 3 gastos nuevos desde documentos. Impacto estimado: −420 €.",
+        title: "Gasto deducible",
+        body: "He detectado un gasto de combustible. Para tu actividad, es deducible. Ya está registrado.",
       },
       {
         type: "warn",
-        title: "Plazo próximo",
-        body: "En 5 días vence un plazo fiscal. ¿Quieres que lo preparemos con antelación?",
+        title: "Gasto a revisar",
+        body: "Este ticket parece 'comida'. Para tu actividad puede requerir justificación. ¿Lo marcamos como 'a revisar'?",
       },
       {
-        type: "info",
-        title: "Insight",
-        body: "Si mantienes este ritmo, el beneficio mensual estimado será 12.400 €.",
+        type: "ok",
+        title: "Factura emitida",
+        body: "Factura VF-2031 creada y validada. ¿La envío al cliente o la programo para mañana?",
+      },
+      {
+        type: "ok",
+        title: "Informe a un clic",
+        body: "¿Te preparo un resumen mensual con ventas, gastos y beneficio en PDF o Excel?",
       },
     ],
     []
@@ -111,18 +111,36 @@ export default function Page() {
               </div>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
-                Factura en minutos.
+                Automatiza tu facturación y
                 <br />
                 <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
-                  Entiende tu beneficio hoy.
+                  entiende tu contabilidad en un solo panel.
                 </span>
               </h1>
 
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
-                Isaak automatiza tu facturación con <strong className="font-semibold text-slate-900">cumplimiento VeriFactu</strong>, 
-                registra gastos con OCR desde Drive y te propone <strong className="font-semibold text-slate-900">acciones</strong> para 
-                maximizar tu margen.
+                Isaak registra tus facturas y gastos por ti. Solo haz una foto o sube el documento y te explica el impacto en tu negocio:
+                <strong className="font-semibold text-slate-900"> ventas, gastos y beneficio</strong>, siempre claros y al día.
               </p>
+
+              <p className="mt-2 max-w-xl text-sm text-slate-500">
+                No necesitas saber contabilidad. Isaak te guía y registra todo por ti.
+              </p>
+
+              <div className="mt-5 max-w-xl space-y-1.5 text-sm text-slate-600">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 flex-shrink-0" />
+                  <span>Facturas verificadas y controladas, sin complicaciones.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 flex-shrink-0" />
+                  <span>Gastos clasificados y deducibles según tu actividad, con el apunte hecho.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 flex-shrink-0" />
+                  <span>Informes y listados disponibles cuando los necesites: pídelo a Isaak.</span>
+                </div>
+              </div>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <PrimaryButton className="group">
@@ -132,13 +150,13 @@ export default function Page() {
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-4">
-                <TrustBadge icon={<BadgeCheck className="h-4 w-4 text-blue-600" />} text="VeriFactu-ready" />
-                <TrustBadge icon={<UploadCloud className="h-4 w-4 text-blue-600" />} text="OCR desde Drive" />
-                <TrustBadge icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorios automáticos" />
+                <TrustBadge icon={<BadgeCheck className="h-4 w-4 text-blue-600" />} text="Cumplimiento VeriFactu" />
+                <TrustBadge icon={<CheckCircle2 className="h-4 w-4 text-blue-600" />} text="Gastos deducibles guiados" />
+                <TrustBadge icon={<Sparkles className="h-4 w-4 text-blue-600" />} text="Informes bajo demanda con Isaak" />
               </div>
 
               <p className="mt-4 text-xs text-slate-500">
-                Sin tarjeta · 30 días gratis en todos los planes · Cancelación en cualquier momento
+                Sin tarjeta · 30 días gratis en planes de pago · Puedes cancelar cuando quieras
               </p>
             </motion.div>
 
@@ -165,65 +183,77 @@ export default function Page() {
       <section className="py-16">
         <Container>
           <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
-            Una plataforma creada para liderar tu VeriFactu.
+            Lo que ves es lo que tienes: Ventas, Gastos, Beneficio.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-slate-600 sm:text-lg">
-            Centraliza emisión, validación y análisis en un panel diseñado para autónomos, pymes y asesorías.
+            El dashboard muestra solo lo esencial. Informes, listados y análisis profundos están a un comando de distancia con Isaak.
           </p>
 
           <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <FeatureCard
-              icon={<Sparkles className="h-5 w-5 text-blue-600" />}
-              title="Automatización total"
-              bullets={["Emite facturas en minutos", "Plantillas y series", "Firmas digitales incluidas"]}
+              icon={<TrendingUp className="h-5 w-5 text-blue-600" />}
+              title="Emisión sin fricción"
+              bullets={["Haz una foto o sube documento", "Isaak clasifica y registra", "Validación automática incluida"]}
             />
             <FeatureCard
               icon={<BadgeCheck className="h-5 w-5 text-blue-600" />}
-              title="VeriFactu integrado"
-              bullets={["Validación automática", "Detección de errores", "Notificaciones inteligentes"]}
+              title="Gastos guiados"
+              bullets={["Foto del ticket → clasificado", "Deducible según tu actividad", "Apunte registrado al instante"]}
             />
             <FeatureCard
-              icon={<TrendingUp className="h-5 w-5 text-blue-600" />}
-              title="Insights accionables"
-              bullets={["Análisis de márgenes", "Proyecciones sencillas", "Informes bajo demanda"]}
+              icon={<Sparkles className="h-5 w-5 text-blue-600" />}
+              title="Dashboard claro"
+              bullets={["Ventas totales", "Gastos totales", "Beneficio real, siempre actualizado"]}
             />
             <FeatureCard
               icon={<Lock className="h-5 w-5 text-blue-600" />}
-              title="Colaboración segura"
-              bullets={["Roles y permisos", "Auditoría y trazabilidad", "Copias cifradas en la nube"]}
+              title="Bajo demanda con Isaak"
+              bullets={["Informes y exportaciones", "Listados por cliente, período", "Análisis profundo cuando lo necesites"]}
             />
           </div>
         </Container>
       </section>
 
-      {/* Comandos reales con Isaak */}
+      {/* Pídeselo a Isaak */}
       <section className="py-16 bg-gradient-to-b from-slate-50 to-white">
         <Container>
           <div className="text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
               <Sparkles className="h-4 w-4" />
-              Comandos reales con Isaak
+              Pídeselo a Isaak
             </div>
             <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
-              Habla con Isaak como con un asesor.
+              Todo lo que necesites, disponible en un comando.
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              Envía órdenes en lenguaje natural. Isaak entiende el contexto, ejecuta y te propone siguientes pasos.
+              Informes, listados, exportaciones, importaciones. Tú pides, Isaak hace. Sin limites, sin fricción.
             </p>
           </div>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             <CommandExample
-              command="Emite una factura a López Ingeniería por 2.450 € con concepto Desarrollo módulo inventario"
-              response="Perfecto. He creado la factura VF-2032 para López Ingeniería S.L. (CIF B12345678) por 2.450,00 € + IVA. ¿La envío ahora por email o prefieres revisarla primero?"
+              command="Subo estos tickets, ¿cuáles son deducibles?"
+              response="He revisado los 5 tickets. 4 son deducibles para tu actividad y ya están registrados. 1 requiere justificación adicional. ¿Lo marcamos como 'a revisar'?"
             />
             <CommandExample
-              command="Registra este ticket de gasolina que subí a Drive ayer"
-              response="He registrado el gasto: 78,50 € en carburante (Repsol, 22/12/2025). Proveedor añadido automáticamente. Este mes llevas 340 € en desplazamientos. ¿Quieres ver el impacto en el beneficio?"
+              command="Prepárame el listado de gastos del trimestre"
+              response="Listo. Gastos T4 2025: 8.200 € en total. He agrupado por categoría (alimentación, transporte, oficina). ¿Lo exporto a Excel o PDF?"
             />
             <CommandExample
-              command="Resumen del mes: ventas, gastos y beneficio"
-              response="Diciembre 2025: Ingresos 24.500 € | Gastos 12.100 € | Beneficio estimado 12.400 € (+8% vs mes anterior). Todas las facturas cumplen VeriFactu. ¿Quieres el desglose por cliente o categoría?"
+              command="Dame el ranking de clientes por facturación"
+              response="Top 5 clientes este año: López S.L. (18.500 €), Acme Corp (15.200 €), Tech Solutions (12.100 €). ¿Quieres ver márgenes o proyecciones?"
+            />
+            <CommandExample
+              command="Crea proveedor 'X' con estos datos"
+              response="Proveedor 'X' creado con CIF, datos bancarios y condiciones de pago. Ya puedes emitir compras contra él. ¿Quieres crear más?"
+            />
+            <CommandExample
+              command="Exporta todos los productos a Excel"
+              response="Archivo generado: 234 productos, con códigos, precios, categorías y stock. Descargable en 2 segundos. ¿Necesitas filtros especiales?"
+            />
+            <CommandExample
+              command="Resumen mensual: ventas, gastos y beneficio"
+              response="Diciembre 2025: Ingresos 24.500 € | Gastos 12.100 € | Beneficio estimado 12.400 € (+8% vs mes anterior). ¿Quieres desglose por cliente?"
             />
           </div>
         </Container>
