@@ -1,0 +1,29 @@
+<svg width="896" height="284" viewBox="0 0 896 284" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VeriFactu Business">
+  <rect width="896" height="284" fill="transparent" />
+  <path
+    d="M215 48L112 82V154C112 208 155 252 215 268C275 252 318 208 318 154V82L215 48Z"
+    stroke="#1E90FF"
+    stroke-width="20"
+    stroke-linejoin="round"
+    fill="none"
+  />
+  <path
+    d="M168 148L205 186L263 122"
+    stroke="#1E90FF"
+    stroke-width="22"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+  <text
+    x="380"
+    y="182"
+    fill="#1E90FF"
+    font-family="Inter, system-ui, sans-serif"
+    font-size="96"
+    font-weight="700"
+    letter-spacing="1"
+  >
+    Business
+  </text>
+</svg>
