@@ -424,6 +424,21 @@ export default function Page() {
               accent="muted"
             />
           </div>
+
+          {/* Trust message: Data protection guarantee */}
+          <div className="mt-12 rounded-2xl border border-slate-200 bg-gradient-to-r from-emerald-50 to-blue-50 p-6 text-center shadow-sm">
+            <div className="flex items-center justify-center gap-2">
+              <Lock className="h-5 w-5 text-emerald-600" />
+              <h4 className="text-lg font-semibold text-slate-900">Tu contabilidad nunca se pierde</h4>
+            </div>
+            <p className="mt-3 max-w-2xl mx-auto text-sm leading-6 text-slate-600">
+              Aunque cambies o canceles tu plan, <strong>siempre tendrás acceso a tus datos</strong>.
+              Solo se limitarán algunas funciones avanzadas, nunca tu información.
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Acceso permanente a tus datos. Sin bloqueos. Sin borrados.
+            </p>
+          </div>
         </Container>
       </section>
 
@@ -456,6 +471,36 @@ export default function Page() {
               desc="Evalúa el estado de tu facturación y detecta riesgos."
               cta="Solicitar checklist"
             />
+          </div>
+        </Container>
+      </section>
+
+      {/* Trust Anchor Section */}
+      <section className="py-12 bg-gradient-to-b from-transparent to-slate-50">
+        <Container>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-emerald-700">La garantía que buscabas</p>
+            <h3 className="mt-2 text-3xl font-bold text-slate-900">
+              El plan cambia.<br />Tu contabilidad no.
+            </h3>
+            <p className="mt-4 max-w-2xl mx-auto text-base text-slate-600">
+              Todos nuestros usuarios tienen <strong>acceso garantizado a sus datos</strong> de forma permanente.
+              Cambiar de plan, cancelar o cambiar de proveedor: tu información siempre es tuya.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-slate-700">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span>Datos nunca se borran</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span>Sin bloqueos ocultos</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span>Descargas ilimitadas</span>
+              </div>
+            </div>
           </div>
         </Container>
       </section>
@@ -860,9 +905,14 @@ function PriceCard({
         {cta}
       </button>
 
-      <p className="mt-3 text-center text-xs text-slate-500">
-        {isPrimary ? "30 días gratis incluidos" : "Gratis o prueba según plan"}
-      </p>
+      <div className="mt-4 border-t border-slate-100 pt-3">
+        <p className="text-center text-[11px] text-slate-500">
+          {isPrimary ? "30 días gratis incluidos" : "Gratis o prueba según plan"}
+        </p>
+        <p className="mt-1.5 text-center text-[11px] font-medium text-emerald-700">
+          ✓ Acceso permanente a tus datos
+        </p>
+      </div>
     </div>
   );
 }

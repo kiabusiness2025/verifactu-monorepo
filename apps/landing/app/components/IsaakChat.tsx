@@ -17,7 +17,7 @@ export default function IsaakChat() {
     {
       id: "1",
       role: "assistant",
-      content: "¡Hola! Soy Isaak. ¿En qué puedo ayudarte hoy? Puedo resolver dudas sobre facturación, VeriFactu, gastos deducibles y mucho más.",
+      content: "Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perderás acceso a tus datos.\nYo me encargo de cuidarlos. 🔒",
       timestamp: new Date(),
     },
   ]);
