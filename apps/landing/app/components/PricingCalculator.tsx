@@ -1,125 +1,167 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 
 type Plan = {
   name: string;
   price: number;
+  period: string;
   users: string;
   features: string[];
-  ctaLabel: string;
-  ctaHref: string;
   highlight?: boolean;
-  note?: string;
 };
 
 const PRICING_PLANS: Plan[] = [
   {
-    name: "FREE",
+    name: "Gratis",
     price: 0,
+    period: "Siempre",
     users: "1 empresa · 1 usuario",
-    ctaLabel: "Crear cuenta",
-    ctaHref: "/auth/signup",
     features: [
       "Facturación básica",
-      "Subida manual de documentos",
-      "Hasta 20 documentos al mes",
+      "Hasta 20 documentos/mes",
       "Chat Isaak limitado",
+      "Dashboard esencial",
     ],
-    note: "Para probar la plataforma sin compromiso.",
   },
   {
-    name: "ESENCIAL",
+    name: "Profesional",
     price: 29,
-    users: "1 empresa · 1 cuenta bancaria",
-    ctaLabel: "Empezar ahora",
-    ctaHref: "/auth/signup",
+    period: "/mes o 290€/año",
+    users: "1 empresa · usuarios ilimitados",
     features: [
-      "Drive integrado",
-      "Facturación Verifactu completa",
-      "OCR + gastos automáticos",
-      "Integración bancaria (1 cuenta)",
-      "Calendario fiscal sincronizado",
-      "Resultados e impuestos estimados",
-    ],
-    note: "29 €/mes o 290 €/año.",
-  },
-  {
-    name: "PROFESIONAL",
-    price: 69,
-    users: "Multiempresa (2 incluidas)",
-    ctaLabel: "Solicitar demo",
-    ctaHref: "/contact",
-    features: [
-      "Varias cuentas bancarias",
-      "Conciliación avanzada",
-      "Prevalidación de modelos 303/130/111",
-      "Libros contables automáticos",
-      "Dashboard financiero avanzado",
-      "Estimación del Impuesto de Sociedades",
+      "Facturación VeriFactu completa",
+      "Gastos con OCR ilimitados",
+      "Integración bancaria",
+      "Calendario fiscal",
+      "Chat Isaak completo",
+      "Informes bajo demanda",
     ],
     highlight: true,
-    note: "69 €/mes o 690 €/año.",
   },
   {
-    name: "ENTERPRISE",
-    price: 149,
-    users: "149 €/mes por empresa",
-    ctaLabel: "Hablar con ventas",
-    ctaHref: "/contact",
+    name: "Business",
+    price: 69,
+    period: "/mes o 690€/año",
+    users: "Multiempresa (hasta 3)",
     features: [
-      "Multiempresa ilimitada",
-      "Acceso por certificado digital",
-      "Firma electrónica integrada",
-      "API privada",
-      "Delegaciones electrónicas automáticas",
+      "Todo en Profesional",
+      "Varias cuentas bancarias",
+      "Conciliación avanzada",
+      "Libros contables",
+      "Dashboard financiero",
       "Soporte prioritario",
     ],
-    note: "Infraestructura fiscal completa para grupos y franquicias.",
+  },
+  {
+    name: "Enterprise",
+    price: null,
+    period: "A medida",
+    users: "Multiempresa ilimitada",
+    features: [
+      "Infraestructura personalizada",
+      "Integración API completa",
+      "Firma electrónica",
+      "Flujos automáticos",
+      "SLA garantizado",
+      "Equipo dedicado",
+    ],
   },
 ];
 
-function currency(value: number) {
-  return value.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
+function PriceDisplay({ price, period }: { price: number | null; period: string }) {
+  if (price === null) {
+    return (
+      <div>
+        <div className="text-2xl font-bold text-slate-900">Personalizado</div>
+        <div className="text-sm text-slate-500">{period}</div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="text-4xl font-bold text-slate-900">
+        {price === 0 ? "Gratis" : `€${price}`}
+      </div>
+      <div className="text-sm text-slate-500">{period}</div>
+    </div>
+  );
 }
 
 export default function PricingCalculator() {
   return (
-    <section id="pricing" className="pricing-section">
-      <div className="section__header">
-        <h2>Planes y precios</h2>
-        <p>Infraestructura fiscal-as-a-service con bancos, Drive, Verifactu e Isaak.</p>
-        <p className="pricing-section__sub-header">Todos los planes incluyen demo guiada y activación VeriFactu.</p>
-      </div>
+    <section className="py-16">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Planes para cada etapa
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            Todos incluyen 30 días de prueba en planes de pago. Sin tarjeta, sin compromiso.
+          </p>
+        </div>
 
-      <div className="pricing-grid">
-        {PRICING_PLANS.map((plan) => (
-          <div key={plan.name} className={`pricing-card ${plan.highlight ? "is-highlight" : ""}`}>
-            <div className="pricing-card__header">
-              <h3>{plan.name}</h3>
-              <span>{plan.users}</span>
-            </div>
-            <div className="pricing-card__price-details">
-              <div className="pricing-card__price">
-                {plan.price === 0 ? "Gratis" : `${currency(plan.price)} /mes`}
+        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {PRICING_PLANS.map((plan, idx) => (
+            <motion.div
+              key={plan.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: idx * 0.05 }}
+              className={[
+                "relative flex flex-col rounded-2xl border p-6 shadow-sm transition",
+                plan.highlight
+                  ? "border-blue-200 bg-white ring-2 ring-blue-100"
+                  : "border-slate-200 bg-white hover:shadow-md",
+              ].join(" ")}
+            >
+              {plan.highlight && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
+                    Más popular
+                  </span>
+                </div>
+              )}
+
+              <div>
+                <div className="text-lg font-semibold text-slate-900">{plan.name}</div>
+                <div className="mt-1 text-sm text-slate-500">{plan.users}</div>
               </div>
-              {plan.note && <p className="pricing-card__note">{plan.note}</p>}
-            </div>
-            <ul className="pricing-card__features">
-              {plan.features.map((feature) => (
-                <li key={feature}>{feature}</li>
-              ))}
-            </ul>
-            <a href={plan.ctaHref} className={`btn ${plan.highlight ? "btn--primary" : "btn--dark"}`}>
-              {plan.ctaLabel}
-            </a>
-          </div>
-        ))}
-      </div>
 
-        <p className="pricing-section__disclaimer">
-          * Precios mensuales sin permanencia. Incluye soporte de activación, cumplimiento VeriFactu y actualizaciones.
-        </p>
+              <div className="mt-4">
+                <PriceDisplay price={plan.price} period={plan.period} />
+              </div>
+
+              <ul className="mt-6 space-y-3">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-4 w-4 text-emerald-600 flex-shrink-0" />
+                    <span className="text-sm text-slate-600">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                className={[
+                  "mt-6 w-full rounded-full px-4 py-2.5 text-sm font-semibold transition",
+                  plan.highlight
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-slate-100 text-slate-900 hover:bg-slate-200",
+                ].join(" ")}
+              >
+                {plan.price === null ? "Contactar" : "Comenzar"}
+              </button>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="mt-12 text-center text-sm text-slate-500">
+          Todos los planes incluyen activación VeriFactu y soporte de onboarding.
+        </div>
+      </div>
     </section>
   );
 }

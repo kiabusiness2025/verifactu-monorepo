@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import React, { Suspense } from "react";
 import CookieBanner from "./components/CookieBanner";
+import IsaakChat from "./components/IsaakChat";
 
 import "./globals.css";
 
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body>
         <Suspense>{children}</Suspense>
         <CookieBanner />
+        <IsaakChat />
       </body>
     </html>
   );
