@@ -1,358 +1,841 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import PricingCalculator from "./components/PricingCalculator";
-import Faq from "./components/Faq";
+import React, { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowRight,
+  BadgeCheck,
+  CalendarClock,
+  CheckCircle2,
+  ChevronRight,
+  FileText,
+  LayoutDashboard,
+  Lock,
+  Percent,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  UploadCloud,
+  Wallet,
+} from "lucide-react";
+
+type IsaakMsg = {
+  type: "ok" | "info" | "warn";
+  title: string;
+  body: string;
+};
 
 export default function Page() {
-  const ISAAC_MESSAGES = [
-    {
-      type: "info",
-      text:
-        "Hoy tus ingresos van un 18% por encima del mes anterior. ¿Quieres ver el detalle por cliente o por servicio?",
-    },
-    {
-      type: "success",
-      text:
-        "Todas las facturas emitidas hoy cumplen con VeriFactu y han sido validadas correctamente.",
-    },
-    {
-      type: "action",
-      text:
-        "He registrado 3 gastos nuevos desde documentos subidos a Drive. Impacto estimado en el beneficio: –420 €.",
-    },
-    {
-      type: "warning",
-      text: "En 5 días vence un plazo fiscal. ¿Quieres que lo preparemos con antelación?",
-    },
-    {
-      type: "insight",
-      text: "Si mantienes este ritmo, tu beneficio mensual estimado será de 12.400 €.",
-    },
-  ];
+  const isaakMessages: IsaakMsg[] = useMemo(
+    () => [
+      {
+        type: "info",
+        title: "Estado diario del negocio",
+        body: "Ingresos del mes: +18% vs objetivo. ¿Revisamos el detalle por cliente?",
+      },
+      {
+        type: "ok",
+        title: "VeriFactu validado",
+        body: "Todas las facturas emitidas hoy cumplen con VeriFactu y han sido validadas.",
+      },
+      {
+        type: "info",
+        title: "Gastos desde Drive (OCR)",
+        body: "He registrado 3 gastos nuevos desde documentos. Impacto estimado: −420 €.",
+      },
+      {
+        type: "warn",
+        title: "Plazo próximo",
+        body: "En 5 días vence un plazo fiscal. ¿Quieres que lo preparemos con antelación?",
+      },
+      {
+        type: "info",
+        title: "Insight",
+        body: "Si mantienes este ritmo, el beneficio mensual estimado será 12.400 €.",
+      },
+    ],
+    []
+  );
 
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [heroVisible, setHeroVisible] = useState(false);
-  const [dashVisible, setDashVisible] = useState(false);
-  const visibleCount = 3;
-  const rolling = Array.from({ length: visibleCount }, (_, i) => ISAAC_MESSAGES[(index + i) % ISAAC_MESSAGES.length]);
-
-  const heroRef = useRef<HTMLElement | null>(null);
-  const dashRef = useRef<HTMLElement | null>(null);
+  const [msgIndex, setMsgIndex] = useState(0);
 
   useEffect(() => {
-    const reduce = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (paused || reduce) return;
-    const id = setInterval(() => {
-      setIndex((i) => (i + 1) % ISAAC_MESSAGES.length);
-    }, 5000);
+    const id = setInterval(() => setMsgIndex((i) => (i + 1) % isaakMessages.length), 5200);
     return () => clearInterval(id);
-  }, [paused]);
+  }, [isaakMessages.length]);
 
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) setHeroVisible(true);
-        });
-      },
-      { threshold: 0.3 }
-    );
-    if (heroRef.current) obs.observe(heroRef.current);
-    return () => obs.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) setDashVisible(true);
-        });
-      },
-      { threshold: 0.2 }
-    );
-    if (dashRef.current) obs.observe(dashRef.current);
-    return () => obs.disconnect();
-  }, []);
-
-  const formatEUR = (n: number) => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
-
-  function useCountUp(target: number, start: boolean, duration = 1000) {
-    const [value, setValue] = useState(0);
-    useEffect(() => {
-      if (!start) return;
-      const reduce = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (reduce) { setValue(target); return; }
-      let raf = 0;
-      const t0 = performance.now();
-      const step = (t: number) => {
-        const p = Math.min((t - t0) / duration, 1);
-        setValue(Math.round(target * p));
-        if (p < 1) raf = requestAnimationFrame(step);
-      };
-      raf = requestAnimationFrame(step);
-      return () => cancelAnimationFrame(raf);
-    }, [start, target, duration]);
-    return value;
-  }
+  const visibleMsgs = useMemo(() => {
+    // Muestra 3 mensajes: el actual + 2 anteriores
+    const a = (msgIndex + isaakMessages.length) % isaakMessages.length;
+    const b = (msgIndex - 1 + isaakMessages.length) % isaakMessages.length;
+    const c = (msgIndex - 2 + isaakMessages.length) % isaakMessages.length;
+    return [isaakMessages[a], isaakMessages[b], isaakMessages[c]];
+  }, [isaakMessages, msgIndex]);
 
   return (
-    <div className="page">
-      <header className="header">
-        <div className="container header__inner">
-          <a className="brand" href="/" aria-label="Inicio">
-            <img
-              className="brand__image"
-              src="/verifactu.business%20logo.png"
-              alt="Verifactu Business"
-            />
-          </a>
-          <nav className="nav" aria-label="Principal">
-            <a href="#como-funciona">Cómo funciona</a>
-            <a href="#dashboard">Dashboard</a>
-            <a href="#pricing">Precios</a>
-            <a href="#faq">FAQ</a>
-          </nav>
-          <div className="header__cta">
-            <a className="btn btn--ghost" href="mailto:hello@verifactu.business">Solicitar demo</a>
-            <a className="btn btn--primary" href="#pricing">Empezar 30 días gratis</a>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-white text-slate-900">
+      <TopNav />
 
-      <main>
-        <section id="hero" ref={heroRef} className={`hero ${heroVisible ? "hero--visible" : ""}`}>
-          <div className="container hero__inner">
-            <div className="hero__content">
-              <p className="hero__badge">Verifactu Business</p>
-              <h1 className="hero__title">Automatiza tu facturación hoy, entiende tu negocio mejor mañana.</h1>
-              <p className="hero__lead">
-                Empieza simple: emite y valida facturas cumpliendo VeriFactu. Añade OCR para gastos y visualiza <strong>ventas – gastos = beneficio</strong> sin contabilidad compleja.
+      {/* HERO */}
+      <section className="relative">
+        <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-gradient-to-b from-slate-50 to-white" />
+        <Container className="pt-14 pb-10">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
+                <ShieldCheck className="h-4 w-4 text-blue-600" />
+                Cumplimiento VeriFactu + IA para tu negocio
+              </div>
+
+              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
+                La forma más inteligente de automatizar tu facturación.
+              </h1>
+
+              <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
+                Isaak centraliza emisión, valida cumplimiento VeriFactu, registra gastos con OCR desde Drive y te
+                muestra lo único que importa: <span className="font-semibold text-slate-900">ventas − gastos = beneficio</span>.
               </p>
-              <ul className="hero__bullets">
-                <li>Sin tarjeta</li>
-                <li>Cumplimiento VeriFactu</li>
-                <li>Cancelación libre</li>
+
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <PrimaryButton>
+                  Comenzar ahora <ArrowRight className="h-4 w-4" />
+                </PrimaryButton>
+                <SecondaryButton>Solicitar demo</SecondaryButton>
+              </div>
+
+              <p className="mt-3 text-xs text-slate-500">
+                Sin tarjeta · 30 días gratis en planes de pago · Cancelación libre
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              className="relative"
+            >
+              <HeroMockup visibleMsgs={visibleMsgs} />
+            </motion.div>
+          </div>
+
+          {/* Stats bar */}
+          <div className="mt-10 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3 sm:p-6">
+            <Stat label="+350%" value="Productividad" desc="en equipos fiscales" />
+            <Stat label="100%" value="Cumplimiento" desc="Real Decreto 1007/2023" />
+            <Stat label="24/7" value="Asistencia" desc="y recomendaciones con Isaak" />
+          </div>
+        </Container>
+      </section>
+
+      {/* FEATURES */}
+      <section className="py-14">
+        <Container>
+          <h2 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
+            Una plataforma creada para liderar tu VeriFactu.
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
+            Centraliza emisión, validación y análisis en un panel diseñado para autónomos, pymes y asesorías.
+          </p>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <FeatureCard
+              icon={<Sparkles className="h-5 w-5 text-blue-600" />}
+              title="Automatización total"
+              bullets={["Emite facturas en minutos", "Plantillas y series", "Firmas digitales incluidas"]}
+            />
+            <FeatureCard
+              icon={<BadgeCheck className="h-5 w-5 text-blue-600" />}
+              title="VeriFactu integrado"
+              bullets={["Validación automática", "Detección de errores", "Notificaciones inteligentes"]}
+            />
+            <FeatureCard
+              icon={<TrendingUp className="h-5 w-5 text-blue-600" />}
+              title="Insights accionables"
+              bullets={["Análisis de márgenes", "Proyecciones sencillas", "Informes bajo demanda"]}
+            />
+            <FeatureCard
+              icon={<Lock className="h-5 w-5 text-blue-600" />}
+              title="Colaboración segura"
+              bullets={["Roles y permisos", "Auditoría y trazabilidad", "Copias cifradas en la nube"]}
+            />
+          </div>
+        </Container>
+      </section>
+
+      {/* 3 steps */}
+      <section className="py-14 bg-slate-50/60">
+        <Container>
+          <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
+            Del envío al cobro en tres pasos.
+          </h3>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
+            Conecta tu flujo de facturación y deja que Isaak automatice validaciones y recordatorios.
+          </p>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <StepCard
+              n={1}
+              title="Configura Isaak"
+              desc="Define tus datos, series y reglas. Conecta Drive y calendario para automatizar el orden."
+              icon={<LayoutDashboard className="h-5 w-5 text-blue-600" />}
+            />
+            <StepCard
+              n={2}
+              title="Emite y valida"
+              desc="Genera la factura y valida automáticamente con VeriFactu antes de enviarla."
+              icon={<FileText className="h-5 w-5 text-blue-600" />}
+            />
+            <StepCard
+              n={3}
+              title="Cobra y analiza"
+              desc="Isaak monitoriza el ciclo, detecta incidencias y te resume impacto en margen."
+              icon={<Wallet className="h-5 w-5 text-blue-600" />}
+            />
+          </div>
+        </Container>
+      </section>
+
+      {/* Dashboard section */}
+      <section className="py-16">
+        <Container>
+          <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
+            Un dashboard que aprende de tu negocio.
+          </h3>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
+            Isaak compara tu histórico, detecta anomalías y propone acciones. Tú solo ves: ventas, gastos y beneficio.
+          </p>
+
+          <div className="mt-10 grid gap-8 lg:grid-cols-2">
+            <DashboardMock />
+            <div className="rounded-3xl bg-gradient-to-b from-slate-50 to-white p-6 shadow-sm ring-1 ring-slate-200">
+              <h4 className="text-xl font-semibold">Soporte proactivo y gestión total desde cualquier dispositivo.</h4>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Isaak ejecuta órdenes, registra documentos (OCR) y genera informes bajo demanda. Tú controlas el resultado.
+              </p>
+
+              <div className="mt-6 space-y-3">
+                <InfoPill
+                  title="Suscripción flexible"
+                  desc="Gratis o 30 días de prueba. Elige cuota fija, % de facturación o híbrido."
+                  icon={<Percent className="h-4 w-4 text-blue-600" />}
+                />
+                <InfoPill
+                  title="Drive + Calendar"
+                  desc="Importa documentos, clasifica gastos y crea recordatorios de plazos automáticamente."
+                  icon={<UploadCloud className="h-4 w-4 text-blue-600" />}
+                />
+                <InfoPill
+                  title="Crecimiento por módulos"
+                  desc="Preparado para contabilidad completa y más integraciones en próximas fases."
+                  icon={<CalendarClock className="h-4 w-4 text-blue-600" />}
+                />
+              </div>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <PrimaryButton className="w-full sm:w-auto">
+                  Probar gratis 30 días <ChevronRight className="h-4 w-4" />
+                </PrimaryButton>
+                <SecondaryButton className="w-full sm:w-auto">Ver ejemplo</SecondaryButton>
+              </div>
+
+              <p className="mt-3 text-xs text-slate-500">
+                Próximamente: integración bancaria y contabilidad completa (sin promesas absolutas).
+              </p>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Compliance */}
+      <section className="py-14 bg-slate-50/60">
+        <Container>
+          <div className="grid items-center gap-8 lg:grid-cols-2">
+            <div>
+              <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                100% cumplimiento VeriFactu certificado.
+              </h3>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+                Diseñado para operar con prudencia. Validación, trazabilidad y control para que tu facturación sea sólida
+                desde el primer día.
+              </p>
+
+              <ul className="mt-6 space-y-3 text-sm text-slate-700">
+                <Li>Firma digital automática</Li>
+                <Li>Validación y control de errores</Li>
+                <Li>Registro y trazabilidad de cambios</Li>
+                <Li>Copias de seguridad cifradas en la nube</Li>
               </ul>
-              <div className="hero__actions">
-                <a className="btn btn--primary" href="#pricing">Probar gratis</a>
-                <a className="btn btn--ghost" href="mailto:hello@verifactu.business">Solicitar demo</a>
-              </div>
             </div>
 
-            <aside className="isaak-panel" aria-label="Mensajes de Isaak" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-              <div className="isaak-panel__header">
-                <span className="isaak-panel__avatar" aria-hidden="true">🤖</span>
-                <div>
-                  <p className="isaak-panel__title">Isaak</p>
-                  <p className="isaak-panel__subtitle">Asistente de facturación y control financiero</p>
-                </div>
-              </div>
-              <div className="isaak-panel__messages">
-                {rolling.map((m, i) => (
-                  <div key={`${m.type}-${i}`} className={`isaak-msg isaak-msg--${m.type} ${i === 0 ? "isaak-msg--enter" : ""}`}>
-                    <span className="isaak-msg__icon" aria-hidden="true">
-                      {m.type === "success" && "✔️"}
-                      {m.type === "warning" && "⚠️"}
-                      {m.type === "insight" && "📈"}
-                      {m.type === "action" && "📄"}
-                      {m.type === "info" && "ℹ️"}
-                    </span>
-                    <p className="isaak-msg__text">{m.text}</p>
+            <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-2xl bg-slate-50">
+                <div className="text-center">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                    <BadgeCheck className="h-5 w-5 text-blue-600" />
                   </div>
-                ))}
-              </div>
-            </aside>
-          </div>
-        </section>
-
-        <section className="section social-proof">
-          <div className="container">
-            <div className="social-proof__grid">
-              <div className="kpi"><span className="kpi__value">+40%</span><span className="kpi__label">productividad</span></div>
-              <div className="kpi"><span className="kpi__value">100%</span><span className="kpi__label">VeriFactu</span></div>
-              <div className="kpi"><span className="kpi__value">24/7</span><span className="kpi__label">asistencia con Isaak</span></div>
-            </div>
-          </div>
-        </section>
-
-        <section id="problema" className="section problem">
-          <div className="container">
-            <div className="section__header">
-              <h2>Qué problema resolvemos</h2>
-              <p>Caos de facturas, gastos desordenados y poca visibilidad del beneficio. Isaak lo orquesta de forma responsable.</p>
-            </div>
-            <div className="cards3">
-              <div className="card"><h3>Facturas</h3><p>Emite y valida cumpliendo VeriFactu. Sin fricción.</p></div>
-              <div className="card"><h3>Gastos</h3><p>Sube tickets y facturas. OCR para clasificación automática.</p></div>
-              <div className="card"><h3>Beneficio</h3><p>Ventas – gastos = beneficio. Visión clara, sin “contabilidad” compleja.</p></div>
-            </div>
-          </div>
-        </section>
-
-        <section id="como-funciona" className="section process">
-          <div className="container">
-            <div className="section__header">
-              <h2>Cómo funciona</h2>
-              <p>3 pasos sencillos para empezar hoy. Diseñado para crecer.</p>
-            </div>
-            <ol className="steps">
-              <li className="step"><div className="step__index">1</div><div className="step__content"><h3>Emite y valida facturas</h3><p>Cumplimiento VeriFactu desde el primer día.</p></div></li>
-              <li className="step"><div className="step__index">2</div><div className="step__content"><h3>Registra gastos (OCR)</h3><p>Clasificación automática con documentos subidos.</p></div></li>
-              <li className="step"><div className="step__index">3</div><div className="step__content"><h3>Visualiza ventas – gastos = beneficio</h3><p>Información útil, sin contabilidad compleja.</p></div></li>
-            </ol>
-          </div>
-        </section>
-
-        <section id="dashboard" ref={dashRef} className="section dashboard">
-          <div className="container">
-            <div className="section__header">
-              <h2>Dashboard inteligente</h2>
-              <p>Ves ventas, gastos y beneficio. Isaak se encarga del resto: preparar informes cuando los necesites.</p>
-            </div>
-            {/* Header / Estado general */}
-            <div className="cards3" style={{ marginBottom: 12 }}>
-              <div className="card" style={{ gridColumn: "1 / -1" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <p style={{ margin: 0, color: "var(--color-muted)", fontWeight: 700 }}>Periodo</p>
-                    <h3 style={{ margin: 0 }}>{new Date().toLocaleString("es-ES", { month: "long" })}</h3>
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, color: "var(--color-muted)", fontWeight: 700 }}>Estado</p>
-                    <h3 style={{ margin: 0 }}>Todo en orden</h3>
-                  </div>
-                  <div>
-                    <a className="btn btn--ghost" href="mailto:hello@verifactu.business">Hablar con Isaak</a>
-                  </div>
+                  <p className="mt-3 text-xs font-semibold text-slate-700">VERIFACTU</p>
+                  <p className="mt-1 text-[11px] text-slate-500">Cumplimiento verificado</p>
                 </div>
               </div>
             </div>
+          </div>
+        </Container>
+      </section>
 
-            {/* KPIs principales con count-up */}
-            <div className="kpi-large" style={{ marginBottom: 12 }}>
-              <div className="kpi-big">
-                <p className="kpi-big__label">Ventas</p>
-                <p className="kpi-big__value">{formatEUR(useCountUp(24500, dashVisible, 1000))}</p>
-                <p className="kpi-big__trend kpi-big__trend--up">↑ +12% vs mes anterior</p>
-              </div>
-              <div className="kpi-big">
-                <p className="kpi-big__label">Gastos</p>
-                <p className="kpi-big__value">{formatEUR(useCountUp(12100, dashVisible, 1000))}</p>
-                <p className="kpi-big__trend kpi-big__trend--down">↓ +5% vs mes anterior</p>
-              </div>
-              <div className="kpi-big">
-                <p className="kpi-big__label">Beneficio</p>
-                <p className="kpi-big__value">{formatEUR(useCountUp(12400, dashVisible, 1000))}</p>
-                <p className="kpi-big__trend kpi-big__trend--up">↑ +8% vs mes anterior</p>
-              </div>
+      {/* Pricing */}
+      <section id="planes" className="py-16">
+        <Container>
+          <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
+            Planes y precios
+          </h3>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
+            Máxima flexibilidad: versión gratuita o 30 días de prueba en planes de pago. Elige cuota fija, % de facturación o híbrido.
+          </p>
+
+          <div className="mt-10 grid gap-4 lg:grid-cols-4">
+            <PriceCard
+              name="Starter"
+              price="Gratis"
+              tagline="Para empezar sin fricción"
+              bullets={["Emisión básica", "Drive + Calendar", "Resumen ventas/gastos/beneficio"]}
+              cta="Empezar"
+              accent="muted"
+            />
+            <PriceCard
+              name="Profesional"
+              price="Cuota fija"
+              tagline="Para negocio activo"
+              bullets={["VeriFactu validación", "OCR de gastos", "Informes bajo demanda"]}
+              cta="Probar 30 días"
+              accent="primary"
+            />
+            <PriceCard
+              name="Business Plus"
+              price="Fija o %"
+              tagline="Para equipos y asesorías"
+              bullets={["Roles y permisos", "Flujos avanzados", "Soporte prioritario"]}
+              cta="Solicitar demo"
+              accent="muted"
+            />
+            <PriceCard
+              name="Enterprise"
+              price="A medida"
+              tagline="Integraciones y SLA"
+              bullets={["Seguridad avanzada", "Despliegues controlados", "Roadmap compartido"]}
+              cta="Contactar"
+              accent="muted"
+            />
+          </div>
+        </Container>
+      </section>
+
+      {/* Resources */}
+      <section className="py-14 bg-slate-50/60">
+        <Container>
+          <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
+            Recursos para dominar VeriFactu e Isaak.
+          </h3>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
+            Guías, onboarding y checklist para aplicar mejores prácticas y aprovechar todo el potencial de la plataforma.
+          </p>
+
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            <ResourceCard
+              tag="Guía"
+              title="Manual VeriFactu 2025"
+              desc="Requisitos y checklist práctico para operar con confianza."
+              cta="Descargar guía"
+            />
+            <ResourceCard
+              tag="Primeros pasos"
+              title="Onboarding con Isaak IA"
+              desc="Aprende a emitir, registrar gastos y entender tus métricas."
+              cta="Reservar plaza"
+            />
+            <ResourceCard
+              tag="Checklist"
+              title="Auditoría express"
+              desc="Evalúa el estado de tu facturación y detecta riesgos."
+              cta="Solicitar checklist"
+            />
+          </div>
+        </Container>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-12">
+        <Container>
+          <div className="flex flex-col items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row">
+            <div>
+              <h4 className="text-xl font-semibold">Factura menos. Vive más.</h4>
+              <p className="mt-1 text-sm text-slate-600">
+                Empieza gratis y deja que Isaak haga el trabajo duro.
+              </p>
             </div>
-
-            {/* Tarjeta central — Isaak */}
-            <div className="cards3" style={{ marginBottom: 12 }}>
-              <div className="card" style={{ gridColumn: "1 / -1" }}>
-                <h3>Isaak</h3>
-                <p>Este mes tus gastos han subido un 12% por proveedores. ¿Quieres que analice cuáles tienen más impacto?</p>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <a className="btn btn--primary" href="#">Analizar</a>
-                  <a className="btn btn--ghost" href="#">Más tarde</a>
-                </div>
-              </div>
-            </div>
-
-            {/* Actividad reciente (máx 5) */}
-            <div className="cards3" style={{ marginBottom: 12 }}>
-              <div className="card" style={{ gridColumn: "1 / -1" }}>
-                <h3>Actividad reciente</h3>
-                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
-                  <li>✔️ Factura emitida</li>
-                  <li>📄 Gasto registrado (OCR)</li>
-                  <li>📁 Documento procesado desde Drive</li>
-                  <li>📅 Recordatorio creado en calendario</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Informes bajo demanda (sugeridos por Isaak) */}
-            <div className="cards3">
-              <div className="card">
-                <h3>Informes bajo demanda</h3>
-                <p>Isaak los propone cuando aportan valor.</p>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <a className="btn btn--ghost" href="#">Informe de IVA</a>
-                  <a className="btn btn--ghost" href="#">Resumen mensual</a>
-                </div>
-              </div>
-              <div className="card">
-                <h3>Integraciones activas</h3>
-                <p>Google Drive, Google Calendar</p>
-                <p style={{ color: "var(--color-muted)" }}>Banca: próximamente</p>
-              </div>
-              <div className="card">
-                <h3>Evolución futura</h3>
-                <p style={{ color: "var(--color-muted)" }}>Contabilidad completa, declaraciones, notificaciones AEAT, correo</p>
-              </div>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <PrimaryButton className="w-full sm:w-auto">Registrarse</PrimaryButton>
+              <SecondaryButton className="w-full sm:w-auto">Empezar gratis 30 días</SecondaryButton>
             </div>
           </div>
-        </section>
+        </Container>
+      </section>
 
-        <section id="pricing" className="section">
-          <div className="container">
-            <div className="section__header">
-              <h2>Planes y precios</h2>
-              <p>Empieza gratis. Decide después. Prueba de 30 días en todos los planes.</p>
-            </div>
-            <PricingCalculator />
-          </div>
-        </section>
-
-        <section id="roadmap" className="section roadmap">
-          <div className="container">
-            <div className="section__header">
-              <h2>Diseñado para crecer contigo</h2>
-              <p>Funcionalidades en evolución, previstas y en próximas fases. Sin prometer de más.</p>
-            </div>
-            <div className="cards3">
-              <div className="card"><h3>Contabilidad completa</h3><p>Previsto.</p></div>
-              <div className="card"><h3>Declaraciones</h3><p>En próximas fases.</p></div>
-              <div className="card"><h3>Integración bancaria</h3><p>Próximamente.</p></div>
-            </div>
-          </div>
-        </section>
-
-        <section id="recursos" className="section resources">
-          <div className="container">
-            <div className="section__header">
-              <h2>Recursos y confianza</h2>
-              <p>Guías, onboarding con Isaak y checklist de cumplimiento para acompañarte.</p>
-            </div>
-            <Faq />
-          </div>
-        </section>
-
-        <section id="cta-final" className="section final-cta">
-          <div className="container final-cta__inner">
-            <h2>Factura menos. Entiende más. Vive mejor.</h2>
-            <div className="final-cta__actions">
-              <a className="btn btn--primary" href="#pricing">Registrarse</a>
-              <a className="btn btn--ghost" href="mailto:hello@verifactu.business">Solicitar demo</a>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="footer">
-        <div className="container footer__inner">
-          <p>© {new Date().getFullYear()} Verifactu Business</p>
-          <nav className="footer__nav">
-            <a href="#faq">FAQ</a>
-            <a href="#pricing">Precios</a>
-            <a href="mailto:hello@verifactu.business">Contacto</a>
-          </nav>
-        </div>
-      </footer>
+      <Footer />
     </div>
+  );
+}
+
+/* ----------------------------- UI Blocks ----------------------------- */
+
+function TopNav() {
+  return (
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
+      <Container className="py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div className="leading-tight">
+              <div className="text-sm font-semibold">Verifactu</div>
+              <div className="-mt-0.5 text-[11px] text-slate-500">BUSINESS</div>
+            </div>
+          </div>
+
+          <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
+            <a className="hover:text-slate-900" href="#producto">Producto</a>
+            <a className="hover:text-slate-900" href="#planes">Planes</a>
+            <a className="hover:text-slate-900" href="#recursos">Recursos</a>
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <a className="hidden rounded-full px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:inline-flex" href="#">
+              Acceder
+            </a>
+            <PrimaryButton className="h-9 px-4 text-sm">Solicitar demo</PrimaryButton>
+          </div>
+        </div>
+      </Container>
+    </header>
+  );
+}
+
+function HeroMockup({ visibleMsgs }: { visibleMsgs: IsaakMsg[] }) {
+  return (
+    <div className="relative">
+      <div className="absolute -right-6 top-10 hidden h-40 w-40 rounded-full bg-blue-100 blur-3xl lg:block" />
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        {/* top row */}
+        <div className="flex items-center justify-between">
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+            <Sparkles className="h-4 w-4 text-blue-600" />
+            Isaak IA
+          </div>
+          <button className="text-xs font-medium text-blue-600 hover:text-blue-700">Conectar</button>
+        </div>
+
+        {/* messages */}
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="mb-2 text-xs font-semibold text-slate-700">Estado diario del negocio</div>
+
+          <div className="space-y-2">
+            <AnimatePresence mode="popLayout">
+              {visibleMsgs.map((m, idx) => (
+                <motion.div
+                  key={`${m.title}-${idx}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex gap-3 rounded-xl border border-slate-200 bg-white p-3"
+                >
+                  <div className="mt-0.5">
+                    <MsgDot type={m.type} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold text-slate-800">{m.title}</div>
+                    <div className="mt-0.5 text-xs leading-5 text-slate-600">{m.body}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* summary row */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <MiniStat
+            title="Resumen"
+            value="12.450 €"
+            sub="Beneficio estimado"
+            badge="Completo"
+          />
+          <MiniInvoice />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MsgDot({ type }: { type: IsaakMsg["type"] }) {
+  const cls =
+    type === "ok"
+      ? "bg-emerald-500"
+      : type === "warn"
+      ? "bg-amber-500"
+      : "bg-blue-500";
+  return <div className={`h-3.5 w-3.5 rounded-full ${cls}`} />;
+}
+
+function MiniStat({ title, value, sub, badge }: { title: string; value: string; sub: string; badge: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-semibold text-slate-700">{title}</div>
+        <span className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
+          {badge}
+        </span>
+      </div>
+      <div className="mt-3 text-2xl font-semibold">{value}</div>
+      <div className="mt-1 text-xs text-slate-500">{sub}</div>
+    </div>
+  );
+}
+
+function MiniInvoice() {
+  return (
+    <div className="relative rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-semibold text-slate-700">Factura VF-2031</div>
+        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+          Pagada
+        </span>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200">
+          <div className="text-[11px] text-slate-500">Cliente</div>
+          <div className="mt-0.5 font-semibold text-slate-800">A. López</div>
+        </div>
+        <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200">
+          <div className="text-[11px] text-slate-500">Importe</div>
+          <div className="mt-0.5 font-semibold text-slate-800">1.250,00 €</div>
+        </div>
+      </div>
+
+      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+        <CheckCircle2 className="h-4 w-4" />
+        Validado por Isaak
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value, desc }: { label: string; value: string; desc: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
+      <div>
+        <div className="text-lg font-semibold text-blue-700">{label}</div>
+        <div className="text-xs font-semibold text-slate-800">{value}</div>
+      </div>
+      <div className="text-right text-xs text-slate-500">{desc}</div>
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, bullets }: { icon: React.ReactNode; title: string; bullets: string[] }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center gap-2">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200">
+          {icon}
+        </div>
+        <div className="text-sm font-semibold">{title}</div>
+      </div>
+      <ul className="mt-4 space-y-2 text-sm text-slate-600">
+        {bullets.map((b) => (
+          <li key={b} className="flex items-start gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-slate-400" />
+            <span>{b}</span>
+          </li>
+        ))}
+      </ul>
+      <button className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700">
+        Ver más <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+function StepCard({ n, title, desc, icon }: { n: number; title: string; desc: string; icon: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200">
+          {icon}
+        </div>
+        <div className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+          {n}
+        </div>
+      </div>
+      <div className="mt-4 text-sm font-semibold">{title}</div>
+      <div className="mt-2 text-sm leading-6 text-slate-600">{desc}</div>
+    </div>
+  );
+}
+
+function DashboardMock() {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-semibold">Isaak Control Center</div>
+        <span className="rounded-full bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
+          Suscripción Business Plus
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <KpiCard label="Ventas del mes" value="48.230 €" sub="↑ +12%" />
+        <KpiCard label="Gastos del mes" value="36.900 €" sub="↑ +7%" />
+        <KpiCard label="Beneficio" value="12.410 €" sub="↑ +8%" />
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="text-xs font-semibold text-slate-700">Isaak</div>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            He detectado un aumento de gastos en proveedores. ¿Quieres que identifique los que más afectan al margen?
+          </p>
+
+          <div className="mt-3 flex gap-2">
+            <button className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700">
+              Analizar ahora
+            </button>
+            <button className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
+              Más tarde
+            </button>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="text-xs font-semibold text-slate-700">Actividad reciente</div>
+          <div className="mt-3 space-y-2">
+            <ActivityItem icon={<FileText className="h-4 w-4 text-blue-600" />} text="Factura VF-2031 emitida y validada" />
+            <ActivityItem icon={<UploadCloud className="h-4 w-4 text-blue-600" />} text="3 tickets importados desde Drive (OCR)" />
+            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorio creado: plazo fiscal en 5 días" />
+            <ActivityItem icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />} text="Checklist VeriFactu: todo en orden" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KpiCard({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="text-[11px] font-medium text-slate-500">{label}</div>
+      <div className="mt-2 text-xl font-semibold">{value}</div>
+      <div className="mt-1 text-xs text-slate-500">{sub}</div>
+    </div>
+  );
+}
+
+function ActivityItem({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 ring-1 ring-slate-200">
+      {icon}
+      <span className="text-xs text-slate-700">{text}</span>
+    </div>
+  );
+}
+
+function InfoPill({ title, desc, icon }: { title: string; desc: string; icon: React.ReactNode }) {
+  return (
+    <div className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200">
+        {icon}
+      </div>
+      <div>
+        <div className="text-sm font-semibold">{title}</div>
+        <div className="mt-1 text-sm leading-6 text-slate-600">{desc}</div>
+      </div>
+    </div>
+  );
+}
+
+function PriceCard({
+  name,
+  price,
+  tagline,
+  bullets,
+  cta,
+  accent,
+}: {
+  name: string;
+  price: string;
+  tagline: string;
+  bullets: string[];
+  cta: string;
+  accent: "primary" | "muted";
+}) {
+  const isPrimary = accent === "primary";
+  return (
+    <div
+      className={[
+        "rounded-2xl border bg-white p-6 shadow-sm",
+        isPrimary ? "border-blue-200 ring-1 ring-blue-100" : "border-slate-200",
+      ].join(" ")}
+    >
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-semibold">{name}</div>
+        {isPrimary ? (
+          <span className="rounded-full bg-blue-600 px-3 py-1 text-[11px] font-semibold text-white">Recomendado</span>
+        ) : (
+          <span className="rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
+            Flexible
+          </span>
+        )}
+      </div>
+
+      <div className="mt-4 text-3xl font-semibold">{price}</div>
+      <div className="mt-1 text-sm text-slate-600">{tagline}</div>
+
+      <ul className="mt-5 space-y-2 text-sm text-slate-600">
+        {bullets.map((b) => (
+          <li key={b} className="flex gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
+            <span>{b}</span>
+          </li>
+        ))}
+      </ul>
+
+      <button
+        className={[
+          "mt-6 w-full rounded-full px-4 py-2.5 text-sm font-semibold transition",
+          isPrimary
+            ? "bg-blue-600 text-white hover:bg-blue-700"
+            : "bg-slate-900 text-white hover:bg-slate-800",
+        ].join(" ")}
+      >
+        {cta}
+      </button>
+
+      <p className="mt-3 text-center text-xs text-slate-500">
+        {isPrimary ? "30 días gratis incluidos" : "Gratis o prueba según plan"}
+      </p>
+    </div>
+  );
+}
+
+function ResourceCard({ tag, title, desc, cta }: { tag: string; title: string; desc: string; cta: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="inline-flex rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-slate-200">
+        {tag}
+      </div>
+      <div className="mt-4 text-sm font-semibold">{title}</div>
+      <div className="mt-2 text-sm leading-6 text-slate-600">{desc}</div>
+      <button className="mt-4 inline-flex items-center gap-1 rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700">
+        {cta} <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+function Li({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex gap-2">
+      <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
+      <span>{children}</span>
+    </li>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="mt-6 bg-slate-950 text-slate-200">
+      <Container className="py-12">
+        <div className="grid gap-10 md:grid-cols-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+                <ShieldCheck className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold">Verifactu</div>
+                <div className="text-[11px] text-slate-400">BUSINESS</div>
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-slate-400">
+              Automatiza tu facturación con cumplimiento y control.
+            </p>
+          </div>
+
+          <FooterCol
+            title="Producto"
+            links={["Resumen", "Plataforma", "Automatización"]}
+          />
+          <FooterCol
+            title="VeriFactu"
+            links={["Qué es", "Planes y precios", "Soporte"]}
+          />
+          <FooterCol
+            title="Recursos"
+            links={["Guías y webinars", "Checklist", "Contacto"]}
+          />
+        </div>
+
+        <div className="mt-10 border-t border-white/10 pt-6 text-xs text-slate-400">
+          © {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.
+        </div>
+      </Container>
+    </footer>
+  );
+}
+
+function FooterCol({ title, links }: { title: string; links: string[] }) {
+  return (
+    <div>
+      <div className="text-sm font-semibold">{title}</div>
+      <ul className="mt-3 space-y-2 text-sm text-slate-400">
+        {links.map((l) => (
+          <li key={l}>
+            <a className="hover:text-white" href="#">
+              {l}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Container({ className = "", children }: { className?: string; children: React.ReactNode }) {
+  return <div className={`mx-auto w-full max-w-6xl px-4 sm:px-6 ${className}`}>{children}</div>;
+}
+
+function PrimaryButton({ className = "", children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <button
+      className={`inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function SecondaryButton({ className = "", children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <button
+      className={`inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 ${className}`}
+    >
+      {children}
+    </button>
   );
 }
 
