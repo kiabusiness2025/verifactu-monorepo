@@ -1,0 +1,8 @@
+﻿{
+  "name": "verifactu-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
