@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PricingCalculator from "./components/PricingCalculator";
 import Faq from "./components/Faq";
 
@@ -32,15 +32,70 @@ export default function Page() {
   ];
 
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [heroVisible, setHeroVisible] = useState(false);
+  const [dashVisible, setDashVisible] = useState(false);
   const visibleCount = 3;
   const rolling = Array.from({ length: visibleCount }, (_, i) => ISAAC_MESSAGES[(index + i) % ISAAC_MESSAGES.length]);
 
+  const heroRef = useRef<HTMLElement | null>(null);
+  const dashRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
+    const reduce = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (paused || reduce) return;
     const id = setInterval(() => {
       setIndex((i) => (i + 1) % ISAAC_MESSAGES.length);
     }, 5000);
     return () => clearInterval(id);
+  }, [paused]);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setHeroVisible(true);
+        });
+      },
+      { threshold: 0.3 }
+    );
+    if (heroRef.current) obs.observe(heroRef.current);
+    return () => obs.disconnect();
   }, []);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setDashVisible(true);
+        });
+      },
+      { threshold: 0.2 }
+    );
+    if (dashRef.current) obs.observe(dashRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  const formatEUR = (n: number) => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+
+  function useCountUp(target: number, start: boolean, duration = 1000) {
+    const [value, setValue] = useState(0);
+    useEffect(() => {
+      if (!start) return;
+      const reduce = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduce) { setValue(target); return; }
+      let raf = 0;
+      const t0 = performance.now();
+      const step = (t: number) => {
+        const p = Math.min((t - t0) / duration, 1);
+        setValue(Math.round(target * p));
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+      return () => cancelAnimationFrame(raf);
+    }, [start, target, duration]);
+    return value;
+  }
 
   return (
     <div className="page">
@@ -67,7 +122,7 @@ export default function Page() {
       </header>
 
       <main>
-        <section id="hero" className="hero">
+        <section id="hero" ref={heroRef} className={`hero ${heroVisible ? "hero--visible" : ""}`}>
           <div className="container hero__inner">
             <div className="hero__content">
               <p className="hero__badge">Verifactu Business</p>
@@ -86,7 +141,7 @@ export default function Page() {
               </div>
             </div>
 
-            <aside className="isaak-panel" aria-label="Mensajes de Isaak">
+            <aside className="isaak-panel" aria-label="Mensajes de Isaak" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
               <div className="isaak-panel__header">
                 <span className="isaak-panel__avatar" aria-hidden="true">🤖</span>
                 <div>
@@ -96,7 +151,7 @@ export default function Page() {
               </div>
               <div className="isaak-panel__messages">
                 {rolling.map((m, i) => (
-                  <div key={`${m.type}-${i}`} className={`isaak-msg isaak-msg--${m.type}`}>
+                  <div key={`${m.type}-${i}`} className={`isaak-msg isaak-msg--${m.type} ${i === 0 ? "isaak-msg--enter" : ""}`}>
                     <span className="isaak-msg__icon" aria-hidden="true">
                       {m.type === "success" && "✔️"}
                       {m.type === "warning" && "⚠️"}
@@ -150,16 +205,94 @@ export default function Page() {
           </div>
         </section>
 
-        <section id="dashboard" className="section dashboard">
+        <section id="dashboard" ref={dashRef} className="section dashboard">
           <div className="container">
             <div className="section__header">
               <h2>Dashboard inteligente</h2>
               <p>Ves ventas, gastos y beneficio. Isaak se encarga del resto: preparar informes cuando los necesites.</p>
             </div>
+            {/* Header / Estado general */}
+            <div className="cards3" style={{ marginBottom: 12 }}>
+              <div className="card" style={{ gridColumn: "1 / -1" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <p style={{ margin: 0, color: "var(--color-muted)", fontWeight: 700 }}>Periodo</p>
+                    <h3 style={{ margin: 0 }}>{new Date().toLocaleString("es-ES", { month: "long" })}</h3>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, color: "var(--color-muted)", fontWeight: 700 }}>Estado</p>
+                    <h3 style={{ margin: 0 }}>Todo en orden</h3>
+                  </div>
+                  <div>
+                    <a className="btn btn--ghost" href="mailto:hello@verifactu.business">Hablar con Isaak</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* KPIs principales con count-up */}
+            <div className="kpi-large" style={{ marginBottom: 12 }}>
+              <div className="kpi-big">
+                <p className="kpi-big__label">Ventas</p>
+                <p className="kpi-big__value">{formatEUR(useCountUp(24500, dashVisible, 1000))}</p>
+                <p className="kpi-big__trend kpi-big__trend--up">↑ +12% vs mes anterior</p>
+              </div>
+              <div className="kpi-big">
+                <p className="kpi-big__label">Gastos</p>
+                <p className="kpi-big__value">{formatEUR(useCountUp(12100, dashVisible, 1000))}</p>
+                <p className="kpi-big__trend kpi-big__trend--down">↓ +5% vs mes anterior</p>
+              </div>
+              <div className="kpi-big">
+                <p className="kpi-big__label">Beneficio</p>
+                <p className="kpi-big__value">{formatEUR(useCountUp(12400, dashVisible, 1000))}</p>
+                <p className="kpi-big__trend kpi-big__trend--up">↑ +8% vs mes anterior</p>
+              </div>
+            </div>
+
+            {/* Tarjeta central — Isaak */}
+            <div className="cards3" style={{ marginBottom: 12 }}>
+              <div className="card" style={{ gridColumn: "1 / -1" }}>
+                <h3>Isaak</h3>
+                <p>Este mes tus gastos han subido un 12% por proveedores. ¿Quieres que analice cuáles tienen más impacto?</p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <a className="btn btn--primary" href="#">Analizar</a>
+                  <a className="btn btn--ghost" href="#">Más tarde</a>
+                </div>
+              </div>
+            </div>
+
+            {/* Actividad reciente (máx 5) */}
+            <div className="cards3" style={{ marginBottom: 12 }}>
+              <div className="card" style={{ gridColumn: "1 / -1" }}>
+                <h3>Actividad reciente</h3>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
+                  <li>✔️ Factura emitida</li>
+                  <li>📄 Gasto registrado (OCR)</li>
+                  <li>📁 Documento procesado desde Drive</li>
+                  <li>📅 Recordatorio creado en calendario</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Informes bajo demanda (sugeridos por Isaak) */}
             <div className="cards3">
-              <div className="card"><h3>Ventas</h3><p>Resumen claro por periodo.</p></div>
-              <div className="card"><h3>Gastos</h3><p>Clasificados automáticamente.</p></div>
-              <div className="card"><h3>Beneficio</h3><p>Tu margen sin complicaciones.</p></div>
+              <div className="card">
+                <h3>Informes bajo demanda</h3>
+                <p>Isaak los propone cuando aportan valor.</p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <a className="btn btn--ghost" href="#">Informe de IVA</a>
+                  <a className="btn btn--ghost" href="#">Resumen mensual</a>
+                </div>
+              </div>
+              <div className="card">
+                <h3>Integraciones activas</h3>
+                <p>Google Drive, Google Calendar</p>
+                <p style={{ color: "var(--color-muted)" }}>Banca: próximamente</p>
+              </div>
+              <div className="card">
+                <h3>Evolución futura</h3>
+                <p style={{ color: "var(--color-muted)" }}>Contabilidad completa, declaraciones, notificaciones AEAT, correo</p>
+              </div>
             </div>
           </div>
         </section>
