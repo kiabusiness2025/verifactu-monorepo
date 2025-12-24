@@ -1,18 +1,7 @@
 {
   "version": 2,
-  "projectSettings": {
-    "nodeVersion": "20.x"
-  },
-  "builds": [
-    {
-      "src": "apps/landing/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "apps/landing/$1"
-    }
-  ]
+  "monorepoRoot": true,
+  "buildCommand": "turbo run build --filter=verifactu-landing",
+  "outputDirectory": "apps/landing/.next",
+  "nodeVersion": "20.x"
 }
