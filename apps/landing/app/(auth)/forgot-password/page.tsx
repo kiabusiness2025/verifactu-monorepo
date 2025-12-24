@@ -2,13 +2,16 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, ArrowLeft } from "lucide-react";
 import { AuthLayout, FormInput } from "../../components/AuthComponents";
+import { sendResetEmail, resetPasswordWithCode } from "../../lib/auth";
 
 type ForgotPasswordStep = "email" | "sent" | "reset";
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const [step, setStep] = useState<ForgotPasswordStep>("email");
   const [email, setEmail] = useState("");
   const [resetCode, setResetCode] = useState("");
@@ -22,9 +25,13 @@ export default function ForgotPasswordPage() {
     setError("");
 
     try {
-      // TODO: Integrar con Firebase Auth
-      console.log("Password reset requested for:", email);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await sendResetEmail(email);
+
+      if (result.error) {
+        setError(result.error.userMessage);
+        return;
+      }
+
       setStep("sent");
     } catch (err) {
       setError("Error al enviar el correo. Intenta de nuevo.");
@@ -40,11 +47,15 @@ export default function ForgotPasswordPage() {
     setError("");
 
     try {
-      // TODO: Integrar con Firebase Auth
-      console.log("Password reset with code:", { resetCode, newPassword });
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert("Contraseña actualizada. Redirigiendo a login...");
-      window.location.href = "/auth/login";
+      const result = await resetPasswordWithCode(resetCode, newPassword);
+
+      if (result.error) {
+        setError(result.error.userMessage);
+        return;
+      }
+
+      // Redirect to login
+      router.push("/auth/login");
     } catch (err) {
       setError("Error al actualizar la contraseña. Intenta de nuevo.");
       console.error(err);

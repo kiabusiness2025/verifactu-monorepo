@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import React, { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
+import { AuthProvider } from "./context/AuthContext";
 import CookieBanner from "./components/CookieBanner";
 import IsaakChat from "./components/IsaakChat";
 
@@ -62,10 +63,12 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Verifactu" />
       </head>
       <body>
-        <Suspense>{children}</Suspense>
-        <CookieBanner />
-        <IsaakChat />
-        <Analytics />
+        <AuthProvider>
+          <Suspense>{children}</Suspense>
+          <CookieBanner />
+          <IsaakChat />
+          <Analytics />
+        </AuthProvider>
       </body>
     </html>
   );
