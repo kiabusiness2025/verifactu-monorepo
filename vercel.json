@@ -12,5 +12,6 @@
       "src": "/(.*)",
       "dest": "apps/landing/$1"
     }
-  ]
+  ],
+  "outputDirectory": "apps/landing/.next"
 }
