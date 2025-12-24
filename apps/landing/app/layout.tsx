@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   title,
   description,
   metadataBase: new URL("https://verifactu.business"),
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

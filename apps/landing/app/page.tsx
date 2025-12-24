@@ -571,11 +571,11 @@ function TopNav() {
       <Container className="py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="leading-tight">
-              <div className="text-sm font-semibold">Verifactu</div>
+              <div className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">Verifactu</div>
               <div className="-mt-0.5 text-[11px] text-slate-500">BUSINESS</div>
             </div>
           </div>
@@ -943,40 +943,64 @@ function Li({ children }: { children: React.ReactNode }) {
 
 function Footer() {
   return (
-    <footer className="mt-6 bg-slate-950 text-slate-200">
-      <Container className="py-12">
+    <footer className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-slate-100">
+      {/* Decorative gradient orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-600/10 blur-3xl" />
+      </div>
+
+      <Container className="py-12 relative z-10">
         <div className="grid gap-10 md:grid-cols-4">
           <div>
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg">
                 <ShieldCheck className="h-5 w-5 text-white" />
               </div>
               <div>
                 <div className="text-sm font-semibold">Verifactu</div>
-                <div className="text-[11px] text-slate-400">BUSINESS</div>
+                <div className="text-[11px] text-blue-300">BUSINESS</div>
               </div>
             </div>
-            <p className="mt-3 text-sm text-slate-400">
-              Automatiza tu facturación con cumplimiento y control.
+            <p className="mt-3 text-sm text-slate-300">
+              Automatiza tu facturación con cumplimiento y control total.
             </p>
+            <div className="mt-4 flex gap-3">
+              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2s9 5 20 5a9.5 9.5 0 00-9-5.5c4.75 2.25 7-7 7-7"/></svg>
+              </a>
+              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </a>
+              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+              </a>
+            </div>
           </div>
 
           <FooterCol
             title="Producto"
-            links={["Resumen", "Plataforma", "Automatización"]}
+            links={["Resumen", "Plataforma", "Automatización", "Integración API"]}
           />
           <FooterCol
             title="VeriFactu"
-            links={["Qué es", "Planes y precios", "Soporte"]}
+            links={["Qué es", "Planes y precios", "Soporte", "Estado del servicio"]}
           />
           <FooterCol
             title="Recursos"
-            links={["Guías y webinars", "Checklist", "Contacto"]}
+            links={["Guías y webinars", "Checklist", "Blog", "Contacto"]}
           />
         </div>
 
-        <div className="mt-10 border-t border-white/10 pt-6 text-xs text-slate-400">
-          © {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.
+        <div className="mt-10 border-t border-white/10 pt-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400">
+            <p>© {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
+            <div className="flex gap-6">
+              <a href="#" className="hover:text-blue-300 transition">Política de privacidad</a>
+              <a href="#" className="hover:text-blue-300 transition">Términos de servicio</a>
+              <a href="#" className="hover:text-blue-300 transition">Cookies</a>
+            </div>
+          </div>
         </div>
       </Container>
     </footer>
@@ -986,11 +1010,13 @@ function Footer() {
 function FooterCol({ title, links }: { title: string; links: string[] }) {
   return (
     <div>
-      <div className="text-sm font-semibold">{title}</div>
-      <ul className="mt-3 space-y-2 text-sm text-slate-400">
+      <div className="text-sm font-semibold text-white">
+        {title}
+      </div>
+      <ul className="mt-3 space-y-2 text-sm text-slate-300">
         {links.map((l) => (
           <li key={l}>
-            <a className="hover:text-white" href="#">
+            <a className="hover:text-blue-300 transition" href="#">
               {l}
             </a>
           </li>
@@ -1007,7 +1033,7 @@ function Container({ className = "", children }: { className?: string; children:
 function PrimaryButton({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:from-blue-700 hover:to-blue-800 ${className}`}
     >
       {children}
     </button>
