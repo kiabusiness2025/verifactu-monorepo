@@ -56,7 +56,7 @@ check_service() {
     
     # Verificar si el servicio responde
     if [ -n "$url" ]; then
-      http_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$url" || echo "000")
+      http_code=$(curl -s -o /dev/null -w "%{http_code}" --location --max-time 10 "$url" || echo "000")
       if [[ "$http_code" =~ ^2[0-9][0-9]$ ]]; then
         echo "   Health: ✅ Respondiendo (HTTP $http_code)"
       else

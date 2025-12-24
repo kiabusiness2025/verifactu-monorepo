@@ -1,6 +1,6 @@
 ---
 steps:
-  # Build landing
+  # Build landing (local context - standalone Next.js app)
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -10,7 +10,7 @@ steps:
       - 'apps/landing/Dockerfile'
       - 'apps/landing'
 
-  # Build app
+  # Build app (monorepo root context - uses pnpm workspace)
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -20,7 +20,7 @@ steps:
       - 'apps/app/Dockerfile'
       - '.'
 
-  # Build api
+  # Build api (local context - standalone Node.js app)
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
