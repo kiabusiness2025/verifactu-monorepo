@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
-const ISAAC_API_KEY = process.env.NEXT_PUBLIC_ISAAC_API_KEY;
-const ISAAC_ASSISTANT_ID = process.env.NEXT_PUBLIC_ISAAC_ASSISTANT_ID;
+// Prefer server-only env vars; fallback to NEXT_PUBLIC for compatibility
+const ISAAC_API_KEY = process.env.ISAAC_API_KEY || process.env.NEXT_PUBLIC_ISAAC_API_KEY;
+const ISAAC_ASSISTANT_ID = process.env.ISAAC_ASSISTANT_ID || process.env.NEXT_PUBLIC_ISAAC_ASSISTANT_ID;
 
 export async function POST(req: Request) {
   try {

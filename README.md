@@ -175,6 +175,27 @@ npm install -g vercel
 vercel --prod
 ```
 
+### Variables de entorno (Chat de Isaak)
+
+Configurar en Vercel (Production y Preview):
+- `ISAAC_API_KEY` (preferido) o `NEXT_PUBLIC_ISAAC_API_KEY`
+- `ISAAC_ASSISTANT_ID` (opcional) o `NEXT_PUBLIC_ISAAC_ASSISTANT_ID`
+
+Para desarrollo local en `apps/landing/.env.local`:
+```env
+ISAAC_API_KEY=tu_clave
+ISAAC_ASSISTANT_ID=tu_asistente
+# Compatibilidad si prefieres NEXT_PUBLIC
+NEXT_PUBLIC_ISAAC_API_KEY=tu_clave
+NEXT_PUBLIC_ISAAC_ASSISTANT_ID=tu_asistente
+```
+
+Luego:
+```bash
+cd apps/landing
+npm run dev
+```
+
 ## 5.2 App (Next.js) - Cloud Run
 
 cd $REPO_DIR/apps/app
