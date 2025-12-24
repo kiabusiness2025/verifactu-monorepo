@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 
 const FAQ_DATA = [
   {
@@ -43,36 +45,50 @@ function FaqItem({
   item,
   isOpen,
   onClick,
+  index,
 }: {
   item: { question: string; answer: string };
   isOpen: boolean;
   onClick: () => void;
+  index: number;
 }) {
   return (
-    <div className={`faq-item ${isOpen ? "is-open" : ""}`}>
-      <button className="faq-item__question" onClick={onClick}>
-        <span>{item.question}</span>
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="faq-item__icon"
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4, delay: index * 0.05 }}
+      className="rounded-2xl border border-slate-200 bg-white overflow-hidden transition-shadow hover:shadow-sm"
+    >
+      <button
+        onClick={onClick}
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition"
+      >
+        <span className="text-base font-semibold text-slate-900">
+          {item.question}
+        </span>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
-          <path
-            d="M6 9l6 6 6-6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+          <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0" />
+        </motion.div>
       </button>
-      <div className="faq-item__answer">
-        <p>{item.answer}</p>
-      </div>
-    </div>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className="px-6 pb-5 text-sm leading-6 text-slate-600">
+              {item.answer}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
@@ -84,25 +100,18 @@ export default function Faq() {
   };
 
   return (
-    <section id="faq" className="section faq-section">
-      <div className="container">
-        <div className="section__header">
-          <h2>Preguntas Frecuentes</h2>
-          <p>
-            Resolvemos dudas sobre registro, integraciones, seguridad y cómo Isaak automatiza tu operativa.
-          </p>
-        </div>
-        <div className="faq-list">
-          {FAQ_DATA.map((item, index) => (
-            <FaqItem
-              key={index}
-              item={item}
-              isOpen={openIndex === index}
-              onClick={() => handleToggle(index)}
-            />
-          ))}
-        </div>
+    <div className="mx-auto max-w-3xl">
+      <div className="space-y-3">
+        {FAQ_DATA.map((item, index) => (
+          <FaqItem
+            key={index}
+            item={item}
+            index={index}
+            isOpen={openIndex === index}
+            onClick={() => handleToggle(index)}
+          />
+        ))}
       </div>
-    </section>
+    </div>
   );
 }

@@ -18,6 +18,8 @@ import {
   UploadCloud,
   Wallet,
 } from "lucide-react";
+import PricingCalculator from "./components/PricingCalculator";
+import Faq from "./components/Faq";
 
 type IsaakMsg = {
   type: "ok" | "info" | "warn";
@@ -381,66 +383,43 @@ export default function Page() {
       </section>
 
       {/* Pricing */}
-      <section id="planes" className="py-16">
+      <motion.section
+        id="planes"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-slate-50/60"
+      >
+        <PricingCalculator />
+      </motion.section>
+
+      {/* FAQ */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="py-16 bg-white"
+      >
         <Container>
-          <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
-            Planes y precios
-          </h3>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
-            Máxima flexibilidad: versión gratuita o 30 días de prueba en planes de pago. Elige cuota fija, % de facturación o híbrido.
-          </p>
-
-          <div className="mt-10 grid gap-4 lg:grid-cols-4">
-            <PriceCard
-              name="Starter"
-              price="Gratis"
-              tagline="Para empezar sin fricción"
-              bullets={["Emisión básica", "Drive + Calendar", "Resumen ventas/gastos/beneficio"]}
-              cta="Empezar"
-              accent="muted"
-            />
-            <PriceCard
-              name="Profesional"
-              price="Cuota fija"
-              tagline="Para negocio activo"
-              bullets={["VeriFactu validación", "OCR de gastos", "Informes bajo demanda"]}
-              cta="Probar 30 días"
-              accent="primary"
-            />
-            <PriceCard
-              name="Business Plus"
-              price="Fija o %"
-              tagline="Para equipos y asesorías"
-              bullets={["Roles y permisos", "Flujos avanzados", "Soporte prioritario"]}
-              cta="Solicitar demo"
-              accent="muted"
-            />
-            <PriceCard
-              name="Enterprise"
-              price="A medida"
-              tagline="Integraciones y SLA"
-              bullets={["Seguridad avanzada", "Despliegues controlados", "Roadmap compartido"]}
-              cta="Contactar"
-              accent="muted"
-            />
-          </div>
-
-          {/* Trust message: Data protection guarantee */}
-          <div className="mt-12 rounded-2xl border border-slate-200 bg-gradient-to-r from-emerald-50 to-blue-50 p-6 text-center shadow-sm">
-            <div className="flex items-center justify-center gap-2">
-              <Lock className="h-5 w-5 text-emerald-600" />
-              <h4 className="text-lg font-semibold text-slate-900">Tu contabilidad nunca se pierde</h4>
-            </div>
-            <p className="mt-3 max-w-2xl mx-auto text-sm leading-6 text-slate-600">
-              Aunque cambies o canceles tu plan, <strong>siempre tendrás acceso a tus datos</strong>.
-              Solo se limitarán algunas funciones avanzadas, nunca tu información.
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-center mb-12"
+          >
+            <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Preguntas frecuentes
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
+              Respuestas rápidas sobre planes, seguridad y funcionalidades.
             </p>
-            <p className="mt-2 text-xs text-slate-500">
-              Acceso permanente a tus datos. Sin bloqueos. Sin borrados.
-            </p>
-          </div>
+          </motion.div>
+          <Faq />
         </Container>
-      </section>
+      </motion.section>
 
       {/* Resources */}
       <section className="py-14 bg-slate-50/60">
