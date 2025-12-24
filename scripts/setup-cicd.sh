@@ -12,8 +12,8 @@ echo
 # Variables de configuración
 PROJECT_ID="${PROJECT_ID:-verifactu-business-480212}"
 REGION="${REGION:-europe-west1}"
-REPO_OWNER="kiabusiness2025"
-REPO_NAME="verifactu-monorepo"
+REPO_OWNER="${REPO_OWNER:-kiabusiness2025}"
+REPO_NAME="${REPO_NAME:-verifactu-monorepo}"
 
 echo "Configuración:"
 echo "  PROJECT_ID:  $PROJECT_ID"
@@ -48,15 +48,32 @@ echo "----------------------------------------"
 echo "Creando trigger para despliegue en main"
 echo "----------------------------------------"
 
+# Verificar si el trigger ya existe
+if gcloud builds triggers describe deploy-all-services &>/dev/null; then
+  echo "⚠️  El trigger 'deploy-all-services' ya existe"
+  read -p "¿Deseas recrearlo? (s/n): " recreate
+  if [ "$recreate" = "s" ]; then
+    gcloud builds triggers delete deploy-all-services --quiet
+    echo "✅ Trigger anterior eliminado"
+  else
+    echo "ℹ️  Manteniendo trigger existente"
+  fi
+fi
+
 # Crear trigger para despliegue automático en push a main
-gcloud builds triggers create github \
-  --name="deploy-all-services" \
-  --repo-name="$REPO_NAME" \
-  --repo-owner="$REPO_OWNER" \
-  --branch-pattern="^main$" \
-  --build-config="cloudbuild.yaml" \
-  --description="Despliega todos los servicios cuando se hace push a main" \
-  2>&1 | grep -v "ERROR: (gcloud.builds.triggers.create.github) Resource" || true
+if ! gcloud builds triggers describe deploy-all-services &>/dev/null; then
+  gcloud builds triggers create github \
+    --name="deploy-all-services" \
+    --repo-name="$REPO_NAME" \
+    --repo-owner="$REPO_OWNER" \
+    --branch-pattern="^main$" \
+    --build-config="cloudbuild.yaml" \
+    --description="Despliega todos los servicios cuando se hace push a main"
+  
+  echo "✅ Trigger creado exitosamente"
+else
+  echo "✅ Trigger configurado"
+fi
 
 echo
 echo "----------------------------------------"

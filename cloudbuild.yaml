@@ -1,4 +1,3 @@
----
 steps:
   # Build landing (local context - standalone Next.js app)
   - name: 'gcr.io/cloud-builders/docker'
