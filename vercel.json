@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "buildCommand": "cd apps/landing && npm install && npm run build",
+  "outputDirectory": "apps/landing/.next",
+  "installCommand": "npm install",
+  "env": {},
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "feat/landing-rebuild-from-app-content": true
+    }
+  }
+}
