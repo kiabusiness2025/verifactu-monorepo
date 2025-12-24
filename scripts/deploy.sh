@@ -36,8 +36,7 @@ echo
 deploy_service() {
   local service_name=$1
   local service_path=$2
-  local dockerfile=$3
-  local needs_db=$4
+  local needs_db=$3
   
   echo "----------------------------------------"
   echo "Desplegando: $service_name"
@@ -85,26 +84,26 @@ read -p "Selecciona una opción (1-6): " option
 case $option in
   1)
     echo "Desplegando todos los servicios..."
-    deploy_service "verifactu-landing" "apps/landing" "apps/landing/Dockerfile" "false"
-    deploy_service "verifactu-app" "apps/app" "apps/app/Dockerfile" "true"
-    deploy_service "verifactu-api" "apps/api" "apps/api/Dockerfile" "true"
+    deploy_service "verifactu-landing" "apps/landing" "false"
+    deploy_service "verifactu-app" "apps/app" "true"
+    deploy_service "verifactu-api" "apps/api" "true"
     ;;
   2)
     echo "Desplegando solo landing..."
-    deploy_service "verifactu-landing" "apps/landing" "apps/landing/Dockerfile" "false"
+    deploy_service "verifactu-landing" "apps/landing" "false"
     ;;
   3)
     echo "Desplegando solo app..."
-    deploy_service "verifactu-app" "apps/app" "apps/app/Dockerfile" "true"
+    deploy_service "verifactu-app" "apps/app" "true"
     ;;
   4)
     echo "Desplegando solo api..."
-    deploy_service "verifactu-api" "apps/api" "apps/api/Dockerfile" "true"
+    deploy_service "verifactu-api" "apps/api" "true"
     ;;
   5)
     echo "Desplegando landing y app..."
-    deploy_service "verifactu-landing" "apps/landing" "apps/landing/Dockerfile" "false"
-    deploy_service "verifactu-app" "apps/app" "apps/app/Dockerfile" "true"
+    deploy_service "verifactu-landing" "apps/landing" "false"
+    deploy_service "verifactu-app" "apps/app" "true"
     ;;
   6)
     echo "Despliegue cancelado."

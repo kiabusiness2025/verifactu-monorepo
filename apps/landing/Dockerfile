@@ -2,12 +2,12 @@ FROM node:20-alpine AS base
 
 WORKDIR /app
 
-# Copy landing app files
-COPY apps/landing/package*.json ./
+# Copy package files
+COPY package*.json ./
 RUN npm ci
 
 # Copy the application code
-COPY apps/landing ./
+COPY . ./
 
 # Build the Next.js application
 RUN npm run build
@@ -38,4 +38,5 @@ EXPOSE 8080
 
 # Start the application
 CMD ["node", "server.js"]
+
 
