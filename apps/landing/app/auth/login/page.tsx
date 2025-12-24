@@ -5,14 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { AuthLayout, FormInput, PasswordInput, GoogleAuthButton } from "../../components/AuthComponents";
-import { signInWithEmail, signInWithGoogle } from "../../lib/auth";
+import { signInWithEmail, signUpWithEmail, signInWithGoogle } from "../../lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [passwordError, setPasswordError] = useState("");
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,15 +63,74 @@ export default function LoginPage() {
     }
   };
 
+  const validateSignup = () => {
+    setError("");
+    setPasswordError("");
+
+    if (password.length < 8) {
+      setPasswordError("La contraseña debe tener al menos 8 caracteres");
+      return false;
+    }
+
+    if (password !== confirmPassword) {
+      setPasswordError("Las contraseñas no coinciden");
+      return false;
+    }
+
+    if (!agreeTerms) {
+      setError("Debes aceptar los términos y condiciones");
+      return false;
+    }
+    return true;
+  };
+
+  const handleEmailSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateSignup()) return;
+    setIsLoading(true);
+    setError("");
+    try {
+      const result = await signUpWithEmail(email, password);
+      if (result.error) {
+        setError(result.error.userMessage);
+        return;
+      }
+      router.push("/auth/verify-email");
+    } catch (err) {
+      setError("Error al registrarse. Intenta de nuevo.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthLayout
-      title="Inicia sesión"
-      subtitle="Accede a tu cuenta de Verifactu"
-      footerText="¿No tienes cuenta?"
-      footerLink={{ href: "/auth/signup", label: "Regístrate aquí" }}
+      title={mode === "login" ? "Inicia sesión" : "Crea tu cuenta"}
+      subtitle={mode === "login" ? "Accede a tu cuenta de Verifactu" : "Únete a Verifactu hoy"}
+      footerText={mode === "login" ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?"}
+      footerLink={mode === "login" ? { href: "/auth/signup", label: "Regístrate aquí" } : { href: "/auth/login", label: "Inicia sesión aquí" }}
     >
+      {/* Tabs */}
+      <div className="flex gap-2 mb-2">
+        <button
+          type="button"
+          onClick={() => setMode("login")}
+          className={`flex-1 py-2 rounded-lg border ${mode === "login" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-300"}`}
+        >
+          Iniciar sesión
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("signup")}
+          className={`flex-1 py-2 rounded-lg border ${mode === "signup" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-300"}`}
+        >
+          Crear cuenta
+        </button>
+      </div>
+
       <motion.form
-        onSubmit={handleEmailLogin}
+        onSubmit={mode === "login" ? handleEmailLogin : handleEmailSignup}
         className="space-y-4"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -93,26 +156,75 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700">
               Contraseña
             </label>
-            <Link
-              href="/auth/forgot-password"
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              ¿La olvidaste?
-            </Link>
+            {mode === "login" && (
+              <Link
+                href="/auth/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                ¿La olvidaste?
+              </Link>
+            )}
           </div>
           <PasswordInput
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setPasswordError("");
+            }}
             required
           />
+          {mode === "signup" && passwordError && (
+            <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+          )}
         </div>
+
+        {mode === "signup" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Confirmar contraseña <span className="text-red-500">*</span>
+            </label>
+            <PasswordInput
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setPasswordError("");
+              }}
+              placeholder="Repite tu contraseña"
+              required
+            />
+          </div>
+        )}
+
+        {mode === "signup" && (
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={agreeTerms}
+              onChange={(e) => {
+                setAgreeTerms(e.target.checked);
+                setError("");
+              }}
+              className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-gray-600">
+              Acepto los {" "}
+              <a href="/terms" className="text-blue-600 hover:text-blue-700 font-medium">
+                términos y condiciones
+              </a>{" "}
+              y la {" "}
+              <a href="/privacy" className="text-blue-600 hover:text-blue-700 font-medium">
+                política de privacidad
+              </a>
+            </span>
+          </label>
+        )}
 
         <button
           type="submit"
           disabled={isLoading}
           className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
+          {isLoading ? (mode === "login" ? "Iniciando sesión..." : "Creando cuenta...") : (mode === "login" ? "Iniciar sesión" : "Crear cuenta")}
         </button>
       </motion.form>
 
@@ -150,7 +262,7 @@ export default function LoginPage() {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        {isLoading ? "Iniciando sesión..." : "Continuar con Google"}
+        {isLoading ? (mode === "login" ? "Iniciando sesión..." : "Registrándose...") : "Continuar con Google"}
       </button>
     </AuthLayout>
   );

@@ -138,9 +138,11 @@ export function AuthLayout({
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-lg">VF</span>
-              </div>
+              <img
+                src="/verifactu.business%20logo.png"
+                alt="Verifactu Business"
+                className="h-10 w-auto"
+              />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
             {subtitle && <p className="text-gray-600">{subtitle}</p>}
