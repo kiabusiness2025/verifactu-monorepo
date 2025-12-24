@@ -1,7 +1,3 @@
 {
-  "version": 2,
-  "monorepoRoot": true,
-  "buildCommand": "turbo run build --filter=verifactu-landing",
-  "outputDirectory": "apps/landing/.next",
-  "nodeVersion": "20.x"
+  "version": 2
 }
