@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "./context/AuthContext";
 import CookieBanner from "./components/CookieBanner";
 import IsaakChat from "./components/IsaakChat";
+import DevStatusBanner from "./components/DevStatusBanner";
 
 import "./globals.css";
 
@@ -65,6 +66,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <Suspense>{children}</Suspense>
+          {process.env.NODE_ENV !== "production" && <DevStatusBanner />}
           <CookieBanner />
           <IsaakChat />
           <Analytics />

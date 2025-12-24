@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { AuthLayout, FormInput, PasswordInput, GoogleAuthButton } from "../../components/AuthComponents";
+import { useAuth } from "../../context/AuthContext";
 import { signInWithEmail, signUpWithEmail, signInWithGoogle } from "../../lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,6 +19,13 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [passwordError, setPasswordError] = useState("");
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (user) {
+      router.push("/");
+    }
+  }, [user, router]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
