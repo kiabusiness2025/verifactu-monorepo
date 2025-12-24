@@ -154,21 +154,29 @@ gcloud secrets add-iam-policy-binding DATABASE_URL \
   --role=roles/secretmanager.secretAccessor
 
 ---------------------------------------------------------------------
-🛠️ 5. Despliegue individual de cada servicio (Cloud Run)
+🛠️ 5. Despliegue de servicios
 ---------------------------------------------------------------------
 
-Cada servicio se despliega de forma independiente:
+## 5.1 Landing - Vercel (Recomendado)
 
-5.1 Despliegue Landing
-cd $REPO_DIR/apps/landing
+La landing se despliega automáticamente en **Vercel**:
 
-gcloud run deploy verifactu-landing \
-  --source . \
-  --region $REGION \
-  --allow-unauthenticated \
-  --set-env-vars NODE_ENV=production
+1. Conectar el repositorio en vercel.com
+2. Configuración automática:
+   - Framework: Next.js (auto-detectado)
+   - Root Directory: `apps/landing`
+   - Build Command: `npm run build` (auto-detectado)
+   - Output Directory: `.next`
+3. Deploy automático en cada push a `main`
 
-5.2 Despliegue App (Next.js)
+Alternativamente, desplegar localmente con Vercel CLI:
+```bash
+npm install -g vercel
+vercel --prod
+```
+
+## 5.2 App (Next.js) - Cloud Run
+
 cd $REPO_DIR/apps/app
 
 gcloud run deploy verifactu-app \
@@ -178,7 +186,8 @@ gcloud run deploy verifactu-app \
   --set-env-vars NODE_ENV=production \
   --set-secrets DATABASE_URL=DATABASE_URL:latest
 
-5.3 Despliegue API (Node Express)
+## 5.3 API (Node Express) - Cloud Run
+
 cd $REPO_DIR/apps/api
 
 gcloud run deploy verifactu-api \
