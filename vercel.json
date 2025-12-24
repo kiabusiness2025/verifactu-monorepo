@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "framework": "nextjs",
-  "installCommand": "cd apps/landing && npm install",
-  "buildCommand": "cd apps/landing && npm run build",
-  "outputDirectory": "apps/landing/.next"
-}
