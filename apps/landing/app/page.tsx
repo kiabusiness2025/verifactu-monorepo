@@ -18,6 +18,7 @@ import {
   UploadCloud,
   Wallet,
 } from "lucide-react";
+import Header from "./components/Header";
 import PricingCalculator from "./components/PricingCalculator";
 import Faq from "./components/Faq";
 
@@ -95,7 +96,7 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <TopNav />
+      <Header />
 
       {/* HERO */}
       <section className="relative">
@@ -541,39 +542,6 @@ function CommandExample({ command, response }: { command: string; response: stri
         <p className="mt-2 text-sm leading-6 text-slate-700">{response}</p>
       </div>
     </div>
-  );
-}
-
-function TopNav() {
-  return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
-      <Container className="py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div className="leading-tight">
-              <div className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">Verifactu</div>
-              <div className="-mt-0.5 text-[11px] text-slate-500">BUSINESS</div>
-            </div>
-          </div>
-
-          <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
-            <a className="hover:text-slate-900" href="#producto">Producto</a>
-            <a className="hover:text-slate-900" href="#planes">Planes</a>
-            <a className="hover:text-slate-900" href="#recursos">Recursos</a>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <a className="hidden rounded-full px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:inline-flex" href="#">
-              Acceder
-            </a>
-            <PrimaryButton className="h-9 px-4 text-sm">Solicitar demo</PrimaryButton>
-          </div>
-        </div>
-      </Container>
-    </header>
   );
 }
 
