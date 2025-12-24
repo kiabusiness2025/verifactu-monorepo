@@ -1,17 +1,9 @@
 {
   "version": 2,
-  "name": "verifactu-landing",
   "builds": [
     {
-      "src": "apps/landing",
+      "src": "apps/landing/package.json",
       "use": "@vercel/next"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "apps/landing/$1"
-    }
-  ],
-  "outputDirectory": "apps/landing/.next"
+  ]
 }
