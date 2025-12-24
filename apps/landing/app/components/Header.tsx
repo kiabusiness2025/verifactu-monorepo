@@ -20,9 +20,11 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">VF</span>
-          </div>
+          <img
+            src="/verifactu.business%20logo.png"
+            alt="Verifactu Business"
+            className="h-8 w-auto"
+          />
           <span className="font-bold text-lg hidden sm:inline text-gray-900">
             Verifactu
           </span>

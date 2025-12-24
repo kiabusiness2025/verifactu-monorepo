@@ -8,12 +8,14 @@ import { Mail, ArrowLeft } from "lucide-react";
 import { AuthLayout, FormInput } from "../../components/AuthComponents";
 import { useToast } from "../../components/Toast";
 import { sendResetEmail, resetPasswordWithCode } from "../../lib/auth";
+import { useAuth } from "../../context/AuthContext";
 
 type ForgotPasswordStep = "email" | "sent" | "reset";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [step, setStep] = useState<ForgotPasswordStep>("email");
   const [email, setEmail] = useState("");
   const [resetCode, setResetCode] = useState("");
@@ -81,6 +83,11 @@ export default function ForgotPasswordPage() {
           : `Hemos enviado un código a ${email}`
       }
     >
+      {user && (
+        <div className="mb-3 p-2 text-xs rounded border border-blue-200 bg-blue-50 text-blue-700">
+          Ya has iniciado sesión. Puedes cambiar tu contraseña con el enlace del correo.
+        </div>
+      )}
       {step === "email" && (
         <motion.form
           onSubmit={handleEmailSubmit}

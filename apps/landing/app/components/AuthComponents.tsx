@@ -148,6 +148,15 @@ export function AuthLayout({
             {subtitle && <p className="text-gray-600">{subtitle}</p>}
           </div>
 
+          {/* Illustration (only in larger screens) */}
+          <div className="hidden sm:block mb-6">
+            <img
+              src="/hero-dashboard.svg"
+              alt="Panel de control Verifactu"
+              className="w-full rounded-lg border border-gray-200"
+            />
+          </div>
+
           {/* Content */}
           <div className="space-y-6">{children}</div>
 
