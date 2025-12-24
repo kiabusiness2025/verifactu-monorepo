@@ -4,6 +4,8 @@ Proyecto GCP: verifactu-business-480212
 Monorepo: verifactu-monorepo
 Servicios incluidos: Landing · App · API · Base de Datos
 
+> **🚀 ¿Buscas instrucciones de despliegue rápido?** Consulta la [Guía de Despliegue (DEPLOYMENT.md)](./DEPLOYMENT.md)
+
 🧭 0. Objetivo del README
 
 Este documento explica cómo:
