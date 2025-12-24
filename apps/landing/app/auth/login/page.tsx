@@ -7,10 +7,12 @@ import { motion } from "framer-motion";
 import { AuthLayout, FormInput, PasswordInput, GoogleAuthButton } from "../../components/AuthComponents";
 import { useAuth } from "../../context/AuthContext";
 import { signInWithEmail, signUpWithEmail, signInWithGoogle } from "../../lib/auth";
+import { useToast } from "../../components/Toast";
 
 export default function LoginPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,13 +39,16 @@ export default function LoginPage() {
 
       if (result.error) {
         setError(result.error.userMessage);
+        showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
       }
 
       // Redirect to dashboard
+      showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión correcto" });
       router.push("/");
     } catch (err) {
       setError("Error al iniciar sesión. Intenta de nuevo.");
+      showToast({ type: "error", title: "Error", message: "Error al iniciar sesión" });
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -59,13 +64,16 @@ export default function LoginPage() {
 
       if (result.error) {
         setError(result.error.userMessage);
+        showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
       }
 
       // Redirect to dashboard
+      showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión con Google" });
       router.push("/");
     } catch (err) {
       setError("Error al iniciar sesión con Google. Intenta de nuevo.");
+      showToast({ type: "error", title: "Error", message: "Error al iniciar sesión con Google" });
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -75,12 +83,10 @@ export default function LoginPage() {
   const validateSignup = () => {
     setError("");
     setPasswordError("");
-
     if (password.length < 8) {
       setPasswordError("La contraseña debe tener al menos 8 caracteres");
       return false;
     }
-
     if (password !== confirmPassword) {
       setPasswordError("Las contraseñas no coinciden");
       return false;

@@ -6,12 +6,14 @@ import { motion } from "framer-motion";
 import { Mail, CheckCircle2, RotateCcw } from "lucide-react";
 import { AuthLayout } from "../../components/AuthComponents";
 import { resendVerificationEmail } from "../../lib/auth";
+import { useToast } from "../../components/Toast";
 import { auth } from "../../lib/firebase";
 
 type VerifyEmailStep = "pending" | "resent" | "verified";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [step, setStep] = useState<VerifyEmailStep>("pending");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -63,15 +65,18 @@ export default function VerifyEmailPage() {
 
       if (result.error) {
         setError(result.error.userMessage);
+        showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
       }
 
       setStep("resent");
+      showToast({ type: "info", title: "Correo reenviado", message: "Revisa tu bandeja de entrada" });
       setResendCount((prev) => prev + 1);
       setCanResend(false);
       setCountdown(60); // 60 seconds before resending again
     } catch (err) {
       setError("Error al reenviar el correo. Intenta de nuevo.");
+      showToast({ type: "error", title: "Error", message: "No se pudo reenviar el correo" });
       console.error(err);
     } finally {
       setIsLoading(false);

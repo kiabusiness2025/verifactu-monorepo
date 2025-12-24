@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, ArrowLeft } from "lucide-react";
 import { AuthLayout, FormInput } from "../../components/AuthComponents";
+import { useToast } from "../../components/Toast";
 import { sendResetEmail, resetPasswordWithCode } from "../../lib/auth";
 
 type ForgotPasswordStep = "email" | "sent" | "reset";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [step, setStep] = useState<ForgotPasswordStep>("email");
   const [email, setEmail] = useState("");
   const [resetCode, setResetCode] = useState("");
@@ -29,12 +31,15 @@ export default function ForgotPasswordPage() {
 
       if (result.error) {
         setError(result.error.userMessage);
+        showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
       }
 
+      showToast({ type: "info", title: "Correo enviado", message: "Revisa tu bandeja para el código" });
       setStep("sent");
     } catch (err) {
       setError("Error al enviar el correo. Intenta de nuevo.");
+      showToast({ type: "error", title: "Error", message: "No se pudo enviar el correo" });
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -51,13 +56,16 @@ export default function ForgotPasswordPage() {
 
       if (result.error) {
         setError(result.error.userMessage);
+        showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
       }
 
       // Redirect to login
+      showToast({ type: "success", title: "Actualizada", message: "Tu contraseña ha sido cambiada" });
       router.push("/auth/login");
     } catch (err) {
       setError("Error al actualizar la contraseña. Intenta de nuevo.");
+      showToast({ type: "error", title: "Error", message: "No se pudo actualizar la contraseña" });
       console.error(err);
     } finally {
       setIsLoading(false);

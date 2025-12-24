@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import CookieBanner from "./components/CookieBanner";
 import IsaakChat from "./components/IsaakChat";
 import DevStatusBanner from "./components/DevStatusBanner";
+import { ToastProvider } from "./components/Toast";
 
 import "./globals.css";
 
@@ -65,11 +66,13 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <Suspense>{children}</Suspense>
-          {process.env.NODE_ENV !== "production" && <DevStatusBanner />}
-          <CookieBanner />
-          <IsaakChat />
-          <Analytics />
+          <ToastProvider>
+            <Suspense>{children}</Suspense>
+            {process.env.NODE_ENV !== "production" && <DevStatusBanner />}
+            <CookieBanner />
+            <IsaakChat />
+            <Analytics />
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>
