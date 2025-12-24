@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Asegurar que usa App Router
-  experimental: {},
-  // Output tracing para Vercel
+  // Output tracing for Vercel
   output: 'standalone',
-  // Configuración para producción
+  // Production configuration
   poweredByHeader: false,
   compress: true,
 };
