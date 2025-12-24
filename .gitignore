@@ -3,6 +3,7 @@ node_modules/
 dist/
 out/
 .env*
+!**/.env.example
 .DS_Store
 *.log
 .vscode/
