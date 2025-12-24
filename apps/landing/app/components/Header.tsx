@@ -4,9 +4,14 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "../context/AuthContext";
+import { logout } from "../lib/auth";
+import { useToast } from "./Toast";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+  const { showToast } = useToast();
 
   const navLinks = [
     { label: "Características", href: "#features" },
@@ -45,22 +50,46 @@ export default function Header() {
 
         {/* Right Side - Desktop */}
         <div className="hidden md:flex items-center gap-4">
-          <Link
-            href="/auth/login"
-            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm"
-          >
-            Acceder
-          </Link>
+          {user ? (
+            <button
+              onClick={async () => {
+                await logout();
+                showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
+              }}
+              className="px-6 py-2 bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-lg hover:from-gray-800 hover:to-black transition-all font-medium text-sm"
+            >
+              Salir
+            </button>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm"
+            >
+              Acceder
+            </Link>
+          )}
         </div>
 
         {/* Mobile: Hamburger Menu Button + Login Button */}
         <div className="md:hidden flex items-center gap-3">
-          <Link
-            href="/auth/login"
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm"
-          >
-            Acceder
-          </Link>
+          {user ? (
+            <button
+              onClick={async () => {
+                await logout();
+                showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
+              }}
+              className="px-4 py-2 bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-lg hover:from-gray-800 hover:to-black transition-all font-medium text-sm"
+            >
+              Salir
+            </button>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm"
+            >
+              Acceder
+            </Link>
+          )}
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"

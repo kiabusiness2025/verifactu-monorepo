@@ -22,6 +22,15 @@ export default function VerifyEmailPage() {
   const [countdown, setCountdown] = useState(0);
   const [userEmail, setUserEmail] = useState("tu@email.com");
 
+  // Fast check: already verified
+  useEffect(() => {
+    if (auth.currentUser?.emailVerified) {
+      setStep("verified");
+      showToast({ type: "success", title: "Verificado", message: "Correo ya verificado" });
+      setTimeout(() => router.push("/"), 1000);
+    }
+  }, [router, showToast]);
+
   // Get user email on client mount
   useEffect(() => {
     if (auth.currentUser?.email) {
@@ -38,6 +47,7 @@ export default function VerifyEmailPage() {
         setTimeout(() => {
           router.push("/");
         }, 2000);
+        showToast({ type: "success", title: "Verificado", message: "Correo verificado" });
       }
     }, 2000);
 
