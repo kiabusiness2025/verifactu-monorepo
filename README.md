@@ -18,7 +18,7 @@ Configurar e integrar Cloud SQL (Postgres).
 
 Preparar despliegues independientes por servicio:
 
-apps/landing → Cloud Run
+apps/landing → Vercel
 
 apps/app → Cloud Run
 
@@ -159,14 +159,21 @@ gcloud secrets add-iam-policy-binding DATABASE_URL \
 
 Cada servicio se despliega de forma independiente:
 
-5.1 Despliegue Landing
-cd $REPO_DIR/apps/landing
+5.1 Despliegue Landing (Vercel)
 
-gcloud run deploy verifactu-landing \
-  --source . \
-  --region $REGION \
-  --allow-unauthenticated \
-  --set-env-vars NODE_ENV=production
+La aplicación landing se despliega automáticamente en Vercel:
+
+Pasos en Vercel Dashboard:
+1. Conectar repositorio kiabusiness2025/verifactu-monorepo
+2. Configurar Root Directory: `apps/landing`
+3. Framework Preset: Next.js (detectado automáticamente)
+4. Build Command: (auto-detectado por Vercel)
+5. Install Command: `pnpm install` (auto-detectado)
+
+Variables de entorno opcionales:
+- NODE_ENV=production (configurado por defecto)
+
+La aplicación se redesplegará automáticamente con cada push a main.
 
 5.2 Despliegue App (Next.js)
 cd $REPO_DIR/apps/app
@@ -237,6 +244,11 @@ steps:
       ]
 
 images: []
+
+## Nota: Landing en Vercel
+
+La aplicación `landing` se despliega en Vercel y no requiere configuración en Cloud Build.
+Solo `app` y `api` se despliegan en Cloud Run.
 
 ---------------------------------------------------------------------
 🧩 8. Migración desde entornos previos
