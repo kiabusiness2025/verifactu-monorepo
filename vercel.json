@@ -1,9 +1,3 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "apps/landing/package.json",
-      "use": "@vercel/next"
-    }
-  ]
+  "version": 2
 }
