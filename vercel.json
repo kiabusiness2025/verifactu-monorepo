@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm run build --filter=landing",
+  "buildCommand": "pnpm run build --filter=verifactu-landing",
   "outputDirectory": "apps/landing/.next",
   "installCommand": "pnpm install",
   "framework": "nextjs"
