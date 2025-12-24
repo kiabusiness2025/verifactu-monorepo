@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import React, { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import CookieBanner from "./components/CookieBanner";
 import IsaakChat from "./components/IsaakChat";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
         <Suspense>{children}</Suspense>
         <CookieBanner />
         <IsaakChat />
+        <Analytics />
       </body>
     </html>
   );
