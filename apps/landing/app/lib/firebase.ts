@@ -16,27 +16,35 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+const isConfigComplete = Object.values(firebaseConfig).every(Boolean);
+
 // Initialize Firebase only on client-side
 let app: any;
 let auth: any;
 
-if (typeof window !== "undefined") {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
+if (typeof window !== "undefined" && isConfigComplete) {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
 
-  // Enable persistence (stay logged in after refresh)
-  setPersistence(auth, browserLocalPersistence).catch((error) => {
-    console.error("Error setting persistence:", error);
-  });
+    // Enable persistence (stay logged in after refresh)
+    setPersistence(auth, browserLocalPersistence).catch((error) => {
+      console.error("Error setting persistence:", error);
+    });
 
-  // Use emulator in development (optional)
-  if (process.env.NEXT_PUBLIC_USE_AUTH_EMULATOR === "true") {
-    try {
-      connectAuthEmulator(auth, "http://localhost:9099");
-    } catch (error) {
-      // Emulator already connected
+    // Use emulator in development (optional)
+    if (process.env.NEXT_PUBLIC_USE_AUTH_EMULATOR === "true") {
+      try {
+        connectAuthEmulator(auth, "http://localhost:9099");
+      } catch (error) {
+        // Emulator already connected
+      }
     }
+  } catch (error) {
+    console.error("Error initializing Firebase:", error);
   }
+} else if (typeof window !== "undefined" && !isConfigComplete) {
+  console.warn("Firebase config incomplete: set NEXT_PUBLIC_FIREBASE_* env vars to enable auth.");
 }
 
-export { app, auth };
+export { app, auth, isConfigComplete as isFirebaseConfigComplete };
