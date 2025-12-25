@@ -1,12 +1,20 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
 export default function DevStatusBanner() {
   const { user, loading, isEmailVerified } = useAuth();
 
-  const env = typeof window !== "undefined" ? window.location.hostname : "server";
+  // Avoid hydration mismatch: render placeholder on SSR, update after mount
+  const [host, setHost] = useState<string>("server");
+  useEffect(() => {
+    try {
+      setHost(window.location.hostname || "client");
+    } catch {
+      setHost("client");
+    }
+  }, []);
   const hasEnv = [
     process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -19,7 +27,7 @@ export default function DevStatusBanner() {
       <div className="rounded-lg shadow-md bg-white/90 backdrop-blur px-4 py-2 text-xs text-gray-700 border border-gray-200">
         <div className="flex items-center gap-2">
           <span className="font-semibold">DEV</span>
-          <span>env: {env}</span>
+          <span suppressHydrationWarning>env: {host}</span>
           <span className={hasEnv ? "text-emerald-600" : "text-red-600"}>
             envVars: {hasEnv ? "ok" : "missing"}
           </span>
