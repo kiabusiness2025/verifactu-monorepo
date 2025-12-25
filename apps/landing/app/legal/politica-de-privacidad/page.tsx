@@ -4,15 +4,15 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Política de privacidad | Verifactu Business",
   description:
-    "Política de privacidad de EXPERT ESTUDIOS PROFESIONALES, SLU para los servicios Verifactu Business.",
+    "Política de privacidad de Expert Estudios Profesionales, SLU para los servicios Verifactu Business.",
 };
 
 const today = "25/12/2025";
 
 const dataController = {
-  name: "EXPERT ESTUDIOS PROFESIONALES, SLU",
-  nif: "B44991776",
-  address: "C/ Pintor Agrassot, a9 - 03110 Mutxamel (Alicante)",
+  name: process.env.ORGANIZATION_NAME ?? "Expert Estudios Profesionales, SLU",
+  nif: process.env.ORGANIZATION_CIF ?? "B44991776",
+  address: process.env.ORGANIZATION_ADDRESS ?? "C/ Pintor Agrassot, 19 - 03110 Mutxamel (Alicante)",
   email: "soporte@verifactu.business",
   phone: "+34 669 04 55 28",
   domain: "verifactu.business",

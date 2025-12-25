@@ -70,16 +70,11 @@ git config --global --list
 cd $HOME
 git clone https://github.com/kiabusiness2025/verifactu-monorepo.git
 
-
 Si ya existe:
 
 cd $REPO_DIR
 git pull
 
----------------------------------------------------------------------
-📦 2. Estructura del monorepo
----------------------------------------------------------------------
-verifactu-monorepo/
 │
 ├── apps/
 │   ├── landing/   → Landing corporativa (Next.js)
@@ -120,19 +115,12 @@ Si todo compila → se puede pasar a despliegues.
 
 ---------------------------------------------------------------------
 🗄️ 4. Integración con Cloud SQL (Postgres)
----------------------------------------------------------------------
-4.1 Instancia de base de datos existente
-
-En este proyecto ya existe:
-
 NAME: verifactu-db
 ENGINE: PostgreSQL 15
 REGION: europe-west1
 PUBLIC IP: 146.148.21.12
 
 4.2 Variables de entorno para servicios
-
-Todos los servicios que necesiten BD deben recibir:
 
 DATABASE_HOST=146.148.21.12
 DATABASE_PORT=5432
@@ -173,21 +161,26 @@ Alternativamente, desplegar localmente con Vercel CLI:
 ```bash
 npm install -g vercel
 vercel --prod
-```
-
-### Variables de entorno (Chat de Isaak)
-
 Configurar en Vercel (Production y Preview):
 - `ISAAC_API_KEY` (preferido) o `NEXT_PUBLIC_ISAAC_API_KEY`
 - `ISAAC_ASSISTANT_ID` (opcional) o `NEXT_PUBLIC_ISAAC_ASSISTANT_ID`
+```
 
-Para desarrollo local en `apps/landing/.env.local`:
+Variables de entorno Isaak (requeridas):
+
+Vercel (Production y Preview):
+- ISAAK_API_KEY=tu_clave (preferido)
+- ISAAK_ASSISTANT_ID=tu_asistente (opcional)
+- NEXT_PUBLIC_ISAAK_API_KEY=tu_clave (solo si prefieres exponerla en cliente)
+- NEXT_PUBLIC_ISAAK_ASSISTANT_ID=tu_asistente
+
+Desarrollo local en apps/landing/.env.local:
 ```env
-ISAAC_API_KEY=tu_clave
-ISAAC_ASSISTANT_ID=tu_asistente
-# Compatibilidad si prefieres NEXT_PUBLIC
-NEXT_PUBLIC_ISAAC_API_KEY=tu_clave
-NEXT_PUBLIC_ISAAC_ASSISTANT_ID=tu_asistente
+ISAAK_API_KEY=tu_clave
+ISAAK_ASSISTANT_ID=tu_asistente
+# Compatibilidad pública si prefieres usar NEXT_PUBLIC
+NEXT_PUBLIC_ISAAK_API_KEY=tu_clave
+NEXT_PUBLIC_ISAAK_ASSISTANT_ID=tu_asistente
 ```
 
 Luego:
@@ -196,12 +189,8 @@ cd apps/landing
 npm run dev
 ```
 
-## 5.2 App (Next.js) - Cloud Run
-
 cd $REPO_DIR/apps/app
 
-gcloud run deploy verifactu-app \
-  --source . \
   --region $REGION \
   --allow-unauthenticated \
   --set-env-vars NODE_ENV=production \

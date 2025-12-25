@@ -18,7 +18,10 @@ export const metadata: Metadata = {
   description,
   metadataBase: new URL("https://verifactu.business"),
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
     apple: "/icon-192.png",
   },
   manifest: "/manifest.json",

@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 
 // Prefer server-only env vars; fallback to NEXT_PUBLIC for compatibility
-const ISAAC_API_KEY = process.env.ISAAC_API_KEY || process.env.NEXT_PUBLIC_ISAAC_API_KEY;
-const ISAAC_ASSISTANT_ID = process.env.ISAAC_ASSISTANT_ID || process.env.NEXT_PUBLIC_ISAAC_ASSISTANT_ID;
+const ISAAK_API_KEY = process.env.ISAAK_API_KEY || process.env.NEXT_PUBLIC_ISAAK_API_KEY;
+const ISAAK_ASSISTANT_ID = process.env.ISAAK_ASSISTANT_ID || process.env.NEXT_PUBLIC_ISAAK_ASSISTANT_ID;
 
 export async function POST(req: Request) {
   try {
     const { prompt } = await req.json();
 
-    if (!ISAAC_API_KEY || !ISAAC_ASSISTANT_ID) {
+    if (!ISAAK_API_KEY || !ISAAK_ASSISTANT_ID) {
       return NextResponse.json({ text: "La configuración del asistente IA no está completa." }, { status: 500 });
     }
 
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${ISAAC_API_KEY}`,
+        Authorization: `Bearer ${ISAAK_API_KEY}`,
       },
       body: JSON.stringify({
         model: "gpt-4-turbo", // Modelo actualizado

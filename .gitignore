@@ -12,3 +12,5 @@ landing/.next
 landing/node_modules
 landing/.env
 landing/dist*.pem
+.vercel
+.env*.local
