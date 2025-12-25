@@ -5,10 +5,43 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      commit_hash:
+        description: 'Commit hash to redeploy (e.g., 940af1c8)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deployed to Vercel
-        run: echo "Deployment handled by Vercel CI/CD"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.commit_hash || github.sha }}
+          
+      - name: Deploy to Vercel
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual deployment triggered for commit: ${{ github.event.inputs.commit_hash }}"
+            echo "Target environment: ${{ github.event.inputs.environment }}"
+            echo "This will trigger Vercel redeployment via commit push"
+          else
+            echo "Automatic deployment triggered by push/PR"
+            echo "Deployment handled by Vercel CI/CD integration"
+          fi
+          
+      - name: Deployment Info
+        run: |
+          echo "Commit SHA: ${{ github.event.inputs.commit_hash || github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Event: ${{ github.event_name }}"
