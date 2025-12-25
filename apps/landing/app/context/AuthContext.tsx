@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged } from "firebase/auth";
-import { auth, isFirebaseConfigComplete } from "../lib/firebase";
+import { auth, isFirebaseConfigComplete, isFirebaseReady } from "../lib/firebase";
 
 interface AuthContextType {
   user: User | null;
@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   useEffect(() => {
-    if (!isFirebaseConfigComplete || !auth) {
+    if (!isFirebaseConfigComplete || !auth || !isFirebaseReady) {
       console.warn("Auth deshabilitado: configura NEXT_PUBLIC_FIREBASE_* en Vercel/entorno.");
       setLoading(false);
       return () => {};

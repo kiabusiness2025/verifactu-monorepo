@@ -10,7 +10,16 @@ import {
   User,
   AuthError,
 } from "firebase/auth";
-import { auth } from "./firebase";
+import { auth, isFirebaseConfigComplete, isFirebaseReady } from "./firebase";
+
+const authUnavailable = () => ({
+  user: null as any,
+  error: {
+    code: "auth/config-unavailable",
+    message: "Auth not initialized",
+    userMessage: "Autenticación no disponible. Revisa la configuración de Firebase (entorno).",
+  },
+});
 
 // Type for auth errors with custom messages
 export interface AuthErrorMessage {
@@ -75,6 +84,7 @@ export const signUpWithEmail = async (
   email: string,
   password: string
 ): Promise<{ user: User; error: null } | { user: null; error: AuthErrorMessage }> => {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
@@ -105,6 +115,7 @@ export const signInWithEmail = async (
   email: string,
   password: string
 ): Promise<{ user: User; error: null } | { user: null; error: AuthErrorMessage }> => {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
@@ -135,6 +146,7 @@ export const signInWithEmail = async (
 export const signInWithGoogle = async (): Promise<
   { user: User; error: null } | { user: null; error: AuthErrorMessage }
 > => {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
@@ -154,6 +166,8 @@ export const signInWithGoogle = async (): Promise<
 export const sendResetEmail = async (
   email: string
 ): Promise<{ success: boolean; error: null } | { success: false; error: AuthErrorMessage }> => {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth)
+    return { success: false, error: authUnavailable().error };
   try {
     await sendPasswordResetEmail(auth, email);
     return { success: true, error: null };
@@ -172,6 +186,8 @@ export const resetPasswordWithCode = async (
   code: string,
   newPassword: string
 ): Promise<{ success: boolean; error: null } | { success: false; error: AuthErrorMessage }> => {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth)
+    return { success: false, error: authUnavailable().error };
   try {
     await confirmPasswordReset(auth, code, newPassword);
     return { success: true, error: null };
@@ -189,6 +205,8 @@ export const resetPasswordWithCode = async (
 export const resendVerificationEmail = async (
   user: User
 ): Promise<{ success: boolean; error: null } | { success: false; error: AuthErrorMessage }> => {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth)
+    return { success: false, error: authUnavailable().error };
   try {
     await sendEmailVerification(user);
     return { success: true, error: null };
@@ -204,6 +222,7 @@ export const resendVerificationEmail = async (
  * Sign out
  */
 export const logout = async (): Promise<void> => {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return;
   try {
     await signOut(auth);
   } catch (error) {
@@ -215,5 +234,6 @@ export const logout = async (): Promise<void> => {
  * Get current auth state
  */
 export const getCurrentUser = (): User | null => {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return null;
   return auth.currentUser;
 };

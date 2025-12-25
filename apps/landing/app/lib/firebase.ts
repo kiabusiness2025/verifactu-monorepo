@@ -17,6 +17,7 @@ const firebaseConfig = {
 };
 
 const isConfigComplete = Object.values(firebaseConfig).every(Boolean);
+let isFirebaseReady = false;
 
 // Initialize Firebase only on client-side
 let app: any;
@@ -26,6 +27,7 @@ if (typeof window !== "undefined" && isConfigComplete) {
   try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
+    isFirebaseReady = true;
 
     // Enable persistence (stay logged in after refresh)
     setPersistence(auth, browserLocalPersistence).catch((error) => {
@@ -42,9 +44,12 @@ if (typeof window !== "undefined" && isConfigComplete) {
     }
   } catch (error) {
     console.error("Error initializing Firebase:", error);
+    app = undefined;
+    auth = undefined;
+    isFirebaseReady = false;
   }
 } else if (typeof window !== "undefined" && !isConfigComplete) {
   console.warn("Firebase config incomplete: set NEXT_PUBLIC_FIREBASE_* env vars to enable auth.");
 }
 
-export { app, auth, isConfigComplete as isFirebaseConfigComplete };
+export { app, auth, isConfigComplete as isFirebaseConfigComplete, isFirebaseReady };
