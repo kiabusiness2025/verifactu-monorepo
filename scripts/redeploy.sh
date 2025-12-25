@@ -55,7 +55,9 @@ else
   echo "GitHub CLI (gh) is not installed."
   echo ""
   echo "To redeploy manually:"
-  echo "1. Go to: https://github.com/$(git remote get-url origin | sed 's/.*github.com[:/]\(.*\)\.git/\1/')/actions"
+  # Extract repository name from git remote URL (removes github.com[:/] prefix and .git suffix)
+  REPO_PATH=$(git remote get-url origin | sed 's/.*github.com[:/]\(.*\)\.git/\1/')
+  echo "1. Go to: https://github.com/${REPO_PATH}/actions"
   echo "2. Select 'Deploy to Vercel' workflow"
   echo "3. Click 'Run workflow'"
   echo "4. Enter commit hash: $COMMIT_HASH"

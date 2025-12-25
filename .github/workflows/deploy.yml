@@ -34,7 +34,8 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "Manual deployment triggered for commit: ${{ github.event.inputs.commit_hash }}"
             echo "Target environment: ${{ github.event.inputs.environment }}"
-            echo "This will trigger Vercel redeployment via commit push"
+            echo "Note: Actual deployment is handled by Vercel's GitHub integration"
+            echo "This workflow serves as a trigger point and documentation"
           else
             echo "Automatic deployment triggered by push/PR"
             echo "Deployment handled by Vercel CI/CD integration"

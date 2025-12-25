@@ -2,6 +2,8 @@
 
 ## Vercel Team Access
 
+**Important Security Note:** The team invite link below is specific to this deployment task. If this repository is public, this link should be rotated after use or the invited user should be removed from the team if they no longer need access.
+
 You have been invited to the Vercel team. Use this link to accept the invite:
 **https://vercel.com/teams/invite/4vgTRfAiJJIp4987lkvFwnGZ6HoIMrbl**
 
