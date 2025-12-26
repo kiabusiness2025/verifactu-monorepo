@@ -1,5 +1,6 @@
 "use client";
 
+// v1.0.1 - Updated branding with new logos and favicons
 import React, { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
