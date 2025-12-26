@@ -1,0 +1,7 @@
+# Never ignore the brand directory
+!public/brand/
+# Standard ignored files
+node_modules/
+.next/
+.turbo/
+.git/
