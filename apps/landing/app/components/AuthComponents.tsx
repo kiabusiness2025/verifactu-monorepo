@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import BrandLogo from "./BrandLogo";
 
 interface PasswordInputProps {
   value: string;
@@ -138,11 +139,7 @@ export function AuthLayout({
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <img
-                src="/verifactu.business%20logo.png"
-                alt="Verifactu Business"
-                className="h-10 w-auto"
-              />
+              <BrandLogo variant="auth" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
             {subtitle && <p className="text-gray-600">{subtitle}</p>}
@@ -190,3 +187,4 @@ export function AuthLayout({
     </div>
   );
 }
+

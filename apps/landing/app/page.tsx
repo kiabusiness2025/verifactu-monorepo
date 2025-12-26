@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -19,6 +20,7 @@ import {
   Wallet,
 } from "lucide-react";
 import Header from "./components/Header";
+import BrandLogo from "./components/BrandLogo";
 import PricingCalculator from "./components/PricingCalculator";
 import Faq from "./components/Faq";
 
@@ -114,34 +116,37 @@ export default function Page() {
               </div>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
-                Automatiza tu facturación y
+                Tu contabilidad, siempre
                 <br />
                 <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
-                  entiende tu contabilidad en un solo panel.
+                  bajo control. Sin esfuerzo.
                 </span>
               </h1>
 
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
-                Isaak registra tus facturas y gastos por ti. Solo haz una foto o sube el documento y te explica el impacto en tu negocio:
-                <strong className="font-semibold text-slate-900"> ventas, gastos y beneficio</strong>, siempre claros y al día.
+                Isaak se encarga de tus facturas, gastos y cumplimiento fiscal para que tú te centres en tu negocio. Solo haz una foto o sube el documento.
               </p>
 
-              <p className="mt-2 max-w-xl text-sm text-slate-500">
-                No necesitas saber contabilidad. Isaak te guía y registra todo por ti.
+              <p className="mt-3 max-w-xl text-sm text-slate-500">
+                Cumple con Verifactu y normativa fiscal española desde el primer día.
               </p>
 
-              <div className="mt-5 max-w-xl space-y-1.5 text-sm text-slate-600">
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 flex-shrink-0" />
-                  <span>Facturas verificadas y controladas, sin complicaciones.</span>
+              <div className="mt-6 max-w-xl space-y-2.5 text-sm text-slate-700">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">📸</span>
+                  <span>Haces una foto a una factura o ticket</span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 flex-shrink-0" />
-                  <span>Gastos clasificados y deducibles según tu actividad, con el apunte hecho.</span>
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">🤖</span>
+                  <span>Isaak decide si el gasto es deducible según tu actividad</span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 flex-shrink-0" />
-                  <span>Informes y listados disponibles cuando los necesites: pídelo a Isaak.</span>
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">📊</span>
+                  <span>Tu beneficio se actualiza automáticamente</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">⏰</span>
+                  <span>Recibes avisos antes de cualquier plazo importante</span>
                 </div>
               </div>
 
@@ -149,7 +154,7 @@ export default function Page() {
                 <PrimaryButton className="group">
                   Empezar gratis <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </PrimaryButton>
-                <SecondaryButton>Solicitar demo</SecondaryButton>
+                <SecondaryButton>Ver cómo funciona</SecondaryButton>
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-4">
@@ -353,29 +358,42 @@ export default function Page() {
           <div className="grid items-center gap-8 lg:grid-cols-2">
             <div>
               <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                100% cumplimiento VeriFactu certificado.
+                Un panel claro donde siempre sabes cómo estás.
               </h3>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
-                Diseñado para operar con prudencia. Validación, trazabilidad y control para que tu facturación sea sólida
-                desde el primer día.
+                Tu información no se pierde nunca, aunque cambies de plan. Isaak es tu gestor fiscal digital: revisa facturas, clasifica gastos, te avisa de plazos y te explica tu situación financiera en lenguaje claro.
               </p>
 
               <ul className="mt-6 space-y-3 text-sm text-slate-700">
-                <Li>Firma digital automática</Li>
-                <Li>Validación y control de errores</Li>
-                <Li>Registro y trazabilidad de cambios</Li>
-                <Li>Copias de seguridad cifradas en la nube</Li>
+                <Li>Siempre acceso a tus datos</Li>
+                <Li>Exportable cuando quieras</Li>
+                <Li>Sin bloqueos ni letra pequeña</Li>
+                <Li>Respaldos automáticos y cifrados en la nube</Li>
               </ul>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-2xl bg-slate-50">
-                <div className="text-center">
-                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-                    <BadgeCheck className="h-5 w-5 text-blue-600" />
+              <div className="mx-auto flex flex-col items-center justify-center">
+                <div className="relative w-full max-w-[280px]">
+                  <Image
+                    src="/brand/logo-aeat-verifactu.jpg"
+                    alt="VeriFactu - Agencia Tributaria"
+                    width={280}
+                    height={100}
+                    className="w-full h-auto"
+                    priority
+                  />
+                </div>
+                <div className="mt-6 text-center">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 ring-1 ring-green-200">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
+                      <BadgeCheck className="h-3 w-3 text-white" />
+                    </div>
+                    <span className="text-sm font-semibold text-green-700">Cumplimiento Certificado</span>
                   </div>
-                  <p className="mt-3 text-xs font-semibold text-slate-700">VERIFACTU</p>
-                  <p className="mt-1 text-[11px] text-slate-500">Cumplimiento verificado</p>
+                  <p className="mt-3 text-xs text-slate-500">
+                    Sistema homologado según normativa de la Agencia Tributaria
+                  </p>
                 </div>
               </div>
             </div>
@@ -900,15 +918,7 @@ function Footer() {
       <Container className="py-12 relative z-10">
         <div className="grid gap-10 md:grid-cols-4">
           <div>
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg">
-                <ShieldCheck className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold">Verifactu</div>
-                <div className="text-[11px] text-blue-300">BUSINESS</div>
-              </div>
-            </div>
+            <BrandLogo variant="footer" />
             <p className="mt-3 text-sm text-slate-300">
               Automatiza tu facturación con cumplimiento y control total.
             </p>
@@ -996,4 +1006,5 @@ function SecondaryButton({ className = "", children }: { className?: string; chi
     </button>
   );
 }
+
 

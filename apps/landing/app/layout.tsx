@@ -20,9 +20,13 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/brand/favicon/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/favicon/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/brand/favicon.svg", type: "image/svg+xml" },
     ],
-    apple: "/icon-192.png",
+    apple: [
+      { url: "/brand/favicon/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   manifest: "/manifest.json",
   appleWebApp: {
@@ -37,11 +41,20 @@ export const metadata: Metadata = {
     locale: "es_ES",
     url: "https://verifactu.business",
     siteName: "Verifactu Business",
+    images: [
+      {
+        url: "/brand/social/og-1200x630.png",
+        width: 1200,
+        height: 630,
+        alt: "Verifactu Business - Automatiza tu facturación con cumplimiento verificado",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title,
     description,
+    images: ["/brand/social/og-1200x630.png"],
   },
 };
 

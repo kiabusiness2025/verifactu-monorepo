@@ -96,10 +96,10 @@ export default function PricingCalculator() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Planes para cada etapa
+            Empieza gratis. Paga solo cuando tu negocio crece.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-            Todos incluyen 30 días de prueba en planes de pago. Sin tarjeta, sin compromiso.
+            <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos · Prueba gratuita de 30 días · Posibilidad de cambiar o pausar sin perder información
           </p>
         </div>
 

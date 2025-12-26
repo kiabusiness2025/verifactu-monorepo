@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { logout } from "../lib/auth";
 import { useToast } from "./Toast";
+import BrandLogo from "./BrandLogo";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,16 +25,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <img
-            src="/verifactu.business%20logo.png"
-            alt="Verifactu Business"
-            className="h-8 w-auto"
-          />
-          <span className="font-bold text-lg hidden sm:inline text-gray-900">
-            Verifactu
-          </span>
-        </Link>
+        <BrandLogo variant="header" />
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
@@ -132,3 +124,4 @@ export default function Header() {
     </header>
   );
 }
+
