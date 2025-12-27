@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "installCommand": "npm --prefix apps/landing ci || npm --prefix apps/landing install",
+  "buildCommand": "npm --prefix apps/landing run build",
+  "devCommand": "npm --prefix apps/landing run dev"
+}
