@@ -1,6 +1,6 @@
 "use client";
 
-// v1.0.1 - Updated branding with new logos and favicons
+// v1.0.3 - Visible version marker for deploy verification
 import React, { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
@@ -27,6 +27,9 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
         <BrandLogo variant="header" />
+
+        {/* Version marker */}
+        <span className="hidden md:inline text-xs text-gray-500">v1.0.3</span>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
@@ -65,6 +68,7 @@ export default function Header() {
 
         {/* Mobile: Hamburger Menu Button + Login Button */}
         <div className="md:hidden flex items-center gap-3">
+          <span className="text-xs text-gray-500">v1.0.3</span>
           {user ? (
             <button
               onClick={async () => {
