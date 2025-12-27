@@ -146,13 +146,13 @@ export function AuthLayout({
           </div>
 
           {/* Illustration (only in larger screens) */}
-          <div className="hidden sm:block mb-6">
+          {/* <div className="hidden sm:block mb-6">
             <img
               src="/hero-dashboard.svg"
               alt="Panel de control Verifactu"
               className="w-full rounded-lg border border-gray-200"
             />
-          </div>
+          </div> */}
 
           {/* Content */}
           <div className="space-y-6">{children}</div>
