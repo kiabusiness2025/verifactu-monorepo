@@ -1,6 +1,0 @@
-{
-  "framework": "nextjs",
-  "installCommand": "pnpm --filter verifactu-landing install",
-  "buildCommand": "pnpm --filter verifactu-landing run build",
-  "devCommand": "pnpm --filter verifactu-landing run dev"
-}
