@@ -1,6 +1,6 @@
 "use client";
 
-// v1.0.3 - Visible version marker for deploy verification
+// v1.0.3 - Updated with blue shield favicon
 import React, { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
