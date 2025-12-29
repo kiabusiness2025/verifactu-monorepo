@@ -59,7 +59,7 @@ export default function Header() {
           ) : (
             <Link
               href="/auth/login"
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm"
+              className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
             >
               Acceder
             </Link>
@@ -82,7 +82,7 @@ export default function Header() {
           ) : (
             <Link
               href="/auth/login"
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm"
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
             >
               Acceder
             </Link>

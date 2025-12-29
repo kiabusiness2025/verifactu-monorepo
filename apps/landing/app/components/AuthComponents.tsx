@@ -91,7 +91,7 @@ export function GoogleAuthButton() {
   return (
     <button
       type="button"
-      className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700"
+      className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md transition hover:from-blue-700 hover:to-blue-800"
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">
         <path
@@ -172,6 +172,15 @@ export function AuthLayout({
                   </a>
                 </>
               )}
+              {/* Enlaces adicionales: inicio y legales */}
+              <div className="mt-4 flex flex-col gap-1 items-center text-xs text-gray-500">
+                <a href="/" className="hover:text-blue-600 underline">Volver al inicio</a>
+                <div className="flex gap-2">
+                  <a href="/legal/politica-de-privacidad" className="hover:text-blue-600 underline">Política de privacidad</a>
+                  <span>|</span>
+                  <a href="/legal/terminos-y-condiciones" className="hover:text-blue-600 underline">Términos y condiciones</a>
+                </div>
+              </div>
             </div>
           )}
         </div>

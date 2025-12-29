@@ -146,9 +146,9 @@ export default function PricingCalculator() {
 
               <button
                 className={[
-                  "mt-6 w-full rounded-full px-4 py-2.5 text-sm font-semibold transition",
+                  "mt-6 w-full rounded-full px-4 py-2.5 text-sm font-semibold shadow-md transition",
                   plan.highlight
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
                     : "bg-slate-100 text-slate-900 hover:bg-slate-200",
                 ].join(" ")}
               >
