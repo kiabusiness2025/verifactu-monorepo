@@ -17,9 +17,9 @@ export default function Header() {
 
   const navLinks = [
     { label: "Características", href: "#features" },
-    { label: "Precios", href: "#pricing" },
+    { label: "Precios", href: "#planes" },
     { label: "FAQ", href: "#faq" },
-    { label: "Docs", href: "https://docs.verifactu.business" },
+    { label: "Docs", href: "/proximamente" },
   ];
 
   return (
@@ -49,14 +49,14 @@ export default function Header() {
                 await logout();
                 showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
               }}
-              className="px-6 py-2 bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-lg hover:from-gray-800 hover:to-black transition-all font-medium text-sm"
+              className="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
             >
               Salir
             </button>
           ) : (
             <Link
               href="/auth/login"
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm"
             >
               Acceder
             </Link>
@@ -71,14 +71,14 @@ export default function Header() {
                 await logout();
                 showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
               }}
-              className="px-4 py-2 bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-lg hover:from-gray-800 hover:to-black transition-all font-medium text-sm"
+              className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
             >
               Salir
             </button>
           ) : (
             <Link
               href="/auth/login"
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium text-sm"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm"
             >
               Acceder
             </Link>

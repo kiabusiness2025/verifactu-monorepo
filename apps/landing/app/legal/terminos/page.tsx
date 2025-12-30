@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Términos y condiciones | Verifactu Business",
+  title: "Términos de servicio | Verifactu Business",
   description:
     "Condiciones de uso del servicio Verifactu Business operado por Expert Estudios Profesionales, SLU.",
 };
@@ -21,12 +21,14 @@ const owner = {
 export default function TermsPage() {
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 space-y-10">
+      <div className="mb-2 text-sm">
+        <a href="/" className="text-blue-700 font-semibold hover:text-blue-800">← Volver al inicio</a>
+      </div>
       <header className="space-y-2">
         <p className="text-sm text-gray-500">Última actualización: {today}</p>
         <h1 className="text-3xl font-bold text-gray-900">Términos y condiciones de uso</h1>
         <p className="text-gray-700">
-          Estos términos regulan el acceso y uso de los servicios Verifactu Business ofrecidos a través de
-          {" "}
+          Estos términos regulan el acceso y uso de los servicios Verifactu Business ofrecidos a través de {" "}
           <span className="font-semibold">{owner.domain}</span> por {owner.name}.
         </p>
       </header>
@@ -95,7 +97,8 @@ export default function TermsPage() {
       <section className="space-y-3">
         <h2 className="text-2xl font-semibold text-gray-900">8. Protección de datos</h2>
         <p className="text-gray-700">
-          El tratamiento de datos personales se rige por la <Link className="text-indigo-600 hover:underline" href="/legal/politica-de-privacidad">Política de privacidad</Link>.
+          El tratamiento de datos personales se rige por la {" "}
+          <Link className="text-indigo-600 hover:underline" href="/legal/privacidad">Política de privacidad</Link>.
         </p>
       </section>
 
@@ -103,8 +106,7 @@ export default function TermsPage() {
         <h2 className="text-2xl font-semibold text-gray-900">9. Disponibilidad y soporte</h2>
         <p className="text-gray-700">
           Trabajamos para mantener el servicio disponible, pero no podemos garantizar disponibilidad ininterrumpida.
-          Podrán realizarse mantenimientos programados o urgentes. El soporte se atenderá a través de
-          {" "}
+          Podrán realizarse mantenimientos programados o urgentes. El soporte se atenderá a través de {" "}
           <a className="text-indigo-600 hover:underline" href={`mailto:${owner.email}`}>
             {owner.email}
           </a>{" "}
@@ -149,8 +151,7 @@ export default function TermsPage() {
       <section className="space-y-3">
         <h2 className="text-2xl font-semibold text-gray-900">14. Contacto</h2>
         <p className="text-gray-700">
-          Si tienes dudas sobre estos términos, escribe a
-          {" "}
+          Si tienes dudas sobre estos términos, escribe a {" "}
           <a className="text-indigo-600 hover:underline" href={`mailto:${owner.email}`}>
             {owner.email}
           </a>{" "}

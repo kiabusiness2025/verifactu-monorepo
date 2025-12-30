@@ -1,117 +1,86 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import React, { useMemo } from "react";
+import { motion } from "framer-motion";
 
 const FAQ_DATA = [
   {
     question: "¿Necesito tarjeta para registrarme?",
     answer:
-      "No. El plan Free es completamente gratuito y sin compromiso.",
+      "No. El plan Gratis es completamente gratuito y sin compromiso. Solo necesitamos tu email para crear la cuenta. Puedes cancelar cuando quieras y seguirás teniendo acceso a tus datos.",
   },
   {
     question: "¿Puedo conectar varias empresas?",
-    answer: "Sí, desde el plan Profesional.",
+    answer:
+      "Sí. Desde el plan Profesional puedes tener varias empresas en la misma cuenta. Cada empresa tiene su propio espacio, usuarios y libros separados.",
   },
   {
-    question: "¿Cómo funciona la integración bancaria?",
+    question: "¿Cómo funcionará la integración bancaria? (próximamente)",
     answer:
-      "Usamos proveedores PSD2 certificados. La conexión es segura y puedes darte de baja en cualquier momento.",
+      "Lanzaremos conexión PSD2 certificada. Será opcional: podrás activarla o desactivarla en cualquier momento. Los movimientos se sincronizarán con consentimiento explícito y podrás reconciliarlos antes de registrarlos.",
   },
   {
     question: "¿Isaak sustituye a una gestoría?",
     answer:
-      "Isaak automatiza procesos, cálculos y preparación de datos. Puedes usarlo con o sin gestoría externa.",
+      "Isaak automatiza procesos (OCR, clasificación, avisos, Verifactu), pero puedes usarlo con o sin gestoría externa. Si trabajas con gestor, le das acceso a tus libros y evidencias.",
   },
   {
     question: "¿Qué implica el cumplimiento Verifactu?",
     answer:
-      "Tus facturas quedan registradas automáticamente según los requisitos oficiales de integridad, trazabilidad y seguridad.",
+      "Registramos tus facturas con hash encadenado, marca temporal y trazabilidad de eventos (creación, validación, envíos). Puedes exportar libros y evidencias cuando lo necesites.",
   },
   {
     question: "¿Puedo contratar trámites adicionales desde la app?",
     answer:
-      "Sí. Tienes un marketplace interno con constituciones, certificados, servicios notariales y gestiones fiscales.",
+      "Sí. Dispones de un marketplace con constituciones de sociedades, certificados digitales, gestiones notariales y trámites fiscales puntuales.",
   },
   {
     question: "¿Es seguro subir mis documentos?",
     answer:
-      "Sí. Utilizamos cifrado extremo a extremo y almacenamiento seguro con control de acceso por empresa.",
+      "Sí. Usamos cifrado en tránsito, controles por empresa, registros de acceso y backups. Solo tu organización y los usuarios autorizados pueden ver los documentos.",
   },
 ];
 
-function FaqItem({
-  item,
-  isOpen,
-  onClick,
-  index,
-}: {
-  item: { question: string; answer: string };
-  isOpen: boolean;
-  onClick: () => void;
-  index: number;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
-      className="rounded-2xl border border-slate-200 bg-white overflow-hidden transition-shadow hover:shadow-sm"
-    >
-      <button
-        onClick={onClick}
-        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition"
-      >
-        <span className="text-base font-semibold text-slate-900">
-          {item.question}
-        </span>
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <ChevronDown className="h-5 w-5 text-slate-400 flex-shrink-0" />
-        </motion.div>
-      </button>
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="px-6 pb-5 text-sm leading-6 text-slate-600">
-              {item.answer}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
 export default function Faq() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
-
-  const handleToggle = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
+  const faqSchema = useMemo(
+    () => ({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: FAQ_DATA.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.answer,
+        },
+      })),
+    }),
+    []
+  );
 
   return (
     <div className="mx-auto max-w-3xl">
       <div className="space-y-3">
         {FAQ_DATA.map((item, index) => (
-          <FaqItem
-            key={index}
-            item={item}
-            index={index}
-            isOpen={openIndex === index}
-            onClick={() => handleToggle(index)}
-          />
+          <motion.div
+            key={item.question}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: index * 0.05 }}
+            className="rounded-2xl border border-slate-200 bg-white overflow-hidden transition-shadow hover:shadow-sm"
+          >
+            <div className="px-6 py-5">
+              <p className="text-base font-semibold text-slate-900">{item.question}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.answer}</p>
+            </div>
+          </motion.div>
         ))}
       </div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
     </div>
   );
 }

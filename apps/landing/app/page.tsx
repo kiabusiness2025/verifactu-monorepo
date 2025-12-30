@@ -7,12 +7,16 @@ import {
   ArrowRight,
   BadgeCheck,
   CalendarClock,
+  Check,
   CheckCircle2,
   ChevronRight,
   FileText,
   LayoutDashboard,
   Lock,
   Percent,
+  User,
+  Building2,
+  Briefcase,
   ShieldCheck,
   Sparkles,
   TrendingUp,
@@ -21,7 +25,6 @@ import {
 } from "lucide-react";
 import Header from "./components/Header";
 import BrandLogo from "./components/BrandLogo";
-import PricingCalculator from "./components/PricingCalculator";
 import Faq from "./components/Faq";
 
 type IsaakMsg = {
@@ -29,6 +32,108 @@ type IsaakMsg = {
   title: string;
   body: string;
 };
+
+type Plan = {
+  name: string;
+  priceMonthly: number | null;
+  priceYearly: number | null;
+  users: string;
+  features: string[];
+  highlight?: boolean;
+  checkoutMonthly?: string;
+  checkoutYearly?: string;
+};
+
+const PRICING_PLANS: Plan[] = [
+  {
+    name: "Gratis",
+    priceMonthly: 0,
+    priceYearly: 0,
+    users: "1 empresa · 1 usuario",
+    features: [
+      "Facturación básica",
+      "Hasta 20 documentos/mes",
+      "Chat Isaak limitado",
+      "Dashboard esencial",
+    ],
+    checkoutMonthly: "/api/checkout?plan=free",
+    checkoutYearly: "/api/checkout?plan=free",
+  },
+  {
+    name: "Profesional",
+    priceMonthly: 29,
+    priceYearly: 290,
+    users: "1 empresa · usuarios ilimitados",
+    features: [
+      "Facturación VeriFactu completa",
+      "Gastos con OCR ilimitados",
+      "Integración bancaria (próximamente)",
+      "Calendario fiscal",
+      "Chat Isaak completo",
+      "Informes bajo demanda",
+    ],
+    highlight: true,
+    checkoutMonthly: "/api/checkout?plan=pro-monthly",
+    checkoutYearly: "/api/checkout?plan=pro-yearly",
+  },
+  {
+    name: "Business",
+    priceMonthly: 69,
+    priceYearly: 690,
+    users: "Multiempresa (hasta 3)",
+    features: [
+      "Todo en Profesional",
+      "Varias cuentas bancarias (próximamente)",
+      "Conciliación avanzada (próximamente)",
+      "Libros contables",
+      "Dashboard financiero",
+      "Soporte prioritario",
+    ],
+    checkoutMonthly: "/api/checkout?plan=business-monthly",
+    checkoutYearly: "/api/checkout?plan=business-yearly",
+  },
+  {
+    name: "Enterprise",
+    priceMonthly: null,
+    priceYearly: null,
+    users: "Multiempresa ilimitada",
+    features: [
+      "Infraestructura personalizada",
+      "Integración API completa",
+      "Firma electrónica",
+      "Flujos automáticos",
+      "SLA garantizado",
+      "Equipo dedicado",
+    ],
+    checkoutMonthly: "/api/checkout?plan=enterprise",
+    checkoutYearly: "/api/checkout?plan=enterprise",
+  },
+];
+
+function PriceDisplay({ price, isYearly }: { price: number | null; isYearly: boolean }) {
+  if (price === null) {
+    return (
+      <div>
+        <div className="text-2xl font-bold text-slate-900">Personalizado</div>
+        <div className="text-sm text-slate-500">A medida</div>
+      </div>
+    );
+  }
+  if (price === 0) {
+    return (
+      <div>
+        <div className="text-4xl font-bold text-slate-900">Gratis</div>
+        <div className="text-sm text-slate-500">Siempre</div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="text-4xl font-bold text-slate-900">€{price}</div>
+      <div className="text-sm text-slate-500">{isYearly ? "/año" : "/mes"}</div>
+    </div>
+  );
+}
 
 export default function Page() {
   const isaakMessages: IsaakMsg[] = useMemo(
@@ -63,8 +168,9 @@ export default function Page() {
   );
 
   const [msgIndex, setMsgIndex] = useState(0);
-  const [pricingModel, setPricingModel] = useState<"fija" | "porcentaje" | "hibrido">("fija");
   const [benefitTarget, setBenefitTarget] = useState(0);
+  const [showStickyCta, setShowStickyCta] = useState(false);
+  const [isYearlyBilling, setIsYearlyBilling] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setMsgIndex((i) => (i + 1) % isaakMessages.length), 5200);
@@ -88,6 +194,15 @@ export default function Page() {
     animate();
   }, []);
 
+  useEffect(() => {
+    const onScroll = () => {
+      setShowStickyCta(window.scrollY > 320);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const visibleMsgs = useMemo(() => {
     // Muestra 3 mensajes: el actual + 2 anteriores
     const a = (msgIndex + isaakMessages.length) % isaakMessages.length;
@@ -102,7 +217,7 @@ export default function Page() {
 
       {/* HERO */}
       <section className="relative">
-        <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-gradient-to-b from-slate-50 to-white" />
+        <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-gradient-to-b from-blue-100 via-blue-50 to-white" />
         <Container className="pt-14 pb-10">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <motion.div
@@ -113,6 +228,10 @@ export default function Page() {
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
                 <ShieldCheck className="h-4 w-4 text-blue-600" />
                 Cumplimiento VeriFactu + IA para tu negocio
+              </div>
+              <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+                Estado: Operativo · Última sync VeriFactu hace 3 min
               </div>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
@@ -187,6 +306,42 @@ export default function Page() {
         </Container>
       </section>
 
+      {/* Para quién es */}
+      <section className="py-12">
+        <Container>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-blue-700">Para quién es</p>
+            <h3 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Te encaja si eres...</h3>
+            <p className="mt-3 max-w-2xl mx-auto text-sm leading-6 text-slate-600 sm:text-base">
+              Segmentamos el acompañamiento según tu perfil: foco en simplicidad para autónomos, control para pymes y orden fiscal para gestorías.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><User className="h-4 w-4" />Autónomos</div>
+              <h4 className="mt-3 text-lg font-semibold text-slate-900">Menos papeleo</h4>
+              <p className="text-xs font-semibold text-slate-500">Simplifica capturas y presentación</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Haz foto a tickets, Isaak los clasifica y te recuerda plazos. Facturas VeriFactu listas en segundos.</p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><Building2 className="h-4 w-4" />Pymes</div>
+              <h4 className="mt-3 text-lg font-semibold text-slate-900">Visibilidad y control</h4>
+              <p className="text-xs font-semibold text-slate-500">Equipo alineado y datos auditables</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Dashboard con ventas, gastos y beneficio real. Roles por equipo y evidencias listas para auditoría.</p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><Briefcase className="h-4 w-4" />Gestorías</div>
+              <h4 className="mt-3 text-lg font-semibold text-slate-900">Orden fiscal</h4>
+              <p className="text-xs font-semibold text-slate-500">Evidencias listas para clientes</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Importa documentación, conserva hash y logs VeriFactu, y genera libros o informes bajo demanda.</p>
+            </div>
+          </div>
+        </Container>
+      </section>
+
       {/* FEATURES */}
       <section className="py-16">
         <Container>
@@ -223,7 +378,7 @@ export default function Page() {
       </section>
 
       {/* Pídeselo a Isaak */}
-      <section className="py-16 bg-gradient-to-b from-slate-50 to-white">
+      <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <div className="text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
@@ -269,7 +424,7 @@ export default function Page() {
 
       {/* FEATURES OLD POSITION - REMOVED, NOW ABOVE */}
       {/* 3 steps */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
             Del envío al cobro en tres pasos.
@@ -313,7 +468,7 @@ export default function Page() {
 
           <div className="mt-10 grid gap-8 lg:grid-cols-2">
             <DashboardMock />
-            <div className="rounded-3xl bg-gradient-to-b from-slate-50 to-white p-6 shadow-sm ring-1 ring-slate-200">
+            <div className="rounded-3xl bg-gradient-to-b from-blue-50 via-blue-100 to-white p-6 shadow-sm ring-1 ring-slate-200">
               <h4 className="text-xl font-semibold">Soporte proactivo y gestión total desde cualquier dispositivo.</h4>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Isaak ejecuta órdenes, registra documentos (OCR) y genera informes bajo demanda. Tú controlas el resultado.
@@ -321,8 +476,8 @@ export default function Page() {
 
               <div className="mt-6 space-y-3">
                 <InfoPill
-                  title="Suscripción flexible"
-                  desc="Gratis o 30 días de prueba. Elige cuota fija, % de facturación o híbrido."
+                  title="Suscripción clara"
+                  desc="Gratis o 30 días de prueba. Cuota fija y sin sorpresas ni variables sobre facturación."
                   icon={<Percent className="h-4 w-4 text-blue-600" />}
                 />
                 <InfoPill
@@ -353,7 +508,7 @@ export default function Page() {
       </section>
 
       {/* Compliance */}
-      <section className="py-14 bg-slate-50/60">
+      <section className="py-14 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <div className="grid items-center gap-8 lg:grid-cols-2">
             <div>
@@ -408,9 +563,114 @@ export default function Page() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="bg-slate-50/60"
+        className="bg-gradient-to-b from-blue-50 via-blue-100 to-white"
       >
-        <PricingCalculator />
+        <Container className="py-16">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Empieza gratis. Planes claros para crecer.
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos · Prueba gratuita de 30 días · Posibilidad de cambiar o pausar sin perder información
+            </p>
+          </div>
+
+          {/* Toggle Mensual / Anual */}
+          <div className="mt-8 flex justify-center">
+            <div className="inline-flex items-center rounded-full bg-slate-100 p-1 shadow-sm">
+              <button
+                onClick={() => setIsYearlyBilling(false)}
+                className={[
+                  "rounded-full px-5 py-2 text-sm font-semibold transition",
+                  !isYearlyBilling
+                    ? "bg-white text-slate-900 shadow"
+                    : "text-slate-600 hover:text-slate-900",
+                ].join(" ")}
+              >
+                Mensual
+              </button>
+              <button
+                onClick={() => setIsYearlyBilling(true)}
+                className={[
+                  "rounded-full px-5 py-2 text-sm font-semibold transition",
+                  isYearlyBilling
+                    ? "bg-white text-slate-900 shadow"
+                    : "text-slate-600 hover:text-slate-900",
+                ].join(" ")}
+              >
+                Anual
+                <span className="ml-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                  -16%
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {PRICING_PLANS.map((plan, idx) => (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: idx * 0.05 }}
+                className={[
+                  "relative flex flex-col rounded-2xl border p-6 shadow-sm transition",
+                  plan.highlight
+                    ? "border-blue-200 bg-white ring-2 ring-blue-100"
+                    : "border-slate-200 bg-white hover:shadow-md",
+                ].join(" ")}
+              >
+                {plan.highlight && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
+                      Más popular
+                    </span>
+                  </div>
+                )}
+
+                <div>
+                  <div className="text-lg font-semibold text-slate-900">{plan.name}</div>
+                  <div className="mt-1 text-sm text-slate-500">{plan.users}</div>
+                  {plan.highlight && (
+                    <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                      Sin % de facturación
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4">
+                  <PriceDisplay price={isYearlyBilling ? plan.priceYearly : plan.priceMonthly} isYearly={isYearlyBilling} />
+                </div>
+
+                <ul className="mt-6 space-y-3">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <Check className="mt-0.5 h-4 w-4 text-emerald-600 flex-shrink-0" />
+                      <span className="text-sm text-slate-600">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <a
+                  href={isYearlyBilling ? (plan.checkoutYearly ?? "#") : (plan.checkoutMonthly ?? "#")}
+                  className={[
+                    "mt-6 w-full rounded-full px-4 py-2.5 text-sm font-semibold text-center transition",
+                    plan.highlight
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-slate-100 text-slate-900 hover:bg-slate-200",
+                  ].join(" ")}
+                >
+                  {plan.priceMonthly === null ? "Contactar" : "Ir al checkout"}
+                </a>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-12 text-center text-sm text-slate-500">
+            Todos los planes incluyen activación VeriFactu y soporte de onboarding.
+          </div>
+        </Container>
       </motion.section>
 
       {/* FAQ */}
@@ -419,7 +679,7 @@ export default function Page() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="py-16 bg-white"
+        className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white"
       >
         <Container>
           <motion.div
@@ -441,7 +701,7 @@ export default function Page() {
       </motion.section>
 
       {/* Resources */}
-      <section className="py-14 bg-slate-50/60">
+      <section className="py-14 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
             Recursos para dominar VeriFactu e Isaak.
@@ -474,7 +734,7 @@ export default function Page() {
       </section>
 
       {/* Trust Anchor Section */}
-      <section className="py-12 bg-gradient-to-b from-transparent to-slate-50">
+      <section className="py-12 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <div className="text-center">
             <p className="text-sm font-semibold text-emerald-700">La garantía que buscabas</p>
@@ -506,7 +766,7 @@ export default function Page() {
       {/* Final CTA */}
       <section className="py-12">
         <Container>
-          <div className="flex flex-col items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row">
+          <div className="flex flex-col items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-gradient-to-r from-blue-50 via-blue-100 to-white p-6 shadow-sm sm:flex-row">
             <div>
               <h4 className="text-xl font-semibold">Factura menos. Vive más.</h4>
               <p className="mt-1 text-sm text-slate-600">
@@ -522,6 +782,7 @@ export default function Page() {
       </section>
 
       <Footer />
+      <StickyCtaBar show={showStickyCta} />
     </div>
   );
 }
@@ -569,6 +830,12 @@ function HeroMockup({ visibleMsgs, benefitValue }: { visibleMsgs: IsaakMsg[]; be
     currency: "EUR",
     maximumFractionDigits: 0,
   }).format(benefitValue);
+
+  const heroLog = [
+    { title: "Factura VF-2031", desc: "Hash verificado y enviada al cliente" },
+    { title: "Ticket combustible", desc: "Marcado deducible y registrado" },
+    { title: "Sync VeriFactu", desc: "Última validación hace 3 min" },
+  ];
 
   return (
     <div className="relative">
@@ -620,6 +887,18 @@ function HeroMockup({ visibleMsgs, benefitValue }: { visibleMsgs: IsaakMsg[]; be
             badge="Completo"
           />
           <MiniInvoice />
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="mb-2 text-xs font-semibold text-slate-700">Registro reciente</div>
+          <div className="space-y-2">
+            {heroLog.map((item) => (
+              <div key={item.title} className="flex justify-between rounded-xl bg-white px-3 py-2 text-xs text-slate-700 ring-1 ring-slate-200">
+                <span className="font-semibold text-slate-800">{item.title}</span>
+                <span className="text-slate-500">{item.desc}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -923,13 +1202,13 @@ function Footer() {
               Automatiza tu facturación con cumplimiento y control total.
             </p>
             <div className="mt-4 flex gap-3">
-              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition">
+              <a href="/proximamente" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition">
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2s9 5 20 5a9.5 9.5 0 00-9-5.5c4.75 2.25 7-7 7-7"/></svg>
               </a>
-              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition">
+              <a href="/proximamente" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition">
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
               </a>
-              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition">
+              <a href="/proximamente" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition">
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
               </a>
             </div>
@@ -947,15 +1226,20 @@ function Footer() {
             title="Recursos"
             links={["Guías y webinars", "Checklist", "Blog", "Contacto"]}
           />
+          <FooterCol
+            title="Legal"
+            links={["VeriFactu", "Política de privacidad", "Términos de servicio", "Cookies"]}
+          />
         </div>
 
         <div className="mt-10 border-t border-white/10 pt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400">
             <p>© {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-blue-300 transition">Política de privacidad</a>
-              <a href="#" className="hover:text-blue-300 transition">Términos de servicio</a>
-              <a href="#" className="hover:text-blue-300 transition">Cookies</a>
+              <a href="/verifactu" className="hover:text-blue-300 transition">VeriFactu</a>
+              <a href="/legal/privacidad" className="hover:text-blue-300 transition">Política de privacidad</a>
+              <a href="/legal/terminos" className="hover:text-blue-300 transition">Términos de servicio</a>
+              <a href="/legal/cookies" className="hover:text-blue-300 transition">Cookies</a>
             </div>
           </div>
         </div>
@@ -973,7 +1257,7 @@ function FooterCol({ title, links }: { title: string; links: string[] }) {
       <ul className="mt-3 space-y-2 text-sm text-slate-300">
         {links.map((l) => (
           <li key={l}>
-            <a className="hover:text-blue-300 transition" href="#">
+            <a className="hover:text-blue-300 transition" href="/proximamente">
               {l}
             </a>
           </li>
@@ -990,7 +1274,7 @@ function Container({ className = "", children }: { className?: string; children:
 function PrimaryButton({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:from-blue-700 hover:to-blue-800 ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700 ${className}`}
     >
       {children}
     </button>
@@ -1000,10 +1284,27 @@ function PrimaryButton({ className = "", children }: { className?: string; child
 function SecondaryButton({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200 ${className}`}
     >
       {children}
     </button>
+  );
+}
+
+function StickyCtaBar({ show }: { show: boolean }) {
+  return (
+    <div
+      className={`fixed inset-x-0 bottom-4 z-30 px-4 transition-opacity duration-300 ${show ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+      aria-hidden={!show}
+    >
+      <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
+        <div className="text-sm font-semibold text-slate-800">Prueba gratis y ve Isaak en acción</div>
+        <div className="flex gap-2">
+          <PrimaryButton className="px-4 py-2">Probar gratis</PrimaryButton>
+          <SecondaryButton className="px-4 py-2">Ver demo</SecondaryButton>
+        </div>
+      </div>
+    </div>
   );
 }
 
