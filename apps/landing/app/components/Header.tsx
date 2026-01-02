@@ -1,6 +1,6 @@
 "use client";
 
-// v1.0.1 - Updated branding with new logos and favicons
+// v1.0.3 - Updated with blue shield favicon
 import React, { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
@@ -27,6 +27,9 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
         <BrandLogo variant="header" />
+
+        {/* Version marker */}
+        <span className="hidden md:inline text-xs text-gray-500">v1.0.3</span>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
@@ -56,7 +59,7 @@ export default function Header() {
           ) : (
             <Link
               href="/auth/login"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm"
+              className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
             >
               Acceder
             </Link>
@@ -65,6 +68,7 @@ export default function Header() {
 
         {/* Mobile: Hamburger Menu Button + Login Button */}
         <div className="md:hidden flex items-center gap-3">
+          <span className="text-xs text-gray-500">v1.0.3</span>
           {user ? (
             <button
               onClick={async () => {
@@ -78,7 +82,7 @@ export default function Header() {
           ) : (
             <Link
               href="/auth/login"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm"
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
             >
               Acceder
             </Link>

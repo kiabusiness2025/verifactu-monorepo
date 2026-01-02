@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Output tracing for Vercel
-  output: 'standalone',
+  // output: 'standalone',
   // Production configuration
   poweredByHeader: false,
   compress: true,

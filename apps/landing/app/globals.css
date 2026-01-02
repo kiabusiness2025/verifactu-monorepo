@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Paleta corporativa y gradientes */
+.bg-primary-gradient {
+	@apply bg-gradient-primary;
+}
+.bg-light-gradient {
+	@apply bg-gradient-light;
+}
+.bg-metallic-gradient {
+	@apply bg-gradient-metallic;
+}
+
+.text-metallic {
+	color: #bfc3c7;
+	text-shadow: 0 1px 2px #e6e8ea, 0 2px 6px #7a7d80;
+}
+
+/* Ejemplo de botón metalizado */
+.btn-metallic {
+	@apply bg-metallic-gradient text-slate-900 font-bold py-2 px-4 rounded shadow;
+	border: 1px solid #bfc3c7;
+	box-shadow: 0 2px 8px #bfc3c7;
+	transition: background 0.3s;
+}
+.btn-metallic:hover {
+	background: linear-gradient(90deg, #e6e8ea 0%, #bfc3c7 60%, #7a7d80 100%);
+}
