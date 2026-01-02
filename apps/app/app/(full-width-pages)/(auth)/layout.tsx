@@ -25,12 +25,12 @@ export default function AuthLayout({
                   <Image
                     width={231}
                     height={48}
-                    src="/brand/logo/logo-horizontal-light.png"
+                    src="/brand/system/logo-horizontal-light.png"
                     alt="Verifactu logo"
                   />
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">
-                  Free and Open-Source Tailwind CSS Admin Dashboard Template
+                  Entra con tranquilidad. Lo importante, siempre claro.
                 </p>
               </div>
             </div>

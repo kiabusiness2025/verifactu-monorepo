@@ -87,7 +87,7 @@ const AppHeader: React.FC = () => {
             <Image
               width={270}
               height={60}
-              src="/brand/logo/logo-horizontal-light.png"
+              src="/brand/system/logo-horizontal-light.png"
               alt="Verifactu Business"
             />
           </Link>
