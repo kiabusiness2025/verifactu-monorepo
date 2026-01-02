@@ -14,3 +14,5 @@ landing/.env
 landing/dist*.pem
 .vercel
 .env*.local
+
+.github/agents/
