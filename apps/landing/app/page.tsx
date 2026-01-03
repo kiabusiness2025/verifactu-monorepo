@@ -1,5 +1,6 @@
 ﻿"use client";
 
+// v1.0.4 - Fixed UTF-8 encoding issues
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -49,9 +50,9 @@ const PRICING_PLANS: Plan[] = [
     name: "Gratis",
     priceMonthly: 0,
     priceYearly: 0,
-    users: "1 empresa ┬À 1 usuario",
+    users: "1 empresa · 1 usuario",
     features: [
-      "Facturaci├│n b├ísica",
+      "Facturación b├ísica",
       "Hasta 20 documentos/mes",
       "Chat Isaak limitado",
       "Dashboard esencial",
@@ -63,11 +64,11 @@ const PRICING_PLANS: Plan[] = [
     name: "Profesional",
     priceMonthly: 29,
     priceYearly: 290,
-    users: "1 empresa ┬À usuarios ilimitados",
+    users: "1 empresa · usuarios ilimitados",
     features: [
-      "Facturaci├│n VeriFactu completa",
+      "Facturación VeriFactu completa",
       "Gastos ilimitados con reconocimiento autom├ítico",
-      "Integraci├│n bancaria (pr├│ximamente)",
+      "Integración bancaria (próximamente)",
       "Calendario fiscal",
       "Chat Isaak completo",
       "Informes bajo demanda",
@@ -83,8 +84,8 @@ const PRICING_PLANS: Plan[] = [
     users: "Multiempresa (hasta 3)",
     features: [
       "Todo en Profesional",
-      "Varias cuentas bancarias (pr├│ximamente)",
-      "Conciliaci├│n avanzada (pr├│ximamente)",
+      "Varias cuentas bancarias (próximamente)",
+      "Conciliación avanzada (próximamente)",
       "Libros contables",
       "Dashboard financiero",
       "Soporte prioritario",
@@ -98,9 +99,9 @@ const PRICING_PLANS: Plan[] = [
     priceYearly: null,
     users: "Multiempresa ilimitada",
     features: [
-      "Configuraci├│n personalizada",
-      "Integraci├│n completa con tu sistema",
-      "Firma electr├│nica",
+      "Configuración personalizada",
+      "Integración completa con tu sistema",
+      "Firma electrónica",
       "Flujos autom├íticos",
       "SLA garantizado",
       "Equipo dedicado",
@@ -129,8 +130,8 @@ function PriceDisplay({ price, isYearly }: { price: number | null; isYearly: boo
   }
   return (
     <div>
-      <div className="text-4xl font-bold text-slate-900">Ôé¼{price}</div>
-      <div className="text-sm text-slate-500">{isYearly ? "/a├▒o" : "/mes"}</div>
+      <div className="text-4xl font-bold text-slate-900">€{price}</div>
+      <div className="text-sm text-slate-500">{isYearly ? "/año" : "/mes"}</div>
     </div>
   );
 }
@@ -141,7 +142,7 @@ export default function Page() {
       {
         type: "ok",
         title: "Estado del negocio",
-        body: "Esta semana tu beneficio va +8%. ┬┐Quieres ver qu├® clientes lo est├ín impulsando?",
+        body: "Esta semana tu beneficio va +8%. ¿Quieres ver qué clientes lo est├ín impulsando?",
       },
       {
         type: "ok",
@@ -151,17 +152,17 @@ export default function Page() {
       {
         type: "warn",
         title: "Gasto a revisar",
-        body: "Este ticket parece 'comida'. Para tu actividad puede requerir justificaci├│n. ┬┐Lo marcamos como 'a revisar'?",
+        body: "Este ticket parece 'comida'. Para tu actividad puede requerir justificación. ¿Lo marcamos como 'a revisar'?",
       },
       {
         type: "ok",
         title: "Factura emitida",
-        body: "Factura VF-2031 creada y validada. ┬┐La env├¡o al cliente o la programo para ma├▒ana?",
+        body: "Factura VF-2031 creada y validada. ¿La enváo al cliente o la programo para mañana?",
       },
       {
         type: "ok",
         title: "Informe a un clic",
-        body: "┬┐Te preparo un resumen mensual con ventas, gastos y beneficio en PDF o Excel?",
+        body: "¿Te preparo un resumen mensual con ventas, gastos y beneficio en PDF o Excel?",
       },
     ],
     []
@@ -184,7 +185,7 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (prefersReducedMotion) return; // Pausar rotaci├│n si el usuario prefiere movimiento reducido
+    if (prefersReducedMotion) return; // Pausar rotación si el usuario prefiere movimiento reducido
     const id = setInterval(() => setMsgIndex((i) => (i + 1) % isaakMessages.length), 5200);
     return () => clearInterval(id);
   }, [isaakMessages.length, prefersReducedMotion]);
@@ -248,7 +249,7 @@ export default function Page() {
               </div>
               <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
-                Estado: Operativo ┬À ├Ültima sync VeriFactu hace 3 min
+                Estado: Operativo · Última sync VeriFactu hace 3 min
               </div>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
@@ -260,28 +261,28 @@ export default function Page() {
               </h1>
 
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
-                Isaak se encarga de tus facturas, gastos y cumplimiento fiscal para que t├║ te centres en tu negocio. Solo haz una foto o sube el documento.
+                Isaak se encarga de tus facturas, gastos y cumplimiento fiscal para que tú te centres en tu negocio. Solo haz una foto o sube el documento.
               </p>
 
               <p className="mt-3 max-w-xl text-sm text-slate-500">
-                Cumple con Verifactu y normativa fiscal espa├▒ola desde el primer d├¡a.
+                Cumple con Verifactu y normativa fiscal española desde el primer dáa.
               </p>
 
               <div className="mt-6 max-w-xl space-y-2.5 text-sm text-slate-700">
                 <div className="flex items-start gap-3">
-                  <span className="text-xl">­ƒô©</span>
+                  <span className="text-xl">📷</span>
                   <span>Haces una foto a una factura o ticket</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-xl">­ƒñû</span>
-                  <span>Isaak decide si el gasto es deducible seg├║n tu actividad</span>
+                  <span className="text-xl">🧠</span>
+                  <span>Isaak decide si el gasto es deducible según tu actividad</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-xl">­ƒôè</span>
+                  <span className="text-xl">📈</span>
                   <span>Tu beneficio se actualiza autom├íticamente</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="text-xl">ÔÅ░</span>
+                  <span className="text-xl">🔔</span>
                   <span>Recibes avisos antes de cualquier plazo importante</span>
                 </div>
               </div>
@@ -290,7 +291,7 @@ export default function Page() {
                 <PrimaryButton className="group">
                   Empezar gratis <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </PrimaryButton>
-                <SecondaryButton>Ver c├│mo funciona</SecondaryButton>
+                <SecondaryButton>Ver cómo funciona</SecondaryButton>
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-4">
@@ -300,7 +301,7 @@ export default function Page() {
               </div>
 
               <p className="mt-4 text-xs text-slate-500">
-                Sin tarjeta ┬À 30 d├¡as gratis en planes de pago ┬À Puedes cancelar cuando quieras
+                Sin tarjeta · 30 dáas gratis en planes de pago · Puedes cancelar cuando quieras
               </p>
             </motion.div>
 
@@ -323,22 +324,22 @@ export default function Page() {
         </Container>
       </section>
 
-      {/* Para qui├®n es */}
+      {/* Para quién es */}
       <section className="py-12">
         <Container>
           <div className="text-center">
-            <p className="text-sm font-semibold text-blue-700">Para qui├®n es</p>
+            <p className="text-sm font-semibold text-blue-700">Para quién es</p>
             <h3 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Te encaja si eres...</h3>
             <p className="mt-3 max-w-2xl mx-auto text-sm leading-6 text-slate-600 sm:text-base">
-              Segmentamos el acompa├▒amiento seg├║n tu perfil: foco en simplicidad para aut├│nomos, control para pymes y orden fiscal para gestor├¡as.
+              Segmentamos el acompañamiento según tu perfil: foco en simplicidad para autónomos, control para pymes y orden fiscal para gestoráas.
             </p>
           </div>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><User className="h-4 w-4" />Aut├│nomos</div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><User className="h-4 w-4" />Autónomos</div>
               <h4 className="mt-3 text-lg font-semibold text-slate-900">Menos papeleo</h4>
-              <p className="text-xs font-semibold text-slate-500">Simplifica capturas y presentaci├│n</p>
+              <p className="text-xs font-semibold text-slate-500">Simplifica capturas y presentación</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">Haz foto a tickets, Isaak los clasifica y te recuerda plazos. Facturas VeriFactu listas en segundos.</p>
             </div>
 
@@ -346,14 +347,14 @@ export default function Page() {
               <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><Building2 className="h-4 w-4" />Pymes</div>
               <h4 className="mt-3 text-lg font-semibold text-slate-900">Visibilidad y control</h4>
               <p className="text-xs font-semibold text-slate-500">Equipo alineado y datos auditables</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Dashboard con ventas, gastos y beneficio real. Roles por equipo y evidencias listas para auditor├¡a.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Dashboard con ventas, gastos y beneficio real. Roles por equipo y evidencias listas para auditoráa.</p>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><Briefcase className="h-4 w-4" />Gestor├¡as</div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><Briefcase className="h-4 w-4" />Gestoráas</div>
               <h4 className="mt-3 text-lg font-semibold text-slate-900">Orden fiscal</h4>
               <p className="text-xs font-semibold text-slate-500">Evidencias listas para clientes</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Importa documentaci├│n, conserva todas las pruebas VeriFactu, y genera libros o informes bajo demanda.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Importa documentación, conserva todas las pruebas VeriFactu, y genera libros o informes bajo demanda.</p>
             </div>
           </div>
         </Container>
@@ -372,13 +373,13 @@ export default function Page() {
           <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <FeatureCard
               icon={<TrendingUp className="h-5 w-5 text-blue-600" />}
-              title="Emisi├│n sin fricci├│n"
-              bullets={["Haz una foto o sube documento", "Isaak clasifica y registra", "Validaci├│n autom├ítica incluida"]}
+              title="Emisión sin fricción"
+              bullets={["Haz una foto o sube documento", "Isaak clasifica y registra", "Validación autom├ítica incluida"]}
             />
             <FeatureCard
               icon={<BadgeCheck className="h-5 w-5 text-blue-600" />}
               title="Gastos guiados"
-              bullets={["Foto del ticket ÔåÆ clasificado", "Deducible seg├║n tu actividad", "Apunte registrado al instante"]}
+              bullets={["Foto del ticket → clasificado", "Deducible según tu actividad", "Apunte registrado al instante"]}
             />
             <FeatureCard
               icon={<Sparkles className="h-5 w-5 text-blue-600" />}
@@ -388,52 +389,52 @@ export default function Page() {
             <FeatureCard
               icon={<Lock className="h-5 w-5 text-blue-600" />}
               title="Bajo demanda con Isaak"
-              bullets={["Informes y exportaciones", "Listados por cliente, per├¡odo", "An├ílisis profundo cuando lo necesites"]}
+              bullets={["Informes y exportaciones", "Listados por cliente, peráodo", "An├ílisis profundo cuando lo necesites"]}
             />
           </div>
         </Container>
       </section>
 
-      {/* P├¡deselo a Isaak */}
+      {/* Pádeselo a Isaak */}
       <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <div className="text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
               <Sparkles className="h-4 w-4" />
-              P├¡deselo a Isaak
+              Pádeselo a Isaak
             </div>
             <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
               Todo lo que necesites, disponible en un comando.
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              Informes, listados, exportaciones, importaciones. T├║ pides, Isaak hace. Sin limites, sin fricci├│n.
+              Informes, listados, exportaciones, importaciones. Tú pides, Isaak hace. Sin limites, sin fricción.
             </p>
           </div>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             <CommandExample
-              command="Subo estos tickets, ┬┐cu├íles son deducibles?"
-              response="He revisado los 5 tickets. 4 son deducibles para tu actividad y ya est├ín registrados. 1 requiere justificaci├│n adicional. ┬┐Lo marcamos como 'a revisar'?"
+              command="Subo estos tickets, ¿cu├íles son deducibles?"
+              response="He revisado los 5 tickets. 4 son deducibles para tu actividad y ya est├ín registrados. 1 requiere justificación adicional. ¿Lo marcamos como 'a revisar'?"
             />
             <CommandExample
               command="Prep├írame el listado de gastos del trimestre"
-              response="Listo. Gastos T4 2025: 8.200 Ôé¼ en total. He agrupado por categor├¡a (alimentaci├│n, transporte, oficina). ┬┐Lo exporto a Excel o PDF?"
+              response="Listo. Gastos T4 2025: 8.200 € en total. He agrupado por categoráa (alimentación, transporte, oficina). ¿Lo exporto a Excel o PDF?"
             />
             <CommandExample
-              command="Dame el ranking de clientes por facturaci├│n"
-              response="Top 5 clientes este a├▒o: L├│pez S.L. (18.500 Ôé¼), Acme Corp (15.200 Ôé¼), Tech Solutions (12.100 Ôé¼). ┬┐Quieres ver m├írgenes o proyecciones?"
+              command="Dame el ranking de clientes por facturación"
+              response="Top 5 clientes este año: López S.L. (18.500 €), Acme Corp (15.200 €), Tech Solutions (12.100 €). ¿Quieres ver m├írgenes o proyecciones?"
             />
             <CommandExample
               command="Crea proveedor 'X' con estos datos"
-              response="Proveedor 'X' creado con CIF, datos bancarios y condiciones de pago. Ya puedes emitir compras contra ├®l. ┬┐Quieres crear m├ís?"
+              response="Proveedor 'X' creado con CIF, datos bancarios y condiciones de pago. Ya puedes emitir compras contra él. ¿Quieres crear m├ís?"
             />
             <CommandExample
               command="Exporta todos los productos a Excel"
-              response="Archivo generado: 234 productos, con c├│digos, precios, categor├¡as y stock. Descargable en 2 segundos. ┬┐Necesitas filtros especiales?"
+              response="Archivo generado: 234 productos, con códigos, precios, categoráas y stock. Descargable en 2 segundos. ¿Necesitas filtros especiales?"
             />
             <CommandExample
               command="Resumen mensual: ventas, gastos y beneficio"
-              response="Diciembre 2025: Ingresos 24.500 Ôé¼ | Gastos 12.100 Ôé¼ | Beneficio estimado 12.400 Ôé¼ (+8% vs mes anterior). ┬┐Quieres desglose por cliente?"
+              response="Diciembre 2025: Ingresos 24.500 € | Gastos 12.100 € | Beneficio estimado 12.400 € (+8% vs mes anterior). ¿Quieres desglose por cliente?"
             />
           </div>
         </Container>
@@ -444,10 +445,10 @@ export default function Page() {
       <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
-            Del env├¡o al cobro en tres pasos.
+            Del enváo al cobro en tres pasos.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
-            Conecta tu flujo de facturaci├│n y deja que Isaak automatice validaciones y recordatorios.
+            Conecta tu flujo de facturación y deja que Isaak automatice validaciones y recordatorios.
           </p>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -480,21 +481,21 @@ export default function Page() {
             Un dashboard que aprende de tu negocio.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
-            Isaak compara tu hist├│rico, detecta anomal├¡as y propone acciones. T├║ solo ves: ventas, gastos y beneficio.
+            Isaak compara tu histórico, detecta anomaláas y propone acciones. Tú solo ves: ventas, gastos y beneficio.
           </p>
 
           <div className="mt-10 grid gap-8 lg:grid-cols-2">
             <DashboardMock />
             <div className="rounded-3xl bg-gradient-to-b from-blue-50 via-blue-100 to-white p-6 shadow-sm ring-1 ring-slate-200">
-              <h4 className="text-xl font-semibold">Soporte proactivo y gesti├│n total desde cualquier dispositivo.</h4>
+              <h4 className="text-xl font-semibold">Soporte proactivo y gestión total desde cualquier dispositivo.</h4>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Isaak ejecuta ├│rdenes, registra documentos (OCR) y genera informes bajo demanda. T├║ controlas el resultado.
+                Isaak ejecuta órdenes, registra documentos (OCR) y genera informes bajo demanda. Tú controlas el resultado.
               </p>
 
               <div className="mt-6 space-y-3">
                 <InfoPill
-                  title="Suscripci├│n clara"
-                  desc="Gratis o 30 d├¡as de prueba. Cuota fija y sin sorpresas ni variables sobre facturaci├│n."
+                  title="Suscripción clara"
+                  desc="Gratis o 30 dáas de prueba. Cuota fija y sin sorpresas ni variables sobre facturación."
                   icon={<Percent className="h-4 w-4 text-blue-600" />}
                 />
                 <InfoPill
@@ -503,21 +504,21 @@ export default function Page() {
                   icon={<UploadCloud className="h-4 w-4 text-blue-600" />}
                 />
                 <InfoPill
-                  title="Crecimiento por m├│dulos"
-                  desc="Preparado para contabilidad completa y m├ís integraciones en pr├│ximas fases."
+                  title="Crecimiento por módulos"
+                  desc="Preparado para contabilidad completa y m├ís integraciones en próximas fases."
                   icon={<CalendarClock className="h-4 w-4 text-blue-600" />}
                 />
               </div>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <PrimaryButton className="w-full sm:w-auto">
-                  Probar gratis 30 d├¡as <ChevronRight className="h-4 w-4" />
+                  Probar gratis 30 dáas <ChevronRight className="h-4 w-4" />
                 </PrimaryButton>
                 <SecondaryButton className="w-full sm:w-auto">Ver ejemplo</SecondaryButton>
               </div>
 
               <p className="mt-3 text-xs text-slate-500">
-                Pr├│ximamente: integraci├│n bancaria y contabilidad completa (sin promesas absolutas).
+                Próximamente: integración bancaria y contabilidad completa (sin promesas absolutas).
               </p>
             </div>
           </div>
@@ -530,16 +531,16 @@ export default function Page() {
           <div className="grid items-center gap-8 lg:grid-cols-2">
             <div>
               <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                Un panel claro donde siempre sabes c├│mo est├ís.
+                Un panel claro donde siempre sabes cómo est├ís.
               </h3>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
-                Tu informaci├│n no se pierde nunca, aunque cambies de plan. Isaak es tu gestor fiscal digital: revisa facturas, clasifica gastos, te avisa de plazos y te explica tu situaci├│n financiera en lenguaje claro.
+                Tu información no se pierde nunca, aunque cambies de plan. Isaak es tu gestor fiscal digital: revisa facturas, clasifica gastos, te avisa de plazos y te explica tu situación financiera en lenguaje claro.
               </p>
 
               <ul className="mt-6 space-y-3 text-sm text-slate-700">
                 <Li>Siempre acceso a tus datos</Li>
                 <Li>Exportable cuando quieras</Li>
-                <Li>Sin bloqueos ni letra peque├▒a</Li>
+                <Li>Sin bloqueos ni letra pequeña</Li>
                 <Li>Respaldos autom├íticos y cifrados en la nube</Li>
               </ul>
             </div>
@@ -564,7 +565,7 @@ export default function Page() {
                     <span className="text-sm font-semibold text-green-700">Cumplimiento Certificado</span>
                   </div>
                   <p className="mt-3 text-xs text-slate-500">
-                    Sistema homologado seg├║n normativa de la Agencia Tributaria
+                    Sistema homologado según normativa de la Agencia Tributaria
                   </p>
                 </div>
               </div>
@@ -588,7 +589,7 @@ export default function Page() {
               Empieza gratis. Planes claros para crecer.
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos ┬À Prueba gratuita de 30 d├¡as ┬À Posibilidad de cambiar o pausar sin perder informaci├│n
+              <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos · Prueba gratuita de 30 dáas · Posibilidad de cambiar o pausar sin perder información
             </p>
           </div>
 
@@ -651,7 +652,7 @@ export default function Page() {
                   <div className="mt-1 text-sm text-slate-500">{plan.users}</div>
                   {plan.highlight && (
                     <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                      Sin % de facturaci├│n
+                      Sin % de facturación
                     </div>
                   )}
                 </div>
@@ -682,14 +683,14 @@ export default function Page() {
                 </a>
                 
                 <div className="mt-3 text-center text-xs text-slate-500">
-                  Ô£ô Acceso permanente a tus datos
+                  ✓ Acceso permanente a tus datos
                 </div>
               </motion.div>
             ))}
           </div>
 
           <div className="mt-12 text-center text-sm text-slate-500">
-            Todos los planes incluyen activaci├│n VeriFactu y soporte de onboarding.
+            Todos los planes incluyen activación VeriFactu y soporte de onboarding.
           </div>
         </Container>
       </motion.section>
@@ -728,26 +729,26 @@ export default function Page() {
             Recursos para dominar VeriFactu e Isaak.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
-            Gu├¡as, onboarding y checklist para aplicar mejores pr├ícticas y aprovechar todo el potencial de la plataforma.
+            Guáas, onboarding y checklist para aplicar mejores pr├ícticas y aprovechar todo el potencial de la plataforma.
           </p>
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
             <ResourceCard
-              tag="Gu├¡a"
+              tag="Guáa"
               title="Manual VeriFactu 2025"
               desc="Requisitos y checklist pr├íctico para operar con confianza."
-              cta="Descargar gu├¡a"
+              cta="Descargar guáa"
             />
             <ResourceCard
               tag="Primeros pasos"
               title="Onboarding con Isaak IA"
-              desc="Aprende a emitir, registrar gastos y entender tus m├®tricas."
+              desc="Aprende a emitir, registrar gastos y entender tus métricas."
               cta="Reservar plaza"
             />
             <ResourceCard
               tag="Checklist"
-              title="Auditor├¡a express"
-              desc="Eval├║a el estado de tu facturaci├│n y detecta riesgos."
+              title="Auditoráa express"
+              desc="Evalúa el estado de tu facturación y detecta riesgos."
               cta="Solicitar checklist"
             />
           </div>
@@ -758,13 +759,13 @@ export default function Page() {
       <section className="py-12 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <div className="text-center">
-            <p className="text-sm font-semibold text-emerald-700">La garant├¡a que buscabas</p>
+            <p className="text-sm font-semibold text-emerald-700">La garantáa que buscabas</p>
             <h3 className="mt-2 text-3xl font-bold text-slate-900">
               El plan cambia.<br />Tu contabilidad no.
             </h3>
             <p className="mt-4 max-w-2xl mx-auto text-base text-slate-600">
               Todos nuestros usuarios tienen <strong>acceso garantizado a sus datos</strong> de forma permanente.
-              Cambiar de plan, cancelar o cambiar de proveedor: tu informaci├│n siempre es tuya.
+              Cambiar de plan, cancelar o cambiar de proveedor: tu información siempre es tuya.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-slate-700">
               <div className="flex items-center gap-2">
@@ -796,7 +797,7 @@ export default function Page() {
             </div>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
               <PrimaryButton className="w-full sm:w-auto">Registrarse</PrimaryButton>
-              <SecondaryButton className="w-full sm:w-auto">Empezar gratis 30 d├¡as</SecondaryButton>
+              <SecondaryButton className="w-full sm:w-auto">Empezar gratis 30 dáas</SecondaryButton>
             </div>
           </div>
         </Container>
@@ -855,7 +856,7 @@ function HeroMockup({ visibleMsgs, benefitValue }: { visibleMsgs: IsaakMsg[]; be
   const heroLog = [
     { title: "Factura VF-2031", desc: "Validada y enviada al cliente" },
     { title: "Ticket combustible", desc: "Marcado deducible y registrado" },
-    { title: "Sync VeriFactu", desc: "├Ültima validaci├│n hace 3 min" },
+    { title: "Sync VeriFactu", desc: "Última validación hace 3 min" },
   ];
 
   return (
@@ -964,11 +965,11 @@ function MiniInvoice() {
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200">
           <div className="text-[11px] text-slate-500">Cliente</div>
-          <div className="mt-0.5 font-semibold text-slate-800">A. L├│pez</div>
+          <div className="mt-0.5 font-semibold text-slate-800">A. López</div>
         </div>
         <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200">
           <div className="text-[11px] text-slate-500">Importe</div>
-          <div className="mt-0.5 font-semibold text-slate-800">1.250,00 Ôé¼</div>
+          <div className="mt-0.5 font-semibold text-slate-800">1.250,00 €</div>
         </div>
       </div>
 
@@ -1039,21 +1040,21 @@ function DashboardMock() {
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold">Isaak Control Center</div>
         <span className="rounded-full bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-          Suscripci├│n Business Plus
+          Suscripción Business Plus
         </span>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <KpiCard label="Ventas del mes" value="48.230 Ôé¼" sub="Ôåæ +12%" />
-        <KpiCard label="Gastos del mes" value="36.900 Ôé¼" sub="Ôåæ +7%" />
-        <KpiCard label="Beneficio" value="12.410 Ôé¼" sub="Ôåæ +8%" />
+        <KpiCard label="Ventas del mes" value="48.230 €" sub="↑ +12%" />
+        <KpiCard label="Gastos del mes" value="36.900 €" sub="↑ +7%" />
+        <KpiCard label="Beneficio" value="12.410 €" sub="↑ +8%" />
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-xs font-semibold text-slate-700">Isaak</div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            He detectado un aumento de gastos en proveedores. ┬┐Quieres que identifique los que m├ís afectan al margen?
+            He detectado un aumento de gastos en proveedores. ¿Quieres que identifique los que m├ís afectan al margen?
           </p>
 
           <div className="mt-3 flex gap-2">
@@ -1071,7 +1072,7 @@ function DashboardMock() {
           <div className="mt-3 space-y-2">
             <ActivityItem icon={<FileText className="h-4 w-4 text-blue-600" />} text="Factura VF-2031 emitida y validada" />
             <ActivityItem icon={<UploadCloud className="h-4 w-4 text-blue-600" />} text="3 tickets reconocidos desde Drive" />
-            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorio creado: plazo fiscal en 5 d├¡as" />
+            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorio creado: plazo fiscal en 5 dáas" />
             <ActivityItem icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />} text="Checklist VeriFactu: todo en orden" />
           </div>
         </div>
@@ -1172,10 +1173,10 @@ function PriceCard({
 
       <div className="mt-4 border-t border-slate-100 pt-3">
         <p className="text-center text-[11px] text-slate-500">
-          {isPrimary ? "30 d├¡as gratis incluidos" : "Gratis o prueba seg├║n plan"}
+          {isPrimary ? "30 dáas gratis incluidos" : "Gratis o prueba según plan"}
         </p>
         <p className="mt-1.5 text-center text-[11px] font-medium text-emerald-700">
-          Ô£ô Acceso permanente a tus datos
+          ✓ Acceso permanente a tus datos
         </p>
       </div>
     </div>
@@ -1220,7 +1221,7 @@ function Footer() {
           <div>
             <BrandLogo variant="footer" />
             <p className="mt-3 text-sm text-slate-300">
-              Automatiza tu facturaci├│n con cumplimiento y control total.
+              Automatiza tu facturación con cumplimiento y control total.
             </p>
             <div className="mt-4 flex gap-3">
               <a href="/proximamente" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition">
@@ -1237,19 +1238,19 @@ function Footer() {
 
           <FooterCol
             title="Producto"
-            links={["Resumen", "Plataforma", "Automatizaci├│n", "Integraciones"]}
+            links={["Resumen", "Plataforma", "Automatización", "Integraciones"]}
           />
           <FooterCol
             title="VeriFactu"
-            links={["Qu├® es", "Planes y precios", "Soporte", "Estado del servicio"]}
+            links={["Qué es", "Planes y precios", "Soporte", "Estado del servicio"]}
           />
           <FooterCol
             title="Recursos"
-            links={["Gu├¡as y webinars", "Checklist", "Blog", "Contacto"]}
+            links={["Guáas y webinars", "Checklist", "Blog", "Contacto"]}
           />
           <FooterCol
             title="Legal"
-            links={["VeriFactu", "Pol├¡tica de privacidad", "T├®rminos de servicio", "Cookies"]}
+            links={["VeriFactu", "Polática de privacidad", "Términos de servicio", "Cookies"]}
           />
         </div>
 
@@ -1258,8 +1259,8 @@ function Footer() {
             <p>┬® {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
             <div className="flex gap-6">
               <a href="/verifactu" className="hover:text-blue-300 transition">VeriFactu</a>
-              <a href="/legal/privacidad" className="hover:text-blue-300 transition">Pol├¡tica de privacidad</a>
-              <a href="/legal/terminos" className="hover:text-blue-300 transition">T├®rminos de servicio</a>
+              <a href="/legal/privacidad" className="hover:text-blue-300 transition">Polática de privacidad</a>
+              <a href="/legal/terminos" className="hover:text-blue-300 transition">Términos de servicio</a>
               <a href="/legal/cookies" className="hover:text-blue-300 transition">Cookies</a>
             </div>
           </div>
@@ -1319,7 +1320,7 @@ function StickyCtaBar({ show }: { show: boolean }) {
       aria-hidden={!show}
     >
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
-        <div className="text-sm font-semibold text-slate-800">Prueba gratis y ve Isaak en acci├│n</div>
+        <div className="text-sm font-semibold text-slate-800">Prueba gratis y ve Isaak en acción</div>
         <div className="flex gap-2">
           <PrimaryButton className="px-4 py-2">Probar gratis</PrimaryButton>
           <SecondaryButton className="px-4 py-2">Ver demo</SecondaryButton>
