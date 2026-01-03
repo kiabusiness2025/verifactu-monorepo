@@ -2,6 +2,5 @@
   "buildCommand": "cd apps/landing && npm ci && npm run build",
   "installCommand": "npm ci --legacy-peer-deps",
   "framework": "nextjs",
-  "outputDirectory": "apps/landing/.next",
-  "nodeVersion": "20.x"
+  "outputDirectory": "apps/landing/.next"
 }
