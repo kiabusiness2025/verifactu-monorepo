@@ -1,6 +1,5 @@
 {
-  "buildCommand": "bash build-landing.sh && cd apps/landing && npm run build",
-  "installCommand": "bash build-landing.sh",
+  "buildCommand": "cd apps/landing && npm install && npm run build",
   "framework": "nextjs",
   "outputDirectory": "apps/landing/.next"
 }
