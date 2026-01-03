@@ -1,6 +1,5 @@
 {
   "framework": "nextjs",
   "buildCommand": "pnpm build",
-  "devCommand": "pnpm dev",
-  "installCommand": "cd ../.. && pnpm install --frozen-lockfile && cd apps/landing"
+  "devCommand": "pnpm dev"
 }
