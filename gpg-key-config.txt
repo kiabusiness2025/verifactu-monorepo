@@ -1,0 +1,9 @@
+%echo Generating a basic OpenPGP key
+Key-Type: RSA
+Key-Length: 3072
+Name-Real: VeriFactu Bot
+Name-Email: bot@verifactu.dev
+Expire-Date: 0
+%no-protection
+%commit
+%echo done
