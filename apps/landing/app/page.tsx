@@ -1,573 +1,511 @@
-"use client";
+'use client'
 
-import PricingCalculator from "@/app/components/PricingCalculator";
-import Faq from "@/app/components/Faq";
-import { useSession } from "next-auth/react";
-import React, { useEffect, useState } from "react";
+import { useState, useRef, useEffect, FormEvent } from 'react'
 
-type ChatMessage = {
-  from: "Isaak" | "Tú";
-  text: string;
-  pending?: boolean;
-};
+export default function Home() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [salesVolume, setSalesVolume] = useState(5000)
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    company: '',
+    message: ''
+  })
+  const [formStatus, setFormStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'bot', content: string }[]>([
+    { role: 'bot', content: '¡Hola! ¿En qué puedo ayudarte con Verifactu?' }
+  ])
+  const [chatInput, setChatInput] = useState('')
+  const [isSending, setIsSending] = useState(false)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-const PROACTIVE_MESSAGES = [
-  "Hola 👋 soy Isaak. ¿Quieres que configuremos tus envíos VeriFactu?",
-  "Puedo analizar tus márgenes y detectar ahorros fiscales en minutos.",
-  "¿Te guío paso a paso para validar tu siguiente envío a la AEAT?",
-];
-
-const ISAAC_API_KEY = process.env.NEXT_PUBLIC_ISAAC_API_KEY;
-const ISAAC_ASSISTANT_ID = process.env.NEXT_PUBLIC_ISAAC_ASSISTANT_ID;
-
-export default function Page() {
-  const [chatOpen, setChatOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const { data: session } = useSession();
-
+  // Cleanup timeout on unmount
   useEffect(() => {
-    setChatMessages(PROACTIVE_MESSAGES.map((text) => ({ from: "Isaak", text })));
-  }, []);
-
-  const sendIsaakMessage = async (prompt: string) => {
-    setChatMessages((prev) => [...prev, { from: "Tú", text: prompt }]);
-
-    const placeholder: ChatMessage = {
-      from: "Isaak",
-      text: "Isaak está escribiendo...",
-      pending: true,
-    };
-    setChatMessages((prev) => [...prev, placeholder]);
-
-    if (!ISAAC_API_KEY || !ISAAC_ASSISTANT_ID) {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          from: "Isaak",
-          text: "Configura las variables NEXT_PUBLIC_ISAAC_API_KEY y NEXT_PUBLIC_ISAAC_ASSISTANT_ID.",
-        },
-      ]);
-      return;
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
     }
+  }, [])
+
+  const calculatePrice = (volume: number) => {
+    if (volume <= 1000) return 49
+    if (volume <= 5000) return 149
+    if (volume <= 10000) return 299
+    return 499
+  }
+
+  const handleFormSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setIsSending(true)
+    setFormStatus(null)
 
     try {
-      const response = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
+      const response = await fetch('/api/send-lead', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${ISAAC_API_KEY}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: "gpt-4.1-mini",
-          assistant_id: ISAAC_ASSISTANT_ID,
-          input: [{ role: "user", content: prompt }],
-        }),
-      });
+        body: JSON.stringify(formData),
+      })
 
-      const data = await response.json();
-      const text =
-        data?.output?.[0]?.content?.[0]?.text?.value ||
-        "Tengo dificultades para responder ahora mismo, ¿puedes intentarlo de nuevo en unos minutos?";
+      const data = await response.json()
 
-      setChatMessages((prev) => [
-        ...prev.filter((msg) => !msg.pending),
-        { from: "Isaak", text },
-      ]);
+      if (response.ok) {
+        setFormStatus({ type: 'success', message: '¡Gracias! Nos pondremos en contacto contigo pronto.' })
+        setFormData({ name: '', email: '', company: '', message: '' })
+        // Clear any existing timeout
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current)
+        }
+        // Set new timeout and store reference
+        timeoutRef.current = setTimeout(() => {
+          setIsModalOpen(false)
+          setFormStatus(null)
+        }, 2000)
+      } else {
+        setFormStatus({ type: 'error', message: data.error || 'Hubo un error. Inténtalo de nuevo.' })
+      }
     } catch (error) {
-      console.error("Error comunicando con Isaak", error);
-      setChatMessages((prev) => [
-        ...prev.filter((msg) => !msg.pending),
-        {
-          from: "Isaak",
-          text: "No puedo conectarme con Isaak ahora mismo. Inténtalo más tarde.",
-        },
-      ]);
+      setFormStatus({ type: 'error', message: 'Error de conexión. Inténtalo de nuevo.' })
+    } finally {
+      setIsSending(false)
     }
-  };
+  }
 
-  const handleChatSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const message = String(formData.get("message") || "").trim();
-    if (!message) return;
-    form.reset();
-    sendIsaakMessage(message);
-  };
+  const handleChatSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!chatInput.trim() || isSending) return
+
+    const userMessage = chatInput.trim()
+    setChatInput('')
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    setIsSending(true)
+
+    try {
+      const response = await fetch('/api/vertex-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userMessage }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setChatMessages(prev => [...prev, { role: 'bot', content: data.response }])
+      } else {
+        setChatMessages(prev => [...prev, { 
+          role: 'bot', 
+          content: 'Lo siento, hubo un error. ¿Podrías intentarlo de nuevo?' 
+        }])
+      }
+    } catch (error) {
+      setChatMessages(prev => [...prev, { 
+        role: 'bot', 
+        content: 'Error de conexión. Por favor, inténtalo de nuevo.' 
+      }])
+    } finally {
+      setIsSending(false)
+    }
+  }
 
   return (
     <div className="page">
-      {mobileMenuOpen && (
-        <div
-          className="mobile-menu-backdrop"
-          onClick={() => setMobileMenuOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      {/* Header */}
       <header className="header">
         <div className="container header__inner">
-          <a href="#hero" className="brand" aria-label="Volver al inicio">
-            <img
-              src="/assets/verifactu-logo-animated.svg"
-              alt="VeriFactu Business"
-              className="brand__image"
-            />
+          <a href="#" className="brand">
+            <div className="brand__logo" aria-hidden="true">V</div>
+            <span className="brand__name">Verifactu</span>
           </a>
-          <div className="header__nav-wrapper">
-            <button
-              className="header__mobile-toggle"
-              aria-label="Toggle menu"
-              aria-expanded={mobileMenuOpen}
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                {mobileMenuOpen ? (
-                  <path
-                    d="M18 6L6 18M6 6l12 12"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                ) : (
-                  <path
-                    d="M4 6h16M4 12h16M4 18h16"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                )}
-              </svg>
-            </button>
-            <nav className={`nav ${mobileMenuOpen ? "is-open" : ""}`}>
-              <a href="#value" onClick={() => setMobileMenuOpen(false)}>
-                Propuesta
-              </a>
-              <a href="#key-features" onClick={() => setMobileMenuOpen(false)}>
-                Funcionalidades
-              </a>
-              <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>
-                Planes
-              </a>
-              <a href="#services" onClick={() => setMobileMenuOpen(false)}>
-                Servicios
-              </a>
-              <a href="#faq" onClick={() => setMobileMenuOpen(false)}>
-                FAQ
-              </a>
-            </nav>
-          </div>
-          <div className={`header__cta ${mobileMenuOpen ? "is-open" : ""}`}>
-            {session ? (
-              <a className="btn btn--ghost" href="/dashboard">
-                Ir al panel
-              </a>
-            ) : (
-              <a className="btn btn--ghost" href="/api/auth/signin">
-                Acceder
-              </a>
-            )}
-            <a className="btn btn--primary" href="/contact">
+          <nav className="nav">
+            <a href="#features">Plataforma</a>
+            <a href="#steps">Cómo funciona</a>
+            <a href="#solutions">Soluciones</a>
+            <a href="#pricing">Precios</a>
+          </nav>
+          <div className="header__cta">
+            <button className="btn btn--ghost" onClick={() => setIsModalOpen(true)}>
               Solicitar demo
-            </a>
+            </button>
+            <button className="btn" onClick={() => setIsModalOpen(true)}>
+              Hablar con ventas
+            </button>
           </div>
         </div>
       </header>
 
+      {/* Main Content */}
       <main>
-        <section id="hero" className="hero">
-          <div className="hero__background" aria-hidden="true" />
-          <div className="container hero__inner">
-            <div className="hero__copy">
-              <p className="hero__eyebrow">LANDING COMPLETA – verifactu.business</p>
-              <h1>Gestión fiscal y contable automatizada para tu empresa</h1>
-              <h2 className="hero__subtitle">
-                La plataforma integral que conecta Verifactu, bancos, Google Drive y un asistente fiscal especializado en normativa española. Todo en un único panel inteligente.
-              </h2>
-              <p className="hero__description">
-                Control financiero en tiempo real, calendario fiscal automático y contabilidad generada por IA.
+        {/* Hero Section */}
+        <section className="hero">
+          <div className="container hero__content">
+            <div className="hero__text">
+              <div className="pill">SII Verifactu</div>
+              <h1>
+                La forma más simple de emitir y cumplir con Verifactu para tu negocio
+              </h1>
+              <p>
+                Centraliza tus puntos de emisión y automatiza el envío de los libros de facturas al SII con una plataforma segura y certificada.
               </p>
               <div className="hero__actions">
-                <a className="btn btn--primary" href="/auth/signup">
-                  Crear cuenta gratuita
-                </a>
-                <a className="btn btn--ghost" href="#key-features">
-                  Explorar funcionalidades
-                </a>
+                <button className="btn btn--primary" onClick={() => setIsModalOpen(true)}>
+                  Solicitar demo
+                </button>
+                <button className="btn btn--ghost" onClick={() => setIsModalOpen(true)}>
+                  Hablar con ventas
+                </button>
               </div>
-              <p className="hero__microcopy">Sin tarjeta. Configuración inicial en menos de 2 minutos.</p>
-              <p className="hero__description">
-                IA fiscal que entiende tu negocio, automatiza tus procesos y te prepara para cada obligación tributaria.
-              </p>
-            </div>
-
-            <div className="hero__mockup" aria-hidden="true">
-              <div className="mockup mockup--assistant">
-                <header className="mockup__header">
-                  <div>
-                    <span className="mockup__badge">Isaak</span>
-                    <p className="mockup__title">Respuestas inmediatas</p>
-                  </div>
-                  <span className="mockup__status">Conectado a AEAT</span>
-                </header>
-                <div className="mockup__body">
-                  <article className="mockup__message">
-                    <span className="mockup__avatar">🙋</span>
-                    <div>
-                      <p className="mockup__label">Usuario</p>
-                      <p className="mockup__text">
-                        “¿Cómo voy este trimestre? Necesito el IVA estimado y si hay riesgos de descuadre.”
-                      </p>
-                    </div>
-                  </article>
-                  <article className="mockup__message mockup__message--light">
-                    <span className="mockup__avatar">🤖</span>
-                    <div>
-                      <p className="mockup__label">Isaak</p>
-                      <p className="mockup__text">
-                        “Ingresos del 2T: 14.980 €. Gastos deducibles: 3.420 €. IVA devengado: 3.145 €. IVA soportado: 718 €. Previsión de cuota: 2.427 €. No detecto inconsistencias.”
-                      </p>
-                    </div>
-                  </article>
-                  <article className="mockup__message">
-                    <span className="mockup__avatar">🙋</span>
-                    <div>
-                      <p className="mockup__label">Usuario</p>
-                      <p className="mockup__text">
-                        “Subo estas 12 facturas de gasto. Clasifícalas y cuéntame si alguna no es deducible.”
-                      </p>
-                    </div>
-                  </article>
-                  <article className="mockup__message mockup__message--light">
-                    <span className="mockup__avatar">🤖</span>
-                    <div>
-                      <p className="mockup__label">Isaak</p>
-                      <p className="mockup__text">
-                        “11 facturas clasificadas correctamente. 1 factura no deducible: servicio de entretenimiento. Todo se ha registrado en tu libro de gastos.”
-                      </p>
-                    </div>
-                  </article>
-                  <article className="mockup__message">
-                    <span className="mockup__avatar">🙋</span>
-                    <div>
-                      <p className="mockup__label">Usuario</p>
-                      <p className="mockup__text">
-                        “Concíliame los movimientos bancarios de esta semana y dime si queda algo pendiente de cobrar.”
-                      </p>
-                    </div>
-                  </article>
-                  <article className="mockup__message mockup__message--light">
-                    <span className="mockup__avatar">🤖</span>
-                    <div>
-                      <p className="mockup__label">Isaak</p>
-                      <p className="mockup__text">
-                        “8 movimientos conciliados con tus facturas. 1 transferencia de 412 € pendiente de asociar. 2 facturas emitidas siguen sin cobro.”
-                      </p>
-                    </div>
-                  </article>
+              <div className="hero__stats">
+                <div>
+                  <span className="stat__value">+12k</span>
+                  <span className="stat__label">Facturas emitidas al mes</span>
+                </div>
+                <div>
+                  <span className="stat__value">99.9%</span>
+                  <span className="stat__label">Disponibilidad garantizada</span>
+                </div>
+                <div>
+                  <span className="stat__value">48h</span>
+                  <span className="stat__label">Onboarding promedio</span>
                 </div>
               </div>
             </div>
+            <div className="hero__card" aria-labelledby="card-title">
+              <h2 id="card-title">Panel unificado</h2>
+              <p>Administra, monitoriza y envía facturas al SII sin fricciones.</p>
+              <ul className="card__list">
+                <li>
+                  <span className="dot dot--green"></span>
+                  Facturas y tickets en un único flujo
+                </li>
+                <li>
+                  <span className="dot dot--purple"></span>
+                  Validación automática del SII
+                </li>
+                <li>
+                  <span className="dot dot--blue"></span>
+                  Alertas en tiempo real
+                </li>
+              </ul>
+              <div className="card__footer">
+                <div>
+                  <span className="status">Estado</span>
+                  <span className="status__value">En cumplimiento</span>
+                </div>
+                <span className="status__badge">100%</span>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section id="value" className="section features">
+        {/* Features Section */}
+        <section id="features" className="section features">
           <div className="container">
             <div className="section__header">
-              <h2>Centraliza toda la gestión fiscal y contable en un único sistema</h2>
+              <h2>Una plataforma creada para liderar en Verifactu</h2>
               <p>
-                Verifactu, bancos, gastos, documentos, calendario fiscal e inteligencia artificial especializada en España. Una infraestructura empresarial diseñada para maximizar control, eficiencia y seguridad.
+                Diseñada para equipos de operaciones, contabilidad y tecnología que necesitan cumplir con la normativa sin comprometer la experiencia de sus clientes.
               </p>
             </div>
-            <div className="features__grid">
-              <article className="feature-card">
-                <h3>Beneficios clave</h3>
-                <ul>
-                  <li>Automatización completa del ciclo fiscal y contable.</li>
-                  <li>Libros oficiales actualizados de forma continua.</li>
-                  <li>Eliminación de errores y duplicidades.</li>
-                  <li>Visión financiera 360º en tiempo real.</li>
-                  <li>Preparación automatizada de los modelos 303, 130, 111 e Impuesto de Sociedades.</li>
-                  <li>Cumplimiento nativo con Verifactu.</li>
-                </ul>
+            <div className="grid grid--three">
+              <article className="card">
+                <div className="icon icon--purple">01</div>
+                <h3>Orquestación omnicanal</h3>
+                <p>
+                  Conecta tus puntos de venta físicos y digitales en un único flujo para controlar cada factura emitida.
+                </p>
               </article>
-              <article className="feature-card">
-                <h3>Core tecnológico</h3>
-                <ul>
-                  <li>Next.js (UI + API) sobre Cloud Run y Cloud SQL.</li>
-                  <li>Integraciones Drive, PSD2, Verifactu y Google Calendar.</li>
-                  <li>Isaak como asistente fiscal orquestado con datos en vivo.</li>
-                  <li>Roles multiempresa y acceso con identidad digital.</li>
-                </ul>
+              <article className="card">
+                <div className="icon icon--green">02</div>
+                <h3>Automatización del envío</h3>
+                <p>
+                  Programación inteligente para entregar libros al SII sin errores ni retrasos.
+                </p>
+              </article>
+              <article className="card">
+                <div className="icon icon--blue">03</div>
+                <h3>Gobierno y seguridad</h3>
+                <p>
+                  Trazabilidad completa, controles de acceso y cifrado de extremo a extremo para tus datos.
+                </p>
               </article>
             </div>
           </div>
         </section>
 
-        <section id="key-features" className="section features">
+        {/* Steps Section */}
+        <section id="steps" className="section steps">
           <div className="container">
             <div className="section__header">
-              <h2>Funcionalidades clave</h2>
-              <p>Automatización VeriFactu, OCR, banca, contabilidad e IA fiscal en el mismo panel.</p>
+              <h2>De la emisión al envío en tres pasos</h2>
+              <p>
+                Simplificamos la adaptación a Verifactu para que puedas seguir creciendo mientras cumples la regulación.
+              </p>
             </div>
-            <div className="features__grid">
-              <article className="feature-card">
-                <h3>Facturación Verifactu</h3>
-                <ul>
-                  <li>Emisión certificada y registro automático.</li>
-                  <li>Control de cobros y vencimientos.</li>
-                  <li>Envío profesional a clientes.</li>
-                </ul>
+            <div className="grid grid--three">
+              <article className="step">
+                <span className="step__badge">1</span>
+                <h3>Conecta tus fuentes</h3>
+                <p>
+                  Integraciones listas para tus ERPs, e-commerce y puntos de venta físicos.
+                </p>
               </article>
-              <article className="feature-card">
-                <h3>Gastos y OCR avanzado</h3>
-                <ul>
-                  <li>Integración con Google Drive.</li>
-                  <li>OCR inteligente y clasificación automática.</li>
-                  <li>Registro contable inmediato.</li>
-                </ul>
+              <article className="step">
+                <span className="step__badge">2</span>
+                <h3>Automatiza el flujo</h3>
+                <p>
+                  Reglas de negocio y validaciones que aseguran que cada factura cumple con los requisitos del SII.
+                </p>
               </article>
-              <article className="feature-card">
-                <h3>Integración bancaria (PSD2)</h3>
-                <ul>
-                  <li>Conexión segura con entidades españolas.</li>
-                  <li>Importación automática de movimientos.</li>
-                  <li>Conciliación con facturas y gastos.</li>
-                  <li>Alertas financieras y de liquidez.</li>
-                </ul>
-              </article>
-              <article className="feature-card">
-                <h3>Contabilidad automática</h3>
-                <ul>
-                  <li>Libros diario, mayor e IVA.</li>
-                  <li>Conciliación completa.</li>
-                  <li>Resultados del periodo en tiempo real.</li>
-                  <li>Proyección de cierre anual.</li>
-                </ul>
-              </article>
-              <article className="feature-card">
-                <h3>Asistente fiscal “Isaak”</h3>
-                <p>Asesoramiento guiado, análisis documental, explicaciones normativas, cálculos automáticos y soporte integral.</p>
-              </article>
-              <article className="feature-card">
-                <h3>Calendario fiscal inteligente</h3>
-                <ul>
-                  <li>Generación automática de obligaciones.</li>
-                  <li>Sincronización con Google Calendar.</li>
-                  <li>Recordatorios previos a cada presentación.</li>
-                </ul>
+              <article className="step">
+                <span className="step__badge">3</span>
+                <h3>Envía y monitoriza</h3>
+                <p>
+                  Envío automático de libros, alertas en tiempo real y reportes auditables.
+                </p>
               </article>
             </div>
           </div>
         </section>
 
-        <section id="audience" className="section features">
+        {/* Solutions Section */}
+        <section id="solutions" className="section solutions">
           <div className="container">
             <div className="section__header">
-              <h2>¿Para quién es?</h2>
-              <p>Experiencia adaptada a autónomos, pymes y gestorías con operativa multiempresa.</p>
+              <h2>Elige la solución que mejor se adapta a tu organización</h2>
+              <p>
+                Paquetes flexibles para cubrir desde necesidades estándar hasta proyectos a medida.
+              </p>
             </div>
-            <div className="features__grid">
-              <article className="feature-card">
-                <h3>Autónomos</h3>
-                <p>Gestión simple, automática y sin fricciones.</p>
+            <div className="solutions__grid">
+              <article className="plan">
+                <div className="plan__header">
+                  <h3>Solución estándar</h3>
+                  <p>
+                    Configuración acelerada y soporte especializado para equipos que necesitan cumplir rápido.
+                  </p>
+                </div>
+                <ul className="plan__list">
+                  <li>Integraciones listas con ERPs líderes</li>
+                  <li>Automatización de libros y tickets</li>
+                  <li>Alertas en tiempo real</li>
+                  <li>Soporte prioritario</li>
+                </ul>
+                <button className="btn btn--block" onClick={() => setIsModalOpen(true)}>
+                  Solicitar demo
+                </button>
               </article>
-              <article className="feature-card">
-                <h3>Pymes</h3>
-                <p>Control completo de facturación, bancos, impuestos y documentación.</p>
-              </article>
-              <article className="feature-card">
-                <h3>Gestorías y despachos</h3>
-                <p>Operativa multiempresa con automatización contable y fiscal de alto nivel.</p>
+              <article className="plan plan--highlight">
+                <div className="plan__header">
+                  <h3>A medida</h3>
+                  <p>
+                    Diseñamos junto a tu equipo un flujo personalizado sobre la infraestructura de Verifactu.
+                  </p>
+                </div>
+                <ul className="plan__list">
+                  <li>Integraciones a medida</li>
+                  <li>Gobierno y auditoría avanzada</li>
+                  <li>Soporte 24/7 y acuerdos SLA</li>
+                  <li>Consultoría regulatoria</li>
+                </ul>
+                <button className="btn btn--block btn--primary" onClick={() => setIsModalOpen(true)}>
+                  Hablar con ventas
+                </button>
               </article>
             </div>
           </div>
         </section>
 
-        <section id="pricing" className="section">
-          <PricingCalculator />
-          <div className="pricing-section__cta">
-            <a className="btn btn--ghost" href="/contact">
-              Comparar planes
-            </a>
-          </div>
-        </section>
-
-        <section id="services" className="section features">
+        {/* Pricing Section */}
+        <section id="pricing" className="section pricing">
           <div className="container">
             <div className="section__header">
-              <h2>Servicios adicionales on-demand</h2>
-              <p>Contratación directa desde la aplicación sin abandonar el panel.</p>
+              <h2>Precios transparentes según tu volumen</h2>
+              <p>
+                Ajusta el slider para ver el precio que se adapta a tu negocio.
+              </p>
             </div>
-            <div className="features__grid">
-              <article className="feature-card">
-                <ul>
-                  <li>Tramitación de certificados digitales.</li>
-                  <li>Constitución de sociedades.</li>
-                  <li>Servicios notariales online (más de 100 trámites).</li>
-                  <li>Modificaciones estatutarias.</li>
-                  <li>Altas de autónomos y cambios censales.</li>
-                  <li>Presentación de modelos especiales.</li>
-                  <li>Revisión documental y legalización.</li>
-                  <li>Representación ante AEAT y Seguridad Social.</li>
-                </ul>
-                <a className="btn btn--dark" href="/contact">Ver catálogo completo</a>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section id="security" className="section features">
-          <div className="container">
-            <div className="section__header">
-              <h2>Seguridad</h2>
-              <p>Infraestructura diseñada para la normativa española.</p>
-            </div>
-            <div className="features__grid">
-              <article className="feature-card">
-                <ul>
-                  <li>Cumplimiento Verifactu nativo.</li>
-                  <li>Integración con bancos bajo PSD2.</li>
-                  <li>Tokens cifrados y comunicaciones seguras.</li>
-                  <li>Acceso con certificado digital en planes superiores.</li>
-                  <li>Infraestructura desplegada en Google Cloud.</li>
-                  <li>Control de accesos multiempresa.</li>
-                </ul>
-              </article>
+            <div className="pricing__slider">
+              <div className="slider__label">
+                <span>Facturas mensuales</span>
+                <span>{salesVolume.toLocaleString()}</span>
+              </div>
+              <input
+                type="range"
+                min="100"
+                max="20000"
+                step="100"
+                value={salesVolume}
+                onChange={(e) => setSalesVolume(parseInt(e.target.value))}
+                className="slider__input"
+              />
+              <div className="pricing__value">
+                {calculatePrice(salesVolume)}€/mes
+              </div>
             </div>
           </div>
         </section>
 
-        <Faq />
-
+        {/* CTA Section */}
         <section className="section cta">
           <div className="container cta__inner">
             <div>
-              <h2>Optimiza tu gestión fiscal y contable hoy mismo</h2>
+              <h2>Listos para liderar el cambio en Verifactu</h2>
               <p>
-                Automatiza procesos, elimina errores y accede a una visión financiera completa.
+                Nuestro equipo acompaña a empresas de retail, hospitality y servicios en su transición a la facturación digital.
               </p>
-              <div className="cta__actions">
-                <a className="btn btn--primary" href="/auth/signup">
-                  Crear cuenta gratuita
-                </a>
-                <a className="btn btn--ghost" href="/contact">
-                  Solicitar demostración
-                </a>
-              </div>
             </div>
-            <div className="cta__badge" aria-hidden="true">
-              <p className="cta__label">Infraestructura fiscal-as-a-service</p>
-              <p className="cta__value">verifactu.business</p>
-            </div>
+            <button className="btn btn--primary" onClick={() => setIsModalOpen(true)}>
+              Reserva una demo
+            </button>
           </div>
         </section>
       </main>
 
+      {/* Footer */}
       <footer className="footer">
-        <div className="container footer__inner">
-          <div>
-            <img
-              src="/assets/verifactu-logo-animated.svg"
-              alt="VeriFactu Business"
-              className="footer__logo"
-            />
-            <p className="footer__tagline">
-              Asistente IA Isaak · Cumple la normativa AEAT VeriFactu
+        <div className="container footer__grid">
+          <div className="footer__brand">
+            <div className="brand">
+              <div className="brand__logo" aria-hidden="true">V</div>
+              <span className="brand__name">Verifactu</span>
+            </div>
+            <p>
+              Solución integral para la gestión y el cumplimiento de Verifactu.
             </p>
           </div>
           <div className="footer__links">
-            <a href="mailto:soporte@verifactu.business">
-              soporte@verifactu.business
-            </a>
-            <a href="/privacy">Política de Privacidad</a>
-            <a href="/terms">Condiciones de Uso</a>
-            <a href="/cookies">Cookies</a>
+            <div>
+              <h4>Producto</h4>
+              <a href="#features">Características</a>
+              <a href="#steps">Cómo funciona</a>
+              <a href="#pricing">Precios</a>
+            </div>
+            <div>
+              <h4>Recursos</h4>
+              <a href="#solutions">Casos de uso</a>
+              <a href="#contact">Documentación</a>
+              <a href="#contact">Soporte</a>
+            </div>
+            <div>
+              <h4>Compañía</h4>
+              <a href="#contact">Nosotros</a>
+              <a href="#contact">Privacidad</a>
+              <a href="#contact">Contacto</a>
+            </div>
+          </div>
+          <div className="footer__legal">
+            <p>© {new Date().getFullYear()} Verifactu. Todos los derechos reservados.</p>
+            <div className="footer__socials">
+              <a href="#" aria-label="LinkedIn">in</a>
+              <a href="#" aria-label="Twitter">tw</a>
+              <a href="#" aria-label="YouTube">yt</a>
+            </div>
           </div>
         </div>
-        <p className="footer__legal">© 2025 Veri*Factu Business</p>
       </footer>
 
-      <button
-        className="isaak-fab"
-        type="button"
-        aria-controls="isaak-chat"
-        aria-expanded={chatOpen}
-        onClick={() => setChatOpen((state) => !state)}
-      >
-        <span className="isaak-fab__avatar">🤖</span>
-        <span className="isaak-fab__label">Habla con Isaak</span>
-      </button>
-
-      <section className="isaak-chat" id="isaak-chat" aria-hidden={!chatOpen}>
-        <header className="isaak-chat__header">
-          <div>
-            <span className="isaak-chat__avatar">🤖</span>
-            <div>
-              <p className="isaak-chat__title">Isaak, tu asistente fiscal</p>
-              <p className="isaak-chat__status">Proactivo · Conectado a AEAT</p>
+      {/* Modal */}
+      <div className={`modal ${isModalOpen ? 'active' : ''}`} onClick={() => setIsModalOpen(false)}>
+        <div className="modal__content" onClick={(e) => e.stopPropagation()}>
+          <button className="modal__close" onClick={() => setIsModalOpen(false)}>×</button>
+          <h2>Solicita información</h2>
+          <p>Completa el formulario y nuestro equipo se pondrá en contacto contigo.</p>
+          <form onSubmit={handleFormSubmit}>
+            <div className="form__group">
+              <label className="form__label" htmlFor="name">Nombre *</label>
+              <input
+                id="name"
+                type="text"
+                className="form__input"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
             </div>
-          </div>
-          <button
-            className="isaak-chat__close"
-            type="button"
-            aria-label="Cerrar chat"
-            onClick={() => setChatOpen(false)}
-          >
-            ×
-          </button>
-        </header>
-        <div className="isaak-chat__proactive" role="log" aria-live="polite">
-          {PROACTIVE_MESSAGES.map((text) => (
-            <div className="isaak-chat__proactive-bubble" key={text}>
-              {text}
+            <div className="form__group">
+              <label className="form__label" htmlFor="email">Email *</label>
+              <input
+                id="email"
+                type="email"
+                className="form__input"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
             </div>
-          ))}
-        </div>
-        <div className="isaak-chat__messages" role="list">
-          {chatMessages.map((message, index) => (
-            <div
-              key={`${message.from}-${index}-${message.text}`}
-              className={`isaak-chat__message ${message.from === "Isaak" ? "from-isaak" : "from-user"} ${
-                message.pending ? "is-pending" : ""
-              }`}
-            >
-              <span className="isaak-chat__message-avatar">
-                {message.from === "Isaak" ? "🤖" : "🙋"}
-              </span>
-              <div>
-                <p className="isaak-chat__message-label">{message.from}</p>
-                <p className="isaak-chat__message-text">{message.text}</p>
+            <div className="form__group">
+              <label className="form__label" htmlFor="company">Empresa</label>
+              <input
+                id="company"
+                type="text"
+                className="form__input"
+                value={formData.company}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+              />
+            </div>
+            <div className="form__group">
+              <label className="form__label" htmlFor="message">Mensaje</label>
+              <textarea
+                id="message"
+                className="form__textarea"
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              />
+            </div>
+            {formStatus && (
+              <div className={`form__${formStatus.type}`}>
+                {formStatus.message}
               </div>
-            </div>
-          ))}
+            )}
+            <button type="submit" className="btn btn--primary btn--block" disabled={isSending}>
+              {isSending ? 'Enviando...' : 'Enviar'}
+            </button>
+          </form>
         </div>
-        <form
-          className="isaak-chat__form"
-          autoComplete="off"
-          onSubmit={handleChatSubmit}
-        >
-          <label className="sr-only" htmlFor="isaak-input">
-            Escribe tu mensaje
-          </label>
-          <input
-            id="isaak-input"
-            name="message"
-            type="text"
-            placeholder="Pregunta a Isaak sobre tu facturación"
-            required
-          />
-          <button type="submit">Enviar</button>
-        </form>
-      </section>
+      </div>
+
+      {/* Chat Widget */}
+      <div className="chat-widget">
+        <div className={`chat-window ${isChatOpen ? 'active' : ''}`}>
+          <div className="chat-header">
+            <h3>Asistente Verifactu</h3>
+            <button 
+              className="modal__close"
+              onClick={() => setIsChatOpen(false)}
+            >
+              ×
+            </button>
+          </div>
+          <div className="chat-messages">
+            {chatMessages.map((msg, idx) => (
+              <div key={idx} className={`chat-message chat-message--${msg.role}`}>
+                {msg.content}
+              </div>
+            ))}
+          </div>
+          <form className="chat-input-container" onSubmit={handleChatSubmit}>
+            <input
+              type="text"
+              className="chat-input"
+              placeholder="Escribe tu pregunta..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              disabled={isSending}
+            />
+            <button type="submit" className="chat-send" disabled={isSending}>
+              {isSending ? '...' : 'Enviar'}
+            </button>
+          </form>
+        </div>
+        <button className="chat-button" onClick={() => setIsChatOpen(!isChatOpen)}>
+          💬
+        </button>
+      </div>
     </div>
-  );
+  )
 }

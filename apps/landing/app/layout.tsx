@@ -1,48 +1,35 @@
-import React, { Suspense } from "react";
-import { SessionProvider } from "next-auth/react";
-import CookieBanner from "./components/CookieBanner";
+import type { Metadata } from 'next'
+import './globals.css'
 
-const title = "Veri*Factu Business - Automatiza tu facturación con IA";
-const description = "Cumple con VeriFactu y haz crecer tu negocio. Isaak centraliza la emisión, valida con AEAT y te sugiere cómo mejorar tus márgenes automáticamente.";
-const url = "https://verifactu.business";
-
-export const metadata = {
-  title: "Veri*Factu Business - Automatiza tu facturación con IA",
-  description: "Cumple con VeriFactu y haz crecer tu negocio. Isaak centraliza la emisión, valida con AEAT y te sugiere cómo mejorar tus márgenes automáticamente.",
-  icons: [{ rel: "icon", url: "/assets/favicon.svg" }],
-  metadataBase: new URL(url),
+export const metadata: Metadata = {
+  title: 'Verifactu - Cumple con la facturación digital',
+  description: 'Centraliza tus puntos de emisión y automatiza el envío de los libros de facturas al SII con una plataforma segura y certificada.',
+  keywords: 'Verifactu, facturación digital, SII, facturas, tickets, automatización',
+  authors: [{ name: 'Verifactu' }],
   openGraph: {
-    title,
-    description,
-    url,
-    siteName: "Veri*Factu Business",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
-    locale: "es_ES",
-    type: "website",
+    title: 'Verifactu - Cumple con la facturación digital',
+    description: 'La forma más simple de emitir y cumplir con Verifactu para tu negocio',
+    type: 'website',
+    locale: 'es_ES',
   },
-  twitter: {
-    card: "summary_large_image",
-    title,
-    description,
-    images: ["/og-image.png"],
-  },
-  themeColor: "#2563eb",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
-};
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="es">
-      <body>
-        <SessionProvider>
-          <Suspense>{children}</Suspense>
-          <CookieBanner />
-        </SessionProvider>
-      </body>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body>{children}</body>
     </html>
-  );
+  )
 }

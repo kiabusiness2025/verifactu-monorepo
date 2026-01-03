@@ -4,7 +4,6 @@
   "packageManager": "npm@11.6.2",
   "workspaces": [
     "apps/*",
-    "services/*",
     "packages/*"
   ],
   "scripts": {
@@ -14,11 +13,10 @@
     "test": "turbo run test"
   },
   "devDependencies": {
-    "turbo": "^2.2.3"
-  },
-  "dependencies": {
     "chai": "^6.2.1",
     "mocha": "^11.7.5",
-    "supertest": "^7.1.4"
-  }
+    "supertest": "^7.1.4",
+    "turbo": "^2.2.3"
+  },
+  "dependencies": {}
 }

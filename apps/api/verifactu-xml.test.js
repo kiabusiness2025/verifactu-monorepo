@@ -1,7 +1,7 @@
-const { invoiceToVeriFactuXML } = require("./verifactu-xml.js");
+import { invoiceToVeriFactuXML } from "./verifactu-xml.js";
 
 describe("invoiceToVeriFactuXML", () => {
-  it("should generate a valid VeriFactu XML", () => {
+  it("should generate a valid VeriFactu object", () => {
     const invoice = {
       id: "F2023-0001",
       number: "F2023-0001",
@@ -21,18 +21,20 @@ describe("invoiceToVeriFactuXML", () => {
       },
     };
 
-    const xml = invoiceToVeriFactuXML(invoice);
+    const xmlObject = invoiceToVeriFactuXML(invoice);
 
-    expect(xml).toContain("<Facturae>");
-    expect(xml).toContain("<IDFactura>F2023-0001</IDFactura>");
-    expect(xml).toContain("<NumeroFactura>F2023-0001</NumeroFactura>");
-    expect(xml).toContain("<FechaExpedicionFactura>2023-10-27T10:00:00Z</FechaExpedicionFactura>");
-    expect(xml).toContain("<ImporteTotalFactura>121</ImporteTotalFactura>");
-    expect(xml).toContain("<TipoImpositivo>0.21</TipoImpositivo>");
-    expect(xml).toContain("<CuotaTributaria>21</CuotaTributaria>");
-    expect(xml).toContain("<Nombre>Cliente de Prueba</Nombre>");
-    expect(xml).toContain("<NIF>12345678Z</NIF>");
-    expect(xml).toContain("<Nombre>Mi Empresa</Nombre>");
-    expect(xml).toContain("<NIF>A12345678</NIF>");
+    expect(xmlObject).toHaveProperty("Facturae");
+    expect(xmlObject.Facturae).toHaveProperty("Factura");
+    const factura = xmlObject.Facturae.Factura;
+    expect(factura.IDFactura).toBe("F2023-0001");
+    expect(factura.NumeroFactura).toBe("F2023-0001");
+    expect(factura.FechaExpedicionFactura).toBe("2023-10-27T10:00:00Z");
+    expect(factura.ImporteTotalFactura).toBe(121);
+    expect(factura.Impuestos.TipoImpositivo).toBe(0.21);
+    expect(factura.Impuestos.CuotaTributaria).toBe(21);
+    expect(factura.Cliente.Nombre).toBe("Cliente de Prueba");
+    expect(factura.Cliente.NIF).toBe("12345678Z");
+    expect(factura.Emisor.Nombre).toBe("Mi Empresa");
+    expect(factura.Emisor.NIF).toBe("A12345678");
   });
 });

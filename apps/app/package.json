@@ -23,18 +23,21 @@
     "apexcharts": "^4.3.0",
     "autoprefixer": "^10.4.20",
     "flatpickr": "^4.6.13",
-    "next": "14.2.33",
+    "next": "^14.2.35",
     "react": "^18.2.0",
     "react-apexcharts": "^1.7.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.3.5",
+    "react-intersection-observer": "^10.0.0",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@swc/helpers": "^0.5.11",
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -43,7 +46,6 @@
     "eslint-config-next": "16.0.7",
     "postcss": "^8",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5",
-    "@swc/helpers": "^0.5.11"
+    "typescript": "^5"
   }
 }

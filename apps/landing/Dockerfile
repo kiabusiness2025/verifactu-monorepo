@@ -1,18 +1,40 @@
-# 1) Build
+# Build stage
 FROM node:20-alpine AS builder
+
 WORKDIR /app
-COPY package*.json ./
+
+# Copy package files
+COPY apps/landing/package*.json ./
+
+# Install dependencies
 RUN npm ci
-COPY . .
+
+# Copy application files
+COPY apps/landing .
+
+# Build the application
 RUN npm run build
 
-# 2) Run (standalone)
+# Production stage
 FROM node:20-alpine AS runner
+
 WORKDIR /app
+
 ENV NODE_ENV=production
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
-ENV PORT=8080
-EXPOSE 8080
-CMD ["node","server.js"]
+ENV PORT=3000
+
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy standalone output
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Switch to non-root user
+USER nextjs
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]

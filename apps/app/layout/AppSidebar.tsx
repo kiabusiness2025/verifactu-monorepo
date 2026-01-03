@@ -42,6 +42,13 @@ const navItems: NavItem[] = [
     name: "User Profile",
     path: "/profile",
   },
+  {
+    icon: <PageIcon />,
+    name: "Invoices",
+    subItems: [
+      { name: "Create Invoice", path: "/invoices/create", pro: false },
+    ],
+  },
 
   {
     name: "Forms",

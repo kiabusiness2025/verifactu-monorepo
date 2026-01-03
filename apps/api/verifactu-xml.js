@@ -1,28 +1,28 @@
 export function invoiceToVeriFactuXML(invoice) {
   const { id, number, issueDate, total, tax, customer, issuer } = invoice;
 
-  const xml = `
-    <Facturae>
-      <Factura>
-        <IDFactura>${id}</IDFactura>
-        <NumeroFactura>${number}</NumeroFactura>
-        <FechaExpedicionFactura>${issueDate}</FechaExpedicionFactura>
-        <ImporteTotalFactura>${total}</ImporteTotalFactura>
-        <Impuestos>
-          <TipoImpositivo>${tax.rate}</TipoImpositivo>
-          <CuotaTributaria>${tax.amount}</CuotaTributaria>
-        </Impuestos>
-        <Cliente>
-          <Nombre>${customer.name}</Nombre>
-          <NIF>${customer.nif}</NIF>
-        </Cliente>
-        <Emisor>
-          <Nombre>${issuer.name}</Nombre>
-          <NIF>${issuer.nif}</NIF>
-        </Emisor>
-      </Factura>
-    </Facturae>
-  `;
+  const xmlObject = {
+    Facturae: {
+      Factura: {
+        IDFactura: id,
+        NumeroFactura: number,
+        FechaExpedicionFactura: issueDate,
+        ImporteTotalFactura: total,
+        Impuestos: {
+          TipoImpositivo: tax.rate,
+          CuotaTributaria: tax.amount,
+        },
+        Cliente: {
+          Nombre: customer.name,
+          NIF: customer.nif,
+        },
+        Emisor: {
+          Nombre: issuer.name,
+          NIF: issuer.nif,
+        },
+      },
+    },
+  };
 
-  return xml;
+  return xmlObject;
 }

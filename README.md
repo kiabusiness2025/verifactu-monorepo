@@ -8,13 +8,10 @@ This is the monorepo for the VeriFactu project.
 *   `app`: The main web application.
 *   `landing`: The landing page.
 
-## Services
-
-*   `invoices`: The invoices service.
-*   `notifications`: The notifications service.
-
 ## Packages
 
+*   `eslint-config`: Shared ESLint configuration.
+*   `typescript-config`: Shared TypeScript configuration.
 *   `ui`: Shared UI components.
 *   `utils`: Shared utility functions.
 # Triggering a new build
