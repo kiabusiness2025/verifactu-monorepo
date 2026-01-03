@@ -16,3 +16,4 @@ landing/dist*.pem
 .env*.local
 
 .github/agents/
+.turbo/

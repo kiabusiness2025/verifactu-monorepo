@@ -10,6 +10,9 @@
   "devDependencies": {
     "@verifactu/eslint-config": "file:../eslint-config",
     "@verifactu/typescript-config": "file:../typescript-config",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint": "^8.57.0",
     "typescript": "^5.3.3"
   }
 }
