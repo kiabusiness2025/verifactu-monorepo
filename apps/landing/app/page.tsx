@@ -1,6 +1,15 @@
 ﻿"use client";
 
-// v1.0.4 - Fixed UTF-8 encoding issues
+/**
+ * Landing Page - Verifactu.business
+ * v1.0.4 - Fixed UTF-8 encoding and verified deployment
+ * 
+ * Improvements:
+ * - Removed technical jargon per Isaak principles
+ * - Added accessibility support (prefers-reduced-motion)
+ * - Space Grotesk font for branding consistency
+ * - All special characters properly encoded: ·, ó, á, é, ú, ñ, €, 📷, 🧠, 📈
+ */
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
