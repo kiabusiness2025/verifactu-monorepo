@@ -1,8 +1,8 @@
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import ResponsiveImage from "@/components/ui/images/ResponsiveImage";
-import ThreeColumnImageGrid from "@/components/ui/images/ThreeColumnImageGrid";
-import TwoColumnImageGrid from "@/components/ui/images/TwoColumnImageGrid";
+import ResponsiveImage from "@verifactu/ui/src/images/ResponsiveImage";
+// import ThreeColumnImageGrid from "@/components/ui/images/ThreeColumnImageGrid";
+// import TwoColumnImageGrid from "@/components/ui/images/TwoColumnImageGrid";
 import { Metadata } from "next";
 import React from "react";
 
@@ -21,12 +21,12 @@ export default function Images() {
         <ComponentCard title="Responsive image">
           <ResponsiveImage />
         </ComponentCard>
-        <ComponentCard title="Image in 2 Grid">
+        {/* <ComponentCard title="Image in 2 Grid">
           <TwoColumnImageGrid />
         </ComponentCard>
         <ComponentCard title="Image in 3 Grid">
           <ThreeColumnImageGrid />
-        </ComponentCard>
+        </ComponentCard> */}
       </div>
     </div>
   );

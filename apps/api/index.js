@@ -57,8 +57,34 @@ const WSDL_FILE = process.env.AEAT_WSDL_FILE || "/var/secrets/aeat_wsdl/wsdl_url
 
 app.get("/api/healthz", (_req, res) => res.status(200).send("ok"));
 
-// Healthcheck simple
- 
+function buildEmptyDashboardSummary(extra = {}) {
+  return {
+    totals: { sales: 0, expenses: 0, profit: 0 },
+    activity: [],
+    deadlines: [],
+    ...extra,
+  };
+}
+
+app.get("/api/dashboard/summary", (req, res) => {
+  try {
+    const period = String(req.query.period || "").trim();
+    if (period !== "this_month") {
+      return res
+        .status(400)
+        .json(buildEmptyDashboardSummary({ error: "Invalid period. Use period=this_month" }));
+    }
+
+    // Backend actual: no hay facturas/gastos persistidos disponibles para calcular totales reales.
+    // Devolvemos contrato estable con ceros y arrays vacíos.
+    return res.status(200).json(buildEmptyDashboardSummary());
+  } catch (e) {
+    log.error(e);
+    return res
+      .status(500)
+      .json(buildEmptyDashboardSummary({ error: e?.message || "Unexpected error" }));
+  }
+});
 
 // Inspección (mínima) para validar que los secretos están accesibles
 app.get("/api/verifactu/ops", (_req, res) => {

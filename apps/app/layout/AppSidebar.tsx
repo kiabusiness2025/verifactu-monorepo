@@ -29,8 +29,23 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    name: "Resumen",
+    subItems: [{ name: "Resumen", path: "/app", pro: false }],
+  },
+  {
+    icon: <TableIcon />,
+    name: "Facturas",
+    path: "/invoices",
+  },
+  {
+    icon: <ListIcon />,
+    name: "Gastos",
+    path: "/expenses",
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: "Documentos",
+    path: "/documents",
   },
   {
     icon: <CalenderIcon />,
@@ -317,26 +332,17 @@ const AppSidebar: React.FC = () => {
       >
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <Image
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </>
-          ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
+              src="/brand/system/logo-horizontal-light.png"
+              alt="Verifactu Business"
+              width={200}
+              height={40}
+              style={{ height: "40px", width: "auto" }}
+            />
+          ) : (
+            <img
+              src="/brand/system/shield.svg"
+              alt="Verifactu"
               width={32}
               height={32}
             />

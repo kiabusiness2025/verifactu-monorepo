@@ -1,23 +1,30 @@
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+FROM node:18-alpine AS base
 
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+# PNPM is used in the monorepo, so we need it
+RUN corepack enable
 
-FROM node:20-alpine AS runner
 WORKDIR /app
+
+# Copy workspace files from the root
+COPY turbo.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Copy only the necessary package.json for the app
+COPY apps/app/package.json ./apps/app/
+
+# Copy only the necessary source code for the app
+COPY apps/app ./apps/app
+COPY packages ./packages
+
+# Install dependencies and build only the target app
+RUN pnpm install --filter verifactu-app
+RUN pnpm run build --filter=verifactu-app
+
+FROM node:18-alpine AS runner
+WORKDIR /app
+COPY --from=base /app/apps/app/.next/standalone ./
+COPY --from=base /app/apps/app/.next/static ./.next/static
+COPY --from=base /app/apps/app/public ./public
 ENV NODE_ENV=production
-ENV PORT=8080
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-
-COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
 EXPOSE 8080
-CMD ["npm","run","start"]
+CMD ["node", "server.js"]

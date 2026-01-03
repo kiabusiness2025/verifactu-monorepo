@@ -2,5 +2,9 @@
   "name": "@verifactu/eslint-config",
   "version": "0.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-config-turbo": "^2.7.2"
+  }
 }

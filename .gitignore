@@ -3,6 +3,7 @@ node_modules/
 dist/
 out/
 .env*
+!**/.env.example
 .DS_Store
 *.log
 .vscode/
@@ -11,3 +12,8 @@ landing/.next
 landing/node_modules
 landing/.env
 landing/dist*.pem
+.vercel
+.env*.local
+
+.github/agents/
+.turbo/

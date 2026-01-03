@@ -1,21 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
-  reactStrictMode: true,
+  // Output tracing for Vercel
+  // output: 'standalone',
+  // Production configuration
   poweredByHeader: false,
-  experimental: {
-    serverActions: {
-      allowedOrigins: ["localhost:3000", "verifactu.business"]
-    }
+  compress: true,
+  // Clear cache and rebuild - v1.0.1
+  onDemandEntries: {
+    maxInactiveAge: 1000,
+    pagesBufferLength: 2,
   },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'verifactu.business',
-      },
-    ],
-  }
-}
-
-module.exports = nextConfig
+};
+export default nextConfig;

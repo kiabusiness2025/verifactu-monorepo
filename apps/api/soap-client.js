@@ -58,4 +58,9 @@ async function queryInvoice(query) {
   return result;
 }
 
-export { getClient, registerInvoice, queryInvoice };
+function resetClient() {
+  client = null;
+}
+
+export { getClient, registerInvoice, queryInvoice, resetClient };
+
