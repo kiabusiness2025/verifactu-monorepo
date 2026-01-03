@@ -1,4 +1,4 @@
-import { apiClient } from "./apiClient";
+import { apiClient, DashboardSummaryResponse } from "./apiClient";
 
 export type DashboardKpis = {
   salesEur: number;
@@ -24,32 +24,44 @@ export type DashboardMvpData = {
 };
 
 export async function getDashboardMvpData(): Promise<DashboardMvpData> {
-  // Si el backend está accesible, lo comprobamos sin mostrarlo en UI.
-  // Si no lo está, seguimos con datos de ejemplo.
+  const fallback: DashboardMvpData = {
+    kpis: {
+      salesEur: 0,
+      expensesEur: 0,
+      profitEur: 0,
+    },
+    activity: [],
+    deadlines: [],
+  };
+
+  let response: DashboardSummaryResponse | null = null;
   try {
-    await apiClient.getHealth();
+    response = await apiClient.getDashboardSummary("this_month");
   } catch {
-    // noop
+    return fallback;
   }
 
-  const kpis: DashboardKpis = {
-    salesEur: 48230,
-    expensesEur: 36900,
-    profitEur: 11330,
-  };
+  if (!response) {
+    return fallback;
+  }
 
-  return {
-    kpis,
-    activity: [
-      { title: "Factura enviada", time: "Hoy · 09:30", tone: "ok" },
-      { title: "Nuevos gastos añadidos", time: "Hoy · 08:10" },
-      { title: "Recordatorio preparado", time: "Ayer · 18:05", tone: "ok" },
-      { title: "Gasto marcado para revisar", time: "Ayer · 16:40", tone: "warn" },
-    ],
-    deadlines: [
-      { name: "IVA trimestral", dateLabel: "22 ene" },
-      { name: "Resumen anual", dateLabel: "30 ene" },
-      { name: "Vencimiento de cobro", dateLabel: "05 feb" },
-    ],
-  };
+  const totals = response.totals || null;
+  const hasTotals =
+    totals &&
+    typeof totals.sales === "number" &&
+    typeof totals.expenses === "number" &&
+    typeof totals.profit === "number";
+
+  const kpis: DashboardKpis = hasTotals
+    ? {
+        salesEur: totals.sales!,
+        expensesEur: totals.expenses!,
+        profitEur: totals.profit!,
+      }
+    : fallback.kpis;
+
+  const activity = Array.isArray(response.activity) ? response.activity : fallback.activity;
+  const deadlines = Array.isArray(response.deadlines) ? response.deadlines : fallback.deadlines;
+
+  return { kpis, activity, deadlines };
 }

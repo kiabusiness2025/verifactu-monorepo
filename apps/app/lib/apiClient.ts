@@ -14,6 +14,17 @@ type RegisterInvoiceResponse = {
   error?: string;
 };
 
+export type DashboardSummaryResponse = {
+  totals?: {
+    sales?: number;
+    expenses?: number;
+    profit?: number;
+  };
+  activity?: Array<{ title: string; time: string; tone?: "ok" | "warn" }>;
+  deadlines?: Array<{ name: string; dateLabel: string }>;
+  error?: string;
+};
+
 function getApiBase(): string {
   return (
     process.env.NEXT_PUBLIC_API_BASE ||
@@ -64,5 +75,10 @@ export const apiClient = {
       method: "POST",
       body: JSON.stringify({}),
     });
+  },
+
+  getDashboardSummary(period: string): Promise<DashboardSummaryResponse> {
+    const search = new URLSearchParams({ period }).toString();
+    return apiFetch<DashboardSummaryResponse>(`/api/dashboard/summary?${search}`);
   },
 };
