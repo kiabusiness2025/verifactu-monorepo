@@ -1,6 +1,6 @@
 {
   "buildCommand": "pnpm --filter verifactu-landing build",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": "nextjs",
   "outputDirectory": "apps/landing/.next"
 }

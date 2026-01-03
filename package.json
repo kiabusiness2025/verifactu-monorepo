@@ -7,6 +7,10 @@
     "lint": "turbo run lint",
     "test": "turbo run test"
   },
+  "engines": {
+    "node": ">=18.17.0",
+    "pnpm": ">=8.0.0"
+  },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.0",
     "@testing-library/react": "^16.1.0",
