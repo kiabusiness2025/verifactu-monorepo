@@ -14,8 +14,9 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validationResult = chatSchema.safeParse(body)
     if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0]
       return NextResponse.json(
-        { error: validationResult.error.errors[0].message },
+        { error: firstError?.message || 'Datos inválidos' },
         { status: 400 }
       )
     }
