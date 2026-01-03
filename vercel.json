@@ -1,6 +1,9 @@
 {
-  "buildCommand": "cd apps/landing && npm install && npm run build",
-  "installCommand": "cd apps/landing && npm install",
+  "buildCommand": "cd apps/landing && npm run build",
+  "installCommand": "npm install --legacy-peer-deps",
   "framework": "nextjs",
-  "outputDirectory": "apps/landing/.next"
+  "outputDirectory": "apps/landing/.next",
+  "env": {
+    "npm_config_workspaces_update": "false"
+  }
 }
