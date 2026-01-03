@@ -1,6 +1,7 @@
 {
-  "buildCommand": "pnpm install --no-frozen-lockfile && pnpm turbo build --filter=verifactu-landing",
-  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "cd apps/landing && npm ci && npm run build",
+  "installCommand": "npm ci --legacy-peer-deps",
   "framework": "nextjs",
-  "outputDirectory": "apps/landing/.next"
+  "outputDirectory": "apps/landing/.next",
+  "nodeVersion": "20.x"
 }
