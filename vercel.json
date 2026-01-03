@@ -1,7 +1,9 @@
 {
-  "buildCommand": "cd apps/landing && npm install && npm run build",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd apps/landing && pnpm install --frozen-lockfile && pnpm build",
   "outputDirectory": "apps/landing/.next",
-  "installCommand": "cd apps/landing && npm install",
-  "devCommand": "cd apps/landing && npm run dev",
-  "framework": "nextjs"
+  "installCommand": "pnpm install --frozen-lockfile",
+  "devCommand": "cd apps/landing && pnpm dev",
+  "framework": "nextjs",
+  "ignoreCommand": "git diff HEAD^ HEAD --quiet ."
 }
