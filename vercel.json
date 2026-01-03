@@ -1,11 +1,5 @@
 {
-  "framework": null,
+  "framework": "nextjs",
   "buildCommand": "cd apps/landing && npm install && npm run build",
-  "outputDirectory": "apps/landing/.next",
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/apps/landing/$1"
-    }
-  ]
+  "outputDirectory": "apps/landing/.next"
 }
