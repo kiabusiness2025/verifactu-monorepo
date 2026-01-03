@@ -66,7 +66,7 @@ const PRICING_PLANS: Plan[] = [
     users: "1 empresa ┬À usuarios ilimitados",
     features: [
       "Facturaci├│n VeriFactu completa",
-      "Gastos con OCR ilimitados",
+      "Gastos ilimitados con reconocimiento autom├ítico",
       "Integraci├│n bancaria (pr├│ximamente)",
       "Calendario fiscal",
       "Chat Isaak completo",
@@ -98,8 +98,8 @@ const PRICING_PLANS: Plan[] = [
     priceYearly: null,
     users: "Multiempresa ilimitada",
     features: [
-      "Infraestructura personalizada",
-      "Integraci├│n API completa",
+      "Configuraci├│n personalizada",
+      "Integraci├│n completa con tu sistema",
       "Firma electr├│nica",
       "Flujos autom├íticos",
       "SLA garantizado",
@@ -171,13 +171,30 @@ export default function Page() {
   const [benefitTarget, setBenefitTarget] = useState(0);
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [isYearlyBilling, setIsYearlyBilling] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
+    // Detectar preferencia de movimiento reducido
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion) return; // Pausar rotaci├│n si el usuario prefiere movimiento reducido
     const id = setInterval(() => setMsgIndex((i) => (i + 1) % isaakMessages.length), 5200);
     return () => clearInterval(id);
-  }, [isaakMessages.length]);
+  }, [isaakMessages.length, prefersReducedMotion]);
 
   useEffect(() => {
+    if (prefersReducedMotion) {
+      // Mostrar valor final inmediatamente
+      setBenefitTarget(12450);
+      return;
+    }
     // Contador animado para beneficio estimado en mockup
     let frame = 0;
     const target = 12450;
@@ -221,9 +238,9 @@ export default function Page() {
         <Container className="pt-14 pb-10">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
+              animate={prefersReducedMotion ? false : { opacity: 1, y: 0 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
                 <ShieldCheck className="h-4 w-4 text-blue-600" />
@@ -288,9 +305,9 @@ export default function Page() {
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
+              animate={prefersReducedMotion ? false : { opacity: 1, y: 0 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.65, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
               className="relative"
             >
               <HeroMockup visibleMsgs={visibleMsgs} benefitValue={benefitTarget} />
@@ -336,7 +353,7 @@ export default function Page() {
               <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><Briefcase className="h-4 w-4" />Gestor├¡as</div>
               <h4 className="mt-3 text-lg font-semibold text-slate-900">Orden fiscal</h4>
               <p className="text-xs font-semibold text-slate-500">Evidencias listas para clientes</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Importa documentaci├│n, conserva hash y logs VeriFactu, y genera libros o informes bajo demanda.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Importa documentaci├│n, conserva todas las pruebas VeriFactu, y genera libros o informes bajo demanda.</p>
             </div>
           </div>
         </Container>
@@ -663,6 +680,10 @@ export default function Page() {
                 >
                   {plan.priceMonthly === null ? "Contactar" : "Ir al checkout"}
                 </a>
+                
+                <div className="mt-3 text-center text-xs text-slate-500">
+                  Ô£ô Acceso permanente a tus datos
+                </div>
               </motion.div>
             ))}
           </div>
@@ -832,7 +853,7 @@ function HeroMockup({ visibleMsgs, benefitValue }: { visibleMsgs: IsaakMsg[]; be
   }).format(benefitValue);
 
   const heroLog = [
-    { title: "Factura VF-2031", desc: "Hash verificado y enviada al cliente" },
+    { title: "Factura VF-2031", desc: "Validada y enviada al cliente" },
     { title: "Ticket combustible", desc: "Marcado deducible y registrado" },
     { title: "Sync VeriFactu", desc: "├Ültima validaci├│n hace 3 min" },
   ];
@@ -1049,7 +1070,7 @@ function DashboardMock() {
           <div className="text-xs font-semibold text-slate-700">Actividad reciente</div>
           <div className="mt-3 space-y-2">
             <ActivityItem icon={<FileText className="h-4 w-4 text-blue-600" />} text="Factura VF-2031 emitida y validada" />
-            <ActivityItem icon={<UploadCloud className="h-4 w-4 text-blue-600" />} text="3 tickets importados desde Drive (OCR)" />
+            <ActivityItem icon={<UploadCloud className="h-4 w-4 text-blue-600" />} text="3 tickets reconocidos desde Drive" />
             <ActivityItem icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorio creado: plazo fiscal en 5 d├¡as" />
             <ActivityItem icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />} text="Checklist VeriFactu: todo en orden" />
           </div>
@@ -1216,7 +1237,7 @@ function Footer() {
 
           <FooterCol
             title="Producto"
-            links={["Resumen", "Plataforma", "Automatizaci├│n", "Integraci├│n API"]}
+            links={["Resumen", "Plataforma", "Automatizaci├│n", "Integraciones"]}
           />
           <FooterCol
             title="VeriFactu"
