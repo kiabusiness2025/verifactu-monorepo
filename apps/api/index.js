@@ -114,24 +114,7 @@ app.get("/api/verifactu/ops", (_req, res) => {
 
 app.post("/api/verifactu/register-invoice", async (req, res) => {
   try {
-    const invoice = {
-      id: "F2023-0001",
-      number: "F2023-0001",
-      issueDate: new Date().toISOString(),
-      total: 121,
-      tax: {
-        rate: 0.21,
-        amount: 21,
-      },
-      customer: {
-        name: "Cliente de Prueba",
-        nif: "12345678Z",
-      },
-      issuer: {
-        name: "Mi Empresa",
-        nif: "A12345678",
-      },
-    };
+    const invoice = req.body;
     const result = await registerInvoice(invoice);
     res.json({ ok: true, data: result });
   } catch (error) {

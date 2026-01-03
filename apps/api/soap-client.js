@@ -1,4 +1,4 @@
-import soap from "soap";
+import * as soap from "soap";
 import fs from "fs";
 import pino from "pino";
 
