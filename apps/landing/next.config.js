@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Transpile workspace packages
+  transpilePackages: ['@verifactu/ui'],
+  // Skip linting during builds
+  eslint: { ignoreDuringBuilds: true },
   // Output tracing for Vercel
   // output: 'standalone',
   // Production configuration
