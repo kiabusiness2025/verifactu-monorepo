@@ -1,7 +1,7 @@
 import type React from "react";
 import Link from "next/link";
 
-interface DropdownItemProps {
+export interface DropdownItemProps {
   tag?: "a" | "button";
   href?: string;
   onClick?: () => void;

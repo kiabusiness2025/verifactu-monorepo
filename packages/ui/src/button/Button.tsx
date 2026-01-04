@@ -1,6 +1,6 @@
 import * as React from "react";
 
-export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+export type ButtonProps = React.ComponentPropsWithoutRef<"button"> & {
   children: React.ReactNode;
   size?: "sm" | "md";
   variant?: "primary" | "outline";
@@ -9,25 +9,25 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({
-    children,
-    size = "md",
-    variant = "primary",
-    startIcon,
-    endIcon,
-    className = "",
-    type = "button",
-    disabled = false,
-    onClick,
-    ...props
-  }, ref) => {
-    // Size Classes
+  (
+    {
+      children,
+      size = "md",
+      variant = "primary",
+      startIcon,
+      endIcon,
+      className = "",
+      type = "button",
+      disabled = false,
+      ...props
+    },
+    ref
+  ) => {
     const sizeClasses = {
       sm: "px-4 py-3 text-sm",
       md: "px-5 py-3.5 text-sm",
     };
 
-    // Variant Classes
     const variantClasses = {
       primary:
         "bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300",
@@ -44,7 +44,6 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         } ${variantClasses[variant]} ${
           disabled ? "cursor-not-allowed opacity-50" : ""
         }`}
-        onClick={onClick}
         disabled={disabled}
         {...props}
       >
@@ -57,8 +56,5 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
-    </button>
-  );
-};
 
 
