@@ -20,3 +20,4 @@ landing/dist*.pem
 .env.local
 **/.env*
 
+.env*
