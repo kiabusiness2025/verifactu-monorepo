@@ -1,43 +1,5 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.svg$/i,
-      use: [
-        {
-          loader: '@svgr/webpack',
-          options: { icon: true },
-        },
-      ],
-    });
-    return config;
-  },
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'Content-Security-Policy', value:
-            "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval'; connect-src 'self' https://api.verifactu.business" }
-        ]
-      }
-    ];
-  },
-  webpack(config) {
-    config.module.rules.push({
-      test: /\.svg$/,
-      use: ["@svgr/webpack"]
-    });
-
-    return config;
-  }
+﻿export default {
+  output: 'standalone',
+  eslint: { ignoreDuringBuilds: true },
+  transpilePackages: ['@verifactu/ui'],
 };
-
-export default nextConfig;
