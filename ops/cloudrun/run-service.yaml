@@ -1,0 +1,75 @@
+﻿apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/urls: '["https://verifactu-app-dev-536174799167.europe-west1.run.app","https://verifactu-app-dev-gvkb6iyvkq-ew.a.run.app"]'
+  labels:
+    cloud.googleapis.com/location: europe-west1
+  name: verifactu-app-dev
+  namespace: '536174799167'
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '20'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/startup-cpu-boost: 'true'
+      labels:
+        run.googleapis.com/startupProbeType: Default
+    spec:
+      containerConcurrency: 80
+      containers:
+      - env:
+        - name: AEAT_CERT_PATH
+          value: /var/secrets/aeat_cert/cert.p12
+        - name: AEAT_CERT_PASS_PATH
+          value: /var/secrets/aeat_pass/cert_pass.txt
+        - name: AEAT_WSDL_FILE
+          value: /var/secrets/aeat_wsdl/wsdl_url.txt
+        image: europe-west1-docker.pkg.dev/verifactu-business/verifactu/verifactu-app-dev:monorepo-api-20260103-1322
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+        volumeMounts:
+        - mountPath: /var/secrets/aeat_cert
+          name: aeat-cert
+        - mountPath: /var/secrets/aeat_pass
+          name: aeat-pass
+        - mountPath: /var/secrets/aeat_wsdl
+          name: aeat-wsdl
+      serviceAccountName: run-runtime@verifactu-business.iam.gserviceaccount.com
+      timeoutSeconds: 300
+      volumes:
+      - name: aeat-cert
+        secret:
+          items:
+          - key: latest
+            path: cert.p12
+          secretName: aeat-cert-p12
+      - name: aeat-pass
+        secret:
+          items:
+          - key: latest
+            path: cert_pass.txt
+          secretName: aeat-cert-pass
+      - name: aeat-wsdl
+        secret:
+          items:
+          - key: latest
+            path: wsdl_url.txt
+          secretName: aeat-wsdl-url
+  traffic:
+  - latestRevision: true
+    percent: 100
