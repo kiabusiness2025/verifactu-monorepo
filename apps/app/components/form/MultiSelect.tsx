@@ -103,7 +103,6 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
               </div>
               <div className="flex items-center py-1 pl-1 pr-1 w-7">
                 <button
-                  type="button"
                   onClick={toggleDropdown} 
                   className="w-5 h-5 text-gray-700 outline-hidden cursor-pointer focus:outline-hidden dark:text-gray-400"
                 >

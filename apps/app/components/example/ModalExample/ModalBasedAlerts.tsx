@@ -89,7 +89,6 @@ export default function ModalBasedAlerts() {
 
           <div className="flex items-center justify-center w-full gap-3 mt-7">
             <Button
-              type="button"
               className="w-full sm:w-auto bg-success-500 hover:bg-success-600"
             >
               Okay, Got It
@@ -149,7 +148,6 @@ export default function ModalBasedAlerts() {
 
           <div className="flex items-center justify-center w-full gap-3 mt-7">
             <Button
-              type="button"
               className="w-full sm:w-auto bg-blue-light-500 hover:bg-blue-light-600"
             >
               Okay, Got It
@@ -209,7 +207,6 @@ export default function ModalBasedAlerts() {
 
           <div className="flex items-center justify-center w-full gap-3 mt-7">
             <Button
-              type="button"
               className="w-full sm:w-auto bg-warning-500 hover:bg-warning-600"
             >
               Okay, Got It
@@ -269,7 +266,6 @@ export default function ModalBasedAlerts() {
 
           <div className="flex items-center justify-center w-full gap-3 mt-7">
             <Button
-              type="button"
               className="w-full sm:w-auto bg-error-500 hover:bg-error-600"
             >
               Okay, Got It
