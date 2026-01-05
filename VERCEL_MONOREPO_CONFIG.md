@@ -17,7 +17,7 @@ En Vercel Dashboard → Project Settings → General:
 
 ### Paso 2: Build & Development Settings
 - **Framework Preset**: Next.js
-- **Build Command**: `cd ../.. && pnpm turbo run build --filter=landing`
+- **Build Command**: `cd ../.. && pnpm turbo run build --filter=verifactu-landing`
 - **Install Command**: `pnpm install --frozen-lockfile`
 - **Output Directory**: `.next` (default)
 
@@ -31,7 +31,7 @@ Para verificar que el build funciona localmente:
 # Desde la raíz del monorepo
 cd C:\dev\verifactu-monorepo
 pnpm install --frozen-lockfile
-pnpm turbo run build --filter=landing
+pnpm turbo run build --filter=verifactu-landing
 ```
 
 ## Estructura de Archivos Clave
