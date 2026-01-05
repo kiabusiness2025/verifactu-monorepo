@@ -18,7 +18,7 @@ En Vercel Dashboard → Project Settings → General:
 ### Paso 2: Build & Development Settings
 - **Framework Preset**: Next.js
 - **Build Command**: `cd ../.. && pnpm turbo run build --filter=verifactu-landing`
-- **Install Command**: `cd ../.. && corepack pnpm install --frozen-lockfile`
+- **Install Command**: `cd ../.. && corepack enable && corepack pnpm install --frozen-lockfile`
 - **Output Directory**: `.next` (default)
 - **Node version**: 20 (usa `.nvmrc` en la raíz o define NODE_VERSION=20 en Vercel)
 
