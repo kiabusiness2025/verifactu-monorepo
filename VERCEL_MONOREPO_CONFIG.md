@@ -18,8 +18,9 @@ En Vercel Dashboard → Project Settings → General:
 ### Paso 2: Build & Development Settings
 - **Framework Preset**: Next.js
 - **Build Command**: `cd ../.. && pnpm turbo run build --filter=verifactu-landing`
-- **Install Command**: `pnpm install --frozen-lockfile`
+- **Install Command**: `cd ../.. && corepack pnpm install --frozen-lockfile`
 - **Output Directory**: `.next` (default)
+- **Node version**: 20 (usa `.nvmrc` en la raíz o define NODE_VERSION=20 en Vercel)
 
 ### Paso 3: Environment Variables (si aplica)
 Asegurarse de configurar todas las variables de entorno necesarias.
@@ -30,7 +31,7 @@ Para verificar que el build funciona localmente:
 ```bash
 # Desde la raíz del monorepo
 cd C:\dev\verifactu-monorepo
-pnpm install --frozen-lockfile
+corepack pnpm install --frozen-lockfile
 pnpm turbo run build --filter=verifactu-landing
 ```
 
