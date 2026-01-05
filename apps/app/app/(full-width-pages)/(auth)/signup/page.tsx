@@ -1,4 +1,7 @@
 import SignUpForm from "@/components/auth/SignUpForm";
+
+export const dynamic = 'force-dynamic';
+
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

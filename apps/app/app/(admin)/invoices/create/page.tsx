@@ -1,4 +1,7 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+
+export const dynamic = 'force-dynamic';
+
 import { CreateInvoiceForm } from "@/components/invoices/CreateInvoiceForm";
 import { Metadata } from "next";
 import React from "react";

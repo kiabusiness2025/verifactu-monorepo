@@ -1,4 +1,7 @@
 import BarChartOne from "@/components/charts/bar/BarChartOne";
+
+export const dynamic = 'force-dynamic';
+
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Metadata } from "next";

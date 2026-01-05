@@ -1,4 +1,7 @@
 import UserAddressCard from "@/components/user-profile/UserAddressCard";
+
+export const dynamic = 'force-dynamic';
+
 import UserInfoCard from "@/components/user-profile/UserInfoCard";
 import UserMetaCard from "@/components/user-profile/UserMetaCard";
 import { Metadata } from "next";

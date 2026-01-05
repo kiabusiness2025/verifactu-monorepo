@@ -1,31 +1,31 @@
 import React, { ReactNode } from "react";
 
 // Props for Table
-interface TableProps {
+export interface TableProps {
   children: ReactNode; // Table content (thead, tbody, etc.)
   className?: string; // Optional className for styling
 }
 
 // Props for TableHeader
-interface TableHeaderProps {
+export interface TableHeaderProps {
   children: ReactNode; // Header row(s)
   className?: string; // Optional className for styling
 }
 
 // Props for TableBody
-interface TableBodyProps {
+export interface TableBodyProps {
   children: ReactNode; // Body row(s)
   className?: string; // Optional className for styling
 }
 
 // Props for TableRow
-interface TableRowProps {
+export interface TableRowProps {
   children: ReactNode; // Cells (th or td)
   className?: string; // Optional className for styling
 }
 
 // Props for TableCell
-interface TableCellProps {
+export interface TableCellProps {
   children: ReactNode; // Cell content
   isHeader?: boolean; // If true, renders as <th>, otherwise <td>
   className?: string; // Optional className for styling

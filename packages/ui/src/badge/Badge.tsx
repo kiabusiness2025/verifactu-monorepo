@@ -11,7 +11,7 @@ type BadgeColor =
   | "light"
   | "dark";
 
-interface BadgeProps {
+export interface BadgeProps {
   variant?: BadgeVariant; // Light or solid variant
   size?: BadgeSize; // Badge size
   color?: BadgeColor; // Badge color

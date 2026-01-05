@@ -1,7 +1,7 @@
 import Link from "next/link";
 import * as React from "react";
 
-interface AlertProps {
+export interface AlertProps {
   variant: "success" | "error" | "warning" | "info"; // Alert type
   title: string; // Title of the alert
   message: string; // Message of the alert

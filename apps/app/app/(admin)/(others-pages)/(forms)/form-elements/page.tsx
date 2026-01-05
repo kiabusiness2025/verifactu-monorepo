@@ -1,4 +1,7 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+
+export const dynamic = 'force-dynamic';
+
 import CheckboxComponents from "@/components/form/form-elements/CheckboxComponents";
 import DefaultInputs from "@/components/form/form-elements/DefaultInputs";
 import DropzoneComponent from "@/components/form/form-elements/DropZone";
