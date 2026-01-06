@@ -333,7 +333,7 @@ const AppSidebar: React.FC = () => {
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <Image
-              src="/brand/system/logo-horizontal-light.png"
+              src="/brand/logo-horizontal-light.png"
               alt="Verifactu Business"
               width={200}
               height={40}
@@ -341,7 +341,7 @@ const AppSidebar: React.FC = () => {
             />
           ) : (
             <img
-              src="/brand/system/shield.png"
+              src="/favicon-32x32.png"
               alt="Verifactu"
               width={32}
               height={32}

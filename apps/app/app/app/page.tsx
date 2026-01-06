@@ -22,7 +22,7 @@ export default async function AppDashboardPage() {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Image
-            src="/brand/system/logo-horizontal-dark.png"
+            src="/brand/logo-horizontal-dark.png"
             alt="Verifactu Business"
             width={160}
             height={32}

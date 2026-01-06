@@ -27,7 +27,7 @@ export default function AuthLayout({
                   <Image
                     width={231}
                     height={48}
-                    src="/brand/system/logo-horizontal-light.png"
+                    src="/brand/logo-horizontal-light.png"
                     alt="Verifactu logo"
                   />
                 </Link>
