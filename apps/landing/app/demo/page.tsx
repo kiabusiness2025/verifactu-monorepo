@@ -22,7 +22,11 @@ function PriceDisplay({ price }: { price: number | null }) {
   );
 }
 
-export default function DemoPage() {
+export default function DemoPage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const demoHref = `${appUrl.replace(/\/$/, "")}/app`;
   const demoNavLinks = [
@@ -31,11 +35,23 @@ export default function DemoPage() {
     { label: "Abrir demo", href: demoHref },
   ];
 
+  const checkoutParam = typeof searchParams?.checkout === "string" ? searchParams.checkout : undefined;
+  const showCheckoutSuccess = checkoutParam === "success";
+
   return (
     <main className="bg-gradient-to-b from-slate-50 via-white to-slate-50">
       <Header navLinks={demoNavLinks} />
 
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+        {showCheckoutSuccess && (
+          <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            <div className="font-semibold">Gracias. Todo listo.</div>
+            <div className="mt-1 text-emerald-800">
+              Stripe ha confirmado el pago. En breve recibirás un email de confirmación.
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-8 lg:grid-cols-[1.1fr,0.9fr]">
           <section className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-800 ring-1 ring-blue-100">

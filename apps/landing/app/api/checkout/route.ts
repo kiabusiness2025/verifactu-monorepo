@@ -58,9 +58,9 @@ export async function GET(req: Request) {
   }
 
   const origin = getOrigin(req);
-  const successUrl = new URL("/", origin);
+  const successUrl = new URL("/demo", origin);
   successUrl.searchParams.set("checkout", "success");
-  const cancelUrl = new URL("/#planes", origin);
+  const cancelUrl = new URL("/demo#planes", origin);
 
   try {
     const session = await stripe.checkout.sessions.create({
