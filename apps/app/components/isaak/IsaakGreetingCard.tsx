@@ -15,7 +15,7 @@ export function IsaakGreetingCard({ userName = "Ksenia" }: Props) {
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-slate-900">👋 {greeting}</p>
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
@@ -28,10 +28,10 @@ export function IsaakGreetingCard({ userName = "Ksenia" }: Props) {
           )}
         </div>
         {primary && (
-          <Link href={primary.href ?? "#"} className="sm:self-end">
+          <Link href={primary.href ?? "#"} className="w-full sm:w-auto sm:self-end">
             <Button
               size="sm"
-              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+              className="w-full rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 sm:w-auto"
             >
               {primary.label}
             </Button>

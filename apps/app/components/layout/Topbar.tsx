@@ -16,30 +16,32 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6">
-        <button
-          onClick={onToggleSidebar}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 lg:hidden"
-          aria-label="Abrir menú"
-        >
-          ☰
-        </button>
-        <div className="hidden items-center gap-2 lg:flex">
-          <Image
-            src="/brand/logo-horizontal-light.png"
-            alt="Verifactu Business"
-            width={150}
-            height={36}
-            priority
-          />
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-6">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onToggleSidebar}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 lg:hidden"
+            aria-label="Abrir menú"
+          >
+            ☰
+          </button>
+          <div className="hidden items-center gap-2 lg:flex">
+            <Image
+              src="/brand/logo-horizontal-light.png"
+              alt="Verifactu Business"
+              width={150}
+              height={36}
+              priority
+            />
+          </div>
         </div>
 
-        <div className="ml-auto flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <div className="flex flex-col">
-            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex flex-col sm:min-w-[180px]">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
               Hola
             </span>
-            <span className="text-sm font-semibold text-slate-900">{greeting}</span>
+            <span className="text-sm font-semibold leading-tight text-slate-900">{greeting}</span>
           </div>
 
           <select
@@ -52,9 +54,9 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
             <option>Proyecto Alfa</option>
           </select>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <button
-              className="relative h-10 w-10 rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200"
+              className="relative hidden h-10 w-10 rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200 sm:inline-flex"
               aria-label="Notificaciones"
             >
               🔔
@@ -62,7 +64,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
             </button>
             <Button
               size="sm"
-              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+              className="w-full rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 sm:w-auto"
               onClick={openDrawer}
             >
               Isaak
