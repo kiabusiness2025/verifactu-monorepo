@@ -1,5 +1,15 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "ISAAK_API_KEY",
+    "ISAAK_ASSISTANT_ID",
+    "RESEND_API_KEY",
+    "RESEND_FROM",
+    "STRIPE_SECRET_KEY",
+    "ORGANIZACIÓN_CIF",
+    "NOMBRE_DE_LA_ORGANIZACIÓN",
+    "DIRECCIÓN DE LA ORGANIZACIÓN"
+  ],
   "tasks": {
     "build": { "dependsOn": ["^build"], "outputs": [".next/**", "dist/**"] },
     "dev":   { "cache": false },
