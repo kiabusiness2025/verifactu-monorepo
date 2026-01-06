@@ -10,17 +10,21 @@ import { logout } from "../lib/auth";
 import { useToast } from "./Toast";
 import BrandLogo from "./BrandLogo";
 
-export default function Header() {
+type NavLink = { label: string; href: string };
+
+export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  const navLinks = [
+  const defaultNavLinks: NavLink[] = [
     { label: "Características", href: "#features" },
     { label: "Precios", href: "#planes" },
     { label: "FAQ", href: "#faq" },
     { label: "Docs", href: "/proximamente" },
   ];
+
+  const links = navLinks ?? defaultNavLinks;
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200">
@@ -33,7 +37,7 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
+          {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
@@ -112,7 +116,7 @@ export default function Header() {
             className="md:hidden bg-white border-t border-gray-200"
           >
             <nav className="flex flex-col py-4">
-              {navLinks.map((link) => (
+              {links.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
