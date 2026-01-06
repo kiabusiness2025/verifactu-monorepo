@@ -6,3 +6,4 @@ export * from "./src/dropdown/Dropdown";
 export * from "./src/dropdown/DropdownItem";
 export * from "./src/modal";
 export * from "./src/table";
+export * from "./src/logo/Logo";

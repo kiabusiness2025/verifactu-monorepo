@@ -17,5 +17,7 @@ export { Dropdown } from "./dropdown/Dropdown";
 export { DropdownItem } from "./dropdown/DropdownItem";
 export type { DropdownItemProps } from "./dropdown/DropdownItem";
 
+export { Logo } from "./logo/Logo";
+
 export { Table, TableHeader, TableBody, TableRow, TableCell } from "./table/index";
 export type { TableProps, TableHeaderProps, TableBodyProps, TableRowProps, TableCellProps } from "./table/index";
