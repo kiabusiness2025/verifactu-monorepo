@@ -12,7 +12,7 @@ type TopbarProps = {
 
 export function Topbar({ onToggleSidebar }: TopbarProps) {
   const { company, setCompany, openDrawer } = useIsaakUI();
-  const { greeting } = useIsaakContext();
+  useIsaakContext();
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -37,12 +37,6 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         </div>
 
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <div className="flex flex-col sm:min-w-[180px]">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-              Hola
-            </span>
-            <span className="text-sm font-semibold leading-tight text-slate-900">{greeting}</span>
-          </div>
 
           <select
             value={company}
