@@ -26,18 +26,16 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://verifactu.business"),
   icons: {
     icon: [
-      { url: "/brand/favicon/favicon-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/brand/favicon/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/brand/favicon/favicon-48.png", sizes: "48x48", type: "image/png" },
-      { url: "/brand/favicon/favicon-64.png", sizes: "64x64", type: "image/png" },
-      { url: "/brand/favicon/favicon-128.png", sizes: "128x128", type: "image/png" },
-      { url: "/brand/favicon/favicon-256.png", sizes: "256x256", type: "image/png" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
     ],
     apple: [
-      { url: "/brand/favicon/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -71,7 +69,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#2563eb",
+  themeColor: "#0B0F14",
 };
 
 export default function RootLayout({
@@ -82,15 +80,13 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/brand/favicon/favicon-16.png" sizes="16x16" type="image/png" />
-        <link rel="icon" href="/brand/favicon/favicon-32.png" sizes="32x32" type="image/png" />
-        <link rel="icon" href="/brand/favicon/favicon-48.png" sizes="48x48" type="image/png" />
-        <link rel="icon" href="/brand/favicon/favicon-64.png" sizes="64x64" type="image/png" />
-        <link rel="icon" href="/brand/favicon/favicon-128.png" sizes="128x128" type="image/png" />
-        <link rel="icon" href="/brand/favicon/favicon-256.png" sizes="256x256" type="image/png" />
-        <link rel="apple-touch-icon" href="/brand/favicon/apple-touch-icon.png" />
-        <meta name="theme-color" content="#2563eb" />
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
+        <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+        <link rel="icon" href="/favicon-48x48.png" sizes="48x48" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="theme-color" content="#0B0F14" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
