@@ -4,6 +4,11 @@ const nextConfig = {
   transpilePackages: ['@verifactu/ui'],
   // Skip linting during builds
   eslint: { ignoreDuringBuilds: true },
+  // Spain (default)
+  i18n: {
+    locales: ['es'],
+    defaultLocale: 'es',
+  },
   // Output tracing for Vercel
   // output: 'standalone',
   // Production configuration

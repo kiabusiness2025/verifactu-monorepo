@@ -61,7 +61,7 @@ const PRICING_PLANS: Plan[] = [
     priceYearly: 0,
     users: "1 empresa · 1 usuario",
     features: [
-      "Facturación b├ísica",
+      "Facturación básica",
       "Hasta 20 documentos/mes",
       "Chat Isaak limitado",
       "Dashboard esencial",
@@ -76,7 +76,7 @@ const PRICING_PLANS: Plan[] = [
     users: "1 empresa · usuarios ilimitados",
     features: [
       "Facturación VeriFactu completa",
-      "Gastos ilimitados con reconocimiento autom├ítico",
+      "Gastos ilimitados con reconocimiento automático",
       "Integración bancaria (próximamente)",
       "Calendario fiscal",
       "Chat Isaak completo",
@@ -111,7 +111,7 @@ const PRICING_PLANS: Plan[] = [
       "Configuración personalizada",
       "Integración completa con tu sistema",
       "Firma electrónica",
-      "Flujos autom├íticos",
+      "Flujos automáticos",
       "SLA garantizado",
       "Equipo dedicado",
     ],
@@ -151,12 +151,12 @@ export default function Page() {
       {
         type: "ok",
         title: "Estado del negocio",
-        body: "Esta semana tu beneficio va +8%. ¿Quieres ver qué clientes lo est├ín impulsando?",
+        body: "Esta semana tu beneficio va +8%. ¿Quieres ver qué clientes lo están impulsando?",
       },
       {
         type: "ok",
         title: "Gasto deducible",
-        body: "He detectado un gasto de combustible. Para tu actividad, es deducible. Ya est├í registrado.",
+        body: "He detectado un gasto de combustible. Para tu actividad, es deducible. Ya está registrado.",
       },
       {
         type: "warn",
@@ -166,7 +166,7 @@ export default function Page() {
       {
         type: "ok",
         title: "Factura emitida",
-        body: "Factura VF-2031 creada y validada. ¿La enváo al cliente o la programo para mañana?",
+        body: "Factura VF-2031 creada y validada. ¿La envío al cliente o la programo para mañana?",
       },
       {
         type: "ok",
@@ -274,7 +274,7 @@ export default function Page() {
               </p>
 
               <p className="mt-3 max-w-xl text-sm text-slate-500">
-                Cumple con Verifactu y normativa fiscal española desde el primer dáa.
+                Cumple con Verifactu y normativa fiscal española desde el primer día.
               </p>
 
               <div className="mt-6 max-w-xl space-y-2.5 text-sm text-slate-700">
@@ -288,7 +288,7 @@ export default function Page() {
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-xl">📈</span>
-                  <span>Tu beneficio se actualiza autom├íticamente</span>
+                  <span>Tu beneficio se actualiza automáticamente</span>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-xl">🔔</span>
@@ -310,7 +310,7 @@ export default function Page() {
               </div>
 
               <p className="mt-4 text-xs text-slate-500">
-                Sin tarjeta · 30 dáas gratis en planes de pago · Puedes cancelar cuando quieras
+                Sin tarjeta · 30 días gratis en planes de pago · Puedes cancelar cuando quieras
               </p>
             </motion.div>
 
@@ -340,7 +340,7 @@ export default function Page() {
             <p className="text-sm font-semibold text-blue-700">Para quién es</p>
             <h3 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Te encaja si eres...</h3>
             <p className="mt-3 max-w-2xl mx-auto text-sm leading-6 text-slate-600 sm:text-base">
-              Segmentamos el acompañamiento según tu perfil: foco en simplicidad para autónomos, control para pymes y orden fiscal para gestoráas.
+              Segmentamos el acompañamiento según tu perfil: foco en simplicidad para autónomos, control para pymes y orden fiscal para gestorías.
             </p>
           </div>
 
@@ -356,11 +356,11 @@ export default function Page() {
               <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><Building2 className="h-4 w-4" />Pymes</div>
               <h4 className="mt-3 text-lg font-semibold text-slate-900">Visibilidad y control</h4>
               <p className="text-xs font-semibold text-slate-500">Equipo alineado y datos auditables</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Dashboard con ventas, gastos y beneficio real. Roles por equipo y evidencias listas para auditoráa.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Dashboard con ventas, gastos y beneficio real. Roles por equipo y evidencias listas para auditoría.</p>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><Briefcase className="h-4 w-4" />Gestoráas</div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100"><Briefcase className="h-4 w-4" />Gestorías</div>
               <h4 className="mt-3 text-lg font-semibold text-slate-900">Orden fiscal</h4>
               <p className="text-xs font-semibold text-slate-500">Evidencias listas para clientes</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">Importa documentación, conserva todas las pruebas VeriFactu, y genera libros o informes bajo demanda.</p>
@@ -376,14 +376,14 @@ export default function Page() {
             Lo que ves es lo que tienes: Ventas, Gastos, Beneficio.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-slate-600 sm:text-lg">
-            El dashboard muestra solo lo esencial. Informes, listados y an├ílisis profundos est├ín a un comando de distancia con Isaak.
+            El dashboard muestra solo lo esencial. Informes, listados y análisis profundos están a un comando de distancia con Isaak.
           </p>
 
           <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <FeatureCard
               icon={<TrendingUp className="h-5 w-5 text-blue-600" />}
               title="Emisión sin fricción"
-              bullets={["Haz una foto o sube documento", "Isaak clasifica y registra", "Validación autom├ítica incluida"]}
+              bullets={["Haz una foto o sube documento", "Isaak clasifica y registra", "Validación automática incluida"]}
             />
             <FeatureCard
               icon={<BadgeCheck className="h-5 w-5 text-blue-600" />}
@@ -398,48 +398,48 @@ export default function Page() {
             <FeatureCard
               icon={<Lock className="h-5 w-5 text-blue-600" />}
               title="Bajo demanda con Isaak"
-              bullets={["Informes y exportaciones", "Listados por cliente, peráodo", "An├ílisis profundo cuando lo necesites"]}
+              bullets={["Informes y exportaciones", "Listados por cliente, período", "Análisis profundo cuando lo necesites"]}
             />
           </div>
         </Container>
       </section>
 
-      {/* Pádeselo a Isaak */}
+      {/* Pídeselo a Isaak */}
       <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <div className="text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
               <Sparkles className="h-4 w-4" />
-              Pádeselo a Isaak
+              Pídeselo a Isaak
             </div>
             <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
               Todo lo que necesites, disponible en un comando.
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              Informes, listados, exportaciones, importaciones. Tú pides, Isaak hace. Sin limites, sin fricción.
+              Informes, listados, exportaciones, importaciones. Tú pides, Isaak hace. Sin límites, sin fricción.
             </p>
           </div>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             <CommandExample
-              command="Subo estos tickets, ¿cu├íles son deducibles?"
-              response="He revisado los 5 tickets. 4 son deducibles para tu actividad y ya est├ín registrados. 1 requiere justificación adicional. ¿Lo marcamos como 'a revisar'?"
+              command="Subo estos tickets, ¿cuáles son deducibles?"
+              response="He revisado los 5 tickets. 4 son deducibles para tu actividad y ya están registrados. 1 requiere justificación adicional. ¿Lo marcamos como 'a revisar'?"
             />
             <CommandExample
-              command="Prep├írame el listado de gastos del trimestre"
-              response="Listo. Gastos T4 2025: 8.200 € en total. He agrupado por categoráa (alimentación, transporte, oficina). ¿Lo exporto a Excel o PDF?"
+              command="Prepárame el listado de gastos del trimestre"
+              response="Listo. Gastos T4 2025: 8.200 € en total. He agrupado por categoría (alimentación, transporte, oficina). ¿Lo exporto a Excel o PDF?"
             />
             <CommandExample
               command="Dame el ranking de clientes por facturación"
-              response="Top 5 clientes este año: López S.L. (18.500 €), Acme Corp (15.200 €), Tech Solutions (12.100 €). ¿Quieres ver m├írgenes o proyecciones?"
+              response="Top 5 clientes este año: López S.L. (18.500 €), Acme Corp (15.200 €), Tech Solutions (12.100 €). ¿Quieres ver márgenes o proyecciones?"
             />
             <CommandExample
               command="Crea proveedor 'X' con estos datos"
-              response="Proveedor 'X' creado con CIF, datos bancarios y condiciones de pago. Ya puedes emitir compras contra él. ¿Quieres crear m├ís?"
+              response="Proveedor 'X' creado con CIF, datos bancarios y condiciones de pago. Ya puedes emitir compras contra él. ¿Quieres crear más?"
             />
             <CommandExample
               command="Exporta todos los productos a Excel"
-              response="Archivo generado: 234 productos, con códigos, precios, categoráas y stock. Descargable en 2 segundos. ¿Necesitas filtros especiales?"
+              response="Archivo generado: 234 productos, con códigos, precios, categorías y stock. Descargable en 2 segundos. ¿Necesitas filtros especiales?"
             />
             <CommandExample
               command="Resumen mensual: ventas, gastos y beneficio"
@@ -454,7 +454,7 @@ export default function Page() {
       <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
-            Del enváo al cobro en tres pasos.
+            Del envío al cobro en tres pasos.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
             Conecta tu flujo de facturación y deja que Isaak automatice validaciones y recordatorios.
@@ -470,7 +470,7 @@ export default function Page() {
             <StepCard
               n={2}
               title="Emite y valida"
-              desc="Genera la factura y valida autom├íticamente con VeriFactu antes de enviarla."
+              desc="Genera la factura y valida automáticamente con VeriFactu antes de enviarla."
               icon={<FileText className="h-5 w-5 text-blue-600" />}
             />
             <StepCard
@@ -490,7 +490,7 @@ export default function Page() {
             Un dashboard que aprende de tu negocio.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
-            Isaak compara tu histórico, detecta anomaláas y propone acciones. Tú solo ves: ventas, gastos y beneficio.
+            Isaak compara tu histórico, detecta anomalías y propone acciones. Tú solo ves: ventas, gastos y beneficio.
           </p>
 
           <div className="mt-10 grid gap-8 lg:grid-cols-2">
@@ -498,30 +498,30 @@ export default function Page() {
             <div className="rounded-3xl bg-gradient-to-b from-blue-50 via-blue-100 to-white p-6 shadow-sm ring-1 ring-slate-200">
               <h4 className="text-xl font-semibold">Soporte proactivo y gestión total desde cualquier dispositivo.</h4>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Isaak ejecuta órdenes, registra documentos (OCR) y genera informes bajo demanda. Tú controlas el resultado.
+                Isaak ejecuta órdenes, registra documentos y genera informes bajo demanda. Tú controlas el resultado.
               </p>
 
               <div className="mt-6 space-y-3">
                 <InfoPill
                   title="Suscripción clara"
-                  desc="Gratis o 30 dáas de prueba. Cuota fija y sin sorpresas ni variables sobre facturación."
+                  desc="Gratis o 30 días de prueba. Cuota fija y sin sorpresas ni variables sobre facturación."
                   icon={<Percent className="h-4 w-4 text-blue-600" />}
                 />
                 <InfoPill
                   title="Drive + Calendar"
-                  desc="Importa documentos, clasifica gastos y crea recordatorios de plazos autom├íticamente."
+                  desc="Importa documentos, clasifica gastos y crea recordatorios de plazos automáticamente."
                   icon={<UploadCloud className="h-4 w-4 text-blue-600" />}
                 />
                 <InfoPill
                   title="Crecimiento por módulos"
-                  desc="Preparado para contabilidad completa y m├ís integraciones en próximas fases."
+                  desc="Preparado para contabilidad completa y más integraciones en próximas fases."
                   icon={<CalendarClock className="h-4 w-4 text-blue-600" />}
                 />
               </div>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <PrimaryButton className="w-full sm:w-auto">
-                  Probar gratis 30 dáas <ChevronRight className="h-4 w-4" />
+                  Probar gratis 30 días <ChevronRight className="h-4 w-4" />
                 </PrimaryButton>
                 <SecondaryButton className="w-full sm:w-auto">Ver ejemplo</SecondaryButton>
               </div>
@@ -540,7 +540,7 @@ export default function Page() {
           <div className="grid items-center gap-8 lg:grid-cols-2">
             <div>
               <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                Un panel claro donde siempre sabes cómo est├ís.
+                Un panel claro donde siempre sabes cómo estás.
               </h3>
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
                 Tu información no se pierde nunca, aunque cambies de plan. Isaak es tu gestor fiscal digital: revisa facturas, clasifica gastos, te avisa de plazos y te explica tu situación financiera en lenguaje claro.
@@ -550,7 +550,7 @@ export default function Page() {
                 <Li>Siempre acceso a tus datos</Li>
                 <Li>Exportable cuando quieras</Li>
                 <Li>Sin bloqueos ni letra pequeña</Li>
-                <Li>Respaldos autom├íticos y cifrados en la nube</Li>
+                <Li>Respaldos automáticos y cifrados en la nube</Li>
               </ul>
             </div>
 
@@ -598,7 +598,7 @@ export default function Page() {
               Empieza gratis. Planes claros para crecer.
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos · Prueba gratuita de 30 dáas · Posibilidad de cambiar o pausar sin perder información
+              <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos · Prueba gratuita de 30 días · Posibilidad de cambiar o pausar sin perder información
             </p>
           </div>
 
@@ -651,7 +651,7 @@ export default function Page() {
                 {plan.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
-                      M├ís popular
+                      Más popular
                     </span>
                   </div>
                 )}
@@ -724,7 +724,7 @@ export default function Page() {
               Preguntas frecuentes
             </h3>
             <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-              Respuestas r├ípidas sobre planes, seguridad y funcionalidades.
+              Respuestas rápidas sobre planes, seguridad y funcionalidades.
             </p>
           </motion.div>
           <Faq />
@@ -738,15 +738,15 @@ export default function Page() {
             Recursos para dominar VeriFactu e Isaak.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
-            Guáas, onboarding y checklist para aplicar mejores pr├ícticas y aprovechar todo el potencial de la plataforma.
+            Guías, onboarding y checklist para aplicar mejores prácticas y aprovechar todo el potencial de la plataforma.
           </p>
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
             <ResourceCard
-              tag="Guáa"
+              tag="Guía"
               title="Manual VeriFactu 2025"
-              desc="Requisitos y checklist pr├íctico para operar con confianza."
-              cta="Descargar guáa"
+              desc="Requisitos y checklist práctico para operar con confianza."
+              cta="Descargar guía"
             />
             <ResourceCard
               tag="Primeros pasos"
@@ -756,7 +756,7 @@ export default function Page() {
             />
             <ResourceCard
               tag="Checklist"
-              title="Auditoráa express"
+              title="Auditoría express"
               desc="Evalúa el estado de tu facturación y detecta riesgos."
               cta="Solicitar checklist"
             />
@@ -768,7 +768,7 @@ export default function Page() {
       <section className="py-12 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <div className="text-center">
-            <p className="text-sm font-semibold text-emerald-700">La garantáa que buscabas</p>
+            <p className="text-sm font-semibold text-emerald-700">La garantía que buscabas</p>
             <h3 className="mt-2 text-3xl font-bold text-slate-900">
               El plan cambia.<br />Tu contabilidad no.
             </h3>
@@ -799,14 +799,14 @@ export default function Page() {
         <Container>
           <div className="flex flex-col items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-gradient-to-r from-blue-50 via-blue-100 to-white p-6 shadow-sm sm:flex-row">
             <div>
-              <h4 className="text-xl font-semibold">Factura menos. Vive m├ís.</h4>
+              <h4 className="text-xl font-semibold">Factura menos. Vive más.</h4>
               <p className="mt-1 text-sm text-slate-600">
                 Empieza gratis y deja que Isaak haga el trabajo duro.
               </p>
             </div>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
               <PrimaryButton className="w-full sm:w-auto">Registrarse</PrimaryButton>
-              <SecondaryButton className="w-full sm:w-auto">Empezar gratis 30 dáas</SecondaryButton>
+              <SecondaryButton className="w-full sm:w-auto">Empezar gratis 30 días</SecondaryButton>
             </div>
           </div>
         </Container>
@@ -1020,7 +1020,7 @@ function FeatureCard({ icon, title, bullets }: { icon: React.ReactNode; title: s
         ))}
       </ul>
       <button className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700">
-        Ver m├ís <ChevronRight className="h-4 w-4" />
+        Ver más <ChevronRight className="h-4 w-4" />
       </button>
     </div>
   );
@@ -1063,7 +1063,7 @@ function DashboardMock() {
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-xs font-semibold text-slate-700">Isaak</div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            He detectado un aumento de gastos en proveedores. ¿Quieres que identifique los que m├ís afectan al margen?
+            He detectado un aumento de gastos en proveedores. ¿Quieres que identifique los que más afectan al margen?
           </p>
 
           <div className="mt-3 flex gap-2">
@@ -1071,7 +1071,7 @@ function DashboardMock() {
               Analizar ahora
             </button>
             <button className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
-              M├ís tarde
+              Más tarde
             </button>
           </div>
         </div>
@@ -1081,7 +1081,7 @@ function DashboardMock() {
           <div className="mt-3 space-y-2">
             <ActivityItem icon={<FileText className="h-4 w-4 text-blue-600" />} text="Factura VF-2031 emitida y validada" />
             <ActivityItem icon={<UploadCloud className="h-4 w-4 text-blue-600" />} text="3 tickets reconocidos desde Drive" />
-            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorio creado: plazo fiscal en 5 dáas" />
+            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorio creado: plazo fiscal en 5 días" />
             <ActivityItem icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />} text="Checklist VeriFactu: todo en orden" />
           </div>
         </div>
@@ -1182,7 +1182,7 @@ function PriceCard({
 
       <div className="mt-4 border-t border-slate-100 pt-3">
         <p className="text-center text-[11px] text-slate-500">
-          {isPrimary ? "30 dáas gratis incluidos" : "Gratis o prueba según plan"}
+          {isPrimary ? "30 días gratis incluidos" : "Gratis o prueba según plan"}
         </p>
         <p className="mt-1.5 text-center text-[11px] font-medium text-emerald-700">
           ✓ Acceso permanente a tus datos
@@ -1255,20 +1255,20 @@ function Footer() {
           />
           <FooterCol
             title="Recursos"
-            links={["Guáas y webinars", "Checklist", "Blog", "Contacto"]}
+            links={["Guías y webinars", "Checklist", "Blog", "Contacto"]}
           />
           <FooterCol
             title="Legal"
-            links={["VeriFactu", "Polática de privacidad", "Términos de servicio", "Cookies"]}
+            links={["VeriFactu", "Política de privacidad", "Términos de servicio", "Cookies"]}
           />
         </div>
 
         <div className="mt-10 border-t border-white/10 pt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400">
-            <p>┬® {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
+            <p>© {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
             <div className="flex gap-6">
               <a href="/verifactu" className="hover:text-blue-300 transition">VeriFactu</a>
-              <a href="/legal/privacidad" className="hover:text-blue-300 transition">Polática de privacidad</a>
+              <a href="/legal/privacidad" className="hover:text-blue-300 transition">Política de privacidad</a>
               <a href="/legal/terminos" className="hover:text-blue-300 transition">Términos de servicio</a>
               <a href="/legal/cookies" className="hover:text-blue-300 transition">Cookies</a>
             </div>
