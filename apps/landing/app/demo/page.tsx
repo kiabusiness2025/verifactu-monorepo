@@ -27,12 +27,13 @@ export default function DemoPage({
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const demoHref = `${appUrl.replace(/\/$/, "")}/app`;
+  const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = configuredAppUrl ?? (process.env.NODE_ENV === "development" ? "http://localhost:3000" : null);
+  const demoHref = appUrl ? `${appUrl.replace(/\/$/, "")}/app` : null;
   const demoNavLinks = [
     { label: "Home", href: "/" },
     { label: "Planes", href: "#planes" },
-    { label: "Abrir demo", href: demoHref },
+    ...(demoHref ? [{ label: "Abrir demo", href: demoHref }] : []),
   ];
 
   const checkoutParam = typeof searchParams?.checkout === "string" ? searchParams.checkout : undefined;
@@ -69,12 +70,21 @@ export default function DemoPage({
             </p>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <a
-                href={demoHref}
-                className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-              >
-                Abrir en pantalla completa
-              </a>
+              {demoHref ? (
+                <a
+                  href={demoHref}
+                  className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                >
+                  Abrir en pantalla completa
+                </a>
+              ) : (
+                <div
+                  className="inline-flex items-center justify-center rounded-xl bg-slate-200 px-5 py-3 text-sm font-semibold text-slate-600"
+                  aria-disabled="true"
+                >
+                  Vista previa no disponible
+                </div>
+              )}
               <a
                 href="#planes"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
@@ -111,16 +121,31 @@ export default function DemoPage({
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
                 <p className="text-xs font-semibold text-slate-600">Vista previa</p>
-                <a href={demoHref} className="text-xs font-semibold text-blue-700 hover:text-blue-800">
-                  Abrir
-                </a>
+                {demoHref ? (
+                  <a href={demoHref} className="text-xs font-semibold text-blue-700 hover:text-blue-800">
+                    Abrir
+                  </a>
+                ) : (
+                  <span className="text-xs font-semibold text-slate-500">No disponible</span>
+                )}
               </div>
-              <iframe
-                title="Demo Verifactu"
-                src={demoHref}
-                className="h-[640px] w-full"
-                allow="clipboard-read; clipboard-write"
-              />
+              {demoHref ? (
+                <iframe
+                  title="Demo Verifactu"
+                  src={demoHref}
+                  className="h-[640px] w-full"
+                  allow="clipboard-read; clipboard-write"
+                />
+              ) : (
+                <div className="flex h-[640px] w-full items-center justify-center bg-white px-6 text-center">
+                  <div className="max-w-md">
+                    <div className="text-sm font-semibold text-slate-900">La vista previa no está disponible ahora.</div>
+                    <div className="mt-2 text-sm leading-6 text-slate-600">
+                      Mientras tanto, puedes revisar los planes o pedir una demo personalizada.
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <p className="text-xs leading-5 text-slate-500">
               Si no carga aquí, ábrela en pantalla completa.
