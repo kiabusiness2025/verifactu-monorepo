@@ -6,6 +6,7 @@ out/
 !**/.env.example
 .DS_Store
 *.log
+*.tsbuildinfo
 .vscode/
 coverage/
 landing/.next
