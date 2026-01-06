@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "cd ../.. && echo \"node: $(node -v)\" && echo \"corepack: $(corepack --version)\" && corepack enable && corepack prepare pnpm@10.27.0 --activate && echo \"pnpm: $(pnpm -v)\" && pnpm install --frozen-lockfile",
-  "buildCommand": "cd ../.. && echo \"node: $(node -v)\" && echo \"pnpm: $(pnpm -v)\" && pnpm turbo run build --filter=verifactu-landing",
+  "installCommand": "cd ../.. && node -v && npm -v && (command -v corepack >/dev/null 2>&1 && corepack enable || echo corepack-not-found) && npm i -g pnpm@10.27.0 && pnpm -v && pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm -v && pnpm turbo run build --filter=verifactu-landing",
   "devCommand": "pnpm run dev",
   "outputDirectory": ".next"
 }
