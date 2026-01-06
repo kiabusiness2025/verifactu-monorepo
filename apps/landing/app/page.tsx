@@ -121,7 +121,7 @@ export default function Page() {
                 <PrimaryButton>
                   Probar gratis <span aria-hidden>→</span>
                 </PrimaryButton>
-                <SecondaryButton>Ver demo</SecondaryButton>
+                <SecondaryButton href="/demo">Ver demo</SecondaryButton>
               </div>
 
               <div className="mt-7 flex flex-wrap gap-2">

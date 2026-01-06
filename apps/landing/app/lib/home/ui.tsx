@@ -34,14 +34,24 @@ export function PrimaryButton({ className = "", children }: { className?: string
 export function SecondaryButton({
   className = "",
   children,
+  href,
 }: {
   className?: string;
   children: React.ReactNode;
+  href?: string;
 }) {
+  const cls = `inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200 ${className}`;
+
+  if (href) {
+    return (
+      <a href={href} className={cls}>
+        {children}
+      </a>
+    );
+  }
+
   return (
-    <button
-      className={`inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200 ${className}`}
-    >
+    <button type="button" className={cls}>
       {children}
     </button>
   );
@@ -57,7 +67,9 @@ export function StickyCtaBar({ show }: { show: boolean }) {
         <div className="text-sm font-semibold text-slate-800">Prueba gratis y ve Isaak en acción</div>
         <div className="flex gap-2">
           <PrimaryButton className="px-4 py-2">Probar gratis</PrimaryButton>
-          <SecondaryButton className="px-4 py-2">Ver demo</SecondaryButton>
+          <SecondaryButton href="/demo" className="px-4 py-2">
+            Ver demo
+          </SecondaryButton>
         </div>
       </div>
     </div>
