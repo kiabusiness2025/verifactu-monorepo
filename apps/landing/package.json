@@ -34,7 +34,7 @@
     "typescript": "5.9.3"
   },
   "engines": {
-    "node": ">=18.18.0 <21"
+    "node": "20.x"
   },
   "packageManager": "pnpm@10.27.0"
 }
