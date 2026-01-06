@@ -32,7 +32,6 @@ export const metadata: Metadata = {
       { url: "/brand/favicon/favicon-64.png", sizes: "64x64", type: "image/png" },
       { url: "/brand/favicon/favicon-128.png", sizes: "128x128", type: "image/png" },
       { url: "/brand/favicon/favicon-256.png", sizes: "256x256", type: "image/png" },
-      { url: "/brand/favicon/favicon.ico" },
     ],
     apple: [
       { url: "/brand/favicon/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
@@ -84,8 +83,12 @@ export default function RootLayout({
     <html lang="es">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/brand/favicon/favicon-32.png" type="image/png" />
-        <link rel="icon" href="/brand/favicon/favicon.ico" />
+        <link rel="icon" href="/brand/favicon/favicon-16.png" sizes="16x16" type="image/png" />
+        <link rel="icon" href="/brand/favicon/favicon-32.png" sizes="32x32" type="image/png" />
+        <link rel="icon" href="/brand/favicon/favicon-48.png" sizes="48x48" type="image/png" />
+        <link rel="icon" href="/brand/favicon/favicon-64.png" sizes="64x64" type="image/png" />
+        <link rel="icon" href="/brand/favicon/favicon-128.png" sizes="128x128" type="image/png" />
+        <link rel="icon" href="/brand/favicon/favicon-256.png" sizes="256x256" type="image/png" />
         <link rel="apple-touch-icon" href="/brand/favicon/apple-touch-icon.png" />
         <meta name="theme-color" content="#2563eb" />
         <meta name="mobile-web-app-capable" content="yes" />
