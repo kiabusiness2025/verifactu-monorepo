@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
 export type IsaakSuggestion = {
@@ -45,14 +45,45 @@ const sabiasQuePool: Record<string, string[]> = {
   ],
 };
 
+function stableHash(input: string): number {
+  let hash = 0;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = (hash * 31 + input.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function dayOfYearLocal(date: Date): number {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const diff = date.getTime() - start.getTime();
+  return Math.floor(diff / 86400000);
+}
+
 export function useIsaakContext(userName?: string): IsaakContext {
   const pathname = usePathname() || "/app/(admin)";
 
-  return useMemo(() => {
-    const hour = new Date().getHours();
-    const greetingPrefix = hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches";
-    const { key, title } = resolveSection(pathname);
+  const { key, title } = useMemo(() => resolveSection(pathname), [pathname]);
 
+  // Important for hydration: the initial render must be deterministic.
+  // We compute the "dynamic" parts (time-based greeting / rotating tip) only after mount.
+  const [greetingPrefix, setGreetingPrefix] = useState<string>("Hola");
+  const [sabiasQue, setSabiasQue] = useState<string | undefined>(() => {
+    const list = sabiasQuePool[key] ?? sabiasQuePool.default;
+    return list[0];
+  });
+
+  useEffect(() => {
+    const now = new Date();
+    const hour = now.getHours();
+    const prefix = hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches";
+    setGreetingPrefix(prefix);
+
+    const list = sabiasQuePool[key] ?? sabiasQuePool.default;
+    const index = (stableHash(`${pathname}|${userName ?? ""}`) + dayOfYearLocal(now)) % list.length;
+    setSabiasQue(list[index]);
+  }, [key, pathname, userName]);
+
+  return useMemo(() => {
     const suggestions: IsaakSuggestion[] = (() => {
       switch (key) {
         case "invoices":
@@ -93,9 +124,6 @@ export function useIsaakContext(userName?: string): IsaakContext {
       }
     })();
 
-    const sabiasList = sabiasQuePool[key] ?? sabiasQuePool.default;
-    const sabiasQue = sabiasList[Math.floor(Math.random() * sabiasList.length)];
-
     const greeting = userName ? `${greetingPrefix}, ${userName}` : greetingPrefix;
 
     return {
@@ -105,5 +133,5 @@ export function useIsaakContext(userName?: string): IsaakContext {
       suggestions,
       sabiasQue,
     };
-  }, [pathname, userName]);
+  }, [greetingPrefix, key, pathname, sabiasQue, title, userName]);
 }
