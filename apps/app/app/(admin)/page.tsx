@@ -1,41 +1,48 @@
-import type { Metadata } from "next";
-import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import React from "react";
-import MonthlyTarget from "@/components/ecommerce/MonthlyTarget";
-import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "@/components/ecommerce/StatisticsChart";
-import RecentOrders from "@/components/ecommerce/RecentOrders";
-import DemographicCard from "@/components/ecommerce/DemographicCard";
+import { IsaakGreetingCard } from "@/components/isaak/IsaakGreetingCard";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { InsightTicker } from "@/components/dashboard/InsightTicker";
 
-export const metadata: Metadata = {
-  title:
-    "Next.js E-commerce Dashboard | TailAdmin - Next.js Dashboard Template",
-  description: "This is Next.js Home for TailAdmin Dashboard Template",
-};
+const activity = [
+  { title: "Factura VF-2040 validada y enviada", time: "Hoy · 09:30" },
+  { title: "2 tickets OCR clasificados", time: "Hoy · 08:15" },
+  { title: "Recordatorio IVA listo", time: "Ayer · 18:20" },
+  { title: "Gasto de viaje marcado para revisar", time: "Ayer · 16:40" },
+  { title: "Calendario fiscal actualizado", time: "Lun · 11:05" },
+];
 
-export default function Ecommerce() {
+export default function Dashboard() {
   return (
-    <div className="grid grid-cols-12 gap-4 md:gap-6">
-      <div className="col-span-12 space-y-6 xl:col-span-7">
-        <EcommerceMetrics />
+    <div className="space-y-6">
+      <IsaakGreetingCard userName="Ksenia" />
 
-        <MonthlySalesChart />
-      </div>
+      <DashboardStats />
 
-      <div className="col-span-12 xl:col-span-5">
-        <MonthlyTarget />
-      </div>
+      <QuickActions />
 
-      <div className="col-span-12">
-        <StatisticsChart />
-      </div>
+      <div className="grid gap-4 lg:grid-cols-[2fr,1fr]">
+        <InsightTicker />
 
-      <div className="col-span-12 xl:col-span-5">
-        <DemographicCard />
-      </div>
-
-      <div className="col-span-12 xl:col-span-7">
-        <RecentOrders />
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+            Actividad reciente
+          </p>
+          <div className="mt-3 space-y-2">
+            {activity.map((item) => (
+              <div
+                key={`${item.title}-${item.time}`}
+                className="flex items-start justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                  <p className="text-xs text-slate-500">{item.time}</p>
+                </div>
+                <span className="text-xs font-semibold text-emerald-700">OK</span>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );
