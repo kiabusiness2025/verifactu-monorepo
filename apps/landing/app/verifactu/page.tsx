@@ -4,39 +4,39 @@ import { CheckCircle2, ShieldCheck, FileText, Hash } from "lucide-react";
 export const metadata: Metadata = {
   title: "Cumplimiento VeriFactu | Verifactu Business",
   description:
-    "Detalle de cómo Verifactu Business cumple el RD 1007/2023: integridad, sellado, hash encadenado y evidencias.",
+    "Cómo Verifactu Business cumple el RD 1007/2023: integridad, trazabilidad y evidencias.",
 };
 
 const evidencias = [
   {
-    title: "Hash encadenado por registro",
+    title: "Registro encadenado por documento",
     detail:
-      "Cada factura o apunte genera un hash SHA-256 que se encadena con el hash del registro previo, evitando alteraciones sin rastro.",
+      "Cada documento queda enlazado con el anterior, de forma que cualquier cambio posterior deja rastro.",
     icon: <Hash className="h-5 w-5 text-blue-700" />,
   },
   {
-    title: "Sellado temporal (timestamp)",
+    title: "Fecha y trazabilidad",
     detail:
-      "Guardamos fecha/hora UTC de alta y de cada cambio relevante (estado, envíos, anulaciones) con sincronización NTP.",
+      "Guardamos la fecha de alta y los cambios relevantes (estado, envíos y anulaciones permitidas).",
     icon: <ShieldCheck className="h-5 w-5 text-blue-700" />,
   },
   {
-    title: "Trazabilidad y logs inmutables",
+    title: "Historial de eventos",
     detail:
-      "Eventos críticos (creación, validación, envío a AEAT, modificación permitida) quedan en un log WORM con firma.",
+      "Los eventos críticos (creación, validación, envío y modificaciones permitidas) quedan registrados para consulta.",
     icon: <FileText className="h-5 w-5 text-blue-700" />,
   },
   {
-    title: "Huella de fichero",
+    title: "Evidencias del documento",
     detail:
-      "Para cada PDF/XML generado, almacenamos huella criptográfica y referencia a la versión exacta enviada/descargada.",
+      "Conservamos evidencias para identificar la versión exacta enviada o descargada.",
     icon: <CheckCircle2 className="h-5 w-5 text-blue-700" />,
   },
 ];
 
 const cumplimos = [
-  "Integridad y secuencialidad: numeración y hash encadenado evitan manipulaciones posteriores.",
-  "Trazabilidad completa: registro de eventos y responsables con marca temporal.",
+  "Integridad y secuencialidad: evitamos cambios posteriores sin rastro.",
+  "Trazabilidad completa: historial de eventos con fecha.",
   "Conservación: custodia de evidencias y huellas durante los plazos legales.",
   "Disponibilidad: exportación de libros y evidencias bajo demanda para auditoría.",
 ];
@@ -56,8 +56,7 @@ export default function VerifactuPage() {
             </div>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Cómo cumplimos VeriFactu</h1>
             <p className="text-lg text-slate-700">
-              Te mostramos las medidas técnicas que aplicamos para garantizar integridad, trazabilidad y conservación de
-              los registros VeriFactu.
+              Te mostramos cómo cuidamos la integridad, la trazabilidad y la conservación de tus registros VeriFactu.
             </p>
           </div>
 
@@ -95,10 +94,10 @@ export default function VerifactuPage() {
           <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">Exportables y evidencias</h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-700">
-              <li>• Libro de facturas emitidas/recibidas con hash encadenado y marcas temporales.</li>
-              <li>• Huellas de PDF/XML y referencia cruzada a versiones enviadas.</li>
-              <li>• Log de eventos (creación, validación, envíos, anulaciones permitidas) en formato consultable.</li>
-              <li>• Informe de consistencia (verificación de cadena de hash) bajo demanda.</li>
+              <li>• Libro de facturas emitidas/recibidas con evidencias de integridad y fechas.</li>
+              <li>• Evidencias de documentos y referencia a versiones enviadas/descargadas.</li>
+              <li>• Historial de eventos (creación, validación, envíos y anulaciones permitidas) consultable.</li>
+              <li>• Informe de consistencia bajo demanda.</li>
             </ul>
           </div>
         </div>

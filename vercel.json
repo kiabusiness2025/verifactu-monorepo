@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd ../.. && npx -y pnpm@10.27.0 -v && npx -y pnpm@10.27.0 turbo run build --filter=verifactu-landing",
-  "installCommand": "cd ../.. && node -v && npm -v && npx -y pnpm@10.27.0 -v && npx -y pnpm@10.27.0 install --frozen-lockfile",
+  "installCommand": "node -v && npm -v && npx -y pnpm@10.27.0 -v && npx -y pnpm@10.27.0 install --frozen-lockfile",
+  "buildCommand": "npx -y pnpm@10.27.0 -v && npx -y pnpm@10.27.0 --filter verifactu-landing build && npx -y pnpm@10.27.0 --filter verifactu-app build",
   "framework": "nextjs"
 }

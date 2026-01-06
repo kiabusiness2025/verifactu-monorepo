@@ -28,7 +28,7 @@ export default function BrandLogo({
   return (
     <Link
       href="/"
-      aria-label="Verifactu Business home"
+      aria-label="Ir al inicio de Verifactu Business"
       className={[
         "group inline-flex items-center transition-opacity hover:opacity-90",
         // Focus states for accessibility

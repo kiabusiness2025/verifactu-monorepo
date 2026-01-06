@@ -18,7 +18,7 @@ const display = Space_Grotesk({
 
 const title = "Verifactu Business";
 const description =
-  "Plataforma SaaS para automatizar facturacion y contabilidad cumpliendo VeriFactu (AEAT).";
+  "Plataforma para llevar ventas, gastos y beneficio con tranquilidad, cumpliendo VeriFactu.";
 
 export const metadata: Metadata = {
   title,
@@ -26,10 +26,13 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://verifactu.business"),
   icons: {
     icon: [
-      { url: "/brand/favicon/favicon-32.png", sizes: "32x32", type: "image/png" },
       { url: "/brand/favicon/favicon-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/brand/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico" },
+      { url: "/brand/favicon/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/favicon/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/brand/favicon/favicon-64.png", sizes: "64x64", type: "image/png" },
+      { url: "/brand/favicon/favicon-128.png", sizes: "128x128", type: "image/png" },
+      { url: "/brand/favicon/favicon-256.png", sizes: "256x256", type: "image/png" },
+      { url: "/brand/favicon/favicon.ico" },
     ],
     apple: [
       { url: "/brand/favicon/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
@@ -53,7 +56,7 @@ export const metadata: Metadata = {
         url: "/brand/social/og-1200x630.png",
         width: 1200,
         height: 630,
-        alt: "Verifactu Business - Automatiza tu facturacion con cumplimiento verificado",
+        alt: "Verifactu Business - Lleva tus ventas, gastos y beneficio con tranquilidad",
       },
     ],
   },
@@ -81,7 +84,8 @@ export default function RootLayout({
     <html lang="es">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/brand/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/brand/favicon/favicon-32.png" type="image/png" />
+        <link rel="icon" href="/brand/favicon/favicon.ico" />
         <link rel="apple-touch-icon" href="/brand/favicon/apple-touch-icon.png" />
         <meta name="theme-color" content="#2563eb" />
         <meta name="mobile-web-app-capable" content="yes" />

@@ -111,7 +111,7 @@ export default function IsaakChat() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 text-white">
               <div>
-                <div className="font-semibold">Isaak IA</div>
+                <div className="font-semibold">Isaak</div>
                 <div className="text-xs opacity-90">Aquí para ayudarte</div>
               </div>
               <button

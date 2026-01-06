@@ -17,22 +17,22 @@ const FAQ_DATA = [
   {
     question: "¿Cómo funcionará la integración bancaria? (próximamente)",
     answer:
-      "Lanzaremos conexión PSD2 certificada. Será opcional: podrás activarla o desactivarla en cualquier momento. Los movimientos se sincronizarán con consentimiento explícito y podrás reconciliarlos antes de registrarlos.",
+      "Será opcional: podrás activarla o desactivarla en cualquier momento. Los movimientos se sincronizarán con tu permiso y podrás revisarlos antes de registrarlos.",
   },
   {
     question: "¿Isaak sustituye a una gestoría?",
     answer:
-      "Isaak automatiza procesos (OCR, clasificación, avisos, Verifactu), pero puedes usarlo con o sin gestoría externa. Si trabajas con gestor, le das acceso a tus libros y evidencias.",
+      "Isaak te ayuda a registrar y ordenar tus documentos, y a entender tu situación. Puedes usarlo con o sin gestoría. Si trabajas con un gestor, puedes darle acceso a tus informes y evidencias.",
   },
   {
     question: "¿Qué implica el cumplimiento Verifactu?",
     answer:
-      "Registramos tus facturas con hash encadenado, marca temporal y trazabilidad de eventos (creación, validación, envíos). Puedes exportar libros y evidencias cuando lo necesites.",
+      "Guardamos tus facturas con evidencias de integridad, fecha y trazabilidad. Puedes exportar libros y evidencias cuando lo necesites.",
   },
   {
     question: "¿Puedo contratar trámites adicionales desde la app?",
     answer:
-      "Sí. Dispones de un marketplace con constituciones de sociedades, certificados digitales, gestiones notariales y trámites fiscales puntuales.",
+      "Estamos preparando opciones para trámites puntuales. Cuando estén disponibles, podrás gestionarlos desde la plataforma.",
   },
   {
     question: "¿Es seguro subir mis documentos?",

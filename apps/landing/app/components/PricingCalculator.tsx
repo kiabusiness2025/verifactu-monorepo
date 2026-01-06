@@ -33,7 +33,7 @@ const PRICING_PLANS: Plan[] = [
     users: "1 empresa · usuarios ilimitados",
     features: [
       "Facturación VeriFactu completa",
-      "Gastos con OCR ilimitados",
+      "Gastos ilimitados con reconocimiento automático",
       "Integración bancaria",
       "Calendario fiscal",
       "Chat Isaak completo",
@@ -61,8 +61,8 @@ const PRICING_PLANS: Plan[] = [
     period: "A medida",
     users: "Multiempresa ilimitada",
     features: [
-      "Infraestructura personalizada",
-      "Integración API completa",
+      "Configuración personalizada",
+      "Integración completa con tu sistema",
       "Firma electrónica",
       "Flujos automáticos",
       "SLA garantizado",

@@ -341,7 +341,7 @@ const AppSidebar: React.FC = () => {
             />
           ) : (
             <img
-              src="/brand/system/shield.svg"
+              src="/brand/system/shield.png"
               alt="Verifactu"
               width={32}
               height={32}
