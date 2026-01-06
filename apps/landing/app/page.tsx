@@ -246,6 +246,9 @@ export default function Page() {
                     price={isYearlyBilling ? plan.priceYearly : plan.priceMonthly}
                     isYearly={isYearlyBilling}
                   />
+                  <div className="mt-2 inline-flex items-center justify-center rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                    Prueba gratuita 30 días · sin tarjeta · sin compromiso
+                  </div>
                 </div>
 
                 <ul className="mt-6 space-y-3">
@@ -264,7 +267,7 @@ export default function Page() {
                     plan.highlight ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-slate-100 text-slate-900 hover:bg-slate-200",
                   ].join(" ")}
                 >
-                  {plan.priceMonthly === null ? "Contactar" : "Ir al checkout"}
+                  {plan.priceMonthly === null ? "Contactar" : "Empezar prueba gratuita"}
                 </a>
 
                 <div className="mt-3 text-center text-xs text-slate-500">✓ Acceso permanente a tus datos</div>
