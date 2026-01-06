@@ -1,3 +1,18 @@
+## Stripe (suscripciones)
+
+La landing usa enlaces tipo `/api/checkout?plan=pro-monthly` para iniciar el pago de suscripciones.
+1) Crea/actualiza productos y precios en Stripe (idempotente)
+- Define `STRIPE_SECRET_KEY` (test o live)
+- Ejecuta: `node scripts/stripe/sync-products.mjs`
+
+El script imprimirá los `PRICE IDs`.
+
+2) Configura estas variables en `apps/landing/.env.local` (y en Vercel)
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PRICE_PRO_MONTHLY`
+- `STRIPE_PRICE_PRO_YEARLY`
+- `STRIPE_PRICE_BUSINESS_MONTHLY`
+- `STRIPE_PRICE_BUSINESS_YEARLY`
 📘 README — Integración completa del monorepo Verifactu Business en Google Cloud
 
 Proyecto GCP: verifactu-business-480212
