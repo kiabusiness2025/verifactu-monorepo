@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button } from "@verifactu/ui";
 import { useIsaakUI } from "@/context/IsaakUIContext";
 import { useIsaakContext } from "@/hooks/useIsaakContext";
+import { getLandingUrl } from "@/lib/urls";
 
 type TopbarProps = {
   onToggleSidebar: () => void;
@@ -12,7 +13,7 @@ type TopbarProps = {
 
 export function Topbar({ onToggleSidebar }: TopbarProps) {
   const { company, setCompany, openDrawer } = useIsaakUI();
-  useIsaakContext();
+  const { greeting } = useIsaakContext();
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -37,6 +38,9 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         </div>
 
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="text-sm font-semibold leading-tight text-slate-900">
+            {greeting}
+          </div>
 
           <select
             value={company}
@@ -66,6 +70,12 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
               K
             </div>
+            <a
+              href={getLandingUrl()}
+              className="text-xs font-semibold text-slate-600 underline-offset-4 hover:text-blue-700 hover:underline"
+            >
+              verifactu.business
+            </a>
           </div>
         </div>
       </div>

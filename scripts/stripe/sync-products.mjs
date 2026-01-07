@@ -40,7 +40,13 @@ async function findOrCreateProduct({ planKey, name }) {
     limit: 1,
   });
 
-  if (existing.data[0]) return existing.data[0];
+  if (existing.data[0]) {
+    const product = existing.data[0];
+    if (product.name !== name) {
+      return stripe.products.update(product.id, { name });
+    }
+    return product;
+  }
 
   return stripe.products.create({
     name,
@@ -52,15 +58,49 @@ async function findOrCreateProduct({ planKey, name }) {
   });
 }
 
+function priceMatchesExpected({ existingPrice, unit_amount, interval }) {
+  if (existingPrice.currency !== "eur") return false;
+  if (existingPrice.unit_amount !== unit_amount) return false;
+  if (!existingPrice.recurring) return false;
+  if (existingPrice.recurring.interval !== interval) return false;
+  return true;
+}
+
+async function deprecatePrice({ existingPrice, priceKey }) {
+  const now = new Date().toISOString();
+  await stripe.prices.update(existingPrice.id, {
+    active: false,
+    metadata: {
+      ...(existingPrice.metadata || {}),
+      verifactu_price_key_deprecated_from: priceKey,
+      verifactu_price_key_deprecated_at: now,
+      // Important: change the key so future searches don't keep matching this old price.
+      verifactu_price_key: `deprecated:${priceKey}:${now}`,
+    },
+  });
+}
+
 async function findOrCreatePrice({ productId, priceKey, unitAmountEur, interval }) {
   const unit_amount = eurosToCents(unitAmountEur);
 
   // Search by metadata key first.
   const existing = await stripe.prices.search({
     query: `metadata['verifactu_price_key']:'${priceKey}' AND active:'true'`,
-    limit: 1,
+    limit: 10,
   });
-  if (existing.data[0]) return existing.data[0];
+
+  if (existing.data.length > 0) {
+    const matching = existing.data.find((p) =>
+      priceMatchesExpected({ existingPrice: p, unit_amount, interval }),
+    );
+    if (matching) return matching;
+
+    // We have at least one active price with this key, but it doesn't match
+    // what we want (amount/interval). Deprecate them and create a new one.
+    for (const p of existing.data) {
+      await deprecatePrice({ existingPrice: p, priceKey });
+    }
+  }
 
   return stripe.prices.create({
     currency: "eur",

@@ -2,6 +2,7 @@ export type NavItem = {
   label: string;
   href: string;
   icon?: string;
+  roles?: string[]; // reservado para RBAC futuro
 };
 
 export const navItems: NavItem[] = [

@@ -1,3 +1,46 @@
+---
+
+## Sincronización de productos y precios en Stripe
+
+Para actualizar productos/precios de los planes:
+
+1. Elige la clave de Stripe (`sk_test_...` para pruebas, `sk_live_...` para producción).
+2. Ejecuta en PowerShell (Windows):
+
+   $env:STRIPE_SECRET_KEY="sk_live_xxx"; node scripts/stripe/sync-products.mjs
+
+   (Sustituye por tu clave real. El script imprime los STRIPE_PRICE_* que debes copiar a Vercel.)
+
+3. Copia los STRIPE_PRICE_* resultantes a las variables de entorno del proyecto “landing” en Vercel.
+
+---
+
+## Ajustes de navegación y protección (app/landing)
+
+**Rutas y enlaces:**
+- Header.tsx: el botón “Dashboard” apunta a `/dashboard` en app.verifactu.business.
+- page.tsx (landing): la demo abre `/dashboard` en la app.
+- Tras login/signup (incluido Google), redirige a `/dashboard`; si ya hay sesión, también va a `/dashboard`.
+
+**Helpers de URLs:**
+- Nuevo `urls.ts` con `getLandingUrl()` (default https://www.verifactu.business) y `getAppUrl()` (default https://app.verifactu.business), sin barras finales.
+
+**Topbar:**
+- Topbar.tsx: saludo de Isaak, link a la landing, selector de empresa y botón Isaak.
+
+**Nav preparado para RBAC futuro:**
+- nav.ts: items incluyen `roles?: string[]` (placeholder para RBAC) y rutas base `/dashboard/...`.
+
+**Middleware de protección:**
+- Nuevo `middleware.ts`: protege `/dashboard` y `/dashboard/*`.
+  - Si no hay sesión (cookies estándar), redirige a https://www.verifactu.business/auth/login?next=<url-actual>.
+  - Si hay sesión y accede a `/`, redirige a `/dashboard`.
+  - Si hay sesión en `/dashboard`, deja pasar.
+- Config matcher: `/`, `/dashboard/:path*`.
+
+**Notas:**
+- El guard comprueba cookies estándar; ajusta `hasSession` si usas otro nombre de cookie/token.
+- En Topbar se usa `getLandingUrl()`; en la landing usa `NEXT_PUBLIC_APP_URL` (debe ser https://app.verifactu.business en Vercel).
 # Deploy en Vercel (monorepo)
 
 Este repo tiene **dos proyectos separados** en Vercel:
@@ -56,27 +99,47 @@ Este repo tiene **dos proyectos separados** en Vercel:
 - Install: `cd ../.. && npx -y pnpm@10.27.0 install --frozen-lockfile`
 - Build: `cd ../.. && npx -y pnpm@10.27.0 turbo run build --filter=verifactu-landing`
 
-**Variables de entorno (recomendadas)**
-- `NEXT_PUBLIC_APP_URL=https://app.verifactu.business` (para que `/demo` apunte a la app real)
 
-**Stripe (si se usa checkout)**
+**Variables de entorno recomendadas (landing)**
+
+**URLs y organización**
+- `NEXT_PUBLIC_APP_URL=https://app.verifactu.business`  
+  (para que `/demo` apunte a la app real)
+- `NEXT_PUBLIC_SITE_URL=https://verifactu.business`
+- `NEXT_PUBLIC_SUPPORT_EMAIL=soporte@verifactu.business`
+- `ORGANIZATION_CIF=B44991776`
+- `ORGANIZATION_NAME="Expert Estudios Profesionales, SLU"`
+- `ORGANIZATION_ADDRESS="C/ Pintor Agrassot, 19 - 03110 Mutxamel (Alicante)"`
+
+**Stripe (checkout de planes)**
 - `STRIPE_SECRET_KEY`
 - `STRIPE_PRICE_PRO_MONTHLY`
 - `STRIPE_PRICE_PRO_YEARLY`
 - `STRIPE_PRICE_BUSINESS_MONTHLY`
 - `STRIPE_PRICE_BUSINESS_YEARLY`
 
-**Email leads (si se usa el formulario)**
-- `RESEND_API_KEY`
-- Opcional: `LEAD_EMAIL`, `FROM_EMAIL`
-
-**Firebase (si se usa auth en landing)**
+**Firebase (autenticación en landing)**
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
 - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_USE_AUTH_EMULATOR` (opcional, solo local)
+
+**Isaak Chat / OpenAI**
+- `ISAAK_API_KEY`
+- `ISAAK_ASSISTANT_ID`
+- `NEXT_PUBLIC_ISAAK_API_KEY` (compatibilidad)
+- `NEXT_PUBLIC_ISAAK_ASSISTANT_ID` (compatibilidad)
+
+**Resend Email Service (leads)**
+- `RESEND_API_KEY`
+- `RESEND_FROM`
+
+**Notas**
+- Si usas el formulario de contacto/leads, puedes añadir `LEAD_EMAIL` y `FROM_EMAIL`.
+- Si cambias precios o productos en Stripe, ejecuta el script `scripts/stripe/sync-products.mjs` y actualiza los `STRIPE_PRICE_*` que imprime.
 
 **Dominio**
 - `verifactu.business`
