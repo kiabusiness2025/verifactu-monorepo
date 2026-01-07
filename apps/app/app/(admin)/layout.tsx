@@ -27,7 +27,7 @@ export default function AdminLayout({
               <span className="font-semibold text-slate-800">Verifactu Business</span>
               <div className="flex flex-wrap gap-3 text-xs">
                 <a className="hover:text-blue-700" href="/">Ir a Home</a>
-                <a className="hover:text-blue-700" href="/app/settings">Configuración</a>
+                <a className="hover:text-blue-700" href="/dashboard/settings">Configuración</a>
               </div>
             </div>
           </footer>

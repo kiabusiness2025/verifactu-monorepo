@@ -1,4 +1,4 @@
-const DEFAULT_LANDING_URL = "https://www.verifactu.business";
+const DEFAULT_LANDING_URL = "https://verifactu.business";
 const DEFAULT_APP_URL = "https://app.verifactu.business";
 
 export function getLandingUrl() {

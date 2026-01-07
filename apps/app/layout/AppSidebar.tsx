@@ -30,27 +30,27 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Resumen",
-    subItems: [{ name: "Resumen", path: "/app", pro: false }],
+    subItems: [{ name: "Resumen", path: "/dashboard", pro: false }],
   },
   {
     icon: <TableIcon />,
     name: "Facturas",
-    path: "/invoices",
+    path: "/dashboard/invoices",
   },
   {
     icon: <ListIcon />,
     name: "Gastos",
-    path: "/expenses",
+    path: "/dashboard/expenses",
   },
   {
     icon: <BoxCubeIcon />,
     name: "Documentos",
-    path: "/documents",
+    path: "/dashboard/documents",
   },
   {
     icon: <CalenderIcon />,
     name: "Calendar",
-    path: "/calendar",
+    path: "/dashboard/calendar",
   },
   {
     icon: <UserCircleIcon />,
@@ -61,7 +61,7 @@ const navItems: NavItem[] = [
     icon: <PageIcon />,
     name: "Invoices",
     subItems: [
-      { name: "Create Invoice", path: "/invoices/create", pro: false },
+      { name: "Create Invoice", path: "/dashboard/invoices/create", pro: false },
     ],
   },
 

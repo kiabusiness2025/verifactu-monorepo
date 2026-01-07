@@ -2,15 +2,17 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { AuthLayout, FormInput, PasswordInput, GoogleAuthButton } from "../../components/AuthComponents";
 import { useAuth } from "../../context/AuthContext";
 import { signInWithEmail, signUpWithEmail, signInWithGoogle } from "../../lib/auth";
 import { useToast } from "../../components/Toast";
+import type { User } from "firebase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { showToast } = useToast();
   const [email, setEmail] = useState("");
@@ -22,12 +24,52 @@ export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [passwordError, setPasswordError] = useState("");
 
+  const appUrl =
+    (process.env.NEXT_PUBLIC_APP_URL as string | undefined) ||
+    "https://app.verifactu.business";
+  const resolveNextUrl = React.useCallback(() => {
+    const nextParam = searchParams.get("next");
+    const defaultTarget = `${appUrl}/dashboard`;
+
+    if (!nextParam) return defaultTarget;
+
+    // Absolute URL
+    if (nextParam.startsWith("http")) {
+      try {
+        const target = new URL(nextParam);
+        const appOrigin = new URL(appUrl).origin;
+        if (target.origin === appOrigin) return nextParam;
+      } catch {
+        return defaultTarget;
+      }
+    }
+
+    // Relative path
+    if (nextParam.startsWith("/")) {
+      return `${appUrl}${nextParam}`;
+    }
+
+    return defaultTarget;
+  }, [appUrl, searchParams]);
+
   // Redirect if already authenticated
   React.useEffect(() => {
     if (user) {
-      router.push("/");
+      window.location.href = resolveNextUrl();
     }
-  }, [user, router]);
+  }, [user, resolveNextUrl]);
+
+  const persistSession = async (authedUser: User) => {
+    const idToken = await authedUser.getIdToken();
+    const res = await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    if (!res.ok) {
+      throw new Error("No se pudo guardar la sesión");
+    }
+  };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,9 +85,13 @@ export default function LoginPage() {
         return;
       }
 
+      if (result.user) {
+        await persistSession(result.user);
+      }
+
       // Redirect to dashboard
       showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión correcto" });
-      router.push("/");
+      window.location.href = resolveNextUrl();
     } catch (err) {
       setError("Error al iniciar sesión. Intenta de nuevo.");
       showToast({ type: "error", title: "Error", message: "Error al iniciar sesión" });
@@ -68,9 +114,13 @@ export default function LoginPage() {
         return;
       }
 
+      if (result.user) {
+        await persistSession(result.user);
+      }
+
       // Redirect to dashboard
       showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión con Google" });
-      router.push("/");
+      window.location.href = resolveNextUrl();
     } catch (err) {
       setError("Error al iniciar sesión con Google. Intenta de nuevo.");
       showToast({ type: "error", title: "Error", message: "Error al iniciar sesión con Google" });
