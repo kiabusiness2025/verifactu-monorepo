@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/fix-client-reference-manifests.mjs",
     "start": "next start -p 8080",
     "lint": "next lint",
     "test": "jest",
