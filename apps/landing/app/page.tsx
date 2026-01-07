@@ -16,7 +16,6 @@ import {
   Footer,
   HeroMockup,
   PideseloAIsaakSection,
-  PriceDisplay,
   PrimaryButton,
   ResourceCard,
   SecondaryButton,
@@ -189,99 +188,24 @@ export default function Page() {
       </section>
 
       {/* Pricing */}
-      <section className="py-16">
+      <section id="precios" className="py-16">
         <Container>
           <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Planes y precios</h2>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Precio que se ajusta a tu uso real
+            </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              Empieza gratis. Cambia de plan cuando lo necesites.
+              Solo mensual · 1 mes gratis · aviso antes de renovar.
             </p>
 
-            <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-50 p-1 ring-1 ring-slate-200">
-              <button
-                type="button"
-                onClick={() => setIsYearlyBilling(false)}
-                className={[
-                  "rounded-full px-4 py-2 text-xs font-semibold transition",
-                  !isYearlyBilling ? "bg-white shadow-sm text-slate-900" : "text-slate-600 hover:text-slate-900",
-                ].join(" ")}
-              >
-                Mensual
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsYearlyBilling(true)}
-                className={[
-                  "rounded-full px-4 py-2 text-xs font-semibold transition",
-                  isYearlyBilling ? "bg-white shadow-sm text-slate-900" : "text-slate-600 hover:text-slate-900",
-                ].join(" ")}
-              >
-                Anual
-              </button>
+            <div className="mt-8 flex justify-center">
+              <PricingModal />
             </div>
-          </div>
 
-          <div className="mt-10 grid gap-6 lg:grid-cols-4">
-            {PRICING_PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={[
-                  "relative rounded-2xl border bg-white p-6 shadow-sm",
-                  plan.highlight ? "border-blue-200 ring-1 ring-blue-100" : "border-slate-200",
-                ].join(" ")}
-              >
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">Más popular</span>
-                  </div>
-                )}
-
-                <div>
-                  <div className="text-lg font-semibold text-slate-900">{plan.name}</div>
-                  <div className="mt-1 text-sm text-slate-500">{plan.users}</div>
-                  {plan.highlight && (
-                    <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                      Sin % de facturación
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4">
-                  <PriceDisplay
-                    price={isYearlyBilling ? plan.priceYearly : plan.priceMonthly}
-                    isYearly={isYearlyBilling}
-                  />
-                  <div className="mt-2 inline-flex items-center justify-center rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                    Prueba gratuita 30 días · sin tarjeta · sin compromiso
-                  </div>
-                </div>
-
-                <ul className="mt-6 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 text-emerald-600 flex-shrink-0" />
-                      <span className="text-sm text-slate-600">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <a
-                  href={isYearlyBilling ? (plan.checkoutYearly ?? "#") : (plan.checkoutMonthly ?? "#")}
-                  className={[
-                    "mt-6 block w-full rounded-full px-4 py-2.5 text-sm font-semibold text-center transition",
-                    plan.highlight ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-slate-100 text-slate-900 hover:bg-slate-200",
-                  ].join(" ")}
-                >
-                  {plan.priceMonthly === null ? "Contactar" : "Empezar prueba gratuita"}
-                </a>
-
-                <div className="mt-3 text-center text-xs text-slate-500">✓ Acceso permanente a tus datos</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 text-center text-sm text-slate-500">
-            Todos los planes incluyen activación VeriFactu y soporte de onboarding.
+            <p className="mx-auto mt-6 max-w-2xl text-xs text-slate-500">
+              Precio orientativo. La cuota final se basa en empresas activas, facturas emitidas y movimientos procesados
+              (si activas conciliación bancaria). IVA no incluido.
+            </p>
           </div>
         </Container>
       </section>

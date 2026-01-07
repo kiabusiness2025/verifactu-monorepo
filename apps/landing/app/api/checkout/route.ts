@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { normalizeInput, invoiceTierKey, movementTierKey, type PricingInput } from "../../lib/pricing/calc";
+import { estimateNetEur, invoiceTierKey, movementTierKey, normalizeInput } from "../../lib/pricing/calc";
 
 function getOrigin(req: Request) {
   const url = new URL(req.url);
@@ -14,97 +14,133 @@ function requireEnv(name: string) {
   return v;
 }
 
-// Calculator-based checkout logic
-function calculatePriceItems(input: PricingInput) {
-  const normalized = normalizeInput(input);
-  const items: { price: string; quantity?: number }[] = [];
-
-  // Base (always)
-  const basePrice = process.env.STRIPE_PRICE_BASE_MONTHLY;
-  if (!basePrice) throw new Error("Missing STRIPE_PRICE_BASE_MONTHLY");
-  items.push({ price: basePrice });
-
-  // Extra companies (desde la 2ª)
-  if (normalized.companies > 1) {
-    const companyPrice = process.env.STRIPE_PRICE_COMPANY_UNIT_MONTHLY;
-    if (!companyPrice) throw new Error("Missing STRIPE_PRICE_COMPANY_UNIT_MONTHLY");
-    items.push({ price: companyPrice, quantity: normalized.companies - 1 });
+// ====== POST: calculadora ======
+export async function POST(req: Request) {
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Body inválido" }, { status: 400 });
   }
 
-  // Invoices tier add-on
-  const invoiceTier = invoiceTierKey(normalized.invoices);
-  if (invoiceTier) {
-    const p = process.env[`STRIPE_PRICE_${invoiceTier}`];
-    if (p) items.push({ price: p });
+  const input = normalizeInput({
+    companies: body?.companies,
+    invoices: body?.invoices,
+    movements: body?.movements,
+    bankingEnabled: body?.bankingEnabled,
+  });
+
+  const stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"), { apiVersion: "2024-06-20" });
+
+  const basePrice = requireEnv("STRIPE_PRICE_BASE_MONTHLY");
+  const companyUnitPrice = requireEnv("STRIPE_PRICE_COMPANY_UNIT_MONTHLY");
+
+  const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+    { price: basePrice, quantity: 1 },
+  ];
+
+  const extraCompanies = Math.max(0, input.companies - 1);
+  if (extraCompanies > 0) {
+    line_items.push({ price: companyUnitPrice, quantity: extraCompanies });
   }
 
-  // Movements tier add-on (solo si banking habilitado)
-  if (normalized.bankingEnabled) {
-    const movTier = movementTierKey(normalized.movements);
-    if (movTier) {
-      const p = process.env[`STRIPE_PRICE_${movTier}`];
-      if (p) items.push({ price: p });
-    }
+  const invTier = invoiceTierKey(input.invoices);
+  if (invTier) {
+    const priceId = requireEnv(`STRIPE_PRICE_${invTier}`);
+    line_items.push({ price: priceId, quantity: 1 });
   }
 
-  return items;
+  const movTier = input.bankingEnabled ? movementTierKey(input.movements) : null;
+  if (movTier) {
+    const priceId = requireEnv(`STRIPE_PRICE_${movTier}`);
+    line_items.push({ price: priceId, quantity: 1 });
+  }
+
+  const origin = getOrigin(req);
+  const successUrl = new URL("/demo", origin);
+  successUrl.searchParams.set("checkout", "success");
+  successUrl.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
+
+  const cancelUrl = new URL("/#precios", origin);
+
+  // Estimación neta para mostrar/guardar como metadata (sin IVA)
+  const estimated = estimateNetEur(input);
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items,
+      success_url: successUrl.toString(),
+      cancel_url: cancelUrl.toString(),
+
+      // Trial 30 días (sin tarjeta si no es necesaria)
+      payment_method_collection: "if_required",
+      subscription_data: {
+        trial_period_days: 30,
+        metadata: {
+          verifactu_pricing: "calculator-v1",
+          companies: String(input.companies),
+          invoices: String(input.invoices),
+          movements: String(input.movements),
+          bankingEnabled: String(input.bankingEnabled),
+          estimated_net_eur: String(estimated),
+        },
+      },
+
+      // Para que el cliente meta email y luego podáis vincularlo con cuenta
+      customer_creation: "always",
+      metadata: {
+        verifactu_pricing: "calculator-v1",
+        estimated_net_eur: String(estimated),
+      },
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch (e) {
+    return NextResponse.json({ error: "No se pudo iniciar el pago" }, { status: 500 });
+  }
 }
+
+// ====== GET antiguo (lo puedes borrar cuando migres todo) ======
+const PLAN_TO_PRICE_ENV: Record<string, string> = {
+  "pro-monthly": "STRIPE_PRICE_PRO_MONTHLY",
+  "pro-yearly": "STRIPE_PRICE_PRO_YEARLY",
+  "business-monthly": "STRIPE_PRICE_BUSINESS_MONTHLY",
+  "business-yearly": "STRIPE_PRICE_BUSINESS_YEARLY",
+};
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const type = url.searchParams.get("type") || "";
+  const plan = url.searchParams.get("plan") || "";
 
-  // Calculator mode (nuevo)
-  if (type === "calculator") {
-    const companies = parseInt(url.searchParams.get("companies") || "1");
-    const invoices = parseInt(url.searchParams.get("invoices") || "1");
-    const movements = parseInt(url.searchParams.get("movements") || "0");
-    const bankingEnabled = url.searchParams.get("bankingEnabled") === "true";
-
-    const input: PricingInput = { companies, invoices, movements, bankingEnabled };
-
-    let stripe: Stripe;
-    try {
-      stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"), { apiVersion: "2024-06-20" });
-    } catch (e) {
-      return NextResponse.json({ error: "Stripe no configurado" }, { status: 500 });
-    }
-
-    try {
-      const line_items = calculatePriceItems(input);
-
-      const origin = getOrigin(req);
-      const successUrl = new URL("/demo", origin);
-      successUrl.searchParams.set("checkout", "success");
-      const cancelUrl = new URL("/", origin);
-
-      const session = await stripe.checkout.sessions.create({
-        mode: "subscription",
-        line_items,
-        success_url: successUrl.toString(),
-        cancel_url: cancelUrl.toString(),
-        subscription_data: {
-          trial_period_days: 30,
-          metadata: {
-            companies: companies.toString(),
-            invoices: invoices.toString(),
-            movements: movements.toString(),
-            bankingEnabled: bankingEnabled.toString(),
-          },
-        },
-      });
-
-      if (!session.url) {
-        return NextResponse.json({ error: "No se pudo iniciar el pago" }, { status: 500 });
-      }
-
-      return NextResponse.redirect(session.url);
-    } catch (e) {
-      console.error("Stripe checkout error:", e);
-      return NextResponse.json({ error: "Error al crear sesión de pago" }, { status: 500 });
-    }
+  if (plan === "free") {
+    return NextResponse.redirect(new URL("/auth/signup", getOrigin(req)));
+  }
+  if (plan === "enterprise") {
+    return NextResponse.redirect("mailto:soporte@verifactu.business");
   }
 
-  // Legacy mode (planes fijos, mantener por compatibilidad si es necesario)
-  return NextResponse.json({ error: "Plan no válido" }, { status: 400 });
+  const envKey = PLAN_TO_PRICE_ENV[plan];
+  if (!envKey) {
+    return NextResponse.json({ error: "Plan no válido" }, { status: 400 });
+  }
+
+  const stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"), { apiVersion: "2024-06-20" });
+  const priceId = process.env[envKey];
+  if (!priceId) return NextResponse.json({ error: `Falta configurar ${envKey}` }, { status: 500 });
+
+  const origin = getOrigin(req);
+  const successUrl = new URL("/demo", origin);
+  successUrl.searchParams.set("checkout", "success");
+  const cancelUrl = new URL("/demo#planes", origin);
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: successUrl.toString(),
+    cancel_url: cancelUrl.toString(),
+  });
+
+  if (!session.url) return NextResponse.json({ error: "No se pudo iniciar el pago" }, { status: 500 });
+  return NextResponse.redirect(session.url);
 }

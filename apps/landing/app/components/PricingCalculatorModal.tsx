@@ -24,15 +24,28 @@ export default function PricingCalculatorModal({
   const monthlyPrice = estimateNetEur(input);
   const withVAT = Math.round(monthlyPrice * 1.21 * 100) / 100;
 
-  const handleStartTrial = () => {
-    const params = new URLSearchParams({
-      type: "calculator",
-      companies: companies.toString(),
-      invoices: invoices.toString(),
-      movements: movements.toString(),
-      bankingEnabled: bankingEnabled.toString(),
-    });
-    window.location.href = `/api/checkout?${params}`;
+  const handleStartTrial = async () => {
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companies,
+          invoices,
+          movements,
+          bankingEnabled,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("Error al crear sesión de pago");
+      }
+    } catch (error) {
+      console.error("Error al iniciar trial:", error);
+    }
   };
 
   return (
