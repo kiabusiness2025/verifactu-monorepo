@@ -5,7 +5,6 @@ import { Check, ShieldCheck, Sparkles } from "lucide-react";
 import Header from "./components/Header";
 import Faq from "./components/Faq";
 import PricingCalculatorModal from "./components/PricingCalculatorModal";
-import PricingModal from "./components/PricingModal";
 
 import { ISAAK_MESSAGES } from "./lib/home/data";
 import {
@@ -199,7 +198,12 @@ export default function Page() {
             </p>
 
             <div className="mt-8 flex justify-center">
-              <PricingModal />
+              <button
+                onClick={() => setShowCalculator(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-blue-700"
+              >
+                Calcula tu precio
+              </button>
             </div>
 
             <p className="mx-auto mt-6 max-w-2xl text-xs text-slate-500">
