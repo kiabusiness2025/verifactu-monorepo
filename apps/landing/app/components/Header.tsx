@@ -16,6 +16,10 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const { showToast } = useToast();
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://app.verifactu.business");
+  const dashboardHref = `${appUrl.replace(/\/$/, "")}/app`;
 
   const defaultNavLinks: NavLink[] = [
     { label: "Características", href: "#features" },
@@ -51,15 +55,23 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
         {/* Right Side - Desktop */}
         <div className="hidden md:flex items-center gap-4">
           {user ? (
-            <button
-              onClick={async () => {
-                await logout();
-                showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
-              }}
-              className="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
-            >
-              Salir
-            </button>
+            <>
+              <Link
+                href={dashboardHref}
+                className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={async () => {
+                  await logout();
+                  showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
+                }}
+                className="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
+              >
+                Salir
+              </button>
+            </>
           ) : (
             <Link
               href="/auth/login"
@@ -74,15 +86,23 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
         <div className="md:hidden flex items-center gap-3">
           <span className="text-xs text-gray-500">v1.0.3</span>
           {user ? (
-            <button
-              onClick={async () => {
-                await logout();
-                showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
-              }}
-              className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
-            >
-              Salir
-            </button>
+            <>
+              <Link
+                href={dashboardHref}
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={async () => {
+                  await logout();
+                  showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
+                }}
+                className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
+              >
+                Salir
+              </button>
+            </>
           ) : (
             <Link
               href="/auth/login"

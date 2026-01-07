@@ -28,7 +28,9 @@ export default function DemoPage({
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
   const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
-  const appUrl = configuredAppUrl ?? (process.env.NODE_ENV === "development" ? "http://localhost:3000" : null);
+  const appUrl =
+    configuredAppUrl ??
+    (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://app.verifactu.business");
   const demoHref = appUrl ? `${appUrl.replace(/\/$/, "")}/app` : null;
   const demoNavLinks = [
     { label: "Home", href: "/" },
