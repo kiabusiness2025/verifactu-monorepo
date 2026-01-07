@@ -13,25 +13,29 @@ function eurosToCents(amount) {
 const STRIPE_SECRET_KEY = requireEnv("STRIPE_SECRET_KEY");
 const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
 
-// Keep this aligned with the pricing shown on the landing page.
-// We only create paid plans in Stripe.
-const PLANS = [
-  {
-    planKey: "pro",
-    name: "Verifactu Business · Profesional",
-    prices: [
-      { priceKey: "pro-monthly", unitAmountEur: 29, interval: "month" },
-      { priceKey: "pro-yearly", unitAmountEur: 290, interval: "year" },
-    ],
-  },
-  {
-    planKey: "business",
-    name: "Verifactu Business · Business",
-    prices: [
-      { priceKey: "business-monthly", unitAmountEur: 69, interval: "month" },
-      { priceKey: "business-yearly", unitAmountEur: 690, interval: "year" },
-    ],
-  },
+const PRODUCT = {
+  planKey: "calculator-v1",
+  name: "Verifactu Business · Suscripción mensual (calculadora)",
+};
+
+// IMPORTANT: aquí definimos los "addons" como precios recurrentes.
+// Base siempre (19€). Empresas extra: 7€/empresa (cantidad = empresas-1).
+// Facturas y movimientos: "flat add-on" por tramo (solo añadimos el tramo que aplique).
+const PRICES = [
+  { priceKey: "base-monthly", unitAmountEur: 19, interval: "month" },
+  { priceKey: "company-unit-monthly", unitAmountEur: 7, interval: "month" },
+
+  // Facturas (solo >50)
+  { priceKey: "invoices-51-200-monthly", unitAmountEur: 6, interval: "month" },
+  { priceKey: "invoices-201-500-monthly", unitAmountEur: 15, interval: "month" },
+  { priceKey: "invoices-501-1000-monthly", unitAmountEur: 29, interval: "month" },
+  { priceKey: "invoices-1001-2000-monthly", unitAmountEur: 49, interval: "month" },
+
+  // Movimientos (solo >0)
+  { priceKey: "mov-1-200-monthly", unitAmountEur: 6, interval: "month" },
+  { priceKey: "mov-201-800-monthly", unitAmountEur: 15, interval: "month" },
+  { priceKey: "mov-801-2000-monthly", unitAmountEur: 35, interval: "month" },
+  { priceKey: "mov-2001-5000-monthly", unitAmountEur: 69, interval: "month" },
 ];
 
 async function findOrCreateProduct({ planKey, name }) {
@@ -116,34 +120,27 @@ async function findOrCreatePrice({ productId, priceKey, unitAmountEur, interval 
 }
 
 async function main() {
-  const result = {
-    products: {},
-    prices: {},
-  };
+  const result = { productId: "", prices: {} };
 
-  for (const plan of PLANS) {
-    const product = await findOrCreateProduct(plan);
-    result.products[plan.planKey] = product.id;
+  const product = await findOrCreateProduct(PRODUCT);
+  result.productId = product.id;
 
-    for (const price of plan.prices) {
-      const created = await findOrCreatePrice({
-        productId: product.id,
-        priceKey: price.priceKey,
-        unitAmountEur: price.unitAmountEur,
-        interval: price.interval,
-      });
-      result.prices[price.priceKey] = created.id;
-    }
+  for (const p of PRICES) {
+    const created = await findOrCreatePrice({
+      productId: product.id,
+      priceKey: p.priceKey,
+      unitAmountEur: p.unitAmountEur,
+      interval: p.interval,
+    });
+    result.prices[p.priceKey] = created.id;
   }
 
-  console.log("\nStripe sync complete. Configure these env vars in apps/landing (.env.local / Vercel):\n");
-  console.log(`STRIPE_PRICE_PRO_MONTHLY=${result.prices["pro-monthly"]}`);
-  console.log(`STRIPE_PRICE_PRO_YEARLY=${result.prices["pro-yearly"]}`);
-  console.log(`STRIPE_PRICE_BUSINESS_MONTHLY=${result.prices["business-monthly"]}`);
-  console.log(`STRIPE_PRICE_BUSINESS_YEARLY=${result.prices["business-yearly"]}`);
-
-  console.log("\n(Products)");
-  console.log(JSON.stringify(result.products, null, 2));
+  console.log("\nStripe sync complete. Configure these env vars in apps/landing:\n");
+  for (const [k, v] of Object.entries(result.prices)) {
+    const env = "STRIPE_PRICE_" + k.toUpperCase().replace(/-/g, "_");
+    console.log(`${env}=${v}`);
+  }
+  console.log("\nProduct:", result.productId);
 }
 
 main().catch((err) => {

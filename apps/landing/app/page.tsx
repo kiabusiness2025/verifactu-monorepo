@@ -4,8 +4,10 @@ import { motion } from "framer-motion";
 import { Check, ShieldCheck, Sparkles } from "lucide-react";
 import Header from "./components/Header";
 import Faq from "./components/Faq";
+import PricingCalculatorModal from "./components/PricingCalculatorModal";
+import PricingModal from "./components/PricingModal";
 
-import { ISAAK_MESSAGES, PRICING_PLANS } from "./lib/home/data";
+import { ISAAK_MESSAGES } from "./lib/home/data";
 import {
   ComplianceBadge,
   Container,
@@ -29,8 +31,8 @@ export default function Page() {
   const [msgIndex, setMsgIndex] = useState(0);
   const [benefitTarget, setBenefitTarget] = useState(0);
   const [showStickyCta, setShowStickyCta] = useState(false);
-  const [isYearlyBilling, setIsYearlyBilling] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -118,9 +120,12 @@ export default function Page() {
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <PrimaryButton>
-                  Probar gratis <span aria-hidden>→</span>
-                </PrimaryButton>
+                <button
+                  onClick={() => setShowCalculator(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-blue-700"
+                >
+                  Calcula tu precio
+                </button>
                 <SecondaryButton href="/demo">Ver demo</SecondaryButton>
               </div>
 
@@ -329,6 +334,7 @@ export default function Page() {
 
       <Footer />
       <StickyCtaBar show={showStickyCta} />
+      <PricingCalculatorModal isOpen={showCalculator} onClose={() => setShowCalculator(false)} />
     </div>
   );
 }

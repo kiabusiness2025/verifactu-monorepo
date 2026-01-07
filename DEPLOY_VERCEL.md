@@ -111,12 +111,19 @@ Este repo tiene **dos proyectos separados** en Vercel:
 - `ORGANIZATION_NAME="Expert Estudios Profesionales, SLU"`
 - `ORGANIZATION_ADDRESS="C/ Pintor Agrassot, 19 - 03110 Mutxamel (Alicante)"`
 
-**Stripe (checkout de planes)**
+**Stripe (checkout con calculadora de precios)**
 - `STRIPE_SECRET_KEY`
-- `STRIPE_PRICE_PRO_MONTHLY`
-- `STRIPE_PRICE_PRO_YEARLY`
-- `STRIPE_PRICE_BUSINESS_MONTHLY`
-- `STRIPE_PRICE_BUSINESS_YEARLY`
+- `STRIPE_WEBHOOK_SECRET` (para recibir eventos en `/api/webhooks/stripe`)
+- `STRIPE_PRICE_BASE_MONTHLY`
+- `STRIPE_PRICE_COMPANY_UNIT_MONTHLY`
+- `STRIPE_PRICE_INVOICES_51_200_MONTHLY`
+- `STRIPE_PRICE_INVOICES_201_500_MONTHLY`
+- `STRIPE_PRICE_INVOICES_501_1000_MONTHLY`
+- `STRIPE_PRICE_INVOICES_1001_2000_MONTHLY`
+- `STRIPE_PRICE_MOV_1_200_MONTHLY`
+- `STRIPE_PRICE_MOV_201_800_MONTHLY`
+- `STRIPE_PRICE_MOV_801_2000_MONTHLY`
+- `STRIPE_PRICE_MOV_2001_5000_MONTHLY`
 
 **Firebase (autenticación en landing)**
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
@@ -139,7 +146,13 @@ Este repo tiene **dos proyectos separados** en Vercel:
 
 **Notas**
 - Si usas el formulario de contacto/leads, puedes añadir `LEAD_EMAIL` y `FROM_EMAIL`.
-- Si cambias precios o productos en Stripe, ejecuta el script `scripts/stripe/sync-products.mjs` y actualiza los `STRIPE_PRICE_*` que imprime.
+- Para sincronizar productos/precios en Stripe, ejecuta: `$env:STRIPE_SECRET_KEY="sk_xxx"; node scripts/stripe/sync-products.mjs`
+- Copia los `STRIPE_PRICE_*` que imprime el script a las variables de entorno en Vercel.
+- Para configurar el webhook de Stripe:
+  1. Ve a Stripe Dashboard → Webhooks
+  2. Añade endpoint: `https://verifactu.business/api/webhooks/stripe`
+  3. Eventos recomendados: `checkout.session.completed`, `customer.subscription.*`, `invoice.payment_*`
+  4. Copia el "Signing secret" y configúralo como `STRIPE_WEBHOOK_SECRET`
 
 **Dominio**
 - `verifactu.business`
