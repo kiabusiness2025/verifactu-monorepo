@@ -335,9 +335,10 @@ const AppSidebar: React.FC = () => {
             <Image
               src="/brand/logo-horizontal-light.png"
               alt="Verifactu Business"
-              width={200}
-              height={40}
-              style={{ height: "40px", width: "auto" }}
+              width={220}
+              height={52}
+              className="h-auto w-auto"
+              priority
             />
           ) : (
             <img

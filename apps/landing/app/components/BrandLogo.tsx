@@ -16,12 +16,14 @@ export default function BrandLogo({
   const isFooter = variant === "footer";
   const isAuth = variant === "auth";
 
-  // Height based on variant
-  const height = isAuth ? 65 : 60;
+  // Height based on variant - aumentado para mejor calidad
+  const height = isAuth ? 80 : 70;
   const width = height * 4.5; // Ratio para logo horizontal
   
-  // Landing: por decisión de marca, siempre usamos el logo light
-  const logoSrc = "/brand/logo-horizontal-light.png";
+  // Footer usa dark, resto usa light
+  const logoSrc = isFooter 
+    ? "/brand/logo-horizontal-dark.png"
+    : "/brand/logo-horizontal-light.png";
 
   return (
     <Link

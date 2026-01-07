@@ -28,11 +28,12 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
           </button>
           <div className="hidden items-center gap-2 lg:flex">
             <Image
-              src="/brand/logo-horizontal-light.png"
+              src="/brand/logo-horizontal-dark.png"
               alt="Verifactu Business"
-              width={150}
-              height={36}
+              width={200}
+              height={48}
               priority
+              className="h-auto w-auto"
             />
           </div>
         </div>

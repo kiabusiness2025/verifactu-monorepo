@@ -25,10 +25,11 @@ export default function AuthLayout({
               <div className="flex flex-col items-center max-w-xs">
                 <Link href="/" className="block mb-4">
                   <Image
-                    width={231}
-                    height={48}
+                    width={280}
+                    height={66}
                     src="/brand/logo-horizontal-light.png"
                     alt="Verifactu logo"
+                    className="h-auto w-auto"
                   />
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">
