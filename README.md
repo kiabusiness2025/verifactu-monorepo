@@ -19,6 +19,13 @@ Proyecto GCP: verifactu-business-480212
 Monorepo: verifactu-monorepo
 Servicios incluidos: Landing · App · API · Base de Datos
 
+## 📦 Despliegue y Redeployment
+
+Para información sobre cómo redesplegar versiones específicas a producción:
+- **[MANUAL_REDEPLOY_STEPS.md](MANUAL_REDEPLOY_STEPS.md)** - Pasos manuales para redesplegar via Vercel UI
+- **[REDEPLOY_GUIDE.md](REDEPLOY_GUIDE.md)** - Guía completa de opciones de redeployment (automatizado y manual)
+- **Script de redeployment**: `./scripts/redeploy.sh <commit_hash> [environment]`
+
 🧭 0. Objetivo del README
 
 Este documento explica cómo:
