@@ -113,7 +113,7 @@ Este repo tiene **dos proyectos separados** en Vercel:
 
 **Stripe (checkout con calculadora de precios)**
 - `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET` (para recibir eventos en `/api/webhooks/stripe`)
+- `STRIPE_WEBHOOK_SECRET` (para recibir eventos en `/api/stripe/webhook`)
 - `STRIPE_PRICE_BASE_MONTHLY`
 - `STRIPE_PRICE_COMPANY_UNIT_MONTHLY`
 - `STRIPE_PRICE_INVOICES_51_200_MONTHLY`
@@ -150,7 +150,7 @@ Este repo tiene **dos proyectos separados** en Vercel:
 - Copia los `STRIPE_PRICE_*` que imprime el script a las variables de entorno en Vercel.
 - Para configurar el webhook de Stripe:
   1. Ve a Stripe Dashboard → Webhooks
-  2. Añade endpoint: `https://verifactu.business/api/webhooks/stripe`
+  2. Añade endpoint: `https://verifactu.business/api/stripe/webhook`
   3. Eventos recomendados: `checkout.session.completed`, `customer.subscription.*`, `invoice.payment_*`
   4. Copia el "Signing secret" y configúralo como `STRIPE_WEBHOOK_SECRET`
 
