@@ -146,7 +146,7 @@ export function AuthLayout({
                 href="/"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
               >
-                <span aria-hidden>←</span> Volver al inicio
+                <span aria-hidden="true">←</span> Volver al inicio
               </a>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>

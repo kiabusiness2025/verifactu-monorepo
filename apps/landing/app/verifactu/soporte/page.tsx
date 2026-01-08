@@ -1,35 +1,57 @@
 import Link from "next/link";
 
+const title = "Soporte | Verifactu Business";
+const description = "Abre ticket, agenda onboarding o consulta el centro de ayuda de Verifactu Business.";
+
 export const metadata = {
-  title: "Soporte | Verifactu Business",
-  description: "Abre ticket, agenda onboarding o consulta el centro de ayuda de Verifactu Business.",
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: "/verifactu/soporte",
+    type: "article",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
 };
 
 export default function SoportePage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Soporte</p>
+        <Breadcrumbs
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "VeriFactu", href: "/verifactu/que-es" },
+            { label: "Soporte" },
+          ]}
+        />
+
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Soporte</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Estamos para ayudarte</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          Elige cómo prefieres recibir ayuda: ticket rápido, onboarding guiado o consultar guías paso a paso.
+          Elige como prefieres recibir ayuda: ticket rapido, onboarding guiado o consultar guias paso a paso.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <SupportCard
-            title="Ticket rápido"
-            desc="Cuéntanos el problema y adjunta capturas. Respondemos en horario laboral."
+            title="Ticket rapido"
+            desc="Cuentanos el problema y adjunta capturas. Respondemos en horario laboral."
             action={{ label: "Abrir ticket", href: "mailto:soporte@verifactu.business" }}
           />
           <SupportCard
             title="Onboarding guiado"
             desc="Configura VeriFactu, bancos y permisos con un especialista."
-            action={{ label: "Agendar sesión", href: "mailto:soporte@verifactu.business?subject=Onboarding" }}
+            action={{ label: "Agendar sesion", href: "mailto:soporte@verifactu.business?subject=Onboarding" }}
           />
           <SupportCard
             title="Centro de ayuda"
-            desc="Preguntas frecuentes sobre facturación, VeriFactu y conciliación."
-            action={{ label: "Ver guías", href: "/proximamente" }}
+            desc="Preguntas frecuentes sobre facturacion, VeriFactu y conciliacion."
+            action={{ label: "Ver guias", href: "/recursos/guias-y-webinars" }}
           />
           <SupportCard
             title="Estado del servicio"
@@ -39,11 +61,11 @@ export default function SoportePage() {
         </div>
 
         <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Consejos para soporte rápido</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Consejos para soporte rapido</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
-            <li>• Adjunta capturas o números de factura afectados.</li>
-            <li>• Indica si el fallo es en app.verifactu.business o en la sincronización con bancos/AEAT.</li>
-            <li>• Dinos si has probado refrescar sesión o reconectar la integración.</li>
+            <li>- Adjunta capturas o numeros de factura afectados.</li>
+            <li>- Indica si el fallo es en app.verifactu.business o en la sincronizacion con bancos/AEAT.</li>
+            <li>- Dinos si has probado refrescar sesion o reconectar la integracion.</li>
           </ul>
         </div>
 
@@ -78,8 +100,31 @@ function SupportCard({
         className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
       >
         {action.label}
-        <span aria-hidden>→</span>
+        <span aria-hidden="true">→</span>
       </Link>
     </div>
+  );
+}
+
+type Crumb = { label: string; href?: string };
+
+function Breadcrumbs({ items }: { items: Crumb[] }) {
+  return (
+    <nav className="text-xs text-slate-500">
+      <ol className="flex flex-wrap items-center gap-2">
+        {items.map((item, index) => (
+          <li key={`${item.label}-${index}`} className="flex items-center gap-2">
+            {item.href ? (
+              <Link href={item.href} className="hover:text-blue-700">
+                {item.label}
+              </Link>
+            ) : (
+              <span className="text-slate-700">{item.label}</span>
+            )}
+            {index < items.length - 1 ? <span>/</span> : null}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }

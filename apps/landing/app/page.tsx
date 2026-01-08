@@ -101,7 +101,7 @@ export default function Page() {
                 Cumplimiento VeriFactu con Isaak
               </div>
               <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+                <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
                 Estado: Operativo · Última sync VeriFactu hace 3 min
               </div>
 

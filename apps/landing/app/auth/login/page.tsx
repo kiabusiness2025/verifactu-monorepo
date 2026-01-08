@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -23,7 +23,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [passwordError, setPasswordError] = useState("");
-  const [redirecting, setRedirecting] = useState(false);
+  const hasRedirected = useRef(false);
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
@@ -36,14 +36,14 @@ export default function LoginPage() {
 
   // Redirect if already authenticated
   React.useEffect(() => {
-    if (user && !authLoading && !redirecting) {
-      setRedirecting(true);
+    if (user && !authLoading && !hasRedirected.current) {
+      hasRedirected.current = true;
       router.push(resolveNextUrl());
     }
-  }, [user, authLoading, redirecting, resolveNextUrl, router]);
+  }, [user, authLoading, resolveNextUrl, router]);
 
   // Show loading state while checking auth
-  if (authLoading || redirecting) {
+  if (authLoading || (user && hasRedirected.current)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
         <div className="text-center">

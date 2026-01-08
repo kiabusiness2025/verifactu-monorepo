@@ -1,8 +1,22 @@
 import Link from "next/link";
 
+const title = "Checklist | Verifactu Business";
+const description = "Checklist de cumplimiento VeriFactu y control operativo antes de emitir.";
+
 export const metadata = {
-  title: "Checklist | Verifactu Business",
-  description: "Checklist de cumplimiento VeriFactu y control operativo antes de emitir.",
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: "/recursos/checklist",
+    type: "article",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
 };
 
 const checklist = [
@@ -19,7 +33,15 @@ export default function ChecklistPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Recursos</p>
+        <Breadcrumbs
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Recursos", href: "/recursos/guias-y-webinars" },
+            { label: "Checklist" },
+          ]}
+        />
+
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Recursos</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Checklist VeriFactu</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
           Una lista corta para asegurar que tu facturacion esta lista antes de emitir.
@@ -52,5 +74,28 @@ export default function ChecklistPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+type Crumb = { label: string; href?: string };
+
+function Breadcrumbs({ items }: { items: Crumb[] }) {
+  return (
+    <nav className="text-xs text-slate-500">
+      <ol className="flex flex-wrap items-center gap-2">
+        {items.map((item, index) => (
+          <li key={`${item.label}-${index}`} className="flex items-center gap-2">
+            {item.href ? (
+              <Link href={item.href} className="hover:text-blue-700">
+                {item.label}
+              </Link>
+            ) : (
+              <span className="text-slate-700">{item.label}</span>
+            )}
+            {index < items.length - 1 ? <span>/</span> : null}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }

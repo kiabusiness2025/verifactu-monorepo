@@ -1,6 +1,22 @@
+import Link from "next/link";
+
+const title = "Estado del servicio | Verifactu Business";
+const description = "Estado operativo de VeriFactu, AEAT y bancos conectados.";
+
 export const metadata = {
-  title: "Estado del servicio | Verifactu Business",
-  description: "Estado operativo de VeriFactu, AEAT y bancos conectados.",
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: "/verifactu/estado",
+    type: "article",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
 };
 
 type Status = { name: string; state: "operativo" | "incidencia" | "mantenimiento"; note?: string };
@@ -8,17 +24,25 @@ type Status = { name: string; state: "operativo" | "incidencia" | "mantenimiento
 const statusList: Status[] = [
   { name: "Verifactu Business", state: "operativo", note: "Sin incidencias" },
   { name: "AEAT VeriFactu", state: "operativo", note: "Validaciones OK" },
-  { name: "Conexión bancaria", state: "operativo", note: "Sin retrasos reportados" },
+  { name: "Conexion bancaria", state: "operativo", note: "Sin retrasos reportados" },
 ];
 
 export default function EstadoPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Estado</p>
+        <Breadcrumbs
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "VeriFactu", href: "/verifactu/que-es" },
+            { label: "Estado del servicio" },
+          ]}
+        />
+
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Estado</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Estado del servicio</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          Aquí verás si hay incidencias en VeriFactu, AEAT o en las integraciones bancarias. Si algo falla, publicaremos
+          Aqui veras si hay incidencias en VeriFactu, AEAT o en las integraciones bancarias. Si algo falla, publicaremos
           actualizaciones y tiempos estimados.
         </p>
 
@@ -29,9 +53,9 @@ export default function EstadoPage() {
         </div>
 
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">¿Ves algo raro?</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Ves algo raro?</h2>
           <p className="mt-2 text-sm text-slate-700">
-            Envíanos detalles (capturas, hora aproximada, factura afectada). Prioridad para incidencias VeriFactu/AEAT.
+            Enviamos detalles (capturas, hora aproximada, factura afectada). Prioridad para incidencias VeriFactu/AEAT.
           </p>
           <div className="mt-4 flex flex-wrap gap-3 text-sm">
             <a
@@ -40,15 +64,15 @@ export default function EstadoPage() {
             >
               Reportar incidencia
             </a>
-            <a
+            <Link
               href="/verifactu/soporte"
               className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-100"
             >
               Abrir ticket
-            </a>
+            </Link>
           </div>
           <p className="mt-3 text-xs text-slate-500">
-            Respuesta en horario laboral. Si hay incidente crítico, lo publicaremos aquí.
+            Respuesta en horario laboral. Si hay incidente critico, lo publicaremos aqui.
           </p>
         </div>
       </div>
@@ -73,9 +97,32 @@ function StatusRow({ name, state, note }: Status) {
         <div className="text-xs text-slate-600">{note || "Sin notas adicionales"}</div>
       </div>
       <div className="inline-flex items-center gap-2">
-        <span className={`h-2.5 w-2.5 rounded-full ${color}`} aria-hidden />
+        <span className={`h-2.5 w-2.5 rounded-full ${color}`} aria-hidden="true" />
         <span className="text-xs font-semibold text-slate-800">{label}</span>
       </div>
     </div>
+  );
+}
+
+type Crumb = { label: string; href?: string };
+
+function Breadcrumbs({ items }: { items: Crumb[] }) {
+  return (
+    <nav className="text-xs text-slate-500">
+      <ol className="flex flex-wrap items-center gap-2">
+        {items.map((item, index) => (
+          <li key={`${item.label}-${index}`} className="flex items-center gap-2">
+            {item.href ? (
+              <Link href={item.href} className="hover:text-blue-700">
+                {item.label}
+              </Link>
+            ) : (
+              <span className="text-slate-700">{item.label}</span>
+            )}
+            {index < items.length - 1 ? <span>/</span> : null}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }

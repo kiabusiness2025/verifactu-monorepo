@@ -1,8 +1,22 @@
 import Link from "next/link";
 
+const title = "Guias y webinars | Verifactu Business";
+const description = "Recursos practicos para cumplir VeriFactu, automatizar facturacion y sacar partido a Isaak.";
+
 export const metadata = {
-  title: "Guias y webinars | Verifactu Business",
-  description: "Recursos practicos para cumplir VeriFactu, automatizar facturacion y sacar partido a Isaak.",
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: "/recursos/guias-y-webinars",
+    type: "article",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
 };
 
 const guides = [
@@ -27,7 +41,15 @@ export default function GuiasWebinarsPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Recursos</p>
+        <Breadcrumbs
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Recursos", href: "/recursos/guias-y-webinars" },
+            { label: "Guias y webinars" },
+          ]}
+        />
+
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Recursos</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Guias y webinars</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
           Material listo para usar: activa VeriFactu, optimiza tus facturas y evita errores tipicos.
@@ -49,7 +71,7 @@ export default function GuiasWebinarsPage() {
             className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
           >
             Solicitar sesion
-            <span aria-hidden>-></span>
+            <span aria-hidden="true">→</span>
           </Link>
         </div>
       </div>
@@ -63,8 +85,31 @@ function ResourceCard({ title, desc, cta }: { title: string; desc: string; cta: 
       <div className="text-sm font-semibold text-slate-900">{title}</div>
       <p className="mt-1 text-sm text-slate-600">{desc}</p>
       <button className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
-        {cta} <span aria-hidden>-></span>
+        {cta} <span aria-hidden="true">→</span>
       </button>
     </div>
+  );
+}
+
+type Crumb = { label: string; href?: string };
+
+function Breadcrumbs({ items }: { items: Crumb[] }) {
+  return (
+    <nav className="text-xs text-slate-500">
+      <ol className="flex flex-wrap items-center gap-2">
+        {items.map((item, index) => (
+          <li key={`${item.label}-${index}`} className="flex items-center gap-2">
+            {item.href ? (
+              <Link href={item.href} className="hover:text-blue-700">
+                {item.label}
+              </Link>
+            ) : (
+              <span className="text-slate-700">{item.label}</span>
+            )}
+            {index < items.length - 1 ? <span>/</span> : null}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }
