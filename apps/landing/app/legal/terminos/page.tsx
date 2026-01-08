@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Condiciones de uso del servicio Verifactu Business operado por Expert Estudios Profesionales, SLU.",
 };
 
-const today = "25/12/2025";
+const today = "08/01/2026";
 
 const owner = {
   name: process.env.ORGANIZATION_NAME ?? "Expert Estudios Profesionales, SLU",

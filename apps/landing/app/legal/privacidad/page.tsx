@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "Política de privacidad de Expert Estudios Profesionales, SLU para los servicios Verifactu Business.",
 };
 
-const today = "25/12/2025";
+const today = "08/01/2026";
 
 const dataController = {
   name: process.env.ORGANIZATION_NAME ?? "Expert Estudios Profesionales, SLU",
