@@ -65,7 +65,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
               <button
                 onClick={async () => {
                   await logout();
-                  showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
+                  showToast({ type: "success", title: "Sesion cerrada", message: "Has salido correctamente" });
                 }}
                 className="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
               >
@@ -96,7 +96,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
               <button
                 onClick={async () => {
                   await logout();
-                  showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
+                  showToast({ type: "success", title: "Sesion cerrada", message: "Has salido correctamente" });
                 }}
                 className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
               >
@@ -153,5 +153,6 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
     </header>
   );
 }
+
 
 

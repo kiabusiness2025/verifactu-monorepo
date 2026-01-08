@@ -5,6 +5,23 @@ export type PricingInput = {
   bankingEnabled: boolean;
 };
 
+const BASE_PRICE_EUR = 19;
+const COMPANY_UNIT_EUR = 7;
+
+const INVOICE_TIER_PRICES_EUR: Record<string, number> = {
+  INVOICES_51_200_MONTHLY: 6,
+  INVOICES_201_500_MONTHLY: 15,
+  INVOICES_501_1000_MONTHLY: 29,
+  INVOICES_1001_2000_MONTHLY: 49,
+};
+
+const MOVEMENT_TIER_PRICES_EUR: Record<string, number> = {
+  MOV_1_200_MONTHLY: 6,
+  MOV_201_800_MONTHLY: 15,
+  MOV_801_2000_MONTHLY: 35,
+  MOV_2001_5000_MONTHLY: 69,
+};
+
 export function clampInt(n: number, min: number, max: number) {
   const x = Math.floor(Number.isFinite(n) ? n : min);
   return Math.max(min, Math.min(max, x));
@@ -47,24 +64,23 @@ export function movementTierKey(movements: number):
 
 export function estimateNetEur(input: PricingInput) {
   const i = normalizeInput(input);
-  let total = 19; // base
+  let total = BASE_PRICE_EUR;
 
   // empresas extra
-  total += Math.max(0, i.companies - 1) * 7;
+  total += Math.max(0, i.companies - 1) * COMPANY_UNIT_EUR;
 
-  // facturas tier add-on
-  if (i.invoices > 50 && i.invoices <= 200) total += 6;
-  else if (i.invoices <= 500) total += 15;
-  else if (i.invoices <= 1000) total += 29;
-  else total += 49;
+  // facturas: aplicar SOLO si hay tier (>50)
+  const invTier = invoiceTierKey(i.invoices);
+  if (invTier) {
+    total += INVOICE_TIER_PRICES_EUR[invTier] ?? 0;
+  }
 
-  // movimientos tier add-on (solo si banca)
+  // movimientos: aplicar SOLO si hay tier (>0) y banca activada
   if (i.bankingEnabled) {
-    const m = i.movements;
-    if (m > 0 && m <= 200) total += 6;
-    else if (m <= 800) total += 15;
-    else if (m <= 2000) total += 35;
-    else if (m <= 5000) total += 69;
+    const movTier = movementTierKey(i.movements);
+    if (movTier) {
+      total += MOVEMENT_TIER_PRICES_EUR[movTier] ?? 0;
+    }
   }
 
   return total;

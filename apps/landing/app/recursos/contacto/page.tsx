@@ -1,15 +1,37 @@
 import Link from "next/link";
 
+const title = "Contacto | Verifactu Business";
+const description = "Contacta con el equipo de Verifactu Business para soporte, ventas o colaboraciones.";
+
 export const metadata = {
-  title: "Contacto | Verifactu Business",
-  description: "Contacta con el equipo de Verifactu Business para soporte, ventas o colaboraciones.",
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: "/recursos/contacto",
+    type: "article",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
 };
 
 export default function ContactoPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Recursos</p>
+        <Breadcrumbs
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Recursos", href: "/recursos/guias-y-webinars" },
+            { label: "Contacto" },
+          ]}
+        />
+
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Recursos</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Contacto</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
           Escribenos para soporte, ventas o colaboraciones. Te respondemos en horario laboral.
@@ -79,6 +101,24 @@ export default function ContactoPage() {
             Abrir soporte
           </Link>
         </div>
+
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-slate-600">Quieres ver planes y activar la prueba?</div>
+          <div className="flex gap-3">
+            <Link
+              href="/verifactu/planes"
+              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+            >
+              Ver planes
+            </Link>
+            <Link
+              href="/verifactu/soporte"
+              className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200"
+            >
+              Abrir soporte
+            </Link>
+          </div>
+        </div>
       </div>
     </main>
   );
@@ -102,8 +142,31 @@ function ContactCard({
         className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
       >
         {action.label}
-        <span aria-hidden="true">→</span>
+        <span aria-hidden>-></span>
       </Link>
     </div>
+  );
+}
+
+type Crumb = { label: string; href?: string };
+
+function Breadcrumbs({ items }: { items: Crumb[] }) {
+  return (
+    <nav className="text-xs text-slate-500">
+      <ol className="flex flex-wrap items-center gap-2">
+        {items.map((item, index) => (
+          <li key={`${item.label}-${index}`} className="flex items-center gap-2">
+            {item.href ? (
+              <Link href={item.href} className="hover:text-blue-700">
+                {item.label}
+              </Link>
+            ) : (
+              <span className="text-slate-700">{item.label}</span>
+            )}
+            {index < items.length - 1 ? <span>/</span> : null}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }

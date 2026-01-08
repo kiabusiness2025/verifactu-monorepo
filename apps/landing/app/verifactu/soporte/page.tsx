@@ -77,6 +77,24 @@ export default function SoportePage() {
             Prioridad para incidencias VeriFactu
           </span>
         </div>
+
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-slate-600">Quieres ver planes y activar la prueba?</div>
+          <div className="flex gap-3">
+            <Link
+              href="/verifactu/planes"
+              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+            >
+              Ver planes
+            </Link>
+            <Link
+              href="/verifactu/soporte"
+              className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200"
+            >
+              Abrir soporte
+            </Link>
+          </div>
+        </div>
       </div>
     </main>
   );
@@ -100,7 +118,7 @@ function SupportCard({
         className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
       >
         {action.label}
-        <span aria-hidden="true">→</span>
+        <span aria-hidden>-></span>
       </Link>
     </div>
   );
@@ -128,3 +146,5 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
     </nav>
   );
 }
+
+

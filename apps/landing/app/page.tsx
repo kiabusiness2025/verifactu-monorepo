@@ -1,5 +1,6 @@
-ï»¿"use client";
+"use client";
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Check, ShieldCheck, Sparkles } from "lucide-react";
 import Header from "./components/Header";
@@ -102,7 +103,7 @@ export default function Page() {
               </div>
               <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-                Estado: Operativo Â· Ãšltima sync VeriFactu hace 3 min
+                Estado: Operativo · Última sync VeriFactu hace 3 min
               </div>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
@@ -114,17 +115,17 @@ export default function Page() {
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-slate-700 sm:text-lg">
-                Isaak organiza facturas y gastos, y te muestra lo esencial: ventas, gastos y beneficio. TÃº decides el ritmo.
+                Isaak organiza facturas y gastos, y te muestra lo esencial: ventas, gastos y beneficio. Tú decides el ritmo.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <button
-                  onClick={() => setShowCalculator(true)}
+                <Link
+                  href="/verifactu/planes"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-blue-700"
                 >
-                  Calcula tu precio
-                </button>
-                <SecondaryButton href="/demo">Ver demo</SecondaryButton>
+                  Ver planes
+                </Link>
+                <SecondaryButton href="/verifactu/soporte">Abrir soporte</SecondaryButton>
               </div>
 
               <div className="mt-7 flex flex-wrap gap-2">
@@ -154,7 +155,7 @@ export default function Page() {
                 Cumple con calma.
               </h2>
               <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-                VeriFactu no deberÃ­a darte miedo. Isaak te guÃ­a, valida y te avisa cuando algo necesita revisiÃ³n.
+                VeriFactu no debería darte miedo. Isaak te guía, valida y te avisa cuando algo necesita revisión.
               </p>
             </div>
             <ComplianceBadge />
@@ -174,7 +175,7 @@ export default function Page() {
               <Sparkles className="h-4 w-4" />
               Dashboard
             </div>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">Ventas â€“ Gastos = Beneficio</h2>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">Ventas – Gastos = Beneficio</h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
               Lo esencial, siempre visible. El detalle aparece solo cuando lo pides.
             </p>
@@ -194,7 +195,7 @@ export default function Page() {
               Precio que se ajusta a tu uso real
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              Solo mensual Â· 1 mes gratis Â· aviso antes de renovar.
+              Solo mensual · 1 mes gratis · aviso antes de renovar.
             </p>
 
             <div className="mt-8 flex justify-center">
@@ -208,7 +209,7 @@ export default function Page() {
 
             <p className="mx-auto mt-6 max-w-2xl text-xs text-slate-500">
               Precio orientativo. La cuota final se basa en empresas activas, facturas emitidas y movimientos procesados
-              (si activas conciliaciÃ³n bancaria). IVA no incluido.
+              (si activas conciliación bancaria). IVA no incluido.
             </p>
           </div>
         </Container>
@@ -220,7 +221,7 @@ export default function Page() {
           <div className="text-center mb-12">
             <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">Preguntas frecuentes</h3>
             <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-              Respuestas rÃ¡pidas sobre planes, seguridad y funcionalidades.
+              Respuestas rápidas sobre planes, seguridad y funcionalidades.
             </p>
           </div>
           <Faq />
@@ -234,26 +235,26 @@ export default function Page() {
             Recursos para dominar VeriFactu e Isaak.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
-            GuÃ­as, onboarding y checklist para aplicar mejores prÃ¡cticas y aprovechar todo el potencial de la plataforma.
+            Guías, onboarding y checklist para aplicar mejores prácticas y aprovechar todo el potencial de la plataforma.
           </p>
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
             <ResourceCard
-              tag="GuÃ­a"
+              tag="Guía"
               title="Manual VeriFactu 2025"
-              desc="Requisitos y checklist prÃ¡ctico para operar con confianza."
-              cta="Descargar guÃ­a"
+              desc="Requisitos y checklist práctico para operar con confianza."
+              cta="Descargar guía"
             />
             <ResourceCard
               tag="Primeros pasos"
               title="Primeros pasos con Isaak"
-              desc="Aprende a emitir, registrar gastos y entender tus mÃ©tricas."
+              desc="Aprende a emitir, registrar gastos y entender tus métricas."
               cta="Reservar plaza"
             />
             <ResourceCard
               tag="Checklist"
-              title="AuditorÃ­a express"
-              desc="EvalÃºa el estado de tu facturaciÃ³n y detecta riesgos."
+              title="Auditoría express"
+              desc="Evalúa el estado de tu facturación y detecta riesgos."
               cta="Solicitar checklist"
             />
           </div>
@@ -266,5 +267,6 @@ export default function Page() {
     </div>
   );
 }
+
 
 

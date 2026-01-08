@@ -71,8 +71,26 @@ export default function GuiasWebinarsPage() {
             className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
           >
             Solicitar sesion
-            <span aria-hidden="true">→</span>
+            <span aria-hidden>-></span>
           </Link>
+        </div>
+
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-slate-600">Quieres activar la prueba y ver el precio final?</div>
+          <div className="flex gap-3">
+            <Link
+              href="/verifactu/planes"
+              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+            >
+              Ver planes
+            </Link>
+            <Link
+              href="/verifactu/soporte"
+              className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200"
+            >
+              Abrir soporte
+            </Link>
+          </div>
         </div>
       </div>
     </main>
@@ -85,7 +103,7 @@ function ResourceCard({ title, desc, cta }: { title: string; desc: string; cta: 
       <div className="text-sm font-semibold text-slate-900">{title}</div>
       <p className="mt-1 text-sm text-slate-600">{desc}</p>
       <button className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
-        {cta} <span aria-hidden="true">→</span>
+        {cta} <span aria-hidden>-></span>
       </button>
     </div>
   );
@@ -113,3 +131,5 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
     </nav>
   );
 }
+
+
