@@ -36,19 +36,32 @@ export default function LoginPage() {
 
   // Redirect if already authenticated
   React.useEffect(() => {
-    if (user && !authLoading && !hasRedirected.current) {
+    if (!authLoading && user && !hasRedirected.current) {
       hasRedirected.current = true;
-      router.push(resolveNextUrl());
+      const nextUrl = resolveNextUrl();
+      router.replace(nextUrl);
     }
   }, [user, authLoading, resolveNextUrl, router]);
 
-  // Show loading state while checking auth
-  if (authLoading || (user && hasRedirected.current)) {
+  // Don't render anything if authenticated - just show loading
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is authenticated, don't show login form
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Redirigiendo...</p>
         </div>
       </div>
     );
