@@ -145,8 +145,3 @@ export default function CookiesPage() {
     </main>
   );
 }
-        </p>
-      </section>
-    </main>
-  );
-}

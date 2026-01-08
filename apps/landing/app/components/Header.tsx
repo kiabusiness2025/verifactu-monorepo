@@ -22,10 +22,10 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   const dashboardHref = `${appUrl.replace(/\/$/, "")}/dashboard`;
 
   const defaultNavLinks: NavLink[] = [
-    { label: "Características", href: "#features" },
-    { label: "Precios", href: "#planes" },
-    { label: "FAQ", href: "#faq" },
-    { label: "Docs", href: "/proximamente" },
+    { label: "VeriFactu", href: "/verifactu/que-es" },
+    { label: "Planes", href: "/verifactu/planes" },
+    { label: "Recursos", href: "/recursos/guias-y-webinars" },
+    { label: "Soporte", href: "/verifactu/soporte" },
   ];
 
   const links = navLinks ?? defaultNavLinks;
@@ -153,4 +153,5 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
     </header>
   );
 }
+
 

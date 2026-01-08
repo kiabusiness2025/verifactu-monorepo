@@ -13,7 +13,7 @@ import type { User } from "firebase/auth";
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { showToast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [passwordError, setPasswordError] = useState("");
+  const [redirecting, setRedirecting] = useState(false);
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
@@ -35,10 +36,23 @@ export default function LoginPage() {
 
   // Redirect if already authenticated
   React.useEffect(() => {
-    if (user) {
+    if (user && !authLoading && !redirecting) {
+      setRedirecting(true);
       router.push(resolveNextUrl());
     }
-  }, [user, resolveNextUrl]);
+  }, [user, authLoading, redirecting, resolveNextUrl, router]);
+
+  // Show loading state while checking auth
+  if (authLoading || redirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   const persistSession = async (authedUser: User) => {
     const idToken = await authedUser.getIdToken();
