@@ -13,11 +13,20 @@ type IsaakUIContextValue = {
 
 const IsaakUIContext = createContext<IsaakUIContextValue | undefined>(undefined);
 
-export function IsaakUIProvider({ children }: { children: React.ReactNode }) {
+export function IsaakUIProvider({ 
+  children,
+  onIsaakOpen
+}: { 
+  children: React.ReactNode;
+  onIsaakOpen?: () => void;
+}) {
   const [company, setCompany] = useState("Empresa Demo SL");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const openDrawer = useCallback(() => setIsDrawerOpen(true), []);
+  const openDrawer = useCallback(() => {
+    if (onIsaakOpen) onIsaakOpen();
+    setIsDrawerOpen(true);
+  }, [onIsaakOpen]);
   const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
   const toggleDrawer = useCallback(() => setIsDrawerOpen((v) => !v), []);
 

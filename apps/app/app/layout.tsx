@@ -13,7 +13,12 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Verifactu Business",
   description: "Plataforma para llevar ventas, gastos y beneficio con tranquilidad, cumpliendo VeriFactu.",
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Verifactu Business",
+  },
   icons: {
     icon: [
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
@@ -27,6 +32,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
   themeColor: "#0B0F14",
 };
 

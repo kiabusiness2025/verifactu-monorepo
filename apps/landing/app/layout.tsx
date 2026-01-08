@@ -80,6 +80,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        {/* Preconnect a servicios externos para mejorar performance */}
+        <link rel="preconnect" href="https://firebaseauth.googleapis.com" />
+        <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+        <link rel="preconnect" href="https://js.stripe.com" />
+        <link rel="preconnect" href="https://api.stripe.com" />
+      </head>
       <body className={display.className}>
         <AuthProvider>
           <ToastProvider>

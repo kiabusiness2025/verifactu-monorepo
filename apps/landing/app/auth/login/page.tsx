@@ -25,37 +25,18 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState("");
 
   const appUrl =
-    (process.env.NEXT_PUBLIC_APP_URL as string | undefined) ||
-    "https://app.verifactu.business";
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://app.verifactu.business");
+  const fallback = `${appUrl.replace(/\/$/, "")}/dashboard`;
   const resolveNextUrl = React.useCallback(() => {
     const nextParam = searchParams.get("next");
-    const defaultTarget = `${appUrl}/dashboard`;
-
-    if (!nextParam) return defaultTarget;
-
-    // Absolute URL
-    if (nextParam.startsWith("http")) {
-      try {
-        const target = new URL(nextParam);
-        const appOrigin = new URL(appUrl).origin;
-        if (target.origin === appOrigin) return nextParam;
-      } catch {
-        return defaultTarget;
-      }
-    }
-
-    // Relative path
-    if (nextParam.startsWith("/")) {
-      return `${appUrl}${nextParam}`;
-    }
-
-    return defaultTarget;
-  }, [appUrl, searchParams]);
+    return nextParam && nextParam.length > 0 ? nextParam : fallback;
+  }, [fallback, searchParams]);
 
   // Redirect if already authenticated
   React.useEffect(() => {
     if (user) {
-      window.location.href = resolveNextUrl();
+      router.push(resolveNextUrl());
     }
   }, [user, resolveNextUrl]);
 
@@ -93,7 +74,7 @@ export default function LoginPage() {
 
       // Redirect to dashboard
       showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión correcto" });
-      window.location.href = resolveNextUrl();
+      router.push(resolveNextUrl());
     } catch (err) {
       setError("Error al iniciar sesión. Intenta de nuevo.");
       showToast({ type: "error", title: "Error", message: "Error al iniciar sesión" });
@@ -122,7 +103,7 @@ export default function LoginPage() {
 
       // Redirect to dashboard
       showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión con Google" });
-      window.location.href = resolveNextUrl();
+      router.push(resolveNextUrl());
     } catch (err) {
       setError("Error al iniciar sesión con Google. Intenta de nuevo.");
       showToast({ type: "error", title: "Error", message: "Error al iniciar sesión con Google" });

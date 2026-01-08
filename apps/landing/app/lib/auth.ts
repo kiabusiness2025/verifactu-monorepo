@@ -11,6 +11,7 @@ import {
   AuthError,
 } from "firebase/auth";
 import { auth, isFirebaseConfigComplete, isFirebaseReady } from "./firebase";
+import { mintSessionCookie, clearSessionCookie } from "./serverSession";
 
 const authUnavailable = () => ({
   user: null as any,
@@ -131,6 +132,7 @@ export const signInWithEmail = async (
       };
     }
 
+    await mintSessionCookie(userCredential.user);
     return { user: userCredential.user, error: null };
   } catch (error) {
     return {
@@ -151,6 +153,7 @@ export const signInWithGoogle = async (): Promise<
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
 
+    await mintSessionCookie(userCredential.user);
     return { user: userCredential.user, error: null };
   } catch (error) {
     return {
@@ -224,6 +227,7 @@ export const resendVerificationEmail = async (
 export const logout = async (): Promise<void> => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return;
   try {
+    await clearSessionCookie();
     await signOut(auth);
   } catch (error) {
     console.error("Error signing out:", error);

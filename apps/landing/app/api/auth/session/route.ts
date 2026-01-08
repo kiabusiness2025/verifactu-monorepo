@@ -1,80 +1,68 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifyIdToken } from "@/lib/firebaseAdmin";
+import { NextResponse } from "next/server";
+import { SignJWT } from "jose";
+import admin from "firebase-admin";
 
-const COOKIE_NAME = "__session";
-// Cookie expira en 14 días, pero Firebase token expira en 1 hora
-// El cliente debe refrescar el token antes de que expire
-const MAX_AGE = 60 * 60 * 24 * 14; // 14 days
+export const runtime = "nodejs";
 
-function getDomainAndSecure(req: NextRequest) {
-  const host = req.headers.get("host") || "";
-  const isProd = host.includes("verifactu.business");
-
-  return {
-    domain: isProd ? ".verifactu.business" : undefined,
-    secure: isProd,
-  };
+function requireEnv(name: string) {
+  const v = process.env[name];
+  if (!v) throw new Error(`Missing env var: ${name}`);
+  return v;
 }
 
-export async function POST(req: NextRequest) {
-  let payload: { idToken?: string } = {};
-  try {
-    payload = await req.json();
-  } catch (error) {
-    return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
-  }
+function initFirebaseAdmin() {
+  if (admin.apps.length) return;
 
-  const idToken = payload.idToken;
-  if (!idToken || typeof idToken !== "string") {
-    return NextResponse.json({ error: "Falta idToken" }, { status: 400 });
-  }
-
-  // Verificar el ID token con Firebase Admin
-  try {
-    const decodedToken = await verifyIdToken(idToken);
-    
-    // Token válido, crear sesión
-    const res = NextResponse.json({ 
-      ok: true, 
-      uid: decodedToken.uid,
-      email: decodedToken.email 
-    });
-    const { domain, secure } = getDomainAndSecure(req);
-
-    res.cookies.set({
-      name: COOKIE_NAME,
-      value: idToken,
-      httpOnly: true,
-      secure,
-      sameSite: "lax",
-      path: "/",
-      domain,
-      maxAge: MAX_AGE,
-    });
-
-    return res;
-  } catch (error) {
-    console.error("Error verificando token:", error);
-    return NextResponse.json(
-      { error: "Token inválido o expirado" },
-      { status: 401 }
-    );
-  }
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: requireEnv("FIREBASE_ADMIN_PROJECT_ID"),
+      clientEmail: requireEnv("FIREBASE_ADMIN_CLIENT_EMAIL"),
+      privateKey: requireEnv("FIREBASE_ADMIN_PRIVATE_KEY").replace(/\\n/g, "\n"),
+    }),
+  });
 }
 
-export async function DELETE(req: NextRequest) {
+function cookieDomainFromHost(host: string | null) {
+  if (!host) return undefined;
+  if (host.endsWith("verifactu.business")) return ".verifactu.business";
+  return undefined;
+}
+
+export async function POST(req: Request) {
+  initFirebaseAdmin();
+
+  const { idToken } = await req.json().catch(() => ({}));
+  if (!idToken) {
+    return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
+  }
+
+  const decoded = await admin.auth().verifyIdToken(idToken);
+
+  const secret = new TextEncoder().encode(requireEnv("SESSION_SECRET"));
+
+  const token = await new SignJWT({
+    uid: decoded.uid,
+    email: decoded.email ?? null,
+    ver: 1,
+  })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuedAt()
+    .setExpirationTime("30d")
+    .sign(secret);
+
+  const url = new URL(req.url);
+  const host = req.headers.get("host");
+
   const res = NextResponse.json({ ok: true });
-  const { domain, secure } = getDomainAndSecure(req);
-
   res.cookies.set({
-    name: COOKIE_NAME,
-    value: "",
+    name: "__session",
+    value: token,
     httpOnly: true,
-    secure,
+    secure: url.protocol === "https:",
     sameSite: "lax",
     path: "/",
-    domain,
-    maxAge: 0,
+    domain: cookieDomainFromHost(host),
+    maxAge: 60 * 60 * 24 * 30,
   });
 
   return res;

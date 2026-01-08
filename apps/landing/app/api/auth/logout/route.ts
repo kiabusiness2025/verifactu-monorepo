@@ -1,30 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-const COOKIE_NAME = "__session";
+export const runtime = "nodejs";
 
-function getDomainAndSecure(req: NextRequest) {
-  const host = req.headers.get("host") || "";
-  const isProd = host.includes("verifactu.business");
-
-  return {
-    domain: isProd ? ".verifactu.business" : undefined,
-    secure: isProd,
-  };
+function cookieDomainFromHost(host: string | null) {
+  if (!host) return undefined;
+  if (host.endsWith("verifactu.business")) return ".verifactu.business";
+  return undefined;
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
+  const host = req.headers.get("host");
   const res = NextResponse.json({ ok: true });
-  const { domain, secure } = getDomainAndSecure(req);
 
-  // Limpiar cookie de sesión
   res.cookies.set({
-    name: COOKIE_NAME,
+    name: "__session",
     value: "",
     httpOnly: true,
-    secure,
+    secure: new URL(req.url).protocol === "https:",
     sameSite: "lax",
     path: "/",
-    domain,
+    domain: cookieDomainFromHost(host),
     maxAge: 0,
   });
 
