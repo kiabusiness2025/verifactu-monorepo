@@ -19,7 +19,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
     (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://app.verifactu.business");
-  const dashboardHref = `${appUrl.replace(/\/$/, "")}/app`;
+  const dashboardHref = `${appUrl.replace(/\/$/, "")}/dashboard`;
 
   const defaultNavLinks: NavLink[] = [
     { label: "Características", href: "#features" },

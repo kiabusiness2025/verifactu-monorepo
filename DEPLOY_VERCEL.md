@@ -136,9 +136,13 @@ Este repo tiene **dos proyectos separados** en Vercel:
 - `FIREBASE_SERVICE_ACCOUNT` ⚠️ **REQUERIDO** - Service Account JSON para validar tokens  
   Ver [FIREBASE_ADMIN_CONFIG.md](apps/landing/FIREBASE_ADMIN_CONFIG.md) para instrucciones
 
-**Isaak Chat / OpenAI**
-- `ISAAK_API_KEY`
-- `ISAAK_ASSISTANT_ID`
+**Google AI (Genkit con Gemini)**
+- `GOOGLE_AI_API_KEY` ⚠️ **REQUERIDO** - API Key de Google AI para Isaak chat  
+  Obtener en [Google AI Studio](https://makersuite.google.com/app/apikey)
+
+**Isaak Chat / OpenAI (Legacy, deprecado)**
+- `ISAAK_API_KEY` (ya no se usa, reemplazado por Genkit)
+- `ISAAK_ASSISTANT_ID` (ya no se usa)
 - `NEXT_PUBLIC_ISAAK_API_KEY` (compatibilidad)
 - `NEXT_PUBLIC_ISAAK_ASSISTANT_ID` (compatibilidad)
 
