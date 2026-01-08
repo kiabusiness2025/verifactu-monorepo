@@ -24,6 +24,7 @@
     "@verifactu/ui": "workspace:^",
     "apexcharts": "^4.3.0",
     "flatpickr": "^4.6.13",
+    "jose": "^6.1.3",
     "next": "^14.2.35",
     "react": "^18.2.0",
     "react-apexcharts": "^1.7.0",

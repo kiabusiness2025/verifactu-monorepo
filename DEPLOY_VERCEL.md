@@ -133,6 +133,8 @@ Este repo tiene **dos proyectos separados** en Vercel:
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
 - `NEXT_PUBLIC_USE_AUTH_EMULATOR` (opcional, solo local)
+- `FIREBASE_SERVICE_ACCOUNT` ⚠️ **REQUERIDO** - Service Account JSON para validar tokens  
+  Ver [FIREBASE_ADMIN_CONFIG.md](apps/landing/FIREBASE_ADMIN_CONFIG.md) para instrucciones
 
 **Isaak Chat / OpenAI**
 - `ISAAK_API_KEY`

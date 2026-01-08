@@ -67,8 +67,10 @@ export default function LoginPage() {
       body: JSON.stringify({ idToken }),
     });
     if (!res.ok) {
-      throw new Error("No se pudo guardar la sesión");
+      const data = await res.json();
+      throw new Error(data.error || "No se pudo guardar la sesión");
     }
+    return res.json();
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
