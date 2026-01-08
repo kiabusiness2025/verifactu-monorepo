@@ -4,5 +4,18 @@
   "installCommand": "cd ../.. && node -v && npm -v && npx -y pnpm@10.27.0 -v && npx -y pnpm@10.27.0 install --frozen-lockfile",
   "buildCommand": "cd ../.. && npx -y pnpm@10.27.0 -v && npx -y pnpm@10.27.0 turbo run build --filter=verifactu-landing",
   "devCommand": "pnpm run dev",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.verifactu.business"
+        }
+      ],
+      "destination": "https://verifactu.business/:path*",
+      "permanent": true
+    }
+  ]
 }
