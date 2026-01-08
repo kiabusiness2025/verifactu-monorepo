@@ -25,6 +25,12 @@ export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   const isDashboard = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   const isRoot = pathname === "/";
+  const isDemo = pathname === "/demo";
+
+  // Demo is always public
+  if (isDemo) {
+    return NextResponse.next();
+  }
 
   const landingLogin = `${getLandingUrl()}/auth/login`;
   const appBase = getAppUrl();
@@ -47,5 +53,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*"],
+  matcher: ["/", "/dashboard/:path*", "/demo"],
 };
