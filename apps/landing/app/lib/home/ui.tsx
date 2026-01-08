@@ -479,10 +479,42 @@ export function Footer() {
             </div>
           </div>
 
-          <FooterCol title="Producto" links={["Resumen", "Plataforma", "Automatización", "Integraciones"]} />
-          <FooterCol title="VeriFactu" links={["Qué es", "Planes y precios", "Soporte", "Estado del servicio"]} />
-          <FooterCol title="Recursos" links={["Guías y webinars", "Checklist", "Blog", "Contacto"]} />
-          <FooterCol title="Legal" links={["VeriFactu", "Política de privacidad", "Términos de servicio", "Cookies"]} />
+          <FooterCol
+            title="Producto"
+            links={[
+              { label: "Resumen", href: "#hero" },
+              { label: "Plataforma", href: "#dashboard" },
+              { label: "Automatización", href: "#automatizacion" },
+              { label: "Integraciones", href: "#integraciones" },
+            ]}
+          />
+          <FooterCol
+            title="VeriFactu"
+            links={[
+              { label: "Qué es", href: "/verifactu/que-es" },
+              { label: "Planes y precios", href: "/verifactu/planes" },
+              { label: "Soporte", href: "/verifactu/soporte" },
+              { label: "Estado del servicio", href: "/verifactu/estado" },
+            ]}
+          />
+          <FooterCol
+            title="Recursos"
+            links={[
+              { label: "Guías y webinars", href: "/recursos/guias-y-webinars" },
+              { label: "Checklist", href: "/recursos/checklist" },
+              { label: "Blog", href: "/recursos/blog" },
+              { label: "Contacto", href: "/recursos/contacto" },
+            ]}
+          />
+          <FooterCol
+            title="Legal"
+            links={[
+              { label: "VeriFactu", href: "/verifactu" },
+              { label: "Política de privacidad", href: "/legal/privacidad" },
+              { label: "Términos de servicio", href: "/legal/terminos" },
+              { label: "Cookies", href: "/legal/cookies" },
+            ]}
+          />
         </div>
 
         <div className="mt-10 border-t border-white/10 pt-6">
@@ -509,15 +541,17 @@ export function Footer() {
   );
 }
 
-export function FooterCol({ title, links }: { title: string; links: string[] }) {
+type FooterLink = { label: string; href: string };
+
+export function FooterCol({ title, links }: { title: string; links: FooterLink[] }) {
   return (
     <div>
       <div className="text-sm font-semibold text-white">{title}</div>
       <ul className="mt-3 space-y-2 text-sm text-slate-300">
-        {links.map((l) => (
-          <li key={l}>
-            <a className="hover:text-blue-300 transition" href="/proximamente">
-              {l}
+        {links.map((link) => (
+          <li key={link.label}>
+            <a className="hover:text-blue-300 transition" href={link.href}>
+              {link.label}
             </a>
           </li>
         ))}

@@ -26,3 +26,8 @@ landing/dist*.pem
 # Local brand packs / artifacts (keep out of git)
 brand/verifactu_business_brand_pack_v2/
 apps/**/public/favicon.png
+
+# secrets
+secrets/
+**/.env.local
+
