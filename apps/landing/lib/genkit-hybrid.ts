@@ -7,15 +7,17 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { enableFirebaseTelemetry } from '@genkit-ai/firebase';
 
-// Habilitar telemetría de Firebase
-try {
-  enableFirebaseTelemetry({
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  });
-} catch (error) {
-  console.warn('Firebase telemetry no pudo inicializarse:', error);
+// Habilitar telemetría de Firebase solo en runtime (no en build)
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+  try {
+    const { enableFirebaseTelemetry } = require('@genkit-ai/firebase');
+    enableFirebaseTelemetry({
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    });
+  } catch (error) {
+    // Silently fail - telemetry es opcional
+  }
 }
 
 // Tipos de modelos disponibles
