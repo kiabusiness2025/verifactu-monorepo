@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import BrandLogo from "../../components/BrandLogo";
 import type { IsaakMsg } from "./types";
+import { Button } from "../../components/ui";
 
 export function Container({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return <div className={`mx-auto w-full max-w-6xl px-4 sm:px-6 ${className}`}>{children}</div>;
@@ -23,11 +24,9 @@ export function Container({ className = "", children }: { className?: string; ch
 
 export function PrimaryButton({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
-    <button
-      className={`inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700 ${className}`}
-    >
+    <Button variant="primary" size="md" className={className}>
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -40,20 +39,20 @@ export function SecondaryButton({
   children: React.ReactNode;
   href?: string;
 }) {
-  const cls = `inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200 ${className}`;
-
   if (href) {
     return (
-      <a href={href} className={cls}>
-        {children}
+      <a href={href} className={className}>
+        <Button variant="secondary" size="md" className={className}>
+          {children}
+        </Button>
       </a>
     );
   }
 
   return (
-    <button type="button" className={cls}>
+    <Button variant="secondary" size="md" type="button" className={className}>
       {children}
-    </button>
+    </Button>
   );
 }
 
