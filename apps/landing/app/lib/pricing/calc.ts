@@ -87,3 +87,25 @@ export function estimateNetEur(input: PricingInput) {
 
   return total;
 }
+
+export function estimateBreakdown(input: PricingInput) {
+  const i = normalizeInput(input);
+  const base = BASE_PRICE_EUR;
+  const companiesExtra = Math.max(0, i.companies - 1) * COMPANY_UNIT_EUR;
+
+  const invTier = invoiceTierKey(i.invoices);
+  const invoiceAddon = invTier ? INVOICE_TIER_PRICES_EUR[invTier] : 0;
+
+  const movTier = i.bankingEnabled ? movementTierKey(i.movements) : null;
+  const movementAddon = movTier ? MOVEMENT_TIER_PRICES_EUR[movTier] : 0;
+
+  const total = base + companiesExtra + invoiceAddon + movementAddon;
+
+  return {
+    base,
+    companiesExtra,
+    invoiceAddon,
+    movementAddon,
+    total,
+  };
+}

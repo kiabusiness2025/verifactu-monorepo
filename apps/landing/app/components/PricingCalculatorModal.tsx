@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { estimateNetEur, type PricingInput } from "../lib/pricing/calc";
+import {
+  estimateBreakdown,
+  estimateNetEur,
+  type PricingInput,
+} from "../lib/pricing/calc";
 
 interface PricingCalculatorModalProps {
   isOpen: boolean;
@@ -22,6 +26,7 @@ export default function PricingCalculatorModal({
 
   const input: PricingInput = { companies, invoices, movements, bankingEnabled };
   const monthlyPrice = estimateNetEur(input);
+  const breakdown = estimateBreakdown(input);
   const withVAT = Math.round(monthlyPrice * 1.21 * 100) / 100;
 
   const handleStartTrial = async () => {
@@ -164,11 +169,28 @@ export default function PricingCalculatorModal({
             <div>
               <p className="text-sm text-gray-600">Cuota mensual estimada</p>
               <p className="mt-1 text-4xl font-bold text-blue-600">
-                {monthlyPrice} EUR<span className="text-2xl text-gray-500">/mes</span>
+                {monthlyPrice} €{" "}
+                <span className="text-2xl text-gray-500">/mes + IVA</span>
               </p>
-              <p className="mt-1 text-sm text-gray-500">
-                {withVAT} EUR/mes con IVA incluido
-              </p>
+              <p className="mt-1 text-sm text-gray-500">Con IVA: {withVAT} €</p>
+              <div className="mt-4 space-y-1 text-xs text-gray-500">
+                <div className="flex items-center justify-between">
+                  <span>Base</span>
+                  <span>{breakdown.base} €</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Empresas extra</span>
+                  <span>{breakdown.companiesExtra} €</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Tramo facturas</span>
+                  <span>{breakdown.invoiceAddon} €</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Tramo movimientos</span>
+                  <span>{breakdown.movementAddon} €</span>
+                </div>
+              </div>
             </div>
             <button
               onClick={handleStartTrial}
