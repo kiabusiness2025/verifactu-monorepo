@@ -31,17 +31,44 @@ export default function LoginPage() {
   const fallback = `${appUrl.replace(/\/$/, "")}/dashboard`;
   const resolveNextUrl = React.useCallback(() => {
     const nextParam = searchParams.get("next");
-    return nextParam && nextParam.length > 0 ? nextParam : fallback;
-  }, [fallback, searchParams]);
+    if (!nextParam) return { url: fallback, external: true };
+
+    if (nextParam.startsWith("http")) {
+      try {
+        const target = new URL(nextParam);
+        const appOrigin = new URL(appUrl).origin;
+        if (target.origin === appOrigin) {
+          return { url: nextParam, external: true };
+        }
+      } catch {
+        return { url: fallback, external: true };
+      }
+      return { url: fallback, external: true };
+    }
+
+    if (nextParam.startsWith("/")) {
+      return { url: nextParam, external: false };
+    }
+
+    return { url: fallback, external: true };
+  }, [fallback, searchParams, appUrl]);
+
+  const redirectToNext = React.useCallback(() => {
+    const next = resolveNextUrl();
+    if (next.external) {
+      window.location.href = next.url;
+      return;
+    }
+    router.replace(next.url);
+  }, [resolveNextUrl, router]);
 
   // Redirect if already authenticated
   React.useEffect(() => {
     if (!authLoading && user && !hasRedirected.current) {
       hasRedirected.current = true;
-      const nextUrl = resolveNextUrl();
-      router.replace(nextUrl);
+      redirectToNext();
     }
-  }, [user, authLoading, resolveNextUrl, router]);
+  }, [user, authLoading, redirectToNext]);
 
   // Don't render anything if authenticated - just show loading
   if (authLoading) {
@@ -101,7 +128,7 @@ export default function LoginPage() {
 
       // Redirect to dashboard
       showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión correcto" });
-      router.push(resolveNextUrl());
+      redirectToNext();
     } catch (err) {
       setError("Error al iniciar sesión. Intenta de nuevo.");
       showToast({ type: "error", title: "Error", message: "Error al iniciar sesión" });
@@ -130,7 +157,7 @@ export default function LoginPage() {
 
       // Redirect to dashboard
       showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión con Google" });
-      router.push(resolveNextUrl());
+      redirectToNext();
     } catch (err) {
       setError("Error al iniciar sesión con Google. Intenta de nuevo.");
       showToast({ type: "error", title: "Error", message: "Error al iniciar sesión con Google" });
