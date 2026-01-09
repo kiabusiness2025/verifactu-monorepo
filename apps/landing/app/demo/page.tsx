@@ -229,8 +229,8 @@ export default function DemoPage({
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span className="font-semibold text-slate-800">Verifactu Business</span>
           <div className="flex flex-wrap gap-3 text-xs">
-            <a className="hover:text-blue-700" href="/">Ir a Home</a>
-            <a className="hover:text-blue-700" href="/auth/signup">Crear cuenta</a>
+            <Link className="hover:text-blue-700" href="/" aria-label="Ir a página de inicio">Ir a Home</Link>
+            <Link className="hover:text-blue-700" href="/auth/signup" aria-label="Crear nueva cuenta">Crear cuenta</Link>
           </div>
         </div>
       </footer>

@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BadgeCheck,
@@ -41,11 +42,11 @@ export function SecondaryButton({
 }) {
   if (href) {
     return (
-      <a href={href} className={className}>
+      <Link href={href} className={className}>
         <Button variant="secondary" size="md" className={className}>
           {children}
         </Button>
-      </a>
+      </Link>
     );
   }
 
@@ -521,18 +522,18 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400">
             <p>© {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
             <div className="flex gap-6">
-              <a href="/verifactu" className="hover:text-blue-300 transition">
+              <Link href="/verifactu" className="hover:text-blue-300 transition" aria-label="Ir a VeriFactu">
                 VeriFactu
-              </a>
-              <a href="/legal/privacidad" className="hover:text-blue-300 transition">
+              </Link>
+              <Link href="/legal/privacidad" className="hover:text-blue-300 transition" aria-label="Leer política de privacidad">
                 Política de privacidad
-              </a>
-              <a href="/legal/terminos" className="hover:text-blue-300 transition">
+              </Link>
+              <Link href="/legal/terminos" className="hover:text-blue-300 transition" aria-label="Leer términos de servicio">
                 Términos de servicio
-              </a>
-              <a href="/legal/cookies" className="hover:text-blue-300 transition">
+              </Link>
+              <Link href="/legal/cookies" className="hover:text-blue-300 transition" aria-label="Leer política de cookies">
                 Cookies
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -550,9 +551,9 @@ export function FooterCol({ title, links }: { title: string; links: FooterLink[]
       <ul className="mt-3 space-y-2 text-sm text-slate-300">
         {links.map((link) => (
           <li key={link.label}>
-            <a className="hover:text-blue-300 transition" href={link.href}>
+            <Link className="hover:text-blue-300 transition" href={link.href} aria-label={`Ir a ${link.label}`}>
               {link.label}
-            </a>
+            </Link>
           </li>
         ))}
       </ul>

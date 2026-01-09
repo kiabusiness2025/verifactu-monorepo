@@ -181,13 +181,13 @@ export default function SignupPage() {
           />
           <span className="text-gray-600">
             Acepto los{" "}
-            <a href="/legal/terminos" className="text-blue-600 hover:text-blue-700 font-medium">
+            <Link href="/legal/terminos" className="text-blue-600 hover:text-blue-700 font-medium" aria-label="Leer términos y condiciones">
               términos y condiciones
-            </a>{" "}
+            </Link>{" "}
             y la{" "}
-            <a href="/legal/privacidad" className="text-blue-600 hover:text-blue-700 font-medium">
-              política de privacidad
-            </a>
+            <Link href="/legal/privacidad" className="text-blue-600 hover:text-blue-700 font-medium" aria-label="Leer política de privacidad">
+              Política de privacidad
+            </Link>
           </span>
         </label>
 

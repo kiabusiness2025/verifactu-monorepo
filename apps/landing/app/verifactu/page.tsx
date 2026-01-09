@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { CheckCircle2, ShieldCheck, FileText, Hash } from "lucide-react";
 
@@ -47,7 +48,7 @@ export default function VerifactuPage() {
       <section className="py-14">
         <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
           <div className="mb-4 text-sm">
-            <a href="/" className="text-blue-700 font-semibold hover:text-blue-800">← Volver al inicio</a>
+            <Link href="/" className="text-blue-700 font-semibold hover:text-blue-800" aria-label="Volver al inicio">← Volver al inicio</Link>
           </div>
           <div className="max-w-3xl space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 
@@ -181,11 +182,11 @@ export function AuthLayout({
               )}
               {/* Enlaces adicionales: inicio y legales */}
               <div className="mt-4 flex flex-col gap-1 items-center text-xs text-gray-500">
-                <a href="/" className="hover:text-blue-600 underline">Volver al inicio</a>
+                <Link href="/" className="hover:text-blue-600 underline" aria-label="Volver al inicio">Volver al inicio</Link>
                 <div className="flex gap-2">
-                  <a href="/legal/privacidad" className="hover:text-blue-600 underline">Política de privacidad</a>
+                  <Link href="/legal/privacidad" className="hover:text-blue-600 underline" aria-label="Leer política de privacidad">Política de privacidad</Link>
                   <span>|</span>
-                  <a href="/legal/terminos" className="hover:text-blue-600 underline">Términos y condiciones</a>
+                  <Link href="/legal/terminos" className="hover:text-blue-600 underline" aria-label="Leer términos y condiciones">Términos y condiciones</Link>
                 </div>
               </div>
             </div>

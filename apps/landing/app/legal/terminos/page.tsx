@@ -22,7 +22,7 @@ export default function TermsPage() {
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 space-y-10">
       <div className="mb-2 text-sm">
-        <a href="/" className="text-blue-700 font-semibold hover:text-blue-800">← Volver al inicio</a>
+        <Link href="/" className="text-blue-700 font-semibold hover:text-blue-800" aria-label="Volver al inicio">← Volver al inicio</Link>
       </div>
       <header className="space-y-2">
         <p className="text-sm text-gray-500">Última actualización: {today}</p>
