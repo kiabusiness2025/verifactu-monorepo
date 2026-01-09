@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import React, { Suspense } from "react";
+import dynamic from "next/dynamic";
 import { Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "./context/AuthContext";
 import CookieBanner from "./components/CookieBanner";
-import IsaakChat from "./components/IsaakChat";
 import DevStatusBanner from "./components/DevStatusBanner";
 import { ToastProvider } from "./components/Toast";
 
@@ -14,6 +14,10 @@ const display = Space_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
+});
+
+const IsaakChat = dynamic(() => import("./components/IsaakChat"), {
+  ssr: false,
 });
 
 const title = "Verifactu Business";

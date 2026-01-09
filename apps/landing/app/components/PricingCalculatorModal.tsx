@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { X } from "lucide-react";
@@ -14,7 +14,7 @@ export default function PricingCalculatorModal({
   onClose,
 }: PricingCalculatorModalProps) {
   const [companies, setCompanies] = useState(1);
-  const [invoices, setInvoices] = useState(50);
+  const [invoices, setInvoices] = useState(1);
   const [movements, setMovements] = useState(0);
   const [bankingEnabled, setBankingEnabled] = useState(false);
 
@@ -41,7 +41,7 @@ export default function PricingCalculatorModal({
       if (data.url) {
         window.location.href = data.url;
       } else {
-        console.error("Error al crear sesión de pago");
+        console.error("Error al crear sesion de pago");
       }
     } catch (error) {
       console.error("Error al iniciar trial:", error);
@@ -63,7 +63,7 @@ export default function PricingCalculatorModal({
           Calcula tu precio
         </h2>
         <p className="mb-8 text-gray-600">
-          Ajusta los valores según tu actividad. El precio se calcula por uso real.
+          Ajusta los valores segun tu actividad. El precio se calcula por uso real.
         </p>
 
         <div className="space-y-8">
@@ -76,17 +76,17 @@ export default function PricingCalculatorModal({
             <input
               type="range"
               min="1"
-              max="10"
+              max="50"
               value={companies}
               onChange={(e) => setCompanies(Number(e.target.value))}
               className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
               style={{
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((companies - 1) / 9) * 100}%, #e5e7eb ${((companies - 1) / 9) * 100}%, #e5e7eb 100%)`,
+                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((companies - 1) / 49) * 100}%, #e5e7eb ${((companies - 1) / 49) * 100}%, #e5e7eb 100%)`,
               }}
             />
             <div className="mt-1 flex justify-between text-xs text-gray-500">
               <span>1</span>
-              <span>10</span>
+              <span>50</span>
             </div>
           </div>
 
@@ -100,7 +100,7 @@ export default function PricingCalculatorModal({
               type="range"
               min="1"
               max="2000"
-              step="10"
+              step="1"
               value={invoices}
               onChange={(e) => setInvoices(Number(e.target.value))}
               className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
@@ -124,7 +124,7 @@ export default function PricingCalculatorModal({
                   onChange={(e) => setBankingEnabled(e.target.checked)}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span>Conciliación bancaria</span>
+                <span>Conciliacion bancaria</span>
               </label>
               {bankingEnabled && (
                 <span className="text-2xl font-bold text-blue-600">{movements}</span>
@@ -164,10 +164,10 @@ export default function PricingCalculatorModal({
             <div>
               <p className="text-sm text-gray-600">Cuota mensual estimada</p>
               <p className="mt-1 text-4xl font-bold text-blue-600">
-                {monthlyPrice}€<span className="text-2xl text-gray-500">/mes</span>
+                {monthlyPrice} EUR<span className="text-2xl text-gray-500">/mes</span>
               </p>
               <p className="mt-1 text-sm text-gray-500">
-                {withVAT}€/mes con IVA incluido
+                {withVAT} EUR/mes con IVA incluido
               </p>
             </div>
             <button
@@ -185,3 +185,6 @@ export default function PricingCalculatorModal({
     </div>
   );
 }
+
+
+

@@ -34,7 +34,7 @@ export default function DemoPage({
   const demoHref = appUrl ? `${appUrl.replace(/\/$/, "")}/demo` : null;
   const demoNavLinks = [
     { label: "Home", href: "/" },
-    { label: "Planes", href: "#planes" },
+    { label: "Planes", href: "#precios" },
     ...(demoHref ? [{ label: "Abrir demo", href: demoHref }] : []),
   ];
 
@@ -88,7 +88,7 @@ export default function DemoPage({
                 </div>
               )}
               <a
-                href="#planes"
+                href="#precios"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
               >
                 Ver planes
@@ -155,7 +155,7 @@ export default function DemoPage({
           </section>
         </div>
 
-        <section id="planes" className="mt-12">
+        <section id="precios" className="mt-12">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -237,3 +237,4 @@ export default function DemoPage({
     </main>
   );
 }
+

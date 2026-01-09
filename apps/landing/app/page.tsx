@@ -1,11 +1,15 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Check, ShieldCheck, Sparkles } from "lucide-react";
 import Header from "./components/Header";
 import Faq from "./components/Faq";
-import PricingCalculatorModal from "./components/PricingCalculatorModal";
+const PricingCalculatorModal = dynamic(
+  () => import("./components/PricingCalculatorModal"),
+  { ssr: false }
+);
 import { Button } from "./components/ui";
 
 import { ISAAK_MESSAGES } from "./lib/home/data";
@@ -27,6 +31,11 @@ import {
 
 export default function Page() {
   const isaakMessages = ISAAK_MESSAGES;
+  const navLinks = [
+    { label: "Features", href: "#features" },
+    { label: "Precios", href: "#precios" },
+    { label: "FAQ", href: "#faq" },
+  ];
 
   const [msgIndex, setMsgIndex] = useState(0);
   const [benefitTarget, setBenefitTarget] = useState(0);
@@ -86,10 +95,10 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <Header />
+      <Header navLinks={navLinks} />
 
       {/* HERO */}
-      <section className="relative">
+      <section id="hero" className="relative">
         <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-gradient-to-b from-blue-100 via-blue-50 to-white" />
         <Container className="pt-14 pb-10">
           <div className="grid items-center gap-10 lg:grid-cols-2">
@@ -104,7 +113,7 @@ export default function Page() {
               </div>
               <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-                Estado: Operativo • ultima sync VeriFactu hace 3 min
+                Estado: Operativo - ultima sync VeriFactu hace 3 min
               </div>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
@@ -121,12 +130,21 @@ export default function Page() {
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href="/verifactu/planes"
+                  href="#precios"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-blue-700"
                 >
                   Ver planes
                 </Link>
-                <SecondaryButton href="/verifactu/soporte">Abrir soporte</SecondaryButton>
+                <SecondaryButton href="#faq">Ver FAQ</SecondaryButton>
+              </div>
+              <div className="mt-3 text-sm text-slate-600">
+                <Link href="/auth/signup" className="font-semibold text-blue-700 hover:text-blue-800">
+                  Empezar prueba gratis
+                </Link>
+                <span className="px-2 text-slate-400">|</span>
+                <Link href="/auth/login" className="font-semibold text-slate-700 hover:text-slate-900">
+                  Crear cuenta
+                </Link>
               </div>
 
               <div className="mt-7 flex flex-wrap gap-2">
@@ -165,11 +183,13 @@ export default function Page() {
       </section>
 
       <ThreeSteps />
-      <FeaturesSection />
+      <section id="features">
+        <FeaturesSection />
+      </section>
       <PideseloAIsaakSection />
 
       {/* Dashboard preview */}
-      <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
+      <section id="faq" className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <div className="text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
@@ -218,7 +238,7 @@ export default function Page() {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
+      <section id="dashboard" className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <div className="text-center mb-12">
             <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">Preguntas frecuentes</h3>
@@ -269,6 +289,7 @@ export default function Page() {
     </div>
   );
 }
+
 
 
 

@@ -11,11 +11,20 @@ export const metadata = {
     description,
     url: "/verifactu/soporte",
     type: "article",
+    images: [
+      {
+        url: "/brand/social/og-1200x630.png",
+        width: 1200,
+        height: 630,
+        alt: "Verifactu Business",
+      },
+    ],
   },
   twitter: {
     card: "summary",
     title,
     description,
+    images: ["/brand/social/og-1200x630.png"],
   },
 };
 

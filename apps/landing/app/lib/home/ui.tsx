@@ -449,7 +449,7 @@ export function Footer() {
             <p className="mt-3 text-sm text-slate-300">Automatiza tu facturación con cumplimiento y control total.</p>
             <div className="mt-4 flex gap-3">
               <a
-                href="/proximamente"
+                href="/recursos/guias-y-webinars"
                 className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -457,7 +457,7 @@ export function Footer() {
                 </svg>
               </a>
               <a
-                href="/proximamente"
+                href="/recursos/blog"
                 className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -467,7 +467,7 @@ export function Footer() {
                 </svg>
               </a>
               <a
-                href="/proximamente"
+                href="/recursos/contacto"
                 className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -482,15 +482,16 @@ export function Footer() {
             title="Producto"
             links={[
               { label: "Resumen", href: "#hero" },
-              { label: "Plataforma", href: "#dashboard" },
-              { label: "Automatización", href: "#automatizacion" },
-              { label: "Integraciones", href: "#integraciones" },
+              { label: "Dashboard", href: "#dashboard" },
+              { label: "Features", href: "#features" },
+              { label: "FAQ", href: "#faq" },
+              { label: "Precios", href: "#precios" },
             ]}
           />
           <FooterCol
             title="VeriFactu"
             links={[
-              { label: "Qué es", href: "/verifactu/que-es" },
+              { label: "Que es", href: "/verifactu/que-es" },
               { label: "Planes y precios", href: "/verifactu/planes" },
               { label: "Soporte", href: "/verifactu/soporte" },
               { label: "Estado del servicio", href: "/verifactu/estado" },
@@ -499,7 +500,7 @@ export function Footer() {
           <FooterCol
             title="Recursos"
             links={[
-              { label: "Guías y webinars", href: "/recursos/guias-y-webinars" },
+              { label: "Guias y webinars", href: "/recursos/guias-y-webinars" },
               { label: "Checklist", href: "/recursos/checklist" },
               { label: "Blog", href: "/recursos/blog" },
               { label: "Contacto", href: "/recursos/contacto" },
@@ -729,3 +730,5 @@ export function PideseloAIsaakSection() {
     </section>
   );
 }
+
+
