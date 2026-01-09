@@ -64,23 +64,25 @@ export function movementTierKey(movements: number):
 
 export function estimateNetEur(input: PricingInput) {
   const i = normalizeInput(input);
-  let total = BASE_PRICE_EUR;
+  let total = 19; // base
 
   // empresas extra
-  total += Math.max(0, i.companies - 1) * COMPANY_UNIT_EUR;
+  total += Math.max(0, i.companies - 1) * 7;
 
   // facturas: aplicar SOLO si hay tier (>50)
   const invTier = invoiceTierKey(i.invoices);
-  if (invTier) {
-    total += INVOICE_TIER_PRICES_EUR[invTier] ?? 0;
-  }
+  if (invTier === "INVOICES_51_200_MONTHLY") total += 6;
+  else if (invTier === "INVOICES_201_500_MONTHLY") total += 15;
+  else if (invTier === "INVOICES_501_1000_MONTHLY") total += 29;
+  else if (invTier === "INVOICES_1001_2000_MONTHLY") total += 49;
 
   // movimientos: aplicar SOLO si hay tier (>0) y banca activada
   if (i.bankingEnabled) {
     const movTier = movementTierKey(i.movements);
-    if (movTier) {
-      total += MOVEMENT_TIER_PRICES_EUR[movTier] ?? 0;
-    }
+    if (movTier === "MOV_1_200_MONTHLY") total += 6;
+    else if (movTier === "MOV_201_800_MONTHLY") total += 15;
+    else if (movTier === "MOV_801_2000_MONTHLY") total += 35;
+    else if (movTier === "MOV_2001_5000_MONTHLY") total += 69;
   }
 
   return total;
