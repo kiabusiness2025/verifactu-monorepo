@@ -92,9 +92,19 @@ export default function RootLayout({
         <link rel="preconnect" href="https://api.stripe.com" />
       </head>
       <body className={display.className}>
+        {/* Skip to main content link for accessibility */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:bg-blue-500 focus:text-white focus:px-4 focus:py-2 focus:rounded-br"
+        >
+          Ir al contenido principal
+        </a>
+        
         <AuthProvider>
           <ToastProvider>
-            <Suspense>{children}</Suspense>
+            <main id="main-content">
+              <Suspense>{children}</Suspense>
+            </main>
             {process.env.NODE_ENV !== "production" && <DevStatusBanner />}
             <CookieBanner />
             <IsaakChat />

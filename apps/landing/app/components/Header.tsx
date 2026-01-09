@@ -31,18 +31,18 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   const links = navLinks ?? defaultNavLinks;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200" role="banner">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
         <BrandLogo variant="header" />
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-8" aria-label="Navegación principal">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-gray-700 hover:text-blue-600 transition-colors text-sm font-medium"
+              className="text-gray-700 hover:text-blue-600 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:rounded"
             >
               {link.label}
             </Link>
