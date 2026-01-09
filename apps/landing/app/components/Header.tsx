@@ -36,19 +36,16 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
         {/* Logo */}
         <BrandLogo variant="header" />
 
-        {/* Version marker */}
-        <span className="hidden md:inline text-xs text-gray-500">v1.0.3</span>
-
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
           {links.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
               className="text-gray-700 hover:text-blue-600 transition-colors text-sm font-medium"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -59,6 +56,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
               <Link
                 href={dashboardHref}
                 className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
+                aria-label="Ir al Dashboard"
               >
                 Dashboard
               </Link>
@@ -68,6 +66,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
                   showToast({ type: "success", title: "Sesion cerrada", message: "Has salido correctamente" });
                 }}
                 className="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
+                aria-label="Cerrar sesion"
               >
                 Salir
               </button>
@@ -76,6 +75,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
             <Link
               href="/auth/login"
               className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
+              aria-label="Acceder a tu cuenta"
             >
               Acceder
             </Link>
@@ -84,12 +84,12 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
 
         {/* Mobile: Hamburger Menu Button + Login Button */}
         <div className="md:hidden flex items-center gap-3">
-          <span className="text-xs text-gray-500">v1.0.3</span>
           {user ? (
             <>
               <Link
                 href={dashboardHref}
                 className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
+                aria-label="Ir al Dashboard"
               >
                 Dashboard
               </Link>
@@ -99,6 +99,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
                   showToast({ type: "success", title: "Sesion cerrada", message: "Has salido correctamente" });
                 }}
                 className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
+                aria-label="Cerrar sesion"
               >
                 Salir
               </button>
@@ -107,6 +108,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
             <Link
               href="/auth/login"
               className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
+              aria-label="Acceder a tu cuenta"
             >
               Acceder
             </Link>
@@ -114,7 +116,9 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="Toggle menu"
+            aria-label={isOpen ? "Cerrar menu de navegacion" : "Abrir menu de navegacion"}
+            aria-expanded={isOpen}
+            aria-controls="mobile-menu"
           >
             {isOpen ? (
               <X className="w-6 h-6 text-gray-900" />
@@ -133,18 +137,19 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
+            id="mobile-menu"
             className="md:hidden bg-white border-t border-gray-200"
           >
             <nav className="flex flex-col py-4">
               {links.map((link) => (
-                <a
+                <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
                   className="px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium"
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
             </nav>
           </motion.div>
