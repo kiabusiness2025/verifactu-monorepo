@@ -103,7 +103,7 @@ export default function Page() {
               </div>
               <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-                Estado: Operativo · Última sync VeriFactu hace 3 min
+                Estado: Operativo â€¢ ultima sync VeriFactu hace 3 min
               </div>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
@@ -115,7 +115,7 @@ export default function Page() {
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-slate-700 sm:text-lg">
-                Isaak organiza facturas y gastos, y te muestra lo esencial: ventas, gastos y beneficio. Tú decides el ritmo.
+                Isaak organiza facturas y gastos, y te muestra lo esencial: ventas, gastos y beneficio. Tu decides el ritmo.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -155,7 +155,7 @@ export default function Page() {
                 Cumple con calma.
               </h2>
               <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-                VeriFactu no debería darte miedo. Isaak te guía, valida y te avisa cuando algo necesita revisión.
+                VeriFactu no deberia darte miedo. Isaak te guia, valida y te avisa cuando algo necesita revision.
               </p>
             </div>
             <ComplianceBadge />
@@ -175,7 +175,7 @@ export default function Page() {
               <Sparkles className="h-4 w-4" />
               Dashboard
             </div>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">Ventas – Gastos = Beneficio</h2>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">Ventas - Gastos = Beneficio</h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
               Lo esencial, siempre visible. El detalle aparece solo cuando lo pides.
             </p>
@@ -195,7 +195,7 @@ export default function Page() {
               Precio que se ajusta a tu uso real
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              Solo mensual · 1 mes gratis · aviso antes de renovar.
+              Solo mensual - 1 mes gratis - aviso antes de renovar.
             </p>
 
             <div className="mt-8 flex justify-center">
@@ -209,7 +209,7 @@ export default function Page() {
 
             <p className="mx-auto mt-6 max-w-2xl text-xs text-slate-500">
               Precio orientativo. La cuota final se basa en empresas activas, facturas emitidas y movimientos procesados
-              (si activas conciliación bancaria). IVA no incluido.
+              (si activas conciliacion bancaria). IVA no incluido.
             </p>
           </div>
         </Container>
@@ -221,7 +221,7 @@ export default function Page() {
           <div className="text-center mb-12">
             <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">Preguntas frecuentes</h3>
             <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-              Respuestas rápidas sobre planes, seguridad y funcionalidades.
+              Respuestas rapidas sobre planes, seguridad y funcionalidades.
             </p>
           </div>
           <Faq />
@@ -235,26 +235,26 @@ export default function Page() {
             Recursos para dominar VeriFactu e Isaak.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
-            Guías, onboarding y checklist para aplicar mejores prácticas y aprovechar todo el potencial de la plataforma.
+            Guias, onboarding y checklist para aplicar mejores practicas y aprovechar todo el potencial de la plataforma.
           </p>
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
             <ResourceCard
-              tag="Guía"
+              tag="Guia"
               title="Manual VeriFactu 2025"
-              desc="Requisitos y checklist práctico para operar con confianza."
-              cta="Descargar guía"
+              desc="Requisitos y checklist practico para operar con confianza."
+              cta="Descargar guia"
             />
             <ResourceCard
               tag="Primeros pasos"
               title="Primeros pasos con Isaak"
-              desc="Aprende a emitir, registrar gastos y entender tus métricas."
+              desc="Aprende a emitir, registrar gastos y entender tus metricas."
               cta="Reservar plaza"
             />
             <ResourceCard
               tag="Checklist"
-              title="Auditoría express"
-              desc="Evalúa el estado de tu facturación y detecta riesgos."
+              title="Auditoria express"
+              desc="Evalua el estado de tu facturacion y detecta riesgos."
               cta="Solicitar checklist"
             />
           </div>

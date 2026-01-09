@@ -71,7 +71,7 @@ export default function GuiasWebinarsPage() {
             className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
           >
             Solicitar sesion
-            <span aria-hidden>-></span>
+            <span aria-hidden>{'->'}</span>
           </Link>
         </div>
 
@@ -103,7 +103,7 @@ function ResourceCard({ title, desc, cta }: { title: string; desc: string; cta: 
       <div className="text-sm font-semibold text-slate-900">{title}</div>
       <p className="mt-1 text-sm text-slate-600">{desc}</p>
       <button className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
-        {cta} <span aria-hidden>-></span>
+        {cta} <span aria-hidden>{'->'}</span>
       </button>
     </div>
   );

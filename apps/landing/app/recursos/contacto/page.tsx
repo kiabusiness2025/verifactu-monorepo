@@ -142,7 +142,7 @@ function ContactCard({
         className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
       >
         {action.label}
-        <span aria-hidden>-></span>
+        <span aria-hidden>{'->'}</span>
       </Link>
     </div>
   );

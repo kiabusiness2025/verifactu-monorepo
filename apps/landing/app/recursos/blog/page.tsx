@@ -63,7 +63,7 @@ export default function BlogPage() {
               <p className="mt-2 text-sm text-slate-600">{post.desc}</p>
               <button className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
                 Leer articulo
-                <span aria-hidden>-></span>
+                <span aria-hidden>{'->'}</span>
               </button>
             </article>
           ))}
