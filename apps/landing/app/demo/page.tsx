@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import Link from "next/link";
 import Header from "../components/Header";
 import { DemoLeadForm } from "./DemoLeadForm";
@@ -9,6 +11,8 @@ export default function DemoPage({
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  
   const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
   const appUrl =
     configuredAppUrl ??
@@ -69,13 +73,12 @@ export default function DemoPage({
                   Vista previa no disponible
                 </div>
               )}
-              <PricingCalculatorModal
-                trigger={
-                  <button className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50">
-                    Calcula precio
-                  </button>
-                }
-              />
+              <button
+                onClick={() => setIsCalculatorOpen(true)}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+              >
+                Calcula precio
+              </button>
               <Link
                 href="/"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
@@ -156,14 +159,13 @@ export default function DemoPage({
             </div>
 
             <div className="mt-6">
-              <PricingCalculatorModal
-                trigger={
-                  <button className="w-full rounded-2xl border border-blue-200 bg-blue-50 p-6 text-left transition hover:bg-blue-100">
-                    <div className="text-lg font-semibold text-slate-900">Abre la calculadora interactiva</div>
-                    <div className="mt-1 text-sm text-slate-600">Ajusta empresas, facturas y movimientos para ver tu cuota exacta</div>
-                  </button>
-                }
-              />
+              <button
+                onClick={() => setIsCalculatorOpen(true)}
+                className="w-full rounded-2xl border border-blue-200 bg-blue-50 p-6 text-left transition hover:bg-blue-100"
+              >
+                <div className="text-lg font-semibold text-slate-900">Abre la calculadora interactiva</div>
+                <div className="mt-1 text-sm text-slate-600">Ajusta empresas, facturas y movimientos para ver tu cuota exacta</div>
+              </button>
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -183,6 +185,8 @@ export default function DemoPage({
           </div>
         </section>
       </div>
+
+      <PricingCalculatorModal isOpen={isCalculatorOpen} onClose={() => setIsCalculatorOpen(false)} />
 
       <footer className="mt-12 border-t border-slate-200 bg-white/80">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
