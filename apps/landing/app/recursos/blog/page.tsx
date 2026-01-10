@@ -97,13 +97,13 @@ export default function BlogPage() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Quieres ver planes claros y empezar hoy?</div>
+          <div className="text-sm text-slate-600">Quieres calcular tu precio y empezar hoy?</div>
           <div className="flex gap-3">
             <Link
-              href="/verifactu/planes"
+              href="/demo#calculadora"
               className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
-              Ver planes
+              Calcula precio
             </Link>
             <Link
               href="/verifactu/soporte"

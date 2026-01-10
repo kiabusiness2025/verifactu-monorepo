@@ -86,10 +86,10 @@ export default function ChecklistPage() {
           <div className="text-sm text-slate-600">Listo para activar planes y empezar a emitir?</div>
           <div className="flex gap-3">
             <Link
-              href="/verifactu/planes"
+              href="/demo#calculadora"
               className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
-              Ver planes
+              Calcula precio
             </Link>
             <Link
               href="/verifactu/soporte"

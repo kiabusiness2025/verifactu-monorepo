@@ -74,10 +74,10 @@ export default function Faq() {
         <div className="text-sm text-slate-600">Quieres ver el precio exacto antes de activar?</div>
         <div className="flex gap-3">
           <Link
-            href="/verifactu/planes"
-            className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+            href="/demo#calculadora"
+            className="mt-2 inline-block rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
           >
-            Ver planes
+            Calcula precio
           </Link>
           <Link
             href="/verifactu/soporte"

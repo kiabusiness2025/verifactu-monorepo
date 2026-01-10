@@ -24,6 +24,9 @@ export default function PricingCalculatorModal({
 
   if (!isOpen) return null;
 
+  const fmt = (n: number) =>
+    n.toLocaleString("es-ES", { maximumFractionDigits: 2 });
+
   const input: PricingInput = { companies, invoices, movements, bankingEnabled };
   const monthlyPrice = estimateNetEur(input);
   const breakdown = estimateBreakdown(input);
@@ -34,12 +37,7 @@ export default function PricingCalculatorModal({
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          companies,
-          invoices,
-          movements,
-          bankingEnabled,
-        }),
+        body: JSON.stringify(input),
       });
 
       const data = await response.json();
@@ -126,7 +124,11 @@ export default function PricingCalculatorModal({
                 <input
                   type="checkbox"
                   checked={bankingEnabled}
-                  onChange={(e) => setBankingEnabled(e.target.checked)}
+                  onChange={(e) => {
+                    const enabled = e.target.checked;
+                    setBankingEnabled(enabled);
+                    if (!enabled) setMovements(0);
+                  }}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span>Conciliacion bancaria</span>
@@ -141,7 +143,7 @@ export default function PricingCalculatorModal({
                   type="range"
                   min="0"
                   max="5000"
-                  step="50"
+                  step="1"
                   value={movements}
                   onChange={(e) => setMovements(Number(e.target.value))}
                   className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
@@ -169,26 +171,28 @@ export default function PricingCalculatorModal({
             <div>
               <p className="text-sm text-gray-600">Cuota mensual estimada</p>
               <p className="mt-1 text-4xl font-bold text-blue-600">
-                {monthlyPrice} €{" "}
+                {fmt(monthlyPrice)} €{" "}
                 <span className="text-2xl text-gray-500">/mes + IVA</span>
               </p>
-              <p className="mt-1 text-sm text-gray-500">Con IVA: {withVAT} €</p>
+              <p className="mt-1 text-sm text-gray-500">
+                Con IVA: {fmt(withVAT)} €
+              </p>
               <div className="mt-4 space-y-1 text-xs text-gray-500">
                 <div className="flex items-center justify-between">
                   <span>Base</span>
-                  <span>{breakdown.base} €</span>
+                  <span>{fmt(breakdown.base)} €</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Empresas extra</span>
-                  <span>{breakdown.companiesExtra} €</span>
+                  <span>{fmt(breakdown.companiesExtra)} €</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tramo facturas</span>
-                  <span>{breakdown.invoiceAddon} €</span>
+                  <span>{fmt(breakdown.invoiceAddon)} €</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tramo movimientos</span>
-                  <span>{breakdown.movementAddon} €</span>
+                  <span>{fmt(breakdown.movementAddon)} €</span>
                 </div>
               </div>
             </div>

@@ -2,25 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Header from "../components/Header";
 import { DemoLeadForm } from "./DemoLeadForm";
-import { PRICING_PLANS } from "../lib/home/data";
-
-function PriceDisplay({ price }: { price: number | null }) {
-  if (price === null) return <span className="text-3xl font-bold text-slate-900">A medida</span>;
-  if (price === 0) return <span className="text-3xl font-bold text-slate-900">Gratis</span>;
-
-  const formatted = new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(price);
-
-  return (
-    <div className="flex items-end gap-2">
-      <span className="text-3xl font-bold text-slate-900">{formatted}</span>
-      <span className="pb-1 text-sm font-semibold text-slate-500">/ mes</span>
-    </div>
-  );
-}
+import PricingCalculatorModal from "../components/PricingCalculatorModal";
 
 export default function DemoPage({
   searchParams,
@@ -34,7 +16,7 @@ export default function DemoPage({
   const demoHref = appUrl ? `${appUrl.replace(/\/$/, "")}/demo` : null;
   const demoNavLinks = [
     { label: "Home", href: "/" },
-    { label: "Planes", href: "#precios" },
+    { label: "Calculadora", href: "#calculadora" },
     ...(demoHref ? [{ label: "Abrir demo", href: demoHref }] : []),
   ];
 
@@ -87,12 +69,13 @@ export default function DemoPage({
                   Vista previa no disponible
                 </div>
               )}
-              <a
-                href="#precios"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
-              >
-                Ver planes
-              </a>
+              <PricingCalculatorModal
+                trigger={
+                  <button className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50">
+                    Calcula precio
+                  </button>
+                }
+              />
               <Link
                 href="/"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
@@ -155,71 +138,47 @@ export default function DemoPage({
           </section>
         </div>
 
-        <section id="precios" className="mt-12">
+        <section id="calculadora" className="mt-12">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900">Planes (con prueba gratuita)</h2>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900">Calcula tu precio personalizado</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Elige un plan cuando estés listo. Puedes empezar sin compromiso y cambiar más adelante.
+                  Sin cuotas fijas. Pagas según tu uso real: empresas activas, facturas emitidas y movimientos conciliados.
                 </p>
               </div>
-              <a
-                href="/"
+              <Link
+                href="/auth/signup"
                 className="text-sm font-semibold text-blue-700 hover:text-blue-800"
               >
-                Ver detalles en Home
-              </a>
+                Activar prueba gratuita
+              </Link>
             </div>
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-4">
-              {PRICING_PLANS.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={[
-                    "relative rounded-2xl border bg-white p-5",
-                    plan.highlight ? "border-blue-200 ring-1 ring-blue-100" : "border-slate-200",
-                  ].join(" ")}
-                >
-                  {plan.highlight && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">Más popular</span>
-                    </div>
-                  )}
+            <div className="mt-6">
+              <PricingCalculatorModal
+                trigger={
+                  <button className="w-full rounded-2xl border border-blue-200 bg-blue-50 p-6 text-left transition hover:bg-blue-100">
+                    <div className="text-lg font-semibold text-slate-900">Abre la calculadora interactiva</div>
+                    <div className="mt-1 text-sm text-slate-600">Ajusta empresas, facturas y movimientos para ver tu cuota exacta</div>
+                  </button>
+                }
+              />
+            </div>
 
-                  <div className="text-base font-semibold text-slate-900">{plan.name}</div>
-                  <div className="mt-1 text-xs text-slate-500">{plan.users}</div>
-
-                  <div className="mt-4">
-                    <PriceDisplay price={plan.priceMonthly} />
-                    <div className="mt-2 inline-flex items-center justify-center rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                      Prueba gratuita 30 días · sin tarjeta · sin compromiso
-                    </div>
-                  </div>
-
-                  <ul className="mt-4 space-y-2">
-                    {plan.features.slice(0, 4).map((feature) => (
-                      <li key={feature} className="text-xs leading-5 text-slate-600">
-                        • {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <a
-                    href={plan.checkoutMonthly ?? "#"}
-                    className={[
-                      "mt-5 block w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-center transition",
-                      plan.highlight
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-slate-100 text-slate-900 hover:bg-slate-200",
-                    ].join(" ")}
-                  >
-                    {plan.priceMonthly === null ? "Contactar" : plan.priceMonthly === 0 ? "Empezar gratis" : "Empezar prueba gratuita"}
-                  </a>
-
-                  <div className="mt-3 text-center text-xs text-slate-500">✓ Acceso permanente a tus datos</div>
-                </div>
-              ))}
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-sm font-semibold text-slate-900">Sin permanencias</div>
+                <p className="mt-1 text-xs text-slate-600">Cancela cuando quieras, sin penalizaciones.</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-sm font-semibold text-slate-900">1 mes gratis</div>
+                <p className="mt-1 text-xs text-slate-600">Prueba completa sin tarjeta ni compromiso.</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-sm font-semibold text-slate-900">Aviso antes de cobrar</div>
+                <p className="mt-1 text-xs text-slate-600">Te avisamos antes de renovar para que ajustes el plan.</p>
+              </div>
             </div>
           </div>
         </section>

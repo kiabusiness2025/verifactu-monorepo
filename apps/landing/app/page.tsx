@@ -130,12 +130,17 @@ export default function Page() {
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href="#precios"
+                  href="/demo#calculadora"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-blue-700"
                 >
-                  Ver planes
+                  Calcula precio
                 </Link>
-                <SecondaryButton href="#faq">Ver FAQ</SecondaryButton>
+                <Link
+                  href="/demo"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100"
+                >
+                  Ver demo
+                </Link>
               </div>
               <div className="mt-3 text-sm text-slate-600">
                 <Link href="/auth/signup" className="font-semibold text-blue-700 hover:text-blue-800">

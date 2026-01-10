@@ -493,7 +493,7 @@ export function Footer() {
             title="VeriFactu"
             links={[
               { label: "Que es", href: "/verifactu/que-es" },
-              { label: "Planes y precios", href: "/verifactu/planes" },
+              { label: "Calcula precio", href: "/demo#calculadora" },
               { label: "Soporte", href: "/verifactu/soporte" },
               { label: "Estado del servicio", href: "/verifactu/estado" },
             ]}
