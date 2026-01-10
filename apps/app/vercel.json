@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "installCommand": "rm -rf ../.. node_modules .npm && npm install --prefix ../.. --legacy-peer-deps",
+  "installCommand": "rm -rf node_modules .npm && npm install --prefix ../.. --legacy-peer-deps",
   "buildCommand": "npm --prefix ../.. run build -w verifactu-app"
 }
