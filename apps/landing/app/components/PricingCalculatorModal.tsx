@@ -156,7 +156,7 @@ export default function PricingCalculatorModal({
                   }}
                 />
                 <p className="mt-2 text-xs text-gray-500">
-                  Se aplica tramo a partir de 1 movimiento/mes.
+                  0 movimientos = 0 EUR. Si activas conciliacion y procesas movimientos, se aplica un tramo.
                 </p>
                 <div className="mt-1 flex justify-between text-xs text-gray-500">
                   <span>0</span>

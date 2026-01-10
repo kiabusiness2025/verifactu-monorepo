@@ -3,6 +3,7 @@ import pino from "pino";
 import fs from "fs";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import { jwtVerify } from "jose";
 import { registerInvoice } from "./soap-client.js";
 
 const log = pino();
@@ -49,6 +50,38 @@ app.use(cors({
   },
   credentials: true,
 }));
+
+async function getUserFromSession(req) {
+  const cookieHeader = req.headers.cookie || "";
+  const match = cookieHeader.match(/(?:^|;\s*)__session=([^;]+)/);
+  if (!match) return null;
+
+  const token = decodeURIComponent(match[1]);
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) return null;
+
+  try {
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+    return {
+      uid: String(payload.uid || ""),
+      email: payload.email ? String(payload.email) : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+app.use("/api", async (req, res, next) => {
+  if (req.path === "/healthz") return next();
+
+  const user = await getUserFromSession(req);
+  if (!user?.uid) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  req.user = user;
+  return next();
+});
 
 // Rutas de secretos montados como archivos
 const CERT_PATH = process.env.AEAT_CERT_PATH || "/var/secrets/aeat_cert/cert.p12";

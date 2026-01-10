@@ -1,12 +1,15 @@
 export type PricingInput = {
-  companies: number;     // min 1
-  invoices: number;      // min 1
-  movements: number;     // min 0
+  companies: number; // min 1
+  invoices: number; // min 1
+  movements: number; // min 0
   bankingEnabled: boolean;
 };
 
 const BASE_PRICE_EUR = 19;
 const COMPANY_UNIT_EUR = 7;
+
+// Base incluye hasta 10 facturas/mes
+const INVOICE_INCLUDED = 10;
 
 const INVOICE_TIER_PRICES_EUR: Record<string, number> = {
   INVOICES_11_50_MONTHLY: 4,
@@ -16,6 +19,8 @@ const INVOICE_TIER_PRICES_EUR: Record<string, number> = {
   INVOICES_1001_2000_MONTHLY: 49,
 };
 
+// Movimientos: 0 => 0 EUR
+// Bandas: 100 hasta 500, salto 500 hasta 1000, luego 1000 hasta 10.000
 const MOVEMENT_TIER_PRICES_EUR: Record<string, number> = {
   MOV_1_100_MONTHLY: 3,
   MOV_101_200_MONTHLY: 4,
@@ -55,7 +60,7 @@ export function invoiceTierKey(invoices: number):
   | "INVOICES_201_500_MONTHLY"
   | "INVOICES_501_1000_MONTHLY"
   | "INVOICES_1001_2000_MONTHLY" {
-  if (invoices <= 10) return null;
+  if (invoices <= INVOICE_INCLUDED) return null;
   if (invoices <= 50) return "INVOICES_11_50_MONTHLY";
   if (invoices <= 200) return "INVOICES_51_200_MONTHLY";
   if (invoices <= 500) return "INVOICES_201_500_MONTHLY";
@@ -100,26 +105,17 @@ export function movementTierKey(movements: number):
 
 export function estimateNetEur(input: PricingInput) {
   const i = normalizeInput(input);
-  let total = 19; // base
 
-  // empresas extra
-  total += Math.max(0, i.companies - 1) * 7;
+  const base = BASE_PRICE_EUR;
+  const companiesExtra = Math.max(0, i.companies - 1) * COMPANY_UNIT_EUR;
 
-  // facturas: aplicar SOLO si hay tier (>50)
   const invTier = invoiceTierKey(i.invoices);
-  if (invTier === "INVOICES_11_50_MONTHLY") total += 4;
-  else if (invTier === "INVOICES_51_200_MONTHLY") total += 6;
-  else if (invTier === "INVOICES_201_500_MONTHLY") total += 15;
-  else if (invTier === "INVOICES_501_1000_MONTHLY") total += 29;
-  else if (invTier === "INVOICES_1001_2000_MONTHLY") total += 49;
+  const invoiceAddon = invTier ? (INVOICE_TIER_PRICES_EUR[invTier] ?? 0) : 0;
 
-  // movimientos: aplicar SOLO si hay tier (>0) y banca activada
-  if (i.bankingEnabled) {
-    const movTier = movementTierKey(i.movements);
-    if (movTier) total += MOVEMENT_TIER_PRICES_EUR[movTier] ?? 0;
-  }
+  const movTier = i.bankingEnabled ? movementTierKey(i.movements) : null;
+  const movementAddon = movTier ? (MOVEMENT_TIER_PRICES_EUR[movTier] ?? 0) : 0;
 
-  return total;
+  return base + companiesExtra + invoiceAddon + movementAddon;
 }
 
 export function estimateBreakdown(input: PricingInput) {
@@ -128,10 +124,10 @@ export function estimateBreakdown(input: PricingInput) {
   const companiesExtra = Math.max(0, i.companies - 1) * COMPANY_UNIT_EUR;
 
   const invTier = invoiceTierKey(i.invoices);
-  const invoiceAddon = invTier ? INVOICE_TIER_PRICES_EUR[invTier] : 0;
+  const invoiceAddon = invTier ? (INVOICE_TIER_PRICES_EUR[invTier] ?? 0) : 0;
 
   const movTier = i.bankingEnabled ? movementTierKey(i.movements) : null;
-  const movementAddon = movTier ? MOVEMENT_TIER_PRICES_EUR[movTier] : 0;
+  const movementAddon = movTier ? (MOVEMENT_TIER_PRICES_EUR[movTier] ?? 0) : 0;
 
   const total = base + companiesExtra + invoiceAddon + movementAddon;
 

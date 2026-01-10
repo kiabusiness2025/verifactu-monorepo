@@ -27,6 +27,7 @@ export type DashboardSummaryResponse = {
 
 function getApiBase(): string {
   return (
+    process.env.NEXT_PUBLIC_API_URL ||
     process.env.NEXT_PUBLIC_API_BASE ||
     process.env.API_BASE ||
     "https://api.verifactu.business"
@@ -39,6 +40,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
   const res = await fetch(url, {
     ...init,
+    credentials: init?.credentials ?? "include",
     headers: {
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
