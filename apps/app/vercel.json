@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "installCommand": "npm install --prefer-offline --no-audit",
-  "buildCommand": "npm run build"
+  "installCommand": "cd ../.. && npm install --prefer-offline --no-audit && npm --prefix apps/app run build",
+  "buildCommand": "echo 'Build already completed during install'"
 }
