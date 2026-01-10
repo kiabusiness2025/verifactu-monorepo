@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "corepack enable ; corepack prepare pnpm@10.27.0 --activate ; pnpm -C ../.. install --no-frozen-lockfile",
-  "buildCommand": "npm run build",
+  "buildCommand": "corepack enable ; pnpm -C apps/app build",
   "outputDirectory": ".next"
 }
