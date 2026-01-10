@@ -1,6 +1,5 @@
-﻿{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
+{
   "framework": "nextjs",
-  "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm build"
+  "installCommand": "rm -rf ../.. node_modules .npm && npm install --prefix ../.. --legacy-peer-deps",
+  "buildCommand": "npm --prefix ../.. run build -w verifactu-app"
 }
