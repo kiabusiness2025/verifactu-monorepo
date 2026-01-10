@@ -54,9 +54,10 @@ function Vercel-EnvUpsert([string]$name, [string]$value, [string]$target) {
   Write-Host ("OK {0}: {1}" -f $target, $name)
 }
 
-# 1) Entrar al proyecto y linkear
-Push-Location $ProjectDir
-try { vercel link | Out-Null } finally { Pop-Location }
+# 1) Proyecto ya linkeado (evitamos pull interactivo)
+if (-not (Test-Path (Join-Path $ProjectDir ".vercel"))) {
+  throw "Falta .vercel link en $ProjectDir; ejecuta 'vercel link' una vez manualmente"
+}
 
 # 2) Parse env local
 $envMap = Parse-DotEnv $EnvFile
