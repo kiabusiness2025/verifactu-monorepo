@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { X } from "lucide-react";
 import {
   estimateBreakdown,
@@ -111,6 +112,9 @@ export default function PricingCalculatorModal({
                 background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((invoices - 1) / 1999) * 100}%, #e5e7eb ${((invoices - 1) / 1999) * 100}%, #e5e7eb 100%)`,
               }}
             />
+            <p className="mt-2 text-xs text-gray-500">
+              Incluye hasta 10 facturas/mes en la cuota base.
+            </p>
             <div className="mt-1 flex justify-between text-xs text-gray-500">
               <span>1</span>
               <span>2.000</span>
@@ -142,18 +146,21 @@ export default function PricingCalculatorModal({
                 <input
                   type="range"
                   min="0"
-                  max="5000"
+                  max="10000"
                   step="1"
                   value={movements}
                   onChange={(e) => setMovements(Number(e.target.value))}
                   className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
                   style={{
-                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(movements / 5000) * 100}%, #e5e7eb ${(movements / 5000) * 100}%, #e5e7eb 100%)`,
+                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(movements / 10000) * 100}%, #e5e7eb ${(movements / 10000) * 100}%, #e5e7eb 100%)`,
                   }}
                 />
+                <p className="mt-2 text-xs text-gray-500">
+                  Se aplica tramo a partir de 1 movimiento/mes.
+                </p>
                 <div className="mt-1 flex justify-between text-xs text-gray-500">
                   <span>0</span>
-                  <span>5.000</span>
+                  <span>10.000</span>
                 </div>
               </>
             )}
@@ -187,14 +194,19 @@ export default function PricingCalculatorModal({
                   <span>{fmt(breakdown.companiesExtra)} €</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Tramo facturas</span>
+                  <span>Tramo facturas (a partir de 11)</span>
                   <span>{fmt(breakdown.invoiceAddon)} €</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Tramo movimientos</span>
+                  <span>Tramo movimientos (a partir de 1)</span>
                   <span>{fmt(breakdown.movementAddon)} €</span>
                 </div>
               </div>
+              <p className="mt-3 text-xs text-gray-500">
+                <Link href="/politica-de-precios" className="text-blue-600 hover:text-blue-700">
+                  Ver politica de medicion de uso
+                </Link>
+              </p>
             </div>
             <button
               onClick={handleStartTrial}

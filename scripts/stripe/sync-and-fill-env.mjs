@@ -1,4 +1,4 @@
-import fs from "node:fs";
+﻿import fs from "node:fs";
 import path from "node:path";
 import Stripe from "stripe";
 
@@ -53,7 +53,7 @@ const stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"), { apiVersion: "2024-0
 
 const PRODUCT = {
   planKey: "calculator-v1",
-  name: "Verifactu Business · Suscripción mensual (calculadora)",
+  name: "Verifactu Business - Suscripcion mensual (calculadora)",
 };
 
 const PRICE_SPECS = [
@@ -64,16 +64,28 @@ const PRICE_SPECS = [
   { priceKey: "company-unit-monthly", unitAmountEur: 7, interval: "month" },
 
   // invoices (add-on por tramo)
+  { priceKey: "invoices-11-50-monthly", unitAmountEur: 4, interval: "month" },
   { priceKey: "invoices-51-200-monthly", unitAmountEur: 6, interval: "month" },
   { priceKey: "invoices-201-500-monthly", unitAmountEur: 15, interval: "month" },
   { priceKey: "invoices-501-1000-monthly", unitAmountEur: 29, interval: "month" },
   { priceKey: "invoices-1001-2000-monthly", unitAmountEur: 49, interval: "month" },
 
   // movements (add-on por tramo)
-  { priceKey: "mov-1-200-monthly", unitAmountEur: 6, interval: "month" },
-  { priceKey: "mov-201-800-monthly", unitAmountEur: 15, interval: "month" },
-  { priceKey: "mov-801-2000-monthly", unitAmountEur: 35, interval: "month" },
-  { priceKey: "mov-2001-5000-monthly", unitAmountEur: 69, interval: "month" },
+  { priceKey: "mov-1-100-monthly", unitAmountEur: 3, interval: "month" },
+  { priceKey: "mov-101-200-monthly", unitAmountEur: 4, interval: "month" },
+  { priceKey: "mov-201-300-monthly", unitAmountEur: 5, interval: "month" },
+  { priceKey: "mov-301-400-monthly", unitAmountEur: 6, interval: "month" },
+  { priceKey: "mov-401-500-monthly", unitAmountEur: 7, interval: "month" },
+  { priceKey: "mov-501-1000-monthly", unitAmountEur: 12, interval: "month" },
+  { priceKey: "mov-1001-2000-monthly", unitAmountEur: 19, interval: "month" },
+  { priceKey: "mov-2001-3000-monthly", unitAmountEur: 29, interval: "month" },
+  { priceKey: "mov-3001-4000-monthly", unitAmountEur: 39, interval: "month" },
+  { priceKey: "mov-4001-5000-monthly", unitAmountEur: 49, interval: "month" },
+  { priceKey: "mov-5001-6000-monthly", unitAmountEur: 59, interval: "month" },
+  { priceKey: "mov-6001-7000-monthly", unitAmountEur: 69, interval: "month" },
+  { priceKey: "mov-7001-8000-monthly", unitAmountEur: 79, interval: "month" },
+  { priceKey: "mov-8001-9000-monthly", unitAmountEur: 89, interval: "month" },
+  { priceKey: "mov-9001-10000-monthly", unitAmountEur: 99, interval: "month" },
 ];
 
 async function findOrCreateProduct() {
@@ -178,21 +190,22 @@ async function main() {
     });
   }
 
-  // actualiza/añade las env vars en el archivo destino
+  // actualiza/aÃ±ade las env vars en el archivo destino
   upsertEnvFile(envTarget, envKv);
 
-  console.log("\n✅ Stripe prices synced.");
-  console.log("✅ .env updated:", envTarget);
+  console.log("\nâœ… Stripe prices synced.");
+  console.log("âœ… .env updated:", envTarget);
   console.log("\n--- Summary (env -> priceId | amount) ---");
   for (const r of report) {
     console.log(`${r.env}=${r.id}   # ${r.eur} EUR / ${r.interval}`);
   }
 
   console.log("\nProduct:", product.id, `"${product.name}"`);
-  console.log("\nTip: para actualizar también en Vercel, usa vercel env rm/add con estas mismas keys.");
+  console.log("\nTip: para actualizar tambiÃ©n en Vercel, usa vercel env rm/add con estas mismas keys.");
 }
 
 main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
+

@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "installCommand": "npm ci --prefix ../.. --legacy-peer-deps || npm install --prefix ../.. --legacy-peer-deps",
-  "buildCommand": "npm --prefix ../.. run build -w verifactu-app"
+  "installCommand": "npm install",
+  "buildCommand": "npm run build-app-only"
 }

@@ -1,45 +1,46 @@
-{
-    "name": "verifactu-monorepo",
-    "private": true,
-    "scripts": {
-        "dev": "turbo run dev --parallel",
-        "build": "turbo run build",
-        "lint": "turbo run lint",
-        "test": "turbo run test"
-    },
-    "devDependencies": {
-        "@next/env": "^16.1.1",
-        "@testing-library/jest-dom": "^6.9.0",
-        "@testing-library/react": "^16.1.0",
-        "@typescript-eslint/eslint-plugin": "^8.15.0",
-        "@typescript-eslint/parser": "^8.15.0",
-        "eslint": "^8.57.0",
-        "jest": "^30.2.0",
-        "jest-environment-jsdom": "^30.2.0",
-        "turbo": "^2.7.2"
-    },
-    "dependencies": {
-        "chai": "^6.2.1",
-        "eslint-config-prettier": "^10.1.8",
-        "eslint-config-turbo": "^2.6.3",
-        "mocha": "^11.7.5",
-        "supertest": "^7.1.4"
-    },
-    "pnpm": {
-        "overrides": {
-            "qs": "^6.14.1",
-            "@types/react": "18.3.27",
-            "@types/react-dom": "18.3.7"
-        },
-        "onlyBuiltDependencies": [
-            "@firebase/util",
-            "bcrypt",
-            "protobufjs",
-            "unrs-resolver"
-        ]
-    },
-    "engines": {
-        "node": ">=18.18.0 <21"
-    },
-    "packageManager": "pnpm@10.27.0"
+﻿{
+    "name":  "verifactu-monorepo",
+    "private":  true,
+    "scripts":  {
+                    "dev":  "turbo run dev --parallel",
+                    "build":  "turbo run build",
+                    "lint":  "turbo run lint",
+                    "test":  "turbo run test",
+                    "build-app-only":  "npm --prefix apps/app run build"
+                },
+    "devDependencies":  {
+                            "@next/env":  "^16.1.1",
+                            "@testing-library/jest-dom":  "^6.9.0",
+                            "@testing-library/react":  "^16.1.0",
+                            "@typescript-eslint/eslint-plugin":  "^8.15.0",
+                            "@typescript-eslint/parser":  "^8.15.0",
+                            "eslint":  "^8.57.0",
+                            "jest":  "^30.2.0",
+                            "jest-environment-jsdom":  "^30.2.0",
+                            "turbo":  "^2.7.2"
+                        },
+    "dependencies":  {
+                         "chai":  "^6.2.1",
+                         "eslint-config-prettier":  "^10.1.8",
+                         "eslint-config-turbo":  "^2.6.3",
+                         "mocha":  "^11.7.5",
+                         "supertest":  "^7.1.4"
+                     },
+    "pnpm":  {
+                 "overrides":  {
+                                   "qs":  "^6.14.1",
+                                   "@types/react":  "18.3.27",
+                                   "@types/react-dom":  "18.3.7"
+                               },
+                 "onlyBuiltDependencies":  [
+                                               "@firebase/util",
+                                               "bcrypt",
+                                               "protobufjs",
+                                               "unrs-resolver"
+                                           ]
+             },
+    "engines":  {
+                    "node":  "\u003e=18.18.0 \u003c21"
+                },
+    "packageManager":  "pnpm@10.27.0"
 }
