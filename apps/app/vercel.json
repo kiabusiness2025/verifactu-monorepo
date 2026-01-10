@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "installCommand": "cd ../.. && npm install --prefer-offline --no-audit --legacy-peer-deps",
-  "buildCommand": "npm run build-app-only"
+  "installCommand": "npm ci --prefer-offline --no-audit",
+  "buildCommand": "npm run build"
 }
