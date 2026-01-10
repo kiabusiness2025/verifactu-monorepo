@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "installCommand": "cd ../.. && npm ci --legacy-peer-deps",
+  "installCommand": "cd ../.. && npm ci --force --legacy-peer-deps",
   "buildCommand": "npm run build-app-only"
 }
