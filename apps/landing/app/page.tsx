@@ -1,16 +1,11 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Check, ShieldCheck, Sparkles } from "lucide-react";
 import Header from "./components/Header";
 import Faq from "./components/Faq";
-const PricingCalculatorModal = dynamic(
-  () => import("./components/PricingCalculatorModal"),
-  { ssr: false }
-);
-import { Button } from "./components/ui";
+import PricingCalculatorInline from "./components/PricingCalculatorInline";
 
 import { ISAAK_MESSAGES } from "./lib/home/data";
 import {
@@ -41,7 +36,6 @@ export default function Page() {
   const [benefitTarget, setBenefitTarget] = useState(0);
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [showCalculator, setShowCalculator] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -130,7 +124,10 @@ export default function Page() {
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <button
-                  onClick={() => setShowCalculator(true)}
+                  onClick={() => {
+                    const el = document.getElementById("precios");
+                    el?.scrollIntoView({ behavior: "smooth" });
+                  }}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-primary-light"
                   type="button"
                 >
@@ -228,18 +225,12 @@ export default function Page() {
             </p>
 
             <div className="mt-8 flex justify-center">
-              <Button
-                onClick={() => setShowCalculator(true)}
-                variant="primary"
-                size="xl"
-              >
-                Calcula tu precio
-              </Button>
+              <PricingCalculatorInline />
             </div>
 
             <p className="mx-auto mt-6 max-w-2xl text-xs text-slate-500">
-              Precio orientativo. La cuota final se basa en empresas activas, facturas emitidas y movimientos procesados
-              (si activas conciliacion bancaria). IVA no incluido.
+              Precio orientativo. La cuota final se basa en facturas emitidas y movimientos procesados (si activas
+              conciliacion bancaria). IVA no incluido.
             </p>
           </div>
         </Container>
@@ -295,7 +286,6 @@ export default function Page() {
 
       <Footer />
       <StickyCtaBar show={showStickyCta} />
-      <PricingCalculatorModal isOpen={showCalculator} onClose={() => setShowCalculator(false)} />
     </div>
   );
 }

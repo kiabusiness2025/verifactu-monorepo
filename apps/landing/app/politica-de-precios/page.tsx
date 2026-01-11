@@ -11,8 +11,8 @@ export default function PoliticaDePreciosPage() {
     <main className="mx-auto max-w-3xl px-6 py-12">
       <h1 className="text-3xl font-bold">Politica de precios y medicion de uso</h1>
       <p className="mt-6 text-gray-700">
-        Tu cuota mensual se compone de base, empresas adicionales y tramos de uso (facturas y, si activas conciliacion,
-        movimientos bancarios). Los importes mostrados son sin IVA.
+        Tu cuota mensual se compone de base y tramos de uso (facturas y, si activas conciliacion, movimientos
+        bancarios). Los importes mostrados son sin IVA.
       </p>
 
       <h2 className="mt-10 text-xl font-semibold">Base mensual</h2>
@@ -23,6 +23,10 @@ export default function PoliticaDePreciosPage() {
         <li>
           Conciliacion bancaria opcional: <strong>0 movimientos</strong> no tiene coste; si procesas movimientos se aplica
           un tramo.
+        </li>
+        <li>
+          La calculadora cubre hasta <strong>500 facturas/mes</strong> y <strong>1000 movimientos/mes</strong>. Por encima
+          de esos limites, ofrecemos presupuesto personalizado e integraciones avanzadas.
         </li>
       </ul>
 

@@ -3,11 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
-import {
-  estimateBreakdown,
-  estimateNetEur,
-  type PricingInput,
-} from "../lib/pricing/calc";
+import { estimateBreakdown, estimateNetEur, type PricingInput } from "../lib/pricing/calc";
 
 interface PricingCalculatorModalProps {
   isOpen: boolean;
@@ -18,7 +14,6 @@ export default function PricingCalculatorModal({
   isOpen,
   onClose,
 }: PricingCalculatorModalProps) {
-  const [companies, setCompanies] = useState(1);
   const [invoices, setInvoices] = useState(1);
   const [movements, setMovements] = useState(0);
   const [bankingEnabled, setBankingEnabled] = useState(false);
@@ -28,7 +23,7 @@ export default function PricingCalculatorModal({
   const fmt = (n: number) =>
     n.toLocaleString("es-ES", { maximumFractionDigits: 2 });
 
-  const input: PricingInput = { companies, invoices, movements, bankingEnabled };
+  const input: PricingInput = { invoices, movements, bankingEnabled };
   const monthlyPrice = estimateNetEur(input);
   const breakdown = estimateBreakdown(input);
   const withVAT = Math.round(monthlyPrice * 1.21 * 100) / 100;
@@ -42,6 +37,10 @@ export default function PricingCalculatorModal({
       });
 
       const data = await response.json();
+      if (!response.ok && data?.code === "QUOTE_REQUIRED" && data?.redirect) {
+        window.location.href = data.redirect;
+        return;
+      }
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -71,29 +70,6 @@ export default function PricingCalculatorModal({
         </p>
 
         <div className="space-y-8">
-          {/* Empresas */}
-          <div>
-            <label className="mb-3 flex items-center justify-between text-sm font-medium text-gray-700">
-              <span>Empresas activas</span>
-              <span className="text-2xl font-bold text-primary">{companies}</span>
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="50"
-              value={companies}
-              onChange={(e) => setCompanies(Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
-              style={{
-                background: `linear-gradient(to right, #003170 0%, #003170 ${((companies - 1) / 49) * 100}%, #e5e7eb ${((companies - 1) / 49) * 100}%, #e5e7eb 100%)`,
-              }}
-            />
-            <div className="mt-1 flex justify-between text-xs text-gray-500">
-              <span>1</span>
-              <span>50</span>
-            </div>
-          </div>
-
           {/* Facturas */}
           <div>
             <label className="mb-3 flex items-center justify-between text-sm font-medium text-gray-700">
@@ -103,21 +79,24 @@ export default function PricingCalculatorModal({
             <input
               type="range"
               min="1"
-              max="2000"
+              max="500"
               step="1"
               value={invoices}
               onChange={(e) => setInvoices(Number(e.target.value))}
               className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
               style={{
-                background: `linear-gradient(to right, #003170 0%, #003170 ${((invoices - 1) / 1999) * 100}%, #e5e7eb ${((invoices - 1) / 1999) * 100}%, #e5e7eb 100%)`,
+                background: `linear-gradient(to right, #003170 0%, #003170 ${((invoices - 1) / 499) * 100}%, #e5e7eb ${((invoices - 1) / 499) * 100}%, #e5e7eb 100%)`,
               }}
             />
             <p className="mt-2 text-xs text-gray-500">
               Incluye hasta 10 facturas/mes en la cuota base.
             </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Mas de 500 facturas/mes requiere presupuesto.
+            </p>
             <div className="mt-1 flex justify-between text-xs text-gray-500">
               <span>1</span>
-              <span>2.000</span>
+              <span>500</span>
             </div>
           </div>
 
@@ -146,21 +125,24 @@ export default function PricingCalculatorModal({
                 <input
                   type="range"
                   min="0"
-                  max="10000"
+                  max="1000"
                   step="1"
                   value={movements}
                   onChange={(e) => setMovements(Number(e.target.value))}
                   className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
                   style={{
-                    background: `linear-gradient(to right, #003170 0%, #003170 ${(movements / 10000) * 100}%, #e5e7eb ${(movements / 10000) * 100}%, #e5e7eb 100%)`,
+                    background: `linear-gradient(to right, #003170 0%, #003170 ${(movements / 1000) * 100}%, #e5e7eb ${(movements / 1000) * 100}%, #e5e7eb 100%)`,
                   }}
                 />
                 <p className="mt-2 text-xs text-gray-500">
                   0 movimientos = 0 EUR. Si activas conciliacion y procesas movimientos, se aplica un tramo.
                 </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Mas de 1000 movimientos/mes requiere presupuesto.
+                </p>
                 <div className="mt-1 flex justify-between text-xs text-gray-500">
                   <span>0</span>
-                  <span>10.000</span>
+                  <span>1.000</span>
                 </div>
               </>
             )}
@@ -187,10 +169,6 @@ export default function PricingCalculatorModal({
                 <div className="flex items-center justify-between">
                   <span>Base</span>
                   <span>{fmt(breakdown.base)} EUR</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Empresas extra</span>
-                  <span>{fmt(breakdown.companiesExtra)} EUR</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tramo facturas (a partir de 11)</span>
@@ -222,8 +200,6 @@ export default function PricingCalculatorModal({
     </div>
   );
 }
-
-
 
 
 

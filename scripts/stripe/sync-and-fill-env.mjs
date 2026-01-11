@@ -60,32 +60,16 @@ const PRICE_SPECS = [
   // base
   { priceKey: "base-monthly", unitAmountEur: 19, interval: "month" },
 
-  // companies extra
-  { priceKey: "company-unit-monthly", unitAmountEur: 7, interval: "month" },
-
   // invoices (add-on por tramo)
   { priceKey: "invoices-11-50-monthly", unitAmountEur: 4, interval: "month" },
   { priceKey: "invoices-51-200-monthly", unitAmountEur: 6, interval: "month" },
   { priceKey: "invoices-201-500-monthly", unitAmountEur: 15, interval: "month" },
-  { priceKey: "invoices-501-1000-monthly", unitAmountEur: 29, interval: "month" },
-  { priceKey: "invoices-1001-2000-monthly", unitAmountEur: 49, interval: "month" },
 
   // movements (add-on por tramo)
   { priceKey: "mov-1-100-monthly", unitAmountEur: 3, interval: "month" },
-  { priceKey: "mov-101-200-monthly", unitAmountEur: 4, interval: "month" },
-  { priceKey: "mov-201-300-monthly", unitAmountEur: 5, interval: "month" },
-  { priceKey: "mov-301-400-monthly", unitAmountEur: 6, interval: "month" },
-  { priceKey: "mov-401-500-monthly", unitAmountEur: 7, interval: "month" },
-  { priceKey: "mov-501-1000-monthly", unitAmountEur: 12, interval: "month" },
-  { priceKey: "mov-1001-2000-monthly", unitAmountEur: 19, interval: "month" },
-  { priceKey: "mov-2001-3000-monthly", unitAmountEur: 29, interval: "month" },
-  { priceKey: "mov-3001-4000-monthly", unitAmountEur: 39, interval: "month" },
-  { priceKey: "mov-4001-5000-monthly", unitAmountEur: 49, interval: "month" },
-  { priceKey: "mov-5001-6000-monthly", unitAmountEur: 59, interval: "month" },
-  { priceKey: "mov-6001-7000-monthly", unitAmountEur: 69, interval: "month" },
-  { priceKey: "mov-7001-8000-monthly", unitAmountEur: 79, interval: "month" },
-  { priceKey: "mov-8001-9000-monthly", unitAmountEur: 89, interval: "month" },
-  { priceKey: "mov-9001-10000-monthly", unitAmountEur: 99, interval: "month" },
+  { priceKey: "mov-101-200-monthly", unitAmountEur: 5, interval: "month" },
+  { priceKey: "mov-201-500-monthly", unitAmountEur: 9, interval: "month" },
+  { priceKey: "mov-501-1000-monthly", unitAmountEur: 15, interval: "month" },
 ];
 
 async function findOrCreateProduct() {

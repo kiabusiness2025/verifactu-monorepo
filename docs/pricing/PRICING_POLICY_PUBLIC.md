@@ -3,7 +3,6 @@
 ## 1. Que incluye la cuota
 Tu cuota mensual se compone de:
 - **Base mensual** (incluye un minimo de uso).
-- **Empresas adicionales** (si gestionas mas de una empresa).
 - **Tramo de facturas emitidas** (segun volumen mensual).
 - **Tramo de movimientos bancarios** (solo si activas la conciliacion bancaria).
 
@@ -13,6 +12,7 @@ Tu cuota mensual se compone de:
 La cuota base incluye:
 - Hasta **10 facturas emitidas al mes**.
 - Conciliacion bancaria opcional: **0 movimientos** no tiene coste. Si activas conciliacion y procesas movimientos, se aplica un tramo.
+La calculadora cubre hasta **500 facturas/mes** y **1000 movimientos/mes**. Por encima de esos limites, ofrecemos presupuesto personalizado e integraciones avanzadas.
 
 ## 3. Precio estimado vs precio final
 La calculadora muestra un **precio estimado**.

@@ -10,12 +10,20 @@ function check(input, expected) {
   );
 }
 
+// 10 vs 11 invoices boundary
+check({ invoices: 10, movements: 0, bankingEnabled: false }, 19);
+check({ invoices: 11, movements: 0, bankingEnabled: false }, 23);
+
 // 50 vs 51 invoices boundary
-check({ companies: 1, invoices: 50, movements: 0, bankingEnabled: false }, 19);
-check({ companies: 1, invoices: 51, movements: 0, bankingEnabled: false }, 25);
+check({ invoices: 50, movements: 0, bankingEnabled: false }, 23);
+check({ invoices: 51, movements: 0, bankingEnabled: false }, 25);
 
 // 0 vs 1 movements boundary (banking enabled)
-check({ companies: 1, invoices: 50, movements: 0, bankingEnabled: true }, 19);
-check({ companies: 1, invoices: 50, movements: 1, bankingEnabled: true }, 25);
+check({ invoices: 10, movements: 0, bankingEnabled: true }, 19);
+check({ invoices: 10, movements: 1, bankingEnabled: true }, 22);
+
+// 100 vs 101 movements boundary (banking enabled)
+check({ invoices: 10, movements: 100, bankingEnabled: true }, 22);
+check({ invoices: 10, movements: 101, bankingEnabled: true }, 24);
 
 console.log("pricing-smoke OK");

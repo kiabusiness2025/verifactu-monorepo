@@ -3,7 +3,6 @@
 ## Objetivo
 Modelo simple "por tramo" (bandas). El checkout siempre incluye:
 - Base mensual
-- Empresas extra (por unidad)
 - 0 o 1 add-on de facturas (segun tramo)
 - 0 o 1 add-on de movimientos (segun tramo, si conciliacion activada)
 
@@ -18,40 +17,25 @@ Modelo simple "por tramo" (bandas). El checkout siempre incluye:
 - Stripe sync + env: scripts/stripe/sync-and-fill-env.mjs
 - Vercel env upsert: scripts/vercel/upsert-landing-env-bonus.ps1
 
-## Regla multiempresa
-- 7 EUR/mes por empresa adicional (companies-1)
-
 ## Facturas emitidas (tramos)
 - 1-10: +0
 - 11-50: +4
 - 51-200: +6
 - 201-500: +15
-- 501-1000: +29
-- 1001-2000: +49
+- >500: presupuesto
 
 ## Movimientos bancarios (tramos, si conciliacion activada)
 - 0: +0
 - 1-100: +3
-- 101-200: +4
-- 201-300: +5
-- 301-400: +6
-- 401-500: +7
-- 501-1000: +12
-- 1001-2000: +19
-- 2001-3000: +29
-- 3001-4000: +39
-- 4001-5000: +49
-- 5001-6000: +59
-- 6001-7000: +69
-- 7001-8000: +79
-- 8001-9000: +89
-- 9001-10000: +99
+- 101-200: +5
+- 201-500: +9
+- 501-1000: +15
+- >1000: presupuesto
 
 ## Implementacion Stripe (V1)
 Checkout "subscription":
 - line_items:
   - STRIPE_PRICE_BASE_MONTHLY (quantity 1)
-  - STRIPE_PRICE_COMPANY_UNIT_MONTHLY (quantity companies-1, si >0)
   - STRIPE_PRICE_INVOICES_* (quantity 1 si aplica)
   - STRIPE_PRICE_MOV_* (quantity 1 si aplica)
 

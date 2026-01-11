@@ -43,14 +43,31 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Body inválido" }, { status: 400 });
+    return NextResponse.json({ error: "Body invalido" }, { status: 400 });
+  }
+
+  const rawInvoices = Number(body?.invoices ?? 1);
+  const rawMovements = Number(body?.movements ?? 0);
+  const rawBankingEnabled = !!body?.bankingEnabled;
+
+  if (rawInvoices > 500) {
+    return NextResponse.json(
+      { error: "Presupuesto requerido", code: "QUOTE_REQUIRED", redirect: "/presupuesto" },
+      { status: 400 }
+    );
+  }
+
+  if (rawBankingEnabled && rawMovements > 1000) {
+    return NextResponse.json(
+      { error: "Presupuesto requerido", code: "QUOTE_REQUIRED", redirect: "/presupuesto" },
+      { status: 400 }
+    );
   }
 
   const input = normalizeInput({
-    companies: body?.companies,
-    invoices: body?.invoices,
-    movements: body?.movements,
-    bankingEnabled: body?.bankingEnabled,
+    invoices: rawInvoices,
+    movements: rawMovements,
+    bankingEnabled: rawBankingEnabled,
   });
 
   const user = await getUserFromSession(req);
@@ -61,16 +78,9 @@ export async function POST(req: Request) {
   const stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"), { apiVersion: "2024-06-20" });
 
   const basePrice = requireEnv("STRIPE_PRICE_BASE_MONTHLY");
-  const companyUnitPrice = requireEnv("STRIPE_PRICE_COMPANY_UNIT_MONTHLY");
-
   const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [
     { price: basePrice, quantity: 1 },
   ];
-
-  const extraCompanies = Math.max(0, input.companies - 1);
-  if (extraCompanies > 0) {
-    line_items.push({ price: companyUnitPrice, quantity: extraCompanies });
-  }
 
   const invTier = invoiceTierKey(input.invoices);
   if (invTier) {
@@ -90,7 +100,7 @@ export async function POST(req: Request) {
 
   const cancelUrl = new URL("/#precios", getLandingUrl());
 
-  // Estimación neta para mostrar/guardar como metadata (sin IVA)
+  // Estimacion neta para mostrar/guardar como metadata (sin IVA)
   const estimated = estimateNetEur(input);
 
   try {
@@ -103,14 +113,13 @@ export async function POST(req: Request) {
       client_reference_id: user.uid,
       customer_email: user.email ?? undefined,
 
-      // Trial 30 días (sin tarjeta si no es necesaria)
+      // Trial 30 dias (sin tarjeta si no es necesaria)
       payment_method_collection: "if_required",
       subscription_data: {
         trial_period_days: 30,
         metadata: {
           verifactu_pricing: "calculator-v1",
           uid: user.uid,
-          companies: String(input.companies),
           invoices: String(input.invoices),
           movements: String(input.movements),
           bankingEnabled: String(input.bankingEnabled),
@@ -118,7 +127,7 @@ export async function POST(req: Request) {
         },
       },
 
-      // Para que el cliente meta email y luego podáis vincularlo con cuenta
+      // Para que el cliente meta email y luego podais vincularlo con cuenta
       customer_creation: "always",
       metadata: {
         verifactu_pricing: "calculator-v1",
@@ -158,7 +167,7 @@ export async function GET(req: Request) {
 
   const envKey = PLAN_TO_PRICE_ENV[plan];
   if (!envKey) {
-    return NextResponse.json({ error: "Plan no válido" }, { status: 400 });
+    return NextResponse.json({ error: "Plan no valido" }, { status: 400 });
   }
 
   const stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"), { apiVersion: "2024-06-20" });
