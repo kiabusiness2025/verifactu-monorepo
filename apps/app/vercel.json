@@ -1,5 +1,4 @@
 {
-  "framework": "nextjs",
-  "installCommand": "cd ../.. && npm install --prefer-offline --no-audit",
-  "buildCommand": "cd ../.. && npm --prefix apps/app run build"
+ "framework": "nextjs",
+ "buildCommand": "npm run build --prefix apps/app"
 }

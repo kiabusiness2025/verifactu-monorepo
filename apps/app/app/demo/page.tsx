@@ -5,7 +5,7 @@ import { useState } from "react";
 
 const DEMO_DATA = {
   revenue: 47250,
-  expenses: 12800,
+  expensesTotal: 12800,
   profit: 34450,
   invoices: [
     { id: "F-2026-001", date: "2026-01-05", client: "Acme Corp", amount: 12500, status: "paid" },
@@ -75,7 +75,7 @@ export default function DemoPage() {
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Gastos</div>
             <div className="mt-2 text-2xl font-bold text-slate-900">
               {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(
-                DEMO_DATA.expenses
+                DEMO_DATA.expensesTotal
               )}
             </div>
             <div className="mt-1 text-xs text-slate-600">Normal para este periodo</div>

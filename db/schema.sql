@@ -21,16 +21,43 @@ CREATE TABLE IF NOT EXISTS tenants (
 -- 2) USERS (usuarios app)
 -- =========================
 CREATE TABLE IF NOT EXISTS users (
-    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id   uuid REFERENCES tenants(id) ON DELETE CASCADE,
+    id          uuid PRIMARY KEY,
     email       text NOT NULL UNIQUE,
     name        text,
-    role        text NOT NULL DEFAULT 'user', -- 'owner','admin','user'
     created_at  timestamptz NOT NULL DEFAULT now()
 );
 
 -- =========================
--- 3) PLANS (tarifas)
+-- 3) MEMBERSHIPS (pertenencia user-tenant con rol)
+-- =========================
+CREATE TABLE IF NOT EXISTS memberships (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id   uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role        text NOT NULL DEFAULT 'member', -- 'owner','admin','member','asesor'
+    status      text NOT NULL DEFAULT 'active', -- 'active','invited','revoked'
+    invited_by  uuid REFERENCES users(id),
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (tenant_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_memberships_user_id
+    ON memberships (user_id);
+
+CREATE INDEX IF NOT EXISTS idx_memberships_tenant_id
+    ON memberships (tenant_id);
+
+-- =========================
+-- 4) USER PREFERENCES (tenant preferido, etc)
+-- =========================
+CREATE TABLE IF NOT EXISTS user_preferences (
+    user_id             uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    preferred_tenant_id uuid REFERENCES tenants(id) ON DELETE SET NULL,
+    updated_at          timestamptz NOT NULL DEFAULT now()
+);
+
+-- =========================
+-- 5) PLANS (tarifas)
 -- =========================
 CREATE TABLE IF NOT EXISTS plans (
     id                      serial PRIMARY KEY,
@@ -44,7 +71,7 @@ CREATE TABLE IF NOT EXISTS plans (
 );
 
 -- =========================
--- 4) SUBSCRIPTIONS
+-- 6) SUBSCRIPTIONS
 -- =========================
 CREATE TABLE IF NOT EXISTS subscriptions (
     id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -61,7 +88,7 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant_status
     ON subscriptions (tenant_id, status);
 
 -- =========================
--- 5) INVOICES (facturas)
+-- 7) INVOICES (facturas)
 -- =========================
 CREATE TABLE IF NOT EXISTS invoices (
     id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -89,7 +116,7 @@ CREATE INDEX IF NOT EXISTS idx_invoices_tenant_status
     ON invoices (tenant_id, status);
 
 -- =========================
--- 6) INVOICE ITEMS (líneas)
+-- 8) INVOICE ITEMS (líneas)
 -- =========================
 CREATE TABLE IF NOT EXISTS invoice_items (
     id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -102,7 +129,7 @@ CREATE TABLE IF NOT EXISTS invoice_items (
 );
 
 -- =========================
--- 7) EXPENSE CATEGORIES
+-- 9) EXPENSE CATEGORIES
 -- =========================
 CREATE TABLE IF NOT EXISTS expense_categories (
     id            serial PRIMARY KEY,
@@ -113,7 +140,7 @@ CREATE TABLE IF NOT EXISTS expense_categories (
 );
 
 -- =========================
--- 8) EXPENSES (gastos)
+-- 10) EXPENSES (gastos)
 -- =========================
 CREATE TABLE IF NOT EXISTS expenses (
     id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -137,7 +164,7 @@ CREATE INDEX IF NOT EXISTS idx_expenses_tenant_issue_date
     ON expenses (tenant_id, issue_date);
 
 -- =========================
--- 9) USAGE COUNTERS (control límites plan)
+-- 11) USAGE COUNTERS (control límites plan)
 -- =========================
 CREATE TABLE IF NOT EXISTS usage_counters (
     id               bigserial PRIMARY KEY,
