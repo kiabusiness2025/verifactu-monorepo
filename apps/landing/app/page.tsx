@@ -116,25 +116,26 @@ export default function Page() {
                 Estado: Operativo - ultima sync VeriFactu hace 3 min
               </div>
 
-              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl">
+              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-primary sm:text-6xl">
                 Tu contabilidad, siempre
                 <br />
-                <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent">
                   bajo control. Sin esfuerzo.
                 </span>
               </h1>
 
-              <p className="mt-5 max-w-xl text-base leading-7 text-slate-700 sm:text-lg">
+              <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
                 Isaak organiza facturas y gastos, y te muestra lo esencial: ventas, gastos y beneficio. Tu decides el ritmo.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/demo#calculadora"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-blue-700"
+                <button
+                  onClick={() => setShowCalculator(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-primary-light"
+                  type="button"
                 >
                   Calcula precio
-                </Link>
+                </button>
                 <Link
                   href="/demo"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100"
@@ -143,11 +144,11 @@ export default function Page() {
                 </Link>
               </div>
               <div className="mt-3 text-sm text-slate-600">
-                <Link href="/auth/signup" className="font-semibold text-blue-700 hover:text-blue-800">
+                <Link href="/auth/signup" className="font-semibold text-primary hover:text-primary-light">
                   Empezar prueba gratis
                 </Link>
                 <span className="px-2 text-slate-400">|</span>
-                <Link href="/auth/login" className="font-semibold text-slate-700 hover:text-slate-900">
+                <Link href="/auth/login" className="font-semibold text-lightbg-600 hover:text-primary">
                   Crear cuenta
                 </Link>
               </div>
@@ -175,12 +176,12 @@ export default function Page() {
         <Container>
           <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                Cumple con calma.
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-                VeriFactu no deberia darte miedo. Isaak te guia, valida y te avisa cuando algo necesita revision.
-              </p>
+            <h2 className="text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
+              Cumple con calma.
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
+              VeriFactu no deberia darte miedo. Isaak te guia, valida y te avisa cuando algo necesita revision.
+            </p>
             </div>
             <ComplianceBadge />
           </div>
@@ -201,8 +202,10 @@ export default function Page() {
               <Sparkles className="h-4 w-4" />
               Dashboard
             </div>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">Ventas - Gastos = Beneficio</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-primary sm:text-4xl">
+              Ventas - Gastos = Beneficio
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
               Lo esencial, siempre visible. El detalle aparece solo cuando lo pides.
             </p>
           </div>
@@ -217,10 +220,10 @@ export default function Page() {
       <section id="precios" className="py-16">
         <Container>
           <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
               Precio que se ajusta a tu uso real
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
               Solo mensual - 1 mes gratis - aviso antes de renovar.
             </p>
 
@@ -246,8 +249,10 @@ export default function Page() {
       <section id="dashboard" className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
           <div className="text-center mb-12">
-            <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">Preguntas frecuentes</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
+            <h3 className="text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
+              Preguntas frecuentes
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
               Respuestas rapidas sobre planes, seguridad y funcionalidades.
             </p>
           </div>
@@ -258,10 +263,10 @@ export default function Page() {
       {/* Resources */}
       <section className="py-14 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
         <Container>
-          <h3 className="text-center text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h3 className="text-center text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
             Recursos para dominar VeriFactu e Isaak.
           </h3>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600 sm:text-base">
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
             Guias, onboarding y checklist para aplicar mejores practicas y aprovechar todo el potencial de la plataforma.
           </p>
 

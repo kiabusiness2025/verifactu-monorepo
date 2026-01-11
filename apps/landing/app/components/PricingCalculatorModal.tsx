@@ -63,10 +63,10 @@ export default function PricingCalculatorModal({
           <X className="h-6 w-6" />
         </button>
 
-        <h2 className="mb-2 text-3xl font-bold text-gray-900">
+        <h2 className="mb-2 text-3xl font-bold text-primary">
           Calcula tu precio
         </h2>
-        <p className="mb-8 text-gray-600">
+        <p className="mb-8 text-lightbg-600">
           Ajusta los valores segun tu actividad. El precio se calcula por uso real.
         </p>
 
@@ -75,7 +75,7 @@ export default function PricingCalculatorModal({
           <div>
             <label className="mb-3 flex items-center justify-between text-sm font-medium text-gray-700">
               <span>Empresas activas</span>
-              <span className="text-2xl font-bold text-blue-600">{companies}</span>
+              <span className="text-2xl font-bold text-primary">{companies}</span>
             </label>
             <input
               type="range"
@@ -98,7 +98,7 @@ export default function PricingCalculatorModal({
           <div>
             <label className="mb-3 flex items-center justify-between text-sm font-medium text-gray-700">
               <span>Facturas emitidas / mes</span>
-              <span className="text-2xl font-bold text-blue-600">{invoices}</span>
+              <span className="text-2xl font-bold text-primary">{invoices}</span>
             </label>
             <input
               type="range"
@@ -133,12 +133,12 @@ export default function PricingCalculatorModal({
                     setBankingEnabled(enabled);
                     if (!enabled) setMovements(0);
                   }}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <span>Conciliacion bancaria</span>
               </label>
               {bankingEnabled && (
-                <span className="text-2xl font-bold text-blue-600">{movements}</span>
+                <span className="text-2xl font-bold text-primary">{movements}</span>
               )}
             </div>
             {bankingEnabled && (
@@ -177,40 +177,39 @@ export default function PricingCalculatorModal({
           <div className="flex items-end justify-between">
             <div>
               <p className="text-sm text-gray-600">Cuota mensual estimada</p>
-              <p className="mt-1 text-4xl font-bold text-blue-600">
-                {fmt(monthlyPrice)} €{" "}
-                <span className="text-2xl text-gray-500">/mes + IVA</span>
+              <p className="mt-1 text-4xl font-bold text-primary">
+                {fmt(monthlyPrice)} EUR <span className="text-2xl text-gray-500">/mes + IVA</span>
               </p>
               <p className="mt-1 text-sm text-gray-500">
-                Con IVA: {fmt(withVAT)} €
+                Con IVA: {fmt(withVAT)} EUR
               </p>
               <div className="mt-4 space-y-1 text-xs text-gray-500">
                 <div className="flex items-center justify-between">
                   <span>Base</span>
-                  <span>{fmt(breakdown.base)} €</span>
+                  <span>{fmt(breakdown.base)} EUR</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Empresas extra</span>
-                  <span>{fmt(breakdown.companiesExtra)} €</span>
+                  <span>{fmt(breakdown.companiesExtra)} EUR</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tramo facturas (a partir de 11)</span>
-                  <span>{fmt(breakdown.invoiceAddon)} €</span>
+                  <span>{fmt(breakdown.invoiceAddon)} EUR</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tramo movimientos (a partir de 1)</span>
-                  <span>{fmt(breakdown.movementAddon)} €</span>
+                  <span>{fmt(breakdown.movementAddon)} EUR</span>
                 </div>
               </div>
               <p className="mt-3 text-xs text-gray-500">
-                <Link href="/politica-de-precios" className="text-blue-600 hover:text-blue-700">
+                <Link href="/politica-de-precios" className="text-primary hover:text-primary-light">
                   Ver politica de medicion de uso
                 </Link>
               </p>
             </div>
             <button
               onClick={handleStartTrial}
-              className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-blue-700"
+              className="rounded-lg bg-primary px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-primary-light"
             >
               Empezar 1 mes gratis
             </button>
@@ -223,6 +222,7 @@ export default function PricingCalculatorModal({
     </div>
   );
 }
+
 
 
 

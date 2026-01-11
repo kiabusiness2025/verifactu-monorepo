@@ -23,7 +23,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
 
   const defaultNavLinks: NavLink[] = [
     { label: "VeriFactu", href: "/verifactu/que-es" },
-    { label: "Calcula precio", href: "/demo#calculadora" },
+    { label: "Calcula precio", href: "/#precios" },
     { label: "Recursos", href: "/recursos/guias-y-webinars" },
     { label: "Soporte", href: "/verifactu/soporte" },
   ];
@@ -42,7 +42,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
             <Link
               key={link.href}
               href={link.href}
-              className="text-gray-700 hover:text-blue-600 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:rounded"
+              className="text-lightbg-600 hover:text-primary transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:rounded"
             >
               {link.label}
             </Link>
@@ -55,7 +55,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
             <>
               <Link
                 href={dashboardHref}
-                className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
+                className="px-6 py-2 rounded-full bg-gradient-to-r from-primary to-primary-light text-white font-semibold shadow-md hover:from-primary hover:to-primary-light transition-all text-sm"
                 aria-label="Ir al Dashboard"
               >
                 Dashboard
@@ -74,7 +74,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
           ) : (
             <Link
               href="/auth/login"
-              className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
+              className="px-6 py-2 rounded-full bg-gradient-to-r from-primary to-primary-light text-white font-semibold shadow-md hover:from-primary hover:to-primary-light transition-all text-sm"
               aria-label="Acceder a tu cuenta"
             >
               Acceder
@@ -88,7 +88,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
             <>
               <Link
                 href={dashboardHref}
-                className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-primary to-primary-light text-white font-semibold shadow-md hover:from-primary hover:to-primary-light transition-all text-sm"
                 aria-label="Ir al Dashboard"
               >
                 Dashboard
@@ -107,7 +107,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
           ) : (
             <Link
               href="/auth/login"
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:from-blue-700 hover:to-blue-800 transition-all text-sm"
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-primary to-primary-light text-white font-semibold shadow-md hover:from-primary hover:to-primary-light transition-all text-sm"
               aria-label="Acceder a tu cuenta"
             >
               Acceder
