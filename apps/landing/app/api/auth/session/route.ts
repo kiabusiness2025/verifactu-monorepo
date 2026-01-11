@@ -37,12 +37,26 @@ export async function POST(req: Request) {
   }
 
   const decoded = await admin.auth().verifyIdToken(idToken);
+  const rolesRaw = (decoded as any).roles ?? (decoded as any).role ?? [];
+  const tenantsRaw = (decoded as any).tenants ?? (decoded as any).tenant ?? [];
+  const roles = Array.isArray(rolesRaw)
+    ? rolesRaw.map((role) => String(role))
+    : rolesRaw
+      ? [String(rolesRaw)]
+      : [];
+  const tenants = Array.isArray(tenantsRaw)
+    ? tenantsRaw.map((tenant) => String(tenant))
+    : tenantsRaw
+      ? [String(tenantsRaw)]
+      : [];
 
   const secret = new TextEncoder().encode(requireEnv("SESSION_SECRET"));
 
   const token = await new SignJWT({
     uid: decoded.uid,
     email: decoded.email ?? null,
+    roles,
+    tenants,
     ver: 1,
   })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })

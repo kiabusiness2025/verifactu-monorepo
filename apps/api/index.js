@@ -62,13 +62,49 @@ async function getUserFromSession(req) {
 
   try {
     const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+    const rolesRaw = payload.roles ?? payload.role ?? [];
+    const tenantsRaw = payload.tenants ?? payload.tenant ?? [];
+    const roles = Array.isArray(rolesRaw)
+      ? rolesRaw.map((role) => String(role))
+      : rolesRaw
+        ? [String(rolesRaw)]
+        : [];
+    const tenants = Array.isArray(tenantsRaw)
+      ? tenantsRaw.map((tenant) => String(tenant))
+      : tenantsRaw
+        ? [String(tenantsRaw)]
+        : [];
     return {
       uid: String(payload.uid || ""),
       email: payload.email ? String(payload.email) : null,
+      roles,
+      tenants,
     };
   } catch {
     return null;
   }
+}
+
+function parseAllowlist(value) {
+  if (!value) return new Set();
+  return new Set(
+    value
+      .split(",")
+      .map((entry) => entry.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+function isAdminUser(user) {
+  if (!user) return false;
+  const adminUids = parseAllowlist(process.env.ADMIN_UIDS);
+  const adminEmails = parseAllowlist(process.env.ADMIN_EMAILS);
+  const uid = user.uid ? String(user.uid).toLowerCase() : "";
+  const email = user.email ? String(user.email).toLowerCase() : "";
+  if (uid && adminUids.has(uid)) return true;
+  if (email && adminEmails.has(email)) return true;
+  if (user.roles?.includes("admin")) return true;
+  return false;
 }
 
 app.use("/api", async (req, res, next) => {
@@ -79,7 +115,7 @@ app.use("/api", async (req, res, next) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  req.user = user;
+  req.user = { ...user, isAdmin: isAdminUser(user) };
   return next();
 });
 
@@ -122,6 +158,9 @@ app.get("/api/dashboard/summary", (req, res) => {
 // Inspección (mínima) para validar que los secretos están accesibles
 app.get("/api/verifactu/ops", (_req, res) => {
   try {
+    if (!_req.user?.isAdmin) {
+      return res.status(403).json({ ok: false, error: "Forbidden" });
+    }
     const certExists = fs.existsSync(CERT_PATH);
     const pass = fs.existsSync(PASS_FILE) ? fs.readFileSync(PASS_FILE, "utf8") : null;
     const wsdlUrl = fs.existsSync(WSDL_FILE) ? fs.readFileSync(WSDL_FILE, "utf8") : null;
