@@ -126,7 +126,7 @@ export function HeroMockup({
   const heroLog = [
     { title: "Factura VF-2031", desc: "Validada y enviada al cliente" },
     { title: "Ticket combustible", desc: "Marcado deducible y registrado" },
-    { title: "Sync VeriFactu", desc: "Ãšltima validaciÃ³n hace 3 min" },
+    { title: "Sync VeriFactu", desc: "Ultima validacion hace 3 min" },
   ];
 
   return (
@@ -235,11 +235,11 @@ export function MiniInvoice() {
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200">
           <div className="text-[11px] text-slate-500">Cliente</div>
-          <div className="mt-0.5 font-semibold text-slate-800">A. LÃ³pez</div>
+          <div className="mt-0.5 font-semibold text-slate-800">A. Lopez</div>
         </div>
         <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200">
           <div className="text-[11px] text-slate-500">Importe</div>
-          <div className="mt-0.5 font-semibold text-slate-800">1.250,00 â‚¬</div>
+          <div className="mt-0.5 font-semibold text-slate-800">1.250,00 EUR</div>
         </div>
       </div>
 
@@ -289,7 +289,7 @@ export function FeatureCard({
         ))}
       </ul>
       <button className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700">
-        Ver mÃ¡s <ChevronRight className="h-4 w-4" />
+        Ver mas <ChevronRight className="h-4 w-4" />
       </button>
     </div>
   );
@@ -328,21 +328,21 @@ export function DashboardMock() {
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold">Isaak Control Center</div>
         <span className="rounded-full bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-          SuscripciÃ³n Business Plus
+          Suscripcion Business Plus
         </span>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <KpiCard label="Ventas del mes" value="48.230 â‚¬" sub="â†‘ +12%" />
-        <KpiCard label="Gastos del mes" value="36.900 â‚¬" sub="â†‘ +7%" />
-        <KpiCard label="Beneficio" value="12.410 â‚¬" sub="â†‘ +8%" />
+        <KpiCard label="Ventas del mes" value="48.230 EUR" sub="+12%" />
+        <KpiCard label="Gastos del mes" value="36.900 EUR" sub="+7%" />
+        <KpiCard label="Beneficio" value="12.410 EUR" sub="+8%" />
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-xs font-semibold text-slate-700">Isaak</div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            He detectado un aumento de gastos en proveedores. Â¿Quieres que identifique los que mÃ¡s afectan al margen?
+            He detectado un aumento de gastos en proveedores. Quieres que identifique los que mas afectan al margen?
           </p>
 
           <div className="mt-3 flex gap-2">
@@ -350,7 +350,7 @@ export function DashboardMock() {
               Analizar ahora
             </button>
             <button className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
-              MÃ¡s tarde
+              Mas tarde
             </button>
           </div>
         </div>
@@ -360,7 +360,7 @@ export function DashboardMock() {
           <div className="mt-3 space-y-2">
             <ActivityItem icon={<FileText className="h-4 w-4 text-blue-600" />} text="Factura VF-2031 emitida y validada" />
             <ActivityItem icon={<UploadCloud className="h-4 w-4 text-blue-600" />} text="3 tickets reconocidos desde Drive" />
-            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorio creado: plazo fiscal en 5 dÃ­as" />
+            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorio creado: plazo fiscal en 5 dias" />
             <ActivityItem icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />} text="Checklist VeriFactu: todo en orden" />
           </div>
         </div>
@@ -446,7 +446,7 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-4">
           <div>
             <BrandLogo variant="footer" />
-            <p className="mt-3 text-sm text-slate-300">Automatiza tu facturaciÃ³n con cumplimiento y control total.</p>
+            <p className="mt-3 text-sm text-slate-300">Automatiza tu facturacion con cumplimiento y control total.</p>
             <div className="mt-4 flex gap-3">
               <a
                 href="/recursos/guias-y-webinars"
@@ -510,8 +510,8 @@ export function Footer() {
             title="Legal"
             links={[
               { label: "VeriFactu", href: "/verifactu" },
-              { label: "PolÃ­tica de privacidad", href: "/legal/privacidad" },
-              { label: "TÃ©rminos de servicio", href: "/legal/terminos" },
+              { label: "Politica de privacidad", href: "/legal/privacidad" },
+              { label: "Terminos de servicio", href: "/legal/terminos" },
               { label: "Cookies", href: "/legal/cookies" },
             ]}
           />
@@ -519,18 +519,18 @@ export function Footer() {
 
         <div className="mt-10 border-t border-white/10 pt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400">
-            <p>Â© {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
+            <p>(c) {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
             <div className="flex gap-6">
               <Link href="/verifactu" className="hover:text-blue-300 transition" aria-label="Ir a VeriFactu">
                 VeriFactu
               </Link>
-              <Link href="/legal/privacidad" className="hover:text-blue-300 transition" aria-label="Leer polÃ­tica de privacidad">
-                PolÃ­tica de privacidad
+              <Link href="/legal/privacidad" className="hover:text-blue-300 transition" aria-label="Leer politica de privacidad">
+                Politica de privacidad
               </Link>
-              <Link href="/legal/terminos" className="hover:text-blue-300 transition" aria-label="Leer tÃ©rminos de servicio">
-                TÃ©rminos de servicio
+              <Link href="/legal/terminos" className="hover:text-blue-300 transition" aria-label="Leer terminos de servicio">
+                Terminos de servicio
               </Link>
-              <Link href="/legal/cookies" className="hover:text-blue-300 transition" aria-label="Leer polÃ­tica de cookies">
+              <Link href="/legal/cookies" className="hover:text-blue-300 transition" aria-label="Leer politica de cookies">
                 Cookies
               </Link>
             </div>
@@ -579,8 +579,8 @@ export function PriceDisplay({ price, isYearly }: { price: number | null; isYear
   }
   return (
     <div>
-      <div className="text-4xl font-bold text-slate-900">â‚¬{price}</div>
-      <div className="text-sm text-slate-500">{isYearly ? "/aÃ±o" : "/mes"}</div>
+      <div className="text-4xl font-bold text-slate-900">{price} EUR</div>
+      <div className="text-sm text-slate-500">{isYearly ? "/ano" : "/mes"}</div>
     </div>
   );
 }
@@ -606,7 +606,7 @@ export function ComplianceBadge() {
             </div>
             <span className="text-sm font-semibold text-green-700">Cumplimiento Certificado</span>
           </div>
-          <p className="mt-3 text-xs text-slate-500">Sistema homologado segÃºn normativa de la Agencia Tributaria</p>
+          <p className="mt-3 text-xs text-slate-500">Sistema homologado segun normativa de la Agencia Tributaria</p>
         </div>
       </div>
     </div>
@@ -617,9 +617,9 @@ export function ThreeSteps() {
   return (
     <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
       <Container>
-        <h3 className="text-center text-2xl font-semibold tracking-tight text-primary sm:text-3xl">Del envÃ­o al cobro en tres pasos.</h3>
+        <h3 className="text-center text-2xl font-semibold tracking-tight text-primary sm:text-3xl">Del envio al cobro en tres pasos.</h3>
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
-          Conecta tu flujo de facturaciÃ³n y deja que Isaak automatice validaciones y recordatorios.
+          Conecta tu flujo de facturacion y deja que Isaak automatice validaciones y recordatorios.
         </p>
 
         <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -632,7 +632,7 @@ export function ThreeSteps() {
           <StepCard
             n={2}
             title="Emite y valida"
-            desc="Genera la factura y valida automÃ¡ticamente con VeriFactu antes de enviarla."
+            desc="Genera la factura y valida automaticamente con VeriFactu antes de enviarla."
             icon={<FileText className="h-5 w-5 text-blue-600" />}
           />
           <StepCard
@@ -655,19 +655,19 @@ export function FeaturesSection() {
           Lo que ves es lo que tienes: Ventas, Gastos, Beneficio.
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-lightbg-600 sm:text-lg">
-          El dashboard muestra solo lo esencial. Informes, listados y anÃ¡lisis profundos estÃ¡n a un comando de distancia con Isaak.
+          El dashboard muestra solo lo esencial. Informes, listados y analisis profundos estan a un comando de distancia con Isaak.
         </p>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <FeatureCard
             icon={<TrendingUp className="h-5 w-5 text-blue-600" />}
-            title="EmisiÃ³n sin fricciÃ³n"
-            bullets={["Haz una foto o sube documento", "Isaak clasifica y registra", "ValidaciÃ³n automÃ¡tica incluida"]}
+            title="Emision sin friccion"
+            bullets={["Haz una foto o sube documento", "Isaak clasifica y registra", "Validacion automatica incluida"]}
           />
           <FeatureCard
             icon={<BadgeCheck className="h-5 w-5 text-blue-600" />}
             title="Gastos guiados"
-            bullets={["Foto del ticket â†’ clasificado", "Deducible segÃºn tu actividad", "Apunte registrado al instante"]}
+            bullets={["Foto del ticket -> clasificado", "Deducible segun tu actividad", "Apunte registrado al instante"]}
           />
           <FeatureCard
             icon={<Sparkles className="h-5 w-5 text-blue-600" />}
@@ -677,7 +677,7 @@ export function FeaturesSection() {
           <FeatureCard
             icon={<FileText className="h-5 w-5 text-blue-600" />}
             title="Bajo demanda con Isaak"
-            bullets={["Informes y exportaciones", "Listados por cliente, perÃ­odo", "AnÃ¡lisis profundo cuando lo necesites"]}
+            bullets={["Informes y exportaciones", "Listados por cliente, periodo", "Analisis profundo cuando lo necesites"]}
           />
         </div>
       </Container>
@@ -692,40 +692,40 @@ export function PideseloAIsaakSection() {
         <div className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
             <Sparkles className="h-4 w-4" />
-            PÃ­deselo a Isaak
+            Pideselo a Isaak
           </div>
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-primary sm:text-4xl">
             Todo lo que necesites, disponible en un comando.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Informes, listados, exportaciones, importaciones. TÃº pides, Isaak hace. Sin lÃ­mites, sin fricciÃ³n.
+            Informes, listados, exportaciones, importaciones. Tu pides, Isaak hace. Sin limites, sin friccion.
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <CommandExample
-            command="Subo estos tickets, Â¿cuÃ¡les son deducibles?"
-            response="He revisado los 5 tickets. 4 son deducibles para tu actividad y ya estÃ¡n registrados. 1 requiere justificaciÃ³n adicional. Â¿Lo marcamos como 'a revisar'?"
+            command="Subo estos tickets, cuales son deducibles?"
+            response="He revisado los 5 tickets. 4 son deducibles para tu actividad y ya estan registrados. 1 requiere justificacion adicional. Lo marcamos como 'a revisar'?"
           />
           <CommandExample
-            command="PrepÃ¡rame el listado de gastos del trimestre"
-            response="Listo. Gastos T4 2025: 8.200 â‚¬ en total. He agrupado por categorÃ­a (alimentaciÃ³n, transporte, oficina). Â¿Lo exporto a Excel o PDF?"
+            command="Prepara el listado de gastos del trimestre"
+            response="Listo. Gastos T4 2025: 8.200 EUR en total. He agrupado por categoria (alimentacion, transporte, oficina). Lo exporto a Excel o PDF?"
           />
           <CommandExample
-            command="Dame el ranking de clientes por facturaciÃ³n"
-            response="Top 5 clientes este aÃ±o: LÃ³pez S.L. (18.500 â‚¬), Acme Corp (15.200 â‚¬), Tech Solutions (12.100 â‚¬). Â¿Quieres ver mÃ¡rgenes o proyecciones?"
+            command="Dame el ranking de clientes por facturacion"
+            response="Top 5 clientes este ano: Lopez S.L. (18.500 EUR), Acme Corp (15.200 EUR), Tech Solutions (12.100 EUR). Quieres ver margenes o proyecciones?"
           />
           <CommandExample
             command="Crea proveedor 'X' con estos datos"
-            response="Proveedor 'X' creado con CIF, datos bancarios y condiciones de pago. Ya puedes emitir compras contra Ã©l. Â¿Quieres crear mÃ¡s?"
+            response="Proveedor 'X' creado con CIF, datos bancarios y condiciones de pago. Ya puedes emitir compras contra el. Quieres crear mas?"
           />
           <CommandExample
             command="Exporta todos los productos a Excel"
-            response="Archivo generado: 234 productos, con cÃ³digos, precios, categorÃ­as y stock. Descargable en 2 segundos. Â¿Necesitas filtros especiales?"
+            response="Archivo generado: 234 productos, con codigos, precios, categorias y stock. Descargable en 2 segundos. Necesitas filtros especiales?"
           />
           <CommandExample
             command="Resumen mensual: ventas, gastos y beneficio"
-            response="Diciembre 2025: Ingresos 24.500 â‚¬ | Gastos 12.100 â‚¬ | Beneficio estimado 12.400 â‚¬ (+8% vs mes anterior). Â¿Quieres desglose por cliente?"
+            response="Diciembre 2025: Ingresos 24.500 EUR | Gastos 12.100 EUR | Beneficio estimado 12.400 EUR (+8% vs mes anterior). Quieres desglose por cliente?"
           />
         </div>
       </Container>

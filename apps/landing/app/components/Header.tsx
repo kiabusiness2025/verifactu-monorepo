@@ -37,7 +37,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
         <BrandLogo variant="header" />
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8" aria-label="Navegación principal">
+        <nav className="hidden md:flex items-center gap-8" aria-label="Navegacion principal">
           {links.map((link) => (
             <Link
               key={link.href}

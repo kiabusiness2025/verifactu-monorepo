@@ -85,7 +85,7 @@ export default function PricingCalculatorModal({
               onChange={(e) => setCompanies(Number(e.target.value))}
               className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
               style={{
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((companies - 1) / 49) * 100}%, #e5e7eb ${((companies - 1) / 49) * 100}%, #e5e7eb 100%)`,
+                background: `linear-gradient(to right, #003170 0%, #003170 ${((companies - 1) / 49) * 100}%, #e5e7eb ${((companies - 1) / 49) * 100}%, #e5e7eb 100%)`,
               }}
             />
             <div className="mt-1 flex justify-between text-xs text-gray-500">
@@ -109,7 +109,7 @@ export default function PricingCalculatorModal({
               onChange={(e) => setInvoices(Number(e.target.value))}
               className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
               style={{
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((invoices - 1) / 1999) * 100}%, #e5e7eb ${((invoices - 1) / 1999) * 100}%, #e5e7eb 100%)`,
+                background: `linear-gradient(to right, #003170 0%, #003170 ${((invoices - 1) / 1999) * 100}%, #e5e7eb ${((invoices - 1) / 1999) * 100}%, #e5e7eb 100%)`,
               }}
             />
             <p className="mt-2 text-xs text-gray-500">
@@ -152,7 +152,7 @@ export default function PricingCalculatorModal({
                   onChange={(e) => setMovements(Number(e.target.value))}
                   className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
                   style={{
-                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(movements / 10000) * 100}%, #e5e7eb ${(movements / 10000) * 100}%, #e5e7eb 100%)`,
+                    background: `linear-gradient(to right, #003170 0%, #003170 ${(movements / 10000) * 100}%, #e5e7eb ${(movements / 10000) * 100}%, #e5e7eb 100%)`,
                   }}
                 />
                 <p className="mt-2 text-xs text-gray-500">
@@ -222,6 +222,7 @@ export default function PricingCalculatorModal({
     </div>
   );
 }
+
 
 
 
