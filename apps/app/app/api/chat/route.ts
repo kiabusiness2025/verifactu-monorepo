@@ -107,7 +107,7 @@ export async function POST(req: Request) {
             endDate: z.string().optional(),
             period: z.string().optional(),
           }),
-          execute: async ({ startDate, endDate, period }) => {
+          execute: async ({ startDate, endDate, period }): Promise<{ message: string; sales?: number; expenses?: number; profit?: number; margin?: number }> => {
             if (!activeTenantId) return { message: 'No hay empresa seleccionada' };
             
             if (!startDate || !endDate) {
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
             month: z.number().min(1).max(12).optional(),
             year: z.number().optional(),
           }),
-          execute: async ({ month, year }) => {
+          execute: async ({ month, year }): Promise<{ deadline: string; pendingCount: number; message: string }> => {
             if (!activeTenantId) return { message: 'No hay empresa seleccionada' };
             
             const currentMonth = month || new Date().getMonth() + 1;
@@ -161,7 +161,7 @@ export async function POST(req: Request) {
             description: z.string(),
             amount: z.number().optional(),
           }),
-          execute: async ({ description, amount }) => {
+          execute: async ({ description, amount }): Promise<{ categoryId?: string; categoryName: string; deductible: boolean; message: string }> => {
             if (!activeTenantId) return { message: 'No hay empresa seleccionada' };
             
             const categories = await getExpenseCategories();
