@@ -1,0 +1,14 @@
+# Admin Panel Configuration
+# Add this to your apps/app/.env.local file
+
+# Admin Emails Allowlist (comma-separated)
+# Only users with these emails can access /api/admin/* endpoints
+ADMIN_EMAILS=kiabusiness2025@gmail.com
+
+# Example with multiple admins:
+# ADMIN_EMAILS=kiabusiness2025@gmail.com,another-admin@example.com,third@example.com
+
+# Instructions:
+# 1. Copy this value to apps/app/.env.local
+# 2. Restart your development server
+# 3. In Vercel, add this as an environment variable for production

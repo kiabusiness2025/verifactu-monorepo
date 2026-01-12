@@ -10,11 +10,17 @@ import {
   getCurrentMonthSummary 
 } from '@/lib/db-queries';
 
+// Helpers
+function getMonthName(month: number): string {
+  const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  return months[month - 1] || 'Mes desconocido';
+}
+
 // Runtime Edge para mejor rendimiento
 export const runtime = 'edge';
 
-// System prompt de Isaak
-const ISAAK_SYSTEM = `Eres Isaak, el asistente experto en contabilidad y fiscalidad de Verifactu Business.
+// System prompts contextuales para Isaak
+const ISAAK_SYSTEM_BASE = `Eres Isaak, el asistente experto en contabilidad y fiscalidad de Verifactu Business.
 
 **Tu misión:**
 - Ayudar a autónomos y pequeñas empresas a gestionar ventas, gastos y cumplir con VeriFactu
@@ -26,12 +32,36 @@ const ISAAK_SYSTEM = `Eres Isaak, el asistente experto en contabilidad y fiscali
 2. Usa lenguaje natural: "ventas − gastos = beneficio"
 3. NO inventes funcionalidades que no existen
 4. Si no sabes algo, sugiere consultar con un asesor
-5. NUNCA menciones términos técnicos internos (OCR, API, pipelines, etc.)
+5. NUNCA menciones términos técnicos internos (OCR, API, pipelines, etc.)`;
 
-**Contexto del usuario:**
-- Está en su panel de control
-- Quiere saber cuánto gana/gasta sin complicaciones
-- Necesita cumplir con la AEAT sin estrés`;
+const ISAAK_CONTEXT_PROMPTS = {
+  landing: `Tu contexto: El usuario está visitando nuestra landing page.
+- Sé breve y cautivador
+- Menciona el valor principal: simplificar impuestos y VeriFactu
+- No hagas preguntas técnicas
+- Invita a probar o conocer más`,
+
+  dashboard: `Tu contexto: El usuario está en su panel de control.
+- Ayuda con preguntas específicas sobre sus facturas, gastos y beneficio
+- Sé práctico: "Tu beneficio este mes es X"
+- Sugiere acciones: "¿Quieres subir un gasto?" o "¿Revisamos tus facturas pendientes?"
+- Sé su co-piloto, no un chatbot genérico`,
+
+  admin: `Tu contexto: El usuario es un administrador del sistema.
+- Proporciona información técnica y operativa cuando sea necesario
+- Ayuda con reportes, importación de datos, gestión de empresas
+- Sé más formal pero igualmente cercano
+- Oferece análisis de negocio y datos consolidados`,
+};
+
+function buildIsaakSystem(context?: string): string {
+  const contextPrompt =
+    context && context in ISAAK_CONTEXT_PROMPTS
+      ? ISAAK_CONTEXT_PROMPTS[context as keyof typeof ISAAK_CONTEXT_PROMPTS]
+      : ISAAK_CONTEXT_PROMPTS.dashboard;
+
+  return `${ISAAK_SYSTEM_BASE}\n\n${contextPrompt}`;
+}
 
 async function getSessionTenantId(): Promise<string | null> {
   try {
@@ -49,12 +79,15 @@ async function getSessionTenantId(): Promise<string | null> {
 
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json();
+    const { messages, context } = await req.json();
     
     // Obtener tenantId de la sesión
     const activeTenantId = await getSessionTenantId();
     
-    if (!activeTenantId) {
+    // Context puede venir del cliente (landing no necesita tenant)
+    const contextType = context?.type || 'dashboard';
+    
+    if (contextType === 'dashboard' && !activeTenantId) {
       return new Response(
         JSON.stringify({ error: 'No tenant found in session' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
@@ -63,7 +96,7 @@ export async function POST(req: Request) {
 
     const result = await streamText({
       model: openai('gpt-4-turbo'),
-      system: ISAAK_SYSTEM,
+      system: buildIsaakSystem(contextType),
       messages,
       temperature: 0.7,
       tools: {
@@ -75,6 +108,8 @@ export async function POST(req: Request) {
             period: z.string().optional(),
           }),
           execute: async ({ startDate, endDate, period }) => {
+            if (!activeTenantId) return { message: 'No hay empresa seleccionada' };
+            
             if (!startDate || !endDate) {
               const data = await getCurrentMonthSummary(activeTenantId);
               return {
@@ -97,6 +132,8 @@ export async function POST(req: Request) {
             year: z.number().optional(),
           }),
           execute: async ({ month, year }) => {
+            if (!activeTenantId) return { message: 'No hay empresa seleccionada' };
+            
             const currentMonth = month || new Date().getMonth() + 1;
             const currentYear = year || new Date().getFullYear();
             const pending = await getPendingVeriFactuInvoices(activeTenantId);
@@ -125,6 +162,8 @@ export async function POST(req: Request) {
             amount: z.number().optional(),
           }),
           execute: async ({ description, amount }) => {
+            if (!activeTenantId) return { message: 'No hay empresa seleccionada' };
+            
             const categories = await getExpenseCategories();
             const lower = description.toLowerCase();
             let matchedCategory = categories.find(cat => cat.code === 'other');
@@ -148,6 +187,7 @@ export async function POST(req: Request) {
             } else if (lower.includes('formación') || lower.includes('curso')) {
               matchedCategory = categories.find(cat => cat.code === 'training');
             }
+
 
             return {
               categoryId: matchedCategory?.id,
