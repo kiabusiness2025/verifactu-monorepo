@@ -11,6 +11,7 @@ export type SessionPayload = JWTPayload & {
   uid?: string;
   email?: string;
   name?: string;
+  tenantId?: string;
 };
 
 export async function getSessionPayload(): Promise<SessionPayload | null> {

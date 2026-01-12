@@ -1,8 +1,23 @@
 import { NextResponse } from "next/server";
 import { SignJWT } from "jose";
 import admin from "firebase-admin";
+import { Pool } from "pg";
 
 export const runtime = "nodejs";
+
+let pool: Pool | null = null;
+
+function getDbPool() {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DATABASE_URL?.includes("sslmode=require")
+        ? { rejectUnauthorized: false }
+        : false,
+    });
+  }
+  return pool;
+}
 
 function requireEnv(name: string) {
   const v = process.env[name];
@@ -28,6 +43,65 @@ function cookieDomainFromHost(host: string | null) {
   return undefined;
 }
 
+async function getOrCreateTenantForUser(uid: string, email: string) {
+  try {
+    const dbPool = getDbPool();
+    
+    // 1. Verificar/crear usuario
+    const userResult = await dbPool.query(
+      `INSERT INTO users (id, email, name)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (id) DO NOTHING
+       RETURNING id`,
+      [uid, email, email.split("@")[0]]
+    );
+
+    // 2. Obtener membership del usuario (si existe)
+    const membershipResult = await dbPool.query(
+      `SELECT tenant_id FROM memberships 
+       WHERE user_id = $1 AND status = 'active'
+       LIMIT 1`,
+      [uid]
+    );
+
+    if (membershipResult.rows.length > 0) {
+      // Usuario ya tiene tenant
+      return membershipResult.rows[0].tenant_id;
+    }
+
+    // 3. Crear tenant si no existe
+    const tenantResult = await dbPool.query(
+      `INSERT INTO tenants (name, legal_name)
+       VALUES ($1, $2)
+       RETURNING id`,
+      [email.split("@")[0], email.split("@")[0]]
+    );
+    const newTenantId = tenantResult.rows[0].id;
+
+    // 4. Crear membership (owner)
+    await dbPool.query(
+      `INSERT INTO memberships (tenant_id, user_id, role, status)
+       VALUES ($1, $2, 'owner', 'active')
+       ON CONFLICT DO NOTHING`,
+      [newTenantId, uid]
+    );
+
+    // 5. Crear user_preferences
+    await dbPool.query(
+      `INSERT INTO user_preferences (user_id, preferred_tenant_id)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id) DO UPDATE SET preferred_tenant_id = $2`,
+      [uid, newTenantId]
+    );
+
+    return newTenantId;
+  } catch (error) {
+    console.error("Error en getOrCreateTenantForUser:", error);
+    // Retornar null en caso de error; el JWT se creará sin tenantId
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   initFirebaseAdmin();
 
@@ -37,6 +111,10 @@ export async function POST(req: Request) {
   }
 
   const decoded = await admin.auth().verifyIdToken(idToken);
+  
+  // Obtener o crear tenant para el usuario
+  const tenantId = await getOrCreateTenantForUser(decoded.uid, decoded.email || "");
+  
   const rolesRaw = (decoded as any).roles ?? (decoded as any).role ?? [];
   const tenantsRaw = (decoded as any).tenants ?? (decoded as any).tenant ?? [];
   const roles = Array.isArray(rolesRaw)
@@ -55,6 +133,7 @@ export async function POST(req: Request) {
   const token = await new SignJWT({
     uid: decoded.uid,
     email: decoded.email ?? null,
+    tenantId: tenantId || undefined,
     roles,
     tenants,
     ver: 1,
