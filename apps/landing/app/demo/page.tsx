@@ -12,11 +12,13 @@ export default function DemoPage({
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
-  
+
   const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
   const appUrl =
     configuredAppUrl ??
-    (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://app.verifactu.business");
+    (process.env.NODE_ENV === "development"
+      ? "http://localhost:3000"
+      : "https://app.verifactu.business");
   const demoHref = appUrl ? `${appUrl.replace(/\/$/, "")}/demo` : null;
   const demoNavLinks = [
     { label: "Home", href: "/" },
@@ -57,13 +59,22 @@ export default function DemoPage({
               con datos de ejemplo y sin riesgo.
             </p>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="text-sm font-semibold text-slate-900">Qué ver en 30 segundos</div>
+              <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                <li>Panel con ventas, gastos y beneficio en un vistazo.</li>
+                <li>Flujo Factura → Validación → Envío VeriFactu.</li>
+                <li>Isaak sugiriendo acciones útiles por sección.</li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
               {demoHref ? (
                 <a
                   href={demoHref}
                   className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
                 >
-                  Abrir en pantalla completa
+                  Abrir demo
                 </a>
               ) : (
                 <div
@@ -74,10 +85,13 @@ export default function DemoPage({
                 </div>
               )}
               <button
-                onClick={() => setIsCalculatorOpen(true)}
+                onClick={() => {
+                  const el = document.getElementById("calculadora");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
               >
-                Calcula precio
+                Calcula tu precio
               </button>
               <Link
                 href="/"
@@ -111,7 +125,7 @@ export default function DemoPage({
                 <p className="text-xs font-semibold text-slate-600">Vista previa</p>
                 {demoHref ? (
                   <a href={demoHref} className="text-xs font-semibold text-blue-700 hover:text-blue-800">
-                    Abrir
+                    Abrir demo
                   </a>
                 ) : (
                   <span className="text-xs font-semibold text-slate-500">No disponible</span>
@@ -147,7 +161,7 @@ export default function DemoPage({
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900">Calcula tu precio personalizado</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Sin cuotas fijas. Pagas según tu uso real: empresas activas, facturas emitidas y movimientos conciliados.
+                  Sin cuotas fijas. Pagas según tu uso real: facturas emitidas y movimientos conciliados.
                 </p>
               </div>
               <Link
@@ -164,7 +178,9 @@ export default function DemoPage({
                 className="w-full rounded-2xl border border-blue-200 bg-blue-50 p-6 text-left transition hover:bg-blue-100"
               >
                 <div className="text-lg font-semibold text-slate-900">Abre la calculadora interactiva</div>
-                <div className="mt-1 text-sm text-slate-600">Ajusta empresas, facturas y movimientos para ver tu cuota exacta</div>
+                <div className="mt-1 text-sm text-slate-600">
+                  Ajusta facturas y movimientos para ver tu cuota exacta
+                </div>
               </button>
             </div>
 
@@ -192,12 +208,15 @@ export default function DemoPage({
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span className="font-semibold text-slate-800">Verifactu Business</span>
           <div className="flex flex-wrap gap-3 text-xs">
-            <Link className="hover:text-blue-700" href="/" aria-label="Ir a página de inicio">Ir a Home</Link>
-            <Link className="hover:text-blue-700" href="/auth/signup" aria-label="Crear nueva cuenta">Crear cuenta</Link>
+            <Link className="hover:text-blue-700" href="/" aria-label="Ir a página de inicio">
+              Ir a Home
+            </Link>
+            <Link className="hover:text-blue-700" href="/auth/signup" aria-label="Crear nueva cuenta">
+              Crear cuenta
+            </Link>
           </div>
         </div>
       </footer>
     </main>
   );
 }
-

@@ -105,49 +105,65 @@ export default function Page() {
                 <ShieldCheck className="h-4 w-4 text-blue-600" />
                 Cumplimiento VeriFactu con Isaak
               </div>
-              <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
+              <Link
+                href="/verifactu/estado"
+                className="mt-2 inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100 hover:text-emerald-800"
+              >
                 <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-                Estado: Operativo - ultima sync VeriFactu hace 3 min
-              </div>
+                Estado: Operativo · última sincronización VeriFactu hace 3 min
+              </Link>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-primary sm:text-6xl">
-                Tu contabilidad, siempre
+                Emite facturas VeriFactu sin errores
                 <br />
                 <span className="bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent">
-                  bajo control. Sin esfuerzo.
+                  y entiende tu negocio en un panel.
                 </span>
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
-                Isaak organiza facturas y gastos, y te muestra lo esencial: ventas, gastos y beneficio. Tu decides el ritmo.
+                Isaak te guía, valida y resume lo esencial: ventas, gastos y beneficio, con
+                cumplimiento VeriFactu desde el primer día.
               </p>
 
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
+                Fuente oficial:{" "}
+                <a
+                  href="https://www.agenciatributaria.es/AEAT.internet/Inicio/_Segmentos_/Empresas_y_profesionales/Empresas/Impuesto_sobre_Sociedades/VeriFactu.shtml"
+                  className="font-semibold text-primary hover:text-primary-light"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Agencia Tributaria (AEAT)
+                </a>{" "}
+                · Te obliga a emitir y registrar facturas con trazabilidad e integridad.
+              </div>
+
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/auth/signup"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-primary-light"
+                >
+                  Empezar 1 mes gratis
+                </Link>
+                <Link
+                  href="/demo"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100"
+                >
+                  Ver demo (2 min)
+                </Link>
+              </div>
+              <div className="mt-3 text-sm text-slate-600">
                 <button
                   onClick={() => {
                     const el = document.getElementById("precios");
                     el?.scrollIntoView({ behavior: "smooth" });
                   }}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-primary-light"
+                  className="font-semibold text-primary hover:text-primary-light"
                   type="button"
                 >
-                  Calcula precio
+                  Calcula tu precio
                 </button>
-                <Link
-                  href="/demo"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100"
-                >
-                  Ver demo
-                </Link>
-              </div>
-              <div className="mt-3 text-sm text-slate-600">
-                <Link href="/auth/signup" className="font-semibold text-primary hover:text-primary-light">
-                  Empezar prueba gratis
-                </Link>
-                <span className="px-2 text-slate-400">|</span>
-                <Link href="/auth/login" className="font-semibold text-lightbg-600 hover:text-primary">
-                  Crear cuenta
-                </Link>
               </div>
 
               <div className="mt-7 flex flex-wrap gap-2">
@@ -177,7 +193,7 @@ export default function Page() {
               Cumple con calma.
             </h2>
             <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
-              VeriFactu no deberia darte miedo. Isaak te guia, valida y te avisa cuando algo necesita revision.
+              VeriFactu no debería darte miedo. Isaak te guía, valida y te avisa cuando algo necesita revisión.
             </p>
             </div>
             <ComplianceBadge />
@@ -221,7 +237,7 @@ export default function Page() {
               Precio que se ajusta a tu uso real
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-              Solo mensual - 1 mes gratis - aviso antes de renovar.
+              Solo mensual · 1 mes gratis · aviso antes de renovar.
             </p>
 
             <div className="mt-8 flex justify-center">
@@ -230,7 +246,7 @@ export default function Page() {
 
             <p className="mx-auto mt-6 max-w-2xl text-xs text-slate-500">
               Precio orientativo. La cuota final se basa en facturas emitidas y movimientos procesados (si activas
-              conciliacion bancaria). Hasta 1.000 facturas y 2.000 movimientos; si superas estos limites ofrecemos
+              conciliación bancaria). Hasta 1.000 facturas y 2.000 movimientos; si superas estos límites ofrecemos
               presupuesto. IVA no incluido.
             </p>
           </div>
@@ -245,7 +261,7 @@ export default function Page() {
               Preguntas frecuentes
             </h3>
             <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
-              Respuestas rapidas sobre planes, seguridad y funcionalidades.
+              Respuestas rápidas sobre planes, seguridad y funcionalidades.
             </p>
           </div>
           <Faq />
@@ -259,26 +275,26 @@ export default function Page() {
             Recursos para dominar VeriFactu e Isaak.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
-            Guias, onboarding y checklist para aplicar mejores practicas y aprovechar todo el potencial de la plataforma.
+            Guías, onboarding y checklist para aplicar mejores prácticas y aprovechar todo el potencial de la plataforma.
           </p>
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
             <ResourceCard
-              tag="Guia"
+              tag="Guía"
               title="Manual VeriFactu 2025"
-              desc="Requisitos y checklist practico para operar con confianza."
-              cta="Descargar guia"
+              desc="Requisitos y checklist práctico para operar con confianza."
+              cta="Descargar guía"
             />
             <ResourceCard
               tag="Primeros pasos"
               title="Primeros pasos con Isaak"
-              desc="Aprende a emitir, registrar gastos y entender tus metricas."
+              desc="Aprende a emitir, registrar gastos y entender tus métricas."
               cta="Reservar plaza"
             />
             <ResourceCard
               tag="Checklist"
-              title="Auditoria express"
-              desc="Evalua el estado de tu facturacion y detecta riesgos."
+              title="Auditoría express"
+              desc="Evalúa el estado de tu facturación y detecta riesgos."
               cta="Solicitar checklist"
             />
           </div>

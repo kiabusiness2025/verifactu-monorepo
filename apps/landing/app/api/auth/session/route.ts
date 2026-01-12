@@ -48,7 +48,7 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
     const dbPool = getDbPool();
     
     // 1. Verificar/crear usuario
-    const userResult = await dbPool.query(
+    await dbPool.query(
       `INSERT INTO users (id, email, name)
        VALUES ($1, $2, $3)
        ON CONFLICT (id) DO NOTHING
@@ -65,11 +65,12 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
     );
 
     if (membershipResult.rows.length > 0) {
-      // Usuario ya tiene tenant
+      console.log(`[Auth] Usuario ${uid} tiene tenant existente: ${membershipResult.rows[0].tenant_id}`);
       return membershipResult.rows[0].tenant_id;
     }
 
     // 3. Crear tenant si no existe
+    console.log(`[Auth] Creando nuevo tenant para usuario ${uid} (${email})`);
     const tenantResult = await dbPool.query(
       `INSERT INTO tenants (name, legal_name)
        VALUES ($1, $2)
@@ -94,10 +95,10 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
       [uid, newTenantId]
     );
 
+    console.log(`[Auth] Nuevo tenant creado: ${newTenantId} para usuario ${uid}`);
     return newTenantId;
   } catch (error) {
-    console.error("Error en getOrCreateTenantForUser:", error);
-    // Retornar null en caso de error; el JWT se creará sin tenantId
+    console.error("[Auth] Error en getOrCreateTenantForUser:", error);
     return null;
   }
 }

@@ -11,6 +11,33 @@ export default function PricingCalculatorInline() {
   const [error, setError] = useState("");
 
   const fmt = (n: number) => n.toLocaleString("es-ES", { maximumFractionDigits: 2 });
+  const invoiceLabel = (value: number) => {
+    if (value <= 10) return "Incluido (hasta 10)";
+    if (value <= 20) return "Hasta 20";
+    if (value <= 30) return "Hasta 30";
+    if (value <= 40) return "Hasta 40";
+    if (value <= 50) return "Hasta 50";
+    if (value <= 100) return "Hasta 100";
+    if (value <= 200) return "Hasta 200";
+    if (value <= 300) return "Hasta 300";
+    if (value <= 400) return "Hasta 400";
+    if (value <= 500) return "Hasta 500";
+    return "Hasta 1.000";
+  };
+  const movementLabel = (value: number) => {
+    if (!bankingEnabled || value <= 0) return "No aplica";
+    if (value <= 20) return "Hasta 20";
+    if (value <= 30) return "Hasta 30";
+    if (value <= 40) return "Hasta 40";
+    if (value <= 50) return "Hasta 50";
+    if (value <= 100) return "Hasta 100";
+    if (value <= 200) return "Hasta 200";
+    if (value <= 300) return "Hasta 300";
+    if (value <= 400) return "Hasta 400";
+    if (value <= 500) return "Hasta 500";
+    if (value <= 1000) return "Hasta 1.000";
+    return "Hasta 2.000";
+  };
 
   const input: PricingInput = { invoices, movements, bankingEnabled };
   const monthlyPrice = estimateNetEur(input);
@@ -48,7 +75,7 @@ export default function PricingCalculatorInline() {
         <div className="text-center">
           <h3 className="text-2xl font-semibold text-primary">Calcula tu precio</h3>
           <p className="mt-2 text-sm text-lightbg-600">
-            Base 19 EUR/mes + IVA. Incluye hasta 10 facturas/mes.
+            Base 19 €/mes + IVA. Incluye hasta 10 facturas/mes.
           </p>
         </div>
 
@@ -70,7 +97,7 @@ export default function PricingCalculatorInline() {
             }}
           />
           <p className="mt-2 text-xs text-gray-500">Incluye hasta 10 en la base.</p>
-          <p className="mt-1 text-xs text-gray-500">Mas de 1.000 facturas/mes requiere presupuesto.</p>
+          <p className="mt-1 text-xs text-gray-500">Más de 1.000 facturas/mes requiere presupuesto.</p>
           <div className="mt-1 flex justify-between text-xs text-gray-500">
             <span>1</span>
             <span>1.000</span>
@@ -111,10 +138,10 @@ export default function PricingCalculatorInline() {
                 }}
               />
               <p className="mt-2 text-xs text-gray-500">
-                0 movimientos = 0 EUR. Si activas conciliacion y procesas movimientos, se aplica un tramo.
+                0 movimientos = 0 €. Si activas conciliación y procesas movimientos, se aplica un tramo.
               </p>
               <p className="mt-1 text-xs text-gray-500">
-                Mas de 2.000 movimientos/mes requiere presupuesto.
+                Más de 2.000 movimientos/mes requiere presupuesto.
               </p>
               <div className="mt-1 flex justify-between text-xs text-gray-500">
                 <span>0</span>
@@ -127,23 +154,23 @@ export default function PricingCalculatorInline() {
         <div className="rounded-2xl bg-blue-50 p-5">
           <p className="text-sm text-gray-600">Cuota mensual estimada</p>
           <p className="mt-1 text-3xl font-bold text-primary">
-            {fmt(monthlyPrice)} EUR{" "}
+            {fmt(monthlyPrice)} €{" "}
             <span className="text-base text-gray-500">/mes + IVA</span>
           </p>
-          <p className="mt-1 text-sm text-gray-500">Con IVA: {fmt(withVAT)} EUR</p>
+          <p className="mt-1 text-sm text-gray-500">Con IVA: {fmt(withVAT)} €</p>
 
           <div className="mt-4 space-y-1 text-xs text-gray-500">
             <div className="flex items-center justify-between">
               <span>Base</span>
-              <span>{fmt(breakdown.base)} EUR</span>
+              <span>{fmt(breakdown.base)} €</span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Tramo facturas (a partir de 11)</span>
-              <span>{fmt(breakdown.invoiceAddon)} EUR</span>
+              <span>Tramo facturas ({invoiceLabel(invoices)})</span>
+              <span>{fmt(breakdown.invoiceAddon)} €</span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Tramo movimientos (a partir de 1)</span>
-              <span>{fmt(breakdown.movementAddon)} EUR</span>
+              <span>Tramo movimientos ({movementLabel(movements)})</span>
+              <span>{fmt(breakdown.movementAddon)} €</span>
             </div>
           </div>
 
@@ -164,7 +191,7 @@ export default function PricingCalculatorInline() {
               href="/politica-de-precios"
               className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-6 py-3 text-sm font-semibold text-primary hover:border-primary-light"
             >
-              Ver politica de medicion de uso
+              Ver política de medición de uso
             </Link>
           </div>
         </div>

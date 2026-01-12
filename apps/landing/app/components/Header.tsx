@@ -23,7 +23,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
 
   const defaultNavLinks: NavLink[] = [
     { label: "VeriFactu", href: "/verifactu/que-es" },
-    { label: "Calcula precio", href: "/#precios" },
+    { label: "Calcula tu precio", href: "/#precios" },
     { label: "Recursos", href: "/recursos/guias-y-webinars" },
     { label: "Soporte", href: "/verifactu/soporte" },
   ];
@@ -37,7 +37,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
         <BrandLogo variant="header" />
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8" aria-label="Navegacion principal">
+        <nav className="hidden md:flex items-center gap-8" aria-label="Navegación principal">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -63,10 +63,10 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
               <button
                 onClick={async () => {
                   await logout();
-                  showToast({ type: "success", title: "Sesion cerrada", message: "Has salido correctamente" });
+                  showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
                 }}
                 className="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
-                aria-label="Cerrar sesion"
+                aria-label="Cerrar sesión"
               >
                 Salir
               </button>
@@ -96,10 +96,10 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
               <button
                 onClick={async () => {
                   await logout();
-                  showToast({ type: "success", title: "Sesion cerrada", message: "Has salido correctamente" });
+                  showToast({ type: "success", title: "Sesión cerrada", message: "Has salido correctamente" });
                 }}
                 className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium text-sm"
-                aria-label="Cerrar sesion"
+                aria-label="Cerrar sesión"
               >
                 Salir
               </button>
@@ -116,7 +116,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label={isOpen ? "Cerrar menu de navegacion" : "Abrir menu de navegacion"}
+            aria-label={isOpen ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
             aria-expanded={isOpen}
             aria-controls="mobile-menu"
           >

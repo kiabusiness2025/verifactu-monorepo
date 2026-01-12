@@ -5,37 +5,47 @@ import Link from "next/link";
 
 const FAQ_DATA = [
   {
-    question: "Como se calcula el precio?",
+    question: "¿Cómo se calcula el precio?",
     answer:
-      "Pagas por uso real: una base mensual + empresas activas + tramo de facturas y, si activas banca, tramo de movimientos.",
+      "Pagas por uso real: una base mensual + tramo de facturas y, si activas conciliación bancaria, tramo de movimientos.",
   },
   {
-    question: "Hay permanencia o comisiones sobre facturacion?",
+    question: "¿Hay permanencia o comisiones sobre facturación?",
     answer:
       "No. Puedes subir o bajar uso cuando quieras y nunca cobramos porcentaje sobre tus ventas.",
   },
   {
-    question: "Necesito tarjeta para probar?",
+    question: "¿Necesito tarjeta para probar?",
     answer:
-      "Tienes 1 mes gratis. El cobro se activa solo si confirmas la suscripcion.",
+      "Tienes 1 mes gratis. El cobro se activa solo si confirmas la suscripción.",
   },
   {
-    question: "Que pasa si supero un tramo de facturas o movimientos?",
+    question: "¿Qué pasa si supero un tramo de facturas o movimientos?",
     answer:
-      "El precio se ajusta al tramo correspondiente. Siempre veras el importe antes de renovar.",
+      "El precio se ajusta al tramo correspondiente. Siempre verás el importe antes de renovar.",
   },
   {
-    question: "La conciliacion bancaria es opcional?",
+    question: "¿La conciliación bancaria es opcional?",
     answer:
-      "Si. Puedes activarla o desactivarla cuando quieras. Si no la activas, movimientos = 0.",
+      "Sí. Puedes activarla o desactivarla cuando quieras. Si no la activas, movimientos = 0.",
   },
   {
-    question: "VeriFactu esta incluido?",
+    question: "¿Necesito certificado? ¿Cómo firmo?",
     answer:
-      "Si. Incluye sellado, trazabilidad y evidencias exportables para auditoria.",
+      "Te guiamos paso a paso. La firma y el sellado se gestionan desde la plataforma según la normativa aplicable.",
   },
   {
-    question: "Puedo exportar mis datos?",
+    question: "¿Qué pasa si la AEAT está caída?",
+    answer:
+      "Seguimos generando y guardando evidencias. Reintentamos el envío y puedes ver el estado en /verifactu/estado.",
+  },
+  {
+    question: "¿VeriFactu está incluido?",
+    answer:
+      "Sí. Incluye sellado, trazabilidad y evidencias exportables para auditoría.",
+  },
+  {
+    question: "¿Puedo exportar mis datos?",
     answer:
       "Siempre. Tus facturas, documentos y evidencias son tuyos.",
   },
@@ -71,13 +81,13 @@ export default function Faq() {
         ))}
       </div>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-slate-600">Quieres ver el precio exacto antes de activar?</div>
+        <div className="text-sm text-slate-600">¿Quieres ver el precio exacto antes de activar?</div>
         <div className="flex gap-3">
           <Link
             href="/demo#calculadora"
             className="mt-2 inline-block rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
           >
-            Calcula precio
+            Calcula tu precio
           </Link>
           <Link
             href="/verifactu/soporte"

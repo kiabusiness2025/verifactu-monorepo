@@ -12,11 +12,16 @@ function getSecretKey() {
 async function getSessionPayload(req: NextRequest) {
   const token = req.cookies.get("__session")?.value;
   const secret = getSecretKey();
-  if (!token || !secret) return null;
+  if (!token || !secret) {
+    console.log('[Middleware] Sin sesión: token=' + !!token + ', secret=' + !!secret);
+    return null;
+  }
   try {
     const { payload } = await jwtVerify(token, secret);
+    console.log('[Middleware] Sesión válida - uid:', payload.uid, 'tenantId:', payload.tenantId);
     return payload;
-  } catch {
+  } catch (error) {
+    console.error('[Middleware] Error verificando JWT:', error);
     return null;
   }
 }
