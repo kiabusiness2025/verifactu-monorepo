@@ -1,21 +1,21 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { Plug, Database, CloudOff, Mail, FileText, Smartphone } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Integraciones | Verifactu Business",
   description:
-    "Conecta Verifactu Business con tus herramientas: exporta a Excel, sincroniza con tu gestoría y más. Integraciones simples y seguras.",
+    "Conecta Verifactu Business con tus herramientas: exporta a Excel, sincroniza con tu gestorÃ­a y mÃ¡s. Integraciones simples y seguras.",
 };
 
 export default function IntegrationsPage() {
   return (
     <main className="min-h-screen bg-white">
-      {/* Navegación */}
+      {/* NavegaciÃ³n */}
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-4">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
-            ← Volver al inicio
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]">
+            â† Volver al inicio
           </Link>
         </div>
       </div>
@@ -33,27 +33,27 @@ export default function IntegrationsPage() {
             </h1>
             <p className="text-xl text-slate-600 leading-relaxed">
               Verifactu Business se integra con las herramientas que ya usas. Exporta datos, 
-              sincroniza con tu gestoría y comparte información sin complicaciones.
+              sincroniza con tu gestorÃ­a y comparte informaciÃ³n sin complicaciones.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Filosofía */}
+      {/* FilosofÃ­a */}
       <section className="py-16">
         <div className="mx-auto max-w-4xl px-4">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-8 shadow-lg border border-blue-200">
+          <div className="bg-gradient-to-br from-sky-50/70 to-blue-50/40 rounded-3xl p-8 shadow-lg border border-[#0060F0]/25">
             <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+              <div className="h-12 w-12 rounded-xl bg-[#0060F0] flex items-center justify-center shrink-0">
                 <CloudOff className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 mb-3">
-                  Nuestra filosofía: simplicidad primero
+                  Nuestra filosofÃ­a: simplicidad primero
                 </h2>
                 <p className="text-slate-700 leading-relaxed mb-4">
                   No queremos ser "el ERP que hace todo". Queremos ser la mejor herramienta para 
-                  <strong> llevar ventas, gastos y beneficio</strong>, y conectar fácilmente con el resto de tu stack.
+                  <strong> llevar ventas, gastos y beneficio</strong>, y conectar fÃ¡cilmente con el resto de tu stack.
                 </p>
                 <p className="text-slate-700 leading-relaxed">
                   Por eso, en lugar de replicar funcionalidades que ya existen (email marketing, CRM, etc.), 
@@ -89,7 +89,7 @@ export default function IntegrationsPage() {
               <p className="text-sm text-slate-600 mb-4">
                 Libro de facturas, gastos, clientes. Compatible con Excel, Google Sheets y LibreOffice.
               </p>
-              <p className="text-xs text-green-700 font-medium">✓ Disponible ahora</p>
+              <p className="text-xs text-green-700 font-medium">âœ“ Disponible ahora</p>
             </div>
 
             {/* PDF */}
@@ -105,7 +105,7 @@ export default function IntegrationsPage() {
               <p className="text-sm text-slate-600 mb-4">
                 Cada factura en PDF con QR, huella digital y cumplimiento RD 1007/2023 garantizado.
               </p>
-              <p className="text-xs text-green-700 font-medium">✓ Disponible ahora</p>
+              <p className="text-xs text-green-700 font-medium">âœ“ Disponible ahora</p>
             </div>
 
             {/* JSON/API */}
@@ -117,23 +117,23 @@ export default function IntegrationsPage() {
                 API REST (JSON)
               </h3>
               <p className="text-sm text-slate-600 mb-4">
-                Conecta tu propio software o automatizaciones con nuestra API. Documentación completa.
+                Conecta tu propio software o automatizaciones con nuestra API. DocumentaciÃ³n completa.
               </p>
-              <p className="text-xs text-blue-700 font-medium">Q2 2026 (próximamente)</p>
+              <p className="text-xs text-[#0060F0] font-medium">Q2 2026 (prÃ³ximamente)</p>
             </div>
 
             {/* Email */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition">
               <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
-                <Mail className="h-6 w-6 text-blue-700" />
+                <Mail className="h-6 w-6 text-[#0060F0]" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                Envío por email
+                EnvÃ­o por email
               </h3>
               <p className="text-sm text-slate-600 mb-4">
-                Envía facturas PDF por email directamente desde la plataforma. Automático o manual.
+                EnvÃ­a facturas PDF por email directamente desde la plataforma. AutomÃ¡tico o manual.
               </p>
-              <p className="text-xs text-blue-700 font-medium">Q2 2026 (próximamente)</p>
+              <p className="text-xs text-[#0060F0] font-medium">Q2 2026 (prÃ³ximamente)</p>
             </div>
 
             {/* Zapier/Make */}
@@ -145,23 +145,23 @@ export default function IntegrationsPage() {
                 Zapier / Make (Integromat)
               </h3>
               <p className="text-sm text-slate-600 mb-4">
-                Conecta con +5000 apps sin código: Google Drive, Slack, Notion, Airtable...
+                Conecta con +5000 apps sin cÃ³digo: Google Drive, Slack, Notion, Airtable...
               </p>
-              <p className="text-xs text-blue-700 font-medium">Q3 2026 (próximamente)</p>
+              <p className="text-xs text-[#0060F0] font-medium">Q3 2026 (prÃ³ximamente)</p>
             </div>
 
-            {/* Móvil */}
+            {/* MÃ³vil */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition">
               <div className="h-12 w-12 rounded-xl bg-teal-100 flex items-center justify-center mb-4">
                 <Smartphone className="h-6 w-6 text-teal-700" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                App móvil nativa
+                App mÃ³vil nativa
               </h3>
               <p className="text-sm text-slate-600 mb-4">
                 iOS y Android nativas para escanear tickets, crear facturas y consultar beneficio.
               </p>
-              <p className="text-xs text-blue-700 font-medium">Q4 2026 (próximamente)</p>
+              <p className="text-xs text-[#0060F0] font-medium">Q4 2026 (prÃ³ximamente)</p>
             </div>
           </div>
         </div>
@@ -175,27 +175,27 @@ export default function IntegrationsPage() {
               Casos de uso reales
             </h2>
             <p className="text-lg text-slate-600">
-              Así usan las integraciones nuestros clientes
+              AsÃ­ usan las integraciones nuestros clientes
             </p>
           </div>
 
           <div className="space-y-8 max-w-4xl mx-auto">
             {/* Caso 1 */}
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-8 border border-blue-200">
+            <div className="bg-gradient-to-r from-sky-50/70 to-blue-50/40 rounded-2xl p-8 border border-[#0060F0]/25">
               <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center shrink-0 text-white font-bold">
+                <div className="h-10 w-10 rounded-full bg-[#0060F0] flex items-center justify-center shrink-0 text-white font-bold">
                   1
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-slate-900 mb-2">
-                    Enviar datos a la gestoría cada trimestre
+                    Enviar datos a la gestorÃ­a cada trimestre
                   </h3>
                   <p className="text-slate-700 leading-relaxed mb-3">
-                    María exporta su libro de facturas y gastos en Excel cada fin de trimestre. 
-                    Lo envía por email a su gestoría y ellos preparan los modelos trimestrales.
+                    MarÃ­a exporta su libro de facturas y gastos en Excel cada fin de trimestre. 
+                    Lo envÃ­a por email a su gestorÃ­a y ellos preparan los modelos trimestrales.
                   </p>
-                  <p className="text-sm text-blue-700 font-medium">
-                    Integración: Excel + Email (manual)
+                  <p className="text-sm text-[#0060F0] font-medium">
+                    IntegraciÃ³n: Excel + Email (manual)
                   </p>
                 </div>
               </div>
@@ -213,10 +213,10 @@ export default function IntegrationsPage() {
                   </h3>
                   <p className="text-slate-700 leading-relaxed mb-3">
                     Javier exporta los PDFs de sus facturas y los sube a una carpeta compartida en Google Drive 
-                    con su socio. Así ambos tienen acceso a la documentación.
+                    con su socio. AsÃ­ ambos tienen acceso a la documentaciÃ³n.
                   </p>
                   <p className="text-sm text-green-700 font-medium">
-                    Integración: PDF + Google Drive (manual ahora, automático Q3 2026)
+                    IntegraciÃ³n: PDF + Google Drive (manual ahora, automÃ¡tico Q3 2026)
                   </p>
                 </div>
               </div>
@@ -233,11 +233,11 @@ export default function IntegrationsPage() {
                     Notificaciones en Slack cuando hay factura nueva
                   </h3>
                   <p className="text-slate-700 leading-relaxed mb-3">
-                    El equipo de contabilidad de una pequeña empresa recibe un mensaje en Slack cada vez 
-                    que se crea una factura. Así todos están al día sin revisar la plataforma constantemente.
+                    El equipo de contabilidad de una pequeÃ±a empresa recibe un mensaje en Slack cada vez 
+                    que se crea una factura. AsÃ­ todos estÃ¡n al dÃ­a sin revisar la plataforma constantemente.
                   </p>
                   <p className="text-sm text-purple-700 font-medium">
-                    Integración: API + Zapier + Slack (Q3 2026)
+                    IntegraciÃ³n: API + Zapier + Slack (Q3 2026)
                   </p>
                 </div>
               </div>
@@ -254,7 +254,7 @@ export default function IntegrationsPage() {
             Empresas
           </div>
           <h2 className="text-3xl font-bold text-white mb-6">
-            ¿Necesitas una integración específica?
+            Â¿Necesitas una integraciÃ³n especÃ­fica?
           </h2>
           <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
             Para equipos con necesidades especiales, creamos integraciones a medida. 
@@ -262,7 +262,7 @@ export default function IntegrationsPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="mailto:soporte@verifactu.business?subject=Integración%20personalizada"
+              href="mailto:soporte@verifactu.business?subject=IntegraciÃ³n%20personalizada"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-slate-900 font-semibold rounded-xl shadow-lg hover:bg-slate-100 transition"
             >
               <Mail className="h-5 w-5" />
@@ -303,7 +303,7 @@ export default function IntegrationsPage() {
                   <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Exportación a Excel/CSV
+                  ExportaciÃ³n a Excel/CSV
                 </li>
                 <li className="flex items-center gap-2">
                   <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -314,21 +314,21 @@ export default function IntegrationsPage() {
               </ul>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-blue-300">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-[#0060F0]/35">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xl font-semibold text-slate-900">Q2 2026</h3>
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                <span className="px-3 py-1 bg-blue-100 text-[#0060F0] text-xs font-semibold rounded-full">
                   En desarrollo
                 </span>
               </div>
               <ul className="space-y-2 text-sm text-slate-700">
                 <li className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-blue-600" />
-                  API REST completa con documentación
+                  <div className="h-2 w-2 rounded-full bg-[#0060F0]" />
+                  API REST completa con documentaciÃ³n
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-blue-600" />
-                  Envío de facturas por email
+                  <div className="h-2 w-2 rounded-full bg-[#0060F0]" />
+                  EnvÃ­o de facturas por email
                 </li>
               </ul>
             </div>
@@ -343,7 +343,7 @@ export default function IntegrationsPage() {
               <ul className="space-y-2 text-sm text-slate-700">
                 <li className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-slate-400" />
-                  Integración Zapier/Make
+                  IntegraciÃ³n Zapier/Make
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-slate-400" />
@@ -356,13 +356,13 @@ export default function IntegrationsPage() {
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xl font-semibold text-slate-900">Q4 2026</h3>
                 <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-semibold rounded-full">
-                  Exploración
+                  ExploraciÃ³n
                 </span>
               </div>
               <ul className="space-y-2 text-sm text-slate-700">
                 <li className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-slate-400" />
-                  App móvil nativa (iOS + Android)
+                  App mÃ³vil nativa (iOS + Android)
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-slate-400" />
@@ -378,17 +378,17 @@ export default function IntegrationsPage() {
       <section className="py-20 bg-gradient-to-br from-teal-600 to-teal-700">
         <div className="mx-auto max-w-4xl px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-6">
-            Empieza ahora, integra después
+            Empieza ahora, integra despuÃ©s
           </h2>
           <p className="text-xl text-teal-100 mb-8 max-w-2xl mx-auto">
-            No necesitas integraciones complejas desde el día 1. 
-            Empieza a usar la plataforma y añade conexiones cuando las necesites.
+            No necesitas integraciones complejas desde el dÃ­a 1. 
+            Empieza a usar la plataforma y aÃ±ade conexiones cuando las necesites.
           </p>
           <Link
             href="/auth/signup"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-teal-700 font-semibold rounded-xl shadow-lg hover:shadow-xl transition"
           >
-            Prueba gratis 14 días
+            Prueba gratis 14 dÃ­as
           </Link>
         </div>
       </section>
@@ -397,10 +397,10 @@ export default function IntegrationsPage() {
       <footer className="border-t border-slate-200 bg-white py-8">
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-600">
-            <p>© 2026 Verifactu Business · Expert Estudios Profesionales, SLU</p>
+            <p>Â© 2026 Verifactu Business Â· Expert Estudios Profesionales, SLU</p>
             <div className="flex gap-6">
               <Link href="/legal/privacidad" className="hover:text-slate-900">Privacidad</Link>
-              <Link href="/legal/terminos" className="hover:text-slate-900">Términos</Link>
+              <Link href="/legal/terminos" className="hover:text-slate-900">TÃ©rminos</Link>
               <Link href="/legal/cookies" className="hover:text-slate-900">Cookies</Link>
             </div>
           </div>
@@ -409,3 +409,4 @@ export default function IntegrationsPage() {
     </main>
   );
 }
+

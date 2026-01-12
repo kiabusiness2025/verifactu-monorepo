@@ -1,7 +1,7 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 const title = "Blog | Verifactu Business";
-const description = "Consejos practicos para facturacion, cumplimiento y operaciones con VeriFactu.";
+const description = "Consejos prÃ¡cticos para facturaciÃ³n, cumplimiento y operaciones con VeriFactu.";
 
 export const metadata = {
   title,
@@ -30,17 +30,17 @@ export const metadata = {
 
 const posts = [
   {
-    title: "Errores mas comunes al emitir facturas VeriFactu",
-    desc: "Cinco fallos que vemos a diario y como evitarlos.",
+    title: "Errores mÃ¡s comunes al emitir facturas VeriFactu",
+    desc: "Cinco fallos que vemos a diario y cÃ³mo evitarlos.",
     date: "Mar 10, 2026",
   },
   {
-    title: "Como preparar tu empresa para una auditoria express",
+    title: "CÃ³mo preparar tu empresa para una auditorÃ­a express",
     desc: "Checklist de evidencias y procesos que Isaak te ayuda a mantener.",
     date: "Feb 21, 2026",
   },
   {
-    title: "Conciliacion bancaria sin dolores de cabeza",
+    title: "ConciliaciÃ³n bancaria sin dolores de cabeza",
     desc: "Automatiza movimientos y detecta gastos duplicados.",
     date: "Feb 03, 2026",
   },
@@ -58,10 +58,10 @@ export default function BlogPage() {
           ]}
         />
 
-        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Recursos</p>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-[#0060F0]">Recursos</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Blog</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          Ideas y practicas para una facturacion clara, ordenada y lista para VeriFactu.
+          Ideas y prÃ¡cticas para una facturaciÃ³n clara, ordenada y lista para VeriFactu.
         </p>
 
         <div className="mt-8 space-y-4">
@@ -70,8 +70,8 @@ export default function BlogPage() {
               <div className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{post.date}</div>
               <h2 className="mt-2 text-lg font-semibold text-slate-900">{post.title}</h2>
               <p className="mt-2 text-sm text-slate-600">{post.desc}</p>
-              <button className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
-                Leer articulo
+              <button className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]">
+                Leer artÃ­culo
                 <span aria-hidden>{'->'}</span>
               </button>
             </article>
@@ -79,7 +79,7 @@ export default function BlogPage() {
         </div>
 
         <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Quieres recibir las novedades?</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Â¿Quieres recibir las novedades?</h2>
           <p className="mt-2 text-sm text-slate-700">
             Enviaremos tips cortos sobre cumplimiento, cambios de AEAT y productividad.
           </p>
@@ -87,9 +87,9 @@ export default function BlogPage() {
             <input
               type="email"
               placeholder="tu@email.com"
-              className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-full border border-slate-200 px-4 py-2 text-sm shadow-sm focus:border-[#0060F0]/35 focus:outline-none focus:ring-2 focus:ring-[#0080F0]/15"
             />
-            <button className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+            <button className="rounded-full bg-[#0060F0] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0056D6]">
               Suscribirme
             </button>
           </div>
@@ -97,13 +97,13 @@ export default function BlogPage() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Quieres calcular tu precio y empezar hoy?</div>
+          <div className="text-sm text-slate-600">Â¿Quieres calcular tu precio y empezar hoy?</div>
           <div className="flex gap-3">
             <Link
               href="/demo#calculadora"
-              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="rounded-full bg-[#0060F0] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0056D6]"
             >
-              Calcula precio
+              Calcula tu precio
             </Link>
             <Link
               href="/verifactu/soporte"
@@ -127,7 +127,7 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
         {items.map((item, index) => (
           <li key={`${item.label}-${index}`} className="flex items-center gap-2">
             {item.href ? (
-              <Link href={item.href} className="hover:text-blue-700">
+              <Link href={item.href} className="hover:text-[#0060F0]">
                 {item.label}
               </Link>
             ) : (
@@ -140,3 +140,4 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
     </nav>
   );
 }
+

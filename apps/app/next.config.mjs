@@ -3,7 +3,7 @@
 export default {
   ...(isVercel ? {} : { output: 'standalone' }),
   eslint: { ignoreDuringBuilds: true },
-  transpilePackages: ['@verifactu/ui'],
+  transpilePackages: ['@verifactu/ui', '@verifactu/utils'],
   i18n: {
     locales: ['es'],
     defaultLocale: 'es',

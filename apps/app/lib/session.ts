@@ -1,26 +1,19 @@
 import { cookies } from "next/headers";
-import { jwtVerify, JWTPayload } from "jose";
+import {
+  verifySessionToken,
+  readSessionSecret,
+  SESSION_COOKIE_NAME,
+  type SessionPayload,
+} from "@verifactu/utils";
 
-function getSecretKey(): Uint8Array | null {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) return null;
-  return new TextEncoder().encode(secret);
-}
-
-export type SessionPayload = JWTPayload & {
-  uid?: string;
-  email?: string;
-  name?: string;
-  tenantId?: string;
-};
+export type { SessionPayload };
 
 export async function getSessionPayload(): Promise<SessionPayload | null> {
-  const token = cookies().get("__session")?.value;
-  const secret = getSecretKey();
-  if (!token || !secret) return null;
+  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
+  if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret);
-    return payload as SessionPayload;
+    const secret = readSessionSecret();
+    return await verifySessionToken(token, secret);
   } catch {
     return null;
   }

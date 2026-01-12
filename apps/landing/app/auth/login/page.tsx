@@ -73,9 +73,9 @@ export default function LoginPage() {
   // Don't render anything if authenticated - just show loading
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50/70 via-white to-blue-50/40">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#0060F0]"></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -85,9 +85,9 @@ export default function LoginPage() {
   // If user is authenticated, don't show login form
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50/70 via-white to-blue-50/40">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#0060F0]"></div>
           <p className="mt-4 text-gray-600">Redirigiendo...</p>
         </div>
       </div>
@@ -95,17 +95,9 @@ export default function LoginPage() {
   }
 
   const persistSession = async (authedUser: User) => {
-    const idToken = await authedUser.getIdToken();
-    const res = await fetch("/api/auth/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || "No se pudo guardar la sesión");
-    }
-    return res.json();
+    // Session is already minted by signInWithEmail/signInWithGoogle
+    // No need to call /api/auth/session again
+    return { ok: true };
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -120,10 +112,6 @@ export default function LoginPage() {
         setError(result.error.userMessage);
         showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
-      }
-
-      if (result.user) {
-        await persistSession(result.user);
       }
 
       // Redirect to dashboard
@@ -149,10 +137,6 @@ export default function LoginPage() {
         setError(result.error.userMessage);
         showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
-      }
-
-      if (result.user) {
-        await persistSession(result.user);
       }
 
       // Redirect to dashboard
@@ -218,14 +202,14 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={() => setMode("login")}
-          className={`flex-1 py-2 rounded-lg border ${mode === "login" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-300"}`}
+          className={`flex-1 py-2 rounded-lg border ${mode === "login" ? "bg-[#0060F0] text-white border-[#0060F0]" : "bg-white text-gray-700 border-gray-300"}`}
         >
           Iniciar sesión
         </button>
         <button
           type="button"
           onClick={() => setMode("signup")}
-          className={`flex-1 py-2 rounded-lg border ${mode === "signup" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-300"}`}
+          className={`flex-1 py-2 rounded-lg border ${mode === "signup" ? "bg-[#0060F0] text-white border-[#0060F0]" : "bg-white text-gray-700 border-gray-300"}`}
         >
           Crear cuenta
         </button>
@@ -261,7 +245,7 @@ export default function LoginPage() {
             {mode === "login" && (
               <Link
                 href="/auth/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-[#0060F0] hover:text-[#0080F0] font-medium"
               >
                 ¿La olvidaste?
               </Link>
@@ -306,15 +290,15 @@ export default function LoginPage() {
                 setAgreeTerms(e.target.checked);
                 setError("");
               }}
-              className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="mt-1 w-4 h-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
             />
             <span className="text-gray-600">
               Acepto los {" "}
-              <Link href="/legal/terminos" className="text-blue-600 hover:text-blue-700 font-medium" aria-label="Leer términos y condiciones">
+              <Link href="/legal/terminos" className="text-[#0060F0] hover:text-[#0080F0] font-medium" aria-label="Leer términos y condiciones">
                 términos y condiciones
               </Link>{" "}
               y la {" "}
-              <Link href="/legal/privacidad" className="text-blue-600 hover:text-blue-700 font-medium" aria-label="Leer política de privacidad">
+              <Link href="/legal/privacidad" className="text-[#0060F0] hover:text-[#0080F0] font-medium" aria-label="Leer política de privacidad">
                 Política de privacidad
               </Link>
             </span>
@@ -324,7 +308,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md transition hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (mode === "login" ? "Iniciando sesión..." : "Creando cuenta...") : (mode === "login" ? "Iniciar sesión" : "Crear cuenta")}
         </button>
@@ -344,7 +328,7 @@ export default function LoginPage() {
         type="button"
         onClick={handleGoogleLogin}
         disabled={isLoading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md transition hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path

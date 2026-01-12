@@ -92,7 +92,7 @@ export function GoogleAuthButton() {
   return (
     <button
       type="button"
-      className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md transition hover:from-blue-700 hover:to-blue-800"
+      className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">
         <path
@@ -145,7 +145,7 @@ export function AuthLayout({
             <div className="mb-4">
               <a
                 href="/"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
               >
                 <span aria-hidden="true">←</span> Volver al inicio
               </a>
@@ -174,7 +174,7 @@ export function AuthLayout({
                   {" "}
                   <a
                     href={footerLink.href}
-                    className="text-blue-600 hover:text-blue-700 font-medium"
+                    className="text-[#0060F0] hover:text-[#0080F0] font-medium"
                   >
                     {footerLink.label}
                   </a>
@@ -182,11 +182,11 @@ export function AuthLayout({
               )}
               {/* Enlaces adicionales: inicio y legales */}
               <div className="mt-4 flex flex-col gap-1 items-center text-xs text-gray-500">
-                <Link href="/" className="hover:text-blue-600 underline" aria-label="Volver al inicio">Volver al inicio</Link>
+                <Link href="/" className="hover:text-[#0080F0] underline" aria-label="Volver al inicio">Volver al inicio</Link>
                 <div className="flex gap-2">
-                  <Link href="/legal/privacidad" className="hover:text-blue-600 underline" aria-label="Leer política de privacidad">Política de privacidad</Link>
+                  <Link href="/legal/privacidad" className="hover:text-[#0080F0] underline" aria-label="Leer política de privacidad">Política de privacidad</Link>
                   <span>|</span>
-                  <Link href="/legal/terminos" className="hover:text-blue-600 underline" aria-label="Leer términos y condiciones">Términos y condiciones</Link>
+                  <Link href="/legal/terminos" className="hover:text-[#0080F0] underline" aria-label="Leer términos y condiciones">Términos y condiciones</Link>
                 </div>
               </div>
             </div>

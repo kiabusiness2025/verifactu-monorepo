@@ -64,7 +64,7 @@ export function StickyCtaBar({ show }: { show: boolean }) {
       aria-hidden={!show}
     >
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
-        <div className="text-sm font-semibold text-primary">Prueba gratis y ve Isaak en accion</div>
+        <div className="text-sm font-semibold text-[#002060]">Prueba gratis y ve Isaak en acción</div>
         <div className="flex gap-2">\n          <Link href="/auth/signup">\n            <PrimaryButton className="px-4 py-2">Probar gratis</PrimaryButton>\n          </Link>
           <SecondaryButton href="/demo" className="px-4 py-2">
             Ver demo
@@ -99,10 +99,10 @@ export function CommandExample({ command, response }: { command: string; respons
 
       <div className="mt-4 rounded-xl bg-gradient-to-br from-blue-50 to-slate-50 p-4 ring-1 ring-slate-200/50">
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-600">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0060F0]">
             <CheckCircle2 className="h-3.5 w-3.5 text-white" />
           </div>
-          <div className="text-xs font-semibold text-blue-900">Respuesta de Isaak</div>
+          <div className="text-xs font-semibold text-[#002060]">Respuesta de Isaak</div>
         </div>
         <p className="mt-2 text-sm leading-6 text-slate-700">{response}</p>
       </div>
@@ -126,7 +126,7 @@ export function HeroMockup({
   const heroLog = [
     { title: "Factura VF-2031", desc: "Validada y enviada al cliente" },
     { title: "Ticket combustible", desc: "Marcado deducible y registrado" },
-    { title: "Sync VeriFactu", desc: "Ultima validacion hace 3 min" },
+    { title: "Sync VeriFactu", desc: "Última validación hace 3 min" },
   ];
 
   return (
@@ -135,10 +135,10 @@ export function HeroMockup({
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-            <Sparkles className="h-4 w-4 text-blue-600" />
+            <Sparkles className="h-4 w-4 text-[#0080F0]" />
             Isaak
           </div>
-          <button className="text-xs font-medium text-blue-600 hover:text-blue-700">Conectar</button>
+          <button className="text-xs font-medium text-[#0060F0] hover:text-[#0080F0]">Conectar</button>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -193,7 +193,7 @@ export function HeroMockup({
 }
 
 export function MsgDot({ type }: { type: IsaakMsg["type"] }) {
-  const cls = type === "ok" ? "bg-emerald-500" : type === "warn" ? "bg-amber-500" : "bg-blue-500";
+  const cls = type === "ok" ? "bg-emerald-500" : type === "warn" ? "bg-amber-500" : "bg-[#0080F0]";
   return <div className={`h-3.5 w-3.5 rounded-full ${cls}`} />;
 }
 
@@ -239,11 +239,11 @@ export function MiniInvoice() {
         </div>
         <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200">
           <div className="text-[11px] text-slate-500">Importe</div>
-          <div className="mt-0.5 font-semibold text-slate-800">1.250,00 EUR</div>
+          <div className="mt-0.5 font-semibold text-slate-800">1.250,00 €</div>
         </div>
       </div>
 
-      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#0060F0] px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
         <CheckCircle2 className="h-4 w-4" />
         Validado por Isaak
       </div>
@@ -255,7 +255,7 @@ export function Stat({ label, value, desc }: { label: string; value: string; des
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
       <div>
-        <div className="text-lg font-semibold text-blue-700">{label}</div>
+        <div className="text-lg font-semibold text-[#002060]">{label}</div>
         <div className="text-xs font-semibold text-slate-800">{value}</div>
       </div>
       <div className="text-right text-xs text-slate-500">{desc}</div>
@@ -288,8 +288,8 @@ export function FeatureCard({
           </li>
         ))}
       </ul>
-      <button className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700">
-        Ver mas <ChevronRight className="h-4 w-4" />
+      <button className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]">
+        Ver más <ChevronRight className="h-4 w-4" />
       </button>
     </div>
   );
@@ -312,7 +312,7 @@ export function StepCard({
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200">
           {icon}
         </div>
-        <div className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+        <div className="rounded-full bg-sky-50/70 px-3 py-1 text-xs font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15">
           {n}
         </div>
       </div>
@@ -328,29 +328,29 @@ export function DashboardMock() {
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold">Isaak Control Center</div>
         <span className="rounded-full bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-          Suscripcion Business Plus
+          Suscripción Business Plus
         </span>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <KpiCard label="Ventas del mes" value="48.230 EUR" sub="+12%" />
-        <KpiCard label="Gastos del mes" value="36.900 EUR" sub="+7%" />
-        <KpiCard label="Beneficio" value="12.410 EUR" sub="+8%" />
+        <KpiCard label="Ventas del mes" value="48.230 €" sub="+12%" />
+        <KpiCard label="Gastos del mes" value="36.900 €" sub="+7%" />
+        <KpiCard label="Beneficio" value="12.410 €" sub="+8%" />
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-xs font-semibold text-slate-700">Isaak</div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            He detectado un aumento de gastos en proveedores. Quieres que identifique los que mas afectan al margen?
+            He detectado un aumento de gastos en proveedores. ¿Quieres que identifique los que más afectan al margen?
           </p>
 
           <div className="mt-3 flex gap-2">
-            <button className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700">
+            <button className="rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-xs font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB]">
               Analizar ahora
             </button>
-            <button className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
-              Mas tarde
+            <button className="rounded-full border border-[#0060F0] bg-white px-4 py-2 text-xs font-semibold text-[#0060F0] hover:bg-[#0060F0]/10">
+              Más tarde
             </button>
           </div>
         </div>
@@ -358,9 +358,9 @@ export function DashboardMock() {
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="text-xs font-semibold text-slate-700">Actividad reciente</div>
           <div className="mt-3 space-y-2">
-            <ActivityItem icon={<FileText className="h-4 w-4 text-blue-600" />} text="Factura VF-2031 emitida y validada" />
-            <ActivityItem icon={<UploadCloud className="h-4 w-4 text-blue-600" />} text="3 tickets reconocidos desde Drive" />
-            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-blue-600" />} text="Recordatorio creado: plazo fiscal en 5 dias" />
+            <ActivityItem icon={<FileText className="h-4 w-4 text-[#0080F0]" />} text="Factura VF-2031 emitida y validada" />
+            <ActivityItem icon={<UploadCloud className="h-4 w-4 text-[#0080F0]" />} text="3 tickets reconocidos desde Drive" />
+            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-[#0080F0]" />} text="Recordatorio creado: plazo fiscal en 5 días" />
             <ActivityItem icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />} text="Checklist VeriFactu: todo en orden" />
           </div>
         </div>
@@ -418,7 +418,7 @@ export function ResourceCard({ tag, title, desc, cta }: { tag: string; title: st
       </div>
       <div className="mt-4 text-sm font-semibold">{title}</div>
       <div className="mt-2 text-sm leading-6 text-slate-600">{desc}</div>
-      <button className="mt-4 inline-flex items-center gap-1 rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700">
+      <button className="mt-4 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-xs font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB]">
         {cta} <ChevronRight className="h-4 w-4" />
       </button>
     </div>
@@ -446,7 +446,7 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-4">
           <div>
             <BrandLogo variant="footer" />
-            <p className="mt-3 text-sm text-slate-300">Automatiza tu facturacion con cumplimiento y control total.</p>
+            <p className="mt-3 text-sm text-slate-300">Automatiza tu facturación con cumplimiento y control total.</p>
             <div className="mt-4 flex gap-3">
               <a
                 href="/recursos/guias-y-webinars"
@@ -491,7 +491,7 @@ export function Footer() {
           <FooterCol
             title="VeriFactu"
             links={[
-              { label: "Que es", href: "/verifactu/que-es" },
+              { label: "Qué es", href: "/verifactu/que-es" },
               { label: "Calcula precio", href: "/#precios" },
               { label: "Soporte", href: "/verifactu/soporte" },
               { label: "Estado del servicio", href: "/verifactu/estado" },
@@ -500,7 +500,7 @@ export function Footer() {
           <FooterCol
             title="Recursos"
             links={[
-              { label: "Guias y webinars", href: "/recursos/guias-y-webinars" },
+              { label: "Guías y webinars", href: "/recursos/guias-y-webinars" },
               { label: "Checklist", href: "/recursos/checklist" },
               { label: "Blog", href: "/recursos/blog" },
               { label: "Contacto", href: "/recursos/contacto" },
@@ -510,8 +510,8 @@ export function Footer() {
             title="Legal"
             links={[
               { label: "VeriFactu", href: "/verifactu" },
-              { label: "Politica de privacidad", href: "/legal/privacidad" },
-              { label: "Terminos de servicio", href: "/legal/terminos" },
+              { label: "Política de privacidad", href: "/legal/privacidad" },
+              { label: "Términos de servicio", href: "/legal/terminos" },
               { label: "Cookies", href: "/legal/cookies" },
             ]}
           />
@@ -524,13 +524,13 @@ export function Footer() {
               <Link href="/verifactu" className="hover:text-blue-300 transition" aria-label="Ir a VeriFactu">
                 VeriFactu
               </Link>
-              <Link href="/legal/privacidad" className="hover:text-blue-300 transition" aria-label="Leer politica de privacidad">
-                Politica de privacidad
+              <Link href="/legal/privacidad" className="hover:text-blue-300 transition" aria-label="Leer política de privacidad">
+                Política de privacidad
               </Link>
-              <Link href="/legal/terminos" className="hover:text-blue-300 transition" aria-label="Leer terminos de servicio">
-                Terminos de servicio
+              <Link href="/legal/terminos" className="hover:text-blue-300 transition" aria-label="Leer términos de servicio">
+                Términos de servicio
               </Link>
-              <Link href="/legal/cookies" className="hover:text-blue-300 transition" aria-label="Leer politica de cookies">
+              <Link href="/legal/cookies" className="hover:text-blue-300 transition" aria-label="Leer política de cookies">
                 Cookies
               </Link>
             </div>
@@ -579,8 +579,8 @@ export function PriceDisplay({ price, isYearly }: { price: number | null; isYear
   }
   return (
     <div>
-      <div className="text-4xl font-bold text-slate-900">{price} EUR</div>
-      <div className="text-sm text-slate-500">{isYearly ? "/ano" : "/mes"}</div>
+      <div className="text-4xl font-bold text-slate-900">{price} €</div>
+      <div className="text-sm text-slate-500">{isYearly ? "/año" : "/mes"}</div>
     </div>
   );
 }
@@ -606,7 +606,7 @@ export function ComplianceBadge() {
             </div>
             <span className="text-sm font-semibold text-green-700">Cumplimiento Certificado</span>
           </div>
-          <p className="mt-3 text-xs text-slate-500">Sistema homologado segun normativa de la Agencia Tributaria</p>
+          <p className="mt-3 text-xs text-slate-500">Sistema homologado según normativa de la Agencia Tributaria</p>
         </div>
       </div>
     </div>
@@ -615,11 +615,11 @@ export function ComplianceBadge() {
 
 export function ThreeSteps() {
   return (
-    <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
+    <section className="py-16 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white">
       <Container>
-        <h3 className="text-center text-2xl font-semibold tracking-tight text-primary sm:text-3xl">Del envio al cobro en tres pasos.</h3>
+        <h3 className="text-center text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">Del envío al cobro en tres pasos.</h3>
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
-          Conecta tu flujo de facturacion y deja que Isaak automatice validaciones y recordatorios.
+          Conecta tu flujo de facturación y deja que Isaak automatice validaciones y recordatorios.
         </p>
 
         <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -627,19 +627,19 @@ export function ThreeSteps() {
             n={1}
             title="Configura Isaak"
             desc="Define tus datos, series y reglas. Conecta Drive y calendario para automatizar el orden."
-            icon={<LayoutDashboard className="h-5 w-5 text-blue-600" />}
+            icon={<LayoutDashboard className="h-5 w-5 text-[#0080F0]" />}
           />
           <StepCard
             n={2}
             title="Emite y valida"
             desc="Genera la factura y valida automaticamente con VeriFactu antes de enviarla."
-            icon={<FileText className="h-5 w-5 text-blue-600" />}
+            icon={<FileText className="h-5 w-5 text-[#0080F0]" />}
           />
           <StepCard
             n={3}
             title="Cobra y analiza"
             desc="Isaak monitoriza el ciclo, detecta incidencias y te resume impacto en margen."
-            icon={<Wallet className="h-5 w-5 text-blue-600" />}
+            icon={<Wallet className="h-5 w-5 text-[#0080F0]" />}
           />
         </div>
       </Container>
@@ -651,33 +651,33 @@ export function FeaturesSection() {
   return (
     <section className="py-16">
       <Container>
-        <h2 className="text-center text-3xl font-bold tracking-tight text-primary sm:text-4xl">
+        <h2 className="text-center text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
           Lo que ves es lo que tienes: Ventas, Gastos, Beneficio.
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-lightbg-600 sm:text-lg">
-          El dashboard muestra solo lo esencial. Informes, listados y analisis profundos estan a un comando de distancia con Isaak.
+          El dashboard muestra solo lo esencial. Informes, listados y análisis profundos están a un comando de distancia con Isaak.
         </p>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <FeatureCard
-            icon={<TrendingUp className="h-5 w-5 text-blue-600" />}
-            title="Emision sin friccion"
-            bullets={["Haz una foto o sube documento", "Isaak clasifica y registra", "Validacion automatica incluida"]}
+            icon={<TrendingUp className="h-5 w-5 text-[#0080F0]" />}
+            title="Emisión sin fricción"
+            bullets={["Haz una foto o sube documento", "Isaak clasifica y registra", "Validación automática incluida"]}
           />
           <FeatureCard
-            icon={<BadgeCheck className="h-5 w-5 text-blue-600" />}
+            icon={<BadgeCheck className="h-5 w-5 text-[#0080F0]" />}
             title="Gastos guiados"
-            bullets={["Foto del ticket -> clasificado", "Deducible segun tu actividad", "Apunte registrado al instante"]}
+            bullets={["Foto del ticket -> clasificado", "Deducible según tu actividad", "Apunte registrado al instante"]}
           />
           <FeatureCard
-            icon={<Sparkles className="h-5 w-5 text-blue-600" />}
+            icon={<Sparkles className="h-5 w-5 text-[#0080F0]" />}
             title="Dashboard claro"
             bullets={["Ventas totales", "Gastos totales", "Beneficio real, siempre actualizado"]}
           />
           <FeatureCard
-            icon={<FileText className="h-5 w-5 text-blue-600" />}
+            icon={<FileText className="h-5 w-5 text-[#0080F0]" />}
             title="Bajo demanda con Isaak"
-            bullets={["Informes y exportaciones", "Listados por cliente, periodo", "Analisis profundo cuando lo necesites"]}
+            bullets={["Informes y exportaciones", "Listados por cliente, periodo", "Análisis profundo cuando lo necesites"]}
           />
         </div>
       </Container>
@@ -690,42 +690,42 @@ export function PideseloAIsaakSection() {
     <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
       <Container>
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
-            <Sparkles className="h-4 w-4" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-4 py-1.5 text-sm font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15">
+            <Sparkles className="h-4 w-4 text-[#0080F0]" />
             Pideselo a Isaak
           </div>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight text-primary sm:text-4xl">
+          <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
             Todo lo que necesites, disponible en un comando.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Informes, listados, exportaciones, importaciones. Tu pides, Isaak hace. Sin limites, sin friccion.
+            Informes, listados, exportaciones, importaciones. Tú pides, Isaak hace. Sin límites, sin fricción.
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <CommandExample
-            command="Subo estos tickets, cuales son deducibles?"
-            response="He revisado los 5 tickets. 4 son deducibles para tu actividad y ya estan registrados. 1 requiere justificacion adicional. Lo marcamos como 'a revisar'?"
+            command="Subo estos tickets, cuáles son deducibles?"
+            response="He revisado los 5 tickets. 4 son deducibles para tu actividad y ya están registrados. 1 requiere justificación adicional. ¿Lo marcamos como 'a revisar'?"
           />
           <CommandExample
             command="Prepara el listado de gastos del trimestre"
-            response="Listo. Gastos T4 2025: 8.200 EUR en total. He agrupado por categoria (alimentacion, transporte, oficina). Lo exporto a Excel o PDF?"
+            response="Listo. Gastos T4 2025: 8.200 € en total. He agrupado por categoría (alimentación, transporte, oficina). ¿Lo exporto a Excel o PDF?"
           />
           <CommandExample
-            command="Dame el ranking de clientes por facturacion"
-            response="Top 5 clientes este ano: Lopez S.L. (18.500 EUR), Acme Corp (15.200 EUR), Tech Solutions (12.100 EUR). Quieres ver margenes o proyecciones?"
+            command="Dame el ranking de clientes por facturación"
+            response="Top 5 clientes este año: López S.L. (18.500 €), Acme Corp (15.200 €), Tech Solutions (12.100 €). ¿Quieres ver márgenes o proyecciones?"
           />
           <CommandExample
             command="Crea proveedor 'X' con estos datos"
-            response="Proveedor 'X' creado con CIF, datos bancarios y condiciones de pago. Ya puedes emitir compras contra el. Quieres crear mas?"
+            response="Proveedor 'X' creado con CIF, datos bancarios y condiciones de pago. Ya puedes emitir compras contra él. ¿Quieres crear más?"
           />
           <CommandExample
             command="Exporta todos los productos a Excel"
-            response="Archivo generado: 234 productos, con codigos, precios, categorias y stock. Descargable en 2 segundos. Necesitas filtros especiales?"
+            response="Archivo generado: 234 productos, con códigos, precios, categorías y stock. Descargable en 2 segundos. ¿Necesitas filtros especiales?"
           />
           <CommandExample
             command="Resumen mensual: ventas, gastos y beneficio"
-            response="Diciembre 2025: Ingresos 24.500 EUR | Gastos 12.100 EUR | Beneficio estimado 12.400 EUR (+8% vs mes anterior). Quieres desglose por cliente?"
+            response="Diciembre 2025: Ingresos 24.500 € | Gastos 12.100 € | Beneficio estimado 12.400 € (+8% vs mes anterior). ¿Quieres desglose por cliente?"
           />
         </div>
       </Container>

@@ -1,7 +1,7 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
-const title = "Guias y webinars | Verifactu Business";
-const description = "Recursos practicos para cumplir VeriFactu, automatizar facturacion y sacar partido a Isaak.";
+const title = "GuÃ­as y webinars | Verifactu Business";
+const description = "Recursos prÃ¡cticos para cumplir VeriFactu, automatizar facturaciÃ³n y sacar partido a Isaak.";
 
 export const metadata = {
   title,
@@ -30,19 +30,19 @@ export const metadata = {
 
 const guides = [
   {
-    title: "Guia rapida VeriFactu 2025",
-    desc: "Checklist tecnica y operativa para activar VeriFactu sin fricciones.",
+    title: "GuÃ­a rÃ¡pida VeriFactu 2025",
+    desc: "Checklist tÃ©cnica y operativa para activar VeriFactu sin fricciones.",
     cta: "Descargar PDF",
   },
   {
     title: "Webinar: de cero a facturar con Isaak",
-    desc: "Como emitir, registrar gastos y validar con AEAT en 30 minutos.",
-    cta: "Ver grabacion",
+    desc: "CÃ³mo emitir, registrar gastos y validar con AEAT en 30 minutos.",
+    cta: "Ver grabaciÃ³n",
   },
   {
-    title: "Automatizacion bancaria",
+    title: "AutomatizaciÃ³n bancaria",
     desc: "Conecta bancos y reconcilia movimientos con reglas simples.",
-    cta: "Ver guia",
+    cta: "Ver guÃ­a",
   },
 ];
 
@@ -54,14 +54,14 @@ export default function GuiasWebinarsPage() {
           items={[
             { label: "Inicio", href: "/" },
             { label: "Recursos", href: "/recursos/guias-y-webinars" },
-            { label: "Guias y webinars" },
+            { label: "GuÃ­as y webinars" },
           ]}
         />
 
-        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Recursos</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Guias y webinars</h1>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-[#0060F0]">Recursos</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">GuÃ­as y webinars</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          Material listo para usar: activa VeriFactu, optimiza tus facturas y evita errores tipicos.
+          Material listo para usar: activa VeriFactu, optimiza tus facturas y evita errores tÃ­picos.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -71,27 +71,27 @@ export default function GuiasWebinarsPage() {
         </div>
 
         <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Quieres un webinar privado?</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Â¿Quieres un webinar privado?</h2>
           <p className="mt-2 text-sm text-slate-700">
-            Preparamos sesiones enfocadas a tu equipo: facturacion, bancos o auditoria interna.
+            Preparamos sesiones enfocadas a tu equipo: facturaciÃ³n, bancos o auditorÃ­a interna.
           </p>
           <Link
             href="mailto:soporte@verifactu.business?subject=Webinar%20privado"
-            className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
+            className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-            Solicitar sesion
+            Solicitar sesiÃ³n
             <span aria-hidden>{'->'}</span>
           </Link>
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Quieres activar la prueba y ver el precio final?</div>
+          <div className="text-sm text-slate-600">Â¿Quieres activar la prueba y ver el precio final?</div>
           <div className="flex gap-3">
             <Link
               href="/demo#calculadora"
-              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="rounded-full bg-[#0060F0] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0056D6]"
             >
-              Calcula precio
+              Calcula tu precio
             </Link>
             <Link
               href="/verifactu/soporte"
@@ -111,7 +111,7 @@ function ResourceCard({ title, desc, cta }: { title: string; desc: string; cta: 
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="text-sm font-semibold text-slate-900">{title}</div>
       <p className="mt-1 text-sm text-slate-600">{desc}</p>
-      <button className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
+      <button className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]">
         {cta} <span aria-hidden>{'->'}</span>
       </button>
     </div>
@@ -127,7 +127,7 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
         {items.map((item, index) => (
           <li key={`${item.label}-${index}`} className="flex items-center gap-2">
             {item.href ? (
-              <Link href={item.href} className="hover:text-blue-700">
+              <Link href={item.href} className="hover:text-[#0060F0]">
                 {item.label}
               </Link>
             ) : (
@@ -140,5 +140,6 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
     </nav>
   );
 }
+
 
 

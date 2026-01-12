@@ -177,15 +177,15 @@ export default function SignupPage() {
               setAgreeTerms(e.target.checked);
               setError("");
             }}
-            className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="mt-1 w-4 h-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
           />
           <span className="text-gray-600">
             Acepto los{" "}
-            <Link href="/legal/terminos" className="text-blue-600 hover:text-blue-700 font-medium" aria-label="Leer términos y condiciones">
+            <Link href="/legal/terminos" className="text-[#0060F0] hover:text-[#0080F0] font-medium" aria-label="Leer términos y condiciones">
               términos y condiciones
             </Link>{" "}
             y la{" "}
-            <Link href="/legal/privacidad" className="text-blue-600 hover:text-blue-700 font-medium" aria-label="Leer política de privacidad">
+            <Link href="/legal/privacidad" className="text-[#0060F0] hover:text-[#0080F0] font-medium" aria-label="Leer política de privacidad">
               Política de privacidad
             </Link>
           </span>
@@ -194,7 +194,7 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md transition hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? "Creando cuenta..." : "Crear cuenta"}
         </button>
@@ -214,7 +214,7 @@ export default function SignupPage() {
         type="button"
         onClick={handleGoogleSignup}
         disabled={isLoading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md transition hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path

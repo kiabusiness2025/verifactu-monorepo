@@ -37,7 +37,7 @@ export default function CookieBanner() {
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6">
         <p className="text-sm text-slate-600">
           Utilizamos cookies técnicas para el funcionamiento esencial. Puedes aceptar solo las esenciales o todas. Más detalle en {" "}
-          <Link href="/legal/cookies" className="text-blue-700 font-semibold hover:text-blue-800" aria-label="Leer política de cookies">Política de cookies</Link>.
+          <Link href="/legal/cookies" className="text-[#0060F0] font-semibold hover:text-[#0080F0]" aria-label="Leer política de cookies">Política de cookies</Link>.
         </p>
         <div className="flex shrink-0 items-center gap-2">
           <button
@@ -48,7 +48,7 @@ export default function CookieBanner() {
           </button>
           <button
             onClick={() => handleAccept("all")}
-            className="inline-flex items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-sm font-semibold text-white transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
           >
             Aceptar todo
           </button>

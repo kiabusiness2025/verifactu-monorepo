@@ -20,6 +20,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
+      "@verifactu/utils": ["../../packages/utils"],
+      "@verifactu/utils/*": ["../../packages/utils/*"],
       "@verifactu/ui": ["../../packages/ui"],
       "@verifactu/ui/*": ["../../packages/ui/*"]
     }

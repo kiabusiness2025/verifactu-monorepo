@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 const title = "Checklist | Verifactu Business";
 const description = "Checklist de cumplimiento VeriFactu y control operativo antes de emitir.";
@@ -30,12 +30,12 @@ export const metadata = {
 
 const checklist = [
   "Datos fiscales completos y actualizados",
-  "Numeracion correlativa sin saltos",
+  "NumeraciÃ³n correlativa sin saltos",
   "Series configuradas por tipo de factura",
-  "Politica de abonos definida",
-  "Integracion bancaria conectada",
+  "PolÃ­tica de abonos definida",
+  "IntegraciÃ³n bancaria conectada",
   "Alertas de inconsistencias activas",
-  "Exportacion de evidencias programada",
+  "ExportaciÃ³n de evidencias programada",
 ];
 
 export default function ChecklistPage() {
@@ -50,10 +50,10 @@ export default function ChecklistPage() {
           ]}
         />
 
-        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Recursos</p>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-[#0060F0]">Recursos</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Checklist VeriFactu</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          Una lista corta para asegurar que tu facturacion esta lista antes de emitir.
+          Una lista corta para asegurar que tu facturaciÃ³n estÃ¡ lista antes de emitir.
         </p>
 
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -68,28 +68,28 @@ export default function ChecklistPage() {
         </div>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Quieres la version imprimible?</div>
+          <div className="text-sm text-slate-600">Â¿Quieres la versiÃ³n imprimible?</div>
           <div className="flex gap-3">
-            <button className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+            <button className="rounded-full bg-[#0060F0] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0056D6]">
               Descargar PDF
             </button>
             <Link
               href="/recursos/guias-y-webinars"
               className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200"
             >
-              Ver guias
+              Ver guÃ­as
             </Link>
           </div>
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Listo para activar planes y empezar a emitir?</div>
+          <div className="text-sm text-slate-600">Â¿Listo para activar planes y empezar a emitir?</div>
           <div className="flex gap-3">
             <Link
               href="/demo#calculadora"
-              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="rounded-full bg-[#0060F0] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0056D6]"
             >
-              Calcula precio
+              Calcula tu precio
             </Link>
             <Link
               href="/verifactu/soporte"
@@ -113,7 +113,7 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
         {items.map((item, index) => (
           <li key={`${item.label}-${index}`} className="flex items-center gap-2">
             {item.href ? (
-              <Link href={item.href} className="hover:text-blue-700">
+              <Link href={item.href} className="hover:text-[#0060F0]">
                 {item.label}
               </Link>
             ) : (
@@ -126,3 +126,4 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
     </nav>
   );
 }
+

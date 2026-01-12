@@ -1,27 +1,23 @@
 import { NextResponse } from "next/server";
+import { buildSessionCookieOptions } from "@verifactu/utils";
 
 export const runtime = "nodejs";
 
-function cookieDomainFromHost(host: string | null) {
-  if (!host) return undefined;
-  if (host.endsWith("verifactu.business")) return ".verifactu.business";
-  return undefined;
-}
-
 export async function POST(req: Request) {
+  const url = new URL(req.url);
   const host = req.headers.get("host");
-  const res = NextResponse.json({ ok: true });
 
-  res.cookies.set({
-    name: "__session",
+  const cookieOpts = buildSessionCookieOptions({
+    url: url.toString(),
+    host,
+    domainEnv: process.env.SESSION_COOKIE_DOMAIN,
+    secureEnv: process.env.SESSION_COOKIE_SECURE,
+    sameSiteEnv: process.env.SESSION_COOKIE_SAMESITE,
     value: "",
-    httpOnly: true,
-    secure: new URL(req.url).protocol === "https:",
-    sameSite: "lax",
-    path: "/",
-    domain: cookieDomainFromHost(host),
-    maxAge: 0,
+    maxAgeSeconds: 0,
   });
 
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set(cookieOpts);
   return res;
 }

@@ -55,7 +55,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
             <>
               <Link
                 href={dashboardHref}
-                className="px-6 py-2 rounded-full bg-gradient-to-r from-primary to-primary-light text-white font-semibold shadow-md hover:from-primary hover:to-primary-light transition-all text-sm"
+                className="px-6 py-2 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md hover:from-[#0056D6] hover:to-[#1AA3DB] transition-all text-sm"
                 aria-label="Ir al Dashboard"
               >
                 Dashboard
@@ -74,7 +74,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
           ) : (
             <Link
               href="/auth/login"
-              className="px-6 py-2 rounded-full bg-gradient-to-r from-primary to-primary-light text-white font-semibold shadow-md hover:from-primary hover:to-primary-light transition-all text-sm"
+              className="px-6 py-2 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md hover:from-[#0056D6] hover:to-[#1AA3DB] transition-all text-sm"
               aria-label="Acceder a tu cuenta"
             >
               Acceder
@@ -88,7 +88,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
             <>
               <Link
                 href={dashboardHref}
-                className="px-4 py-2 rounded-full bg-gradient-to-r from-primary to-primary-light text-white font-semibold shadow-md hover:from-primary hover:to-primary-light transition-all text-sm"
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md hover:from-[#0056D6] hover:to-[#1AA3DB] transition-all text-sm"
                 aria-label="Ir al Dashboard"
               >
                 Dashboard
@@ -107,7 +107,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
           ) : (
             <Link
               href="/auth/login"
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-primary to-primary-light text-white font-semibold shadow-md hover:from-primary hover:to-primary-light transition-all text-sm"
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md hover:from-[#0056D6] hover:to-[#1AA3DB] transition-all text-sm"
               aria-label="Acceder a tu cuenta"
             >
               Acceder

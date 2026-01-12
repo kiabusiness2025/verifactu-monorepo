@@ -2,7 +2,7 @@ import { openai } from '@ai-sdk/openai';
 import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
+import { verifySessionToken, readSessionSecret, SESSION_COOKIE_NAME } from '@verifactu/utils';
 import { 
   calculateTenantProfit, 
   getPendingVeriFactuInvoices,
@@ -36,13 +36,11 @@ const ISAAK_SYSTEM = `Eres Isaak, el asistente experto en contabilidad y fiscali
 async function getSessionTenantId(): Promise<string | null> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('__session')?.value;
-    const secret = process.env.SESSION_SECRET;
-    
-    if (!token || !secret) return null;
-    
-    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
-    return (payload.tenantId as string) || null;
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    if (!token) return null;
+    const secret = readSessionSecret();
+    const payload = await verifySessionToken(token, secret);
+    return payload?.tenantId || null;
   } catch (error) {
     console.error('Error getting session tenant:', error);
     return null;

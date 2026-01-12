@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { SignJWT } from "jose";
+import {
+  signSessionToken,
+  readSessionSecret,
+  buildSessionCookieOptions,
+  type SessionPayload,
+} from "@verifactu/utils";
 import admin from "firebase-admin";
 import { Pool } from "pg";
 
@@ -37,12 +42,6 @@ function initFirebaseAdmin() {
   });
 }
 
-function cookieDomainFromHost(host: string | null) {
-  if (!host) return undefined;
-  if (host.endsWith("verifactu.business")) return ".verifactu.business";
-  return undefined;
-}
-
 async function getOrCreateTenantForUser(uid: string, email: string) {
   try {
     const dbPool = getDbPool();
@@ -65,12 +64,10 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
     );
 
     if (membershipResult.rows.length > 0) {
-      console.log(`[Auth] Usuario ${uid} tiene tenant existente: ${membershipResult.rows[0].tenant_id}`);
       return membershipResult.rows[0].tenant_id;
     }
 
     // 3. Crear tenant si no existe
-    console.log(`[Auth] Creando nuevo tenant para usuario ${uid} (${email})`);
     const tenantResult = await dbPool.query(
       `INSERT INTO tenants (name, legal_name)
        VALUES ($1, $2)
@@ -95,7 +92,6 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
       [uid, newTenantId]
     );
 
-    console.log(`[Auth] Nuevo tenant creado: ${newTenantId} para usuario ${uid}`);
     return newTenantId;
   } catch (error) {
     console.error("[Auth] Error en getOrCreateTenantForUser:", error);
@@ -129,35 +125,31 @@ export async function POST(req: Request) {
       ? [String(tenantsRaw)]
       : [];
 
-  const secret = new TextEncoder().encode(requireEnv("SESSION_SECRET"));
-
-  const token = await new SignJWT({
+  const payload: SessionPayload = {
     uid: decoded.uid,
     email: decoded.email ?? null,
     tenantId: tenantId || undefined,
     roles,
     tenants,
     ver: 1,
-  })
-    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-    .setIssuedAt()
-    .setExpirationTime("30d")
-    .sign(secret);
+  };
+
+  const secret = readSessionSecret();
+  const token = await signSessionToken({ payload, secret, expiresIn: "30d" });
 
   const url = new URL(req.url);
   const host = req.headers.get("host");
-
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set({
-    name: "__session",
+  const cookieOpts = buildSessionCookieOptions({
+    url: url.toString(),
+    host,
+    domainEnv: process.env.SESSION_COOKIE_DOMAIN,
+    secureEnv: process.env.SESSION_COOKIE_SECURE,
+    sameSiteEnv: process.env.SESSION_COOKIE_SAMESITE,
     value: token,
-    httpOnly: true,
-    secure: url.protocol === "https:",
-    sameSite: "lax",
-    path: "/",
-    domain: cookieDomainFromHost(host),
-    maxAge: 60 * 60 * 24 * 30,
+    maxAgeSeconds: 60 * 60 * 24 * 30,
   });
 
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set(cookieOpts);
   return res;
 }

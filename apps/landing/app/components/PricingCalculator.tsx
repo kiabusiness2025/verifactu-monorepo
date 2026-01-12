@@ -6,7 +6,7 @@ import { Check } from "lucide-react";
 
 type Plan = {
   name: string;
-  price: number;
+  price: number | null;
   period: string;
   users: string;
   features: string[];
@@ -29,7 +29,7 @@ const PRICING_PLANS: Plan[] = [
   {
     name: "Profesional",
     price: 29,
-    period: "/mes o 290€/año",
+    period: "/mes o 290 €/año",
     users: "1 empresa · usuarios ilimitados",
     features: [
       "Facturación VeriFactu completa",
@@ -44,7 +44,7 @@ const PRICING_PLANS: Plan[] = [
   {
     name: "Business",
     price: 69,
-    period: "/mes o 690€/año",
+    period: "/mes o 690 €/año",
     users: "Multiempresa (hasta 3)",
     features: [
       "Todo en Profesional",
@@ -95,11 +95,12 @@ export default function PricingCalculator() {
     <section className="py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
             Empieza gratis. Paga solo cuando tu negocio crece.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-            <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos · Prueba gratuita de 30 días · Posibilidad de cambiar o pausar sin perder información
+            <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos · Prueba gratuita de 30 días ·
+            Posibilidad de cambiar o pausar sin perder información
           </p>
         </div>
 
@@ -120,7 +121,7 @@ export default function PricingCalculator() {
             >
               {plan.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
+                  <span className="rounded-full bg-[#0080F0] px-3 py-1 text-xs font-semibold text-white">
                     Más popular
                   </span>
                 </div>
@@ -148,8 +149,8 @@ export default function PricingCalculator() {
                 className={[
                   "mt-6 w-full rounded-full px-4 py-2.5 text-sm font-semibold shadow-md transition",
                   plan.highlight
-                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
-                    : "bg-slate-100 text-slate-900 hover:bg-slate-200",
+                    ? "bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white hover:from-[#0056D6] hover:to-[#1AA3DB]"
+                    : "border border-[#0060F0] bg-white text-[#0060F0] hover:bg-[#0060F0]/10",
                 ].join(" ")}
               >
                 {plan.price === null ? "Contactar" : "Comenzar"}

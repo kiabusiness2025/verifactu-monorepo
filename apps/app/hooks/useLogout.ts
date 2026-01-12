@@ -11,22 +11,18 @@ export function useLogout() {
     
     setIsLoggingOut(true);
     try {
-      // Llamar endpoint de logout en landing para limpiar cookie cross-domain
+      // Call logout endpoint on landing to clear cookie and Firebase session
       const landingUrl = getLandingUrl();
-      const response = await fetch(`${landingUrl}/api/auth/logout`, {
+      await fetch(`${landingUrl}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
 
-      if (!response.ok) {
-        console.error("Error al cerrar sesión");
-      }
-
-      // Redirigir a landing después de logout
+      // Redirect to landing home page after logout
       window.location.href = landingUrl;
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
-      // Redirigir de todas formas
+      // Redirect anyway
       window.location.href = getLandingUrl();
     } finally {
       setIsLoggingOut(false);

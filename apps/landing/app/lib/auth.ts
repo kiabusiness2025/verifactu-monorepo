@@ -132,6 +132,7 @@ export const signInWithEmail = async (
       };
     }
 
+    // Mint session cookie once here
     await mintSessionCookie(userCredential.user);
     return { user: userCredential.user, error: null };
   } catch (error) {

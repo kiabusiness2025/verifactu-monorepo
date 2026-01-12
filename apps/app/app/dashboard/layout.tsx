@@ -5,11 +5,7 @@ import { IsaakUIProvider } from "@/context/IsaakUIContext";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { getLandingUrl } from "@/lib/urls";
-
-// Lazy load IsaakDrawer solo cuando se necesite
-const IsaakDrawer = lazy(() => 
-  import("@/components/isaak/IsaakDrawer").then(mod => ({ default: mod.IsaakDrawer }))
-);
+import { IsaakDrawer } from "@/components/isaak/IsaakDrawer";
 
 export default function DashboardLayout({
   children,
@@ -17,16 +13,10 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isaakDrawerMounted, setIsaakDrawerMounted] = useState(false);
   const landingUrl = getLandingUrl();
 
-  // Montar IsaakDrawer cuando el usuario interactúe con el botón
-  const handleIsaakOpen = () => {
-    setIsaakDrawerMounted(true);
-  };
-
   return (
-    <IsaakUIProvider onIsaakOpen={handleIsaakOpen}>
+    <IsaakUIProvider>
       <div className="flex min-h-screen bg-slate-50">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex min-h-screen w-full flex-col lg:pl-72">
@@ -48,11 +38,7 @@ export default function DashboardLayout({
             </div>
           </footer>
         </div>
-        {isaakDrawerMounted && (
-          <Suspense fallback={null}>
-            <IsaakDrawer />
-          </Suspense>
-        )}
+        <IsaakDrawer />
       </div>
     </IsaakUIProvider>
   );

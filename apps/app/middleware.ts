@@ -1,30 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
-import { getAppUrl, getLandingUrl } from "./lib/urls";
-
-function getSecretKey() {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) return null;
-  return new TextEncoder().encode(secret);
-}
-
-async function getSessionPayload(req: NextRequest) {
-  const token = req.cookies.get("__session")?.value;
-  const secret = getSecretKey();
-  if (!token || !secret) {
-    console.log('[Middleware] Sin sesión: token=' + !!token + ', secret=' + !!secret);
-    return null;
-  }
-  try {
-    const { payload } = await jwtVerify(token, secret);
-    console.log('[Middleware] Sesión válida - uid:', payload.uid, 'tenantId:', payload.tenantId);
-    return payload;
-  } catch (error) {
-    console.error('[Middleware] Error verificando JWT:', error);
-    return null;
-  }
-}
+import {
+  verifySessionToken,
+  readSessionSecret,
+  SESSION_COOKIE_NAME,
+  type SessionPayload,
+} from "@verifactu/utils";
+import { getLandingUrl, getAppUrl } from "@verifactu/utils";
 
 function parseAllowlist(value?: string) {
   if (!value) return new Set();
@@ -36,7 +18,7 @@ function parseAllowlist(value?: string) {
   );
 }
 
-function isAdmin(payload: Record<string, unknown> | null) {
+function isAdmin(payload: SessionPayload | null) {
   if (!payload) return false;
   const adminUids = parseAllowlist(process.env.ADMIN_UIDS);
   const adminEmails = parseAllowlist(process.env.ADMIN_EMAILS);
@@ -48,37 +30,45 @@ function isAdmin(payload: Record<string, unknown> | null) {
   return false;
 }
 
+async function getSessionPayload(req: NextRequest): Promise<SessionPayload | null> {
+  const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (!token) return null;
+  try {
+    const secret = readSessionSecret();
+    return await verifySessionToken(token, secret);
+  } catch {
+    return null;
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
-  const isDashboard = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
-  const isAdminRoute =
-    pathname === "/dashboard/admin" || pathname.startsWith("/dashboard/admin/");
-  const isRoot = pathname === "/";
-  const isDemo = pathname === "/demo";
 
-  // Demo is always public
-  if (isDemo) {
+  // Public routes
+  if (pathname === "/demo" || pathname.startsWith("/api/") || pathname.startsWith("/_next/")) {
     return NextResponse.next();
   }
 
   const landingLogin = `${getLandingUrl()}/auth/login`;
   const appBase = getAppUrl();
   const current = `${appBase}${pathname}${search}`;
-  const sessionPayload = (isRoot || isDashboard) ? await getSessionPayload(req) : null;
+  const sessionPayload = await getSessionPayload(req);
 
-  if (isRoot) {
+  // Root: redirect to dashboard if authenticated, else to landing login
+  if (pathname === "/") {
     if (sessionPayload) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
-    const target = `${landingLogin}?next=${encodeURIComponent(current)}`;
-    return NextResponse.redirect(target);
+    return NextResponse.redirect(`${landingLogin}?next=${encodeURIComponent(current)}`);
   }
 
-  if (isDashboard && !sessionPayload) {
-    const target = `${landingLogin}?next=${encodeURIComponent(current)}`;
-    return NextResponse.redirect(target);
+  // Protected routes: require session
+  if (!sessionPayload) {
+    return NextResponse.redirect(`${landingLogin}?next=${encodeURIComponent(current)}`);
   }
 
+  // Admin routes: require admin privilege
+  const isAdminRoute = pathname === "/dashboard/admin" || pathname.startsWith("/dashboard/admin/");
   if (isAdminRoute && !isAdmin(sessionPayload)) {
     return new NextResponse("Forbidden", { status: 403 });
   }
@@ -87,5 +77,13 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/demo"],
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/invoices/:path*",
+    "/documents/:path*",
+    "/expenses/:path*",
+    "/app/:path*",
+    "/demo",
+  ],
 };

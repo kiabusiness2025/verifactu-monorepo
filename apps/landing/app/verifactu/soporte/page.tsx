@@ -43,24 +43,24 @@ export default function SoportePage() {
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Soporte</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Estamos para ayudarte</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          Elige como prefieres recibir ayuda: ticket rapido, onboarding guiado o consultar guias paso a paso.
+          Elige cómo prefieres recibir ayuda: ticket rápido, onboarding guiado o consultar guías paso a paso.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <SupportCard
-            title="Ticket rapido"
-            desc="Cuentanos el problema y adjunta capturas. Respondemos en horario laboral."
+            title="Ticket rápido"
+            desc="Cuéntanos el problema y adjunta capturas. Respondemos en horario laboral."
             action={{ label: "Abrir ticket", href: "mailto:soporte@verifactu.business" }}
           />
           <SupportCard
             title="Onboarding guiado"
             desc="Configura VeriFactu, bancos y permisos con un especialista."
-            action={{ label: "Agendar sesion", href: "mailto:soporte@verifactu.business?subject=Onboarding" }}
+            action={{ label: "Agendar sesión", href: "mailto:soporte@verifactu.business?subject=Onboarding" }}
           />
           <SupportCard
             title="Centro de ayuda"
-            desc="Preguntas frecuentes sobre facturacion, VeriFactu y conciliacion."
-            action={{ label: "Ver guias", href: "/recursos/guias-y-webinars" }}
+            desc="Preguntas frecuentes sobre facturación, VeriFactu y conciliación."
+            action={{ label: "Ver guías", href: "/recursos/guias-y-webinars" }}
           />
           <SupportCard
             title="Estado del servicio"
@@ -70,11 +70,11 @@ export default function SoportePage() {
         </div>
 
         <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Consejos para soporte rapido</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Consejos para soporte rápido</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
-            <li>- Adjunta capturas o numeros de factura afectados.</li>
-            <li>- Indica si el fallo es en app.verifactu.business o en la sincronizacion con bancos/AEAT.</li>
-            <li>- Dinos si has probado refrescar sesion o reconectar la integracion.</li>
+            <li>- Adjunta capturas o números de factura afectados.</li>
+            <li>- Indica si el fallo es en app.verifactu.business o en la sincronización con bancos/AEAT.</li>
+            <li>- Dinos si has probado refrescar sesión o reconectar la integración.</li>
           </ul>
         </div>
 
@@ -88,13 +88,13 @@ export default function SoportePage() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Quieres calcular tu precio y activar la prueba?</div>
+          <div className="text-sm text-slate-600">¿Quieres calcular tu precio y activar la prueba?</div>
           <div className="flex gap-3">
             <Link
               href="/demo#calculadora"
               className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
-              Calcula precio
+              Calcula tu precio
             </Link>
             <Link
               href="/verifactu/soporte"

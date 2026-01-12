@@ -23,7 +23,9 @@
     ],
     "target": "ES2017",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./"],
+      "@verifactu/utils": ["../../packages/utils"],
+      "@verifactu/utils/*": ["../../packages/utils/*"]
     }
   },
   "include": [

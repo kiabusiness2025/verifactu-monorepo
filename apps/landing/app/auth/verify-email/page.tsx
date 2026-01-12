@@ -128,8 +128,8 @@ export default function VerifyEmailPage() {
         transition={{ duration: 0.3 }}
       >
         <div className="flex justify-center mb-4">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <Mail className="w-6 h-6 text-blue-600" />
+          <div className="w-12 h-12 bg-sky-50/70 rounded-full flex items-center justify-center">
+            <Mail className="w-6 h-6 text-[#0060F0]" />
           </div>
         </div>
 
@@ -155,7 +155,7 @@ export default function VerifyEmailPage() {
           </p>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+        <div className="bg-sky-50/70 border border-[#0060F0]/20 rounded-lg p-3 text-sm text-[#0060F0]">
           💡 <strong>Tip:</strong> No ves el correo? Revisa tu carpeta de spam.
         </div>
 
@@ -175,7 +175,7 @@ export default function VerifyEmailPage() {
 
           <a
             href="/auth/login"
-            className="w-full block text-center py-3 text-blue-600 hover:text-blue-700 font-medium"
+            className="w-full block text-center py-3 text-[#0060F0] hover:text-[#0080F0] font-medium"
           >
             Volver a login
           </a>
@@ -187,7 +187,7 @@ export default function VerifyEmailPage() {
         <p>¿Problemas?</p>
         <a
           href="mailto:soporte@verifactu.business"
-          className="text-blue-600 hover:text-blue-700 font-medium"
+          className="text-[#0060F0] hover:text-[#0080F0] font-medium"
         >
           Contáctanos
         </a>

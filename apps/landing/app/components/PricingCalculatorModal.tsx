@@ -71,7 +71,7 @@ export default function PricingCalculatorModal({
       if (data.url) {
         window.location.href = data.url;
       } else {
-        console.error("Error al crear sesion de pago");
+        console.error("Error al crear sesión de pago");
       }
     } catch (error) {
       console.error("Error al iniciar trial:", error);
@@ -89,7 +89,7 @@ export default function PricingCalculatorModal({
           <X className="h-6 w-6" />
         </button>
 
-        <h2 className="mb-2 text-3xl font-bold text-primary">
+        <h2 className="mb-2 text-3xl font-bold text-[#002060]">
           Calcula tu precio
         </h2>
         <p className="mb-8 text-lightbg-600">
@@ -101,7 +101,7 @@ export default function PricingCalculatorModal({
           <div>
             <label className="mb-3 flex items-center justify-between text-sm font-medium text-gray-700">
               <span>Facturas emitidas / mes</span>
-              <span className="text-2xl font-bold text-primary">{invoices}</span>
+              <span className="text-2xl font-bold text-[#0060F0]">{invoices}</span>
             </label>
             <input
               type="range"
@@ -112,7 +112,7 @@ export default function PricingCalculatorModal({
               onChange={(e) => setInvoices(Number(e.target.value))}
               className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
               style={{
-                background: `linear-gradient(to right, #003170 0%, #003170 ${((invoices - 1) / 999) * 100}%, #e5e7eb ${((invoices - 1) / 999) * 100}%, #e5e7eb 100%)`,
+                background: `linear-gradient(to right, #0060F0 0%, #0060F0 ${((invoices - 1) / 999) * 100}%, #e5e7eb ${((invoices - 1) / 999) * 100}%, #e5e7eb 100%)`,
               }}
             />
             <p className="mt-2 text-xs text-gray-500">
@@ -139,12 +139,12 @@ export default function PricingCalculatorModal({
                     setBankingEnabled(enabled);
                     if (!enabled) setMovements(0);
                   }}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  className="h-4 w-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
                 />
                 <span>Conciliación bancaria</span>
               </label>
               {bankingEnabled && (
-                <span className="text-2xl font-bold text-primary">{movements}</span>
+                <span className="text-2xl font-bold text-[#0060F0]">{movements}</span>
               )}
             </div>
             {bankingEnabled && (
@@ -158,7 +158,7 @@ export default function PricingCalculatorModal({
                   onChange={(e) => setMovements(Number(e.target.value))}
                   className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
                   style={{
-                    background: `linear-gradient(to right, #003170 0%, #003170 ${(movements / 2000) * 100}%, #e5e7eb ${(movements / 2000) * 100}%, #e5e7eb 100%)`,
+                    background: `linear-gradient(to right, #0060F0 0%, #0060F0 ${(movements / 2000) * 100}%, #e5e7eb ${(movements / 2000) * 100}%, #e5e7eb 100%)`,
                   }}
                 />
                 <p className="mt-2 text-xs text-gray-500">
@@ -182,11 +182,11 @@ export default function PricingCalculatorModal({
         </div>
 
         {/* Resumen */}
-        <div className="mt-8 rounded-lg bg-blue-50 p-6">
+        <div className="mt-8 rounded-lg bg-sky-50/70 p-6">
           <div className="flex items-end justify-between">
             <div>
               <p className="text-sm text-gray-600">Cuota mensual estimada</p>
-              <p className="mt-1 text-4xl font-bold text-primary">
+              <p className="mt-1 text-4xl font-bold text-[#0060F0]">
                 {fmt(monthlyPrice)} € <span className="text-2xl text-gray-500">/mes + IVA</span>
               </p>
               <p className="mt-1 text-sm text-gray-500">
@@ -207,14 +207,14 @@ export default function PricingCalculatorModal({
                 </div>
               </div>
               <p className="mt-3 text-xs text-gray-500">
-                <Link href="/politica-de-precios" className="text-primary hover:text-primary-light">
+                <Link href="/politica-de-precios" className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]">
                   Ver política de medición de uso
                 </Link>
               </p>
             </div>
             <button
               onClick={handleStartTrial}
-              className="rounded-lg bg-primary px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-primary-light"
+              className="rounded-lg bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 font-semibold text-white shadow-lg transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
             >
               Empezar 1 mes gratis
             </button>

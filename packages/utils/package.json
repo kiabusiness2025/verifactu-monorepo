@@ -7,6 +7,9 @@
   "scripts": {
     "lint": "eslint . --max-warnings 0"
   },
+  "dependencies": {
+    "jose": "^6.1.3"
+  },
   "devDependencies": {
     "@verifactu/eslint-config": "file:../eslint-config",
     "@verifactu/typescript-config": "file:../typescript-config",

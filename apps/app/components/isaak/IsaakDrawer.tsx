@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useChat } from 'ai/react';
 import { useIsaakUI } from "@/context/IsaakUIContext";
 import { useIsaakContext } from "@/hooks/useIsaakContext";
 
 type Message = {
-  from: string;
-  text: string;
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
 };
 
 export function IsaakDrawer() {
@@ -16,16 +16,15 @@ export function IsaakDrawer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: '/api/chat',
-    initialMessages: [
-      {
-        id: '1',
-        role: 'assistant',
-        content: '¡Hola! Soy Isaak. ¿En qué puedo ayudarte hoy?',
-      }
-    ],
-  });
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      role: 'assistant',
+      content: '¡Hola! Soy Isaak. ¿En qué puedo ayudarte hoy?',
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isDrawerOpen) inputRef.current?.focus();
@@ -43,12 +42,72 @@ export function IsaakDrawer() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    // Add user message
+    const userMessage: Message = {
+      id: `msg-${Date.now()}`,
+      role: 'user',
+      content: input,
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      // Send to chat API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Chat error');
+      }
+
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value);
+          assistantContent += chunk;
+        }
+      }
+
+      const assistantMessage: Message = {
+        id: `msg-${Date.now()}`,
+        role: 'assistant',
+        content: assistantContent || 'No pude procesar tu solicitud.',
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorMessage: Message = {
+        id: `msg-${Date.now()}`,
+        role: 'assistant',
+        content: 'Disculpa, ocurrió un error. Intenta de nuevo.',
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const chips = suggestions.slice(0, 3);
   
   const onChipClick = (label: string) => {
-    handleInputChange({
-      target: { value: label }
-    } as React.ChangeEvent<HTMLInputElement>);
+    setInput(label);
     inputRef.current?.focus();
   };
 
@@ -130,7 +189,7 @@ export function IsaakDrawer() {
               ref={inputRef}
               type="text"
               value={input}
-              onChange={handleInputChange}
+              onChange={(e) => setInput(e.target.value)}
               disabled={isLoading}
               placeholder="Escribe o pega una instrucción"
               className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 disabled:opacity-50"

@@ -1,15 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { estimateNetEur, invoiceTierKey, movementTierKey, normalizeInput } from "../../lib/pricing/calc";
-import { jwtVerify } from "jose";
-
-function getLandingUrl() {
-  return process.env.NEXT_PUBLIC_LANDING_URL || "https://verifactu.business";
-}
-
-function getAppUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
-}
+import { verifySessionToken, readSessionSecret, SESSION_COOKIE_NAME } from "@verifactu/utils";
+import { getLandingUrl, getAppUrl } from "@verifactu/utils";
 
 function requireEnv(name: string) {
   const v = process.env[name];
@@ -19,18 +12,16 @@ function requireEnv(name: string) {
 
 async function getUserFromSession(req: Request) {
   const cookie = req.headers.get("cookie") || "";
-  const m = cookie.match(/(?:^|;\s*)__session=([^;]+)/);
+  const m = cookie.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE_NAME}=([^;]+)`));
   if (!m) return null;
 
   const token = decodeURIComponent(m[1]);
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) return null;
-
   try {
-    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+    const secret = readSessionSecret();
+    const payload = await verifySessionToken(token, secret);
     return {
-      uid: String(payload.uid || ""),
-      email: payload.email ? String(payload.email) : null,
+      uid: payload?.uid || "",
+      email: payload?.email || null,
     };
   } catch {
     return null;
@@ -72,7 +63,7 @@ export async function POST(req: Request) {
 
   const user = await getUserFromSession(req);
   if (!user?.uid) {
-    return NextResponse.json({ error: "Necesitas iniciar sesion" }, { status: 401 });
+    return NextResponse.json({ error: "Necesitas iniciar sesión" }, { status: 401 });
   }
 
   const stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"), { apiVersion: "2024-06-20" });
@@ -113,7 +104,7 @@ export async function POST(req: Request) {
       client_reference_id: user.uid,
       customer_email: user.email ?? undefined,
 
-      // Trial 30 dias (sin tarjeta si no es necesaria)
+      // Trial 30 días (sin tarjeta si no es necesaria)
       payment_method_collection: "if_required",
       subscription_data: {
         trial_period_days: 30,

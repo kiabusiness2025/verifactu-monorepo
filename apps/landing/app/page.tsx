@@ -93,7 +93,7 @@ export default function Page() {
 
       {/* HERO */}
       <section id="hero" className="relative">
-        <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-gradient-to-b from-blue-100 via-blue-50 to-white" />
+        <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white" />
         <Container className="pt-14 pb-10">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <motion.div
@@ -102,21 +102,21 @@ export default function Page() {
               transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
-                <ShieldCheck className="h-4 w-4 text-blue-600" />
+                <ShieldCheck className="h-4 w-4 text-[#0080F0]" />
                 Cumplimiento VeriFactu con Isaak
               </div>
               <Link
                 href="/verifactu/estado"
-                className="mt-2 inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100 hover:text-emerald-800"
+                className="mt-2 inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-3 py-1 text-[11px] font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15 hover:text-[#0060F0]"
               >
-                <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-                Estado: Operativo · última sincronización VeriFactu hace 3 min
+                <span className="h-2 w-2 rounded-full bg-[#0080F0]" aria-hidden="true" />
+                Estado: Operativo · Última sincronización VeriFactu hace 3 min
               </Link>
 
-              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-primary sm:text-6xl">
+              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-[#002060] sm:text-6xl">
                 Emite facturas VeriFactu sin errores
                 <br />
-                <span className="bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#0060F0] to-[#20B0F0] bg-clip-text text-transparent">
                   y entiende tu negocio en un panel.
                 </span>
               </h1>
@@ -130,7 +130,7 @@ export default function Page() {
                 Fuente oficial:{" "}
                 <a
                   href="https://www.agenciatributaria.es/AEAT.internet/Inicio/_Segmentos_/Empresas_y_profesionales/Empresas/Impuesto_sobre_Sociedades/VeriFactu.shtml"
-                  className="font-semibold text-primary hover:text-primary-light"
+                  className="font-semibold text-[#0060F0] hover:text-[#0080F0]"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -142,13 +142,13 @@ export default function Page() {
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/auth/signup"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-primary-light"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 font-semibold text-white shadow-lg transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
                 >
                   Empezar 1 mes gratis
                 </Link>
                 <Link
                   href="/demo"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#0060F0] bg-white px-6 py-3 font-semibold text-[#0060F0] shadow-sm transition hover:bg-[#0060F0]/10"
                 >
                   Ver demo (2 min)
                 </Link>
@@ -159,7 +159,7 @@ export default function Page() {
                     const el = document.getElementById("precios");
                     el?.scrollIntoView({ behavior: "smooth" });
                   }}
-                  className="font-semibold text-primary hover:text-primary-light"
+                  className="font-semibold text-[#0060F0] hover:text-[#0080F0]"
                   type="button"
                 >
                   Calcula tu precio
@@ -167,8 +167,8 @@ export default function Page() {
               </div>
 
               <div className="mt-7 flex flex-wrap gap-2">
-                <TrustBadge icon={<Sparkles className="h-4 w-4 text-blue-600" />} text="Isaak incluido" />
-                <TrustBadge icon={<ShieldCheck className="h-4 w-4 text-blue-600" />} text="Cumplimiento" />
+                <TrustBadge icon={<Sparkles className="h-4 w-4 text-[#0080F0]" />} text="Isaak incluido" />
+                <TrustBadge icon={<ShieldCheck className="h-4 w-4 text-[#0080F0]" />} text="Cumplimiento" />
                 <TrustBadge icon={<Check className="h-4 w-4 text-emerald-600" />} text="Datos bajo control" />
               </div>
             </motion.div>
@@ -189,7 +189,7 @@ export default function Page() {
         <Container>
           <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
             <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
+            <h2 className="text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
               Cumple con calma.
             </h2>
             <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
@@ -208,14 +208,14 @@ export default function Page() {
       <PideseloAIsaakSection />
 
       {/* Dashboard preview */}
-      <section id="faq" className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
+      <section id="faq" className="py-16 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white">
         <Container>
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
+            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-4 py-1.5 text-sm font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15">
               <Sparkles className="h-4 w-4" />
               Dashboard
             </div>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-primary sm:text-4xl">
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
               Ventas - Gastos = Beneficio
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
@@ -233,7 +233,7 @@ export default function Page() {
       <section id="precios" className="py-16">
         <Container>
           <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
               Precio que se ajusta a tu uso real
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
@@ -254,10 +254,10 @@ export default function Page() {
       </section>
 
       {/* FAQ */}
-      <section id="dashboard" className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
+      <section id="dashboard" className="py-16 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white">
         <Container>
           <div className="text-center mb-12">
-            <h3 className="text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
+            <h3 className="text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
               Preguntas frecuentes
             </h3>
             <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
@@ -269,9 +269,9 @@ export default function Page() {
       </section>
 
       {/* Resources */}
-      <section className="py-14 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
+      <section className="py-14 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white">
         <Container>
-          <h3 className="text-center text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
+          <h3 className="text-center text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
             Recursos para dominar VeriFactu e Isaak.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">

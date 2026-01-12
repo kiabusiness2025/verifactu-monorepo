@@ -9,23 +9,23 @@ module.exports = {
       colors: {
         // Paleta corporativa principal
         primary: {
-          DEFAULT: '#003170',
-          light: '#3f99e0',
-          lighter: '#b7ecff',
-          accent: '#126b4',
+          DEFAULT: '#002060',
+          light: '#0060F0',
+          lighter: '#20B0F0',
+          accent: '#0080F0',
         },
         darkbg: {
-          DEFAULT: '#003170',
-          700: '#003170',
-          600: '#3f99e0',
-          500: '#b7ecff',
-          accent: '#126b4',
+          DEFAULT: '#002060',
+          700: '#002060',
+          600: '#0060F0',
+          500: '#20B0F0',
+          accent: '#0080F0',
         },
         lightbg: {
-          DEFAULT: '#00275b',
-          700: '#00275b',
-          600: '#3c6190',
-          500: '#80a3c8',
+          DEFAULT: '#002060',
+          700: '#002060',
+          600: '#4a6aa0',
+          500: '#7ea0d1',
         },
         // Metálico (estilo robot)
         metallic: {
@@ -35,8 +35,8 @@ module.exports = {
         },
       },
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(90deg, #003170 0%, #3f99e0 100%)',
-        'gradient-light': 'linear-gradient(90deg, #00275b 0%, #3c6190 100%)',
+        'gradient-primary': 'linear-gradient(90deg, #0060F0 0%, #20B0F0 100%)',
+        'gradient-light': 'linear-gradient(90deg, #002060 0%, #4a6aa0 100%)',
         'gradient-metallic': 'linear-gradient(90deg, #e6e8ea 0%, #bfc3c7 50%, #7a7d80 100%)',
       },
     },

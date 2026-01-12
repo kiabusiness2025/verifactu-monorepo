@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 const title = "Contacto | Verifactu Business";
 const description = "Contacta con el equipo de Verifactu Business para soporte, ventas o colaboraciones.";
@@ -40,10 +40,10 @@ export default function ContactoPage() {
           ]}
         />
 
-        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Recursos</p>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-[#0060F0]">Recursos</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Contacto</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          Escribenos para soporte, ventas o colaboraciones. Te respondemos en horario laboral.
+          EscrÃ­benos para soporte, ventas o colaboraciones. Te respondemos en horario laboral.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -59,7 +59,7 @@ export default function ContactoPage() {
           />
           <ContactCard
             title="Colaboraciones"
-            desc="Partners, asesorias y acuerdos con terceros."
+            desc="Partners, asesorÃ­as y acuerdos con terceros."
             action={{ label: "alianzas@verifactu.business", href: "mailto:alianzas@verifactu.business" }}
           />
           <ContactCard
@@ -70,7 +70,7 @@ export default function ContactoPage() {
         </div>
 
         <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Prefieres que te llamemos?</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Â¿Prefieres que te llamemos?</h2>
           <p className="mt-2 text-sm text-slate-700">
             Deja un contacto y el motivo. Te responderemos con propuestas claras.
           </p>
@@ -78,25 +78,25 @@ export default function ContactoPage() {
             <input
               type="text"
               placeholder="Nombre completo"
-              className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm shadow-sm focus:border-[#0060F0]/35 focus:outline-none focus:ring-2 focus:ring-[#0080F0]/15"
             />
             <input
               type="email"
               placeholder="Email de contacto"
-              className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm shadow-sm focus:border-[#0060F0]/35 focus:outline-none focus:ring-2 focus:ring-[#0080F0]/15"
             />
             <textarea
-              placeholder="Cuentanos brevemente lo que necesitas"
-              className="min-h-[120px] w-full rounded-xl border border-slate-200 px-4 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              placeholder="CuÃ©ntanos brevemente lo que necesitas"
+              className="min-h-[120px] w-full rounded-xl border border-slate-200 px-4 py-2 text-sm shadow-sm focus:border-[#0060F0]/35 focus:outline-none focus:ring-2 focus:ring-[#0080F0]/15"
             />
             <button
               type="button"
-              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="rounded-full bg-[#0060F0] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0056D6]"
             >
               Enviar solicitud
             </button>
           </form>
-          <div className="mt-2 text-xs text-slate-500">Formulario demo, aun sin envio real.</div>
+          <div className="mt-2 text-xs text-slate-500">Formulario demo, aÃºn sin envÃ­o real.</div>
         </div>
 
         <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-slate-600">
@@ -105,20 +105,20 @@ export default function ContactoPage() {
           </span>
           <Link
             href="/verifactu/soporte"
-            className="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-blue-100"
+            className="rounded-full bg-sky-50/70 px-3 py-1 font-semibold text-[#0060F0] ring-1 ring-[#0080F0]/15"
           >
             Abrir soporte
           </Link>
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Quieres calcular tu precio y activar la prueba?</div>
+          <div className="text-sm text-slate-600">Â¿Quieres calcular tu precio y activar la prueba?</div>
           <div className="flex gap-3">
             <Link
               href="/demo#calculadora"
-              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="rounded-full bg-[#0060F0] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0056D6]"
             >
-              Calcula precio
+              Calcula tu precio
             </Link>
             <Link
               href="/verifactu/soporte"
@@ -148,7 +148,7 @@ function ContactCard({
       <p className="mt-1 text-sm text-slate-600">{desc}</p>
       <Link
         href={action.href}
-        className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
+        className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
       >
         {action.label}
         <span aria-hidden>{'->'}</span>
@@ -166,7 +166,7 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
         {items.map((item, index) => (
           <li key={`${item.label}-${index}`} className="flex items-center gap-2">
             {item.href ? (
-              <Link href={item.href} className="hover:text-blue-700">
+              <Link href={item.href} className="hover:text-[#0060F0]">
                 {item.label}
               </Link>
             ) : (
@@ -179,3 +179,4 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
     </nav>
   );
 }
+

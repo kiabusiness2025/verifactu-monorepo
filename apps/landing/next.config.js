@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Transpile workspace packages
-  transpilePackages: ['@verifactu/ui'],
+  transpilePackages: ['@verifactu/ui', '@verifactu/utils'],
   
   // Skip linting during builds
   eslint: { ignoreDuringBuilds: true },

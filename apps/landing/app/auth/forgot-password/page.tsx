@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
       }
     >
       {user && (
-        <div className="mb-3 p-2 text-xs rounded border border-blue-200 bg-blue-50 text-blue-700">
+        <div className="mb-3 p-2 text-xs rounded border border-[#0060F0]/20 bg-sky-50/70 text-[#0060F0]">
           Ya has iniciado sesión. Puedes cambiar tu contraseña con el enlace del correo.
         </div>
       )}
@@ -114,14 +114,14 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white rounded-lg hover:from-[#0056D6] hover:to-[#1AA3DB] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "Enviando..." : "Enviar enlace"}
           </button>
 
           <Link
             href="/auth/login"
-            className="flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="flex items-center justify-center gap-2 text-sm text-[#0060F0] hover:text-[#0080F0] font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver a login
@@ -137,8 +137,8 @@ export default function ForgotPasswordPage() {
           transition={{ duration: 0.3 }}
         >
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <Mail className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-sky-50/70 rounded-full flex items-center justify-center">
+              <Mail className="w-6 h-6 text-[#0060F0]" />
             </div>
           </div>
 
@@ -180,7 +180,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white rounded-lg hover:from-[#0056D6] hover:to-[#1AA3DB] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? "Actualizando..." : "Actualizar contraseña"}
             </button>
@@ -188,7 +188,7 @@ export default function ForgotPasswordPage() {
 
           <button
             onClick={() => setStep("email")}
-            className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="w-full text-sm text-[#0060F0] hover:text-[#0080F0] font-medium"
           >
             ¿No recibiste el código? Intenta de nuevo
           </button>
@@ -198,7 +198,7 @@ export default function ForgotPasswordPage() {
       {/* Helper text */}
       <div className="mt-6 text-center text-xs text-gray-500 space-y-1">
         <p>¿Necesitas ayuda?</p>
-        <a href="mailto:soporte@verifactu.business" className="text-blue-600 hover:text-blue-700 font-medium">
+        <a href="mailto:soporte@verifactu.business" className="text-[#0060F0] hover:text-[#0080F0] font-medium">
           Contáctanos
         </a>
       </div>

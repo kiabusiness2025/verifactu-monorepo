@@ -1,21 +1,21 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { Zap, Clock, RefreshCw, Bell, Calendar, CheckCircle2 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Automatización | Verifactu Business",
+  title: "AutomatizaciÃ³n | Verifactu Business",
   description:
-    "Automatiza tareas repetitivas: recordatorios, cálculos, exportaciones y más. Ahorra tiempo cada semana con Verifactu Business.",
+    "Automatiza tareas repetitivas: recordatorios, cÃ¡lculos, exportaciones y mÃ¡s. Ahorra tiempo cada semana con Verifactu Business.",
 };
 
 export default function AutomationPage() {
   return (
     <main className="min-h-screen bg-white">
-      {/* Navegación */}
+      {/* NavegaciÃ³n */}
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-4">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">
-            ← Volver al inicio
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]">
+            â† Volver al inicio
           </Link>
         </div>
       </div>
@@ -26,20 +26,20 @@ export default function AutomationPage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 mb-6">
               <Zap className="h-4 w-4 text-orange-600" />
-              Automatización
+              AutomatizaciÃ³n
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl mb-4">
-              Menos clics, <br className="hidden sm:block" />más tiempo para tu negocio
+              Menos clics, <br className="hidden sm:block" />mÃ¡s tiempo para tu negocio
             </h1>
             <p className="text-xl text-slate-600 leading-relaxed">
               Automatizamos tareas repetitivas para que no pierdas tiempo en lo aburrido: 
-              recordatorios, cálculos, exportaciones y cumplimiento VeriFactu.
+              recordatorios, cÃ¡lculos, exportaciones y cumplimiento VeriFactu.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Problema → Solución */}
+      {/* Problema â†’ SoluciÃ³n */}
       <section className="py-16">
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center mb-12">
@@ -47,25 +47,25 @@ export default function AutomationPage() {
               El tiempo que pierdes en tareas repetitivas
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Calcular IVA, recordar envíos, exportar datos... son minutos que suman horas al mes. 
+              Calcular IVA, recordar envÃ­os, exportar datos... son minutos que suman horas al mes. 
               Verifactu Business automatiza esto para ti.
             </p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {/* Tarjeta 1 */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200">
-              <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center mb-4">
+            <div className="bg-gradient-to-br from-sky-50/70 to-blue-50/40 rounded-2xl p-6 border border-[#0060F0]/25">
+              <div className="h-12 w-12 rounded-xl bg-[#0060F0] flex items-center justify-center mb-4">
                 <CheckCircle2 className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                Cálculos automáticos
+                CÃ¡lculos automÃ¡ticos
               </h3>
               <p className="text-sm text-slate-700 mb-3">
                 IVA, retenciones, subtotales, descuentos. Todo calculado al escribir el importe.
               </p>
               <p className="text-xs text-slate-600">
-                ⏱️ Ahorras: <strong>10 min/factura</strong>
+                â±ï¸ Ahorras: <strong>10 min/factura</strong>
               </p>
             </div>
 
@@ -78,10 +78,10 @@ export default function AutomationPage() {
                 Recordatorios inteligentes
               </h3>
               <p className="text-sm text-slate-700 mb-3">
-                Notificación cuando se acerca una fecha límite de pago o declaración.
+                NotificaciÃ³n cuando se acerca una fecha lÃ­mite de pago o declaraciÃ³n.
               </p>
               <p className="text-xs text-slate-600">
-                ⏱️ Ahorras: <strong>olvidos caros</strong>
+                â±ï¸ Ahorras: <strong>olvidos caros</strong>
               </p>
             </div>
 
@@ -91,13 +91,13 @@ export default function AutomationPage() {
                 <RefreshCw className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                Numeración automática
+                NumeraciÃ³n automÃ¡tica
               </h3>
               <p className="text-sm text-slate-700 mb-3">
-                Cada factura con su número secuencial. Sin duplicados, sin errores.
+                Cada factura con su nÃºmero secuencial. Sin duplicados, sin errores.
               </p>
               <p className="text-xs text-slate-600">
-                ⏱️ Ahorras: <strong>5 min/factura</strong>
+                â±ï¸ Ahorras: <strong>5 min/factura</strong>
               </p>
             </div>
 
@@ -107,13 +107,13 @@ export default function AutomationPage() {
                 <Calendar className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                Resúmenes trimestrales
+                ResÃºmenes trimestrales
               </h3>
               <p className="text-sm text-slate-700 mb-3">
-                Informe automático de ventas, gastos y beneficio cada fin de trimestre.
+                Informe automÃ¡tico de ventas, gastos y beneficio cada fin de trimestre.
               </p>
               <p className="text-xs text-slate-600">
-                ⏱️ Ahorras: <strong>30 min/trimestre</strong>
+                â±ï¸ Ahorras: <strong>30 min/trimestre</strong>
               </p>
             </div>
 
@@ -131,7 +131,7 @@ export default function AutomationPage() {
                 Cada PDF generado cumple el RD 1007/2023. Qr, huella digital y trazabilidad incluidos.
               </p>
               <p className="text-xs text-slate-600">
-                ⏱️ Ahorras: <strong>configuración manual</strong>
+                â±ï¸ Ahorras: <strong>configuraciÃ³n manual</strong>
               </p>
             </div>
 
@@ -141,20 +141,20 @@ export default function AutomationPage() {
                 <Clock className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                Backups automáticos
+                Backups automÃ¡ticos
               </h3>
               <p className="text-sm text-slate-700 mb-3">
-                Tus datos se guardan cada hora. Sin preocuparte de exportar ni de pérdidas.
+                Tus datos se guardan cada hora. Sin preocuparte de exportar ni de pÃ©rdidas.
               </p>
               <p className="text-xs text-slate-600">
-                ⏱️ Ahorras: <strong>estrés innecesario</strong>
+                â±ï¸ Ahorras: <strong>estrÃ©s innecesario</strong>
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Ejemplo práctico */}
+      {/* Ejemplo prÃ¡ctico */}
       <section className="py-16 bg-slate-50">
         <div className="mx-auto max-w-5xl px-4">
           <div className="text-center mb-12">
@@ -162,18 +162,18 @@ export default function AutomationPage() {
               Un ejemplo: crear una factura
             </h2>
             <p className="text-lg text-slate-600">
-              Con automatización vs. sin automatización
+              Con automatizaciÃ³n vs. sin automatizaciÃ³n
             </p>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-2">
-            {/* Sin automatización */}
+            {/* Sin automatizaciÃ³n */}
             <div className="bg-white rounded-2xl p-8 shadow-sm border border-red-200">
               <div className="flex items-center gap-3 mb-6">
                 <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                  <span className="text-red-600 font-bold text-xl">✕</span>
+                  <span className="text-red-600 font-bold text-xl">âœ•</span>
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900">Sin automatización</h3>
+                <h3 className="text-xl font-semibold text-slate-900">Sin automatizaciÃ³n</h3>
               </div>
               <ol className="space-y-3 text-sm text-slate-700">
                 <li className="flex gap-3">
@@ -182,7 +182,7 @@ export default function AutomationPage() {
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400">2.</span>
-                  <span>Buscar el último número de factura</span>
+                  <span>Buscar el Ãºltimo nÃºmero de factura</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400">3.</span>
@@ -194,11 +194,11 @@ export default function AutomationPage() {
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400">5.</span>
-                  <span>Calcular retención si aplica</span>
+                  <span>Calcular retenciÃ³n si aplica</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400">6.</span>
-                  <span>Sumar subtotal + IVA - retención</span>
+                  <span>Sumar subtotal + IVA - retenciÃ³n</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400">7.</span>
@@ -214,11 +214,11 @@ export default function AutomationPage() {
                 </li>
               </ol>
               <div className="mt-6 pt-6 border-t border-red-200">
-                <p className="text-red-700 font-semibold">⏱️ Tiempo: ~15 minutos</p>
+                <p className="text-red-700 font-semibold">â±ï¸ Tiempo: ~15 minutos</p>
               </div>
             </div>
 
-            {/* Con automatización */}
+            {/* Con automatizaciÃ³n */}
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8 shadow-sm border-2 border-green-300">
               <div className="flex items-center gap-3 mb-6">
                 <div className="h-10 w-10 rounded-full bg-green-600 flex items-center justify-center">
@@ -233,7 +233,7 @@ export default function AutomationPage() {
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-green-700">2.</span>
-                  <span>Seleccionar cliente (o añadir nuevo)</span>
+                  <span>Seleccionar cliente (o aÃ±adir nuevo)</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-green-700">3.</span>
@@ -241,19 +241,19 @@ export default function AutomationPage() {
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400 line-through">4.</span>
-                  <span className="text-slate-400 line-through">IVA calculado automáticamente</span>
+                  <span className="text-slate-400 line-through">IVA calculado automÃ¡ticamente</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400 line-through">5.</span>
-                  <span className="text-slate-400 line-through">Retención calculada si aplica</span>
+                  <span className="text-slate-400 line-through">RetenciÃ³n calculada si aplica</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400 line-through">6.</span>
-                  <span className="text-slate-400 line-through">Total calculado automáticamente</span>
+                  <span className="text-slate-400 line-through">Total calculado automÃ¡ticamente</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400 line-through">7.</span>
-                  <span className="text-slate-400 line-through">Número secuencial asignado</span>
+                  <span className="text-slate-400 line-through">NÃºmero secuencial asignado</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400 line-through">8.</span>
@@ -261,19 +261,19 @@ export default function AutomationPage() {
                 </li>
                 <li className="flex gap-3">
                   <span className="font-semibold text-slate-400 line-through">9.</span>
-                  <span className="text-slate-400 line-through">Guardado y sincronizado automáticamente</span>
+                  <span className="text-slate-400 line-through">Guardado y sincronizado automÃ¡ticamente</span>
                 </li>
               </ol>
               <div className="mt-6 pt-6 border-t border-green-300">
-                <p className="text-green-700 font-bold text-lg">⏱️ Tiempo: 2 minutos</p>
-                <p className="text-sm text-green-600 mt-1">✓ Ahorras 13 minutos por factura</p>
+                <p className="text-green-700 font-bold text-lg">â±ï¸ Tiempo: 2 minutos</p>
+                <p className="text-sm text-green-600 mt-1">âœ“ Ahorras 13 minutos por factura</p>
               </div>
             </div>
           </div>
 
-          <div className="mt-12 text-center bg-blue-50 rounded-2xl p-8 border border-blue-200">
+          <div className="mt-12 text-center bg-sky-50/70 rounded-2xl p-8 border border-[#0060F0]/25">
             <p className="text-2xl font-bold text-slate-900 mb-2">
-              13 minutos × 20 facturas/mes = <span className="text-blue-700">4.3 horas ahorradas</span>
+              13 minutos Ã— 20 facturas/mes = <span className="text-[#0060F0]">4.3 horas ahorradas</span>
             </p>
             <p className="text-slate-600">
               Tiempo que puedes dedicar a tu negocio en lugar de tareas administrativas
@@ -282,15 +282,15 @@ export default function AutomationPage() {
         </div>
       </section>
 
-      {/* Próximamente */}
+      {/* PrÃ³ximamente */}
       <section className="py-16">
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">
-              Próximamente: más automatizaciones
+              PrÃ³ximamente: mÃ¡s automatizaciones
             </h2>
             <p className="text-lg text-slate-600">
-              Seguimos mejorando para que ahorres aún más tiempo
+              Seguimos mejorando para que ahorres aÃºn mÃ¡s tiempo
             </p>
           </div>
 
@@ -300,10 +300,10 @@ export default function AutomationPage() {
                 <Clock className="h-5 w-5 text-slate-500" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                Envío automático de facturas
+                EnvÃ­o automÃ¡tico de facturas
               </h3>
               <p className="text-sm text-slate-600">
-                Email al cliente con PDF adjunto. Automático al generar la factura.
+                Email al cliente con PDF adjunto. AutomÃ¡tico al generar la factura.
               </p>
               <p className="text-xs text-slate-500 mt-3">Q2 2026</p>
             </div>
@@ -316,7 +316,7 @@ export default function AutomationPage() {
                 Recordatorio de impagados
               </h3>
               <p className="text-sm text-slate-600">
-                Notificación si una factura lleva +30 días pendiente de cobro.
+                NotificaciÃ³n si una factura lleva +30 dÃ­as pendiente de cobro.
               </p>
               <p className="text-xs text-slate-500 mt-3">Q2 2026</p>
             </div>
@@ -326,10 +326,10 @@ export default function AutomationPage() {
                 <RefreshCw className="h-5 w-5 text-slate-500" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                Sincronización con gestoría
+                SincronizaciÃ³n con gestorÃ­a
               </h3>
               <p className="text-sm text-slate-600">
-                Exportación automática de datos cada trimestre a tu asesor fiscal.
+                ExportaciÃ³n automÃ¡tica de datos cada trimestre a tu asesor fiscal.
               </p>
               <p className="text-xs text-slate-500 mt-3">Q3 2026</p>
             </div>
@@ -350,7 +350,7 @@ export default function AutomationPage() {
             href="/auth/signup"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-orange-700 font-semibold rounded-xl shadow-lg hover:shadow-xl transition"
           >
-            Prueba gratis 14 días
+            Prueba gratis 14 dÃ­as
           </Link>
         </div>
       </section>
@@ -359,10 +359,10 @@ export default function AutomationPage() {
       <footer className="border-t border-slate-200 bg-white py-8">
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-600">
-            <p>© 2026 Verifactu Business · Expert Estudios Profesionales, SLU</p>
+            <p>Â© 2026 Verifactu Business Â· Expert Estudios Profesionales, SLU</p>
             <div className="flex gap-6">
               <Link href="/legal/privacidad" className="hover:text-slate-900">Privacidad</Link>
-              <Link href="/legal/terminos" className="hover:text-slate-900">Términos</Link>
+              <Link href="/legal/terminos" className="hover:text-slate-900">TÃ©rminos</Link>
               <Link href="/legal/cookies" className="hover:text-slate-900">Cookies</Link>
             </div>
           </div>
@@ -371,3 +371,4 @@ export default function AutomationPage() {
     </main>
   );
 }
+

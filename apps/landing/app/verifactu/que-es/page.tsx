@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-const title = "Que es VeriFactu | Verifactu Business";
+const title = "Qué es VeriFactu | Verifactu Business";
 const description =
-  "VeriFactu es el sistema de facturacion verificable que garantiza trazabilidad, auditoria y cumplimiento anti-fraude.";
+  "VeriFactu es el sistema de facturación verificable que garantiza trazabilidad, auditoría y cumplimiento anti-fraude.";
 
 export const metadata = {
   title,
@@ -37,28 +37,28 @@ export default function QueEsVeriFactuPage() {
           items={[
             { label: "Inicio", href: "/" },
             { label: "VeriFactu", href: "/verifactu/que-es" },
-            { label: "Que es" },
+            { label: "Qué es" },
           ]}
         />
 
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">VeriFactu</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Que es VeriFactu</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Qué es VeriFactu</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          VeriFactu es el estandar de facturacion verificable exigido por la AEAT para garantizar la integridad de tus
-          facturas. Cada asiento queda trazado con hash y marca de tiempo, listo para auditoria sin esfuerzo.
+          VeriFactu es el estándar de facturación verificable exigido por la AEAT para garantizar la integridad de tus
+          facturas. Cada asiento queda trazado con hash y marca de tiempo, listo para auditoría sin esfuerzo.
         </p>
 
         <div className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:grid-cols-2">
-          <Feature title="Trazabilidad automatica" desc="Cada factura se sella con hash y marca temporal." />
-          <Feature title="Integridad anti-manipulacion" desc="Historico inmutable: sin sobrescrituras ni borrados ocultos." />
-          <Feature title="Auditoria simplificada" desc="Exporta registros y evidencias en un clic." />
-          <Feature title="Listo para la AEAT" desc="Cumple con los requisitos tecnicos y de reporte." />
+          <Feature title="Trazabilidad automática" desc="Cada factura se sella con hash y marca temporal." />
+          <Feature title="Integridad anti-manipulación" desc="Histórico inmutable: sin sobrescrituras ni borrados ocultos." />
+          <Feature title="Auditoría simplificada" desc="Exporta registros y evidencias en un clic." />
+          <Feature title="Listo para la AEAT" desc="Cumple con los requisitos técnicos y de reporte." />
         </div>
 
         <div className="mt-10 space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">Por que integrarlo con Isaak</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Por qué integrarlo con Isaak</h2>
           <p className="text-sm leading-6 text-slate-700">
-            Isaak aplica las reglas de VeriFactu, valida tus envios y te avisa si algo se desvia. Combina cumplimiento con
+            Isaak aplica las reglas de VeriFactu, valida tus envíos y te avisa si algo se desvía. Combina cumplimiento con
             panel claro de ventas, gastos y beneficio.
           </p>
           <div className="flex flex-wrap gap-3 text-sm">
@@ -66,22 +66,22 @@ export default function QueEsVeriFactuPage() {
               Cumplimiento automatizado
             </span>
             <span className="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-blue-100">
-              Alertas y validacion
+              Alertas y validación
             </span>
             <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700 ring-1 ring-slate-200">
-              Exportaciones listas para auditoria
+              Exportaciones listas para auditoría
             </span>
           </div>
         </div>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Necesitas que te guiemos? Revisa los planes o contactanos.</div>
+          <div className="text-sm text-slate-600">¿Necesitas que te guiemos? Revisa los planes o contáctanos.</div>
           <div className="flex gap-3">
             <Link
               href="/demo#calculadora"
               className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
-              Calcula precio
+              Calcula tu precio
             </Link>
             <Link
               href="/verifactu/soporte"

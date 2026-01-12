@@ -24,15 +24,15 @@ const baseStyles = [
 // Variant styles
 const variants: Record<ButtonVariant, string> = {
   primary: [
-    'bg-indigo-600 text-white',
-    'hover:bg-indigo-700 active:bg-indigo-800',
-    'focus:ring-indigo-500',
+    'bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white',
+    'hover:from-[#0056D6] hover:to-[#1AA3DB]',
+    'focus:ring-[#0060F0]',
     'shadow-sm hover:shadow-md',
   ].join(' '),
   secondary: [
-    'bg-gray-200 text-gray-900',
-    'hover:bg-gray-300 active:bg-gray-400',
-    'focus:ring-gray-500',
+    'border border-[#0060F0] text-[#0060F0] bg-white',
+    'hover:bg-[#0060F0]/10 active:bg-[#0060F0]/15',
+    'focus:ring-[#0060F0]',
   ].join(' '),
   ghost: [
     'bg-transparent text-gray-600',
