@@ -12,6 +12,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.8",
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",
     "@fullcalendar/interaction": "^6.1.15",
@@ -22,11 +23,12 @@
     "@react-jvectormap/world": "^1.1.2",
     "@tailwindcss/forms": "^0.5.9",
     "@verifactu/ui": "file:../../packages/ui",
-    "pg": "^8.11.5",
+    "ai": "^6.0.28",
     "apexcharts": "^4.3.0",
     "flatpickr": "^4.6.13",
     "jose": "^6.1.3",
     "next": "^14.2.35",
+    "pg": "^8.11.5",
     "react": "^18.2.0",
     "react-apexcharts": "^1.7.0",
     "react-dnd": "^16.0.1",
@@ -35,7 +37,8 @@
     "react-dropzone": "^14.3.5",
     "react-intersection-observer": "^10.0.0",
     "swiper": "^11.2.0",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -43,9 +46,9 @@
     "@swc/helpers": "^0.5.11",
     "@testing-library/react": "^16.3.1",
     "@types/node": "^20",
+    "@types/pg": "^8.11.6",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@types/pg": "^8.11.6",
     "@types/react-transition-group": "^4.4.12",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.0.0",
