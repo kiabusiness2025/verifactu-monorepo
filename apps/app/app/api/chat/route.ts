@@ -206,9 +206,3 @@ export async function POST(req: Request) {
     return new Response('Error al procesar tu mensaje', { status: 500 });
   }
 }
-
-function getMonthName(month: number): string {
-  const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
-                  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-  return months[month - 1] || 'mes';
-}
