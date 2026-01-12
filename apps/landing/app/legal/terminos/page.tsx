@@ -1,191 +1,96 @@
-﻿import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "TÃ©rminos de servicio | Verifactu Business",
+  title: "Términos y condiciones | Verifactu Business",
   description:
-    "Condiciones de uso del servicio Verifactu Business operado por Expert Estudios Profesionales, SLU.",
+    "Términos y condiciones de uso de Verifactu Business.",
 };
 
-const today = "08/01/2026";
-
-const owner = {
-  name: process.env.ORGANIZATION_NAME ?? "Expert Estudios Profesionales, SLU",
-  nif: process.env.ORGANIZATION_CIF ?? "B44991776",
-  address: process.env.ORGANIZATION_ADDRESS ?? "C/ Pintor Agrassot, 19 - 03110 Mutxamel (Alicante)",
-  email: "soporte@verifactu.business",
-  phone: "+34 669 04 55 28",
-  domain: "verifactu.business",
-};
-
-export default function TermsPage() {
+export default function TerminosPage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12 space-y-10">
-      <div className="mb-2 text-sm">
-        <Link
-          href="/"
-          className="text-[#0060F0] font-semibold hover:text-[#0080F0]"
-          aria-label="Volver al inicio"
-        >
-          Volver al inicio
-        </Link>
+    <main className="min-h-screen bg-gradient-to-b from-sky-50/70 via-white to-white">
+      <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
+        <div className="mx-auto max-w-5xl px-4 py-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
+          >
+            ← Volver al inicio
+          </Link>
+        </div>
       </div>
-      <header className="space-y-2">
-        <p className="text-sm text-gray-500">Ãšltima actualizaciÃ³n: {today}</p>
-        <h1 className="text-3xl font-bold text-gray-900">
-          TÃ©rminos y condiciones de uso
-        </h1>
-        <p className="text-gray-700">
-          Estos tÃ©rminos regulan el acceso y uso de los servicios Verifactu Business
-          ofrecidos a travÃ©s de <span className="font-semibold">{owner.domain}</span> por{" "}
-          {owner.name}.
+
+      <section className="mx-auto max-w-5xl px-4 py-16">
+        <h1 className="text-4xl font-bold text-[#002060]">Términos y condiciones</h1>
+        <p className="mt-4 text-lg text-slate-600">
+          Estas condiciones regulan el acceso y uso de Verifactu Business. Al usar
+          el servicio aceptas este acuerdo.
         </p>
-      </header>
 
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">1. Titular del servicio</h2>
-        <p className="text-gray-700">RazÃ³n social: {owner.name}</p>
-        <p className="text-gray-700">NIF/CIF: {owner.nif}</p>
-        <p className="text-gray-700">Domicilio: {owner.address}</p>
-        <p className="text-gray-700">Correo de contacto: {owner.email}</p>
-        <p className="text-gray-700">TelÃ©fono: {owner.phone}</p>
-        <p className="text-gray-700">Dominio principal: {owner.domain}</p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">2. AceptaciÃ³n</h2>
-        <p className="text-gray-700">
-          El uso del servicio implica la aceptaciÃ³n Ã­ntegra de estos tÃ©rminos. Si no
-          estÃ¡s de acuerdo, debes abstenerte de utilizar la plataforma.
+        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+          1. Servicio
+        </h2>
+        <p className="mt-3 text-slate-600">
+          Verifactu Business proporciona herramientas de facturación, registro y
+          control básico para PYMEs y autónomos. El servicio puede evolucionar y
+          mejorar con el tiempo.
         </p>
-      </section>
 
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">3. Objeto del servicio</h2>
-        <p className="text-gray-700">
-          Verifactu Business es una plataforma SaaS orientada a la gestiÃ³n y generaciÃ³n
-          de facturas VeriFactu, con funcionalidades de autenticaciÃ³n, panel de usuario
-          y servicios asociados.
+        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+          2. Cuenta y acceso
+        </h2>
+        <p className="mt-3 text-slate-600">
+          Eres responsable de mantener la confidencialidad de tus credenciales y
+          del uso que se haga de tu cuenta.
         </p>
-      </section>
 
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">4. Registro y cuentas</h2>
-        <ul className="list-disc pl-5 space-y-2 text-gray-700">
-          <li>Debes aportar informaciÃ³n veraz y mantenerla actualizada.</li>
-          <li>Protege tus credenciales; eres responsable de su uso. Notifica accesos no autorizados.</li>
-          <li>Podemos suspender o cancelar cuentas ante uso fraudulento, incumplimientos o riesgos para el servicio.</li>
-        </ul>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">5. Uso permitido</h2>
-        <ul className="list-disc pl-5 space-y-2 text-gray-700">
-          <li>Queda prohibido usar el servicio para actividades ilÃ­citas, envÃ­o de spam o vulneraciÃ³n de derechos.</li>
-          <li>No realices ingenierÃ­a inversa, extracciÃ³n masiva de datos o pruebas de seguridad sin autorizaciÃ³n.</li>
-          <li>Respeta los lÃ­mites tÃ©cnicos y de cuota establecidos para garantizar la disponibilidad.</li>
-        </ul>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">6. Precios y facturaciÃ³n</h2>
-        <p className="text-gray-700">
-          Si existen planes de pago, se publicarÃ¡n las tarifas vigentes y condiciones de
-          facturaciÃ³n. Los impuestos aplicables se aÃ±adirÃ¡n segÃºn la normativa. Las facturas
-          se emitirÃ¡n a los datos fiscales que proporciones.
-        </p>
-        <p className="text-gray-700">
-          La polÃ­tica de precios y mediciÃ³n de uso estÃ¡ disponible en{" "}
-          <Link className="text-indigo-600 hover:underline" href="/politica-de-precios">
-            verifactu.business/politica-de-precios
+        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+          3. Precios y facturación
+        </h2>
+        <p className="mt-3 text-slate-600">
+          Los precios se calculan por tramos de uso. Puedes consultar la política
+          pública de precios y medición aquí:{" "}
+          <Link
+            href="/politica-de-precios"
+            className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
+          >
+            Política de precios
           </Link>
           .
         </p>
-      </section>
 
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">7. Propiedad intelectual</h2>
-        <p className="text-gray-700">
-          El software, diseÃ±os y contenidos del servicio son titularidad de {owner.name} o
-          de sus licenciantes. Concedes una licencia limitada para operar tus datos dentro
-          de la plataforma con la Ãºnica finalidad de prestar el servicio. No se transfieren
-          derechos de propiedad intelectual.
+        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+          4. Responsabilidad
+        </h2>
+        <p className="mt-3 text-slate-600">
+          El servicio se ofrece "tal cual". Hacemos esfuerzos razonables para
+          mantener la disponibilidad y la información actualizada, sin garantía
+          absoluta.
         </p>
-      </section>
 
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">8. ProtecciÃ³n de datos</h2>
-        <p className="text-gray-700">
-          El tratamiento de datos personales se rige por la{" "}
-          <Link className="text-indigo-600 hover:underline" href="/legal/privacidad">
-            PolÃ­tica de privacidad
-          </Link>
+        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+          5. Cancelación
+        </h2>
+        <p className="mt-3 text-slate-600">
+          Puedes cancelar tu suscripción en cualquier momento. La cancelación
+          aplica al siguiente periodo de facturación.
+        </p>
+
+        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+          6. Contacto
+        </h2>
+        <p className="mt-3 text-slate-600">
+          Para dudas legales o soporte, contacta en{" "}
+          <a
+            href="mailto:soporte@verifactu.business"
+            className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
+          >
+            soporte@verifactu.business
+          </a>
           .
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">9. Disponibilidad y soporte</h2>
-        <p className="text-gray-700">
-          Trabajamos para mantener el servicio disponible, pero no podemos garantizar
-          disponibilidad ininterrumpida. PodrÃ¡n realizarse mantenimientos programados o
-          urgentes. El soporte se atenderÃ¡ a travÃ©s de{" "}
-          <a className="text-indigo-600 hover:underline" href={`mailto:${owner.email}`}>
-            {owner.email}
-          </a>{" "}
-          en horario razonable.
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">10. Responsabilidad</h2>
-        <p className="text-gray-700">
-          El servicio se presta tal cual dentro de los lÃ­mites legales. No nos hacemos
-          responsables de daÃ±os indirectos, lucro cesante o pÃ©rdida de datos derivados del uso
-          de la plataforma, salvo dolo o culpa grave.
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">11. TerminaciÃ³n</h2>
-        <p className="text-gray-700">
-          Puedes cancelar tu cuenta en cualquier momento. Podemos suspender o cancelar el
-          acceso por incumplimiento de estos tÃ©rminos o por requisitos legales. Algunas
-          obligaciones (confidencialidad, pagos pendientes, limitaciÃ³n de responsabilidad)
-          sobrevivirÃ¡n a la terminaciÃ³n.
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">12. Cambios en los tÃ©rminos</h2>
-        <p className="text-gray-700">
-          Podemos actualizar estos tÃ©rminos para reflejar mejoras del servicio o cambios
-          normativos. Publicaremos la versiÃ³n vigente con su fecha. El uso continuado tras la
-          publicaciÃ³n implica aceptaciÃ³n de las modificaciones.
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">13. Ley aplicable y jurisdicciÃ³n</h2>
-        <p className="text-gray-700">
-          Estos tÃ©rminos se rigen por la legislaciÃ³n espaÃ±ola. Para cualquier conflicto, las
-          partes se someten a los juzgados y tribunales del domicilio del usuario consumidor;
-          en caso de usuario empresarial, a los de la ciudad donde radique el domicilio del
-          titular indicado en el apartado 1.
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">14. Contacto</h2>
-        <p className="text-gray-700">
-          Si tienes dudas sobre estos tÃ©rminos, escribe a{" "}
-          <a className="text-indigo-600 hover:underline" href={`mailto:${owner.email}`}>
-            {owner.email}
-          </a>{" "}
-          o llama al telÃ©fono indicado en el apartado 1.
         </p>
       </section>
     </main>
   );
 }
-
