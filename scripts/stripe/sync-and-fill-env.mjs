@@ -61,15 +61,29 @@ const PRICE_SPECS = [
   { priceKey: "base-monthly", unitAmountEur: 19, interval: "month" },
 
   // invoices (add-on por tramo)
-  { priceKey: "invoices-11-50-monthly", unitAmountEur: 4, interval: "month" },
-  { priceKey: "invoices-51-200-monthly", unitAmountEur: 6, interval: "month" },
-  { priceKey: "invoices-201-500-monthly", unitAmountEur: 15, interval: "month" },
+  { priceKey: "invoices-11-20-monthly", unitAmountEur: 5, interval: "month" },
+  { priceKey: "invoices-21-30-monthly", unitAmountEur: 10, interval: "month" },
+  { priceKey: "invoices-31-40-monthly", unitAmountEur: 15, interval: "month" },
+  { priceKey: "invoices-41-50-monthly", unitAmountEur: 20, interval: "month" },
+  { priceKey: "invoices-51-100-monthly", unitAmountEur: 25, interval: "month" },
+  { priceKey: "invoices-101-200-monthly", unitAmountEur: 35, interval: "month" },
+  { priceKey: "invoices-201-300-monthly", unitAmountEur: 45, interval: "month" },
+  { priceKey: "invoices-301-400-monthly", unitAmountEur: 55, interval: "month" },
+  { priceKey: "invoices-401-500-monthly", unitAmountEur: 65, interval: "month" },
+  { priceKey: "invoices-501-1000-monthly", unitAmountEur: 85, interval: "month" },
 
   // movements (add-on por tramo)
-  { priceKey: "mov-1-100-monthly", unitAmountEur: 3, interval: "month" },
-  { priceKey: "mov-101-200-monthly", unitAmountEur: 5, interval: "month" },
-  { priceKey: "mov-201-500-monthly", unitAmountEur: 9, interval: "month" },
-  { priceKey: "mov-501-1000-monthly", unitAmountEur: 15, interval: "month" },
+  { priceKey: "mov-1-20-monthly", unitAmountEur: 5, interval: "month" },
+  { priceKey: "mov-21-30-monthly", unitAmountEur: 10, interval: "month" },
+  { priceKey: "mov-31-40-monthly", unitAmountEur: 15, interval: "month" },
+  { priceKey: "mov-41-50-monthly", unitAmountEur: 20, interval: "month" },
+  { priceKey: "mov-51-100-monthly", unitAmountEur: 25, interval: "month" },
+  { priceKey: "mov-101-200-monthly", unitAmountEur: 35, interval: "month" },
+  { priceKey: "mov-201-300-monthly", unitAmountEur: 45, interval: "month" },
+  { priceKey: "mov-301-400-monthly", unitAmountEur: 55, interval: "month" },
+  { priceKey: "mov-401-500-monthly", unitAmountEur: 65, interval: "month" },
+  { priceKey: "mov-501-1000-monthly", unitAmountEur: 85, interval: "month" },
+  { priceKey: "mov-1001-2000-monthly", unitAmountEur: 105, interval: "month" },
 ];
 
 async function findOrCreateProduct() {

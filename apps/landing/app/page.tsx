@@ -230,7 +230,8 @@ export default function Page() {
 
             <p className="mx-auto mt-6 max-w-2xl text-xs text-slate-500">
               Precio orientativo. La cuota final se basa en facturas emitidas y movimientos procesados (si activas
-              conciliacion bancaria). IVA no incluido.
+              conciliacion bancaria). Hasta 1.000 facturas y 2.000 movimientos; si superas estos limites ofrecemos
+              presupuesto. IVA no incluido.
             </p>
           </div>
         </Container>

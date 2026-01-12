@@ -60,20 +60,20 @@ export default function PricingCalculatorInline() {
           <input
             type="range"
             min="1"
-            max="500"
+            max="1000"
             step="1"
             value={invoices}
             onChange={(e) => setInvoices(Number(e.target.value))}
             className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
             style={{
-              background: `linear-gradient(to right, #003170 0%, #003170 ${((invoices - 1) / 499) * 100}%, #e5e7eb ${((invoices - 1) / 499) * 100}%, #e5e7eb 100%)`,
+              background: `linear-gradient(to right, #003170 0%, #003170 ${((invoices - 1) / 999) * 100}%, #e5e7eb ${((invoices - 1) / 999) * 100}%, #e5e7eb 100%)`,
             }}
           />
           <p className="mt-2 text-xs text-gray-500">Incluye hasta 10 en la base.</p>
-          <p className="mt-1 text-xs text-gray-500">Mas de 500 facturas/mes requiere presupuesto.</p>
+          <p className="mt-1 text-xs text-gray-500">Mas de 1.000 facturas/mes requiere presupuesto.</p>
           <div className="mt-1 flex justify-between text-xs text-gray-500">
             <span>1</span>
-            <span>500</span>
+            <span>1.000</span>
           </div>
         </div>
 
@@ -101,24 +101,24 @@ export default function PricingCalculatorInline() {
               <input
                 type="range"
                 min="0"
-                max="1000"
+                max="2000"
                 step="1"
                 value={movements}
                 onChange={(e) => setMovements(Number(e.target.value))}
                 className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
                 style={{
-                  background: `linear-gradient(to right, #003170 0%, #003170 ${(movements / 1000) * 100}%, #e5e7eb ${(movements / 1000) * 100}%, #e5e7eb 100%)`,
+                  background: `linear-gradient(to right, #003170 0%, #003170 ${(movements / 2000) * 100}%, #e5e7eb ${(movements / 2000) * 100}%, #e5e7eb 100%)`,
                 }}
               />
               <p className="mt-2 text-xs text-gray-500">
                 0 movimientos = 0 EUR. Si activas conciliacion y procesas movimientos, se aplica un tramo.
               </p>
               <p className="mt-1 text-xs text-gray-500">
-                Mas de 1000 movimientos/mes requiere presupuesto.
+                Mas de 2.000 movimientos/mes requiere presupuesto.
               </p>
               <div className="mt-1 flex justify-between text-xs text-gray-500">
                 <span>0</span>
-                <span>1.000</span>
+                <span>2.000</span>
               </div>
             </>
           )}

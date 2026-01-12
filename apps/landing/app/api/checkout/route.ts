@@ -50,14 +50,14 @@ export async function POST(req: Request) {
   const rawMovements = Number(body?.movements ?? 0);
   const rawBankingEnabled = !!body?.bankingEnabled;
 
-  if (rawInvoices > 500) {
+  if (rawInvoices > 1000) {
     return NextResponse.json(
       { error: "Presupuesto requerido", code: "QUOTE_REQUIRED", redirect: "/presupuesto" },
       { status: 400 }
     );
   }
 
-  if (rawBankingEnabled && rawMovements > 1000) {
+  if (rawBankingEnabled && rawMovements > 2000) {
     return NextResponse.json(
       { error: "Presupuesto requerido", code: "QUOTE_REQUIRED", redirect: "/presupuesto" },
       { status: 400 }

@@ -12,7 +12,7 @@ Tu cuota mensual se compone de:
 La cuota base incluye:
 - Hasta **10 facturas emitidas al mes**.
 - Conciliacion bancaria opcional: **0 movimientos** no tiene coste. Si activas conciliacion y procesas movimientos, se aplica un tramo.
-La calculadora cubre hasta **500 facturas/mes** y **1000 movimientos/mes**. Por encima de esos limites, ofrecemos presupuesto personalizado e integraciones avanzadas.
+La calculadora cubre hasta **1.000 facturas/mes** y **2.000 movimientos/mes**. Por encima de esos limites, ofrecemos presupuesto personalizado e integraciones avanzadas.
 
 ## 3. Precio estimado vs precio final
 La calculadora muestra un **precio estimado**.

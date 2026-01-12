@@ -45,7 +45,7 @@ export default function PresupuestoPage() {
     <main className="mx-auto max-w-3xl px-6 py-12">
       <h1 className="text-3xl font-bold text-primary">Solicitar presupuesto</h1>
       <p className="mt-4 text-sm text-lightbg-600">
-        Si superas 500 facturas/mes o 1000 movimientos/mes, preparamos un plan a medida.
+        Si superas 1.000 facturas/mes o 2.000 movimientos/mes, preparamos un plan a medida.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
@@ -83,7 +83,7 @@ export default function PresupuestoPage() {
               onChange={(e) => setInvoices(e.target.value)}
               className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
               placeholder="Ej: 800"
-              min={501}
+              min={1001}
             />
           </div>
           <div>
@@ -95,7 +95,7 @@ export default function PresupuestoPage() {
               onChange={(e) => setMovements(e.target.value)}
               className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
               placeholder="Ej: 1500"
-              min={1001}
+              min={2001}
             />
           </div>
         </div>

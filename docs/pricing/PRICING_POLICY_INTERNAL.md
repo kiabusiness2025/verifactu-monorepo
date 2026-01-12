@@ -19,18 +19,32 @@ Modelo simple "por tramo" (bandas). El checkout siempre incluye:
 
 ## Facturas emitidas (tramos)
 - 1-10: +0
-- 11-50: +4
-- 51-200: +6
-- 201-500: +15
-- >500: presupuesto
+- 11-20: +5
+- 21-30: +10
+- 31-40: +15
+- 41-50: +20
+- 51-100: +25
+- 101-200: +35
+- 201-300: +45
+- 301-400: +55
+- 401-500: +65
+- 501-1000: +85
+- >1000: presupuesto
 
 ## Movimientos bancarios (tramos, si conciliacion activada)
 - 0: +0
-- 1-100: +3
-- 101-200: +5
-- 201-500: +9
-- 501-1000: +15
-- >1000: presupuesto
+- 1-20: +5
+- 21-30: +10
+- 31-40: +15
+- 41-50: +20
+- 51-100: +25
+- 101-200: +35
+- 201-300: +45
+- 301-400: +55
+- 401-500: +65
+- 501-1000: +85
+- 1001-2000: +105
+- >2000: presupuesto
 
 ## Implementacion Stripe (V1)
 Checkout "subscription":

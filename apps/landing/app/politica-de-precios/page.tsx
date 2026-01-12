@@ -25,8 +25,8 @@ export default function PoliticaDePreciosPage() {
           un tramo.
         </li>
         <li>
-          La calculadora cubre hasta <strong>500 facturas/mes</strong> y <strong>1000 movimientos/mes</strong>. Por encima
-          de esos limites, ofrecemos presupuesto personalizado e integraciones avanzadas.
+          La calculadora cubre hasta <strong>1.000 facturas/mes</strong> y <strong>2.000 movimientos/mes</strong>. Por
+          encima de esos limites, ofrecemos presupuesto personalizado e integraciones avanzadas.
         </li>
       </ul>
 
