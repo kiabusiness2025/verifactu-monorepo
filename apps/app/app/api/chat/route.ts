@@ -16,8 +16,8 @@ function getMonthName(month: number): string {
   return months[month - 1] || 'Mes desconocido';
 }
 
-// Runtime Edge para mejor rendimiento
-export const runtime = 'edge';
+// Runtime Node.js para permitir acceso a base de datos (pg)
+export const runtime = 'nodejs';
 
 // System prompts contextuales para Isaak
 const ISAAK_SYSTEM_BASE = `Eres Isaak, el asistente experto en contabilidad y fiscalidad de Verifactu Business.
