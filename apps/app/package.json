@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "prisma generate",
     "build": "next build",
     "postbuild": "node scripts/fix-client-reference-manifests.mjs",
     "start": "next start -p 8080",
@@ -13,6 +14,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.9",
+    "@prisma/client": "^7.2.0",
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",
     "@fullcalendar/interaction": "^6.1.15",
@@ -46,7 +48,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@prisma/client": "^7.2.0",
     "@svgr/webpack": "^8.1.0",
     "@swc/helpers": "^0.5.11",
     "@testing-library/react": "^16.3.1",
