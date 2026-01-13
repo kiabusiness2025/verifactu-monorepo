@@ -2,7 +2,7 @@
 
 ## 🎯 Trabajo Completado
 
-Se han identificado y arreglado **3 errores críticos** en los builds de Vercel, junto con mejoras en la configuración de ISAAK para detectar futuros problemas.
+Se han identificado y arreglado **4 errores críticos** en los builds de Vercel, junto con mejoras en la configuración de ISAAK para detectar futuros problemas.
 
 ---
 
@@ -65,6 +65,30 @@ import CookieBanner from "./components/CookieBanner";
 import DevStatusBanner from "./components/DevStatusBanner";
 import { ToastProvider } from "./components/Toast";
 ```
+
+---
+
+### Error #4: Lockfile Desactualizado (App)
+**Archivos:** `pnpm-lock.yaml`, `apps/app/package.json`, `package.json`  
+**Problema:** pnpm-lock.yaml no sincronizado con package.json  
+**Síntoma en Vercel:** `ERR_PNPM_OUTDATED_LOCKFILE - Cannot install with "frozen-lockfile"`  
+**Solución:** Sincronizar lockfile y corregir versión de Prisma
+
+```json
+// ❌ ANTES
+{
+  "@prisma/client": "^7.2.0"  // ← Versión inestable
+}
+
+// ✅ DESPUÉS
+{
+  "@prisma/client": "5.20.0"  // ← Versión estable
+}
+```
+
+**Cambios adicionales:**
+- Agregado `prisma`, `@prisma/engines`, `@prisma/client` a `nohoist` en root
+- Sincronizado todas las dependencias en pnpm-lock.yaml
 
 ---
 
