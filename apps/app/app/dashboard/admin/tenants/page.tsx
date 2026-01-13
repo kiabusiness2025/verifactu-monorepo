@@ -28,6 +28,27 @@ type TenantForm = {
   cnae?: string;
 };
 
+type EinformaSearchItem = {
+  name: string;
+  nif?: string;
+  province?: string;
+  id?: string;
+};
+
+type EinformaCompanyProfile = {
+  name: string;
+  legalName?: string;
+  nif?: string;
+  cnae?: string;
+  address?: {
+    street?: string;
+    zip?: string;
+    city?: string;
+    province?: string;
+    country?: string;
+  };
+};
+
 export default function AdminTenantsPage() {
   const [items, setItems] = useState<TenantRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +68,11 @@ export default function AdminTenantsPage() {
     address: "",
     cnae: "",
   });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<EinformaSearchItem[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
@@ -56,6 +82,14 @@ export default function AdminTenantsPage() {
     if (to) params.set("to", to);
     return params.toString();
   }, [search, statusFilter, from, to]);
+
+  function resetEinforma() {
+    setSearchQuery("");
+    setSearchResults([]);
+    setSearchLoading(false);
+    setSearchError("");
+    setProfileLoading(false);
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -81,10 +115,99 @@ export default function AdminTenantsPage() {
     };
   }, [queryString]);
 
+  useEffect(() => {
+    if (!showModal) return;
+    const query = searchQuery.trim();
+    if (query.length < 3) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      setSearchError("");
+      return;
+    }
+
+    setSearchLoading(true);
+    setSearchError("");
+    const timeout = window.setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/admin/einforma/search?q=${encodeURIComponent(query)}`
+        );
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error || "Error en la busqueda");
+        }
+        setSearchResults(Array.isArray(data?.items) ? data.items : []);
+      } catch (err) {
+        setSearchResults([]);
+        setSearchError(err instanceof Error ? err.message : "Error al buscar");
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchQuery, showModal]);
+
+  function buildAddress(profile: EinformaCompanyProfile) {
+    const address = profile.address || {};
+    const parts = [
+      address.street,
+      address.zip,
+      address.city,
+      address.province,
+    ].filter(Boolean);
+    return parts.join(", ");
+  }
+
+  async function applyEinformaProfile(item: EinformaSearchItem) {
+    setSearchError("");
+    setSearchResults([]);
+    setSearchQuery(item.name || item.nif || "");
+    if (!item?.nif) {
+      setForm((prev) => ({
+        ...prev,
+        legalName: item?.name || prev.legalName,
+        taxId: "",
+      }));
+      return;
+    }
+
+    setProfileLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/einforma/profile?nif=${encodeURIComponent(
+          item.nif.toUpperCase()
+        )}`
+      );
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || "No se pudo cargar la empresa");
+      }
+
+      const profile: EinformaCompanyProfile | undefined = data?.profile;
+      if (!profile) {
+        throw new Error("No se pudo cargar la empresa");
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        legalName: profile.legalName || profile.name || prev.legalName,
+        taxId: (profile.nif || item.nif || prev.taxId || "").toUpperCase(),
+        address: buildAddress(profile) || prev.address || "",
+        cnae: profile.cnae || prev.cnae || "",
+      }));
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "Error al cargar");
+    } finally {
+      setProfileLoading(false);
+    }
+  }
+
   function openCreate() {
     setEditing(null);
     setForm({ legalName: "", taxId: "", address: "", cnae: "" });
     setError("");
+    resetEinforma();
     setShowModal(true);
   }
 
@@ -97,6 +220,7 @@ export default function AdminTenantsPage() {
       cnae: "",
     });
     setError("");
+    resetEinforma();
     setShowModal(true);
   }
 
@@ -271,6 +395,47 @@ export default function AdminTenantsPage() {
               </button>
             </div>
             <form onSubmit={onSubmit} className="space-y-4 p-4">
+              <div className="space-y-2">
+                <label className="block text-sm text-slate-700">
+                  Buscar empresa (nombre o CIF)
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Minimo 3 caracteres"
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </label>
+                {searchLoading && (
+                  <div className="text-xs text-slate-500">Buscando...</div>
+                )}
+                {searchError && (
+                  <div className="text-xs text-rose-600">{searchError}</div>
+                )}
+                {searchResults.length > 0 && (
+                  <div className="max-h-48 overflow-auto rounded-lg border border-slate-200 text-sm">
+                    {searchResults.map((item) => (
+                      <button
+                        key={`${item.nif || item.id || item.name}`}
+                        type="button"
+                        onClick={() => applyEinformaProfile(item)}
+                        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-slate-50"
+                      >
+                        <span className="font-medium text-slate-900">
+                          {item.name}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {item.nif || item.province || "Sin CIF"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {profileLoading && (
+                  <div className="text-xs text-slate-500">
+                    Cargando datos de empresa...
+                  </div>
+                )}
+              </div>
               <label className="block text-sm text-slate-700">
                 Razon social *
                 <input
