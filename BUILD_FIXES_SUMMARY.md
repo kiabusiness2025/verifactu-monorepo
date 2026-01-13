@@ -2,7 +2,7 @@
 
 ## 🎯 Trabajo Completado
 
-Se han identificado y arreglado **4 errores críticos** en los builds de Vercel, junto con mejoras en la configuración de ISAAK para detectar futuros problemas.
+Se han identificado y arreglado **5 errores críticos** en los builds de Vercel, junto con mejoras en la configuración de ISAAK para detectar futuros problemas.
 
 ---
 
@@ -89,6 +89,24 @@ import { ToastProvider } from "./components/Toast";
 **Cambios adicionales:**
 - Agregado `prisma`, `@prisma/engines`, `@prisma/client` a `nohoist` en root
 - Sincronizado todas las dependencias en pnpm-lock.yaml
+
+---
+
+### Error #5: Uso Incorrecto de Operador en JSX (Landing)
+**Archivo:** `apps/landing/app/demo/page.tsx`  
+**Problema:** Uso de `->` directamente en JSX (sin escape)  
+**Síntoma en Vercel:** `Type error: Unexpected token. Did you mean '{'>'}' or '&gt;'?`  
+**Solución:** Usar flecha Unicode `→` en lugar de `->`
+
+```tsx
+// ❌ ANTES
+<li>Flujo Factura -> Validación -> Envío VeriFactu.</li>
+
+// ✅ DESPUÉS
+<li>Flujo Factura → Validación → Envío VeriFactu.</li>
+```
+
+**Explicación:** En JSX, el símbolo `>` tiene significado especial (cierre de tags HTML). Para usar flechas en texto, usar Unicode `→` o escapar con `{'->'}`
 
 ---
 
