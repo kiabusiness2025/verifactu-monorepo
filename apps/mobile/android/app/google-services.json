@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "536174799167",
+    "project_id": "verifactu-business",
+    "storage_bucket": "verifactu-business.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536174799167:android:24c5a26ae575bec269cb8a",
+        "android_client_info": {
+          "package_name": "business.verifactu.verifactu_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "536174799167-dl0m9vg1eo7fu477fld1f4qj13ec3hb6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqm3YFq9Z35FMCbYguRTenGnniHe7lyrE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "536174799167-dl0m9vg1eo7fu477fld1f4qj13ec3hb6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
