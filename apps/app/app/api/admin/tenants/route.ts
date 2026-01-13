@@ -150,7 +150,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     // Verificar que el usuario es admin
-    await requireAdmin(req);
+    const admin = await requireAdmin(req);
 
     const body = await req.json();
     const { legalName, taxId, address, cnae } = body;
@@ -184,6 +184,23 @@ export async function POST(req: Request) {
       `INSERT INTO tenants (id, name, legal_name, tax_id, address, cnae, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [tenantId, legalName, legalName, taxId, address || null, cnae || null, now, now]
+    );
+
+    // Crear membership owner para el admin
+    await query(
+      `INSERT INTO memberships (tenant_id, user_id, role, status)
+       VALUES ($1, $2, 'owner', 'active')
+       ON CONFLICT (tenant_id, user_id) DO NOTHING`,
+      [tenantId, admin.userId]
+    );
+
+    // Marcar empresa activa para el admin
+    await query(
+      `INSERT INTO user_preferences (user_id, preferred_tenant_id, updated_at)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id) DO UPDATE
+       SET preferred_tenant_id = EXCLUDED.preferred_tenant_id, updated_at = EXCLUDED.updated_at`,
+      [admin.userId, tenantId, now]
     );
 
     // Obtener el tenant creado con estadísticas

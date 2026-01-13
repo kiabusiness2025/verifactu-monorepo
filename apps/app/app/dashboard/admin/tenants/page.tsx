@@ -128,6 +128,14 @@ export default function AdminTenantsPage() {
     }
   }
 
+  async function setActiveTenant(tenantId: string) {
+    try {
+      await adminPost(`/api/admin/tenants/${tenantId}/set-active`, {});
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "No se pudo activar");
+    }
+  }
+
   return (
     <main className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -219,12 +227,20 @@ export default function AdminTenantsPage() {
                     {tenant.membersCount}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => openEdit(tenant)}
-                      className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                    >
-                      Editar
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => setActiveTenant(tenant.id)}
+                        className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                      >
+                        Activar
+                      </button>
+                      <button
+                        onClick={() => openEdit(tenant)}
+                        className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                      >
+                        Editar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
