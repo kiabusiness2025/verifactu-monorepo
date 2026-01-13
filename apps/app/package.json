@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.9",
-    "@prisma/client": "^7.2.0",
+    "@prisma/client": "5.20.0",
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",
     "@fullcalendar/interaction": "^6.1.15",
