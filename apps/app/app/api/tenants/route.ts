@@ -3,6 +3,7 @@ import { getSessionPayload, requireUserId } from "../../../lib/session";
 import { ensureRole } from "../../../lib/authz";
 import { Roles } from "../../../lib/roles";
 import { createTenantWithOwner, listTenantsForUser, upsertUser } from "../../../lib/tenants";
+import { getUserPreferredTenant } from "../../../lib/preferences";
 
 export async function GET() {
   const session = await getSessionPayload();
@@ -10,7 +11,8 @@ export async function GET() {
   if (guard) return guard;
   const uid = requireUserId(session);
   const tenants = await listTenantsForUser(uid).catch(() => []);
-  return NextResponse.json({ ok: true, tenants });
+  const preferredTenantId = await getUserPreferredTenant(uid).catch(() => null);
+  return NextResponse.json({ ok: true, tenants, preferredTenantId });
 }
 
 export async function POST(req: Request) {
