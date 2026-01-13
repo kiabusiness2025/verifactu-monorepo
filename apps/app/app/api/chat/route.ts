@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { openai } from '@ai-sdk/openai';
 import { streamText, tool } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { verifySessionToken, readSessionSecret, SESSION_COOKIE_NAME } from '@verifactu/utils';
@@ -95,8 +96,23 @@ export async function POST(req: Request) {
       );
     }
 
+    // Usar AI Gateway de Vercel en lugar de OpenAI directo
+    const aiGatewayApiKey = process.env.CLAVE_API_AI_VERCEL || process.env.VERCEL_AI_API_KEY;
+    
+    if (!aiGatewayApiKey) {
+      console.warn('[Isaak Chat API] AI Gateway key not found, falling back to OpenAI direct');
+    }
+
+    // Crear cliente de OpenAI apuntando a AI Gateway
+    const aiGatewayClient = aiGatewayApiKey
+      ? createOpenAI({
+          apiKey: aiGatewayApiKey,
+          baseURL: 'https://ai-gateway.vercel.sh/v1',
+        })
+      : openai;
+
     const result = await streamText({
-      model: openai('gpt-4-turbo'),
+      model: aiGatewayClient('gpt-4-turbo'),
       system: buildIsaakSystem(contextType),
       messages,
       temperature: 0.7,
