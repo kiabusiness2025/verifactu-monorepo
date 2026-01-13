@@ -30,4 +30,7 @@ apps/**/public/favicon.png
 # secrets
 secrets/
 **/.env.local
+client_secret_*.json
+*.pem
+*.key
 
