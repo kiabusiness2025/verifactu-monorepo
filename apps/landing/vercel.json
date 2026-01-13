@@ -3,5 +3,10 @@
   "framework": "nextjs",
   "installCommand": "echo '📋 ISAAK: Starting dependency check' && npm install --legacy-peer-deps && echo '✓ Dependencies installed'",
   "buildCommand": "echo '🧠 ISAAK: Starting landing build' && npm run build && echo '✓ Build completed successfully'",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "env": {
+    "SESSION_COOKIE_DOMAIN": ".verifactu.business",
+    "SESSION_COOKIE_SAMESITE": "none",
+    "SESSION_COOKIE_SECURE": "true"
+  }
 }
