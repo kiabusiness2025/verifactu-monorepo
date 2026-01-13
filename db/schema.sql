@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS tenants (
 -- 2) USERS (usuarios app)
 -- =========================
 CREATE TABLE IF NOT EXISTS users (
-    id          uuid PRIMARY KEY,
+    id          text PRIMARY KEY,
     email       text NOT NULL UNIQUE,
     name        text,
     created_at  timestamptz NOT NULL DEFAULT now()
@@ -33,10 +33,10 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS memberships (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id   uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id     text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role        text NOT NULL DEFAULT 'member', -- 'owner','admin','member','asesor'
     status      text NOT NULL DEFAULT 'active', -- 'active','invited','revoked'
-    invited_by  uuid REFERENCES users(id),
+    invited_by  text REFERENCES users(id),
     created_at  timestamptz NOT NULL DEFAULT now(),
     UNIQUE (tenant_id, user_id)
 );
@@ -51,7 +51,7 @@ CREATE INDEX IF NOT EXISTS idx_memberships_tenant_id
 -- 4) USER PREFERENCES (tenant preferido, etc)
 -- =========================
 CREATE TABLE IF NOT EXISTS user_preferences (
-    user_id             uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    user_id             text PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     preferred_tenant_id uuid REFERENCES tenants(id) ON DELETE SET NULL,
     updated_at          timestamptz NOT NULL DEFAULT now()
 );

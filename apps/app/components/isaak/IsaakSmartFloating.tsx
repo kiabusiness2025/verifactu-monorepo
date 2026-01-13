@@ -40,15 +40,6 @@ export function IsaakSmartFloating() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showPreferences, setShowPreferences] = useState(false);
 
-  // Hide if preferences disable this context
-  if (!preferences[`${detection.context}Enabled` as keyof typeof preferences]) {
-    return null;
-  }
-
-  if (!preferences.chatEnabled) {
-    return null;
-  }
-
   const contextKey = `${detection.context}:${detection.role}`;
   const context = getIsaakFloatingContext(
     detection.language,
@@ -223,6 +214,15 @@ export function IsaakSmartFloating() {
     a.click();
     URL.revokeObjectURL(url);
   }, [sessionId, messages]);
+
+  // Hide if preferences disable this context
+  if (!preferences[`${detection.context}Enabled` as keyof typeof preferences]) {
+    return null;
+  }
+
+  if (!preferences.chatEnabled) {
+    return null;
+  }
 
   return (
     <>

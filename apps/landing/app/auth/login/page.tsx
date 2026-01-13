@@ -28,47 +28,23 @@ export default function LoginPage() {
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
     (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://app.verifactu.business");
-  const fallback = `${appUrl.replace(/\/$/, "")}/dashboard`;
-  const resolveNextUrl = React.useCallback(() => {
-    const nextParam = searchParams.get("next");
-    if (!nextParam) return { url: fallback, external: true };
 
-    if (nextParam.startsWith("http")) {
-      try {
-        const target = new URL(nextParam);
-        const appOrigin = new URL(appUrl).origin;
-        if (target.origin === appOrigin) {
-          return { url: nextParam, external: true };
-        }
-      } catch {
-        return { url: fallback, external: true };
-      }
-      return { url: fallback, external: true };
-    }
-
-    if (nextParam.startsWith("/")) {
-      return { url: nextParam, external: false };
-    }
-
-    return { url: fallback, external: true };
-  }, [fallback, searchParams, appUrl]);
-
-  const redirectToNext = React.useCallback(() => {
-    const next = resolveNextUrl();
-    if (next.external) {
-      window.location.href = next.url;
-      return;
-    }
-    router.replace(next.url);
-  }, [resolveNextUrl, router]);
+  // Simple redirect to dashboard after login
+  const redirectToDashboard = React.useCallback(() => {
+    console.log("[🧠 LOGIN] Redirecting to dashboard...");
+    // In dev: http://localhost:3000/dashboard
+    // In prod: https://app.verifactu.business/dashboard
+    window.location.href = `${appUrl}/dashboard`;
+  }, [appUrl]);
 
   // Redirect if already authenticated
   React.useEffect(() => {
     if (!authLoading && user && !hasRedirected.current) {
+      console.log("[🧠 LOGIN] User authenticated, redirecting to dashboard", { uid: user.uid, email: user.email });
       hasRedirected.current = true;
-      redirectToNext();
+      redirectToDashboard();
     }
-  }, [user, authLoading, redirectToNext]);
+  }, [user, authLoading, redirectToDashboard]);
 
   // Don't render anything if authenticated - just show loading
   if (authLoading) {
@@ -106,21 +82,23 @@ export default function LoginPage() {
     setError("");
 
     try {
+      console.log("[🧠 LOGIN] Email login attempt", { email });
       const result = await signInWithEmail(email, password);
 
       if (result.error) {
+        console.error("[🧠 LOGIN] Email login failed", { error: result.error });
         setError(result.error.userMessage);
         showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
       }
 
-      // Redirect to dashboard
+      console.log("[🧠 LOGIN] Email login successful, redirecting...");
       showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión correcto" });
-      redirectToNext();
+      redirectToDashboard();
     } catch (err) {
+      console.error("[🧠 LOGIN] Email login exception", err);
       setError("Error al iniciar sesión. Intenta de nuevo.");
       showToast({ type: "error", title: "Error", message: "Error al iniciar sesión" });
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -131,21 +109,23 @@ export default function LoginPage() {
     setError("");
 
     try {
+      console.log("[🧠 LOGIN] Google login attempt");
       const result = await signInWithGoogle();
 
       if (result.error) {
+        console.error("[🧠 LOGIN] Google login failed", { error: result.error });
         setError(result.error.userMessage);
         showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
       }
 
-      // Redirect to dashboard
+      console.log("[🧠 LOGIN] Google login successful, redirecting...");
       showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión con Google" });
-      redirectToNext();
+      redirectToDashboard();
     } catch (err) {
+      console.error("[🧠 LOGIN] Google login exception", err);
       setError("Error al iniciar sesión con Google. Intenta de nuevo.");
       showToast({ type: "error", title: "Error", message: "Error al iniciar sesión con Google" });
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
