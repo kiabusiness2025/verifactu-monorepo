@@ -85,6 +85,17 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
+        {/* Google Tag Manager */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','GTM-PHP7QW26');`,
+          }}
+        />
+        {/* End Google Tag Manager */}
         {/* Preconnect a servicios externos para mejorar performance */}
         <link rel="preconnect" href="https://firebaseauth.googleapis.com" />
         <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
@@ -92,6 +103,16 @@ export default function RootLayout({
         <link rel="preconnect" href="https://api.stripe.com" />
       </head>
       <body className={display.className}>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-PHP7QW26"
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+          />
+        </noscript>
+        {/* End Google Tag Manager (noscript) */}
         {/* Skip to main content link for accessibility */}
         <a
           href="#main-content"
