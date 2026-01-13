@@ -3,6 +3,7 @@ import { IsaakGreetingCard } from "@/components/isaak/IsaakGreetingCard";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { InsightTicker } from "@/components/dashboard/InsightTicker";
+import { RemoteConfigDemo } from "@/components/RemoteConfigDemo";
 
 const activity = [
   { title: "Factura VF-2040 validada y enviada", time: "Hoy · 09:30" },
@@ -20,6 +21,8 @@ export default function DashboardPage() {
       <DashboardStats />
 
       <QuickActions />
+
+      <RemoteConfigDemo />
 
       <div className="grid gap-4 lg:grid-cols-[2fr,1fr]">
         <InsightTicker />
