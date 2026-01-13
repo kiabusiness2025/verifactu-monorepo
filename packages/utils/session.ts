@@ -103,5 +103,8 @@ function resolveSecure(url: string, secureEnv?: string | null) {
 function resolveSameSite(sameSiteEnv?: string | null): SessionSameSite {
   const normalized = sameSiteEnv?.toLowerCase();
   if (normalized === "strict" || normalized === "none") return normalized;
-  return "lax";
+  // Default to "none" to ensure cookie is sent across subdomains
+  // (verifactu.business ↔ app.verifactu.business) during top-level redirects.
+  // Can be overridden via SESSION_COOKIE_SAMESITE env.
+  return "none";
 }
