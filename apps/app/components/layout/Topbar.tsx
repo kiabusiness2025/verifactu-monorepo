@@ -10,9 +10,10 @@ import { getLandingUrl } from "@/lib/urls";
 
 type TopbarProps = {
   onToggleSidebar: () => void;
+  onOpenPreferences?: () => void;
 };
 
-export function Topbar({ onToggleSidebar }: TopbarProps) {
+export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
   const { company, setCompany, openDrawer } = useIsaakUI();
   const { greeting } = useIsaakContext();
   const { logout, isLoggingOut } = useLogout();
