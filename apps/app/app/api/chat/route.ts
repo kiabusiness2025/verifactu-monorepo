@@ -108,18 +108,24 @@ export async function POST(req: Request) {
             period: z.string().optional(),
           }),
           execute: async ({ startDate, endDate, period }) => {
-            if (!activeTenantId) return { message: 'No hay empresa seleccionada' };
+            if (!activeTenantId) return { message: 'No hay empresa seleccionada', sales: 0, expenses: 0, profit: 0, margin: 0 };
             
             if (!startDate || !endDate) {
               const data = await getCurrentMonthSummary(activeTenantId);
               return {
-                ...data,
+                sales: data.sales,
+                expenses: data.expenses,
+                profit: data.profit,
+                margin: data.margin,
                 message: `Este mes: has facturado ${data.sales}€, gastado ${data.expenses}€. Tu beneficio es ${data.profit}€ (margen del ${data.margin}%)`,
               };
             }
             const data = await calculateTenantProfit(activeTenantId, startDate, endDate);
             return {
-              ...data,
+              sales: data.sales,
+              expenses: data.expenses,
+              profit: data.profit,
+              margin: data.margin,
               message: `En ${period || 'ese periodo'}: has facturado ${data.sales}€, gastado ${data.expenses}€. Tu beneficio es ${data.profit}€ (margen del ${data.margin}%)`,
             };
           },
@@ -132,7 +138,7 @@ export async function POST(req: Request) {
             year: z.number().optional(),
           }),
           execute: async ({ month, year }) => {
-            if (!activeTenantId) return { message: 'No hay empresa seleccionada' };
+            if (!activeTenantId) return { deadline: '', pendingCount: 0, message: 'No hay empresa seleccionada' };
             
             const currentMonth = month || new Date().getMonth() + 1;
             const currentYear = year || new Date().getFullYear();
@@ -162,7 +168,7 @@ export async function POST(req: Request) {
             amount: z.number().optional(),
           }),
           execute: async ({ description, amount }) => {
-            if (!activeTenantId) return { message: 'No hay empresa seleccionada' };
+            if (!activeTenantId) return { categoryId: undefined, categoryName: 'N/A', deductible: false, message: 'No hay empresa seleccionada' };
             
             const categories = await getExpenseCategories();
             const lower = description.toLowerCase();
