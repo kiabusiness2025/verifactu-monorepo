@@ -45,8 +45,8 @@ export function useDeadlineNotifications() {
       title: dd.title,
       date: new Date(year, dd.month - 1, dd.day),
       type: dd.type,
-      context: "dashboard",
-      priority: dd.type === "annual_tax" ? "critical" : "high",
+      context: "dashboard" as const,
+      priority: (dd.type === "annual_tax" ? "critical" : "high") as "critical" | "high",
       notified: false,
     }));
 
@@ -58,7 +58,7 @@ export function useDeadlineNotifications() {
         date: new Date(year + 1, dd.month - 1, dd.day),
         type: dd.type,
         context: "dashboard" as const,
-        priority: (dd.type === "annual_tax" ? "critical" : "high") as const,
+        priority: (dd.type === "annual_tax" ? "critical" : "high") as "critical" | "high",
         notified: false,
       }))
     );
