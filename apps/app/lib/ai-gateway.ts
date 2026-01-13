@@ -8,14 +8,12 @@
  * 
  * Modelos disponibles:
  * - OpenAI: gpt-4-turbo, gpt-4, gpt-3.5-turbo
- * - Anthropic: claude-3-opus, claude-3-sonnet, claude-3-haiku
  * - xAI: grok-2
  * - Google: gemini-pro
  * - Y más...
  */
 
 import { createOpenAI } from '@ai-sdk/openai';
-import { createAnthropic } from '@ai-sdk/anthropic';
 
 /**
  * Inicializar cliente de OpenAI via AI Gateway
@@ -29,14 +27,6 @@ export const createAIGatewayClient = (apiKey: string) => {
   return {
     // Cliente OpenAI (soporta modelos de OpenAI y otros via gateway)
     openai: createOpenAI({
-      apiKey,
-      baseURL: 'https://ai-gateway.vercel.sh/v1',
-      defaultQuery: {},
-      defaultHeaders: {},
-    }),
-
-    // Cliente Anthropic (soporta Claude via gateway)
-    anthropic: createAnthropic({
       apiKey,
       baseURL: 'https://ai-gateway.vercel.sh/v1',
     }),
@@ -76,35 +66,6 @@ export const AI_MODELS = {
     bestFor: ['respuestas rápidas', 'tareas simples'],
   },
 
-  // Anthropic - Claude series
-  'anthropic/claude-3-opus': {
-    provider: 'Anthropic',
-    name: 'Claude 3 Opus',
-    cost: '$$',
-    speed: 'normal',
-    context: 200000,
-    recommended: false,
-    bestFor: ['análisis profundo', 'reasoning complejo'],
-  },
-  'anthropic/claude-3-sonnet': {
-    provider: 'Anthropic',
-    name: 'Claude 3 Sonnet',
-    cost: '$',
-    speed: 'rápido',
-    context: 200000,
-    recommended: false,
-    bestFor: ['tareas generales', 'balance velocidad-calidad'],
-  },
-  'anthropic/claude-3-haiku': {
-    provider: 'Anthropic',
-    name: 'Claude 3 Haiku',
-    cost: '$',
-    speed: 'muy rápido',
-    context: 200000,
-    recommended: false,
-    bestFor: ['respuestas rápidas', 'bajo costo'],
-  },
-
   // xAI - Grok
   'xai/grok-2': {
     provider: 'xAI',
@@ -137,8 +98,8 @@ export const getRecommendedModel = (context: 'dashboard' | 'landing' | 'admin') 
       // Para dashboard: GPT-4 Turbo (análisis contable)
       return 'openai/gpt-4-turbo';
     case 'admin':
-      // Para admin: Claude Opus (reasoning complejo)
-      return 'anthropic/claude-3-opus';
+      // Para admin: GPT-4 Turbo (análisis contable avanzado)
+      return 'openai/gpt-4-turbo';
     case 'landing':
       // Para landing: Grok o GPT-3.5 (respuestas rápidas)
       return 'openai/gpt-3.5-turbo';
