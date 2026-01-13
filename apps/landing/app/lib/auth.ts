@@ -133,9 +133,23 @@ export const signInWithEmail = async (
     }
 
     // Mint session cookie once here
-    await mintSessionCookie(userCredential.user);
+    try {
+      await mintSessionCookie(userCredential.user);
+    } catch (cookieError) {
+      console.error("Failed to mint session cookie after email login:", cookieError);
+      return {
+        user: null,
+        error: {
+          code: "auth/session-mint-failed",
+          message: "Session mint failed",
+          userMessage: "Error al crear tu sesión. Por favor, intenta de nuevo o contacta soporte.",
+        },
+      };
+    }
+
     return { user: userCredential.user, error: null };
   } catch (error) {
+    console.error("Email sign-in error:", error);
     return {
       user: null,
       error: getErrorMessage(error as AuthError),
@@ -154,9 +168,23 @@ export const signInWithGoogle = async (): Promise<
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
 
-    await mintSessionCookie(userCredential.user);
+    try {
+      await mintSessionCookie(userCredential.user);
+    } catch (cookieError) {
+      console.error("Failed to mint session cookie after Google login:", cookieError);
+      return {
+        user: null,
+        error: {
+          code: "auth/session-mint-failed",
+          message: "Session mint failed",
+          userMessage: "Error al crear tu sesión. Por favor, intenta de nuevo o contacta soporte.",
+        },
+      };
+    }
+
     return { user: userCredential.user, error: null };
   } catch (error) {
+    console.error("Google sign-in error:", error);
     return {
       user: null,
       error: getErrorMessage(error as AuthError),

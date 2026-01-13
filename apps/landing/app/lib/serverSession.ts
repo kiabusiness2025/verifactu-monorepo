@@ -5,14 +5,43 @@ import type { User } from "firebase/auth";
  * with the user's Firebase ID token.
  */
 export async function mintSessionCookie(user: User) {
-  const idToken = await user.getIdToken(true);
-  const res = await fetch("/api/auth/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken }),
-  });
-  if (!res.ok) throw new Error("Failed to mint session cookie");
-  return res.json();
+  try {
+    console.log("[🧠 AUTH] mintSessionCookie START", {
+      uid: user.uid,
+      email: user.email,
+      emailVerified: user.emailVerified,
+    });
+
+    const idToken = await user.getIdToken(true);
+    console.log("[🧠 AUTH] Got Firebase idToken");
+
+    const res = await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("[🧠 AUTH] Session endpoint failed", {
+        status: res.status,
+        statusText: res.statusText,
+        error: errorText,
+      });
+      throw new Error(
+        `Session mint failed (${res.status}): ${errorText || res.statusText}`
+      );
+    }
+
+    const result = await res.json();
+    console.log("[🧠 AUTH] Session cookie minted successfully");
+    return result;
+  } catch (error) {
+    console.error("[🧠 AUTH] mintSessionCookie ERROR", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
 }
 
 /**

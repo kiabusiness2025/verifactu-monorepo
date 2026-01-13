@@ -100,56 +100,96 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
 }
 
 export async function POST(req: Request) {
+  console.log("[📋 API] /api/auth/session START");
   initFirebaseAdmin();
 
-  const { idToken } = await req.json().catch(() => ({}));
-  if (!idToken) {
-    return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
+  try {
+    const { idToken } = await req.json().catch(() => ({}));
+    if (!idToken) {
+      console.error("[📋 API] Missing idToken in request body");
+      return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
+    }
+
+    console.log("[📋 API] Verifying idToken with Firebase Admin");
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    console.log("[📋 API] idToken verified", {
+      uid: decoded.uid,
+      email: decoded.email,
+    });
+
+    // Obtener o crear tenant para el usuario
+    console.log("[📋 API] Getting or creating tenant");
+    const tenantId = await getOrCreateTenantForUser(decoded.uid, decoded.email || "");
+    if (!tenantId) {
+      console.error("[📋 API] Failed to get/create tenant for user");
+      return NextResponse.json(
+        { error: "Failed to create user session" },
+        { status: 500 }
+      );
+    }
+    console.log("[📋 API] Tenant resolved", { tenantId });
+
+    const rolesRaw = (decoded as any).roles ?? (decoded as any).role ?? [];
+    const tenantsRaw = (decoded as any).tenants ?? (decoded as any).tenant ?? [];
+    const roles = Array.isArray(rolesRaw)
+      ? rolesRaw.map((role) => String(role))
+      : rolesRaw
+        ? [String(rolesRaw)]
+        : [];
+    const tenants = Array.isArray(tenantsRaw)
+      ? tenantsRaw.map((tenant) => String(tenant))
+      : tenantsRaw
+        ? [String(tenantsRaw)]
+        : [];
+
+    const payload: SessionPayload = {
+      uid: decoded.uid,
+      email: decoded.email ?? null,
+      tenantId: tenantId || undefined,
+      roles,
+      tenants,
+      ver: 1,
+    };
+
+    console.log("[📋 API] Signing session token");
+    const secret = readSessionSecret();
+    const token = await signSessionToken({ payload, secret, expiresIn: "30d" });
+    console.log("[📋 API] Session token signed successfully");
+
+    const url = new URL(req.url);
+    const host = req.headers.get("host");
+    console.log("[📋 API] Building cookie options", {
+      host,
+      domain: process.env.SESSION_COOKIE_DOMAIN,
+      sameSite: process.env.SESSION_COOKIE_SAMESITE,
+      secure: process.env.SESSION_COOKIE_SECURE,
+    });
+
+    const cookieOpts = buildSessionCookieOptions({
+      url: url.toString(),
+      host,
+      domainEnv: process.env.SESSION_COOKIE_DOMAIN,
+      secureEnv: process.env.SESSION_COOKIE_SECURE,
+      sameSiteEnv: process.env.SESSION_COOKIE_SAMESITE,
+      value: token,
+      maxAgeSeconds: 60 * 60 * 24 * 30,
+    });
+
+    const res = NextResponse.json({ ok: true });
+    res.cookies.set(cookieOpts);
+    console.log("[📋 API] Session cookie set successfully");
+    return res;
+  } catch (error) {
+    console.error("[📋 API] Error in POST /api/auth/session:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 }
+    );
   }
-
-  const decoded = await admin.auth().verifyIdToken(idToken);
-  
-  // Obtener o crear tenant para el usuario
-  const tenantId = await getOrCreateTenantForUser(decoded.uid, decoded.email || "");
-  
-  const rolesRaw = (decoded as any).roles ?? (decoded as any).role ?? [];
-  const tenantsRaw = (decoded as any).tenants ?? (decoded as any).tenant ?? [];
-  const roles = Array.isArray(rolesRaw)
-    ? rolesRaw.map((role) => String(role))
-    : rolesRaw
-      ? [String(rolesRaw)]
-      : [];
-  const tenants = Array.isArray(tenantsRaw)
-    ? tenantsRaw.map((tenant) => String(tenant))
-    : tenantsRaw
-      ? [String(tenantsRaw)]
-      : [];
-
-  const payload: SessionPayload = {
-    uid: decoded.uid,
-    email: decoded.email ?? null,
-    tenantId: tenantId || undefined,
-    roles,
-    tenants,
-    ver: 1,
-  };
-
-  const secret = readSessionSecret();
-  const token = await signSessionToken({ payload, secret, expiresIn: "30d" });
-
-  const url = new URL(req.url);
-  const host = req.headers.get("host");
-  const cookieOpts = buildSessionCookieOptions({
-    url: url.toString(),
-    host,
-    domainEnv: process.env.SESSION_COOKIE_DOMAIN,
-    secureEnv: process.env.SESSION_COOKIE_SECURE,
-    sameSiteEnv: process.env.SESSION_COOKIE_SAMESITE,
-    value: token,
-    maxAgeSeconds: 60 * 60 * 24 * 30,
-  });
-
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(cookieOpts);
-  return res;
 }
