@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  legalName String?  @map("legal_name")
+  nif       String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  
+  users         Membership[]
+  userPref      UserPreference[]
+  subscriptions Subscription[]
+  invoices      Invoice[]
+  payments      Payment[]
+  
+  @@map("tenants")
+}
+
+model User {
+  id        String   @id @db.Uuid
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  
+  memberships       Membership[]
+  preferences       UserPreference?
+  invoicesCreatedBy Invoice[]       @relation("CreatedByUser")
+  
+  @@map("users")
+}
+
+model Membership {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  role      String   @default("member")
+  status    String   @default("active")
+  invitedBy String?  @map("invited_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@index([tenantId])
+  @@map("memberships")
+}
+
+model UserPreference {
+  userId             String   @id @map("user_id") @db.Uuid
+  preferredTenantId  String?  @map("preferred_tenant_id") @db.Uuid
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamptz
+  
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredTenant Tenant? @relation(fields: [preferredTenantId], references: [id], onDelete: SetNull)
+  
+  @@map("user_preferences")
+}
+
+model Plan {
+  id                   Int      @id @default(autoincrement())
+  code                 String   @unique
+  name                 String
+  fixedMonthly         Decimal  @default(0) @map("fixed_monthly")
+  variableRate         Decimal  @default(0) @map("variable_rate")
+  maxInvoicesPerMonth  Int?     @map("max_invoices_per_month")
+  maxRevenuePerMonth   Decimal? @map("max_revenue_per_month")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  
+  subscriptions Subscription[]
+  
+  @@map("plans")
+}
+
+model Subscription {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  planId             Int       @map("plan_id")
+  status             String    @default("active")
+  trialEndsAt        DateTime? @map("trial_ends_at") @db.Timestamptz
+  currentPeriodStart DateTime? @map("current_period_start") @db.Timestamptz
+  currentPeriodEnd   DateTime? @map("current_period_end") @db.Timestamptz
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan   Plan   @relation(fields: [planId], references: [id])
+  
+  @@index([tenantId, status])
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  number        String
+  issueDate     DateTime @map("issue_date") @db.Date
+  customerName  String   @map("customer_name")
+  customerNif   String?  @map("customer_nif")
+  currency      String   @default("EUR") @db.Char(3)
+  amountGross   Decimal  @map("amount_gross")
+  amountTax     Decimal  @map("amount_tax")
+  amountNet     Decimal  @map("amount_net")
+  status        String   @default("draft")
+  notes         String?
+  createdBy     String   @map("created_by") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  tenant       Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdByUser User   @relation("CreatedByUser", fields: [createdBy], references: [id])
+  payments     Payment[]
+  
+  @@index([tenantId])
+  @@map("invoices")
+}
+
+model Payment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId String   @map("invoice_id") @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  amount    Decimal
+  method    String   @default("bank_transfer")
+  reference String?
+  paidAt    DateTime @map("paid_at") @db.Date
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([invoiceId])
+  @@index([tenantId])
+  @@map("payments")
+}
