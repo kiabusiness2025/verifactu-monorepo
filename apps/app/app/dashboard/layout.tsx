@@ -30,26 +30,27 @@ export default function DashboardLayout({
             <Topbar onToggleSidebar={() => setSidebarOpen((v) => !v)} onOpenPreferences={() => setPreferencesOpen(true)} />
             <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6">
               {children}
-          </main>
-          <footer className="mt-auto border-t border-slate-200 bg-white/80">
-            <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <span className="font-semibold text-slate-800">Verifactu Business</span>
-              <div className="flex flex-wrap gap-3 text-xs">
-                <a className="hover:text-blue-700" href={landingUrl}>
-                  Ir a Home
-                </a>
-                <a className="hover:text-blue-700" href="/dashboard/settings">
-                  Configuración
-                </a>
-                <button 
-                  onClick={() => setPreferencesOpen(true)}
-                  className="hover:text-blue-700"
-                >
-                  Preferencias Isaak
-                </button>
+            </main>
+            <footer className="mt-auto border-t border-slate-200 bg-white/80">
+              <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <span className="font-semibold text-slate-800">Verifactu Business</span>
+                <div className="flex flex-wrap gap-3 text-xs">
+                  <a className="hover:text-blue-700" href={landingUrl}>
+                    Ir a Home
+                  </a>
+                  <a className="hover:text-blue-700" href="/dashboard/settings">
+                    Configuración
+                  </a>
+                  <button 
+                    onClick={() => setPreferencesOpen(true)}
+                    className="hover:text-blue-700"
+                  >
+                    Preferencias Isaak
+                  </button>
+                </div>
               </div>
-            </div>
-          </footer>
+            </footer>
+          </div>
         </div>
         <IsaakDrawer />
         
@@ -65,8 +66,7 @@ export default function DashboardLayout({
           isOpen={preferencesOpen}
           onClose={() => setPreferencesOpen(false)}
         />
-      </div>
-    </IsaakUIProvider>
+      </IsaakUIProvider>
     </ProtectedRoute>
   );
 }
