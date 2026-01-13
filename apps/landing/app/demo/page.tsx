@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import Header from "../components/Header";
-import PricingCalculatorModal from "../components/PricingCalculatorModal";
+import PricingCalculatorInline from "../components/PricingCalculatorInline";
 
 type DemoFormState = {
   name: string;
@@ -65,7 +65,7 @@ function DemoRequestModal({
       `Tamaño equipo: ${form.teamSize || "-"}`,
       `Facturas/mes: ${form.invoices || "-"}`,
       `Movimientos/mes: ${form.movements || "-"}`,
-      `Telefono: ${form.phone || "-"}`,
+      `Teléfono: ${form.phone || "-"}`,
       `Notas: ${form.notes || "-"}`,
     ];
 
@@ -104,7 +104,7 @@ function DemoRequestModal({
           className="absolute right-4 top-4 text-slate-400 hover:text-slate-600"
           aria-label="Cerrar"
         >
-          ✕
+          X
         </button>
 
         <div className="space-y-3">
@@ -208,7 +208,7 @@ function DemoRequestModal({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm text-slate-700">
-            Telefono (opcional)
+            Teléfono (opcional)
             <input
               value={form.phone}
               onChange={(e) => setForm((v) => ({ ...v, phone: e.target.value }))}
@@ -258,7 +258,6 @@ export default function DemoPage({
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
-  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isRequestOpen, setIsRequestOpen] = useState(false);
 
   const demoNavLinks = [
@@ -308,7 +307,7 @@ export default function DemoPage({
               </div>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
                 <li>Panel con ventas, gastos y beneficio en un vistazo.</li>
-                <li>Flujo Factura → Validación → Envío VeriFactu.</li>
+                <li>Flujo Factura -> Validación -> Envío VeriFactu.</li>
                 <li>Isaak sugiriendo acciones útiles por sección.</li>
               </ul>
             </div>
@@ -339,7 +338,7 @@ export default function DemoPage({
               >
                 Calcula tu precio
               </button>
-              <span className="px-2 text-slate-400">·</span>
+              <span className="px-2 text-slate-400">.</span>
               <Link className="font-semibold text-[#0060F0] hover:text-[#0080F0]" href="/">
                 Volver a Home
               </Link>
@@ -373,16 +372,39 @@ export default function DemoPage({
               </div>
               <div className="grid gap-4 p-6">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="h-3 w-32 rounded-full bg-slate-200" />
+                  <div className="text-xs font-semibold uppercase text-slate-500">
+                    Resumen mensual
+                  </div>
                   <div className="mt-3 grid grid-cols-3 gap-3">
-                    <div className="h-16 rounded-lg bg-white shadow-sm" />
-                    <div className="h-16 rounded-lg bg-white shadow-sm" />
-                    <div className="h-16 rounded-lg bg-white shadow-sm" />
+                    <div className="rounded-lg bg-white p-3 shadow-sm">
+                      <div className="text-[11px] text-slate-500">Ventas</div>
+                      <div className="mt-1 text-lg font-semibold text-[#002060]">
+                        18.240 €
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-white p-3 shadow-sm">
+                      <div className="text-[11px] text-slate-500">Gastos</div>
+                      <div className="mt-1 text-lg font-semibold text-[#002060]">
+                        6.430 €
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-white p-3 shadow-sm">
+                      <div className="text-[11px] text-slate-500">Beneficio</div>
+                      <div className="mt-1 text-lg font-semibold text-[#002060]">
+                        11.810 €
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="h-3 w-40 rounded-full bg-slate-200" />
-                  <div className="mt-3 h-20 rounded-lg bg-slate-50" />
+                  <div className="text-xs font-semibold uppercase text-slate-500">
+                    Actividad reciente
+                  </div>
+                  <div className="mt-3 space-y-2 text-xs text-slate-600">
+                    <div>Factura #F-1024 · 1.240 € · Enviada</div>
+                    <div>Gasto Proveedor · 180 € · Registrado</div>
+                    <div>Factura #F-1025 · 980 € · Pendiente</div>
+                  </div>
                 </div>
                 <div className="rounded-xl border border-[#0060F0]/20 bg-gradient-to-r from-sky-50/70 to-white p-4">
                   <div className="text-sm font-semibold text-[#002060]">
@@ -395,7 +417,7 @@ export default function DemoPage({
               </div>
             </div>
             <p className="text-xs leading-5 text-slate-500">
-              La demo real se activa tras registro y validación de tu empresa.
+              La demo real se activa tras registro y validacion de tu empresa.
             </p>
           </section>
         </div>
@@ -421,17 +443,7 @@ export default function DemoPage({
             </div>
 
             <div className="mt-6">
-              <button
-                onClick={() => setIsCalculatorOpen(true)}
-                className="w-full rounded-2xl border border-[#0060F0]/25 bg-sky-50/70 p-6 text-left transition hover:bg-sky-50"
-              >
-                <div className="text-lg font-semibold text-slate-900">
-                  Abre la calculadora interactiva
-                </div>
-                <div className="mt-1 text-sm text-slate-600">
-                  Ajusta facturas y movimientos para ver tu cuota exacta
-                </div>
-              </button>
+              <PricingCalculatorInline />
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -460,14 +472,14 @@ export default function DemoPage({
                 </p>
               </div>
             </div>
+
+            <div className="mt-6 rounded-2xl border border-[#0060F0]/15 bg-gradient-to-r from-sky-50/70 to-white p-4 text-sm text-slate-700">
+              Si ya estas convencido, calcula tu precio y solicita la prueba gratuita.
+            </div>
           </div>
         </section>
       </div>
 
-      <PricingCalculatorModal
-        isOpen={isCalculatorOpen}
-        onClose={() => setIsCalculatorOpen(false)}
-      />
       <DemoRequestModal
         isOpen={isRequestOpen}
         onClose={() => setIsRequestOpen(false)}
