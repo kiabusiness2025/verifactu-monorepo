@@ -1,0 +1,222 @@
+import { genkit, z } from '@genkit-ai/core';
+import { enableFirebaseTelemetry } from '@genkit-ai/firebase';
+import { googleAI } from '@genkit-ai/googleai';
+
+// Habilitar telemetría de Firebase para monitoreo en Google Cloud
+enableFirebaseTelemetry();
+
+// Configurar Genkit con Google AI
+const ai = genkit({
+  plugins: [
+    googleAI({
+      apiKey: process.env.GOOGLE_AI_API_KEY,
+    }),
+  ],
+});
+
+// Flow para análisis de facturas con IA
+export const analyzeInvoice = ai.defineFlow(
+  {
+    name: 'analyzeInvoice',
+    inputSchema: z.object({
+      invoiceText: z.string(),
+      customerName: z.string().optional(),
+    }),
+    outputSchema: z.object({
+      extractedData: z.object({
+        customerName: z.string(),
+        nif: z.string().optional(),
+        totalAmount: z.number(),
+        items: z.array(z.object({
+          description: z.string(),
+          quantity: z.number(),
+          price: z.number(),
+        })),
+        date: z.string(),
+      }),
+      confidence: z.number(),
+      warnings: z.array(z.string()).optional(),
+    }),
+  },
+  async (input) => {
+    const prompt = `
+Analiza el siguiente texto de factura y extrae la información estructurada.
+
+Texto de la factura:
+${input.invoiceText}
+
+${input.customerName ? `Cliente esperado: ${input.customerName}` : ''}
+
+Extrae:
+1. Nombre del cliente
+2. NIF/CIF si está presente
+3. Importe total
+4. Lista de productos/servicios con cantidad y precio
+5. Fecha de emisión
+
+Devuelve los datos en formato JSON estructurado.
+`;
+
+    const result = await ai.generate({
+      model: 'googleai/gemini-1.5-flash',
+      prompt,
+      output: {
+        schema: z.object({
+          customerName: z.string(),
+          nif: z.string().optional(),
+          totalAmount: z.number(),
+          items: z.array(z.object({
+            description: z.string(),
+            quantity: z.number(),
+            price: z.number(),
+          })),
+          date: z.string(),
+        }),
+      },
+    });
+
+    return {
+      extractedData: result.output!,
+      confidence: 0.85, // Placeholder - en producción calcular basado en respuesta
+      warnings: [],
+    };
+  }
+);
+
+// Flow para asistencia de Isaak (chatbot inteligente)
+export const isaakChat = ai.defineFlow(
+  {
+    name: 'isaakChat',
+    inputSchema: z.object({
+      message: z.string(),
+      tenantId: z.string(),
+      userId: z.string(),
+      context: z.object({
+        recentInvoices: z.number().optional(),
+        totalRevenue: z.number().optional(),
+        pendingTasks: z.number().optional(),
+      }).optional(),
+    }),
+    outputSchema: z.object({
+      response: z.string(),
+      suggestedActions: z.array(z.object({
+        label: z.string(),
+        action: z.string(),
+      })).optional(),
+    }),
+  },
+  async (input) => {
+    const contextInfo = input.context
+      ? `
+Contexto del usuario:
+- Facturas recientes: ${input.context.recentInvoices || 0}
+- Ingresos totales: ${input.context.totalRevenue || 0}€
+- Tareas pendientes: ${input.context.pendingTasks || 0}
+`
+      : '';
+
+    const prompt = `
+Eres Isaak, el asistente inteligente de Verifactu Business, una plataforma de facturación española.
+Tu objetivo es ayudar a los usuarios con sus facturas, gastos, beneficios y cumplimiento de VeriFactu.
+
+${contextInfo}
+
+Usuario: ${input.message}
+
+Responde de forma amigable, concisa y práctica. Si puedes sugerir acciones específicas, hazlo.
+`;
+
+    const result = await ai.generate({
+      model: 'googleai/gemini-1.5-flash',
+      prompt,
+    });
+
+    // Detectar acciones sugeridas en la respuesta
+    const suggestedActions: Array<{ label: string; action: string }> = [];
+    
+    if (result.text.toLowerCase().includes('crear factura')) {
+      suggestedActions.push({
+        label: 'Crear nueva factura',
+        action: 'create-invoice',
+      });
+    }
+    
+    if (result.text.toLowerCase().includes('ver informe') || result.text.toLowerCase().includes('generar informe')) {
+      suggestedActions.push({
+        label: 'Ver informes',
+        action: 'view-reports',
+      });
+    }
+
+    return {
+      response: result.text,
+      suggestedActions: suggestedActions.length > 0 ? suggestedActions : undefined,
+    };
+  }
+);
+
+// Flow para verificación de VeriFactu
+export const verifactuCompliance = ai.defineFlow(
+  {
+    name: 'verifactuCompliance',
+    inputSchema: z.object({
+      invoiceData: z.object({
+        number: z.string(),
+        issueDate: z.string(),
+        customerName: z.string(),
+        customerNif: z.string().optional(),
+        items: z.array(z.any()),
+        totalGross: z.number(),
+        totalTax: z.number(),
+      }),
+    }),
+    outputSchema: z.object({
+      isCompliant: z.boolean(),
+      issues: z.array(z.object({
+        severity: z.enum(['error', 'warning', 'info']),
+        field: z.string(),
+        message: z.string(),
+        suggestion: z.string().optional(),
+      })),
+      score: z.number(),
+    }),
+  },
+  async (input) => {
+    const issues: Array<{
+      severity: 'error' | 'warning' | 'info';
+      field: string;
+      message: string;
+      suggestion?: string;
+    }> = [];
+
+    // Validaciones básicas
+    if (!input.invoiceData.customerNif) {
+      issues.push({
+        severity: 'warning',
+        field: 'customerNif',
+        message: 'NIF/CIF del cliente no proporcionado',
+        suggestion: 'Para cumplir con VeriFactu, es recomendable incluir el NIF/CIF',
+      });
+    }
+
+    if (input.invoiceData.items.length === 0) {
+      issues.push({
+        severity: 'error',
+        field: 'items',
+        message: 'La factura no tiene líneas de detalle',
+        suggestion: 'Agrega al menos un producto o servicio',
+      });
+    }
+
+    const isCompliant = !issues.some((i) => i.severity === 'error');
+    const score = isCompliant ? (1 - issues.length * 0.1) : 0.5;
+
+    return {
+      isCompliant,
+      issues,
+      score: Math.max(0, Math.min(1, score)),
+    };
+  }
+);
+
+export default ai;

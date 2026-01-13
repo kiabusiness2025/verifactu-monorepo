@@ -1,0 +1,179 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserId() {
+      return request.auth.uid;
+    }
+    
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+    
+    // Check if user is member of a tenant
+    function isTenantMember(tenantId) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/tenants/$(tenantId)/members/$(getUserId()));
+    }
+    
+    // Check if user is owner or admin of tenant
+    function isTenantAdmin(tenantId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(getUserId())).data.role in ['owner', 'admin'];
+    }
+    
+    // Check if user is owner of tenant
+    function isTenantOwner(tenantId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/tenants/$(tenantId)/members/$(getUserId())).data.role == 'owner';
+    }
+    
+    // ========== TENANTS ==========
+    match /tenants/{tenantId} {
+      // Read: Only members can read tenant data
+      allow read: if isTenantMember(tenantId);
+      
+      // Create: Any authenticated user can create a tenant (becomes owner)
+      allow create: if isAuthenticated() && 
+                       isEmailVerified() &&
+                       request.resource.data.createdBy == getUserId();
+      
+      // Update: Only admin or owner can update tenant
+      allow update: if isTenantAdmin(tenantId);
+      
+      // Delete: Only owner can delete tenant
+      allow delete: if isTenantOwner(tenantId);
+      
+      // Members subcollection
+      match /members/{userId} {
+        // Read: Any tenant member can read members list
+        allow read: if isTenantMember(tenantId);
+        
+        // Create: Admin can add members
+        allow create: if isTenantAdmin(tenantId) &&
+                         request.resource.data.role in ['owner', 'admin', 'member'];
+        
+        // Update: Admin can update member roles (except cannot demote owner)
+        allow update: if isTenantAdmin(tenantId) &&
+                         (resource.data.role != 'owner' || isTenantOwner(tenantId));
+        
+        // Delete: Admin can remove members (except owner)
+        allow delete: if isTenantAdmin(tenantId) && 
+                         resource.data.role != 'owner';
+      }
+    }
+    
+    // ========== INVOICES ==========
+    match /invoices/{invoiceId} {
+      // Read: Members of the invoice's tenant
+      allow read: if isAuthenticated() && 
+                     isTenantMember(resource.data.tenantId);
+      
+      // Create: Members can create invoices for their tenant
+      allow create: if isAuthenticated() && 
+                       isEmailVerified() &&
+                       isTenantMember(request.resource.data.tenantId) &&
+                       request.resource.data.createdBy == getUserId() &&
+                       request.resource.data.createdAt == request.time;
+      
+      // Update: Members can update invoices of their tenant
+      allow update: if isAuthenticated() && 
+                       isTenantMember(resource.data.tenantId) &&
+                       request.resource.data.tenantId == resource.data.tenantId && // Cannot change tenant
+                       request.resource.data.createdBy == resource.data.createdBy; // Cannot change creator
+      
+      // Delete: Only admin or owner can delete invoices
+      allow delete: if isAuthenticated() && 
+                       isTenantAdmin(resource.data.tenantId);
+    }
+    
+    // ========== PAYMENTS ==========
+    match /payments/{paymentId} {
+      // Read: Members of the payment's tenant
+      allow read: if isAuthenticated() && 
+                     isTenantMember(resource.data.tenantId);
+      
+      // Create: Members can create payments for their tenant's invoices
+      allow create: if isAuthenticated() && 
+                       isTenantMember(request.resource.data.tenantId) &&
+                       request.resource.data.createdAt == request.time;
+      
+      // Update: Admin can update payments
+      allow update: if isTenantAdmin(resource.data.tenantId);
+      
+      // Delete: Only admin or owner can delete payments
+      allow delete: if isTenantAdmin(resource.data.tenantId);
+    }
+    
+    // ========== CHAT MESSAGES (Isaak) ==========
+    match /chat_messages/{messageId} {
+      // Read: User can read their own messages
+      allow read: if isAuthenticated() && 
+                     (resource.data.userId == getUserId() || 
+                      resource.data.tenantId != null && isTenantMember(resource.data.tenantId));
+      
+      // Create: Users can create their own messages
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == getUserId() &&
+                       request.resource.data.createdAt == request.time;
+      
+      // Update/Delete: Not allowed (chat messages are immutable)
+      allow update, delete: if false;
+    }
+    
+    // ========== NOTIFICATIONS ==========
+    match /notifications/{notificationId} {
+      // Read: User can read their own notifications
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == getUserId();
+      
+      // Create: System can create notifications (or admin for their tenant users)
+      allow create: if isAuthenticated() && 
+                       (request.resource.data.userId == getUserId() ||
+                        (request.resource.data.tenantId != null && isTenantAdmin(request.resource.data.tenantId)));
+      
+      // Update: User can mark their own notifications as read
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == getUserId() &&
+                       request.resource.data.userId == resource.data.userId; // Cannot change user
+      
+      // Delete: User can delete their own notifications
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == getUserId();
+    }
+    
+    // ========== USER PROFILES ==========
+    match /user_profiles/{userId} {
+      // Read: User can read their own profile, tenant admins can read their members' profiles
+      allow read: if isAuthenticated() && 
+                     (userId == getUserId() || 
+                      (resource.data.tenantIds != null && 
+                       resource.data.tenantIds.hasAny([getUserId()])));
+      
+      // Create: Users can create their own profile
+      allow create: if isAuthenticated() && 
+                       userId == getUserId() &&
+                       request.resource.data.createdAt == request.time;
+      
+      // Update: Users can update their own profile
+      allow update: if isAuthenticated() && 
+                       userId == getUserId();
+      
+      // Delete: Users can delete their own profile
+      allow delete: if isAuthenticated() && 
+                       userId == getUserId();
+    }
+    
+    // ========== DEFAULT: DENY ALL ==========
+    // Any other path is denied by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

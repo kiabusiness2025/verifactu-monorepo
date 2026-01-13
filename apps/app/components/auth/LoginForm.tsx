@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
+  OAuthProvider,
   sendPasswordResetEmail,
   sendEmailVerification,
 } from 'firebase/auth';
@@ -35,6 +36,9 @@ export function LoginForm() {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         trackLogin('email');
         
+        // Sincronizar con Prisma
+        await syncUserWithPrisma(userCredential.user);
+        
         // Redirigir al dashboard
         router.push('/dashboard');
       } else {
@@ -47,6 +51,9 @@ export function LoginForm() {
           await sendEmailVerification(userCredential.user);
           setSuccess('¡Cuenta creada! Revisa tu email para verificar tu cuenta.');
         }
+        
+        // Sincronizar con Prisma (crear tenant, membership, etc.)
+        await syncUserWithPrisma(userCredential.user);
         
         // Redirigir al dashboard
         router.push('/dashboard');
@@ -73,18 +80,65 @@ export function LoginForm() {
     }
   };
 
+  const syncUserWithPrisma = async (user: any) => {
+    try {
+      await fetch('/api/auth/sync-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          emailVerified: user.emailVerified,
+        }),
+      });
+    } catch (error) {
+      console.error('Error syncing user with Prisma:', error);
+      // No bloqueamos el login si falla la sincronización
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);
 
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
       trackLogin('google');
+      
+      // Sincronizar con Prisma
+      await syncUserWithPrisma(userCredential.user);
+      
       router.push('/dashboard');
     } catch (err: any) {
       console.error('Google auth error:', err);
       setError('Error al iniciar sesión con Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMicrosoftLogin = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const provider = new OAuthProvider('microsoft.com');
+      provider.setCustomParameters({
+        tenant: 'common', // Permite cuentas personales y de trabajo/escuela
+      });
+      const userCredential = await signInWithPopup(auth, provider);
+      trackLogin('microsoft');
+      
+      // Sincronizar con Prisma
+      await syncUserWithPrisma(userCredential.user);
+      
+      router.push('/dashboard');
+    } catch (err: any) {
+      console.error('Microsoft auth error:', err);
+      setError('Error al iniciar sesión con Microsoft');
     } finally {
       setLoading(false);
     }
@@ -245,6 +299,17 @@ export function LoginForm() {
           disabled={loading}
           className="mt-4 w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 py-2 px-4 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
         >
+
+        <button
+          onClick={handleMicrosoftLogin}
+          disabled={loading}
+          className="mt-3 w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 py-2 px-4 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 23 23" fill="currentColor">
+            <path d="M11 0H0v11h11V0zM23 0H12v11h11V0zM11 12H0v11h11V12zM23 12H12v11h11V12z" />
+          </svg>
+          Microsoft
+        </button>
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
               fill="currentColor"
