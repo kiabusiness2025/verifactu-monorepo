@@ -4,10 +4,10 @@ import dynamic from "next/dynamic";
 import { Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "./context/AuthContext";
-import CookieBanner from "./components/CookieBanner";
-import DevStatusBanner from "./components/DevStatusBanner";
-import { ToastProvider } from "./components/Toast";
-import { GoogleTagManager } from "./components/GoogleTagManager";
+import CookieBanner from "../components/CookieBanner";
+import DevStatusBanner from "../components/DevStatusBanner";
+import { ToastProvider } from "../components/Toast";
+import { GoogleTagManager } from "../components/GoogleTagManager";
 
 import "./globals.css";
 
