@@ -1,32 +1,16 @@
-import { initializeApp, getApps } from "firebase/app";
+import { remoteConfig as firebaseRemoteConfig } from "./firebase";
 import {
-  getRemoteConfig,
   fetchAndActivate,
   getValue,
   RemoteConfig,
 } from "firebase/remote-config";
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-const isConfigComplete = Object.values(firebaseConfig).every(Boolean);
-
 let remoteConfig: RemoteConfig | null = null;
 
-if (typeof window !== "undefined" && isConfigComplete) {
+if (typeof window !== "undefined") {
   try {
-    // Initialize Firebase if not already initialized
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-    
-    // Initialize Remote Config
-    remoteConfig = getRemoteConfig(app);
+    // Use centralized Firebase Remote Config instance
+    remoteConfig = firebaseRemoteConfig;
     
     // Settings
     remoteConfig.settings = {
@@ -62,8 +46,6 @@ if (typeof window !== "undefined" && isConfigComplete) {
   } catch (error) {
     console.error("Error initializing Firebase Remote Config:", error);
   }
-} else if (typeof window !== "undefined" && !isConfigComplete) {
-  console.warn("Firebase config incomplete: set NEXT_PUBLIC_FIREBASE_* env vars");
 }
 
 /**

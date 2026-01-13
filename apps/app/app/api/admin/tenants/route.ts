@@ -10,6 +10,62 @@ export async function GET(req: Request) {
     // Verificar que el usuario es admin
     await requireAdmin(req);
 
+    const { searchParams } = new URL(req.url);
+    const q = (searchParams.get("q") || "").trim().toLowerCase();
+    const status = (searchParams.get("status") || "all").toLowerCase();
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+    const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
+    const pageSize = Math.min(
+      Math.max(parseInt(searchParams.get("pageSize") || "25", 10), 1),
+      100
+    );
+    const offset = (page - 1) * pageSize;
+
+    const where: string[] = [];
+    const params: Array<string | number> = [];
+
+    if (q) {
+      params.push(`%${q}%`);
+      params.push(`%${q}%`);
+      params.push(`%${q}%`);
+      where.push(
+        `(LOWER(t.legal_name) LIKE $${params.length - 2} OR LOWER(t.name) LIKE $${
+          params.length - 1
+        } OR LOWER(t.tax_id) LIKE $${params.length})`
+      );
+    }
+
+    if (from) {
+      params.push(from);
+      where.push(`t.created_at >= $${params.length}`);
+    }
+    if (to) {
+      params.push(to);
+      where.push(`t.created_at <= $${params.length}`);
+    }
+
+    if (status !== "all") {
+      params.push(status);
+      where.push(`COALESCE(sub.status, 'trial') = $${params.length}`);
+    }
+
+    const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+    const countRows = await query<{ total: number }>(
+      `SELECT COUNT(*)::int as total
+       FROM tenants t
+       LEFT JOIN LATERAL (
+         SELECT status
+         FROM subscriptions s
+         WHERE s.tenant_id = t.id
+         ORDER BY s.created_at DESC
+         LIMIT 1
+       ) sub ON true
+       ${whereClause}`,
+      params
+    );
+
     const tenants = await query<{
       id: string;
       name: string;
@@ -19,8 +75,9 @@ export async function GET(req: Request) {
       cnae: string | null;
       created_at: string;
       members_count: number;
-      invoices_count: number;
-      total_revenue: number;
+      invoices_this_month: number;
+      revenue_this_month: number;
+      status: string | null;
     }>(
       `SELECT 
         t.id,
@@ -31,29 +88,48 @@ export async function GET(req: Request) {
         t.cnae,
         t.created_at,
         COUNT(DISTINCT m.user_id) as members_count,
-        COUNT(DISTINCT i.id) as invoices_count,
-        COALESCE(SUM(i.total), 0) as total_revenue
+        COUNT(DISTINCT i.id) as invoices_this_month,
+        COALESCE(SUM(i.total), 0) as revenue_this_month,
+        COALESCE(sub.status, 'trial') as status
        FROM tenants t
        LEFT JOIN memberships m ON m.tenant_id = t.id AND m.status = 'active'
        LEFT JOIN invoices i ON i.tenant_id = t.id AND i.status IN ('sent', 'paid')
+         AND i.issue_date >= DATE_TRUNC('month', CURRENT_DATE)
+         AND i.issue_date < (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month')
+       LEFT JOIN LATERAL (
+         SELECT status
+         FROM subscriptions s
+         WHERE s.tenant_id = t.id
+         ORDER BY s.created_at DESC
+         LIMIT 1
+       ) sub ON true
+       ${whereClause}
        GROUP BY t.id, t.name, t.legal_name, t.tax_id, t.address, t.cnae, t.created_at
-       ORDER BY t.created_at DESC`
+       ORDER BY t.created_at DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, pageSize, offset]
     );
 
     // Transformar a camelCase
-    const transformedTenants = tenants.map(t => ({
+    const transformedTenants = tenants.map((t) => ({
       id: t.id,
       legalName: t.legal_name,
-      taxId: t.tax_id,
+      taxId: t.tax_id || "",
       address: t.address,
       cnae: t.cnae,
       createdAt: t.created_at,
-      members_count: t.members_count,
-      invoices_count: t.invoices_count,
-      total_revenue: parseFloat(String(t.total_revenue || 0)),
+      membersCount: Number(t.members_count || 0),
+      invoicesThisMonth: Number(t.invoices_this_month || 0),
+      revenueThisMonth: parseFloat(String(t.revenue_this_month || 0)),
+      status: t.status || "trial",
     }));
 
-    return NextResponse.json({ ok: true, tenants: transformedTenants });
+    return NextResponse.json({
+      items: transformedTenants,
+      page,
+      pageSize,
+      total: countRows[0]?.total || 0,
+    });
   } catch (error) {
     console.error("Error fetching tenants:", error);
     
@@ -126,7 +202,6 @@ export async function POST(req: Request) {
     );
 
     return NextResponse.json({
-      ok: true,
       tenant: {
         id: tenant.id,
         legalName: tenant.legal_name,
@@ -134,9 +209,10 @@ export async function POST(req: Request) {
         address: tenant.address,
         cnae: tenant.cnae,
         createdAt: tenant.created_at,
-        members_count: 0,
-        invoices_count: 0,
-        total_revenue: 0,
+        membersCount: 0,
+        invoicesThisMonth: 0,
+        revenueThisMonth: 0,
+        status: "trial",
       },
     });
   } catch (error) {

@@ -6,6 +6,7 @@ import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { IsaakUIProvider } from '@/context/IsaakUIContext';
 import { GoogleTagManager } from '@/components/GoogleTagManager';
+import { FirebaseAnalytics } from '@/components/FirebaseAnalytics';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -50,6 +51,7 @@ export default function RootLayout({
         <GoogleTagManager />
       </head>
       <body className={`${outfit.className} dark:bg-gray-900`}>
+        <FirebaseAnalytics />
         <ThemeProvider>
           <SidebarProvider>
             <IsaakUIProvider>{children}</IsaakUIProvider>

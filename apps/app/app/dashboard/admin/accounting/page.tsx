@@ -1,193 +1,192 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { BarChart3, Download, FileText, Send, TrendingUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { adminGet, type AccountingData } from "@/lib/adminApi";
 
-type GlobalStats = {
-  total_invoices: number;
-  total_expenses: number;
-  total_revenue: number;
-  total_costs: number;
-  profit: number;
-  margin: number;
-};
+type PeriodOption = "current_month" | "last_quarter" | "custom";
 
-type MonthlyData = {
-  month: string;
-  revenue: number;
-  expenses: number;
-  profit: number;
-};
-
-export default function AccountingPage() {
-  const [stats, setStats] = useState<GlobalStats | null>(null);
-  const [monthly, setMonthly] = useState<MonthlyData[]>([]);
+export default function AdminAccountingPage() {
+  const [period, setPeriod] = useState<PeriodOption>("current_month");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [data, setData] = useState<AccountingData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState("current_month");
+  const [error, setError] = useState("");
+
+  const query = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("period", period);
+    if (period === "custom") {
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+    }
+    return params.toString();
+  }, [period, from, to]);
 
   useEffect(() => {
-    fetchData();
-  }, [period]);
-
-  async function fetchData() {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/accounting?period=${period}`);
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data.stats);
-        setMonthly(data.monthly);
+    let mounted = true;
+    async function load() {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await adminGet<AccountingData>(`/api/admin/accounting?${query}`);
+        if (mounted) setData(res);
+      } catch (err) {
+        if (mounted) setError(err instanceof Error ? err.message : "Error al cargar");
+      } finally {
+        if (mounted) setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
     }
-  }
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [query]);
 
   return (
     <main className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Contabilidad Global</h1>
-        <p className="text-sm text-gray-600">Vista consolidada de todos los tenants</p>
-      </div>
+      <header className="space-y-2">
+        <h1 className="text-2xl font-semibold text-slate-900">Contabilidad global</h1>
+        <p className="text-sm text-slate-600">
+          KPIs y ranking por empresa para el periodo seleccionado.
+        </p>
+      </header>
 
-      {/* Selector de período */}
-      <div className="flex gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
         {[
           { value: "current_month", label: "Este mes" },
-          { value: "last_3_months", label: "Últimos 3 meses" },
-          { value: "current_year", label: "Este año" },
-          { value: "all_time", label: "Todo el tiempo" },
+          { value: "last_quarter", label: "Ultimo trimestre" },
+          { value: "custom", label: "Rango personalizado" },
         ].map((opt) => (
           <button
             key={opt.value}
-            onClick={() => setPeriod(opt.value)}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+            onClick={() => setPeriod(opt.value as PeriodOption)}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
               period === opt.value
-                ? "bg-blue-100 text-blue-700"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             {opt.label}
           </button>
         ))}
+        {period === "custom" && (
+          <div className="flex flex-wrap gap-2">
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
+          </div>
+        )}
       </div>
 
-      {/* KPIs */}
       {loading ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600">Cargando datos...</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+          Cargando contabilidad...
         </div>
-      ) : stats ? (
+      ) : error ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          {error}
+        </div>
+      ) : data ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Ingresos</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.total_revenue.toLocaleString()}€
-                  </p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-green-500" />
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="text-xs text-slate-500">Ingresos</div>
+              <div className="mt-1 text-2xl font-semibold text-slate-900">
+                {data.totals.revenue.toLocaleString()} EUR
               </div>
             </div>
-
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Gastos</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.total_costs.toLocaleString()}€
-                  </p>
-                </div>
-                <BarChart3 className="h-8 w-8 text-orange-500" />
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="text-xs text-slate-500">Facturas</div>
+              <div className="mt-1 text-2xl font-semibold text-slate-900">
+                {data.totals.invoices.toLocaleString()}
               </div>
             </div>
-
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Beneficio</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.profit.toLocaleString()}€
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Margen: {stats.margin.toFixed(1)}%
-                  </p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-blue-500" />
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="text-xs text-slate-500">Gastos</div>
+              <div className="mt-1 text-2xl font-semibold text-slate-900">
+                {data.totals.expenses.toLocaleString()}
               </div>
             </div>
-
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Documentos</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.total_invoices + stats.total_expenses}
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    {stats.total_invoices} inv, {stats.total_expenses} exp
-                  </p>
-                </div>
-                <FileText className="h-8 w-8 text-purple-500" />
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="text-xs text-slate-500">Beneficio</div>
+              <div className="mt-1 text-2xl font-semibold text-slate-900">
+                {data.totals.profit.toLocaleString()} EUR
               </div>
             </div>
           </div>
 
-          {/* Evolución mensual */}
-          {monthly.length > 0 && (
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Evolución Mensual</h2>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="border-b border-gray-200">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-gray-600 font-medium">Mes</th>
-                      <th className="px-4 py-2 text-right text-gray-600 font-medium">Ingresos</th>
-                      <th className="px-4 py-2 text-right text-gray-600 font-medium">Gastos</th>
-                      <th className="px-4 py-2 text-right text-gray-600 font-medium">Beneficio</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {monthly.map((m) => (
-                      <tr key={m.month} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="px-4 py-2 text-gray-900 font-medium">{m.month}</td>
-                        <td className="px-4 py-2 text-right text-gray-600">
-                          {m.revenue.toLocaleString()}€
-                        </td>
-                        <td className="px-4 py-2 text-right text-gray-600">
-                          {m.expenses.toLocaleString()}€
-                        </td>
-                        <td className="px-4 py-2 text-right text-gray-900 font-medium">
-                          {m.profit.toLocaleString()}€
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Ingresos mensuales
+            </h2>
+            <div className="mt-4 space-y-2">
+              {data.monthly.map((row) => (
+                <div key={row.month} className="flex items-center gap-3">
+                  <div className="w-20 text-xs text-slate-500">{row.month}</div>
+                  <div className="h-2 flex-1 rounded-full bg-slate-100">
+                    <div
+                      className="h-2 rounded-full bg-slate-900"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          row.revenue === 0 ? 0 : (row.revenue / data.totals.revenue) * 100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="w-28 text-right text-xs text-slate-600">
+                    {row.revenue.toLocaleString()} EUR
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
 
-          {/* Acciones */}
-          <div className="grid gap-3 sm:grid-cols-3">
-            <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-              <Download className="h-4 w-4" />
-              Exportar PDF
-            </button>
-            <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-              <FileText className="h-4 w-4" />
-              Generar Modelos
-            </button>
-            <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-              <Send className="h-4 w-4" />
-              Enviar Reportes
-            </button>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Top empresas por facturacion
+            </h2>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-xs uppercase text-slate-500">
+                  <tr>
+                    <th className="px-3 py-2">Empresa</th>
+                    <th className="px-3 py-2 text-right">Ingresos</th>
+                    <th className="px-3 py-2 text-right">Facturas</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {data.byTenant?.map((row) => (
+                    <tr key={row.tenantId}>
+                      <td className="px-3 py-2 text-slate-700">{row.legalName}</td>
+                      <td className="px-3 py-2 text-right text-slate-600">
+                        {row.revenue.toLocaleString()} EUR
+                      </td>
+                      <td className="px-3 py-2 text-right text-slate-600">
+                        {row.invoices.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                  {!data.byTenant?.length && (
+                    <tr>
+                      <td className="px-3 py-4 text-center text-slate-500" colSpan={3}>
+                        Sin datos para el periodo seleccionado.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       ) : null}

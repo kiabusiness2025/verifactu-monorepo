@@ -26,20 +26,31 @@ export async function GET(req: Request) {
       users.map(async (user) => {
         const tenants = await query<{
           id: string;
+          legal_name: string | null;
           name: string;
           role: string;
         }>(
-          `SELECT t.id, t.name, m.role
+          `SELECT t.id, t.legal_name, t.name, m.role
            FROM tenants t
            JOIN memberships m ON m.tenant_id = t.id
            WHERE m.user_id = $1 AND m.status = 'active'`,
           [user.id]
         );
-        return { ...user, tenants };
+        return {
+          id: user.id,
+          email: user.email,
+          displayName: user.name ?? null,
+          createdAt: user.created_at,
+          tenants: tenants.map((t) => ({
+            tenantId: t.id,
+            legalName: t.legal_name ?? t.name,
+            role: t.role,
+          })),
+        };
       })
     );
 
-    return NextResponse.json({ ok: true, users: usersWithTenants });
+    return NextResponse.json({ users: usersWithTenants });
   } catch (error) {
     console.error("Error fetching users:", error);
     
