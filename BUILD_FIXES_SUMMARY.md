@@ -2,13 +2,13 @@
 
 ## 🎯 Trabajo Completado
 
-Se han identificado y arreglado **2 errores críticos** en los builds de Vercel, junto con mejoras en la configuración de ISAAK para detectar futuros problemas.
+Se han identificado y arreglado **3 errores críticos** en los builds de Vercel, junto con mejoras en la configuración de ISAAK para detectar futuros problemas.
 
 ---
 
 ## 🔧 Errores Corregidos
 
-### Error #1: Importación Faltante
+### Error #1: Importación Faltante (App)
 **Archivo:** `apps/app/lib/ai-gateway.ts`  
 **Problema:** `@ai-sdk/anthropic` no está instalado  
 **Síntoma en Vercel:** `Cannot find module '@ai-sdk/anthropic'`  
@@ -24,7 +24,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 
 ---
 
-### Error #2: Parámetro Inválido
+### Error #2: Parámetro Inválido (App)
 **Archivo:** `apps/app/lib/ai-gateway.ts`  
 **Problema:** `defaultQuery` no existe en OpenAI  
 **Síntoma en Vercel:** `'defaultQuery' does not exist in type 'OpenAIProviderSettings'`  
@@ -44,6 +44,26 @@ openai: createOpenAI({
   apiKey,
   baseURL: 'https://ai-gateway.vercel.sh/v1',
 })
+```
+
+---
+
+### Error #3: Rutas de Importación Incorrectas (Landing)
+**Archivo:** `apps/landing/app/layout.tsx`  
+**Problema:** Imports usando rutas relativas incorrectas  
+**Síntoma en Vercel:** `Module not found: Can't resolve '../components/CookieBanner'`  
+**Solución:** Corregir paths - componentes están en `./components/`, no `../components/`
+
+```typescript
+// ❌ ANTES
+import CookieBanner from "../components/CookieBanner";
+import DevStatusBanner from "../components/DevStatusBanner";
+import { ToastProvider } from "../components/Toast";
+
+// ✅ DESPUÉS
+import CookieBanner from "./components/CookieBanner";
+import DevStatusBanner from "./components/DevStatusBanner";
+import { ToastProvider } from "./components/Toast";
 ```
 
 ---
