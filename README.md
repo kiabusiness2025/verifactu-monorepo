@@ -1,103 +1,287 @@
-## Stripe (suscripciones)
+# 🏢 Verifactu Business - Monorepo
 
-La landing usa enlaces tipo `/api/checkout?plan=pro-monthly` para iniciar el pago de suscripciones.
-1) Crea/actualiza productos y precios en Stripe (idempotente)
-- Define `STRIPE_SECRET_KEY` (test o live)
-- Ejecuta: `node scripts/stripe/sync-products.mjs`
+<div align="center">
 
-El script imprimirá los `PRICE IDs`.
+**Plataforma SaaS completa para emisión de facturas y cumplimiento VeriFactu**
 
-2) Configura estas variables en `apps/landing/.env.local` (y en Vercel)
-- `STRIPE_SECRET_KEY`
-- `STRIPE_PRICE_PRO_MONTHLY`
-- `STRIPE_PRICE_PRO_YEARLY`
-- `STRIPE_PRICE_BUSINESS_MONTHLY`
-- `STRIPE_PRICE_BUSINESS_YEARLY`
-📘 README — Integración completa del monorepo Verifactu Business en Google Cloud
+[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js)](https://nodejs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=next.js)](https://nextjs.org/)
+[![Flutter](https://img.shields.io/badge/Flutter-3.38-02569B?logo=flutter)](https://flutter.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-12-FFCA28?logo=firebase)](https://firebase.google.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791?logo=postgresql)](https://www.postgresql.org/)
+[![Vercel](https://img.shields.io/badge/Vercel-Hosted-000000?logo=vercel)](https://vercel.com/)
 
-Proyecto GCP: verifactu-business-480212
-Monorepo: verifactu-monorepo
-Servicios incluidos: Landing · App · API · Base de Datos
+[Documentación](./docs/README.md) • [Arquitectura](./ARQUITECTURA_UNIFICADA.md) • [Estado](./PROJECT_STATUS.md)
 
-🧭 0. Objetivo del README
+</div>
 
-Este documento explica cómo:
+---
 
-Configurar Google Cloud para este monorepo.
+## 🎯 Descripción
 
-Preparar el entorno en Cloud Shell.
+**Verifactu Business** es una plataforma SaaS moderna para:
 
-Validar repositorio, dependencias y builds.
+✅ **Emisión de facturas** - Crea y gestiona facturas de forma sencilla  
+✅ **Cumplimiento VeriFactu** - Integración con Sistema de Notificación Inmediata (SNI)  
+✅ **Multi-tenant** - Soporte para múltiples empresas por usuario  
+✅ **Autenticación robusta** - Firebase Auth con Google, Microsoft, Facebook  
+✅ **App móvil** - Flutter app con sincronización en tiempo real  
+✅ **Analytics** - Google Tag Manager + Firebase Analytics  
+✅ **AI** - Genkit para análisis de documentos y chatbot  
 
-Configurar e integrar Cloud SQL (Postgres).
+---
 
-Preparar despliegues independientes por servicio:
+## 🚀 Stack Tecnológico
 
-apps/landing → Cloud Run
+### Frontend
+- **Next.js 14** - React framework con SSR
+- **Flutter 3.38** - App móvil iOS/Android/Web
+- **TypeScript** - Type safety en todo el código
+- **Tailwind CSS** - Styling utility-first
+- **Material Design 3** - Design system moderno
 
-apps/app → Cloud Run
+### Backend
+- **Firebase** - Auth, Firestore, Remote Config, Analytics
+- **PostgreSQL** - Base de datos relacional
+- **Prisma ORM** - Query builder type-safe
+- **Genkit AI** - AI flows con Google AI
 
-apps/api → Cloud Run
+### Deployment
+- **Vercel** - Hosting web (Next.js apps)
+- **Firebase Hosting** - Backend services
+- **Google Cloud Run** - Optional API scaling
+- **GitHub Actions** - CI/CD
 
-Estructura de variables de entorno.
+---
 
-Pipeline recomendado con Cloud Build.
+## 📁 Estructura del Proyecto
 
-Este README no crea tablas — solo prepara el entorno para que la app las cree al ejecutar su ORM.
-
----------------------------------------------------------------------
-🚀 1. Configuración inicial del entorno en Cloud Shell
----------------------------------------------------------------------
-1.1 Variables de proyecto
-
-Ejecutar siempre al iniciar Cloud Shell:
-
-export PROJECT_ID="verifactu-business-480212"
-export REGION="europe-west1"
-export REPO_DIR="$HOME/verifactu-monorepo"
-
-gcloud config set project $PROJECT_ID
-gcloud config set run/region $REGION
-
-1.2 Instalar Node versión estable (ya incluido en Cloud Shell)
-
-Cloud Shell viene con Node 20+:
-
-node -v
-npm -v
-
-
-Si hiciera falta:
-
-nvm install 20
-nvm use 20
-
-1.3 Identidad Git recomendada
-git config --global user.name  "Soporte Verifactu"
-git config --global user.email "soporte@verifactu.business"
-
-
-Revisar:
-
-git config --global --list
-
-1.4 Clonar o usar el monorepo existente
-cd $HOME
-git clone https://github.com/kiabusiness2025/verifactu-monorepo.git
-
-Si ya existe:
-
-cd $REPO_DIR
-git pull
-
-│
+```
+verifactu-monorepo/
 ├── apps/
-│   ├── landing/   → Landing corporativa (Next.js)
-│   ├── app/       → App de negocio (Next.js)
-│   └── api/       → API firme VeriFactu (Node + Express)
-│
-├── infra/         → (opcional) Cloud Build, IaC, scripts
-└── README.md
+│   ├── app/                    # 🎯 App principal (Next.js)
+│   │   ├── lib/                # Librerías (firebase, prisma, etc.)
+│   │   ├── components/         # Componentes React
+│   │   ├── hooks/              # Custom hooks
+│   │   ├── app/                # App router (Next.js)
+│   │   └── prisma/             # ORM schema
+│   ├── landing/                # 🌐 Landing page (Next.js)
+│   ├── api/                    # 📡 API backend (opcional)
+│   └── mobile/                 # 📱 Flutter app
+│       ├── lib/
+│       ├── services/           # Auth, Invoice, RemoteConfig
+│       ├── pages/              # UI pages
+│       └── main.dart
+├── packages/
+│   ├── ui/                     # 🎨 Componentes compartidos
+│   ├── utils/                  # Utilidades compartidas
+│   ├── eslint-config/
+│   └── typescript-config/
+├── db/
+│   ├── schema.sql              # PostgreSQL schema
+│   └── init-complete.sql       # Datos iniciales
+├── docs/                       # 📚 Documentación
+├── scripts/                    # 🔧 Scripts de desarrollo
+├── brand/                      # 🎨 Assets de branding
+├── ops/                        # ⚙️ Configuración ops
+└── vercel.json                 # Config Vercel
+```
+
+---
+
+## ⚡ Inicio Rápido
+
+### 1️⃣ Clonar Repositorio
+
+```bash
+git clone https://github.com/kiabusiness2025/verifactu-monorepo.git
+cd verifactu-monorepo
+```
+
+### 2️⃣ Instalar Dependencias
+
+```bash
+# Usar pnpm (recomendado)
+pnpm install
+
+# O usar npm
+npm install
+```
+
+### 3️⃣ Configurar Variables de Entorno
+
+```bash
+# apps/app/.env.local
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=verifactu-business
+DATABASE_URL=postgresql://...
+GOOGLE_AI_API_KEY=...  # Para Genkit (opcional)
+
+# apps/landing/.env.local
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+```
+
+### 4️⃣ Ejecutar en Desarrollo
+
+```bash
+# Web app (puerto 3000)
+pnpm dev:app
+
+# Landing page (puerto 3001)
+pnpm dev:landing
+
+# Flutter app
+cd apps/mobile && flutter run -d chrome
+```
+
+### 5️⃣ Build y Deploy
+
+```bash
+# Build
+pnpm build
+
+# Deploy a Vercel (automático con git push)
+git push origin main
+```
+
+---
+
+## 🔐 Autenticación
+
+### Proveedores Soportados
+- ✅ Email/Password
+- ✅ Google OAuth
+- ✅ Microsoft OAuth
+- ✅ Facebook OAuth
+
+### Flow de Autenticación
+```
+Usuario → Firebase Auth → Sync a Prisma → 
+Auto-crear Tenant + Membership (owner) → 
+Trial 14 días con plan Free
+```
+
+---
+
+## 💾 Base de Datos
+
+### Schema Prisma
+```
+Tenant → Memberships ← User
+              ↓
+          Subscriptions → Plans
+          Invoices → Payments
+```
+
+### Modelos
+- **Tenant** - Empresa/workspace del usuario
+- **User** - Usuario Firebase
+- **Membership** - Relación user-tenant con roles (owner, admin, member)
+- **UserPreference** - Preferencias por usuario
+- **Plan** - Planes de suscripción (free, pro, business)
+- **Subscription** - Suscripción activa del tenant
+- **Invoice** - Facturas
+- **Payment** - Pagos de facturas
+
+---
+
+## 📱 App Móvil (Flutter)
+
+### Características
+- Autenticación Firebase
+- Gestión de facturas con Firestore
+- Feature flags con Remote Config
+- Sincronización en tiempo real
+
+### Comandos
+```bash
+cd apps/mobile
+
+# Desarrollo
+flutter run -d chrome
+
+# Build APK (Android)
+flutter build apk
+
+# Build IPA (iOS)
+flutter build ios
+
+# Build web
+flutter build web
+```
+
+---
+
+## 🎨 UI/Components
+
+- Componentes compartidos en `packages/ui/`
+- Tailwind CSS + Material Design 3
+- Dark mode soportado
+- Responsive design
+
+---
+
+## 📚 Documentación
+
+Ver [docs/README.md](./docs/README.md) para:
+
+- 🏗️ [Arquitectura completa](./ARQUITECTURA_UNIFICADA.md)
+- 🔐 [Autenticación y seguridad](./FIREBASE_CONSOLE_ACCESO.md)
+- 🚀 [Guías de despliegue](./VERCEL_DEPLOYMENT_GUIDE.md)
+- 📱 [Setup Flutter](./FLUTTER_SETUP.md)
+- 🗄️ [Base de datos](./DB_SETUP_GUIDE.md)
+- 🤖 [Genkit AI](./ISAAK_V3_QUICK_START.md)
+
+---
+
+## 🐛 Troubleshooting
+
+### Error: `DATABASE_URL not set`
+```bash
+# Asegúrate de que exista en .env.local
+echo "DATABASE_URL=..." >> apps/app/.env.local
+```
+
+### Error: Firebase credentials not found
+```bash
+# Verifica que las credenciales estén en lib/firebase.ts
+# O configura variables en .env.local
+```
+
+### Flutter app no compila
+```bash
+cd apps/mobile
+flutter clean
+flutter pub get
+flutter run -d chrome
+```
+
+---
+
+## 🔗 Enlaces Útiles
+
+- **Firebase Console:** https://console.firebase.google.com/project/verifactu-business
+- **Vercel Dashboard:** https://vercel.com/kiabusiness2025/verifactu-monorepo
+- **GitHub:** https://github.com/kiabusiness2025/verifactu-monorepo
+- **Documentación Firebase:** https://firebase.google.com/docs
+- **Documentación Next.js:** https://nextjs.org/docs
+- **Documentación Flutter:** https://flutter.dev/docs
+
+---
+
+## 📞 Contacto
+
+**Email:** kiabusiness2025@gmail.com
+
+---
+
+## 📄 Licencia
+
+Proyecto privado - Verifactu Business 2026
+
+---
+
+**Última actualización:** Enero 2026
 
 
 Cada “app” es un servicio independiente que se despliega por separado.
