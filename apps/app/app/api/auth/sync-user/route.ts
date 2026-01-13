@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { auth } from '@/lib/firebase';
+import prisma from '../../../lib/prisma';
+import { auth } from '../../../lib/firebase';
 
 /**
  * API Route para sincronizar usuarios de Firebase Auth con PostgreSQL (Prisma)
