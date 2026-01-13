@@ -100,7 +100,6 @@ export async function POST(req: Request) {
       messages,
       temperature: 0.7,
       tools: {
-        // @ts-ignore - AI SDK v6 tool() compatibility
         calculateProfit: tool({
           description: 'Calcula el beneficio real (ventas − gastos) consultando la base de datos',
           parameters: z.object({
@@ -126,7 +125,6 @@ export async function POST(req: Request) {
           },
         }),
 
-        // @ts-ignore - AI SDK v6 tool() compatibility
         checkVeriFactuDeadlines: tool({
           description: 'Consulta plazos VeriFactu y facturas pendientes de enviar',
           parameters: z.object({
@@ -157,7 +155,6 @@ export async function POST(req: Request) {
           },
         }),
 
-        // @ts-ignore - AI SDK v6 tool() compatibility
         suggestExpenseCategory: tool({
           description: 'Sugiere la categoría fiscal adecuada para un gasto',
           parameters: z.object({
