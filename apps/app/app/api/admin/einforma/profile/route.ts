@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/adminAuth";
 import { getCompanyProfileByNif } from "@/server/einforma";
 
 export const runtime = "nodejs";
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
