@@ -8,6 +8,7 @@ import { AuthLayout, FormInput, PasswordInput, GoogleAuthButton } from "../../co
 import { useAuth } from "../../context/AuthContext";
 import { signInWithEmail, signUpWithEmail, signInWithGoogle } from "../../lib/auth";
 import { useToast } from "../../components/Toast";
+import { getAppUrl } from "../../lib/urls";
 import type { User } from "firebase/auth";
 
 export default function LoginPage() {
@@ -25,9 +26,7 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState("");
   const hasRedirected = useRef(false);
 
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://app.verifactu.business");
+  const appUrl = getAppUrl();
 
   // Simple redirect to dashboard after login
   const redirectToDashboard = React.useCallback(() => {

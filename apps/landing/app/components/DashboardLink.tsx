@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
+import { getAppUrl } from "../lib/urls";
 
 interface DashboardLinkProps {
   className?: string;
@@ -26,26 +27,36 @@ export function DashboardLink({
   children = "Dashboard",
 }: DashboardLinkProps) {
   const { user, loading } = useAuth();
-  const [appUrl, setAppUrl] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const url =
-      process.env.NEXT_PUBLIC_APP_URL ??
-      (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://app.verifactu.business");
-    setAppUrl(url);
+    setMounted(true);
   }, []);
 
-  if (loading || !appUrl) {
+  if (!mounted || loading) {
     return null;
   }
 
-  const href = user
-    ? `${appUrl.replace(/\/$/, "")}/dashboard`
-    : "/auth/login";
+  // If user is authenticated, redirect to app dashboard
+  if (user) {
+    const appUrl = getAppUrl();
+    const href = `${appUrl.replace(/\/$/, "")}/dashboard`;
+    
+    return (
+      <a
+        href={href}
+        className={className}
+        aria-label={ariaLabel}
+      >
+        {children}
+      </a>
+    );
+  }
 
+  // If user is not authenticated, redirect to login
   return (
     <Link
-      href={href}
+      href="/auth/login"
       className={className}
       aria-label={ariaLabel}
     >
