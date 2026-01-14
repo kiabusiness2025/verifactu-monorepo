@@ -285,8 +285,8 @@ functions.http('vercel-auto-fixer', async (req, res) => {
     console.log(`🔴 Build failed for: ${deployment.url}`);
 
     // Obtener tokens seguros
-    const GITHUB_TOKEN = await getSecret('github-token');
-    const VERCEL_TOKEN = await getSecret('vercel-token');
+    const GITHUB_TOKEN = await getSecret('GITHUB_TOKEN');
+    const VERCEL_TOKEN = await getSecret('VERCEL_API_KEY');
 
     // Parsear errores del log
     const logs = req.body.logs || '';
