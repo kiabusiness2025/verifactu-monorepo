@@ -196,8 +196,13 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
         </div>
 
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <div className="text-sm font-semibold leading-tight text-[#002060]">
-            {greeting}
+          <div className="flex items-center gap-2 text-sm font-semibold leading-tight text-[#002060]">
+            <span>{greeting}</span>
+            {currentPanel?.id === "admin" && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                Modo admin
+              </span>
+            )}
           </div>
 
           <select
