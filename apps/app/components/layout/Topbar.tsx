@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@verifactu/ui";
 import { useIsaakUI } from "@/context/IsaakUIContext";
 import { useIsaakContext } from "@/hooks/useIsaakContext";
@@ -19,7 +20,17 @@ type TenantOption = {
   name: string;
 };
 
+type PanelOption = {
+  id: string;
+  name: string;
+  path: string;
+  icon: string;
+  description: string;
+};
+
 export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const { setCompany, openDrawer } = useIsaakUI();
   const { greeting } = useIsaakContext();
   const { logout, isLoggingOut } = useLogout();
@@ -29,7 +40,29 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
   const [isLoadingTenants, setIsLoadingTenants] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const availablePanels: PanelOption[] = [
+    {
+      id: 'dashboard',
+      name: 'Panel Principal',
+      path: '/dashboard',
+      icon: '📊',
+      description: 'Gestión de tu empresa'
+    },
+    ...(isAdmin ? [{
+      id: 'admin',
+      name: 'Panel de Administración',
+      path: '/dashboard/admin',
+      icon: '⚙️',
+      description: 'Gestión del sistema'
+    }] : [])
+  ];
+
+  const currentPanel = pathname?.startsWith('/dashboard/admin') 
+    ? availablePanels.find(p => p.id === 'admin')
+    : availablePanels.find(p => p.id === 'dashboard');
 
   // Cerrar menú al hacer click fuera
   useEffect(() => {
@@ -44,6 +77,21 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showUserMenu]);
+
+  // Verificar si el usuario es admin
+  useEffect(() => {
+    async function checkAdminStatus() {
+      try {
+        const res = await fetch("/api/admin/check", { credentials: "include" });
+        const data = await res.json().catch(() => ({ isAdmin: false }));
+        setIsAdmin(data.isAdmin === true);
+      } catch (error) {
+        console.error("Failed to check admin status:", error);
+        setIsAdmin(false);
+      }
+    }
+    checkAdminStatus();
+  }, [firebaseUser]);
 
   useEffect(() => {
     let mounted = true;
@@ -234,6 +282,49 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
                         </div>
                       </>
                     )}
+                    
+                    {/* Selector de Paneles */}
+                    {availablePanels.length > 1 && (
+                      <>
+                        <div className="px-4 py-2 border-b border-slate-200">
+                          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
+                            Cambiar Panel
+                          </p>
+                          <div className="space-y-1">
+                            {availablePanels.map((panel) => (
+                              <button
+                                key={panel.id}
+                                onClick={() => {
+                                  router.push(panel.path);
+                                  setShowUserMenu(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                                  currentPanel?.id === panel.id
+                                    ? 'bg-[#0060F0]/10 text-[#0060F0] font-medium'
+                                    : 'text-slate-700 hover:bg-slate-100'
+                                }`}
+                              >
+                                <div className="flex items-start gap-2">
+                                  <span className="text-base mt-0.5">{panel.icon}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium">{panel.name}</div>
+                                    <div className="text-xs text-slate-500 truncate">
+                                      {panel.description}
+                                    </div>
+                                  </div>
+                                  {currentPanel?.id === panel.id && (
+                                    <svg className="w-4 h-4 mt-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                  )}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
                     {onOpenPreferences && (
                       <button
                         onClick={() => {
