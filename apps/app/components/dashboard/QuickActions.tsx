@@ -13,13 +13,29 @@ type Action = {
 };
 
 export function QuickActions() {
+  const router = useRouter();
   const { openDrawer } = useIsaakUI();
 
   const actions: Action[] = [
-    { label: "Crear factura", description: "VeriFactu al día", onClick: () => {} },
-    { label: "Subir documento", description: "Ordenado y listo", onClick: () => {} },
+    {
+      label: "Crear factura",
+      description: "Ir a facturas",
+      href: "/dashboard/invoices",
+      onClick: () => router.push("/dashboard/invoices"),
+    },
+    {
+      label: "Subir documento",
+      description: "Centraliza tus archivos",
+      href: "/dashboard/documents",
+      onClick: () => router.push("/dashboard/documents"),
+    },
     { label: "Preguntar a Isaak", description: "Respuestas guiadas", onClick: openDrawer },
-    { label: "Ver resumen", description: "Ventas, gastos, beneficio", onClick: () => {} },
+    {
+      label: "Revisar gastos",
+      description: "Pagos y proveedores",
+      href: "/dashboard/expenses",
+      onClick: () => router.push("/dashboard/expenses"),
+    },
   ];
 
   return (

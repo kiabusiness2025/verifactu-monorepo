@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const adminNav = [
-  { label: "Overview", href: "/dashboard/admin" },
-  { label: "Users", href: "/dashboard/admin/users" },
-  { label: "Empresas", href: "/dashboard/admin/tenants" },
+  { label: "Resumen", href: "/dashboard/admin" },
+  { label: "Usuarios", href: "/dashboard/admin/users" },
+  { label: "Empresas", href: "/dashboard/admin/companies" },
   { label: "Contabilidad", href: "/dashboard/admin/accounting" },
 ];
 
