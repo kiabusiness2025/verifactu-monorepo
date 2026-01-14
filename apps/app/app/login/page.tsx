@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 /**
  * Login Page (App)
@@ -18,8 +17,6 @@ import { useRouter } from 'next/navigation';
  */
 
 export default function LoginPage() {
-  const router = useRouter();
-
   useEffect(() => {
     // Redirect to landing authentication page
     window.location.href = 'https://verifactu.business/auth/login';
@@ -34,11 +31,6 @@ export default function LoginPage() {
         <p className="text-gray-600 dark:text-gray-400">
           Te estamos llevando a la página de autenticación.
         </p>
-      </div>
-    </div>
-  );
-}
-        </div>
       </div>
     </div>
   );
