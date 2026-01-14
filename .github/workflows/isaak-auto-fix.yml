@@ -1,0 +1,190 @@
+name: 🤖 Isaak Auto-Fix Build Failures
+
+on:
+  # Trigger 1: Cuando hay un push (verifica si hubo fallos previos)
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/app/**'
+      - 'apps/landing/**'
+      - 'packages/**'
+
+  # Trigger 2: Manualmente desde la UI
+  workflow_dispatch:
+    inputs:
+      auto_fix:
+        description: 'Ejecutar auto-fix'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  check-and-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Detect common errors in code
+        id: detect
+        run: |
+          ERRORS=""
+          
+          # Buscar imports incorrectos
+          if grep -r "from '@/lib/auth'" apps/ 2>/dev/null; then
+            ERRORS="${ERRORS}AUTH_IMPORT "
+            echo "❌ Found: @/lib/auth imports"
+          fi
+          
+          if grep -r "import { prisma }" apps/ 2>/dev/null; then
+            ERRORS="${ERRORS}PRISMA_IMPORT "
+            echo "❌ Found: Named prisma imports"
+          fi
+          
+          if grep -r "from '@/lib/firebaseAdmin'" apps/ 2>/dev/null; then
+            ERRORS="${ERRORS}FIREBASE_IMPORT "
+            echo "❌ Found: @/lib/firebaseAdmin imports"
+          fi
+          
+          if grep -r "await getSession()" apps/app/app/api 2>/dev/null | grep -v "getSessionPayload"; then
+            ERRORS="${ERRORS}SESSION_CALL "
+            echo "❌ Found: getSession() calls (should be getSessionPayload)"
+          fi
+          
+          if grep -r "session.tenant.id" apps/ 2>/dev/null; then
+            ERRORS="${ERRORS}SESSION_PROPERTY "
+            echo "❌ Found: session.tenant.id (should be session.tenantId)"
+          fi
+          
+          if grep -r "session?.tenant?.id" apps/ 2>/dev/null; then
+            ERRORS="${ERRORS}SESSION_VALIDATION "
+            echo "❌ Found: Wrong session validation pattern"
+          fi
+          
+          if grep -r "dueDate" apps/app/app/api/invoices 2>/dev/null; then
+            ERRORS="${ERRORS}INVOICE_FIELD "
+            echo "❌ Found: dueDate field (doesn't exist in schema)"
+          fi
+          
+          if [ -z "$ERRORS" ]; then
+            echo "✅ No errors detected"
+            echo "has_errors=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_errors=true" >> $GITHUB_OUTPUT
+            echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🔧 Apply auto-fixes
+        if: steps.detect.outputs.has_errors == 'true'
+        run: |
+          echo "🔧 Applying auto-fixes..."
+          
+          # Fix 1: @/lib/auth → @/lib/session
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "AUTH_IMPORT"; then
+            echo "Fixing AUTH imports..."
+            find apps -name "*.ts" -type f -exec sed -i "s/from '@\/lib\/auth'/from '@\/lib\/session'/g" {} +
+            find apps -name "*.ts" -type f -exec sed -i "s/import { getSession }/import { getSessionPayload }/g" {} +
+          fi
+          
+          # Fix 2: Named prisma import → default
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "PRISMA_IMPORT"; then
+            echo "Fixing Prisma imports..."
+            find apps -name "*.ts" -type f -exec sed -i "s/import { prisma }/import prisma/g" {} +
+          fi
+          
+          # Fix 3: @/lib/firebaseAdmin → remove
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "FIREBASE_IMPORT"; then
+            echo "Fixing Firebase Admin imports..."
+            find apps -name "*.ts" -type f -exec sed -i "s/import { initFirebaseAdmin } from '@\/lib\/firebaseAdmin';//g" {} +
+            find apps -name "*.ts" -type f -exec sed -i "s/initFirebaseAdmin();//g" {} +
+          fi
+          
+          # Fix 4: getSession() → getSessionPayload()
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "SESSION_CALL"; then
+            echo "Fixing getSession calls..."
+            find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/await getSession()/await getSessionPayload()/g" {} +
+          fi
+          
+          # Fix 5: session.tenant.id → session.tenantId
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "SESSION_PROPERTY"; then
+            echo "Fixing session property access..."
+            find apps -name "*.ts" -type f -exec sed -i "s/session\.tenant\.id/session.tenantId/g" {} +
+          fi
+          
+          # Fix 6: Wrong session validation
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "SESSION_VALIDATION"; then
+            echo "Fixing session validation..."
+            find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/if (!session\?\.user\?\.id || !session\?\.tenant\?\.id)/if (!session || !session.tenantId)/g" {} +
+          fi
+          
+          # Fix 7: dueDate field
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "INVOICE_FIELD"; then
+            echo "Fixing invoice fields..."
+            find apps/app/app/api/invoices -name "*.ts" -type f -exec sed -i "/dueDate: new Date(data.dueDate),/d" {} +
+          fi
+          
+          echo "✅ Auto-fixes applied"
+
+      - name: 📊 Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "✅ No changes needed"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected:"
+            git diff --name-only
+          fi
+
+      - name: 📝 Commit auto-fixes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "isaak-bot@verifactu.dev"
+          git config --local user.name "Isaak Auto-Fixer Bot"
+          
+          git add -A
+          
+          COMMIT_MSG="fix(auto): apply automatic code fixes
+
+Fixed issues:
+$(git diff --cached --name-only | sed 's/^/- /')
+
+Auto-fixed by Isaak Bot
+Detected and resolved:
+- Import path issues
+- Session handling inconsistencies
+- Prisma schema mismatches
+- Type guard validations"
+          
+          git commit -m "$COMMIT_MSG"
+
+      - name: 🚀 Push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git push origin main
+
+      - name: ✅ Summary
+        run: |
+          if [ "${{ steps.detect.outputs.has_errors }}" = "true" ]; then
+            echo "🤖 Isaak Auto-Fix Summary"
+            echo "=========================="
+            echo "Errors found: ${{ steps.detect.outputs.errors }}"
+            if [ "${{ steps.changes.outputs.has_changes }}" = "true" ]; then
+              echo "Status: ✅ Fixed and committed"
+            else
+              echo "Status: ⚠️ Detected but couldn't auto-fix"
+            fi
+          else
+            echo "✅ All checks passed, no fixes needed"
+          fi
