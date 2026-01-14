@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     const customer = await prisma.customer.create({
       data: {
-        tenantId: session.tenant.id,
+        tenantId: session.tenantId,
         name,
         email: email || null,
         phone: phone || null,

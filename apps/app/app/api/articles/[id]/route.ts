@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { getSessionPayload } from '@/lib/session';
 
 /**
  * GET /api/articles/[id]
@@ -8,13 +8,13 @@ import { getSession } from '@/lib/auth';
  */
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getSession();
-    if (!session?.user?.id || !session?.tenant?.id) {
+    const session = await getSessionPayload();
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const article = await prisma.article.findFirst({
-      where: { id: params.id, tenantId: session.tenant.id },
+      where: { id: params.id, tenantId: session.tenantId },
       include: { invoiceLines: { select: { id: true, invoiceId: true, quantity: true, unitPrice: true } } },
     });
 
@@ -91,13 +91,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  */
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getSession();
-    if (!session?.user?.id || !session?.tenant?.id) {
+    const session = await getSessionPayload();
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const existing = await prisma.article.findFirst({
-      where: { id: params.id, tenantId: session.tenant.id },
+      where: { id: params.id, tenantId: session.tenantId },
     });
 
     if (!existing) {

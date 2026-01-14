@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     const article = await prisma.article.create({
       data: {
-        tenantId: session.tenant.id,
+        tenantId: session.tenantId,
         code,
         name,
         description: description || null,

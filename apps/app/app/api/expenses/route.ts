@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = { tenantId: session.tenant.id };
+    const where: any = { tenantId: session.tenantId };
     
     if (search) {
       where.OR = [
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // Verify supplier ownership if provided
     if (supplierId) {
       const supplier = await prisma.supplier.findFirst({
-        where: { id: supplierId, tenantId: session.tenant.id },
+        where: { id: supplierId, tenantId: session.tenantId },
       });
       if (!supplier) {
         return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     const expense = await prisma.expenseRecord.create({
       data: {
-        tenantId: session.tenant.id,
+        tenantId: session.tenantId,
         date: new Date(date),
         description,
         category,

@@ -1,16 +1,16 @@
-import { getSession } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getSessionPayload } from '@/lib/session';
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getSession();
+    const session = await getSessionPayload();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const invoice = await prisma.invoice.findFirst({
-      where: { id: params.id, tenantId: session.tenant.id },
+      where: { id: params.id, tenantId: session.tenantId },
       include: {
         customer: true,
         lines: {
@@ -32,14 +32,14 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getSession();
+    const session = await getSessionPayload();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Verify invoice ownership
     const existing = await prisma.invoice.findFirst({
-      where: { id: params.id, tenantId: session.tenant.id },
+      where: { id: params.id, tenantId: session.tenantId },
     });
 
     if (!existing) {
@@ -70,14 +70,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getSession();
+    const session = await getSessionPayload();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Verify invoice ownership
     const existing = await prisma.invoice.findFirst({
-      where: { id: params.id, tenantId: session.tenant.id },
+      where: { id: params.id, tenantId: session.tenantId },
     });
 
     if (!existing) {

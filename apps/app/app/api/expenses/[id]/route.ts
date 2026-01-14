@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { getSessionPayload } from '@/lib/session';
 
 /**
  * GET /api/expenses/[id]
@@ -8,13 +8,13 @@ import { getSession } from '@/lib/auth';
  */
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getSession();
-    if (!session?.user?.id || !session?.tenant?.id) {
+    const session = await getSessionPayload();
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const expense = await prisma.expenseRecord.findFirst({
-      where: { id: params.id, tenantId: session.tenant.id },
+      where: { id: params.id, tenantId: session.tenantId },
       include: { supplier: true, tenant: { select: { name: true } } },
     });
 
@@ -41,7 +41,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const existing = await prisma.expenseRecord.findFirst({
-      where: { id: params.id, tenantId: session.tenant.id },
+      where: { id: params.id, tenantId: session.tenantId },
     });
 
     if (!existing) {
@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     // Verify supplier ownership if provided
     if (supplierId && supplierId !== existing.supplierId) {
       const supplier = await prisma.supplier.findFirst({
-        where: { id: supplierId, tenantId: session.tenant.id },
+        where: { id: supplierId, tenantId: session.tenantId },
       });
       if (!supplier) {
         return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
@@ -90,13 +90,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  */
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getSession();
-    if (!session?.user?.id || !session?.tenant?.id) {
+    const session = await getSessionPayload();
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const existing = await prisma.expenseRecord.findFirst({
-      where: { id: params.id, tenantId: session.tenant.id },
+      where: { id: params.id, tenantId: session.tenantId },
     });
 
     if (!existing) {

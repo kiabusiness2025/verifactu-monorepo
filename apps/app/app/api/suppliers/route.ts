@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = { tenantId: session.tenant.id };
+    const where: any = { tenantId: session.tenantId };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     const supplier = await prisma.supplier.create({
       data: {
-        tenantId: session.tenant.id,
+        tenantId: session.tenantId,
         name,
         email: email || null,
         phone: phone || null,

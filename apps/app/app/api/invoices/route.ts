@@ -1,5 +1,5 @@
-import { getSession } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getSessionPayload } from '@/lib/session';
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit;
 
     const where: any = {
-      tenantId: session.tenant.id,
+      tenantId: session.tenantId,
       ...(search && {
         OR: [
           { number: { contains: search, mode: 'insensitive' } },
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     // Validate customer exists and belongs to tenant
     if (data.customerId) {
       const customer = await prisma.customer.findFirst({
-        where: { id: data.customerId, tenantId: session.tenant.id },
+        where: { id: data.customerId, tenantId: session.tenantId },
       });
 
       if (!customer) {
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     // Create invoice with line items
     const invoice = await prisma.invoice.create({
       data: {
-        tenantId: session.tenant.id,
+        tenantId: session.tenantId,
         customerId: data.customerId,
         customerName: data.customerName || 'Por especificar',
         number: data.number,
