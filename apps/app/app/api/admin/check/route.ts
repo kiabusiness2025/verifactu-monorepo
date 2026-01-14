@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSessionPayload } from "@/lib/session";
 
 /**
  * GET /api/admin/check
@@ -7,7 +7,7 @@ import { getSessionFromRequest } from "@/lib/session";
  */
 export async function GET(req: NextRequest) {
   try {
-    const session = await getSessionFromRequest(req);
+    const session = await getSessionPayload();
     
     if (!session?.email) {
       return NextResponse.json({ isAdmin: false });
