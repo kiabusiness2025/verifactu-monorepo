@@ -1,3 +1,8 @@
 {
- "framework": "nextjs"
+  "framework": "nextjs",
+  "env": {
+    "SESSION_COOKIE_DOMAIN": ".verifactu.business",
+    "SESSION_COOKIE_SAMESITE": "none",
+    "SESSION_COOKIE_SECURE": "true"
+  }
 }
