@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionPayload } from '@/lib/session';
-import { initFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { uploadToStorage } from '@/lib/storage';
 
 export const runtime = 'nodejs';
@@ -25,8 +24,6 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
-
-    initFirebaseAdmin();
 
     // Obtener FormData
     const formData = await req.formData();
