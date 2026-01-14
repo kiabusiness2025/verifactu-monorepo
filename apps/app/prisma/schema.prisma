@@ -14,11 +14,12 @@ model Tenant {
   nif       String?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   
-  users         Membership[]
-  userPref      UserPreference[]
-  subscriptions Subscription[]
-  invoices      Invoice[]
-  payments      Payment[]
+  users              Membership[]
+  userPref           UserPreference[]
+  subscriptions      Subscription[]
+  invoices           Invoice[]
+  payments           Payment[]
+  isaakConversations IsaakConversation[]
   
   @@map("tenants")
 }
@@ -29,9 +30,10 @@ model User {
   name      String?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   
-  memberships       Membership[]
-  preferences       UserPreference?
-  invoicesCreatedBy Invoice[]       @relation("CreatedByUser")
+  memberships          Membership[]
+  preferences          UserPreference?
+  invoicesCreatedBy    Invoice[]          @relation("CreatedByUser")
+  isaakConversations   IsaakConversation[]
   
   @@map("users")
 }
@@ -138,4 +140,45 @@ model Payment {
   @@index([invoiceId])
   @@index([tenantId])
   @@map("payments")
+}
+
+// ==================== ISAAK CONVERSATIONS ====================
+
+model IsaakConversation {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  title       String?  // Título auto-generado basado en el primer mensaje
+  context     String?  // Contexto de negocio (facturas, impuestos, etc)
+  summary     String?  // Resumen de la conversación
+  messageCount Int     @default(0) @map("message_count")
+  lastActivity DateTime @map("last_activity") @db.Timestamptz
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  
+  tenant   Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages IsaakConversationMsg[]
+  
+  @@index([tenantId])
+  @@index([userId])
+  @@index([lastActivity])
+  @@map("isaak_conversations")
+}
+
+model IsaakConversationMsg {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  role           String   // "user" o "assistant"
+  content        String   // El mensaje en sí
+  tokens         Int?     // Tokens usados (para monitoreo)
+  metadata       Json?    // Datos adicionales (mood, categoría, etc)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  
+  conversation IsaakConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@index([conversationId])
+  @@index([role])
+  @@index([createdAt])
+  @@map("isaak_conversation_messages")
 }
