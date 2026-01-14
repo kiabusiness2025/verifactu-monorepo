@@ -85,7 +85,6 @@ export async function POST(req: NextRequest) {
         customerName: data.customerName || 'Por especificar',
         number: data.number,
         issueDate: new Date(data.issueDate),
-        dueDate: new Date(data.dueDate),
         status: 'pending',
         amountNet: data.lineItems.reduce(
           (sum: number, line: any) => sum + line.quantity * line.unitPrice * (1 - line.discount / 100),
