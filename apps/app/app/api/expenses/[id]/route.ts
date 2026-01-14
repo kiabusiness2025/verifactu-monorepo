@@ -35,8 +35,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  */
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getSession();
-    if (!session?.user?.id || !session?.tenant?.id) {
+    const session = await getSessionPayload();
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

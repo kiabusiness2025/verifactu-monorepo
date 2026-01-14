@@ -52,7 +52,7 @@ db = getFirestore(app);
 remoteConfig = getRemoteConfig(app);
 
 // Export initialized services
-export { app, analytics, auth, db, remoteConfig };
+export { app, analytics, auth, db, remoteConfig, firebaseConfig };
 
 // Export Firebase App instance for custom usage
 export default app;
