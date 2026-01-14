@@ -11,6 +11,7 @@ import {
   AuthError,
 } from "firebase/auth";
 import { auth } from "./firebase";
+import { syncUserToDB, syncUserSilent } from "./syncUser";
 
 // Type for auth errors with custom messages
 export interface AuthErrorMessage {
@@ -89,6 +90,9 @@ export const signUpWithEmail = async (
       console.warn("Could not send verification email:", verifyError);
     }
 
+    // Sync user to database (silent - don't block signup)
+    syncUserSilent(userCredential.user);
+
     return { user: userCredential.user, error: null };
   } catch (error) {
     return {
@@ -120,6 +124,9 @@ export const signInWithEmail = async (
       };
     }
 
+    // Sync user to database (silent - don't block login)
+    syncUserSilent(userCredential.user);
+
     return { user: userCredential.user, error: null };
   } catch (error) {
     return {
@@ -138,6 +145,9 @@ export const signInWithGoogle = async (): Promise<
   try {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
+
+    // Sync user to database (silent - don't block login)
+    syncUserSilent(userCredential.user);
 
     return { user: userCredential.user, error: null };
   } catch (error) {

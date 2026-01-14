@@ -1,0 +1,89 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to get user ID
+    function getUserId() {
+      return request.auth.uid;
+    }
+    
+    // Helper function to extract tenant ID from path
+    function getTenantIdFromPath() {
+      return resource.name.split('/')[1];
+    }
+    
+    // Helper function to extract tenant ID from request path
+    function getRequestTenantId() {
+      return request.resource.name.split('/')[1];
+    }
+    
+    // Check if user belongs to the tenant
+    // In production, verify this against Firestore user_tenants collection
+    function userBelongsToTenant(tenantId) {
+      return isAuthenticated();
+      // TODO: Add verification against Firestore for production
+      // return firestore.get(/databases/(default)/documents/user_tenants/$(getUserId())/tenants/$(tenantId)).exists();
+    }
+    
+    // ===========================================
+    // TENANT STORAGE ACCESS
+    // ===========================================
+    
+    // Allow access to tenant folders
+    match /tenants/{tenantId}/{allPaths=**} {
+      // Read: Users in the tenant can read their own files
+      allow read: if isAuthenticated() && userBelongsToTenant(tenantId);
+      
+      // Write: Users in the tenant can upload to their folder
+      allow write: if isAuthenticated() && 
+                      userBelongsToTenant(tenantId) &&
+                      // Limit file size to 50MB
+                      request.resource.size <= 50 * 1024 * 1024 &&
+                      // Only allow specific content types
+                      request.resource.contentType in [
+                        'application/pdf',
+                        'application/xml',
+                        'text/xml',
+                        'application/json',
+                        'image/jpeg',
+                        'image/png',
+                        'image/webp',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.ms-excel',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                      ];
+      
+      // Delete: Users in the tenant can delete their own files
+      allow delete: if isAuthenticated() && userBelongsToTenant(tenantId);
+    }
+    
+    // ===========================================
+    // PUBLIC/AVATARS (with restrictions)
+    // ===========================================
+    
+    match /public/avatars/{userId}/{fileName} {
+      // Read: Public avatars
+      allow read: if true;
+      
+      // Write: Only the user can upload their own avatar
+      allow write: if isAuthenticated() && 
+                      request.auth.uid == userId &&
+                      request.resource.size <= 5 * 1024 * 1024 &&
+                      request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp'];
+    }
+    
+    // ===========================================
+    // DENY EVERYTHING ELSE
+    // ===========================================
+    
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
