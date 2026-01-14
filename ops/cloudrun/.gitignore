@@ -1,0 +1,31 @@
+# Secrets - NEVER commit these files
+*.env
+*.env.local
+.env.*
+secrets/
+credentials/
+
+# Cloud Function temp files
+node_modules/
+.gcloud/
+.env.yaml
+
+# Vercel deployments
+.vercel/
+.next/
+out/
+
+# Build outputs
+dist/
+build/
+.tsc/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

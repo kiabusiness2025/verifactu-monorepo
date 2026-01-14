@@ -1,0 +1,13 @@
+{
+  "name": "vercel-auto-fixer",
+  "version": "1.0.0",
+  "description": "Auto-fix Vercel build failures",
+  "main": "vercel-auto-fixer.js",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.5.0",
+    "@google-cloud/secret-manager": "^5.0.0"
+  },
+  "engines": {
+    "node": "20"
+  }
+}
