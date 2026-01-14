@@ -9,7 +9,7 @@ import { getSessionPayload } from '@/lib/session';
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session) {
+    if (!session || !session.tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -91,7 +91,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session) {
+    if (!session || !session.tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

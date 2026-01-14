@@ -9,7 +9,7 @@ import { getSessionPayload } from '@/lib/session';
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session) {
+    if (!session || !session.tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session) {
+    if (!session || !session.tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
