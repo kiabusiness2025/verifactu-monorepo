@@ -9,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import { logout } from "../lib/auth";
 import { useToast } from "./Toast";
 import BrandLogo from "./BrandLogo";
+import { DashboardLink } from "./DashboardLink";
 
 type NavLink = { label: string; href: string };
 
@@ -16,10 +17,6 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const { showToast } = useToast();
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://app.verifactu.business");
-  const dashboardHref = `${appUrl.replace(/\/$/, "")}/dashboard`;
 
   const defaultNavLinks: NavLink[] = [
     { label: "VeriFactu", href: "/verifactu/que-es" },
@@ -53,13 +50,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
         <div className="hidden md:flex items-center gap-4">
           {user ? (
             <>
-              <Link
-                href={dashboardHref}
-                className="px-6 py-2 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md hover:from-[#0056D6] hover:to-[#1AA3DB] transition-all text-sm"
-                aria-label="Ir al Dashboard"
-              >
-                Dashboard
-              </Link>
+              <DashboardLink />
               <button
                 onClick={async () => {
                   await logout();
@@ -86,13 +77,10 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
         <div className="md:hidden flex items-center gap-3">
           {user ? (
             <>
-              <Link
-                href={dashboardHref}
+              <DashboardLink
                 className="px-4 py-2 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md hover:from-[#0056D6] hover:to-[#1AA3DB] transition-all text-sm"
-                aria-label="Ir al Dashboard"
-              >
-                Dashboard
-              </Link>
+                ariaLabel="Ir al Dashboard"
+              />
               <button
                 onClick={async () => {
                   await logout();
