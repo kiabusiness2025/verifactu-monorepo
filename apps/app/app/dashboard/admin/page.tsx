@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <Link
-            href="/dashboard/admin/tenants"
+            href="/dashboard/admin/companies"
             className="text-xs font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
             Ver empresas
@@ -121,7 +121,7 @@ export default function AdminDashboardPage() {
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <Link
-            href="/dashboard/admin/tenants"
+            href="/dashboard/admin/companies/new"
             className="rounded-xl bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:from-[#0056D6] hover:to-[#1AA3DB]"
           >
             Crear empresa
@@ -149,7 +149,7 @@ export default function AdminDashboardPage() {
           Ir a usuarios
         </Link>
         <Link
-          href="/dashboard/admin/tenants"
+          href="/dashboard/admin/companies"
           className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
           Ir a empresas

@@ -25,7 +25,10 @@ export default function AdminLayout({
         </div>
         <nav className="mt-4 space-y-1">
           {adminNav.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive =
+              item.href === "/dashboard/admin"
+                ? pathname === item.href
+                : pathname?.startsWith(item.href);
             return (
               <Link
                 key={item.href}
