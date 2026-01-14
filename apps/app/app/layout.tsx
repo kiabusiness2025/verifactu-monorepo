@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { IsaakUIProvider } from '@/context/IsaakUIContext';
 import { GoogleTagManager } from '@/components/GoogleTagManager';
 import { FirebaseAnalytics } from '@/components/FirebaseAnalytics';
+import { PWARegistration } from '@/components/PWARegistration';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -37,7 +38,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0B0F14",
+  userScalable: true,
+  themeColor: "#0060F0",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -51,6 +54,7 @@ export default function RootLayout({
         <GoogleTagManager />
       </head>
       <body className={`${outfit.className} dark:bg-gray-900`}>
+        <PWARegistration />
         <FirebaseAnalytics />
         <ThemeProvider>
           <SidebarProvider>

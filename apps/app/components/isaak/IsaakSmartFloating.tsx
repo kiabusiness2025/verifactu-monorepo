@@ -236,11 +236,11 @@ export function IsaakSmartFloating() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 shadow-lg text-white hover:shadow-xl transition-shadow"
+            className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 shadow-lg text-white hover:shadow-xl transition-shadow"
             aria-label="Abrir chat con Isaak"
             title="Hablemos con Isaak"
           >
-            <MessageCircle className="h-6 w-6" />
+            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -252,15 +252,15 @@ export function IsaakSmartFloating() {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed bottom-24 right-6 z-40 w-96 max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 bg-white shadow-2xl overflow-hidden flex flex-col max-h-96"
+            className="fixed inset-x-2 bottom-2 sm:inset-x-auto sm:bottom-24 sm:right-6 z-40 sm:w-96 max-w-[calc(100vw-1rem)] sm:max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 bg-white shadow-2xl overflow-hidden flex flex-col h-[85vh] sm:h-auto sm:max-h-[32rem]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 text-white">
+            <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-500 px-3 sm:px-4 py-2.5 sm:py-3 text-white flex-shrink-0">
               <div>
-                <div className="font-semibold">Isaak</div>
+                <div className="font-semibold text-sm sm:text-base">Isaak</div>
                 <div className="text-xs opacity-90">Tu asistente fiscal</div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <button
                   onClick={() => setShowPreferences(!showPreferences)}
                   className="rounded-lg p-1 hover:bg-white/20 transition"
@@ -270,7 +270,7 @@ export function IsaakSmartFloating() {
                 </button>
                 <button
                   onClick={handleExport}
-                  className="rounded-lg p-1 hover:bg-white/20 transition"
+                  className="rounded-lg p-1 hover:bg-white/20 transition hidden sm:block"
                   title="Descargar conversación"
                 >
                   <Download className="h-4 w-4" />

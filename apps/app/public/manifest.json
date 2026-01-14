@@ -1,13 +1,14 @@
 {
-  "name": "Verifactu Business",
+  "name": "Verifactu Business - Gestión Empresarial",
   "short_name": "Verifactu",
   "description": "Gestiona tus ventas, gastos y beneficios con tranquilidad, cumpliendo VeriFactu",
-  "start_url": "/dashboard",
+  "start_url": "/dashboard?source=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0B0F14",
-  "orientation": "portrait-primary",
+  "theme_color": "#0060F0",
+  "orientation": "any",
   "scope": "/",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/favicon-32x32.png",

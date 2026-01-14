@@ -8,6 +8,7 @@ import CookieBanner from "./components/CookieBanner";
 import DevStatusBanner from "./components/DevStatusBanner";
 import { ToastProvider } from "./components/Toast";
 import { GoogleTagManager } from "../components/GoogleTagManager";
+import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 
 import "./globals.css";
 
@@ -110,6 +111,7 @@ export default function RootLayout({
             {process.env.NODE_ENV !== "production" && <DevStatusBanner />}
             <CookieBanner />
             <IsaakChat />
+            <PWAInstallPrompt />
             <Analytics />
           </ToastProvider>
         </AuthProvider>
