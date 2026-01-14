@@ -3,11 +3,11 @@
  * Integraciones con Resend para enviar correos electrónicos
  */
 
-import { VerifyEmailTemplate } from '../emails/VerifyEmail';
-import { WelcomeEmailTemplate } from '../emails/WelcomeEmail';
-import { ResetPasswordEmailTemplate } from '../emails/ResetPasswordEmail';
-import { PasswordChangedEmailTemplate } from '../emails/PasswordChangedEmail';
-import { TeamInviteEmailTemplate } from '../emails/TeamInviteEmail';
+import { VerifyEmailTemplate } from '../../emails/VerifyEmail';
+import { WelcomeEmailTemplate } from '../../emails/WelcomeEmail';
+import { ResetPasswordEmailTemplate } from '../../emails/ResetPasswordEmail';
+import { PasswordChangedEmailTemplate } from '../../emails/PasswordChangedEmail';
+import { TeamInviteEmailTemplate } from '../../emails/TeamInviteEmail';
 
 // Importar Resend
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
