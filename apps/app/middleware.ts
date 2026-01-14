@@ -70,8 +70,8 @@ export async function middleware(req: NextRequest) {
   
   if (!session) {
     console.log(`[🧠 MW] ❌ No session - redirecting to login`);
-    const loginUrl = `https://verifactu.business/auth/login?next=${encodeURIComponent(req.url)}`;
-    return NextResponse.redirect(loginUrl);
+    // Simple redirect to landing login (no ?next= param - we'll handle redirect after auth)
+    return NextResponse.redirect("https://verifactu.business/auth/login");
   }
 
   console.log("[🧠 MW] ✅ Session valid - allowing request");
