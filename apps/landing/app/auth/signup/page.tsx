@@ -7,10 +7,12 @@ import { motion } from "framer-motion";
 import { AuthLayout, FormInput, PasswordInput, GoogleAuthButton } from "../../components/AuthComponents";
 import { useAuth } from "../../context/AuthContext";
 import { signUpWithEmail, signInWithGoogle, AuthErrorMessage } from "../../lib/auth";
+import { getAppUrl } from "../../lib/urls";
 
 export default function SignupPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const appUrl = getAppUrl();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,9 +25,9 @@ export default function SignupPage() {
   // Redirect if already authenticated
   React.useEffect(() => {
     if (user) {
-      router.push("/");
+      window.location.href = `${appUrl}/dashboard`;
     }
-  }, [user, router]);
+  }, [user, appUrl]);
 
   const validateForm = () => {
     setError("");
@@ -88,7 +90,7 @@ export default function SignupPage() {
       }
 
       // Redirect to dashboard
-      router.push("/");
+      window.location.href = `${appUrl}/dashboard`;
     } catch (err) {
       setError("Error al registrarse con Google. Intenta de nuevo.");
       console.error(err);

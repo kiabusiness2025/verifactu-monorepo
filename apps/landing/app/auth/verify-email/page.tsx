@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Mail, CheckCircle2, RotateCcw } from "lucide-react";
 import { AuthLayout } from "../../components/AuthComponents";
 import { resendVerificationEmail } from "../../lib/auth";
+import { getAppUrl } from "../../lib/urls";
 import { useToast } from "../../components/Toast";
 import { auth } from "../../lib/firebase";
 
@@ -14,6 +15,7 @@ type VerifyEmailStep = "pending" | "resent" | "verified";
 export default function VerifyEmailPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const appUrl = getAppUrl();
   const [step, setStep] = useState<VerifyEmailStep>("pending");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,9 +29,11 @@ export default function VerifyEmailPage() {
     if (auth.currentUser?.emailVerified) {
       setStep("verified");
       showToast({ type: "success", title: "Verificado", message: "Correo ya verificado" });
-      setTimeout(() => router.push("/"), 1000);
+      setTimeout(() => {
+        window.location.href = `${appUrl}/dashboard`;
+      }, 1000);
     }
-  }, [router, showToast]);
+  }, [appUrl, showToast]);
 
   // Get user email on client mount
   useEffect(() => {
@@ -45,14 +49,14 @@ export default function VerifyEmailPage() {
       if (auth.currentUser?.emailVerified) {
         setStep("verified");
         setTimeout(() => {
-          router.push("/");
+          window.location.href = `${appUrl}/dashboard`;
         }, 2000);
         showToast({ type: "success", title: "Verificado", message: "Correo verificado" });
       }
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [router]);
+  }, [appUrl, showToast]);
 
   // Handle resend countdown
   useEffect(() => {

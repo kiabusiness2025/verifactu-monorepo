@@ -27,10 +27,50 @@ export default function LoginPage() {
   const hasRedirected = useRef(false);
 
   const appUrl = getAppUrl();
-  const nextParam = searchParams?.get("next")?.trim();
-  const redirectTarget = nextParam && nextParam.startsWith(appUrl)
-    ? nextParam
-    : `${appUrl}/dashboard`;
+  const reportInvalidNext = (reason: string, value: string) => {
+    try {
+      const payload = JSON.stringify({
+        reason,
+        nextParam: value,
+        appUrl,
+        ts: new Date().toISOString(),
+      });
+      if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
+        navigator.sendBeacon("/api/auth/log-next", payload);
+        return;
+      }
+      fetch("/api/auth/log-next", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).catch(() => {});
+    } catch {
+      // Best-effort logging only
+    }
+  };
+  const nextParam = searchParams?.get("next")?.trim() || "";
+  const redirectTarget = (() => {
+    if (!nextParam) return `${appUrl}/dashboard`;
+    try {
+      const target = new URL(nextParam);
+      const appOrigin = new URL(appUrl).origin;
+      if (target.origin !== appOrigin) {
+        console.warn("[AUTH] Ignoring invalid next param (cross-origin)", {
+          nextParam,
+          appOrigin,
+        });
+        reportInvalidNext("cross-origin", nextParam);
+        return `${appUrl}/dashboard`;
+      }
+      return target.toString();
+    } catch {
+      console.warn("[AUTH] Ignoring invalid next param (malformed URL)", {
+        nextParam,
+      });
+      reportInvalidNext("malformed", nextParam);
+      return `${appUrl}/dashboard`;
+    }
+  })();
 
   // Simple redirect to dashboard after login
   const redirectToDashboard = React.useCallback(() => {
