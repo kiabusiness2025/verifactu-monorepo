@@ -57,7 +57,12 @@ export function ensureRole(params: {
   minRole: Role;
 }) {
   const { session, minRole } = params;
-  const role = normalizeRole((session as Record<string, unknown> | null)?.role);
+  // Get role from either 'role' field or first item from 'roles' array
+  const roleValue = (session as Record<string, unknown> | null)?.role ?? 
+    (Array.isArray((session as Record<string, unknown> | null)?.roles) 
+      ? ((session as Record<string, unknown> | null)?.roles as string[])?.[0]
+      : null);
+  const role = normalizeRole(roleValue);
   if (!session || !roleAtLeast(role, minRole)) {
     return forbidden("insufficient role", { required: minRole, actual: role ?? "none" });
   }

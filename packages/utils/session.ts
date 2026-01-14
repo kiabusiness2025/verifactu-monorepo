@@ -7,6 +7,7 @@ export type SessionPayload = JWTPayload & {
   email?: string | null;
   name?: string | null;
   tenantId?: string;
+  role?: string; // Primary role for backwards compatibility
   roles?: string[];
   tenants?: string[];
 };

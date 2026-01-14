@@ -146,6 +146,7 @@ export async function POST(req: Request) {
       uid: decoded.uid,
       email: decoded.email ?? null,
       tenantId: tenantId || undefined,
+      role: roles[0] ?? "member", // Primary role for backwards compatibility
       roles,
       tenants,
       ver: 1,
