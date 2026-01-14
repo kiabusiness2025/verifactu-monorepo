@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId) {
+    if (!session || !session.tenantId || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
