@@ -71,7 +71,11 @@ export async function middleware(req: NextRequest) {
   if (!session) {
     console.log(`[🧠 MW] ❌ No session - redirecting to login`);
     // Simple redirect to landing login (no ?next= param - we'll handle redirect after auth)
-    return NextResponse.redirect("https://verifactu.business/auth/login");
+    const landingUrl = getLandingUrl();
+    const appUrl = getAppUrl();
+    const nextPath = `${req.nextUrl.pathname}${req.nextUrl.search || ""}`;
+    const nextUrl = `${appUrl}${nextPath}`;
+    return NextResponse.redirect(`${landingUrl}/auth/login?next=${encodeURIComponent(nextUrl)}`);
   }
 
   console.log("[🧠 MW] ✅ Session valid - allowing request");

@@ -6,9 +6,9 @@
 export function EmailHeader() {
   return (
     <table
-      cellPadding="0"
-      cellSpacing="0"
-      border="0"
+      cellPadding={0}
+      cellSpacing={0}
+      border={0}
       style={{
         fontFamily: 'Arial, sans-serif',
         color: '#1b2a3a',
@@ -137,9 +137,9 @@ export function EmailContainer({ children }: { children: React.ReactNode }) {
       }}
     >
       <table
-        cellPadding="0"
-        cellSpacing="0"
-        border="0"
+        cellPadding={0}
+        cellSpacing={0}
+        border={0}
         style={{
           maxWidth: '600px',
           margin: '0 auto',
@@ -178,9 +178,9 @@ export function CTAButton({
 
   return (
     <table
-      cellPadding="0"
-      cellSpacing="0"
-      border="0"
+      cellPadding={0}
+      cellSpacing={0}
+      border={0}
       style={{
         margin: '24px 0',
       }}

@@ -16,7 +16,7 @@ export function getAppUrl(): string {
     return 'http://localhost:3000';
   }
 
-  if (hostname === 'verifactu.business') {
+  if (hostname === 'verifactu.business' || hostname === 'www.verifactu.business') {
     return 'https://app.verifactu.business';
   }
 

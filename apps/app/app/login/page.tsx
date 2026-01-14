@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { getLandingUrl } from '@/lib/urls';
 
 /**
  * Login Page (App)
@@ -19,7 +20,8 @@ import { useEffect } from 'react';
 export default function LoginPage() {
   useEffect(() => {
     // Redirect to landing authentication page
-    window.location.href = 'https://verifactu.business/auth/login';
+    const landingUrl = getLandingUrl();
+    window.location.href = `${landingUrl}/auth/login`;
   }, []);
 
   return (

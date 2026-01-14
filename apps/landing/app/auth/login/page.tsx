@@ -27,14 +27,18 @@ export default function LoginPage() {
   const hasRedirected = useRef(false);
 
   const appUrl = getAppUrl();
+  const nextParam = searchParams?.get("next")?.trim();
+  const redirectTarget = nextParam && nextParam.startsWith(appUrl)
+    ? nextParam
+    : `${appUrl}/dashboard`;
 
   // Simple redirect to dashboard after login
   const redirectToDashboard = React.useCallback(() => {
     console.log("[🧠 LOGIN] Redirecting to dashboard...");
     // In dev: http://localhost:3000/dashboard
     // In prod: https://app.verifactu.business/dashboard
-    window.location.href = `${appUrl}/dashboard`;
-  }, [appUrl]);
+    window.location.href = redirectTarget;
+  }, [redirectTarget]);
 
   // Redirect if already authenticated
   React.useEffect(() => {
