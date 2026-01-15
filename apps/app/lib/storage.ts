@@ -115,7 +115,7 @@ export async function deleteFromStorage(
   tenantId: string,
   category: string,
   fileName: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: true } | { success: false; error: string }> {
   try {
     const fileRef = ref(storage, `tenants/${tenantId}/${category}/${fileName}`);
     await deleteObject(fileRef);
