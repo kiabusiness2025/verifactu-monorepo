@@ -76,6 +76,18 @@ jobs:
             echo "❌ Found: dueDate field (doesn't exist in schema)"
           fi
           
+          # Detectar type guard incompleto (falta !session.uid)
+          if grep -r "if (!session || !session.tenantId)" apps/app/app/api 2>/dev/null | grep -v "!session.uid"; then
+            ERRORS="${ERRORS}INCOMPLETE_TYPE_GUARD "
+            echo "❌ Found: Incomplete type guard (missing !session.uid)"
+          fi
+          
+          # Detectar operaciones Decimal sin .toNumber()
+          if grep -r "invoice\.amountNet + invoice\.amountTax" apps/app/app/api 2>/dev/null; then
+            ERRORS="${ERRORS}DECIMAL_ARITHMETIC "
+            echo "❌ Found: Direct Decimal arithmetic (should use .toNumber())"
+          fi
+          
           if [ -z "$ERRORS" ]; then
             echo "✅ No errors detected"
             echo "has_errors=false" >> $GITHUB_OUTPUT
@@ -131,6 +143,20 @@ jobs:
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "INVOICE_FIELD"; then
             echo "Fixing invoice fields..."
             find apps/app/app/api/invoices -name "*.ts" -type f -exec sed -i "/dueDate: new Date(data.dueDate),/d" {} +
+          fi
+          
+          # Fix 8: Incomplete type guard (añadir !session.uid)
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "INCOMPLETE_TYPE_GUARD"; then
+            echo "Fixing incomplete type guards..."
+            find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/if (!session || !session\.tenantId)/if (!session || !session.tenantId || !session.uid)/g" {} +
+          fi
+          
+          # Fix 9: Decimal arithmetic (convertir a number antes de sumar)
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "DECIMAL_ARITHMETIC"; then
+            echo "Fixing Decimal arithmetic..."
+            # Este fix es más complejo, solo lo podemos hacer en el contexto específico
+            # Buscar el patrón exacto y reemplazar con la conversión correcta
+            find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/amountGross: invoice\.amountNet + invoice\.amountTax,/amountGross: (typeof invoice.amountNet === 'number' ? invoice.amountNet : invoice.amountNet.toNumber()) + (typeof invoice.amountTax === 'number' ? invoice.amountTax : invoice.amountTax.toNumber()),/g" {} +
           fi
           
           echo "✅ Auto-fixes applied"
