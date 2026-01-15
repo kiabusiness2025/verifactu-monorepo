@@ -153,6 +153,11 @@ export async function POST(req: Request) {
     };
 
     console.log("[📋 API] Signing session token");
+    console.log("[📋 API] SESSION_SECRET check:", {
+      exists: !!process.env.SESSION_SECRET,
+      length: process.env.SESSION_SECRET?.length || 0,
+      vercel_env: process.env.VERCEL_ENV,
+    });
     const secret = readSessionSecret();
     const token = await signSessionToken({ payload, secret, expiresIn: "30d" });
     console.log("[📋 API] Session token signed successfully");
