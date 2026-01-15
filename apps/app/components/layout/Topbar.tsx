@@ -31,7 +31,7 @@ type PanelOption = {
 export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { setCompany, openDrawer } = useIsaakUI();
+  const { setCompany } = useIsaakUI();
   const { greeting } = useIsaakContext();
   const { logout, isLoggingOut } = useLogout();
   const { user: firebaseUser, signOut: firebaseSignOut } = useAuth();
@@ -242,13 +242,6 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
               </svg>
               <span className="absolute right-2 top-2 inline-block h-2 w-2 rounded-full bg-emerald-500" />
             </button>
-            <Button
-              size="sm"
-              className="w-full rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:from-[#0056D6] hover:to-[#1AA3DB] sm:w-auto"
-              onClick={openDrawer}
-            >
-              Isaak
-            </Button>
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}

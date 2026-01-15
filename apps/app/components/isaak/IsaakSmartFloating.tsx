@@ -78,15 +78,21 @@ export function IsaakSmartFloating() {
     }
   }, [isOpen, sessionId, detection, startNewSession, trackEvent, preferences.chatHistoryEnabled]);
 
-  // Initialize with contextual greeting
+  // Initialize with contextual greeting + disclaimer
   useEffect(() => {
-    const initialMessage: Message = {
+    const initialGreeting: Message = {
       id: "1",
       role: "assistant",
       content: context.greeting,
     };
 
-    setMessages([initialMessage]);
+    const disclaimer: Message = {
+      id: "2",
+      role: "assistant",
+      content: "⚠️ **Recordatorio importante:**\n\nSoy tu asistente para gestión diaria y análisis de datos, pero **NO sustituyo a tu gestor o asesor contable**.\n\n✅ Te ayudo a:\n• Ver ventas, gastos y beneficio en tiempo real\n• Organizar documentos y facturas\n• Recordar plazos fiscales\n• Interpretar datos contables\n\n¿En qué puedo ayudarte hoy?",
+    };
+
+    setMessages([initialGreeting, disclaimer]);
   }, [context.greeting, contextKey]);
 
   const handleSend = useCallback(
@@ -258,7 +264,7 @@ export function IsaakSmartFloating() {
             <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-500 px-3 sm:px-4 py-2.5 sm:py-3 text-white flex-shrink-0">
               <div>
                 <div className="font-semibold text-sm sm:text-base">Isaak</div>
-                <div className="text-xs opacity-90">Tu asistente fiscal</div>
+                <div className="text-xs opacity-90">Tu compañero fiscal</div>
               </div>
               <div className="flex items-center gap-1 sm:gap-2">
                 <button

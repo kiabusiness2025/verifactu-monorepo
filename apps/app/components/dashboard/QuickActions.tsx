@@ -3,7 +3,6 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@verifactu/ui";
-import { useIsaakUI } from "@/context/IsaakUIContext";
 
 type Action = {
   label: string;
@@ -14,7 +13,6 @@ type Action = {
 
 export function QuickActions() {
   const router = useRouter();
-  const { openDrawer } = useIsaakUI();
 
   const actions: Action[] = [
     {
@@ -29,12 +27,17 @@ export function QuickActions() {
       href: "/dashboard/documents",
       onClick: () => router.push("/dashboard/documents"),
     },
-    { label: "Preguntar a Isaak", description: "Respuestas guiadas", onClick: openDrawer },
     {
       label: "Revisar gastos",
       description: "Pagos y proveedores",
       href: "/dashboard/expenses",
       onClick: () => router.push("/dashboard/expenses"),
+    },
+    {
+      label: "Ver calendario fiscal",
+      description: "Plazos y obligaciones",
+      href: "/dashboard/calendar",
+      onClick: () => router.push("/dashboard/calendar"),
     },
   ];
 
