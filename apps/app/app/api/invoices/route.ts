@@ -79,9 +79,9 @@ export async function POST(req: NextRequest) {
 
     // Create invoice with line items
     const invoice = await prisma.invoice.create({
-      data: { createdBy: session.uid,
-        tenantId: session.tenantId,
+      data: {
         createdBy: session.uid,
+        tenantId: session.tenantId,
         customerId: data.customerId,
         customerName: data.customerName || 'Por especificar',
         number: data.number,
