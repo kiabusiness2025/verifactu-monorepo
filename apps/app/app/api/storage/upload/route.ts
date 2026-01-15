@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     // Verificar autenticación
-    const session = await getSessionPayload(req);
+    const session = await getSessionPayload();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     // Verificar autenticación
-    const session = await getSessionPayload(req);
+    const session = await getSessionPayload();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
