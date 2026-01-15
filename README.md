@@ -11,7 +11,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791?logo=postgresql)](https://www.postgresql.org/)
 [![Vercel](https://img.shields.io/badge/Vercel-Hosted-000000?logo=vercel)](https://vercel.com/)
 
-[Documentación](./docs/README.md) • [Arquitectura](./ARQUITECTURA_UNIFICADA.md) • [Estado](./PROJECT_STATUS.md)
+[Documentación](./docs/README.md) • [Arquitectura](./ARQUITECTURA_UNIFICADA.md) • [Deliverables](./PROJECT_DELIVERABLES.md)
 
 </div>
 

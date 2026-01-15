@@ -4,7 +4,9 @@
 
 1. **[README.md](README.md)** - Descripción general del proyecto
 2. **[ARQUITECTURA_UNIFICADA.md](ARQUITECTURA_UNIFICADA.md)** - Arquitectura de la solución
-3. **[docs/README.md](docs/README.md)** - Índice de documentación
+3. **[PROJECT_DELIVERABLES.md](PROJECT_DELIVERABLES.md)** - Funcionalidades entregadas
+4. **[AUTH_FLOW_REFERENCE.md](AUTH_FLOW_REFERENCE.md)** - Referencia de autenticación
+5. **[docs/README.md](docs/README.md)** - Índice de documentación técnica
 
 ---
 
@@ -195,21 +197,30 @@ verifactu-monorepo/
 - Flutter app con Firebase integration
 - PostgreSQL con Prisma ORM (8 modelos)
 - Firestore security rules (multi-tenant)
-- Google Tag Manager integration
-- Firebase Analytics tracking
-- Remote Config for feature flags
-- Email verification requirement
-- Auto-sync Firebase → Prisma
+---
 
-**En Progreso:** 🔄
-- Genkit AI (temporalmente deshabilitado, espera Google AI API key)
-- Dashboard completo
+## 📚 DOCUMENTOS PRINCIPALES (Actualizados)
 
-**Pendiente:** ⏳
-- Deploy Firestore rules a producción
-- Habilitar Microsoft/Facebook OAuth en Firebase Console
-- Completar dashboard con datos reales
-- Setup pagos con Stripe
+### Esenciales
+- **[README.md](README.md)** - Overview y quickstart
+- **[ARQUITECTURA_UNIFICADA.md](ARQUITECTURA_UNIFICADA.md)** - Arquitectura completa
+- **[PROJECT_DELIVERABLES.md](PROJECT_DELIVERABLES.md)** - Features entregadas
+- **[MANIFESTO.md](MANIFESTO.md)** - Principios del producto (ISAAK)
+- **[BRANDING.md](BRANDING.md)** - Guía de marca
+
+### Técnicos
+- **[AUTH_FLOW_REFERENCE.md](AUTH_FLOW_REFERENCE.md)** - Flujo de autenticación
+- **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Resumen ejecutivo
+- **[EMAIL_SYSTEM_SUMMARY.md](EMAIL_SYSTEM_SUMMARY.md)** - Sistema de emails
+- **[IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)** - Estado de implementación
+- **[ISAAK_VERCEL_INTEGRATION.md](ISAAK_VERCEL_INTEGRATION.md)** - CI/CD y tooling
+
+### Setup
+- **[QUICK_START.md](QUICK_START.md)** - Inicio rápido
+- **[GOOGLE_OAUTH_SETUP_STEPS.md](GOOGLE_OAUTH_SETUP_STEPS.md)** - OAuth Google
+- **[FACEBOOK_OAUTH_SETUP.md](FACEBOOK_OAUTH_SETUP.md)** - OAuth Facebook
+- **[FIREBASE_APPS_CONFIGURATION.md](FIREBASE_APPS_CONFIGURATION.md)** - Config Firebase
+- **[docs/](docs/)** - Documentación técnica detallada
 
 ---
 
@@ -224,7 +235,7 @@ verifactu-monorepo/
 | Backend Auth | Firebase | 12.x |
 | Backend DB | PostgreSQL | 15+ |
 | ORM | Prisma | 5.20.0 |
-| AI | Genkit | 1.27.0 |
+| AI | Genkit | 1.27.0 (disabled) |
 | Hosting | Vercel | - |
 | Package Manager | pnpm | 10.27.0 |
 
@@ -237,17 +248,17 @@ verifactu-monorepo/
 **URLs Importantes:**
 - 🌐 Landing: https://verifactu.business
 - 📱 App: https://app.verifactu.business
-- 🐍 Firebase Console: https://console.firebase.google.com/project/verifactu-business
-- 📊 Vercel: https://vercel.com/kiabusiness2025/verifactu-monorepo
+- 🔥 Firebase Console: https://console.firebase.google.com/project/verifactu-business
+- 📊 Vercel: https://vercel.com/ksenias-projects-16d8d1fb
 - 💻 GitHub: https://github.com/kiabusiness2025/verifactu-monorepo
 
 ---
 
 ## 📝 Versión del Documento
 
-- **Actualizado:** Enero 2026
-- **Versión:** 2.0
-- **Commits desde inicio:** 20+
+- **Actualizado:** 15 Enero 2026
+- **Mantenido por:** Isaak (con K)
+- **Última limpieza:** 15 Enero 2026 (eliminados 13 docs obsoletos)
 
 ---
 
