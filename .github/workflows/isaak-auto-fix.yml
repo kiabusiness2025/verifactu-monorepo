@@ -40,58 +40,114 @@ jobs:
         run: |
           ERRORS=""
           
-          # Buscar imports incorrectos
+          # ============================================
+          # IMPORT ERRORS
+          # ============================================
+          
+          # Error 1: @/lib/auth (doesn't exist)
           if grep -r "from '@/lib/auth'" apps/ 2>/dev/null; then
             ERRORS="${ERRORS}AUTH_IMPORT "
-            echo "❌ Found: @/lib/auth imports"
+            echo "❌ Error 1: @/lib/auth imports (use @/lib/session)"
           fi
           
+          # Error 2: Named { prisma } import (should be default export)
           if grep -r "import { prisma }" apps/ 2>/dev/null; then
             ERRORS="${ERRORS}PRISMA_IMPORT "
-            echo "❌ Found: Named prisma imports"
+            echo "❌ Error 2: Named prisma imports (use default import)"
           fi
           
+          # Error 3: @/lib/firebaseAdmin (deprecated)
           if grep -r "from '@/lib/firebaseAdmin'" apps/ 2>/dev/null; then
             ERRORS="${ERRORS}FIREBASE_IMPORT "
-            echo "❌ Found: @/lib/firebaseAdmin imports"
+            echo "❌ Error 3: @/lib/firebaseAdmin imports"
           fi
           
+          # ============================================
+          # SESSION & AUTHENTICATION ERRORS
+          # ============================================
+          
+          # Error 4: getSession() without Payload
           if grep -r "await getSession()" apps/app/app/api 2>/dev/null | grep -v "getSessionPayload"; then
             ERRORS="${ERRORS}SESSION_CALL "
-            echo "❌ Found: getSession() calls (should be getSessionPayload)"
+            echo "❌ Error 4: getSession() calls (use getSessionPayload())"
           fi
           
-          if grep -r "session.tenant.id" apps/ 2>/dev/null; then
-            ERRORS="${ERRORS}SESSION_PROPERTY "
-            echo "❌ Found: session.tenant.id (should be session.tenantId)"
-          fi
-          
-          if grep -r "session?.tenant?.id" apps/ 2>/dev/null; then
-            ERRORS="${ERRORS}SESSION_VALIDATION "
-            echo "❌ Found: Wrong session validation pattern"
-          fi
-          
-          if grep -r "dueDate" apps/app/app/api/invoices 2>/dev/null; then
-            ERRORS="${ERRORS}INVOICE_FIELD "
-            echo "❌ Found: dueDate field (doesn't exist in schema)"
-          fi
-          
-          # Detectar type guard incompleto (falta !session.uid)
-          if grep -r "if (!session || !session.tenantId)" apps/app/app/api 2>/dev/null | grep -v "!session.uid"; then
-            ERRORS="${ERRORS}INCOMPLETE_TYPE_GUARD "
-            echo "❌ Found: Incomplete type guard (missing !session.uid)"
-          fi
-          
-          # Detectar operaciones Decimal sin .toNumber()
-          if grep -r "invoice\.amountNet + invoice\.amountTax" apps/app/app/api 2>/dev/null; then
-            ERRORS="${ERRORS}DECIMAL_ARITHMETIC "
-            echo "❌ Found: Direct Decimal arithmetic (should use .toNumber())"
-          fi
-          
-          # Detectar llamadas incorrectas getSessionPayload(req)
+          # Error 5: getSessionPayload(req) with arguments
           if grep -r "getSessionPayload(req)" apps/app/app/api 2>/dev/null; then
             ERRORS="${ERRORS}SESSION_PAYLOAD_ARG "
-            echo "❌ Found: getSessionPayload(req) - should be getSessionPayload() with no args"
+            echo "❌ Error 5: getSessionPayload(req) - should be getSessionPayload() no args"
+          fi
+          
+          # Error 6: session.tenant.id (incorrect property)
+          if grep -r "session\.tenant\.id" apps/ 2>/dev/null; then
+            ERRORS="${ERRORS}SESSION_PROPERTY "
+            echo "❌ Error 6: session.tenant.id (use session.tenantId)"
+          fi
+          
+          # Error 7: Wrong session validation pattern
+          if grep -r "session\?\.tenant\?\.id" apps/ 2>/dev/null; then
+            ERRORS="${ERRORS}SESSION_VALIDATION "
+            echo "❌ Error 7: Wrong session validation (session?.tenant?.id)"
+          fi
+          
+          # ============================================
+          # TYPE GUARD ERRORS (Very common TypeScript issues)
+          # ============================================
+          
+          # Error 8: Type guard missing !session.uid check
+          if grep -r "if (!session || !session.tenantId)" apps/app/app/api 2>/dev/null | grep -v "!session.uid"; then
+            ERRORS="${ERRORS}INCOMPLETE_TYPE_GUARD "
+            echo "❌ Error 8: Type guard missing !session.uid"
+          fi
+          
+          # Error 9: Type guard missing !session.tenantId or !session.uid
+          if grep -r "if (!session\$)" apps/app/app/api 2>/dev/null; then
+            if grep -rA 3 "if (!session\$)" apps/app/app/api 2>/dev/null | grep -q "session\.tenantId\|session\.uid"; then
+              ERRORS="${ERRORS}INSUFFICIENT_TYPE_GUARD "
+              echo "❌ Error 9: Type guard too simple (only checks !session)"
+            fi
+          fi
+          
+          # ============================================
+          # SCHEMA & FIELD ERRORS
+          # ============================================
+          
+          # Error 10: dueDate field (doesn't exist in Invoice schema)
+          if grep -r "dueDate" apps/app/app/api/invoices 2>/dev/null; then
+            ERRORS="${ERRORS}INVOICE_FIELD "
+            echo "❌ Error 10: dueDate field (doesn't exist in Invoice schema)"
+          fi
+          
+          # Error 11: Missing createdBy field in invoice creation
+          if grep -r "prisma\.invoice\.create" apps/app/app/api/invoices 2>/dev/null | grep -v "createdBy"; then
+            ERRORS="${ERRORS}MISSING_CREATED_BY "
+            echo "❌ Error 11: Missing createdBy in invoice creation"
+          fi
+          
+          # ============================================
+          # DECIMAL/NUMBER ARITHMETIC ERRORS
+          # ============================================
+          
+          # Error 12: Direct Decimal arithmetic without .toNumber()
+          if grep -r "invoice\.amountNet + invoice\.amountTax" apps/app/app/api 2>/dev/null; then
+            ERRORS="${ERRORS}DECIMAL_ARITHMETIC "
+            echo "❌ Error 12: Direct Decimal arithmetic (use .toNumber())"
+          fi
+          
+          # Error 13: Other Decimal operations without conversion
+          if grep -r "\.amountNet +\|\.amountTax +\|\.amountGross +" apps/app/app/api 2>/dev/null | grep -v "toNumber"; then
+            ERRORS="${ERRORS}DECIMAL_OPERATIONS "
+            echo "❌ Error 13: Decimal operations need .toNumber()"
+          fi
+          
+          # ============================================
+          # EMAIL & TEMPLATE ERRORS
+          # ============================================
+          
+          # Error 14: Wrong email template import paths
+          if grep -r "from '\.\./emails/'" apps/landing/lib/email 2>/dev/null; then
+            ERRORS="${ERRORS}EMAIL_IMPORT "
+            echo "❌ Error 14: Email template paths (use ../../emails/)"
           fi
           
           if [ -z "$ERRORS" ]; then
@@ -169,6 +225,25 @@ jobs:
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "SESSION_PAYLOAD_ARG"; then
             echo "Fixing getSessionPayload calls..."
             find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/getSessionPayload(req)/getSessionPayload()/g" {} +
+          fi
+          
+          # Fix 11: Type guard missing !session.tenantId or !session.uid
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "INSUFFICIENT_TYPE_GUARD"; then
+            echo "Fixing insufficient type guards..."
+            # This is a more complex fix - we need to add the missing checks
+            find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/if (!session)/if (!session || !session.tenantId || !session.uid)/g" {} +
+          fi
+          
+          # Fix 12: Missing createdBy in invoice creation
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "MISSING_CREATED_BY"; then
+            echo "Fixing missing createdBy fields..."
+            find apps/app/app/api/invoices -name "*.ts" -type f -exec sed -i "s/data: {/data: { createdBy: session.uid,/g" {} +
+          fi
+          
+          # Fix 13: Email template import paths
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "EMAIL_IMPORT"; then
+            echo "Fixing email template imports..."
+            find apps/landing/lib/email -name "*.ts" -type f -exec sed -i "s/from '\.\.\\/emails\\//from '..\/..\/emails\//g" {} +
           fi
           
           echo "✅ Auto-fixes applied"
