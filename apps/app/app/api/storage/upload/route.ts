@@ -128,7 +128,7 @@ export async function DELETE(req: NextRequest) {
 
     if (!result.success) {
       return NextResponse.json(
-        { error: result.error },
+        { error: (result as { success: false; error: string }).error },
         { status: 400 }
       );
     }
