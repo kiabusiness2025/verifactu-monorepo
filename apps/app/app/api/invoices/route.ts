@@ -117,10 +117,13 @@ export async function POST(req: NextRequest) {
     });
 
     // Update amountGross
+    const netAmount = typeof invoice.amountNet === 'number' ? invoice.amountNet : invoice.amountNet.toNumber();
+    const taxAmount = typeof invoice.amountTax === 'number' ? invoice.amountTax : invoice.amountTax.toNumber();
+    
     const updated = await prisma.invoice.update({
       where: { id: invoice.id },
       data: {
-        amountGross: invoice.amountNet + invoice.amountTax,
+        amountGross: netAmount + taxAmount,
       },
       include: {
         customer: true,
