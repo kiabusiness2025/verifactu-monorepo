@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const sessionData = useSession();
+  const session = sessionData?.data;
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(false);
 
