@@ -1,4 +1,5 @@
 {
+  "buildCommand": "pnpm run build",
   "framework": "nextjs",
   "env": {
     "SESSION_COOKIE_DOMAIN": ".verifactu.business",
