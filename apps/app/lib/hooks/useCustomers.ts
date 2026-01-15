@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 
-interface Customer {
+export interface Customer {
   id: string;
   tenantId: string;
   name: string;
