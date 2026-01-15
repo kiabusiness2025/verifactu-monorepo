@@ -122,10 +122,10 @@ export default function Page() {
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
-  Isaak detecta tu idioma, te acompana en un tono cercano y te ayuda a entender
-  documentos, plazos y notificaciones. Resume ventas, gastos y beneficio en tiempo real
-  para que tomes decisiones con calma.
-</p>
+                Isaak detecta tu idioma, te acompana con soporte amigable y te ayuda a interpretar
+                documentos, plazos y notificaciones. Te guia para subir escrituras, CIF, declaraciones
+                y arrancar el ano con datos reales de gastos y ventas, con avisos para cierres y trimestres.
+              </p>
 
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
                 Fuente oficial:{" "}
@@ -190,12 +190,13 @@ export default function Page() {
         <Container>
           <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
             <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
-              Cumple con calma.
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
-  VeriFactu no deberia darte miedo. Isaak te guia, valida y te avisa cuando algo necesita revision.
-</p>
+              <h2 className="text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
+                Cumple con calma.
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
+                VeriFactu no deberia darte miedo. Isaak te avisa de cierres y plazos, y te ayuda a
+                comprobar los datos que prepara tu gestor al final de mes, trimestre o ano.
+              </p>
             </div>
             <ComplianceBadge />
           </div>
@@ -261,7 +262,9 @@ export default function Page() {
             <h3 className="text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
               Preguntas frecuentes
             </h3>
-            <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">\n  Respuestas rapidas sobre planes, seguridad y funcionalidades.\n</p>
+            <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
+              Respuestas rapidas sobre planes, seguridad y funcionalidades.
+            </p>
           </div>
           <Faq />
         </Container>
