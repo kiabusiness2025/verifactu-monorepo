@@ -155,7 +155,7 @@ export function IsaakSmartFloating() {
         });
 
         const data = await response.json();
-        const rawContent = data.content || \"Perdón, hubo un error. Intenta de nuevo.\";
+        const rawContent = data.content || "Perdón, hubo un error. Intenta de nuevo.";
         
         // Aplicar formato según tono configurado
         const assistantContent = formatIsaakMessage(rawContent, tone);
