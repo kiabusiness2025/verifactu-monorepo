@@ -30,7 +30,7 @@ model Tenant {
 }
 
 model User {
-  id        String   @id @db.Uuid
+  id        String   @id @db.Text
   email     String   @unique
   name      String?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -46,7 +46,7 @@ model User {
 model Membership {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId  String   @map("tenant_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
+  userId    String   @map("user_id") @db.Text
   role      String   @default("member")
   status    String   @default("active")
   invitedBy String?  @map("invited_by") @db.Uuid
@@ -62,7 +62,7 @@ model Membership {
 }
 
 model UserPreference {
-  userId            String   @id @map("user_id") @db.Uuid
+  userId            String   @id @map("user_id") @db.Text
   preferredTenantId String?  @map("preferred_tenant_id") @db.Uuid
   updatedAt         DateTime @default(now()) @map("updated_at") @db.Timestamptz
 
@@ -291,7 +291,7 @@ model ExpenseRecord {
 model IsaakConversation {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId     String   @map("tenant_id") @db.Uuid
-  userId       String   @map("user_id") @db.Uuid
+  userId       String   @map("user_id") @db.Text
   title        String? // Título auto-generado basado en el primer mensaje
   context      String? // Contexto de negocio (facturas, impuestos, etc)
   summary      String? // Resumen de la conversación
