@@ -78,8 +78,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Create invoice with line items
+    // Create invoice with line items
     const invoice = await prisma.invoice.create({
-      data: { createdBy: session.uid, createdBy: session.uid,
+      data: {
         createdBy: session.uid,
         tenantId: session.tenantId,
         customerId: data.customerId,
@@ -122,7 +123,8 @@ export async function POST(req: NextRequest) {
     
     const updated = await prisma.invoice.update({
       where: { id: invoice.id },
-      data: { createdBy: session.uid, createdBy: session.uid, createdBy: session.uid,
+        data: {
+          createdBy: session.uid,
         amountGross: netAmount + taxAmount,
       },
       include: {
