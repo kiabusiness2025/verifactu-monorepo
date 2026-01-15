@@ -22,6 +22,8 @@ import { useIsaakVoice } from "@/hooks/useIsaakVoice";
 import { useIsaakPreferences } from "@/hooks/useIsaakPreferences";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserFirstName } from "@/lib/getUserName";
+import { useIsaakTone } from "@/hooks/useIsaakTone";
+import { formatIsaakMessage, getIsaakGreeting, getIsaakDisclaimer } from "@/lib/formatIsaakMessage";
 
 type Message = {
   id: string;
@@ -37,6 +39,7 @@ export function IsaakSmartFloating() {
   const { preferences } = useIsaakPreferences();
   const { user: firebaseUser } = useAuth();
   const userName = getUserFirstName(firebaseUser);
+  const { tone } = useIsaakTone();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -84,22 +87,23 @@ export function IsaakSmartFloating() {
 
   // Initialize with contextual greeting + disclaimer
   useEffect(() => {
-    const personalizedGreeting = context.greeting.replace('Hola', `Hola ${userName}`);
+    const greetingText = getIsaakGreeting(userName, tone);
+    const disclaimerText = getIsaakDisclaimer(tone);
     
     const initialGreeting: Message = {
-      id: "1",
-      role: "assistant",
-      content: personalizedGreeting,
+      id: \"1\",
+      role: \"assistant\",
+      content: greetingText,
     };
 
     const disclaimer: Message = {
-      id: "2",
-      role: "assistant",
-      content: "⚠️ **Recordatorio importante:**\n\nSoy tu asistente para gestión diaria y análisis de datos, pero **NO sustituyo a tu gestor o asesor contable**.\n\n✅ Te ayudo a:\n• Ver ventas, gastos y beneficio en tiempo real\n• Organizar documentos y facturas\n• Recordar plazos fiscales\n• Interpretar datos contables\n\n¿En qué puedo ayudarte hoy?",
+      id: \"2\",
+      role: \"assistant\",
+      content: disclaimerText,
     };
 
     setMessages([initialGreeting, disclaimer]);
-  }, [context.greeting, contextKey, userName]);
+  }, [userName, tone]);
 
   const handleSend = useCallback(
     async (e: React.FormEvent) => {
@@ -151,8 +155,10 @@ export function IsaakSmartFloating() {
         });
 
         const data = await response.json();
-        const assistantContent =
-          data.content || "Perdón, hubo un error. Intenta de nuevo.";
+        const rawContent = data.content || \"Perdón, hubo un error. Intenta de nuevo.\";
+        
+        // Aplicar formato según tono configurado
+        const assistantContent = formatIsaakMessage(rawContent, tone);
 
         const assistantMsg: Message = {
           id: `assistant-${Date.now()}`,

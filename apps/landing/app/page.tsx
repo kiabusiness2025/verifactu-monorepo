@@ -110,7 +110,7 @@ export default function Page() {
                 className="mt-2 inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-3 py-1 text-[11px] font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15 hover:text-[#0060F0]"
               >
                 <span className="h-2 w-2 rounded-full bg-[#0080F0]" aria-hidden="true" />
-                Estado: Operativo · Última sincronización VeriFactu hace 3 min
+                Estado: Operativo - Ultima sincronizacion VeriFactu hace 3 min
               </Link>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-[#002060] sm:text-6xl">
@@ -122,7 +122,7 @@ export default function Page() {
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
-  Isaak detecta tu idioma, te acompaña en un tono cercano y te ayuda a entender
+  Isaak detecta tu idioma, te acompana en un tono cercano y te ayuda a entender
   documentos, plazos y notificaciones. Resume ventas, gastos y beneficio en tiempo real
   para que tomes decisiones con calma.
 </p>
@@ -194,7 +194,7 @@ export default function Page() {
               Cumple con calma.
             </h2>
             <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
-  VeriFactu no debería darte miedo. Isaak te guía, valida y te avisa cuando algo necesita revisión.
+  VeriFactu no deberia darte miedo. Isaak te guia, valida y te avisa cuando algo necesita revision.
 </p>
             </div>
             <ComplianceBadge />
@@ -261,9 +261,7 @@ export default function Page() {
             <h3 className="text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
               Preguntas frecuentes
             </h3>
-            <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
-  VeriFactu no debería darte miedo. Isaak te guía, valida y te avisa cuando algo necesita revisión.
-</p>
+            <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">\n  Respuestas rapidas sobre planes, seguridad y funcionalidades.\n</p>
           </div>
           <Faq />
         </Container>
@@ -307,6 +305,9 @@ export default function Page() {
     </div>
   );
 }
+
+
+
 
 
 

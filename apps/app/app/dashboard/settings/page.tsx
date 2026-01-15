@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
 
 export default function SettingsPage() {
   const sessionData = useSession();
@@ -77,6 +78,16 @@ export default function SettingsPage() {
             }`}
           >
             Equipo
+          </button>
+          <button
+            onClick={() => setActiveTab('isaak')}
+            className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'isaak'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Isaak
           </button>
         </div>
 
@@ -283,6 +294,13 @@ export default function SettingsPage() {
                   </span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Isaak Tab */}
+          {activeTab === 'isaak' && (
+            <div>
+              <IsaakToneSettings />
             </div>
           )}
         </div>

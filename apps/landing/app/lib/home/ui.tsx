@@ -655,29 +655,46 @@ export function FeaturesSection() {
           Lo que ves es lo que tienes: Ventas, Gastos, Beneficio.
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-lightbg-600 sm:text-lg">
-          El dashboard muestra solo lo esencial. Informes, listados y análisis profundos están a un comando de distancia con Isaak.
+          El dashboard muestra solo lo esencial. Isaak entiende documentos, detecta el idioma y te guia con alertas y
+          recordatorios cuando se acercan cierres y plazos fiscales.
         </p>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <FeatureCard
             icon={<TrendingUp className="h-5 w-5 text-[#0080F0]" />}
-            title="Emisión sin fricción"
-            bullets={["Haz una foto o sube documento", "Isaak clasifica y registra", "Validación automática incluida"]}
+            title="Emision sin friccion"
+            bullets={[
+              "Sube facturas y tickets en cualquier idioma",
+              "Isaak interpreta y clasifica al instante",
+              "Validacion VeriFactu incluida",
+            ]}
           />
           <FeatureCard
             icon={<BadgeCheck className="h-5 w-5 text-[#0080F0]" />}
             title="Gastos guiados"
-            bullets={["Foto del ticket -> clasificado", "Deducible según tu actividad", "Apunte registrado al instante"]}
+            bullets={[
+              "Documentos, extractos y justificantes",
+              "Deducible segun tu actividad",
+              "Recordatorios de cierres y plazos",
+            ]}
           />
           <FeatureCard
             icon={<Sparkles className="h-5 w-5 text-[#0080F0]" />}
             title="Dashboard claro"
-            bullets={["Ventas totales", "Gastos totales", "Beneficio real, siempre actualizado"]}
+            bullets={[
+              "Ventas, gastos y beneficio en tiempo real",
+              "Comparativas por mes y trimestre",
+              "Alertas cuando algo se desvia",
+            ]}
           />
           <FeatureCard
             icon={<FileText className="h-5 w-5 text-[#0080F0]" />}
             title="Bajo demanda con Isaak"
-            bullets={["Informes y exportaciones", "Listados por cliente, periodo", "Análisis profundo cuando lo necesites"]}
+            bullets={[
+              "Soporte cercano y en tu idioma",
+              "Plazos fiscales siempre visibles",
+              "Checklist de cierre mensual y anual",
+            ]}
           />
         </div>
       </Container>
@@ -695,45 +712,45 @@ export function PideseloAIsaakSection() {
             Pideselo a Isaak
           </div>
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
-            Todo lo que necesites, disponible en un comando.
+            Un amigo experto que habla tu idioma y te cuida los plazos.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Informes, listados, exportaciones, importaciones. Tú pides, Isaak hace. Sin límites, sin fricción.
+            Isaak interpreta documentos, avisa de cierres (ejercicio 2025, T4 2025), ayuda a cargar tus datos reales
+            y te guia mientras la prueba se acerca a su fin.
+          </p>
+          <p className="mx-auto mt-3 max-w-3xl text-xs text-slate-500">
+            Isaak no sustituye a tu gestor o asesor contable. Te ofrece datos de ventas, gastos y beneficio para
+            decidir en tiempo real y revisar lo que te preparen al cierre de mes, trimestre o ano.
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <CommandExample
-            command="Subo estos tickets, cuáles son deducibles?"
-            response="He revisado los 5 tickets. 4 son deducibles para tu actividad y ya están registrados. 1 requiere justificación adicional. ¿Lo marcamos como 'a revisar'?"
+            command="Explicame estas escrituras y el CIF"
+            response="He extraido los datos clave y los he guardado en tu ficha de empresa. Si falta algo, te lo marco para completar en 2 minutos."
           />
           <CommandExample
-            command="Prepara el listado de gastos del trimestre"
-            response="Listo. Gastos T4 2025: 8.200 € en total. He agrupado por categoría (alimentación, transporte, oficina). ¿Lo exporto a Excel o PDF?"
+            command="Estamos en cierre 2025, que me falta?"
+            response="Te faltan 2 facturas de diciembre y un extracto bancario. Quieres que te recuerde los plazos y lo deje listo para tu gestor?"
           />
           <CommandExample
-            command="Dame el ranking de clientes por facturación"
-            response="Top 5 clientes este año: López S.L. (18.500 €), Acme Corp (15.200 €), Tech Solutions (12.100 €). ¿Quieres ver márgenes o proyecciones?"
+            command="Recuerdame el 4o trimestre de 2025"
+            response="He creado recordatorios para los plazos del T4 2025 y te avisare con tiempo. Si quieres, preparo el resumen fiscal automatico."
           />
           <CommandExample
-            command="Crea proveedor 'X' con estos datos"
-            response="Proveedor 'X' creado con CIF, datos bancarios y condiciones de pago. Ya puedes emitir compras contra él. ¿Quieres crear más?"
+            command="Sube estos gastos y ordenalos por trimestre"
+            response="Cargados y clasificados. He creado un resumen por trimestre con deducibles y pendientes de revision."
           />
           <CommandExample
-            command="Exporta todos los productos a Excel"
-            response="Archivo generado: 234 productos, con códigos, precios, categorías y stock. Descargable en 2 segundos. ¿Necesitas filtros especiales?"
+            command="Prepara un resumen para mi gestor"
+            response="Listo: ventas, gastos y beneficio del periodo, con notas y posibles discrepancias para revisar juntos."
           />
           <CommandExample
-            command="Resumen mensual: ventas, gastos y beneficio"
-            response="Diciembre 2025: Ingresos 24.500 € | Gastos 12.100 € | Beneficio estimado 12.400 € (+8% vs mes anterior). ¿Quieres desglose por cliente?"
+            command="Mi prueba termina en 5 dias"
+            response="Te recomiendo el plan que mejor encaja por tu uso. Si quieres, preparo la transicion para no perder datos."
           />
         </div>
       </Container>
     </section>
   );
 }
-
-
-
-
-
