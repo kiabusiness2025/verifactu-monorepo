@@ -47,9 +47,14 @@ function initFirebaseAdmin() {
 
 async function getOrCreateTenantForUser(uid: string, email: string) {
   try {
+    console.log("[Auth] getOrCreateTenantForUser START", { uid, email });
+    console.log("[Auth] DATABASE_URL exists:", !!process.env.DATABASE_URL);
+    
     const dbPool = getDbPool();
+    console.log("[Auth] Pool created");
     
     // 1. Verificar/crear usuario
+    console.log("[Auth] Step 1: Inserting user");
     await dbPool.query(
       `INSERT INTO users (id, email, name)
        VALUES ($1, $2, $3)
@@ -57,8 +62,10 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
        RETURNING id`,
       [uid, email, email.split("@")[0]]
     );
+    console.log("[Auth] Step 1: User inserted/exists");
 
     // 2. Obtener membership del usuario (si existe)
+    console.log("[Auth] Step 2: Checking existing membership");
     const membershipResult = await dbPool.query(
       `SELECT tenant_id FROM memberships 
        WHERE user_id = $1 AND status = 'active'
@@ -67,10 +74,12 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
     );
 
     if (membershipResult.rows.length > 0) {
+      console.log("[Auth] Existing tenant found:", membershipResult.rows[0].tenant_id);
       return membershipResult.rows[0].tenant_id;
     }
 
     // 3. Crear tenant si no existe
+    console.log("[Auth] Step 3: Creating new tenant");
     const tenantResult = await dbPool.query(
       `INSERT INTO tenants (name, legal_name)
        VALUES ($1, $2)
@@ -78,26 +87,36 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
       [email.split("@")[0], email.split("@")[0]]
     );
     const newTenantId = tenantResult.rows[0].id;
+    console.log("[Auth] Step 3: Tenant created:", newTenantId);
 
     // 4. Crear membership (owner)
+    console.log("[Auth] Step 4: Creating membership");
     await dbPool.query(
       `INSERT INTO memberships (tenant_id, user_id, role, status)
        VALUES ($1, $2, 'owner', 'active')
        ON CONFLICT DO NOTHING`,
       [newTenantId, uid]
     );
+    console.log("[Auth] Step 4: Membership created");
 
     // 5. Crear user_preferences
+    console.log("[Auth] Step 5: Creating user_preferences");
     await dbPool.query(
       `INSERT INTO user_preferences (user_id, preferred_tenant_id)
        VALUES ($1, $2)
        ON CONFLICT (user_id) DO UPDATE SET preferred_tenant_id = $2`,
       [uid, newTenantId]
     );
+    console.log("[Auth] Step 5: user_preferences created");
 
+    console.log("[Auth] getOrCreateTenantForUser SUCCESS:", newTenantId);
     return newTenantId;
   } catch (error) {
-    console.error("[Auth] Error en getOrCreateTenantForUser:", error);
+    console.error("[Auth] Error en getOrCreateTenantForUser:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : typeof error,
+    });
     return null;
   }
 }
