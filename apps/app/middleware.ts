@@ -66,7 +66,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Check session
-  const session = await getSessionPayload();
+  const session = await getSessionPayload(req);
   
   if (!session) {
     console.log(`[🧠 MW] ❌ No session - redirecting to login`);
