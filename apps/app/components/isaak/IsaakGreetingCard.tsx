@@ -5,10 +5,11 @@ import Link from "next/link";
 import { Button } from "@verifactu/ui";
 import { useIsaakContext } from "@/hooks/useIsaakContext";
 import { useAuth } from "@/hooks/useAuth";
+import { getUserFirstName } from "@/lib/getUserName";
 
 export function IsaakGreetingCard() {
   const { user } = useAuth();
-  const userName = user?.displayName?.split(' ')[0] || 'Usuario';
+  const userName = getUserFirstName(user);
   const { greeting, title, suggestions, sabiasQue } = useIsaakContext(userName);
   const primary = suggestions[0];
 

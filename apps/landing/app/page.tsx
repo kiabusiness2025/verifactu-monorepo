@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -122,9 +122,10 @@ export default function Page() {
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
-                Isaak te guía, valida y resume lo esencial: ventas, gastos y beneficio, con
-                cumplimiento VeriFactu desde el primer día.
-              </p>
+  Isaak detecta tu idioma, te acompaña en un tono cercano y te ayuda a entender
+  documentos, plazos y notificaciones. Resume ventas, gastos y beneficio en tiempo real
+  para que tomes decisiones con calma.
+</p>
 
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
                 Fuente oficial:{" "}
@@ -136,7 +137,7 @@ export default function Page() {
                 >
                   Agencia Tributaria (AEAT)
                 </a>{" "}
-                · Te obliga a emitir y registrar facturas con trazabilidad e integridad.
+                Â· Te obliga a emitir y registrar facturas con trazabilidad e integridad.
               </div>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -193,8 +194,8 @@ export default function Page() {
               Cumple con calma.
             </h2>
             <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
-              VeriFactu no debería darte miedo. Isaak te guía, valida y te avisa cuando algo necesita revisión.
-            </p>
+  VeriFactu no debería darte miedo. Isaak te guía, valida y te avisa cuando algo necesita revisión.
+</p>
             </div>
             <ComplianceBadge />
           </div>
@@ -237,7 +238,7 @@ export default function Page() {
               Precio que se ajusta a tu uso real
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-              Solo mensual · 1 mes gratis · aviso antes de renovar.
+              Solo mensual Â· 1 mes gratis Â· aviso antes de renovar.
             </p>
 
             <div className="mt-8 flex justify-center">
@@ -246,7 +247,7 @@ export default function Page() {
 
             <p className="mx-auto mt-6 max-w-2xl text-xs text-slate-500">
               Precio orientativo. La cuota final se basa en facturas emitidas y movimientos procesados (si activas
-              conciliación bancaria). Hasta 1.000 facturas y 2.000 movimientos; si superas estos límites ofrecemos
+              conciliaciÃ³n bancaria). Hasta 1.000 facturas y 2.000 movimientos; si superas estos lÃ­mites ofrecemos
               presupuesto. IVA no incluido.
             </p>
           </div>
@@ -261,8 +262,8 @@ export default function Page() {
               Preguntas frecuentes
             </h3>
             <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
-              Respuestas rápidas sobre planes, seguridad y funcionalidades.
-            </p>
+  VeriFactu no debería darte miedo. Isaak te guía, valida y te avisa cuando algo necesita revisión.
+</p>
           </div>
           <Faq />
         </Container>
@@ -275,26 +276,26 @@ export default function Page() {
             Recursos para dominar VeriFactu e Isaak.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
-            Guías, onboarding y checklist para aplicar mejores prácticas y aprovechar todo el potencial de la plataforma.
+            GuÃ­as, onboarding y checklist para aplicar mejores prÃ¡cticas y aprovechar todo el potencial de la plataforma.
           </p>
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
             <ResourceCard
-              tag="Guía"
+              tag="GuÃ­a"
               title="Manual VeriFactu 2025"
-              desc="Requisitos y checklist práctico para operar con confianza."
-              cta="Descargar guía"
+              desc="Requisitos y checklist prÃ¡ctico para operar con confianza."
+              cta="Descargar guÃ­a"
             />
             <ResourceCard
               tag="Primeros pasos"
               title="Primeros pasos con Isaak"
-              desc="Aprende a emitir, registrar gastos y entender tus métricas."
+              desc="Aprende a emitir, registrar gastos y entender tus mÃ©tricas."
               cta="Reservar plaza"
             />
             <ResourceCard
               tag="Checklist"
-              title="Auditoría express"
-              desc="Evalúa el estado de tu facturación y detecta riesgos."
+              title="AuditorÃ­a express"
+              desc="EvalÃºa el estado de tu facturaciÃ³n y detecta riesgos."
               cta="Solicitar checklist"
             />
           </div>
@@ -306,6 +307,9 @@ export default function Page() {
     </div>
   );
 }
+
+
+
 
 
 

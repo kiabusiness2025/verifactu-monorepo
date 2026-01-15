@@ -20,6 +20,8 @@ import { useConversationHistory, type ConversationMessage } from "@/hooks/useCon
 import { useIsaakAnalytics } from "@/hooks/useIsaakAnalytics";
 import { useIsaakVoice } from "@/hooks/useIsaakVoice";
 import { useIsaakPreferences } from "@/hooks/useIsaakPreferences";
+import { useAuth } from "@/hooks/useAuth";
+import { getUserFirstName } from "@/lib/getUserName";
 
 type Message = {
   id: string;
@@ -33,6 +35,8 @@ export function IsaakSmartFloating() {
   const { trackEvent } = useIsaakAnalytics();
   const { speak, isSpeaking } = useIsaakVoice();
   const { preferences } = useIsaakPreferences();
+  const { user: firebaseUser } = useAuth();
+  const userName = getUserFirstName(firebaseUser);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -80,10 +84,12 @@ export function IsaakSmartFloating() {
 
   // Initialize with contextual greeting + disclaimer
   useEffect(() => {
+    const personalizedGreeting = context.greeting.replace('Hola', `Hola ${userName}`);
+    
     const initialGreeting: Message = {
       id: "1",
       role: "assistant",
-      content: context.greeting,
+      content: personalizedGreeting,
     };
 
     const disclaimer: Message = {
@@ -93,7 +99,7 @@ export function IsaakSmartFloating() {
     };
 
     setMessages([initialGreeting, disclaimer]);
-  }, [context.greeting, contextKey]);
+  }, [context.greeting, contextKey, userName]);
 
   const handleSend = useCallback(
     async (e: React.FormEvent) => {
