@@ -70,12 +70,8 @@ export async function middleware(req: NextRequest) {
   
   if (!session) {
     console.log(`[🧠 MW] ❌ No session - redirecting to login`);
-    // Simple redirect to landing login (no ?next= param - we'll handle redirect after auth)
     const landingUrl = getLandingUrl();
-    const appUrl = getAppUrl();
-    const nextPath = `${req.nextUrl.pathname}${req.nextUrl.search || ""}`;
-    const nextUrl = `${appUrl}${nextPath}`;
-    return NextResponse.redirect(`${landingUrl}/auth/login?next=${encodeURIComponent(nextUrl)}`);
+    return NextResponse.redirect(`${landingUrl}/auth/login`);
   }
 
   console.log("[🧠 MW] ✅ Session valid - allowing request");
