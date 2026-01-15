@@ -88,6 +88,12 @@ jobs:
             echo "❌ Found: Direct Decimal arithmetic (should use .toNumber())"
           fi
           
+          # Detectar llamadas incorrectas getSessionPayload(req)
+          if grep -r "getSessionPayload(req)" apps/app/app/api 2>/dev/null; then
+            ERRORS="${ERRORS}SESSION_PAYLOAD_ARG "
+            echo "❌ Found: getSessionPayload(req) - should be getSessionPayload() with no args"
+          fi
+          
           if [ -z "$ERRORS" ]; then
             echo "✅ No errors detected"
             echo "has_errors=false" >> $GITHUB_OUTPUT
@@ -157,6 +163,12 @@ jobs:
             # Este fix es más complejo, solo lo podemos hacer en el contexto específico
             # Buscar el patrón exacto y reemplazar con la conversión correcta
             find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/amountGross: invoice\.amountNet + invoice\.amountTax,/amountGross: (typeof invoice.amountNet === 'number' ? invoice.amountNet : invoice.amountNet.toNumber()) + (typeof invoice.amountTax === 'number' ? invoice.amountTax : invoice.amountTax.toNumber()),/g" {} +
+          fi
+          
+          # Fix 10: getSessionPayload(req) → getSessionPayload()
+          if echo "${{ steps.detect.outputs.errors }}" | grep -q "SESSION_PAYLOAD_ARG"; then
+            echo "Fixing getSessionPayload calls..."
+            find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/getSessionPayload(req)/getSessionPayload()/g" {} +
           fi
           
           echo "✅ Auto-fixes applied"
