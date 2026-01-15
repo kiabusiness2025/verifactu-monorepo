@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { AuthLayout, FormInput, PasswordInput, GoogleAuthButton } from "../../components/AuthComponents";
 import { useAuth } from "../../context/AuthContext";
 import { signInWithEmail, signUpWithEmail, signInWithGoogle } from "../../lib/auth";
+import { mintSessionCookie } from "../../lib/serverSession";
 import { useToast } from "../../components/Toast";
 import { getAppUrl } from "../../lib/urls";
 import type { User } from "firebase/auth";
@@ -80,12 +81,24 @@ export default function LoginPage() {
     window.location.href = redirectTarget;
   }, [redirectTarget]);
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated AND has valid session
   React.useEffect(() => {
     if (!authLoading && user && !hasRedirected.current) {
-      console.log("[🧠 LOGIN] User authenticated, redirecting to dashboard", { uid: user.uid, email: user.email });
-      hasRedirected.current = true;
-      redirectToDashboard();
+      console.log("[🧠 LOGIN] User authenticated in Firebase, verifying session cookie...", { uid: user.uid });
+      
+      // Verify that session cookie exists by trying to mint it
+      // If cookie doesn't exist, mintSessionCookie will create it
+      mintSessionCookie(user)
+        .then(() => {
+          console.log("[🧠 LOGIN] Session cookie verified/created, redirecting to dashboard");
+          hasRedirected.current = true;
+          redirectToDashboard();
+        })
+        .catch((error) => {
+          console.error("[🧠 LOGIN] Failed to verify/create session cookie:", error);
+          // If session creation fails, don't redirect - let user try to login again
+          hasRedirected.current = false;
+        });
     }
   }, [user, authLoading, redirectToDashboard]);
 
@@ -112,12 +125,6 @@ export default function LoginPage() {
       </div>
     );
   }
-
-  const persistSession = async (authedUser: User) => {
-    // Session is already minted by signInWithEmail/signInWithGoogle
-    // No need to call /api/auth/session again
-    return { ok: true };
-  };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
