@@ -1,4 +1,6 @@
 name: 🤖 Isaak Auto-Fix Build Failures
+# Auto-detects and fixes common build errors
+# Status: Production Ready ✅
 
 on:
   # Trigger 1: Cuando hay un push (verifica si hubo fallos previos)
