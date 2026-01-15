@@ -1,5 +1,5 @@
 {
-  "buildCommand": "rm -rf .next && pnpm run build",
+  "buildCommand": "npx -y pnpm@10.27.0 run build",
   "framework": "nextjs",
   "env": {
     "SESSION_COOKIE_DOMAIN": ".verifactu.business",
