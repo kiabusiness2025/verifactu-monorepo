@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId) {
+    if (!session || !session.tenantId || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId) {
+    if (!session || !session.tenantId || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     const updated = await prisma.invoice.update({
       where: { id: params.id },
-      data: {
+      data: { createdBy: session.uid,
         ...(data.status && { status: data.status }),
         ...(data.notes && { notes: data.notes }),
         ...(data.dueDate && { dueDate: new Date(data.dueDate) }),
@@ -71,7 +71,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId) {
+    if (!session || !session.tenantId || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

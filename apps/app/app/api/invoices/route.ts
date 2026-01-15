@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(req: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId) {
+    if (!session || !session.tenantId || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
     // Create invoice with line items
     const invoice = await prisma.invoice.create({
-      data: {
+      data: { createdBy: session.uid,
         tenantId: session.tenantId,
         createdBy: session.uid,
         customerId: data.customerId,
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
     
     const updated = await prisma.invoice.update({
       where: { id: invoice.id },
-      data: {
+      data: { createdBy: session.uid,
         amountGross: netAmount + taxAmount,
       },
       include: {
