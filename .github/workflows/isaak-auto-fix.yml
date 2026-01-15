@@ -236,11 +236,12 @@ jobs:
             find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/if (!session)/if (!session || !session.tenantId || !session.uid)/g" {} +
           fi
           
-          # Fix 12: Missing createdBy in invoice creation
-          if echo "${{ steps.detect.outputs.errors }}" | grep -q "MISSING_CREATED_BY"; then
-            echo "Fixing missing createdBy fields..."
-            find apps/app/app/api/invoices -name "*.ts" -type f -exec sed -i "s/data: {/data: { createdBy: session.uid,/g" {} +
-          fi
+          # Fix 12: Missing createdBy in invoice creation  
+          # DISABLED: This fix causes duplicates - manual review required
+          # if echo "${{ steps.detect.outputs.errors }}" | grep -q "MISSING_CREATED_BY"; then
+          #   echo "Fixing missing createdBy fields..."
+          #   find apps/app/app/api/invoices -name "*.ts" -type f -exec sed -i "s/data: {/data: { createdBy: session.uid,/g" {} +
+          # fi
           
           # Fix 13: Email template import paths
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "EMAIL_IMPORT"; then
