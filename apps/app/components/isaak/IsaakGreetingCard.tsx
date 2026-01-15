@@ -4,12 +4,11 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@verifactu/ui";
 import { useIsaakContext } from "@/hooks/useIsaakContext";
+import { useAuth } from "@/hooks/useAuth";
 
-type Props = {
-  userName?: string;
-};
-
-export function IsaakGreetingCard({ userName = "Ksenia" }: Props) {
+export function IsaakGreetingCard() {
+  const { user } = useAuth();
+  const userName = user?.displayName?.split(' ')[0] || 'Usuario';
   const { greeting, title, suggestions, sabiasQue } = useIsaakContext(userName);
   const primary = suggestions[0];
 
