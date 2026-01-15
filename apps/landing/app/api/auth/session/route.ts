@@ -26,7 +26,10 @@ function getDbPool() {
 
 function requireEnv(name: string) {
   const v = process.env[name];
-  if (!v) throw new Error(`Missing env var: ${name}`);
+  if (!v) {
+    console.error(`[📋 API] Missing required env var: ${name}`);
+    throw new Error(`Missing env var: ${name}`);
+  }
   return v;
 }
 
@@ -101,9 +104,12 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
 
 export async function POST(req: Request) {
   console.log("[📋 API] /api/auth/session START");
-  initFirebaseAdmin();
-
+  
   try {
+    console.log("[📋 API] Initializing Firebase Admin");
+    initFirebaseAdmin();
+    console.log("[📋 API] Firebase Admin initialized");
+
     const { idToken } = await req.json().catch(() => ({}));
     if (!idToken) {
       console.error("[📋 API] Missing idToken in request body");
