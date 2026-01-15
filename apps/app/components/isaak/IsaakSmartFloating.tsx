@@ -91,14 +91,14 @@ export function IsaakSmartFloating() {
     const disclaimerText = getIsaakDisclaimer(tone);
     
     const initialGreeting: Message = {
-      id: \"1\",
-      role: \"assistant\",
+      id: "1",
+      role: "assistant",
       content: greetingText,
     };
 
     const disclaimer: Message = {
-      id: \"2\",
-      role: \"assistant\",
+      id: "2",
+      role: "assistant",
       content: disclaimerText,
     };
 
