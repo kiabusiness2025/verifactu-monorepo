@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { AuthLayout, FormInput, PasswordInput, GoogleAuthButton } from "../../components/AuthComponents";
+import { AuthLayout, FormInput, PasswordInput } from "../../components/AuthComponents";
 import { useAuth } from "../../context/AuthContext";
 import { signInWithEmail, signUpWithEmail, signInWithGoogle } from "../../lib/auth";
 import { mintSessionCookie } from "../../lib/serverSession";
@@ -49,6 +49,7 @@ export default function LoginPage() {
       // Best-effort logging only
     }
   };
+
   const nextParam = searchParams?.get("next")?.trim() || "";
   const redirectTarget = (() => {
     if (!nextParam) return `${appUrl}/dashboard`;
@@ -56,70 +57,49 @@ export default function LoginPage() {
       const target = new URL(nextParam);
       const appOrigin = new URL(appUrl).origin;
       if (target.origin !== appOrigin) {
-        console.warn("[AUTH] Ignoring invalid next param (cross-origin)", {
-          nextParam,
-          appOrigin,
-        });
         reportInvalidNext("cross-origin", nextParam);
         return `${appUrl}/dashboard`;
       }
       return target.toString();
     } catch {
-      console.warn("[AUTH] Ignoring invalid next param (malformed URL)", {
-        nextParam,
-      });
       reportInvalidNext("malformed", nextParam);
       return `${appUrl}/dashboard`;
     }
   })();
 
-  // Simple redirect to dashboard after login
   const redirectToDashboard = React.useCallback(() => {
-    console.log("[🧠 LOGIN] Redirecting to dashboard...");
-    // In dev: http://localhost:3000/dashboard
-    // In prod: https://app.verifactu.business/dashboard
     window.location.href = redirectTarget;
   }, [redirectTarget]);
 
-  // Redirect if already authenticated AND has valid session
   React.useEffect(() => {
     if (!authLoading && user && !hasRedirected.current) {
-      console.log("[🧠 LOGIN] User authenticated in Firebase, verifying session cookie...", { uid: user.uid });
-      
-      // Verify that session cookie exists by trying to mint it
-      // If cookie doesn't exist, mintSessionCookie will create it
-      mintSessionCookie(user)
+      mintSessionCookie(user as User)
         .then(() => {
-          console.log("[🧠 LOGIN] Session cookie verified/created, redirecting to dashboard");
           hasRedirected.current = true;
           redirectToDashboard();
         })
-        .catch((error) => {
-          console.error("[🧠 LOGIN] Failed to verify/create session cookie:", error);
-          // If session creation fails, don't redirect - let user try to login again
+        .catch(() => {
           hasRedirected.current = false;
         });
     }
   }, [user, authLoading, redirectToDashboard]);
 
-  // Don't render anything if authenticated - just show loading
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50/70 via-white to-blue-50/40">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50/70 via-white to-blue-50/40">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#0060F0]"></div>
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-[#0060F0]"></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
     );
   }
 
-  // If user is authenticated, don't show login form
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50/70 via-white to-blue-50/40">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50/70 via-white to-blue-50/40">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#0060F0]"></div>
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-[#0060F0]"></div>
           <p className="mt-4 text-gray-600">Redirigiendo...</p>
         </div>
       </div>
@@ -132,23 +112,19 @@ export default function LoginPage() {
     setError("");
 
     try {
-      console.log("[🧠 LOGIN] Email login attempt", { email });
       const result = await signInWithEmail(email, password);
 
       if (result.error) {
-        console.error("[🧠 LOGIN] Email login failed", { error: result.error });
         setError(result.error.userMessage);
         showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
       }
 
-      console.log("[🧠 LOGIN] Email login successful, redirecting...");
-      showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión correcto" });
+      showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesion correcto" });
       redirectToDashboard();
     } catch (err) {
-      console.error("[🧠 LOGIN] Email login exception", err);
-      setError("Error al iniciar sesión. Intenta de nuevo.");
-      showToast({ type: "error", title: "Error", message: "Error al iniciar sesión" });
+      setError("Error al iniciar sesion. Intenta de nuevo.");
+      showToast({ type: "error", title: "Error", message: "Error al iniciar sesion" });
     } finally {
       setIsLoading(false);
     }
@@ -159,23 +135,19 @@ export default function LoginPage() {
     setError("");
 
     try {
-      console.log("[🧠 LOGIN] Google login attempt");
       const result = await signInWithGoogle();
 
       if (result.error) {
-        console.error("[🧠 LOGIN] Google login failed", { error: result.error });
         setError(result.error.userMessage);
         showToast({ type: "error", title: "Error", message: result.error.userMessage });
         return;
       }
 
-      console.log("[🧠 LOGIN] Google login successful, redirecting...");
-      showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesión con Google" });
+      showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesion con Google" });
       redirectToDashboard();
     } catch (err) {
-      console.error("[🧠 LOGIN] Google login exception", err);
-      setError("Error al iniciar sesión con Google. Intenta de nuevo.");
-      showToast({ type: "error", title: "Error", message: "Error al iniciar sesión con Google" });
+      setError("Error al iniciar sesion con Google. Intenta de nuevo.");
+      showToast({ type: "error", title: "Error", message: "Error al iniciar sesion con Google" });
     } finally {
       setIsLoading(false);
     }
@@ -194,7 +166,7 @@ export default function LoginPage() {
     }
 
     if (!agreeTerms) {
-      setError("Debes aceptar los términos y condiciones");
+      setError("Debes aceptar los terminos y condiciones");
       return false;
     }
     return true;
@@ -214,7 +186,6 @@ export default function LoginPage() {
       router.push("/auth/verify-email");
     } catch (err) {
       setError("Error al registrarse. Intenta de nuevo.");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -222,24 +193,35 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title={mode === "login" ? "Inicia sesión" : "Crea tu cuenta"}
-      subtitle={mode === "login" ? "Accede a tu cuenta de Verifactu" : "Únete a Verifactu hoy"}
-      footerText={mode === "login" ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?"}
-      footerLink={mode === "login" ? { href: "/auth/signup", label: "Regístrate aquí" } : { href: "/auth/login", label: "Inicia sesión aquí" }}
+      title={mode === "login" ? "Inicia sesion" : "Crea tu cuenta"}
+      subtitle={mode === "login" ? "Accede a tu cuenta de Verifactu" : "Unete a Verifactu hoy"}
+      footerText={mode === "login" ? "No tienes cuenta?" : "Ya tienes cuenta?"}
+      footerLink={
+        mode === "login"
+          ? { href: "/auth/signup", label: "Registrate aqui" }
+          : { href: "/auth/login", label: "Inicia sesion aqui" }
+      }
     >
-      {/* Tabs */}
-      <div className="flex gap-2 mb-2">
+      <div className="mb-2 flex gap-2">
         <button
           type="button"
           onClick={() => setMode("login")}
-          className={`flex-1 py-2 rounded-lg border ${mode === "login" ? "bg-[#0060F0] text-white border-[#0060F0]" : "bg-white text-gray-700 border-gray-300"}`}
+          className={`flex-1 rounded-lg border py-2 ${
+            mode === "login"
+              ? "border-[#0060F0] bg-[#0060F0] text-white"
+              : "border-gray-300 bg-white text-gray-700"
+          }`}
         >
-          Iniciar sesión
+          Iniciar sesion
         </button>
         <button
           type="button"
           onClick={() => setMode("signup")}
-          className={`flex-1 py-2 rounded-lg border ${mode === "signup" ? "bg-[#0060F0] text-white border-[#0060F0]" : "bg-white text-gray-700 border-gray-300"}`}
+          className={`flex-1 rounded-lg border py-2 ${
+            mode === "signup"
+              ? "border-[#0060F0] bg-[#0060F0] text-white"
+              : "border-gray-300 bg-white text-gray-700"
+          }`}
         >
           Crear cuenta
         </button>
@@ -253,13 +235,13 @@ export default function LoginPage() {
         transition={{ duration: 0.3 }}
       >
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
         <FormInput
-          label="Correo electrónico"
+          label="Correo electronico"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -268,16 +250,14 @@ export default function LoginPage() {
         />
 
         <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Contraseña
-            </label>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="block text-sm font-medium text-gray-700">Contraseña</label>
             {mode === "login" && (
               <Link
                 href="/auth/forgot-password"
-                className="text-sm text-[#0060F0] hover:text-[#0080F0] font-medium"
+                className="text-sm font-medium text-[#0060F0] hover:text-[#0080F0]"
               >
-                ¿La olvidaste?
+                La olvidaste?
               </Link>
             )}
           </div>
@@ -290,13 +270,13 @@ export default function LoginPage() {
             required
           />
           {mode === "signup" && passwordError && (
-            <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+            <p className="mt-1 text-sm text-red-500">{passwordError}</p>
           )}
         </div>
 
         {mode === "signup" && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Confirmar contraseña <span className="text-red-500">*</span>
             </label>
             <PasswordInput
@@ -320,16 +300,24 @@ export default function LoginPage() {
                 setAgreeTerms(e.target.checked);
                 setError("");
               }}
-              className="mt-1 w-4 h-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
             />
             <span className="text-gray-600">
-              Acepto los {" "}
-              <Link href="/legal/terminos" className="text-[#0060F0] hover:text-[#0080F0] font-medium" aria-label="Leer términos y condiciones">
-                términos y condiciones
+              Acepto los{" "}
+              <Link
+                href="/legal/terminos"
+                className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+                aria-label="Leer terminos y condiciones"
+              >
+                terminos y condiciones
               </Link>{" "}
-              y la {" "}
-              <Link href="/legal/privacidad" className="text-[#0060F0] hover:text-[#0080F0] font-medium" aria-label="Leer política de privacidad">
-                Política de privacidad
+              y la{" "}
+              <Link
+                href="/legal/privacidad"
+                className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+                aria-label="Leer politica de privacidad"
+              >
+                politica de privacidad
               </Link>
             </span>
           </label>
@@ -338,19 +326,24 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isLoading ? (mode === "login" ? "Iniciando sesión..." : "Creando cuenta...") : (mode === "login" ? "Iniciar sesión" : "Crear cuenta")}
+          {isLoading
+            ? mode === "login"
+              ? "Iniciando sesion..."
+              : "Creando cuenta..."
+            : mode === "login"
+            ? "Iniciar sesion"
+            : "Crear cuenta"}
         </button>
       </motion.form>
 
-      {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-gray-300"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">O continúa con</span>
+          <span className="bg-white px-2 text-gray-500">O continua con</span>
         </div>
       </div>
 
@@ -358,9 +351,9 @@ export default function LoginPage() {
         type="button"
         onClick={handleGoogleLogin}
         disabled={isLoading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <svg className="w-5 h-5" viewBox="0 0 24 24">
+        <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
             fill="#4285F4"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -378,7 +371,11 @@ export default function LoginPage() {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        {isLoading ? (mode === "login" ? "Iniciando sesión..." : "Registrándose...") : "Continuar con Google"}
+        {isLoading
+          ? mode === "login"
+            ? "Iniciando sesion..."
+            : "Registrandose..."
+          : "Continuar con Google"}
       </button>
     </AuthLayout>
   );

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -28,19 +28,15 @@ export function PasswordInput({
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-500"
+        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 transition-all focus:border-[#0060F0] focus:outline-none focus:ring-2 focus:ring-[#0060F0]/20"
       />
       <button
         type="button"
         onClick={() => setShowPassword(!showPassword)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-        aria-label="Toggle password visibility"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-colors hover:text-gray-700"
+        aria-label="Mostrar u ocultar contraseña"
       >
-        {showPassword ? (
-          <EyeOff className="w-5 h-5" />
-        ) : (
-          <Eye className="w-5 h-5" />
-        )}
+        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
       </button>
     </div>
   );
@@ -70,7 +66,7 @@ export function FormInput({
       {label && (
         <label className="block text-sm font-medium text-gray-700">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="ml-1 text-red-500">*</span>}
         </label>
       )}
       <input
@@ -79,11 +75,11 @@ export function FormInput({
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-500 ${
+        className={`w-full rounded-lg border bg-white px-4 py-3 text-gray-900 placeholder-gray-500 transition-all focus:border-[#0060F0] focus:outline-none focus:ring-2 focus:ring-[#0060F0]/20 ${
           error ? "border-red-500" : "border-gray-300"
         }`}
       />
-      {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
     </div>
   );
 }
@@ -92,9 +88,9 @@ export function GoogleAuthButton() {
   return (
     <button
       type="button"
-      className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
+      className="flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
     >
-      <svg className="w-5 h-5" viewBox="0 0 24 24">
+      <svg className="h-5 w-5" viewBox="0 0 24 24">
         <path
           fill="#4285F4"
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -133,13 +129,11 @@ export function AuthLayout({
   footerLink,
 }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8">
-      <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 px-4 py-10">
+      <div className="mx-auto w-full max-w-md">
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-lg">
+          <div className="mb-8 text-center">
+            <div className="mb-4 flex justify-center">
               <BrandLogo variant="auth" />
             </div>
             <div className="mb-4">
@@ -150,22 +144,12 @@ export function AuthLayout({
                 <span aria-hidden="true">←</span> Volver al inicio
               </a>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
+            <h1 className="mb-2 text-2xl font-bold text-[#002060]">{title}</h1>
             {subtitle && <p className="text-gray-600">{subtitle}</p>}
           </div>
 
-          {/* Illustration (only in larger screens) */}
-          {/* <div className="hidden sm:block mb-6">
-            <img
-              src="/hero-dashboard.svg"
-              alt="Panel de control Verifactu"
-              className="w-full rounded-lg border border-gray-200"
-            />
-          </div> */}
-          {/* Content */}
           <div className="space-y-6">{children}</div>
 
-          {/* Footer */}
           {footerText && (
             <div className="mt-8 text-center text-sm text-gray-600">
               {footerText}
@@ -174,33 +158,48 @@ export function AuthLayout({
                   {" "}
                   <a
                     href={footerLink.href}
-                    className="text-[#0060F0] hover:text-[#0080F0] font-medium"
+                    className="font-medium text-[#0060F0] hover:text-[#0080F0]"
                   >
                     {footerLink.label}
                   </a>
                 </>
               )}
-              {/* Enlaces adicionales: inicio y legales */}
-              <div className="mt-4 flex flex-col gap-1 items-center text-xs text-gray-500">
-                <Link href="/" className="hover:text-[#0080F0] underline" aria-label="Volver al inicio">Volver al inicio</Link>
+              <div className="mt-4 flex flex-col items-center gap-1 text-xs text-gray-500">
+                <Link
+                  href="/"
+                  className="underline hover:text-[#0080F0]"
+                  aria-label="Volver al inicio"
+                >
+                  Volver al inicio
+                </Link>
                 <div className="flex gap-2">
-                  <Link href="/legal/privacidad" className="hover:text-[#0080F0] underline" aria-label="Leer política de privacidad">Política de privacidad</Link>
+                  <Link
+                    href="/legal/privacidad"
+                    className="underline hover:text-[#0080F0]"
+                    aria-label="Leer politica de privacidad"
+                  >
+                    Política de privacidad
+                  </Link>
                   <span>|</span>
-                  <Link href="/legal/terminos" className="hover:text-[#0080F0] underline" aria-label="Leer términos y condiciones">Términos y condiciones</Link>
+                  <Link
+                    href="/legal/terminos"
+                    className="underline hover:text-[#0080F0]"
+                    aria-label="Leer terminos y condiciones"
+                  >
+                    Términos y condiciones
+                  </Link>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Trust Message */}
-        <div className="mt-6 text-center text-xs text-gray-600 bg-white rounded-lg p-4">
+        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4 text-center text-xs text-gray-600">
           <p>
-            <strong>Tu información nunca se pierde.</strong> Se guarda de forma segura para que siempre puedas acceder cuando lo necesites.
+            <strong>Tu informacion siempre esta segura.</strong> Guardamos tus datos con cifrado y control de acceso.
           </p>
         </div>
       </div>
     </div>
   );
 }
-

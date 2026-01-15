@@ -1,7 +1,6 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, CheckCircle2, RotateCcw } from "lucide-react";
 import { AuthLayout } from "../../components/AuthComponents";
@@ -13,7 +12,6 @@ import { auth } from "../../lib/firebase";
 type VerifyEmailStep = "pending" | "resent" | "verified";
 
 export default function VerifyEmailPage() {
-  const router = useRouter();
   const { showToast } = useToast();
   const appUrl = getAppUrl();
   const [step, setStep] = useState<VerifyEmailStep>("pending");
@@ -24,7 +22,6 @@ export default function VerifyEmailPage() {
   const [countdown, setCountdown] = useState(0);
   const [userEmail, setUserEmail] = useState("tu@email.com");
 
-  // Fast check: already verified
   useEffect(() => {
     if (auth.currentUser?.emailVerified) {
       setStep("verified");
@@ -35,14 +32,12 @@ export default function VerifyEmailPage() {
     }
   }, [appUrl, showToast]);
 
-  // Get user email on client mount
   useEffect(() => {
     if (auth.currentUser?.email) {
       setUserEmail(auth.currentUser.email);
     }
   }, []);
 
-  // Check if email is verified periodically
   useEffect(() => {
     const interval = setInterval(async () => {
       await auth.currentUser?.reload();
@@ -58,12 +53,12 @@ export default function VerifyEmailPage() {
     return () => clearInterval(interval);
   }, [appUrl, showToast]);
 
-  // Handle resend countdown
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (countdown === 0 && resendCount > 0) {
+    }
+    if (countdown === 0 && resendCount > 0) {
       setCanResend(true);
     }
   }, [countdown, resendCount]);
@@ -87,11 +82,10 @@ export default function VerifyEmailPage() {
       showToast({ type: "info", title: "Correo reenviado", message: "Revisa tu bandeja de entrada" });
       setResendCount((prev) => prev + 1);
       setCanResend(false);
-      setCountdown(60); // 60 seconds before resending again
+      setCountdown(60);
     } catch (err) {
       setError("Error al reenviar el correo. Intenta de nuevo.");
       showToast({ type: "error", title: "Error", message: "No se pudo reenviar el correo" });
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -99,20 +93,17 @@ export default function VerifyEmailPage() {
 
   if (step === "verified") {
     return (
-      <AuthLayout
-        title="¡Correo verificado!"
-        subtitle="Redirigiendo..."
-      >
+      <AuthLayout title="Correo verificado" subtitle="Redirigiendo...">
         <motion.div
           className="flex flex-col items-center gap-4"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
-            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
           </div>
-          <p className="text-gray-600 text-center">
+          <p className="text-center text-gray-600">
             Tu correo ha sido verificado. Accediendo a tu cuenta...
           </p>
         </motion.div>
@@ -121,55 +112,48 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <AuthLayout
-      title="Verifica tu correo"
-      subtitle={`Enviamos un enlace a ${userEmail}`}
-    >
+    <AuthLayout title="Verifica tu correo" subtitle={`Enviamos un enlace a ${userEmail}`}>
       <motion.div
         className="space-y-4"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="flex justify-center mb-4">
-          <div className="w-12 h-12 bg-sky-50/70 rounded-full flex items-center justify-center">
-            <Mail className="w-6 h-6 text-[#0060F0]" />
+        <div className="mb-4 flex justify-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-50/70">
+            <Mail className="h-6 w-6 text-[#0060F0]" />
           </div>
         </div>
 
         {step === "resent" && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700">
-            ✓ Correo reenviado. Revisa tu bandeja de entrada.
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+            Correo reenviado. Revisa tu bandeja de entrada.
           </div>
         )}
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        <div className="space-y-2 mb-6 text-center">
-          <p className="text-gray-600">
-            Hemos enviado un enlace de verificación a:
-          </p>
+        <div className="mb-6 space-y-2 text-center">
+          <p className="text-gray-600">Hemos enviado un enlace de verificacion a:</p>
           <p className="font-medium text-gray-900">{userEmail}</p>
-          <p className="text-sm text-gray-500">
-            Haz clic en el enlace del correo para verificar tu cuenta.
-          </p>
+          <p className="text-sm text-gray-500">Haz clic en el enlace del correo para verificar tu cuenta.</p>
         </div>
 
-        <div className="bg-sky-50/70 border border-[#0060F0]/20 rounded-lg p-3 text-sm text-[#0060F0]">
-          💡 <strong>Tip:</strong> No ves el correo? Revisa tu carpeta de spam.
+        <div className="rounded-lg border border-[#0060F0]/20 bg-sky-50/70 p-3 text-sm text-[#0060F0]">
+          <strong>Tip:</strong> No ves el correo? Revisa tu carpeta de spam.
         </div>
 
-        <div className="pt-4 space-y-2">
+        <div className="space-y-2 pt-4">
           <button
             onClick={handleResendEmail}
             disabled={!canResend || isLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="h-4 w-4" />
             {isLoading
               ? "Reenviando..."
               : canResend
@@ -179,21 +163,20 @@ export default function VerifyEmailPage() {
 
           <a
             href="/auth/login"
-            className="w-full block text-center py-3 text-[#0060F0] hover:text-[#0080F0] font-medium"
+            className="block w-full py-3 text-center font-medium text-[#0060F0] hover:text-[#0080F0]"
           >
             Volver a login
           </a>
         </div>
       </motion.div>
 
-      {/* Support */}
-      <div className="mt-6 text-center text-xs text-gray-500 space-y-1">
-        <p>¿Problemas?</p>
+      <div className="mt-6 space-y-1 text-center text-xs text-gray-500">
+        <p>Problemas?</p>
         <a
           href="mailto:soporte@verifactu.business"
-          className="text-[#0060F0] hover:text-[#0080F0] font-medium"
+          className="font-medium text-[#0060F0] hover:text-[#0080F0]"
         >
-          Contáctanos
+          Contactanos
         </a>
       </div>
     </AuthLayout>

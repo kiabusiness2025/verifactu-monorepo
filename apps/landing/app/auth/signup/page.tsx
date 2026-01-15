@@ -1,13 +1,13 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { AuthLayout, FormInput, PasswordInput, GoogleAuthButton } from "../../components/AuthComponents";
+import { AuthLayout, FormInput, PasswordInput } from "../../components/AuthComponents";
 import { useAuth } from "../../context/AuthContext";
-import { signUpWithEmail, signInWithGoogle, AuthErrorMessage } from "../../lib/auth";
+import { signUpWithEmail, signInWithGoogle } from "../../lib/auth";
 import { getAppUrl } from "../../lib/urls";
+import Link from "next/link";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -22,7 +22,6 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  // Redirect if already authenticated
   React.useEffect(() => {
     if (user) {
       window.location.href = `${appUrl}/dashboard`;
@@ -44,7 +43,7 @@ export default function SignupPage() {
     }
 
     if (!agreeTerms) {
-      setError("Debes aceptar los términos y condiciones");
+      setError("Debes aceptar los terminos y condiciones");
       return false;
     }
 
@@ -67,11 +66,9 @@ export default function SignupPage() {
         return;
       }
 
-      // Redirect to verify email page
       router.push("/auth/verify-email");
     } catch (err) {
       setError("Error al registrarse. Intenta de nuevo.");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -89,11 +86,9 @@ export default function SignupPage() {
         return;
       }
 
-      // Redirect to dashboard
       window.location.href = `${appUrl}/dashboard`;
     } catch (err) {
       setError("Error al registrarse con Google. Intenta de nuevo.");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -102,9 +97,9 @@ export default function SignupPage() {
   return (
     <AuthLayout
       title="Crea tu cuenta"
-      subtitle="Únete a Verifactu hoy"
-      footerText="¿Ya tienes cuenta?"
-      footerLink={{ href: "/auth/login", label: "Inicia sesión aquí" }}
+      subtitle="Unete a Verifactu hoy"
+      footerText="Ya tienes cuenta?"
+      footerLink={{ href: "/auth/login", label: "Inicia sesion aqui" }}
     >
       <motion.form
         onSubmit={handleEmailSignup}
@@ -114,7 +109,7 @@ export default function SignupPage() {
         transition={{ duration: 0.3 }}
       >
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {error}
           </div>
         )}
@@ -124,12 +119,12 @@ export default function SignupPage() {
           type="text"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          placeholder="Juan Pérez"
+          placeholder="Juan Perez"
           required
         />
 
         <FormInput
-          label="Correo electrónico"
+          label="Correo electronico"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -138,7 +133,7 @@ export default function SignupPage() {
         />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Contraseña <span className="text-red-500">*</span>
           </label>
           <PasswordInput
@@ -147,16 +142,14 @@ export default function SignupPage() {
               setPassword(e.target.value);
               setPasswordError("");
             }}
-            placeholder="Mínimo 8 caracteres"
+            placeholder="Minimo 8 caracteres"
             required
           />
-          {passwordError && (
-            <p className="text-sm text-red-500 mt-1">{passwordError}</p>
-          )}
+          {passwordError && <p className="mt-1 text-sm text-red-500">{passwordError}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Confirmar contraseña <span className="text-red-500">*</span>
           </label>
           <PasswordInput
@@ -170,7 +163,6 @@ export default function SignupPage() {
           />
         </div>
 
-        {/* Terms Checkbox */}
         <label className="flex items-start gap-3 text-sm">
           <input
             type="checkbox"
@@ -179,16 +171,24 @@ export default function SignupPage() {
               setAgreeTerms(e.target.checked);
               setError("");
             }}
-            className="mt-1 w-4 h-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
           />
           <span className="text-gray-600">
             Acepto los{" "}
-            <Link href="/legal/terminos" className="text-[#0060F0] hover:text-[#0080F0] font-medium" aria-label="Leer términos y condiciones">
-              términos y condiciones
+            <Link
+              href="/legal/terminos"
+              className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+              aria-label="Leer terminos y condiciones"
+            >
+              terminos y condiciones
             </Link>{" "}
             y la{" "}
-            <Link href="/legal/privacidad" className="text-[#0060F0] hover:text-[#0080F0] font-medium" aria-label="Leer política de privacidad">
-              Política de privacidad
+            <Link
+              href="/legal/privacidad"
+              className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+              aria-label="Leer politica de privacidad"
+            >
+              politica de privacidad
             </Link>
           </span>
         </label>
@@ -196,19 +196,18 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? "Creando cuenta..." : "Crear cuenta"}
         </button>
       </motion.form>
 
-      {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-gray-300"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">O regístrate con</span>
+          <span className="bg-white px-2 text-gray-500">O registrate con</span>
         </div>
       </div>
 
@@ -216,9 +215,9 @@ export default function SignupPage() {
         type="button"
         onClick={handleGoogleSignup}
         disabled={isLoading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <svg className="w-5 h-5" viewBox="0 0 24 24">
+        <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
             fill="#4285F4"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -236,7 +235,7 @@ export default function SignupPage() {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        {isLoading ? "Registrándose..." : "Continuar con Google"}
+        {isLoading ? "Registrandose..." : "Continuar con Google"}
       </button>
     </AuthLayout>
   );
