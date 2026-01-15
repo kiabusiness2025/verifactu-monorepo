@@ -17,8 +17,8 @@ export function formatIsaakMessage(content: string, tone: IsaakTone): string {
     // Reducir emoticonos (máximo 1 por mensaje)
     let formatted = content;
     
-    // Detectar todos los emoticonos
-    const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu;
+    // Detectar emoticonos comunes (compatible con ES5)
+    const emojiRegex = /[\u2600-\u27BF]|[\uD800-\uDBFF][\uDC00-\uDFFF]/g;
     const emojis = content.match(emojiRegex) || [];
     
     if (emojis.length > 1) {
@@ -46,9 +46,9 @@ export function formatIsaakMessage(content: string, tone: IsaakTone): string {
   }
 
   if (tone === "minimal") {
-    // Eliminar TODOS los emoticonos
+    // Eliminar TODOS los emoticonos (compatible con ES5)
     let formatted = content.replace(
-      /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,
+      /[\u2600-\u27BF]|[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
       ""
     );
     
