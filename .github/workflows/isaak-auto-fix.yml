@@ -265,22 +265,8 @@ jobs:
         run: |
           git config --local user.email "isaak-bot@verifactu.dev"
           git config --local user.name "Isaak Auto-Fixer Bot"
-          
           git add -A
-          
-          COMMIT_MSG="fix(auto): apply automatic code fixes
-
-Fixed issues:
-$(git diff --cached --name-only | sed 's/^/- /')
-
-Auto-fixed by Isaak Bot
-Detected and resolved:
-- Import path issues
-- Session handling inconsistencies
-- Prisma schema mismatches
-- Type guard validations"
-          
-          git commit -m "$COMMIT_MSG"
+          git commit -m $'fix(auto): apply automatic code fixes\n\nAuto-fixed by Isaak Bot'
 
       - name: 🚀 Push changes
         if: steps.changes.outputs.has_changes == 'true'

@@ -43,7 +43,7 @@ export function InvoicesForm({ invoice, onSubmit, onCancel, loading }: any) {
           articleId: selectedArticle,
           quantity: selectedQty,
           unitPrice: Number(article.unitPrice),
-          taxRate: article.taxRate,
+          taxRate: typeof article.taxRate === 'string' ? Number(article.taxRate) : article.taxRate,
           discount: 0,
         },
       ],

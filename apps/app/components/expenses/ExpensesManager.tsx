@@ -81,7 +81,7 @@ export function ExpensesManager() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             pagination={pagination}
-            onPageChange={(page) => fetchExpenses(page)}
+            onPageChange={(page: number) => fetchExpenses(page)}
           />
         </>
       )}

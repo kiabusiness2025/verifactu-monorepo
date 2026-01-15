@@ -9,7 +9,7 @@ export function CustomersManager() {
   const { customers, pagination, loading, error, fetchCustomers, createCustomer, updateCustomer, deleteCustomer } =
     useCustomers();
   const [showForm, setShowForm] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [editingCustomer, setEditingCustomer] = useState<any>(undefined);
 
   const handleCreate = async (data: any) => {
     try {

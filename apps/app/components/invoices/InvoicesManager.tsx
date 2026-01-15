@@ -6,7 +6,7 @@ import { InvoicesForm } from './InvoicesForm';
 
 export function InvoicesManager() {
   const [showForm, setShowForm] = useState(false);
-  const [invoices, setInvoices] = useState([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, pages: 0 });
@@ -81,7 +81,7 @@ export function InvoicesManager() {
           pagination={pagination}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          onPageChange={(page) => setPagination({ ...pagination, page })}
+          onPageChange={(page: number) => setPagination({ ...pagination, page })}
         />
       )}
     </div>

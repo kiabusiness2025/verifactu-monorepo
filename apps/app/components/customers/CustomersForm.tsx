@@ -26,7 +26,18 @@ export function CustomersForm({ customer, onSubmit, onCancel, loading = false }:
 
   useEffect(() => {
     if (customer) {
-      setFormData(customer);
+      setFormData({
+        name: customer.name,
+        email: customer.email || '',
+        phone: customer.phone || '',
+        nif: customer.nif || '',
+        address: customer.address || '',
+        city: customer.city || '',
+        postalCode: customer.postalCode || '',
+        country: customer.country || 'ES',
+        paymentTerms: customer.paymentTerms || '',
+        notes: customer.notes || '',
+      });
     }
   }, [customer]);
 

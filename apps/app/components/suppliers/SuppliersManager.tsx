@@ -81,7 +81,7 @@ export function SuppliersManager() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             pagination={pagination}
-            onPageChange={(page) => fetchSuppliers(page)}
+            onPageChange={(page: number) => fetchSuppliers(page)}
           />
         </>
       )}

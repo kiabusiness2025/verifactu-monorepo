@@ -81,7 +81,7 @@ export function ArticlesManager() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             pagination={pagination}
-            onPageChange={(page) => fetchArticles(page)}
+            onPageChange={(page: number) => fetchArticles(page)}
           />
         </>
       )}
