@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       [userId]
     );
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       // Si no existen preferencias, crear con valores por defecto
       await query(
         `INSERT INTO user_preferences (user_id, isaak_tone, chat_history_enabled, voice_enabled)
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(result.rows[0]);
+    return NextResponse.json(result[0]);
   } catch (error) {
     console.error("Error fetching user preferences:", error);
     return NextResponse.json(
