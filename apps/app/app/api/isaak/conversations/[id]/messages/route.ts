@@ -22,7 +22,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getSessionPayload(req);
+    const session = await getSessionPayload();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -106,7 +106,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getSessionPayload(req);
+    const session = await getSessionPayload();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -174,7 +174,7 @@ export async function DELETE(
   { params }: { params: { id: string; messageId: string } }
 ) {
   try {
-    const session = await getSessionPayload(req);
+    const session = await getSessionPayload();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },

@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: NextRequest) {
   try {
-    const session = await getSessionPayload(req);
+    const session = await getSessionPayload();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSessionPayload(req);
+    const session = await getSessionPayload();
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
