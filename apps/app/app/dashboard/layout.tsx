@@ -52,11 +52,11 @@ export default function DashboardLayout({
   return (
     <ProtectedRoute requireEmailVerification={true}>
       <IsaakUIProvider>
-        <div className="flex min-h-screen bg-slate-50">
+        <div className="app-shell flex min-h-screen">
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <div className="flex min-h-screen w-full flex-col lg:pl-72">
             <Topbar onToggleSidebar={() => setSidebarOpen((v) => !v)} onOpenPreferences={() => setPreferencesOpen(true)} />
-            <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6">
+            <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 pb-10 sm:px-6 sm:py-8">
               {children}
             </main>
             <footer className="mt-auto border-t border-slate-200 bg-white/80">
@@ -67,7 +67,7 @@ export default function DashboardLayout({
                     Ir a Home
                   </a>
                   <a className="hover:text-blue-700" href="/dashboard/settings">
-                    Configuración
+                    Configuracion
                   </a>
                   <button 
                     onClick={() => setPreferencesOpen(true)}

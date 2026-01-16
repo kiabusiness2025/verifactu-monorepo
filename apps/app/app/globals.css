@@ -20,6 +20,18 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentColor);
   }
+  :root {
+    --vf-ink: #0b214a;
+    --vf-brand: #0b6cfb;
+    --vf-brand-strong: #0052cc;
+    --vf-accent: #ff8a3d;
+    --vf-mint: #20c997;
+    --vf-sand: #fff4e8;
+    --vf-sky: #e8f1ff;
+    --vf-shell: #f6f7fb;
+    --vf-card: #ffffff;
+    --vf-stroke: #dbe4f3;
+  }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
@@ -36,6 +48,18 @@
 */
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #344054;
+}
+
+.app-shell {
+  background:
+    radial-gradient(1200px 800px at 10% -20%, var(--vf-sand) 0%, rgba(255, 244, 232, 0) 60%),
+    radial-gradient(900px 700px at 90% -10%, var(--vf-sky) 0%, rgba(232, 241, 255, 0) 55%),
+    var(--vf-shell);
+}
+
+.surface-card {
+  background: color-mix(in srgb, var(--vf-card) 92%, transparent);
+  border-color: var(--vf-stroke);
 }
 
 
