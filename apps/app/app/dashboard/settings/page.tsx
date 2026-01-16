@@ -7,8 +7,14 @@ import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
 export default function SettingsPage() {
   const sessionData = useSession();
   const session = sessionData?.data;
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
+
+  const [profileSettings, setProfileSettings] = useState({
+    displayName: session?.user?.name || '',
+    email: session?.user?.email || '',
+    phone: '',
+  });
 
   const [generalSettings, setGeneralSettings] = useState({
     companyName: session?.user?.email || '',
@@ -38,20 +44,30 @@ export default function SettingsPage() {
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
         {/* Tabs */}
-        <div className="border-b border-slate-200 flex">
+        <div className="border-b border-slate-200 flex overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'profile'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Perfil
+          </button>
           <button
             onClick={() => setActiveTab('general')}
-            className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'general'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
-            General
+            Empresa
           </button>
           <button
             onClick={() => setActiveTab('billing')}
-            className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'billing'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -61,7 +77,7 @@ export default function SettingsPage() {
           </button>
           <button
             onClick={() => setActiveTab('integrations')}
-            className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'integrations'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -71,7 +87,7 @@ export default function SettingsPage() {
           </button>
           <button
             onClick={() => setActiveTab('team')}
-            className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'team'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -81,7 +97,7 @@ export default function SettingsPage() {
           </button>
           <button
             onClick={() => setActiveTab('isaak')}
-            className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'isaak'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -93,7 +109,81 @@ export default function SettingsPage() {
 
         {/* Content */}
         <div className="p-6">
-          {/* General Tab */}
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <form onSubmit={handleSaveProfile} className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo *</label>
+                  <input
+                    type="text"
+                    value={profileSettings.displayName}
+                    onChange={(e) =>
+                      setProfileSettings({ ...profileSettings, displayName: e.target.value })
+                    }
+                    placeholder="Ej: Ksenia Ivanova"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Este nombre aparecerá en tu perfil y saludos de Isaak</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
+                  <input
+                    type="email"
+                    value={profileSettings.email}
+                    disabled
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-600 cursor-not-allowed"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">El email no se puede cambiar una vez registrado</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Teléfono</label>
+                  <input
+                    type="tel"
+                    value={profileSettings.phone}
+                    onChange={(e) =>
+                      setProfileSettings({ ...profileSettings, phone: e.target.value })
+                    }
+                    placeholder="+34 600 000 000"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <hr className="border-slate-200" />
+
+              <div className="space-y-4">
+                <h3 className="font-semibold text-slate-900">Seguridad</h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Cambiar Contraseña</label>
+                  <button
+                    type="button"
+                    onClick={() => alert('Próximamente: cambiar contraseña')}
+                    className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium"
+                  >
+                    Actualizar contraseña
+                  </button>
+                  <p className="mt-1 text-xs text-slate-500">Se te enviará un email para restablecer tu contraseña</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 font-medium"
+                >
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* General Tab (now renamed to Empresa) */}
           {activeTab === 'general' && (
             <form onSubmit={handleSaveGeneral} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">

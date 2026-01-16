@@ -339,7 +339,9 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
                       </button>
                     )}
                     <a
-                      href={getLandingUrl()}
+                      href="https://verifactu.business"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                     >
                       🌐 verifactu.business

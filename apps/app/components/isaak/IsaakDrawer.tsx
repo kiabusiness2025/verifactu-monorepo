@@ -16,13 +16,18 @@ export function IsaakDrawer() {
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: '¡Hola! Soy Isaak. ¿En qué puedo ayudarte hoy?',
-    }
-  ]);
+  // Solo mostrar mensaje de bienvenida si es Empresa Demo SL
+  const isDemoCompany = company && company.toLowerCase().includes('demo');
+  
+  const [messages, setMessages] = useState<Message[]>(
+    isDemoCompany ? [
+      {
+        id: '1',
+        role: 'assistant',
+        content: '¡Hola! Soy Isaak. ¿En qué puedo ayudarte hoy?',
+      }
+    ] : []
+  );
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
