@@ -1,14 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
+import { Camera } from 'lucide-react';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
+import { useIsaakUI } from '@/context/IsaakUIContext';
 
 export default function SettingsPage() {
   const sessionData = useSession();
   const session = sessionData?.data;
+  const { activeTenantId } = useIsaakUI();
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
+  const [logoURL, setLogoURL] = useState<string | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const [profileSettings, setProfileSettings] = useState({
     displayName: session?.user?.name || '',
@@ -37,7 +44,85 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    async function loadLogo() {
+      if (!activeTenantId) return;
+      try {
+        const res = await fetch(`/api/tenant/logo?tenantId=${activeTenantId}`, {
+          credentials: "include"
+        });
+        const data = await res.json();
+        if (data.ok && data.logoURL) {
+          setLogoURL(data.logoURL);
+        }
+      } catch (error) {
+        console.error("Error loading logo:", error);
+      }
+    }
+    loadLogo();
+  }, [activeTenantId]);
 
+  const handleLogoClick = () => {
+    logoInputRef.current?.click();
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor selecciona una imagen válida');
+      return;
+    }
+
+    // Validar tamaño (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen no puede superar los 5MB');
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      // Convertir a base64
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64 = event.target?.result as string;
+        
+        // Subir a la API
+        const res = await fetch('/api/tenant/logo', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenantId: activeTenantId,
+            logoURL: base64
+          })
+        });
+
+        const data = await res.json();
+        if (data.ok && data.logoURL) {
+          setLogoURL(data.logoURL);
+          alert('Logo actualizado correctamente');
+          // Recargar página para que se actualice en el Topbar
+          window.location.reload();
+        } else {
+          alert(data.error || 'Error al subir el logo');
+        }
+      };
+
+      reader.onerror = () => {
+        alert('Error al leer el archivo');
+      };
+
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      alert('Error al subir el logo');
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -199,6 +284,58 @@ export default function SettingsPage() {
           {/* General Tab (now renamed to Empresa) */}
           {activeTab === 'general' && (
             <form onSubmit={handleSaveGeneral} className="space-y-6">
+              {/* Logo Upload Section */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-slate-900">Logo de la Empresa</h3>
+                <div className="flex items-center gap-6">
+                  <div className="relative">
+                    {logoURL ? (
+                      <div className="relative h-24 w-24 rounded-xl overflow-hidden border-2 border-slate-200">
+                        <Image
+                          src={logoURL}
+                          alt="Logo de empresa"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-24 w-24 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-2xl">
+                        {generalSettings.companyName.charAt(0).toUpperCase() || 'E'}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleLogoClick}
+                      disabled={isUploadingLogo}
+                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-lg disabled:bg-slate-400"
+                      title="Cambiar logo"
+                    >
+                      <Camera size={16} />
+                    </button>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="hidden"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-slate-600">
+                      Este logo aparecerá en el panel de control de tu empresa
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Formato: JPG, PNG o WebP • Máximo 5MB • Recomendado: imagen cuadrada
+                    </p>
+                    {isUploadingLogo && (
+                      <p className="text-sm text-blue-600 mt-2">Subiendo logo...</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <hr className="border-slate-200" />
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Nombre de la Empresa *</label>
