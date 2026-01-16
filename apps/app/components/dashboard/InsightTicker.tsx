@@ -3,12 +3,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 type Insight = {
-  category: "¿Sabías que…?" | "Consejo de Isaak" | "Recordatorio";
+  category: "Sabias que" | "Consejo de Isaak" | "Recordatorio";
   text: string;
 };
 
 const badgeStyles: Record<Insight["category"], string> = {
-  "¿Sabías que…?": "bg-blue-50 text-blue-700 ring-blue-200",
+  "Sabias que": "bg-[#0060F0]/10 text-[#0060F0] ring-[#0060F0]/25",
   "Consejo de Isaak": "bg-emerald-50 text-emerald-700 ring-emerald-200",
   "Recordatorio": "bg-amber-50 text-amber-700 ring-amber-200",
 };
@@ -16,15 +16,42 @@ const badgeStyles: Record<Insight["category"], string> = {
 export function InsightTicker() {
   const insights: Insight[] = useMemo(
     () => [
-      { category: "¿Sabías que…?", text: "Puedes emitir una factura VeriFactu en menos de 2 minutos con ayuda de Isaak." },
-      { category: "Consejo de Isaak", text: "Revisa vencimientos cada viernes para evitar cargos de financiación." },
-      { category: "Recordatorio", text: "Sube tickets el mismo día para mejorar deducibilidad." },
-      { category: "¿Sabías que…?", text: "Las incidencias se resuelven antes de enviar si revisas borradores." },
-      { category: "Consejo de Isaak", text: "Etiqueta gastos con proyectos para ver margen real por línea." },
-      { category: "Recordatorio", text: "Comprueba el acceso antes del día 1 para evitar bloqueos." },
-      { category: "¿Sabías que…?", text: "Puedes compartir un enlace con tu asesor sin descargar." },
-      { category: "Consejo de Isaak", text: "Programa recordatorios de cobro 48h antes del vencimiento." },
-      { category: "Recordatorio", text: "Mantén la numeración ordenada para cumplir VeriFactu." },
+      {
+        category: "Sabias que",
+        text: "Puedes emitir una factura VeriFactu en menos de 2 minutos con ayuda de Isaak.",
+      },
+      {
+        category: "Consejo de Isaak",
+        text: "Revisa vencimientos cada viernes para evitar cargos de financiacion.",
+      },
+      {
+        category: "Recordatorio",
+        text: "Sube tickets el mismo dia para mejorar deducibilidad.",
+      },
+      {
+        category: "Sabias que",
+        text: "Las incidencias se resuelven antes de enviar si revisas borradores.",
+      },
+      {
+        category: "Consejo de Isaak",
+        text: "Etiqueta gastos con proyectos para ver margen real por linea.",
+      },
+      {
+        category: "Recordatorio",
+        text: "Comprueba el acceso antes del dia 1 para evitar bloqueos.",
+      },
+      {
+        category: "Sabias que",
+        text: "Puedes compartir un enlace con tu asesor sin descargar.",
+      },
+      {
+        category: "Consejo de Isaak",
+        text: "Programa recordatorios de cobro 48h antes del vencimiento.",
+      },
+      {
+        category: "Recordatorio",
+        text: "Mantener la numeracion ordenada ayuda a cumplir VeriFactu.",
+      },
     ],
     []
   );

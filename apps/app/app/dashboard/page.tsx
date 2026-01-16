@@ -6,16 +6,31 @@ import { InsightTicker } from "@/components/dashboard/InsightTicker";
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <IsaakGreetingCard />
 
-      <DashboardStats />
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+          Estado general
+        </h2>
+        <DashboardStats />
+      </section>
 
-      <QuickActions />
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+          Acciones rapidas
+        </h2>
+        <QuickActions />
+      </section>
 
-      <div className="grid gap-4 lg:grid-cols-1">
-        <InsightTicker />
-      </div>
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+          Mensaje util
+        </h2>
+        <div className="grid gap-4 lg:grid-cols-1">
+          <InsightTicker />
+        </div>
+      </section>
     </div>
   );
 }

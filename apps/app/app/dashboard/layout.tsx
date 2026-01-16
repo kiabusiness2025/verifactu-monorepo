@@ -11,6 +11,9 @@ import { IsaakProactiveBubbles } from "@/components/isaak/IsaakProactiveBubbles"
 import { IsaakPreferencesModal } from "@/components/isaak/IsaakPreferencesModal";
 import { IsaakDeadlineNotifications } from "@/components/isaak/IsaakDeadlineNotifications";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
+import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 export default function DashboardLayout({
   children,
@@ -20,6 +23,31 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const landingUrl = getLandingUrl();
+
+  const { 
+    hasSeenWelcome, 
+    hasCompletedOnboarding, 
+    markWelcomeSeen, 
+    markOnboardingComplete 
+  } = useOnboarding();
+
+  const [showTour, setShowTour] = useState(false);
+
+  const handleWelcomeComplete = async () => {
+    await markWelcomeSeen();
+    // Después del welcome, mostrar el tour
+    setShowTour(true);
+  };
+
+  const handleTourComplete = async () => {
+    await markOnboardingComplete();
+    setShowTour(false);
+  };
+
+  const handleTourSkip = async () => {
+    await markOnboardingComplete();
+    setShowTour(false);
+  };
 
   return (
     <ProtectedRoute requireEmailVerification={true}>
@@ -65,6 +93,17 @@ export default function DashboardLayout({
         <IsaakPreferencesModal
           isOpen={preferencesOpen}
           onClose={() => setPreferencesOpen(false)}
+        />
+
+        {/* Onboarding Flow */}
+        <WelcomeModal 
+          isOpen={!hasSeenWelcome} 
+          onComplete={handleWelcomeComplete} 
+        />
+        <OnboardingTour 
+          isOpen={showTour} 
+          onComplete={handleTourComplete}
+          onSkip={handleTourSkip}
         />
       </IsaakUIProvider>
     </ProtectedRoute>

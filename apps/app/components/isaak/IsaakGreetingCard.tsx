@@ -17,13 +17,13 @@ export function IsaakGreetingCard() {
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-slate-900">👋 {greeting}</p>
+          <p className="text-sm font-semibold text-[#002060]">Hola, {greeting}</p>
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-            Estás en: {title}
+            Estas en: {title}
           </p>
           {sabiasQue && (
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              ¿Sabías que…? {sabiasQue}
+              Sabias que? {sabiasQue}
             </p>
           )}
         </div>
@@ -31,7 +31,7 @@ export function IsaakGreetingCard() {
           <Link href={primary.href ?? "#"} className="w-full sm:w-auto sm:self-end">
             <Button
               size="sm"
-              className="w-full rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 sm:w-auto"
+              className="w-full rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-xs font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB] sm:w-auto"
             >
               {primary.label}
             </Button>

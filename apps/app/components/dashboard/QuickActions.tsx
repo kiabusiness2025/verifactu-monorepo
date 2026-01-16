@@ -50,14 +50,14 @@ export function QuickActions() {
         >
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold text-slate-900">{action.label}</p>
+              <p className="text-sm font-semibold text-[#002060]">{action.label}</p>
               <p className="text-xs text-slate-500">{action.description}</p>
             </div>
           </div>
           <Button
             variant="outline"
             size="sm"
-            className="mt-4 w-full justify-center rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            className="mt-4 w-full justify-center rounded-full border-[#0060F0] bg-white text-[#0060F0] hover:bg-[#0060F0]/10"
             onClick={action.onClick}
           >
             Ir

@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
 
     // Obtener preferencias del usuario
     const result = await query(
-      `SELECT isaak_tone, chat_history_enabled, voice_enabled
+      `SELECT isaak_tone, chat_history_enabled, voice_enabled, 
+              has_seen_welcome, has_completed_onboarding
        FROM user_preferences
        WHERE user_id = $1`,
       [userId]
@@ -26,8 +27,9 @@ export async function GET(request: NextRequest) {
     if (result.length === 0) {
       // Si no existen preferencias, crear con valores por defecto
       await query(
-        `INSERT INTO user_preferences (user_id, isaak_tone, chat_history_enabled, voice_enabled)
-         VALUES ($1, 'friendly', true, false)
+        `INSERT INTO user_preferences (user_id, isaak_tone, chat_history_enabled, voice_enabled, 
+                                        has_seen_welcome, has_completed_onboarding)
+         VALUES ($1, 'friendly', true, false, false, false)
          ON CONFLICT (user_id) DO NOTHING`,
         [userId]
       );
@@ -36,6 +38,8 @@ export async function GET(request: NextRequest) {
         isaak_tone: "friendly",
         chat_history_enabled: true,
         voice_enabled: false,
+        has_seen_welcome: false,
+        has_completed_onboarding: false,
       });
     }
 
@@ -63,7 +67,7 @@ export async function PATCH(request: NextRequest) {
     const userId = decodedToken.uid;
 
     const body = await request.json();
-    const { isaak_tone, chat_history_enabled, voice_enabled } = body;
+    const { isaak_tone, chat_history_enabled, voice_enabled, has_seen_welcome, has_completed_onboarding } = body;
 
     // Validar isaak_tone si se proporciona
     if (isaak_tone && !["friendly", "professional", "minimal"].includes(isaak_tone)) {
@@ -91,6 +95,16 @@ export async function PATCH(request: NextRequest) {
     if (voice_enabled !== undefined) {
       updates.push(`voice_enabled = $${paramCount++}`);
       values.push(voice_enabled);
+    }
+
+    if (has_seen_welcome !== undefined) {
+      updates.push(`has_seen_welcome = $${paramCount++}`);
+      values.push(has_seen_welcome);
+    }
+
+    if (has_completed_onboarding !== undefined) {
+      updates.push(`has_completed_onboarding = $${paramCount++}`);
+      values.push(has_completed_onboarding);
     }
 
     if (updates.length === 0) {
