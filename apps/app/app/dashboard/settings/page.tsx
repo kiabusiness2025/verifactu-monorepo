@@ -171,7 +171,6 @@ export default function SettingsPage() {
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
         {/* Tabs */}
         <div className="border-b border-slate-200 flex overflow-x-auto">
-        <div className="border-b border-slate-200 flex overflow-x-auto">
           <button
             onClick={() => setActiveTab('profile')}
             className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${

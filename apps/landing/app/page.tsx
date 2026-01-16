@@ -122,10 +122,14 @@ export default function Page() {
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
-                Isaak detecta tu idioma, te acompana con soporte amigable y te ayuda a interpretar
-                documentos, plazos y notificaciones. Te guia para subir escrituras, CIF, declaraciones
-                y arrancar el ano con datos reales de gastos y ventas, con avisos para cierres y trimestres.
+                Verifactu y el asistente fiscal Isaak no sustituyen a tu gestor habitual. Te dan
+                visibilidad diaria de ventas, gastos y beneficio para tomar decisiones en tiempo real,
+                sin esperar al cierre mensual, trimestral o anual.
               </p>
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
+                Isaak te ayuda a calcular un beneficio aproximado y un impuesto estimado, para que puedas
+                comparar o compartir resultados con tu asesor y ajustar tu negocio a tiempo.
+              </div>
 
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
                 Fuente oficial:{" "}
