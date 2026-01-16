@@ -130,8 +130,6 @@ export async function GET(
       subscriptions,
       recentActivity: activityResult,
       conversationsCount
-      recentActivity,
-      conversationsCount
     });
 
   } catch (error: any) {
