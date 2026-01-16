@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken } from "@verifactu/utils";
 import { readSessionSecret } from "@/lib/session";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { app } from "@/lib/firebase";
+
+const storage = getStorage(app);
 
 /**
- * API para subir foto de perfil
+ * API para subir foto de perfil a Firebase Storage
  * 
- * Por ahora, acepta una URL de imagen (ej: desde Google, Facebook)
- * o un Data URL (base64)
- * 
- * En producción, podrías integrar con:
- * - Cloud Storage (Google Cloud Storage, AWS S3)
- * - CDN (Cloudflare Images, Cloudinary)
+ * Acepta:
+ * - Data URL (base64) - lo convierte a Blob y sube a Firebase
+ * - URL externa - la retorna tal cual (ej: Google, Facebook OAuth)
  */
 export async function POST(req: NextRequest) {
   try {
@@ -32,23 +33,76 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid photoURL" }, { status: 400 });
     }
 
-    // Validar que sea una URL válida o data URL
-    const isDataURL = photoURL.startsWith("data:image/");
-    const isHTTPURL = photoURL.startsWith("http://") || photoURL.startsWith("https://");
+    // Si ya es una URL HTTP, retornarla tal cual (ej: desde OAuth providers)
+    if (photoURL.startsWith("http://") || photoURL.startsWith("https://")) {
+      return NextResponse.json({
+        ok: true,
+        photoURL,
+        message: "Using external URL",
+      });
+    }
 
-    if (!isDataURL && !isHTTPURL) {
+    // Validar que sea un data URL
+    if (!photoURL.startsWith("data:image/")) {
       return NextResponse.json(
-        { error: "photoURL must be a valid URL or data URL" },
+        { error: "photoURL must be a valid data URL or HTTP URL" },
         { status: 400 }
       );
     }
 
-    // TODO: En producción, subir a Cloud Storage y retornar URL pública
-    // Por ahora, simplemente retornamos la URL tal cual
+    // Extraer tipo MIME y datos base64
+    const matches = photoURL.match(/^data:([^;]+);base64,(.+)$/);
+    if (!matches) {
+      return NextResponse.json(
+        { error: "Invalid data URL format" },
+        { status: 400 }
+      );
+    }
+
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+
+    // Validar tipo de imagen
+    if (!mimeType.startsWith("image/")) {
+      return NextResponse.json(
+        { error: "File must be an image" },
+        { status: 400 }
+      );
+    }
+
+    // Convertir base64 a Buffer
+    const buffer = Buffer.from(base64Data, "base64");
+
+    // Validar tamaño (5MB máximo)
+    if (buffer.length > 5 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "Image size must be less than 5MB" },
+        { status: 400 }
+      );
+    }
+
+    // Determinar extensión del archivo
+    const extension = mimeType.split("/")[1] || "jpg";
+    const fileName = `${payload.uid}_${Date.now()}.${extension}`;
+    const storagePath = `profile-photos/${fileName}`;
+
+    // Subir a Firebase Storage
+    const storageRef = ref(storage, storagePath);
+    await uploadBytes(storageRef, buffer, {
+      contentType: mimeType,
+      customMetadata: {
+        userId: payload.uid,
+        uploadedAt: new Date().toISOString(),
+      },
+    });
+
+    // Obtener URL pública
+    const downloadURL = await getDownloadURL(storageRef);
+
     return NextResponse.json({
       ok: true,
-      photoURL,
-      message: "Photo uploaded successfully",
+      photoURL: downloadURL,
+      message: "Photo uploaded to Firebase Storage",
     });
   } catch (error) {
     console.error("POST /api/user/upload-photo error:", error);

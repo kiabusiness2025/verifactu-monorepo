@@ -66,11 +66,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${
                         active
                           ? "bg-[#0b6cfb] text-white shadow-sm"
-                          : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
+                          : "bg-slate-200 text-slate-700 group-hover:bg-slate-300"
                       }`}
                     >
                       {item.icon ? (
-                        <item.icon className="h-4 w-4" aria-hidden="true" />
+                        <item.icon className="h-5 w-5" aria-hidden="true" />
                       ) : (
                         <span className="text-[10px] font-semibold">?</span>
                       )}

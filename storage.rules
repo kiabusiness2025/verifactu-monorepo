@@ -79,6 +79,22 @@ service firebase.storage {
     }
     
     // ===========================================
+    // PROFILE PHOTOS (user-specific uploads)
+    // ===========================================
+    
+    match /profile-photos/{fileName} {
+      // Read: Anyone can view profile photos (public)
+      allow read: if true;
+      
+      // Write: Only authenticated users can upload their own photos
+      // Filename must start with their userId
+      allow write: if isAuthenticated() && 
+                      fileName.matches('^' + getUserId() + '_.*') &&
+                      request.resource.size <= 5 * 1024 * 1024 &&
+                      request.resource.contentType.matches('image/.*');
+    }
+    
+    // ===========================================
     // DENY EVERYTHING ELSE
     // ===========================================
     

@@ -2,6 +2,13 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import {
+  FileText,
+  Receipt,
+  UploadCloud,
+  CalendarClock,
+  type LucideIcon,
+} from "lucide-react";
 
 type Action = {
   label: string;
@@ -9,6 +16,7 @@ type Action = {
   href: string;
   accent: string;
   badge: string;
+  icon: LucideIcon;
 };
 
 export function QuickActions() {
@@ -21,6 +29,7 @@ export function QuickActions() {
       href: "/dashboard/invoices",
       accent: "from-[#0b6cfb] to-[#4cc3ff]",
       badge: "Ventas",
+      icon: FileText,
     },
     {
       label: "Gasto",
@@ -28,6 +37,7 @@ export function QuickActions() {
       href: "/dashboard/expenses",
       accent: "from-[#20c997] to-[#4fe3b3]",
       badge: "Pagos",
+      icon: Receipt,
     },
     {
       label: "Documento",
@@ -35,6 +45,7 @@ export function QuickActions() {
       href: "/dashboard/documents",
       accent: "from-[#ff8a3d] to-[#ffb570]",
       badge: "Archivo",
+      icon: UploadCloud,
     },
     {
       label: "Calendario",
@@ -42,6 +53,7 @@ export function QuickActions() {
       href: "/dashboard/calendar",
       accent: "from-[#ff6b6b] to-[#ffa45c]",
       badge: "Fiscal",
+      icon: CalendarClock,
     },
   ];
 
@@ -63,7 +75,7 @@ export function QuickActions() {
             <span
               className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${action.accent} text-xs font-semibold text-white shadow-sm`}
             >
-              {action.label.slice(0, 1)}
+              <action.icon className="h-5 w-5" aria-hidden="true" />
             </span>
           </div>
           <div className="mt-4 flex items-center justify-between">

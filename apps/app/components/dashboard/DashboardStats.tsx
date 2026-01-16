@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { FileText, Receipt, FolderUp } from "lucide-react";
 
 type Stat = {
   title: string;
@@ -36,14 +37,23 @@ export function DashboardStats() {
           </div>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600">
-            1. Crea tu primera factura
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#0b6cfb]/10 text-[#0b6cfb]">
+              <FileText className="h-4 w-4" />
+            </span>
+            <span>1. Crea tu primera factura</span>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600">
-            2. Registra un gasto recurrente
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+              <Receipt className="h-4 w-4" />
+            </span>
+            <span>2. Registra un gasto recurrente</span>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600">
-            3. Sube un documento fiscal
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+              <FolderUp className="h-4 w-4" />
+            </span>
+            <span>3. Sube un documento fiscal</span>
           </div>
         </div>
       </div>

@@ -136,8 +136,7 @@ export default function SettingsPage() {
       reader.onloadend = async () => {
         const base64 = reader.result as string;
         
-        // Por ahora guardamos el base64 directamente
-        // En producción, subirías a Cloud Storage
+        // Subir a Firebase Storage vía API
         const res = await fetch('/api/user/upload-photo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -147,13 +146,14 @@ export default function SettingsPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
-        setProfileSettings({ ...profileSettings, photoURL: base64 });
+        // Usar la URL pública de Firebase Storage
+        setProfileSettings({ ...profileSettings, photoURL: data.photoURL });
+        setUploadingPhoto(false);
       };
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Error uploading photo:', error);
       alert('Error al subir la foto');
-    } finally {
       setUploadingPhoto(false);
     }
   };

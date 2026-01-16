@@ -321,7 +321,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
                                     className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${
                                       isActive
                                         ? "bg-[#0b6cfb] text-white"
-                                        : "bg-slate-100 text-slate-600"
+                                        : "bg-slate-200 text-slate-700"
                                     }`}
                                   >
                                     {panel.icon === "admin" ? (
