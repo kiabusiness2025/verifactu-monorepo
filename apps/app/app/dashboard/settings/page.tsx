@@ -44,6 +44,7 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     async function loadLogo() {
       if (!activeTenantId) return;
@@ -123,6 +124,7 @@ export default function SettingsPage() {
       setIsUploadingLogo(false);
     }
   };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

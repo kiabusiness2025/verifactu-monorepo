@@ -1,3 +1,9 @@
+/**
+ * SVG Logo para Empresa Demo SL
+ * Círculo con gradiente azul-cyan, letras ED y "DEMO SL"
+ */
+
+export const empresaDemoLogo = `
 <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <!-- Fondo circular con gradiente -->
   <defs>
@@ -14,6 +20,7 @@
   <!-- Letras "ED" estilizadas -->
   <text x="100" y="130" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" text-anchor="middle">ED</text>
   
-  <!-- "SL" en pequeño -->
+  <!-- "DEMO SL" en pequeño -->
   <text x="100" y="160" font-family="Arial, sans-serif" font-size="20" font-weight="normal" fill="white" opacity="0.9" text-anchor="middle">DEMO SL</text>
 </svg>
+`;

@@ -9,7 +9,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken, readSessionSecret } from "@verifactu/utils";
 import { query } from "@/lib/db";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { app } from "@/lib/firebaseClient";
+import { initializeApp, getApps } from "firebase/app";
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDahYslX6rDZSWcHk4sCXOZnU9cmqgEt0o",
+  authDomain: "verifactu-business.firebaseapp.com",
+  projectId: "verifactu-business",
+  storageBucket: "verifactu-business.firebasestorage.app",
+  messagingSenderId: "536174799167",
+  appId: "1:536174799167:web:69c286d928239c9069cb8a",
+  measurementId: "G-F91R5J137F"
+};
+
+// Initialize Firebase if not already initialized
+let app;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
+}
 
 // Verificar que el usuario pertenece al tenant y tiene permisos
 async function verifyTenantAccess(userId: string, tenantId: string): Promise<boolean> {
