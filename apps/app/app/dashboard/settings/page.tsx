@@ -1,58 +1,20 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { useAuth } from '@/hooks/useAuth';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
-import { Camera, Loader2 } from 'lucide-react';
 
 export default function SettingsPage() {
   const sessionData = useSession();
   const session = sessionData?.data;
-  const { user: firebaseUser } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profileSettings, setProfileSettings] = useState({
-    displayName: '',
-    email: '',
+    displayName: session?.user?.name || '',
+    email: session?.user?.email || '',
     phone: '',
-    photoURL: '',
   });
-
-  // Cargar datos del perfil desde API
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const res = await fetch('/api/user/profile');
-        const data = await res.json();
-        if (data.ok && data.user) {
-          setProfileSettings({
-            displayName: data.user.name || '',
-            email: data.user.email || '',
-            phone: data.user.phone || '',
-            photoURL: data.user.photoURL || firebaseUser?.photoURL || '',
-          });
-        }
-      } catch (error) {
-        console.error('Error loading profile:', error);
-        // Fallback a datos de Firebase
-        if (firebaseUser) {
-          setProfileSettings({
-            displayName: firebaseUser.displayName || '',
-            email: firebaseUser.email || '',
-            phone: '',
-            photoURL: firebaseUser.photoURL || '',
-          });
-        }
-      }
-    }
-    if (firebaseUser) {
-      loadProfile();
-    }
-  }, [firebaseUser]);
 
   const [generalSettings, setGeneralSettings] = useState({
     companyName: session?.user?.email || '',
@@ -80,87 +42,12 @@ export default function SettingsPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('/api/user/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: profileSettings.displayName,
-          phone: profileSettings.phone,
-          photoURL: profileSettings.photoURL,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Error al guardar');
-      }
-
-      alert('Perfil actualizado correctamente');
-      
-      // Actualizar Firebase displayName si cambió
-      if (firebaseUser && profileSettings.displayName !== firebaseUser.displayName) {
-        const { updateProfile } = await import('firebase/auth');
-        await updateProfile(firebaseUser, {
-          displayName: profileSettings.displayName,
-          photoURL: profileSettings.photoURL || firebaseUser.photoURL,
-        });
-      }
+      console.log('Saving profile settings:', profileSettings);
+      // TODO: Implementar guardado de perfil
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Error al guardar el perfil');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validar tipo de archivo
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor selecciona una imagen');
-      return;
-    }
-
-    // Validar tamaño (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no puede superar 5MB');
-      return;
-    }
-
-    setUploadingPhoto(true);
-    try {
-      // Convertir a base64
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const base64 = reader.result as string;
-          
-          // Subir a Firebase Storage vía API
-          const res = await fetch('/api/user/upload-photo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ photoURL: base64 }),
-          });
-
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error);
-
-          // Usar la URL pública de Firebase Storage
-          setProfileSettings({ ...profileSettings, photoURL: data.photoURL });
-        } catch (error) {
-          console.error('Error uploading photo:', error);
-          alert('Error al subir la foto');
-        } finally {
-          setUploadingPhoto(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error('Error reading file:', error);
-      alert('Error al leer el archivo');
-      setUploadingPhoto(false);
     }
   };
 
@@ -235,66 +122,6 @@ export default function SettingsPage() {
 
         {/* Content */}
         <div className="p-6">
-          {/* Profile Tab */}
-          {activeTab === 'profile' && (
-            <form onSubmit={handleSaveProfile} className="space-y-6">
-              {/* Foto de Perfil */}
-              <div className="flex items-start gap-6">
-                <div className="relative">
-                  <div className="h-24 w-24 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200">
-                    {profileSettings.photoURL ? (
-                      <img
-                        src={profileSettings.photoURL}
-                        alt={profileSettings.displayName || 'Perfil'}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-2xl font-bold text-slate-400">
-                        {profileSettings.displayName?.[0]?.toUpperCase() || 
-                         profileSettings.email?.[0]?.toUpperCase() || 
-                         'U'}
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingPhoto}
-                    className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 disabled:bg-slate-400 flex items-center justify-center"
-                  >
-                    {uploadingPhoto ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Camera className="h-4 w-4" />
-                    )}
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-slate-900">Foto de Perfil</h3>
-                  <p className="text-sm text-slate-600 mt-1">
-                    Sube una imagen de perfil. Formatos: JPG, PNG, GIF (máx. 5MB)
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingPhoto}
-                    className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium disabled:text-slate-400"
-                  >
-                    {uploadingPhoto ? 'Subiendo...' : 'Cambiar foto'}
-                  </button>
-                </div>
-              </div>
-
-              <hr className="border-slate-200" />
-
-              <div className="space-y-4">
           {/* Profile Tab */}
           {activeTab === 'profile' && (
             <form onSubmit={handleSaveProfile} className="space-y-6">
