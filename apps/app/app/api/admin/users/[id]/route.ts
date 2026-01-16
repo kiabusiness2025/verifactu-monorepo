@@ -40,14 +40,14 @@ export async function GET(
       [userId]
     );
 
-    if (userResult.rows.length === 0) {
+    if (userResult.length === 0) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
         { status: 404 }
       );
     }
 
-    const user = userResult.rows[0];
+    const user = userResult[0];
 
     // Obtener memberships con datos de tenants
     const membershipsResult = await query(
@@ -67,6 +67,8 @@ export async function GET(
       ORDER BY m.created_at DESC`,
       [userId]
     );
+
+    const memberships = membershipsResult;
 
     // Obtener suscripciones de sus empresas
     const subscriptionsResult = await query(
@@ -91,6 +93,8 @@ export async function GET(
       ORDER BY s.created_at DESC`,
       [userId]
     );
+
+    const subscriptions = subscriptionsResult;
 
     // Obtener actividad reciente (facturas creadas)
     const activityResult = await query(
@@ -118,12 +122,16 @@ export async function GET(
       [userId]
     );
 
+    const conversationsCount = conversationsResult[0]?.count || 0;
+
     return NextResponse.json({
       user,
-      memberships: membershipsResult.rows,
-      subscriptions: subscriptionsResult.rows,
-      recentActivity: activityResult.rows,
-      conversationsCount: parseInt(conversationsResult.rows[0]?.count || '0')
+      memberships,
+      subscriptions,
+      recentActivity: activityResult,
+      conversationsCount
+      recentActivity,
+      conversationsCount
     });
 
   } catch (error: any) {
