@@ -11,16 +11,16 @@ export default function DashboardPage() {
 
       <section className="space-y-3">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-          Estado
+          Acciones
         </h2>
-        <DashboardStats />
+        <QuickActions />
       </section>
 
       <section className="space-y-3">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-          Acciones
+          Estado
         </h2>
-        <QuickActions />
+        <DashboardStats />
       </section>
 
       <section className="space-y-3">

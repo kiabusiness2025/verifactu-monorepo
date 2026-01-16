@@ -39,7 +39,7 @@ export default function DashboardLayout({
 
   const handleWelcomeComplete = async () => {
     await markWelcomeSeen();
-    // Después del welcome, mostrar el tour
+    // Despues del welcome, mostrar el tour
     setShowTour(true);
   };
 
@@ -67,18 +67,17 @@ export default function DashboardLayout({
               <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <span className="font-semibold text-[#0b214a]">Verifactu Business</span>
                 <div className="flex flex-wrap gap-3 text-xs">
-                  <a className="hover:text-blue-700" href={landingUrl}>
+                  <a 
+                    className="hover:text-blue-700" 
+                    href="https://verifactu.business"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     Ir a Home
                   </a>
                   <a className="hover:text-blue-700" href="/dashboard/settings">
                     Configuracion
                   </a>
-                  <button 
-                    onClick={() => setPreferencesOpen(true)}
-                    className="hover:text-blue-700"
-                  >
-                    Preferencias Isaak
-                  </button>
                 </div>
               </div>
             </footer>

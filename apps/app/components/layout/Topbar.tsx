@@ -216,22 +216,24 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            <select
-              value={activeTenantId || ""}
-              onChange={(e) => handleTenantChange(e.target.value)}
-              disabled={isLoadingTenants || isSwitching || tenants.length === 0}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
-            >
-              {tenants.length === 0 ? (
-                <option value="">Sin empresas</option>
-              ) : (
-                tenants.map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.name}
-                  </option>
-                ))
-              )}
-            </select>
+            {currentPanel?.id !== "admin" && (
+              <select
+                value={activeTenantId || ""}
+                onChange={(e) => handleTenantChange(e.target.value)}
+                disabled={isLoadingTenants || isSwitching || tenants.length === 0}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
+              >
+                {tenants.length === 0 ? (
+                  <option value="">Sin empresas</option>
+                ) : (
+                  tenants.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>
+                      {tenant.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            )}
 
             <button
               className="relative hidden h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200 sm:inline-flex"
