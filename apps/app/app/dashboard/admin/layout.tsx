@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AlertTriangle, ShieldCheck } from "lucide-react";
 
 const adminNav = [
   { label: "Resumen", href: "/dashboard/admin" },
@@ -54,6 +55,23 @@ export default function AdminLayout({
       </aside>
 
       <div className="min-w-0 flex-1 space-y-4">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/80 px-3 py-2 text-xs text-rose-900 shadow-sm sm:px-4">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-600 text-white">
+              <ShieldCheck className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <div className="font-semibold">Modo admin activo</div>
+              <div className="text-[11px] text-rose-700">
+                Acciones sensibles habilitadas. Revisa con atencion cada cambio.
+              </div>
+            </div>
+            <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-700">
+              <AlertTriangle className="h-3 w-3" />
+              Alto riesgo
+            </span>
+          </div>
+        </div>
         <div className="lg:hidden">
           <div className="rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-sm">
             <div className="flex items-center gap-2 overflow-x-auto">

@@ -7,6 +7,7 @@ import { useIsaakUI } from "@/context/IsaakUIContext";
 import { useIsaakContext } from "@/hooks/useIsaakContext";
 import { useLogout } from "@/hooks/useLogout";
 import { useAuth } from "@/hooks/useAuth";
+import { LayoutGrid, Shield } from "lucide-react";
 import { getUserFirstName } from "@/lib/getUserName";
 
 type TopbarProps = {
@@ -48,7 +49,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
       id: "dashboard",
       name: "Panel Principal",
       path: "/dashboard",
-      icon: "D",
+      icon: "dashboard",
       description: "Gestion de tu empresa",
     },
     ...(isAdmin
@@ -57,7 +58,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
             id: "admin",
             name: "Panel de Admin",
             path: "/dashboard/admin",
-            icon: "A",
+            icon: "admin",
             description: "Control del sistema",
           },
         ]
@@ -317,13 +318,17 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
                               >
                                 <div className="flex items-start gap-2">
                                   <span
-                                    className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                                    className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${
                                       isActive
                                         ? "bg-[#0b6cfb] text-white"
                                         : "bg-slate-100 text-slate-600"
                                     }`}
                                   >
-                                    {panel.icon}
+                                    {panel.icon === "admin" ? (
+                                      <Shield className="h-4 w-4" />
+                                    ) : (
+                                      <LayoutGrid className="h-4 w-4" />
+                                    )}
                                   </span>
                                   <div className="flex-1 min-w-0">
                                     <div className="font-medium">{panel.name}</div>
