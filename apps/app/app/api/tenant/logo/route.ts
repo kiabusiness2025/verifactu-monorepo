@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
     }
 
     const tenantId = req.nextUrl.searchParams.get("tenantId");
-    if (!tenantId) {
+    if (!tenantId || typeof tenantId !== "string") {
       return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
     }
 
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { tenantId, logoURL } = body;
 
-    if (!tenantId) {
+    if (!tenantId || typeof tenantId !== "string") {
       return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
     }
 
