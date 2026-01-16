@@ -3,11 +3,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { Button } from "@verifactu/ui";
 import { useIsaakUI } from "@/context/IsaakUIContext";
 import { useIsaakContext } from "@/hooks/useIsaakContext";
 import { useLogout } from "@/hooks/useLogout";
-import { getLandingUrl } from "@/lib/urls";
 import { useAuth } from "@/hooks/useAuth";
 
 type TopbarProps = {
@@ -45,26 +43,29 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
 
   const availablePanels: PanelOption[] = [
     {
-      id: 'dashboard',
-      name: 'Panel Principal',
-      path: '/dashboard',
-      icon: '📊',
-      description: 'Gestión de tu empresa'
+      id: "dashboard",
+      name: "Panel Principal",
+      path: "/dashboard",
+      icon: "D",
+      description: "Gestion de tu empresa",
     },
-    ...(isAdmin ? [{
-      id: 'admin',
-      name: 'Panel de Administración',
-      path: '/dashboard/admin',
-      icon: '⚙️',
-      description: 'Gestión del sistema'
-    }] : [])
+    ...(isAdmin
+      ? [
+          {
+            id: "admin",
+            name: "Panel de Admin",
+            path: "/dashboard/admin",
+            icon: "A",
+            description: "Control del sistema",
+          },
+        ]
+      : []),
   ];
 
-  const currentPanel = pathname?.startsWith('/dashboard/admin') 
-    ? availablePanels.find(p => p.id === 'admin')
-    : availablePanels.find(p => p.id === 'dashboard');
+  const currentPanel = pathname?.startsWith("/dashboard/admin")
+    ? availablePanels.find((panel) => panel.id === "admin")
+    : availablePanels.find((panel) => panel.id === "dashboard");
 
-  // Cerrar menú al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -78,7 +79,6 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
     }
   }, [showUserMenu]);
 
-  // Verificar si el usuario es admin
   useEffect(() => {
     async function checkAdminStatus() {
       try {
@@ -162,13 +162,13 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-6">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2 sm:justify-start">
           <button
             onClick={onToggleSidebar}
             className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 lg:hidden"
-            aria-label="Abrir menú"
+            aria-label="Abrir menu"
           >
             <svg
               viewBox="0 0 24 24"
@@ -187,16 +187,26 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
             <Image
               src="/brand/logo-horizontal-dark.png"
               alt="Verifactu Business"
-              width={200}
-              height={48}
+              width={190}
+              height={44}
+              priority
+              className="h-auto w-auto"
+            />
+          </div>
+          <div className="flex items-center gap-2 lg:hidden">
+            <Image
+              src="/brand/logo-horizontal-dark.png"
+              alt="Verifactu Business"
+              width={140}
+              height={36}
               priority
               className="h-auto w-auto"
             />
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <div className="flex items-center gap-2 text-sm font-semibold leading-tight text-[#002060]">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#0b214a]">
             <span>{greeting}</span>
             {currentPanel?.id === "admin" && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
@@ -205,26 +215,26 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
             )}
           </div>
 
-          <select
-            value={activeTenantId || ""}
-            onChange={(e) => handleTenantChange(e.target.value)}
-            disabled={isLoadingTenants || isSwitching || tenants.length === 0}
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#0060F0] focus:outline-none focus:ring-2 focus:ring-[#0060F0]/20 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
-          >
-            {tenants.length === 0 ? (
-              <option value="">Sin empresas</option>
-            ) : (
-              tenants.map((tenant) => (
-                <option key={tenant.id} value={tenant.id}>
-                  {tenant.name}
-                </option>
-              ))
-            )}
-          </select>
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+            <select
+              value={activeTenantId || ""}
+              onChange={(e) => handleTenantChange(e.target.value)}
+              disabled={isLoadingTenants || isSwitching || tenants.length === 0}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
+            >
+              {tenants.length === 0 ? (
+                <option value="">Sin empresas</option>
+              ) : (
+                tenants.map((tenant) => (
+                  <option key={tenant.id} value={tenant.id}>
+                    {tenant.name}
+                  </option>
+                ))
+              )}
+            </select>
 
-          <div className="flex flex-wrap items-center justify-end gap-2">
             <button
-              className="relative hidden h-10 w-10 rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200 sm:inline-flex"
+              className="relative hidden h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200 sm:inline-flex"
               aria-label="Notificaciones"
             >
               <svg
@@ -242,54 +252,53 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
               </svg>
               <span className="absolute right-2 top-2 inline-block h-2 w-2 rounded-full bg-emerald-500" />
             </button>
+
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0060F0]/10 text-sm font-semibold text-[#0060F0] ring-1 ring-[#0060F0]/20 transition-colors hover:bg-[#0060F0]/20"
-                title={firebaseUser?.email || 'Usuario'}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0b6cfb]/10 text-sm font-semibold text-[#0b6cfb] ring-1 ring-[#0b6cfb]/20 transition-colors hover:bg-[#0b6cfb]/20"
+                title={firebaseUser?.email || "Usuario"}
               >
                 {firebaseUser?.photoURL ? (
-                  <Image 
-                    src={firebaseUser.photoURL} 
-                    alt={firebaseUser.displayName || 'Usuario'}
+                  <Image
+                    src={firebaseUser.photoURL}
+                    alt={firebaseUser.displayName || "Usuario"}
                     width={40}
                     height={40}
                     className="rounded-full"
                   />
                 ) : (
-                  firebaseUser?.email?.[0].toUpperCase() || 'K'
+                  firebaseUser?.email?.[0].toUpperCase() || "U"
                 )}
               </button>
               {showUserMenu && (
-                <div className="absolute right-0 z-50 mt-2 w-64 rounded-lg border border-slate-200 bg-white shadow-lg">
-                  <div className="py-1">
+                <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-slate-200 bg-white shadow-lg">
+                  <div className="py-2">
                     {firebaseUser && (
-                      <>
-                        <div className="px-4 py-3 border-b border-slate-200">
-                          <p className="text-sm font-medium text-slate-900">
-                            {firebaseUser.displayName || 'Usuario'}
-                          </p>
-                          <p className="text-xs text-slate-500 truncate">
-                            {firebaseUser.email}
-                          </p>
-                          {!firebaseUser.emailVerified && (
-                            <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded">
-                              Email no verificado
-                            </span>
-                          )}
-                        </div>
-                      </>
+                      <div className="px-4 py-3 border-b border-slate-200">
+                        <p className="text-sm font-medium text-slate-900">
+                          {firebaseUser.displayName || "Usuario"}
+                        </p>
+                        <p className="text-xs text-slate-500 truncate">
+                          {firebaseUser.email}
+                        </p>
+                        {!firebaseUser.emailVerified && (
+                          <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded">
+                            Email no verificado
+                          </span>
+                        )}
+                      </div>
                     )}
-                    
-                    {/* Selector de Paneles */}
+
                     {availablePanels.length > 1 && (
-                      <>
-                        <div className="px-4 py-2 border-b border-slate-200">
-                          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
-                            Cambiar Panel
-                          </p>
-                          <div className="space-y-1">
-                            {availablePanels.map((panel) => (
+                      <div className="px-4 py-2 border-b border-slate-200">
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
+                          Cambiar panel
+                        </p>
+                        <div className="space-y-1">
+                          {availablePanels.map((panel) => {
+                            const isActive = currentPanel?.id === panel.id;
+                            return (
                               <button
                                 key={panel.id}
                                 onClick={() => {
@@ -297,30 +306,33 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
                                   setShowUserMenu(false);
                                 }}
                                 className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                                  currentPanel?.id === panel.id
-                                    ? 'bg-[#0060F0]/10 text-[#0060F0] font-medium'
-                                    : 'text-slate-700 hover:bg-slate-100'
+                                  isActive
+                                    ? "bg-[#0b6cfb]/10 text-[#0b6cfb] font-medium"
+                                    : "text-slate-700 hover:bg-slate-100"
                                 }`}
                               >
                                 <div className="flex items-start gap-2">
-                                  <span className="text-base mt-0.5">{panel.icon}</span>
+                                  <span
+                                    className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                                      isActive
+                                        ? "bg-[#0b6cfb] text-white"
+                                        : "bg-slate-100 text-slate-600"
+                                    }`}
+                                  >
+                                    {panel.icon}
+                                  </span>
                                   <div className="flex-1 min-w-0">
                                     <div className="font-medium">{panel.name}</div>
                                     <div className="text-xs text-slate-500 truncate">
                                       {panel.description}
                                     </div>
                                   </div>
-                                  {currentPanel?.id === panel.id && (
-                                    <svg className="w-4 h-4 mt-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                  )}
                                 </div>
                               </button>
-                            ))}
-                          </div>
+                            );
+                          })}
                         </div>
-                      </>
+                      </div>
                     )}
 
                     {onOpenPreferences && (
@@ -331,9 +343,24 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center gap-2"
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
                         </svg>
                         Preferencias
                       </button>
@@ -344,7 +371,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
                       rel="noopener noreferrer"
                       className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
                     >
-                      🌐 verifactu.business
+                      Ir a verifactu.business
                     </a>
                     <hr className="my-1 border-slate-200" />
                     <button
@@ -358,10 +385,20 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
                       disabled={isLoggingOut}
                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 flex items-center gap-2"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                        />
                       </svg>
-                      {isLoggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
+                      {isLoggingOut ? "Cerrando sesion..." : "Cerrar sesion"}
                     </button>
                   </div>
                 </div>

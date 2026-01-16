@@ -6,12 +6,12 @@ export type NavItem = {
 };
 
 export const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "🏠" },
-  { label: "Facturas", href: "/dashboard/invoices", icon: "📄" },
-  { label: "Clientes", href: "/dashboard/clients", icon: "👥" },
-  { label: "Bancos", href: "/dashboard/banks", icon: "🏦" },
-  { label: "Documentos", href: "/dashboard/documents", icon: "🗂️" },
-  { label: "Isaak 💬", href: "/dashboard/isaak", icon: "🤖" },
-  { label: "Calendario", href: "/dashboard/calendar", icon: "📆" },
-  { label: "Configuración", href: "/dashboard/settings", icon: "⚙️" },
+  { label: "Dashboard", href: "/dashboard", icon: "DB" },
+  { label: "Facturas", href: "/dashboard/invoices", icon: "FV" },
+  { label: "Clientes", href: "/dashboard/clients", icon: "CL" },
+  { label: "Bancos", href: "/dashboard/banks", icon: "BK" },
+  { label: "Documentos", href: "/dashboard/documents", icon: "DC" },
+  { label: "Isaak AI", href: "/dashboard/isaak", icon: "AI" },
+  { label: "Calendario", href: "/dashboard/calendar", icon: "CA" },
+  { label: "Configuracion", href: "/dashboard/settings", icon: "ST" },
 ];

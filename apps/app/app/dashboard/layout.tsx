@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, Suspense } from "react";
+import { usePathname } from "next/navigation";
 import { IsaakUIProvider } from "@/context/IsaakUIContext";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
@@ -20,6 +21,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isAdminRoute = pathname?.startsWith("/dashboard/admin");
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const landingUrl = getLandingUrl();
@@ -59,9 +63,9 @@ export default function DashboardLayout({
             <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 pb-10 sm:px-6 sm:py-8">
               {children}
             </main>
-            <footer className="mt-auto border-t border-slate-200 bg-white/80">
+            <footer className="mt-auto border-t border-slate-200 bg-white/85 backdrop-blur">
               <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <span className="font-semibold text-slate-800">Verifactu Business</span>
+                <span className="font-semibold text-[#0b214a]">Verifactu Business</span>
                 <div className="flex flex-wrap gap-3 text-xs">
                   <a className="hover:text-blue-700" href={landingUrl}>
                     Ir a Home
@@ -80,31 +84,39 @@ export default function DashboardLayout({
             </footer>
           </div>
         </div>
-        <IsaakDrawer />
+        {!isAdminRoute && <IsaakDrawer />}
         
         {/* Isaak V3: Analytics + History + Voice + Preferences + Deadlines */}
-        <Suspense fallback={null}>
-          <IsaakSmartFloating />
-          <IsaakProactiveBubbles />
-          <IsaakDeadlineNotifications />
-        </Suspense>
+        {!isAdminRoute && (
+          <Suspense fallback={null}>
+            <IsaakSmartFloating />
+            <IsaakProactiveBubbles />
+            <IsaakDeadlineNotifications />
+          </Suspense>
+        )}
 
         {/* Preferences Modal */}
-        <IsaakPreferencesModal
-          isOpen={preferencesOpen}
-          onClose={() => setPreferencesOpen(false)}
-        />
+        {!isAdminRoute && (
+          <IsaakPreferencesModal
+            isOpen={preferencesOpen}
+            onClose={() => setPreferencesOpen(false)}
+          />
+        )}
 
         {/* Onboarding Flow */}
-        <WelcomeModal 
-          isOpen={!hasSeenWelcome} 
-          onComplete={handleWelcomeComplete} 
-        />
-        <OnboardingTour 
-          isOpen={showTour} 
-          onComplete={handleTourComplete}
-          onSkip={handleTourSkip}
-        />
+        {!isAdminRoute && (
+          <>
+            <WelcomeModal 
+              isOpen={!hasSeenWelcome} 
+              onComplete={handleWelcomeComplete} 
+            />
+            <OnboardingTour 
+              isOpen={showTour} 
+              onComplete={handleTourComplete}
+              onSkip={handleTourSkip}
+            />
+          </>
+        )}
       </IsaakUIProvider>
     </ProtectedRoute>
   );

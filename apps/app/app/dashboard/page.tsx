@@ -10,22 +10,22 @@ export default function DashboardPage() {
       <IsaakGreetingCard />
 
       <section className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-          Estado general
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+          Estado
         </h2>
         <DashboardStats />
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-          Acciones rapidas
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+          Acciones
         </h2>
         <QuickActions />
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-          Mensaje util
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+          Avisos
         </h2>
         <div className="grid gap-4 lg:grid-cols-1">
           <InsightTicker />

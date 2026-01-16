@@ -2,13 +2,13 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@verifactu/ui";
 
 type Action = {
   label: string;
   description: string;
-  href?: string;
-  onClick: () => void;
+  href: string;
+  accent: string;
+  badge: string;
 };
 
 export function QuickActions() {
@@ -16,53 +16,65 @@ export function QuickActions() {
 
   const actions: Action[] = [
     {
-      label: "Crear factura",
-      description: "Ir a facturas",
+      label: "Factura",
+      description: "Crea o revisa cobros",
       href: "/dashboard/invoices",
-      onClick: () => router.push("/dashboard/invoices"),
+      accent: "from-[#0b6cfb] to-[#4cc3ff]",
+      badge: "Ventas",
     },
     {
-      label: "Subir documento",
-      description: "Centraliza tus archivos",
-      href: "/dashboard/documents",
-      onClick: () => router.push("/dashboard/documents"),
-    },
-    {
-      label: "Revisar gastos",
-      description: "Pagos y proveedores",
+      label: "Gasto",
+      description: "Registra proveedores",
       href: "/dashboard/expenses",
-      onClick: () => router.push("/dashboard/expenses"),
+      accent: "from-[#20c997] to-[#4fe3b3]",
+      badge: "Pagos",
     },
     {
-      label: "Ver calendario fiscal",
-      description: "Plazos y obligaciones",
+      label: "Documento",
+      description: "Sube y organiza",
+      href: "/dashboard/documents",
+      accent: "from-[#ff8a3d] to-[#ffb570]",
+      badge: "Archivo",
+    },
+    {
+      label: "Calendario",
+      description: "Mira plazos",
       href: "/dashboard/calendar",
-      onClick: () => router.push("/dashboard/calendar"),
+      accent: "from-[#ff6b6b] to-[#ffa45c]",
+      badge: "Fiscal",
     },
   ];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {actions.map((action) => (
-        <div
+        <button
           key={action.label}
-          className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          onClick={() => router.push(action.href)}
+          className="group flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
         >
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-[#002060]">{action.label}</p>
+              <p className="text-sm font-semibold text-[#0b214a]">
+                {action.label}
+              </p>
               <p className="text-xs text-slate-500">{action.description}</p>
             </div>
+            <span
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${action.accent} text-xs font-semibold text-white shadow-sm`}
+            >
+              {action.label.slice(0, 1)}
+            </span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-4 w-full justify-center rounded-full border-[#0060F0] bg-white text-[#0060F0] hover:bg-[#0060F0]/10"
-            onClick={action.onClick}
-          >
-            Ir
-          </Button>
-        </div>
+          <div className="mt-4 flex items-center justify-between">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+              {action.badge}
+            </span>
+            <span className="text-xs font-semibold text-[#0b6cfb]">
+              Ir
+            </span>
+          </div>
+        </button>
       ))}
     </div>
   );

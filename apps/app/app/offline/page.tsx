@@ -2,11 +2,11 @@
 
 export default function Offline() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
-      <div className="text-center max-w-md">
-        <div className="mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#f6f7fb] via-[#fff4e8] to-[#e8f1ff] px-4 py-10">
+      <div className="mx-auto flex max-w-md flex-col items-center rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-sm">
+        <div className="mb-5">
           <svg
-            className="w-24 h-24 mx-auto text-slate-400"
+            className="h-20 w-20 text-slate-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -19,18 +19,27 @@ export default function Offline() {
             />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-3">
-          Sin conexión
+        <h1 className="text-2xl font-bold text-[#0b214a]">
+          Sin conexion
         </h1>
-        <p className="text-slate-600 mb-6">
-          No tienes conexión a internet. Algunas funciones están limitadas mientras estés offline.
+        <p className="mt-2 text-sm text-slate-600">
+          Estas sin internet. Puedes seguir navegando por secciones ya abiertas,
+          pero algunas funciones estan limitadas.
         </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-6 py-3 bg-[#0060F0] text-white rounded-lg hover:bg-[#0050D0] transition font-medium"
-        >
-          Reintentar conexión
-        </button>
+        <div className="mt-6 flex w-full flex-col gap-2">
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full rounded-lg bg-[#0b6cfb] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0a5be0] transition"
+          >
+            Reintentar conexion
+          </button>
+          <a
+            href="/dashboard"
+            className="w-full rounded-lg border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Volver al dashboard
+          </a>
+        </div>
       </div>
     </div>
   );
