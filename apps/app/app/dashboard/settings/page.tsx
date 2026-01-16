@@ -134,26 +134,32 @@ export default function SettingsPage() {
       // Convertir a base64
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        
-        // Subir a Firebase Storage vía API
-        const res = await fetch('/api/user/upload-photo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ photoURL: base64 }),
-        });
+        try {
+          const base64 = reader.result as string;
+          
+          // Subir a Firebase Storage vía API
+          const res = await fetch('/api/user/upload-photo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photoURL: base64 }),
+          });
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
 
-        // Usar la URL pública de Firebase Storage
-        setProfileSettings({ ...profileSettings, photoURL: data.photoURL });
-        setUploadingPhoto(false);
+          // Usar la URL pública de Firebase Storage
+          setProfileSettings({ ...profileSettings, photoURL: data.photoURL });
+        } catch (error) {
+          console.error('Error uploading photo:', error);
+          alert('Error al subir la foto');
+        } finally {
+          setUploadingPhoto(false);
+        }
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Error uploading photo:', error);
-      alert('Error al subir la foto');
+      console.error('Error reading file:', error);
+      alert('Error al leer el archivo');
       setUploadingPhoto(false);
     }
   };
