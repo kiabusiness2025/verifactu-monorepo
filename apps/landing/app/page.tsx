@@ -122,13 +122,14 @@ export default function Page() {
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
-                Verifactu y el asistente fiscal Isaak no sustituyen a tu gestor habitual. Te dan
-                visibilidad diaria de ventas, gastos y beneficio para tomar decisiones en tiempo real,
-                sin esperar al cierre mensual, trimestral o anual.
+                Isaak detecta tu idioma, te acompana con soporte amigable y te ayuda a interpretar
+                documentos, plazos y notificaciones. Te guia para subir escrituras, CIF, declaraciones
+                y arrancar el ano con datos reales de gastos y ventas, con avisos para cierres y trimestres.
               </p>
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
-                Isaak te ayuda a calcular un beneficio aproximado y un impuesto estimado, para que puedas
-                comparar o compartir resultados con tu asesor y ajustar tu negocio a tiempo.
+                Verifactu e Isaak no sustituyen a tu gestor habitual. Te dan visibilidad diaria de
+                ventas, gastos y beneficio, con impuesto estimado, para decidir en tiempo real y
+                comparar o compartir resultados con tu asesoria.
               </div>
 
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
@@ -198,8 +199,9 @@ export default function Page() {
                 Cumple con calma.
               </h2>
               <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
-                VeriFactu no deberia darte miedo. Isaak te avisa de cierres y plazos, y te ayuda a
-                comprobar los datos que prepara tu gestor al final de mes, trimestre o ano.
+                VeriFactu no deberia darte miedo. Isaak y la plataforma trabajan como apoyo: te
+                permiten ver resultados contables al momento y contrastarlos con tu gestor cuando
+                cierre periodos mensuales, trimestrales o anuales.
               </p>
             </div>
             <ComplianceBadge />
@@ -225,7 +227,8 @@ export default function Page() {
               Ventas - Gastos = Beneficio
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-              Lo esencial, siempre visible. El detalle aparece solo cuando lo pides.
+              Beneficio actualizado sin esperar al asesor. Compara con tu contabilidad real cuando
+              quieras y comparte resultados con tu gestoria en un clic.
             </p>
           </div>
 
@@ -243,7 +246,7 @@ export default function Page() {
               Precio que se ajusta a tu uso real
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-              Solo mensual Â· 1 mes gratis Â· aviso antes de renovar.
+              Solo mensual - 1 mes gratis - aviso antes de renovar.
             </p>
 
             <div className="mt-8 flex justify-center">
