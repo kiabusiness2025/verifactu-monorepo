@@ -66,7 +66,7 @@ export async function POST(
       uid: targetUser.uid,
       email: targetUser.email || '',
       name: targetUser.displayName || targetUser.email?.split('@')[0] || 'Usuario',
-      tenantId: null, // Se establecerá después
+      tenantId: undefined, // Se establecerá después
       impersonatedBy: adminDecoded.uid // Guardar quién está impersonando
     };
 
