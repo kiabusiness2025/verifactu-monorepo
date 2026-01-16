@@ -16,13 +16,18 @@ const toneClasses: Record<NonNullable<Stat["tone"]>, string> = {
 };
 
 export function DashboardStats() {
-  const stats: Stat[] = [
-    { title: "Facturas (mes)", value: "28", note: "3 pendientes de enviar", tone: "info" },
-    { title: "Estado VeriFactu", value: "Ok", note: "Ultima actualizacion hace 5 min", tone: "ok" },
-    { title: "AEAT", value: "Sin avisos", note: "Todo al dia", tone: "ok" },
-    { title: "Bancos", value: "Conciliacion 92%", note: "2 movimientos por revisar", tone: "warn" },
-    { title: "Documentos", value: "148", note: "Listos para revisar", tone: "info" },
-  ];
+  // TODO: Obtener stats reales desde API
+  const stats: Stat[] = [];
+
+  if (stats.length === 0) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm text-center">
+        <p className="text-sm text-slate-600">
+          📊 Tus estadísticas aparecerán aquí cuando empieces a registrar facturas y gastos
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
