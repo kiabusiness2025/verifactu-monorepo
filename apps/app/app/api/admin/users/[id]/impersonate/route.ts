@@ -6,9 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getFirebaseAdminAuth } from '@/lib/firebase-admin';
+import { getFirebaseAuth } from '@/lib/firebase-admin';
 import { cookies } from 'next/headers';
-import { signToken, SESSION_COOKIE_NAME } from '@verifactu/utils';
+import { signSessionToken, SESSION_COOKIE_NAME, readSessionSecret } from '@verifactu/utils';
 
 function parseAllowlist(value?: string) {
   if (!value) return new Set<string>();
@@ -48,7 +48,7 @@ export async function POST(
     }
 
     // Obtener info del usuario target
-    const auth = getFirebaseAdminAuth();
+    const auth = getFirebaseAuth();
     const targetUserId = params.id;
     const targetUser = await auth.getUser(targetUserId);
 

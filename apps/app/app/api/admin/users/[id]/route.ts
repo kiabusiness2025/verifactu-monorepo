@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
-import { verifyAdminAccess } from '@/lib/adminAuth';
+import { requireAdmin } from '@/lib/adminAuth';
 
 export async function GET(
   request: NextRequest,
@@ -18,13 +18,7 @@ export async function GET(
 ) {
   try {
     // Verificar acceso admin
-    const adminCheck = await verifyAdminAccess(request);
-    if (!adminCheck.isAdmin) {
-      return NextResponse.json(
-        { error: 'Acceso denegado' },
-        { status: 403 }
-      );
-    }
+    await requireAdmin(request);
 
     const userId = params.id;
 
@@ -151,13 +145,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const adminCheck = await verifyAdminAccess(request);
-    if (!adminCheck.isAdmin) {
-      return NextResponse.json(
-        { error: 'Acceso denegado' },
-        { status: 403 }
-      );
-    }
+    await requireAdmin(request);
 
     const userId = params.id;
     const body = await request.json();
@@ -193,13 +181,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const adminCheck = await verifyAdminAccess(request);
-    if (!adminCheck.isAdmin) {
-      return NextResponse.json(
-        { error: 'Acceso denegado' },
-        { status: 403 }
-      );
-    }
+    await requireAdmin(request);
 
     const userId = params.id;
 
