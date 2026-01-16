@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase/firebase-admin-app';
+import { getFirebaseAdminAuth } from '@/lib/firebase-admin';
 import { cookies } from 'next/headers';
 import { signToken, SESSION_COOKIE_NAME } from '@verifactu/utils';
 
@@ -48,6 +48,7 @@ export async function POST(
     }
 
     // Obtener info del usuario target
+    const auth = getFirebaseAdminAuth();
     const targetUserId = params.id;
     const targetUser = await auth.getUser(targetUserId);
 
