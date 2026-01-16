@@ -38,6 +38,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
   const { logout, isLoggingOut } = useLogout();
   const [tenants, setTenants] = useState<TenantOption[]>([]);
   const [activeTenantId, setActiveTenantId] = useState("");
+  const [tenantLogoURL, setTenantLogoURL] = useState<string | null>(null);
   const [isLoadingTenants, setIsLoadingTenants] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -122,6 +123,10 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
           setTenants(items);
           setActiveTenantId(initialId);
           setCompany(initialName);
+          // Cargar logo del tenant activo
+          if (initialId) {
+            loadTenantLogo(initialId);
+          }
         }
       } catch (error) {
         console.error("Failed to load tenants:", error);
@@ -138,6 +143,23 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
       mounted = false;
     };
   }, [setCompany]);
+
+  async function loadTenantLogo(tenantId: string) {
+    try {
+      const res = await fetch(`/api/tenant/logo?tenantId=${tenantId}`, {
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.ok && data.logoURL) {
+        setTenantLogoURL(data.logoURL);
+      } else {
+        setTenantLogoURL(null);
+      }
+    } catch (error) {
+      console.error("Failed to load tenant logo:", error);
+      setTenantLogoURL(null);
+    }
+  }
 
   async function handleTenantChange(nextId: string) {
     if (!nextId || nextId === activeTenantId) return;
@@ -157,6 +179,8 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
       setActiveTenantId(nextId);
       const selected = tenants.find((tenant) => tenant.id === nextId);
       if (selected?.name) setCompany(selected.name);
+      // Cargar logo del nuevo tenant
+      loadTenantLogo(nextId);
     } catch (error) {
       console.error("Failed to switch tenant:", error);
     } finally {
@@ -186,25 +210,29 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
               <path d="M3 6h18M3 12h18M3 18h18" />
             </svg>
           </button>
-          <div className="hidden items-center gap-2 lg:flex">
-            <Image
-              src="/brand/logo-horizontal-dark.png"
-              alt="Verifactu Business"
-              width={190}
-              height={44}
-              priority
-              className="h-auto w-auto"
-            />
-          </div>
-          <div className="flex items-center gap-2 lg:hidden">
-            <Image
-              src="/brand/logo-horizontal-dark.png"
-              alt="Verifactu Business"
-              width={140}
-              height={36}
-              priority
-              className="h-auto w-auto"
-            />
+          <div className="flex items-center gap-2">
+            {tenantLogoURL && currentPanel?.id !== "admin" ? (
+              <Image
+                src={tenantLogoURL}
+                alt="Logo de empresa"
+                width={44}
+                height={44}
+                priority
+                className="rounded-xl object-cover"
+              />
+            ) : (
+              <Image
+                src="/brand/app/app-icon-512.png"
+                alt="Verifactu Business"
+                width={44}
+                height={44}
+                priority
+                className="rounded-xl"
+              />
+            )}
+            <span className="hidden text-lg font-semibold text-gray-900 lg:inline">
+              Verifactu Business
+            </span>
           </div>
         </div>
 

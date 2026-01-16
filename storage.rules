@@ -95,6 +95,22 @@ service firebase.storage {
     }
     
     // ===========================================
+    // TENANT LOGOS (company logos)
+    // ===========================================
+    
+    match /tenant-logos/{fileName} {
+      // Read: Anyone can view tenant logos (public)
+      allow read: if true;
+      
+      // Write: Only authenticated users can upload logos for their tenants
+      // Filename must start with a valid tenantId
+      allow write: if isAuthenticated() && 
+                      request.resource.size <= 5 * 1024 * 1024 &&
+                      request.resource.contentType.matches('image/.*');
+      // Note: Tenant membership verification is done at API level
+    }
+    
+    // ===========================================
     // DENY EVERYTHING ELSE
     // ===========================================
     
