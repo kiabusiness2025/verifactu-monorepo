@@ -14,9 +14,19 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url), { status: 301 });
   }
 
+  // Redirigir usuario autenticado desde landing (/) a dashboard
+  if (pathname === '/') {
+    const sessionCookie = request.cookies.get('__session');
+    
+    if (sessionCookie?.value) {
+      // Usuario tiene sesión activa -> redirigir a dashboard
+      return NextResponse.redirect(new URL('https://app.verifactu.business/dashboard', request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/es', '/es/:path*'],
+  matcher: ['/es', '/es/:path*', '/'],
 };
