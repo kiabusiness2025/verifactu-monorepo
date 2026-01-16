@@ -70,8 +70,12 @@ export async function POST(
       impersonatedBy: adminDecoded.uid // Guardar quién está impersonando
     };
 
-    const secret = process.env.SESSION_SECRET!;
-    const token = await signToken(sessionPayload, secret);
+    // Crear token de sesión para el usuario target
+    const sessionToken = await signSessionToken({
+      payload: sessionPayload,
+      secret: readSessionSecret(),
+      expiresIn: '8h'
+    });
 
     // Establecer cookie de sesión
     const response = NextResponse.json({
@@ -80,7 +84,7 @@ export async function POST(
       redirectTo: '/dashboard'
     });
 
-    response.cookies.set(SESSION_COOKIE_NAME, token, {
+    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
