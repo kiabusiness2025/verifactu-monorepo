@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken } from "@verifactu/utils";
-import { readSessionSecret } from "@/lib/session";
+import { verifySessionToken, readSessionSecret } from "@verifactu/utils";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { app } from "@/lib/firebase";
 

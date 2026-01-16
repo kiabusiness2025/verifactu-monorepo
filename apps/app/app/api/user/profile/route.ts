@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken } from "@verifactu/utils";
-import { readSessionSecret } from "@/lib/session";
+import { verifySessionToken, readSessionSecret } from "@verifactu/utils";
 import { query } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
