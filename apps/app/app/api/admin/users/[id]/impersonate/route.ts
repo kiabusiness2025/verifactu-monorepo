@@ -25,6 +25,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Inicializar Firebase Auth
+    const auth = getFirebaseAuth();
+    
     // Verificar que el usuario actual es admin
     const cookieStore = await cookies();
     const adminToken = cookieStore.get('__session')?.value;
@@ -48,7 +51,6 @@ export async function POST(
     }
 
     // Obtener info del usuario target
-    const auth = getFirebaseAuth();
     const targetUserId = params.id;
     const targetUser = await auth.getUser(targetUserId);
 
