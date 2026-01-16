@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken, readSessionSecret } from "@verifactu/utils";
 import { query } from "@/lib/db";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { initializeApp, getApps } from "firebase/app";
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -23,7 +23,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase if not already initialized
-let app;
+let app: FirebaseApp;
 if (getApps().length === 0) {
   app = initializeApp(firebaseConfig);
 } else {
