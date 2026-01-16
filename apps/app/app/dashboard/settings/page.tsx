@@ -38,6 +38,19 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      console.log('Saving profile settings:', profileSettings);
+      // TODO: Implementar guardado de perfil
+    } catch (error) {
+      console.error('Error saving profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl">
       <h1 className="text-3xl font-bold text-slate-900 mb-6">Configuración</h1>
