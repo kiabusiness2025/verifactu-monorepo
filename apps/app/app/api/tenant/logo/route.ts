@@ -43,6 +43,15 @@ async function verifyTenantAccess(userId: string, tenantId: string): Promise<boo
   return role === "owner" || role === "admin";
 }
 
+// Helper para validar y extraer tenantId
+function extractTenantId(value: string | null | undefined): string {
+  if (typeof value === "string" && value.length > 0) {
+    return value;
+  }
+  throw new Error("tenantId es requerido y debe ser string");
+}
+
+
 /**
  * GET /api/tenant/logo
  * Obtener logo actual del tenant
@@ -62,10 +71,12 @@ export async function GET(req: NextRequest) {
     }
 
     const tenantIdParam = req.nextUrl.searchParams.get("tenantId");
-    if (!tenantIdParam || typeof tenantIdParam !== "string") {
+    let tenantId: string;
+    try {
+      tenantId = extractTenantId(tenantIdParam);
+    } catch (e) {
       return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
     }
-    const tenantId: string = tenantIdParam;
 
     // Verificar acceso
     const hasAccess = await verifyTenantAccess(payload.uid, tenantId);
@@ -117,10 +128,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { tenantId: tenantIdParam, logoURL } = body;
 
-    if (!tenantIdParam || typeof tenantIdParam !== "string") {
+    let tenantId: string;
+    try {
+      tenantId = extractTenantId(tenantIdParam);
+    } catch (e) {
       return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
     }
-    const tenantId: string = tenantIdParam;
 
     if (!logoURL) {
       return NextResponse.json({ ok: false, error: "logoURL requerido" }, { status: 400 });
