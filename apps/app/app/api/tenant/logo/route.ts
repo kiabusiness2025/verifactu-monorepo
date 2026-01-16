@@ -56,6 +56,10 @@ export async function GET(req: NextRequest) {
 
     const sessionSecret = readSessionSecret();
     const payload = await verifySessionToken(sessionToken, sessionSecret);
+    
+    if (!payload) {
+      return NextResponse.json({ ok: false, error: "Token inválido" }, { status: 401 });
+    }
 
     const tenantId = req.nextUrl.searchParams.get("tenantId");
     if (!tenantId) {
@@ -104,6 +108,10 @@ export async function POST(req: NextRequest) {
 
     const sessionSecret = readSessionSecret();
     const payload = await verifySessionToken(sessionToken, sessionSecret);
+    
+    if (!payload) {
+      return NextResponse.json({ ok: false, error: "Token inválido" }, { status: 401 });
+    }
 
     const body = await req.json();
     const { tenantId, logoURL } = body;
