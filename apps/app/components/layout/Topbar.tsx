@@ -7,6 +7,7 @@ import { useIsaakUI } from "@/context/IsaakUIContext";
 import { useIsaakContext } from "@/hooks/useIsaakContext";
 import { useLogout } from "@/hooks/useLogout";
 import { useAuth } from "@/hooks/useAuth";
+import { getUserFirstName } from "@/lib/getUserName";
 
 type TopbarProps = {
   onToggleSidebar: () => void;
@@ -30,9 +31,10 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { setCompany } = useIsaakUI();
-  const { greeting } = useIsaakContext();
-  const { logout, isLoggingOut } = useLogout();
   const { user: firebaseUser, signOut: firebaseSignOut } = useAuth();
+  const userName = getUserFirstName(firebaseUser);
+  const { greeting } = useIsaakContext(userName);
+  const { logout, isLoggingOut } = useLogout();
   const [tenants, setTenants] = useState<TenantOption[]>([]);
   const [activeTenantId, setActiveTenantId] = useState("");
   const [isLoadingTenants, setIsLoadingTenants] = useState(true);
