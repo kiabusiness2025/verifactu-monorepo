@@ -12,6 +12,7 @@ model Tenant {
   name      String
   legalName String?  @map("legal_name")
   nif       String?
+  isDemo    Boolean  @default(false) @map("is_demo")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   users              Membership[]

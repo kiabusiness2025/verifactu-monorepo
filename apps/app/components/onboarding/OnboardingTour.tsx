@@ -9,7 +9,9 @@ import {
   Receipt, 
   TrendingUp, 
   MessageSquare,
-  CheckCircle2 
+  CheckCircle2,
+  Building2,
+  Bell
 } from "lucide-react";
 
 interface OnboardingTourProps {
@@ -27,6 +29,12 @@ interface Step {
 
 const STEPS: Step[] = [
   {
+    title: "Bienvenido a tu Empresa Demo",
+    description: "Estás en 'Empresa Demo SL', una empresa de prueba con datos reales. Explora libremente sin miedo a romper nada.",
+    icon: <Building2 className="h-8 w-8 text-purple-600" />,
+    tip: "Cuando estés listo, podrás crear tu empresa real desde Configuración 🏢"
+  },
+  {
     title: "Registra tus ventas y gastos",
     description: "Añade facturas emitidas y recibidas de forma sencilla. Solo los datos esenciales, nada complicado.",
     icon: <Receipt className="h-8 w-8 text-blue-600" />,
@@ -43,6 +51,12 @@ const STEPS: Step[] = [
     description: "Tu asistente fiscal está disponible 24/7. Pregunta cualquier duda sobre impuestos, facturas o tu negocio.",
     icon: <MessageSquare className="h-8 w-8 text-cyan-600" />,
     tip: "Isaak habla tu idioma, sin tecnicismos fiscales 😊"
+  },
+  {
+    title: "Nunca te pierdas una fecha fiscal",
+    description: "Recibe recordatorios automáticos de IVA, IRPF y otros impuestos. Isaak te avisa con tiempo suficiente.",
+    icon: <Bell className="h-8 w-8 text-orange-600" />,
+    tip: "Configura tus preferencias de notificaciones en ajustes 🔔"
   },
 ];
 

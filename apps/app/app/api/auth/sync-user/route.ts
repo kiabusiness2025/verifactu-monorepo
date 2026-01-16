@@ -50,7 +50,45 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Crear tenant personal automáticamente para nuevos usuarios
+      // EMPRESA DEMO: Agregar membership automático a "Empresa Demo SL"
+      const demoTenant = await prisma.tenant.findFirst({
+        where: { 
+          name: 'Empresa Demo SL',
+          isDemo: true,
+        },
+      });
+
+      if (demoTenant) {
+        // Crear membership a empresa demo (como member)
+        await prisma.membership.create({
+          data: {
+            tenantId: demoTenant.id,
+            userId: uid,
+            role: 'member',
+            status: 'active',
+          },
+        });
+
+        // Crear preferencias con empresa demo como preferida
+        await prisma.userPreference.create({
+          data: {
+            userId: uid,
+            preferredTenantId: demoTenant.id,
+          },
+        });
+
+        console.log(`✓ Usuario ${email} agregado a Empresa Demo SL`);
+
+        return NextResponse.json({
+          ok: true,
+          user,
+          tenant: demoTenant,
+          created: true,
+          message: 'User created and added to Empresa Demo SL',
+        });
+      }
+
+      // FALLBACK: Si no existe empresa demo, crear tenant personal
       const tenant = await prisma.tenant.create({
         data: {
           name: `${displayName || email.split('@')[0]}'s Business`,

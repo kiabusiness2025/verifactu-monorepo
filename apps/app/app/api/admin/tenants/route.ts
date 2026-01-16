@@ -26,6 +26,9 @@ export async function GET(req: Request) {
     const where: string[] = [];
     const params: Array<string | number> = [];
 
+    // FILTRAR EMPRESAS DEMO: Excluir tenants con is_demo = TRUE
+    where.push(`(t.is_demo IS NULL OR t.is_demo = FALSE)`);
+
     if (q) {
       params.push(`%${q}%`);
       params.push(`%${q}%`);
