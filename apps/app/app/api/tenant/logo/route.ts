@@ -61,10 +61,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Token inválido" }, { status: 401 });
     }
 
-    const tenantId = req.nextUrl.searchParams.get("tenantId");
-    if (!tenantId || typeof tenantId !== "string") {
+    const tenantIdParam = req.nextUrl.searchParams.get("tenantId");
+    if (!tenantIdParam || typeof tenantIdParam !== "string") {
       return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
     }
+    const tenantId: string = tenantIdParam;
 
     // Verificar acceso
     const hasAccess = await verifyTenantAccess(payload.uid, tenantId);
@@ -114,11 +115,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { tenantId, logoURL } = body;
+    const { tenantId: tenantIdParam, logoURL } = body;
 
-    if (!tenantId || typeof tenantId !== "string") {
+    if (!tenantIdParam || typeof tenantIdParam !== "string") {
       return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
     }
+    const tenantId: string = tenantIdParam;
 
     if (!logoURL) {
       return NextResponse.json({ ok: false, error: "logoURL requerido" }, { status: 400 });
