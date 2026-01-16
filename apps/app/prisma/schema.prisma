@@ -301,9 +301,10 @@ model IsaakConversation {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant   Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant   Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages IsaakConversationMsg[]
+  shares   IsaakConversationShare[]
 
   @@index([tenantId])
   @@index([userId])
@@ -327,3 +328,23 @@ model IsaakConversationMsg {
   @@index([createdAt])
   @@map("isaak_conversation_messages")
 }
+
+model IsaakConversationShare {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  shareToken     String    @unique @map("share_token")
+  passwordHash   String?   @map("password_hash")
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz
+  accessCount    Int       @default(0) @map("access_count")
+  lastAccessedAt DateTime? @map("last_accessed_at") @db.Timestamptz
+  createdBy      String    @map("created_by") @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  conversation IsaakConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([shareToken])
+  @@index([conversationId])
+  @@index([expiresAt])
+  @@map("isaak_conversation_shares")
+}
+

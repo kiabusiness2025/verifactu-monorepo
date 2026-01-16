@@ -11,6 +11,7 @@ export const navItems: NavItem[] = [
   { label: "Clientes", href: "/dashboard/clients", icon: "👥" },
   { label: "Bancos", href: "/dashboard/banks", icon: "🏦" },
   { label: "Documentos", href: "/dashboard/documents", icon: "🗂️" },
+  { label: "Isaak 💬", href: "/dashboard/isaak", icon: "🤖" },
   { label: "Calendario", href: "/dashboard/calendar", icon: "📆" },
   { label: "Configuración", href: "/dashboard/settings", icon: "⚙️" },
 ];

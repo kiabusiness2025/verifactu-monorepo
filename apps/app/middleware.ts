@@ -60,6 +60,14 @@ export async function middleware(req: NextRequest) {
 
   console.log(`[🧠 MW] ${req.method} ${pathname}`);
 
+  // Redirect /dashboard/admin/tenants → /dashboard/admin/companies (permanent)
+  if (pathname === "/dashboard/admin/tenants" || pathname.startsWith("/dashboard/admin/tenants/")) {
+    const newPath = pathname.replace("/dashboard/admin/tenants", "/dashboard/admin/companies");
+    const url = req.nextUrl.clone();
+    url.pathname = newPath;
+    return NextResponse.redirect(url, { status: 308 }); // 308 = Permanent Redirect
+  }
+
   // Skip public routes
   if (pathname === "/demo" || pathname.startsWith("/api/") || pathname.startsWith("/_next/")) {
     return NextResponse.next();

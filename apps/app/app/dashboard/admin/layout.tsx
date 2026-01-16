@@ -20,6 +20,14 @@ export default function AdminLayout({
   return (
     <div className="flex gap-6">
       <aside className="hidden w-56 shrink-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:block">
+        {/* Badge "Modo Admin" */}
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 ring-1 ring-red-200">
+          <span className="text-red-600">👑</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-red-700">
+            Modo Admin
+          </span>
+        </div>
+
         <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
           Admin
         </div>
