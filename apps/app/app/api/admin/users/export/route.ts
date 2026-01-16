@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       'Onboarding Completado'
     ];
 
-    const rows = result.rows.map(user => [
+    const rows = result.map(user => [
       user.id,
       user.email,
       user.name || '',
