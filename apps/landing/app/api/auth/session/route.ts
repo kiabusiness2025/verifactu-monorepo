@@ -116,8 +116,11 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : typeof error,
+      code: (error as any)?.code,
+      detail: (error as any)?.detail,
     });
-    return null;
+    // Re-throw para que el caller pueda ver el error específico
+    throw error;
   }
 }
 
@@ -144,11 +147,28 @@ export async function POST(req: Request) {
 
     // Obtener o crear tenant para el usuario
     console.log("[📋 API] Getting or creating tenant");
-    const tenantId = await getOrCreateTenantForUser(decoded.uid, decoded.email || "");
-    if (!tenantId) {
-      console.error("[📋 API] Failed to get/create tenant for user");
+    let tenantId: string;
+    try {
+      tenantId = await getOrCreateTenantForUser(decoded.uid, decoded.email || "");
+    } catch (dbError) {
+      console.error("[📋 API] Database error in getOrCreateTenantForUser:", {
+        error: dbError instanceof Error ? dbError.message : String(dbError),
+        code: (dbError as any)?.code,
+        detail: (dbError as any)?.detail,
+      });
       return NextResponse.json(
-        { error: "Failed to create user session" },
+        { 
+          error: "Database error creating user session",
+          detail: dbError instanceof Error ? dbError.message : String(dbError)
+        },
+        { status: 500 }
+      );
+    }
+    
+    if (!tenantId) {
+      console.error("[📋 API] tenantId is null or undefined after getOrCreateTenantForUser");
+      return NextResponse.json(
+        { error: "Failed to create user session: No tenant ID returned" },
         { status: 500 }
       );
     }
