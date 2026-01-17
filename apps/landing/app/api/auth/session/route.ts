@@ -56,24 +56,18 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
     // 1. Verificar/crear usuario
     console.log("[Auth] Step 1: Upserting user");
     
-    // Primero intentamos actualizar el usuario si existe por email
-    const updateResult = await dbPool.query(
-      `UPDATE users SET id = $1, name = $3, updated_at = NOW()
-       WHERE email = $2
+    // Usar UPSERT que maneja tanto conflictos de id como de email
+    await dbPool.query(
+      `INSERT INTO users (id, email, name)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (email) 
+       DO UPDATE SET 
+         id = EXCLUDED.id,
+         name = EXCLUDED.name,
+         updated_at = NOW()
        RETURNING id`,
       [uid, email, email.split("@")[0]]
     );
-    
-    // Si no existía, insertamos
-    if (updateResult.rows.length === 0) {
-      await dbPool.query(
-        `INSERT INTO users (id, email, name)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, name = EXCLUDED.name
-         RETURNING id`,
-        [uid, email, email.split("@")[0]]
-      );
-    }
     
     console.log("[Auth] Step 1: User upserted successfully");
 
