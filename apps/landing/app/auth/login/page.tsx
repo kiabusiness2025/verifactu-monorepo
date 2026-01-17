@@ -52,18 +52,19 @@ export default function LoginPage() {
 
   const nextParam = searchParams?.get("next")?.trim() || "";
   const redirectTarget = (() => {
-    if (!nextParam) return `${appUrl}/dashboard`;
+    if (!nextParam) return `/api/dashboard-redirect`;
     try {
       const target = new URL(nextParam);
       const appOrigin = new URL(appUrl).origin;
       if (target.origin !== appOrigin) {
         reportInvalidNext("cross-origin", nextParam);
-        return `${appUrl}/dashboard`;
+        return `/api/dashboard-redirect`;
       }
-      return target.toString();
+      // Use dashboard-redirect to ensure cookie sync
+      return `/api/dashboard-redirect?target=${encodeURIComponent(target.pathname)}`;
     } catch {
       reportInvalidNext("malformed", nextParam);
-      return `${appUrl}/dashboard`;
+      return `/api/dashboard-redirect`;
     }
   })();
 
@@ -380,3 +381,4 @@ export default function LoginPage() {
     </AuthLayout>
   );
 }
+

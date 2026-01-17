@@ -37,17 +37,24 @@ async function getSessionPayload(req: NextRequest): Promise<SessionPayload | nul
   console.log(`[🧠 MW] Checking session for: ${req.nextUrl.pathname}`, {
     host: req.headers.get("host"),
     hasCookie: !!token,
+    cookieName,
+    allCookies: req.cookies.getAll().map(c => c.name),
   });
 
   if (!token) {
     console.log("[🧠 MW] ❌ No session cookie found");
+    console.log("[🧠 MW] Available cookies:", req.cookies.getAll().map(c => `${c.name}=${c.value.substring(0, 10)}...`));
     return null;
   }
 
   try {
     const secret = readSessionSecret();
     const payload = await verifySessionToken(token, secret);
-    console.log("[🧠 MW] ✅ Session verified", { uid: payload?.uid });
+    console.log("[🧠 MW] ✅ Session verified", { 
+      uid: payload?.uid,
+      email: payload?.email,
+      tenantId: payload?.tenantId 
+    });
     return payload;
   } catch (error) {
     console.error("[🧠 MW] ❌ Session verification failed", error);
@@ -79,7 +86,11 @@ export async function middleware(req: NextRequest) {
   if (!session) {
     console.log(`[🧠 MW] ❌ No session - redirecting to login`);
     const landingUrl = getLandingUrl();
-    return NextResponse.redirect(`${landingUrl}/auth/login`);
+    const appUrl = getAppUrl();
+    const returnUrl = `${appUrl}${pathname}`;
+    const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(returnUrl)}`;
+    console.log(`[🧠 MW] Redirect URL: ${loginUrl}`);
+    return NextResponse.redirect(loginUrl);
   }
 
   console.log("[🧠 MW] ✅ Session valid - allowing request");

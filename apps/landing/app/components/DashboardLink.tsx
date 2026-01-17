@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -15,11 +15,11 @@ interface DashboardLinkProps {
  * DashboardLink Component
  * 
  * Intelligently routes users:
- * - If authenticated: Links to app.verifactu.business/dashboard
+ * - If authenticated: Links to app.verifactu.business/dashboard with session sync
  * - If not authenticated: Links to landing /auth/login
  * 
- * This ensures users are always redirected to the correct login page
- * if they don't have a valid session.
+ * Uses a special route that ensures session cookie is properly set
+ * before redirecting to the app dashboard.
  */
 export function DashboardLink({
   className = "px-6 py-2 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md hover:from-[#0056D6] hover:to-[#1AA3DB] transition-all text-sm",
@@ -37,14 +37,11 @@ export function DashboardLink({
     return null;
   }
 
-  // If user is authenticated, redirect to app dashboard
+  // If user is authenticated, use session-sync route to ensure cookie is set
   if (user) {
-    const appUrl = getAppUrl();
-    const href = `${appUrl.replace(/\/$/, "")}/dashboard`;
-    
     return (
       <a
-        href={href}
+        href="/api/dashboard-redirect"
         className={className}
         aria-label={ariaLabel}
       >
@@ -64,3 +61,4 @@ export function DashboardLink({
     </Link>
   );
 }
+
