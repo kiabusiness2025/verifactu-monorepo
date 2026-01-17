@@ -1,4 +1,4 @@
-export const dynamic = "force-static";
+﻿export const dynamic = "force-static";
 
 export default function HealthPage() {
   return (
@@ -10,3 +10,4 @@ export default function HealthPage() {
     </main>
   );
 }
+

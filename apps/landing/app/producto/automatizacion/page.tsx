@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Bot, RefreshCcw, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Automatización | Verifactu Business",
+  title: "AutomatizaciÃ³n | Verifactu Business",
   description:
-    "Flujos automáticos para facturar, cumplir VeriFactu y reducir errores.",
+    "Flujos automÃ¡ticos para facturar, cumplir VeriFactu y reducir errores.",
 };
 
 const flows = [
   {
-    title: "Factura -> Validación",
+    title: "Factura -> ValidaciÃ³n",
     description: "Genera, valida y registra sin pasos manuales.",
     icon: RefreshCcw,
   },
@@ -21,7 +21,7 @@ const flows = [
   },
   {
     title: "Cumplimiento continuo",
-    description: "Trazabilidad y conservación siempre activas.",
+    description: "Trazabilidad y conservaciÃ³n siempre activas.",
     icon: ShieldCheck,
   },
 ];
@@ -35,7 +35,7 @@ export default function AutomatizacionPage() {
             href="/"
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-            ← Volver al inicio
+            â† Volver al inicio
           </Link>
         </div>
       </div>
@@ -44,10 +44,10 @@ export default function AutomatizacionPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
             <h1 className="text-4xl font-bold text-[#002060] sm:text-5xl">
-              Automatización sin fricción
+              AutomatizaciÃ³n sin fricciÃ³n
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Menos tareas repetitivas, menos errores y más tiempo para tu negocio.
+              Menos tareas repetitivas, menos errores y mÃ¡s tiempo para tu negocio.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -61,7 +61,7 @@ export default function AutomatizacionPage() {
                 href="/demo"
                 className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
               >
-                Ver demo
+                Solicitar demo
               </Link>
             </div>
           </div>
@@ -105,3 +105,4 @@ export default function AutomatizacionPage() {
     </main>
   );
 }
+

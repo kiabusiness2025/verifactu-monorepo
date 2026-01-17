@@ -163,3 +163,4 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
     </header>
   );
 }
+

@@ -24,10 +24,11 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const name = typeof body?.name === "string" ? body.name.trim() : "";
+  const nif = typeof body?.nif === "string" ? body.nif.trim() : "";
   if (!name) {
     return NextResponse.json({ ok: false, error: "name required" }, { status: 400 });
   }
 
-  const tenantId = await createTenantWithOwner({ name, ownerId: uid });
+  const tenantId = await createTenantWithOwner({ name, ownerId: uid, nif: nif || null });
   return NextResponse.json({ ok: true, tenant: { id: tenantId, name, ownerId: uid } });
 }

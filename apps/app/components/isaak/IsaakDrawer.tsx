@@ -6,7 +6,7 @@ import { useIsaakContext } from "@/hooks/useIsaakContext";
 
 type Message = {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 };
 
@@ -15,21 +15,25 @@ export function IsaakDrawer() {
   const { title, suggestions } = useIsaakContext();
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Solo mostrar mensaje de bienvenida si es Empresa Demo SL
-  const isDemoCompany = company && company.toLowerCase().includes('demo');
-  
-  const [messages, setMessages] = useState<Message[]>(
-    isDemoCompany ? [
-      {
-        id: '1',
-        role: 'assistant',
-        content: '¡Hola! Soy Isaak. ¿En qué puedo ayudarte hoy?',
-      }
-    ] : []
-  );
-  const [input, setInput] = useState('');
+  const isDemoCompany = company && company.toLowerCase().includes("demo");
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isDemoCompany || messages.length > 0) return;
+    setMessages([
+      {
+        id: "welcome",
+        role: "assistant",
+        content:
+          "Hola! Soy Isaak. Estas en Empresa Demo SL. Explora los datos de ejemplo o crea tu empresa desde Configuracion > Empresa.",
+      },
+    ]);
+  }, [isDemoCompany, messages.length]);
 
   useEffect(() => {
     if (isDrawerOpen) inputRef.current?.focus();
@@ -54,37 +58,37 @@ export function IsaakDrawer() {
     // Add user message
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
-      role: 'user',
+      role: "user",
       content: input,
     };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
     setIsLoading(true);
 
     try {
       // Send to chat API
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...messages, userMessage],
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Chat error');
+        throw new Error("Chat error");
       }
 
       // Handle streaming response
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let assistantContent = '';
+      let assistantContent = "";
 
       if (reader) {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          
+
           const chunk = decoder.decode(value);
           assistantContent += chunk;
         }
@@ -92,25 +96,25 @@ export function IsaakDrawer() {
 
       const assistantMessage: Message = {
         id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: assistantContent || 'No pude procesar tu solicitud.',
+        role: "assistant",
+        content: assistantContent || "No pude procesar tu solicitud.",
       };
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Chat error:', error);
+      console.error("Chat error:", error);
       const errorMessage: Message = {
         id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: 'Disculpa, ocurrió un error. Intenta de nuevo.',
+        role: "assistant",
+        content: "Disculpa, ocurrio un error. Intenta de nuevo.",
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const chips = suggestions.slice(0, 3);
-  
+
   const onChipClick = (label: string) => {
     setInput(label);
     inputRef.current?.focus();
@@ -135,7 +139,7 @@ export function IsaakDrawer() {
           <div>
             <p className="text-sm font-semibold text-slate-900">Isaak</p>
             <p className="text-xs text-slate-500">
-              {title} · {company}
+              {title} - {company}
             </p>
           </div>
           <button
@@ -157,20 +161,26 @@ export function IsaakDrawer() {
               }`}
             >
               <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] opacity-70">
-                {m.role === "assistant" ? "Isaak" : "Tú"}
+                {m.role === "assistant" ? "Isaak" : "Tu"}
               </span>
-              <span className="block mt-1 whitespace-pre-wrap">{m.content}</span>
+              <span className="mt-1 block whitespace-pre-wrap">{m.content}</span>
             </div>
           ))}
           {isLoading && (
-            <div className="self-start max-w-[85%] rounded-2xl px-4 py-3 text-sm bg-slate-50">
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] opacity-70 text-slate-700">
+            <div className="self-start max-w-[85%] rounded-2xl bg-slate-50 px-4 py-3 text-sm">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-700 opacity-70">
                 Isaak
               </span>
-              <div className="flex gap-1 mt-2">
-                <div className="h-2 w-2 rounded-full bg-slate-400 animate-pulse" />
-                <div className="h-2 w-2 rounded-full bg-slate-400 animate-pulse" style={{ animationDelay: "0.2s" }} />
-                <div className="h-2 w-2 rounded-full bg-slate-400 animate-pulse" style={{ animationDelay: "0.4s" }} />
+              <div className="mt-2 flex gap-1">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-slate-400" />
+                <div
+                  className="h-2 w-2 animate-pulse rounded-full bg-slate-400"
+                  style={{ animationDelay: "0.2s" }}
+                />
+                <div
+                  className="h-2 w-2 animate-pulse rounded-full bg-slate-400"
+                  style={{ animationDelay: "0.4s" }}
+                />
               </div>
             </div>
           )}
@@ -183,26 +193,29 @@ export function IsaakDrawer() {
               <button
                 key={c.label}
                 onClick={() => onChipClick(c.label)}
-                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-200 transition-colors"
+                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition-colors hover:bg-slate-200"
               >
                 {c.label}
               </button>
             ))}
           </div>
-          <form onSubmit={handleSubmit} className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm">
+          <form
+            onSubmit={handleSubmit}
+            className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm"
+          >
             <input
               ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={isLoading}
-              placeholder="Escribe o pega una instrucción"
+              placeholder="Escribe o pega una instruccion"
               className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 disabled:opacity-50"
             />
-            <button 
+            <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+              className="rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               Enviar
             </button>

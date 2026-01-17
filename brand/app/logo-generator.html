@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Empresa Demo SL Logo Generator</title>
+</head>
+<body>
+    <h1>Empresa Demo SL - Logo Generator</h1>
+    <p>Haz click derecho en el logo y selecciona "Guardar imagen como..." para descargar como PNG</p>
+    
+    <div id="logo-container" style="margin: 20px 0;">
+        <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <!-- Fondo circular con gradiente -->
+          <defs>
+            <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#0b6cfb;stop-opacity:1" />
+              <stop offset="50%" style="stop-color:#2bb2ff;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#20c997;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          
+          <!-- Círculo de fondo -->
+          <circle cx="256" cy="256" r="240" fill="url(#bgGradient)"/>
+          
+          <!-- Letras "ED" estilizadas -->
+          <text x="256" y="310" font-family="Arial, sans-serif" font-size="180" font-weight="bold" fill="white" text-anchor="middle">ED</text>
+          
+          <!-- "DEMO SL" en pequeño -->
+          <text x="256" y="380" font-family="Arial, sans-serif" font-size="42" font-weight="normal" fill="white" opacity="0.95" text-anchor="middle">DEMO SL</text>
+        </svg>
+    </div>
+
+    <canvas id="canvas" width="512" height="512" style="display:none;"></canvas>
+    
+    <button onclick="downloadPNG()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">
+        Descargar como PNG
+    </button>
+
+    <script>
+        function downloadPNG() {
+            const svg = document.querySelector('svg');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const data = (new XMLSerializer()).serializeToString(svg);
+            const svgBlob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+            
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob(function(blob) {
+                    const link = document.createElement('a');
+                    link.download = 'empresa-demo-sl-logo-512.png';
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                });
+                URL.revokeObjectURL(url);
+            };
+            img.src = url;
+        }
+    </script>
+</body>
+</html>

@@ -1,11 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '../../../../lib/prisma';
-import { auth } from '../../../../lib/firebase';
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "../../../../lib/prisma";
 
 /**
  * API Route para sincronizar usuarios de Firebase Auth con PostgreSQL (Prisma)
- * 
- * Se llama después de que un usuario se registra o inicia sesión por primera vez.
+ *
+ * Se llama despues de que un usuario se registra o inicia sesion por primera vez.
  * Crea o actualiza el usuario en la base de datos PostgreSQL.
  */
 export async function POST(request: NextRequest) {
@@ -15,7 +14,7 @@ export async function POST(request: NextRequest) {
 
     if (!uid || !email) {
       return NextResponse.json(
-        { error: 'Missing required fields: uid and email' },
+        { error: "Missing required fields: uid and email" },
         { status: 400 }
       );
     }
@@ -50,10 +49,10 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // EMPRESA DEMO: Agregar membership automático a "Empresa Demo SL"
+      // EMPRESA DEMO: Agregar membership automatico a "Empresa Demo SL"
       const demoTenant = await prisma.tenant.findFirst({
-        where: { 
-          name: 'Empresa Demo SL',
+        where: {
+          name: "Empresa Demo SL",
           isDemo: true,
         },
       });
@@ -64,8 +63,8 @@ export async function POST(request: NextRequest) {
           data: {
             tenantId: demoTenant.id,
             userId: uid,
-            role: 'member',
-            status: 'active',
+            role: "member",
+            status: "active",
           },
         });
 
@@ -77,21 +76,21 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        console.log(`✓ Usuario ${email} agregado a Empresa Demo SL`);
+        console.log(`Usuario ${email} agregado a Empresa Demo SL`);
 
         return NextResponse.json({
           ok: true,
           user,
           tenant: demoTenant,
           created: true,
-          message: 'User created and added to Empresa Demo SL',
+          message: "User created and added to Empresa Demo SL",
         });
       }
 
       // FALLBACK: Si no existe empresa demo, crear tenant personal
       const tenant = await prisma.tenant.create({
         data: {
-          name: `${displayName || email.split('@')[0]}'s Business`,
+          name: `${displayName || email.split("@")[0]}'s Business`,
           legalName: null,
           nif: null,
         },
@@ -102,8 +101,8 @@ export async function POST(request: NextRequest) {
         data: {
           tenantId: tenant.id,
           userId: uid,
-          role: 'owner',
-          status: 'active',
+          role: "owner",
+          status: "active",
         },
       });
 
@@ -115,9 +114,9 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Crear suscripción trial gratuita (14 días)
+      // Crear suscripcion trial gratuita (14 dias)
       const freePlan = await prisma.plan.findFirst({
-        where: { code: 'free' },
+        where: { code: "free" },
       });
 
       if (freePlan) {
@@ -125,8 +124,8 @@ export async function POST(request: NextRequest) {
           data: {
             tenantId: tenant.id,
             planId: freePlan.id,
-            status: 'trialing',
-            trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 días
+            status: "trialing",
+            trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
             currentPeriodStart: new Date(),
             currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
           },
@@ -138,31 +137,28 @@ export async function POST(request: NextRequest) {
         user,
         tenant,
         created: true,
-        message: 'User and tenant created successfully with 14-day trial',
+        message: "User and tenant created successfully with 14-day trial",
       });
     }
   } catch (error: any) {
-    console.error('Error syncing user with Prisma:', error);
+    console.error("Error syncing user with Prisma:", error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: "Internal server error", details: error.message },
       { status: 500 }
     );
   }
 }
 
 /**
- * GET: Obtener información del usuario desde PostgreSQL
+ * GET: Obtener informacion del usuario desde PostgreSQL
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const uid = searchParams.get('uid');
+    const uid = searchParams.get("uid");
 
     if (!uid) {
-      return NextResponse.json(
-        { error: 'Missing uid parameter' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing uid parameter" }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -182,10 +178,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -193,9 +186,9 @@ export async function GET(request: NextRequest) {
       user,
     });
   } catch (error: any) {
-    console.error('Error fetching user from Prisma:', error);
+    console.error("Error fetching user from Prisma:", error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: "Internal server error", details: error.message },
       { status: 500 }
     );
   }

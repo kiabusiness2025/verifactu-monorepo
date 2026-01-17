@@ -1,11 +1,11 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import type { Metadata } from "next";
 import { CheckCircle2, ShieldCheck, FileText, Hash } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Cumplimiento VeriFactu | Verifactu Business",
   description:
-    "Cómo Verifactu Business cumple el RD 1007/2023: integridad, trazabilidad y evidencias.",
+    "CÃ³mo Verifactu Business cumple el RD 1007/2023: integridad, trazabilidad y evidencias.",
 };
 
 const evidencias = [
@@ -18,19 +18,19 @@ const evidencias = [
   {
     title: "Fecha y trazabilidad",
     detail:
-      "Guardamos la fecha de alta y los cambios relevantes (estado, envíos y anulaciones permitidas).",
+      "Guardamos la fecha de alta y los cambios relevantes (estado, envÃ­os y anulaciones permitidas).",
     icon: <ShieldCheck className="h-5 w-5 text-blue-700" />,
   },
   {
     title: "Historial de eventos",
     detail:
-      "Los eventos críticos (creación, validación, envío y modificaciones permitidas) quedan registrados para consulta.",
+      "Los eventos crÃ­ticos (creaciÃ³n, validaciÃ³n, envÃ­o y modificaciones permitidas) quedan registrados para consulta.",
     icon: <FileText className="h-5 w-5 text-blue-700" />,
   },
   {
     title: "Evidencias del documento",
     detail:
-      "Conservamos evidencias para identificar la versión exacta enviada o descargada.",
+      "Conservamos evidencias para identificar la versiÃ³n exacta enviada o descargada.",
     icon: <CheckCircle2 className="h-5 w-5 text-blue-700" />,
   },
 ];
@@ -38,8 +38,8 @@ const evidencias = [
 const cumplimos = [
   "Integridad y secuencialidad: evitamos cambios posteriores sin rastro.",
   "Trazabilidad completa: historial de eventos con fecha.",
-  "Conservación: custodia de evidencias y huellas durante los plazos legales.",
-  "Disponibilidad: exportación de libros y evidencias bajo demanda para auditoría.",
+  "ConservaciÃ³n: custodia de evidencias y huellas durante los plazos legales.",
+  "Disponibilidad: exportaciÃ³n de libros y evidencias bajo demanda para auditorÃ­a.",
 ];
 
 export default function VerifactuPage() {
@@ -61,14 +61,14 @@ export default function VerifactuPage() {
               <ShieldCheck className="h-4 w-4 text-blue-700" />
               Cumplimiento VeriFactu (RD 1007/2023)
             </div>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Cómo cumplimos VeriFactu</h1>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">CÃ³mo cumplimos VeriFactu</h1>
             <p className="text-lg text-slate-700">
-              Te mostramos cómo cuidamos la integridad, la trazabilidad y la conservación de tus registros VeriFactu.
+              Te mostramos cÃ³mo cuidamos la integridad, la trazabilidad y la conservaciÃ³n de tus registros VeriFactu.
             </p>
           </div>
 
           <div className="mt-10 grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-2xl font-semibold text-slate-900">Qué cumplimos exactamente</h2>
+            <h2 className="text-2xl font-semibold text-slate-900">QuÃ© cumplimos exactamente</h2>
             <ul className="space-y-3 text-sm text-slate-700">
               {cumplimos.map((item) => (
                 <li key={item} className="flex items-start gap-2">
@@ -101,10 +101,10 @@ export default function VerifactuPage() {
           <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">Exportables y evidencias</h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-700">
-              <li>• Libro de facturas emitidas/recibidas con evidencias de integridad y fechas.</li>
-              <li>• Evidencias de documentos y referencia a versiones enviadas/descargadas.</li>
-              <li>• Historial de eventos (creación, validación, envíos y anulaciones permitidas) consultable.</li>
-              <li>• Informe de consistencia bajo demanda.</li>
+              <li>â€¢ Libro de facturas emitidas/recibidas con evidencias de integridad y fechas.</li>
+              <li>â€¢ Evidencias de documentos y referencia a versiones enviadas/descargadas.</li>
+              <li>â€¢ Historial de eventos (creaciÃ³n, validaciÃ³n, envÃ­os y anulaciones permitidas) consultable.</li>
+              <li>â€¢ Informe de consistencia bajo demanda.</li>
             </ul>
           </div>
         </div>
@@ -112,3 +112,4 @@ export default function VerifactuPage() {
     </main>
   );
 }
+

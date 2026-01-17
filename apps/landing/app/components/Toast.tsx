@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { createContext, useContext, useCallback, useState, useEffect } from "react";
 
@@ -83,3 +83,4 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
     </div>
   );
 }
+

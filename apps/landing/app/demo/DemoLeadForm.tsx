@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useMemo, useState } from "react";
 
@@ -66,10 +66,10 @@ export function DemoLeadForm() {
         Acceso a la demo
       </p>
       <h2 className="mt-1 text-lg font-semibold text-[#002060]">
-        ¿Te aviso cuando esté listo para tu caso?
+        Te aviso cuando este listo para tu caso?
       </h2>
       <p className="mt-2 text-sm leading-6 text-slate-600">
-        Déjame tu email y lo preparo con calma. Sin presión.
+        Dejame tu email y lo preparo con calma. Sin presion.
       </p>
 
       <form className="mt-4 space-y-3" onSubmit={onSubmit}>
@@ -137,3 +137,5 @@ export function DemoLeadForm() {
     </section>
   );
 }
+
+

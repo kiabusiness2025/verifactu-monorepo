@@ -15,6 +15,10 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [logoURL, setLogoURL] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [newTenantName, setNewTenantName] = useState("");
+  const [isCreatingTenant, setIsCreatingTenant] = useState(false);
+  const [createTenantError, setCreateTenantError] = useState<string | null>(null);
+  const [createTenantSuccess, setCreateTenantSuccess] = useState<string | null>(null);
 
   const [profileSettings, setProfileSettings] = useState({
     displayName: session?.user?.name || '',
@@ -44,6 +48,53 @@ export default function SettingsPage() {
     }
   };
 
+  const handleCreateTenant = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    const name = newTenantName.trim();
+    setCreateTenantError(null);
+    setCreateTenantSuccess(null);
+
+    if (!name) {
+      setCreateTenantError("Introduce un nombre para la empresa.");
+      return;
+    }
+
+    setIsCreatingTenant(true);
+    try {
+      const res = await fetch("/api/tenants", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "No se pudo crear la empresa");
+      }
+
+      const tenantId = data?.tenant?.id as string | undefined;
+      if (tenantId) {
+        await fetch("/api/session/tenant-switch", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tenantId }),
+        });
+        setActiveTenantId(tenantId);
+      }
+
+      setNewTenantName("");
+      setCreateTenantSuccess("Empresa creada. Te hemos cambiado a tu nueva empresa.");
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error) {
+      console.error("Error creating tenant:", error);
+      setCreateTenantError("No se pudo crear la empresa. Intenta de nuevo.");
+    } finally {
+      setIsCreatingTenant(false);
+    }
+  };
+
   // Cargar el tenant activo
   useEffect(() => {
     async function loadActiveTenant() {
@@ -51,8 +102,8 @@ export default function SettingsPage() {
         const res = await fetch("/api/tenants", { credentials: "include" });
         const data = await res.json().catch(() => null);
         if (data?.ok && Array.isArray(data.tenants) && data.tenants.length > 0) {
-          const preferredId = typeof data.preferredTenantId === "string" 
-            ? data.preferredTenantId 
+          const preferredId = typeof data.preferredTenantId === "string"
+            ? data.preferredTenantId
             : data.tenants[0]?.id || "";
           setActiveTenantId(preferredId);
         }
@@ -91,11 +142,11 @@ export default function SettingsPage() {
 
     // Validar tipo de archivo
     if (!file.type.startsWith('image/')) {
-      alert('Por favor selecciona una imagen válida');
+      alert('Por favor selecciona una imagen valida');
       return;
     }
 
-    // Validar tamaño (5MB)
+    // Validar tamano (5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('La imagen no puede superar los 5MB');
       return;
@@ -107,7 +158,7 @@ export default function SettingsPage() {
       const reader = new FileReader();
       reader.onload = async (event) => {
         const base64 = event.target?.result as string;
-        
+
         // Subir a la API
         const res = await fetch('/api/tenant/logo', {
           method: 'POST',
@@ -123,7 +174,7 @@ export default function SettingsPage() {
         if (data.ok && data.logoURL) {
           setLogoURL(data.logoURL);
           alert('Logo actualizado correctamente');
-          // Recargar página para que se actualice en el Topbar
+          // Recargar pagina para que se actualice en el Topbar
           window.location.reload();
         } else {
           alert(data.error || 'Error al subir el logo');
@@ -158,10 +209,9 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-4xl">
-      <h1 className="text-3xl font-bold text-slate-900 mb-6">Configuración</h1>
+      <h1 className="text-3xl font-bold text-slate-900 mb-6">Configuracion</h1>
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
-        {/* Tabs */}
         <div className="border-b border-slate-200 flex overflow-x-auto">
           <button
             onClick={() => setActiveTab('profile')}
@@ -191,7 +241,7 @@ export default function SettingsPage() {
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
-            Facturación
+            Facturacion
           </button>
           <button
             onClick={() => setActiveTab('integrations')}
@@ -225,9 +275,7 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6">
-          {/* Profile Tab */}
           {activeTab === 'profile' && (
             <form onSubmit={handleSaveProfile} className="space-y-6">
               <div className="space-y-4">
@@ -243,7 +291,7 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
-                  <p className="mt-1 text-xs text-slate-500">Este nombre aparecerá en tu perfil y saludos de Isaak</p>
+                  <p className="mt-1 text-xs text-slate-500">Este nombre aparecera en tu perfil y saludos de Isaak</p>
                 </div>
 
                 <div>
@@ -258,7 +306,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Teléfono</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Telefono</label>
                   <input
                     type="tel"
                     value={profileSettings.phone}
@@ -275,17 +323,17 @@ export default function SettingsPage() {
 
               <div className="space-y-4">
                 <h3 className="font-semibold text-slate-900">Seguridad</h3>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Cambiar Contraseña</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Cambiar Contrasena</label>
                   <button
                     type="button"
-                    onClick={() => alert('Próximamente: cambiar contraseña')}
+                    onClick={() => alert('Proximamente: cambiar contrasena')}
                     className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium"
                   >
-                    Actualizar contraseña
+                    Actualizar contrasena
                   </button>
-                  <p className="mt-1 text-xs text-slate-500">Se te enviará un email para restablecer tu contraseña</p>
+                  <p className="mt-1 text-xs text-slate-500">Se te enviara un email para restablecer tu contrasena</p>
                 </div>
               </div>
 
@@ -301,175 +349,206 @@ export default function SettingsPage() {
             </form>
           )}
 
-          {/* General Tab (now renamed to Empresa) */}
           {activeTab === 'general' && (
-            <form onSubmit={handleSaveGeneral} className="space-y-6">
-              {/* Logo Upload Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-slate-900">Logo de la Empresa</h3>
-                <div className="flex items-center gap-6">
-                  <div className="relative">
-                    {logoURL ? (
-                      <div className="relative h-24 w-24 rounded-xl overflow-hidden border-2 border-slate-200">
-                        <Image
-                          src={logoURL}
-                          alt="Logo de empresa"
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-24 w-24 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-2xl">
-                        {generalSettings.companyName.charAt(0).toUpperCase() || 'E'}
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleLogoClick}
-                      disabled={isUploadingLogo}
-                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-lg disabled:bg-slate-400"
-                      title="Cambiar logo"
-                    >
-                      <Camera size={16} />
-                    </button>
+            <div className="space-y-6">
+              <form
+                onSubmit={handleCreateTenant}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+              >
+                <h3 className="text-sm font-semibold text-slate-900">Crear empresa nueva</h3>
+                <p className="mt-1 text-xs text-slate-600">
+                  Si estas en Empresa Demo SL, crea tu empresa aqui y empieza con tus datos reales.
+                </p>
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    type="text"
+                    value={newTenantName}
+                    onChange={(e) => setNewTenantName(e.target.value)}
+                    placeholder="Nombre de la empresa"
+                    className="w-full flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isCreatingTenant}
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  >
+                    {isCreatingTenant ? 'Creando...' : 'Crear empresa'}
+                  </button>
+                </div>
+                {createTenantError && (
+                  <p className="mt-2 text-xs text-red-600">{createTenantError}</p>
+                )}
+                {createTenantSuccess && (
+                  <p className="mt-2 text-xs text-emerald-600">{createTenantSuccess}</p>
+                )}
+              </form>
+
+              <form onSubmit={handleSaveGeneral} className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-slate-900">Logo de la Empresa</h3>
+                  <div className="flex items-center gap-6">
+                    <div className="relative">
+                      {logoURL ? (
+                        <div className="relative h-24 w-24 rounded-xl overflow-hidden border-2 border-slate-200">
+                          <Image
+                            src={logoURL}
+                            alt="Logo de empresa"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-24 w-24 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-2xl">
+                          {generalSettings.companyName.charAt(0).toUpperCase() || 'E'}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleLogoClick}
+                        disabled={isUploadingLogo}
+                        className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-lg disabled:bg-slate-400"
+                        title="Cambiar logo"
+                      >
+                        <Camera size={16} />
+                      </button>
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoChange}
+                        className="hidden"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-slate-600">
+                        Este logo aparecera en el panel de control de tu empresa
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Formato: JPG, PNG o WebP - Maximo 5MB - Recomendado: imagen cuadrada
+                      </p>
+                      {isUploadingLogo && (
+                        <p className="text-sm text-blue-600 mt-2">Subiendo logo...</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <hr className="border-slate-200" />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Nombre de la Empresa *</label>
                     <input
-                      ref={logoInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoChange}
-                      className="hidden"
+                      type="text"
+                      value={generalSettings.companyName}
+                      onChange={(e) =>
+                        setGeneralSettings({ ...generalSettings, companyName: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                      required
                     />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-600">
-                      Este logo aparecerá en el panel de control de tu empresa
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Formato: JPG, PNG o WebP • Máximo 5MB • Recomendado: imagen cuadrada
-                    </p>
-                    {isUploadingLogo && (
-                      <p className="text-sm text-blue-600 mt-2">Subiendo logo...</p>
-                    )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
+                    <input
+                      type="email"
+                      value={generalSettings.email}
+                      onChange={(e) =>
+                        setGeneralSettings({ ...generalSettings, email: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Telefono</label>
+                    <input
+                      type="tel"
+                      value={generalSettings.phone}
+                      onChange={(e) =>
+                        setGeneralSettings({ ...generalSettings, phone: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">NIF/CIF</label>
+                    <input
+                      type="text"
+                      value={generalSettings.taxId}
+                      onChange={(e) =>
+                        setGeneralSettings({ ...generalSettings, taxId: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Direccion</label>
+                    <input
+                      type="text"
+                      value={generalSettings.address}
+                      onChange={(e) =>
+                        setGeneralSettings({ ...generalSettings, address: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Ciudad</label>
+                    <input
+                      type="text"
+                      value={generalSettings.city}
+                      onChange={(e) =>
+                        setGeneralSettings({ ...generalSettings, city: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Codigo Postal</label>
+                    <input
+                      type="text"
+                      value={generalSettings.postalCode}
+                      onChange={(e) =>
+                        setGeneralSettings({ ...generalSettings, postalCode: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    />
                   </div>
                 </div>
-              </div>
 
-              <hr className="border-slate-200" />
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Nombre de la Empresa *</label>
-                  <input
-                    type="text"
-                    value={generalSettings.companyName}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, companyName: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    required
-                  />
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 font-medium"
+                  >
+                    {loading ? 'Guardando...' : 'Guardar Cambios'}
+                  </button>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                  <input
-                    type="email"
-                    value={generalSettings.email}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, email: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Teléfono</label>
-                  <input
-                    type="tel"
-                    value={generalSettings.phone}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, phone: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">NIF/CIF</label>
-                  <input
-                    type="text"
-                    value={generalSettings.taxId}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, taxId: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Dirección</label>
-                  <input
-                    type="text"
-                    value={generalSettings.address}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, address: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Ciudad</label>
-                  <input
-                    type="text"
-                    value={generalSettings.city}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, city: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Código Postal</label>
-                  <input
-                    type="text"
-                    value={generalSettings.postalCode}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, postalCode: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 font-medium"
-                >
-                  {loading ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           )}
 
-          {/* Billing Tab */}
           {activeTab === 'billing' && (
             <div className="space-y-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-semibold text-blue-900 mb-2">Plan Actual</h3>
-                <p className="text-blue-800 text-sm">Plan Profesional - €99/mes</p>
+                <p className="text-blue-800 text-sm">Plan Profesional - EUR 99/mes</p>
               </div>
 
               <div>
-                <h3 className="font-semibold text-slate-900 mb-4">Método de Pago</h3>
+                <h3 className="font-semibold text-slate-900 mb-4">Metodo de Pago</h3>
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                   <p className="text-slate-600 text-sm">Tarjeta Mastercard terminada en 4242</p>
                   <button className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    Cambiar método de pago
+                    Cambiar metodo de pago
                   </button>
                 </div>
               </div>
@@ -483,7 +562,7 @@ export default function SettingsPage() {
                       <p className="text-sm text-slate-600">14 Enero, 2026</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-slate-900">€99.00</p>
+                      <p className="font-medium text-slate-900">EUR 99.00</p>
                       <button className="text-blue-600 hover:text-blue-800 text-sm">Descargar PDF</button>
                     </div>
                   </div>
@@ -492,14 +571,13 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Integrations Tab */}
           {activeTab === 'integrations' && (
             <div className="space-y-6">
               <div className="border border-slate-200 rounded-lg p-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-slate-900">Correo Electrónico (Resend)</h3>
-                    <p className="text-sm text-slate-600 mt-1">Envía tus plantillas de email a través de Resend</p>
+                    <h3 className="font-semibold text-slate-900">Correo Electronico (Resend)</h3>
+                    <p className="text-sm text-slate-600 mt-1">Envia tus plantillas de email a traves de Resend</p>
                   </div>
                   <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                     Conectado
@@ -533,7 +611,6 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Team Tab */}
           {activeTab === 'team' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
@@ -557,7 +634,6 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Isaak Tab */}
           {activeTab === 'isaak' && (
             <div>
               <IsaakToneSettings />

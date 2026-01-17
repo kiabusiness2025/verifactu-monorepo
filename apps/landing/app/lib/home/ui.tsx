@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import BrandLogo from "../../components/BrandLogo";
 import type { IsaakMsg } from "./types";
+import { getAppUrl } from "../urls";
 import { Button } from "../../components/ui";
 
 export function Container({ className = "", children }: { className?: string; children: React.ReactNode }) {
@@ -58,15 +59,19 @@ export function SecondaryButton({
 }
 
 export function StickyCtaBar({ show }: { show: boolean }) {
+  const appDemoUrl = `${getAppUrl()}/demo`;
   return (
     <div
       className={`fixed inset-x-0 bottom-4 z-30 px-4 transition-opacity duration-300 ${show ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       aria-hidden={!show}
     >
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
-        <div className="text-sm font-semibold text-[#002060]">Prueba gratis y ve Isaak en acción</div>
-        <div className="flex gap-2">\n          <Link href="/auth/signup">\n            <PrimaryButton className="px-4 py-2">Probar gratis</PrimaryButton>\n          </Link>
-          <SecondaryButton href="/demo" className="px-4 py-2">
+        <div className="text-sm font-semibold text-[#002060]">Prueba gratis y ve Isaak en accion</div>
+        <div className="flex gap-2">
+          <Link href="/auth/signup">
+            <PrimaryButton className="px-4 py-2">Probar gratis</PrimaryButton>
+          </Link>
+          <SecondaryButton href={appDemoUrl} className="px-4 py-2">
             Ver demo
           </SecondaryButton>
         </div>
@@ -126,7 +131,7 @@ export function HeroMockup({
   const heroLog = [
     { title: "Factura VF-2031", desc: "Validada y enviada al cliente" },
     { title: "Ticket combustible", desc: "Marcado deducible y registrado" },
-    { title: "Sync VeriFactu", desc: "Última validación hace 3 min" },
+    { title: "Sync VeriFactu", desc: "Ultima validacion hace 3 min" },
   ];
 
   return (
@@ -239,7 +244,7 @@ export function MiniInvoice() {
         </div>
         <div className="rounded-xl bg-slate-50 p-2 ring-1 ring-slate-200">
           <div className="text-[11px] text-slate-500">Importe</div>
-          <div className="mt-0.5 font-semibold text-slate-800">1.250,00 €</div>
+          <div className="mt-0.5 font-semibold text-slate-800">1.250,00 EUR</div>
         </div>
       </div>
 
@@ -289,7 +294,7 @@ export function FeatureCard({
         ))}
       </ul>
       <button className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]">
-        Ver más <ChevronRight className="h-4 w-4" />
+        Ver mas <ChevronRight className="h-4 w-4" />
       </button>
     </div>
   );
@@ -328,21 +333,21 @@ export function DashboardMock() {
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold">Isaak Control Center</div>
         <span className="rounded-full bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-          Suscripción Business Plus
+          Suscripcion Business Plus
         </span>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <KpiCard label="Ventas del mes" value="48.230 €" sub="+12%" />
-        <KpiCard label="Gastos del mes" value="36.900 €" sub="+7%" />
-        <KpiCard label="Beneficio" value="12.410 €" sub="+8%" />
+        <KpiCard label="Ventas del mes" value="48.230 EUR" sub="+12%" />
+        <KpiCard label="Gastos del mes" value="36.900 EUR" sub="+7%" />
+        <KpiCard label="Beneficio" value="12.410 EUR" sub="+8%" />
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-xs font-semibold text-slate-700">Isaak</div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            He detectado un aumento de gastos en proveedores. ¿Quieres que identifique los que más afectan al margen?
+            He detectado un aumento de gastos en proveedores. Quieres que identifique los que mas afectan al margen?
           </p>
 
           <div className="mt-3 flex gap-2">
@@ -350,7 +355,7 @@ export function DashboardMock() {
               Analizar ahora
             </button>
             <button className="rounded-full border border-[#0060F0] bg-white px-4 py-2 text-xs font-semibold text-[#0060F0] hover:bg-[#0060F0]/10">
-              Más tarde
+              Mas tarde
             </button>
           </div>
         </div>
@@ -360,7 +365,7 @@ export function DashboardMock() {
           <div className="mt-3 space-y-2">
             <ActivityItem icon={<FileText className="h-4 w-4 text-[#0080F0]" />} text="Factura VF-2031 emitida y validada" />
             <ActivityItem icon={<UploadCloud className="h-4 w-4 text-[#0080F0]" />} text="3 tickets reconocidos desde Drive" />
-            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-[#0080F0]" />} text="Recordatorio creado: plazo fiscal en 5 días" />
+            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-[#0080F0]" />} text="Recordatorio creado: plazo fiscal en 5 dias" />
             <ActivityItem icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />} text="Checklist VeriFactu: todo en orden" />
           </div>
         </div>
@@ -446,7 +451,7 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-4">
           <div>
             <BrandLogo variant="footer" />
-            <p className="mt-3 text-sm text-slate-300">Automatiza tu facturación con cumplimiento y control total.</p>
+            <p className="mt-3 text-sm text-slate-300">Automatiza tu facturacion con cumplimiento y control total.</p>
             <div className="mt-4 flex gap-3">
               <a
                 href="/recursos/guias-y-webinars"
@@ -491,7 +496,7 @@ export function Footer() {
           <FooterCol
             title="VeriFactu"
             links={[
-              { label: "Qué es", href: "/verifactu/que-es" },
+              { label: "Que es", href: "/verifactu/que-es" },
               { label: "Calcula precio", href: "/#precios" },
               { label: "Soporte", href: "/verifactu/soporte" },
               { label: "Estado del servicio", href: "/verifactu/estado" },
@@ -500,7 +505,7 @@ export function Footer() {
           <FooterCol
             title="Recursos"
             links={[
-              { label: "Guías y webinars", href: "/recursos/guias-y-webinars" },
+              { label: "Guias y webinars", href: "/recursos/guias-y-webinars" },
               { label: "Checklist", href: "/recursos/checklist" },
               { label: "Blog", href: "/recursos/blog" },
               { label: "Contacto", href: "/recursos/contacto" },
@@ -510,8 +515,8 @@ export function Footer() {
             title="Legal"
             links={[
               { label: "VeriFactu", href: "/verifactu" },
-              { label: "Política de privacidad", href: "/legal/privacidad" },
-              { label: "Términos de servicio", href: "/legal/terminos" },
+              { label: "Politica de privacidad", href: "/legal/privacidad" },
+              { label: "Terminos de servicio", href: "/legal/terminos" },
               { label: "Cookies", href: "/legal/cookies" },
             ]}
           />
@@ -524,13 +529,13 @@ export function Footer() {
               <Link href="/verifactu" className="hover:text-blue-300 transition" aria-label="Ir a VeriFactu">
                 VeriFactu
               </Link>
-              <Link href="/legal/privacidad" className="hover:text-blue-300 transition" aria-label="Leer política de privacidad">
-                Política de privacidad
+              <Link href="/legal/privacidad" className="hover:text-blue-300 transition" aria-label="Leer politica de privacidad">
+                Politica de privacidad
               </Link>
-              <Link href="/legal/terminos" className="hover:text-blue-300 transition" aria-label="Leer términos de servicio">
-                Términos de servicio
+              <Link href="/legal/terminos" className="hover:text-blue-300 transition" aria-label="Leer terminos de servicio">
+                Terminos de servicio
               </Link>
-              <Link href="/legal/cookies" className="hover:text-blue-300 transition" aria-label="Leer política de cookies">
+              <Link href="/legal/cookies" className="hover:text-blue-300 transition" aria-label="Leer politica de cookies">
                 Cookies
               </Link>
             </div>
@@ -579,8 +584,8 @@ export function PriceDisplay({ price, isYearly }: { price: number | null; isYear
   }
   return (
     <div>
-      <div className="text-4xl font-bold text-slate-900">{price} €</div>
-      <div className="text-sm text-slate-500">{isYearly ? "/año" : "/mes"}</div>
+      <div className="text-4xl font-bold text-slate-900">{price} EUR</div>
+      <div className="text-sm text-slate-500">{isYearly ? "/ano" : "/mes"}</div>
     </div>
   );
 }
@@ -606,7 +611,7 @@ export function ComplianceBadge() {
             </div>
             <span className="text-sm font-semibold text-green-700">Cumplimiento Certificado</span>
           </div>
-          <p className="mt-3 text-xs text-slate-500">Sistema homologado según normativa de la Agencia Tributaria</p>
+          <p className="mt-3 text-xs text-slate-500">Sistema homologado segun normativa de la Agencia Tributaria</p>
         </div>
       </div>
     </div>
@@ -617,9 +622,9 @@ export function ThreeSteps() {
   return (
     <section className="py-16 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white">
       <Container>
-        <h3 className="text-center text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">Del envío al cobro en tres pasos.</h3>
+        <h3 className="text-center text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">Del envio al cobro en tres pasos.</h3>
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
-          Conecta tu flujo de facturación y deja que Isaak automatice validaciones y recordatorios.
+          Conecta tu flujo de facturacion y deja que Isaak automatice validaciones y recordatorios.
         </p>
 
         <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -754,3 +759,9 @@ export function PideseloAIsaakSection() {
     </section>
   );
 }
+
+
+
+
+
+

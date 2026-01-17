@@ -1,53 +1,63 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import Link from "next/link";
 
 const FAQ_DATA = [
   {
-    question: "¿Cómo se calcula el precio?",
+    question: "Como se calcula el precio?",
     answer:
-      "Pagas por uso real: una base mensual + tramo de facturas y, si activas conciliación bancaria, tramo de movimientos.",
+      "Pagas por uso real: base mensual + tramo de facturas y, si activas conciliacion bancaria, tramo de movimientos. Sin comisiones sobre ventas.",
   },
   {
-    question: "¿Hay permanencia o comisiones sobre facturación?",
+    question: "Que cuenta como factura?",
     answer:
-      "No. Puedes subir o bajar uso cuando quieras y nunca cobramos porcentaje sobre tus ventas.",
+      "Factura emitida o generada en el mes. Si se numera, cuenta en el tramo correspondiente.",
   },
   {
-    question: "¿Necesito tarjeta para probar?",
+    question: "Que cuenta como movimiento?",
     answer:
-      "Tienes 1 mes gratis. El cobro se activa solo si confirmas la suscripción.",
+      "Movimiento procesado para conciliacion, tanto si viene de banco como si lo importas desde Excel.",
   },
   {
-    question: "¿Qué pasa si supero un tramo de facturas o movimientos?",
+    question: "Cuando se recalcula la cuota?",
     answer:
-      "El precio se ajusta al tramo correspondiente. Siempre verás el importe antes de renovar.",
+      "Durante la prueba medimos el uso y antes del cobro te avisamos del importe final.",
   },
   {
-    question: "¿La conciliación bancaria es opcional?",
+    question: "Isaak sustituye a mi gestor?",
     answer:
-      "Sí. Puedes activarla o desactivarla cuando quieras. Si no la activas, movimientos = 0.",
+      "No. Isaak y la plataforma son un apoyo. Te dan visibilidad diaria de ventas, gastos y beneficio para decidir sin esperar al cierre contable.",
   },
   {
-    question: "¿Necesito certificado? ¿Cómo firmo?",
+    question: "Que puede hacer Isaak por mi?",
     answer:
-      "Te guiamos paso a paso. La firma y el sellado se gestionan desde la plataforma según la normativa aplicable.",
+      "Interpreta documentos, clasifica gastos, sugiere acciones, avisa de plazos y genera resumenes con ventas, gastos y beneficio.",
   },
   {
-    question: "¿Qué pasa si la AEAT está caída?",
+    question: "Puedo ver beneficio e impuesto estimado?",
     answer:
-      "Seguimos generando y guardando evidencias. Reintentamos el envío y puedes ver el estado en /verifactu/estado.",
+      "Si. Obtienes un beneficio aproximado y un impuesto estimado para comparar con tu asesoria y ajustar decisiones a tiempo.",
   },
   {
-    question: "¿VeriFactu está incluido?",
+    question: "Necesito tarjeta para probar?",
     answer:
-      "Sí. Incluye sellado, trazabilidad y evidencias exportables para auditoría.",
+      "Tienes 1 mes gratis. El cobro se activa solo si confirmas la suscripcion.",
   },
   {
-    question: "¿Puedo exportar mis datos?",
+    question: "Puedo exportar y compartir con mi gestoria?",
     answer:
-      "Siempre. Tus facturas, documentos y evidencias son tuyos.",
+      "Si. Puedes exportar en PDF o Excel y compartir resultados con tu gestor o asesor cuando lo necesites.",
+  },
+  {
+    question: "Que pasa si supero un tramo de facturas o movimientos?",
+    answer:
+      "El precio se ajusta al tramo correspondiente. Siempre veras el importe antes de renovar.",
+  },
+  {
+    question: "VeriFactu esta incluido?",
+    answer:
+      "Si. Incluye sellado, trazabilidad y evidencias exportables para auditoria.",
   },
 ];
 
@@ -81,16 +91,16 @@ export default function Faq() {
         ))}
       </div>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-slate-600">¿Quieres ver el precio exacto antes de activar?</div>
+        <div className="text-sm text-slate-600">Quieres ver el precio exacto antes de activar?</div>
         <div className="flex gap-3">
           <Link
-            href="/demo#calculadora"
+            href="/#precios"
             className="mt-2 inline-block rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
           >
             Calcula tu precio
           </Link>
           <Link
-            href="/verifactu/soporte"
+            href="/recursos/contacto"
             className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200"
           >
             Abrir soporte
@@ -104,3 +114,4 @@ export default function Faq() {
     </div>
   );
 }
+

@@ -1,22 +1,22 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Plug, Database, Building } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Integraciones | Verifactu Business",
   description:
-    "Conecta Verifactu Business con tus herramientas y centraliza la información.",
+    "Conecta Verifactu Business con tus herramientas y centraliza la informaciÃ³n.",
 };
 
 const integrations = [
   {
     title: "Bancos",
-    description: "Conciliación de movimientos y extractos bancarios.",
+    description: "ConciliaciÃ³n de movimientos y extractos bancarios.",
     icon: Building,
   },
   {
     title: "ERP y contabilidad",
-    description: "Exportaciones y formatos estándar para asesorías.",
+    description: "Exportaciones y formatos estÃ¡ndar para asesorÃ­as.",
     icon: Database,
   },
   {
@@ -35,7 +35,7 @@ export default function IntegracionesPage() {
             href="/"
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-            ← Volver al inicio
+            â† Volver al inicio
           </Link>
         </div>
       </div>
@@ -44,11 +44,11 @@ export default function IntegracionesPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
             <h1 className="text-4xl font-bold text-[#002060] sm:text-5xl">
-              Integraciones para crecer sin fricción
+              Integraciones para crecer sin fricciÃ³n
             </h1>
             <p className="mt-4 text-lg text-slate-600">
               Conecta tus datos financieros, automatiza tareas y centraliza la
-              información en un solo lugar.
+              informaciÃ³n en un solo lugar.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -94,10 +94,10 @@ export default function IntegracionesPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-3xl border border-[#0060F0]/15 bg-gradient-to-br from-sky-50/70 to-white p-10">
             <h2 className="text-2xl font-semibold text-[#002060]">
-              Necesitas una integración específica
+              Necesitas una integraciÃ³n especÃ­fica
             </h2>
             <p className="mt-4 text-slate-600">
-              Cuéntanos tu caso y preparamos un plan con integraciones y soporte
+              CuÃ©ntanos tu caso y preparamos un plan con integraciones y soporte
               a medida.
             </p>
             <div className="mt-6">
@@ -114,3 +114,4 @@ export default function IntegracionesPage() {
     </main>
   );
 }
+

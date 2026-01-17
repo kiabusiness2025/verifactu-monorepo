@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, FileCheck2, LayoutDashboard } from "lucide-react";
 
@@ -16,7 +16,7 @@ const modules = [
   },
   {
     title: "Cumplimiento VeriFactu",
-    description: "Emisión y trazabilidad conforme a la normativa.",
+    description: "EmisiÃ³n y trazabilidad conforme a la normativa.",
     icon: FileCheck2,
   },
   {
@@ -35,7 +35,7 @@ export default function PlataformaPage() {
             href="/"
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-            ← Volver al inicio
+            â† Volver al inicio
           </Link>
         </div>
       </div>
@@ -44,7 +44,7 @@ export default function PlataformaPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
             <h1 className="text-4xl font-bold text-[#002060] sm:text-5xl">
-              La plataforma que simplifica tu gestión diaria
+              La plataforma que simplifica tu gestiÃ³n diaria
             </h1>
             <p className="mt-4 text-lg text-slate-600">
               Todo lo esencial para emitir, controlar y cumplir, sin pantallas
@@ -62,7 +62,7 @@ export default function PlataformaPage() {
                 href="/demo"
                 className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
               >
-                Ver demo
+                Solicitar demo
               </Link>
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function PlataformaPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-3xl border border-[#0060F0]/15 bg-gradient-to-br from-sky-50/70 to-white p-10">
             <h2 className="text-2xl font-semibold text-[#002060]">
-              Diseñada para equipos pequeños
+              DiseÃ±ada para equipos pequeÃ±os
             </h2>
             <p className="mt-4 text-slate-600">
               Pensada para PYMEs que quieren facturar y cumplir sin contratar
@@ -120,3 +120,4 @@ export default function PlataformaPage() {
     </main>
   );
 }
+

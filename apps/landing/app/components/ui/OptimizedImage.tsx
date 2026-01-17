@@ -1,4 +1,4 @@
-import Image from 'next/image';
+﻿import Image from 'next/image';
 import React from 'react';
 
 interface OptimizedImageProps {
@@ -106,3 +106,4 @@ export async function generateBlurPlaceholder(
   // TODO: Implement with plaiceholder in future
   return '';
 }
+

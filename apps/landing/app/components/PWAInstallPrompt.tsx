@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Download, X } from "lucide-react";
@@ -83,7 +83,7 @@ export function PWAInstallPrompt() {
             Instalar Verifactu
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Accede más rápido instalando la app en tu dispositivo
+            Accede mÃ¡s rÃ¡pido instalando la app en tu dispositivo
           </p>
         </div>
       </div>
@@ -99,9 +99,10 @@ export function PWAInstallPrompt() {
           onClick={handleDismiss}
           className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition text-sm"
         >
-          Más tarde
+          MÃ¡s tarde
         </button>
       </div>
     </div>
   );
 }
+

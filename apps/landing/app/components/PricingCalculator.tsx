@@ -18,9 +18,9 @@ const PRICING_PLANS: Plan[] = [
     name: "Gratis",
     price: 0,
     period: "Siempre",
-    users: "1 empresa · 1 usuario",
+    users: "1 empresa - 1 usuario",
     features: [
-      "Facturación básica",
+      "Facturacion basica",
       "Hasta 20 documentos/mes",
       "Chat Isaak limitado",
       "Dashboard esencial",
@@ -29,12 +29,12 @@ const PRICING_PLANS: Plan[] = [
   {
     name: "Profesional",
     price: 29,
-    period: "/mes o 290 €/año",
-    users: "1 empresa · usuarios ilimitados",
+    period: "/mes o 290 EUR/ano",
+    users: "1 empresa - usuarios ilimitados",
     features: [
-      "Facturación VeriFactu completa",
-      "Gastos ilimitados con reconocimiento automático",
-      "Integración bancaria",
+      "Facturacion VeriFactu completa",
+      "Gastos ilimitados con reconocimiento automatico",
+      "Integracion bancaria",
       "Calendario fiscal",
       "Chat Isaak completo",
       "Informes bajo demanda",
@@ -44,12 +44,12 @@ const PRICING_PLANS: Plan[] = [
   {
     name: "Business",
     price: 69,
-    period: "/mes o 690 €/año",
+    period: "/mes o 690 EUR/ano",
     users: "Multiempresa (hasta 3)",
     features: [
       "Todo en Profesional",
       "Varias cuentas bancarias",
-      "Conciliación avanzada",
+      "Conciliacion avanzada",
       "Libros contables",
       "Dashboard financiero",
       "Soporte prioritario",
@@ -61,10 +61,10 @@ const PRICING_PLANS: Plan[] = [
     period: "A medida",
     users: "Multiempresa ilimitada",
     features: [
-      "Configuración personalizada",
-      "Integración completa con tu sistema",
-      "Firma electrónica",
-      "Flujos automáticos",
+      "Configuracion personalizada",
+      "Integracion completa con tu sistema",
+      "Firma electronica",
+      "Flujos automaticos",
       "SLA garantizado",
       "Equipo dedicado",
     ],
@@ -83,7 +83,7 @@ function PriceDisplay({ price, period }: { price: number | null; period: string 
   return (
     <div>
       <div className="text-4xl font-bold text-slate-900">
-        {price === 0 ? "Gratis" : `€${price}`}
+        {price === 0 ? "Gratis" : `EUR ${price}`}
       </div>
       <div className="text-sm text-slate-500">{period}</div>
     </div>
@@ -99,8 +99,8 @@ export default function PricingCalculator() {
             Empieza gratis. Paga solo cuando tu negocio crece.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-            <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos · Prueba gratuita de 30 días ·
-            Posibilidad de cambiar o pausar sin perder información
+            <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos - Prueba gratuita de 30 dias -
+            Posibilidad de cambiar o pausar sin perder informacion
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export default function PricingCalculator() {
               {plan.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="rounded-full bg-[#0080F0] px-3 py-1 text-xs font-semibold text-white">
-                    Más popular
+                    Mas popular
                   </span>
                 </div>
               )}
@@ -160,7 +160,7 @@ export default function PricingCalculator() {
         </div>
 
         <div className="mt-12 text-center text-sm text-slate-500">
-          Todos los planes incluyen activación VeriFactu y soporte de onboarding.
+          Todos los planes incluyen activacion VeriFactu y soporte de onboarding.
         </div>
       </div>
     </section>

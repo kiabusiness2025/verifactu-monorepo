@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Términos y condiciones | Verifactu Business",
+  title: "Terminos y condiciones | Verifactu Business",
   description:
-    "Términos y condiciones de uso de Verifactu Business.",
+    "Terminos y condiciones de uso de Verifactu Business.",
 };
 
 export default function TerminosPage() {
@@ -16,13 +16,13 @@ export default function TerminosPage() {
             href="/"
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-            ← Volver al inicio
+            Volver al inicio
           </Link>
         </div>
       </div>
 
       <section className="mx-auto max-w-5xl px-4 py-16">
-        <h1 className="text-4xl font-bold text-[#002060]">Términos y condiciones</h1>
+        <h1 className="text-4xl font-bold text-[#002060]">Terminos y condiciones</h1>
         <p className="mt-4 text-lg text-slate-600">
           Estas condiciones regulan el acceso y uso de Verifactu Business. Al usar
           el servicio aceptas este acuerdo.
@@ -32,8 +32,8 @@ export default function TerminosPage() {
           1. Servicio
         </h2>
         <p className="mt-3 text-slate-600">
-          Verifactu Business proporciona herramientas de facturación, registro y
-          control básico para PYMEs y autónomos. El servicio puede evolucionar y
+          Verifactu Business proporciona herramientas de facturacion, registro y
+          control basico para PYMEs y autonomos. El servicio puede evolucionar y
           mejorar con el tiempo.
         </p>
 
@@ -46,16 +46,23 @@ export default function TerminosPage() {
         </p>
 
         <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
-          3. Precios y facturación
+          3. Precios y facturacion
         </h2>
         <p className="mt-3 text-slate-600">
-          Los precios se calculan por tramos de uso. Puedes consultar la política
-          pública de precios y medición aquí:{" "}
+          Los precios se calculan por tramos de uso. Puedes consultar la politica
+          publica de precios y medicion aqui:{" "}
           <Link
             href="/politica-de-precios"
             className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
           >
-            Política de precios
+            Politica de precios
+          </Link>
+          , y el soporte en{" "}
+          <Link
+            href="/verifactu/soporte"
+            className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
+          >
+            Centro de soporte
           </Link>
           .
         </p>
@@ -65,16 +72,16 @@ export default function TerminosPage() {
         </h2>
         <p className="mt-3 text-slate-600">
           El servicio se ofrece "tal cual". Hacemos esfuerzos razonables para
-          mantener la disponibilidad y la información actualizada, sin garantía
+          mantener la disponibilidad y la informacion actualizada, sin garantia
           absoluta.
         </p>
 
         <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
-          5. Cancelación
+          5. Cancelacion
         </h2>
         <p className="mt-3 text-slate-600">
-          Puedes cancelar tu suscripción en cualquier momento. La cancelación
-          aplica al siguiente periodo de facturación.
+          Puedes cancelar tu suscripcion en cualquier momento. La cancelacion
+          aplica al siguiente periodo de facturacion.
         </p>
 
         <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
@@ -94,3 +101,5 @@ export default function TerminosPage() {
     </main>
   );
 }
+
+

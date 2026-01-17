@@ -18,11 +18,11 @@ export async function listTenantsForUser(userId: string) {
   );
 }
 
-export async function createTenantWithOwner(params: { name: string; ownerId: string }) {
-  const { name, ownerId } = params;
+export async function createTenantWithOwner(params: { name: string; ownerId: string; nif?: string | null }) {
+  const { name, ownerId, nif } = params;
   const [tenant] = await query<{ id: string }>(
-    `INSERT INTO tenants (name) VALUES ($1) RETURNING id`,
-    [name]
+    `INSERT INTO tenants (name, legal_name, nif) VALUES ($1, $2, $3) RETURNING id`,
+    [name, name, nif ?? null]
   );
   await query(
     `INSERT INTO memberships (tenant_id, user_id, role, status) VALUES ($1,$2,$3,'active')

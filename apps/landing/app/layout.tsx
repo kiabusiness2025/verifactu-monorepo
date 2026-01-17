@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { Space_Grotesk } from "next/font/google";
@@ -119,3 +119,4 @@ export default function RootLayout({
     </html>
   );
 }
+

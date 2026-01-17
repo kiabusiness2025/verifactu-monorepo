@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
@@ -62,10 +62,10 @@ function DemoRequestModal({
       `Empresa: ${form.company || "-"}`,
       `Web: ${form.website || "-"}`,
       `Sector: ${form.sector || "-"}`,
-      `Tamaño equipo: ${form.teamSize || "-"}`,
+      `Tamano equipo: ${form.teamSize || "-"}`,
       `Facturas/mes: ${form.invoices || "-"}`,
       `Movimientos/mes: ${form.movements || "-"}`,
-      `Teléfono: ${form.phone || "-"}`,
+      `Telefono: ${form.phone || "-"}`,
       `Notas: ${form.notes || "-"}`,
     ];
 
@@ -181,7 +181,7 @@ function DemoRequestModal({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm text-slate-700">
-            Tamaño de equipo
+            Tamano de equipo
             <input
               value={form.teamSize}
               onChange={(e) => setForm((v) => ({ ...v, teamSize: e.target.value }))}
@@ -208,7 +208,7 @@ function DemoRequestModal({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm text-slate-700">
-            Teléfono (opcional)
+            Telefono (opcional)
             <input
               value={form.phone}
               onChange={(e) => setForm((v) => ({ ...v, phone: e.target.value }))}
@@ -222,7 +222,7 @@ function DemoRequestModal({
               value={form.notes}
               onChange={(e) => setForm((v) => ({ ...v, notes: e.target.value }))}
               className="min-h-[90px] rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder="Cuéntanos lo que necesitas ver en la demo."
+              placeholder="Cuentanos lo que necesitas ver en la demo."
             />
           </label>
 
@@ -279,8 +279,8 @@ export default function DemoPage({
           <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
             <div className="font-semibold">Gracias. Todo listo.</div>
             <div className="mt-1 text-emerald-800">
-              Stripe ha confirmado el pago. En breve recibirás un email de
-              confirmación.
+              Stripe ha confirmado el pago. En breve recibiras un email de
+              confirmacion.
             </div>
           </div>
         )}
@@ -294,7 +294,7 @@ export default function DemoPage({
               </span>
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
-              Pruébalo sin miedo. Todo ya está listo.
+              Pruebalo sin miedo. Todo ya esta listo.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-600">
               Entra, toca botones y revisa el panel. Esta vista previa es segura
@@ -303,12 +303,12 @@ export default function DemoPage({
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="text-sm font-semibold text-[#002060]">
-                Qué ver en 30 segundos
+                Que ver en 30 segundos
               </div>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
                 <li>Panel con ventas, gastos y beneficio en un vistazo.</li>
-                <li>Flujo Factura → Validación → Envío VeriFactu.</li>
-                <li>Isaak sugiriendo acciones útiles por sección.</li>
+                <li>Flujo Factura -> Validacion -> Envio VeriFactu.</li>
+                <li>Isaak sugiriendo acciones utiles por seccion.</li>
               </ul>
             </div>
 
@@ -325,6 +325,18 @@ export default function DemoPage({
               >
                 Crear cuenta
               </Link>
+            </div>
+            <div className="text-xs text-slate-500">
+              1 mes gratis, sin permanencia.
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="text-sm font-semibold text-[#002060]">Que pasa despues</div>
+              <ol className="mt-3 list-decimal pl-5 text-sm text-slate-600">
+                <li>Creas tu cuenta y confirmas tu empresa.</li>
+                <li>Emites 1 factura de prueba o importas datos.</li>
+                <li>Isaak te entrega un resumen mensual al momento.</li>
+              </ol>
             </div>
 
             <div className="text-sm text-slate-600">
@@ -379,19 +391,19 @@ export default function DemoPage({
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Ventas</div>
                       <div className="mt-1 text-lg font-semibold text-[#002060]">
-                        18.240 €
+                        18.240 ,
                       </div>
                     </div>
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Gastos</div>
                       <div className="mt-1 text-lg font-semibold text-[#002060]">
-                        6.430 €
+                        6.430 ,
                       </div>
                     </div>
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Beneficio</div>
                       <div className="mt-1 text-lg font-semibold text-[#002060]">
-                        11.810 €
+                        11.810 ,
                       </div>
                     </div>
                   </div>
@@ -401,9 +413,9 @@ export default function DemoPage({
                     Actividad reciente
                   </div>
                   <div className="mt-3 space-y-2 text-xs text-slate-600">
-                    <div>Factura #F-1024 · 1.240 € · Enviada</div>
-                    <div>Gasto Proveedor · 180 € · Registrado</div>
-                    <div>Factura #F-1025 · 980 € · Pendiente</div>
+                    <div>Factura #F-1024 - 1.240 , - Enviada</div>
+                    <div>Gasto Proveedor - 180 , - Registrado</div>
+                    <div>Factura #F-1025 - 980 , - Pendiente</div>
                   </div>
                 </div>
                 <div className="rounded-xl border border-[#0060F0]/20 bg-gradient-to-r from-sky-50/70 to-white p-4">
@@ -430,7 +442,7 @@ export default function DemoPage({
                   Calcula tu precio personalizado
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Sin cuotas fijas. Pagas según tu uso real: facturas emitidas y
+                  Sin cuotas fijas. Pagas segun tu uso real: facturas emitidas y
                   movimientos conciliados.
                 </p>
               </div>
@@ -501,3 +513,5 @@ export default function DemoPage({
     </main>
   );
 }
+
+

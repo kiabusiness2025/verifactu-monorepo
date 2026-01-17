@@ -1,9 +1,11 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import { useState } from "react";
+import { getAppUrl, getLandingUrl } from "@/lib/urls";
 
 const DEMO_DATA = {
+  company: "Empresa Demo SL",
   revenue: 47250,
   expensesTotal: 12800,
   profit: 34450,
@@ -14,16 +16,16 @@ const DEMO_DATA = {
   ],
   expenses: [
     { id: "G-001", date: "2026-01-03", concept: "Hosting AWS", amount: 450, category: "Servicios" },
-    { id: "G-002", date: "2026-01-04", concept: "Software licencias", amount: 890, category: "Tecnología" },
+    { id: "G-002", date: "2026-01-04", concept: "Software licencias", amount: 890, category: "Tecnologia" },
     { id: "G-003", date: "2026-01-06", concept: "Material oficina", amount: 120, category: "Suministros" },
   ],
 };
 
 const ISAAK_MESSAGES = [
-  "He revisado tus últimas 3 facturas. Todo parece correcto y conforme a VeriFactu.",
-  "Detecté que tienes 2 gastos pendientes de clasificar. ¿Los reviso contigo?",
-  "Tu beneficio actual es de 34.450€. Un 12% más que el mes anterior.",
-  "Recuerda: tienes una factura pendiente de cobro desde hace 3 días.",
+  "He revisado tus ultimas 3 facturas. Todo parece correcto y conforme a VeriFactu.",
+  "Detecte que tienes 2 gastos pendientes de clasificar. Los reviso contigo?",
+  "Tu beneficio actual es de 34.450 EUR. Un 12% mas que el mes anterior.",
+  "Recuerda: tienes una factura pendiente de cobro desde hace 3 dias.",
 ];
 
 export default function DemoPage() {
@@ -31,17 +33,22 @@ export default function DemoPage() {
   const [msgIndex, setMsgIndex] = useState(0);
 
   const currentMessage = ISAAK_MESSAGES[msgIndex];
+  const appUrl = getAppUrl();
+  const landingUrl = getLandingUrl();
+  const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(`${appUrl}/onboarding`)}`;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
               V
             </div>
-            <span className="font-semibold text-slate-900">Verifactu Business</span>
+            <div>
+              <span className="font-semibold text-slate-900">Verifactu Business</span>
+              <div className="text-xs text-slate-500">{DEMO_DATA.company}</div>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
@@ -58,8 +65,19 @@ export default function DemoPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        {/* Metrics */}
+      <div className="border-b border-slate-200 bg-amber-50">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 text-xs text-amber-800 sm:px-6">
+          <span>Modo demo: datos simulados. Algunas acciones estan desactivadas.</span>
+          <a
+            href={loginUrl}
+            className="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-700"
+          >
+            Probar con mis datos
+          </a>
+        </div>
+      </div>
+
+      <main className="mx-auto max-w-7xl px-4 py-8 pb-24 sm:px-6">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Ventas</div>
@@ -92,18 +110,22 @@ export default function DemoPage() {
           </div>
         </div>
 
-        {/* Invoices */}
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">Facturas recientes</h2>
-            <button className="text-sm font-semibold text-blue-700 hover:text-blue-800">Ver todas</button>
+            <button
+              disabled
+              className="text-sm font-semibold text-slate-400"
+            >
+              Ver todas
+            </button>
           </div>
 
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600">
                 <tr>
-                  <th className="px-4 py-3">Número</th>
+                  <th className="px-4 py-3">Numero</th>
                   <th className="px-4 py-3">Fecha</th>
                   <th className="px-4 py-3">Cliente</th>
                   <th className="px-4 py-3 text-right">Importe</th>
@@ -142,11 +164,15 @@ export default function DemoPage() {
           </div>
         </section>
 
-        {/* Expenses */}
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">Gastos recientes</h2>
-            <button className="text-sm font-semibold text-blue-700 hover:text-blue-800">Ver todos</button>
+            <button
+              disabled
+              className="text-sm font-semibold text-slate-400"
+            >
+              Ver todos
+            </button>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
@@ -174,7 +200,6 @@ export default function DemoPage() {
         </section>
       </main>
 
-      {/* Isaak Panel */}
       {isaakOpen && (
         <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md border-l border-slate-200 bg-white shadow-2xl sm:w-96">
           <div className="flex h-full flex-col">
@@ -191,8 +216,9 @@ export default function DemoPage() {
               <button
                 onClick={() => setIsaakOpen(false)}
                 className="rounded-lg p-2 text-white hover:bg-blue-800"
+                aria-label="Cerrar Isaak"
               >
-                ✕
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -211,12 +237,12 @@ export default function DemoPage() {
                 </div>
 
                 <div className="rounded-xl border border-slate-200 bg-white p-4">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Vista rápida</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Vista rapida</div>
                   <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                    <li>• 3 facturas emitidas este mes</li>
-                    <li>• 1 factura pendiente de cobro</li>
-                    <li>• 3 gastos clasificados</li>
-                    <li>• 0 alertas de cumplimiento</li>
+                    <li>3 facturas emitidas este mes</li>
+                    <li>1 factura pendiente de cobro</li>
+                    <li>3 gastos clasificados</li>
+                    <li>0 alertas de cumplimiento</li>
                   </ul>
                 </div>
               </div>
@@ -224,6 +250,20 @@ export default function DemoPage() {
           </div>
         </div>
       )}
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="text-sm font-semibold text-slate-800">
+            Probar con tus datos reales y activar 1 mes gratis.
+          </div>
+          <a
+            href={loginUrl}
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+          >
+            Probar con mis datos (1 mes gratis)
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

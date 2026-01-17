@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { User, onAuthStateChanged } from "firebase/auth";
@@ -62,3 +62,4 @@ export function useAuth() {
   }
   return context;
 }
+

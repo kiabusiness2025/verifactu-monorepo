@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, ArrowRight, TrendingUp, FileText, Calculator } from "lucide-react";
 
@@ -21,7 +21,7 @@ const highlights = [
   },
   {
     title: "Control de gastos",
-    description: "Clasifica gastos y controla IVA sin hojas de cálculo.",
+    description: "Clasifica gastos y controla IVA sin hojas de cÃ¡lculo.",
     icon: Calculator,
   },
 ];
@@ -35,7 +35,7 @@ export default function ProductSummaryPage() {
             href="/"
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-            ← Volver al inicio
+            â† Volver al inicio
           </Link>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function ProductSummaryPage() {
             </h1>
             <p className="mt-4 text-xl text-slate-600">
               Verifactu Business unifica ventas, gastos y cumplimiento VeriFactu
-              en una sola pantalla. Isaak te guía para decidir sin dudas.
+              en una sola pantalla. Isaak te guÃ­a para decidir sin dudas.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -66,7 +66,7 @@ export default function ProductSummaryPage() {
                 href="/demo"
                 className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
               >
-                Ver demo (2 min)
+                Solicitar demo
               </Link>
             </div>
           </div>
@@ -124,7 +124,7 @@ export default function ProductSummaryPage() {
             Empieza hoy y recupera el control
           </h2>
           <p className="mt-4 text-lg text-slate-600">
-            1 mes gratis, sin tarjeta y sin fricción.
+            1 mes gratis, sin tarjeta y sin fricciÃ³n.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
@@ -146,3 +146,4 @@ export default function ProductSummaryPage() {
     </main>
   );
 }
+
