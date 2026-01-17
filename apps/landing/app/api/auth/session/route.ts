@@ -56,14 +56,12 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
     // 1. Verificar/crear usuario
     console.log("[Auth] Step 1: Upserting user");
     
-    // Usar UPSERT que maneja tanto conflictos de id como de email
+    // Insertar usuario si no existe (por email), sin actualizar id si ya existe
     await dbPool.query(
       `INSERT INTO users (id, email, name)
        VALUES ($1, $2, $3)
        ON CONFLICT (email) 
-       DO UPDATE SET 
-         id = EXCLUDED.id,
-         name = EXCLUDED.name
+       DO UPDATE SET name = EXCLUDED.name
        RETURNING id`,
       [uid, email, email.split("@")[0]]
     );
