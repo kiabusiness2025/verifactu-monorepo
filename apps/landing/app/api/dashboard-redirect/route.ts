@@ -33,8 +33,8 @@ export async function GET(req: Request) {
     console.log("[🔄 Dashboard Redirect] Session cookie found, re-setting with proper domain");
     
     // Get app URL and target path
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
     const url = new URL(req.url);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
     const targetPath = url.searchParams.get("target") || "/dashboard";
     const dashboardUrl = `${appUrl}${targetPath}`;
     
@@ -44,7 +44,6 @@ export async function GET(req: Request) {
     const response = NextResponse.redirect(dashboardUrl);
     
     // Re-set the cookie with explicit domain configuration
-    const url = new URL(req.url);
     const host = req.headers.get("host");
     
     const cookieOpts = buildSessionCookieOptions({
