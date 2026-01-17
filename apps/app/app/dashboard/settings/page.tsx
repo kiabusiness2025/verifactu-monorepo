@@ -5,12 +5,11 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { Camera } from 'lucide-react';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
-import { useIsaakUI } from '@/context/IsaakUIContext';
 
 export default function SettingsPage() {
   const sessionData = useSession();
   const session = sessionData?.data;
-  const { activeTenantId } = useIsaakUI();
+  const [activeTenantId, setActiveTenantId] = useState<string>("");
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
@@ -44,6 +43,25 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
+
+  // Cargar el tenant activo
+  useEffect(() => {
+    async function loadActiveTenant() {
+      try {
+        const res = await fetch("/api/tenants", { credentials: "include" });
+        const data = await res.json().catch(() => null);
+        if (data?.ok && Array.isArray(data.tenants) && data.tenants.length > 0) {
+          const preferredId = typeof data.preferredTenantId === "string" 
+            ? data.preferredTenantId 
+            : data.tenants[0]?.id || "";
+          setActiveTenantId(preferredId);
+        }
+      } catch (error) {
+        console.error("Error loading tenant:", error);
+      }
+    }
+    loadActiveTenant();
+  }, []);
 
   useEffect(() => {
     async function loadLogo() {
