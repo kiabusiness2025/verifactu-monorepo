@@ -63,8 +63,7 @@ async function getOrCreateTenantForUser(uid: string, email: string) {
        ON CONFLICT (email) 
        DO UPDATE SET 
          id = EXCLUDED.id,
-         name = EXCLUDED.name,
-         updated_at = NOW()
+         name = EXCLUDED.name
        RETURNING id`,
       [uid, email, email.split("@")[0]]
     );
