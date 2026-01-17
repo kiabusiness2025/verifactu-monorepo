@@ -43,14 +43,6 @@ async function verifyTenantAccess(userId: string, tenantId: string): Promise<boo
   return role === "owner" || role === "admin";
 }
 
-// Helper para validar y extraer tenantId
-function extractTenantId(value: string | null | undefined): string {
-  if (typeof value === "string" && value.length > 0) {
-    return value;
-  }
-  throw new Error("tenantId es requerido y debe ser string");
-}
-
 
 /**
  * GET /api/tenant/logo
@@ -66,20 +58,21 @@ export async function GET(req: NextRequest) {
     const sessionSecret = readSessionSecret();
     const payload = await verifySessionToken(sessionToken, sessionSecret);
     
-    if (!payload) {
+    if (!payload || !payload.uid) {
       return NextResponse.json({ ok: false, error: "Token inválido" }, { status: 401 });
     }
 
+    const userId: string = payload.uid;
+
     const tenantIdParam = req.nextUrl.searchParams.get("tenantId");
-    let tenantId: string;
-    try {
-      tenantId = extractTenantId(tenantIdParam);
-    } catch (e) {
+    if (!tenantIdParam) {
       return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
     }
 
+    const tenantId: string = tenantIdParam;
+
     // Verificar acceso
-    const hasAccess = await verifyTenantAccess(payload.uid, tenantId);
+    const hasAccess = await verifyTenantAccess(userId, tenantId);
     if (!hasAccess) {
       return NextResponse.json({ ok: false, error: "Sin permisos" }, { status: 403 });
     }
@@ -121,26 +114,28 @@ export async function POST(req: NextRequest) {
     const sessionSecret = readSessionSecret();
     const payload = await verifySessionToken(sessionToken, sessionSecret);
     
-    if (!payload) {
+    if (!payload || !payload.uid) {
       return NextResponse.json({ ok: false, error: "Token inválido" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { tenantId: tenantIdParam, logoURL } = body;
+    const userId: string = payload.uid;
 
-    let tenantId: string;
-    try {
-      tenantId = extractTenantId(tenantIdParam);
-    } catch (e) {
+    const body = await req.json();
+    const { tenantId: tenantIdRaw, logoURL: logoURLRaw } = body;
+
+    if (!tenantIdRaw) {
       return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
     }
 
-    if (!logoURL) {
+    if (!logoURLRaw) {
       return NextResponse.json({ ok: false, error: "logoURL requerido" }, { status: 400 });
     }
 
+    const tenantId: string = tenantIdRaw;
+    const logoURL: string = logoURLRaw;
+
     // Verificar acceso
-    const hasAccess = await verifyTenantAccess(payload.uid, tenantId);
+    const hasAccess = await verifyTenantAccess(userId, tenantId);
     if (!hasAccess) {
       return NextResponse.json({ ok: false, error: "Sin permisos para modificar este tenant" }, { status: 403 });
     }
@@ -201,7 +196,7 @@ export async function POST(req: NextRequest) {
       contentType: mimeType,
       customMetadata: {
         tenantId: tenantId,
-        uploadedBy: payload.uid,
+        uploadedBy: userId,
         uploadedAt: new Date().toISOString()
       }
     });
