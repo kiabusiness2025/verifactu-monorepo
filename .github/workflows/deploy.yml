@@ -5,7 +5,35 @@ on:
     branches: [main]
 
 jobs:
+  # Primero: Type check antes de deployar
+  typecheck:
+    name: Type Check Before Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.27.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter verifactu-app exec prisma generate
+
+      - name: Type check app
+        run: pnpm --filter verifactu-app exec tsc --noEmit
+
   deploy-app:
+    needs: typecheck # Solo deploya si el typecheck pasa
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

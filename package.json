@@ -6,7 +6,12 @@
         "build": "turbo run build",
         "lint": "turbo run lint",
         "test": "turbo run test",
-        "build-app-only": "npm --prefix apps/app run build"
+        "build-app-only": "npm --prefix apps/app run build",
+        "typecheck": "bash scripts/typecheck-all.sh",
+        "typecheck:app": "pnpm --filter verifactu-app exec tsc --noEmit",
+        "typecheck:landing": "pnpm --filter verifactu-landing exec tsc --noEmit",
+        "precommit": "bash scripts/pre-commit.sh",
+        "install-hooks": "cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit"
     },
     "devDependencies": {
         "@next/env": "^16.1.1",

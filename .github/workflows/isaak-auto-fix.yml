@@ -152,6 +152,28 @@ jobs:
             echo "❌ Error 14: Email template paths (use ../../emails/)"
           fi
           
+          # ============================================
+          # TYPESCRIPT TYPE ERRORS
+          # ============================================
+          
+          # Error 15: undefined types passed to functions expecting string
+          if grep -rn "verifyTenantAccess.*tenantId)" apps/app 2>/dev/null | grep -v "const tenantId"; then
+            ERRORS="${ERRORS}UNDEFINED_TYPE "
+            echo "❌ Error 15: Potential undefined type passed to function"
+          fi
+          
+          # Error 16: Optional properties without null checks (payload.uid)
+          if grep -rn "payload\.uid" apps/app 2>/dev/null | grep -v "payload\.uid)" | grep -v "!payload\.uid" | grep -v "payload\.uid as string"; then
+            ERRORS="${ERRORS}OPTIONAL_PROPERTY "
+            echo "❌ Error 16: Optional property used without validation"
+          fi
+          
+          # Error 17: activeTenantId from non-existent context
+          if grep -rn "activeTenantId.*useIsaakUI" apps/app 2>/dev/null; then
+            ERRORS="${ERRORS}NONEXISTENT_CONTEXT_PROP "
+            echo "❌ Error 17: activeTenantId doesn't exist in IsaakUI context"
+          fi
+          
           if [ -z "$ERRORS" ]; then
             echo "✅ No errors detected"
             echo "has_errors=false" >> $GITHUB_OUTPUT

@@ -1,0 +1,89 @@
+name: 🔍 TypeScript Type Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/app/**'
+      - 'apps/landing/**'
+      - 'packages/**'
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck-app:
+    name: Type Check App
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.27.0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 Generate Prisma Client
+        run: pnpm --filter verifactu-app run prisma:generate || pnpm --filter verifactu-app exec prisma generate
+
+      - name: 🔍 Type check app
+        run: pnpm --filter verifactu-app exec tsc --noEmit
+
+  typecheck-landing:
+    name: Type Check Landing
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.27.0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 Type check landing
+        run: pnpm --filter verifactu-landing exec tsc --noEmit
+        continue-on-error: true # Landing puede tener errores menores
+
+  lint-app:
+    name: Lint App
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.27.0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🧹 Lint app
+        run: pnpm --filter verifactu-app run lint || echo "⚠️ Lint warnings found"
+        continue-on-error: true
