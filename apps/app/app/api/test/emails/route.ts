@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   sendVerificationEmail,
   sendWelcomeEmail,
-  sendPasswordResetEmail,
+  sendResetPasswordEmail,
   sendPasswordChangedEmail,
   sendTeamInviteEmail
 } from '../../../../landing/lib/email/emailService';
@@ -62,12 +62,13 @@ export async function POST(request: NextRequest) {
           case 'welcome':
             result = await sendWelcomeEmail({
               email: testEmail,
-              userName: 'Usuario Test'
+              userName: 'Usuario Test',
+              dashboardLink: 'http://localhost:3000/dashboard'
             });
             break;
 
           case 'password-reset':
-            result = await sendPasswordResetEmail({
+            result = await sendResetPasswordEmail({
               email: testEmail,
               userName: 'Usuario Test',
               resetLink: `http://localhost:3000/reset-password?token=reset_token_12345`
@@ -77,7 +78,8 @@ export async function POST(request: NextRequest) {
           case 'password-changed':
             result = await sendPasswordChangedEmail({
               email: testEmail,
-              userName: 'Usuario Test'
+              userName: 'Usuario Test',
+              dashboardLink: 'http://localhost:3000/dashboard'
             });
             break;
 
