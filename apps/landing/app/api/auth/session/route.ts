@@ -45,8 +45,11 @@ function initFirebaseAdmin() {
   });
 }
 
-async function getTenantForUser(uid: string, email: string) {
+async function getTenantForUser(uid: string, email: string, displayName?: string) {
   const dbPool = getDbPool();
+
+  // Usar el nombre de Firebase si está disponible, sino el email
+  const userName = displayName || email.split("@")[0];
 
   await dbPool.query(
     `INSERT INTO users (id, email, name)
@@ -54,7 +57,7 @@ async function getTenantForUser(uid: string, email: string) {
      ON CONFLICT (email)
      DO UPDATE SET name = EXCLUDED.name
      RETURNING id`,
-    [uid, email, email.split("@")[0]]
+    [uid, email, userName]
   );
 
   const membershipResult = await dbPool.query(
@@ -81,7 +84,12 @@ export async function POST(req: Request) {
     }
 
     const decoded = await admin.auth().verifyIdToken(idToken);
-    const tenantId = await getTenantForUser(decoded.uid, decoded.email || "");
+    
+    // Obtener información del usuario de Firebase
+    const userRecord = await admin.auth().getUser(decoded.uid);
+    const displayName = userRecord.displayName || decoded.name || undefined;
+    
+    const tenantId = await getTenantForUser(decoded.uid, decoded.email || "", displayName);
 
     const rolesRaw = (decoded as any).roles ?? (decoded as any).role ?? [];
     const tenantsRaw = (decoded as any).tenants ?? (decoded as any).tenant ?? [];
