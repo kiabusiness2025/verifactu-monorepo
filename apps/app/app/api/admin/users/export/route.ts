@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { requireAdmin } from '@/lib/adminAuth';
+import { formatShortDate } from '@/src/lib/formatters';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
       user.id,
       user.email,
       user.name || '',
-      new Date(user.created_at).toLocaleDateString('es-ES'),
+      formatShortDate(user.created_at),
       user.num_empresas || 0,
       user.empresas || '',
       user.roles || '',

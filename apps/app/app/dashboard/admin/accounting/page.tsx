@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { adminGet, type AccountingData } from "@/lib/adminApi";
+import { formatCurrency, formatNumber } from "@/src/lib/formatters";
 
 type PeriodOption = "current_month" | "last_quarter" | "custom";
 
@@ -102,25 +103,25 @@ export default function AdminAccountingPage() {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="text-xs text-slate-500">Ingresos</div>
               <div className="mt-1 text-2xl font-semibold text-slate-900">
-                {data.totals.revenue.toLocaleString()} EUR
+                {formatCurrency(data.totals.revenue)}
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="text-xs text-slate-500">Facturas</div>
               <div className="mt-1 text-2xl font-semibold text-slate-900">
-                {data.totals.invoices.toLocaleString()}
+                {formatNumber(data.totals.invoices)}
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="text-xs text-slate-500">Gastos</div>
               <div className="mt-1 text-2xl font-semibold text-slate-900">
-                {data.totals.expenses.toLocaleString()}
+                {formatCurrency(data.totals.expenses)}
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="text-xs text-slate-500">Beneficio</div>
               <div className="mt-1 text-2xl font-semibold text-slate-900">
-                {data.totals.profit.toLocaleString()} EUR
+                {formatCurrency(data.totals.profit)}
               </div>
             </div>
           </div>
@@ -145,7 +146,7 @@ export default function AdminAccountingPage() {
                     />
                   </div>
                   <div className="w-28 text-right text-xs text-slate-600">
-                    {row.revenue.toLocaleString()} EUR
+                    {formatCurrency(row.revenue)}
                   </div>
                 </div>
               ))}
@@ -170,10 +171,10 @@ export default function AdminAccountingPage() {
                     <tr key={row.tenantId}>
                       <td className="px-3 py-2 text-slate-700">{row.legalName}</td>
                       <td className="px-3 py-2 text-right text-slate-600">
-                        {row.revenue.toLocaleString()} EUR
+                        {formatCurrency(row.revenue)}
                       </td>
                       <td className="px-3 py-2 text-right text-slate-600">
-                        {row.invoices.toLocaleString()}
+                        {formatNumber(row.invoices)}
                       </td>
                     </tr>
                   ))}

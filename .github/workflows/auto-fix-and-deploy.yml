@@ -1,6 +1,17 @@
 name: Auto-Fix & Deploy
 
 on:
+  workflow_dispatch:
+    inputs:
+      error_context:
+        description: 'Error context from monitoring'
+        required: false
+        type: string
+      auto_fix:
+        description: 'Enable automatic fixes'
+        required: false
+        type: boolean
+        default: true
   push:
     branches: [main, develop]
   pull_request:
@@ -49,6 +60,18 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Analyze error context from Isaak
+        if: github.event.inputs.error_context != ''
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🤖 Isaak Error Analysis"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "${{ github.event.inputs.error_context }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Guardar contexto para análisis
+          echo '${{ github.event.inputs.error_context }}' > error-context.json
 
       - name: Generate Prisma Client
         run: |
@@ -110,10 +133,15 @@ jobs:
       - name: Commit Auto-Fixes
         if: steps.typecheck-app.outcome == 'failure' || steps.typecheck-landing.outcome == 'failure'
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --local user.email "isaak@verifactu.business"
+          git config --local user.name "Isaak Auto-Fix Bot"
           git add -A
-          git diff --staged --quiet || git commit -m "fix: auto-fix TypeScript errors [skip ci]"
+          git diff --staged --quiet || git commit -m "🤖 Isaak: Auto-fix errors
+
+          Triggered by: ${{ github.event_name }}
+          ${{ github.event.inputs.error_context != '' && format('Context: {0}', github.event.inputs.error_context) || '' }}
+          
+          [skip ci]"
           git push
 
       - name: Re-run Type Check (App)

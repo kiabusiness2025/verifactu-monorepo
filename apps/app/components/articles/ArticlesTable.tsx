@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
+import { formatCurrency, formatNumber } from "@/src/lib/formatters";
 
 interface ArticlesTableProps {
   articles: any[];
@@ -26,7 +27,7 @@ export function ArticlesTable({
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   if (loading && articles.length === 0) {
-    return <div className="text-center py-8">Cargando artículos...</div>;
+    return <div className="text-center py-8">Cargando articulos......</div>;
   }
 
   return (
@@ -37,7 +38,7 @@ export function ArticlesTable({
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Código</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Categoría</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Categoriaa</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Precio</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">IVA</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Stock</th>
@@ -54,7 +55,7 @@ export function ArticlesTable({
                   {parseFloat(article.unitPrice).toFixed(2)}€
                 </td>
                 <td className="px-6 py-4 text-right text-sm text-gray-600">
-                  {(parseFloat(article.taxRate) * 100).toFixed(0)}%
+                  {formatNumber(parseFloat(article.taxRate) * 100)}%
                 </td>
                 <td className="px-6 py-4 text-right text-sm text-gray-600">{article.stock || '-'}</td>
                 <td className="px-6 py-4 text-right space-x-2">

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, User, Bot, Edit2, Save, X, Share2, Download } from "lucide-react";
+import { formatShortDate, formatTime } from "@/src/lib/formatters";
 
 interface Message {
   id: string;

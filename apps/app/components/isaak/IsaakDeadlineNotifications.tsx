@@ -4,6 +4,7 @@ import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Clock, AlertCircle } from "lucide-react";
 import { useDeadlineNotifications } from "@/hooks/useDeadlineNotifications";
+import { formatShortDate } from "@/src/lib/formatters";
 
 export function IsaakDeadlineNotifications() {
   const { upcomingDeadlines, getDaysUntil } =

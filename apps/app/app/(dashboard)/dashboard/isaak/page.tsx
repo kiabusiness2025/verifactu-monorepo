@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MessageSquare, Search, Trash2, Share2, Clock, ChevronRight } from "lucide-react";
+import { formatShortDate } from "@/src/lib/formatters";
 
 interface Conversation {
   id: string;
@@ -144,7 +145,7 @@ export default function IsaakHistoryPage() {
               className="group relative flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
             >
               <button
-                onClick={() => router.push(`/dashboard/isaak/${conv.id}`)}
+                onClick={() => router.push(`/diashboard/isaak/${conv.id}`)}
                 className="flex flex-1 items-start gap-3 text-left"
               >
                 <MessageSquare className="mt-1 h-5 w-5 flex-shrink-0 text-blue-600" />
@@ -234,7 +235,7 @@ export default function IsaakHistoryPage() {
 
       {/* Empty state */}
       {!loading && conversations.length === 0 && (
-        <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 py-12 text-center">
+        <div className="rounded-lg border-2 bordiashed border-slate-300 bg-slate-50 py-12 text-center">
           <MessageSquare className="mx-auto h-12 w-12 text-slate-400" />
           <h3 className="mt-4 text-lg font-semibold text-slate-900">
             Sin conversaciones aún
@@ -271,11 +272,7 @@ function formatDate(dateString: string): string {
   if (diffMins < 60) return `Hace ${diffMins} min`;
   if (diffHours < 24) return `Hace ${diffHours}h`;
   if (diffDays === 1) return "Ayer";
-  if (diffDays < 7) return `Hace ${diffDays} días`;
+  if (diffDays < 7) return `Hace ${diffDays} dias`;
   
-  return date.toLocaleDateString("es-ES", {
-    day: "numeric",
-    month: "short",
-    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined
-  });
+  return formatShortDate(date);
 }

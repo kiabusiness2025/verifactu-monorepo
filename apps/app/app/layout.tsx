@@ -9,6 +9,7 @@ import { GoogleTagManager } from '@/components/GoogleTagManager';
 import { FirebaseAnalytics } from '@/components/FirebaseAnalytics';
 import { PWARegistration } from '@/components/PWARegistration';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
+import { ErrorMonitor } from '@/components/monitoring/ErrorMonitor';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -57,6 +58,7 @@ export default function RootLayout({
       <body className={`${outfit.className} dark:bg-gray-900`}>
         <PWARegistration />
         <PWAInstallPrompt />
+        <ErrorMonitor />
         <FirebaseAnalytics />
         <ThemeProvider>
           <SidebarProvider>

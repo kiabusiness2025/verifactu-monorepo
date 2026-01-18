@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Edit2, LogIn, Trash2, Building2, CreditCard, Activity, MessageSquare, Users, Clock, Settings } from "lucide-react";
+import { formatShortDate, formatCurrency, formatNumber } from "@/src/lib/formatters";
 
 interface UserDetails {
   user: {
@@ -195,13 +196,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
               ID: <code className="rounded bg-slate-100 px-2 py-1 text-xs">{user.id}</code>
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Registrado: {new Date(user.created_at).toLocaleDateString('es-ES', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+              Registrado: {formatShortDate(user.created_at)}
             </p>
           </div>
 
@@ -261,7 +256,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                     <p className="text-xs text-slate-500">NIF: {m.tenant_nif}</p>
                   )}
                   <p className="mt-1 text-xs text-slate-500">
-                    Miembro desde {new Date(m.created_at).toLocaleDateString('es-ES')}
+                    Miembro desde {formatShortDate(m.created_at)}
                   </p>
                 </div>
                 <div className="text-right">
@@ -301,12 +296,12 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                   <p className="text-sm text-slate-600">Código: {s.plan_code}</p>
                   {s.trial_ends_at && (
                     <p className="mt-1 text-xs text-amber-600">
-                      Trial hasta {new Date(s.trial_ends_at).toLocaleDateString('es-ES')}
+                      Trial hasta {formatShortDate(s.trial_ends_at)}
                     </p>
                   )}
                   {s.current_period_end && (
                     <p className="mt-1 text-xs text-slate-500">
-                      Próxima renovación: {new Date(s.current_period_end).toLocaleDateString('es-ES')}
+                      Próxima renovación: {formatShortDate(s.current_period_end)}
                     </p>
                   )}
                 </div>
@@ -343,9 +338,9 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                   <p className="text-xs text-slate-500">{item.tenant_name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-slate-900">€{item.amount_gross.toFixed(2)}</p>
+                  <p className="font-semibold text-slate-900">{formatCurrency(item.amount_gross)}</p>
                   <p className="text-xs text-slate-500">
-                    {new Date(item.created_at).toLocaleDateString('es-ES')}
+                    {formatShortDate(item.created_at)}
                   </p>
                 </div>
               </div>
@@ -375,17 +370,12 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                     </span>
                   )}
                   <p className="mt-2 text-xs text-slate-500">
-                    {conv.message_count} mensajes • Última actividad: {new Date(conv.last_activity).toLocaleDateString('es-ES', {
-                      day: 'numeric',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    {formatNumber(conv.message_count)} mensajes • Última actividad: {formatShortDate(conv.last_activity)}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-slate-500">
-                    Creado: {new Date(conv.created_at).toLocaleDateString('es-ES')}
+                    Creado: {formatShortDate(conv.created_at)}
                   </p>
                 </div>
               </div>
@@ -413,11 +403,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
             {loginActivity.map((activity, idx) => (
               <div key={idx} className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
                 <p className="text-sm text-slate-700">
-                  {new Date(activity.login_date).toLocaleDateString('es-ES', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short'
-                  })}
+                  {formatShortDate(activity.login_date)}
                 </p>
                 <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
                   {activity.actions_count} acciones
@@ -447,9 +433,9 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                   <p className="text-xs text-slate-500">{expense.tenant_name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-slate-900">€{expense.amount.toFixed(2)}</p>
+                  <p className="font-semibold text-slate-900">{formatCurrency(expense.amount)}</p>
                   <p className="text-xs text-slate-500">
-                    {new Date(expense.date).toLocaleDateString('es-ES')}
+                    {formatShortDate(expense.date)}
                   </p>
                 </div>
               </div>
@@ -524,13 +510,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-slate-700">Última Actualización</p>
               <p className="text-xs text-slate-500">
-                {new Date(profileChanges.updated_at).toLocaleDateString('es-ES', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
+                {formatShortDate(profileChanges.updated_at)}
               </p>
             </div>
           </div>

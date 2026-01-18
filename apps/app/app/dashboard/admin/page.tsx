@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { adminGet, type AccountingData } from "@/lib/adminApi";
 import { AdminChat } from "@/components/admin/AdminChat";
+import { formatCurrency, formatNumber, formatTime } from "@/src/lib/formatters";
 
 type OverviewTotals = AccountingData["totals"];
 
@@ -23,18 +24,16 @@ export default function AdminDashboardPage() {
         if (mounted) {
           setTotals(data.totals);
           setStatus("ok");
-          setLastCheckedAt(
-            new Date().toLocaleTimeString("es-ES", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          );
+          setLastCheckedAt(formatTime(new Date()));
         }
       } catch (error) {
-        console.error("Admin overview error:", error);
-        if (mounted) setStatus("error");
+        if (mounted) {
+          setStatus("error");
+        }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
     load();
@@ -44,85 +43,17 @@ export default function AdminDashboardPage() {
   }, []);
 
   return (
-    <main className="space-y-6">
-      <div
-        className={`rounded-2xl border px-4 py-3 text-sm ${
-          status === "ok"
-            ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-            : status === "error"
-            ? "border-amber-200 bg-amber-50 text-amber-900"
-            : "border-slate-200 bg-slate-50 text-slate-600"
-        }`}
-      >
-        {status === "ok" && (
-          <span>Datos conectados. Ultima lectura {lastCheckedAt}.</span>
-        )}
-        {status === "error" && (
-          <span>No pudimos cargar datos. Reintenta en unos segundos.</span>
-        )}
-        {status === "loading" && <span>Verificando datos...</span>}
+    <main className="mx-auto max-w-7xl space-y-4 p-4 sm:p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">
+          Panel de Administración
+        </h1>
+        <div className="text-sm text-slate-500">
+          {lastCheckedAt && (
+            <span>Última actualización: {lastCheckedAt}</span>
+          )}
+        </div>
       </div>
-
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-[#0b214a]">Panel admin</h1>
-        <p className="text-sm text-slate-600">
-          Seguimiento operativo y accesos rapidos a usuarios, empresas y
-          contabilidad.
-        </p>
-      </header>
-
-      {loading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-          Cargando indicadores...
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            {
-              label: "Ingresos (mes)",
-              value: totals ? totals.revenue.toLocaleString("es-ES") : "0",
-              unit: "EUR",
-              accent: "from-[#0b6cfb] to-[#4cc3ff]",
-            },
-            {
-              label: "Facturas (mes)",
-              value: totals ? totals.invoices.toLocaleString("es-ES") : "0",
-              unit: "Total",
-              accent: "from-[#20c997] to-[#4fe3b3]",
-            },
-            {
-              label: "Gastos (mes)",
-              value: totals ? totals.expenses.toLocaleString("es-ES") : "0",
-              unit: "EUR",
-              accent: "from-[#ff8a3d] to-[#ffb570]",
-            },
-            {
-              label: "Beneficio (mes)",
-              value: totals ? totals.profit.toLocaleString("es-ES") : "0",
-              unit: "EUR",
-              accent: "from-[#ff6b6b] to-[#ffa45c]",
-            },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-slate-500">{item.label}</div>
-                <span
-                  className={`inline-flex h-6 w-6 rounded-full bg-gradient-to-br ${item.accent}`}
-                />
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-[#0b214a]">
-                {item.value}
-              </div>
-              <div className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
-                {item.unit}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

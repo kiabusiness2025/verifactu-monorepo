@@ -76,7 +76,7 @@ export default function AdminContabilidadPage() {
                 <div>
                   <p className="text-sm text-gray-500">Ingresos</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {stats.total_revenue.toLocaleString()} €
+                    {formatCurrency(stats.total_revenue)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">{stats.total_invoices} facturas</p>
                 </div>
@@ -89,7 +89,7 @@ export default function AdminContabilidadPage() {
                 <div>
                   <p className="text-sm text-gray-500">Gastos</p>
                   <p className="text-2xl font-bold text-red-600">
-                    {stats.total_costs.toLocaleString()} €
+                    {formatCurrency(stats.total_costs)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">{stats.total_expenses} gastos</p>
                 </div>
@@ -102,7 +102,7 @@ export default function AdminContabilidadPage() {
                 <div>
                   <p className="text-sm text-gray-500">Beneficio</p>
                   <p className={`text-2xl font-bold ${stats.profit >= 0 ? "text-blue-600" : "text-red-600"}`}>
-                    {stats.profit.toLocaleString()} €
+                    {formatCurrency(stats.profit)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">Margen: {stats.margin.toFixed(1)}%</p>
                 </div>
@@ -143,10 +143,10 @@ export default function AdminContabilidadPage() {
                       </span>
                       <div className="flex gap-6 text-sm">
                         <span className="text-green-600">
-                          +{month.revenue.toLocaleString()} €
+                          +{formatCurrency(month.revenue)}
                         </span>
                         <span className="text-red-600">
-                          -{month.expenses.toLocaleString()} €
+                          -{formatCurrency(month.expenses)}
                         </span>
                       </div>
                     </div>
@@ -154,7 +154,7 @@ export default function AdminContabilidadPage() {
                       className={`text-sm font-bold ${month.profit >= 0 ? "text-blue-600" : "text-red-600"}`}
                     >
                       {month.profit >= 0 ? "+" : ""}
-                      {month.profit.toLocaleString()} €
+                      {formatCurrency(month.profit)}
                     </span>
                   </div>
                 ))}

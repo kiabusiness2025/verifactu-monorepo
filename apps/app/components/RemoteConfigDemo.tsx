@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateTime } from "@/src/lib/formatters";
+
 import { useRemoteConfig, useFeatureFlag, useMaintenanceMode } from "@/hooks/useRemoteConfig";
 
 export function RemoteConfigDemo() {
@@ -56,7 +58,7 @@ export function RemoteConfigDemo() {
 
         {lastFetchTime && (
           <p className="text-xs text-slate-500 mb-4">
-            Última actualización: {new Date(lastFetchTime).toLocaleString('es-ES')}
+            Ultima actualizacion: {formatDateTime(lastFetchTime)}
           </p>
         )}
 

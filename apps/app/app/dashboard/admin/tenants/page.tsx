@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { adminGet, adminPost, adminPatch } from "@/lib/adminApi";
@@ -345,7 +345,7 @@ export default function AdminTenantsPage() {
                     {tenant.invoicesThisMonth}
                   </td>
                   <td className="px-4 py-3 text-right text-slate-700">
-                    {tenant.revenueThisMonth.toLocaleString()} EUR
+                    {formatCurrency(tenant.revenueThisMonth)}
                   </td>
                   <td className="px-4 py-3 text-right text-slate-700">
                     {tenant.membersCount}
@@ -504,3 +504,4 @@ export default function AdminTenantsPage() {
     </main>
   );
 }
+

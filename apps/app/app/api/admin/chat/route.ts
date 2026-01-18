@@ -16,10 +16,15 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: session.uid }
+      where: { id: session.uid },
+      select: { id: true, email: true }
     });
 
-    if (!user?.isAdmin) {
+    // Verificar si el usuario es admin (basado en email o lista)
+    const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
+    const isAdmin = adminEmails.includes(user?.email || '');
+    
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

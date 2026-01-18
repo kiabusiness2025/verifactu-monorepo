@@ -274,7 +274,7 @@ export function IsaakPreferencesModal({
 
                   <div>
                     <label className="block text-sm font-medium text-slate-900 dark:text-white mb-2">
-                      Velocidad: {preferences.voiceRate.toFixed(1)}x
+                      Velocidad: {formatNumber(preferences.voiceRate)}x
                     </label>
                     <input
                       type="range"
@@ -291,7 +291,7 @@ export function IsaakPreferencesModal({
 
                   <div>
                     <label className="block text-sm font-medium text-slate-900 dark:text-white mb-2">
-                      Tono: {preferences.voicePitch.toFixed(1)}x
+                      Tono: {formatNumber(preferences.voicePitch)}x
                     </label>
                     <input
                       type="range"

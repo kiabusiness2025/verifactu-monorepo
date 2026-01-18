@@ -39,11 +39,11 @@ export function ExpensesTable({
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-600 font-medium">Total Gastos</p>
-          <p className="text-2xl font-bold text-blue-900">{totalExpenses.toFixed(2)}€</p>
+          <p className="text-2xl font-bold text-blue-900">{formatCurrency(totalExpenses)}</p>
         </div>
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
           <p className="text-sm text-purple-600 font-medium">IVA Soportado</p>
-          <p className="text-2xl font-bold text-purple-900">{totalTax.toFixed(2)}€</p>
+          <p className="text-2xl font-bold text-purple-900">{formatCurrency(totalTax)}</p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <p className="text-sm text-green-600 font-medium">Total Registros</p>
@@ -75,10 +75,10 @@ export function ExpensesTable({
                 <td className="px-6 py-4 text-sm text-gray-600">{expense.category}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{expense.supplier?.name || '-'}</td>
                 <td className="px-6 py-4 text-right text-sm text-gray-900 font-medium">
-                  {parseFloat(expense.amount).toFixed(2)}€
+                  {formatCurrency(parseFloat(expense.amount))}
                 </td>
                 <td className="px-6 py-4 text-right text-sm text-gray-600">
-                  {(parseFloat(expense.amount) * parseFloat(expense.taxRate)).toFixed(2)}€
+                  {formatCurrency(parseFloat(expense.amount) * parseFloat(expense.taxRate))}
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button

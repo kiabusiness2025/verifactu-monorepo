@@ -147,7 +147,7 @@ export function InvoicesForm({ invoice, onSubmit, onCancel, loading }: any) {
             <option value="">Seleccionar artículo...</option>
             {articles.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.code} - {a.name} (€{Number(a.unitPrice).toFixed(2)})
+                {a.code} - {a.name} ({formatCurrency(Number(a.unitPrice))})
               </option>
             ))}
           </select>
@@ -191,9 +191,9 @@ export function InvoicesForm({ invoice, onSubmit, onCancel, loading }: any) {
                     <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50">
                       <td className="px-4 py-2">{article?.name}</td>
                       <td className="px-4 py-2 text-right">{line.quantity}</td>
-                      <td className="px-4 py-2 text-right">€{line.unitPrice.toFixed(2)}</td>
-                      <td className="px-4 py-2 text-right">{(line.taxRate * 100).toFixed(0)}%</td>
-                      <td className="px-4 py-2 text-right">€{lineTotal.toFixed(2)}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(line.unitPrice)}</td>
+                      <td className="px-4 py-2 text-right">{formatNumber(line.taxRate * 100)}%</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(lineTotal)}</td>
                       <td className="px-4 py-2 text-right">
                         <button
                           type="button"
@@ -212,15 +212,15 @@ export function InvoicesForm({ invoice, onSubmit, onCancel, loading }: any) {
             <div className="bg-gray-50 px-4 py-3 flex justify-end gap-8">
               <div>
                 <p className="text-sm text-gray-600">Subtotal</p>
-                <p className="text-lg font-bold text-gray-900">€{calculateTotal().toFixed(2)}</p>
+                <p className="text-lg font-bold text-gray-900">{formatCurrency(calculateTotal())}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">IVA</p>
-                <p className="text-lg font-bold text-gray-900">€{calculateTax().toFixed(2)}</p>
+                <p className="text-lg font-bold text-gray-900">{formatCurrency(calculateTax())}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Total</p>
-                <p className="text-lg font-bold text-blue-600">€{(calculateTotal() + calculateTax()).toFixed(2)}</p>
+                <p className="text-lg font-bold text-blue-600">{formatCurrency(calculateTotal() + calculateTax())}</p>
               </div>
             </div>
           </div>

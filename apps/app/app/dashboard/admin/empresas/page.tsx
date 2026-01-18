@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Building2, Users, TrendingUp, Plus, Pencil, Trash2, X } from "lucide-react";
+import { formatCurrency, formatNumber } from "@/src/lib/formatters";
 import { adminGet, adminPost, adminPatch, adminDelete, type TenantRow } from "@/lib/adminApi";
 
 type Tenant = TenantRow & {
@@ -124,7 +125,9 @@ export default function AdminEmpresasPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Empresas</p>
-              <p className="text-2xl font-bold text-gray-900">{tenants.length}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatNumber(tenants.length)}
+              </p>
             </div>
             <Building2 className="h-8 w-8 text-blue-500" />
           </div>
@@ -134,7 +137,9 @@ export default function AdminEmpresasPage() {
             <div>
               <p className="text-sm text-gray-500">Total Usuarios</p>
               <p className="text-2xl font-bold text-gray-900">
-                {tenants.reduce((acc, t) => acc + (t.members_count || 0), 0)}
+                {formatNumber(
+                  tenants.reduce((acc, t) => acc + (t.members_count || 0), 0)
+                )}
               </p>
             </div>
             <Users className="h-8 w-8 text-green-500" />
@@ -145,7 +150,9 @@ export default function AdminEmpresasPage() {
             <div>
               <p className="text-sm text-gray-500">Ingresos Totales</p>
               <p className="text-2xl font-bold text-gray-900">
-                {tenants.reduce((acc, t) => acc + (t.total_revenue || 0), 0).toLocaleString()} €
+                {formatCurrency(
+                  tenants.reduce((acc, t) => acc + (t.total_revenue || 0), 0)
+                )}
               </p>
             </div>
             <TrendingUp className="h-8 w-8 text-purple-500" />
@@ -183,9 +190,9 @@ export default function AdminEmpresasPage() {
                     <p className="text-xs text-gray-500">{tenant.address}</p>
                   )}
                   <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                    <span>👥 {tenant.members_count} usuarios</span>
-                    <span>📄 {tenant.invoices_count} facturas</span>
-                    <span>💰 {tenant.total_revenue.toLocaleString()} €</span>
+                    <span>Usuarios: {formatNumber(tenant.members_count)}</span>
+                    <span>Facturas: {formatNumber(tenant.invoices_count)}</span>
+                    <span>Ingresos: {formatCurrency(tenant.total_revenue)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

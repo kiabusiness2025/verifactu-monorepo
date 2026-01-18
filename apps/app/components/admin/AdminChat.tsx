@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Send, Terminal, Code, Eye, Bug, Loader2 } from 'lucide-react';
+import { formatDateTime, formatTime } from "@/src/lib/formatters";
 
 type Message = {
   id: string;
@@ -15,7 +16,7 @@ type Message = {
   };
 };
 
-type CommandType = '/logs' | '/errors' | '/deploy' | '/preview' | '/check' | '/vercel' | '/help';
+type CommandType = '/logs' | '/errors' | '/deploy' | '/preview' | '/check' | '/vercel' | '/isaak' | '/help';
 
 const COMMANDS: Record<CommandType, { description: string; example: string; icon: any }> = {
   '/deploy': { description: 'Ver despliegues Vercel', example: '/deploy', icon: '🚀' },
@@ -23,6 +24,7 @@ const COMMANDS: Record<CommandType, { description: string; example: string; icon
   '/check': { description: 'Estado del sistema', example: '/check all', icon: '✅' },
   '/logs': { description: 'Ver logs', example: '/logs app', icon: '📋' },
   '/vercel': { description: 'Historial Vercel', example: '/vercel history', icon: '▲' },
+  '/isaak': { description: 'Trigger auto-fix con Isaak', example: '/isaak fix', icon: '🤖' },
   '/preview': { description: 'Vista previa', example: '/preview InvoicesTable', icon: '👁️' },
   '/help': { description: 'Ayuda completa', example: '/help', icon: '❓' }
 };
@@ -30,6 +32,7 @@ const COMMANDS: Record<CommandType, { description: string; example: string; icon
 const QUICK_COMMANDS = [
   { label: 'Estado Sistema', command: '/check all', icon: '✅' },
   { label: 'Últimos Deploys', command: '/vercel history', icon: '▲' },
+  { label: 'Auto-Fix Isaak', command: '/isaak fix', icon: '🤖' },
   { label: 'Ver Errores', command: '/errors', icon: '🐛' },
   { label: 'Logs App', command: '/logs app', icon: '📋' },
 ];
@@ -99,7 +102,7 @@ export function AdminChat() {
           
           const formatted = deployments.map((d: any, i: number) => {
             const status = d.state === 'READY' ? '✅' : d.state === 'ERROR' ? '❌' : '⏳';
-            const date = new Date(d.createdAt).toLocaleString('es-ES');
+            const date = formatDateTime(d.createdAt);
             const commit = d.meta?.githubCommitMessage || 'Sin mensaje';
             return `${i + 1}. ${status} **${d.target}** - ${date}\n   URL: ${d.url}\n   Commit: ${commit.substring(0, 50)}`;
           }).join('\n\n');
@@ -108,6 +111,39 @@ export function AdminChat() {
         } catch (error) {
           return 'Error al obtener datos de Vercel. Verifica las credenciales en .env.local';
         }
+      
+      case '/isaak':
+        const isaakAction = args[0] || 'fix';
+        
+        if (isaakAction === 'fix') {
+          try {
+            const triggerRes = await fetch('/api/admin/isaak/trigger', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                errorContext: {
+                  source: 'admin_chat',
+                  timestamp: new Date().toISOString(),
+                  triggeredBy: 'manual',
+                  message: 'Auto-fix manual desde Admin Chat'
+                },
+                autoFix: true
+              })
+            });
+            
+            if (!triggerRes.ok) {
+              const errorData = await triggerRes.json();
+              return `❌ Error al disparar auto-fix:\n${errorData.error || 'Error desconocido'}\n\nVerifica que GITHUB_TOKEN y GITHUB_REPOSITORY estén configurados.`;
+            }
+            
+            const result = await triggerRes.json();
+            return `🤖 **Isaak Auto-Fix Activado**\n\n✅ Workflow disparado exitosamente\n📦 Repositorio: ${result.repository}\n⚙️ Workflow: ${result.workflow}\n\nIsaak está analizando el código y aplicará correcciones automáticas. El deploy se realizará automáticamente después de los fixes.\n\nPuedes ver el progreso en GitHub Actions.`;
+          } catch (error) {
+            return `❌ Error al conectar con Isaak:\n${error instanceof Error ? error.message : 'Error desconocido'}`;
+          }
+        }
+        
+        return 'Comando de Isaak no reconocido. Usa: /isaak fix';
       
       default:
         return null as any;
@@ -232,7 +268,7 @@ export function AdminChat() {
             >
               <div className="whitespace-pre-wrap text-sm">{message.content}</div>
               <div className="text-xs opacity-70 mt-1">
-                {message.timestamp.toLocaleTimeString('es-ES')}
+                {formatTime(message.timestamp)}
               </div>
             </div>
           </div>
