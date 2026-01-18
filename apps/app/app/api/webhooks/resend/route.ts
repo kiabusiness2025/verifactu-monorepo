@@ -108,17 +108,33 @@ function isSpam(payload: ResendEmailPayload): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[WEBHOOK] 🔔 Petición recibida en /api/webhooks/resend");
+    console.log("[WEBHOOK] Timestamp:", new Date().toISOString());
+    
     // Verificar webhook secret (seguridad)
     const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+    const signature = request.headers.get("resend-signature");
+    
+    console.log("[WEBHOOK] Secret configurado:", webhookSecret ? "✓" : "✗");
+    console.log("[WEBHOOK] Signature recibida:", signature ? "✓" : "✗");
+    
     if (webhookSecret) {
-      const signature = request.headers.get("resend-signature");
       if (signature !== webhookSecret) {
-        console.error("[WEBHOOK] Invalid signature");
+        console.error("[WEBHOOK] ❌ Invalid signature");
+        console.error("[WEBHOOK] Esperado:", webhookSecret);
+        console.error("[WEBHOOK] Recibido:", signature);
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
     }
+    
+    console.log("[WEBHOOK] ✓ Signature válida");
 
     const payload: ResendEmailPayload = await request.json();
+    console.log("[WEBHOOK] 📧 Payload recibido:", {
+      type: payload.type,
+      from: payload.data?.from?.email,
+      subject: payload.data?.subject,
+    });
 
     // Solo procesar emails recibidos
     if (payload.type !== "email.received") {
@@ -137,13 +153,16 @@ export async function POST(request: NextRequest) {
     const status = spam ? "spam" : "pending";
 
     // Guardar en base de datos
-    await query(
+    console.log("[WEBHOOK] 💾 Guardando en PostgreSQL...");
+    
+    const result = await query(
       `
       INSERT INTO admin_emails (
         message_id, from_email, from_name, to_email, subject,
         text_content, html_content, priority, status, resend_data, received_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       ON CONFLICT (message_id) DO NOTHING
+      RETURNING id
       `,
       [
         payload.data.message_id,
@@ -160,11 +179,16 @@ export async function POST(request: NextRequest) {
       ]
     );
 
-    console.log(`[WEBHOOK] Email saved to database:`, {
-      id: payload.data.message_id,
-      priority,
-      status,
-    });
+    if (result.length > 0) {
+      console.log(`[WEBHOOK] ✅ Email guardado en BD:`, {
+        db_id: result[0].id,
+        message_id: payload.data.message_id,
+        priority,
+        status,
+      });
+    } else {
+      console.log(`[WEBHOOK] ⚠️  Email duplicado (ya existe):`, payload.data.message_id);
+    }
 
     // Si es alta prioridad y no es spam, podríamos enviar notificación
     if (priority === "high" && !spam) {

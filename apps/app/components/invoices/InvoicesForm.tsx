@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useCustomers } from '@/lib/hooks/useCustomers';
 import { useArticles } from '@/lib/hooks/useArticles';
+import { formatCurrency, formatNumber } from '@/src/lib/formatters';
 
 interface InvoiceLineItem {
   articleId: string;

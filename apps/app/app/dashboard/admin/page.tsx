@@ -85,7 +85,7 @@ export default function AdminDashboardPage() {
                   <div>
                     <p className="text-xs text-slate-600">Ingresos</p>
                     <p className="text-2xl font-bold text-slate-900">
-                      {formatCurrency(totals.totalIncome || 0)}
+                      {formatCurrency(totals.revenue || 0)}
                     </p>
                   </div>
                   <DollarSign className="h-8 w-8 text-green-500" />
@@ -100,17 +100,17 @@ export default function AdminDashboardPage() {
                   <div>
                     <p className="text-xs text-slate-600">Beneficio</p>
                     <p className="text-2xl font-bold text-slate-900">
-                      {formatCurrency((totals.totalIncome || 0) - (totals.totalExpenses || 0))}
+                      {formatCurrency(totals.profit || 0)}
                     </p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-blue-500" />
                 </div>
                 <div className="mt-2 text-xs text-slate-500">
                   Margen:{" "}
-                  {totals.totalIncome
+                  {totals.revenue
                     ? (
-                        (((totals.totalIncome - totals.totalExpenses) /
-                          totals.totalIncome) *
+                        (((totals.revenue - totals.expenses) /
+                          totals.revenue) *
                           100)
                       ).toFixed(1)
                     : 0}

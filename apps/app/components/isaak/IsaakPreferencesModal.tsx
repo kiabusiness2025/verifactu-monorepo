@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useIsaakPreferences } from "@/hooks/useIsaakPreferences";
 import { useIsaakVoice } from "@/hooks/useIsaakVoice";
+import { formatNumber } from "@/src/lib/formatters";
 
 interface IsaakPreferencesModalProps {
   isOpen: boolean;
