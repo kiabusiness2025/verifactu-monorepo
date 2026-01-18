@@ -66,12 +66,12 @@ export function StickyCtaBar({ show }: { show: boolean }) {
       aria-hidden={!show}
     >
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
-        <div className="text-sm font-semibold text-[#002060]">Prueba gratis y ve Isaak en accion</div>
+        <div className="text-sm font-semibold text-[#002060]">Prueba gratis y ve Isaak en acción</div>
         <div className="flex gap-2">
           <Link href="/auth/signup">
-            <PrimaryButton className="px-4 py-2">Probar gratis</PrimaryButton>
+            <PrimaryButton className="h-10 px-4 text-sm">Probar gratis</PrimaryButton>
           </Link>
-          <SecondaryButton href={appDemoUrl} className="px-4 py-2">
+          <SecondaryButton href={appDemoUrl} className="h-10 px-4 text-sm">
             Ver demo
           </SecondaryButton>
         </div>

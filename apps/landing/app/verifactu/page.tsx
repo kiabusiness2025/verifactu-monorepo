@@ -1,4 +1,5 @@
 ﻿import Link from "next/link";
+import { getLandingUrl } from "../lib/urls";
 import type { Metadata } from "next";
 import { CheckCircle2, ShieldCheck, FileText, Hash } from "lucide-react";
 
@@ -101,10 +102,10 @@ export default function VerifactuPage() {
           <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">Exportables y evidencias</h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-700">
-              <li>â€¢ Libro de facturas emitidas/recibidas con evidencias de integridad y fechas.</li>
-              <li>â€¢ Evidencias de documentos y referencia a versiones enviadas/descargadas.</li>
-              <li>â€¢ Historial de eventos (creación, validación, envíos y anulaciones permitidas) consultable.</li>
-              <li>â€¢ Informe de consistencia bajo demanda.</li>
+              <li>• Libro de facturas emitidas/recibidas con evidencias de integridad y fechas.</li>
+              <li>• Evidencias de documentos y referencia a versiones enviadas/descargadas.</li>
+              <li>• Historial de eventos (creación, validación, envíos y anulaciones permitidas) consultable.</li>
+              <li>• Informe de consistencia bajo demanda.</li>
             </ul>
           </div>
         </div>

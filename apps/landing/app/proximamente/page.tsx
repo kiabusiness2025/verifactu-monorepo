@@ -5,7 +5,7 @@ import { getLandingUrl } from "../lib/urls";
 
 
 export const metadata = {
-  title: "Proximamente | VeriFactu",
+  title: "Próximamente | VeriFactu",
   description: "Funcionalidad en desarrollo. Vuelve pronto para descubrir las novedades.",
 };
 
@@ -18,7 +18,7 @@ export default function ProximamentePage() {
         </div>
         
         <h1 className="text-4xl font-bold text-slate-900 mb-4">
-          Proximamente
+          Próximamente
         </h1>
         
         <p className="text-lg text-slate-600 mb-8">

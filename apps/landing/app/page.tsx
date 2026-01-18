@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Check, ShieldCheck, Sparkles } from "lucide-react";
+import { Briefcase, Building2, Check, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import Header from "./components/Header";
 import Faq from "./components/Faq";
 import PricingCalculatorInline from "./components/PricingCalculatorInline";
@@ -30,7 +30,6 @@ export default function Page() {
   const navLinks = [
     { label: "Inicio", href: "#hero" },
     { label: "Para quien", href: "#para-quien" },
-    { label: "Dashboard", href: "#dashboard" },
     { label: "Features", href: "#features" },
     { label: "Precios", href: "#precios" },
     { label: "FAQ", href: "#faq" },
@@ -194,10 +193,13 @@ export default function Page() {
         </Container>
       </section>
 
-      <section id="para-quien" className="py-16">
+      <section id="para-quien" className="py-16 bg-gradient-to-b from-white via-sky-50/40 to-white">
         <Container>
           <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#0080F0] shadow-sm ring-1 ring-[#0080F0]/20">
+              Para quien es Verifactu + Isaak
+            </div>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
               Para quien quiere control diario, sin volverse contable
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
@@ -205,22 +207,40 @@ export default function Page() {
             </p>
           </div>
 
-          <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-[#002060]">Autonomos y microempresas</h3>
-              <p className="mt-2 text-sm text-slate-600">
+          <div className="mt-10 grid gap-5 lg:grid-cols-3">
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+              <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-sky-100/70 blur-2xl" aria-hidden="true" />
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-[#0060F0]">
+                  <UserRound className="h-5 w-5" />
+                </span>
+                <h3 className="text-sm font-semibold text-[#002060]">Autonomos y microempresas</h3>
+              </div>
+              <p className="mt-3 text-sm text-slate-600">
                 Emite facturas VeriFactu sin dudas y ve cada dia cuanto estas vendiendo y cuanto te queda.
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-[#002060]">PYMEs que necesitan visibilidad real</h3>
-              <p className="mt-2 text-sm text-slate-600">
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+              <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-blue-100/70 blur-2xl" aria-hidden="true" />
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-[#0060F0]">
+                  <Building2 className="h-5 w-5" />
+                </span>
+                <h3 className="text-sm font-semibold text-[#002060]">PYMEs que necesitan visibilidad real</h3>
+              </div>
+              <p className="mt-3 text-sm text-slate-600">
                 Controla ventas, gastos y beneficio estimado con un panel simple, y detecta problemas antes de fin de mes.
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-[#002060]">Empresas con asesoria que quieren ir un paso por delante</h3>
-              <p className="mt-2 text-sm text-slate-600">
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+              <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-indigo-100/70 blur-2xl" aria-hidden="true" />
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-[#3B4B96]">
+                  <Briefcase className="h-5 w-5" />
+                </span>
+                <h3 className="text-sm font-semibold text-[#002060]">Empresas con asesoria que quieren ir un paso por delante</h3>
+              </div>
+              <p className="mt-3 text-sm text-slate-600">
                 Comparte tus cifras y documentos con tu gestoria para trabajar con datos actualizados, no con sorpresas.
               </p>
             </div>
@@ -229,10 +249,22 @@ export default function Page() {
           <div className="mt-12 rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
             <div className="text-sm font-semibold text-[#002060]">Lo que cambia cuando lo usas</div>
             <ul className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
-              <li>Visibilidad diaria de ventas, gastos y beneficio estimado.</li>
-              <li>Impuesto orientativo (IVA/IRPF/IS segun configuracion) para decidir con tiempo.</li>
-              <li>Documentos ordenados y listos para compartir con tu asesoria.</li>
-              <li>Menos friccion: Isaak guia, revisa y propone proximos pasos.</li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
+                Visibilidad diaria de ventas, gastos y beneficio estimado.
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
+                Impuesto orientativo (IVA/IRPF/IS segun configuracion) para decidir con tiempo.
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
+                Documentos ordenados y listos para compartir con tu asesoria.
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
+                Menos friccion: Isaak guia, revisa y propone proximos pasos.
+              </li>
             </ul>
             <p className="mt-5 text-xs text-slate-500">
               Aviso: Verifactu e Isaak no sustituyen a tu gestor o asesor fiscal. Te aportan visibilidad y organizacion
@@ -247,10 +279,10 @@ export default function Page() {
                 Empezar 1 mes gratis
               </Link>
               <Link
-                href="/politica-de-precios"
+                href="/recursos/contacto"
                 className="inline-flex items-center justify-center rounded-full border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
               >
-                Ver como calculamos ventas, gastos e impuestos
+                Solicitar informacion
               </Link>
             </div>
           </div>

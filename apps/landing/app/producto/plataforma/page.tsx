@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
+import { getLandingUrl } from "../../lib/urls";
 import { ArrowRight, ShieldCheck, FileCheck2, LayoutDashboard } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -35,7 +36,7 @@ export default function PlataformaPage() {
             href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-            â† Volver al inicio
+             Volver al inicio
           </Link>
         </div>
       </div>

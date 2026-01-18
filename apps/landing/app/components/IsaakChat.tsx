@@ -17,7 +17,7 @@ export default function IsaakChat() {
     {
       id: "1",
       role: "assistant",
-      content: "Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perderás acceso a tus datos.\nYo me encargo de cuidarlos. ðŸ”’",
+      content: "Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perderás acceso a tus datos.\nYo me encargo de cuidarlos. 🔒",
       timestamp: new Date(),
     },
   ]);

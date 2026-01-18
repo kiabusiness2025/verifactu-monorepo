@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
+import { getLandingUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
   title: "Checklist | Verifactu Business",
@@ -26,7 +27,7 @@ export default function ChecklistPage() {
             href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-            â† Volver al inicio
+             Volver al inicio
           </Link>
         </div>
       </div>

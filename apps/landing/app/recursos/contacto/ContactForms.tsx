@@ -73,6 +73,8 @@ export default function ContactForms() {
   const [contactError, setContactError] = useState("");
   const [ticketError, setTicketError] = useState("");
   const [attachmentError, setAttachmentError] = useState("");
+  const isNameLocked = Boolean(user?.displayName);
+  const isEmailLocked = Boolean(user?.email);
 
   useEffect(() => {
     if (!user) return;
@@ -213,7 +215,7 @@ export default function ContactForms() {
                 placeholder="Nombre y apellidos"
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 required
-                readOnly
+                readOnly={isNameLocked}
               />
               <input
                 value={ticketForm.email}
@@ -222,7 +224,7 @@ export default function ContactForms() {
                 type="email"
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 required
-                readOnly
+                readOnly={isEmailLocked}
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -329,6 +331,21 @@ export default function ContactForms() {
                   <span className="text-[11px] text-rose-600">{attachmentError}</span>
                 )}
                 {ticketForm.attachments.length > 0 && (
+                  <div className="flex items-center justify-between text-[11px] text-slate-500">
+                    <span>
+                      {ticketForm.attachments.length} adjuntos ·{" "}
+                      {(totalAttachmentBytes / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setTicketForm({ ...ticketForm, attachments: [] })}
+                      className="rounded-full px-2 py-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-100"
+                    >
+                      Limpiar adjuntos
+                    </button>
+                  </div>
+                )}
+                {ticketForm.attachments.length > 0 && (
                   <div className="grid gap-2 sm:grid-cols-2">
                     {ticketForm.attachments.map((file) => {
                       const isImage = file.type.startsWith("image/");
@@ -377,9 +394,6 @@ export default function ContactForms() {
                         </div>
                       );
                     })}
-                    <div className="text-[10px] text-slate-500 sm:col-span-2">
-                      Total adjuntos: {(totalAttachmentBytes / 1024 / 1024).toFixed(2)} MB
-                    </div>
                   </div>
                 )}
               </label>
