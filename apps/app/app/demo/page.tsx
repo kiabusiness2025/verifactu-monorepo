@@ -1,21 +1,58 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { getAppUrl, getLandingUrl } from "@/lib/urls";
-import { demoData } from "@/src/lib/demo/demoData";
 import { IsaakUIProvider } from "@/context/IsaakUIContext";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
-import { QuickActions } from "@/components/dashboard/QuickActions";
+import { DashboardHome } from "@/components/dashboard/DashboardHome";
+import {
+  getInvoices,
+  getIsaakExamples,
+  getPnl,
+  getTenant,
+} from "@/src/lib/data/client";
 
 export default function DemoPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const appUrl = getAppUrl();
   const landingUrl = getLandingUrl();
-  const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(`${appUrl}/dashboard`)}`;
+  const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(`${appUrl}/onboarding`)}`;
+  const backUrl = landingUrl;
 
-  const recentInvoices = useMemo(() => demoData.invoices.slice(0, 12), []);
+  const tenant = getTenant("demo");
+  const invoices = getInvoices("demo");
+  const pnl = getPnl("demo");
+  const isaakExamples = getIsaakExamples("demo");
+  const recentInvoices = useMemo(() => invoices.slice(0, 12), [invoices]);
+  const currency = useMemo(
+    () =>
+      new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency: "EUR",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    []
+  );
+  const percentFormat = useMemo(
+    () =>
+      new Intl.NumberFormat("es-ES", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    []
+  );
+  const dateFormat = useMemo(
+    () =>
+      new Intl.DateTimeFormat("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
+    []
+  );
 
   return (
     <IsaakUIProvider>
@@ -25,7 +62,7 @@ export default function DemoPage() {
           <Topbar
             onToggleSidebar={() => setSidebarOpen((v) => !v)}
             isDemo
-            demoCompanyName={demoData.tenant.name}
+            demoCompanyName={tenant?.name ?? "Empresa Demo SL"}
           />
 
           <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 pb-20 sm:px-6 sm:py-8">
@@ -40,89 +77,38 @@ export default function DemoPage() {
                   </div>
                   <div>La demo es solo lectura.</div>
                 </div>
-                <a
-                  href={loginUrl}
-                  className="inline-flex items-center gap-2 font-semibold text-amber-900 hover:text-amber-700"
-                >
-                  Probar con mis datos
-                  <ExternalLink className="h-4 w-4" />
-                </a>
+                <div className="flex flex-wrap items-center gap-3">
+                  <a
+                    href={backUrl}
+                    className="inline-flex items-center gap-2 font-semibold text-amber-900 hover:text-amber-700"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Volver al inicio
+                  </a>
+                  <a
+                    href={loginUrl}
+                    className="inline-flex items-center gap-2 font-semibold text-amber-900 hover:text-amber-700"
+                  >
+                    Probar con mis datos
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
             </div>
 
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Resumen demo
-                </h2>
-                <span className="rounded-full bg-[#0b6cfb]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#0b6cfb]">
-                  Datos simulados
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Modo demo: estas cifras son simuladas y no se pueden modificar.
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Ventas mes</p>
-                  <p className="mt-2 text-2xl font-semibold text-[#0b214a]">
-                    {new Intl.NumberFormat("es-ES", {
-                      style: "currency",
-                      currency: "EUR",
-                      maximumFractionDigits: 0,
-                    }).format(demoData.kpis.revenueMonth)}
-                  </p>
-                  <p className="mt-1 text-xs text-emerald-600">
-                    {demoData.kpis.invoicesCount} facturas recientes
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Gastos mes</p>
-                  <p className="mt-2 text-2xl font-semibold text-[#0b214a]">
-                    {new Intl.NumberFormat("es-ES", {
-                      style: "currency",
-                      currency: "EUR",
-                      maximumFractionDigits: 0,
-                    }).format(demoData.kpis.expensesMonth)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">Estimado por ratio historico</p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Beneficio</p>
-                  <p className="mt-2 text-2xl font-semibold text-[#0b214a]">
-                    {new Intl.NumberFormat("es-ES", {
-                      style: "currency",
-                      currency: "EUR",
-                      maximumFractionDigits: 0,
-                    }).format(demoData.kpis.profitMonth)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">Actualizado hoy</p>
-                </div>
-                <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm ring-1 ring-blue-100">
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-blue-700">IVA estimado</p>
-                  <p className="mt-2 text-2xl font-semibold text-blue-900">
-                    {new Intl.NumberFormat("es-ES", {
-                      style: "currency",
-                      currency: "EUR",
-                      maximumFractionDigits: 0,
-                    }).format(demoData.kpis.vatEstimated)}
-                  </p>
-                  <p className="mt-1 text-xs text-blue-600">Segun facturas del periodo</p>
-                </div>
-              </div>
-            </section>
+            <DashboardHome />
 
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Acciones
+                  Acciones bloqueadas
                 </h2>
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
                   Solo lectura
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                En demo no puedes emitir facturas, conectar bancos ni editar datos.
+                En demo no puedes emitir facturas, conectar bancos ni enviar datos reales.
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -147,7 +133,52 @@ export default function DemoPage() {
                   Enviar a AEAT
                 </button>
               </div>
-              <QuickActions isDemo />
+            </section>
+
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Mini PyG
+                </h2>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                  Datos simulados
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Resumen sintético de ventas, gastos y beneficio estimado.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Ventas</p>
+                  <p className="mt-2 text-xl font-semibold text-[#0b214a]">
+                    {currency.format(pnl?.revenue ?? 0)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">{pnl?.periodLabel ?? "Periodo actual"}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Gastos</p>
+                  <p className="mt-2 text-xl font-semibold text-[#0b214a]">
+                    {currency.format(pnl?.expenses ?? 0)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">Operativos + recurrentes</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Beneficio</p>
+                  <p className="mt-2 text-xl font-semibold text-[#0b214a]">
+                    {currency.format(pnl?.profit ?? 0)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Margen {pnl ? percentFormat.format(pnl.margin) : "0,00"}%
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm ring-1 ring-blue-100">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-blue-700">IVA estimado</p>
+                  <p className="mt-2 text-xl font-semibold text-blue-900">
+                    {currency.format(pnl?.vatEstimated ?? 0)}
+                  </p>
+                  <p className="mt-1 text-xs text-blue-600">Según facturas del periodo</p>
+                </div>
+              </div>
             </section>
 
             <section className="space-y-3">
@@ -166,7 +197,7 @@ export default function DemoPage() {
                 <table className="w-full text-left text-sm">
                   <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600">
                     <tr>
-                      <th className="px-4 py-3">Numero</th>
+                      <th className="px-4 py-3">Número</th>
                       <th className="px-4 py-3">Fecha</th>
                       <th className="px-4 py-3">Cliente</th>
                       <th className="px-4 py-3 text-right">Importe</th>
@@ -177,14 +208,12 @@ export default function DemoPage() {
                     {recentInvoices.map((inv) => (
                       <tr key={inv.id} className="hover:bg-slate-50">
                         <td className="px-4 py-3 font-medium text-slate-900">{inv.number}</td>
-                        <td className="px-4 py-3 text-slate-600">{inv.issueDate}</td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {dateFormat.format(new Date(inv.issueDate))}
+                        </td>
                         <td className="px-4 py-3 text-slate-900">{inv.customerName}</td>
                         <td className="px-4 py-3 text-right font-semibold text-slate-900">
-                          {new Intl.NumberFormat("es-ES", {
-                            style: "currency",
-                            currency: "EUR",
-                            maximumFractionDigits: 0,
-                          }).format(inv.amountGross)}
+                          {currency.format(inv.amountGross)}
                         </td>
                         <td className="px-4 py-3">
                           <span
@@ -214,18 +243,21 @@ export default function DemoPage() {
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Isaak en accion
+                  Isaak en acción
                 </h2>
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
                   Ejemplos
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Respuestas de muestra para ver como te guiaria Isaak.
+                Respuestas de muestra para ver cómo te guiaría Isaak.
               </p>
               <div className="grid gap-4 md:grid-cols-2">
-                {demoData.isaakExamples.map((item) => (
-                  <div key={item.prompt} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                {isaakExamples.map((item, idx) => (
+                  <div
+                    key={`${item.prompt}-${idx}`}
+                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                  >
                     <div className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                       Pregunta
                     </div>
@@ -240,14 +272,14 @@ export default function DemoPage() {
             </section>
           </main>
 
-          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
-            <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <div className="text-sm font-semibold text-slate-800">
-                Probar con tus datos reales y activar 1 mes gratis.
+          <div className="fixed inset-x-0 bottom-4 z-30 px-4">
+            <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
+              <div className="text-sm font-semibold text-[#0b214a]">
+                Estás en demo. ¿Listo para usar tu propia empresa?
               </div>
               <a
                 href={loginUrl}
-                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-[#0056D6] hover:to-[#1AA3DB]"
               >
                 Probar con mis datos (1 mes gratis)
               </a>

@@ -14,6 +14,7 @@
     "express": "^4.19.2",
     "jose": "^6.1.3",
     "pino": "^9.0.0",
+    "qrcode": "^1.5.4",
     "soap": "^1.5.0",
     "express-rate-limit": "^7.4.0"
   },

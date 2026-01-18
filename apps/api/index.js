@@ -5,6 +5,7 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { jwtVerify } from "jose";
 import { registerInvoice } from "./soap-client.js";
+import { processInvoiceVeriFactu, getLastInvoiceHash } from "./verifactu-generator.js";
 
 const log = pino();
 const app = express();
@@ -187,8 +188,30 @@ app.get("/api/verifactu/ops", (_req, res) => {
 app.post("/api/verifactu/register-invoice", async (req, res) => {
   try {
     const invoice = req.body;
-    const result = await registerInvoice(invoice);
-    res.json({ ok: true, data: result });
+    
+    // 1. Generar hash y QR antes de enviar a AEAT
+    const previousHash = await getLastInvoiceHash(null, invoice.tenant_id || invoice.tenantId);
+    const verifactuData = await processInvoiceVeriFactu(invoice, previousHash);
+    
+    // 2. Combinar datos originales con VeriFactu
+    const enrichedInvoice = {
+      ...invoice,
+      ...verifactuData
+    };
+    
+    // 3. Registrar en AEAT
+    const result = await registerInvoice(enrichedInvoice);
+    
+    // 4. Devolver resultado con QR y hash incluidos
+    res.json({ 
+      ok: true, 
+      data: {
+        ...result,
+        verifactu_qr: verifactuData.verifactu_qr,
+        verifactu_hash: verifactuData.verifactu_hash,
+        verifactu_status: 'validated'
+      }
+    });
   } catch (error) {
     log.error(error);
     res.status(500).json({ ok: false, error: error.message });

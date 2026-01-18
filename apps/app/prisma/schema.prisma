@@ -106,22 +106,25 @@ model Subscription {
 }
 
 model Invoice {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId     String   @map("tenant_id") @db.Uuid
-  customerId   String?  @map("customer_id") @db.Uuid // Referencia al cliente
-  number       String
-  issueDate    DateTime @map("issue_date") @db.Date
-  customerName String   @map("customer_name") // Mantener para compatibilidad
-  customerNif  String?  @map("customer_nif")
-  currency     String   @default("EUR") @db.Char(3)
-  amountGross  Decimal  @map("amount_gross")
-  amountTax    Decimal  @map("amount_tax")
-  amountNet    Decimal  @map("amount_net")
-  status       String   @default("draft")
-  notes        String?
-  createdBy    String   @map("created_by") @db.Uuid
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  customerId      String?  @map("customer_id") @db.Uuid // Referencia al cliente
+  number          String
+  issueDate       DateTime @map("issue_date") @db.Date
+  customerName    String   @map("customer_name") // Mantener para compatibilidad
+  customerNif     String?  @map("customer_nif")
+  currency        String   @default("EUR") @db.Char(3)
+  amountGross     Decimal  @map("amount_gross")
+  amountTax       Decimal  @map("amount_tax")
+  amountNet       Decimal  @map("amount_net")
+  status          String   @default("draft")
+  notes           String?
+  verifactuStatus String?  @map("verifactu_status") // 'pending','sent','validated','error'
+  verifactuQr     String?  @map("verifactu_qr") // Código QR en base64 o URL
+  verifactuHash   String?  @map("verifactu_hash") // Hash/huella digital SHA-256
+  createdBy       String   @map("created_by") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)

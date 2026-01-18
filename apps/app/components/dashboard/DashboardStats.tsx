@@ -1,7 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { FileText, Receipt, FolderUp } from "lucide-react";
+import { useDataMode } from "@/src/lib/data/useDataMode";
+import { getKpis } from "@/src/lib/data/client";
 
 type Stat = {
   title: string;
@@ -17,8 +19,46 @@ const toneClasses: Record<NonNullable<Stat["tone"]>, string> = {
 };
 
 export function DashboardStats() {
-  // TODO: Obtener stats reales desde API
-  const stats: Stat[] = [];
+  const dataMode = useDataMode();
+  const kpis = getKpis(dataMode);
+  const formatter = useMemo(
+    () =>
+      new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency: "EUR",
+        maximumFractionDigits: 2,
+      }),
+    []
+  );
+
+  const stats: Stat[] = kpis
+    ? [
+        {
+          title: "Ventas mes",
+          value: formatter.format(kpis.revenueMonth),
+          note: `${kpis.invoicesCount} facturas emitidas`,
+          tone: "ok",
+        },
+        {
+          title: "Gastos mes",
+          value: formatter.format(kpis.expensesMonth),
+          note: "Estimación por ratio histórico",
+          tone: "info",
+        },
+        {
+          title: "Beneficio",
+          value: formatter.format(kpis.profitMonth),
+          note: "Actualizado hoy",
+          tone: kpis.profitMonth >= 0 ? "ok" : "warn",
+        },
+        {
+          title: "IVA estimado",
+          value: formatter.format(kpis.vatEstimated),
+          note: "Según facturas del periodo",
+          tone: "info",
+        },
+      ]
+    : [];
 
   if (stats.length === 0) {
     return (

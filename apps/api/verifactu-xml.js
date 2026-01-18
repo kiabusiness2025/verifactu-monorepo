@@ -1,5 +1,15 @@
 export function invoiceToVeriFactuXML(invoice) {
-  const { id, number, issueDate, total, tax, customer, issuer } = invoice;
+  const { 
+    id, 
+    number, 
+    issueDate, 
+    total, 
+    tax, 
+    customer, 
+    issuer,
+    verifactu_hash,
+    verifactu_qr 
+  } = invoice;
 
   const xmlObject = {
     Facturae: {
@@ -20,6 +30,11 @@ export function invoiceToVeriFactuXML(invoice) {
           Nombre: issuer.name,
           NIF: issuer.nif,
         },
+        // Campos VeriFactu
+        DatosVeriFactu: {
+          HuellaDigital: verifactu_hash,
+          CodigoQR: verifactu_qr ? 'incluido' : 'no',
+        }
       },
     },
   };

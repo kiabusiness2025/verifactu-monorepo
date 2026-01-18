@@ -15,6 +15,9 @@ export type DemoInvoice = {
   amountTax: number;
   amountGross: number;
   status: "paid" | "pending" | "overdue" | "sent";
+  verifactuStatus?: string | null;
+  verifactuQr?: string | null;
+  verifactuHash?: string | null;
 };
 
 export type DemoPayment = {
@@ -35,6 +38,15 @@ type DemoKpis = {
   lastUpdated: string;
 };
 
+type DemoPnl = {
+  periodLabel: string;
+  revenue: number;
+  expenses: number;
+  profit: number;
+  margin: number;
+  vatEstimated: number;
+};
+
 type DemoIsaakExample = {
   prompt: string;
   answer: string;
@@ -43,6 +55,7 @@ type DemoIsaakExample = {
 export type DemoData = {
   tenant: DemoTenant;
   kpis: DemoKpis;
+  pnl: DemoPnl;
   invoices: DemoInvoice[];
   payments: DemoPayment[];
   isaakExamples: DemoIsaakExample[];
@@ -135,6 +148,7 @@ const revenueMonth = invoicesMonth.reduce((sum, inv) => sum + inv.amountNet, 0);
 const vatEstimated = invoicesMonth.reduce((sum, inv) => sum + inv.amountTax, 0);
 const expensesMonth = Math.round(revenueMonth * 0.32 * 100) / 100;
 const profitMonth = Math.round((revenueMonth - expensesMonth) * 100) / 100;
+const marginMonth = revenueMonth > 0 ? profitMonth / revenueMonth : 0;
 
 export const demoData: DemoData = {
   tenant: {
@@ -151,6 +165,14 @@ export const demoData: DemoData = {
     invoicesCount: invoicesMonth.length,
     lastUpdated: new Date().toISOString(),
   },
+  pnl: {
+    periodLabel: "Mes actual",
+    revenue: Math.round(revenueMonth * 100) / 100,
+    expenses: expensesMonth,
+    profit: profitMonth,
+    margin: Math.round(marginMonth * 10000) / 100,
+    vatEstimated: Math.round(vatEstimated * 100) / 100,
+  },
   invoices,
   payments,
   isaakExamples: [
@@ -164,7 +186,7 @@ export const demoData: DemoData = {
     },
     {
       prompt: "Prepara un resumen para mi asesoria",
-      answer: "Listo: ventas, gastos y benefit acumulado con IVA estimado. Puedo compartirlo en un enlace seguro.",
+      answer: "Listo: ventas, gastos y beneficio acumulado con IVA estimado. Puedo compartirlo en un enlace seguro.",
     },
     {
       prompt: "Revisa el IVA estimado del trimestre",
