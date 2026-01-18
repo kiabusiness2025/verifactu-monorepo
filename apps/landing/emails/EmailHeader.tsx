@@ -21,7 +21,7 @@ export function EmailHeader() {
         <tr>
           <td style={{ paddingRight: '16px', verticalAlign: 'middle' }}>
             <img
-              src="https://www.verifactu.business/brand/logo-horizontal-light.png"
+              src="https://verifactu.business/brand/logo-horizontal-light.png"
               width="140"
               alt="Verifactu Business"
               style={{

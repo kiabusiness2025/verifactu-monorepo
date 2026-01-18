@@ -1,6 +1,6 @@
 ﻿import React from "react";
 import Link from "next/link";
-import { Clock, ArrowLeft } from "lucide-react";
+import { getLandingUrl } from "../lib/urls";import { Clock, ArrowLeft } from "lucide-react";
 
 export const metadata = {
   title: "PrÃ³ximamente | VeriFactu",
@@ -24,7 +24,7 @@ export default function ProximamentePage() {
         </p>
         
         <Link
-          href="/"
+          href={getLandingUrl()}
           className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -34,4 +34,5 @@ export default function ProximamentePage() {
     </div>
   );
 }
+
 

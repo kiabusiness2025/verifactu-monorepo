@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://www.verifactu.business';
+  const baseUrl = 'https://verifactu.business';
   
   const routes = [
     // Root

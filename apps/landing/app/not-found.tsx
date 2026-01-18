@@ -1,5 +1,5 @@
 ﻿import Link from "next/link";
-
+import { getLandingUrl } from "./lib/urls";
 export default function NotFound() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
@@ -10,12 +10,13 @@ export default function NotFound() {
           Lo sentimos, la pagina que buscas no existe o ha sido movida.<br />
           Si crees que es un error, contacta con soporte.
         </p>
-        <Link href="/" className="inline-block px-6 py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow transition hover:from-[#0056D6] hover:to-[#1AA3DB]">
+        <Link href={getLandingUrl()} className="inline-block px-6 py-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow transition hover:from-[#0056D6] hover:to-[#1AA3DB]">
           Volver al inicio
         </Link>
       </div>
     </main>
   );
 }
+
 
 
