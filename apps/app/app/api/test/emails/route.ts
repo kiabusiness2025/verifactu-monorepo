@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+// Importar directamente desde landing (monorepo)
 import {
   sendVerificationEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
   sendTeamInviteEmail
-} from '@/lib/email/emailService';
+} from '../../../../landing/lib/email/emailService';
 
 /**
  * Endpoint de testing para probar todos los flujos de email en local

@@ -72,7 +72,7 @@ export default function AdminDashboardPage() {
             Ver empresas
           </Link>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-4">
           <Link
             href="/dashboard/admin/companies/new"
             className="rounded-xl bg-gradient-to-r from-[#0b6cfb] to-[#2bb2ff] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:from-[#0a5be0] hover:to-[#1ca3ef]"
@@ -90,6 +90,12 @@ export default function AdminDashboardPage() {
             className="rounded-xl border border-[#0b6cfb] px-4 py-3 text-sm font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/10"
           >
             Ver contabilidad
+          </Link>
+          <Link
+            href="/test/emails"
+            className="rounded-xl border border-orange-500 px-4 py-3 text-sm font-semibold text-orange-600 hover:bg-orange-50"
+          >
+            🧪 Probar emails
           </Link>
         </div>
       </div>
