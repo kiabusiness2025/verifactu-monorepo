@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
+import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
 import { useCustomers } from '@/lib/hooks/useCustomers';
 import { CheckCircle, AlertCircle, Clock, QrCode } from 'lucide-react';
 import { InvoiceQR } from './InvoiceQR';
@@ -64,7 +65,7 @@ export function InvoicesTable({ invoices, loading, pagination, onEdit, onDelete,
               <tr key={invoice.id} className="border-b border-gray-200 hover:bg-gray-50">
                 <td className="px-6 py-3 font-medium text-gray-900">{invoice.number}</td>
                 <td className="px-6 py-3 text-gray-600">{getCustomerName(invoice.customerId)}</td>
-                <td className="px-6 py-3 text-gray-600">{new Date(invoice.issueDate).toLocaleDateString('es-ES')}</td>
+                <td className="px-6 py-3 text-gray-600">{formatShortDate(invoice.issueDate)}</td>
                 <td className="px-6 py-3 text-right font-medium text-gray-900">€{(invoice.amountGross || 0).toFixed(2)}</td>
                 <td className="px-6 py-3">
                   <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -79,17 +79,13 @@ export function IsaakDeadlineNotifications() {
                     }`}
                   >
                     {daysUntil < 0
-                      ? `Vencido hace ${Math.abs(daysUntil)} días`
+                      ? `Vencido hace ${Math.abs(daysUntil)} dias`
                       : daysUntil === 0
                       ? "Hoy es el vencimiento"
-                      : `Vence en ${daysUntil} día${daysUntil !== 1 ? "s" : ""}`}
+                      : `Vence en ${daysUntil} dia${daysUntil !== 1 ? "s" : ""}`}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {deadline.date.toLocaleDateString("es-ES", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {formatShortDate(deadline.date)}
                   </p>
                 </div>
                 <button
@@ -106,3 +102,4 @@ export function IsaakDeadlineNotifications() {
     </div>
   );
 }
+
