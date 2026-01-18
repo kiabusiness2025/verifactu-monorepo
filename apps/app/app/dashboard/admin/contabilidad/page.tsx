@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, DollarSign, FileText, Calendar } from "lucide-react";
+import { formatCurrency, formatNumber, formatPercent } from "@/src/lib/formatters";
 
 type GlobalStats = {
   total_invoices: number;
@@ -104,7 +105,7 @@ export default function AdminContabilidadPage() {
                   <p className={`text-2xl font-bold ${stats.profit >= 0 ? "text-blue-600" : "text-red-600"}`}>
                     {formatCurrency(stats.profit)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Margen: {stats.margin.toFixed(1)}%</p>
+                  <p className="text-xs text-gray-500 mt-1">Margen: {formatPercent(stats.margin)}%</p>
                 </div>
                 <DollarSign className="h-10 w-10 text-blue-500" />
               </div>
@@ -182,3 +183,4 @@ export default function AdminContabilidadPage() {
     </main>
   );
 }
+

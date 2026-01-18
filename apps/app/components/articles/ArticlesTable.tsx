@@ -38,7 +38,7 @@ export function ArticlesTable({
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Código</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Categoriaa</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Categoria</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Precio</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">IVA</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Stock</th>
@@ -52,7 +52,7 @@ export function ArticlesTable({
                 <td className="px-6 py-4 text-sm text-gray-900 font-medium">{article.name}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{article.category || '-'}</td>
                 <td className="px-6 py-4 text-right text-sm text-gray-900">
-                  {parseFloat(article.unitPrice).toFixed(2)}€
+                  {formatCurrency(parseFloat(article.unitPrice))}
                 </td>
                 <td className="px-6 py-4 text-right text-sm text-gray-600">
                   {formatNumber(parseFloat(article.taxRate) * 100)}%

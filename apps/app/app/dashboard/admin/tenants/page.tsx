@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { adminGet, adminPost, adminPatch } from "@/lib/adminApi";
+import { formatCurrency } from "@/src/lib/formatters";
 
 type TenantRow = {
   id: string;

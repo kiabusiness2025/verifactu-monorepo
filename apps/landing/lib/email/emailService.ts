@@ -47,7 +47,7 @@ async function sendEmail({ to, subject, html }: SendEmailParams) {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Verifactu Business <noreply@verifactu.business>',
+        from: 'Verifactu Business <soporte@verifactu.business>',
         to,
         subject,
         html,
