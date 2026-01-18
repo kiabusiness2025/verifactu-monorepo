@@ -114,22 +114,129 @@ export async function GET(
       [userId]
     );
 
-    // Contar conversaciones con Isaak
+    // Obtener conversaciones con Isaak (últimas 10)
     const conversationsResult = await query(
+      `SELECT 
+        id,
+        title,
+        context,
+        message_count,
+        last_activity,
+        created_at
+       FROM isaak_conversations
+       WHERE user_id = $1
+       ORDER BY last_activity DESC
+       LIMIT 10`,
+      [userId]
+    );
+
+    // Contar total de conversaciones
+    const conversationsCountResult = await query(
       `SELECT COUNT(*) as count
        FROM isaak_conversations
        WHERE user_id = $1`,
       [userId]
     );
 
-    const conversationsCount = conversationsResult[0]?.count || 0;
+    const conversationsCount = conversationsCountResult[0]?.count || 0;
+
+    // Contar mensajes enviados por el usuario
+    const messagesCountResult = await query(
+      `SELECT COUNT(*) as count
+       FROM isaak_conversation_messages
+       WHERE role = 'user'
+       AND conversation_id IN (
+         SELECT id FROM isaak_conversations WHERE user_id = $1
+       )`,
+      [userId]
+    );
+
+    const userMessagesCount = messagesCountResult[0]?.count || 0;
+
+    // Obtener actividad de login (últimos 10 accesos estimados)
+    // Basado en actividad reciente de facturas/gastos como proxy
+    const loginActivityResult = await query(
+      `SELECT DISTINCT 
+        DATE(created_at) as login_date,
+        COUNT(*) as actions_count
+       FROM (
+         SELECT created_at FROM invoices WHERE created_by = $1
+         UNION ALL
+         SELECT created_at FROM expense_records WHERE tenant_id IN (
+           SELECT tenant_id FROM memberships WHERE user_id = $1
+         )
+       ) as activity
+       GROUP BY DATE(created_at)
+       ORDER BY login_date DESC
+       LIMIT 10`,
+      [userId]
+    );
+
+    // Obtener cambios de perfil (basado en user_preferences updates)
+    const profileChangesResult = await query(
+      `SELECT 
+        preferred_tenant_id,
+        isaak_tone,
+        updated_at
+       FROM user_preferences
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    // Obtener otros usuarios de sus tenants (colaboradores)
+    const collaboratorsResult = await query(
+      `SELECT DISTINCT
+        u.id,
+        u.name,
+        u.email,
+        m.role,
+        m.status,
+        t.name as tenant_name,
+        m.created_at
+       FROM memberships m
+       JOIN users u ON m.user_id = u.id
+       JOIN tenants t ON m.tenant_id = t.id
+       WHERE m.tenant_id IN (
+         SELECT tenant_id FROM memberships WHERE user_id = $1
+       )
+       AND m.user_id != $1
+       ORDER BY m.created_at DESC
+       LIMIT 20`,
+      [userId]
+    );
+
+    // Obtener gastos creados (actividad adicional)
+    const expensesActivityResult = await query(
+      `SELECT 
+        e.id,
+        e.description,
+        e.category,
+        e.amount,
+        e.date,
+        t.name as tenant_name,
+        e.created_at
+       FROM expense_records e
+       JOIN tenants t ON e.tenant_id = t.id
+       WHERE e.tenant_id IN (
+         SELECT tenant_id FROM memberships WHERE user_id = $1
+       )
+       ORDER BY e.created_at DESC
+       LIMIT 10`,
+      [userId]
+    );
 
     return NextResponse.json({
       user,
       memberships,
       subscriptions,
       recentActivity: activityResult,
-      conversationsCount
+      conversationsCount,
+      conversations: conversationsResult,
+      userMessagesCount,
+      loginActivity: loginActivityResult,
+      profileChanges: profileChangesResult[0] || null,
+      collaborators: collaboratorsResult,
+      expensesActivity: expensesActivityResult
     });
 
   } catch (error: any) {

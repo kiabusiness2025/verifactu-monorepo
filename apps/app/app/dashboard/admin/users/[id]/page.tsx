@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Edit2, LogIn, Trash2, Building2, CreditCard, Activity, MessageSquare } from "lucide-react";
+import { ArrowLeft, Edit2, LogIn, Trash2, Building2, CreditCard, Activity, MessageSquare, Users, Clock, Settings } from "lucide-react";
 
 interface UserDetails {
   user: {
@@ -46,6 +46,42 @@ interface UserDetails {
     tenant_name: string;
   }>;
   conversationsCount: number;
+  conversations: Array<{
+    id: string;
+    title: string;
+    context: string | null;
+    message_count: number;
+    last_activity: string;
+    created_at: string;
+  }>;
+  userMessagesCount: number;
+  loginActivity: Array<{
+    login_date: string;
+    actions_count: number;
+  }>;
+  profileChanges: {
+    preferred_tenant_id: string | null;
+    isaak_tone: string;
+    updated_at: string;
+  } | null;
+  collaborators: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    status: string;
+    tenant_name: string;
+    created_at: string;
+  }>;
+  expensesActivity: Array<{
+    id: string;
+    description: string;
+    category: string;
+    amount: number;
+    date: string;
+    tenant_name: string;
+    created_at: string;
+  }>;
 }
 
 export default function UserDetailPage({ params }: { params: { id: string } }) {
@@ -116,7 +152,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     return null;
   }
 
-  const { user, memberships, subscriptions, recentActivity, conversationsCount } = data;
+  const { user, memberships, subscriptions, recentActivity, conversationsCount, conversations, userMessagesCount, loginActivity, profileChanges, collaborators, expensesActivity } = data;
 
   return (
     <div className="space-y-6">
@@ -189,14 +225,16 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
           <div className="rounded-lg bg-slate-50 p-4">
             <p className="text-xs font-semibold uppercase text-slate-500">Conversaciones Isaak</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">{conversationsCount}</p>
+            <p className="text-xs text-slate-500">{userMessagesCount} mensajes</p>
           </div>
           <div className="rounded-lg bg-slate-50 p-4">
             <p className="text-xs font-semibold uppercase text-slate-500">Tono Isaak</p>
             <p className="mt-1 text-sm font-semibold capitalize text-slate-700">{user.isaak_tone || 'friendly'}</p>
           </div>
           <div className="rounded-lg bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase text-slate-500">Actividad</p>
+            <p className="text-xs font-semibold uppercase text-slate-500">Facturas</p>
             <p className="mt-1 text-2xl font-bold text-slate-900">{recentActivity.length}</p>
+            <p className="text-xs text-slate-500">{expensesActivity.length} gastos</p>
           </div>
         </div>
       </div>
@@ -290,7 +328,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
           <Activity className="h-5 w-5" />
-          Actividad Reciente
+          Facturas Recientes
         </h2>
 
         {recentActivity.length === 0 ? (
@@ -313,6 +351,191 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Conversaciones con Isaak */}
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <MessageSquare className="h-5 w-5" />
+          Conversaciones con Isaak ({conversationsCount})
+        </h2>
+
+        {conversations.length === 0 ? (
+          <p className="text-sm text-slate-500">Sin conversaciones con Isaak</p>
+        ) : (
+          <div className="space-y-3">
+            {conversations.map((conv) => (
+              <div key={conv.id} className="flex items-start justify-between rounded-lg border border-slate-200 p-4">
+                <div className="flex-1">
+                  <p className="font-semibold text-slate-900">{conv.title || 'Sin título'}</p>
+                  {conv.context && (
+                    <span className="mt-1 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                      {conv.context}
+                    </span>
+                  )}
+                  <p className="mt-2 text-xs text-slate-500">
+                    {conv.message_count} mensajes • Última actividad: {new Date(conv.last_activity).toLocaleDateString('es-ES', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-slate-500">
+                    Creado: {new Date(conv.created_at).toLocaleDateString('es-ES')}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {conversationsCount > 10 && (
+              <p className="pt-2 text-center text-sm text-slate-500">
+                Mostrando 10 de {conversationsCount} conversaciones
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Actividad de Login */}
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <Clock className="h-5 w-5" />
+          Actividad de Acceso (últimos 10 días con actividad)
+        </h2>
+
+        {loginActivity.length === 0 ? (
+          <p className="text-sm text-slate-500">Sin actividad registrada</p>
+        ) : (
+          <div className="space-y-2">
+            {loginActivity.map((activity, idx) => (
+              <div key={idx} className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
+                <p className="text-sm text-slate-700">
+                  {new Date(activity.login_date).toLocaleDateString('es-ES', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short'
+                  })}
+                </p>
+                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                  {activity.actions_count} acciones
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Gastos Recientes */}
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <CreditCard className="h-5 w-5" />
+          Gastos Recientes
+        </h2>
+
+        {expensesActivity.length === 0 ? (
+          <p className="text-sm text-slate-500">Sin gastos registrados</p>
+        ) : (
+          <div className="space-y-2">
+            {expensesActivity.map((expense) => (
+              <div key={expense.id} className="flex items-center justify-between border-b border-slate-100 py-3 last:border-0">
+                <div>
+                  <p className="font-medium text-slate-900">{expense.description}</p>
+                  <p className="text-sm text-slate-600">{expense.category}</p>
+                  <p className="text-xs text-slate-500">{expense.tenant_name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-slate-900">€{expense.amount.toFixed(2)}</p>
+                  <p className="text-xs text-slate-500">
+                    {new Date(expense.date).toLocaleDateString('es-ES')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Colaboradores */}
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <Users className="h-5 w-5" />
+          Colaboradores en sus Empresas ({collaborators.length})
+        </h2>
+
+        {collaborators.length === 0 ? (
+          <p className="text-sm text-slate-500">No comparte empresas con otros usuarios</p>
+        ) : (
+          <div className="space-y-3">
+            {collaborators.map((collab) => (
+              <div key={collab.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+                <div>
+                  <p className="font-semibold text-slate-900">{collab.name || 'Sin nombre'}</p>
+                  <p className="text-sm text-slate-600">{collab.email}</p>
+                  <p className="text-xs text-slate-500">{collab.tenant_name}</p>
+                </div>
+                <div className="text-right">
+                  <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                    collab.role === 'owner' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {collab.role}
+                  </span>
+                  <p className="mt-1 text-xs text-slate-500">{collab.status}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Cambios de Perfil */}
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <Settings className="h-5 w-5" />
+          Configuración de Perfil
+        </h2>
+
+        {profileChanges ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <p className="text-sm font-medium text-slate-700">Empresa Preferida</p>
+              <p className="text-sm text-slate-900">
+                {profileChanges.preferred_tenant_id || 'No configurada'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <p className="text-sm font-medium text-slate-700">Tono de Isaak</p>
+              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold capitalize text-blue-700">
+                {profileChanges.isaak_tone || 'friendly'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <p className="text-sm font-medium text-slate-700">Onboarding Completado</p>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                user.has_completed_onboarding 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-amber-100 text-amber-700'
+              }`}>
+                {user.has_completed_onboarding ? 'Sí' : 'No'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-slate-700">Última Actualización</p>
+              <p className="text-xs text-slate-500">
+                {new Date(profileChanges.updated_at).toLocaleDateString('es-ES', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">Sin configuración de perfil</p>
         )}
       </div>
     </div>
