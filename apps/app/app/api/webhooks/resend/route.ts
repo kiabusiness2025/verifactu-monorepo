@@ -111,6 +111,10 @@ export async function POST(request: NextRequest) {
     console.log("[WEBHOOK] 🔔 Petición recibida en /api/webhooks/resend");
     console.log("[WEBHOOK] Timestamp:", new Date().toISOString());
     
+    // Log ALL headers for debugging
+    const headers = Object.fromEntries(request.headers.entries());
+    console.log("[WEBHOOK] Headers recibidos:", JSON.stringify(headers, null, 2));
+    
     // Verificar webhook secret (seguridad)
     const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
     const signature = request.headers.get("resend-signature");
