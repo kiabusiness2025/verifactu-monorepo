@@ -1,6 +1,8 @@
 ﻿"use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "../../context/AuthContext";
 
 type FormStatus = "idle" | "loading" | "success" | "error";
 
@@ -63,6 +65,7 @@ async function sendLead(payload: ContactFormState) {
 }
 
 export default function ContactForms() {
+  const { user } = useAuth();
   const [contactForm, setContactForm] = useState<ContactFormState>(emptyContact);
   const [ticketForm, setTicketForm] = useState<TicketFormState>(emptyTicket);
   const [contactStatus, setContactStatus] = useState<FormStatus>("idle");
@@ -70,6 +73,15 @@ export default function ContactForms() {
   const [contactError, setContactError] = useState("");
   const [ticketError, setTicketError] = useState("");
   const [attachmentError, setAttachmentError] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    setTicketForm((prev) => ({
+      ...prev,
+      name: user.displayName || prev.name,
+      email: user.email || prev.email,
+    }));
+  }, [user]);
 
   const totalAttachmentBytes = ticketForm.attachments.reduce(
     (sum, file) => sum + file.size,
@@ -184,208 +196,227 @@ export default function ContactForms() {
         </div>
       </form>
 
-      <form
-        onSubmit={handleTicketSubmit}
-        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-      >
-        <div className="text-sm font-semibold text-[#002060]">Ticket de soporte</div>
-        <p className="mt-2 text-sm text-slate-600">
-          Para incidencias tecnicas o problemas con facturas y envios.
-        </p>
-        <div className="mt-5 grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              value={ticketForm.name}
-              onChange={(event) => setTicketForm({ ...ticketForm, name: event.target.value })}
-              placeholder="Nombre y apellidos"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              required
-            />
-            <input
-              value={ticketForm.email}
-              onChange={(event) => setTicketForm({ ...ticketForm, email: event.target.value })}
-              placeholder="Email"
-              type="email"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              required
-            />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              value={ticketForm.company}
-              onChange={(event) => setTicketForm({ ...ticketForm, company: event.target.value })}
-              placeholder="Empresa"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-            <input
-              value={ticketForm.url}
-              onChange={(event) => setTicketForm({ ...ticketForm, url: event.target.value })}
-              placeholder="URL afectada (opcional)"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <select
-              value={ticketForm.product}
-              onChange={(event) => setTicketForm({ ...ticketForm, product: event.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            >
-              <option>Verifactu Business</option>
-              <option>Isaak</option>
-              <option>Facturacion VeriFactu</option>
-            </select>
-            <select
-              value={ticketForm.category}
-              onChange={(event) => setTicketForm({ ...ticketForm, category: event.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            >
-              <option>Facturacion</option>
-              <option>Documentos</option>
-              <option>Usuarios y accesos</option>
-              <option>Pagos</option>
-              <option>Integraciones</option>
-              <option>Otros</option>
-            </select>
-            <select
-              value={ticketForm.priority}
-              onChange={(event) => setTicketForm({ ...ticketForm, priority: event.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            >
-              <option>Baja</option>
-              <option>Media</option>
-              <option>Alta</option>
-              <option>Critica</option>
-            </select>
-          </div>
-          <input
-            value={ticketForm.subject}
-            onChange={(event) => setTicketForm({ ...ticketForm, subject: event.target.value })}
-            placeholder="Asunto"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            required
-          />
-          <textarea
-            value={ticketForm.description}
-            onChange={(event) => setTicketForm({ ...ticketForm, description: event.target.value })}
-            placeholder="Describe el problema con el mayor detalle posible"
-            className="min-h-[140px] w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            required
-          />
-          <div className="rounded-lg border border-dashed border-slate-200 px-3 py-3 text-xs text-slate-600">
-            <label className="flex flex-col gap-2">
-              <span className="flex flex-wrap items-center justify-between gap-2 font-semibold text-slate-700">
-                <span>Adjuntar capturas o PDF (max 3 archivos, 5MB c/u)</span>
-                <span className="text-[11px] font-semibold text-slate-500">
-                  {ticketForm.attachments.length}/{MAX_FILES} -{" "}
-                  {(totalAttachmentBytes / 1024 / 1024).toFixed(2)} MB
-                </span>
-              </span>
+      {user ? (
+        <form
+          onSubmit={handleTicketSubmit}
+          className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+        >
+          <div className="text-sm font-semibold text-[#002060]">Ticket de soporte</div>
+          <p className="mt-2 text-sm text-slate-600">
+            Para incidencias tecnicas o problemas con facturas y envios.
+          </p>
+          <div className="mt-5 grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <input
-                type="file"
-                accept="image/*,application/pdf"
-                multiple
-                onChange={(event) => {
-                  setAttachmentError("");
-                  const files = Array.from(event.target.files || []);
-                  if (files.length > MAX_FILES) {
-                    setAttachmentError(`Maximo ${MAX_FILES} archivos.`);
-                    return;
-                  }
-                  const invalidType = files.find((file) => !ALLOWED_TYPES.includes(file.type));
-                  if (invalidType) {
-                    setAttachmentError("Tipo de archivo no permitido. Usa JPG, PNG, WEBP o PDF.");
-                    return;
-                  }
-                  const tooLarge = files.find((file) => file.size > MAX_FILE_BYTES);
-                  if (tooLarge) {
-                    setAttachmentError("Cada archivo debe pesar 5MB o menos.");
-                    return;
-                  }
-                  const total = files.reduce((sum, file) => sum + file.size, 0);
-                  if (total > MAX_TOTAL_BYTES) {
-                    setAttachmentError("El tamano total supera 10MB.");
-                    return;
-                  }
-                  setTicketForm({ ...ticketForm, attachments: files });
-                }}
-                className="text-xs"
+                value={ticketForm.name}
+                onChange={(event) => setTicketForm({ ...ticketForm, name: event.target.value })}
+                placeholder="Nombre y apellidos"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                required
+                readOnly
               />
-              {attachmentError && (
-                <span className="text-[11px] text-rose-600">{attachmentError}</span>
-              )}
-              {ticketForm.attachments.length > 0 && (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {ticketForm.attachments.map((file) => {
-                    const isImage = file.type.startsWith("image/");
-                    const previewUrl = isImage ? URL.createObjectURL(file) : "";
-                    return (
-                      <div
-                        key={`${file.name}-${file.size}`}
-                        className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-2"
-                      >
-                        {isImage ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={previewUrl}
-                            alt={file.name}
-                            className="h-10 w-10 rounded-md object-cover"
-                            onLoad={() => URL.revokeObjectURL(previewUrl)}
-                          />
-                        ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 text-[10px] font-semibold text-slate-600">
-                            PDF
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <div className="truncate text-[11px] font-semibold text-slate-700">
-                            {file.name}
-                          </div>
-                          <div className="text-[10px] text-slate-500">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTicketForm({
-                              ...ticketForm,
-                              attachments: ticketForm.attachments.filter(
-                                (item) => item !== file
-                              ),
-                            });
-                          }}
-                          className="ml-auto rounded-full px-2 py-1 text-[10px] font-semibold text-rose-600 hover:bg-rose-50"
-                          aria-label={`Eliminar ${file.name}`}
+              <input
+                value={ticketForm.email}
+                onChange={(event) => setTicketForm({ ...ticketForm, email: event.target.value })}
+                placeholder="Email"
+                type="email"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                required
+                readOnly
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input
+                value={ticketForm.company}
+                onChange={(event) => setTicketForm({ ...ticketForm, company: event.target.value })}
+                placeholder="Empresa"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+              <input
+                value={ticketForm.url}
+                onChange={(event) => setTicketForm({ ...ticketForm, url: event.target.value })}
+                placeholder="URL afectada (opcional)"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <select
+                value={ticketForm.product}
+                onChange={(event) => setTicketForm({ ...ticketForm, product: event.target.value })}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              >
+                <option>Verifactu Business</option>
+                <option>Isaak</option>
+                <option>Facturacion VeriFactu</option>
+              </select>
+              <select
+                value={ticketForm.category}
+                onChange={(event) => setTicketForm({ ...ticketForm, category: event.target.value })}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              >
+                <option>Facturacion</option>
+                <option>Documentos</option>
+                <option>Usuarios y accesos</option>
+                <option>Pagos</option>
+                <option>Integraciones</option>
+                <option>Otros</option>
+              </select>
+              <select
+                value={ticketForm.priority}
+                onChange={(event) => setTicketForm({ ...ticketForm, priority: event.target.value })}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              >
+                <option>Baja</option>
+                <option>Media</option>
+                <option>Alta</option>
+                <option>Critica</option>
+              </select>
+            </div>
+            <input
+              value={ticketForm.subject}
+              onChange={(event) => setTicketForm({ ...ticketForm, subject: event.target.value })}
+              placeholder="Asunto"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              required
+            />
+            <textarea
+              value={ticketForm.description}
+              onChange={(event) => setTicketForm({ ...ticketForm, description: event.target.value })}
+              placeholder="Describe el problema con el mayor detalle posible"
+              className="min-h-[140px] w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              required
+            />
+            <div className="rounded-lg border border-dashed border-slate-200 px-3 py-3 text-xs text-slate-600">
+              <label className="flex flex-col gap-2">
+                <span className="flex flex-wrap items-center justify-between gap-2 font-semibold text-slate-700">
+                  <span>Adjuntar capturas o PDF (max 3 archivos, 5MB c/u)</span>
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    {ticketForm.attachments.length}/{MAX_FILES} -{" "}
+                    {(totalAttachmentBytes / 1024 / 1024).toFixed(2)} MB
+                  </span>
+                </span>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  multiple
+                  onChange={(event) => {
+                    setAttachmentError("");
+                    const files = Array.from(event.target.files || []);
+                    if (files.length > MAX_FILES) {
+                      setAttachmentError(`Maximo ${MAX_FILES} archivos.`);
+                      return;
+                    }
+                    const invalidType = files.find((file) => !ALLOWED_TYPES.includes(file.type));
+                    if (invalidType) {
+                      setAttachmentError("Tipo de archivo no permitido. Usa JPG, PNG, WEBP o PDF.");
+                      return;
+                    }
+                    const tooLarge = files.find((file) => file.size > MAX_FILE_BYTES);
+                    if (tooLarge) {
+                      setAttachmentError("Cada archivo debe pesar 5MB o menos.");
+                      return;
+                    }
+                    const total = files.reduce((sum, file) => sum + file.size, 0);
+                    if (total > MAX_TOTAL_BYTES) {
+                      setAttachmentError("El tamano total supera 10MB.");
+                      return;
+                    }
+                    setTicketForm({ ...ticketForm, attachments: files });
+                  }}
+                  className="text-xs"
+                />
+                {attachmentError && (
+                  <span className="text-[11px] text-rose-600">{attachmentError}</span>
+                )}
+                {ticketForm.attachments.length > 0 && (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {ticketForm.attachments.map((file) => {
+                      const isImage = file.type.startsWith("image/");
+                      const previewUrl = isImage ? URL.createObjectURL(file) : "";
+                      return (
+                        <div
+                          key={`${file.name}-${file.size}`}
+                          className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-2"
                         >
-                          Quitar
-                        </button>
-                      </div>
-                    );
-                  })}
-                  <div className="text-[10px] text-slate-500 sm:col-span-2">
-                    Total adjuntos: {(totalAttachmentBytes / 1024 / 1024).toFixed(2)} MB
+                          {isImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={previewUrl}
+                              alt={file.name}
+                              className="h-10 w-10 rounded-md object-cover"
+                              onLoad={() => URL.revokeObjectURL(previewUrl)}
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 text-[10px] font-semibold text-slate-600">
+                              PDF
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="truncate text-[11px] font-semibold text-slate-700">
+                              {file.name}
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTicketForm({
+                                ...ticketForm,
+                                attachments: ticketForm.attachments.filter(
+                                  (item) => item !== file
+                                ),
+                              });
+                            }}
+                            className="ml-auto rounded-full px-2 py-1 text-[10px] font-semibold text-rose-600 hover:bg-rose-50"
+                            aria-label={`Eliminar ${file.name}`}
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <div className="text-[10px] text-slate-500 sm:col-span-2">
+                      Total adjuntos: {(totalAttachmentBytes / 1024 / 1024).toFixed(2)} MB
+                    </div>
                   </div>
-                </div>
-              )}
-            </label>
+                )}
+              </label>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={ticketStatus === "loading"}
+              className="inline-flex items-center justify-center rounded-lg border border-[#0060F0] px-5 py-2 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10 disabled:opacity-60"
+            >
+              {ticketStatus === "loading" ? "Enviando..." : "Crear ticket"}
+            </button>
+            {ticketStatus === "success" && (
+              <span className="text-xs font-semibold text-emerald-600">Ticket enviado</span>
+            )}
+            {ticketStatus === "error" && (
+              <span className="text-xs text-rose-600">{ticketError}</span>
+            )}
+          </div>
+        </form>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="text-sm font-semibold text-[#002060]">Ticket de soporte</div>
+          <p className="mt-2 text-sm text-slate-600">
+            Inicia sesion para abrir un ticket. Usaremos tus datos para responder mas rapido.
+          </p>
+          <div className="mt-4">
+            <Link
+              href="/auth/login"
+              className="inline-flex items-center justify-center rounded-lg border border-[#0060F0] px-5 py-2 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
+            >
+              Acceder para soporte
+            </Link>
           </div>
         </div>
-        <div className="mt-4 flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={ticketStatus === "loading"}
-            className="inline-flex items-center justify-center rounded-lg border border-[#0060F0] px-5 py-2 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10 disabled:opacity-60"
-          >
-            {ticketStatus === "loading" ? "Enviando..." : "Crear ticket"}
-          </button>
-          {ticketStatus === "success" && (
-            <span className="text-xs font-semibold text-emerald-600">Ticket enviado</span>
-          )}
-          {ticketStatus === "error" && (
-            <span className="text-xs text-rose-600">{ticketError}</span>
-          )}
-        </div>
-      </form>
+      )}
     </div>
   );
 }

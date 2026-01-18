@@ -3,15 +3,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { Camera } from 'lucide-react';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
+
+const ALLOWED_TABS = new Set(['profile', 'general', 'billing', 'integrations', 'team', 'isaak']);
 
 export default function SettingsPage() {
   const sessionData = useSession();
   const session = sessionData?.data;
   const [activeTenantId, setActiveTenantId] = useState<string>("");
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState('profile');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get('tab') || '';
+  const initialTab = ALLOWED_TABS.has(tabParam) ? tabParam : 'profile';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
   const [logoURL, setLogoURL] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -113,6 +119,12 @@ export default function SettingsPage() {
     }
     loadActiveTenant();
   }, []);
+
+  useEffect(() => {
+    if (ALLOWED_TABS.has(tabParam) && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [activeTab, tabParam]);
 
   useEffect(() => {
     async function loadLogo() {

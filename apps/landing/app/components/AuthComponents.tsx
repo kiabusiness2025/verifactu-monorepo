@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import BrandLogo from "./BrandLogo";
+import { getLandingUrl } from "../lib/urls";
 
 interface PasswordInputProps {
   value: string;
@@ -128,6 +129,7 @@ export function AuthLayout({
   footerText,
   footerLink,
 }: AuthLayoutProps) {
+  const landingUrl = getLandingUrl();
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 px-4 py-10">
       <div className="mx-auto w-full max-w-md">
@@ -138,10 +140,10 @@ export function AuthLayout({
             </div>
             <div className="mb-4">
               <a
-                href="/"
+                href={landingUrl}
                 className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
               >
-                <span aria-hidden="true">←</span> Volver al inicio
+                <span aria-hidden="true">&larr;</span> Volver al inicio
               </a>
             </div>
             <h1 className="mb-2 text-2xl font-bold text-[#002060]">{title}</h1>
@@ -166,7 +168,7 @@ export function AuthLayout({
               )}
               <div className="mt-4 flex flex-col items-center gap-1 text-xs text-gray-500">
                 <Link
-                  href="/"
+                  href={landingUrl}
                   className="underline hover:text-[#0080F0]"
                   aria-label="Volver al inicio"
                 >

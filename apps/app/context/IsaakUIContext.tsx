@@ -18,7 +18,7 @@ export function IsaakUIProvider({
 }: { 
   children: React.ReactNode;
 }) {
-  const [company, setCompany] = useState("Empresa Demo SL");
+  const [company, setCompany] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const openDrawer = useCallback(() => {

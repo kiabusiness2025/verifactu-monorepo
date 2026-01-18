@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
+import { getLandingUrl } from "../../lib/urls";
 import ContactForms from "./ContactForms";
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export default function ContactoPage() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-4 py-4">
           <Link
-            href="/"
+            href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
             Volver al inicio

@@ -1,5 +1,4 @@
 import {
-  LayoutGrid,
   FileText,
   Users,
   Landmark,
@@ -18,7 +17,6 @@ export type NavItem = {
 };
 
 export const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
   { label: "Facturas", href: "/dashboard/invoices", icon: FileText },
   { label: "Clientes", href: "/dashboard/clients", icon: Users },
   { label: "Bancos", href: "/dashboard/banks", icon: Landmark },

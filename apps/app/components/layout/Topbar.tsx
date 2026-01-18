@@ -2,17 +2,21 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useIsaakUI } from "@/context/IsaakUIContext";
 import { useIsaakContext } from "@/hooks/useIsaakContext";
 import { useLogout } from "@/hooks/useLogout";
 import { useAuth } from "@/hooks/useAuth";
-import { LayoutGrid, Shield } from "lucide-react";
+import { useCreateCompanyModal } from "@/context/CreateCompanyModalContext";
+import { LayoutGrid, Shield, Plus } from "lucide-react";
 import { getUserFirstName } from "@/lib/getUserName";
 
 type TopbarProps = {
   onToggleSidebar: () => void;
   onOpenPreferences?: () => void;
+  isDemo?: boolean;
+  demoCompanyName?: string;
 };
 
 type TenantOption = {
@@ -28,9 +32,10 @@ type PanelOption = {
   description: string;
 };
 
-export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
+export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, demoCompanyName = "Empresa Demo SL" }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const createCompanyModal = useCreateCompanyModal();
   const { setCompany } = useIsaakUI();
   const { user: firebaseUser, signOut: firebaseSignOut } = useAuth();
   const userName = getUserFirstName(firebaseUser);
@@ -84,6 +89,10 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
   }, [showUserMenu]);
 
   useEffect(() => {
+    if (isDemo) {
+      setIsAdmin(false);
+      return;
+    }
     async function checkAdminStatus() {
       try {
         const res = await fetch("/api/admin/check", { credentials: "include" });
@@ -95,9 +104,18 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
       }
     }
     checkAdminStatus();
-  }, [firebaseUser]);
+  }, [firebaseUser, isDemo]);
 
   useEffect(() => {
+    if (isDemo) {
+      const demoTenant = { id: "demo", name: demoCompanyName };
+      setTenants([demoTenant]);
+      setActiveTenantId(demoTenant.id);
+      setCompany(demoTenant.name);
+      setTenantLogoURL(null);
+      setIsLoadingTenants(false);
+      return;
+    }
     let mounted = true;
     async function loadTenants() {
       setIsLoadingTenants(true);
@@ -142,9 +160,10 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
     return () => {
       mounted = false;
     };
-  }, [setCompany]);
+  }, [demoCompanyName, isDemo, setCompany]);
 
   async function loadTenantLogo(tenantId: string) {
+    if (isDemo) return;
     try {
       const res = await fetch(`/api/tenant/logo?tenantId=${tenantId}`, {
         credentials: "include"
@@ -162,6 +181,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
   }
 
   async function handleTenantChange(nextId: string) {
+    if (isDemo) return;
     if (!nextId || nextId === activeTenantId) return;
     setIsSwitching(true);
     try {
@@ -187,6 +207,11 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
       setIsSwitching(false);
     }
   }
+
+  const tenantOptions = isDemo ? [{ id: "demo", name: demoCompanyName }] : tenants;
+  const tenantSelectDisabled = isDemo || isLoadingTenants || isSwitching || tenantOptions.length === 0;
+  const handleCreateCompany =
+    !isDemo && createCompanyModal?.openModal ? () => createCompanyModal.openModal() : undefined;
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur">
@@ -244,26 +269,57 @@ export function Topbar({ onToggleSidebar, onOpenPreferences }: TopbarProps) {
                 Modo admin
               </span>
             )}
+            {isDemo && (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                Modo demo
+              </span>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             {currentPanel?.id !== "admin" && (
-              <select
-                value={activeTenantId || ""}
-                onChange={(e) => handleTenantChange(e.target.value)}
-                disabled={isLoadingTenants || isSwitching || tenants.length === 0}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
-              >
-                {tenants.length === 0 ? (
-                  <option value="">Sin empresas</option>
-                ) : (
-                  tenants.map((tenant) => (
-                    <option key={tenant.id} value={tenant.id}>
-                      {tenant.name}
-                    </option>
-                  ))
+              <>
+                <select
+                  value={activeTenantId || ""}
+                  onChange={(e) => handleTenantChange(e.target.value)}
+                  disabled={tenantSelectDisabled}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
+                >
+                  {tenantOptions.length === 0 ? (
+                    <option value="">Sin empresas</option>
+                  ) : (
+                    tenantOptions.map((tenant) => (
+                      <option key={tenant.id} value={tenant.id}>
+                        {tenant.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+                {!isDemo && (
+                  <>
+                    {handleCreateCompany ? (
+                      <button
+                        type="button"
+                        onClick={handleCreateCompany}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100"
+                        aria-label="Crear empresa"
+                        title="Crear empresa"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <Link
+                        href="/dashboard/settings?tab=general"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100"
+                        aria-label="Crear empresa"
+                        title="Crear empresa"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Link>
+                    )}
+                  </>
                 )}
-              </select>
+              </>
             )}
 
             <button

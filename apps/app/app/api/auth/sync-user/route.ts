@@ -49,95 +49,11 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // EMPRESA DEMO: Agregar membership automatico a "Empresa Demo SL"
-      const demoTenant = await prisma.tenant.findFirst({
-        where: {
-          name: "Empresa Demo SL",
-          isDemo: true,
-        },
-      });
-
-      if (demoTenant) {
-        // Crear membership a empresa demo (como member)
-        await prisma.membership.create({
-          data: {
-            tenantId: demoTenant.id,
-            userId: uid,
-            role: "member",
-            status: "active",
-          },
-        });
-
-        // Crear preferencias con empresa demo como preferida
-        await prisma.userPreference.create({
-          data: {
-            userId: uid,
-            preferredTenantId: demoTenant.id,
-          },
-        });
-
-        console.log(`Usuario ${email} agregado a Empresa Demo SL`);
-
-        return NextResponse.json({
-          ok: true,
-          user,
-          tenant: demoTenant,
-          created: true,
-          message: "User created and added to Empresa Demo SL",
-        });
-      }
-
-      // FALLBACK: Si no existe empresa demo, crear tenant personal
-      const tenant = await prisma.tenant.create({
-        data: {
-          name: `${displayName || email.split("@")[0]}'s Business`,
-          legalName: null,
-          nif: null,
-        },
-      });
-
-      // Crear membership (owner)
-      await prisma.membership.create({
-        data: {
-          tenantId: tenant.id,
-          userId: uid,
-          role: "owner",
-          status: "active",
-        },
-      });
-
-      // Crear preferencias de usuario
-      await prisma.userPreference.create({
-        data: {
-          userId: uid,
-          preferredTenantId: tenant.id,
-        },
-      });
-
-      // Crear suscripcion trial gratuita (14 dias)
-      const freePlan = await prisma.plan.findFirst({
-        where: { code: "free" },
-      });
-
-      if (freePlan) {
-        await prisma.subscription.create({
-          data: {
-            tenantId: tenant.id,
-            planId: freePlan.id,
-            status: "trialing",
-            trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-            currentPeriodStart: new Date(),
-            currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-          },
-        });
-      }
-
       return NextResponse.json({
         ok: true,
         user,
-        tenant,
         created: true,
-        message: "User and tenant created successfully with 14-day trial",
+        message: "User created",
       });
     }
   } catch (error: any) {

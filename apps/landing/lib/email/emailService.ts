@@ -227,12 +227,12 @@ function generateEmailHeader(): string {
     <table cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, sans-serif; color:#1b2a3a; margin-bottom: 32px; border-bottom: 1px solid #e0e6eb; padding-bottom: 24px;">
       <tr>
         <td style="padding-right:16px; vertical-align:middle;">
-          <img src="https://verifactu.business/brand/logo-horizontal-light.png" width="140" alt="Verifactu Business" style="display:block; border:0; outline:none;">
+          <img src="https://www.verifactu.business/brand/logo-horizontal-light.png" width="140" alt="Verifactu Business" style="display:block; border:0; outline:none;">
         </td>
         <td style="vertical-align:middle;">
           <div style="font-size:14px; font-weight:bold; color:#0d2b4a;">Soporte | Verifactu Business</div>
           <div style="font-size:13px; color:#1b2a3a; margin-top:4px;">soporte@verifactu.business</div>
-          <div style="font-size:13px; color:#1b2a3a; margin-top:2px;">verifactu.business</div>
+          <div style="font-size:13px; color:#1b2a3a; margin-top:2px;">www.verifactu.business</div>
           <div style="font-size:11px; color:#6b7c8a; margin-top:8px;">Registro de usuarios y comunicaciones generales</div>
         </td>
       </tr>
@@ -247,8 +247,8 @@ function generateEmailFooter(): string {
       <p style="margin: 0 0 8px 0;">© ${currentYear} Verifactu Business. Todos los derechos reservados.</p>
       <p style="margin: 0 0 12px 0; line-height: 1.6;">Si tienes preguntas, contáctanos en <a href="mailto:soporte@verifactu.business" style="color: #0060F0; text-decoration: none;">soporte@verifactu.business</a></p>
       <p style="margin: 0; font-size: 11px; color: #9ca8b3;">
-        <a href="https://verifactu.business/privacy" style="color: #6b7c8a; text-decoration: none; margin-right: 16px;">Política de privacidad</a>
-        <a href="https://verifactu.business/terms" style="color: #6b7c8a; text-decoration: none;">Términos de servicio</a>
+        <a href="https://www.verifactu.business/privacy" style="color: #6b7c8a; text-decoration: none; margin-right: 16px;">Política de privacidad</a>
+        <a href="https://www.verifactu.business/terms" style="color: #6b7c8a; text-decoration: none;">Términos de servicio</a>
       </p>
     </div>
   `;

@@ -4,6 +4,11 @@ import { ensureRole } from "../../../../lib/authz";
 import { Roles } from "../../../../lib/roles";
 import { setUserPreferredTenant } from "../../../../lib/preferences";
 import { fetchMembership } from "../../../../lib/memberships";
+import {
+  signSessionToken,
+  readSessionSecret,
+  buildSessionCookieOptions,
+} from "@verifactu/utils";
 
 export async function POST(req: Request) {
   const session = await getSessionPayload();
@@ -27,5 +32,27 @@ export async function POST(req: Request) {
     console.error("[tenant-switch] Failed to persist preference:", err);
   });
 
-  return NextResponse.json({ ok: true, tenantId, role: membership.role });
+  const payload = {
+    ...session,
+    tenantId,
+    role: membership.role,
+  };
+
+  const secret = readSessionSecret();
+  const token = await signSessionToken({ payload, secret, expiresIn: "30d" });
+  const url = new URL(req.url);
+  const host = req.headers.get("host");
+  const cookieOpts = buildSessionCookieOptions({
+    url: url.toString(),
+    host,
+    domainEnv: process.env.SESSION_COOKIE_DOMAIN,
+    secureEnv: process.env.SESSION_COOKIE_SECURE,
+    sameSiteEnv: process.env.SESSION_COOKIE_SAMESITE,
+    value: token,
+    maxAgeSeconds: 60 * 60 * 24 * 30,
+  });
+
+  const res = NextResponse.json({ ok: true, tenantId, role: membership.role });
+  res.cookies.set(cookieOpts);
+  return res;
 }

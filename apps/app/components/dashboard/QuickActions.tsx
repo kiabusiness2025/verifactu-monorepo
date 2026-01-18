@@ -7,8 +7,10 @@ import {
   Receipt,
   UploadCloud,
   CalendarClock,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
+import { useCreateCompanyModal } from "@/context/CreateCompanyModalContext";
 
 type Action = {
   label: string;
@@ -17,10 +19,13 @@ type Action = {
   accent: string;
   badge: string;
   icon: LucideIcon;
+  onClick?: () => void;
 };
 
-export function QuickActions() {
+export function QuickActions({ isDemo = false }: { isDemo?: boolean }) {
   const router = useRouter();
+  const createCompanyModal = useCreateCompanyModal();
+  const openCreateCompany = createCompanyModal?.openModal;
 
   const actions: Action[] = [
     {
@@ -55,15 +60,32 @@ export function QuickActions() {
       badge: "Fiscal",
       icon: CalendarClock,
     },
+    {
+      label: "Nueva empresa",
+      description: "Crear o importar",
+      href: "/dashboard/settings?tab=general",
+      accent: "from-[#1f4eff] to-[#66c2ff]",
+      badge: "Empresa",
+      icon: Building2,
+      onClick: openCreateCompany,
+    },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {actions.map((action) => (
         <button
           key={action.label}
-          onClick={() => router.push(action.href)}
-          className="group flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          onClick={() => {
+            if (isDemo) return;
+            if (action.onClick) {
+              action.onClick();
+              return;
+            }
+            router.push(action.href);
+          }}
+          disabled={isDemo}
+          className="group flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
