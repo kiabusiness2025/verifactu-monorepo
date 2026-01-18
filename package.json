@@ -14,7 +14,8 @@
         "install-hooks": "cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
         "pre-deploy": "node scripts/pre-deploy-check.js",
         "auto-fix": "node scripts/auto-fix-typescript.js",
-        "validate": "pnpm run typecheck && pnpm run lint && pnpm run build"
+        "validate": "pnpm run typecheck && pnpm run lint && pnpm run build",
+        "db:migrate:emails": "pwsh scripts/migrate-emails.ps1"
     },
     "devDependencies": {
         "@next/env": "^16.1.1",
