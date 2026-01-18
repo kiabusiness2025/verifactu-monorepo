@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Trash2 } from "lucide-react";
+import { formatCurrency } from "@/src/lib/formatters";
 
 type CompanyData = {
   id: string;
@@ -160,7 +161,7 @@ export default function EditCompanyPage() {
         </div>
         <div>
           <p className="text-sm text-gray-600">Ingresos</p>
-          <p className="text-2xl font-bold text-gray-900">{company.total_revenue.toLocaleString()}€</p>
+          <p className="text-2xl font-bold text-gray-900">{formatCurrency(company.total_revenue)}</p>
         </div>
       </div>
 

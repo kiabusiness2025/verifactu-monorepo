@@ -147,13 +147,7 @@ export default function ConversationDetailPage({ params }: { params: { id: strin
           <span>•</span>
           <span>
             Última actividad:{" "}
-            {new Date(conversation.lastActivity).toLocaleDateString("es-ES", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit"
-            })}
+            {formatShortDate(conversation.lastActivity)}
           </span>
         </div>
       </div>
@@ -220,10 +214,7 @@ export default function ConversationDetailPage({ params }: { params: { id: strin
                       }`}
                     >
                       <span>
-                        {new Date(message.createdAt).toLocaleTimeString("es-ES", {
-                          hour: "2-digit",
-                          minute: "2-digit"
-                        })}
+                        {formatTime(message.createdAt)}
                       </span>
                       {isLast && isUser && !editingLast && (
                         <button

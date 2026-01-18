@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Users, Search, Shield, Ban, CheckCircle } from "lucide-react";
+import { formatShortDate } from "@/src/lib/formatters";
 
 type User = {
   id: string;
@@ -83,7 +84,7 @@ export default function AdminUsuariosPage() {
                     <h3 className="font-semibold text-gray-900">{user.name}</h3>
                     <p className="text-sm text-gray-600">{user.email}</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Registrado: {new Date(user.created_at).toLocaleDateString()}
+                      Registrado: {formatShortDate(user.created_at)}
                     </p>
                   </div>
                 </div>

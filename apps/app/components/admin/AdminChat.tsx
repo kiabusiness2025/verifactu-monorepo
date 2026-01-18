@@ -15,16 +15,24 @@ type Message = {
   };
 };
 
-type CommandType = '/logs' | '/errors' | '/deploy' | '/preview' | '/check' | '/help';
+type CommandType = '/logs' | '/errors' | '/deploy' | '/preview' | '/check' | '/vercel' | '/help';
 
-const COMMANDS: Record<CommandType, { description: string; example: string }> = {
-  '/logs': { description: 'Ver últimos logs del sistema', example: '/logs app' },
-  '/errors': { description: 'Mostrar errores recientes', example: '/errors typescript' },
-  '/deploy': { description: 'Estado de despliegues', example: '/deploy status' },
-  '/preview': { description: 'Vista previa de componente', example: '/preview InvoicesTable' },
-  '/check': { description: 'Verificar configuración', example: '/check database' },
-  '/help': { description: 'Mostrar ayuda', example: '/help' }
+const COMMANDS: Record<CommandType, { description: string; example: string; icon: any }> = {
+  '/deploy': { description: 'Ver despliegues Vercel', example: '/deploy', icon: '🚀' },
+  '/errors': { description: 'Errores recientes', example: '/errors', icon: '🐛' },
+  '/check': { description: 'Estado del sistema', example: '/check all', icon: '✅' },
+  '/logs': { description: 'Ver logs', example: '/logs app', icon: '📋' },
+  '/vercel': { description: 'Historial Vercel', example: '/vercel history', icon: '▲' },
+  '/preview': { description: 'Vista previa', example: '/preview InvoicesTable', icon: '👁️' },
+  '/help': { description: 'Ayuda completa', example: '/help', icon: '❓' }
 };
+
+const QUICK_COMMANDS = [
+  { label: 'Estado Sistema', command: '/check all', icon: '✅' },
+  { label: 'Últimos Deploys', command: '/vercel history', icon: '▲' },
+  { label: 'Ver Errores', command: '/errors', icon: '🐛' },
+  { label: 'Logs App', command: '/logs app', icon: '📋' },
+];
 
 export function AdminChat() {
   const [messages, setMessages] = useState<Message[]>([
@@ -73,6 +81,33 @@ export function AdminChat() {
       case '/check':
         const system = args[0] || 'all';
         return `Verificando ${system}...\n\n✓ Base de datos: Conectada\n✓ Firebase: OK\n✓ API VeriFactu: Operativa`;
+      
+      case '/vercel':
+        const action = args[0] || 'history';
+        
+        // Fetch from API
+        try {
+          const res = await fetch(`/api/admin/vercel?action=deployments&limit=5`);
+          if (!res.ok) throw new Error('Failed to fetch');
+          
+          const data = await res.json();
+          const deployments = data.deployments || [];
+          
+          if (deployments.length === 0) {
+            return 'No hay deployments recientes o credenciales de Vercel no configuradas.';
+          }
+          
+          const formatted = deployments.map((d: any, i: number) => {
+            const status = d.state === 'READY' ? '✅' : d.state === 'ERROR' ? '❌' : '⏳';
+            const date = new Date(d.createdAt).toLocaleString('es-ES');
+            const commit = d.meta?.githubCommitMessage || 'Sin mensaje';
+            return `${i + 1}. ${status} **${d.target}** - ${date}\n   URL: ${d.url}\n   Commit: ${commit.substring(0, 50)}`;
+          }).join('\n\n');
+          
+          return `📦 Últimos 5 deployments en Vercel:\n\n${formatted}`;
+        } catch (error) {
+          return 'Error al obtener datos de Vercel. Verifica las credenciales en .env.local';
+        }
       
       default:
         return null as any;
@@ -154,36 +189,30 @@ export function AdminChat() {
   return (
     <div className="flex flex-col h-[600px] bg-white rounded-lg border border-gray-200 shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="flex items-center gap-2">
+      <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="flex items-center gap-2 mb-3">
           <Terminal className="w-5 h-5 text-white" />
           <h3 className="font-semibold text-white">Chat de Administración</h3>
         </div>
-        <button
-          onClick={() => setShowCommands(!showCommands)}
-          className="text-white hover:text-blue-100 text-sm"
-        >
-          {showCommands ? 'Ocultar' : 'Comandos'}
-        </button>
-      </div>
-
-      {/* Commands help */}
-      {showCommands && (
-        <div className="px-4 py-2 bg-blue-50 border-b border-blue-200 text-xs">
-          <div className="grid grid-cols-3 gap-2">
-            {Object.entries(COMMANDS).map(([cmd, { description }]) => (
-              <button
-                key={cmd}
-                onClick={() => setInput(cmd + ' ')}
-                className="text-left p-2 rounded bg-white hover:bg-blue-100 transition-colors"
-              >
-                <code className="text-blue-600 font-mono">{cmd}</code>
-                <p className="text-gray-600 mt-1">{description}</p>
-              </button>
-            ))}
-          </div>
+        
+        {/* Quick action buttons */}
+        <div className="flex flex-wrap gap-2">
+          {QUICK_COMMANDS.map((cmd) => (
+            <button
+              key={cmd.command}
+              onClick={() => {
+                setInput(cmd.command);
+                sendMessage();
+              }}
+              className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs rounded-lg transition-colors flex items-center gap-1.5"
+              disabled={loading}
+            >
+              <span>{cmd.icon}</span>
+              <span>{cmd.label}</span>
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
