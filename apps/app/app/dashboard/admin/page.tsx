@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { adminGet, type AccountingData } from "@/lib/adminApi";
-import { AdminChat } from "@/components/admin/AdminChat";
 import { formatCurrency, formatNumber, formatTime } from "@/src/lib/formatters";
+import { TrendingUp, TrendingDown, Users, Building, DollarSign } from "lucide-react";
 
 type OverviewTotals = AccountingData["totals"];
 
@@ -43,92 +43,119 @@ export default function AdminDashboardPage() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-7xl space-y-4 p-4 sm:p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">
-          Panel de Administración
-        </h1>
-        <div className="text-sm text-slate-500">
-          {lastCheckedAt && (
-            <span>Última actualización: {lastCheckedAt}</span>
+    <div className="space-y-6">
+      {/* Quick Stats */}
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900 mb-3">
+          Estadísticas Rápidas
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-600">Usuarios</p>
+                <p className="text-2xl font-bold text-slate-900">1,234</p>
+              </div>
+              <Users className="h-8 w-8 text-blue-500" />
+            </div>
+            <div className="mt-2 flex items-center text-xs">
+              <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+              <span className="text-green-600">+12% este mes</span>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-600">Empresas</p>
+                <p className="text-2xl font-bold text-slate-900">456</p>
+              </div>
+              <Building className="h-8 w-8 text-purple-500" />
+            </div>
+            <div className="mt-2 flex items-center text-xs">
+              <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+              <span className="text-green-600">+8% este mes</span>
+            </div>
+          </div>
+
+          {totals && (
+            <>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-600">Ingresos</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {formatCurrency(totals.totalIncome || 0)}
+                    </p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-green-500" />
+                </div>
+                <div className="mt-2 text-xs text-slate-500">
+                  Este periodo
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-600">Beneficio</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {formatCurrency((totals.totalIncome || 0) - (totals.totalExpenses || 0))}
+                    </p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-blue-500" />
+                </div>
+                <div className="mt-2 text-xs text-slate-500">
+                  Margen:{" "}
+                  {totals.totalIncome
+                    ? (
+                        (((totals.totalIncome - totals.totalExpenses) /
+                          totals.totalIncome) *
+                          100)
+                      ).toFixed(1)
+                    : 0}
+                  %
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="text-sm font-semibold text-[#0b214a]">
-              Acciones rapidas
-            </div>
-            <div className="text-xs text-slate-500">
-              Gestion operativa para crear y revisar empresas al instante.
-            </div>
-          </div>
-          <Link
-            href="/dashboard/admin/companies"
-            className="text-xs font-semibold text-[#0b6cfb] hover:text-[#2bb2ff]"
-          >
-            Ver empresas
-          </Link>
-        </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-5">
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900 mb-3">
+          Acciones Rápidas
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-3">
           <Link
             href="/dashboard/admin/companies/new"
-            className="rounded-xl bg-gradient-to-r from-[#0b6cfb] to-[#2bb2ff] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:from-[#0a5be0] hover:to-[#1ca3ef]"
+            className="rounded-xl bg-gradient-to-r from-[#0b6cfb] to-[#2bb2ff] px-4 py-4 text-sm font-semibold text-white shadow-sm hover:from-[#0a5be0] hover:to-[#1ca3ef] text-center"
           >
-            Crear empresa
+            + Crear empresa
           </Link>
           <Link
             href="/dashboard/admin/users"
-            className="rounded-xl border border-[#0b6cfb] px-4 py-3 text-sm font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/10"
+            className="rounded-xl border-2 border-[#0b6cfb] px-4 py-4 text-sm font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/10 text-center"
           >
-            Revisar usuarios
-          </Link>
-          <Link
-            href="/dashboard/admin/accounting"
-            className="rounded-xl border border-[#0b6cfb] px-4 py-3 text-sm font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/10"
-          >
-            Ver contabilidad
+            Ver todos los usuarios
           </Link>
           <Link
             href="/dashboard/admin/emails"
-            className="rounded-xl border border-purple-500 px-4 py-3 text-sm font-semibold text-purple-600 hover:bg-purple-50"
+            className="rounded-xl border-2 border-purple-500 px-4 py-4 text-sm font-semibold text-purple-600 hover:bg-purple-50 text-center"
           >
-            📧 Correos
-          </Link>
-          <Link
-            href="/test/emails"
-            className="rounded-xl border border-orange-500 px-4 py-3 text-sm font-semibold text-orange-600 hover:bg-orange-50"
-          >
-            🧪 Probar emails
+            Revisar correos
           </Link>
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        {[
-          { href: "/dashboard/admin/users", label: "Ir a usuarios" },
-          { href: "/dashboard/admin/companies", label: "Ir a empresas" },
-          { href: "/dashboard/admin/accounting", label: "Ir a contabilidad" },
-        ].map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            {item.label}
-          </Link>
-        ))}
-      </div>
-
-      {/* Chat de Administración */}
-      <div className="mt-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-3">
-          Asistente de Administración
-        </h2>
-        <AdminChat />
-      </div>
-    </main>
+      {/* Last Updated */}
+      {lastCheckedAt && (
+        <div className="text-right text-xs text-slate-500">
+          Última actualización: {lastCheckedAt}
+        </div>
+      )}
+    </div>
   );
 }
+

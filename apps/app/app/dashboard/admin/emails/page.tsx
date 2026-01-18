@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Mail, Clock, AlertCircle, Check, Archive, RefreshCw } from "lucide-react";
+import { Mail, Clock, AlertCircle, Check, Archive, RefreshCw, Send, FlaskConical } from "lucide-react";
 
 interface Email {
   id: string;
