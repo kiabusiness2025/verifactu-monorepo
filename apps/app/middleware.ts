@@ -35,9 +35,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // En desarrollo local, permitir acceso sin sesión para testing
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
   const session = await getSessionPayload(req);
 
-  if (!session) {
+  if (!session && !isDevelopment) {
     const landingUrl = getLandingUrl();
     const appUrl = getAppUrl();
     const returnPath = pathname === "/" ? "/dashboard" : pathname;
