@@ -11,7 +11,10 @@
         "typecheck:app": "pnpm --filter verifactu-app exec tsc --noEmit",
         "typecheck:landing": "pnpm --filter verifactu-landing exec tsc --noEmit",
         "precommit": "bash scripts/pre-commit.sh",
-        "install-hooks": "cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit"
+        "install-hooks": "cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
+        "pre-deploy": "node scripts/pre-deploy-check.js",
+        "auto-fix": "node scripts/auto-fix-typescript.js",
+        "validate": "pnpm run typecheck && pnpm run lint && pnpm run build"
     },
     "devDependencies": {
         "@next/env": "^16.1.1",

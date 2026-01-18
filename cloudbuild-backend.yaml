@@ -61,7 +61,7 @@ steps:
       - 'CLOUDSDK_COMPUTE_REGION=europe-west1'
 
 options:
-  machineType: 'N1_HIGHCPU_8'
+  machineType: 'E2_HIGHCPU_8'
   logging: CLOUD_LOGGING_ONLY
 
 tags:

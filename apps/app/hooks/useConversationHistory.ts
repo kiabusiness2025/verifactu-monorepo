@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useState, useEffect } from "react";
+import { formatShortDate } from "@/src/lib/formatters";
 
 export interface ConversationMessage {
   role: "user" | "assistant";
@@ -206,5 +207,5 @@ function generateSessionTitle(
     admin: "Administración",
   }[context] || context;
 
-  return `${contextLabel} - ${new Date().toLocaleDateString()}`;
+  return `${contextLabel} - ${formatShortDate(new Date())}`;
 }

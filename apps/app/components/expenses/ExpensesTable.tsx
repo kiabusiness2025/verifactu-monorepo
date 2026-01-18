@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
+import { formatCurrency, formatNumber, formatShortDate } from "@/src/lib/formatters";
 
 interface ExpensesTableProps {
   expenses: any[];
@@ -46,7 +47,7 @@ export function ExpensesTable({
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <p className="text-sm text-green-600 font-medium">Total Registros</p>
-          <p className="text-2xl font-bold text-green-900">{pagination.total}</p>
+          <p className="text-2xl font-bold text-green-900">{formatNumber(pagination.total)}</p>
         </div>
       </div>
 
@@ -68,7 +69,7 @@ export function ExpensesTable({
             {expenses.map((expense) => (
               <tr key={expense.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm text-gray-900">
-                  {new Date(expense.date).toLocaleDateString('es-ES')}
+                  {formatShortDate(expense.date)}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 font-medium">{expense.description}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{expense.category}</td>

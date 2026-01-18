@@ -56,7 +56,7 @@ export function RemoteConfigDemo() {
 
         {lastFetchTime && (
           <p className="text-xs text-slate-500 mb-4">
-            Última actualización: {lastFetchTime.toLocaleString("es-ES")}
+            Última actualización: {new Date(lastFetchTime).toLocaleString('es-ES')}
           </p>
         )}
 

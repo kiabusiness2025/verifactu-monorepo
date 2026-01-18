@@ -13,9 +13,11 @@ import {
   getPnl,
   getTenant,
 } from "@/src/lib/data/client";
+import { formatCurrency, formatPercent, formatShortDate } from "@/src/lib/formatters";
 
 export default function DemoPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeExample, setActiveExample] = useState(0);
   const appUrl = getAppUrl();
   const landingUrl = getLandingUrl();
   const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(`${appUrl}/onboarding`)}`;
@@ -26,34 +28,6 @@ export default function DemoPage() {
   const pnl = getPnl("demo");
   const isaakExamples = getIsaakExamples("demo");
   const recentInvoices = useMemo(() => invoices.slice(0, 12), [invoices]);
-  const currency = useMemo(
-    () =>
-      new Intl.NumberFormat("es-ES", {
-        style: "currency",
-        currency: "EUR",
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
-  const percentFormat = useMemo(
-    () =>
-      new Intl.NumberFormat("es-ES", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
-  const dateFormat = useMemo(
-    () =>
-      new Intl.DateTimeFormat("es-ES", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }),
-    []
-  );
-
   return (
     <IsaakUIProvider>
       <div className="app-shell flex min-h-screen bg-slate-50">
@@ -151,30 +125,30 @@ export default function DemoPage() {
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Ventas</p>
                   <p className="mt-2 text-xl font-semibold text-[#0b214a]">
-                    {currency.format(pnl?.revenue ?? 0)}
+                    {formatCurrency(pnl?.revenue ?? 0)}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">{pnl?.periodLabel ?? "Periodo actual"}</p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Gastos</p>
                   <p className="mt-2 text-xl font-semibold text-[#0b214a]">
-                    {currency.format(pnl?.expenses ?? 0)}
+                    {formatCurrency(pnl?.expenses ?? 0)}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">Operativos + recurrentes</p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Beneficio</p>
                   <p className="mt-2 text-xl font-semibold text-[#0b214a]">
-                    {currency.format(pnl?.profit ?? 0)}
+                    {formatCurrency(pnl?.profit ?? 0)}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Margen {pnl ? percentFormat.format(pnl.margin) : "0,00"}%
+                    Margen {pnl ? formatPercent(pnl.margin) : "0,00"}%
                   </p>
                 </div>
                 <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm ring-1 ring-blue-100">
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-blue-700">IVA estimado</p>
                   <p className="mt-2 text-xl font-semibold text-blue-900">
-                    {currency.format(pnl?.vatEstimated ?? 0)}
+                    {formatCurrency(pnl?.vatEstimated ?? 0)}
                   </p>
                   <p className="mt-1 text-xs text-blue-600">Según facturas del periodo</p>
                 </div>
@@ -209,11 +183,11 @@ export default function DemoPage() {
                       <tr key={inv.id} className="hover:bg-slate-50">
                         <td className="px-4 py-3 font-medium text-slate-900">{inv.number}</td>
                         <td className="px-4 py-3 text-slate-600">
-                          {dateFormat.format(new Date(inv.issueDate))}
+                          {formatShortDate(inv.issueDate)}
                         </td>
                         <td className="px-4 py-3 text-slate-900">{inv.customerName}</td>
                         <td className="px-4 py-3 text-right font-semibold text-slate-900">
-                          {currency.format(inv.amountGross)}
+                          {formatCurrency(inv.amountGross)}
                         </td>
                         <td className="px-4 py-3">
                           <span
@@ -252,22 +226,45 @@ export default function DemoPage() {
               <p className="text-xs text-slate-500">
                 Respuestas de muestra para ver cómo te guiaría Isaak.
               </p>
-              <div className="grid gap-4 md:grid-cols-2">
-                {isaakExamples.map((item, idx) => (
-                  <div
-                    key={`${item.prompt}-${idx}`}
-                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-                  >
-                    <div className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-                      Pregunta
-                    </div>
-                    <p className="mt-2 text-sm font-semibold text-slate-900">{item.prompt}</p>
-                    <div className="mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-                      Respuesta
-                    </div>
-                    <p className="mt-2 text-sm text-slate-600">{item.answer}</p>
+              <div className="grid gap-4 lg:grid-cols-[1.15fr,1fr]">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    Preguntas frecuentes en demo
                   </div>
-                ))}
+                  <div className="mt-3 space-y-2">
+                    {isaakExamples.map((item, idx) => {
+                      const isActive = idx === activeExample;
+                      return (
+                        <button
+                          key={`${item.prompt}-${idx}`}
+                          type="button"
+                          onClick={() => setActiveExample(idx)}
+                          className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
+                            isActive
+                              ? "border-[#0b6cfb] bg-[#0b6cfb]/10 text-[#0b6cfb]"
+                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          {item.prompt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    Respuesta de Isaak
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-slate-900">
+                    {isaakExamples[activeExample]?.prompt}
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    {isaakExamples[activeExample]?.answer}
+                  </p>
+                  <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs text-blue-700">
+                    Modo demo: respuestas simuladas. En tu cuenta, Isaak usará tus datos reales.
+                  </div>
+                </div>
               </div>
             </section>
           </main>

@@ -196,5 +196,81 @@ export const demoData: DemoData = {
       prompt: "Detecta variaciones frente al mes pasado",
       answer: "Ventas +12%, gastos +7%. El margen sube al 68%.",
     },
+    {
+      prompt: "Emite una factura VeriFactu para Nova Retail SL",
+      answer: "He preparado el borrador VF-2026-0043 con 21% IVA. Solo falta confirmar la fecha.",
+    },
+    {
+      prompt: "Valida si una factura cumple VeriFactu",
+      answer: "La factura tiene numeracion correlativa y hash correcto. Lista para envio.",
+    },
+    {
+      prompt: "Sube las escrituras y vincula al expediente",
+      answer: "Documento cargado y etiquetado como societario. Quieres avisar a tu asesor?",
+    },
+    {
+      prompt: "Guarda el CIF de la empresa",
+      answer: "CIF guardado y asociado al perfil. Puedo usarlo en futuras facturas.",
+    },
+    {
+      prompt: "Muéstrame los documentos del ultimo trimestre",
+      answer: "Tengo 18 documentos: 10 facturas, 6 gastos y 2 contratos. Los ordeno por fecha?",
+    },
+    {
+      prompt: "Calcula el beneficio estimado hoy",
+      answer: "Beneficio estimado hoy: 12.530 EUR. Margen 68,0%.",
+    },
+    {
+      prompt: "Genera un aviso de cierre trimestral",
+      answer: "Aviso programado para el dia 20 con checklist de ventas y gastos.",
+    },
+    {
+      prompt: "Conecta movimientos bancarios de enero",
+      answer: "En demo no puedo conectar bancos, pero te muestro como quedaria la conciliacion.",
+    },
+    {
+      prompt: "Comparte un resumen con mi gestoria",
+      answer: "Resumen listo con ventas, gastos e IVA estimado. Puedo compartir por enlace seguro.",
+    },
+    {
+      prompt: "Detecta gastos duplicados",
+      answer: "He encontrado 2 gastos similares del mismo proveedor en 48h.",
+    },
+    {
+      prompt: "Crea una factura recurrente mensual",
+      answer: "Plantilla recurrente creada. Se emitira el dia 1 de cada mes.",
+    },
+    {
+      prompt: "Exporta libros de facturas",
+      answer: "Exportacion preparada con trazabilidad VeriFactu y fechas.",
+    },
+    {
+      prompt: "Marca esta factura como cobrada",
+      answer: "En demo no puedo registrar cobros reales, pero actualizaria el estado a cobrada.",
+    },
+    {
+      prompt: "Que impuestos tengo aproximados?",
+      answer: "IVA estimado 3.870 EUR. IRPF/IS depende de tu configuracion y gastos deducibles.",
+    },
+    {
+      prompt: "Organiza gastos por proyecto",
+      answer: "Proyecto 'Web 2026' tiene 12 gastos y margen 62%.",
+    },
+    {
+      prompt: "Revisa vencimientos proximos",
+      answer: "3 facturas vencen en 7 dias. Puedo programar recordatorios.",
+    },
+    {
+      prompt: "Mostrar facturas emitidas en febrero",
+      answer: "En febrero emitiste 9 facturas por 14.200 EUR netos.",
+    },
+    {
+      prompt: "Ver documentos pendientes de revisar",
+      answer: "Tienes 4 tickets sin categoria. Te los muestro para clasificar.",
+    },
+    {
+      prompt: "Ayudame con una rectificativa",
+      answer: "Te guiare paso a paso: motivo, numero original y nueva base imponible.",
+    },
   ],
 };

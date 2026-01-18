@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import '@testing-library/jest-dom'
 
 describe('App root page', () => {

@@ -51,51 +51,36 @@ export function Sidebar({ isOpen, onClose, isDemo = false }: SidebarProps) {
         <nav className="px-3 py-4">
           <ul className="space-y-1">
             {navItems.map((item) => {
+              const targetHref = isDemo
+                ? item.href.replace("/dashboard", "/demo")
+                : item.href;
               const active =
-                pathname === item.href || pathname.startsWith(item.href + "/");
+                pathname === targetHref || pathname.startsWith(targetHref + "/");
               return (
                 <li key={item.href}>
-                  {isDemo ? (
-                    <button
-                      type="button"
-                      className="group flex w-full cursor-not-allowed items-center gap-3 rounded-2xl px-3 py-2 text-left text-sm font-semibold text-slate-400"
-                      title="Disponible al crear cuenta"
-                      aria-disabled="true"
-                    >
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-200 text-slate-400">
-                        {item.icon ? (
-                          <item.icon className="h-5 w-5" aria-hidden="true" />
-                        ) : (
-                          <span className="text-[10px] font-semibold">?</span>
-                        )}
-                      </span>
-                      <span>{item.label}</span>
-                    </button>
-                  ) : (
-                    <Link
-                      href={item.href}
-                      className={`group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold transition ${
+                  <Link
+                    href={targetHref}
+                    className={`group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold transition ${
+                      active
+                        ? "bg-[#0b6cfb]/10 text-[#0b6cfb]"
+                        : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <span
+                      className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${
                         active
-                          ? "bg-[#0b6cfb]/10 text-[#0b6cfb]"
-                          : "text-slate-700 hover:bg-slate-50"
+                          ? "bg-[#0b6cfb] text-white shadow-sm"
+                          : "bg-slate-200 text-slate-700 group-hover:bg-slate-300"
                       }`}
                     >
-                      <span
-                        className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${
-                          active
-                            ? "bg-[#0b6cfb] text-white shadow-sm"
-                            : "bg-slate-200 text-slate-700 group-hover:bg-slate-300"
-                        }`}
-                      >
-                        {item.icon ? (
-                          <item.icon className="h-5 w-5" aria-hidden="true" />
-                        ) : (
-                          <span className="text-[10px] font-semibold">?</span>
-                        )}
-                      </span>
-                      <span>{item.label}</span>
-                    </Link>
-                  )}
+                      {item.icon ? (
+                        <item.icon className="h-5 w-5" aria-hidden="true" />
+                      ) : (
+                        <span className="text-[10px] font-semibold">?</span>
+                      )}
+                    </span>
+                    <span>{item.label}</span>
+                  </Link>
                 </li>
               );
             })}

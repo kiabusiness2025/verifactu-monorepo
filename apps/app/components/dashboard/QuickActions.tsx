@@ -8,6 +8,7 @@ import {
   UploadCloud,
   CalendarClock,
   Building2,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { useCreateCompanyModal } from "@/context/CreateCompanyModalContext";
@@ -69,10 +70,18 @@ export function QuickActions({ isDemo = false }: { isDemo?: boolean }) {
       icon: Building2,
       onClick: openCreateCompany,
     },
+    {
+      label: "Clientes",
+      description: "Gestiona contactos",
+      href: "/dashboard/clients",
+      accent: "from-[#6c5ce7] to-[#a29bfe]",
+      badge: "Contactos",
+      icon: Users,
+    },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {actions.map((action) => (
         <button
           key={action.label}

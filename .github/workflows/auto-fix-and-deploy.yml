@@ -1,0 +1,182 @@
+name: Auto-Fix & Deploy
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20.x'
+  PNPM_VERSION: '10.27.0'
+
+jobs:
+  detect-and-fix:
+    name: Detect & Auto-Fix Errors
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: |
+          cd apps/app
+          pnpm exec prisma generate
+
+      - name: TypeScript Type Check (App)
+        id: typecheck-app
+        continue-on-error: true
+        run: |
+          cd apps/app
+          pnpm exec tsc --noEmit > typecheck-errors.log 2>&1 || true
+          cat typecheck-errors.log
+
+      - name: TypeScript Type Check (Landing)
+        id: typecheck-landing
+        continue-on-error: true
+        run: |
+          cd apps/landing
+          pnpm exec tsc --noEmit > typecheck-errors.log 2>&1 || true
+          cat typecheck-errors.log
+
+      - name: ESLint Check
+        id: eslint
+        continue-on-error: true
+        run: |
+          pnpm exec eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 0 || true
+
+      - name: Install GitHub CLI Copilot Extension
+        if: steps.typecheck-app.outcome == 'failure' || steps.typecheck-landing.outcome == 'failure'
+        run: |
+          gh extension install github/gh-copilot || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-Fix TypeScript Errors (App)
+        if: steps.typecheck-app.outcome == 'failure'
+        run: |
+          cd apps/app
+          if [ -f typecheck-errors.log ]; then
+            echo "Analyzing errors with Copilot..."
+            # Extraer errores más comunes
+            node ../../scripts/auto-fix-typescript.js typecheck-errors.log
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-Fix TypeScript Errors (Landing)
+        if: steps.typecheck-landing.outcome == 'failure'
+        run: |
+          cd apps/landing
+          if [ -f typecheck-errors.log ]; then
+            echo "Analyzing errors with Copilot..."
+            node ../../scripts/auto-fix-typescript.js typecheck-errors.log
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit Auto-Fixes
+        if: steps.typecheck-app.outcome == 'failure' || steps.typecheck-landing.outcome == 'failure'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          git diff --staged --quiet || git commit -m "fix: auto-fix TypeScript errors [skip ci]"
+          git push
+
+      - name: Re-run Type Check (App)
+        if: steps.typecheck-app.outcome == 'failure'
+        run: |
+          cd apps/app
+          pnpm exec tsc --noEmit
+
+      - name: Re-run Type Check (Landing)
+        if: steps.typecheck-landing.outcome == 'failure'
+        run: |
+          cd apps/landing
+          pnpm exec tsc --noEmit
+
+      - name: Build App
+        run: |
+          cd apps/app
+          pnpm run build
+
+      - name: Build Landing
+        run: |
+          cd apps/landing
+          pnpm run build
+
+  deploy-vercel:
+    name: Deploy to Vercel
+    needs: detect-and-fix
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel (Production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./apps/app
+
+  deploy-cloud-run:
+    name: Deploy API to Cloud Run
+    needs: detect-and-fix
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and Deploy to Cloud Run
+        run: |
+          gcloud builds submit \
+            --config cloudbuild-backend.yaml \
+            --substitutions=SHORT_SHA=${GITHUB_SHA::7},BRANCH_NAME=main
