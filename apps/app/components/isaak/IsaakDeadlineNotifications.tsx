@@ -92,7 +92,7 @@ export function IsaakDeadlineNotifications() {
                   onClick={() => handleDismiss(deadline.id)}
                   className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition"
                 >
-                  ✕
+                  ×
                 </button>
               </div>
             </motion.div>
@@ -102,4 +102,5 @@ export function IsaakDeadlineNotifications() {
     </div>
   );
 }
+
 

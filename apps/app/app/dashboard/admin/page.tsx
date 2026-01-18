@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { adminGet, type AccountingData } from "@/lib/adminApi";
+import { AdminChat } from "@/components/admin/AdminChat";
 
 type OverviewTotals = AccountingData["totals"];
 
@@ -176,6 +177,14 @@ export default function AdminDashboardPage() {
             {item.label}
           </Link>
         ))}
+      </div>
+
+      {/* Chat de Administración */}
+      <div className="mt-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-3">
+          Asistente de Administración
+        </h2>
+        <AdminChat />
       </div>
     </main>
   );
