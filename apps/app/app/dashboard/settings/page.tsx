@@ -9,6 +9,8 @@ import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
 
 const ALLOWED_TABS = new Set(['profile', 'general', 'billing', 'integrations', 'team', 'isaak']);
 
+export const dynamic = 'force-dynamic';
+
 export default function SettingsPage() {
   const sessionData = useSession();
   const session = sessionData?.data;

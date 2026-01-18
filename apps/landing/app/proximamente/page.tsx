@@ -1,9 +1,11 @@
 ﻿import React from "react";
 import Link from "next/link";
-import { getLandingUrl } from "../lib/urls";import { Clock, ArrowLeft } from "lucide-react";
+import { Clock, ArrowLeft } from "lucide-react";
+import { getLandingUrl } from "../lib/urls";
+
 
 export const metadata = {
-  title: "PrÃ³ximamente | VeriFactu",
+  title: "Proximamente | VeriFactu",
   description: "Funcionalidad en desarrollo. Vuelve pronto para descubrir las novedades.",
 };
 
@@ -16,7 +18,7 @@ export default function ProximamentePage() {
         </div>
         
         <h1 className="text-4xl font-bold text-slate-900 mb-4">
-          PrÃ³ximamente
+          Proximamente
         </h1>
         
         <p className="text-lg text-slate-600 mb-8">
@@ -34,5 +36,8 @@ export default function ProximamentePage() {
     </div>
   );
 }
+
+
+
 
 
