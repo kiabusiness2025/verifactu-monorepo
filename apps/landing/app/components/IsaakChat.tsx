@@ -17,7 +17,7 @@ export default function IsaakChat() {
     {
       id: "1",
       role: "assistant",
-      content: "Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perderÃ¡s acceso a tus datos.\nYo me encargo de cuidarlos. ðŸ”’",
+      content: "Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perderás acceso a tus datos.\nYo me encargo de cuidarlos. ðŸ”’",
       timestamp: new Date(),
     },
   ]);
@@ -112,7 +112,7 @@ export default function IsaakChat() {
             <div className="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 text-white">
               <div>
                 <div className="font-semibold">Isaak</div>
-                <div className="text-xs opacity-90">AquÃ­ para ayudarte</div>
+                <div className="text-xs opacity-90">Aquí para ayudarte</div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}

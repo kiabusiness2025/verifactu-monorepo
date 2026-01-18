@@ -1,5 +1,5 @@
 {
-  "name": "Verifactu Business - Gestion Empresarial",
+  "name": "Verifactu Business - Gestión Empresarial",
   "short_name": "Verifactu",
   "description": "Gestiona tus ventas, gastos y beneficios con tranquilidad, cumpliendo VeriFactu",
   "start_url": "/dashboard?source=pwa",
@@ -9,6 +9,25 @@
   "orientation": "any",
   "scope": "/",
   "prefer_related_applications": false,
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "lang": "es-ES",
+  "dir": "ltr",
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Vista principal del dashboard"
+    },
+    {
+      "src": "/screenshots/dashboard-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard en móvil"
+    }
+  ],
   "icons": [
     {
       "src": "/favicon-32x32.png",
@@ -72,5 +91,21 @@
       ]
     }
   ],
+  "share_target": {
+    "action": "/dashboard/documents/upload",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "file",
+          "accept": ["image/*", "application/pdf"]
+        }
+      ]
+    }
+  },
   "screenshots": []
 }

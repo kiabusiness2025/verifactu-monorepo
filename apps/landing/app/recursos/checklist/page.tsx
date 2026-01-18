@@ -4,17 +4,17 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Checklist | Verifactu Business",
   description:
-    "Checklist prÃ¡ctico para emitir facturas conforme a VeriFactu.",
+    "Checklist práctico para emitir facturas conforme a VeriFactu.",
 };
 
 const checklist = [
   "Datos fiscales completos del emisor y receptor.",
-  "NumeraciÃ³n correlativa sin saltos.",
-  "Fecha de emisiÃ³n correcta y sin duplicados.",
-  "Concepto claro y descripciÃ³n suficiente.",
-  "Impuestos aplicados segÃºn normativa.",
-  "Registro y conservaciÃ³n de facturas.",
-  "Trazabilidad para auditorÃ­as y verificaciÃ³n.",
+  "Numeración correlativa sin saltos.",
+  "Fecha de emisión correcta y sin duplicados.",
+  "Concepto claro y descripción suficiente.",
+  "Impuestos aplicados según normativa.",
+  "Registro y conservación de facturas.",
+  "Trazabilidad para auditorías y verificación.",
 ];
 
 export default function ChecklistPage() {
@@ -23,7 +23,7 @@ export default function ChecklistPage() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-4 py-4">
           <Link
-            href="/"
+            href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
             â† Volver al inicio
@@ -36,7 +36,7 @@ export default function ChecklistPage() {
           Checklist VeriFactu
         </h1>
         <p className="mt-4 text-lg text-slate-600">
-          Un resumen rÃ¡pido de lo que necesitas revisar antes de emitir.
+          Un resumen rápido de lo que necesitas revisar antes de emitir.
         </p>
 
         <ul className="mt-8 space-y-3">

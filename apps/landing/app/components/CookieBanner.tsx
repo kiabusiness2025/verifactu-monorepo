@@ -36,8 +36,8 @@ export default function CookieBanner() {
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6">
         <p className="text-sm text-slate-600">
-          Utilizamos cookies tÃ©cnicas para el funcionamiento esencial. Puedes aceptar solo las esenciales o todas. MÃ¡s detalle en {" "}
-          <Link href="/legal/cookies" className="text-[#0060F0] font-semibold hover:text-[#0080F0]" aria-label="Leer polÃ­tica de cookies">PolÃ­tica de cookies</Link>.
+          Utilizamos cookies técnicas para el funcionamiento esencial. Puedes aceptar solo las esenciales o todas. Más detalle en {" "}
+          <Link href="/legal/cookies" className="text-[#0060F0] font-semibold hover:text-[#0080F0]" aria-label="Leer política de cookies">Política de cookies</Link>.
         </p>
         <div className="flex shrink-0 items-center gap-2">
           <button

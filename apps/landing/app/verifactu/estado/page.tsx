@@ -33,7 +33,7 @@ type Status = { name: string; state: "operativo" | "incidencia" | "mantenimiento
 const statusList: Status[] = [
   { name: "Verifactu Business", state: "operativo", note: "Sin incidencias" },
   { name: "AEAT VeriFactu", state: "operativo", note: "Validaciones OK" },
-  { name: "ConexiÃ³n bancaria", state: "operativo", note: "Sin retrasos reportados" },
+  { name: "Conexión bancaria", state: "operativo", note: "Sin retrasos reportados" },
 ];
 
 export default function EstadoPage() {
@@ -51,7 +51,7 @@ export default function EstadoPage() {
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Estado</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Estado del servicio</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          AquÃ­ verÃ¡s si hay incidencias en VeriFactu, AEAT o en las integraciones bancarias. Si algo falla, publicaremos
+          Aquí verás si hay incidencias en VeriFactu, AEAT o en las integraciones bancarias. Si algo falla, publicaremos
           actualizaciones y tiempos estimados.
         </p>
 
@@ -62,7 +62,7 @@ export default function EstadoPage() {
         </div>
 
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Â¿Ves algo raro?</h2>
+          <h2 className="text-lg font-semibold text-slate-900">¿Ves algo raro?</h2>
           <p className="mt-2 text-sm text-slate-700">
             Enviamos detalles (capturas, hora aproximada, factura afectada). Prioridad para incidencias VeriFactu/AEAT.
           </p>
@@ -81,12 +81,12 @@ export default function EstadoPage() {
             </Link>
           </div>
           <p className="mt-3 text-xs text-slate-500">
-            Respuesta en horario laboral. Si hay incidente crÃ­tico, lo publicaremos aquÃ­.
+            Respuesta en horario laboral. Si hay incidente crítico, lo publicaremos aquí.
           </p>
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Â¿Quieres calcular tu precio o activar la prueba?</div>
+          <div className="text-sm text-slate-600">¿Quieres calcular tu precio o activar la prueba?</div>
           <div className="flex gap-3">
             <Link
               href="/demo#calculadora"

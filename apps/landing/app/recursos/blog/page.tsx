@@ -4,17 +4,17 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Blog | Verifactu Business",
   description:
-    "Consejos prÃ¡cticos y novedades sobre facturaciÃ³n, fiscalidad y gestiÃ³n.",
+    "Consejos prácticos y novedades sobre facturación, fiscalidad y gestión.",
 };
 
 const posts = [
   {
     title: "VeriFactu en 5 minutos",
-    description: "Resumen claro de la obligaciÃ³n y cÃ³mo cumplir sin fricciÃ³n.",
+    description: "Resumen claro de la obligación y cómo cumplir sin fricción.",
   },
   {
     title: "Errores frecuentes al emitir facturas",
-    description: "CÃ³mo evitarlos y ahorrar tiempo en correcciones.",
+    description: "Cómo evitarlos y ahorrar tiempo en correcciones.",
   },
   {
     title: "Control de gastos sin complicaciones",
@@ -28,7 +28,7 @@ export default function BlogPage() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-4">
           <Link
-            href="/"
+            href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
             â† Volver al inicio
@@ -40,7 +40,7 @@ export default function BlogPage() {
         <div className="max-w-2xl">
           <h1 className="text-4xl font-bold text-[#002060]">Blog</h1>
           <p className="mt-4 text-lg text-slate-600">
-            Ideas prÃ¡cticas para emitir, controlar y cumplir sin dolores de cabeza.
+            Ideas prácticas para emitir, controlar y cumplir sin dolores de cabeza.
           </p>
         </div>
 

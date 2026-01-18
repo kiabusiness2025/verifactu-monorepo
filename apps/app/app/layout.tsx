@@ -8,6 +8,7 @@ import { IsaakUIProvider } from '@/context/IsaakUIContext';
 import { GoogleTagManager } from '@/components/GoogleTagManager';
 import { FirebaseAnalytics } from '@/components/FirebaseAnalytics';
 import { PWARegistration } from '@/components/PWARegistration';
+import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -55,6 +56,7 @@ export default function RootLayout({
       </head>
       <body className={`${outfit.className} dark:bg-gray-900`}>
         <PWARegistration />
+        <PWAInstallPrompt />
         <FirebaseAnalytics />
         <ThemeProvider>
           <SidebarProvider>

@@ -3,14 +3,14 @@ import Link from "next/link";
 import { ArrowRight, Bot, RefreshCcw, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "AutomatizaciÃ³n | Verifactu Business",
+  title: "Automatización | Verifactu Business",
   description:
-    "Flujos automÃ¡ticos para facturar, cumplir VeriFactu y reducir errores.",
+    "Flujos automáticos para facturar, cumplir VeriFactu y reducir errores.",
 };
 
 const flows = [
   {
-    title: "Factura -> ValidaciÃ³n",
+    title: "Factura -> Validación",
     description: "Genera, valida y registra sin pasos manuales.",
     icon: RefreshCcw,
   },
@@ -21,7 +21,7 @@ const flows = [
   },
   {
     title: "Cumplimiento continuo",
-    description: "Trazabilidad y conservaciÃ³n siempre activas.",
+    description: "Trazabilidad y conservación siempre activas.",
     icon: ShieldCheck,
   },
 ];
@@ -32,7 +32,7 @@ export default function AutomatizacionPage() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-4">
           <Link
-            href="/"
+            href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
             â† Volver al inicio
@@ -44,10 +44,10 @@ export default function AutomatizacionPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
             <h1 className="text-4xl font-bold text-[#002060] sm:text-5xl">
-              AutomatizaciÃ³n sin fricciÃ³n
+              Automatización sin fricción
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Menos tareas repetitivas, menos errores y mÃ¡s tiempo para tu negocio.
+              Menos tareas repetitivas, menos errores y más tiempo para tu negocio.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link

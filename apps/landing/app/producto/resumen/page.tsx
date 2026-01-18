@@ -21,7 +21,7 @@ const highlights = [
   },
   {
     title: "Control de gastos",
-    description: "Clasifica gastos y controla IVA sin hojas de cÃ¡lculo.",
+    description: "Clasifica gastos y controla IVA sin hojas de cálculo.",
     icon: Calculator,
   },
 ];
@@ -32,7 +32,7 @@ export default function ProductSummaryPage() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-4">
           <Link
-            href="/"
+            href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
             â† Volver al inicio
@@ -52,7 +52,7 @@ export default function ProductSummaryPage() {
             </h1>
             <p className="mt-4 text-xl text-slate-600">
               Verifactu Business unifica ventas, gastos y cumplimiento VeriFactu
-              en una sola pantalla. Isaak te guÃ­a para decidir sin dudas.
+              en una sola pantalla. Isaak te guía para decidir sin dudas.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -124,7 +124,7 @@ export default function ProductSummaryPage() {
             Empieza hoy y recupera el control
           </h2>
           <p className="mt-4 text-lg text-slate-600">
-            1 mes gratis, sin tarjeta y sin fricciÃ³n.
+            1 mes gratis, sin tarjeta y sin fricción.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link

@@ -2,22 +2,22 @@
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "GuÃ­as y webinars | Verifactu Business",
+  title: "Guías y webinars | Verifactu Business",
   description:
-    "Recursos para cumplir VeriFactu, optimizar facturaciÃ³n y mejorar la gestiÃ³n diaria.",
+    "Recursos para cumplir VeriFactu, optimizar facturación y mejorar la gestión diaria.",
 };
 
 const guides = [
   {
-    title: "GuÃ­a rÃ¡pida VeriFactu",
-    description: "QuÃ© exige la AEAT y cÃ³mo cumplir sin errores.",
+    title: "Guía rápida VeriFactu",
+    description: "Qué exige la AEAT y cómo cumplir sin errores.",
   },
   {
     title: "Cierre mensual sin sorpresas",
     description: "Pasos para revisar ventas, gastos y beneficio.",
   },
   {
-    title: "Checklist de facturaciÃ³n",
+    title: "Checklist de facturación",
     description: "Los 10 puntos que evitan rechazos y sanciones.",
   },
 ];
@@ -28,7 +28,7 @@ export default function GuiasPage() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-4">
           <Link
-            href="/"
+            href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
             â† Volver al inicio
@@ -38,7 +38,7 @@ export default function GuiasPage() {
 
       <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="max-w-2xl">
-        <h1 className="text-4xl font-bold text-[#002060]">GuÃ­as y webinars</h1>
+        <h1 className="text-4xl font-bold text-[#002060]">Guías y webinars</h1>
         <p className="mt-4 text-lg text-slate-600">
           Recursos claros, en lenguaje llano, para que cumplas VeriFactu y
           tengas control real de tu negocio.
@@ -56,7 +56,7 @@ export default function GuiasPage() {
               </h2>
               <p className="mt-3 text-sm text-slate-600">{item.description}</p>
               <div className="mt-6 text-sm text-[#0060F0] hover:text-[#0080F0]">
-                PrÃ³ximamente
+                Próximamente
               </div>
             </div>
           ))}

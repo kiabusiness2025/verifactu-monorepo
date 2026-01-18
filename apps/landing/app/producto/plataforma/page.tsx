@@ -16,7 +16,7 @@ const modules = [
   },
   {
     title: "Cumplimiento VeriFactu",
-    description: "EmisiÃ³n y trazabilidad conforme a la normativa.",
+    description: "Emisión y trazabilidad conforme a la normativa.",
     icon: FileCheck2,
   },
   {
@@ -32,7 +32,7 @@ export default function PlataformaPage() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-4">
           <Link
-            href="/"
+            href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
             â† Volver al inicio
@@ -44,7 +44,7 @@ export default function PlataformaPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
             <h1 className="text-4xl font-bold text-[#002060] sm:text-5xl">
-              La plataforma que simplifica tu gestiÃ³n diaria
+              La plataforma que simplifica tu gestión diaria
             </h1>
             <p className="mt-4 text-lg text-slate-600">
               Todo lo esencial para emitir, controlar y cumplir, sin pantallas
@@ -94,7 +94,7 @@ export default function PlataformaPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-3xl border border-[#0060F0]/15 bg-gradient-to-br from-sky-50/70 to-white p-10">
             <h2 className="text-2xl font-semibold text-[#002060]">
-              DiseÃ±ada para equipos pequeÃ±os
+              Diseñada para equipos pequeños
             </h2>
             <p className="mt-4 text-slate-600">
               Pensada para PYMEs que quieren facturar y cumplir sin contratar
