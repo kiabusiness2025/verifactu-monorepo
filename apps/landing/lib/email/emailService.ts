@@ -12,6 +12,11 @@ import { TeamInviteEmailTemplate } from '../../emails/TeamInviteEmail';
 // Importar Resend
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
+// Alias de emails según contexto
+const EMAIL_FROM_SUPPORT = process.env.RESEND_FROM_SUPPORT || 'Verifactu Business <soporte@verifactu.business>';
+const EMAIL_FROM_NOREPLY = process.env.RESEND_FROM_NOREPLY || 'Verifactu Business <noreply@verifactu.business>';
+const EMAIL_FROM_INFO = process.env.RESEND_FROM_INFO || 'Verifactu Business <info@verifactu.business>';
+
 export interface SendEmailParams {
   to: string;
   subject: string;
@@ -47,7 +52,7 @@ async function sendEmail({ to, subject, html }: SendEmailParams) {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Verifactu Business <soporte@verifactu.business>',
+        from: EMAIL_FROM_NOREPLY,
         to,
         subject,
         html,

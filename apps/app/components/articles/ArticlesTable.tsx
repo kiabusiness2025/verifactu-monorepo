@@ -27,7 +27,7 @@ export function ArticlesTable({
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   if (loading && articles.length === 0) {
-    return <div className="text-center py-8">Cargando articulos......</div>;
+    return <div className="text-center py-8">Cargando articulos...</div>;
   }
 
   return (
@@ -36,7 +36,7 @@ export function ArticlesTable({
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Código</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Codigo</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Categoria</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Precio</th>

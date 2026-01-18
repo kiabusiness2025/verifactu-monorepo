@@ -11,17 +11,31 @@ Sistema completo de envío de correos transaccionales usando **Resend** con plan
 ```bash
 # .env.local (landing/app)
 RESEND_API_KEY=re_BK6kKjAd_34XYNfwf6qkHC7FrQQb64gKA
-RESEND_FROM=Verifactu Business <soporte@verifactu.business>
 
-# Administradores
+# Alias de email (via Google Cloud)
+RESEND_FROM_SUPPORT=Verifactu Business <soporte@verifactu.business>
+RESEND_FROM_NOREPLY=Verifactu Business <noreply@verifactu.business>
+RESEND_FROM_INFO=Verifactu Business <info@verifactu.business>
+
+# Administración
 ADMIN_EMAILS=kiabusiness2025@gmail.com,soporte@verifactu.business
+ADMIN_NOTIFICATION_EMAIL=kiabusiness2025@gmail.com
+
+# Isaak para auto-respuesta
+OPENAI_API_KEY=sk-xxx
+ISAAK_SUPPORT_ENABLED=true
 ```
 
-### Dominios de Email
+### Dominios y Alias de Email
 
-- **Envío**: `soporte@verifactu.business` (principal)
-- **Admin**: `kiabusiness2025@gmail.com`
-- **Reply-to**: `soporte@verifactu.business`
+| Alias | Uso | Descripción |
+|-------|-----|-------------|
+| `soporte@verifactu.business` | **Principal** | Soporte técnico y comunicación bidireccional |
+| `noreply@verifactu.business` | **Autenticación** | Emails de login, verificación, reset contraseña |
+| `info@verifactu.business` | **Informativo** | Newsletter, comunicaciones generales |
+| `kiabusiness2025@gmail.com` | **Admin** | Notificaciones internas y escalamiento |
+
+**Gestión**: Alias creados y gestionados vía CLI de Google Cloud
 
 ---
 
@@ -320,7 +334,166 @@ Registro de usuarios y comunicaciones generales
 
 ---
 
-## 📝 Próximos Pasos
+## 🤖 Sistema de Auto-Respuesta con Isaak
+
+### Flujo Completo
+
+```
+Email → soporte@verifactu.business
+         ↓
+Webhook Resend → /api/webhooks/resend/inbound
+         ↓
+Isaak analiza (OpenAI GPT-4)
+         ↓
+   ┌─────────┴──────────┐
+   ↓                    ↓
+Auto-responder      Escalar a humano
+   ↓                    ↓
+Responde usuario    Notifica admin
+   ↓                    ↓
+Log al admin        kiabusiness2025@gmail.com
+```
+
+### Categorías de Clasificación
+
+| Categoría | Auto-respuesta | Escala a humano |
+|-----------|----------------|-----------------|
+| `technical` | ✅ Tutoriales y guías | ❌ Bugs complejos |
+| `billing` | ✅ Info de planes | ⚠️ Reembolsos |
+| `feature_request` | ✅ Agradece y confirma | ✅ Notifica para roadmap |
+| `bug_report` | ⚠️ Pide detalles | ✅ Si es crítico |
+| `general` | ✅ FAQ y ayuda básica | ❌ Casos complejos |
+| `urgent` | ❌ Siempre escala | ✅ Prioridad alta |
+| `spam` | 🚫 Filtrado automático | ❌ No se procesa |
+
+### Prioridades
+
+- **Critical** 🔴: Notificación inmediata, respuesta manual obligatoria
+- **High** 🟠: Notificación con prioridad, revisar en 1h
+- **Medium** 🟡: Isaak responde, admin recibe log diario
+- **Low** 🔵: Auto-respuesta completa, log semanal
+
+### Configuración del Webhook
+
+#### 1. En Resend Dashboard
+
+```
+Webhook URL: https://verifactu.business/api/webhooks/resend/inbound
+Events: email.received
+Domain: verifactu.business
+Secret: [generar y guardar en .env]
+```
+
+#### 2. Variables de Entorno
+
+```bash
+RESEND_WEBHOOK_SECRET=whsec_xxx
+OPENAI_API_KEY=sk-xxx
+ISAAK_SUPPORT_ENABLED=true
+ADMIN_NOTIFICATION_EMAIL=kiabusiness2025@gmail.com
+```
+
+#### 3. Probar Webhook
+
+```bash
+curl -X POST https://verifactu.business/api/webhooks/resend/inbound \
+  -H "Content-Type: application/json" \
+  -H "resend-signature: xxx" \
+  -d '{
+    "from": "test@ejemplo.com",
+    "to": "soporte@verifactu.business",
+    "subject": "¿Cómo funciona VeriFactu?",
+    "text": "Hola, necesito ayuda para entender cómo usar la plataforma."
+  }'
+```
+
+### Respuestas Automáticas de Isaak
+
+#### Ejemplo 1: Pregunta Técnica Simple
+**Email entrante**:
+```
+De: cliente@empresa.com
+Asunto: ¿Cómo generar una factura?
+```
+
+**Isaak responde**:
+```
+Hola,
+
+Para generar una factura en Verifactu:
+
+1. Ve a "Facturas" en el menú lateral
+2. Click en "Nueva Factura"
+3. Completa los datos del cliente
+4. Añade productos/servicios
+5. Click en "Guardar y Enviar"
+
+La factura se genera automáticamente con QR VeriFactu.
+
+¿Necesitas más ayuda? Responde a este email.
+
+Saludos,
+Isaak - Verifactu Business
+```
+
+#### Ejemplo 2: Caso Urgente
+**Email entrante**:
+```
+De: cliente@empresa.com
+Asunto: URGENTE: No puedo acceder a mi cuenta
+```
+
+**Isaak NO responde, escala a humano**:
+- ✅ Envía ACK al cliente: "Recibimos tu mensaje urgente..."
+- ✅ Notifica a `kiabusiness2025@gmail.com` con prioridad CRITICAL
+- ✅ Admin recibe email con botón "Responder Ahora"
+
+### Notificaciones al Admin
+
+Cuando Isaak detecta que necesita intervención humana, envía un email detallado:
+
+```
+Para: kiabusiness2025@gmail.com
+Asunto: [HIGH] Email de Soporte: No puedo acceder
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟠 Email Requiere Atención
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+De: cliente@empresa.com
+Asunto: No puedo acceder a mi cuenta
+Categoría: technical
+Prioridad: HIGH
+Confianza: 95%
+
+Mensaje:
+─────────────────────────────
+Hola, he intentado acceder varias veces
+pero me da error. Es urgente porque tengo
+que enviar facturas hoy.
+─────────────────────────────
+
+[Responder Ahora] ← Botón
+```
+
+---
+
+## 📊 Dashboard de Soporte (Futuro)
+
+Panel en Admin para gestionar emails:
+
+```
+/dashboard/admin/support
+```
+
+Características:
+- 📥 Bandeja de entrada de emails clasificados
+- 🤖 Ver respuestas de Isaak
+- ✅ Marcar como resuelto
+- 📈 Estadísticas de auto-respuesta
+- 🎯 Entrenar a Isaak con respuestas mejores
+
+---
 
 - [ ] Configurar webhooks de Resend para tracking
 - [ ] Añadir analytics de apertura/clicks
