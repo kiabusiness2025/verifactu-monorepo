@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -9,9 +9,7 @@ import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
 
 const ALLOWED_TABS = new Set(['profile', 'general', 'billing', 'integrations', 'team', 'isaak']);
 
-export const dynamic = 'force-dynamic';
-
-export default function SettingsPage() {
+function SettingsContent() {
   const sessionData = useSession();
   const session = sessionData?.data;
   const [activeTenantId, setActiveTenantId] = useState<string>("");
@@ -656,5 +654,13 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-600">Cargando...</div></div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }
