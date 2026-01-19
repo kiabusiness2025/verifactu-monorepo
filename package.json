@@ -1,76 +1,79 @@
 {
-    "name": "verifactu-monorepo",
-    "private": true,
-    "scripts": {
-        "dev": "turbo run dev --parallel",
-        "build": "turbo run build",
-        "lint": "turbo run lint",
-        "lint:fix": "turbo run lint -- --fix",
-        "format": "prettier --write 'apps/**/*.{ts,tsx,js,jsx,json,md}'",
-        "format:check": "prettier --check 'apps/**/*.{ts,tsx,js,jsx,json,md}'",
-        "test": "turbo run test",
-        "test:watch": "turbo run test -- --watch",
-        "build-app-only": "npm --prefix apps/app run build",
-        "typecheck": "bash scripts/typecheck-all.sh",
-        "typecheck:app": "pnpm --filter verifactu-app exec tsc --noEmit",
-        "typecheck:landing": "pnpm --filter verifactu-landing exec tsc --noEmit",
-        "precommit": "bash scripts/pre-commit.sh",
-        "install-hooks": "cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
-        "pre-deploy": "node scripts/pre-deploy-check.js",
-        "auto-fix": "node scripts/auto-fix-typescript.js",
-        "validate": "pnpm run typecheck && pnpm run lint && pnpm run build",
-        "validate:all": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test && pnpm run build",
-        "db:migrate:emails": "pwsh scripts/migrate-emails.ps1",
-        "docker:up": "docker-compose up -d",
-        "docker:down": "docker-compose down",
-        "docker:logs": "docker-compose logs -f",
-        "debug:app": "NODE_OPTIONS=--inspect-brk pnpm dev",
-        "debug:tests": "NODE_OPTIONS=--inspect-brk pnpm test -- --watch"
+  "name": "verifactu-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
+    "format": "prettier --write 'apps/**/*.{ts,tsx,js,jsx,json,md}'",
+    "format:check": "prettier --check 'apps/**/*.{ts,tsx,js,jsx,json,md}'",
+    "test": "turbo run test",
+    "test:watch": "turbo run test -- --watch",
+    "build-app-only": "npm --prefix apps/app run build",
+    "typecheck": "bash scripts/typecheck-all.sh",
+    "typecheck:app": "pnpm --filter verifactu-app exec tsc --noEmit",
+    "typecheck:landing": "pnpm --filter verifactu-landing exec tsc --noEmit",
+    "precommit": "bash scripts/pre-commit.sh",
+    "install-hooks": "cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
+    "pre-deploy": "node scripts/pre-deploy-check.js",
+    "auto-fix": "node scripts/auto-fix-typescript.js",
+    "validate": "pnpm run typecheck && pnpm run lint && pnpm run build",
+    "validate:all": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test && pnpm run build",
+    "db:migrate:emails": "pwsh scripts/migrate-emails.ps1",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "debug:app": "NODE_OPTIONS=--inspect-brk pnpm dev",
+    "debug:tests": "NODE_OPTIONS=--inspect-brk pnpm test -- --watch"
+  },
+  "devDependencies": {
+    "@next/env": "^16.1.1",
+    "@testing-library/jest-dom": "^6.9.0",
+    "@testing-library/react": "^16.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint": "^8.57.0",
+    "husky": "^9.1.7",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "lint-staged": "^16.2.7",
+    "turbo": "^2.7.2"
+  },
+  "dependencies": {
+    "chai": "^6.2.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-config-turbo": "^2.6.3",
+    "mocha": "^11.7.5",
+    "pg": "^8.16.3",
+    "supertest": "^7.1.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "qs": "^6.14.1",
+      "@types/react": "18.3.27",
+      "@types/react-dom": "18.3.7"
     },
-    "devDependencies": {
-        "@next/env": "^16.1.1",
-        "@testing-library/jest-dom": "^6.9.0",
-        "@testing-library/react": "^16.1.0",
-        "@typescript-eslint/eslint-plugin": "^8.15.0",
-        "@typescript-eslint/parser": "^8.15.0",
-        "eslint": "^8.57.0",
-        "husky": "^9.1.7",
-        "jest": "^30.2.0",
-        "jest-environment-jsdom": "^30.2.0",
-        "lint-staged": "^16.2.7",
-        "turbo": "^2.7.2"
-    },
-    "dependencies": {
-        "chai": "^6.2.1",
-        "eslint-config-prettier": "^10.1.8",
-        "eslint-config-turbo": "^2.6.3",
-        "mocha": "^11.7.5",
-        "pg": "^8.16.3",
-        "supertest": "^7.1.4"
-    },
-    "pnpm": {
-        "overrides": {
-            "qs": "^6.14.1",
-            "@types/react": "18.3.27",
-            "@types/react-dom": "18.3.7"
-        },
-        "onlyBuiltDependencies": [
-            "@firebase/util",
-            "bcrypt",
-            "protobufjs",
-            "unrs-resolver",
-            "prisma",
-            "@prisma/engines",
-            "@prisma/client"
-        ],
-        "ignoredBuiltDependencies": [
-            "@swc/core",
-            "esbuild",
-            "sharp"
-        ]
-    },
-    "engines": {
-        "node": ">=18.18.0 <21"
-    },
-    "packageManager": "pnpm@10.27.0"
+    "onlyBuiltDependencies": [
+      "@firebase/util",
+      "bcrypt",
+      "protobufjs",
+      "unrs-resolver",
+      "prisma",
+      "@prisma/engines",
+      "@prisma/client"
+    ],
+    "ignoredBuiltDependencies": [
+      "@swc/core",
+      "esbuild",
+      "sharp"
+    ]
+  },
+  "engines": {
+    "node": ">=18.18.0 <21"
+  }
 }
