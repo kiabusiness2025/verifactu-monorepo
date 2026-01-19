@@ -1,7 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npx pnpm@10.27.0 install --frozen-lockfile",
-  "buildCommand": "npx pnpm@10.27.0 -r --filter=verifactu-app build",
+  "buildCommand": "npx pnpm@10.27.0 --filter=verifactu-app build",
   "outputDirectory": "apps/app/.next",
-  "framework": null
+  "framework": null,
+  "root": "apps/app"
 }
