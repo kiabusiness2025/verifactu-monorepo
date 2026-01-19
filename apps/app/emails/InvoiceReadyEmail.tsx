@@ -1,4 +1,4 @@
-import { EmailContainer, EmailHeader, CTAButton } from '../landing/emails/EmailHeader';
+import { CTAButton, EmailContainer, EmailHeader } from '../../landing/emails/EmailHeader';
 
 interface InvoiceReadyEmailProps {
   userName: string;
@@ -42,7 +42,8 @@ export function InvoiceReadyEmailTemplate({
             lineHeight: '1.6',
           }}
         >
-          Hola <strong>{userName}</strong>, tu factura ha sido generada y está disponible para descargar.
+          Hola <strong>{userName}</strong>, tu factura ha sido generada y está disponible para
+          descargar.
         </p>
       </div>
 
@@ -70,7 +71,9 @@ export function InvoiceReadyEmailTemplate({
             </tr>
             <tr>
               <td style={{ padding: '8px 0', color: '#6b7c8a' }}>Importe:</td>
-              <td style={{ padding: '8px 0', color: '#0d2b4a', fontWeight: '600', fontSize: '18px' }}>
+              <td
+                style={{ padding: '8px 0', color: '#0d2b4a', fontWeight: '600', fontSize: '18px' }}
+              >
                 {invoiceAmount}
               </td>
             </tr>
@@ -97,7 +100,8 @@ export function InvoiceReadyEmailTemplate({
             lineHeight: '1.6',
           }}
         >
-          💡 <strong>Recordatorio:</strong> Esta factura se almacena automáticamente en tu dashboard y cumple con todas las normativas fiscales vigentes.
+          💡 <strong>Recordatorio:</strong> Esta factura se almacena automáticamente en tu dashboard
+          y cumple con todas las normativas fiscales vigentes.
         </p>
       </div>
     </EmailContainer>

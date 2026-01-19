@@ -1,4 +1,4 @@
-import { EmailContainer, EmailHeader, CTAButton } from '../landing/emails/EmailHeader';
+import { CTAButton, EmailContainer, EmailHeader } from '../../landing/emails/EmailHeader';
 
 interface SupportTicketEmailProps {
   userName: string;

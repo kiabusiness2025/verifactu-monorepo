@@ -7,12 +7,23 @@ type CreateCompanyModalProps = {
   onClose: () => void;
 };
 
+type EinformaItem = {
+  name: string;
+  nif?: string;
+  province?: string;
+  id?: string;
+};
+
 export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps) {
   const [name, setName] = useState("");
   const [nif, setNif] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<EinformaItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
   useEffect(() => {
     if (!isOpen) {
@@ -21,8 +32,56 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
       setError("");
       setSuccess("");
       setIsSubmitting(false);
+      setSearchQuery("");
+      setSearchResults([]);
+      setIsSearching(false);
+      setSearchError("");
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const query = searchQuery.trim();
+    if (query.length < 3) {
+      setSearchResults([]);
+      setSearchError("");
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      setIsSearching(true);
+      setSearchError("");
+      try {
+        const res = await fetch(`/api/einforma/search?q=${encodeURIComponent(query)}`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error || "No se pudo consultar eInforma");
+        }
+        setSearchResults(Array.isArray(data?.items) ? data.items : []);
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        setSearchError("No se pudo consultar eInforma. Revisa la configuracion.");
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [isOpen, searchQuery]);
+
+  const handlePickCompany = (item: EinformaItem) => {
+    setName(item.name || "");
+    setNif(item.nif || "");
+    setSearchQuery(item.name || "");
+    setSearchResults([]);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -90,6 +149,44 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
         </p>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Buscar empresa (eInforma)
+            </label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Nombre o NIF"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            />
+            <div className="mt-2 text-xs text-slate-500">
+              Escribe al menos 3 caracteres para sugerencias automáticas.
+            </div>
+            {isSearching && (
+              <div className="mt-2 text-xs text-slate-500">Buscando en eInforma...</div>
+            )}
+            {searchError && (
+              <div className="mt-2 text-xs text-red-600">{searchError}</div>
+            )}
+            {searchResults.length > 0 && (
+              <div className="mt-3 max-h-48 overflow-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+                {searchResults.map((item) => (
+                  <button
+                    key={`${item.nif || item.id || item.name}`}
+                    type="button"
+                    onClick={() => handlePickCompany(item)}
+                    className="flex w-full flex-col gap-1 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                  >
+                    <span className="font-medium text-slate-900">{item.name || "Empresa"}</span>
+                    <span className="text-xs text-slate-500">
+                      {(item.nif || "NIF no disponible") + (item.province ? ` · ${item.province}` : "")}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Nombre *</label>
             <input

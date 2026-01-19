@@ -1,25 +1,21 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 // Force dynamic rendering for admin routes
 export const dynamic = 'force-dynamic';
 
 const adminNav = [
-  { label: "Resumen", href: "/dashboard/admin" },
-  { label: "Usuarios", href: "/dashboard/admin/users" },
-  { label: "Empresas", href: "/dashboard/admin/companies" },
-  { label: "Contabilidad", href: "/dashboard/admin/accounting" },
-  { label: "Resend", href: "/dashboard/admin/resend" },
+  { label: 'Resumen', href: '/dashboard/admin' },
+  { label: 'Usuarios', href: '/dashboard/admin/users' },
+  { label: 'Empresas', href: '/dashboard/admin/companies' },
+  { label: 'Contabilidad', href: '/dashboard/admin/accounting' },
+  { label: 'Resend', href: '/dashboard/admin/resend' },
 ];
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
@@ -38,7 +34,7 @@ export default function AdminLayout({
         <nav className="mt-4 space-y-1">
           {adminNav.map((item) => {
             const isActive =
-              item.href === "/dashboard/admin"
+              item.href === '/dashboard/admin'
                 ? pathname === item.href
                 : pathname?.startsWith(item.href);
             return (
@@ -46,9 +42,7 @@ export default function AdminLayout({
                 key={item.href}
                 href={item.href}
                 className={`block rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  isActive
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-700 hover:bg-slate-100"
+                  isActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'
                 }`}
               >
                 {item.label}
@@ -81,7 +75,7 @@ export default function AdminLayout({
             <div className="flex items-center gap-2 overflow-x-auto">
               {adminNav.map((item) => {
                 const isActive =
-                  item.href === "/dashboard/admin"
+                  item.href === '/dashboard/admin'
                     ? pathname === item.href
                     : pathname?.startsWith(item.href);
                 return (
@@ -89,9 +83,7 @@ export default function AdminLayout({
                     key={item.href}
                     href={item.href}
                     className={`whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                      isActive
-                        ? "bg-[#0b6cfb] text-white"
-                        : "text-slate-600 hover:bg-slate-100"
+                      isActive ? 'bg-[#0b6cfb] text-white' : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
                     {item.label}

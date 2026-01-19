@@ -5,12 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useIsaakUI } from "@/context/IsaakUIContext";
-import { useIsaakContext } from "@/hooks/useIsaakContext";
 import { useLogout } from "@/hooks/useLogout";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreateCompanyModal } from "@/context/CreateCompanyModalContext";
 import { LayoutGrid, Shield, Plus } from "lucide-react";
-import { getUserFirstName } from "@/lib/getUserName";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 type TopbarProps = {
   onToggleSidebar: () => void;
@@ -38,8 +37,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   const createCompanyModal = useCreateCompanyModal();
   const { setCompany } = useIsaakUI();
   const { user: firebaseUser, signOut: firebaseSignOut } = useAuth();
-  const userName = getUserFirstName(firebaseUser);
-  const { greeting } = useIsaakContext(userName);
+  const { profile } = useUserProfile();
   const { logout, isLoggingOut } = useLogout();
   const [tenants, setTenants] = useState<TenantOption[]>([]);
   const [activeTenantId, setActiveTenantId] = useState("");
@@ -48,6 +46,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   const [isSwitching, setIsSwitching] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDemoTenant, setIsDemoTenant] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const availablePanels: PanelOption[] = [
@@ -114,6 +113,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
       setCompany(demoTenant.name);
       setTenantLogoURL(null);
       setIsLoadingTenants(false);
+      setIsDemoTenant(true);
       return;
     }
     let mounted = true;
@@ -131,6 +131,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
           typeof data.preferredTenantId === "string"
             ? data.preferredTenantId
             : "";
+        const hasTenants = items.length > 0;
         const initialId = preferredId || items[0]?.id || "";
         const initialName =
           items.find((t: TenantOption) => t.id === initialId)?.name ||
@@ -138,12 +139,28 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
           "Empresa";
 
         if (mounted) {
-          setTenants(items);
-          setActiveTenantId(initialId);
-          setCompany(initialName);
-          // Cargar logo del tenant activo
-          if (initialId) {
-            loadTenantLogo(initialId);
+          if (!hasTenants) {
+            const demoTenant = { id: "demo", name: demoCompanyName };
+            setTenants([demoTenant]);
+            setActiveTenantId(demoTenant.id);
+            setCompany(demoTenant.name);
+            setTenantLogoURL(null);
+            setIsDemoTenant(true);
+            try {
+              localStorage.setItem("vf-data-mode", "demo");
+            } catch {}
+          } else {
+            setTenants(items);
+            setActiveTenantId(initialId);
+            setCompany(initialName);
+            setIsDemoTenant(false);
+            try {
+              localStorage.removeItem("vf-data-mode");
+            } catch {}
+            // Cargar logo del tenant activo
+            if (initialId) {
+              loadTenantLogo(initialId);
+            }
           }
         }
       } catch (error) {
@@ -151,6 +168,10 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
         if (mounted) {
           setTenants([]);
           setActiveTenantId("");
+          setIsDemoTenant(false);
+          try {
+            localStorage.removeItem("vf-data-mode");
+          } catch {}
         }
       } finally {
         if (mounted) setIsLoadingTenants(false);
@@ -163,7 +184,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   }, [demoCompanyName, isDemo, setCompany]);
 
   async function loadTenantLogo(tenantId: string) {
-    if (isDemo) return;
+    if (isDemo || isDemoTenant) return;
     try {
       const res = await fetch(`/api/tenant/logo?tenantId=${tenantId}`, {
         credentials: "include"
@@ -181,7 +202,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   }
 
   async function handleTenantChange(nextId: string) {
-    if (isDemo) return;
+    if (isDemo || isDemoTenant) return;
     if (!nextId || nextId === activeTenantId) return;
     setIsSwitching(true);
     try {
@@ -263,13 +284,12 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
 
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-sm font-semibold text-[#0b214a]">
-            <span>{greeting}</span>
             {currentPanel?.id === "admin" && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
                 Modo admin
               </span>
             )}
-            {isDemo && (
+            {(isDemo || isDemoTenant) && (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                 Modo demo
               </span>
@@ -285,17 +305,17 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
                   disabled={tenantSelectDisabled}
                   className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
                 >
-                  {tenantOptions.length === 0 ? (
-                    <option value="">Sin empresas</option>
-                  ) : (
-                    tenantOptions.map((tenant) => (
-                      <option key={tenant.id} value={tenant.id}>
-                        {tenant.name}
-                      </option>
-                    ))
-                  )}
-                </select>
-                {!isDemo && (
+                {tenantOptions.length === 0 ? (
+                  <option value="">Sin empresas</option>
+                ) : (
+                  tenantOptions.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>
+                      {tenant.name}
+                    </option>
+                  ))
+                )}
+              </select>
+              {!isDemo && (
                   <>
                     {handleCreateCompany ? (
                       <button
@@ -346,32 +366,32 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0b6cfb]/10 text-sm font-semibold text-[#0b6cfb] ring-1 ring-[#0b6cfb]/20 transition-colors hover:bg-[#0b6cfb]/20"
-                title={firebaseUser?.email || "Usuario"}
+                title={profile?.email || firebaseUser?.email || "Usuario"}
               >
-                {firebaseUser?.photoURL ? (
+                {profile?.photoURL || firebaseUser?.photoURL ? (
                   <Image
-                    src={firebaseUser.photoURL}
-                    alt={firebaseUser.displayName || "Usuario"}
+                    src={profile?.photoURL || firebaseUser?.photoURL || ""}
+                    alt={profile?.name || firebaseUser?.displayName || "Usuario"}
                     width={40}
                     height={40}
                     className="rounded-full"
                   />
                 ) : (
-                  firebaseUser?.email?.[0].toUpperCase() || "U"
+                  profile?.email?.[0].toUpperCase() || firebaseUser?.email?.[0].toUpperCase() || "U"
                 )}
               </button>
               {showUserMenu && (
                 <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-slate-200 bg-white shadow-lg">
                   <div className="py-2">
-                    {firebaseUser && (
+                    {(firebaseUser || profile) && (
                       <div className="px-4 py-3 border-b border-slate-200">
                         <p className="text-sm font-medium text-slate-900">
-                          {firebaseUser.displayName || "Usuario"}
+                          {profile?.name || firebaseUser?.displayName || "Usuario"}
                         </p>
                         <p className="text-xs text-slate-500 truncate">
-                          {firebaseUser.email}
+                          {profile?.email || firebaseUser?.email}
                         </p>
-                        {!firebaseUser.emailVerified && (
+                        {firebaseUser && !firebaseUser.emailVerified && (
                           <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded">
                             Email no verificado
                           </span>

@@ -1,4 +1,4 @@
-import { EmailContainer, EmailHeader, CTAButton } from '../landing/emails/EmailHeader';
+import { CTAButton, EmailContainer, EmailHeader } from '../../landing/emails/EmailHeader';
 
 interface PaymentReminderEmailProps {
   userName: string;
@@ -44,7 +44,8 @@ export function PaymentReminderEmailTemplate({
             lineHeight: '1.6',
           }}
         >
-          Hola <strong>{userName}</strong>, te recordamos que tienes un pago pendiente con <strong>{companyName}</strong>.
+          Hola <strong>{userName}</strong>, te recordamos que tienes un pago pendiente con{' '}
+          <strong>{companyName}</strong>.
         </p>
       </div>
 
@@ -88,7 +89,9 @@ export function PaymentReminderEmailTemplate({
             </tr>
             <tr>
               <td style={{ padding: '8px 0', color: '#6b7c8a' }}>Importe a pagar:</td>
-              <td style={{ padding: '8px 0', color: '#0d2b4a', fontWeight: '600', fontSize: '18px' }}>
+              <td
+                style={{ padding: '8px 0', color: '#0d2b4a', fontWeight: '600', fontSize: '18px' }}
+              >
                 {invoiceAmount}
               </td>
             </tr>

@@ -1,4 +1,4 @@
 export { InvoiceReadyEmailTemplate } from './InvoiceReadyEmail';
-export { PaymentReminderEmailTemplate } from './PaymentReminderEmail';
 export { MonthlyReportEmailTemplate } from './MonthlyReportEmail';
+export { PaymentReminderEmailTemplate } from './PaymentReminderEmail';
 export { SupportTicketEmailTemplate } from './SupportTicketEmail';

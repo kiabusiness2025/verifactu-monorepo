@@ -1,4 +1,4 @@
-import { EmailContainer, EmailHeader, CTAButton } from '../landing/emails/EmailHeader';
+import { CTAButton, EmailContainer, EmailHeader } from '../../landing/emails/EmailHeader';
 
 interface MonthlyReportEmailProps {
   userName: string;
@@ -73,26 +73,56 @@ export function MonthlyReportEmailTemplate({
         <table style={{ width: '100%', fontSize: '14px' }}>
           <tbody>
             <tr>
-              <td style={{ padding: '12px 0', color: '#6b7c8a', borderBottom: '1px solid #e1e4e8' }}>
+              <td
+                style={{ padding: '12px 0', color: '#6b7c8a', borderBottom: '1px solid #e1e4e8' }}
+              >
                 Facturas emitidas:
               </td>
-              <td style={{ padding: '12px 0', color: '#0d2b4a', fontWeight: '600', textAlign: 'right', borderBottom: '1px solid #e1e4e8' }}>
+              <td
+                style={{
+                  padding: '12px 0',
+                  color: '#0d2b4a',
+                  fontWeight: '600',
+                  textAlign: 'right',
+                  borderBottom: '1px solid #e1e4e8',
+                }}
+              >
                 {totalInvoices}
               </td>
             </tr>
             <tr>
-              <td style={{ padding: '12px 0', color: '#6b7c8a', borderBottom: '1px solid #e1e4e8' }}>
+              <td
+                style={{ padding: '12px 0', color: '#6b7c8a', borderBottom: '1px solid #e1e4e8' }}
+              >
                 Ingresos totales:
               </td>
-              <td style={{ padding: '12px 0', color: '#22c55e', fontWeight: '600', textAlign: 'right', borderBottom: '1px solid #e1e4e8' }}>
+              <td
+                style={{
+                  padding: '12px 0',
+                  color: '#22c55e',
+                  fontWeight: '600',
+                  textAlign: 'right',
+                  borderBottom: '1px solid #e1e4e8',
+                }}
+              >
                 {totalRevenue}
               </td>
             </tr>
             <tr>
-              <td style={{ padding: '12px 0', color: '#6b7c8a', borderBottom: '1px solid #e1e4e8' }}>
+              <td
+                style={{ padding: '12px 0', color: '#6b7c8a', borderBottom: '1px solid #e1e4e8' }}
+              >
                 Gastos totales:
               </td>
-              <td style={{ padding: '12px 0', color: '#ef4444', fontWeight: '600', textAlign: 'right', borderBottom: '1px solid #e1e4e8' }}>
+              <td
+                style={{
+                  padding: '12px 0',
+                  color: '#ef4444',
+                  fontWeight: '600',
+                  textAlign: 'right',
+                  borderBottom: '1px solid #e1e4e8',
+                }}
+              >
                 {totalExpenses}
               </td>
             </tr>
@@ -100,7 +130,15 @@ export function MonthlyReportEmailTemplate({
               <td style={{ padding: '12px 0', color: '#0d2b4a', fontWeight: '700' }}>
                 Beneficio neto:
               </td>
-              <td style={{ padding: '12px 0', color: '#0d2b4a', fontWeight: '700', fontSize: '18px', textAlign: 'right' }}>
+              <td
+                style={{
+                  padding: '12px 0',
+                  color: '#0d2b4a',
+                  fontWeight: '700',
+                  fontSize: '18px',
+                  textAlign: 'right',
+                }}
+              >
                 {netProfit}
               </td>
             </tr>
@@ -127,7 +165,8 @@ export function MonthlyReportEmailTemplate({
             lineHeight: '1.6',
           }}
         >
-          💡 <strong>Consejo:</strong> Revisa tus gastos recurrentes y optimiza tus ingresos consultando con Isaak, tu asistente financiero.
+          💡 <strong>Consejo:</strong> Revisa tus gastos recurrentes y optimiza tus ingresos
+          consultando con Isaak, tu asistente financiero.
         </p>
       </div>
     </EmailContainer>

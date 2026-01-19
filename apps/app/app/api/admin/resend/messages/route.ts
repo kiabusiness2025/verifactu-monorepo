@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import { NextRequest, NextResponse } from 'next/server';
+import { Resend } from 'resend';
 
 // Get or list received messages
 export async function POST(req: NextRequest) {
@@ -8,10 +8,7 @@ export async function POST(req: NextRequest) {
     const { apiKey, status } = body;
 
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "API key required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'API key required' }, { status: 400 });
     }
 
     const resend = new Resend(apiKey);
@@ -20,15 +17,12 @@ export async function POST(req: NextRequest) {
     const { data, error } = await resend.emails.receive.list();
 
     if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     // Filter by status if provided
     let messages = data || [];
-    if (status && status !== "all") {
+    if (status && status !== 'all') {
       messages = messages.filter((msg: any) => msg.status === status);
     }
 
@@ -41,11 +35,11 @@ export async function POST(req: NextRequest) {
       bcc: msg.bcc || [],
       replyTo: msg.reply_to,
       subject: msg.subject,
-      html: msg.html || "",
-      text: msg.text || "",
+      html: msg.html || '',
+      text: msg.text || '',
       tags: msg.tags || [],
       createdAt: msg.created_at,
-      status: msg.status || "delivered",
+      status: msg.status || 'delivered',
       opens: msg.opens || 0,
       clicks: msg.clicks || 0,
     }));
@@ -55,9 +49,9 @@ export async function POST(req: NextRequest) {
       total: formattedMessages.length,
     });
   } catch (error) {
-    console.error("Error:", error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Error fetching messages" },
+      { error: error instanceof Error ? error.message : 'Error fetching messages' },
       { status: 500 }
     );
   }
@@ -67,14 +61,11 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const apiKey = searchParams.get("apiKey");
-    const emailId = searchParams.get("emailId");
+    const apiKey = searchParams.get('apiKey');
+    const emailId = searchParams.get('emailId');
 
     if (!apiKey || !emailId) {
-      return NextResponse.json(
-        { error: "API key and emailId required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'API key and emailId required' }, { status: 400 });
     }
 
     const resend = new Resend(apiKey);
@@ -83,10 +74,7 @@ export async function GET(req: NextRequest) {
     const { data, error } = await resend.emails.receive.get(emailId);
 
     if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     // Get attachments if any
@@ -107,9 +95,9 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error:", error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Error" },
+      { error: error instanceof Error ? error.message : 'Error' },
       { status: 500 }
     );
   }
@@ -122,22 +110,19 @@ export async function DELETE(req: NextRequest) {
     const { apiKey, messageId } = body;
 
     if (!apiKey || !messageId) {
-      return NextResponse.json(
-        { error: "API key and messageId required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'API key and messageId required' }, { status: 400 });
     }
 
     // Note: Resend doesn't have a delete API for received emails
     // This is a placeholder - you'd typically mark as archived in your database
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      message: "Message marked for deletion (stored locally)" 
+      message: 'Message marked for deletion (stored locally)',
     });
   } catch (error) {
-    console.error("Error:", error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Error" },
+      { error: error instanceof Error ? error.message : 'Error' },
       { status: 500 }
     );
   }
