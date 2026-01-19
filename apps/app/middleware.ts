@@ -22,6 +22,13 @@ async function getSessionPayload(req: NextRequest): Promise<SessionPayload | nul
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Redirect /dashboard/admin -> /dashboard/admin-dashboard (Vercel compatibility)
+  if (pathname === "/dashboard/admin") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/dashboard/admin-dashboard";
+    return NextResponse.redirect(url, { status: 307 });
+  }
+
   // Redirect /dashboard/admin/tenants -> /dashboard/admin/companies
   if (pathname === "/dashboard/admin/tenants" || pathname.startsWith("/dashboard/admin/tenants/")) {
     const newPath = pathname.replace("/dashboard/admin/tenants", "/dashboard/admin/companies");
