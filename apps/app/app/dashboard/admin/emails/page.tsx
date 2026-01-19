@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -9,11 +9,25 @@ import {
   Archive,
   RefreshCw,
   Send,
-  FlaskConical,
   Inbox,
   X,
+  Plus,
+  Settings,
+  HelpCircle,
 } from "lucide-react";
 
+          {/* Help section */}
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex gap-3">
+              <HelpCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-900">
+                <p className="font-semibold mb-1">Informacion</p>
+                <p className="text-blue-700">
+                  Inserta emails de prueba para poblar la bandeja y prueba envÃ­os reales con todas las opciones de Resend. Todos los correos se envÃ­an siempre desde <strong>Verifactu Business</strong> usando la cuenta soporte@verifactu.business.
+                </p>
+              </div>
+            </div>
+          </div>
 interface Email {
   id: string;
   from: string;
@@ -34,7 +48,7 @@ interface EmailsData {
 }
 
 export default function AdminEmailsPage() {
-  const [activeTab, setActiveTab] = useState<"inbox" | "testing">("inbox");
+  const [activeTab, setActiveTab] = useState<"inbox" | "compose" | "settings">("inbox");
   
   // Inbox state
   const [emails, setEmails] = useState<Email[]>([]);
@@ -43,17 +57,105 @@ export default function AdminEmailsPage() {
   const [filter, setFilter] = useState<"all" | "pending" | "responded">("all");
   const [stats, setStats] = useState({ total: 0, pending: 0 });
 
-  // Testing state
-  const [testEmail, setTestEmail] = useState("expertestudiospro@gmail.com");
-  const [emailType, setEmailType] = useState("all");
-  const [sending, setSending] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  // Reply state
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [replySubject, setReplySubject] = useState("");
+  const [replyMessage, setReplyMessage] = useState("");
+  const [replySending, setReplySending] = useState(false);
+  const [replyError, setReplyError] = useState<string | null>(null);
+  const [replySuccess, setReplySuccess] = useState(false);
+
+  // Compose state (new email)
+  const [composeFrom, setComposeFrom] = useState("usuario@ejemplo.com");
+  const [composeName, setComposeName] = useState("Usuario de Prueba");
+  const [composeSubject, setComposeSubject] = useState("Pregunta sobre facturas");
+  const [composeMessage, setComposeMessage] = useState("Hola, tengo una pregunta sobre cÃ³mo validar mis facturas...");
+  const [composeSending, setComposeSending] = useState(false);
+  const [composeSuccess, setComposeSuccess] = useState(false);
+
+  // Real send (Resend full options)
+  const [sendTo, setSendTo] = useState("cliente@ejemplo.com");
+  const [sendCc, setSendCc] = useState("");
+  const [sendBcc, setSendBcc] = useState("");
+  const [sendReplyTo, setSendReplyTo] = useState("soporte@verifactu.business");
+  const [sendSubject, setSendSubject] = useState("ActualizaciÃ³n de tu factura");
+  const [sendText, setSendText] = useState("Hola, adjunto la actualizaciÃ³n de tu factura.");
+  const [sendHtml, setSendHtml] = useState("<p>Hola, adjunto la actualizaciÃ³n de tu factura.</p>");
+  const [sendTagsInput, setSendTagsInput] = useState("categoria:soporte\nproyecto:verifactu");
+  const [sendAttachmentsInput, setSendAttachmentsInput] = useState(`[
+  {"filename":"nota.txt","content":"Q29udGVuaWRvIGRlIGVqZW1wbG8u"}
+]`);
+  const [sendSending, setSendSending] = useState(false);
+  const [sendSuccess, setSendSuccess] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab === "inbox") {
       loadEmails();
     }
   }, [activeTab]);
+
+  async function sendReplyEmail() {
+    if (!selectedEmail || !replyMessage.trim()) return;
+
+    try {
+      setReplySending(true);
+      setReplyError(null);
+      setReplySuccess(false);
+
+      const response = await fetch("/api/admin/emails/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          originalEmailId: selectedEmail.id,
+          subject: replySubject || `Re: ${selectedEmail.subject}`,
+          message: replyMessage,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setReplyError(data.error || "Error al enviar la respuesta");
+        return;
+      }
+
+      setReplySuccess(true);
+      setReplyMessage("");
+      setReplySubject("");
+      
+      // Actualizar el estado del email en la UI
+      setEmails((prev) =>
+        prev.map((e) =>
+          e.id === selectedEmail.id ? { ...e, status: "responded" } : e
+        )
+      );
+      
+      if (selectedEmail) {
+        setSelectedEmail({ ...selectedEmail, status: "responded" });
+      }
+
+      // Cerrar modal despuÃ©s de 2 segundos
+      setTimeout(() => {
+        setShowReplyModal(false);
+        setReplySuccess(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Error sending reply:", error);
+      setReplyError("Error al enviar la respuesta. Intenta nuevamente.");
+    } finally {
+      setReplySending(false);
+    }
+  }
+
+  function openReplyModal() {
+    if (!selectedEmail) return;
+    setReplySubject(`Re: ${selectedEmail.subject}`);
+    setReplyMessage("");
+    setReplyError(null);
+    setReplySuccess(false);
+    setShowReplyModal(true);
+  }
 
   async function loadEmails() {
     try {
@@ -95,27 +197,133 @@ export default function AdminEmailsPage() {
     }
   }
 
-  async function sendTestEmail() {
+  async function insertTestEmail() {
     try {
-      setSending(true);
-      setResults(null);
+      setComposeSending(true);
+      setComposeSuccess(false);
 
-      const response = await fetch("/api/test/emails", {
+      const response = await fetch("/api/admin/emails/insert", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          testEmail,
-          emailType: emailType === "all" ? undefined : emailType,
+          from_email: composeFrom,
+          from_name: composeName,
+          to_email: "soporte@verifactu.business",
+          subject: composeSubject,
+          text_content: composeMessage,
+          priority: "normal",
         }),
       });
 
       const data = await response.json();
-      setResults(data);
+
+      if (!response.ok) {
+        alert("Error: " + (data.error || "No se pudo insertar el email"));
+        return;
+      }
+
+      setComposeSuccess(true);
+      await loadEmails();
+      
+      setComposeFrom("usuario@ejemplo.com");
+      setComposeName("Usuario de Prueba");
+      setComposeSubject("Pregunta sobre facturas");
+      setComposeMessage("Hola, tengo una pregunta...");
+
+      setTimeout(() => {
+        setActiveTab("inbox");
+      }, 1500);
     } catch (error) {
-      console.error("Error sending test email:", error);
-      setResults({ success: false, error: "Failed to send" });
+      console.error("Error inserting test email:", error);
+      alert("Error al insertar email de prueba");
     } finally {
-      setSending(false);
+      setComposeSending(false);
+    }
+  }
+
+  async function sendCustomEmail() {
+    try {
+      setSendSending(true);
+      setSendError(null);
+      setSendSuccess(false);
+
+      const toList = sendTo
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+      const ccList = sendCc
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+      const bccList = sendBcc
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+
+      if (toList.length === 0) {
+        setSendError('Agrega al menos un destinatario');
+        setSendSending(false);
+        return;
+      }
+
+      // Parse tags: formato clave:valor por lÃ­nea
+      const tags = sendTagsInput
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const [key, ...rest] = line.split(':');
+          return { name: key?.trim() || '', value: rest.join(':').trim() };
+        })
+        .filter((t) => t.name && t.value);
+
+      // Parse attachments JSON opcional
+      let attachments: Array<{ filename: string; content: string }> | undefined;
+      if (sendAttachmentsInput.trim()) {
+        try {
+          const parsed = JSON.parse(sendAttachmentsInput);
+          if (Array.isArray(parsed)) {
+            attachments = parsed
+              .filter((a) => a.filename && a.content)
+              .map((a) => ({ filename: a.filename, content: a.content }));
+          }
+        } catch (err) {
+          setSendError('Revisa el JSON de adjuntos');
+          setSendSending(false);
+          return;
+        }
+      }
+
+      const response = await fetch('/api/admin/emails/send/custom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: toList,
+          cc: ccList.length ? ccList : undefined,
+          bcc: bccList.length ? bccList : undefined,
+          replyTo: sendReplyTo || undefined,
+          subject: sendSubject,
+          text: sendText,
+          html: sendHtml,
+          tags: tags.length ? tags : undefined,
+          attachments,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setSendError(data.error || 'No se pudo enviar el correo');
+        return;
+      }
+
+      setSendSuccess(true);
+      setTimeout(() => setSendSuccess(false), 2000);
+    } catch (error) {
+      console.error('Error sending custom email:', error);
+      setSendError('Error al enviar el correo');
+    } finally {
+      setSendSending(false);
     }
   }
 
@@ -177,15 +385,26 @@ export default function AdminEmailsPage() {
             Bandeja de entrada
           </button>
           <button
-            onClick={() => setActiveTab("testing")}
+            onClick={() => setActiveTab("compose")}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              activeTab === "testing"
-                ? "bg-orange-500 text-white"
+              activeTab === "compose"
+                ? "bg-emerald-600 text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
           >
-            <FlaskConical className="h-4 w-4" />
-            Testing
+            <Send className="h-4 w-4" />
+            Enviar correo
+          </button>
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+              activeTab === "settings"
+                ? "bg-purple-600 text-white"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            <Settings className="h-4 w-4" />
+            ConfiguraciÃ³n
           </button>
         </div>
 
@@ -294,7 +513,7 @@ export default function AdminEmailsPage() {
                   <p className="mt-2 text-sm font-semibold text-slate-900">
                     No hay emails {filter !== "all" && filter}
                   </p>
-                  <p className="text-xs text-slate-500">Los nuevos mensajes aparecerán aquí</p>
+                  <p className="text-xs text-slate-500">Los nuevos mensajes aparecerÃ¡n aquÃ­</p>
                 </div>
               ) : (
                 filteredEmails.map((email) => (
@@ -316,9 +535,9 @@ export default function AdminEmailsPage() {
                               email.priority
                             )}`}
                           >
-                            {email.priority === "high" && "🔴"}
-                            {email.priority === "normal" && "🔵"}
-                            {email.priority === "low" && "⚪"}
+                            {email.priority === "high" && "ðŸ”´"}
+                            {email.priority === "normal" && "ðŸ”µ"}
+                            {email.priority === "low" && "âšª"}
                           </span>
                         </div>
                         <h3 className="font-semibold text-slate-900 truncate">{email.subject}</h3>
@@ -354,9 +573,9 @@ export default function AdminEmailsPage() {
                           selectedEmail.priority
                         )}`}
                       >
-                        {selectedEmail.priority === "high" && "🔴 Alta"}
-                        {selectedEmail.priority === "normal" && "🔵 Normal"}
-                        {selectedEmail.priority === "low" && "⚪ Baja"}
+                        {selectedEmail.priority === "high" && "ðŸ”´ Alta"}
+                        {selectedEmail.priority === "normal" && "ðŸ”µ Normal"}
+                        {selectedEmail.priority === "low" && "âšª Baja"}
                       </span>
                     </div>
 
@@ -396,14 +615,14 @@ export default function AdminEmailsPage() {
                     </button>
                   </div>
 
-                  {/* Reply Button */}
-                  <a
-                    href={`mailto:${selectedEmail.from}?subject=Re: ${selectedEmail.subject}`}
-                    className="block w-full rounded-lg bg-[#0b6cfb] px-4 py-3 text-center text-sm font-semibold text-white hover:bg-[#0a5be0]"
+                  {/* Reply Button - New */}
+                  <button
+                    onClick={openReplyModal}
+                    className="w-full rounded-lg bg-[#0b6cfb] px-4 py-3 text-center text-sm font-semibold text-white hover:bg-[#0a5be0] flex items-center justify-center gap-2"
                   >
-                    <Mail className="inline-block h-4 w-4 mr-2" />
-                    Responder por email
-                  </a>
+                    <Send className="h-4 w-4" />
+                    Responder desde soporte@verifactu.business
+                  </button>
                 </div>
               ) : (
                 <div className="flex h-full items-center justify-center text-center py-12">
@@ -425,7 +644,7 @@ export default function AdminEmailsPage() {
               <div className="flex gap-3">
                 <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
                 <div className="text-sm text-blue-900">
-                  <p className="font-semibold mb-1">Datos de demostración</p>
+                  <p className="font-semibold mb-1">Informacion</p>
                   <p className="text-blue-700">
                     Para ver emails reales, configura el webhook de Resend y una base de datos para
                     almacenar los mensajes entrantes.
@@ -437,68 +656,344 @@ export default function AdminEmailsPage() {
         </div>
       )}
 
-      {/* Testing Tab */}
-      {activeTab === "testing" && (
-        <div className="space-y-6">
+      {/* COMPOSE TAB - Insertar email de prueba */}
+      {activeTab === "compose" && (
+        <div className="space-y-4">
           <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">
-              Probar envío de emails
-            </h3>
+            <h2 className="text-lg font-bold text-slate-900 mb-1">ðŸ“® Enviar correo</h2>
+            <p className="text-sm text-slate-600 mb-4">Todas las opciones disponibles: mÃºltiples destinatarios, CC, BCC, Reply-To, tags y adjuntos.</p>
 
-            <div className="space-y-4">
-              {/* Email input */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Email de prueba
-                </label>
-                <input
-                  type="email"
-                  value={testEmail}
-                  onChange={(e) => setTestEmail(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20"
-                  placeholder="tu-email@ejemplo.com"
-                />
-              </div>
-
-              {/* Email type */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Tipo de email
-                </label>
-                <div className="space-y-2">
-                  {[
-                    { value: "all", label: "🎯 Todos los emails (5)", color: "blue" },
-                    { value: "verification", label: "✉️ Verificación de cuenta", color: "purple" },
-                    { value: "welcome", label: "👋 Bienvenida", color: "green" },
-                    { value: "password-reset", label: "🔑 Reset de contraseña", color: "orange" },
-                    { value: "password-changed", label: "✅ Contraseña cambiada", color: "green" },
-                    { value: "team-invite", label: "👥 Invitación a equipo", color: "blue" },
-                  ].map((type) => (
-                    <label
-                      key={type.value}
-                      className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 cursor-pointer hover:bg-slate-50"
-                    >
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Para</label>
                       <input
-                        type="radio"
-                        name="emailType"
-                        value={type.value}
-                        checked={emailType === type.value}
-                        onChange={(e) => setEmailType(e.target.value)}
-                        className="text-[#0b6cfb] focus:ring-[#0b6cfb]"
+                        type="text"
+                        value={sendTo}
+                        onChange={(e) => setSendTo(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20"
+                        placeholder="correo1@dominio.com, correo2@dominio.com"
                       />
-                      <span className="text-sm font-medium text-slate-900">{type.label}</span>
-                    </label>
-                  ))}
+                      <p className="text-xs text-slate-500 mt-1">Separar con comas.</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">CC (opcional)</label>
+                      <input
+                        type="text"
+                        value={sendCc}
+                        onChange={(e) => setSendCc(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">BCC (opcional)</label>
+                      <input
+                        type="text"
+                        value={sendBcc}
+                        onChange={(e) => setSendBcc(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Reply-To</label>
+                      <input
+                        type="email"
+                        value={sendReplyTo}
+                        onChange={(e) => setSendReplyTo(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20"
+                        placeholder="respuestas@dominio.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Asunto</label>
+                    <input
+                      type="text"
+                      value={sendSubject}
+                      onChange={(e) => setSendSubject(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20"
+                      placeholder="Asunto del correo"
+                    />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Texto plano</label>
+                      <textarea
+                        value={sendText}
+                        onChange={(e) => setSendText(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 font-mono"
+                        rows={8}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">HTML (opcional)</label>
+                      <textarea
+                        value={sendHtml}
+                        onChange={(e) => setSendHtml(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 font-mono"
+                        rows={8}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Tags (clave:valor, una por lÃ­nea)</label>
+                      <textarea
+                        value={sendTagsInput}
+                        onChange={(e) => setSendTagsInput(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 font-mono"
+                        rows={4}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Adjuntos (JSON opcional)</label>
+                      <textarea
+                        value={sendAttachmentsInput}
+                        onChange={(e) => setSendAttachmentsInput(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 font-mono"
+                        rows={4}
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Formato: [{'{'}&quot;filename&quot;:&quot;nota.txt&quot;,&quot;content&quot;:&quot;BASE64&quot;{'}'}]
+                      </p>
+                    </div>
+                  </div>
+
+                  {sendError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                      {sendError}
+                    </div>
+                  )}
+                  {sendSuccess && (
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+                      Correo enviado correctamente.
+                    </div>
+                  )}
+
+                  <button
+                    onClick={sendCustomEmail}
+                    disabled={sendSending || !sendTo || !sendSubject || (!sendText && !sendHtml)}
+                    className="w-full rounded-lg bg-[#0b6cfb] px-4 py-3 text-sm font-semibold text-white hover:bg-[#0a5be0] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {sendSending ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Enviar correo real
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
-              {/* Send button */}
+
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex gap-3">
+              <HelpCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-900">
+                <p className="font-semibold mb-1">Informacion</p>
+                <p className="text-blue-700">
+                      EnvÃ­a correos a tus clientes con todas las opciones de Resend. Todos los correos se envÃ­an desde <strong>Verifactu Business</strong> usando soporte@verifactu.business.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SETTINGS TAB */}
+      {activeTab === "settings" && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-bold text-slate-900 mb-4">âš™ï¸ ConfiguraciÃ³n del BuzÃ³n</h2>
+
+            <div className="space-y-4">
+              <div className="rounded-lg border border-slate-200 p-4">
+                <h3 className="font-semibold text-slate-900 mb-2">ðŸ“§ Email de Soporte</h3>
+                <p className="text-sm text-slate-600 mb-3">
+                  Todos los correos se envÃ­an desde:
+                </p>
+                <div className="bg-slate-100 px-4 py-2 rounded-lg font-mono text-sm text-slate-900">
+                  Verifactu Business &lt;soporte@verifactu.business&gt;
+                </div>
+              </div>
+
+              {/* Webhook configuration */}
+              <div className="rounded-lg border border-slate-200 p-4">
+                <h3 className="font-semibold text-slate-900 mb-2">ðŸ”Œ ConfiguraciÃ³n de Webhook (ProducciÃ³n)</h3>
+                <p className="text-sm text-slate-600 mb-3">
+                  Para recibir emails reales en producciÃ³n, configura el webhook de Resend:
+                </p>
+                <div className="bg-slate-100 px-4 py-2 rounded-lg font-mono text-xs text-slate-900 overflow-auto">
+                  https://app.verifactu.business/api/webhooks/resend/inbound
+                </div>
+              </div>
+
+              {/* API Endpoints */}
+              <div className="rounded-lg border border-slate-200 p-4">
+                <h3 className="font-semibold text-slate-900 mb-2">ðŸ“¡ API Endpoints</h3>
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <p className="font-mono bg-slate-100 px-2 py-1 rounded text-slate-900">
+                      GET /api/admin/emails
+                    </p>
+                    <p className="text-slate-600 mt-1">Obtener lista de emails</p>
+                  </div>
+                  <div>
+                    <p className="font-mono bg-slate-100 px-2 py-1 rounded text-slate-900">
+                      POST /api/admin/emails/send
+                    </p>
+                    <p className="text-slate-600 mt-1">Enviar respuesta desde soporte@verifactu.business</p>
+                  </div>
+                  <div>
+                    <p className="font-mono bg-slate-100 px-2 py-1 rounded text-slate-900">
+                      POST /api/admin/emails/send/custom
+                    </p>
+                    <p className="text-slate-600 mt-1">Enviar correo nuevo con CC/BCC/Reply-To/Tags/Adjuntos</p>
+                  </div>
+                  <div>
+                    <p className="font-mono bg-slate-100 px-2 py-1 rounded text-slate-900">
+                      PATCH /api/admin/emails
+                    </p>
+                    <p className="text-slate-600 mt-1">Cambiar estado de email</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Help */}
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="flex gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-900">
+                    <p className="font-semibold mb-1">Informacion</p>
+                    <p>
+                      En <strong>desarrollo local</strong>, usa la pestana &quot;Insertar email de prueba&quot; para crear emails de prueba. En <strong>produccion</strong>, los emails se reciben automaticamente via webhook desde Resend.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Modal */}
+      {showReplyModal && selectedEmail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white shadow-2xl">
+            {/* Header */}
+            <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Responder email</h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  Respondiendo a: <span className="font-semibold">{selectedEmail?.from}</span>
+                </p>
+              </div>
               <button
-                onClick={sendTestEmail}
-                disabled={sending || !testEmail}
-                className="w-full rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                onClick={() => setShowReplyModal(false)}
+                className="rounded-lg p-2 hover:bg-slate-100 text-slate-600"
+                disabled={replySending}
               >
-                {sending ? (
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* From */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Desde
+                </label>
+                <div className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm text-slate-700 font-medium">
+                  soporte@verifactu.business
+                </div>
+              </div>
+
+              {/* To */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Para
+                </label>
+                <div className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm text-slate-700 font-medium">
+                  {selectedEmail?.from}
+                </div>
+              </div>
+
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Asunto
+                </label>
+                <input
+                  type="text"
+                  value={replySubject}
+                  onChange={(e) => setReplySubject(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20"
+                  placeholder="Re: ..."
+                />
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Mensaje
+                </label>
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 font-mono"
+                  placeholder="Escribe tu respuesta aquÃ­..."
+                  rows={8}
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  {replyMessage.length} caracteres
+                </p>
+              </div>
+
+              {/* Error Message */}
+              {replyError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                  <p className="text-sm text-red-600 flex items-center gap-2">
+                    <X className="h-4 w-4" />
+                    {replyError}
+                  </p>
+                </div>
+              )}
+
+              {/* Success Message */}
+              {replySuccess && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                  <p className="text-sm text-green-600 flex items-center gap-2">
+                    <Check className="h-4 w-4" />
+                    Respuesta enviada correctamente desde soporte@verifactu.business
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex gap-2 justify-end">
+              <button
+                onClick={() => setShowReplyModal(false)}
+                disabled={replySending}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={sendReplyEmail}
+                disabled={replySending || !replyMessage.trim()}
+                className="flex items-center gap-2 rounded-lg bg-[#0b6cfb] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a5be0] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {replySending ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
                     Enviando...
@@ -506,73 +1001,10 @@ export default function AdminEmailsPage() {
                 ) : (
                   <>
                     <Send className="h-4 w-4" />
-                    Enviar Email de Prueba
+                    Enviar respuesta
                   </>
                 )}
               </button>
-            </div>
-          </div>
-
-          {/* Results */}
-          {results && (
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Resultados</h3>
-
-              {results.success ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-green-600 mb-3">
-                    <Check className="h-5 w-5" />
-                    <span className="font-semibold">{results.message || "Emails enviados"}</span>
-                  </div>
-
-                  {results.results &&
-                    Object.entries(results.results).map(([type, result]: [string, any]) => (
-                      <div
-                        key={type}
-                        className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3"
-                      >
-                        <div className="flex items-center gap-2">
-                          {result.success ? (
-                            <Check className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <X className="h-4 w-4 text-red-500" />
-                          )}
-                          <span className="text-sm font-medium text-slate-900">{type}</span>
-                        </div>
-                        {result.messageId && (
-                          <span className="text-xs font-mono text-slate-500">
-                            {result.messageId}
-                          </span>
-                        )}
-                        {result.error && (
-                          <span className="text-xs text-red-600">{result.error}</span>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-red-600">
-                  <X className="h-5 w-5" />
-                  <span className="font-semibold">
-                    {results.error || "Error al enviar emails"}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Info */}
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <div className="flex gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
-              <div className="text-sm text-blue-900">
-                <p className="font-semibold mb-1">Testing de emails</p>
-                <p className="text-blue-700">
-                  Usa este panel para verificar que todos los templates de email funcionan
-                  correctamente. Los emails se envían usando tu configuración de Resend en
-                  desarrollo.
-                </p>
-              </div>
             </div>
           </div>
         </div>
@@ -580,3 +1012,4 @@ export default function AdminEmailsPage() {
     </div>
   );
 }
+
