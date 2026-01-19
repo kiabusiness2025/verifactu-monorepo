@@ -47,7 +47,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Quick Stats */}
+      {/* Quick Stats - Admin Dashboard */}
       <div>
         <h2 className="text-lg font-semibold text-slate-900 mb-3">
           Estadísticas Rápidas
