@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: verifactu-postgres
+    environment:
+      POSTGRES_USER: verifactu
+      POSTGRES_PASSWORD: verifactu_dev_pass
+      POSTGRES_DB: verifactu
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verifactu"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: SQL Server if needed (commented out by default)
+  # mssql:
+  #   image: mcr.microsoft.com/mssql/server:2019-latest
+  #   container_name: verifactu-mssql
+  #   environment:
+  #     SA_PASSWORD: "Verifactu@2024"
+  #     ACCEPT_EULA: "Y"
+  #   ports:
+  #     - "1433:1433"
+  #   volumes:
+  #     - mssql_data:/var/opt/mssql
+
+  redis:
+    image: redis:7-alpine
+    container_name: verifactu-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  # mssql_data:
