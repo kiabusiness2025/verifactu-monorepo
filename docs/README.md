@@ -27,7 +27,24 @@
 **Web/** (En raíz)
 - [../GOOGLE_CLOUD_RUN_IAM.md](../GOOGLE_CLOUD_RUN_IAM.md) - Permisos IAM (opcional)
 
-### 📱 Flutter / Mobile
+### � GitHub & Colaboración
+
+**Web/** (En raíz)
+- [PULL_REQUEST_WORKFLOW.md](PULL_REQUEST_WORKFLOW.md) - Flujo de PR (paso a paso)
+- [BRANCH_PROTECTION_RULES.md](BRANCH_PROTECTION_RULES.md) - Reglas de protección
+- [GITHUB_INTEGRATION.md](GITHUB_INTEGRATION.md) - Integración GitHub + VS Code
+- [GITHUB_PR_VSCODE_GUIDE.md](GITHUB_PR_VSCODE_GUIDE.md) - Usar PRs desde VS Code
+- [GITHUB_CHEATSHEET.md](GITHUB_CHEATSHEET.md) - Referencia rápida- [DEPENDABOT_GUIDE.md](DEPENDABOT_GUIDE.md) - Automatización de dependencias### 🐙 GitHub & Colaboración
+
+**Web/** (En raíz)
+- [PULL_REQUEST_WORKFLOW.md](PULL_REQUEST_WORKFLOW.md) - Flujo de PR (paso a paso)
+- [BRANCH_PROTECTION_RULES.md](BRANCH_PROTECTION_RULES.md) - Reglas de protección
+- [GITHUB_INTEGRATION.md](GITHUB_INTEGRATION.md) - Integración GitHub + VS Code
+- [GITHUB_PR_VSCODE_GUIDE.md](GITHUB_PR_VSCODE_GUIDE.md) - Usar PRs desde VS Code
+- [GITHUB_CHEATSHEET.md](GITHUB_CHEATSHEET.md) - Referencia rápida
+- [GITHUB_ACTIONS_GUIDE.md](GITHUB_ACTIONS_GUIDE.md) - Workflows y automatización
+- [DEPENDABOT_GUIDE.md](DEPENDABOT_GUIDE.md) - Automatización de dependencias
+### �📱 Flutter / Mobile
 
 **setup/** (Instalación)
 - [setup/FLUTTER_INSTALLATION_GUIDE.md](setup/FLUTTER_INSTALLATION_GUIDE.md) - Instalación Flutter
