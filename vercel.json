@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm install",
-  "buildCommand": "npm run build -- --filter=verifactu-app",
+  "buildCommand": "npx turbo run build --filter=verifactu-app",
   "outputDirectory": "apps/app/.next",
   "framework": "nextjs"
 }
