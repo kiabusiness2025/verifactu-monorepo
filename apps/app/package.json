@@ -30,6 +30,7 @@
     "@verifactu/utils": "file:../../packages/utils",
     "ai": "^6.0.31",
     "apexcharts": "^4.3.0",
+    "decimal.js": "^10.4.3",
     "firebase": "^12.7.0",
     "flatpickr": "^4.6.13",
     "framer-motion": "^11.15.0",
