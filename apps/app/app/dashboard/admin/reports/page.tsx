@@ -1,7 +1,7 @@
 "use client";
 
+import { Calendar, Download, FileText, Mail } from "lucide-react";
 import { useState } from "react";
-import { FileText, Download, Mail, Calendar } from "lucide-react";
 
 export default function ReportsPage() {
   const [generating, setGenerating] = useState(false);
@@ -111,7 +111,7 @@ export default function ReportsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Periodo de reporte
             </label>
-            <select className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <select className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" aria-label="Seleccionar periodo de reporte">
               <option>Mes anterior</option>
               <option>Este mes</option>
               <option>Trimestre anterior</option>

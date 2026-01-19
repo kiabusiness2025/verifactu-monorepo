@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { FileUp, CheckCircle, AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, FileUp } from "lucide-react";
+import { useRef, useState } from "react";
 
 type ImportResult = {
   success: number;
@@ -94,6 +94,7 @@ export default function ImportWizardPage() {
           type="file"
           accept=".csv"
           onChange={handleFileSelect}
+          aria-label="Seleccionar archivo CSV para importar"
           className="hidden"
         />
 

@@ -1,0 +1,40 @@
+# Verifactu Code Owners
+# This file defines who should review pull requests that modify certain areas of the code
+
+# Default owners for all repo files
+*                                    @kiabusiness2025
+
+# Backend / API
+apps/app/app/api/**                  @kiabusiness2025
+apps/app/lib/**                      @kiabusiness2025
+
+# Database & ORM
+apps/app/prisma/**                   @kiabusiness2025
+db/**                                @kiabusiness2025
+
+# Workflows
+apps/app/app/workflows/**            @kiabusiness2025
+
+# UI Components
+apps/app/app/components/**           @kiabusiness2025
+packages/ui/**                       @kiabusiness2025
+
+# Styles & Theming
+apps/app/styles/**                   @kiabusiness2025
+
+# Configuration
+apps/app/next.config.mjs             @kiabusiness2025
+apps/app/tsconfig.json               @kiabusiness2025
+apps/app/.eslintrc.json              @kiabusiness2025
+pnpm-workspace.yaml                  @kiabusiness2025
+
+# CI/CD & Deployment
+.github/**                           @kiabusiness2025
+.devcontainer/**                     @kiabusiness2025
+Dockerfile*                          @kiabusiness2025
+docker-compose.yml                   @kiabusiness2025
+
+# Documentation
+README.md                            @kiabusiness2025
+DEVELOPMENT.md                       @kiabusiness2025
+docs/**                              @kiabusiness2025

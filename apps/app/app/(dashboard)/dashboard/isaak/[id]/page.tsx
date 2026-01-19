@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, User, Bot, Edit2, Save, X, Share2, Download } from "lucide-react";
 import { formatShortDate, formatTime } from "@/src/lib/formatters";
+import { ArrowLeft, Bot, Download, Edit2, Save, Share2, User, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface Message {
   id: string;
@@ -188,6 +188,7 @@ export default function ConversationDetailPage({ params }: { params: { id: strin
                       onChange={(e) => setEditedContent(e.target.value)}
                       className="w-full rounded border border-slate-300 p-2 text-sm text-slate-900"
                       rows={4}
+                      aria-label="Editar mensaje"
                     />
                     <div className="mt-2 flex gap-2">
                       <button

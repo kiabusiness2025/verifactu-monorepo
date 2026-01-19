@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, DollarSign, FileText, Calendar } from "lucide-react";
-import { formatCurrency, formatNumber, formatPercent } from "@/src/lib/formatters";
+import { formatCurrency, formatPercent } from "@/src/lib/formatters";
+import { Calendar, DollarSign, FileText, TrendingDown, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type GlobalStats = {
   total_invoices: number;
@@ -56,6 +56,7 @@ export default function AdminContabilidadPage() {
           value={period}
           onChange={(e) => setPeriod(e.target.value)}
           className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+          aria-label="Seleccionar periodo de contabilidad"
         >
           <option value="current_month">Mes actual</option>
           <option value="last_3_months">Últimos 3 meses</option>
