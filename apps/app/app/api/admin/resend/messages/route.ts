@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
 
     const resend = new Resend(apiKey);
 
-    // Use Resend's emails.receive.list() to get received emails
-    const { data, error } = await resend.emails.receive.list();
+    // Use Resend's emails.list() to get sent emails
+    const { data, error } = await resend.emails.list();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
@@ -70,17 +70,12 @@ export async function GET(req: NextRequest) {
 
     const resend = new Resend(apiKey);
 
-    // Use Resend's emails.receive.get() to get a specific email
-    const { data, error } = await resend.emails.receive.get(emailId);
+    // Use Resend's emails.get() to get a specific email
+    const { data, error } = await resend.emails.get(emailId);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-
-    // Get attachments if any
-    const attachmentsResponse = await resend.attachments.receiving.list({
-      emailId: emailId,
-    });
 
     return NextResponse.json({
       message: {
@@ -91,7 +86,6 @@ export async function GET(req: NextRequest) {
         html: data.html,
         text: data.text,
         createdAt: data.created_at,
-        attachments: attachmentsResponse.data || [],
       },
     });
   } catch (error) {
