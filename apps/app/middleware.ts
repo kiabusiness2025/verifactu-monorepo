@@ -35,12 +35,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // En desarrollo local, permitir acceso sin sesión para testing
+  // Admin routes require session (but will be protected by auth check in layout)
+  // Allow access if session exists or in development
   const isDevelopment = process.env.NODE_ENV === 'development';
+  const isAdminRoute = pathname.startsWith("/dashboard/admin");
   
   const session = await getSessionPayload(req);
 
-  if (!session && !isDevelopment) {
+  if (!session && !isDevelopment && !isAdminRoute) {
     const landingUrl = getLandingUrl();
     const appUrl = getAppUrl();
     const returnPath = pathname === "/" ? "/dashboard" : pathname;
