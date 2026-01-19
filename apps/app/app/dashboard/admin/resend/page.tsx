@@ -782,6 +782,7 @@ export default function ResendConfigPage() {
             <Send className="h-4 w-4" />
             {sendSending ? "Enviando..." : "Enviar Correo"}
           </button>
+          </div>
         </div>
       )}
 
