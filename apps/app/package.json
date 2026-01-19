@@ -45,6 +45,7 @@
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.3.5",
     "react-intersection-observer": "^10.0.0",
+    "resend": "^4.1.0",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.6.0",
     "workflow": "4.0.1-beta.48",
