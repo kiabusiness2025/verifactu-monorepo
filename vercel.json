@@ -1,7 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "cd ../.. && pnpm install --frozen-lockfile && cd apps/app",
-  "buildCommand": "cd ../.. && pnpm --filter=verifactu-app build && cd apps/app",
-  "outputDirectory": ".next",
   "framework": "nextjs"
 }
