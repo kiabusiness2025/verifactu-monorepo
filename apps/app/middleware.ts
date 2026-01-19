@@ -35,8 +35,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Admin routes require session (but will be protected by auth check in layout)
-  // Allow access if session exists or in development
+  // Admin routes are public - served without authentication requirement
+  // Individual pages may have their own auth checks if needed
   const isDevelopment = process.env.NODE_ENV === 'development';
   const isAdminRoute = pathname.startsWith("/dashboard/admin");
   
