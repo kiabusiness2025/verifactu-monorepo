@@ -24,8 +24,8 @@ EINFORMA_TOKEN_URL=https://api.einforma.com/oauth/token
 EINFORMA_API_BASE_URL=https://api.einforma.com/v1
 
 # eInforma OAuth2 Credentials (obtener de eInforma)
-EINFORMA_CLIENT_ID=your_client_id_here
-EINFORMA_CLIENT_SECRET=your_client_secret_here
+EINFORMA_CLIENT_ID=p2jct4ni5q6xrh1p8xzop3vtoa6tql8k7zzcm3he.api.einforma.com
+EINFORMA_CLIENT_SECRET=RMmL7roiSF94FiPyTnBWlzaOVO3vnhj-_nDE6_AUyIw
 
 # Request timeout en milisegundos (opcional, por defecto: 8000)
 EINFORMA_TIMEOUT_MS=8000
