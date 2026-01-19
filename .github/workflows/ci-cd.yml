@@ -35,6 +35,9 @@ jobs:
       - name: Encoding Check
         run: node scripts/fix-encoding.js --check
 
+      - name: I18N Check
+        run: node scripts/i18n-audit.js --check
+
       - run: pnpm install --frozen-lockfile
 
       - name: ESLint Check

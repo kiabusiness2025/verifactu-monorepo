@@ -10,6 +10,8 @@
     "format:check": "prettier --check 'apps/**/*.{ts,tsx,js,jsx,json,md}'",
     "encoding:check": "node scripts/fix-encoding.js --check",
     "encoding:fix": "node scripts/fix-encoding.js --write",
+    "i18n:audit": "node scripts/i18n-audit.js --output docs/I18N_AUDIT.md --limit 600",
+    "i18n:check": "node scripts/i18n-audit.js --check",
     "test": "turbo run test",
         "test:watch": "turbo run test -- --watch",
         "build-app-only": "npm --prefix apps/app run build",
