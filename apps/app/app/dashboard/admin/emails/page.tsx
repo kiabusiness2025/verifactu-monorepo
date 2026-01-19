@@ -23,7 +23,7 @@ import {
               <div className="text-sm text-blue-900">
                 <p className="font-semibold mb-1">Informacion</p>
                 <p className="text-blue-700">
-                  Inserta emails de prueba para poblar la bandeja y prueba envíos reales con todas las opciones de Resend. Todos los correos se envían siempre desde <strong>Verifactu Business</strong> usando la cuenta soporte@verifactu.business.
+                  Inserta emails de prueba para poblar la bandeja y prueba envÃ­os reales con todas las opciones de Resend. Todos los correos se envÃ­an siempre desde <strong>Verifactu Business</strong> usando la cuenta soporte@verifactu.business.
                 </p>
               </div>
             </div>
@@ -69,7 +69,7 @@ export default function AdminEmailsPage() {
   const [composeFrom, setComposeFrom] = useState("usuario@ejemplo.com");
   const [composeName, setComposeName] = useState("Usuario de Prueba");
   const [composeSubject, setComposeSubject] = useState("Pregunta sobre facturas");
-  const [composeMessage, setComposeMessage] = useState("Hola, tengo una pregunta sobre cómo validar mis facturas...");
+  const [composeMessage, setComposeMessage] = useState("Hola, tengo una pregunta sobre cÃ³mo validar mis facturas...");
   const [composeSending, setComposeSending] = useState(false);
   const [composeSuccess, setComposeSuccess] = useState(false);
 
@@ -78,9 +78,9 @@ export default function AdminEmailsPage() {
   const [sendCc, setSendCc] = useState("");
   const [sendBcc, setSendBcc] = useState("");
   const [sendReplyTo, setSendReplyTo] = useState("soporte@verifactu.business");
-  const [sendSubject, setSendSubject] = useState("Actualización de tu factura");
-  const [sendText, setSendText] = useState("Hola, adjunto la actualización de tu factura.");
-  const [sendHtml, setSendHtml] = useState("<p>Hola, adjunto la actualización de tu factura.</p>");
+  const [sendSubject, setSendSubject] = useState("ActualizaciÃ³n de tu factura");
+  const [sendText, setSendText] = useState("Hola, adjunto la actualizaciÃ³n de tu factura.");
+  const [sendHtml, setSendHtml] = useState("<p>Hola, adjunto la actualizaciÃ³n de tu factura.</p>");
   const [sendTagsInput, setSendTagsInput] = useState("categoria:soporte\nproyecto:verifactu");
   const [sendAttachmentsInput, setSendAttachmentsInput] = useState(`[
   {"filename":"nota.txt","content":"Q29udGVuaWRvIGRlIGVqZW1wbG8u"}
@@ -135,7 +135,7 @@ export default function AdminEmailsPage() {
         setSelectedEmail({ ...selectedEmail, status: "responded" });
       }
 
-      // Cerrar modal después de 2 segundos
+      // Cerrar modal despuÃ©s de 2 segundos
       setTimeout(() => {
         setShowReplyModal(false);
         setReplySuccess(false);
@@ -266,7 +266,7 @@ export default function AdminEmailsPage() {
         return;
       }
 
-      // Parse tags: formato clave:valor por línea
+      // Parse tags: formato clave:valor por lÃ­nea
       const tags = sendTagsInput
         .split(/\n+/)
         .map((line) => line.trim())
@@ -404,7 +404,7 @@ export default function AdminEmailsPage() {
             }`}
           >
             <Settings className="h-4 w-4" />
-            Configuración
+            ConfiguraciÃ³n
           </button>
         </div>
 
@@ -513,7 +513,7 @@ export default function AdminEmailsPage() {
                   <p className="mt-2 text-sm font-semibold text-slate-900">
                     No hay emails {filter !== "all" && filter}
                   </p>
-                  <p className="text-xs text-slate-500">Los nuevos mensajes aparecerán aquí</p>
+                  <p className="text-xs text-slate-500">Los nuevos mensajes aparecerÃ¡n aquÃ­</p>
                 </div>
               ) : (
                 filteredEmails.map((email) => (
@@ -535,9 +535,9 @@ export default function AdminEmailsPage() {
                               email.priority
                             )}`}
                           >
-                            {email.priority === "high" && "🔴"}
-                            {email.priority === "normal" && "🔵"}
-                            {email.priority === "low" && "⚪"}
+                            {email.priority === "high" && "ðŸ”´"}
+                            {email.priority === "normal" && "ðŸ”µ"}
+                            {email.priority === "low" && "âšª"}
                           </span>
                         </div>
                         <h3 className="font-semibold text-slate-900 truncate">{email.subject}</h3>
@@ -573,9 +573,9 @@ export default function AdminEmailsPage() {
                           selectedEmail.priority
                         )}`}
                       >
-                        {selectedEmail.priority === "high" && "🔴 Alta"}
-                        {selectedEmail.priority === "normal" && "🔵 Normal"}
-                        {selectedEmail.priority === "low" && "⚪ Baja"}
+                        {selectedEmail.priority === "high" && "ðŸ”´ Alta"}
+                        {selectedEmail.priority === "normal" && "ðŸ”µ Normal"}
+                        {selectedEmail.priority === "low" && "âšª Baja"}
                       </span>
                     </div>
 
@@ -660,8 +660,8 @@ export default function AdminEmailsPage() {
       {activeTab === "compose" && (
         <div className="space-y-4">
           <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-bold text-slate-900 mb-1">📮 Enviar correo</h2>
-            <p className="text-sm text-slate-600 mb-4">Todas las opciones disponibles: múltiples destinatarios, CC, BCC, Reply-To, tags y adjuntos.</p>
+            <h2 className="text-lg font-bold text-slate-900 mb-1">ðŸ“® Enviar correo</h2>
+            <p className="text-sm text-slate-600 mb-4">Todas las opciones disponibles: mÃºltiples destinatarios, CC, BCC, Reply-To, tags y adjuntos.</p>
 
                 <div className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-2">
@@ -740,7 +740,7 @@ export default function AdminEmailsPage() {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Tags (clave:valor, una por línea)</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Tags (clave:valor, una por lÃ­nea)</label>
                       <textarea
                         value={sendTagsInput}
                         onChange={(e) => setSendTagsInput(e.target.value)}
@@ -800,7 +800,7 @@ export default function AdminEmailsPage() {
               <div className="text-sm text-blue-900">
                 <p className="font-semibold mb-1">Informacion</p>
                 <p className="text-blue-700">
-                      Envía correos a tus clientes con todas las opciones de Resend. Todos los correos se envían desde <strong>Verifactu Business</strong> usando soporte@verifactu.business.
+                      EnvÃ­a correos a tus clientes con todas las opciones de Resend. Todos los correos se envÃ­an desde <strong>Verifactu Business</strong> usando soporte@verifactu.business.
                 </p>
               </div>
             </div>
@@ -812,13 +812,13 @@ export default function AdminEmailsPage() {
       {activeTab === "settings" && (
         <div className="space-y-4">
           <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">⚙️ Configuración del Buzón</h2>
+            <h2 className="text-lg font-bold text-slate-900 mb-4">âš™ï¸ ConfiguraciÃ³n del BuzÃ³n</h2>
 
             <div className="space-y-4">
               <div className="rounded-lg border border-slate-200 p-4">
-                <h3 className="font-semibold text-slate-900 mb-2">📧 Email de Soporte</h3>
+                <h3 className="font-semibold text-slate-900 mb-2">ðŸ“§ Email de Soporte</h3>
                 <p className="text-sm text-slate-600 mb-3">
-                  Todos los correos se envían desde:
+                  Todos los correos se envÃ­an desde:
                 </p>
                 <div className="bg-slate-100 px-4 py-2 rounded-lg font-mono text-sm text-slate-900">
                   Verifactu Business &lt;soporte@verifactu.business&gt;
@@ -827,9 +827,9 @@ export default function AdminEmailsPage() {
 
               {/* Webhook configuration */}
               <div className="rounded-lg border border-slate-200 p-4">
-                <h3 className="font-semibold text-slate-900 mb-2">🔌 Configuración de Webhook (Producción)</h3>
+                <h3 className="font-semibold text-slate-900 mb-2">ðŸ”Œ ConfiguraciÃ³n de Webhook (ProducciÃ³n)</h3>
                 <p className="text-sm text-slate-600 mb-3">
-                  Para recibir emails reales en producción, configura el webhook de Resend:
+                  Para recibir emails reales en producciÃ³n, configura el webhook de Resend:
                 </p>
                 <div className="bg-slate-100 px-4 py-2 rounded-lg font-mono text-xs text-slate-900 overflow-auto">
                   https://app.verifactu.business/api/webhooks/resend/inbound
@@ -838,7 +838,7 @@ export default function AdminEmailsPage() {
 
               {/* API Endpoints */}
               <div className="rounded-lg border border-slate-200 p-4">
-                <h3 className="font-semibold text-slate-900 mb-2">📡 API Endpoints</h3>
+                <h3 className="font-semibold text-slate-900 mb-2">ðŸ“¡ API Endpoints</h3>
                 <div className="space-y-2 text-xs">
                   <div>
                     <p className="font-mono bg-slate-100 px-2 py-1 rounded text-slate-900">
@@ -950,7 +950,7 @@ export default function AdminEmailsPage() {
                   value={replyMessage}
                   onChange={(e) => setReplyMessage(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 font-mono"
-                  placeholder="Escribe tu respuesta aquí..."
+                  placeholder="Escribe tu respuesta aquÃ­..."
                   rows={8}
                 />
                 <p className="text-xs text-slate-500 mt-1">

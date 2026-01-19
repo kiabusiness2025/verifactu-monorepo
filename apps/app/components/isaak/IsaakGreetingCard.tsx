@@ -6,22 +6,10 @@ import { Button } from "@verifactu/ui";
 import { useIsaakContext } from "@/hooks/useIsaakContext";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserFirstName } from "@/lib/getUserName";
-import { useUserProfile } from "@/hooks/useUserProfile";
 
 export function IsaakGreetingCard() {
   const { user } = useAuth();
-  const { profile } = useUserProfile();
-  const resolveUserName = () => {
-    if (profile?.name) return profile.name.trim().split(" ")[0];
-    if (profile?.email) {
-      const emailName = profile.email.split("@")[0] || "";
-      return emailName
-        ? emailName.charAt(0).toUpperCase() + emailName.slice(1)
-        : "Usuario";
-    }
-    return getUserFirstName(user);
-  };
-  const userName = resolveUserName();
+  const userName = getUserFirstName(user);
   const { greeting, title, suggestions, sabiasQue } = useIsaakContext(userName);
   const primary = suggestions[0];
 
@@ -29,7 +17,7 @@ export function IsaakGreetingCard() {
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-[#002060]">{greeting}</p>
+          <p className="text-sm font-semibold text-[#002060]">Hola, {greeting}</p>
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
             Estas en: {title}
           </p>

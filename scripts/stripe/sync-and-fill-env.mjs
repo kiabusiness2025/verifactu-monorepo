@@ -53,7 +53,7 @@ const stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"), { apiVersion: "2024-0
 
 const PRODUCT = {
   planKey: "calculator-v1",
-  name: "Verifactu Business - Suscripción mensual (calculadora)",
+  name: "Verifactu Business - Suscripcion mensual (calculadora)",
 };
 
 const PRICE_SPECS = [
@@ -188,24 +188,22 @@ async function main() {
     });
   }
 
-  // actualiza/añade las env vars en el archivo destino
+  // actualiza/aÃ±ade las env vars en el archivo destino
   upsertEnvFile(envTarget, envKv);
 
-  console.log("\n✅ Stripe prices synced.");
-  console.log("✅ .env updated:", envTarget);
+  console.log("\nâœ… Stripe prices synced.");
+  console.log("âœ… .env updated:", envTarget);
   console.log("\n--- Summary (env -> priceId | amount) ---");
   for (const r of report) {
     console.log(`${r.env}=${r.id}   # ${r.eur} EUR / ${r.interval}`);
   }
 
   console.log("\nProduct:", product.id, `"${product.name}"`);
-  console.log("\nTip: para actualizar también en Vercel, usa vercel env rm/add con estas mismas keys.");
+  console.log("\nTip: para actualizar tambiÃ©n en Vercel, usa vercel env rm/add con estas mismas keys.");
 }
 
 main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
-
-
 

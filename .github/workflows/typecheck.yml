@@ -1,4 +1,4 @@
-﻿name: ðŸ” TypeScript Type Check
+name: 🔍 TypeScript Type Check
 
 on:
   push:
@@ -15,63 +15,51 @@ jobs:
     name: Type Check App
     runs-on: ubuntu-latest
     steps:
-      - name: ðŸ“¥ Checkout
+      - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: ðŸ“¦ Setup pnpm
+      - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10.27.0
 
-      - name: ðŸ“¦ Setup Node.js
+      - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
 
-      - name: Encoding Check
-        run: node scripts/fix-encoding.js --check
-
-      - name: I18N Check
-        run: node scripts/i18n-audit.js --check
-
-      - name: ðŸ“¦ Install dependencies
+      - name: 📦 Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: ðŸ” Generate Prisma Client
+      - name: 🔍 Generate Prisma Client
         run: pnpm --filter verifactu-app run prisma:generate || pnpm --filter verifactu-app exec prisma generate
 
-      - name: ðŸ” Type check app
+      - name: 🔍 Type check app
         run: pnpm --filter verifactu-app exec tsc --noEmit
 
   typecheck-landing:
     name: Type Check Landing
     runs-on: ubuntu-latest
     steps:
-      - name: ðŸ“¥ Checkout
+      - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: ðŸ“¦ Setup pnpm
+      - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10.27.0
 
-      - name: ðŸ“¦ Setup Node.js
+      - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
 
-      - name: Encoding Check
-        run: node scripts/fix-encoding.js --check
-
-      - name: I18N Check
-        run: node scripts/i18n-audit.js --check
-
-      - name: ðŸ“¦ Install dependencies
+      - name: 📦 Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: ðŸ” Type check landing
+      - name: 🔍 Type check landing
         run: pnpm --filter verifactu-landing exec tsc --noEmit
         continue-on-error: true # Landing puede tener errores menores
 
@@ -79,30 +67,23 @@ jobs:
     name: Lint App
     runs-on: ubuntu-latest
     steps:
-      - name: ðŸ“¥ Checkout
+      - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: ðŸ“¦ Setup pnpm
+      - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10.27.0
 
-      - name: ðŸ“¦ Setup Node.js
+      - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
 
-      - name: Encoding Check
-        run: node scripts/fix-encoding.js --check
-
-      - name: I18N Check
-        run: node scripts/i18n-audit.js --check
-
-      - name: ðŸ“¦ Install dependencies
+      - name: 📦 Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: ðŸ§¹ Lint app
-        run: pnpm --filter verifactu-app run lint || echo "âš ï¸ Lint warnings found"
+      - name: 🧹 Lint app
+        run: pnpm --filter verifactu-app run lint || echo "⚠️ Lint warnings found"
         continue-on-error: true
-

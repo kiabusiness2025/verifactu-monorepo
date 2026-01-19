@@ -2,18 +2,47 @@ import { remoteConfig as firebaseRemoteConfig } from "./firebase";
 import {
   fetchAndActivate,
   getValue,
-  onConfigUpdate,
   RemoteConfig,
 } from "firebase/remote-config";
 
 let remoteConfig: RemoteConfig | null = null;
-let configUpdateUnsubscribe: (() => void) | null = null;
 
 if (typeof window !== "undefined") {
   try {
     // Use centralized Firebase Remote Config instance
     remoteConfig = firebaseRemoteConfig;
-    console.log("✅ Firebase Remote Config initialized with defaults");
+    
+    // Settings
+    remoteConfig.settings = {
+      minimumFetchIntervalMillis: 3600000, // 1 hour
+      fetchTimeoutMillis: 60000, // 60 seconds
+    };
+    
+    // Default values (fallback si no hay conexión)
+    remoteConfig.defaultConfig = {
+      // Feature flags
+      feature_isaak_chat: true,
+      feature_isaak_proactive: true,
+      feature_isaak_deadlines: true,
+      feature_new_dashboard: false,
+      
+      // UI Configuration
+      ui_theme_primary_color: "#0060F0",
+      ui_show_onboarding: true,
+      ui_max_companies: 3,
+      
+      // Business logic
+      pricing_free_invoices_limit: 10,
+      pricing_trial_days: 14,
+      maintenance_mode: false,
+      maintenance_message: "Estamos realizando mantenimiento. Volvemos pronto.",
+      
+      // API endpoints
+      api_verifactu_endpoint: "https://api.verifactu.business",
+      api_timeout_ms: 30000,
+    };
+
+    console.log("✅ Firebase Remote Config initialized");
   } catch (error) {
     console.error("Error initializing Firebase Remote Config:", error);
   }
@@ -31,62 +60,11 @@ export async function initRemoteConfig(): Promise<boolean> {
 
   try {
     const activated = await fetchAndActivate(remoteConfig);
-    console.log("✅ Remote Config fetched and activated:", activated);
-    
-    // Start listening for updates in real-time
-    startConfigUpdateListener();
-    
+    console.log("Remote Config fetched and activated:", activated);
     return activated;
   } catch (error) {
     console.error("Error fetching remote config:", error);
     return false;
-  }
-}
-
-/**
- * Listen for Remote Config updates in real-time
- * This will automatically fetch new values when they're published
- */
-function startConfigUpdateListener() {
-  if (!remoteConfig) return;
-
-  // Clean up previous listener if exists
-  if (configUpdateUnsubscribe) {
-    configUpdateUnsubscribe();
-  }
-
-  try {
-    configUpdateUnsubscribe = onConfigUpdate(remoteConfig, {
-      next: (configUpdate) => {
-        const updatedKeys = Array.from(configUpdate.getUpdatedKeys());
-        console.log("🔄 Remote Config updated with keys:", updatedKeys);
-        
-        // Activate the new config
-        if (typeof window !== 'undefined' && remoteConfig) {
-          remoteConfig.activate?.().then(() => {
-            console.log("✅ New Remote Config activated");
-          });
-        }
-      },
-      error: (error) => {
-        console.error("❌ Remote Config update error:", error);
-      },
-      complete: () => {
-        console.log("Remote Config listener complete");
-      },
-    });
-  } catch (error) {
-    console.error("Error setting up config update listener:", error);
-  }
-}
-
-/**
- * Stop listening for Real-time Config updates
- */
-export function stopConfigUpdateListener() {
-  if (configUpdateUnsubscribe) {
-    configUpdateUnsubscribe();
-    configUpdateUnsubscribe = null;
   }
 }
 

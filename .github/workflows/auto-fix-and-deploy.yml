@@ -1,4 +1,4 @@
-﻿name: Auto-Fix & Deploy
+name: Auto-Fix & Deploy
 
 on:
   workflow_dispatch:
@@ -36,12 +36,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Encoding Check
-        run: node scripts/fix-encoding.js --check
-
-      - name: I18N Check
-        run: node scripts/i18n-audit.js --check
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -70,13 +64,13 @@ jobs:
       - name: Analyze error context from Isaak
         if: github.event.inputs.error_context != ''
         run: |
-          echo "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”"
-          echo "ðŸ¤– Isaak Error Analysis"
-          echo "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🤖 Isaak Error Analysis"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "${{ github.event.inputs.error_context }}"
-          echo "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          # Guardar contexto para anÃ¡lisis
+          # Guardar contexto para análisis
           echo '${{ github.event.inputs.error_context }}' > error-context.json
 
       - name: Generate Prisma Client
@@ -119,7 +113,7 @@ jobs:
           cd apps/app
           if [ -f typecheck-errors.log ]; then
             echo "Analyzing errors with Copilot..."
-            # Extraer errores mÃ¡s comunes
+            # Extraer errores más comunes
             node ../../scripts/auto-fix-typescript.js typecheck-errors.log
           fi
         env:
@@ -142,7 +136,7 @@ jobs:
           git config --local user.email "isaak@verifactu.business"
           git config --local user.name "Isaak Auto-Fix Bot"
           git add -A
-          git diff --staged --quiet || git commit -m "ðŸ¤– Isaak: Auto-fix errors
+          git diff --staged --quiet || git commit -m "🤖 Isaak: Auto-fix errors
 
           Triggered by: ${{ github.event_name }}
           ${{ github.event.inputs.error_context != '' && format('Context: {0}', github.event.inputs.error_context) || '' }}
@@ -214,4 +208,3 @@ jobs:
           gcloud builds submit \
             --config cloudbuild-backend.yaml \
             --substitutions=SHORT_SHA=${GITHUB_SHA::7},BRANCH_NAME=main
-

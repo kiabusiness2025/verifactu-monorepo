@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken, readSessionSecret, SESSION_COOKIE_NAME } from "@verifactu/utils";
+import { verifySessionToken, readSessionSecret } from "@verifactu/utils";
 import { query } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
-    const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const sessionCookie = req.cookies.get("session")?.value;
     if (!sessionCookie) {
       return NextResponse.json({ error: "No session" }, { status: 401 });
     }
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const sessionCookie = req.cookies.get("session")?.value;
     if (!sessionCookie) {
       return NextResponse.json({ error: "No session" }, { status: 401 });
     }

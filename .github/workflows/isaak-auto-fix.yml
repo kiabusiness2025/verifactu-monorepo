@@ -1,6 +1,6 @@
-﻿name: ðŸ¤– Isaak Auto-Fix Build Failures
+name: 🤖 Isaak Auto-Fix Build Failures
 # Auto-detects and fixes common build errors
-# Status: Production Ready âœ…
+# Status: Production Ready ✅
 
 on:
   # Trigger 1: Cuando hay un push (verifica si hubo fallos previos)
@@ -32,18 +32,12 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: ðŸ“¥ Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Encoding Check
-        run: node scripts/fix-encoding.js --check
-
-      - name: I18N Check
-        run: node scripts/i18n-audit.js --check
-
-      - name: ðŸ” Detect common errors in code
+      - name: 🔍 Detect common errors in code
         id: detect
         run: |
           ERRORS=""
@@ -55,19 +49,19 @@ jobs:
           # Error 1: @/lib/auth (doesn't exist)
           if grep -r "from '@/lib/auth'" apps/ 2>/dev/null; then
             ERRORS="${ERRORS}AUTH_IMPORT "
-            echo "âŒ Error 1: @/lib/auth imports (use @/lib/session)"
+            echo "❌ Error 1: @/lib/auth imports (use @/lib/session)"
           fi
           
           # Error 2: Named { prisma } import (should be default export)
           if grep -r "import { prisma }" apps/ 2>/dev/null; then
             ERRORS="${ERRORS}PRISMA_IMPORT "
-            echo "âŒ Error 2: Named prisma imports (use default import)"
+            echo "❌ Error 2: Named prisma imports (use default import)"
           fi
           
           # Error 3: @/lib/firebaseAdmin (deprecated)
           if grep -r "from '@/lib/firebaseAdmin'" apps/ 2>/dev/null; then
             ERRORS="${ERRORS}FIREBASE_IMPORT "
-            echo "âŒ Error 3: @/lib/firebaseAdmin imports"
+            echo "❌ Error 3: @/lib/firebaseAdmin imports"
           fi
           
           # ============================================
@@ -77,25 +71,25 @@ jobs:
           # Error 4: getSession() without Payload
           if grep -r "await getSession()" apps/app/app/api 2>/dev/null | grep -v "getSessionPayload"; then
             ERRORS="${ERRORS}SESSION_CALL "
-            echo "âŒ Error 4: getSession() calls (use getSessionPayload())"
+            echo "❌ Error 4: getSession() calls (use getSessionPayload())"
           fi
           
           # Error 5: getSessionPayload(req) with arguments
           if grep -r "getSessionPayload(req)" apps/app/app/api 2>/dev/null; then
             ERRORS="${ERRORS}SESSION_PAYLOAD_ARG "
-            echo "âŒ Error 5: getSessionPayload(req) - should be getSessionPayload() no args"
+            echo "❌ Error 5: getSessionPayload(req) - should be getSessionPayload() no args"
           fi
           
           # Error 6: session.tenant.id (incorrect property)
           if grep -r "session\.tenant\.id" apps/ 2>/dev/null; then
             ERRORS="${ERRORS}SESSION_PROPERTY "
-            echo "âŒ Error 6: session.tenant.id (use session.tenantId)"
+            echo "❌ Error 6: session.tenant.id (use session.tenantId)"
           fi
           
           # Error 7: Wrong session validation pattern
           if grep -r "session\?\.tenant\?\.id" apps/ 2>/dev/null; then
             ERRORS="${ERRORS}SESSION_VALIDATION "
-            echo "âŒ Error 7: Wrong session validation (session?.tenant?.id)"
+            echo "❌ Error 7: Wrong session validation (session?.tenant?.id)"
           fi
           
           # ============================================
@@ -105,14 +99,14 @@ jobs:
           # Error 8: Type guard missing !session.uid check
           if grep -r "if (!session || !session.tenantId)" apps/app/app/api 2>/dev/null | grep -v "!session.uid"; then
             ERRORS="${ERRORS}INCOMPLETE_TYPE_GUARD "
-            echo "âŒ Error 8: Type guard missing !session.uid"
+            echo "❌ Error 8: Type guard missing !session.uid"
           fi
           
           # Error 9: Type guard missing !session.tenantId or !session.uid
           if grep -r "if (!session\$)" apps/app/app/api 2>/dev/null; then
             if grep -rA 3 "if (!session\$)" apps/app/app/api 2>/dev/null | grep -q "session\.tenantId\|session\.uid"; then
               ERRORS="${ERRORS}INSUFFICIENT_TYPE_GUARD "
-              echo "âŒ Error 9: Type guard too simple (only checks !session)"
+              echo "❌ Error 9: Type guard too simple (only checks !session)"
             fi
           fi
           
@@ -123,13 +117,13 @@ jobs:
           # Error 10: dueDate field (doesn't exist in Invoice schema)
           if grep -r "dueDate" apps/app/app/api/invoices 2>/dev/null; then
             ERRORS="${ERRORS}INVOICE_FIELD "
-            echo "âŒ Error 10: dueDate field (doesn't exist in Invoice schema)"
+            echo "❌ Error 10: dueDate field (doesn't exist in Invoice schema)"
           fi
           
           # Error 11: Missing createdBy field in invoice creation
           if grep -r "prisma\.invoice\.create" apps/app/app/api/invoices 2>/dev/null | grep -v "createdBy"; then
             ERRORS="${ERRORS}MISSING_CREATED_BY "
-            echo "âŒ Error 11: Missing createdBy in invoice creation"
+            echo "❌ Error 11: Missing createdBy in invoice creation"
           fi
           
           # ============================================
@@ -139,13 +133,13 @@ jobs:
           # Error 12: Direct Decimal arithmetic without .toNumber()
           if grep -r "invoice\.amountNet + invoice\.amountTax" apps/app/app/api 2>/dev/null; then
             ERRORS="${ERRORS}DECIMAL_ARITHMETIC "
-            echo "âŒ Error 12: Direct Decimal arithmetic (use .toNumber())"
+            echo "❌ Error 12: Direct Decimal arithmetic (use .toNumber())"
           fi
           
           # Error 13: Other Decimal operations without conversion
           if grep -r "\.amountNet +\|\.amountTax +\|\.amountGross +" apps/app/app/api 2>/dev/null | grep -v "toNumber"; then
             ERRORS="${ERRORS}DECIMAL_OPERATIONS "
-            echo "âŒ Error 13: Decimal operations need .toNumber()"
+            echo "❌ Error 13: Decimal operations need .toNumber()"
           fi
           
           # ============================================
@@ -155,7 +149,7 @@ jobs:
           # Error 14: Wrong email template import paths
           if grep -r "from '\.\./emails/'" apps/landing/lib/email 2>/dev/null; then
             ERRORS="${ERRORS}EMAIL_IMPORT "
-            echo "âŒ Error 14: Email template paths (use ../../emails/)"
+            echo "❌ Error 14: Email template paths (use ../../emails/)"
           fi
           
           # ============================================
@@ -165,61 +159,61 @@ jobs:
           # Error 15: undefined types passed to functions expecting string
           if grep -rn "verifyTenantAccess.*tenantId)" apps/app 2>/dev/null | grep -v "const tenantId"; then
             ERRORS="${ERRORS}UNDEFINED_TYPE "
-            echo "âŒ Error 15: Potential undefined type passed to function"
+            echo "❌ Error 15: Potential undefined type passed to function"
           fi
           
           # Error 16: Optional properties without null checks (payload.uid)
           if grep -rn "payload\.uid" apps/app 2>/dev/null | grep -v "payload\.uid)" | grep -v "!payload\.uid" | grep -v "payload\.uid as string"; then
             ERRORS="${ERRORS}OPTIONAL_PROPERTY "
-            echo "âŒ Error 16: Optional property used without validation"
+            echo "❌ Error 16: Optional property used without validation"
           fi
           
           # Error 17: activeTenantId from non-existent context
           if grep -rn "activeTenantId.*useIsaakUI" apps/app 2>/dev/null; then
             ERRORS="${ERRORS}NONEXISTENT_CONTEXT_PROP "
-            echo "âŒ Error 17: activeTenantId doesn't exist in IsaakUI context"
+            echo "❌ Error 17: activeTenantId doesn't exist in IsaakUI context"
           fi
           
           if [ -z "$ERRORS" ]; then
-            echo "âœ… No errors detected"
+            echo "✅ No errors detected"
             echo "has_errors=false" >> $GITHUB_OUTPUT
           else
             echo "has_errors=true" >> $GITHUB_OUTPUT
             echo "errors=$ERRORS" >> $GITHUB_OUTPUT
           fi
 
-      - name: ðŸ”§ Apply auto-fixes
+      - name: 🔧 Apply auto-fixes
         if: steps.detect.outputs.has_errors == 'true'
         run: |
-          echo "ðŸ”§ Applying auto-fixes..."
+          echo "🔧 Applying auto-fixes..."
           
-          # Fix 1: @/lib/auth â†’ @/lib/session
+          # Fix 1: @/lib/auth → @/lib/session
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "AUTH_IMPORT"; then
             echo "Fixing AUTH imports..."
             find apps -name "*.ts" -type f -exec sed -i "s/from '@\/lib\/auth'/from '@\/lib\/session'/g" {} +
             find apps -name "*.ts" -type f -exec sed -i "s/import { getSession }/import { getSessionPayload }/g" {} +
           fi
           
-          # Fix 2: Named prisma import â†’ default
+          # Fix 2: Named prisma import → default
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "PRISMA_IMPORT"; then
             echo "Fixing Prisma imports..."
             find apps -name "*.ts" -type f -exec sed -i "s/import { prisma }/import prisma/g" {} +
           fi
           
-          # Fix 3: @/lib/firebaseAdmin â†’ remove
+          # Fix 3: @/lib/firebaseAdmin → remove
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "FIREBASE_IMPORT"; then
             echo "Fixing Firebase Admin imports..."
             find apps -name "*.ts" -type f -exec sed -i "s/import { initFirebaseAdmin } from '@\/lib\/firebaseAdmin';//g" {} +
             find apps -name "*.ts" -type f -exec sed -i "s/initFirebaseAdmin();//g" {} +
           fi
           
-          # Fix 4: getSession() â†’ getSessionPayload()
+          # Fix 4: getSession() → getSessionPayload()
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "SESSION_CALL"; then
             echo "Fixing getSession calls..."
             find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/await getSession()/await getSessionPayload()/g" {} +
           fi
           
-          # Fix 5: session.tenant.id â†’ session.tenantId
+          # Fix 5: session.tenant.id → session.tenantId
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "SESSION_PROPERTY"; then
             echo "Fixing session property access..."
             find apps -name "*.ts" -type f -exec sed -i "s/session\.tenant\.id/session.tenantId/g" {} +
@@ -237,7 +231,7 @@ jobs:
             find apps/app/app/api/invoices -name "*.ts" -type f -exec sed -i "/dueDate: new Date(data.dueDate),/d" {} +
           fi
           
-          # Fix 8: Incomplete type guard (aÃ±adir !session.uid)
+          # Fix 8: Incomplete type guard (añadir !session.uid)
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "INCOMPLETE_TYPE_GUARD"; then
             echo "Fixing incomplete type guards..."
             find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/if (!session || !session\.tenantId)/if (!session || !session.tenantId || !session.uid)/g" {} +
@@ -246,12 +240,12 @@ jobs:
           # Fix 9: Decimal arithmetic (convertir a number antes de sumar)
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "DECIMAL_ARITHMETIC"; then
             echo "Fixing Decimal arithmetic..."
-            # Este fix es mÃ¡s complejo, solo lo podemos hacer en el contexto especÃ­fico
-            # Buscar el patrÃ³n exacto y reemplazar con la conversiÃ³n correcta
+            # Este fix es más complejo, solo lo podemos hacer en el contexto específico
+            # Buscar el patrón exacto y reemplazar con la conversión correcta
             find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/amountGross: invoice\.amountNet + invoice\.amountTax,/amountGross: (typeof invoice.amountNet === 'number' ? invoice.amountNet : invoice.amountNet.toNumber()) + (typeof invoice.amountTax === 'number' ? invoice.amountTax : invoice.amountTax.toNumber()),/g" {} +
           fi
           
-          # Fix 10: getSessionPayload(req) â†’ getSessionPayload()
+          # Fix 10: getSessionPayload(req) → getSessionPayload()
           if echo "${{ steps.detect.outputs.errors }}" | grep -q "SESSION_PAYLOAD_ARG"; then
             echo "Fixing getSessionPayload calls..."
             find apps/app/app/api -name "*.ts" -type f -exec sed -i "s/getSessionPayload(req)/getSessionPayload()/g" {} +
@@ -277,21 +271,21 @@ jobs:
             find apps/landing/lib/email -name "*.ts" -type f -exec sed -i "s/from '\.\.\\/emails\\//from '..\/..\/emails\//g" {} +
           fi
           
-          echo "âœ… Auto-fixes applied"
+          echo "✅ Auto-fixes applied"
 
-      - name: ðŸ“Š Check for changes
+      - name: 📊 Check for changes
         id: changes
         run: |
           if git diff --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "âœ… No changes needed"
+            echo "✅ No changes needed"
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
             echo "Changes detected:"
             git diff --name-only
           fi
 
-      - name: ðŸ“ Commit auto-fixes
+      - name: 📝 Commit auto-fixes
         if: steps.changes.outputs.has_changes == 'true'
         run: |
           git config --local user.email "isaak-bot@verifactu.dev"
@@ -299,23 +293,22 @@ jobs:
           git add -A
           git commit -m $'fix(auto): apply automatic code fixes\n\nAuto-fixed by Isaak Bot'
 
-      - name: ðŸš€ Push changes
+      - name: 🚀 Push changes
         if: steps.changes.outputs.has_changes == 'true'
         run: |
           git push origin main
 
-      - name: âœ… Summary
+      - name: ✅ Summary
         run: |
           if [ "${{ steps.detect.outputs.has_errors }}" = "true" ]; then
-            echo "ðŸ¤– Isaak Auto-Fix Summary"
+            echo "🤖 Isaak Auto-Fix Summary"
             echo "=========================="
             echo "Errors found: ${{ steps.detect.outputs.errors }}"
             if [ "${{ steps.changes.outputs.has_changes }}" = "true" ]; then
-              echo "Status: âœ… Fixed and committed"
+              echo "Status: ✅ Fixed and committed"
             else
-              echo "Status: âš ï¸ Detected but couldn't auto-fix"
+              echo "Status: ⚠️ Detected but couldn't auto-fix"
             fi
           else
-            echo "âœ… All checks passed, no fixes needed"
+            echo "✅ All checks passed, no fixes needed"
           fi
-

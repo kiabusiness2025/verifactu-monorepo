@@ -34,7 +34,3 @@ client_secret_*.json
 *.pem
 *.key
 
-# npm cache
-.npm-cache/
-**/.npm-cache/
-

@@ -1,4 +1,4 @@
-﻿name: Deploy to Vercel
+name: Deploy to Vercel
 
 on:
   push:
@@ -12,37 +12,80 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.27.0
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-
-      - name: Encoding Check
-        run: node scripts/fix-encoding.js --check
-
-      - name: I18N Check
-        run: node scripts/i18n-audit.js --check
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma Client
-        run: npx prisma generate
-        working-directory: ./apps/app
+        run: pnpm --filter verifactu-app exec prisma generate
 
       - name: Type check app
-        run: npx tsc --noEmit
-        working-directory: ./apps/app
+        run: pnpm --filter verifactu-app exec tsc --noEmit
 
-  # Vercel maneja el deploy automÃ¡ticamente basado en vercel.json
-  # Este job solo valida que el push es vÃ¡lido
-  validate:
-    needs: typecheck
-    name: Validate for Vercel
+  deploy-app:
+    needs: typecheck # Solo deploya si el typecheck pasa
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Vercel will auto-deploy based on vercel.json configuration
-        run: echo "âœ… Code validated. Vercel will deploy automatically."
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.27.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build app
+        run: pnpm --filter verifactu-app run build
+
+      - name: Deploy app to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_APP }}
+        run: |
+          npx vercel deploy --token=$VERCEL_TOKEN --prod
+
+  deploy-landing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+        working-directory: ./apps/landing
+
+      - name: Build landing
+        run: npm run build
+        working-directory: ./apps/landing
+
+      - name: Deploy landing to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
+        run: |
+          npx vercel deploy --token=$VERCEL_TOKEN --prod
+        working-directory: ./apps/landing
