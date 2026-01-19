@@ -6,6 +6,9 @@ import { adminGet, type AccountingData } from "@/lib/adminApi";
 import { formatCurrency, formatNumber, formatTime } from "@/src/lib/formatters";
 import { TrendingUp, TrendingDown, Users, Building, DollarSign } from "lucide-react";
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 type OverviewTotals = AccountingData["totals"];
 
 export default function AdminDashboardPage() {
