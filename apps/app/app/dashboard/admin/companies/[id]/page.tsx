@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/src/lib/formatters";
+import { formatCurrency } from '@/src/lib/formatters';
+import { ArrowLeft, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 type CompanyData = {
   id: string;
@@ -32,15 +32,15 @@ export default function EditCompanyPage() {
   const [saving, setSaving] = useState(false);
   const [company, setCompany] = useState<CompanyData | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
-    legal_name: "",
-    tax_id: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    postal_code: "",
-    country: "ES",
+    name: '',
+    legal_name: '',
+    tax_id: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    postal_code: '',
+    country: 'ES',
   });
 
   useEffect(() => {
@@ -56,17 +56,17 @@ export default function EditCompanyPage() {
         setFormData({
           name: data.name,
           legal_name: data.legal_name,
-          tax_id: data.tax_id || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          address: data.address || "",
-          city: data.city || "",
-          postal_code: data.postal_code || "",
-          country: data.country || "ES",
+          tax_id: data.tax_id || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          address: data.address || '',
+          city: data.city || '',
+          postal_code: data.postal_code || '',
+          country: data.country || 'ES',
         });
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
@@ -78,41 +78,41 @@ export default function EditCompanyPage() {
 
     try {
       const res = await fetch(`/api/admin/companies/${companyId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       if (res.ok) {
-        alert("Empresa actualizada");
+        alert('Empresa actualizada');
         fetchCompany();
       } else {
-        alert("Error al actualizar");
+        alert('Error al actualizar');
       }
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error al actualizar");
+      console.error('Error:', error);
+      alert('Error al actualizar');
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete() {
-    if (!confirm("¿Estás seguro de que deseas eliminar esta empresa?")) return;
+    if (!confirm('¿Estás seguro de que deseas eliminar esta empresa?')) return;
 
     try {
       const res = await fetch(`/api/admin/companies/${companyId}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
 
       if (res.ok) {
-        router.push("/dashboard/admin/companies");
+        router.push('/dashboard/admin/companies');
       } else {
-        alert("Error al eliminar");
+        alert('Error al eliminar');
       }
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error al eliminar");
+      console.error('Error:', error);
+      alert('Error al eliminar');
     }
   }
 
@@ -161,19 +161,30 @@ export default function EditCompanyPage() {
         </div>
         <div>
           <p className="text-sm text-gray-600">Ingresos</p>
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(company.total_revenue)}</p>
+          <p className="text-2xl font-bold text-gray-900">
+            {formatCurrency(company.total_revenue)}
+          </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm space-y-6"
+      >
         {/* Información Básica */}
         <div className="space-y-4">
           <h2 className="font-semibold text-gray-900">Información Básica</h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de Empresa</label>
+              <label
+                htmlFor="company-name"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Nombre de Empresa
+              </label>
               <input
+                id="company-name"
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -183,8 +194,14 @@ export default function EditCompanyPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Razón Social</label>
+              <label
+                htmlFor="company-legal-name"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Razón Social
+              </label>
               <input
+                id="company-legal-name"
                 type="text"
                 value={formData.legal_name}
                 onChange={(e) => setFormData({ ...formData, legal_name: e.target.value })}
@@ -194,8 +211,14 @@ export default function EditCompanyPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">NIF/CIF</label>
+              <label
+                htmlFor="company-tax-id"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                NIF/CIF
+              </label>
               <input
+                id="company-tax-id"
                 type="text"
                 value={formData.tax_id}
                 onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
@@ -204,8 +227,14 @@ export default function EditCompanyPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label
+                htmlFor="company-email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Email
+              </label>
               <input
+                id="company-email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -221,8 +250,14 @@ export default function EditCompanyPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+              <label
+                htmlFor="company-phone"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Teléfono
+              </label>
               <input
+                id="company-phone"
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -231,8 +266,14 @@ export default function EditCompanyPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">País</label>
+              <label
+                htmlFor="company-country"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                País
+              </label>
               <select
+                id="company-country"
                 value={formData.country}
                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -251,8 +292,14 @@ export default function EditCompanyPage() {
           <h2 className="font-semibold text-gray-900">Dirección</h2>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Calle</label>
+            <label
+              htmlFor="company-address"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Calle
+            </label>
             <input
+              id="company-address"
               type="text"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -262,8 +309,14 @@ export default function EditCompanyPage() {
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
+              <label
+                htmlFor="company-city"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Ciudad
+              </label>
               <input
+                id="company-city"
                 type="text"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -272,8 +325,14 @@ export default function EditCompanyPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Código Postal</label>
+              <label
+                htmlFor="company-postal-code"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Código Postal
+              </label>
               <input
+                id="company-postal-code"
                 type="text"
                 value={formData.postal_code}
                 onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
@@ -306,7 +365,7 @@ export default function EditCompanyPage() {
               disabled={saving}
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving ? "Guardando..." : "Guardar Cambios"}
+              {saving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
         </div>
