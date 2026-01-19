@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 
+// Force dynamic rendering for admin routes
+export const dynamic = 'force-dynamic';
+
 const adminNav = [
   { label: "Resumen", href: "/dashboard/admin" },
   { label: "Usuarios", href: "/dashboard/admin/users" },

@@ -1,6 +1,6 @@
 ﻿const isVercel = process.env.VERCEL === '1';
 
-export default {
+const nextConfig = {
   ...(isVercel ? {} : { output: 'standalone' }),
   eslint: { ignoreDuringBuilds: true },
   transpilePackages: ['@verifactu/ui', '@verifactu/utils'],
@@ -24,3 +24,9 @@ export default {
     },
   ],
 };
+
+// Workflow integration will be handled by Workflow DevKit plugin
+// The "use workflow" and "use step" directives are processed automatically
+// when workflow package is installed and configured in package.json
+
+export default nextConfig;

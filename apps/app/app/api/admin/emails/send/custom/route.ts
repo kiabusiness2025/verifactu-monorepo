@@ -3,6 +3,9 @@ import { Resend } from 'resend';
 import { requireAdmin } from '@/lib/adminAuth';
 import { query } from '@/lib/db';
 
+// Force dynamic rendering (uses cookies for admin auth)
+export const dynamic = 'force-dynamic';
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SUPPORT_EMAIL = 'Verifactu Business <soporte@verifactu.business>';
 

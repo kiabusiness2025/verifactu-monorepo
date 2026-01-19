@@ -2,6 +2,9 @@ import { getSessionPayload } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+// Force dynamic rendering for this API route (uses cookies for session)
+export const dynamic = 'force-dynamic';
+
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID;
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;

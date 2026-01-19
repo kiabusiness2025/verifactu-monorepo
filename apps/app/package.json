@@ -44,6 +44,7 @@
     "react-intersection-observer": "^10.0.0",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.6.0",
+    "workflow": "4.0.1-beta.48",
     "zod": "^4.3.5"
   },
   "devDependencies": {

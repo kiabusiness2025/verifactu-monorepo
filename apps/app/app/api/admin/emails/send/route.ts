@@ -3,6 +3,9 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { Resend } from 'resend';
 import { query } from '@/lib/db';
 
+// Force dynamic rendering (uses cookies for admin auth)
+export const dynamic = 'force-dynamic';
+
 /**
  * POST - Enviar respuesta desde soporte@verifactu.business
  * 

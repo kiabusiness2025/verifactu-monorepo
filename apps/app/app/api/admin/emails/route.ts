@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 
+// Force dynamic rendering (uses database queries)
+export const dynamic = 'force-dynamic';
+
 /**
  * API para gestionar correos recibidos en soporte@verifactu.business
  * Lee emails desde PostgreSQL (poblados por webhook de Resend)
