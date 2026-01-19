@@ -15,14 +15,10 @@ export function middleware(request: NextRequest) {
   }
 
   // Redirigir usuario autenticado desde landing (/) a dashboard
-  if (pathname === '/') {
-    const sessionCookie = request.cookies.get('__session');
-    
-    if (sessionCookie?.value) {
-      // Usuario tiene sesión activa -> redirigir a dashboard
-      return NextResponse.redirect(new URL('https://app.verifactu.business/dashboard', request.url));
-    }
-  }
+  // Nota: Se desactiva el redireccionamiento automático al dashboard
+  // para permitir que la landing funcione incluso si la app no está disponible.
+  // Antes: si había cookie de sesión en '/', redirigía a app.verifactu.business/dashboard.
+  // Ahora: no se realiza redirección en '/'.
 
   return NextResponse.next();
 }

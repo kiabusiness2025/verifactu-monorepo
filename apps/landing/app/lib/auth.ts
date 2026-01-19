@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
+  OAuthProvider,
   sendPasswordResetEmail,
   confirmPasswordReset,
   sendEmailVerification,
@@ -185,6 +186,41 @@ export const signInWithGoogle = async (): Promise<
     return { user: userCredential.user, error: null };
   } catch (error) {
     console.error("Google sign-in error:", error);
+    return {
+      user: null,
+      error: getErrorMessage(error as AuthError),
+    };
+  }
+};
+
+/**
+ * Sign in with Microsoft
+ */
+export const signInWithMicrosoft = async (): Promise<
+  { user: User; error: null } | { user: null; error: AuthErrorMessage }
+> => {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
+  try {
+    const provider = new OAuthProvider("microsoft.com");
+    const userCredential = await signInWithPopup(auth, provider);
+
+    try {
+      await mintSessionCookie(userCredential.user);
+    } catch (cookieError) {
+      console.error("Failed to mint session cookie after Microsoft login:", cookieError);
+      return {
+        user: null,
+        error: {
+          code: "auth/session-mint-failed",
+          message: "Session mint failed",
+          userMessage: "Error al crear tu sesiИn. Por favor, intenta de nuevo o contacta soporte.",
+        },
+      };
+    }
+
+    return { user: userCredential.user, error: null };
+  } catch (error) {
+    console.error("Microsoft sign-in error:", error);
     return {
       user: null,
       error: getErrorMessage(error as AuthError),

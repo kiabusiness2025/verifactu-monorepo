@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Building2, Users, TrendingUp, Plus, Pencil, Trash2, X } from "lucide-react";
-import { formatCurrency, formatNumber } from "@/src/lib/formatters";
-import { adminGet, adminPost, adminPatch, adminDelete, type TenantRow } from "@/lib/adminApi";
+import { adminDelete, adminGet, adminPatch, adminPost, type TenantRow } from '@/lib/adminApi';
+import { formatCurrency, formatNumber } from '@/src/lib/formatters';
+import { Building2, Pencil, Plus, Trash2, TrendingUp, Users, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 type Tenant = TenantRow & {
   members_count: number;
@@ -17,12 +17,12 @@ export default function AdminEmpresasPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [formData, setFormData] = useState({
-    legalName: "",
-    taxId: "",
-    address: "",
-    cnae: "",
+    legalName: '',
+    taxId: '',
+    address: '',
+    cnae: '',
   });
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -31,10 +31,10 @@ export default function AdminEmpresasPage() {
 
   async function fetchTenants() {
     try {
-      const data = await adminGet<{ ok: boolean; tenants: Tenant[] }>("/api/admin/tenants");
+      const data = await adminGet<{ ok: boolean; tenants: Tenant[] }>('/api/admin/tenants');
       setTenants(data.tenants || []);
     } catch (error) {
-      console.error("Error fetching tenants:", error);
+      console.error('Error fetching tenants:', error);
     } finally {
       setLoading(false);
     }
@@ -42,26 +42,26 @@ export default function AdminEmpresasPage() {
 
   function openCreateModal() {
     setEditingTenant(null);
-    setFormData({ legalName: "", taxId: "", address: "", cnae: "" });
-    setError("");
+    setFormData({ legalName: '', taxId: '', address: '', cnae: '' });
+    setError('');
     setShowModal(true);
   }
 
   function openEditModal(tenant: Tenant) {
     setEditingTenant(tenant);
     setFormData({
-      legalName: tenant.legalName || "",
-      taxId: tenant.taxId || "",
-      address: tenant.address || "",
-      cnae: tenant.cnae || "",
+      legalName: tenant.legalName || '',
+      taxId: tenant.taxId || '',
+      address: tenant.address || '',
+      cnae: tenant.cnae || '',
     });
-    setError("");
+    setError('');
     setShowModal(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setError('');
     setSaving(true);
 
     try {
@@ -74,13 +74,16 @@ export default function AdminEmpresasPage() {
         setTenants(tenants.map((t) => (t.id === editingTenant.id ? data.tenant : t)));
       } else {
         // Crear
-        const data = await adminPost<{ ok: boolean; tenant: Tenant }>("/api/admin/tenants", formData);
+        const data = await adminPost<{ ok: boolean; tenant: Tenant }>(
+          '/api/admin/tenants',
+          formData
+        );
         setTenants([data.tenant, ...tenants]);
       }
       setShowModal(false);
-      setFormData({ legalName: "", taxId: "", address: "", cnae: "" });
+      setFormData({ legalName: '', taxId: '', address: '', cnae: '' });
     } catch (err: any) {
-      setError(err.message || "Error al guardar");
+      setError(err.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -99,7 +102,7 @@ export default function AdminEmpresasPage() {
       await adminDelete(`/api/admin/tenants/${tenant.id}`);
       setTenants(tenants.filter((t) => t.id !== tenant.id));
     } catch (err: any) {
-      alert(err.message || "Error al eliminar");
+      alert(err.message || 'Error al eliminar');
     }
   }
 
@@ -125,9 +128,7 @@ export default function AdminEmpresasPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Empresas</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {formatNumber(tenants.length)}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{formatNumber(tenants.length)}</p>
             </div>
             <Building2 className="h-8 w-8 text-blue-500" />
           </div>
@@ -137,9 +138,7 @@ export default function AdminEmpresasPage() {
             <div>
               <p className="text-sm text-gray-500">Total Usuarios</p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatNumber(
-                  tenants.reduce((acc, t) => acc + (t.members_count || 0), 0)
-                )}
+                {formatNumber(tenants.reduce((acc, t) => acc + (t.members_count || 0), 0))}
               </p>
             </div>
             <Users className="h-8 w-8 text-green-500" />
@@ -150,9 +149,7 @@ export default function AdminEmpresasPage() {
             <div>
               <p className="text-sm text-gray-500">Ingresos Totales</p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(
-                  tenants.reduce((acc, t) => acc + (t.total_revenue || 0), 0)
-                )}
+                {formatCurrency(tenants.reduce((acc, t) => acc + (t.total_revenue || 0), 0))}
               </p>
             </div>
             <TrendingUp className="h-8 w-8 text-purple-500" />
@@ -165,7 +162,7 @@ export default function AdminEmpresasPage() {
         <div className="text-center py-12 text-gray-500">Cargando empresas...</div>
       ) : tenants.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          No hay empresas registradas.{" "}
+          No hay empresas registradas.{' '}
           <button onClick={openCreateModal} className="text-blue-600 hover:underline">
             Crear la primera
           </button>
@@ -186,9 +183,7 @@ export default function AdminEmpresasPage() {
                   {tenant.taxId && (
                     <p className="text-xs text-gray-500 mt-1">CIF/NIF: {tenant.taxId}</p>
                   )}
-                  {tenant.address && (
-                    <p className="text-xs text-gray-500">{tenant.address}</p>
-                  )}
+                  {tenant.address && <p className="text-xs text-gray-500">{tenant.address}</p>}
                   <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
                     <span>Usuarios: {formatNumber(tenant.members_count)}</span>
                     <span>Facturas: {formatNumber(tenant.invoices_count)}</span>
@@ -198,12 +193,14 @@ export default function AdminEmpresasPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => openEditModal(tenant)}
+                    aria-label={`Editar ${tenant.legalName}`}
                     className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(tenant)}
+                    aria-label={`Eliminar ${tenant.legalName}`}
                     className="rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -221,10 +218,11 @@ export default function AdminEmpresasPage() {
           <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-200 p-4">
               <h2 className="text-lg font-semibold text-gray-900">
-                {editingTenant ? "Editar Empresa" : "Crear Empresa"}
+                {editingTenant ? 'Editar Empresa' : 'Crear Empresa'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
+                aria-label="Cerrar modal"
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="h-5 w-5" />
@@ -263,9 +261,7 @@ export default function AdminEmpresasPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Dirección
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
                 <input
                   type="text"
                   value={formData.address}
@@ -275,9 +271,7 @@ export default function AdminEmpresasPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  CNAE
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CNAE</label>
                 <input
                   type="text"
                   value={formData.cnae}
@@ -299,7 +293,7 @@ export default function AdminEmpresasPage() {
                   disabled={saving}
                   className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition"
                 >
-                  {saving ? "Guardando..." : editingTenant ? "Guardar" : "Crear"}
+                  {saving ? 'Guardando...' : editingTenant ? 'Guardar' : 'Crear'}
                 </button>
               </div>
             </form>

@@ -12,7 +12,7 @@ import { getLandingUrl } from '@/lib/urls';
  * Flow:
  * 1. User arrives at app.verifactu.business/login
  * 2. This page redirects to verifactu.business/auth/login
- * 3. User authenticates via Google OAuth
+ * 3. User authenticates via Google or Microsoft OAuth
  * 4. Landing creates JWT session and redirects back to app.verifactu.business/dashboard
  * 5. Middleware validates session and allows access
  */

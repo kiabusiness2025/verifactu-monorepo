@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * API para gestionar correos recibidos en soporte@verifactu.business
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     // Construir query con filtros
-    let whereConditions = ['1=1'];
+    const whereConditions = ['1=1'];
     const params: any[] = [];
     let paramIndex = 1;
 
@@ -75,11 +75,9 @@ export async function GET(request: NextRequest) {
     const stats = await query<any>(statsQuery);
 
     // Formatear respuesta
-    const formattedEmails = emails.map(email => ({
+    const formattedEmails = emails.map((email) => ({
       id: email.id,
-      from: email.from_name 
-        ? `${email.from_name} <${email.from_email}>` 
-        : email.from_email,
+      from: email.from_name ? `${email.from_name} <${email.from_email}>` : email.from_email,
       to: email.to_email,
       subject: email.subject,
       text: email.text_content || '',
@@ -138,7 +136,7 @@ export async function PATCH(request: NextRequest) {
     // Preparar campos adicionales según el status
     let additionalFields = '';
     const params: any[] = [status, emailId];
-    
+
     if (status === 'responded') {
       additionalFields = ', responded_at = NOW()';
       if (respondedBy) {
@@ -160,10 +158,7 @@ export async function PATCH(request: NextRequest) {
     const result = await query(updateQuery, params);
 
     if (result.length === 0) {
-      return NextResponse.json(
-        { error: 'Email not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Email not found' }, { status: 404 });
     }
 
     return NextResponse.json({

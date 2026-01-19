@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { AuthLayout, FormInput, PasswordInput } from "../../components/AuthComponents";
 import { useAuth } from "../../context/AuthContext";
-import { signUpWithEmail, signInWithGoogle } from "../../lib/auth";
+import { signUpWithEmail, signInWithGoogle, signInWithMicrosoft } from "../../lib/auth";
 import { getAppUrl } from "../../lib/urls";
 import Link from "next/link";
 
@@ -89,6 +89,26 @@ export default function SignupPage() {
       window.location.href = `${appUrl}/dashboard`;
     } catch (err) {
       setError("Error al registrarse con Google. Intenta de nuevo.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMicrosoftSignup = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const result = await signInWithMicrosoft();
+
+      if (result.error) {
+        setError(result.error.userMessage);
+        return;
+      }
+
+      window.location.href = `${appUrl}/dashboard`;
+    } catch (err) {
+      setError("Error al registrarse con Microsoft. Intenta de nuevo.");
     } finally {
       setIsLoading(false);
     }
@@ -236,6 +256,21 @@ export default function SignupPage() {
           />
         </svg>
         {isLoading ? "Registrandose..." : "Continuar con Google"}
+      </button>
+
+      <button
+        type="button"
+        onClick={handleMicrosoftSignup}
+        disabled={isLoading}
+        className="mt-3 flex w-full items-center justify-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <svg className="h-5 w-5" viewBox="0 0 24 24">
+          <path fill="#F25022" d="M2 2h9v9H2z" />
+          <path fill="#7FBA00" d="M13 2h9v9h-9z" />
+          <path fill="#00A4EF" d="M2 13h9v9H2z" />
+          <path fill="#FFB900" d="M13 13h9v9h-9z" />
+        </svg>
+        {isLoading ? "Registrandose..." : "Continuar con Microsoft"}
       </button>
     </AuthLayout>
   );

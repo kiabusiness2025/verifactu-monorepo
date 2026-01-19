@@ -6,7 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { AuthLayout, FormInput, PasswordInput } from "../../components/AuthComponents";
 import { useAuth } from "../../context/AuthContext";
-import { signInWithEmail, signUpWithEmail, signInWithGoogle } from "../../lib/auth";
+import {
+  signInWithEmail,
+  signUpWithEmail,
+  signInWithGoogle,
+  signInWithMicrosoft,
+} from "../../lib/auth";
 import { mintSessionCookie } from "../../lib/serverSession";
 import { useToast } from "../../components/Toast";
 import { getAppUrl } from "../../lib/urls";
@@ -148,6 +153,29 @@ export default function LoginPage() {
     } catch (err) {
       setError("Error al iniciar sesion con Google. Intenta de nuevo.");
       showToast({ type: "error", title: "Error", message: "Error al iniciar sesion con Google" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMicrosoftLogin = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const result = await signInWithMicrosoft();
+
+      if (result.error) {
+        setError(result.error.userMessage);
+        showToast({ type: "error", title: "Error", message: result.error.userMessage });
+        return;
+      }
+
+      showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesion con Microsoft" });
+      redirectToDashboard();
+    } catch (err) {
+      setError("Error al iniciar sesion con Microsoft. Intenta de nuevo.");
+      showToast({ type: "error", title: "Error", message: "Error al iniciar sesion" });
     } finally {
       setIsLoading(false);
     }
@@ -377,7 +405,21 @@ export default function LoginPage() {
             : "Registrandose..."
           : "Continuar con Google"}
       </button>
+
+      <button
+        type="button"
+        onClick={handleMicrosoftLogin}
+        disabled={isLoading}
+        className="mt-3 flex w-full items-center justify-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <svg className="h-5 w-5" viewBox="0 0 24 24">
+          <path fill="#F25022" d="M2 2h9v9H2z" />
+          <path fill="#7FBA00" d="M13 2h9v9h-9z" />
+          <path fill="#00A4EF" d="M2 13h9v9H2z" />
+          <path fill="#FFB900" d="M13 13h9v9h-9z" />
+        </svg>
+        {isLoading ? "Iniciando sesion..." : "Continuar con Microsoft"}
+      </button>
     </AuthLayout>
   );
 }
-
