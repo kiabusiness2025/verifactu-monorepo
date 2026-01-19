@@ -43,7 +43,7 @@ interface ResendMessage {
 }
 
 export default function ResendConfigPage() {
-  const [activeTab, setActiveTab] = useState<"config" | "messages" | "send">("config");
+  const [activeTab, setActiveTab] = useState<"config" | "messages" | "send" | "templates">("config");
   const [showApiKey, setShowApiKey] = useState(false);
   const [config, setConfig] = useState<ResendConfig>({
     apiKey: "",
@@ -210,7 +210,7 @@ export default function ResendConfigPage() {
 
       {/* Tabs */}
       <div className="flex gap-4 border-b border-slate-200">
-        {(["config", "messages", "send"] as const).map((tab) => (
+        {(["config", "messages", "send", "templates"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -223,6 +223,7 @@ export default function ResendConfigPage() {
             {tab === "config" && "Configuración"}
             {tab === "messages" && "Mensajes"}
             {tab === "send" && "Enviar"}
+            {tab === "templates" && "Plantillas"}
           </button>
         ))}
       </div>
@@ -650,6 +651,108 @@ export default function ResendConfigPage() {
             <Send className="h-4 w-4" />
             {sendSending ? "Enviando..." : "Enviar Correo"}
           </button>
+        </div>
+      )}
+
+      {/* TEMPLATES TAB */}
+      {activeTab === "templates" && (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">
+              Plantillas de Correo Disponibles
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Invoice Ready Template */}
+              <div className="border border-slate-200 rounded-lg p-4 hover:border-blue-600 transition">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Mail className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900">Factura Lista</h4>
+                    <p className="text-xs text-slate-600">InvoiceReadyEmail</p>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-600 mb-3">
+                  Notifica al usuario cuando su factura está lista para descargar.
+                </p>
+                <div className="text-xs text-slate-500">
+                  <strong>Props:</strong> userName, invoiceNumber, invoiceAmount, invoiceDate, downloadLink
+                </div>
+              </div>
+
+              {/* Payment Reminder Template */}
+              <div className="border border-slate-200 rounded-lg p-4 hover:border-blue-600 transition">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <AlertCircle className="h-5 w-5 text-yellow-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900">Recordatorio de Pago</h4>
+                    <p className="text-xs text-slate-600">PaymentReminderEmail</p>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-600 mb-3">
+                  Recordatorio amistoso de pago pendiente.
+                </p>
+                <div className="text-xs text-slate-500">
+                  <strong>Props:</strong> userName, companyName, invoiceNumber, invoiceAmount, dueDate, paymentLink
+                </div>
+              </div>
+
+              {/* Monthly Report Template */}
+              <div className="border border-slate-200 rounded-lg p-4 hover:border-blue-600 transition">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900">Reporte Mensual</h4>
+                    <p className="text-xs text-slate-600">MonthlyReportEmail</p>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-600 mb-3">
+                  Resumen mensual de actividad financiera.
+                </p>
+                <div className="text-xs text-slate-500">
+                  <strong>Props:</strong> userName, month, year, totalInvoices, totalRevenue, totalExpenses, netProfit, dashboardLink
+                </div>
+              </div>
+
+              {/* Support Ticket Template */}
+              <div className="border border-slate-200 rounded-lg p-4 hover:border-blue-600 transition">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Settings className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900">Ticket de Soporte</h4>
+                    <p className="text-xs text-slate-600">SupportTicketEmail</p>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-600 mb-3">
+                  Actualización de estado de ticket de soporte.
+                </p>
+                <div className="text-xs text-slate-500">
+                  <strong>Props:</strong> userName, ticketNumber, ticketSubject, ticketStatus, ticketLink, message?
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex gap-3">
+              <Mail className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-900">
+                <p className="font-semibold mb-1">Cómo usar las plantillas</p>
+                <ol className="list-decimal list-inside space-y-1 text-blue-700">
+                  <li>Importa la plantilla en tu código: <code className="bg-blue-100 px-1 rounded">import &#123; InvoiceReadyEmailTemplate &#125; from &apos;@/emails&apos;</code></li>
+                  <li>Renderiza con React: <code className="bg-blue-100 px-1 rounded">ReactDOMServer.renderToString(&lt;InvoiceReadyEmailTemplate /&gt;)</code></li>
+                  <li>Envía con Resend usando el HTML renderizado</li>
+                </ol>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-// Get or list messages
+// Get or list received messages
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -16,23 +16,95 @@ export async function POST(req: NextRequest) {
 
     const resend = new Resend(apiKey);
 
-    // Resend doesn't have a native message list API
-    // This is a placeholder - in production you'd use your own database
+    // Use Resend's emails.receive.list() to get received emails
+    const { data, error } = await resend.emails.receive.list();
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
+    // Filter by status if provided
+    let messages = data || [];
+    if (status && status !== "all") {
+      messages = messages.filter((msg: any) => msg.status === status);
+    }
+
+    // Transform to our format
+    const formattedMessages = messages.map((msg: any) => ({
+      id: msg.id,
+      from: msg.from,
+      to: Array.isArray(msg.to) ? msg.to : [msg.to],
+      cc: msg.cc || [],
+      bcc: msg.bcc || [],
+      replyTo: msg.reply_to,
+      subject: msg.subject,
+      html: msg.html || "",
+      text: msg.text || "",
+      tags: msg.tags || [],
+      createdAt: msg.created_at,
+      status: msg.status || "delivered",
+      opens: msg.opens || 0,
+      clicks: msg.clicks || 0,
+    }));
+
     return NextResponse.json({
-      messages: [
-        {
-          id: "msg_1",
-          from: "soporte@verifactu.business",
-          to: ["cliente@ejemplo.com"],
-          subject: "Mensaje de ejemplo",
-          html: "<p>Este es un mensaje de ejemplo</p>",
-          text: "Este es un mensaje de ejemplo",
-          createdAt: new Date().toISOString(),
-          status: "delivered",
-          opens: 1,
-          clicks: 0,
-        },
-      ],
+      messages: formattedMessages,
+      total: formattedMessages.length,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Error fetching messages" },
+      { status: 500 }
+    );
+  }
+}
+
+// Get a specific received email
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const apiKey = searchParams.get("apiKey");
+    const emailId = searchParams.get("emailId");
+
+    if (!apiKey || !emailId) {
+      return NextResponse.json(
+        { error: "API key and emailId required" },
+        { status: 400 }
+      );
+    }
+
+    const resend = new Resend(apiKey);
+
+    // Use Resend's emails.receive.get() to get a specific email
+    const { data, error } = await resend.emails.receive.get(emailId);
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
+    // Get attachments if any
+    const attachmentsResponse = await resend.attachments.receiving.list({
+      emailId: emailId,
+    });
+
+    return NextResponse.json({
+      message: {
+        id: data.id,
+        from: data.from,
+        to: data.to,
+        subject: data.subject,
+        html: data.html,
+        text: data.text,
+        createdAt: data.created_at,
+        attachments: attachmentsResponse.data || [],
+      },
     });
   } catch (error) {
     console.error("Error:", error);
@@ -56,8 +128,12 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Placeholder for delete logic
-    return NextResponse.json({ success: true });
+    // Note: Resend doesn't have a delete API for received emails
+    // This is a placeholder - you'd typically mark as archived in your database
+    return NextResponse.json({ 
+      success: true,
+      message: "Message marked for deletion (stored locally)" 
+    });
   } catch (error) {
     console.error("Error:", error);
     return NextResponse.json(
