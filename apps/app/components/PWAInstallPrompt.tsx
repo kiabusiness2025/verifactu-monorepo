@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Download, Smartphone } from "lucide-react";
+import { es } from "@/lib/i18n/es";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -18,17 +19,17 @@ export function PWAInstallPrompt() {
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(iOS);
 
-    // Detectar si ya estÃ¡ instalado
+    // Detectar si ya está instalado
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
     if (isStandalone) return;
 
-    // Check si ya se rechazÃ³ antes
+    // Check si ya se rechazó antes
     const dismissed = localStorage.getItem("pwa-install-dismissed");
     if (dismissed) {
       const dismissedDate = new Date(dismissed);
       const now = new Date();
       const daysSince = (now.getTime() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
-      if (daysSince < 30) return; // No mostrar por 30 dÃ­as
+      if (daysSince < 30) return; // No mostrar por 30 días
     }
 
     // Esperar 10 segundos antes de mostrar (para no ser intrusivo)
@@ -94,12 +95,12 @@ export function PWAInstallPrompt() {
 
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-slate-900 mb-1">
-              Instala Verifactu
+              {es.pwa.title}
             </h3>
             <p className="text-sm text-slate-600 mb-4">
               {isIOS
-                ? "Toca el boton Compartir y luego \"Anadir a pantalla de inicio\" para acceso rapido."
-                : "Instala la app para acceder mas rapido y recibir notificaciones."}
+                ? es.pwa.iosHint
+                : es.pwa.defaultHint}
             </p>
 
             {!isIOS && deferredPrompt && (
@@ -108,17 +109,17 @@ export function PWAInstallPrompt() {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Instalar aplicacion
+                {es.pwa.installCta}
               </button>
             )}
 
             {isIOS && (
               <div className="flex items-center gap-2 text-xs text-slate-500">
-                <span>1. Toca</span>
+                <span>1. {es.pwa.steps.share}</span>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M16 5l-1.42 1.42-1.59-1.59V16h-1.98V4.83L9.42 6.42 8 5l4-4 4 4zm4 5v11c0 1.1-.9 2-2 2H6c-1.11 0-2-.9-2-2V10c0-1.11.89-2 2-2h3v2H6v11h12V10h-3V8h3c1.1 0 2 .89 2 2z"/>
                 </svg>
-                <span>2. &quot;Anadir a pantalla de inicio&quot;</span>
+                <span>2. &quot;{es.pwa.steps.add}&quot;</span>
               </div>
             )}
           </div>
@@ -127,4 +128,6 @@ export function PWAInstallPrompt() {
     </div>
   );
 }
+
+
 

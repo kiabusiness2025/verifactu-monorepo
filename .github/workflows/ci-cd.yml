@@ -32,6 +32,9 @@ jobs:
           node-version: "20"
           cache: "pnpm"
 
+      - name: Encoding Check
+        run: node scripts/fix-encoding.js --check
+
       - run: pnpm install --frozen-lockfile
 
       - name: ESLint Check

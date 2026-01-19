@@ -1,14 +1,14 @@
-# 📚 Documentación Verifactu Business
+# Documentación Verifactu Business
 
-## 📋 Índice Rápido
+## Índice rápido
 
-### 🎯 Comenzar Aquí
+### Comenzar aquí
 - **[README.md](../README.md)** - Descripción general del proyecto
 - **[ARQUITECTURA_UNIFICADA.md](../ARQUITECTURA_UNIFICADA.md)** - Arquitectura completa (Vercel + Firebase + Prisma)
 
-### 🔐 Autenticación
+### Autenticación
 
-**Setup/** (Configuración)
+**setup/** (Configuración)
 - [setup/FIREBASE_CONSOLE_ACCESO.md](setup/FIREBASE_CONSOLE_ACCESO.md) - Acceso Firebase Console
 - [setup/FIREBASE_AUTH_SETUP.md](setup/FIREBASE_AUTH_SETUP.md) - Autenticación Firebase
 - [setup/MULTI_TENANT_AUTH_SETUP.md](setup/MULTI_TENANT_AUTH_SETUP.md) - Multi-tenant setup
@@ -17,7 +17,7 @@
 - [../FACEBOOK_OAUTH_SETUP.md](../FACEBOOK_OAUTH_SETUP.md) - Facebook OAuth
 - [../SECURITY.md](../SECURITY.md) - Políticas de seguridad
 
-### 🚀 Despliegue
+### Despliegue
 
 **deployment/** (Guías de despliegue)
 - [deployment/VERCEL_DEPLOYMENT_GUIDE.md](deployment/VERCEL_DEPLOYMENT_GUIDE.md) - Vercel
@@ -27,14 +27,7 @@
 **Web/** (En raíz)
 - [../GOOGLE_CLOUD_RUN_IAM.md](../GOOGLE_CLOUD_RUN_IAM.md) - Permisos IAM (opcional)
 
-### � GitHub & Colaboración
-
-**Web/** (En raíz)
-- [PULL_REQUEST_WORKFLOW.md](PULL_REQUEST_WORKFLOW.md) - Flujo de PR (paso a paso)
-- [BRANCH_PROTECTION_RULES.md](BRANCH_PROTECTION_RULES.md) - Reglas de protección
-- [GITHUB_INTEGRATION.md](GITHUB_INTEGRATION.md) - Integración GitHub + VS Code
-- [GITHUB_PR_VSCODE_GUIDE.md](GITHUB_PR_VSCODE_GUIDE.md) - Usar PRs desde VS Code
-- [GITHUB_CHEATSHEET.md](GITHUB_CHEATSHEET.md) - Referencia rápida- [DEPENDABOT_GUIDE.md](DEPENDABOT_GUIDE.md) - Automatización de dependencias### 🐙 GitHub & Colaboración
+### GitHub & colaboración
 
 **Web/** (En raíz)
 - [PULL_REQUEST_WORKFLOW.md](PULL_REQUEST_WORKFLOW.md) - Flujo de PR (paso a paso)
@@ -44,7 +37,8 @@
 - [GITHUB_CHEATSHEET.md](GITHUB_CHEATSHEET.md) - Referencia rápida
 - [GITHUB_ACTIONS_GUIDE.md](GITHUB_ACTIONS_GUIDE.md) - Workflows y automatización
 - [DEPENDABOT_GUIDE.md](DEPENDABOT_GUIDE.md) - Automatización de dependencias
-### �📱 Flutter / Mobile
+
+### Flutter / Mobile
 
 **setup/** (Instalación)
 - [setup/FLUTTER_INSTALLATION_GUIDE.md](setup/FLUTTER_INSTALLATION_GUIDE.md) - Instalación Flutter
@@ -53,40 +47,40 @@
 **Mobile** (Apps)
 - [../apps/mobile/QUICK_START.md](../apps/mobile/QUICK_START.md) - Quick start
 
-### 🗄️ Base de Datos
+### Base de datos
 
 **setup/** (Configuración)
 - [setup/DB_SETUP_GUIDE.md](setup/DB_SETUP_GUIDE.md) - PostgreSQL + Prisma
 - **Schema:** [../apps/app/prisma/schema.prisma](../apps/app/prisma/schema.prisma)
 
-### 🤖 AI / Genkit
+### AI / Genkit
 
 **ai/** (Documentación de IA)
 - [ai/ISAAK_V3_QUICK_START.md](ai/ISAAK_V3_QUICK_START.md) - Quick start Genkit
 - [ai/ISAAK_V3_TESTING_GUIDE.md](ai/ISAAK_V3_TESTING_GUIDE.md) - Testing
 - [ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md](ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md) - Checklist
 
-### 📊 Estado del Proyecto
+### Estado del proyecto
 
 **Web/** (En raíz)
 - [../PROJECT_STATUS.md](../PROJECT_STATUS.md) - Estado actual
 - [../IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md) - Estado de implementación
-- [../DELIVERABLES.md](../DELIVERABLES.md) - Entregables
+- [../PROJECT_DELIVERABLES.md](../PROJECT_DELIVERABLES.md) - Entregables
 
-### 🎨 Branding
+### Branding
 
 **Web/** (En raíz)
 - [../BRANDING.md](../BRANDING.md) - Guía de branding
-- [../MANIFESTO.md](../MANIFESTO.md) - Manifesto de la marca
+- [../MANIFESTO.md](../MANIFESTO.md) - Manifiesto de la marca
 
-### 📈 Optimización
+### Optimización
 
 **optimization/** (Performance y auditorías)
 - [optimization/LANDING_OPTIMIZATION_STATUS.md](optimization/LANDING_OPTIMIZATION_STATUS.md) - Performance
 - [optimization/ACCESSIBILITY_AUDIT.md](optimization/ACCESSIBILITY_AUDIT.md) - Accesibilidad
 - [optimization/IMAGE_OPTIMIZATION_GUIDE.md](optimization/IMAGE_OPTIMIZATION_GUIDE.md) - Imágenes
 
-### 🗂️ Archivos Legados
+### Archivos legados
 
 **legacy/** - Código y docs antiguos
 - Early implementations
@@ -95,7 +89,7 @@
 
 ---
 
-## 🗂️ Estructura del Proyecto
+## Estructura del proyecto
 
 ```
 verifactu-monorepo/
@@ -120,7 +114,7 @@ verifactu-monorepo/
 
 ---
 
-## ⚡ Inicio Rápido
+## Inicio rápido
 
 ### Web (Next.js)
 
@@ -153,7 +147,7 @@ flutter build ios
 
 ---
 
-## 🔧 Tecnologías Principales
+## Tecnologías principales
 
 ### Frontend
 - **Next.js 14** - React framework
@@ -174,7 +168,7 @@ flutter build ios
 
 ---
 
-## 📞 Contacto
+## Contacto
 
 **Email:** kiabusiness2025@gmail.com
 
