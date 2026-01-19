@@ -12,6 +12,7 @@ const adminNav = [
   { label: "Usuarios", href: "/dashboard/admin/users" },
   { label: "Empresas", href: "/dashboard/admin/companies" },
   { label: "Contabilidad", href: "/dashboard/admin/accounting" },
+  { label: "Resend", href: "/dashboard/admin/resend" },
 ];
 
 export default function AdminLayout({
