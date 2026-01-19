@@ -11,7 +11,10 @@
     "DIRECCIÓN DE LA ORGANIZACIÓN"
   ],
   "tasks": {
-    "build": { "dependsOn": ["^build"], "outputs": [".next/**", "dist/**"] },
+    "build": { 
+      "dependsOn": ["^build"], 
+      "outputs": ["apps/app/.next/**", ".next/**", "dist/**"] 
+    },
     "dev":   { "cache": false },
     "lint":  {},
     "test":  {}
