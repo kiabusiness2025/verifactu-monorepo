@@ -151,7 +151,6 @@ export default function AdminUsersPage() {
           >
             {exporting ? "Exportando..." : "Exportar CSV"}
           </AccessibleButton>
-          </button>
         </div>
       </header>
 
