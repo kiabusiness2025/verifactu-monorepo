@@ -1,5 +1,10 @@
 name: Pre-Deployment Validation
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 on:
   push:
     branches: [main, staging]
@@ -36,6 +41,7 @@ jobs:
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
           NEXTAUTH_SECRET: "dummy-secret-for-build"
           NEXTAUTH_URL: "http://localhost:3000"
+          RESEND_API_KEY: "re_dummy_key_for_build"
       
       - name: Type check (app)
         run: |

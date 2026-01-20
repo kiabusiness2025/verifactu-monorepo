@@ -4,6 +4,8 @@
 
 **Plataforma SaaS completa para emisión de facturas y cumplimiento VeriFactu**
 
+> 🤖 **Automated Pre-Deployment Validation Active** - Phase 1 automation testing
+
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js)](https://nodejs.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=next.js)](https://nextjs.org/)
 [![Flutter](https://img.shields.io/badge/Flutter-3.38-02569B?logo=flutter)](https://flutter.dev/)
@@ -503,3 +505,6 @@ El entorno está correctamente configurado cuando:
 ✔ Secret Manager tiene los secretos clave
 ✔ Se puede desplegar un servicio simple a Cloud Run
 ✔ Los dominios están activos en Cloud Run / DNS
+#   T e s t 
+ 
+ 
