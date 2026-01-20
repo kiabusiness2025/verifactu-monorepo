@@ -2,7 +2,7 @@ name: Discord Notifications
 
 on:
   workflow_run:
-    workflows: ["Pre-Deployment Validation", "Auto-Fix Common Errors"]
+    workflows: ['Pre-Deployment Validation', 'Auto-Fix Common Errors']
     types:
       - completed
 
@@ -11,7 +11,7 @@ jobs:
     name: Send Discord Notification
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: Get workflow info
         id: workflow
@@ -21,7 +21,7 @@ jobs:
           echo "url=${{ github.event.workflow_run.html_url }}" >> $GITHUB_OUTPUT
           echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
           echo "commit=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
-      
+
       - name: Set notification color
         id: color
         run: |
@@ -32,7 +32,7 @@ jobs:
           else
             echo "value=16776960" >> $GITHUB_OUTPUT  # Yellow
           fi
-      
+
       - name: Set status emoji
         id: emoji
         run: |
@@ -43,7 +43,7 @@ jobs:
           else
             echo "value=⚠️" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Send Discord notification
         if: env.DISCORD_WEBHOOK_URL != ''
         env:

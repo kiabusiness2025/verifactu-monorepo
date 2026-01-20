@@ -10,6 +10,7 @@ import { FirebaseAnalytics } from '@/components/FirebaseAnalytics';
 import { PWARegistration } from '@/components/PWARegistration';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 import { ErrorMonitor } from '@/components/monitoring/ErrorMonitor';
+import { ToastProvider } from '@/components/notifications/ToastNotifications';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -60,11 +61,13 @@ export default function RootLayout({
         <PWAInstallPrompt />
         <ErrorMonitor />
         <FirebaseAnalytics />
-        <ThemeProvider>
-          <SidebarProvider>
-            <IsaakUIProvider>{children}</IsaakUIProvider>
-          </SidebarProvider>
-        </ThemeProvider>
+        <ToastProvider>
+          <ThemeProvider>
+            <SidebarProvider>
+              <IsaakUIProvider>{children}</IsaakUIProvider>
+            </SidebarProvider>
+          </ThemeProvider>
+        </ToastProvider>
       </body>
     </html>
   );

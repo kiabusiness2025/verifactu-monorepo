@@ -16,16 +16,7 @@ interface AccessibleInputProps extends React.InputHTMLAttributes<HTMLInputElemen
 
 export const AccessibleInput = React.forwardRef<HTMLInputElement, AccessibleInputProps>(
   (
-    {
-      label,
-      showLabel = true,
-      error,
-      helperText,
-      required = false,
-      className = '',
-      id,
-      ...props
-    },
+    { label, showLabel = true, error, helperText, required = false, className = '', id, ...props },
     ref
   ) => {
     // Generate unique ID if not provided
@@ -35,22 +26,16 @@ export const AccessibleInput = React.forwardRef<HTMLInputElement, AccessibleInpu
 
     const baseInputClasses =
       'w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1';
-    const normalClasses =
-      'border-slate-200 focus:border-blue-500 focus:ring-blue-500';
-    const errorClasses =
-      'border-red-300 focus:border-red-500 focus:ring-red-500';
+    const normalClasses = 'border-slate-200 focus:border-blue-500 focus:ring-blue-500';
+    const errorClasses = 'border-red-300 focus:border-red-500 focus:ring-red-500';
 
-    const inputClasses = `${baseInputClasses} ${
-      error ? errorClasses : normalClasses
-    } ${className}`;
+    const inputClasses = `${baseInputClasses} ${error ? errorClasses : normalClasses} ${className}`;
 
     return (
       <div className="space-y-1">
         <label
           htmlFor={inputId}
-          className={`block text-sm font-medium text-slate-700 ${
-            !showLabel ? 'sr-only' : ''
-          }`}
+          className={`block text-sm font-medium text-slate-700 ${!showLabel ? 'sr-only' : ''}`}
         >
           {label}
           {required && (
@@ -65,9 +50,7 @@ export const AccessibleInput = React.forwardRef<HTMLInputElement, AccessibleInpu
           id={inputId}
           className={inputClasses}
           aria-invalid={error ? 'true' : 'false'}
-          aria-describedby={
-            [errorId, helperId].filter(Boolean).join(' ') || undefined
-          }
+          aria-describedby={[errorId, helperId].filter(Boolean).join(' ') || undefined}
           aria-required={required}
           {...props}
         />
@@ -121,10 +104,8 @@ export const AccessibleSelect = React.forwardRef<HTMLSelectElement, AccessibleSe
 
     const baseSelectClasses =
       'w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1';
-    const normalClasses =
-      'border-slate-200 focus:border-blue-500 focus:ring-blue-500';
-    const errorClasses =
-      'border-red-300 focus:border-red-500 focus:ring-red-500';
+    const normalClasses = 'border-slate-200 focus:border-blue-500 focus:ring-blue-500';
+    const errorClasses = 'border-red-300 focus:border-red-500 focus:ring-red-500';
 
     const selectClasses = `${baseSelectClasses} ${
       error ? errorClasses : normalClasses
@@ -134,9 +115,7 @@ export const AccessibleSelect = React.forwardRef<HTMLSelectElement, AccessibleSe
       <div className="space-y-1">
         <label
           htmlFor={selectId}
-          className={`block text-sm font-medium text-slate-700 ${
-            !showLabel ? 'sr-only' : ''
-          }`}
+          className={`block text-sm font-medium text-slate-700 ${!showLabel ? 'sr-only' : ''}`}
         >
           {label}
           {required && (
@@ -151,9 +130,7 @@ export const AccessibleSelect = React.forwardRef<HTMLSelectElement, AccessibleSe
           id={selectId}
           className={selectClasses}
           aria-invalid={error ? 'true' : 'false'}
-          aria-describedby={
-            [errorId, helperId].filter(Boolean).join(' ') || undefined
-          }
+          aria-describedby={[errorId, helperId].filter(Boolean).join(' ') || undefined}
           aria-required={required}
           {...props}
         >

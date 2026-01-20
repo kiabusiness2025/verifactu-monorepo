@@ -5,6 +5,8 @@ import Link from "next/link";
 import { adminGet, type AccountingData } from "@/lib/adminApi";
 import { formatCurrency, formatNumber, formatTime } from "@/src/lib/formatters";
 import { TrendingUp, TrendingDown, Users, Building, DollarSign } from "lucide-react";
+import { DashboardSkeleton } from "@/components/accessibility/LoadingSkeleton";
+import DashboardDataExporter from "@/components/dashboard/DashboardDataExporter";
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -44,6 +46,10 @@ export default function AdminDashboardPage() {
       mounted = false;
     };
   }, []);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -158,6 +164,9 @@ export default function AdminDashboardPage() {
           Última actualización: {lastCheckedAt}
         </div>
       )}
+
+      {/* Dashboard Data Exporter */}
+      <DashboardDataExporter />
     </div>
   );
 }

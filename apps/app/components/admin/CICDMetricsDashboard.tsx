@@ -1,7 +1,7 @@
 'use client';
 
+import { Activity, CheckCircle, Clock, TrendingUp, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Activity, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react';
 
 interface WorkflowStats {
   total: number;
@@ -60,17 +60,23 @@ export default function CICDMetricsDashboard() {
 
   const getStatusColor = (conclusion: string | null) => {
     switch (conclusion) {
-      case 'success': return 'text-green-600 bg-green-50';
-      case 'failure': return 'text-red-600 bg-red-50';
-      default: return 'text-yellow-600 bg-yellow-50';
+      case 'success':
+        return 'text-green-600 bg-green-50';
+      case 'failure':
+        return 'text-red-600 bg-red-50';
+      default:
+        return 'text-yellow-600 bg-yellow-50';
     }
   };
 
   const getStatusIcon = (conclusion: string | null) => {
     switch (conclusion) {
-      case 'success': return <CheckCircle className="h-5 w-5" />;
-      case 'failure': return <XCircle className="h-5 w-5" />;
-      default: return <Clock className="h-5 w-5" />;
+      case 'success':
+        return <CheckCircle className="h-5 w-5" />;
+      case 'failure':
+        return <XCircle className="h-5 w-5" />;
+      default:
+        return <Clock className="h-5 w-5" />;
     }
   };
 
@@ -150,9 +156,7 @@ export default function CICDMetricsDashboard() {
             <div key={name} className="border-b border-gray-100 pb-4 last:border-0">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium text-gray-900">{name}</h4>
-                <span className="text-sm text-gray-600">
-                  {stats.total} runs
-                </span>
+                <span className="text-sm text-gray-600">{stats.total} runs</span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -207,11 +211,11 @@ export default function CICDMetricsDashboard() {
               {metrics.recentRuns.slice(0, 10).map((run) => (
                 <tr key={run.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${getStatusColor(run.conclusion)}`}>
+                    <div
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${getStatusColor(run.conclusion)}`}
+                    >
                       {getStatusIcon(run.conclusion)}
-                      <span className="text-sm font-medium">
-                        {run.conclusion || run.status}
-                      </span>
+                      <span className="text-sm font-medium">{run.conclusion || run.status}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

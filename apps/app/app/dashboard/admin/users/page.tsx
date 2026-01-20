@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminGet, type UserRow } from "@/lib/adminApi";
 import { Eye, Download, LogIn, UserPlus, Edit, Ban, Trash2 } from "lucide-react";
+import { useToast } from "@/components/notifications/ToastNotifications";
+import { TableSkeleton } from "@/components/accessibility/LoadingSkeleton";
+import { AccessibleButton } from "@/components/accessibility/AccessibleButton";
 
 type UsersResponse = {
   users: UserRow[];
@@ -11,6 +14,7 @@ type UsersResponse = {
 
 export default function AdminUsersPage() {
   const router = useRouter();
+  const { success, error: showError, warning } = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -62,9 +66,11 @@ export default function AdminUsersPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      success('Exportación completada', `Archivo descargado: ${a.download}`);
     } catch (error) {
       console.error("Export error:", error);
-      alert("Error al exportar usuarios");
+      showError('Error al exportar', 'No se pudo exportar la lista de usuarios');
     } finally {
       setExporting(false);
     }
@@ -80,39 +86,40 @@ export default function AdminUsersPage() {
       });
 
       if (res.ok) {
+        success('Acceso como usuario', `Entrando al dashboard como ${email}`);
         // Esperar un poco para asegurar que la cookie se estableció
         await new Promise(resolve => setTimeout(resolve, 300));
         window.location.href = "/dashboard";
       } else {
-        const error = await res.json();
-        alert(`Error: ${error.error}`);
+        const errorData = await res.json();
+        showError('Error de impersonación', errorData.error || 'No se pudo acceder como este usuario');
       }
     } catch (error) {
       console.error("Impersonation error:", error);
-      alert("Error al intentar entrar como usuario");
+      showError('Error de impersonación', 'No se pudo acceder como este usuario');
     }
   };
 
   const handleCreateUser = () => {
     // TODO: Implementar modal o página de creación
-    alert("Crear usuario: función en desarrollo");
+    warning('Función en desarrollo', 'Esta funcionalidad estará disponible próximamente');
   };
 
   const handleEditUser = (userId: string) => {
     // TODO: Implementar modal o página de edición
-    alert(`Editar usuario ${userId}: función en desarrollo`);
+    warning('Función en desarrollo', 'La edición de usuarios estará disponible próximamente');
   };
 
   const handleBlockUser = async (userId: string, email: string) => {
     // TODO: Implementar API de bloqueo
     if (!confirm(`¿Bloquear temporalmente a ${email}?`)) return;
-    alert(`Bloquear ${userId}: función en desarrollo`);
+    warning('Función en desarrollo', 'El bloqueo de usuarios estará disponible próximamente');
   };
 
   const handleDeleteUser = async (userId: string, email: string) => {
     if (!confirm(`⚠️ ¿ELIMINAR permanentemente a ${email}?\n\nEsta acción no se puede deshacer.`)) return;
     // TODO: Implementar API de eliminación
-    alert(`Eliminar ${userId}: función en desarrollo`);
+    warning('Función en desarrollo', 'La eliminación de usuarios estará disponible próximamente');
   };
 
   return (
@@ -126,20 +133,24 @@ export default function AdminUsersPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          <AccessibleButton
             onClick={handleCreateUser}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            variant="primary"
+            icon={<UserPlus className="h-4 w-4" />}
+            ariaLabel="Crear nuevo usuario"
           >
-            <UserPlus className="h-4 w-4" />
             Crear Usuario
-          </button>
-          <button
+          </AccessibleButton>
+          <AccessibleButton
             onClick={handleExport}
+            loading={exporting}
             disabled={exporting}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-emerald-400"
+            variant="secondary"
+            icon={<Download className="h-4 w-4" />}
+            ariaLabel="Exportar lista de usuarios a CSV"
           >
-            <Download className="h-4 w-4" />
             {exporting ? "Exportando..." : "Exportar CSV"}
+          </AccessibleButton>
           </button>
         </div>
       </header>
@@ -154,11 +165,9 @@ export default function AdminUsersPage() {
       </div>
 
       {loading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-          Cargando usuarios...
-        </div>
+        <TableSkeleton rows={10} columns={5} />
       ) : error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+        <div className=\"rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700\" role=\"alert\">
           {error}
         </div>
       ) : (

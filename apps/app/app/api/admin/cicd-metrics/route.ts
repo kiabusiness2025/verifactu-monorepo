@@ -26,38 +26,35 @@ interface GitHubMetrics {
     url: string;
     timestamp: string;
   }>;
-  byWorkflow: Record<string, {
-    total: number;
-    success: number;
-    failure: number;
-    successRate: number;
-  }>;
+  byWorkflow: Record<
+    string,
+    {
+      total: number;
+      success: number;
+      failure: number;
+      successRate: number;
+    }
+  >;
 }
 
 export async function GET(request: NextRequest) {
   try {
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
     const REPO = 'kiabusiness2025/verifactu-monorepo';
-    
+
     if (!GITHUB_TOKEN) {
-      return NextResponse.json(
-        { error: 'GitHub token not configured' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'GitHub token not configured' }, { status: 500 });
     }
 
     // Fetch recent workflow runs
-    const response = await fetch(
-      `https://api.github.com/repos/${REPO}/actions/runs?per_page=50`,
-      {
-        headers: {
-          'Authorization': `Bearer ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28'
-        },
-        next: { revalidate: 60 } // Cache for 1 minute
-      }
-    );
+    const response = await fetch(`https://api.github.com/repos/${REPO}/actions/runs?per_page=50`, {
+      headers: {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      next: { revalidate: 60 }, // Cache for 1 minute
+    });
 
     if (!response.ok) {
       throw new Error(`GitHub API error: ${response.statusText}`);
@@ -72,7 +69,7 @@ export async function GET(request: NextRequest) {
       successRate: 0,
       avgDuration: 0,
       recentRuns: [],
-      byWorkflow: {}
+      byWorkflow: {},
     };
 
     let successCount = 0;
@@ -93,7 +90,7 @@ export async function GET(request: NextRequest) {
         duration,
         branch: run.head_branch,
         url: run.html_url,
-        timestamp: run.created_at
+        timestamp: run.created_at,
       });
 
       // Count successes
@@ -107,7 +104,7 @@ export async function GET(request: NextRequest) {
           total: 0,
           success: 0,
           failure: 0,
-          successRate: 0
+          successRate: 0,
         };
       }
 
@@ -122,29 +119,19 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate averages
-    metrics.successRate = runs.length > 0 
-      ? Math.round((successCount / runs.length) * 100) 
-      : 0;
-    
-    metrics.avgDuration = runs.length > 0 
-      ? Math.round(totalDuration / runs.length) 
-      : 0;
+    metrics.successRate = runs.length > 0 ? Math.round((successCount / runs.length) * 100) : 0;
+
+    metrics.avgDuration = runs.length > 0 ? Math.round(totalDuration / runs.length) : 0;
 
     // Calculate success rates per workflow
-    Object.keys(metrics.byWorkflow).forEach(workflow => {
+    Object.keys(metrics.byWorkflow).forEach((workflow) => {
       const stats = metrics.byWorkflow[workflow];
-      stats.successRate = stats.total > 0 
-        ? Math.round((stats.success / stats.total) * 100) 
-        : 0;
+      stats.successRate = stats.total > 0 ? Math.round((stats.success / stats.total) * 100) : 0;
     });
 
     return NextResponse.json(metrics);
-
   } catch (error) {
     console.error('Error fetching CI/CD metrics:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch metrics' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch metrics' }, { status: 500 });
   }
 }

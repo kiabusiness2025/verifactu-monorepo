@@ -42,8 +42,7 @@ export const AccessibleButton = React.forwardRef<HTMLButtonElement, AccessibleBu
       secondary:
         'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 focus-visible:ring-slate-500',
       ghost: 'bg-transparent text-slate-700 hover:bg-slate-100 focus-visible:ring-slate-500',
-      danger:
-        'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500',
+      danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500',
     };
 
     const sizeClasses = {

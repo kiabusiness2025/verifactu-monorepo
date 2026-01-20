@@ -9,13 +9,16 @@
 ## 🛡️ Protection Rules Applied
 
 ### Required Status Checks
+
 ✅ **Strict mode enabled** - Branch must be up to date before merging
 
 **Required Checks**:
+
 - ✅ `Validate App Build` - Ensures apps/app compiles successfully
 - ✅ `Validate Landing Build` - Ensures apps/landing compiles successfully
 
 ### Other Settings
+
 - ❌ Enforce for administrators: **Disabled** (admins can bypass in emergencies)
 - ❌ Required pull request reviews: **Not required** (optional for now)
 - ❌ Required linear history: **Disabled**
@@ -27,17 +30,20 @@
 ## 📋 What This Means
 
 ### For Pull Requests
+
 1. **Cannot merge** until both validation checks pass
 2. Must wait for GitHub Actions to complete (~2 minutes)
 3. PR will show "Merging is blocked" if checks fail
 4. Clear feedback via automated comments
 
 ### For Direct Pushes to Main
+
 - Still allowed (no PR review required)
 - However, validation workflow runs on push
 - Failed deployments will be caught in CI
 
 ### For Emergency Fixes
+
 - Admins can bypass if absolutely necessary
 - Use with extreme caution
 - Document reason in commit message
@@ -50,13 +56,14 @@
 ✅ **Catches errors early** - Before they affect production  
 ✅ **Maintains code quality** - Type safety enforced  
 ✅ **Clear feedback** - Developers know exactly what's wrong  
-✅ **Protects main branch** - Stable baseline preserved  
+✅ **Protects main branch** - Stable baseline preserved
 
 ---
 
 ## 🔧 Modifying Protection Rules
 
 ### Via GitHub CLI
+
 ```bash
 # View current rules
 gh api repos/kiabusiness2025/verifactu-monorepo/branches/main/protection
@@ -67,6 +74,7 @@ gh api repos/kiabusiness2025/verifactu-monorepo/branches/main/protection \
 ```
 
 ### Via GitHub Web Interface
+
 1. Go to: https://github.com/kiabusiness2025/verifactu-monorepo/settings/branches
 2. Click "Edit" on `main` branch rule
 3. Modify settings as needed
@@ -80,10 +88,7 @@ gh api repos/kiabusiness2025/verifactu-monorepo/branches/main/protection \
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": [
-      "Validate App Build",
-      "Validate Landing Build"
-    ]
+    "contexts": ["Validate App Build", "Validate Landing Build"]
   },
   "enforce_admins": false,
   "required_pull_request_reviews": null,
@@ -95,7 +100,9 @@ gh api repos/kiabusiness2025/verifactu-monorepo/branches/main/protection \
 ```
 
 ### Context Names
+
 These must match exactly the job names in `.github/workflows/pre-deployment-check.yml`:
+
 - `Validate App Build` → `validate-app` job
 - `Validate Landing Build` → `validate-landing` job
 
@@ -104,6 +111,7 @@ These must match exactly the job names in `.github/workflows/pre-deployment-chec
 ## 🧪 Testing Protection Rules
 
 ### Test with a PR
+
 ```bash
 # Create test branch
 git checkout -b test/branch-protection
@@ -123,6 +131,7 @@ gh pr create --title "Test: Branch Protection" --body "Testing branch protection
 ```
 
 ### Expected Behavior
+
 1. ✅ Workflow triggers automatically
 2. ❌ Build fails due to missing dependency
 3. 🤖 Bot comments on PR with error details

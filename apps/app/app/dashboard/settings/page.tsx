@@ -6,12 +6,16 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Camera } from 'lucide-react';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
+import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
+import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
+import { useToast } from '@/components/notifications/ToastNotifications';
 
 const ALLOWED_TABS = new Set(['profile', 'general', 'billing', 'integrations', 'team', 'isaak']);
 
 function SettingsContent() {
   const sessionData = useSession();
   const session = sessionData?.data;
+  const { success, error: showError } = useToast();
   const [activeTenantId, setActiveTenantId] = useState<string>("");
   const logoInputRef = useRef<HTMLInputElement>(null);
   const searchParams = useSearchParams();
@@ -47,8 +51,10 @@ function SettingsContent() {
     setLoading(true);
     try {
       console.log('Saving general settings:', generalSettings);
+      success('Configuración guardada', 'Los cambios se han guardado correctamente');
     } catch (error) {
       console.error('Error saving settings:', error);
+      showError('Error al guardar', 'No se pudieron guardar los cambios');
     } finally {
       setLoading(false);
     }
@@ -92,10 +98,13 @@ function SettingsContent() {
 
       setNewTenantName("");
       setCreateTenantSuccess("Empresa creada. Te hemos cambiado a tu nueva empresa.");
+      success('Empresa creada', 'Redirigiendo a tu nueva empresa...');
       setTimeout(() => window.location.reload(), 800);
     } catch (error) {
       console.error("Error creating tenant:", error);
-      setCreateTenantError("No se pudo crear la empresa. Intenta de nuevo.");
+      const errorMsg = "No se pudo crear la empresa. Intenta de nuevo.";
+      setCreateTenantError(errorMsg);
+      showError('Error al crear empresa', errorMsg);
     } finally {
       setIsCreatingTenant(false);
     }

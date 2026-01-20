@@ -33,13 +33,14 @@
 ✅ **Autenticación robusta** - Firebase Auth con Google, Microsoft, Facebook  
 ✅ **App móvil** - Flutter app con sincronización en tiempo real  
 ✅ **Analytics** - Google Tag Manager + Firebase Analytics  
-✅ **AI** - Genkit para análisis de documentos y chatbot  
+✅ **AI** - Genkit para análisis de documentos y chatbot
 
 ---
 
 ## 🚀 Stack Tecnológico
 
 ### Frontend
+
 - **Next.js 14** - React framework con SSR
 - **Flutter 3.38** - App móvil iOS/Android/Web
 - **TypeScript** - Type safety en todo el código
@@ -47,12 +48,14 @@
 - **Material Design 3** - Design system moderno
 
 ### Backend
+
 - **Firebase** - Auth, Firestore, Remote Config, Analytics
 - **PostgreSQL** - Base de datos relacional
 - **Prisma ORM** - Query builder type-safe
 - **Genkit AI** - AI flows con Google AI
 
 ### Deployment
+
 - **Vercel** - Hosting web (Next.js apps)
 - **Firebase Hosting** - Backend services
 - **Google Cloud Run** - Optional API scaling
@@ -155,15 +158,17 @@ git push origin main
 ## 🔐 Autenticación
 
 ### Proveedores Soportados
+
 - ✅ Email/Password
 - ✅ Google OAuth
 - ✅ Microsoft OAuth
 - ✅ Facebook OAuth
 
 ### Flow de Autenticación
+
 ```
-Usuario → Firebase Auth → Sync a Prisma → 
-Auto-crear Tenant + Membership (owner) → 
+Usuario → Firebase Auth → Sync a Prisma →
+Auto-crear Tenant + Membership (owner) →
 Trial 14 días con plan Free
 ```
 
@@ -172,6 +177,7 @@ Trial 14 días con plan Free
 ## 💾 Base de Datos
 
 ### Schema Prisma
+
 ```
 Tenant → Memberships ← User
               ↓
@@ -180,6 +186,7 @@ Tenant → Memberships ← User
 ```
 
 ### Modelos
+
 - **Tenant** - Empresa/workspace del usuario
 - **User** - Usuario Firebase
 - **Membership** - Relación user-tenant con roles (owner, admin, member)
@@ -194,12 +201,14 @@ Tenant → Memberships ← User
 ## 📱 App Móvil (Flutter)
 
 ### Características
+
 - Autenticación Firebase
 - Gestión de facturas con Firestore
 - Feature flags con Remote Config
 - Sincronización en tiempo real
 
 ### Comandos
+
 ```bash
 cd apps/mobile
 
@@ -243,18 +252,21 @@ Ver [docs/README.md](./docs/README.md) para:
 ## 🐛 Troubleshooting
 
 ### Error: `DATABASE_URL not set`
+
 ```bash
 # Asegúrate de que exista en .env.local
 echo "DATABASE_URL=..." >> apps/app/.env.local
 ```
 
 ### Error: Firebase credentials not found
+
 ```bash
 # Verifica que las credenciales estén en lib/firebase.ts
 # O configura variables en .env.local
 ```
 
 ### Flutter app no compila
+
 ```bash
 cd apps/mobile
 flutter clean
@@ -289,12 +301,11 @@ Proyecto privado - Verifactu Business 2026
 
 **Última actualización:** Enero 2026
 
-
 Cada “app” es un servicio independiente que se despliega por separado.
 
----------------------------------------------------------------------
-🏗️ 3. Validación técnica del monorepo en GCP
----------------------------------------------------------------------
+---
+
+## 🏗️ 3. Validación técnica del monorepo en GCP
 
 Antes de desplegar, validar que todo compila correctamente dentro del entorno Cloud Shell.
 
@@ -312,13 +323,13 @@ npm run build
 3.3 API (Node + Express)
 cd $REPO_DIR/apps/api
 npm ci
-npm test       # si jest está configurado
-npm start      # test local
-
+npm test # si jest está configurado
+npm start # test local
 
 Si todo compila → se puede pasar a despliegues.
 
----------------------------------------------------------------------
+---
+
 🗄️ 4. Integración con Cloud SQL (Postgres)
 NAME: verifactu-db
 ENGINE: PostgreSQL 15
@@ -334,21 +345,19 @@ DATABASE_PASSWORD=<<<SECRET>>>
 DATABASE_NAME=verifactu_business
 DATABASE_URL=postgres://USER:PASSWORD@HOST:5432/DATABASE
 
-
 Se almacenan en Secret Manager:
 
 echo -n 'postgres://...' | gcloud secrets create DATABASE_URL --data-file=-
 
-
 Dar acceso al servicio:
 
 gcloud secrets add-iam-policy-binding DATABASE_URL \
-  --member=serviceAccount:$PROJECT_ID@appspot.gserviceaccount.com \
-  --role=roles/secretmanager.secretAccessor
+ --member=serviceAccount:$PROJECT_ID@appspot.gserviceaccount.com \
+ --role=roles/secretmanager.secretAccessor
 
----------------------------------------------------------------------
-🛠️ 5. Despliegue de servicios
----------------------------------------------------------------------
+---
+
+## 🛠️ 5. Despliegue de servicios
 
 ## 5.1 Landing - Vercel (Recomendado)
 
@@ -363,6 +372,7 @@ La landing se despliega automáticamente en **Vercel**:
 3. Deploy automático en cada push a `main`
 
 Alternativamente, desplegar localmente con Vercel CLI:
+
 ```bash
 npm install -g vercel
 vercel --prod
@@ -374,12 +384,14 @@ Configurar en Vercel (Production y Preview):
 Variables de entorno Isaak (requeridas):
 
 Vercel (Production y Preview):
+
 - ISAAK_API_KEY=tu_clave (preferido)
 - ISAAK_ASSISTANT_ID=tu_asistente (opcional)
 - NEXT_PUBLIC_ISAAK_API_KEY=tu_clave (solo si prefieres exponerla en cliente)
 - NEXT_PUBLIC_ISAAK_ASSISTANT_ID=tu_asistente
 
 Desarrollo local en apps/landing/.env.local:
+
 ```env
 ISAAK_API_KEY=tu_clave
 ISAAK_ASSISTANT_ID=tu_asistente
@@ -389,6 +401,7 @@ NEXT_PUBLIC_ISAAK_ASSISTANT_ID=tu_asistente
 ```
 
 Luego:
+
 ```bash
 cd apps/landing
 npm run dev
@@ -396,25 +409,25 @@ npm run dev
 
 cd $REPO_DIR/apps/app
 
-  --region $REGION \
-  --allow-unauthenticated \
-  --set-env-vars NODE_ENV=production \
-  --set-secrets DATABASE_URL=DATABASE_URL:latest
+--region $REGION \
+ --allow-unauthenticated \
+ --set-env-vars NODE_ENV=production \
+ --set-secrets DATABASE_URL=DATABASE_URL:latest
 
 ## 5.3 API (Node Express) - Cloud Run
 
 cd $REPO_DIR/apps/api
 
 gcloud run deploy verifactu-api \
-  --source . \
-  --region $REGION \
-  --allow-unauthenticated \
-  --set-env-vars NODE_ENV=production \
-  --set-secrets DATABASE_URL=DATABASE_URL:latest
+ --source . \
+ --region $REGION \
+ --allow-unauthenticated \
+ --set-env-vars NODE_ENV=production \
+ --set-secrets DATABASE_URL=DATABASE_URL:latest
 
----------------------------------------------------------------------
-🔐 6. Secret Manager estándar del proyecto
----------------------------------------------------------------------
+---
+
+## 🔐 6. Secret Manager estándar del proyecto
 
 Variables típicas:
 
@@ -425,46 +438,46 @@ NEXTAUTH_URL
 AEAT_CERTIFICATE_P12
 AEAT_CERTIFICATE_PASSWORD
 
-
 Crear un secreto:
 
 echo -n "VALUE" | gcloud secrets create SECRET_NAME --data-file=-
-
 
 Actualizar:
 
 echo -n "NEW_VALUE" | gcloud secrets versions add SECRET_NAME --data-file=-
 
----------------------------------------------------------------------
-🔄 7. Pipeline recomendado (Cloud Build YAML)
----------------------------------------------------------------------
+---
+
+## 🔄 7. Pipeline recomendado (Cloud Build YAML)
 
 Ejemplo minimal:
 
 steps:
-  - name: "node:20"
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        cd apps/app
-        npm ci
-        npm run build
 
-  - name: "gcr.io/cloud-builders/gcloud"
-    args:
-      [
-        "run", "deploy", "verifactu-app",
-        "--source=apps/app",
-        "--region=europe-west1",
-        "--allow-unauthenticated"
-      ]
+- name: "node:20"
+  entrypoint: bash
+  args:
+  - -c
+  - |
+    cd apps/app
+    npm ci
+    npm run build
+
+- name: "gcr.io/cloud-builders/gcloud"
+  args:
+  [
+  "run", "deploy", "verifactu-app",
+  "--source=apps/app",
+  "--region=europe-west1",
+  "--allow-unauthenticated"
+  ]
 
 images: []
 
----------------------------------------------------------------------
-🧩 8. Migración desde entornos previos
----------------------------------------------------------------------
+---
+
+## 🧩 8. Migración desde entornos previos
+
 ✔ Recomendado:
 
 Clonar repositorio limpio en el nuevo proyecto.
@@ -481,9 +494,9 @@ Desplegar servicios uno por uno.
 
 Verificar rutas, dominios y CORS.
 
----------------------------------------------------------------------
-🧹 9. Mantenimiento del entorno Cloud Shell
----------------------------------------------------------------------
+---
+
+## 🧹 9. Mantenimiento del entorno Cloud Shell
 
 Para liberar espacio:
 
@@ -492,14 +505,13 @@ rm -rf ~/.npm
 rm -rf ~/.cache
 find $HOME -type d -name "node_modules" -prune -exec rm -rf {} +
 
-
 Comprobar:
 
 df -h $HOME
 
----------------------------------------------------------------------
-✅ 10. Estado ideal antes de comenzar desarrollo
----------------------------------------------------------------------
+---
+
+## ✅ 10. Estado ideal antes de comenzar desarrollo
 
 El entorno está correctamente configurado cuando:
 

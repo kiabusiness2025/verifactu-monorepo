@@ -6,8 +6,16 @@
 
 'use client';
 
+import {
+  CheckCircle,
+  Download,
+  FileJson,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  XCircle,
+} from 'lucide-react';
 import React, { useState } from 'react';
-import { Download, FileText, FileJson, FileSpreadsheet, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { AccessibleButton } from '../accessibility/AccessibleButton';
 
 type ExportFormat = 'csv' | 'json' | 'pdf';
@@ -32,7 +40,10 @@ export default function DashboardDataExporter() {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('csv');
 
   const handleExport = async (format: ExportFormat) => {
-    setExportStatus({ status: 'loading', message: `Preparando exportación ${format.toUpperCase()}...` });
+    setExportStatus({
+      status: 'loading',
+      message: `Preparando exportación ${format.toUpperCase()}...`,
+    });
 
     try {
       // Call export API endpoint
@@ -53,28 +64,27 @@ export default function DashboardDataExporter() {
       // Get the blob from response
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      
+
       // Trigger download
       const a = document.createElement('a');
       a.href = url;
       a.download = `dashboard-export-${new Date().toISOString().split('T')[0]}.${format}`;
       document.body.appendChild(a);
       a.click();
-      
+
       // Cleanup
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      setExportStatus({ 
-        status: 'success', 
-        message: `Exportación completada: ${a.download}` 
+      setExportStatus({
+        status: 'success',
+        message: `Exportación completada: ${a.download}`,
       });
 
       // Reset status after 3 seconds
       setTimeout(() => {
         setExportStatus({ status: 'idle' });
       }, 3000);
-
     } catch (error) {
       console.error('Export error:', error);
       setExportStatus({
@@ -119,9 +129,7 @@ export default function DashboardDataExporter() {
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">
-            Exportar Datos del Dashboard
-          </h3>
+          <h3 className="text-lg font-semibold text-slate-900">Exportar Datos del Dashboard</h3>
           <p className="mt-1 text-sm text-slate-600">
             Descarga tus datos en el formato que prefieras
           </p>
@@ -144,9 +152,7 @@ export default function DashboardDataExporter() {
           >
             <div
               className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                selectedFormat === format
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-100 text-slate-600'
+                selectedFormat === format ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600'
               }`}
             >
               {icon}
@@ -157,14 +163,10 @@ export default function DashboardDataExporter() {
             </div>
             <div
               className={`h-5 w-5 rounded-full border-2 ${
-                selectedFormat === format
-                  ? 'border-blue-500 bg-blue-500'
-                  : 'border-slate-300'
+                selectedFormat === format ? 'border-blue-500 bg-blue-500' : 'border-slate-300'
               }`}
             >
-              {selectedFormat === format && (
-                <CheckCircle className="h-full w-full text-white" />
-              )}
+              {selectedFormat === format && <CheckCircle className="h-full w-full text-white" />}
             </div>
           </button>
         ))}
@@ -177,22 +179,16 @@ export default function DashboardDataExporter() {
             exportStatus.status === 'loading'
               ? 'bg-blue-50 text-blue-800'
               : exportStatus.status === 'success'
-              ? 'bg-green-50 text-green-800'
-              : 'bg-red-50 text-red-800'
+                ? 'bg-green-50 text-green-800'
+                : 'bg-red-50 text-red-800'
           }`}
           role="status"
           aria-live="polite"
         >
           <div className="flex items-center gap-3">
-            {exportStatus.status === 'loading' && (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            )}
-            {exportStatus.status === 'success' && (
-              <CheckCircle className="h-5 w-5" />
-            )}
-            {exportStatus.status === 'error' && (
-              <XCircle className="h-5 w-5" />
-            )}
+            {exportStatus.status === 'loading' && <Loader2 className="h-5 w-5 animate-spin" />}
+            {exportStatus.status === 'success' && <CheckCircle className="h-5 w-5" />}
+            {exportStatus.status === 'error' && <XCircle className="h-5 w-5" />}
             <span className="text-sm font-medium">{exportStatus.message}</span>
           </div>
         </div>
@@ -212,8 +208,8 @@ export default function DashboardDataExporter() {
 
       {/* Additional Info */}
       <div className="mt-4 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
-        <strong>Nota:</strong> La exportación incluye todos los datos visibles en tu
-        dashboard actual. Para exportaciones personalizadas, contacta con soporte.
+        <strong>Nota:</strong> La exportación incluye todos los datos visibles en tu dashboard
+        actual. Para exportaciones personalizadas, contacta con soporte.
       </div>
     </div>
   );

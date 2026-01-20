@@ -3,8 +3,8 @@
  * Handles exporting dashboard data in multiple formats
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import { getSessionPayload } from '@/lib/session';
+import { NextRequest, NextResponse } from 'next/server';
 
 interface ExportRequest {
   format: 'csv' | 'json' | 'pdf';
@@ -17,10 +17,7 @@ export async function POST(request: NextRequest) {
     // Authenticate user
     const session = await getSessionPayload();
     if (!session?.uid) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body: ExportRequest = await request.json();
@@ -55,10 +52,7 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        return NextResponse.json(
-          { error: 'Invalid format' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Invalid format' }, { status: 400 });
     }
 
     return new NextResponse(exportContent, {
@@ -69,7 +63,6 @@ export async function POST(request: NextRequest) {
         'Cache-Control': 'no-cache',
       },
     });
-
   } catch (error) {
     console.error('Export error:', error);
     return NextResponse.json(
@@ -89,7 +82,7 @@ async function fetchDashboardData(userId: string) {
     exportDate: new Date().toISOString(),
     summary: {
       totalInvoices: 142,
-      totalRevenue: 45230.50,
+      totalRevenue: 45230.5,
       pendingPayments: 12,
       overdueInvoices: 3,
     },
@@ -98,7 +91,7 @@ async function fetchDashboardData(userId: string) {
         id: 'INV-2024-001',
         date: '2024-01-15',
         client: 'Cliente A',
-        amount: 1250.00,
+        amount: 1250.0,
         status: 'paid',
       },
       {
@@ -146,7 +139,7 @@ function generateCSV(data: any, includeHeaders: boolean): string {
     lines.push('FACTURAS RECIENTES');
   }
   lines.push('ID,Fecha,Cliente,Importe,Estado');
-  
+
   data.recentInvoices.forEach((invoice: any) => {
     lines.push(
       `${invoice.id},${invoice.date},${invoice.client},€${invoice.amount.toFixed(2)},${invoice.status}`
@@ -160,7 +153,7 @@ function generateCSV(data: any, includeHeaders: boolean): string {
     lines.push('INGRESOS MENSUALES');
   }
   lines.push('Mes,Ingresos');
-  
+
   data.monthlyRevenue.forEach((month: any) => {
     lines.push(`${month.month},€${month.revenue.toFixed(2)}`);
   });
