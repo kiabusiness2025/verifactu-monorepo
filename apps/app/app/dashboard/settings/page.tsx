@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect, Suspense } from 'react';
+import { AccessibleButton } from '@/components/accessible/AccessibleButton';
+import { AccessibleInput } from '@/components/accessible/AccessibleInput';
+import { useToast } from '@/components/accessible/ToastNotifications';
+import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
+import { Camera } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import { Camera } from 'lucide-react';
-import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
-import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
-import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
-import { useToast } from '@/components/notifications/ToastNotifications';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
 const ALLOWED_TABS = new Set(['profile', 'general', 'billing', 'integrations', 'team', 'isaak']);
 
@@ -16,7 +16,7 @@ function SettingsContent() {
   const sessionData = useSession();
   const session = sessionData?.data;
   const { success, error: showError } = useToast();
-  const [activeTenantId, setActiveTenantId] = useState<string>("");
+  const [activeTenantId, setActiveTenantId] = useState<string>('');
   const logoInputRef = useRef<HTMLInputElement>(null);
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get('tab') || '';
@@ -25,7 +25,7 @@ function SettingsContent() {
   const [loading, setLoading] = useState(false);
   const [logoURL, setLogoURL] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [newTenantName, setNewTenantName] = useState("");
+  const [newTenantName, setNewTenantName] = useState('');
   const [isCreatingTenant, setIsCreatingTenant] = useState(false);
   const [createTenantError, setCreateTenantError] = useState<string | null>(null);
   const [createTenantSuccess, setCreateTenantSuccess] = useState<string | null>(null);
@@ -67,42 +67,42 @@ function SettingsContent() {
     setCreateTenantSuccess(null);
 
     if (!name) {
-      setCreateTenantError("Introduce un nombre para la empresa.");
+      setCreateTenantError('Introduce un nombre para la empresa.');
       return;
     }
 
     setIsCreatingTenant(true);
     try {
-      const res = await fetch("/api/tenants", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/tenants', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
       });
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || "No se pudo crear la empresa");
+        throw new Error(data?.error || 'No se pudo crear la empresa');
       }
 
       const tenantId = data?.tenant?.id as string | undefined;
       if (tenantId) {
-        await fetch("/api/session/tenant-switch", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+        await fetch('/api/session/tenant-switch', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tenantId }),
         });
         setActiveTenantId(tenantId);
       }
 
-      setNewTenantName("");
-      setCreateTenantSuccess("Empresa creada. Te hemos cambiado a tu nueva empresa.");
+      setNewTenantName('');
+      setCreateTenantSuccess('Empresa creada. Te hemos cambiado a tu nueva empresa.');
       success('Empresa creada', 'Redirigiendo a tu nueva empresa...');
       setTimeout(() => window.location.reload(), 800);
     } catch (error) {
-      console.error("Error creating tenant:", error);
-      const errorMsg = "No se pudo crear la empresa. Intenta de nuevo.";
+      console.error('Error creating tenant:', error);
+      const errorMsg = 'No se pudo crear la empresa. Intenta de nuevo.';
       setCreateTenantError(errorMsg);
       showError('Error al crear empresa', errorMsg);
     } finally {
@@ -114,16 +114,17 @@ function SettingsContent() {
   useEffect(() => {
     async function loadActiveTenant() {
       try {
-        const res = await fetch("/api/tenants", { credentials: "include" });
+        const res = await fetch('/api/tenants', { credentials: 'include' });
         const data = await res.json().catch(() => null);
         if (data?.ok && Array.isArray(data.tenants) && data.tenants.length > 0) {
-          const preferredId = typeof data.preferredTenantId === "string"
-            ? data.preferredTenantId
-            : data.tenants[0]?.id || "";
+          const preferredId =
+            typeof data.preferredTenantId === 'string'
+              ? data.preferredTenantId
+              : data.tenants[0]?.id || '';
           setActiveTenantId(preferredId);
         }
       } catch (error) {
-        console.error("Error loading tenant:", error);
+        console.error('Error loading tenant:', error);
       }
     }
     loadActiveTenant();
@@ -140,14 +141,14 @@ function SettingsContent() {
       if (!activeTenantId) return;
       try {
         const res = await fetch(`/api/tenant/logo?tenantId=${activeTenantId}`, {
-          credentials: "include"
+          credentials: 'include',
         });
         const data = await res.json();
         if (data.ok && data.logoURL) {
           setLogoURL(data.logoURL);
         }
       } catch (error) {
-        console.error("Error loading logo:", error);
+        console.error('Error loading logo:', error);
       }
     }
     loadLogo();
@@ -187,8 +188,8 @@ function SettingsContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             tenantId: activeTenantId,
-            logoURL: base64
-          })
+            logoURL: base64,
+          }),
         });
 
         const data = await res.json();
@@ -300,44 +301,36 @@ function SettingsContent() {
           {activeTab === 'profile' && (
             <form onSubmit={handleSaveProfile} className="space-y-6">
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo *</label>
-                  <input
-                    type="text"
-                    value={profileSettings.displayName}
-                    onChange={(e) =>
-                      setProfileSettings({ ...profileSettings, displayName: e.target.value })
-                    }
-                    placeholder="Ej: Ksenia Ivanova"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                  <p className="mt-1 text-xs text-slate-500">Este nombre aparecera en tu perfil y saludos de Isaak</p>
-                </div>
+                <AccessibleInput
+                  label="Nombre Completo"
+                  type="text"
+                  value={profileSettings.displayName}
+                  onChange={(e) =>
+                    setProfileSettings({ ...profileSettings, displayName: e.target.value })
+                  }
+                  placeholder="Ej: Ksenia Ivanova"
+                  required
+                  helperText="Este nombre aparecerá en tu perfil y saludos de Isaak"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                  <input
-                    type="email"
-                    value={profileSettings.email}
-                    disabled
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-600 cursor-not-allowed"
-                  />
-                  <p className="mt-1 text-xs text-slate-500">El email no se puede cambiar una vez registrado</p>
-                </div>
+                <AccessibleInput
+                  label="Email"
+                  type="email"
+                  value={profileSettings.email}
+                  disabled
+                  required
+                  helperText="El email no se puede cambiar una vez registrado"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Telefono</label>
-                  <input
-                    type="tel"
-                    value={profileSettings.phone}
-                    onChange={(e) =>
-                      setProfileSettings({ ...profileSettings, phone: e.target.value })
-                    }
-                    placeholder="+34 600 000 000"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                <AccessibleInput
+                  label="Teléfono"
+                  type="tel"
+                  value={profileSettings.phone}
+                  onChange={(e) =>
+                    setProfileSettings({ ...profileSettings, phone: e.target.value })
+                  }
+                  placeholder="+34 600 000 000"
+                />
               </div>
 
               <hr className="border-slate-200" />
@@ -346,26 +339,31 @@ function SettingsContent() {
                 <h3 className="font-semibold text-slate-900">Seguridad</h3>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Cambiar Contrasena</label>
-                  <button
-                    type="button"
-                    onClick={() => alert('Proximamente: cambiar contrasena')}
-                    className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium"
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Cambiar Contrasena
+                  </label>
+                  <AccessibleButton
+                    variant="secondary"
+                    onClick={() => success('Próximamente: funcionalidad de cambiar contraseña')}
+                    ariaLabel="Actualizar contraseña"
                   >
                     Actualizar contrasena
-                  </button>
-                  <p className="mt-1 text-xs text-slate-500">Se te enviara un email para restablecer tu contrasena</p>
+                  </AccessibleButton>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Se te enviara un email para restablecer tu contrasena
+                  </p>
                 </div>
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button
+                <AccessibleButton
                   type="submit"
+                  loading={loading}
                   disabled={loading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 font-medium"
+                  ariaLabel="Guardar cambios de perfil"
                 >
                   {loading ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
+                </AccessibleButton>
               </div>
             </form>
           )}
@@ -381,24 +379,26 @@ function SettingsContent() {
                   Si estas en Empresa Demo SL, crea tu empresa aqui y empieza con tus datos reales.
                 </p>
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <input
-                    type="text"
-                    value={newTenantName}
-                    onChange={(e) => setNewTenantName(e.target.value)}
-                    placeholder="Nombre de la empresa"
-                    className="w-full flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
-                  <button
+                  <div className="flex-1">
+                    <AccessibleInput
+                      label="Nombre de la empresa"
+                      showLabel={false}
+                      type="text"
+                      value={newTenantName}
+                      onChange={(e) => setNewTenantName(e.target.value)}
+                      placeholder="Nombre de la empresa"
+                      error={createTenantError || undefined}
+                    />
+                  </div>
+                  <AccessibleButton
                     type="submit"
+                    loading={isCreatingTenant}
                     disabled={isCreatingTenant}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                    ariaLabel="Crear nueva empresa"
                   >
                     {isCreatingTenant ? 'Creando...' : 'Crear empresa'}
-                  </button>
+                  </AccessibleButton>
                 </div>
-                {createTenantError && (
-                  <p className="mt-2 text-xs text-red-600">{createTenantError}</p>
-                )}
                 {createTenantSuccess && (
                   <p className="mt-2 text-xs text-emerald-600">{createTenantSuccess}</p>
                 )}
@@ -427,8 +427,9 @@ function SettingsContent() {
                         type="button"
                         onClick={handleLogoClick}
                         disabled={isUploadingLogo}
-                        className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-lg disabled:bg-slate-400"
+                        className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-lg disabled:bg-slate-400 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         title="Cambiar logo"
+                        aria-label="Cambiar logo de la empresa"
                       >
                         <Camera size={16} />
                       </button>
@@ -457,101 +458,81 @@ function SettingsContent() {
                 <hr className="border-slate-200" />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Nombre de la Empresa *</label>
-                    <input
-                      type="text"
-                      value={generalSettings.companyName}
-                      onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, companyName: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                      required
-                    />
-                  </div>
+                  <AccessibleInput
+                    label="Nombre de la Empresa"
+                    type="text"
+                    value={generalSettings.companyName}
+                    onChange={(e) =>
+                      setGeneralSettings({ ...generalSettings, companyName: e.target.value })
+                    }
+                    required
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                    <input
-                      type="email"
-                      value={generalSettings.email}
-                      onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, email: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                      required
-                    />
-                  </div>
+                  <AccessibleInput
+                    label="Email"
+                    type="email"
+                    value={generalSettings.email}
+                    onChange={(e) =>
+                      setGeneralSettings({ ...generalSettings, email: e.target.value })
+                    }
+                    required
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Telefono</label>
-                    <input
-                      type="tel"
-                      value={generalSettings.phone}
-                      onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, phone: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    />
-                  </div>
+                  <AccessibleInput
+                    label="Teléfono"
+                    type="tel"
+                    value={generalSettings.phone}
+                    onChange={(e) =>
+                      setGeneralSettings({ ...generalSettings, phone: e.target.value })
+                    }
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">NIF/CIF</label>
-                    <input
-                      type="text"
-                      value={generalSettings.taxId}
-                      onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, taxId: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    />
-                  </div>
+                  <AccessibleInput
+                    label="NIF/CIF"
+                    type="text"
+                    value={generalSettings.taxId}
+                    onChange={(e) =>
+                      setGeneralSettings({ ...generalSettings, taxId: e.target.value })
+                    }
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Direccion</label>
-                    <input
-                      type="text"
-                      value={generalSettings.address}
-                      onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, address: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    />
-                  </div>
+                  <AccessibleInput
+                    label="Dirección"
+                    type="text"
+                    value={generalSettings.address}
+                    onChange={(e) =>
+                      setGeneralSettings({ ...generalSettings, address: e.target.value })
+                    }
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Ciudad</label>
-                    <input
-                      type="text"
-                      value={generalSettings.city}
-                      onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, city: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    />
-                  </div>
+                  <AccessibleInput
+                    label="Ciudad"
+                    type="text"
+                    value={generalSettings.city}
+                    onChange={(e) =>
+                      setGeneralSettings({ ...generalSettings, city: e.target.value })
+                    }
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Codigo Postal</label>
-                    <input
-                      type="text"
-                      value={generalSettings.postalCode}
-                      onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, postalCode: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    />
-                  </div>
+                  <AccessibleInput
+                    label="Código Postal"
+                    type="text"
+                    value={generalSettings.postalCode}
+                    onChange={(e) =>
+                      setGeneralSettings({ ...generalSettings, postalCode: e.target.value })
+                    }
+                  />
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <button
+                  <AccessibleButton
                     type="submit"
+                    loading={loading}
                     disabled={loading}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 font-medium"
+                    ariaLabel="Guardar cambios de configuración general"
                   >
                     {loading ? 'Guardando...' : 'Guardar Cambios'}
-                  </button>
+                  </AccessibleButton>
                 </div>
               </form>
             </div>
@@ -584,7 +565,9 @@ function SettingsContent() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-slate-900">EUR 99.00</p>
-                      <button className="text-blue-600 hover:text-blue-800 text-sm">Descargar PDF</button>
+                      <button className="text-blue-600 hover:text-blue-800 text-sm">
+                        Descargar PDF
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -598,7 +581,9 @@ function SettingsContent() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-semibold text-slate-900">Correo Electronico (Resend)</h3>
-                    <p className="text-sm text-slate-600 mt-1">Envia tus plantillas de email a traves de Resend</p>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Envia tus plantillas de email a traves de Resend
+                    </p>
                   </div>
                   <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                     Conectado
@@ -610,7 +595,9 @@ function SettingsContent() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-semibold text-slate-900">Google Sheets</h3>
-                    <p className="text-sm text-slate-600 mt-1">Sincroniza tus datos con Google Sheets</p>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Sincroniza tus datos con Google Sheets
+                    </p>
                   </div>
                   <button className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium">
                     Conectar
@@ -622,7 +609,9 @@ function SettingsContent() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-semibold text-slate-900">Zapier</h3>
-                    <p className="text-sm text-slate-600 mt-1">Automatiza tu flujo de trabajo con Zapier</p>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Automatiza tu flujo de trabajo con Zapier
+                    </p>
                   </div>
                   <button className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium">
                     Conectar
@@ -668,7 +657,13 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-600">Cargando...</div></div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-gray-600">Cargando...</div>
+        </div>
+      }
+    >
       <SettingsContent />
     </Suspense>
   );

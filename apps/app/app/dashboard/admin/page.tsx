@@ -1,39 +1,37 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { adminGet, type AccountingData } from "@/lib/adminApi";
-import { formatCurrency, formatNumber, formatTime } from "@/src/lib/formatters";
-import { TrendingUp, TrendingDown, Users, Building, DollarSign } from "lucide-react";
-import { DashboardSkeleton } from "@/components/accessibility/LoadingSkeleton";
-import DashboardDataExporter from "@/components/dashboard/DashboardDataExporter";
+import { DashboardSkeleton } from '@/components/accessibility/LoadingSkeleton';
+import DashboardDataExporter from '@/components/dashboard/DashboardDataExporter';
+import { adminGet, type AccountingData } from '@/lib/adminApi';
+import { formatCurrency, formatTime } from '@/src/lib/formatters';
+import { Building, DollarSign, TrendingUp, Users } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
 
-type OverviewTotals = AccountingData["totals"];
+type OverviewTotals = AccountingData['totals'];
 
 export default function AdminDashboardPage() {
   const [totals, setTotals] = useState<OverviewTotals | null>(null);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
+  const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
       try {
-        const data = await adminGet<AccountingData>(
-          "/api/admin/accounting?period=current_month"
-        );
+        const data = await adminGet<AccountingData>('/api/admin/accounting?period=current_month');
         if (mounted) {
           setTotals(data.totals);
-          setStatus("ok");
+          setStatus('ok');
           setLastCheckedAt(formatTime(new Date()));
         }
       } catch (error) {
         if (mounted) {
-          setStatus("error");
+          setStatus('error');
         }
       } finally {
         if (mounted) {
@@ -55,9 +53,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       {/* Quick Stats - Admin Dashboard */}
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-3">
-          Estadísticas Rápidas
-        </h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-3">Estadísticas Rápidas</h2>
         <div className="grid gap-4 sm:grid-cols-4">
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center justify-between">
@@ -99,9 +95,7 @@ export default function AdminDashboardPage() {
                   </div>
                   <DollarSign className="h-8 w-8 text-green-500" />
                 </div>
-                <div className="mt-2 text-xs text-slate-500">
-                  Este periodo
-                </div>
+                <div className="mt-2 text-xs text-slate-500">Este periodo</div>
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -115,13 +109,9 @@ export default function AdminDashboardPage() {
                   <TrendingUp className="h-8 w-8 text-blue-500" />
                 </div>
                 <div className="mt-2 text-xs text-slate-500">
-                  Margen:{" "}
+                  Margen:{' '}
                   {totals.revenue
-                    ? (
-                        (((totals.revenue - totals.expenses) /
-                          totals.revenue) *
-                          100)
-                      ).toFixed(1)
+                    ? (((totals.revenue - totals.expenses) / totals.revenue) * 100).toFixed(1)
                     : 0}
                   %
                 </div>
@@ -133,9 +123,7 @@ export default function AdminDashboardPage() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-3">
-          Acciones Rápidas
-        </h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-3">Acciones Rápidas</h2>
         <div className="grid gap-3 sm:grid-cols-3">
           <Link
             href="/dashboard/admin/companies/new"
@@ -170,4 +158,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
