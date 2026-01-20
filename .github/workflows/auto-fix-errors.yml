@@ -1,0 +1,255 @@
+name: Auto-Fix Common Errors
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+on:
+  workflow_run:
+    workflows: ["Pre-Deployment Validation"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to fix'
+        required: true
+        type: number
+
+jobs:
+  auto-fix:
+    name: Attempt Auto-Fix
+    runs-on: ubuntu-latest
+    if: |
+      github.event.workflow_run.conclusion == 'failure' ||
+      github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Get PR info
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber, headRef, headSha;
+            
+            if (context.eventName === 'workflow_dispatch') {
+              prNumber = ${{ inputs.pr_number }};
+              const pr = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+              headRef = pr.data.head.ref;
+              headSha = pr.data.head.sha;
+            } else {
+              const workflowRun = context.payload.workflow_run;
+              if (!workflowRun.pull_requests || workflowRun.pull_requests.length === 0) {
+                console.log('No PR associated with this workflow run');
+                return { skip: true };
+              }
+              prNumber = workflowRun.pull_requests[0].number;
+              headRef = workflowRun.head_branch;
+              headSha = workflowRun.head_sha;
+            }
+            
+            core.setOutput('number', prNumber);
+            core.setOutput('ref', headRef);
+            core.setOutput('sha', headSha);
+            core.setOutput('skip', false);
+            
+            return { prNumber, headRef, headSha };
+
+      - name: Skip if no PR
+        if: steps.pr.outputs.skip == 'true'
+        run: |
+          echo "No PR associated, skipping auto-fix"
+          exit 0
+
+      - name: Checkout PR branch
+        if: steps.pr.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        if: steps.pr.outputs.skip != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.20.0'
+          cache: 'npm'
+
+      - name: Detect and fix missing dependencies
+        if: steps.pr.outputs.skip != 'true'
+        id: fix_deps
+        run: |
+          echo "Checking for missing dependencies..."
+          FIXED=false
+          
+          # Check apps/app
+          if node scripts/check-dependencies.js apps/app 2>&1 | grep -q "MISSING"; then
+            echo "Missing dependencies detected in apps/app"
+            cd apps/app
+            npm install
+            cd ../..
+            FIXED=true
+          fi
+          
+          # Check apps/landing
+          if node scripts/check-dependencies.js apps/landing 2>&1 | grep -q "MISSING"; then
+            echo "Missing dependencies detected in apps/landing"
+            cd apps/landing
+            npm install
+            cd ../..
+            FIXED=true
+          fi
+          
+          if [ "$FIXED" = true ]; then
+            echo "fixed=true" >> $GITHUB_OUTPUT
+            echo "✅ Auto-installed missing dependencies"
+          else
+            echo "fixed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No missing dependencies detected"
+          fi
+
+      - name: Fix security vulnerabilities
+        if: steps.pr.outputs.skip != 'true'
+        id: fix_audit
+        continue-on-error: true
+        run: |
+          echo "Running npm audit fix..."
+          FIXED=false
+          
+          if npm audit --audit-level=high 2>&1 | grep -q "vulnerabilities"; then
+            npm audit fix --no-audit
+            if [ $? -eq 0 ]; then
+              FIXED=true
+              echo "fixed=true" >> $GITHUB_OUTPUT
+              echo "✅ Fixed security vulnerabilities"
+            fi
+          else
+            echo "ℹ️  No fixable vulnerabilities"
+          fi
+          
+          if [ "$FIXED" != true ]; then
+            echo "fixed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if changes were made
+        if: steps.pr.outputs.skip != 'true'
+        id: changes
+        run: |
+          if [[ -n $(git status -s) ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "📝 Changes detected:"
+            git status -s
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No changes to commit"
+          fi
+
+      - name: Commit and push fixes
+        if: steps.pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add .
+          
+          COMMIT_MSG="🤖 auto-fix: apply automatic fixes
+
+          Applied fixes:
+          "
+          
+          if [ "${{ steps.fix_deps.outputs.fixed }}" = "true" ]; then
+            COMMIT_MSG="${COMMIT_MSG}- ✅ Installed missing dependencies
+          "
+          fi
+          
+          if [ "${{ steps.fix_audit.outputs.fixed }}" = "true" ]; then
+            COMMIT_MSG="${COMMIT_MSG}- ✅ Fixed security vulnerabilities
+          "
+          fi
+          
+          COMMIT_MSG="${COMMIT_MSG}
+          Auto-generated by Phase 2 automation"
+          
+          git commit -m "$COMMIT_MSG"
+          git push
+
+      - name: Comment on PR with fixes
+        if: steps.pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fixes = [];
+            if ('${{ steps.fix_deps.outputs.fixed }}' === 'true') {
+              fixes.push('✅ **Installed missing dependencies**');
+            }
+            if ('${{ steps.fix_audit.outputs.fixed }}' === 'true') {
+              fixes.push('✅ **Fixed security vulnerabilities**');
+            }
+            
+            const body = `## 🤖 Auto-Fix Applied
+            
+            The automated fix system detected and resolved the following issues:
+            
+            ${fixes.join('\n')}
+            
+            ### Next Steps
+            - The validation workflow will run again automatically
+            - Review the auto-generated commit
+            - If checks pass, you can merge the PR
+            
+            ---
+            *Powered by Phase 2 Automation*`;
+            
+            await github.rest.issues.createComment({
+              issue_number: ${{ steps.pr.outputs.number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Comment if no fixes applied
+        if: steps.pr.outputs.skip != 'true' && steps.changes.outputs.has_changes != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## 🤖 Auto-Fix Status
+            
+            The automated fix system ran but could not automatically resolve the errors.
+            
+            ### Manual intervention required
+            
+            Common issues that require manual fixes:
+            - TypeScript errors in your code
+            - Missing files or incorrect imports
+            - Configuration issues
+            - Logic errors in your implementation
+            
+            Please review the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) and fix the issues manually.
+            
+            ---
+            *Powered by Phase 2 Automation*`;
+            
+            await github.rest.issues.createComment({
+              issue_number: ${{ steps.pr.outputs.number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Trigger validation workflow
+        if: steps.pr.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'pre-deployment-check.yml',
+              ref: '${{ steps.pr.outputs.ref }}'
+            });
