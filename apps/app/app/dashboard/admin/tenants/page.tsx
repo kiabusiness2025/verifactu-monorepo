@@ -388,6 +388,7 @@ export default function AdminTenantsPage() {
                 <label className="block text-sm text-slate-700">
                   Buscar empresa (nombre o CIF)
                   <AccessibleInput
+                    label="Buscar empresa (nombre o CIF)"
                     showLabel={false}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
