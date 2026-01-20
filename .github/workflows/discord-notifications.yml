@@ -1,0 +1,65 @@
+name: Discord Notifications
+
+on:
+  workflow_run:
+    workflows: ["Pre-Deployment Validation", "Auto-Fix Common Errors"]
+    types:
+      - completed
+
+jobs:
+  notify:
+    name: Send Discord Notification
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Get workflow info
+        id: workflow
+        run: |
+          echo "name=${{ github.event.workflow_run.name }}" >> $GITHUB_OUTPUT
+          echo "conclusion=${{ github.event.workflow_run.conclusion }}" >> $GITHUB_OUTPUT
+          echo "url=${{ github.event.workflow_run.html_url }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
+          echo "commit=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+      
+      - name: Set notification color
+        id: color
+        run: |
+          if [ "${{ steps.workflow.outputs.conclusion }}" == "success" ]; then
+            echo "value=3066993" >> $GITHUB_OUTPUT  # Green
+          elif [ "${{ steps.workflow.outputs.conclusion }}" == "failure" ]; then
+            echo "value=15158332" >> $GITHUB_OUTPUT  # Red
+          else
+            echo "value=16776960" >> $GITHUB_OUTPUT  # Yellow
+          fi
+      
+      - name: Set status emoji
+        id: emoji
+        run: |
+          if [ "${{ steps.workflow.outputs.conclusion }}" == "success" ]; then
+            echo "value=✅" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.workflow.outputs.conclusion }}" == "failure" ]; then
+            echo "value=❌" >> $GITHUB_OUTPUT
+          else
+            echo "value=⚠️" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Send Discord notification
+        if: env.DISCORD_WEBHOOK_URL != ''
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "${{ steps.emoji.outputs.value }} ${{ steps.workflow.outputs.name }}",
+                "description": "**Status**: ${{ steps.workflow.outputs.conclusion }}\n**Branch**: `${{ steps.workflow.outputs.branch }}`\n**Commit**: `${{ steps.workflow.outputs.commit }}`",
+                "color": ${{ steps.color.outputs.value }},
+                "url": "${{ steps.workflow.outputs.url }}",
+                "timestamp": "${{ github.event.workflow_run.updated_at }}",
+                "footer": {
+                  "text": "Verifactu CI/CD"
+                }
+              }]
+            }' \
+            "$DISCORD_WEBHOOK_URL"

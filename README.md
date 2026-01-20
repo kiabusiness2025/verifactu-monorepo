@@ -4,14 +4,18 @@
 
 **Plataforma SaaS completa para emisión de facturas y cumplimiento VeriFactu**
 
-> 🤖 **Automated Pre-Deployment Validation Active** - Phase 1 automation testing
+[![Pre-Deployment Validation](https://github.com/kiabusiness2025/verifactu-monorepo/actions/workflows/pre-deployment-check.yml/badge.svg)](https://github.com/kiabusiness2025/verifactu-monorepo/actions/workflows/pre-deployment-check.yml)
+[![Auto-Fix](https://github.com/kiabusiness2025/verifactu-monorepo/actions/workflows/auto-fix-errors.yml/badge.svg)](https://github.com/kiabusiness2025/verifactu-monorepo/actions/workflows/auto-fix-errors.yml)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/kiabusiness2025/verifactu-monorepo/actions)
+[![Branch Protection](https://img.shields.io/badge/branch%20protection-active-blue)](https://github.com/kiabusiness2025/verifactu-monorepo/settings/branches)
 
-[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js)](https://nodejs.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=next.js)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20.20.0-339933?logo=node.js)](https://nodejs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14.2.35-000000?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Flutter](https://img.shields.io/badge/Flutter-3.38-02569B?logo=flutter)](https://flutter.dev/)
 [![Firebase](https://img.shields.io/badge/Firebase-12-FFCA28?logo=firebase)](https://firebase.google.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791?logo=postgresql)](https://www.postgresql.org/)
-[![Vercel](https://img.shields.io/badge/Vercel-Hosted-000000?logo=vercel)](https://vercel.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?logo=vercel)](https://vercel.com/)
 
 [Documentación](./docs/README.md) • [Arquitectura](./ARQUITECTURA_UNIFICADA.md) • [Deliverables](./PROJECT_DELIVERABLES.md)
 

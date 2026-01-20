@@ -26,8 +26,21 @@ jobs:
           node-version: '20.20.0'
           cache: 'npm'
       
+      - name: Cache node modules
+        uses: actions/cache@v3
+        id: cache-deps
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      
       - name: Install dependencies
-        run: npm install
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit
       
       - name: Check missing dependencies (app)
         run: node scripts/check-dependencies.js apps/app
@@ -86,8 +99,21 @@ jobs:
           node-version: '20.20.0'
           cache: 'npm'
       
+      - name: Cache node modules
+        uses: actions/cache@v3
+        id: cache-deps
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      
       - name: Install dependencies
-        run: npm install
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit
       
       - name: Check missing dependencies (landing)
         run: node scripts/check-dependencies.js apps/landing
