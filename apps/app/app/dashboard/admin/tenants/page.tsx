@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminGet, adminPost, adminPatch } from '@/lib/adminApi';
 import { formatCurrency } from '@/src/lib/formatters';
-import { AccessibleButton } from '@/components/accessible/AccessibleButton';
-import { AccessibleInput } from '@/components/accessible/AccessibleInput';
-import { TableSkeleton } from '@/components/accessible/LoadingSkeleton';
-import { useToast } from '@/components/accessible/ToastNotifications';
+import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
+import { AccessibleInput } from '@/components/accessibility/AccessibleInput';
+import { TableSkeleton } from '@/components/accessibility/LoadingSkeleton';
+import { useToast } from '@/components/notifications/ToastNotifications';
 
 type TenantRow = {
   id: string;

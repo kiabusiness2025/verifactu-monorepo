@@ -1,8 +1,8 @@
 'use client';
 
-import { AccessibleButton } from '@/components/accessible/AccessibleButton';
-import { AccessibleInput } from '@/components/accessible/AccessibleInput';
-import { useToast } from '@/components/accessible/ToastNotifications';
+import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
+import { AccessibleInput } from '@/components/accessibility/AccessibleInput';
+import { useToast } from '@/components/notifications/ToastNotifications';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
 import { Camera } from 'lucide-react';
 import { useSession } from 'next-auth/react';

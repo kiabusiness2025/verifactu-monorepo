@@ -1,9 +1,9 @@
 'use client';
 
-import { AccessibleButton } from '@/components/accessible/AccessibleButton';
-import { AccessibleInput, AccessibleSelect } from '@/components/accessible/AccessibleInput';
-import { CardSkeleton } from '@/components/accessible/LoadingSkeleton';
-import { useToast } from '@/components/accessible/ToastNotifications';
+import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
+import { AccessibleInput, AccessibleSelect } from '@/components/accessibility/AccessibleInput';
+import { CardSkeleton } from '@/components/accessibility/LoadingSkeleton';
+import { useToast } from '@/components/notifications/ToastNotifications';
 import { Calendar, Download, FileText, Mail } from 'lucide-react';
 import { useState } from 'react';
 
