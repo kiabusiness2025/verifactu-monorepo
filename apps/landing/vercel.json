@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "echo '📋 ISAAK: Starting dependency check' && corepack enable && pnpm install --frozen-lockfile && echo '✓ Dependencies installed'",
-  "buildCommand": "echo '🧠 ISAAK: Starting landing build' && pnpm run build && echo '✓ Build completed successfully'",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "env": {
     "SESSION_COOKIE_DOMAIN": ".verifactu.business",
