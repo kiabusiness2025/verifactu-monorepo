@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { adminGet, type UserRow } from "@/lib/adminApi";
-import { Eye, Download, LogIn, UserPlus, Edit, Ban, Trash2 } from "lucide-react";
-import { useToast } from "@/components/notifications/ToastNotifications";
-import { TableSkeleton } from "@/components/accessibility/LoadingSkeleton";
-import { AccessibleButton } from "@/components/accessibility/AccessibleButton";
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { adminGet, type UserRow } from '@/lib/adminApi';
+import { Eye, Download, LogIn, UserPlus, Edit, Ban, Trash2 } from 'lucide-react';
+import { useToast } from '@/components/notifications/ToastNotifications';
+import { TableSkeleton } from '@/components/accessibility/LoadingSkeleton';
+import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 
 type UsersResponse = {
   users: UserRow[];
@@ -17,20 +17,20 @@ export default function AdminUsersPage() {
   const { success, error: showError, warning } = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [error, setError] = useState("");
+  const [search, setSearch] = useState('');
+  const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
       setLoading(true);
-      setError("");
+      setError('');
       try {
-        const data = await adminGet<UsersResponse>("/api/admin/users");
+        const data = await adminGet<UsersResponse>('/api/admin/users');
         if (mounted) setUsers(data.users || []);
       } catch (err) {
-        if (mounted) setError(err instanceof Error ? err.message : "Error al cargar");
+        if (mounted) setError(err instanceof Error ? err.message : 'Error al cargar');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -46,30 +46,29 @@ export default function AdminUsersPage() {
     if (!term) return users;
     return users.filter(
       (u) =>
-        u.email.toLowerCase().includes(term) ||
-        (u.displayName || "").toLowerCase().includes(term)
+        u.email.toLowerCase().includes(term) || (u.displayName || '').toLowerCase().includes(term)
     );
   }, [users, search]);
 
   const handleExport = async () => {
     try {
       setExporting(true);
-      const res = await fetch("/api/admin/users/export");
-      if (!res.ok) throw new Error("Error al exportar");
+      const res = await fetch('/api/admin/users/export');
+      if (!res.ok) throw new Error('Error al exportar');
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      a.download = `usuarios-${new Date().toISOString().split("T")[0]}.csv`;
+      a.download = `usuarios-${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       success('Exportación completada', `Archivo descargado: ${a.download}`);
     } catch (error) {
-      console.error("Export error:", error);
+      console.error('Export error:', error);
       showError('Error al exportar', 'No se pudo exportar la lista de usuarios');
     } finally {
       setExporting(false);
@@ -81,21 +80,24 @@ export default function AdminUsersPage() {
 
     try {
       const res = await fetch(`/api/admin/users/${userId}/impersonate`, {
-        method: "POST",
-        credentials: "include",
+        method: 'POST',
+        credentials: 'include',
       });
 
       if (res.ok) {
         success('Acceso como usuario', `Entrando al dashboard como ${email}`);
         // Esperar un poco para asegurar que la cookie se estableció
-        await new Promise(resolve => setTimeout(resolve, 300));
-        window.location.href = "/dashboard";
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        window.location.href = '/dashboard';
       } else {
         const errorData = await res.json();
-        showError('Error de impersonación', errorData.error || 'No se pudo acceder como este usuario');
+        showError(
+          'Error de impersonación',
+          errorData.error || 'No se pudo acceder como este usuario'
+        );
       }
     } catch (error) {
-      console.error("Impersonation error:", error);
+      console.error('Impersonation error:', error);
       showError('Error de impersonación', 'No se pudo acceder como este usuario');
     }
   };
@@ -117,7 +119,8 @@ export default function AdminUsersPage() {
   };
 
   const handleDeleteUser = async (userId: string, email: string) => {
-    if (!confirm(`⚠️ ¿ELIMINAR permanentemente a ${email}?\n\nEsta acción no se puede deshacer.`)) return;
+    if (!confirm(`⚠️ ¿ELIMINAR permanentemente a ${email}?\n\nEsta acción no se puede deshacer.`))
+      return;
     // TODO: Implementar API de eliminación
     warning('Función en desarrollo', 'La eliminación de usuarios estará disponible próximamente');
   };
@@ -127,9 +130,7 @@ export default function AdminUsersPage() {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Usuarios</h1>
-          <p className="text-sm text-slate-600">
-            Total: {users.length} usuarios registrados
-          </p>
+          <p className="text-sm text-slate-600">Total: {users.length} usuarios registrados</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -149,7 +150,7 @@ export default function AdminUsersPage() {
             icon={<Download className="h-4 w-4" />}
             ariaLabel="Exportar lista de usuarios a CSV"
           >
-            {exporting ? "Exportando..." : "Exportar CSV"}
+            {exporting ? 'Exportando...' : 'Exportar CSV'}
           </AccessibleButton>
         </div>
       </header>
@@ -166,7 +167,10 @@ export default function AdminUsersPage() {
       {loading ? (
         <TableSkeleton rows={10} columns={5} />
       ) : error ? (
-        <div className=\"rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700\" role=\"alert\">
+        <div
+          className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+          role="alert"
+        >
           {error}
         </div>
       ) : (
@@ -180,12 +184,12 @@ export default function AdminUsersPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="text-sm font-semibold text-slate-900">
-                      {user.displayName || "Usuario"}
+                      {user.displayName || 'Usuario'}
                     </div>
                     <div className="text-xs text-slate-500">{user.email}</div>
                   </div>
                   <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase text-slate-600">
-                    {user.tenants[0]?.role || "Sin rol"}
+                    {user.tenants[0]?.role || 'Sin rol'}
                   </span>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
@@ -253,15 +257,9 @@ export default function AdminUsersPage() {
                 {filtered.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 text-slate-700">{user.email}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {user.displayName || "-"}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {user.tenants.length}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {user.tenants[0]?.role || "-"}
-                    </td>
+                    <td className="px-4 py-3 text-slate-600">{user.displayName || '-'}</td>
+                    <td className="px-4 py-3 text-slate-600">{user.tenants.length}</td>
+                    <td className="px-4 py-3 text-slate-600">{user.tenants[0]?.role || '-'}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
