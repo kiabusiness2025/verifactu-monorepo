@@ -503,3 +503,5 @@ El entorno está correctamente configurado cuando:
 ✔ Secret Manager tiene los secretos clave
 ✔ Se puede desplegar un servicio simple a Cloud Run
 ✔ Los dominios están activos en Cloud Run / DNS
+#   T e s t  
+ 
