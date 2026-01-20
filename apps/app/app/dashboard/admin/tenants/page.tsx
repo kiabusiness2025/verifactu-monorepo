@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { adminGet, adminPost, adminPatch } from '@/lib/adminApi';
 import { formatCurrency } from '@/src/lib/formatters';
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
-import { AccessibleInput } from '@/components/accessibility/AccessibleInput';
+import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
 import { TableSkeleton } from '@/components/accessibility/LoadingSkeleton';
 import { useToast } from '@/components/notifications/ToastNotifications';
 

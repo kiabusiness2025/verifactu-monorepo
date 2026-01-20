@@ -1,7 +1,7 @@
 'use client';
 
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
-import { AccessibleInput, AccessibleSelect } from '@/components/accessibility/AccessibleInput';
+import { AccessibleInput, AccessibleSelect } from '@/components/accessibility/AccessibleFormInputs';
 import { CardSkeleton } from '@/components/accessibility/LoadingSkeleton';
 import { useToast } from '@/components/notifications/ToastNotifications';
 import { Calendar, Download, FileText, Mail } from 'lucide-react';

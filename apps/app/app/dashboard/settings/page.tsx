@@ -1,7 +1,7 @@
 'use client';
 
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
-import { AccessibleInput } from '@/components/accessibility/AccessibleInput';
+import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
 import { useToast } from '@/components/notifications/ToastNotifications';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
 import { Camera } from 'lucide-react';
