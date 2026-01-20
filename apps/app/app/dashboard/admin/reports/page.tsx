@@ -1,8 +1,7 @@
 'use client';
 
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
-import { AccessibleInput, AccessibleSelect } from '@/components/accessibility/AccessibleFormInputs';
-import { CardSkeleton } from '@/components/accessibility/LoadingSkeleton';
+import { AccessibleSelect } from '@/components/accessibility/AccessibleFormInputs';
 import { useToast } from '@/components/notifications/ToastNotifications';
 import { Calendar, Download, FileText, Mail } from 'lucide-react';
 import { useState } from 'react';
@@ -115,11 +114,16 @@ export default function ReportsPage() {
 
         <div className="space-y-3">
           <div>
-            <AccessibleSelect label="Periodo de reporte" value="mes-anterior" onChange={() => {}}>
-              <option value="mes-anterior">Mes anterior</option>
-              <option value="este-mes">Este mes</option>
-              <option value="trimestre-anterior">Trimestre anterior</option>
-            </AccessibleSelect>
+            <AccessibleSelect
+              label="Periodo de reporte"
+              value="mes-anterior"
+              onChange={() => {}}
+              options={[
+                { value: 'mes-anterior', label: 'Mes anterior' },
+                { value: 'este-mes', label: 'Este mes' },
+                { value: 'trimestre-anterior', label: 'Trimestre anterior' },
+              ]}
+            />
           </div>
 
           <div>
