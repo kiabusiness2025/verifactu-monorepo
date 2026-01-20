@@ -1,0 +1,142 @@
+name: Pre-Deployment Validation
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-app:
+    name: Validate App Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.20.0'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Check missing dependencies (app)
+        run: node scripts/check-dependencies.js apps/app
+      
+      - name: Build app
+        run: |
+          cd apps/app
+          npm run build
+        env:
+          CI: true
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          NEXTAUTH_SECRET: "dummy-secret-for-build"
+          NEXTAUTH_URL: "http://localhost:3000"
+      
+      - name: Type check (app)
+        run: |
+          cd apps/app
+          npx tsc --noEmit
+      
+      - name: Comment on PR (failure)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **App build failed**\n\nCheck the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\nPlease fix the build locally before pushing:\n```bash\ncd apps/app\nnpm run build\n```'
+            })
+      
+      - name: Comment on PR (success)
+        if: success() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **App build passed**\n\nReady for deployment to Vercel.'
+            })
+
+  validate-landing:
+    name: Validate Landing Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.20.0'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Check missing dependencies (landing)
+        run: node scripts/check-dependencies.js apps/landing
+      
+      - name: Build landing
+        run: |
+          cd apps/landing
+          npm run build
+        env:
+          CI: true
+          NEXTAUTH_SECRET: "dummy-secret-for-build"
+          NEXTAUTH_URL: "http://localhost:3001"
+      
+      - name: Type check (landing)
+        run: |
+          cd apps/landing
+          npx tsc --noEmit
+      
+      - name: Comment on PR (failure)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **Landing build failed**\n\nCheck the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\nPlease fix the build locally before pushing:\n```bash\ncd apps/landing\nnpm run build\n```'
+            })
+      
+      - name: Comment on PR (success)
+        if: success() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **Landing build passed**\n\nReady for deployment to Vercel.'
+            })
+
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [validate-app, validate-landing]
+    if: always()
+    
+    steps:
+      - name: Check overall status
+        run: |
+          if [[ "${{ needs.validate-app.result }}" == "success" ]] && [[ "${{ needs.validate-landing.result }}" == "success" ]]; then
+            echo "✅ All builds passed! Ready for deployment."
+            exit 0
+          else
+            echo "❌ Some builds failed. Fix errors before deploying."
+            exit 1
+          fi
