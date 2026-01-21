@@ -446,17 +446,11 @@ export function DashboardMock() {
 export function HeroTripleMock() {
   const [activeId, setActiveId] = React.useState<'resumen' | 'facturas' | 'isaak'>('resumen');
 
-  const layoutMap: Record<typeof activeId, string> = {
-    resumen: 'z-20 scale-100 translate-y-0 translate-x-0 opacity-100',
-    facturas: 'z-20 scale-100 translate-y-0 translate-x-0 opacity-100',
-    isaak: 'z-20 scale-100 translate-y-0 translate-x-0 opacity-100',
-  };
-
-  const inactiveLayout: Record<typeof activeId, string> = {
-    resumen: 'z-10 scale-95 translate-y-8 -translate-x-6 opacity-90',
-    facturas: 'z-10 scale-95 translate-y-10 translate-x-8 opacity-90',
-    isaak: 'z-10 scale-95 translate-y-12 -translate-x-8 opacity-90',
-  };
+  const positions = {
+    resumen: 'translate-x-[-140px] translate-y-[-60px]',
+    facturas: 'translate-x-[120px] translate-y-[-20px]',
+    isaak: 'translate-x-[-10px] translate-y-[160px]',
+  } as const;
 
   const panels = [
     {
@@ -464,10 +458,27 @@ export function HeroTripleMock() {
       title: 'Resumen general',
       desc: 'Ventas, gastos y beneficio en un vistazo.',
       content: (
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <KpiCard label="Ventas mes" value="18.420 EUR" sub="+9%" />
-          <KpiCard label="Gastos mes" value="11.260 EUR" sub="+5%" />
-          <KpiCard label="Beneficio" value="7.160 EUR" sub="+12%" />
+        <div className="mt-4 grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <KpiCard label="Ventas mes" value="18.420 EUR" sub="+9%" />
+            <KpiCard label="Gastos mes" value="11.260 EUR" sub="+5%" />
+            <KpiCard label="Beneficio" value="7.160 EUR" sub="+12%" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-xs font-semibold text-slate-700">Ultimo cierre</div>
+              <div className="mt-2 text-sm text-slate-600">Diciembre 2025: margen 31%</div>
+              <div className="mt-2 text-xs text-slate-500">Checklist completado al 90%</div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="text-xs font-semibold text-slate-700">Proximos hitos</div>
+              <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                <li>IVA T1 2026: 12 dias</li>
+                <li>Conciliacion banco: pendiente</li>
+                <li>Subida de tickets: 2 faltantes</li>
+              </ul>
+            </div>
+          </div>
         </div>
       ),
     },
@@ -545,13 +556,9 @@ export function HeroTripleMock() {
 
   const getCardClass = (id: typeof activeId) => {
     const isActive = id === activeId;
-    const fallback =
-      id === 'resumen'
-        ? inactiveLayout.resumen
-        : id === 'facturas'
-          ? inactiveLayout.facturas
-          : inactiveLayout.isaak;
-    return `absolute inset-0 origin-top-left rounded-3xl border border-slate-200 bg-white p-5 shadow-xl transition-all duration-300 ${isActive ? layoutMap[id] : fallback}`;
+    return `absolute left-1/2 top-1/2 origin-top-left rounded-3xl border border-slate-200 bg-white p-4 shadow-xl transition-all duration-400 ${positions[id]} ${
+      isActive ? 'z-30 scale-105 opacity-100' : 'z-10 scale-95 opacity-90'
+    }`;
   };
 
   return (
@@ -573,13 +580,13 @@ export function HeroTripleMock() {
         ))}
       </div>
 
-      <div className="relative min-h-[420px]">
+      <div className="relative min-h-[560px]">
         {panels.map((panel) => (
           <button
             key={panel.id}
             type="button"
             onClick={() => setActiveId(panel.id)}
-            className={getCardClass(panel.id)}
+            className={`${getCardClass(panel.id)} w-[290px] sm:w-[320px]`}
             aria-pressed={activeId === panel.id}
           >
             <div className="flex items-center justify-between">
