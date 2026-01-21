@@ -307,7 +307,7 @@ export default function DemoPage({
               </div>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
                 <li>Panel con ventas, gastos y beneficio en un vistazo.</li>
-                <li>Flujo Factura -> Validacion -> Envio VeriFactu.</li>
+                <li>Flujo Factura {'->'} Validacion {'->'} Envio VeriFactu.</li>
                 <li>Isaak sugiriendo acciones utiles por seccion.</li>
               </ul>
             </div>
