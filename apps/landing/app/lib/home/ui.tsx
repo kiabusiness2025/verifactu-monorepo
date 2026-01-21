@@ -445,11 +445,28 @@ export function DashboardMock() {
 
 export function HeroTripleMock() {
   const [activeId, setActiveId] = React.useState<'resumen' | 'facturas' | 'isaak'>('resumen');
+  const [qaIndex, setQaIndex] = React.useState(0);
+  React.useEffect(() => {
+    const order: Array<typeof activeId> = ['resumen', 'facturas', 'isaak'];
+    const interval = setInterval(() => {
+      setActiveId((prev) => {
+        const idx = order.indexOf(prev);
+        return order[(idx + 1) % order.length];
+      });
+    }, 4200);
+    return () => clearInterval(interval);
+  }, []);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setQaIndex((prev) => (prev + 1) % 3);
+    }, 5200);
+    return () => clearInterval(interval);
+  }, []);
 
   const positions = {
-    resumen: 'translate-x-[-140px] translate-y-[-60px]',
-    facturas: 'translate-x-[120px] translate-y-[-20px]',
-    isaak: 'translate-x-[-10px] translate-y-[160px]',
+    resumen: 'sm:translate-x-[-150px] sm:translate-y-[-360px] lg:translate-x-[-170px] lg:translate-y-[-400px]',
+    facturas: 'sm:translate-x-[140px] sm:translate-y-[-330px] lg:translate-x-[170px] lg:translate-y-[-360px]',
+    isaak: 'sm:translate-x-[-10px] sm:translate-y-[-70px] lg:translate-x-[-20px] lg:translate-y-[-40px]',
   } as const;
 
   const panels = [
@@ -530,25 +547,57 @@ export function HeroTripleMock() {
       title: 'Isaak en vivo',
       desc: 'Respuestas inmediatas y accionables.',
       content: (
-        <div className="mt-4 space-y-3">
-          <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
-            <div className="text-[11px] font-semibold text-slate-500">Tu</div>
-            <div className="mt-1 text-sm text-slate-800">Resumen rapido de enero 2026</div>
-          </div>
-          <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
-            <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
-            <div className="mt-1 text-sm text-slate-700">
-              Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio estimado 5.350 EUR.
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2">
+            <div className="text-xs font-semibold text-slate-700">Chat con Isaak</div>
+            <div className="flex gap-1">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
             </div>
           </div>
-          <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
-            <div className="text-[11px] font-semibold text-slate-500">Tu</div>
-            <div className="mt-1 text-sm text-slate-800">Que falta para cierre 2025?</div>
-          </div>
-          <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
-            <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
-            <div className="mt-1 text-sm text-slate-700">Te faltan 2 facturas y un extracto.</div>
-          </div>
+          {[
+            {
+              q: 'Isaak, resumen rapido de enero 2026',
+              a: 'Vamos genial. Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.',
+              hint: 'Quieres ver el detalle por cliente?',
+              tone: 'emerald',
+            },
+            {
+              q: 'Que falta para cierre 2025?',
+              a: 'Te faltan 2 facturas y un extracto (ok/alerta). Puedo recordartelo hoy.',
+              hint: 'Te preparo checklist con un clic.',
+              tone: 'amber',
+            },
+            {
+              q: 'Tengo facturas verificadas?',
+              a: 'Si. 9 facturas con QR y huella hash listos.',
+              hint: 'Compartimos el informe con tu gestor?',
+              tone: 'emerald',
+            },
+          ].map((item, idx) => {
+            const isActive = idx === qaIndex;
+            const base =
+              item.tone === 'amber'
+                ? 'from-amber-50 to-slate-50 ring-amber-100 text-amber-700'
+                : 'from-emerald-50 to-slate-50 ring-emerald-100 text-emerald-700';
+            return (
+              <div
+                key={item.q}
+                className={`transition-all duration-500 ${isActive ? 'opacity-100' : 'opacity-20'}`}
+              >
+                <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200">
+                  <div className="text-[11px] font-semibold text-slate-500">Tu</div>
+                  <div className="mt-1 text-[13px] text-slate-800">{item.q}</div>
+                </div>
+                <div className={`mt-2 rounded-2xl bg-gradient-to-r p-2 ring-1 ${base}`}>
+                  <div className="text-[11px] font-semibold">Isaak</div>
+                  <div className="mt-1 text-[13px] text-slate-700">{item.a}</div>
+                  <div className="mt-1 text-[11px]">{item.hint}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ),
     },
@@ -556,37 +605,21 @@ export function HeroTripleMock() {
 
   const getCardClass = (id: typeof activeId) => {
     const isActive = id === activeId;
-    return `absolute left-1/2 top-1/2 origin-top-left rounded-3xl border border-slate-200 bg-white p-4 shadow-xl transition-all duration-400 ${positions[id]} ${
+    const mobileVisibility = isActive ? 'block' : 'hidden sm:block';
+    return `${mobileVisibility} rounded-3xl border border-slate-200 bg-white p-4 shadow-xl transition-all duration-500 sm:absolute sm:left-1/2 sm:top-1/2 sm:origin-top-left ${positions[id]} ${
       isActive ? 'z-30 scale-105 opacity-100' : 'z-10 scale-95 opacity-90'
     }`;
   };
 
   return (
     <div className="relative">
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="relative space-y-4 sm:min-h-[520px] sm:space-y-0 lg:min-h-[560px]">
         {panels.map((panel) => (
           <button
             key={panel.id}
             type="button"
             onClick={() => setActiveId(panel.id)}
-            className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-              activeId === panel.id
-                ? 'bg-[#0060F0] text-white shadow-sm'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            {panel.title}
-          </button>
-        ))}
-      </div>
-
-      <div className="relative min-h-[560px]">
-        {panels.map((panel) => (
-          <button
-            key={panel.id}
-            type="button"
-            onClick={() => setActiveId(panel.id)}
-            className={`${getCardClass(panel.id)} w-[290px] sm:w-[320px]`}
+            className={`${getCardClass(panel.id)} w-full sm:w-[300px] lg:w-[340px]`}
             aria-pressed={activeId === panel.id}
           >
             <div className="flex items-center justify-between">
@@ -1052,7 +1085,7 @@ export function PideseloAIsaakSection() {
               <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
                 <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
                 <div className="mt-1 text-sm text-slate-700">
-                  Te faltan 2 facturas y un extracto. ??
+              a: 'Te faltan 2 facturas y un extracto (ok/alerta). Puedo recordartelo hoy.',
                   <br />
                   Te aviso hoy y manana. ?
                 </div>
@@ -1064,7 +1097,7 @@ export function PideseloAIsaakSection() {
               <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
                 <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
                 <div className="mt-1 text-sm text-slate-700">
-                  Ventas 12.480 EUR, gastos 7.130 EUR. ??
+              a: 'Vamos genial. Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.',
                   <br />
                   Beneficio estimado 5.350 EUR. ?
                 </div>
@@ -1117,30 +1150,31 @@ export function PideseloAIsaakSection() {
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <CommandExample
             command="Explicame estas escrituras y el CIF"
-            response="He extraido los datos clave y los guardo en tu ficha. ?? Te aviso si falta algo. ?"
+            response="He extraido los datos clave y los guardo en tu ficha. Te aviso si falta algo."
           />
           <CommandExample
             command="Estamos en cierre 2025, que me falta?"
-            response="Te faltan 2 facturas y un extracto. ?? Te aviso hoy y manana. ?"
+            response="Te faltan 2 facturas y un extracto. Puedo recordartelo hoy."
           />
           <CommandExample
             command="Recordatorios del 1o trimestre 2026"
-            response="Listo. Te aviso de plazos clave con tiempo. ?"
+            response="Listo. Te aviso de plazos clave con tiempo."
           />
           <CommandExample
             command="Sube estos gastos y ordenalos por trimestre"
-            response="Cargados y clasificados. ? Te marco deducibles y pendientes. ??"
+            response="Cargados y clasificados. Te marco deducibles y pendientes."
           />
           <CommandExample
             command="Prepara un resumen para mi gestor"
-            response="Listo: ventas, gastos y beneficio. ?? Te dejo notas claras. ??"
+            response="Listo: ventas, gastos y beneficio. Te dejo notas claras."
           />
           <CommandExample
             command="Mi prueba termina en 5 dias"
-            response="Te recomiendo el plan ideal. ? Si quieres, hago la transicion. ?"
+            response="Te recomiendo el plan ideal. Si quieres, hago la transicion."
           />
         </div>
       </Container>
     </section>
   );
 }
+

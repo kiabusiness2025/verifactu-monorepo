@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useMemo, useState } from "react";
-import Link from "next/link";
-import Header from "../components/Header";
-import PricingCalculatorInline from "../components/PricingCalculatorInline";
+import Link from 'next/link';
+import React, { useMemo, useState } from 'react';
+import Header from '../components/Header';
+import PricingCalculatorInline from '../components/PricingCalculatorInline';
 
 type DemoFormState = {
   name: string;
@@ -22,29 +22,21 @@ function isValidEmail(email: string) {
   return /.+@.+\..+/.test(email);
 }
 
-function DemoRequestModal({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
+function DemoRequestModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [form, setForm] = useState<DemoFormState>({
-    name: "",
-    email: "",
-    company: "",
-    website: "",
-    sector: "",
-    teamSize: "",
-    invoices: "",
-    movements: "",
-    phone: "",
-    notes: "",
+    name: '',
+    email: '',
+    company: '',
+    website: '',
+    sector: '',
+    teamSize: '',
+    invoices: '',
+    movements: '',
+    phone: '',
+    notes: '',
   });
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">(
-    "idle"
-  );
-  const [errorMessage, setErrorMessage] = useState("");
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const canSubmit = useMemo(() => {
     return form.name.trim().length > 0 && isValidEmail(form.email.trim());
@@ -52,45 +44,45 @@ function DemoRequestModal({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit || status === "sending") return;
+    if (!canSubmit || status === 'sending') return;
 
-    setStatus("sending");
-    setErrorMessage("");
+    setStatus('sending');
+    setErrorMessage('');
 
     const messageLines = [
-      "Solicitud demo personalizada",
-      `Empresa: ${form.company || "-"}`,
-      `Web: ${form.website || "-"}`,
-      `Sector: ${form.sector || "-"}`,
-      `Tamano equipo: ${form.teamSize || "-"}`,
-      `Facturas/mes: ${form.invoices || "-"}`,
-      `Movimientos/mes: ${form.movements || "-"}`,
-      `Telefono: ${form.phone || "-"}`,
-      `Notas: ${form.notes || "-"}`,
+      'Solicitud demo personalizada',
+      `Empresa: ${form.company || '-'}`,
+      `Web: ${form.website || '-'}`,
+      `Sector: ${form.sector || '-'}`,
+      `Tamano equipo: ${form.teamSize || '-'}`,
+      `Facturas/mes: ${form.invoices || '-'}`,
+      `Movimientos/mes: ${form.movements || '-'}`,
+      `Telefono: ${form.phone || '-'}`,
+      `Notas: ${form.notes || '-'}`,
     ];
 
     try {
-      const res = await fetch("/api/send-lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/send-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name.trim(),
           email: form.email.trim(),
           company: form.company.trim() || undefined,
-          message: messageLines.join("\n"),
+          message: messageLines.join('\n'),
         }),
       });
 
       const data = (await res.json()) as { success?: boolean; error?: string };
 
       if (!res.ok) {
-        throw new Error(data?.error || "No se pudo enviar");
+        throw new Error(data?.error || 'No se pudo enviar');
       }
 
-      setStatus("success");
+      setStatus('success');
     } catch (err) {
-      setStatus("error");
-      setErrorMessage(err instanceof Error ? err.message : "No se pudo enviar");
+      setStatus('error');
+      setErrorMessage(err instanceof Error ? err.message : 'No se pudo enviar');
     }
   }
 
@@ -112,8 +104,8 @@ function DemoRequestModal({
             Solicitar demo personalizada para tu empresa
           </h2>
           <p className="text-sm text-slate-600">
-            Paso 1: crea tu cuenta. Paso 2: completa este formulario. Te
-            activaremos una demo con tus datos.
+            Paso 1: crea tu cuenta. Paso 2: completa este formulario. Te activaremos una demo con
+            tus datos.
           </p>
           <div className="flex flex-wrap gap-2 text-sm">
             <Link
@@ -229,19 +221,19 @@ function DemoRequestModal({
           <div className="sm:col-span-2">
             <button
               type="submit"
-              disabled={!canSubmit || status === "sending" || status === "success"}
+              disabled={!canSubmit || status === 'sending' || status === 'success'}
               className="w-full rounded-xl bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 text-sm font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {status === "sending"
-                ? "Enviando..."
-                : status === "success"
-                  ? "Solicitud enviada"
-                  : "Enviar solicitud"}
+              {status === 'sending'
+                ? 'Enviando...'
+                : status === 'success'
+                  ? 'Solicitud enviada'
+                  : 'Enviar solicitud'}
             </button>
-            {status === "error" ? (
+            {status === 'error' ? (
               <p className="mt-2 text-sm text-rose-600">{errorMessage}</p>
             ) : null}
-            {status === "success" ? (
+            {status === 'success' ? (
               <p className="mt-2 text-sm text-emerald-700">
                 Perfecto. Te contactamos con una demo personalizada.
               </p>
@@ -261,14 +253,14 @@ export default function DemoPage({
   const [isRequestOpen, setIsRequestOpen] = useState(false);
 
   const demoNavLinks = [
-    { label: "Home", href: "/" },
-    { label: "Calculadora", href: "#calculadora" },
-    { label: "Solicitar demo personalizada", href: "#solicitar-demo" },
+    { label: 'Home', href: '/' },
+    { label: 'Calculadora', href: '#calculadora' },
+    { label: 'Solicitar demo personalizada', href: '#solicitar-demo' },
   ];
 
   const checkoutParam =
-    typeof searchParams?.checkout === "string" ? searchParams.checkout : undefined;
-  const showCheckoutSuccess = checkoutParam === "success";
+    typeof searchParams?.checkout === 'string' ? searchParams.checkout : undefined;
+  const showCheckoutSuccess = checkoutParam === 'success';
 
   return (
     <main className="bg-gradient-to-b from-slate-50 via-white to-slate-50">
@@ -279,8 +271,7 @@ export default function DemoPage({
           <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
             <div className="font-semibold">Gracias. Todo listo.</div>
             <div className="mt-1 text-emerald-800">
-              Stripe ha confirmado el pago. En breve recibiras un email de
-              confirmacion.
+              Stripe ha confirmado el pago. En breve recibiras un email de confirmacion.
             </div>
           </div>
         )}
@@ -297,17 +288,17 @@ export default function DemoPage({
               Pruebalo sin miedo. Todo ya esta listo.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-600">
-              Entra, toca botones y revisa el panel. Esta vista previa es segura
-              y usa datos de ejemplo para enero 2026.
+              Entra, toca botones y revisa el panel. Esta vista previa es segura y usa datos de
+              ejemplo para enero 2026.
             </p>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="text-sm font-semibold text-[#002060]">
-                Que ver en 30 segundos
-              </div>
+              <div className="text-sm font-semibold text-[#002060]">Que ver en 30 segundos</div>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
                 <li>Panel con ventas, gastos y beneficio en un vistazo.</li>
-                <li>Flujo Factura {'->'} Validacion {'->'} Envio VeriFactu.</li>
+                <li>
+                  Flujo Factura {'->'} Validacion {'->'} Envio VeriFactu.
+                </li>
                 <li>Isaak sugiriendo acciones utiles por seccion.</li>
               </ul>
             </div>
@@ -326,9 +317,7 @@ export default function DemoPage({
                 Crear cuenta
               </Link>
             </div>
-            <div className="text-xs text-slate-500">
-              1 mes gratis, sin permanencia.
-            </div>
+            <div className="text-xs text-slate-500">1 mes gratis, sin permanencia.</div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="text-sm font-semibold text-[#002060]">Que pasa despues</div>
@@ -342,8 +331,8 @@ export default function DemoPage({
             <div className="text-sm text-slate-600">
               <button
                 onClick={() => {
-                  const el = document.getElementById("calculadora");
-                  el?.scrollIntoView({ behavior: "smooth" });
+                  const el = document.getElementById('calculadora');
+                  el?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="font-semibold text-[#0060F0] hover:text-[#0080F0]"
                 type="button"
@@ -375,12 +364,8 @@ export default function DemoPage({
           <section className="space-y-3">
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
-                <p className="text-xs font-semibold text-slate-600">
-                  Vista previa (mock)
-                </p>
-                <span className="text-xs font-semibold text-[#0060F0]">
-                  Solo ejemplo
-                </span>
+                <p className="text-xs font-semibold text-slate-600">Vista previa (mock)</p>
+                <span className="text-xs font-semibold text-[#0060F0]">Solo ejemplo</span>
               </div>
               <div className="grid gap-4 p-6">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -390,21 +375,15 @@ export default function DemoPage({
                   <div className="mt-3 grid grid-cols-3 gap-3">
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Ventas</div>
-                      <div className="mt-1 text-lg font-semibold text-[#002060]">
-                        18.240 EUR
-                      </div>
+                      <div className="mt-1 text-lg font-semibold text-[#002060]">18.240 EUR</div>
                     </div>
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Gastos</div>
-                      <div className="mt-1 text-lg font-semibold text-[#002060]">
-                        6.430 EUR
-                      </div>
+                      <div className="mt-1 text-lg font-semibold text-[#002060]">6.430 EUR</div>
                     </div>
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Beneficio</div>
-                      <div className="mt-1 text-lg font-semibold text-[#002060]">
-                        11.810 EUR
-                      </div>
+                      <div className="mt-1 text-lg font-semibold text-[#002060]">11.810 EUR</div>
                     </div>
                   </div>
                 </div>
@@ -419,9 +398,7 @@ export default function DemoPage({
                   </div>
                 </div>
                 <div className="rounded-xl border border-[#0060F0]/20 bg-gradient-to-r from-sky-50/70 to-white p-4">
-                  <div className="text-sm font-semibold text-[#002060]">
-                    Isaak
-                  </div>
+                  <div className="text-sm font-semibold text-[#002060]">Isaak</div>
                   <p className="mt-2 text-xs text-slate-600">
                     "Te ayudo con cierre 2025 y enero 2026. Revisamos?"
                   </p>
@@ -442,8 +419,8 @@ export default function DemoPage({
                   Calcula tu precio personalizado
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Sin cuotas fijas. Pagas segun tu uso real: facturas emitidas y
-                  movimientos conciliados.
+                  Sin cuotas fijas. Pagas segun tu uso real: facturas emitidas y movimientos
+                  conciliados.
                 </p>
               </div>
               <Link
@@ -460,25 +437,19 @@ export default function DemoPage({
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-sm font-semibold text-slate-900">
-                  Sin permanencias
-                </div>
+                <div className="text-sm font-semibold text-slate-900">Sin permanencias</div>
                 <p className="mt-1 text-xs text-slate-600">
                   Cancela cuando quieras, sin penalizaciones.
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-sm font-semibold text-slate-900">
-                  1 mes gratis
-                </div>
+                <div className="text-sm font-semibold text-slate-900">1 mes gratis</div>
                 <p className="mt-1 text-xs text-slate-600">
                   Prueba completa sin tarjeta ni compromiso.
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-sm font-semibold text-slate-900">
-                  Aviso antes de cobrar
-                </div>
+                <div className="text-sm font-semibold text-slate-900">Aviso antes de cobrar</div>
                 <p className="mt-1 text-xs text-slate-600">
                   Te avisamos antes de renovar para que ajustes el plan.
                 </p>
@@ -492,10 +463,7 @@ export default function DemoPage({
         </section>
       </div>
 
-      <DemoRequestModal
-        isOpen={isRequestOpen}
-        onClose={() => setIsRequestOpen(false)}
-      />
+      <DemoRequestModal isOpen={isRequestOpen} onClose={() => setIsRequestOpen(false)} />
 
       <footer className="mt-12 border-t border-slate-200 bg-white/80">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -504,7 +472,11 @@ export default function DemoPage({
             <Link className="hover:text-[#0080F0]" href="/" aria-label="Ir a pagina de inicio">
               Ir a Home
             </Link>
-            <Link className="hover:text-[#0080F0]" href="/auth/signup" aria-label="Crear nueva cuenta">
+            <Link
+              className="hover:text-[#0080F0]"
+              href="/auth/signup"
+              aria-label="Crear nueva cuenta"
+            >
               Crear cuenta
             </Link>
           </div>
@@ -513,8 +485,3 @@ export default function DemoPage({
     </main>
   );
 }
-
-
-
-
-
