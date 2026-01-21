@@ -3,18 +3,21 @@
 ## Overview
 
 Phase 2 now supports sending emails from **both Resend and Gmail API**:
+
 - **Resend**: Transactional emails from `no-reply@verifactu.business` (existing)
 - **Gmail**: Support emails from `support@verifactu.business` (new)
 
 ## Email Provider Strategy
 
 ### Resend (Transactional)
+
 - **Use for**: Automated emails, notifications, password resets
 - **From**: `no-reply@verifactu.business`
 - **Features**: Webhook tracking, automatic status updates, retry support
 - **Reply**: No reply tracking
 
 ### Gmail API (Support)
+
 - **Use for**: Manual support emails from admin panel
 - **From**: `support@verifactu.business`
 - **Features**: Thread tracking, replies tracked in Gmail inbox
@@ -25,6 +28,7 @@ Phase 2 now supports sending emails from **both Resend and Gmail API**:
 ### Migration bd_3
 
 **New Enum:**
+
 ```prisma
 enum EmailProvider {
   RESEND
@@ -33,6 +37,7 @@ enum EmailProvider {
 ```
 
 **Updated EmailEvent:**
+
 ```prisma
 model EmailEvent {
   id          String        @id
@@ -45,11 +50,13 @@ model EmailEvent {
 ```
 
 **New Fields:**
+
 - `threadId`: Gmail thread ID for conversation tracking
 - `fromEmail`: Actual sender email (support@ or no-reply@)
 - `provider`: RESEND or GMAIL enum (instead of String)
 
 **New Index:**
+
 - `@@index([provider, createdAt])`
 
 ## Gmail API Setup
@@ -111,7 +118,8 @@ GOOGLE_SERVICE_ACCOUNT_EMAIL="verifactu-gmail-sender@your-project.iam.gserviceac
 GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
-**Important**: 
+**Important**:
+
 - Replace `\n` with actual newlines in your .env file, OR
 - Keep as `\\n` and the code will convert it
 
@@ -120,6 +128,7 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END P
 ### POST /api/admin/users/[id]/send-email
 
 **Request Body:**
+
 ```typescript
 {
   subject: string;
@@ -130,6 +139,7 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END P
 ```
 
 **Response (Success):**
+
 ```typescript
 {
   success: true;
@@ -140,6 +150,7 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END P
 ```
 
 **Gmail Sending Flow:**
+
 1. Authenticate with service account
 2. Impersonate `support@verifactu.business`
 3. Create RFC 2822 formatted email
@@ -150,6 +161,7 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END P
 ### POST /api/admin/emails/[id]/retry
 
 **Changed Behavior:**
+
 - Only allows retry for `provider=RESEND`
 - Returns 400 error for Gmail emails:
   ```json
@@ -159,11 +171,13 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END P
 ### GET /api/admin/emails
 
 **New Query Parameter:**
+
 ```
 ?provider=RESEND | GMAIL
 ```
 
 **Example:**
+
 ```
 GET /api/admin/emails?provider=GMAIL&status=SENT
 ```
@@ -173,6 +187,7 @@ GET /api/admin/emails?provider=GMAIL&status=SENT
 ### Operations -> Emails List
 
 **New Features:**
+
 - Provider filter dropdown (All / Resend / Gmail)
 - Provider badge in table (colored: Resend=default, Gmail=secondary)
 - Shows provider column
@@ -180,6 +195,7 @@ GET /api/admin/emails?provider=GMAIL&status=SENT
 ### Email Detail Page
 
 **New Display:**
+
 - Provider badge with color
 - `fromEmail` field (support@ or no-reply@)
 - `threadId` field (Gmail only)
@@ -189,6 +205,7 @@ GET /api/admin/emails?provider=GMAIL&status=SENT
 ### User Detail -> Send Email Dialog
 
 **New Features:**
+
 - Email Provider selector:
   - Resend (no-reply@verifactu.business)
   - Gmail (support@verifactu.business)
@@ -207,6 +224,7 @@ GET /api/admin/emails?provider=GMAIL&status=SENT
 ```
 
 **Events Tracked:**
+
 - `email.sent` → status: SENT
 - `email.delivered` → status: DELIVERED
 - `email.bounced` → status: BOUNCED
@@ -217,12 +235,14 @@ GET /api/admin/emails?provider=GMAIL&status=SENT
 **No webhooks**: Gmail API doesn't provide webhook events for sent emails.
 
 **Alternatives:**
+
 - Gmail Push Notifications (watch inbox for replies) - future enhancement
 - Manual status: Emails marked as SENT when API call succeeds
 
 ## Audit Logging
 
 **Updated Metadata:**
+
 ```typescript
 {
   provider: "RESEND" | "GMAIL",
@@ -270,12 +290,14 @@ GET /api/admin/emails?provider=GMAIL&status=SENT
 ### Gmail API Errors
 
 **Common Errors:**
+
 - **Invalid credentials**: Check service account key
 - **Insufficient permissions**: Enable domain-wide delegation
 - **Subject not found**: Service account can't impersonate support@
 - **Quota exceeded**: Gmail API has rate limits
 
 **Error Response:**
+
 ```json
 {
   "error": "Failed to send email: <error message>",
@@ -284,6 +306,7 @@ GET /api/admin/emails?provider=GMAIL&status=SENT
 ```
 
 **EmailEvent Created:**
+
 - `status`: FAILED
 - `lastError`: Error message from Gmail API
 - `provider`: GMAIL
@@ -339,20 +362,24 @@ GET /api/admin/emails?provider=GMAIL&status=SENT
 ## Troubleshooting
 
 ### "Invalid grant" error
+
 - Check domain-wide delegation is enabled
 - Verify OAuth scopes are authorized
 - Ensure service account has correct subject (support@)
 
 ### "Insufficient permissions"
+
 - Enable Gmail API in Google Cloud Console
 - Add correct OAuth scope in Workspace Admin
 
 ### Private key format
+
 - Must include `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----`
 - Newlines should be `\n` (will be converted in code)
 - Or use `\\n` in .env and code will replace
 
 ### Emails not appearing in admin UI
+
 - Check EmailEvent created in database
 - Verify provider=GMAIL
 - Check AuditLog for EMAIL_SEND action
@@ -366,6 +393,7 @@ pnpm db:migrate
 ```
 
 **Applied Changes:**
+
 - EmailProvider enum created
 - EmailEvent.provider changed from String to EmailProvider
 - EmailEvent.threadId added (optional)
@@ -375,6 +403,7 @@ pnpm db:migrate
 ## Code Reference
 
 **Send Email Route:**
+
 ```typescript
 // apps/admin/app/api/admin/users/[id]/send-email/route.ts
 - sendViaGmail() function
@@ -383,6 +412,7 @@ pnpm db:migrate
 ```
 
 **Email List:**
+
 ```typescript
 // apps/admin/app/operations/emails/page.tsx
 - Provider filter
@@ -390,6 +420,7 @@ pnpm db:migrate
 ```
 
 **Email Detail:**
+
 ```typescript
 // apps/admin/app/operations/emails/[id]/page.tsx
 - Gmail-specific fields
@@ -397,6 +428,7 @@ pnpm db:migrate
 ```
 
 **User Detail:**
+
 ```typescript
 // apps/admin/app/users/[id]/page.tsx
 - Provider selector in send dialog

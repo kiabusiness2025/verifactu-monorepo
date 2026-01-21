@@ -41,7 +41,7 @@ async function sendViaGmail(to: string, subject: string, message: string) {
   ];
 
   const email = emailLines.join('\r\n');
-  
+
   // Encode to base64url (RFC 4648 § 5)
   const encodedEmail = Buffer.from(email)
     .toString('base64')
@@ -86,7 +86,7 @@ async function sendViaResend(to: string, subject: string, message: string) {
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   // RBAC: Require admin session
   const session = await requireAdminSession();
-  
+
   const body = await req.json();
   const { template, subject, message, provider = 'RESEND' } = body;
 
@@ -139,10 +139,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           adminUserId: session.userId!,
           action: 'EMAIL_SEND',
           targetUserId: params.id,
-          metadata: { 
-            provider, 
-            template, 
-            subject: emailSubject, 
+          metadata: {
+            provider,
+            template,
+            subject: emailSubject,
             to: user.email,
             fromEmail: emailResult.fromEmail,
           },
@@ -159,9 +159,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     });
   } catch (error: any) {
     // Log failed email attempt
-    const fromEmail = provider === 'GMAIL' 
-      ? 'support@verifactu.business' 
-      : 'no-reply@verifactu.business';
+    const fromEmail =
+      provider === 'GMAIL' ? 'support@verifactu.business' : 'no-reply@verifactu.business';
 
     await prisma.emailEvent.create({
       data: {

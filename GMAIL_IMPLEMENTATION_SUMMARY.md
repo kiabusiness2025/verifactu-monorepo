@@ -12,6 +12,7 @@
 ## 🔐 Security Implementation
 
 ### 1. Hardcoded Email Addresses (Anti-Spoofing)
+
 ```typescript
 // Gmail
 const FROM_EMAIL = 'support@verifactu.business';
@@ -19,32 +20,39 @@ const FROM_EMAIL = 'support@verifactu.business';
 // Resend
 const FROM_EMAIL = 'no-reply@verifactu.business';
 ```
+
 ✅ Prevents email spoofing  
 ✅ Always sends from authorized addresses
 
 ### 2. Provider Validation
+
 ```typescript
 if (provider !== 'RESEND' && provider !== 'GMAIL') {
   return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
 }
 ```
+
 ✅ Allowlist-based validation  
 ✅ Rejects unknown providers
 
 ### 3. RBAC Protection
+
 ```typescript
 const session = await requireAdminSession();
 ```
+
 ✅ Only ADMIN role can send emails  
 ✅ Session validated before every request
 
 ### 4. Audit Trail
+
 ```typescript
 AuditLog: {
   action: 'EMAIL_SEND',
   metadata: { provider, fromEmail, subject, to }
 }
 ```
+
 ✅ All sends logged with full context  
 ✅ Includes actual sender (support@ or no-reply@)
 
@@ -75,6 +83,7 @@ model EmailEvent {
 ## 🔧 Implementation Details
 
 ### sendViaGmail() Function
+
 ```typescript
 - Service account authentication
 - Domain-wide delegation (impersonate support@)
@@ -85,6 +94,7 @@ model EmailEvent {
 ```
 
 ### sendViaResend() Function
+
 ```typescript
 - Resend API email.send()
 - From: no-reply@verifactu.business
@@ -92,6 +102,7 @@ model EmailEvent {
 ```
 
 ### POST /api/admin/users/:id/send-email
+
 ```typescript
 Request:
 {
@@ -144,17 +155,20 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END P
 ## 🧪 Testing Steps
 
 ### 1. Set Environment Variables
+
 ```bash
 cd apps/admin
 # Add variables to .env (see above)
 ```
 
 ### 2. Restart Admin Panel
+
 ```bash
 pnpm dev
 ```
 
 ### 3. Send Test Email
+
 1. Open: http://localhost:3003/users/[user-id]
 2. Click: **Send Email**
 3. Select: **Gmail (support@verifactu.business)**
@@ -163,9 +177,11 @@ pnpm dev
 6. Verify: Success alert with messageId
 
 ### 4. Verify Database
+
 Open Prisma Studio: http://localhost:5555
 
 **EmailEvent Table:**
+
 - Filter: `provider = GMAIL`
 - Check:
   - ✅ `messageId` populated
@@ -174,12 +190,14 @@ Open Prisma Studio: http://localhost:5555
   - ✅ `status = SENT`
 
 **AuditLog Table:**
+
 - Find: Latest `EMAIL_SEND` action
 - Check metadata:
   - ✅ `provider: "GMAIL"`
   - ✅ `fromEmail: "support@verifactu.business"`
 
 ### 5. Check User's Inbox
+
 - User receives email from `support@verifactu.business`
 - Reply goes to Gmail inbox (thread tracking)
 
@@ -187,16 +205,16 @@ Open Prisma Studio: http://localhost:5555
 
 ## 🎯 Email Provider Strategy
 
-| Feature | Gmail (Support) | Resend (Transactional) |
-|---------|----------------|------------------------|
-| **From** | `support@verifactu.business` | `no-reply@verifactu.business` |
-| **Use Case** | Manual support communications | Automated notifications |
-| **Thread Tracking** | ✅ Yes (threadId stored) | ❌ No |
-| **Reply Handling** | ✅ Goes to Gmail inbox | ❌ Bounce (no-reply) |
-| **Webhooks** | ❌ No | ✅ Yes (status updates) |
-| **Retry via UI** | ❌ No (manual from inbox) | ✅ Yes |
-| **API** | Gmail API (google-auth-library) | Resend API |
-| **Authentication** | Service account + delegation | API key |
+| Feature             | Gmail (Support)                 | Resend (Transactional)        |
+| ------------------- | ------------------------------- | ----------------------------- |
+| **From**            | `support@verifactu.business`    | `no-reply@verifactu.business` |
+| **Use Case**        | Manual support communications   | Automated notifications       |
+| **Thread Tracking** | ✅ Yes (threadId stored)        | ❌ No                         |
+| **Reply Handling**  | ✅ Goes to Gmail inbox          | ❌ Bounce (no-reply)          |
+| **Webhooks**        | ❌ No                           | ✅ Yes (status updates)       |
+| **Retry via UI**    | ❌ No (manual from inbox)       | ✅ Yes                        |
+| **API**             | Gmail API (google-auth-library) | Resend API                    |
+| **Authentication**  | Service account + delegation    | API key                       |
 
 ---
 
@@ -234,6 +252,7 @@ https://www.googleapis.com/auth/calendar
 ```
 
 **To Verify:**
+
 1. Go to [admin.google.com](https://admin.google.com)
 2. Security > API Controls > Domain-wide Delegation
 3. Find Client ID: `114995456670039075730`
@@ -246,6 +265,7 @@ https://www.googleapis.com/auth/calendar
 ## 🚀 Next Steps
 
 ### Immediate (Testing)
+
 1. ⬜ Get service account private key from GCP Console
 2. ⬜ Add environment variables to `apps/admin/.env`
 3. ⬜ Restart admin panel
@@ -254,6 +274,7 @@ https://www.googleapis.com/auth/calendar
 6. ⬜ Check user received email from support@
 
 ### Production
+
 1. ⬜ Add environment variables to Vercel/Cloud Run
 2. ⬜ Use Secret Manager for private key
 3. ⬜ Test Gmail sending in production
@@ -265,21 +286,25 @@ https://www.googleapis.com/auth/calendar
 ## 🔍 Troubleshooting
 
 ### "Missing service account credentials"
+
 - Check `GOOGLE_SERVICE_ACCOUNT_EMAIL` is set
 - Check `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` is set
 - Verify private key includes `-----BEGIN/END PRIVATE KEY-----`
 
 ### "Request had insufficient authentication scopes"
+
 - Verify `gmail.send` scope in Admin Console
 - Client ID: `114995456670039075730`
 - Check domain-wide delegation enabled
 
 ### "Delegation denied"
+
 - Go to Admin Console > API Controls > Domain-wide Delegation
 - Verify Client ID is listed
 - Verify scope is authorized
 
 ### Email not received
+
 - Check EmailEvent.status = SENT
 - Verify fromEmail = support@verifactu.business
 - Check user's spam folder
@@ -290,11 +315,13 @@ https://www.googleapis.com/auth/calendar
 ## 📞 Support
 
 **Documentation:**
+
 - `GMAIL_ENV_SETUP.md` - Complete setup guide
 - `PHASE_2_GMAIL_INTEGRATION.md` - Technical details
 - `.env.gmail.example` - Environment variables template
 
 **Code:**
+
 - Route: `apps/admin/app/api/admin/users/[id]/send-email/route.ts`
 - Schema: `packages/db/prisma/schema.prisma`
 - Migration: `packages/db/prisma/migrations/20260121140359_bd_3/`
@@ -306,6 +333,7 @@ https://www.googleapis.com/auth/calendar
 ## ✅ Implementation Checklist
 
 ### Code
+
 - ✅ EmailProvider enum (RESEND, GMAIL)
 - ✅ EmailEvent.threadId (Gmail threads)
 - ✅ EmailEvent.fromEmail (sender tracking)
@@ -318,11 +346,13 @@ https://www.googleapis.com/auth/calendar
 - ✅ Error handling with proper fallback
 
 ### Database
+
 - ✅ Migration bd_3 applied
 - ✅ Prisma Client regenerated
 - ✅ Index on (provider, createdAt)
 
 ### Documentation
+
 - ✅ GMAIL_ENV_SETUP.md created
 - ✅ .env.gmail.example created
 - ✅ Service account details documented
@@ -330,6 +360,7 @@ https://www.googleapis.com/auth/calendar
 - ✅ Troubleshooting guide included
 
 ### Security
+
 - ✅ Hardcoded fromEmail addresses
 - ✅ Provider allowlist validation
 - ✅ RBAC enforcement
@@ -337,6 +368,7 @@ https://www.googleapis.com/auth/calendar
 - ✅ No user input for sender
 
 ### Configuration
+
 - ✅ Service account created
 - ✅ Domain-wide delegation enabled
 - ✅ OAuth scopes authorized in Admin Console

@@ -1,28 +1,40 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@verifactu/ui/components/card';
 import { Badge } from '@verifactu/ui/components/badge';
 import { Button } from '@verifactu/ui/components/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@verifactu/ui/components/dialog';
-import { Textarea } from '@verifactu/ui/components/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@verifactu/ui/components/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@verifactu/ui/components/dialog';
 import { Input } from '@verifactu/ui/components/input';
 import { Label } from '@verifactu/ui/components/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@verifactu/ui/components/select';
-import Link from 'next/link';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verifactu/ui/components/select';
+import { Textarea } from '@verifactu/ui/components/textarea';
 import { format } from 'date-fns';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function UserDetailPage() {
   const params = useParams();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  
+
   // Block dialog state
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [blockReason, setBlockReason] = useState('');
-  
+
   // Email dialog state
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailSubject, setEmailSubject] = useState('');
@@ -52,7 +64,7 @@ export default function UserDetailPage() {
       const res = await fetch(`/api/admin/users/${params.id}/block`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: blockReason })
+        body: JSON.stringify({ reason: blockReason }),
       });
 
       if (res.ok) {
@@ -78,7 +90,7 @@ export default function UserDetailPage() {
     setActionLoading(true);
     try {
       const res = await fetch(`/api/admin/users/${params.id}/unblock`, {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (res.ok) {
@@ -105,11 +117,11 @@ export default function UserDetailPage() {
       const res = await fetch(`/api/admin/users/${params.id}/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          subject: emailSubject, 
+        body: JSON.stringify({
+          subject: emailSubject,
           message: emailMessage,
-          provider: emailProvider
-        })
+          provider: emailProvider,
+        }),
       });
 
       if (res.ok) {
@@ -199,8 +211,8 @@ export default function UserDetailPage() {
                     </p>
                   )}
                 </div>
-                <Button 
-                  onClick={handleUnblock} 
+                <Button
+                  onClick={handleUnblock}
                   disabled={actionLoading}
                   variant="outline"
                   className="w-full"
@@ -211,7 +223,9 @@ export default function UserDetailPage() {
             ) : (
               <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="destructive" className="w-full">Block User</Button>
+                  <Button variant="destructive" className="w-full">
+                    Block User
+                  </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
@@ -231,8 +245,8 @@ export default function UserDetailPage() {
                       <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
                         Cancel
                       </Button>
-                      <Button 
-                        variant="destructive" 
+                      <Button
+                        variant="destructive"
                         onClick={handleBlock}
                         disabled={actionLoading || !blockReason.trim()}
                       >
@@ -246,7 +260,9 @@ export default function UserDetailPage() {
 
             <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="w-full">Send Email</Button>
+                <Button variant="outline" className="w-full">
+                  Send Email
+                </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -255,7 +271,10 @@ export default function UserDetailPage() {
                 <div className="space-y-4 mt-4">
                   <div>
                     <Label>Email Provider</Label>
-                    <Select value={emailProvider} onValueChange={(value: 'RESEND' | 'GMAIL') => setEmailProvider(value)}>
+                    <Select
+                      value={emailProvider}
+                      onValueChange={(value: 'RESEND' | 'GMAIL') => setEmailProvider(value)}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -265,8 +284,8 @@ export default function UserDetailPage() {
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {emailProvider === 'GMAIL' 
-                        ? 'Sent from support@ using Gmail API. User can reply.' 
+                      {emailProvider === 'GMAIL'
+                        ? 'Sent from support@ using Gmail API. User can reply.'
                         : 'Transactional email from no-reply@. No replies tracked.'}
                     </p>
                   </div>
@@ -291,7 +310,7 @@ export default function UserDetailPage() {
                     <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>
                       Cancel
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleSendEmail}
                       disabled={actionLoading || !emailSubject.trim() || !emailMessage.trim()}
                     >

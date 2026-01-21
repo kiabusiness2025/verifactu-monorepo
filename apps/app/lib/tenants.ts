@@ -1,49 +1,110 @@
-import { query, one } from "./db";
-import { Role } from "./roles";
+/**
+ * Tenant (Company) management using Prisma
+ * Migrated from raw SQL to Prisma for consistency with admin panel
+ */
+import { prisma } from "@verifactu/db";
+import { Role } from './roles';
 
 export type Tenant = {
   id: string;
   name: string;
   created_at?: string;
+  createdAt?: Date;
 };
 
-export async function listTenantsForUser(userId: string) {
-  return query<Tenant>(
-    `SELECT t.id, t.name, t.created_at
-     FROM tenants t
-     JOIN memberships m ON m.tenant_id = t.id
-     WHERE m.user_id = $1 AND COALESCE(m.status,'active') = 'active'
-     ORDER BY t.created_at DESC`,
-    [userId]
-  );
+export async function listTenantsForUser(userId: string): Promise<Tenant[]> {
+  // Get companies where user is owner
+  const ownedCompanies = await prisma.company.findMany({
+    where: { ownerUserId: userId },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // Get companies where user is a member
+  const memberCompanies = await prisma.companyMember.findMany({
+    where: { userId },
+    include: { company: true },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // Combine and deduplicate
+  const companyMap = new Map<string, Tenant>();
+
+  ownedCompanies.forEach((company) => {
+    companyMap.set(company.id, {
+      id: company.id,
+      name: company.name,
+      createdAt: company.createdAt,
+      created_at: company.createdAt.toISOString(),
+    });
+  });
+
+  memberCompanies.forEach((membership) => {
+    if (!companyMap.has(membership.company.id)) {
+      companyMap.set(membership.company.id, {
+        id: membership.company.id,
+        name: membership.company.name,
+        createdAt: membership.company.createdAt,
+        created_at: membership.company.createdAt.toISOString(),
+      });
+    }
+  });
+
+  return Array.from(companyMap.values());
 }
 
-export async function createTenantWithOwner(params: { name: string; ownerId: string; nif?: string | null }) {
+export async function createTenantWithOwner(params: {
+  name: string;
+  ownerId: string;
+  nif?: string | null;
+}): Promise<string> {
   const { name, ownerId, nif } = params;
-  const [tenant] = await query<{ id: string }>(
-    `INSERT INTO tenants (name, legal_name, nif) VALUES ($1, $2, $3) RETURNING id`,
-    [name, name, nif ?? null]
-  );
-  await query(
-    `INSERT INTO memberships (tenant_id, user_id, role, status) VALUES ($1,$2,$3,'active')
-     ON CONFLICT DO NOTHING`,
-    [tenant.id, ownerId, "owner"]
-  );
-  return tenant.id;
+
+  // Create company with owner
+  const company = await prisma.company.create({
+    data: {
+      name,
+      taxId: nif || undefined,
+      ownerUserId: ownerId,
+    },
+  });
+
+  return company.id;
 }
 
-export async function getTenant(id: string) {
-  return one<Tenant>(`SELECT id, name, created_at FROM tenants WHERE id = $1`, [id]);
+export async function getTenant(id: string): Promise<Tenant | null> {
+  const company = await prisma.company.findUnique({
+    where: { id },
+  });
+
+  if (!company) return null;
+
+  return {
+    id: company.id,
+    name: company.name,
+    createdAt: company.createdAt,
+    created_at: company.createdAt.toISOString(),
+  };
 }
 
-export async function upsertUser(params: { id: string; email?: string | null; name?: string | null }) {
+export async function upsertUser(params: {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+}): Promise<void> {
   const { id, email, name } = params;
-  await query(
-    `INSERT INTO users (id, email, name)
-     VALUES ($1, COALESCE($2,'unknown@user'), $3)
-     ON CONFLICT (id) DO UPDATE SET email = COALESCE($2, users.email), name = COALESCE($3, users.name)`,
-    [id, email ?? null, name ?? null]
-  );
+
+  await prisma.user.upsert({
+    where: { id },
+    create: {
+      id,
+      email: email || `unknown-${id}@user`,
+      name: name || 'Unknown User',
+    },
+    update: {
+      email: email || undefined,
+      name: name || undefined,
+    },
+  });
 }
 
-export const tenantRoles: Role[] = ["owner", "admin", "member", "asesor"];
+export const tenantRoles: Role[] = ['owner', 'admin', 'member', 'asesor'];

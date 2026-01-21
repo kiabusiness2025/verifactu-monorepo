@@ -3,6 +3,7 @@
 ## ✅ New Capabilities
 
 ### Dual Email Provider Strategy
+
 **Phase 2 now supports TWO email providers:**
 
 1. **Resend** (Existing - Transactional)
@@ -22,6 +23,7 @@
 ### Migration bd_3 Applied
 
 **New Enum:**
+
 ```prisma
 enum EmailProvider {
   RESEND  // Transactional via Resend API
@@ -30,6 +32,7 @@ enum EmailProvider {
 ```
 
 **EmailEvent Model Updates:**
+
 ```prisma
 model EmailEvent {
   provider    EmailProvider  @default(RESEND)  // Changed from String to enum
@@ -37,7 +40,7 @@ model EmailEvent {
   fromEmail   String?                          // NEW: Actual sender (support@ or no-reply@)
   messageId   String?        @unique           // Resend or Gmail message ID
   // ... rest unchanged
-  
+
   @@index([provider, createdAt])               // NEW: Index for filtering
 }
 ```
@@ -47,6 +50,7 @@ model EmailEvent {
 ### POST /api/admin/users/[id]/send-email
 
 **New Request Body:**
+
 ```typescript
 {
   subject: string;
@@ -57,6 +61,7 @@ model EmailEvent {
 ```
 
 **Response:**
+
 ```typescript
 {
   success: true;
@@ -67,18 +72,21 @@ model EmailEvent {
 ```
 
 **Implementation:**
+
 - `sendViaResend()`: Existing Resend API
 - `sendViaGmail()`: NEW - Gmail API with service account impersonation
 
 ### POST /api/admin/emails/[id]/retry
 
 **Updated Logic:**
+
 - Only allows retry for `provider=RESEND`
 - Returns 400 for Gmail: "Retry only available for Resend emails..."
 
 ### GET /api/admin/emails
 
 **New Query Parameter:**
+
 ```
 ?provider=RESEND | GMAIL
 ```
@@ -88,6 +96,7 @@ model EmailEvent {
 ### Operations -> Emails List
 
 **New Features:**
+
 1. Provider filter dropdown (All / Resend / Gmail)
 2. Provider column with colored badge:
    - Resend: Blue
@@ -97,6 +106,7 @@ model EmailEvent {
 ### Email Detail Page
 
 **New Display:**
+
 1. Provider badge with color
 2. `fromEmail` field shown (support@ or no-reply@)
 3. `threadId` field (Gmail only - for thread tracking)
@@ -108,6 +118,7 @@ model EmailEvent {
 ### User Detail -> Send Email Dialog
 
 **New Interface:**
+
 1. **Provider Selector:**
    - Resend (no-reply@verifactu.business)
    - Gmail (support@verifactu.business)
@@ -131,6 +142,7 @@ model EmailEvent {
 ### Environment Variables
 
 Add to `.env` files:
+
 ```bash
 GOOGLE_SERVICE_ACCOUNT_EMAIL="verifactu-gmail-sender@project.iam.gserviceaccount.com"
 GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
@@ -139,6 +151,7 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END P
 ### Implementation Details
 
 **Gmail Sending Flow:**
+
 1. Initialize GoogleAuth with service account credentials
 2. Set `subject: support@verifactu.business` (impersonation)
 3. Create RFC 2822 formatted email
@@ -150,6 +163,7 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END P
 ## 📝 Audit Logging
 
 **Updated Metadata:**
+
 ```typescript
 {
   provider: "RESEND" | "GMAIL",  // NEW: Which provider was used
@@ -179,13 +193,14 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END P
 
 ```json
 {
-  "googleapis": "^170.1.0"  // Gmail API client
+  "googleapis": "^170.1.0" // Gmail API client
 }
 ```
 
 ## 📚 Documentation
 
 **New Documentation File:**
+
 - `PHASE_2_GMAIL_INTEGRATION.md` - Complete Gmail setup guide with:
   - Service account creation steps
   - Domain-wide delegation configuration
@@ -199,6 +214,7 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END P
 ### Existing Data
 
 Existing `EmailEvent` records will:
+
 - Default to `provider=RESEND` (schema default)
 - Continue to work with existing webhooks
 - Retry functionality unchanged
@@ -206,6 +222,7 @@ Existing `EmailEvent` records will:
 ### New Data
 
 New emails will:
+
 - Store explicit provider (RESEND or GMAIL)
 - Include fromEmail and threadId (if Gmail)
 - Filter correctly in admin UI
@@ -213,18 +230,21 @@ New emails will:
 ## 🎯 Use Cases
 
 ### Scenario 1: Automated Password Reset
+
 - **Provider**: RESEND
 - **From**: no-reply@verifactu.business
 - **Why**: Transactional, no reply needed
 - **Status Tracking**: Via Resend webhooks
 
 ### Scenario 2: Manual Support Response
+
 - **Provider**: GMAIL
 - **From**: support@verifactu.business
 - **Why**: User can reply, conversation tracked
 - **Status Tracking**: Sent (no webhook updates)
 
 ### Scenario 3: Failed Email Retry
+
 - **RESEND**: Retry button available, can resend
 - **GMAIL**: No retry button, manual resend from inbox
 
@@ -255,12 +275,14 @@ New emails will:
 ## 📊 Metrics
 
 ### Code Changes
+
 - Files Modified: 14
 - Lines Added: 878
 - Lines Removed: 176
 - Net Change: +702 lines
 
 ### New Features
+
 - 1 new enum (EmailProvider)
 - 3 new fields in EmailEvent
 - 1 new index
@@ -269,6 +291,7 @@ New emails will:
 - Provider filter in operations UI
 
 ### Documentation
+
 - 1 comprehensive setup guide (350+ lines)
 - Updated API documentation
 - Environment variable reference
@@ -292,6 +315,7 @@ fd250380 docs: add Phase 2 implementation status
 All features implemented, tested, and documented. Ready for production deployment after Gmail service account configuration.
 
 **Next Steps:**
+
 1. Configure Gmail service account in Google Cloud
 2. Set environment variables in production
 3. Test sending email from admin panel

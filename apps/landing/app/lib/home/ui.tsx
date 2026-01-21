@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
@@ -66,7 +66,7 @@ export function StickyCtaBar({ show }: { show: boolean }) {
       aria-hidden={!show}
     >
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
-        <div className="text-sm font-semibold text-[#002060]">Prueba gratis y ve Isaak en acción</div>
+        <div className="text-sm font-semibold text-[#002060]">Prueba gratis y ve a Isaak en accion</div>
         <div className="flex gap-2">
           <Link href="/auth/signup">
             <PrimaryButton className="h-10 px-4 text-sm">Probar gratis</PrimaryButton>
@@ -388,7 +388,7 @@ export function DashboardMock() {
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-xs font-semibold text-slate-700">Isaak</div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Maria, enero 2026 va bien. Te faltan 2 tickets y un extracto. 📌
+            Maria, enero 2026 va bien. Te faltan 2 tickets y un extracto. ??
           </p>
           <div className="mt-3 flex gap-2">
             <button className="rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-xs font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB]">
@@ -784,13 +784,13 @@ export function PideseloAIsaakSection() {
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               <button className="rounded-full border border-[#0060F0] bg-[#0060F0]/10 px-3 py-1 font-semibold text-[#0060F0]">
-                Cercano 😊
+                Cercano ??
               </button>
               <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
-                Profesional 🤝
+                Profesional ??
               </button>
               <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
-                Minimalista ✅
+                Minimalista ?
               </button>
             </div>
 
@@ -817,9 +817,9 @@ export function PideseloAIsaakSection() {
               <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
                 <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
                 <div className="mt-1 text-sm text-slate-700">
-                  Te faltan 2 facturas y un extracto. 📄
+                  Te faltan 2 facturas y un extracto. ??
                   <br />
-                  Te aviso hoy y manana. ✅
+                  Te aviso hoy y manana. ?
                 </div>
               </div>
               <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
@@ -829,9 +829,9 @@ export function PideseloAIsaakSection() {
               <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
                 <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
                 <div className="mt-1 text-sm text-slate-700">
-                  Ventas 12.480 EUR, gastos 7.130 EUR. 💶
+                  Ventas 12.480 EUR, gastos 7.130 EUR. ??
                   <br />
-                  Beneficio estimado 5.350 EUR. ✨
+                  Beneficio estimado 5.350 EUR. ?
                 </div>
               </div>
             </div>
@@ -844,15 +844,15 @@ export function PideseloAIsaakSection() {
             </p>
             <div className="mt-4 grid gap-3 text-sm text-slate-600">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="font-semibold text-slate-800">Alegre y optimista 😄</div>
+                <div className="font-semibold text-slate-800">Alegre y optimista ??</div>
                 <p className="mt-1 text-xs">Mensajes cortos, emoji suave y mucha energia positiva.</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="font-semibold text-slate-800">Profesional 🤝</div>
+                <div className="font-semibold text-slate-800">Profesional ??</div>
                 <p className="mt-1 text-xs">Directo, claro y con foco en resultados.</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="font-semibold text-slate-800">Minimalista ✅</div>
+                <div className="font-semibold text-slate-800">Minimalista ?</div>
                 <p className="mt-1 text-xs">Solo lo esencial. Sin ruido.</p>
               </div>
             </div>
@@ -862,7 +862,7 @@ export function PideseloAIsaakSection() {
                 href={isaakSignupUrl}
                 className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
               >
-                Hablar con Isaak 💬
+                Hablar con Isaak ??
               </Link>
               <Link
                 href={isaakChatUrl}
@@ -880,33 +880,35 @@ export function PideseloAIsaakSection() {
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <CommandExample
             command="Explicame estas escrituras y el CIF"
-            response="He extraido los datos clave y los guardo en tu ficha. 📄 Te aviso si falta algo. ✅"
+            response="He extraido los datos clave y los guardo en tu ficha. ?? Te aviso si falta algo. ?"
           />
           <CommandExample
             command="Estamos en cierre 2025, que me falta?"
-            response="Te faltan 2 facturas y un extracto. 📄 Te aviso hoy y manana. ✅"
+            response="Te faltan 2 facturas y un extracto. ?? Te aviso hoy y manana. ?"
           />
           <CommandExample
             command="Recordatorios del 1o trimestre 2026"
-            response="Listo. Te aviso de plazos clave con tiempo. ⏰"
+            response="Listo. Te aviso de plazos clave con tiempo. ?"
           />
           <CommandExample
             command="Sube estos gastos y ordenalos por trimestre"
-            response="Cargados y clasificados. ✅ Te marco deducibles y pendientes. 📌"
+            response="Cargados y clasificados. ? Te marco deducibles y pendientes. ??"
           />
           <CommandExample
             command="Prepara un resumen para mi gestor"
-            response="Listo: ventas, gastos y beneficio. 📊 Te dejo notas claras. 📝"
+            response="Listo: ventas, gastos y beneficio. ?? Te dejo notas claras. ??"
           />
           <CommandExample
             command="Mi prueba termina en 5 dias"
-            response="Te recomiendo el plan ideal. ✨ Si quieres, hago la transicion. ✅"
+            response="Te recomiendo el plan ideal. ? Si quieres, hago la transicion. ?"
           />
         </div>
       </Container>
     </section>
   );
 }
+
+
 
 
 

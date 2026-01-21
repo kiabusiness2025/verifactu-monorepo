@@ -63,6 +63,11 @@ enum EmailProvider {
   GMAIL
 }
 
+enum AuthProvider {
+  FIREBASE
+  GOOGLE
+}
+
 model User {
   id             String    @id @default(cuid())
   email          String    @unique
@@ -70,6 +75,10 @@ model User {
   image          String?
   emailVerified  DateTime? // Required by NextAuth PrismaAdapter
   role           UserRole  @default(USER)
+  
+  // Authentication source
+  authProvider   AuthProvider? // FIREBASE for client app, GOOGLE for admin
+  authSubject    String?       @unique // Firebase UID or Google sub
 
   // Support actions
   isBlocked      Boolean   @default(false)

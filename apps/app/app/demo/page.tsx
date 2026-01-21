@@ -63,7 +63,7 @@ export default function DemoPage() {
                     href={loginUrl}
                     className="inline-flex items-center gap-2 font-semibold text-amber-900 hover:text-amber-700"
                   >
-                    Probar con mis datos
+                    Probar con mis datos (1 mes gratis)
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </div>

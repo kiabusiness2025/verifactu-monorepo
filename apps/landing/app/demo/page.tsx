@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
@@ -58,7 +58,7 @@ function DemoRequestModal({
     setErrorMessage("");
 
     const messageLines = [
-      "Solicitud demo real",
+      "Solicitud demo personalizada",
       `Empresa: ${form.company || "-"}`,
       `Web: ${form.website || "-"}`,
       `Sector: ${form.sector || "-"}`,
@@ -109,7 +109,7 @@ function DemoRequestModal({
 
         <div className="space-y-3">
           <h2 className="text-2xl font-semibold text-[#002060]">
-            Solicitar demo real para tu empresa
+            Solicitar demo personalizada para tu empresa
           </h2>
           <p className="text-sm text-slate-600">
             Paso 1: crea tu cuenta. Paso 2: completa este formulario. Te
@@ -243,7 +243,7 @@ function DemoRequestModal({
             ) : null}
             {status === "success" ? (
               <p className="mt-2 text-sm text-emerald-700">
-                Perfecto. Te contactamos con una demo real.
+                Perfecto. Te contactamos con una demo personalizada.
               </p>
             ) : null}
           </div>
@@ -263,7 +263,7 @@ export default function DemoPage({
   const demoNavLinks = [
     { label: "Home", href: "/" },
     { label: "Calculadora", href: "#calculadora" },
-    { label: "Solicitar demo real", href: "#solicitar-demo" },
+    { label: "Solicitar demo personalizada", href: "#solicitar-demo" },
   ];
 
   const checkoutParam =
@@ -298,7 +298,7 @@ export default function DemoPage({
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-600">
               Entra, toca botones y revisa el panel. Esta vista previa es segura
-              y usa datos de ejemplo.
+              y usa datos de ejemplo para enero 2026.
             </p>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -307,7 +307,7 @@ export default function DemoPage({
               </div>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
                 <li>Panel con ventas, gastos y beneficio en un vistazo.</li>
-                <li>Flujo Factura → Validacion → Envio VeriFactu.</li>
+                <li>Flujo Factura -> Validacion -> Envio VeriFactu.</li>
                 <li>Isaak sugiriendo acciones utiles por seccion.</li>
               </ul>
             </div>
@@ -317,7 +317,7 @@ export default function DemoPage({
                 onClick={() => setIsRequestOpen(true)}
                 className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
               >
-                Solicitar demo real
+                Solicitar demo personalizada
               </button>
               <Link
                 href="/auth/signup"
@@ -363,7 +363,7 @@ export default function DemoPage({
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-0.5 h-2 w-2 rounded-full bg-[#0080F0]" />
-                Para activar la demo real, necesitamos tu registro y el formulario.
+                Para activar la demo personalizada, necesitamos tu registro y el formulario.
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-0.5 h-2 w-2 rounded-full bg-[#0080F0]" />
@@ -391,19 +391,19 @@ export default function DemoPage({
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Ventas</div>
                       <div className="mt-1 text-lg font-semibold text-[#002060]">
-                        18.240 ,
+                        18.240 EUR
                       </div>
                     </div>
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Gastos</div>
                       <div className="mt-1 text-lg font-semibold text-[#002060]">
-                        6.430 ,
+                        6.430 EUR
                       </div>
                     </div>
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Beneficio</div>
                       <div className="mt-1 text-lg font-semibold text-[#002060]">
-                        11.810 ,
+                        11.810 EUR
                       </div>
                     </div>
                   </div>
@@ -413,9 +413,9 @@ export default function DemoPage({
                     Actividad reciente
                   </div>
                   <div className="mt-3 space-y-2 text-xs text-slate-600">
-                    <div>Factura #F-1024 - 1.240 , - Enviada</div>
-                    <div>Gasto Proveedor - 180 , - Registrado</div>
-                    <div>Factura #F-1025 - 980 , - Pendiente</div>
+                    <div>Factura #F-1024 - 1.240 EUR - Enviada</div>
+                    <div>Gasto Proveedor - 180 EUR - Registrado</div>
+                    <div>Factura #F-1025 - 980 EUR - Pendiente</div>
                   </div>
                 </div>
                 <div className="rounded-xl border border-[#0060F0]/20 bg-gradient-to-r from-sky-50/70 to-white p-4">
@@ -423,13 +423,13 @@ export default function DemoPage({
                     Isaak
                   </div>
                   <p className="mt-2 text-xs text-slate-600">
-                    "Puedo ayudarte a revisar tus facturas o preparar un cierre."
+                    "Te ayudo con cierre 2025 y enero 2026. Revisamos?"
                   </p>
                 </div>
               </div>
             </div>
             <p className="text-xs leading-5 text-slate-500">
-              La demo real se activa tras registro y validacion de tu empresa.
+              La demo personalizada se activa tras registro y validacion de tu empresa.
             </p>
           </section>
         </div>
@@ -486,7 +486,7 @@ export default function DemoPage({
             </div>
 
             <div className="mt-6 rounded-2xl border border-[#0060F0]/15 bg-gradient-to-r from-sky-50/70 to-white p-4 text-sm text-slate-700">
-              Si ya estas convencido, calcula tu precio y solicita la prueba gratuita.
+              Si ya estas convencido, calcula tu precio y activa la prueba gratuita.
             </div>
           </div>
         </section>
@@ -513,5 +513,8 @@ export default function DemoPage({
     </main>
   );
 }
+
+
+
 
 
