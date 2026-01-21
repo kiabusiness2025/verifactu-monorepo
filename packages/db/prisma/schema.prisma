@@ -1,0 +1,169 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  USER
+  SUPPORT
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  NONE
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum AuditAction {
+  ADMIN_LOGIN
+  ADMIN_LOGOUT
+  IMPERSONATION_START
+  IMPERSONATION_STOP
+  USER_VIEW
+  COMPANY_VIEW
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  role      UserRole @default(USER)
+
+  companiesOwned   Company[] @relation("CompanyOwner")
+  memberships      CompanyMember[]
+
+  subscriptions    Subscription[]
+  auditActor       AuditLog[] @relation("AuditActor")
+  auditTarget      AuditLog[] @relation("AuditTargetUser")
+
+  // NextAuth relations
+  accounts Account[]
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Company {
+  id          String @id @default(cuid())
+  name        String
+  taxId       String? @unique  // NIF/CIF si aplica
+  ownerUserId String
+  owner       User   @relation("CompanyOwner", fields: [ownerUserId], references: [id])
+
+  members       CompanyMember[]
+  subscriptions Subscription[]
+  auditLogs     AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerUserId])
+}
+
+model CompanyMember {
+  id        String @id @default(cuid())
+  companyId String
+  userId    String
+  role      String @default("MEMBER") // simple por ahora
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([companyId, userId])
+  @@index([userId])
+  @@index([companyId])
+}
+
+model Subscription {
+  id                String @id @default(cuid())
+  userId            String?
+  companyId         String?
+  status            SubscriptionStatus @default(NONE)
+
+  stripeCustomerId  String?
+  stripeSubscriptionId String?
+  stripePriceId     String?
+
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean @default(false)
+
+  user    User?    @relation(fields: [userId], references: [id])
+  company Company? @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@index([companyId])
+  @@index([userId])
+}
+
+model AuditLog {
+  id              String @id @default(cuid())
+  action          AuditAction
+  actorUserId     String
+  targetUserId    String?
+  targetCompanyId String?
+  metadata        Json?
+
+  actorUser     User     @relation("AuditActor", fields: [actorUserId], references: [id])
+  targetUser    User?    @relation("AuditTargetUser", fields: [targetUserId], references: [id])
+  targetCompany Company? @relation(fields: [targetCompanyId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([actorUserId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@index([targetCompanyId, createdAt])
+}
+
+//
+// NextAuth (PrismaAdapter)
+//
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
