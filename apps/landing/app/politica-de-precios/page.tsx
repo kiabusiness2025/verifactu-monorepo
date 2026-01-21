@@ -13,7 +13,7 @@ export default function PoliticaDePreciosPage() {
       <h1 className="text-3xl font-bold">Politica de precios y medicion de uso</h1>
       <p className="mt-6 text-gray-700">
         Tu cuota mensual se compone de base y tramos de uso (facturas y, si activas conciliacion, movimientos
-        bancarios). Los importes mostrados son sin IVA.
+        bancarios). Los importes mostrados son sin IVA. Isaak te avisa antes de renovar.
       </p>
 
       <h2 className="mt-10 text-xl font-semibold">Base mensual</h2>
@@ -111,6 +111,21 @@ export default function PoliticaDePreciosPage() {
         Podemos ajustar tramos o importes para reflejar costes e incorporar mejoras. Si hay cambios, se comunicaran con
         antelacion razonable. Puedes cancelar en cualquier momento segun las condiciones de tu suscripcion.
       </p>
+
+      <div className="mt-12 flex flex-col gap-3 sm:flex-row">
+        <Link
+          href="/#precios"
+          className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 text-sm font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB]"
+        >
+          Calcular precio
+        </Link>
+        <Link
+          href="/auth/signup"
+          className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
+        >
+          Probar con Isaak
+        </Link>
+      </div>
     </main>
   );
 }

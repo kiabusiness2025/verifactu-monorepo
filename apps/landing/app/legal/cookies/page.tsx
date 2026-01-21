@@ -43,6 +43,7 @@ export default function CookiesPage() {
         <ul className="mt-3 list-disc pl-6 text-slate-600">
           <li>Necesarias para el funcionamiento basico.</li>
           <li>Analiticas para entender el uso del sitio.</li>
+          <li>Preferencias para recordar idioma y ajustes de Isaak (si los activas).</li>
         </ul>
 
         <h2 className="mt-10 text-2xl font-semibold text-[#002060]">

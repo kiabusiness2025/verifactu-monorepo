@@ -39,6 +39,14 @@ export default function TerminosPage() {
         </p>
 
         <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+          1.1 Asistente Isaak
+        </h2>
+        <p className="mt-3 text-slate-600">
+          Isaak es un asistente de apoyo para ayudarte a interpretar datos, plazos y documentos. Puedes elegir su
+          personalidad y tono. Isaak no sustituye a tu gestor ni a un asesor profesional.
+        </p>
+
+        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
           2. Cuenta y acceso
         </h2>
         <p className="mt-3 text-slate-600">

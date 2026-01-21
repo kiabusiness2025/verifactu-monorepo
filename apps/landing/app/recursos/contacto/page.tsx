@@ -64,10 +64,10 @@ export default function ContactoPage() {
             Ver planes
           </Link>
           <Link
-            href="/demo"
+            href="/auth/signup"
             className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
           >
-            Solicitar demo
+            Probar con Isaak
           </Link>
         </div>
       </section>

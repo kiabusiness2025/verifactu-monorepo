@@ -1,12 +1,11 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getLandingUrl } from "../../lib/urls";
+import { getLandingUrl, getAppUrl } from "../../lib/urls";
 import { ArrowRight, ShieldCheck, FileCheck2, LayoutDashboard } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Plataforma | Verifactu Business",
-  description:
-    "Una plataforma clara para facturar, cumplir VeriFactu y entender tu negocio.",
+  description: "Una plataforma clara para facturar, cumplir VeriFactu y entender tu negocio.",
 };
 
 const modules = [
@@ -17,17 +16,18 @@ const modules = [
   },
   {
     title: "Cumplimiento VeriFactu",
-    description: "Emisión y trazabilidad conforme a la normativa.",
+    description: "Emision y trazabilidad conforme a la normativa.",
     icon: FileCheck2,
   },
   {
     title: "Seguridad y acceso",
-    description: "Acceso seguro y datos protegidos.",
+    description: "Acceso seguro, roles y datos protegidos.",
     icon: ShieldCheck,
   },
 ];
 
 export default function PlataformaPage() {
+  const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50/70 via-white to-white">
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
@@ -36,7 +36,7 @@ export default function PlataformaPage() {
             href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-             Volver al inicio
+            Volver al inicio
           </Link>
         </div>
       </div>
@@ -45,11 +45,11 @@ export default function PlataformaPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
             <h1 className="text-4xl font-bold text-[#002060] sm:text-5xl">
-              La plataforma que simplifica tu gestión diaria
+              La plataforma que simplifica tu gestion diaria
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Todo lo esencial para emitir, controlar y cumplir, sin pantallas
-              innecesarias.
+              Todo lo esencial para emitir, controlar y cumplir, sin pantallas innecesarias. Isaak te acompana en el
+              cierre 2025 y el arranque del T1 2026.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -60,10 +60,10 @@ export default function PlataformaPage() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/demo"
+                href={isaakChatUrl}
                 className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
               >
-                Solicitar demo
+                Hablar con Isaak
               </Link>
             </div>
           </div>
@@ -81,9 +81,7 @@ export default function PlataformaPage() {
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#0060F0]/10">
                   <item.icon className="h-6 w-6 text-[#0060F0]" />
                 </div>
-                <h2 className="text-lg font-semibold text-[#002060]">
-                  {item.title}
-                </h2>
+                <h2 className="text-lg font-semibold text-[#002060]">{item.title}</h2>
                 <p className="mt-2 text-sm text-slate-600">{item.description}</p>
               </div>
             ))}
@@ -94,12 +92,9 @@ export default function PlataformaPage() {
       <section className="py-12">
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-3xl border border-[#0060F0]/15 bg-gradient-to-br from-sky-50/70 to-white p-10">
-            <h2 className="text-2xl font-semibold text-[#002060]">
-              Diseñada para equipos pequeños
-            </h2>
+            <h2 className="text-2xl font-semibold text-[#002060]">Disenada para equipos pequenos</h2>
             <p className="mt-4 text-slate-600">
-              Pensada para PYMEs que quieren facturar y cumplir sin contratar
-              herramientas complejas.
+              Pensada para PYMEs que quieren facturar y cumplir sin herramientas complejas.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -121,4 +116,3 @@ export default function PlataformaPage() {
     </main>
   );
 }
-

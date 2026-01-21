@@ -1,12 +1,11 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getLandingUrl } from "../../lib/urls";
+import { getLandingUrl, getAppUrl } from "../../lib/urls";
 import { CheckCircle2, ArrowRight, TrendingUp, FileText, Calculator } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Resumen del producto | Verifactu Business",
-  description:
-    "Ventas, gastos y beneficio en una sola pantalla con cumplimiento VeriFactu.",
+  description: "Ventas, gastos y beneficio en una sola pantalla con cumplimiento VeriFactu.",
 };
 
 const highlights = [
@@ -22,12 +21,13 @@ const highlights = [
   },
   {
     title: "Control de gastos",
-    description: "Clasifica gastos y controla IVA sin hojas de cálculo.",
+    description: "Clasifica gastos y controla IVA sin hojas de calculo.",
     icon: Calculator,
   },
 ];
 
 export default function ProductSummaryPage() {
+  const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50/70 via-white to-white">
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
@@ -36,7 +36,7 @@ export default function ProductSummaryPage() {
             href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-             Volver al inicio
+            Volver al inicio
           </Link>
         </div>
       </div>
@@ -52,8 +52,8 @@ export default function ProductSummaryPage() {
               Tu negocio bajo control, sin complicaciones
             </h1>
             <p className="mt-4 text-xl text-slate-600">
-              Verifactu Business unifica ventas, gastos y cumplimiento VeriFactu
-              en una sola pantalla. Isaak te guía para decidir sin dudas.
+              Verifactu Business unifica ventas, gastos y cumplimiento VeriFactu en una sola pantalla. Isaak te guia
+              para decidir sin dudas en cierre 2025 y T1 2026.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -64,10 +64,10 @@ export default function ProductSummaryPage() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/demo"
+                href={isaakChatUrl}
                 className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
               >
-                Solicitar demo
+                Hablar con Isaak
               </Link>
             </div>
           </div>
@@ -85,9 +85,7 @@ export default function ProductSummaryPage() {
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#0060F0]/10">
                   <item.icon className="h-6 w-6 text-[#0060F0]" />
                 </div>
-                <h2 className="text-lg font-semibold text-[#002060]">
-                  {item.title}
-                </h2>
+                <h2 className="text-lg font-semibold text-[#002060]">{item.title}</h2>
                 <p className="mt-2 text-sm text-slate-600">{item.description}</p>
               </div>
             ))}
@@ -98,9 +96,7 @@ export default function ProductSummaryPage() {
       <section className="py-12">
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-3xl border border-[#0060F0]/15 bg-gradient-to-br from-sky-50/70 to-white p-10">
-            <h2 className="text-2xl font-semibold text-[#002060]">
-              Lo esencial, sin ruido
-            </h2>
+            <h2 className="text-2xl font-semibold text-[#002060]">Lo esencial, sin ruido</h2>
             <ul className="mt-6 space-y-3 text-slate-700">
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-[#0080F0]" />
@@ -121,12 +117,8 @@ export default function ProductSummaryPage() {
 
       <section className="py-16">
         <div className="mx-auto max-w-4xl px-4 text-center">
-          <h2 className="text-3xl font-bold text-[#002060]">
-            Empieza hoy y recupera el control
-          </h2>
-          <p className="mt-4 text-lg text-slate-600">
-            1 mes gratis, sin tarjeta y sin fricción.
-          </p>
+          <h2 className="text-3xl font-bold text-[#002060]">Empieza hoy y recupera el control</h2>
+          <p className="mt-4 text-lg text-slate-600">1 mes gratis, sin tarjeta y sin friccion.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/auth/signup"
@@ -147,4 +139,3 @@ export default function ProductSummaryPage() {
     </main>
   );
 }
-

@@ -1,17 +1,16 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getLandingUrl } from "../../lib/urls";
+import { getLandingUrl, getAppUrl } from "../../lib/urls";
 import { ArrowRight, Bot, RefreshCcw, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Automatización | Verifactu Business",
-  description:
-    "Flujos automáticos para facturar, cumplir VeriFactu y reducir errores.",
+  title: "Automatizacion | Verifactu Business",
+  description: "Flujos automaticos para facturar, cumplir VeriFactu y reducir errores.",
 };
 
 const flows = [
   {
-    title: "Factura -> Validación",
+    title: "Factura -> Validacion",
     description: "Genera, valida y registra sin pasos manuales.",
     icon: RefreshCcw,
   },
@@ -22,12 +21,13 @@ const flows = [
   },
   {
     title: "Cumplimiento continuo",
-    description: "Trazabilidad y conservación siempre activas.",
+    description: "Trazabilidad y conservacion siempre activas.",
     icon: ShieldCheck,
   },
 ];
 
 export default function AutomatizacionPage() {
+  const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50/70 via-white to-white">
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
@@ -36,7 +36,7 @@ export default function AutomatizacionPage() {
             href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-             Volver al inicio
+            Volver al inicio
           </Link>
         </div>
       </div>
@@ -45,10 +45,10 @@ export default function AutomatizacionPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
             <h1 className="text-4xl font-bold text-[#002060] sm:text-5xl">
-              Automatización sin fricción
+              Automatizacion sin friccion
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Menos tareas repetitivas, menos errores y más tiempo para tu negocio.
+              Menos tareas repetitivas, menos errores y mas tiempo para tu negocio. Ideal para cierre 2025 y T1 2026.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -59,10 +59,10 @@ export default function AutomatizacionPage() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/demo"
+                href={isaakChatUrl}
                 className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
               >
-                Solicitar demo
+                Hablar con Isaak
               </Link>
             </div>
           </div>
@@ -80,9 +80,7 @@ export default function AutomatizacionPage() {
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#0060F0]/10">
                   <item.icon className="h-6 w-6 text-[#0060F0]" />
                 </div>
-                <h2 className="text-lg font-semibold text-[#002060]">
-                  {item.title}
-                </h2>
+                <h2 className="text-lg font-semibold text-[#002060]">{item.title}</h2>
                 <p className="mt-2 text-sm text-slate-600">{item.description}</p>
               </div>
             ))}
@@ -93,12 +91,9 @@ export default function AutomatizacionPage() {
       <section className="py-12">
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-3xl border border-[#0060F0]/15 bg-gradient-to-br from-sky-50/70 to-white p-10">
-            <h2 className="text-2xl font-semibold text-[#002060]">
-              Isaak como copiloto
-            </h2>
+            <h2 className="text-2xl font-semibold text-[#002060]">Isaak como copiloto</h2>
             <p className="mt-4 text-slate-600">
-              Isaak revisa tus datos y te avisa antes de que haya errores o
-              incoherencias.
+              Isaak revisa tus datos y te avisa antes de que haya errores o incoherencias. Tu cierre llega limpio.
             </p>
           </div>
         </div>
@@ -106,4 +101,3 @@ export default function AutomatizacionPage() {
     </main>
   );
 }
-
