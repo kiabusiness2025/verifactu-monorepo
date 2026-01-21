@@ -3,7 +3,7 @@
 const nextConfig = {
   ...(isVercel ? {} : { output: 'standalone' }),
   eslint: { ignoreDuringBuilds: true },
-  transpilePackages: ['@verifactu/ui', '@verifactu/utils'],
+  transpilePackages: ['@verifactu/ui', '@verifactu/utils', '@verifactu/db'],
   i18n: {
     locales: ['es'],
     defaultLocale: 'es',
