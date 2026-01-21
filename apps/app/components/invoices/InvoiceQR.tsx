@@ -1,7 +1,7 @@
 'use client';
 
 import { DemoInvoice } from '@/src/lib/demo/demoData';
-import { CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import Image from 'next/image';
 
 type InvoiceQRProps = {

@@ -2,7 +2,7 @@
  * Tenant (Company) management using Prisma
  * Migrated from raw SQL to Prisma for consistency with admin panel
  */
-import { prisma } from "@verifactu/db";
+import { prisma } from '@verifactu/db';
 import { Role } from './roles';
 
 export type Tenant = {

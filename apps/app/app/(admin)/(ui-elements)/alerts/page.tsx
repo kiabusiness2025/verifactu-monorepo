@@ -1,9 +1,23 @@
-"use client";
+'use client';
 
-import ComponentCard from "@/components/common/ComponentCard";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { Alert } from "@verifactu/ui";
-import React from "react";
+import ComponentCard from '@/components/common/ComponentCard';
+import PageBreadcrumb from '@/components/common/PageBreadCrumb';
+// import { Alert } from "@verifactu/ui"; // TODO: Create Alert component
+
+// Temporary placeholder until Alert is implemented
+const Alert = ({ variant, title, message, showLink, linkHref, linkText }: any) => (
+  <div
+    className={`p-4 rounded border ${variant === 'success' ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}
+  >
+    <h4 className="font-medium">{title}</h4>
+    <p className="text-sm mt-1">{message}</p>
+    {showLink && (
+      <a href={linkHref} className="text-sm underline mt-2 inline-block">
+        {linkText}
+      </a>
+    )}
+  </div>
+);
 
 export default function Alerts() {
   return (
@@ -41,7 +55,7 @@ export default function Alerts() {
             message="Be cautious when performing this action."
             showLink={false}
           />
-        </ComponentCard>{" "}
+        </ComponentCard>{' '}
         <ComponentCard title="Error Alert">
           <Alert
             variant="error"
@@ -57,7 +71,7 @@ export default function Alerts() {
             message="Be cautious when performing this action."
             showLink={false}
           />
-        </ComponentCard>{" "}
+        </ComponentCard>{' '}
         <ComponentCard title="Info Alert">
           <Alert
             variant="info"
