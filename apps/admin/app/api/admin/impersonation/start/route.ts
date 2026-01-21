@@ -1,8 +1,9 @@
 import { createAuditLog } from '@/lib/audit';
-import { createImpersonationToken, getImpersonationCookieHeader } from '@/lib/cookies';
+import { setImpersonationCookie } from '@/lib/cookies';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 
 export async function POST(request: Request) {
   try {
@@ -18,17 +19,39 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { targetUserId, targetCompanyId } = body;
+    const { targetCompanyId } = body;
 
-    if (!targetUserId) {
-      return NextResponse.json({ error: 'targetUserId es requerido' }, { status: 400 });
+    if (!targetCompanyId) {
+      return NextResponse.json({ error: 'targetCompanyId es requerido' }, { status: 400 });
     }
 
-    // Create signed impersonation token
-    const token = await createImpersonationToken({
-      adminUserId: user.id,
+    // Fetch company with owner info
+    const company = await prisma.company.findUnique({
+      where: { id: targetCompanyId },
+      select: {
+        id: true,
+        name: true,
+        ownerUserId: true,
+        owner: {
+          select: {
+            id: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!company) {
+      return NextResponse.json({ error: 'Empresa no encontrada' }, { status: 404 });
+    }
+
+    const targetUserId = company.ownerUserId;
+
+    // Set impersonation cookie
+    await setImpersonationCookie({
       targetUserId,
       targetCompanyId,
+      startedAt: new Date().toISOString(),
     });
 
     // Create audit log
@@ -39,21 +62,20 @@ export async function POST(request: Request) {
       targetUserId,
       targetCompanyId,
       metadata: {
+        targetUserEmail: company.owner.email,
+        companyName: company.name,
         startedAt: new Date().toISOString(),
       },
     });
 
-    // Set cookie and return response
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: 'Impersonación iniciada',
       targetUserId,
       targetCompanyId,
+      targetUserEmail: company.owner.email,
+      companyName: company.name,
     });
-
-    response.headers.set('Set-Cookie', getImpersonationCookieHeader(token));
-
-    return response;
   } catch (error) {
     console.error('Error starting impersonation:', error);
     return NextResponse.json({ error: 'Error al iniciar impersonación' }, { status: 500 });

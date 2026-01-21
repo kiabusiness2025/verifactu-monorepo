@@ -1,0 +1,80 @@
+name: Build Check - Admin Panel
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/admin/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/admin/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+
+jobs:
+  build-admin:
+    runs-on: ubuntu-latest
+    name: Build Admin Panel
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: cd packages/db && pnpm db:generate
+
+      - name: Type check
+        run: cd apps/admin && pnpm type-check
+
+      - name: Lint
+        run: cd apps/admin && pnpm lint
+
+      - name: Build
+        run: cd apps/admin && pnpm build
+        env:
+          # Mock env vars for build
+          NEXTAUTH_URL: http://localhost:3003
+          NEXTAUTH_SECRET: build-time-secret-not-used
+          GOOGLE_CLIENT_ID: mock-client-id
+          GOOGLE_CLIENT_SECRET: mock-client-secret
+          DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
+          ADMIN_ALLOWED_EMAIL: support@verifactu.business
+          ADMIN_ALLOWED_DOMAIN: verifactu.business
+
+      - name: Upload build artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-errors
+          path: |
+            apps/admin/.next/
+            apps/admin/out/

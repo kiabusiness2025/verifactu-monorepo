@@ -97,21 +97,21 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role      @default(USER)
-  
+
   // Support scope (para rol SUPPORT)
   supportScope  Json?     // SupportScope interface
-  
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   lastLogin     DateTime?
-  
+
   // Relations
   accounts              Account[]
   sessions              Session[]
   companies             Company[]
   auditLogsAsActor      AuditLog[] @relation("ActorLogs")
   auditLogsAsTarget     AuditLog[] @relation("TargetLogs")
-  
+
   @@index([email])
   @@index([role])
 }
@@ -121,26 +121,26 @@ model Company {
   name      String
   cif       String   @unique
   status    String   @default("active") // active, inactive, suspended
-  
+
   // Company details
   address   String?
   phone     String?
   email     String?
-  
+
   // Stats
   invoicesCount    Int @default(0)
   documentsCount   Int @default(0)
   lastActivity     DateTime?
-  
+
   // Relations
   ownerId   String
   owner     User     @relation(fields: [ownerId], references: [id])
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   auditLogs AuditLog[]
-  
+
   @@index([ownerId])
   @@index([cif])
   @@index([status])
@@ -152,31 +152,31 @@ model Company {
 
 model AuditLog {
   id              String   @id @default(cuid())
-  
+
   // Actor (quien realiza la acción)
   actorUserId     String
   actorEmail      String
   actor           User     @relation("ActorLogs", fields: [actorUserId], references: [id])
-  
+
   // Action details
   action          String   // IMPERSONATION_START, IMPERSONATION_STOP, LOGIN, LOGOUT, etc.
-  
+
   // Target (sobre quién/qué se realiza la acción)
   targetUserId    String?
   targetUser      User?    @relation("TargetLogs", fields: [targetUserId], references: [id])
-  
+
   targetCompanyId String?
   targetCompany   Company? @relation(fields: [targetCompanyId], references: [id])
-  
+
   // Metadata
   metadata        Json?    // Additional context
-  
+
   // Request info
   ip              String
   userAgent       String   @db.Text
-  
+
   timestamp       DateTime @default(now())
-  
+
   @@index([actorUserId])
   @@index([targetUserId])
   @@index([targetCompanyId])
@@ -230,9 +230,7 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' 
-      ? ['query', 'error', 'warn'] 
-      : ['error'],
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
 
 if (process.env.NODE_ENV !== 'production') {
@@ -373,7 +371,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   return NextResponse.json({
-    users: users.map(u => ({
+    users: users.map((u) => ({
       ...u,
       companiesCount: u._count.companies,
     })),
@@ -438,7 +436,7 @@ import { prisma } from './lib/prisma';
 async function test() {
   const users = await prisma.user.findMany();
   console.log('Users:', users);
-  
+
   const companies = await prisma.company.findMany();
   console.log('Companies:', companies);
 }

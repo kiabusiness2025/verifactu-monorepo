@@ -1,13 +1,8 @@
 import { createAuditLog } from '@/lib/audit';
-import {
-  getClearImpersonationCookieHeader,
-  IMPERSONATION_COOKIE_NAME,
-  verifyImpersonationToken,
-} from '@/lib/cookies';
+import { clearImpersonationCookie, getImpersonation } from '@/lib/cookies';
 import { getServerSession } from 'next-auth';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 
 export async function POST() {
   try {
@@ -19,20 +14,27 @@ export async function POST() {
 
     const user = session.user as any;
 
-    // Get current impersonation token
-    const cookieStore = cookies();
-    const impersonationCookie = cookieStore.get(IMPERSONATION_COOKIE_NAME);
+    // Get current impersonation
+    const impersonation = await getImpersonation();
 
     let targetUserId = null;
     let targetCompanyId = null;
+    let duration: string | null = null;
 
-    if (impersonationCookie) {
-      const payload = await verifyImpersonationToken(impersonationCookie.value);
-      if (payload) {
-        targetUserId = payload.targetUserId;
-        targetCompanyId = payload.targetCompanyId;
-      }
+    if (impersonation) {
+      targetUserId = impersonation.targetUserId;
+      targetCompanyId = impersonation.targetCompanyId;
+
+      // Calculate duration
+      const startedAt = new Date(impersonation.startedAt);
+      const stoppedAt = new Date();
+      const durationMs = stoppedAt.getTime() - startedAt.getTime();
+      const durationMinutes = Math.floor(durationMs / 60000);
+      duration = `${durationMinutes} minutos`;
     }
+
+    // Clear impersonation cookie
+    clearImpersonationCookie();
 
     // Create audit log
     await createAuditLog({
@@ -43,18 +45,14 @@ export async function POST() {
       targetCompanyId: targetCompanyId || undefined,
       metadata: {
         stoppedAt: new Date().toISOString(),
+        duration,
       },
     });
 
-    // Clear cookie and return response
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: 'Impersonación detenida',
     });
-
-    response.headers.set('Set-Cookie', getClearImpersonationCookieHeader());
-
-    return response;
   } catch (error) {
     console.error('Error stopping impersonation:', error);
     return NextResponse.json({ error: 'Error al detener impersonación' }, { status: 500 });

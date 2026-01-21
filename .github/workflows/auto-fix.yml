@@ -1,0 +1,98 @@
+name: Auto-fix Build Errors
+
+on:
+  workflow_run:
+    workflows: ["Build Check - Admin Panel"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  auto-fix:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint fix
+        run: cd apps/admin && pnpm lint --fix || true
+
+      - name: Run Prettier
+        run: pnpm exec prettier --write "apps/admin/**/*.{ts,tsx,js,jsx,json,md}"
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --exit-code || echo "has_changes=true" >> $GITHUB_OUTPUT
+
+      - name: Commit fixes
+        if: steps.git-check.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          git commit -m "chore: auto-fix linting and formatting errors
+
+          Automatically fixed by GitHub Actions after build failure.
+          
+          Workflow run: ${{ github.event.workflow_run.html_url }}"
+          git push
+
+      - name: Create issue for manual review
+        if: steps.git-check.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🤖 Auto-fix applied after build failure',
+              body: `Build errors were automatically fixed in commit: ${{ github.sha }}
+              
+              **Workflow Run**: ${{ github.event.workflow_run.html_url }}
+              **Branch**: ${{ github.event.workflow_run.head_branch }}
+              
+              Please review the automatic fixes and verify the build passes.`,
+              labels: ['auto-fix', 'build']
+            })
+
+      - name: Comment on PR if applicable
+        if: steps.git-check.outputs.has_changes == 'true' && github.event.workflow_run.pull_requests[0]
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.workflow_run.pull_requests[0];
+            if (pr) {
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: `🤖 **Auto-fix applied**
+                
+                Build errors were automatically fixed. A new commit has been pushed.
+                
+                Please verify the changes and ensure the build passes now.`
+              })
+            }

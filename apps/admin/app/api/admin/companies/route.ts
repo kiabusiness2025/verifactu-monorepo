@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,25 +19,46 @@ export async function GET(request: NextRequest) {
     // Get query params
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search') || '';
-    const status = searchParams.get('status') || '';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
 
-    // TODO: Replace with actual database query
-    console.log('[API] Fetching companies with filters:', { search, status, page, limit });
+    // Build where clause
+    const where: any = {};
+    
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { taxId: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
-    // Mock data for now
-    const companies = [];
-
-    return NextResponse.json({
-      companies,
-      pagination: {
-        page,
-        limit,
-        total: companies.length,
-        pages: 1,
+    // Fetch companies with owner info
+    const companies = await prisma.company.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        taxId: true,
+        ownerUserId: true,
+        createdAt: true,
+        owner: {
+          select: {
+            email: true,
+          },
+        },
       },
+      orderBy: { createdAt: 'desc' },
     });
+
+    // Transform to API contract
+    const items = companies.map((company) => ({
+      id: company.id,
+      name: company.name,
+      taxId: company.taxId || undefined,
+      ownerUserId: company.ownerUserId,
+      ownerEmail: company.owner.email,
+      createdAt: company.createdAt.toISOString(),
+    }));
+
+    return NextResponse.json({ items });
   } catch (error) {
     console.error('Error fetching companies:', error);
     return NextResponse.json({ error: 'Error al obtener empresas' }, { status: 500 });

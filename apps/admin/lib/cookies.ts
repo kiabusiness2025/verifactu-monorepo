@@ -1,54 +1,59 @@
 import { SignJWT, jwtVerify } from 'jose';
+import { cookies } from 'next/headers';
 
-const IMPERSONATION_COOKIE_NAME = 'admin_impersonation';
-const SECRET_KEY = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || 'fallback-secret-key-change-in-production'
-);
+const COOKIE_NAME = 'vf_admin_imp';
 
 export interface ImpersonationPayload {
-  adminUserId: string;
   targetUserId: string;
-  targetCompanyId?: string;
-  startedAt: number;
-  expiresAt: number;
+  targetCompanyId: string;
+  startedAt: string;
+}
+
+function getSecret() {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error('NEXTAUTH_SECRET missing');
+  return new TextEncoder().encode(secret);
 }
 
 /**
- * Creates a signed JWT cookie for impersonation
+ * Set impersonation cookie with signed JWT
  */
-export async function createImpersonationToken(
-  payload: Omit<ImpersonationPayload, 'startedAt' | 'expiresAt'>
-): Promise<string> {
-  const now = Date.now();
-  const expiresAt = now + 8 * 60 * 60 * 1000; // 8 hours
-
-  const token = await new SignJWT({
-    ...payload,
-    startedAt: now,
-    expiresAt,
-  })
+export async function setImpersonationCookie(payload: ImpersonationPayload) {
+  const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('8h')
-    .sign(SECRET_KEY);
+    .sign(getSecret());
 
-  return token;
+  cookies().set(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 8 * 60 * 60, // 8 hours in seconds
+  });
 }
 
 /**
- * Verifies and decodes an impersonation token
+ * Clear impersonation cookie
  */
-export async function verifyImpersonationToken(
-  token: string
-): Promise<ImpersonationPayload | null> {
+export function clearImpersonationCookie() {
+  cookies().set(COOKIE_NAME, '', {
+    httpOnly: true,
+    path: '/',
+    maxAge: 0,
+  });
+}
+
+/**
+ * Get current impersonation context from cookie
+ */
+export async function getImpersonation(): Promise<ImpersonationPayload | null> {
+  const token = cookies().get(COOKIE_NAME)?.value;
+  if (!token) return null;
+
   try {
-    const { payload } = await jwtVerify(token, SECRET_KEY);
-
-    // Check expiration
-    if (payload.expiresAt && Date.now() > (payload.expiresAt as number)) {
-      return null;
-    }
-
+    const { payload } = await jwtVerify(token, getSecret());
     return payload as unknown as ImpersonationPayload;
   } catch (error) {
     console.error('Invalid impersonation token:', error);
@@ -56,18 +61,4 @@ export async function verifyImpersonationToken(
   }
 }
 
-/**
- * Creates the cookie header string for impersonation
- */
-export function getImpersonationCookieHeader(token: string): string {
-  return `${IMPERSONATION_COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${8 * 60 * 60}`;
-}
-
-/**
- * Creates the cookie header string to clear impersonation
- */
-export function getClearImpersonationCookieHeader(): string {
-  return `${IMPERSONATION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
-}
-
-export { IMPERSONATION_COOKIE_NAME };
+export { COOKIE_NAME as IMPERSONATION_COOKIE_NAME };

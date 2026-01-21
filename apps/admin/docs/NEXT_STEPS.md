@@ -60,6 +60,7 @@ pnpm install
 ```
 
 **Dependencias que se instalarán**:
+
 - `@prisma/client@^5.22.0`
 - `@next-auth/prisma-adapter@^1.0.7`
 - `jose@^5.2.0`
@@ -74,6 +75,7 @@ pnpm install
 **Acciones**:
 
 1. Verificar si existe schema actual:
+
    ```bash
    ls packages/db/prisma/schema.prisma
    ```
@@ -82,6 +84,7 @@ pnpm install
    - User, Company, etc.
 
 3. Si no existe, crear estructura completa:
+
    ```bash
    mkdir -p packages/db/prisma
    # Copiar schema desde PRISMA_INTEGRATION.md
@@ -127,6 +130,7 @@ pnpm prisma db seed
 ```
 
 **Usuario por defecto**:
+
 - Email: `support@verifactu.business`
 - Role: `ADMIN`
 - Name: `Support Team`
@@ -142,14 +146,20 @@ pnpm prisma db seed
    - Session expone role y userId
 
 2. **GET /api/admin/users**
+
    ```typescript
    const users = await prisma.user.findMany({
-     where: { /* filters */ },
-     select: { /* fields */ },
+     where: {
+       /* filters */
+     },
+     select: {
+       /* fields */
+     },
    });
    ```
 
 3. **GET /api/admin/users/[userId]**
+
    ```typescript
    const user = await prisma.user.findUnique({
      where: { id: userId },
@@ -158,14 +168,18 @@ pnpm prisma db seed
    ```
 
 4. **GET /api/admin/companies**
+
    ```typescript
    const companies = await prisma.company.findMany({
-     where: { /* filters */ },
+     where: {
+       /* filters */
+     },
      include: { owner: true },
    });
    ```
 
 5. **GET /api/admin/companies/[companyId]**
+
    ```typescript
    const company = await prisma.company.findUnique({
      where: { id: companyId },
@@ -176,7 +190,9 @@ pnpm prisma db seed
 6. **Audit Log Functions** (`lib/audit.ts`)
    ```typescript
    await prisma.auditLog.create({
-     data: { /* audit entry */ },
+     data: {
+       /* audit entry */
+     },
    });
    ```
 
@@ -223,6 +239,7 @@ pnpm --filter @verifactu/admin dev
 ## 📋 Checklist Completo
 
 ### Infraestructura
+
 - [x] Middleware RBAC configurado
 - [x] NextAuth con PrismaAdapter
 - [x] PrismaClient singleton creado
@@ -232,6 +249,7 @@ pnpm --filter @verifactu/admin dev
 - [ ] Seed inicial ejecutado
 
 ### Código
+
 - [x] Páginas del dashboard (overview, users, companies, audit)
 - [x] APIs con estructura Prisma-ready
 - [x] Sistema de impersonación
@@ -241,6 +259,7 @@ pnpm --filter @verifactu/admin dev
 - [ ] Error handling en queries
 
 ### Testing
+
 - [ ] pnpm install exitoso
 - [ ] pnpm prisma generate exitoso
 - [ ] pnpm prisma migrate dev exitoso
@@ -250,6 +269,7 @@ pnpm --filter @verifactu/admin dev
 - [ ] Páginas muestran datos reales
 
 ### Documentación
+
 - [x] README.md actualizado
 - [x] STATUS.md creado
 - [x] MVP_IMPLEMENTATION.md completo
@@ -263,15 +283,17 @@ pnpm --filter @verifactu/admin dev
 
 ### 1. File Lock en node_modules
 
-**Error**: 
+**Error**:
+
 ```
-ERR_PNPM_EPERM: operation not permitted, unlink 
+ERR_PNPM_EPERM: operation not permitted, unlink
 'node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node'
 ```
 
 **Causa**: Hay 8 procesos de Node.js corriendo que bloquean el archivo
 
 **Solución recomendada**:
+
 ```powershell
 # Ver procesos
 Get-Process node | Select-Object Id, Path
@@ -292,15 +314,15 @@ pnpm install
 
 ## 📊 Estimación de Tiempo
 
-| Tarea | Tiempo | Bloqueado por |
-|-------|--------|---------------|
-| Instalar dependencies | 2-5 min | File lock ⚠️ |
-| Crear schema Prisma | 10-15 min | Install |
-| Ejecutar migraciones | 5 min | Schema |
-| Seed inicial | 5 min | Migration |
-| Actualizar APIs | 30-45 min | Migration |
-| Testing completo | 15-20 min | APIs |
-| **Total** | **~90 min** | |
+| Tarea                 | Tiempo      | Bloqueado por |
+| --------------------- | ----------- | ------------- |
+| Instalar dependencies | 2-5 min     | File lock ⚠️  |
+| Crear schema Prisma   | 10-15 min   | Install       |
+| Ejecutar migraciones  | 5 min       | Schema        |
+| Seed inicial          | 5 min       | Migration     |
+| Actualizar APIs       | 30-45 min   | Migration     |
+| Testing completo      | 15-20 min   | APIs          |
+| **Total**             | **~90 min** |               |
 
 ---
 
@@ -338,6 +360,7 @@ pnpm install
 ## 📚 Recursos de Referencia
 
 ### Documentación Creada
+
 - [STATUS.md](./STATUS.md) - Overview completo del MVP
 - [MVP_IMPLEMENTATION.md](./MVP_IMPLEMENTATION.md) - Implementación detallada
 - [MIDDLEWARE_RBAC.md](./MIDDLEWARE_RBAC.md) - Seguridad y acceso
@@ -346,6 +369,7 @@ pnpm install
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Arquitectura completa
 
 ### Archivos Clave
+
 - [middleware.ts](../middleware.ts) - Control de acceso
 - [app/api/auth/[...nextauth]/route.ts](../app/api/auth/[...nextauth]/route.ts) - NextAuth config
 - [lib/prisma.ts](../lib/prisma.ts) - Prisma client
@@ -353,6 +377,7 @@ pnpm install
 - [lib/audit.ts](../lib/audit.ts) - Audit logging
 
 ### External Links
+
 - [Prisma Docs](https://www.prisma.io/docs)
 - [NextAuth Docs](https://next-auth.js.org)
 - [NextAuth Prisma Adapter](https://next-auth.js.org/adapters/prisma)

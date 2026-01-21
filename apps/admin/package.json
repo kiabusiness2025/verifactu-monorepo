@@ -13,7 +13,7 @@
     "@verifactu/auth": "workspace:*",
     "@verifactu/ui": "workspace:*",
     "@verifactu/integrations": "workspace:*",
-    "@prisma/client": "^5.22.0",
+    "@verifactu/db": "workspace:*",
     "@next-auth/prisma-adapter": "^1.0.7",
     "jose": "^5.2.0",
     "next": "14.2.35",
@@ -30,7 +30,6 @@
     "eslint": "^8.55.0",
     "eslint-config-next": "14.2.35",
     "postcss": "^8.4.32",
-    "prisma": "^5.22.0",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3"
   }

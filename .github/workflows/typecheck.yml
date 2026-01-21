@@ -2,13 +2,12 @@ name: 🔍 TypeScript Type Check
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
-      - 'apps/app/**'
-      - 'apps/landing/**'
+      - 'apps/**'
       - 'packages/**'
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   typecheck-app:
@@ -62,6 +61,33 @@ jobs:
       - name: 🔍 Type check landing
         run: pnpm --filter verifactu-landing exec tsc --noEmit
         continue-on-error: true # Landing puede tener errores menores
+
+  typecheck-admin:
+    name: Type Check Admin
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.27.0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 Generate Prisma Client (db package)
+        run: cd packages/db && pnpm db:generate
+
+      - name: 🔍 Type check admin
+        run: pnpm --filter verifactu-admin exec tsc --noEmit
 
   lint-app:
     name: Lint App
