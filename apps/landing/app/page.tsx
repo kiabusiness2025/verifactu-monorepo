@@ -1,17 +1,18 @@
-﻿"use client";
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { Briefcase, Building2, Check, ShieldCheck, Sparkles, UserRound } from "lucide-react";
-import Header from "./components/Header";
-import Faq from "./components/Faq";
-import PricingCalculatorInline from "./components/PricingCalculatorInline";
-import { getAppUrl } from "./lib/urls";
+﻿'use client';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Briefcase, Building2, Check, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import Header from './components/Header';
+import Faq from './components/Faq';
+import PricingCalculatorInline from './components/PricingCalculatorInline';
+import { getAppUrl } from './lib/urls';
 
 import {
   ComplianceBadge,
   Container,
   DashboardMock,
+  HeroTripleMock,
   FeaturesSection,
   Footer,
   PideseloAIsaakSection,
@@ -19,16 +20,16 @@ import {
   StickyCtaBar,
   ThreeSteps,
   TrustBadge,
-} from "./lib/home/ui";
+} from './lib/home/ui';
 
 export default function Page() {
   const navLinks = [
-    { label: "Inicio", href: "#hero" },
-    { label: "Para quien", href: "#para-quien" },
-    { label: "Features", href: "#features" },
-    { label: "Precios", href: "#precios" },
-    { label: "FAQ", href: "#faq" },
-    { label: "Contacto", href: "/recursos/contacto" },
+    { label: 'Inicio', href: '#hero' },
+    { label: 'Para quien', href: '#para-quien' },
+    { label: 'Features', href: '#features' },
+    { label: 'Precios', href: '#precios' },
+    { label: 'FAQ', href: '#faq' },
+    { label: 'Contacto', href: '/recursos/contacto' },
   ];
 
   const [showStickyCta, setShowStickyCta] = useState(false);
@@ -37,18 +38,18 @@ export default function Page() {
   const appDemoUrl = `${getAppUrl()}/demo`;
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setPrefersReducedMotion(mediaQuery.matches);
     const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
   useEffect(() => {
     const onScroll = () => setShowStickyCta(window.scrollY > 320);
-    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
@@ -63,7 +64,11 @@ export default function Page() {
             <motion.div
               initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
               animate={prefersReducedMotion ? false : { opacity: 1, y: 0 }}
-              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { duration: 0.55, ease: [0.22, 1, 0.36, 1] }
+              }
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
                 <ShieldCheck className="h-4 w-4 text-[#0080F0]" />
@@ -87,8 +92,9 @@ export default function Page() {
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
                 Isaak detecta tu idioma, te acompana con soporte amable y te ayuda a interpretar
-                documentos, plazos y notificaciones. Te guia para subir escrituras, CIF, declaraciones
-                y arrancar 2026 con datos reales de gastos y ventas, con avisos para cierre 2025 y T1 2026.
+                documentos, plazos y notificaciones. Te guia para subir escrituras, CIF,
+                declaraciones y arrancar 2026 con datos reales de gastos y ventas, con avisos para
+                cierre 2025 y T1 2026.
               </p>
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
                 Verifactu e Isaak no sustituyen a tu gestor habitual. Te dan visibilidad diaria de
@@ -97,7 +103,7 @@ export default function Page() {
               </div>
 
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
-                Fuente oficial:{" "}
+                Fuente oficial:{' '}
                 <a
                   href="https://www.agenciatributaria.es/AEAT.internet/Inicio/La_Agencia_Tributaria/Tramites_y_servicios/VeriFactu.shtml"
                   className="font-semibold text-[#0060F0] hover:text-[#0080F0]"
@@ -105,7 +111,7 @@ export default function Page() {
                   rel="noreferrer"
                 >
                   Agencia Tributaria (AEAT)
-                </a>{" "}
+                </a>{' '}
                 - Te obliga a emitir y registrar facturas con trazabilidad e integridad.
               </div>
 
@@ -134,18 +140,31 @@ export default function Page() {
               </div>
 
               <div className="mt-7 flex flex-wrap gap-2">
-                <TrustBadge icon={<Sparkles className="h-4 w-4 text-[#0080F0]" />} text="Isaak incluido" />
-                <TrustBadge icon={<ShieldCheck className="h-4 w-4 text-[#0080F0]" />} text="Cumplimiento" />
-                <TrustBadge icon={<Check className="h-4 w-4 text-emerald-600" />} text="Datos bajo control" />
+                <TrustBadge
+                  icon={<Sparkles className="h-4 w-4 text-[#0080F0]" />}
+                  text="Isaak incluido"
+                />
+                <TrustBadge
+                  icon={<ShieldCheck className="h-4 w-4 text-[#0080F0]" />}
+                  text="Cumplimiento"
+                />
+                <TrustBadge
+                  icon={<Check className="h-4 w-4 text-emerald-600" />}
+                  text="Datos bajo control"
+                />
               </div>
             </motion.div>
 
             <motion.div
               initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
               animate={prefersReducedMotion ? false : { opacity: 1, y: 0 }}
-              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.08 }
+              }
             >
-              <DashboardMock />
+              <HeroTripleMock />
             </motion.div>
           </div>
         </Container>
@@ -167,7 +186,10 @@ export default function Page() {
 
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
             <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-              <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-sky-100/70 blur-2xl" aria-hidden="true" />
+              <div
+                className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-sky-100/70 blur-2xl"
+                aria-hidden="true"
+              />
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-[#0060F0]">
                   <UserRound className="h-5 w-5" />
@@ -175,31 +197,44 @@ export default function Page() {
                 <h3 className="text-sm font-semibold text-[#002060]">Autonomos y microempresas</h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                Emite facturas VeriFactu sin dudas y ve cada dia cuanto estas vendiendo y cuanto te queda.
+                Emite facturas VeriFactu sin dudas y ve cada dia cuanto estas vendiendo y cuanto te
+                queda.
               </p>
             </div>
             <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-              <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-blue-100/70 blur-2xl" aria-hidden="true" />
+              <div
+                className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-blue-100/70 blur-2xl"
+                aria-hidden="true"
+              />
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-[#0060F0]">
                   <Building2 className="h-5 w-5" />
                 </span>
-                <h3 className="text-sm font-semibold text-[#002060]">PYMEs que necesitan visibilidad real</h3>
+                <h3 className="text-sm font-semibold text-[#002060]">
+                  PYMEs que necesitan visibilidad real
+                </h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                Controla ventas, gastos y beneficio estimado con un panel simple, y detecta problemas antes de fin de mes.
+                Controla ventas, gastos y beneficio estimado con un panel simple, y detecta
+                problemas antes de fin de mes.
               </p>
             </div>
             <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-              <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-indigo-100/70 blur-2xl" aria-hidden="true" />
+              <div
+                className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-indigo-100/70 blur-2xl"
+                aria-hidden="true"
+              />
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-[#3B4B96]">
                   <Briefcase className="h-5 w-5" />
                 </span>
-                <h3 className="text-sm font-semibold text-[#002060]">Empresas con asesoria que quieren ir un paso por delante</h3>
+                <h3 className="text-sm font-semibold text-[#002060]">
+                  Empresas con asesoria que quieren ir un paso por delante
+                </h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                Comparte tus cifras y documentos con tu gestoria para trabajar con datos actualizados, no con sorpresas.
+                Comparte tus cifras y documentos con tu gestoria para trabajar con datos
+                actualizados, no con sorpresas.
               </p>
             </div>
           </div>
@@ -225,9 +260,10 @@ export default function Page() {
               </li>
             </ul>
             <p className="mt-5 text-xs text-slate-500">
-              Aviso: Verifactu e Isaak no sustituyen a tu gestor o asesor fiscal. Te aportan visibilidad y organizacion
-              para que puedas decidir antes y colaborar mejor con tu asesoria. Las cifras e impuestos mostrados son
-              orientativos y dependen de la informacion disponible.
+              Aviso: Verifactu e Isaak no sustituyen a tu gestor o asesor fiscal. Te aportan
+              visibilidad y organizacion para que puedas decidir antes y colaborar mejor con tu
+              asesoria. Las cifras e impuestos mostrados son orientativos y dependen de la
+              informacion disponible.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -246,7 +282,9 @@ export default function Page() {
           </div>
 
           <div className="mt-10 rounded-2xl border border-slate-200 bg-gradient-to-r from-sky-50/70 to-white p-6 text-center">
-            <div className="text-sm font-semibold text-[#002060]">Deja de esperar al cierre de mes</div>
+            <div className="text-sm font-semibold text-[#002060]">
+              Deja de esperar al cierre de mes
+            </div>
             <p className="mt-2 text-sm text-slate-600">
               Con Isaak tienes ventas, gastos y beneficio estimado hoy. VeriFactu, al dia.
             </p>
@@ -255,7 +293,10 @@ export default function Page() {
       </section>
 
       {/* Dashboard preview */}
-      <section id="dashboard" className="py-16 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white">
+      <section
+        id="dashboard"
+        className="py-16 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white"
+      >
         <Container>
           <div className="text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-4 py-1.5 text-sm font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15">
@@ -293,9 +334,9 @@ export default function Page() {
             </div>
 
             <p className="mx-auto mt-6 max-w-2xl text-xs text-slate-500">
-              Precio orientativo. La cuota final se basa en facturas emitidas y movimientos procesados (si activas
-              conciliacion bancaria). Hasta 1.000 facturas y 2.000 movimientos; si superas estos limites ofrecemos
-              presupuesto. IVA no incluido.
+              Precio orientativo. La cuota final se basa en facturas emitidas y movimientos
+              procesados (si activas conciliacion bancaria). Hasta 1.000 facturas y 2.000
+              movimientos; si superas estos limites ofrecemos presupuesto. IVA no incluido.
             </p>
           </div>
         </Container>
@@ -348,7 +389,8 @@ export default function Page() {
             Recursos para dominar VeriFactu e Isaak.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
-            Guias, onboarding y checklist para aplicar mejores practicas y aprovechar todo el potencial de la plataforma.
+            Guias, onboarding y checklist para aplicar mejores practicas y aprovechar todo el
+            potencial de la plataforma.
           </p>
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
@@ -396,17 +438,3 @@ export default function Page() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

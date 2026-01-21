@@ -1,7 +1,7 @@
-import React from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   BadgeCheck,
   CalendarClock,
@@ -14,17 +14,29 @@ import {
   TrendingUp,
   UploadCloud,
   Wallet,
-} from "lucide-react";
-import BrandLogo from "../../components/BrandLogo";
-import type { IsaakMsg } from "./types";
-import { getAppUrl } from "../urls";
-import { Button } from "../../components/ui";
+} from 'lucide-react';
+import BrandLogo from '../../components/BrandLogo';
+import type { IsaakMsg } from './types';
+import { getAppUrl } from '../urls';
+import { Button } from '../../components/ui';
 
-export function Container({ className = "", children }: { className?: string; children: React.ReactNode }) {
+export function Container({
+  className = '',
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
   return <div className={`mx-auto w-full max-w-6xl px-4 sm:px-6 ${className}`}>{children}</div>;
 }
 
-export function PrimaryButton({ className = "", children }: { className?: string; children: React.ReactNode }) {
+export function PrimaryButton({
+  className = '',
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
     <Button variant="primary" size="md" className={className}>
       {children}
@@ -33,7 +45,7 @@ export function PrimaryButton({ className = "", children }: { className?: string
 }
 
 export function SecondaryButton({
-  className = "",
+  className = '',
   children,
   href,
 }: {
@@ -62,11 +74,13 @@ export function StickyCtaBar({ show }: { show: boolean }) {
   const appDemoUrl = `${getAppUrl()}/demo`;
   return (
     <div
-      className={`fixed inset-x-0 bottom-4 z-30 px-4 transition-opacity duration-300 ${show ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+      className={`fixed inset-x-0 bottom-4 z-30 px-4 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       aria-hidden={!show}
     >
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
-        <div className="text-sm font-semibold text-[#002060]">Prueba gratis y ve a Isaak en accion</div>
+        <div className="text-sm font-semibold text-[#002060]">
+          Prueba gratis y ve a Isaak en accion
+        </div>
         <div className="flex gap-2">
           <Link href="/auth/signup">
             <PrimaryButton className="h-10 px-4 text-sm">Probar gratis</PrimaryButton>
@@ -122,16 +136,16 @@ export function HeroMockup({
   visibleMsgs: IsaakMsg[];
   benefitValue: number;
 }) {
-  const formattedBenefit = new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: "EUR",
+  const formattedBenefit = new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(benefitValue);
 
   const heroLog = [
-    { title: "Factura VF-2031", desc: "Validada y enviada al cliente" },
-    { title: "Ticket combustible", desc: "Marcado deducible y registrado" },
-    { title: "Sync VeriFactu", desc: "Ultima validacion hace 3 min" },
+    { title: 'Factura VF-2031', desc: 'Validada y enviada al cliente' },
+    { title: 'Ticket combustible', desc: 'Marcado deducible y registrado' },
+    { title: 'Sync VeriFactu', desc: 'Ultima validacion hace 3 min' },
   ];
 
   return (
@@ -143,7 +157,9 @@ export function HeroMockup({
             <Sparkles className="h-4 w-4 text-[#0080F0]" />
             Isaak
           </div>
-          <button className="text-xs font-medium text-[#0060F0] hover:text-[#0080F0]">Conectar</button>
+          <button className="text-xs font-medium text-[#0060F0] hover:text-[#0080F0]">
+            Conectar
+          </button>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -174,7 +190,12 @@ export function HeroMockup({
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <MiniStat title="Resumen" value={formattedBenefit} sub="Beneficio estimado" badge="Completo" />
+          <MiniStat
+            title="Resumen"
+            value={formattedBenefit}
+            sub="Beneficio estimado"
+            badge="Completo"
+          />
           <MiniInvoice />
         </div>
 
@@ -197,8 +218,8 @@ export function HeroMockup({
   );
 }
 
-export function MsgDot({ type }: { type: IsaakMsg["type"] }) {
-  const cls = type === "ok" ? "bg-emerald-500" : type === "warn" ? "bg-amber-500" : "bg-[#0080F0]";
+export function MsgDot({ type }: { type: IsaakMsg['type'] }) {
+  const cls = type === 'ok' ? 'bg-emerald-500' : type === 'warn' ? 'bg-amber-500' : 'bg-[#0080F0]';
   return <div className={`h-3.5 w-3.5 rounded-full ${cls}`} />;
 }
 
@@ -403,11 +424,178 @@ export function DashboardMock() {
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="text-xs font-semibold text-slate-700">Avisos</div>
           <div className="mt-3 space-y-2">
-            <ActivityItem icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />} text="Cierre 2025: checklist al 90%" />
-            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-amber-500" />} text="T1 2026: plazos en 12 dias" />
-            <ActivityItem icon={<FileText className="h-4 w-4 text-[#0080F0]" />} text="Factura VF-2310 validada" />
+            <ActivityItem
+              icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+              text="Cierre 2025: checklist al 90%"
+            />
+            <ActivityItem
+              icon={<CalendarClock className="h-4 w-4 text-amber-500" />}
+              text="T1 2026: plazos en 12 dias"
+            />
+            <ActivityItem
+              icon={<FileText className="h-4 w-4 text-[#0080F0]" />}
+              text="Factura VF-2310 validada"
+            />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+export function HeroTripleMock() {
+  const [activeId, setActiveId] = React.useState<'resumen' | 'facturas' | 'isaak'>('resumen');
+
+  const layoutMap: Record<typeof activeId, string> = {
+    resumen: 'z-20 scale-100 translate-y-0 translate-x-0 opacity-100',
+    facturas: 'z-20 scale-100 translate-y-0 translate-x-0 opacity-100',
+    isaak: 'z-20 scale-100 translate-y-0 translate-x-0 opacity-100',
+  };
+
+  const inactiveLayout: Record<typeof activeId, string> = {
+    resumen: 'z-10 scale-95 translate-y-8 -translate-x-6 opacity-90',
+    facturas: 'z-10 scale-95 translate-y-10 translate-x-8 opacity-90',
+    isaak: 'z-10 scale-95 translate-y-12 -translate-x-8 opacity-90',
+  };
+
+  const panels = [
+    {
+      id: 'resumen' as const,
+      title: 'Resumen general',
+      desc: 'Ventas, gastos y beneficio en un vistazo.',
+      content: (
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <KpiCard label="Ventas mes" value="18.420 EUR" sub="+9%" />
+          <KpiCard label="Gastos mes" value="11.260 EUR" sub="+5%" />
+          <KpiCard label="Beneficio" value="7.160 EUR" sub="+12%" />
+        </div>
+      ),
+    },
+    {
+      id: 'facturas' as const,
+      title: 'Facturas verificadas',
+      desc: 'Estado VeriFactu con QR y huella.',
+      content: (
+        <div className="mt-4 space-y-3 text-xs text-slate-600">
+          {[
+            {
+              number: 'VF-2026-0132',
+              client: 'Nova Retail',
+              amount: '1.240 EUR',
+              status: 'Validado AEAT',
+            },
+            { number: 'VF-2026-0133', client: 'Luna Tech', amount: '980 EUR', status: 'Enviado' },
+            {
+              number: 'VF-2026-0134',
+              client: 'Eco Servicios',
+              amount: '410 EUR',
+              status: 'Pendiente',
+            },
+          ].map((row) => (
+            <div
+              key={row.number}
+              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2"
+            >
+              <div>
+                <div className="text-[11px] font-semibold text-slate-800">{row.number}</div>
+                <div className="text-[11px] text-slate-500">{row.client}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-[11px] font-semibold text-slate-800">{row.amount}</div>
+                <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                  {row.status}
+                </span>
+              </div>
+            </div>
+          ))}
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] text-blue-700">
+            QR + huella hash simulados en modo demo.
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'isaak' as const,
+      title: 'Isaak en vivo',
+      desc: 'Respuestas inmediatas y accionables.',
+      content: (
+        <div className="mt-4 space-y-3">
+          <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+            <div className="text-[11px] font-semibold text-slate-500">Tu</div>
+            <div className="mt-1 text-sm text-slate-800">Resumen rapido de enero 2026</div>
+          </div>
+          <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
+            <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
+            <div className="mt-1 text-sm text-slate-700">
+              Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio estimado 5.350 EUR.
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+            <div className="text-[11px] font-semibold text-slate-500">Tu</div>
+            <div className="mt-1 text-sm text-slate-800">Que falta para cierre 2025?</div>
+          </div>
+          <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
+            <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
+            <div className="mt-1 text-sm text-slate-700">Te faltan 2 facturas y un extracto.</div>
+          </div>
+        </div>
+      ),
+    },
+  ];
+
+  const getCardClass = (id: typeof activeId) => {
+    const isActive = id === activeId;
+    const fallback =
+      id === 'resumen'
+        ? inactiveLayout.resumen
+        : id === 'facturas'
+          ? inactiveLayout.facturas
+          : inactiveLayout.isaak;
+    return `absolute inset-0 origin-top-left rounded-3xl border border-slate-200 bg-white p-5 shadow-xl transition-all duration-300 ${isActive ? layoutMap[id] : fallback}`;
+  };
+
+  return (
+    <div className="relative">
+      <div className="mb-4 flex flex-wrap gap-2">
+        {panels.map((panel) => (
+          <button
+            key={panel.id}
+            type="button"
+            onClick={() => setActiveId(panel.id)}
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+              activeId === panel.id
+                ? 'bg-[#0060F0] text-white shadow-sm'
+                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            {panel.title}
+          </button>
+        ))}
+      </div>
+
+      <div className="relative min-h-[420px]">
+        {panels.map((panel) => (
+          <button
+            key={panel.id}
+            type="button"
+            onClick={() => setActiveId(panel.id)}
+            className={getCardClass(panel.id)}
+            aria-pressed={activeId === panel.id}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-semibold text-slate-700">{panel.title}</div>
+                <p className="mt-1 text-xs text-slate-500">{panel.desc}</p>
+              </div>
+              <div className="flex gap-1">
+                <span className="h-2 w-2 rounded-full bg-rose-400" />
+                <span className="h-2 w-2 rounded-full bg-amber-400" />
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              </div>
+            </div>
+            {panel.content}
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -454,7 +642,17 @@ export function InfoPill({
   );
 }
 
-export function ResourceCard({ tag, title, desc, cta }: { tag: string; title: string; desc: string; cta: string }) {
+export function ResourceCard({
+  tag,
+  title,
+  desc,
+  cta,
+}: {
+  tag: string;
+  title: string;
+  desc: string;
+  cta: string;
+}) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="inline-flex rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-slate-200">
@@ -480,7 +678,10 @@ export function Li({ children }: { children: React.ReactNode }) {
 
 export function Footer() {
   return (
-    <footer className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-slate-100" role="contentinfo">
+    <footer
+      className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-slate-100"
+      role="contentinfo"
+    >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-600/10 blur-3xl" />
@@ -490,7 +691,9 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-4">
           <div>
             <BrandLogo variant="footer" />
-            <p className="mt-3 text-sm text-slate-300">Automatiza tu facturacion con cumplimiento y control total.</p>
+            <p className="mt-3 text-sm text-slate-300">
+              Automatiza tu facturacion con cumplimiento y control total.
+            </p>
             <div className="mt-4 flex gap-3">
               <a
                 href="/recursos/guias-y-webinars"
@@ -525,38 +728,38 @@ export function Footer() {
           <FooterCol
             title="Producto"
             links={[
-              { label: "Resumen", href: "#hero" },
-              { label: "Dashboard", href: "#dashboard" },
-              { label: "Features", href: "#features" },
-              { label: "FAQ", href: "#faq" },
-              { label: "Precios", href: "#precios" },
+              { label: 'Resumen', href: '#hero' },
+              { label: 'Dashboard', href: '#dashboard' },
+              { label: 'Features', href: '#features' },
+              { label: 'FAQ', href: '#faq' },
+              { label: 'Precios', href: '#precios' },
             ]}
           />
           <FooterCol
             title="VeriFactu"
             links={[
-              { label: "Que es", href: "/verifactu/que-es" },
-              { label: "Calcula precio", href: "/#precios" },
-              { label: "Soporte", href: "/verifactu/soporte" },
-              { label: "Estado del servicio", href: "/verifactu/estado" },
+              { label: 'Que es', href: '/verifactu/que-es' },
+              { label: 'Calcula precio', href: '/#precios' },
+              { label: 'Soporte', href: '/verifactu/soporte' },
+              { label: 'Estado del servicio', href: '/verifactu/estado' },
             ]}
           />
           <FooterCol
             title="Recursos"
             links={[
-              { label: "Guias y webinars", href: "/recursos/guias-y-webinars" },
-              { label: "Checklist", href: "/recursos/checklist" },
-              { label: "Blog", href: "/recursos/blog" },
-              { label: "Contacto", href: "/recursos/contacto" },
+              { label: 'Guias y webinars', href: '/recursos/guias-y-webinars' },
+              { label: 'Checklist', href: '/recursos/checklist' },
+              { label: 'Blog', href: '/recursos/blog' },
+              { label: 'Contacto', href: '/recursos/contacto' },
             ]}
           />
           <FooterCol
             title="Legal"
             links={[
-              { label: "VeriFactu", href: "/verifactu" },
-              { label: "Politica de privacidad", href: "/legal/privacidad" },
-              { label: "Terminos de servicio", href: "/legal/terminos" },
-              { label: "Cookies", href: "/legal/cookies" },
+              { label: 'VeriFactu', href: '/verifactu' },
+              { label: 'Politica de privacidad', href: '/legal/privacidad' },
+              { label: 'Terminos de servicio', href: '/legal/terminos' },
+              { label: 'Cookies', href: '/legal/cookies' },
             ]}
           />
         </div>
@@ -565,16 +768,32 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400">
             <p>(c) {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
             <div className="flex gap-6">
-              <Link href="/verifactu" className="hover:text-blue-300 transition" aria-label="Ir a VeriFactu">
+              <Link
+                href="/verifactu"
+                className="hover:text-blue-300 transition"
+                aria-label="Ir a VeriFactu"
+              >
                 VeriFactu
               </Link>
-              <Link href="/legal/privacidad" className="hover:text-blue-300 transition" aria-label="Leer politica de privacidad">
+              <Link
+                href="/legal/privacidad"
+                className="hover:text-blue-300 transition"
+                aria-label="Leer politica de privacidad"
+              >
                 Politica de privacidad
               </Link>
-              <Link href="/legal/terminos" className="hover:text-blue-300 transition" aria-label="Leer terminos de servicio">
+              <Link
+                href="/legal/terminos"
+                className="hover:text-blue-300 transition"
+                aria-label="Leer terminos de servicio"
+              >
                 Terminos de servicio
               </Link>
-              <Link href="/legal/cookies" className="hover:text-blue-300 transition" aria-label="Leer politica de cookies">
+              <Link
+                href="/legal/cookies"
+                className="hover:text-blue-300 transition"
+                aria-label="Leer politica de cookies"
+              >
                 Cookies
               </Link>
             </div>
@@ -594,7 +813,11 @@ export function FooterCol({ title, links }: { title: string; links: FooterLink[]
       <ul className="mt-3 space-y-2 text-sm text-slate-300">
         {links.map((link) => (
           <li key={link.label}>
-            <Link className="hover:text-blue-300 transition" href={link.href} aria-label={`Ir a ${link.label}`}>
+            <Link
+              className="hover:text-blue-300 transition"
+              href={link.href}
+              aria-label={`Ir a ${link.label}`}
+            >
               {link.label}
             </Link>
           </li>
@@ -624,7 +847,7 @@ export function PriceDisplay({ price, isYearly }: { price: number | null; isYear
   return (
     <div>
       <div className="text-4xl font-bold text-slate-900">{price} EUR</div>
-      <div className="text-sm text-slate-500">{isYearly ? "/ano" : "/mes"}</div>
+      <div className="text-sm text-slate-500">{isYearly ? '/ano' : '/mes'}</div>
     </div>
   );
 }
@@ -650,7 +873,9 @@ export function ComplianceBadge() {
             </div>
             <span className="text-sm font-semibold text-green-700">Cumplimiento Certificado</span>
           </div>
-          <p className="mt-3 text-xs text-slate-500">Sistema homologado segun normativa de la Agencia Tributaria</p>
+          <p className="mt-3 text-xs text-slate-500">
+            Sistema homologado segun normativa de la Agencia Tributaria
+          </p>
         </div>
       </div>
     </div>
@@ -661,7 +886,9 @@ export function ThreeSteps() {
   return (
     <section className="py-16 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white">
       <Container>
-        <h3 className="text-center text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">Del envio al cobro en tres pasos.</h3>
+        <h3 className="text-center text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
+          Del envio al cobro en tres pasos.
+        </h3>
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
           Conecta tu flujo de facturacion y deja que Isaak automatice validaciones y recordatorios.
         </p>
@@ -699,8 +926,8 @@ export function FeaturesSection() {
           Lo que ves es lo que tienes: Ventas, Gastos, Beneficio.
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-lightbg-600 sm:text-lg">
-          El dashboard muestra solo lo esencial. Isaak entiende documentos, detecta el idioma y te guia con alertas y
-          recordatorios cuando se acercan cierres y plazos fiscales.
+          El dashboard muestra solo lo esencial. Isaak entiende documentos, detecta el idioma y te
+          guia con alertas y recordatorios cuando se acercan cierres y plazos fiscales.
         </p>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -708,36 +935,36 @@ export function FeaturesSection() {
             icon={<TrendingUp className="h-5 w-5 text-[#0080F0]" />}
             title="Emision sin friccion"
             bullets={[
-              "Sube facturas y tickets en cualquier idioma",
-              "Isaak interpreta y clasifica al instante",
-              "Validacion VeriFactu incluida",
+              'Sube facturas y tickets en cualquier idioma',
+              'Isaak interpreta y clasifica al instante',
+              'Validacion VeriFactu incluida',
             ]}
           />
           <FeatureCard
             icon={<BadgeCheck className="h-5 w-5 text-[#0080F0]" />}
             title="Gastos guiados"
             bullets={[
-              "Documentos, extractos y justificantes",
-              "Deducible segun tu actividad",
-              "Recordatorios de cierres y plazos",
+              'Documentos, extractos y justificantes',
+              'Deducible segun tu actividad',
+              'Recordatorios de cierres y plazos',
             ]}
           />
           <FeatureCard
             icon={<Sparkles className="h-5 w-5 text-[#0080F0]" />}
             title="Dashboard claro"
             bullets={[
-              "Ventas, gastos y beneficio en tiempo real",
-              "Comparativas por mes y trimestre",
-              "Alertas cuando algo se desvia",
+              'Ventas, gastos y beneficio en tiempo real',
+              'Comparativas por mes y trimestre',
+              'Alertas cuando algo se desvia',
             ]}
           />
           <FeatureCard
             icon={<FileText className="h-5 w-5 text-[#0080F0]" />}
             title="Bajo demanda con Isaak"
             bullets={[
-              "Soporte cercano y en tu idioma",
-              "Plazos fiscales siempre visibles",
-              "Checklist de cierre mensual y anual",
+              'Soporte cercano y en tu idioma',
+              'Plazos fiscales siempre visibles',
+              'Checklist de cierre mensual y anual',
             ]}
           />
         </div>
@@ -761,12 +988,13 @@ export function PideseloAIsaakSection() {
             Un amigo experto que habla tu idioma y te cuida los plazos.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Isaak interpreta documentos, avisa de cierre 2025 y te prepara el 1o trimestre 2026.
-            Te acompana en enero 2026 para que llegues con todo listo.
+            Isaak interpreta documentos, avisa de cierre 2025 y te prepara el 1o trimestre 2026. Te
+            acompana en enero 2026 para que llegues con todo listo.
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-xs text-slate-500">
-            Isaak no sustituye a tu gestor o asesor contable. Te ofrece datos de ventas, gastos y beneficio para
-            decidir en tiempo real y revisar lo que te preparen al cierre de mes, trimestre o ano.
+            Isaak no sustituye a tu gestor o asesor contable. Te ofrece datos de ventas, gastos y
+            beneficio para decidir en tiempo real y revisar lo que te preparen al cierre de mes,
+            trimestre o ano.
           </p>
         </div>
 
@@ -845,7 +1073,9 @@ export function PideseloAIsaakSection() {
             <div className="mt-4 grid gap-3 text-sm text-slate-600">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                 <div className="font-semibold text-slate-800">Alegre y optimista ??</div>
-                <p className="mt-1 text-xs">Mensajes cortos, emoji suave y mucha energia positiva.</p>
+                <p className="mt-1 text-xs">
+                  Mensajes cortos, emoji suave y mucha energia positiva.
+                </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                 <div className="font-semibold text-slate-800">Profesional ??</div>
@@ -907,11 +1137,3 @@ export function PideseloAIsaakSection() {
     </section>
   );
 }
-
-
-
-
-
-
-
-

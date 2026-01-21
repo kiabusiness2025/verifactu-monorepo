@@ -1,28 +1,42 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { ArrowLeft, ExternalLink } from "lucide-react";
-import { getAppUrl, getLandingUrl } from "@/lib/urls";
-import { IsaakUIProvider } from "@/context/IsaakUIContext";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Topbar } from "@/components/layout/Topbar";
-import { InvoiceQR } from "@/components/invoices/InvoiceQR";
-import { getInvoices, getTenant } from "@/src/lib/data/client";
-import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
-import type { DemoInvoice } from "@/src/lib/demo/demoData";
+import { useMemo, useState } from 'react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { getAppUrl, getLandingUrl } from '@/lib/urls';
+import { IsaakUIProvider } from '@/context/IsaakUIContext';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { Topbar } from '@/components/layout/Topbar';
+import { InvoiceQR } from '@/components/invoices/InvoiceQR';
+import { getInvoices, getTenant } from '@/src/lib/data/client';
+import { formatCurrency, formatShortDate } from '@/src/lib/formatters';
+import type { DemoInvoice } from '@/src/lib/demo/demoData';
 
 const statusStyles: Record<string, string> = {
-  paid: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  pending: "bg-amber-50 text-amber-700 ring-amber-100",
-  overdue: "bg-rose-50 text-rose-700 ring-rose-100",
-  sent: "bg-blue-50 text-blue-700 ring-blue-100",
+  paid: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+  pending: 'bg-amber-50 text-amber-700 ring-amber-100',
+  overdue: 'bg-rose-50 text-rose-700 ring-rose-100',
+  sent: 'bg-blue-50 text-blue-700 ring-blue-100',
 };
 
 const statusLabels: Record<string, string> = {
-  paid: "Cobrada",
-  pending: "Pendiente",
-  overdue: "Vencida",
-  sent: "Enviada",
+  paid: 'Cobrada',
+  pending: 'Pendiente',
+  overdue: 'Vencida',
+  sent: 'Enviada',
+};
+
+const verifactuLabels: Record<string, string> = {
+  validated: 'Validado AEAT',
+  pending: 'Pendiente',
+  error: 'Error',
+  sent: 'Enviado',
+};
+
+const verifactuStyles: Record<string, string> = {
+  validated: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+  pending: 'bg-amber-50 text-amber-700 ring-amber-100',
+  error: 'bg-rose-50 text-rose-700 ring-rose-100',
+  sent: 'bg-blue-50 text-blue-700 ring-blue-100',
 };
 
 export default function DemoInvoicesPage() {
@@ -33,8 +47,8 @@ export default function DemoInvoicesPage() {
   const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(`${appUrl}/onboarding`)}`;
   const backUrl = landingUrl;
 
-  const tenant = getTenant("demo");
-  const invoices = getInvoices("demo");
+  const tenant = getTenant('demo');
+  const invoices = getInvoices('demo');
   const recentInvoices = useMemo(() => invoices.slice(0, 18), [invoices]);
 
   return (
@@ -45,7 +59,7 @@ export default function DemoInvoicesPage() {
           <Topbar
             onToggleSidebar={() => setSidebarOpen((v) => !v)}
             isDemo
-            demoCompanyName={tenant?.name ?? "Empresa Demo SL"}
+            demoCompanyName={tenant?.name ?? 'Empresa Demo SL'}
           />
 
           <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 pb-20 sm:px-6 sm:py-8">
@@ -114,7 +128,9 @@ export default function DemoInvoicesPage() {
                     {recentInvoices.map((inv) => (
                       <tr key={inv.id} className="hover:bg-slate-50">
                         <td className="px-4 py-3 font-medium text-slate-900">{inv.number}</td>
-                        <td className="px-4 py-3 text-slate-600">{formatShortDate(inv.issueDate)}</td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {formatShortDate(inv.issueDate)}
+                        </td>
                         <td className="px-4 py-3 text-slate-900">{inv.customerName}</td>
                         <td className="px-4 py-3 text-right font-semibold text-slate-900">
                           {formatCurrency(inv.amountGross)}
@@ -122,21 +138,34 @@ export default function DemoInvoicesPage() {
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1 ${
-                              statusStyles[inv.status] ?? "bg-slate-100 text-slate-600 ring-slate-200"
+                              statusStyles[inv.status] ??
+                              'bg-slate-100 text-slate-600 ring-slate-200'
                             }`}
                           >
-                            {statusLabels[inv.status] ?? "Pendiente"}
+                            {statusLabels[inv.status] ?? 'Pendiente'}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">
                           {inv.verifactuStatus ? (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedInvoice(inv)}
-                              className="inline-flex items-center justify-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
-                            >
-                              Ver QR
-                            </button>
+                            <div className="flex flex-col items-center gap-1">
+                              <span
+                                className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ring-1 ${
+                                  verifactuStyles[inv.verifactuStatus] ??
+                                  'bg-slate-100 text-slate-600 ring-slate-200'
+                                }`}
+                              >
+                                {verifactuLabels[inv.verifactuStatus] ?? 'Pendiente'}
+                              </span>
+                              {(inv.verifactuQr || inv.verifactuHash) && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedInvoice(inv)}
+                                  className="inline-flex items-center justify-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                                >
+                                  Ver QR
+                                </button>
+                              )}
+                            </div>
                           ) : (
                             <span className="text-xs text-slate-400">Sin validar</span>
                           )}

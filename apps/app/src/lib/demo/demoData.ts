@@ -14,7 +14,7 @@ export type DemoInvoice = {
   amountNet: number;
   amountTax: number;
   amountGross: number;
-  status: "paid" | "pending" | "overdue" | "sent";
+  status: 'paid' | 'pending' | 'overdue' | 'sent';
   verifactuStatus?: string | null;
   verifactuQr?: string | null;
   verifactuHash?: string | null;
@@ -24,7 +24,7 @@ export type DemoPayment = {
   id: string;
   invoiceId: string;
   amount: number;
-  method: "bank_transfer";
+  method: 'bank_transfer';
   reference: string;
   paidAt: string;
 };
@@ -62,24 +62,24 @@ export type DemoData = {
 };
 
 const customers = [
-  { name: "Nova Retail SL", nif: "B10981234" },
-  { name: "Cima Logistics", nif: "B45892017" },
-  { name: "Luna Tech", nif: "B76234109" },
-  { name: "Alba Studio", nif: "B30129844" },
-  { name: "Mercurio Labs", nif: "B88765012" },
-  { name: "Eco Servicios", nif: "B21340098" },
-  { name: "Orion Media", nif: "B56890321" },
-  { name: "Sierra Consult", nif: "B11234567" },
-  { name: "Delta Foods", nif: "B99001122" },
-  { name: "Tramo Energia", nif: "B77112233" },
-  { name: "Kite Market", nif: "B66004591" },
-  { name: "Arco Creativo", nif: "B54007891" },
+  { name: 'Nova Retail SL', nif: 'B10981234' },
+  { name: 'Cima Logistics', nif: 'B45892017' },
+  { name: 'Luna Tech', nif: 'B76234109' },
+  { name: 'Alba Studio', nif: 'B30129844' },
+  { name: 'Mercurio Labs', nif: 'B88765012' },
+  { name: 'Eco Servicios', nif: 'B21340098' },
+  { name: 'Orion Media', nif: 'B56890321' },
+  { name: 'Sierra Consult', nif: 'B11234567' },
+  { name: 'Delta Foods', nif: 'B99001122' },
+  { name: 'Tramo Energia', nif: 'B77112233' },
+  { name: 'Kite Market', nif: 'B66004591' },
+  { name: 'Arco Creativo', nif: 'B54007891' },
 ];
 
-const statusCycle: DemoInvoice["status"][] = ["paid", "paid", "pending", "sent", "overdue"];
+const statusCycle: DemoInvoice['status'][] = ['paid', 'paid', 'pending', 'sent', 'overdue'];
 
 function pad(value: number) {
-  return value.toString().padStart(2, "0");
+  return value.toString().padStart(2, '0');
 }
 
 function formatDate(date: Date) {
@@ -106,8 +106,8 @@ function buildInvoices(count: number): DemoInvoice[] {
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   };
   const buildHash = (seed: string) => {
-    const base = seed.replace(/[^A-Z0-9]/gi, "") || "VF";
-    let out = "";
+    const base = seed.replace(/[^A-Z0-9]/gi, '') || 'VF';
+    let out = '';
     for (let i = 0; i < 64; i += 1) {
       const code = base.charCodeAt(i % base.length) || 65;
       out += ((code + i) % 16).toString(16);
@@ -122,18 +122,18 @@ function buildInvoices(count: number): DemoInvoice[] {
     const amountTax = Math.round(amountNet * 0.21 * 100) / 100;
     const amountGross = Math.round((amountNet + amountTax) * 100) / 100;
     const verifactuStatus =
-      i % 4 === 0 ? "validated" : i % 4 === 1 ? "sent" : i % 4 === 2 ? "pending" : "error";
+      i % 4 === 0 ? 'validated' : i % 4 === 1 ? 'sent' : i % 4 === 2 ? 'pending' : 'error';
     const verifactuQr =
-      verifactuStatus === "validated" || verifactuStatus === "sent"
-        ? buildDemoQr(`VF-2026-${(i + 1).toString().padStart(4, "0")}`)
+      verifactuStatus === 'validated' || verifactuStatus === 'sent'
+        ? buildDemoQr(`VF-2026-${(i + 1).toString().padStart(4, '0')}`)
         : null;
     const verifactuHash =
-      verifactuStatus === "validated" || verifactuStatus === "sent"
-        ? buildHash(`VF-2026-${(i + 1).toString().padStart(4, "0")}`)
+      verifactuStatus === 'validated' || verifactuStatus === 'sent'
+        ? buildHash(`VF-2026-${(i + 1).toString().padStart(4, '0')}`)
         : null;
     invoices.push({
       id: `inv-${i + 1}`,
-      number: `VF-2026-${(i + 1).toString().padStart(4, "0")}`,
+      number: `VF-2026-${(i + 1).toString().padStart(4, '0')}`,
       issueDate: formatDate(issueDate),
       customerName: customer.name,
       customerNif: customer.nif,
@@ -151,7 +151,7 @@ function buildInvoices(count: number): DemoInvoice[] {
 
 function buildPayments(invoices: DemoInvoice[], count: number): DemoPayment[] {
   const payments: DemoPayment[] = [];
-  const paidInvoices = invoices.filter((inv) => inv.status === "paid");
+  const paidInvoices = invoices.filter((inv) => inv.status === 'paid');
   for (let i = 0; i < count && i < paidInvoices.length; i += 1) {
     const invoice = paidInvoices[i];
     const paidAt = daysAgo(1 + i * 4);
@@ -159,7 +159,7 @@ function buildPayments(invoices: DemoInvoice[], count: number): DemoPayment[] {
       id: `pay-${i + 1}`,
       invoiceId: invoice.id,
       amount: invoice.amountGross,
-      method: "bank_transfer",
+      method: 'bank_transfer',
       reference: `TRF-${invoice.number}`,
       paidAt: formatDate(paidAt),
     });
@@ -186,9 +186,9 @@ const marginMonth = revenueMonth > 0 ? profitMonth / revenueMonth : 0;
 
 export const demoData: DemoData = {
   tenant: {
-    id: "demo-tenant",
-    name: "Empresa Demo SL",
-    nif: "B12345678",
+    id: 'demo-tenant',
+    name: 'Empresa Demo SL',
+    nif: 'B12345678',
     createdAt: formatDate(daysAgo(200)),
   },
   kpis: {
@@ -200,7 +200,7 @@ export const demoData: DemoData = {
     lastUpdated: new Date().toISOString(),
   },
   pnl: {
-    periodLabel: "Mes actual",
+    periodLabel: 'Mes actual',
     revenue: Math.round(revenueMonth * 100) / 100,
     expenses: expensesMonth,
     profit: profitMonth,
@@ -211,100 +211,102 @@ export const demoData: DemoData = {
   payments,
   isaakExamples: [
     {
-      prompt: "Resume ventas y gastos del mes actual",
-      answer: "Ventas netas 18.420 EUR, gastos 5.890 EUR y beneficio estimado 12.530 EUR.",
+      prompt: 'Resume ventas y gastos del mes actual',
+      answer: 'Ventas netas 18.420 EUR, gastos 5.890 EUR y beneficio estimado 12.530 EUR.',
     },
     {
-      prompt: "Que facturas estan pendientes de cobro?",
-      answer: "Hay 4 facturas pendientes por un total de 8.210 EUR. Quieres enviar recordatorios?",
+      prompt: 'Que facturas estan pendientes de cobro?',
+      answer: 'Hay 4 facturas pendientes por un total de 8.210 EUR. Quieres enviar recordatorios?',
     },
     {
-      prompt: "Prepara un resumen para mi asesoria",
-      answer: "Listo: ventas, gastos y beneficio acumulado con IVA estimado. Puedo compartirlo en un enlace seguro.",
+      prompt: 'Prepara un resumen para mi asesoria',
+      answer:
+        'Listo: ventas, gastos y beneficio acumulado con IVA estimado. Puedo compartirlo en un enlace seguro.',
     },
     {
-      prompt: "Revisa el IVA estimado del trimestre",
-      answer: "IVA repercutido estimado: 3.870 EUR. Puedo marcar gastos deducibles si faltan tickets.",
+      prompt: 'Revisa el IVA estimado del trimestre',
+      answer:
+        'IVA repercutido estimado: 3.870 EUR. Puedo marcar gastos deducibles si faltan tickets.',
     },
     {
-      prompt: "Detecta variaciones frente al mes pasado",
-      answer: "Ventas +12%, gastos +7%. El margen sube al 68%.",
+      prompt: 'Detecta variaciones frente al mes pasado',
+      answer: 'Ventas +12%, gastos +7%. El margen sube al 68%.',
     },
     {
-      prompt: "Emite una factura VeriFactu para Nova Retail SL",
-      answer: "He preparado el borrador VF-2026-0043 con 21% IVA. Solo falta confirmar la fecha.",
+      prompt: 'Emite una factura VeriFactu para Nova Retail SL',
+      answer: 'He preparado el borrador VF-2026-0043 con 21% IVA. Solo falta confirmar la fecha.',
     },
     {
-      prompt: "Valida si una factura cumple VeriFactu",
-      answer: "La factura tiene numeracion correlativa y hash correcto. Lista para envio.",
+      prompt: 'Valida si una factura cumple VeriFactu',
+      answer: 'La factura tiene numeracion correlativa y hash correcto. Lista para envio.',
     },
     {
-      prompt: "Sube las escrituras y vincula al expediente",
-      answer: "Documento cargado y etiquetado como societario. Quieres avisar a tu asesor?",
+      prompt: 'Sube las escrituras y vincula al expediente',
+      answer: 'Documento cargado y etiquetado como societario. Quieres avisar a tu asesor?',
     },
     {
-      prompt: "Guarda el CIF de la empresa",
-      answer: "CIF guardado y asociado al perfil. Puedo usarlo en futuras facturas.",
+      prompt: 'Guarda el CIF de la empresa',
+      answer: 'CIF guardado y asociado al perfil. Puedo usarlo en futuras facturas.',
     },
     {
-      prompt: "Muéstrame los documentos del ultimo trimestre",
-      answer: "Tengo 18 documentos: 10 facturas, 6 gastos y 2 contratos. Los ordeno por fecha?",
+      prompt: 'Muestrame los documentos del ultimo trimestre',
+      answer: 'Tengo 18 documentos: 10 facturas, 6 gastos y 2 contratos. Los ordeno por fecha?',
     },
     {
-      prompt: "Calcula el beneficio estimado hoy",
-      answer: "Beneficio estimado hoy: 12.530 EUR. Margen 68,0%.",
+      prompt: 'Calcula el beneficio estimado hoy',
+      answer: 'Beneficio estimado hoy: 12.530 EUR. Margen 68,0%.',
     },
     {
-      prompt: "Genera un aviso de cierre trimestral",
-      answer: "Aviso programado para el dia 20 con checklist de ventas y gastos.",
+      prompt: 'Genera un aviso de cierre trimestral',
+      answer: 'Aviso programado para el dia 20 con checklist de ventas y gastos.',
     },
     {
-      prompt: "Conecta movimientos bancarios de enero",
-      answer: "En demo no puedo conectar bancos, pero te muestro como quedaria la conciliacion.",
+      prompt: 'Conecta movimientos bancarios de enero',
+      answer: 'En demo no puedo conectar bancos, pero te muestro como quedaria la conciliacion.',
     },
     {
-      prompt: "Comparte un resumen con mi gestoria",
-      answer: "Resumen listo con ventas, gastos e IVA estimado. Puedo compartir por enlace seguro.",
+      prompt: 'Comparte un resumen con mi gestoria',
+      answer: 'Resumen listo con ventas, gastos e IVA estimado. Puedo compartir por enlace seguro.',
     },
     {
-      prompt: "Detecta gastos duplicados",
-      answer: "He encontrado 2 gastos similares del mismo proveedor en 48h.",
+      prompt: 'Detecta gastos duplicados',
+      answer: 'He encontrado 2 gastos similares del mismo proveedor en 48h.',
     },
     {
-      prompt: "Crea una factura recurrente mensual",
-      answer: "Plantilla recurrente creada. Se emitira el dia 1 de cada mes.",
+      prompt: 'Crea una factura recurrente mensual',
+      answer: 'Plantilla recurrente creada. Se emitira el dia 1 de cada mes.',
     },
     {
-      prompt: "Exporta libros de facturas",
-      answer: "Exportacion preparada con trazabilidad VeriFactu y fechas.",
+      prompt: 'Exporta libros de facturas',
+      answer: 'Exportacion preparada con trazabilidad VeriFactu y fechas.',
     },
     {
-      prompt: "Marca esta factura como cobrada",
-      answer: "En demo no puedo registrar cobros reales, pero actualizaria el estado a cobrada.",
+      prompt: 'Marca esta factura como cobrada',
+      answer: 'En demo no puedo registrar cobros reales, pero actualizaria el estado a cobrada.',
     },
     {
-      prompt: "Que impuestos tengo aproximados?",
-      answer: "IVA estimado 3.870 EUR. IRPF/IS depende de tu configuracion y gastos deducibles.",
+      prompt: 'Que impuestos tengo aproximados?',
+      answer: 'IVA estimado 3.870 EUR. IRPF/IS depende de tu configuracion y gastos deducibles.',
     },
     {
-      prompt: "Organiza gastos por proyecto",
+      prompt: 'Organiza gastos por proyecto',
       answer: "Proyecto 'Web 2026' tiene 12 gastos y margen 62%.",
     },
     {
-      prompt: "Revisa vencimientos proximos",
-      answer: "3 facturas vencen en 7 dias. Puedo programar recordatorios.",
+      prompt: 'Revisa vencimientos proximos',
+      answer: '3 facturas vencen en 7 dias. Puedo programar recordatorios.',
     },
     {
-      prompt: "Mostrar facturas emitidas en febrero",
-      answer: "En febrero emitiste 9 facturas por 14.200 EUR netos.",
+      prompt: 'Mostrar facturas emitidas en febrero',
+      answer: 'En febrero emitiste 9 facturas por 14.200 EUR netos.',
     },
     {
-      prompt: "Ver documentos pendientes de revisar",
-      answer: "Tienes 4 tickets sin categoria. Te los muestro para clasificar.",
+      prompt: 'Ver documentos pendientes de revisar',
+      answer: 'Tienes 4 tickets sin categoria. Te los muestro para clasificar.',
     },
     {
-      prompt: "Ayudame con una rectificativa",
-      answer: "Te guiare paso a paso: motivo, numero original y nueva base imponible.",
+      prompt: 'Ayudame con una rectificativa',
+      answer: 'Te guiare paso a paso: motivo, numero original y nueva base imponible.',
     },
   ],
 };
