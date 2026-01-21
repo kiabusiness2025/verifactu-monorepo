@@ -1,22 +1,30 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@verifactu/db';
 import { requireAdminSession } from '@/lib/auth';
+import { prisma } from '@verifactu/db';
+import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: Request, { params }: { params: { id: string } }) {
   const session = await requireAdminSession();
 
   const email = await prisma.emailEvent.findUnique({
-    where: { id: params.id }
+    where: { id: params.id },
   });
 
   if (!email) {
     return NextResponse.json({ error: 'Email not found' }, { status: 404 });
+  }
+
+  // Only allow retry for Resend emails
+  if (email.provider !== 'RESEND') {
+    return NextResponse.json(
+      {
+        error:
+          'Retry only available for Resend emails. Gmail emails cannot be retried automatically.',
+      },
+      { status: 400 }
+    );
   }
 
   try {
@@ -25,7 +33,7 @@ export async function POST(
       from: 'Verifactu <no-reply@verifactu.business>',
       to: email.to,
       subject: email.subject || 'Email retry',
-      html: '<p>This is a retry of a previous email.</p>'
+      html: '<p>This is a retry of a previous email.</p>',
     });
 
     await prisma.$transaction([
@@ -35,17 +43,17 @@ export async function POST(
           status: 'SENT',
           messageId: result.data?.id,
           lastError: null,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       }),
       prisma.auditLog.create({
         data: {
           adminUserId: session.userId!,
           action: 'EMAIL_RETRY',
           targetUserId: email.userId || undefined,
-          metadata: { emailId: email.id, to: email.to }
-        }
-      })
+          metadata: { emailId: email.id, to: email.to },
+        },
+      }),
     ]);
 
     return NextResponse.json({ success: true, messageId: result.data?.id });
@@ -55,8 +63,8 @@ export async function POST(
       data: {
         status: 'FAILED',
         lastError: error.message,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     return NextResponse.json({ error: error.message }, { status: 500 });

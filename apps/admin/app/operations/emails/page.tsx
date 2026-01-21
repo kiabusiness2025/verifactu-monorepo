@@ -1,12 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@verifactu/ui/components/table';
 import { Badge } from '@verifactu/ui/components/badge';
 import { Button } from '@verifactu/ui/components/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@verifactu/ui/components/select';
-import Link from 'next/link';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@verifactu/ui/components/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@verifactu/ui/components/table';
 import { format } from 'date-fns';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   QUEUED: 'secondary',
@@ -14,22 +27,29 @@ const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'o
   DELIVERED: 'outline',
   BOUNCED: 'destructive',
   COMPLAINED: 'destructive',
-  FAILED: 'destructive'
+  FAILED: 'destructive',
+};
+
+const PROVIDER_COLORS: Record<string, 'default' | 'secondary' | 'outline'> = {
+  RESEND: 'default',
+  GMAIL: 'secondary',
 };
 
 export default function EmailsPage() {
   const [emails, setEmails] = useState<any[]>([]);
   const [status, setStatus] = useState('');
+  const [provider, setProvider] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadEmails();
-  }, [status]);
+  }, [status, provider]);
 
   async function loadEmails() {
     setLoading(true);
     const params = new URLSearchParams();
     if (status) params.set('status', status);
+    if (provider) params.set('provider', provider);
 
     const res = await fetch(`/api/admin/emails?${params}`);
     const data = await res.json();
@@ -64,6 +84,17 @@ export default function EmailsPage() {
             <SelectItem value="FAILED">Failed</SelectItem>
           </SelectContent>
         </Select>
+
+        <Select value={provider} onValueChange={setProvider}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="All Providers" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Providers</SelectItem>
+            <SelectItem value="RESEND">Resend</SelectItem>
+            <SelectItem value="GMAIL">Gmail</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -74,6 +105,7 @@ export default function EmailsPage() {
             <TableRow>
               <TableHead>To</TableHead>
               <TableHead>Subject</TableHead>
+              <TableHead>Provider</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
@@ -85,12 +117,17 @@ export default function EmailsPage() {
                 <TableCell>{email.to}</TableCell>
                 <TableCell>{email.subject || '-'}</TableCell>
                 <TableCell>
+                  <Badge variant={PROVIDER_COLORS[email.provider]}>{email.provider}</Badge>
+                </TableCell>
+                <TableCell>
                   <Badge variant={STATUS_COLORS[email.status]}>{email.status}</Badge>
                 </TableCell>
                 <TableCell>{format(new Date(email.createdAt), 'MMM d, yyyy HH:mm')}</TableCell>
                 <TableCell>
                   <Link href={`/operations/emails/${email.id}`}>
-                    <Button variant="ghost" size="sm">View</Button>
+                    <Button variant="ghost" size="sm">
+                      View
+                    </Button>
                   </Link>
                 </TableCell>
               </TableRow>

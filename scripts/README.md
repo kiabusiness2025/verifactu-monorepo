@@ -3,6 +3,7 @@
 ## Phase 2 Operations Testing
 
 ### Prerequisites
+
 - Admin panel running on http://localhost:3003
 - Logged in as ADMIN user
 - Database connected (Prisma Accelerate)
@@ -10,21 +11,25 @@
 ### Quick Test
 
 1. **Create test data:**
+
 ```bash
 ./scripts/test-phase2.sh
 ```
 
 2. **Visit Operations Dashboard:**
+
 ```
 http://localhost:3003/operations
 ```
 
 3. **Check test webhook:**
+
 ```
 http://localhost:3003/operations/webhooks?provider=STRIPE&status=FAILED
 ```
 
 4. **Check test email:**
+
 ```
 http://localhost:3003/operations/emails?status=FAILED
 ```

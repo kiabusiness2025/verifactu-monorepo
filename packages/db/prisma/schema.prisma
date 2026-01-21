@@ -58,6 +58,11 @@ enum EmailStatus {
   FAILED
 }
 
+enum EmailProvider {
+  RESEND
+  GMAIL
+}
+
 model User {
   id             String    @id @default(cuid())
   email          String    @unique
@@ -216,13 +221,15 @@ model WebhookAttempt {
 }
 
 model EmailEvent {
-  id          String      @id @default(cuid())
-  messageId   String?     @unique // Resend message ID
+  id          String        @id @default(cuid())
+  messageId   String?       @unique // Resend or Gmail message ID
+  threadId    String?       // Gmail thread ID
   to          String
+  fromEmail   String?       // Sender email (support@verifactu.business for Gmail)
   template    String?
   subject     String?
-  status      EmailStatus @default(QUEUED)
-  provider    String      @default("resend")
+  status      EmailStatus   @default(QUEUED)
+  provider    EmailProvider @default(RESEND)
   payload     Json?
   lastError   String?
 
@@ -237,6 +244,7 @@ model EmailEvent {
   @@index([status, createdAt])
   @@index([userId, createdAt])
   @@index([companyId, createdAt])
+  @@index([provider, createdAt])
 }
 
 //

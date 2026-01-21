@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from '@verifactu/ui/components/textarea';
 import { Input } from '@verifactu/ui/components/input';
 import { Label } from '@verifactu/ui/components/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@verifactu/ui/components/select';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { useParams } from 'next/navigation';
@@ -26,6 +27,7 @@ export default function UserDetailPage() {
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
+  const [emailProvider, setEmailProvider] = useState<'RESEND' | 'GMAIL'>('RESEND');
 
   useEffect(() => {
     loadUser();
@@ -103,14 +105,19 @@ export default function UserDetailPage() {
       const res = await fetch(`/api/admin/users/${params.id}/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: emailSubject, message: emailMessage })
+        body: JSON.stringify({ 
+          subject: emailSubject, 
+          message: emailMessage,
+          provider: emailProvider
+        })
       });
 
       if (res.ok) {
         setEmailDialogOpen(false);
         setEmailSubject('');
         setEmailMessage('');
-        alert('Email sent successfully');
+        setEmailProvider('RESEND');
+        alert(`Email sent successfully via ${emailProvider}`);
       } else {
         const error = await res.json();
         alert(error.error || 'Failed to send email');
@@ -247,6 +254,23 @@ export default function UserDetailPage() {
                 </DialogHeader>
                 <div className="space-y-4 mt-4">
                   <div>
+                    <Label>Email Provider</Label>
+                    <Select value={emailProvider} onValueChange={(value: 'RESEND' | 'GMAIL') => setEmailProvider(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="RESEND">Resend (no-reply@verifactu.business)</SelectItem>
+                        <SelectItem value="GMAIL">Gmail (support@verifactu.business)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {emailProvider === 'GMAIL' 
+                        ? 'Sent from support@ using Gmail API. User can reply.' 
+                        : 'Transactional email from no-reply@. No replies tracked.'}
+                    </p>
+                  </div>
+                  <div>
                     <Label>Subject</Label>
                     <Input
                       value={emailSubject}
@@ -271,7 +295,7 @@ export default function UserDetailPage() {
                       onClick={handleSendEmail}
                       disabled={actionLoading || !emailSubject.trim() || !emailMessage.trim()}
                     >
-                      Send Email
+                      Send via {emailProvider}
                     </Button>
                   </div>
                 </div>

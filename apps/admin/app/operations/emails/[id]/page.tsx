@@ -17,6 +17,11 @@ const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'o
   FAILED: 'destructive'
 };
 
+const PROVIDER_COLORS: Record<string, 'default' | 'secondary' | 'outline'> = {
+  RESEND: 'default',
+  GMAIL: 'secondary'
+};
+
 export default function EmailDetailPage() {
   const params = useParams();
   const [email, setEmail] = useState<any>(null);
@@ -38,10 +43,17 @@ export default function EmailDetailPage() {
   async function handleRetry() {
     setRetrying(true);
     try {
-      await fetch(`/api/admin/emails/${params.id}/retry`, { method: 'POST' });
+      const res = await fetch(`/api/admin/emails/${params.id}/retry`, { method: 'POST' });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        alert(data.error || 'Retry failed');
+      }
+      
       await loadEmail();
     } catch (error) {
       console.error('Retry failed:', error);
+      alert('Retry failed');
     }
     setRetrying(false);
   }
@@ -49,8 +61,16 @@ export default function EmailDetailPage() {
   if (loading) return <p className="p-8">Loading...</p>;
   if (!email) return <p className="p-8">Email not found</p>;
 
-  return (
-    <div className="p-8 space-y-6">
+  // Only allow retry for Resend emails with FAILED or BOUNCED status
+  const cancanRetry && (
+            <Button onClick={handleRetry} disabled={retrying}>
+              {retrying ? 'Retrying...' : 'Retry (Resend)'}
+            </Button>
+          )}
+          {email.provider === 'GMAIL' && (email.status === 'FAILED' || email.status === 'BOUNCED') && (
+            <div className="text-sm text-muted-foreground">
+              Gmail emails cannot be retried automatically
+            </divp-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Email Details</h1>
@@ -87,12 +107,24 @@ export default function EmailDetailPage() {
               <p className="font-mono text-sm">{email.template || '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Status</p>
-              <Badge variant={STATUS_COLORS[email.status]}>{email.status}</Badge>
+              <p className="t{PROVIDER_COLORS[email.provider]}>{email.provider}</Badge>
             </div>
+            {email.fromEmail && (
+              <div>
+                <p className="text-sm text-muted-foreground">From</p>
+                <p className="font-medium">{email.fromEmail}</p>
+              </div>
+            )}
             <div>
-              <p className="text-sm text-muted-foreground">Provider</p>
-              <Badge variant="outline">{email.provider}</Badge>
+              <p className="text-sm text-muted-foreground">Message ID</p>
+              <p className="font-mono text-sm break-all">{email.messageId || '-'}</p>
+            </div>
+            {email.threadId && (
+              <div>
+                <p className="text-sm text-muted-foreground">Thread ID (Gmail)</p>
+                <p className="font-mono text-sm break-all">{email.threadId}</p>
+              </div>
+            )}ge variant="outline">{email.provider}</Badge>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Message ID</p>
