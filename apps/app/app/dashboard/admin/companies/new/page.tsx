@@ -4,9 +4,11 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useToast } from '@/components/notifications/ToastNotifications';
 
 export default function NewCompanyPage() {
   const router = useRouter();
+  const { success, error: showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -33,13 +35,14 @@ export default function NewCompanyPage() {
 
       if (res.ok) {
         const data = await res.json();
+        success('Empresa creada', 'La empresa se cre\u00f3 correctamente');
         router.push(`/dashboard/admin/companies/${data.id}`);
       } else {
-        alert('Error al crear la empresa');
+        showError('Error al crear empresa', 'No se pudo crear la empresa');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al crear la empresa');
+      showError('Error al crear empresa', 'No se pudo crear la empresa');
     } finally {
       setLoading(false);
     }

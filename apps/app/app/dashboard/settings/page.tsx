@@ -164,13 +164,13 @@ function SettingsContent() {
 
     // Validar tipo de archivo
     if (!file.type.startsWith('image/')) {
-      alert('Por favor selecciona una imagen valida');
+      showError('Archivo inv\u00e1lido', 'Por favor selecciona una imagen v\u00e1lida');
       return;
     }
 
     // Validar tamano (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no puede superar los 5MB');
+      showError('Archivo muy grande', 'La imagen no puede superar los 5MB');
       return;
     }
 
@@ -195,22 +195,22 @@ function SettingsContent() {
         const data = await res.json();
         if (data.ok && data.logoURL) {
           setLogoURL(data.logoURL);
-          alert('Logo actualizado correctamente');
+          success('Logo actualizado', 'El logo se actualiz\u00f3 correctamente');
           // Recargar pagina para que se actualice en el Topbar
           window.location.reload();
         } else {
-          alert(data.error || 'Error al subir el logo');
+          showError('Error al subir logo', data.error || 'No se pudo actualizar el logo');
         }
       };
 
       reader.onerror = () => {
-        alert('Error al leer el archivo');
+        showError('Error al leer archivo', 'No se pudo leer el archivo seleccionado');
       };
 
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Error uploading logo:', error);
-      alert('Error al subir el logo');
+      showError('Error al subir logo', 'No se pudo subir el logo');
     } finally {
       setIsUploadingLogo(false);
     }

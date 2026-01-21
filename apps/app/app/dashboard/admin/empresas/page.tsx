@@ -4,6 +4,7 @@ import { adminDelete, adminGet, adminPatch, adminPost, type TenantRow } from '@/
 import { formatCurrency, formatNumber } from '@/src/lib/formatters';
 import { Building2, Pencil, Plus, Trash2, TrendingUp, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useToast } from '@/components/notifications/ToastNotifications';
 
 type Tenant = TenantRow & {
   members_count: number;
@@ -12,6 +13,7 @@ type Tenant = TenantRow & {
 };
 
 export default function AdminEmpresasPage() {
+  const { success, error: showError } = useToast();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -101,8 +103,9 @@ export default function AdminEmpresasPage() {
     try {
       await adminDelete(`/api/admin/tenants/${tenant.id}`);
       setTenants(tenants.filter((t) => t.id !== tenant.id));
+      success('Empresa eliminada', 'La empresa se eliminó correctamente');
     } catch (err: any) {
-      alert(err.message || 'Error al eliminar');
+      showError('Error al eliminar', err.message || 'No se pudo eliminar la empresa');
     }
   }
 

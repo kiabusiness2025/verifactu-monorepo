@@ -5,6 +5,7 @@ import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useToast } from '@/components/notifications/ToastNotifications';
 
 type CompanyData = {
   id: string;
@@ -26,6 +27,7 @@ type CompanyData = {
 export default function EditCompanyPage() {
   const params = useParams();
   const router = useRouter();
+  const { success, error: showError } = useToast();
   const companyId = params.id as string;
 
   const [loading, setLoading] = useState(true);
@@ -45,6 +47,7 @@ export default function EditCompanyPage() {
 
   useEffect(() => {
     fetchCompany();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);
 
   async function fetchCompany() {
@@ -84,14 +87,14 @@ export default function EditCompanyPage() {
       });
 
       if (res.ok) {
-        alert('Empresa actualizada');
+        success('Empresa actualizada', 'Los cambios se guardaron correctamente');
         fetchCompany();
       } else {
-        alert('Error al actualizar');
+        showError('Error al actualizar', 'No se pudo actualizar la empresa');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al actualizar');
+      showError('Error al actualizar', 'No se pudo actualizar la empresa');
     } finally {
       setSaving(false);
     }
@@ -106,13 +109,14 @@ export default function EditCompanyPage() {
       });
 
       if (res.ok) {
+        success('Empresa eliminada', 'La empresa se elimin\u00f3 correctamente');
         router.push('/dashboard/admin/companies');
       } else {
-        alert('Error al eliminar');
+        showError('Error al eliminar', 'No se pudo eliminar la empresa');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al eliminar');
+      showError('Error al eliminar', 'No se pudo eliminar la empresa');
     }
   }
 

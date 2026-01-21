@@ -1,9 +1,22 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Edit2, LogIn, Trash2, Building2, CreditCard, Activity, MessageSquare, Users, Clock, Settings } from "lucide-react";
-import { formatShortDate, formatCurrency, formatNumber } from "@/src/lib/formatters";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  Edit2,
+  LogIn,
+  Trash2,
+  Building2,
+  CreditCard,
+  Activity,
+  MessageSquare,
+  Users,
+  Clock,
+  Settings,
+} from 'lucide-react';
+import { useToast } from '@/components/notifications/ToastNotifications';
+import { formatShortDate, formatCurrency, formatNumber } from '@/src/lib/formatters';
 
 interface UserDetails {
   user: {
@@ -87,12 +100,14 @@ interface UserDetails {
 
 export default function UserDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { success, error: showError, warning } = useToast();
   const [data, setData] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isImpersonating, setIsImpersonating] = useState(false);
 
   useEffect(() => {
     fetchUserDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const fetchUserDetails = async () => {
@@ -103,39 +118,47 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         const userData = await res.json();
         setData(userData);
       } else {
-        alert('Error al cargar usuario');
+        showError('Error', 'No se pudo cargar el usuario');
         router.push('/dashboard/admin/users');
       }
     } catch (error) {
       console.error('Error fetching user:', error);
-      alert('Error al cargar usuario');
+      showError('Error', 'No se pudo cargar el usuario');
     } finally {
       setLoading(false);
     }
   };
 
   const handleImpersonate = async () => {
-    if (!confirm(`¿Entrar al dashboard como ${data?.user.email}?\n\nPodrás ver y gestionar su cuenta como si fueras ese usuario.`)) {
+    if (
+      !confirm(
+        `¿Entrar al dashboard como ${data?.user.email}?\n\nPodrás ver y gestionar su cuenta como si fueras ese usuario.`
+      )
+    ) {
       return;
     }
 
     try {
       setIsImpersonating(true);
       const res = await fetch(`/api/admin/users/${params.id}/impersonate`, {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (res.ok) {
         const result = await res.json();
+        success('Suplantaci\u00f3n exitosa', `Entrando como ${data?.user.email}`);
         // Redirigir al dashboard del usuario
         window.location.href = result.redirectTo || '/dashboard';
       } else {
         const error = await res.json();
-        alert(`Error: ${error.error}`);
+        showError(
+          'Error de suplantaci\u00f3n',
+          error.error || 'No se pudo acceder como este usuario'
+        );
       }
     } catch (error) {
       console.error('Impersonation error:', error);
-      alert('Error al intentar entrar como usuario');
+      showError('Error de suplantaci\u00f3n', 'No se pudo acceder como este usuario');
     } finally {
       setIsImpersonating(false);
     }
@@ -153,7 +176,19 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     return null;
   }
 
-  const { user, memberships, subscriptions, recentActivity, conversationsCount, conversations, userMessagesCount, loginActivity, profileChanges, collaborators, expensesActivity } = data;
+  const {
+    user,
+    memberships,
+    subscriptions,
+    recentActivity,
+    conversationsCount,
+    conversations,
+    userMessagesCount,
+    loginActivity,
+    profileChanges,
+    collaborators,
+    expensesActivity,
+  } = data;
 
   return (
     <div className="space-y-6">
@@ -169,7 +204,12 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
         <div className="flex gap-2">
           <button
-            onClick={() => alert('Funcionalidad de edición próximamente')}
+            onClick={() =>
+              warning(
+                'En desarrollo',
+                'La funcionalidad de edici\u00f3n estar\u00e1 disponible pr\u00f3ximamente'
+              )
+            }
             className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             <Edit2 className="h-4 w-4" />
@@ -224,7 +264,9 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
           </div>
           <div className="rounded-lg bg-slate-50 p-4">
             <p className="text-xs font-semibold uppercase text-slate-500">Tono Isaak</p>
-            <p className="mt-1 text-sm font-semibold capitalize text-slate-700">{user.isaak_tone || 'friendly'}</p>
+            <p className="mt-1 text-sm font-semibold capitalize text-slate-700">
+              {user.isaak_tone || 'friendly'}
+            </p>
           </div>
           <div className="rounded-lg bg-slate-50 p-4">
             <p className="text-xs font-semibold uppercase text-slate-500">Facturas</p>
@@ -246,23 +288,28 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         ) : (
           <div className="space-y-3">
             {memberships.map((m) => (
-              <div key={m.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+              <div
+                key={m.id}
+                className="flex items-center justify-between rounded-lg border border-slate-200 p-4"
+              >
                 <div>
                   <p className="font-semibold text-slate-900">{m.tenant_name}</p>
                   {m.tenant_legal_name && (
                     <p className="text-sm text-slate-600">{m.tenant_legal_name}</p>
                   )}
-                  {m.tenant_nif && (
-                    <p className="text-xs text-slate-500">NIF: {m.tenant_nif}</p>
-                  )}
+                  {m.tenant_nif && <p className="text-xs text-slate-500">NIF: {m.tenant_nif}</p>}
                   <p className="mt-1 text-xs text-slate-500">
                     Miembro desde {formatShortDate(m.created_at)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
-                    m.role === 'owner' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
-                  }`}>
+                  <span
+                    className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                      m.role === 'owner'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}
+                  >
                     {m.role === 'owner' ? 'Propietario' : 'Miembro'}
                   </span>
                   {m.is_demo && (
@@ -290,7 +337,10 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         ) : (
           <div className="space-y-3">
             {subscriptions.map((s) => (
-              <div key={s.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+              <div
+                key={s.id}
+                className="flex items-center justify-between rounded-lg border border-slate-200 p-4"
+              >
                 <div>
                   <p className="font-semibold text-slate-900">{s.plan_name}</p>
                   <p className="text-sm text-slate-600">Código: {s.plan_code}</p>
@@ -307,9 +357,13 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold text-slate-900">€{s.fixed_monthly}/mes</p>
-                  <span className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
-                    s.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'
-                  }`}>
+                  <span
+                    className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                      s.status === 'active'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
                     {s.status}
                   </span>
                 </div>
@@ -331,17 +385,20 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         ) : (
           <div className="space-y-2">
             {recentActivity.map((item) => (
-              <div key={item.id} className="flex items-center justify-between border-b border-slate-100 py-3 last:border-0">
+              <div
+                key={item.id}
+                className="flex items-center justify-between border-b border-slate-100 py-3 last:border-0"
+              >
                 <div>
                   <p className="font-medium text-slate-900">{item.number}</p>
                   <p className="text-sm text-slate-600">{item.customer_name}</p>
                   <p className="text-xs text-slate-500">{item.tenant_name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-slate-900">{formatCurrency(item.amount_gross)}</p>
-                  <p className="text-xs text-slate-500">
-                    {formatShortDate(item.created_at)}
+                  <p className="font-semibold text-slate-900">
+                    {formatCurrency(item.amount_gross)}
                   </p>
+                  <p className="text-xs text-slate-500">{formatShortDate(item.created_at)}</p>
                 </div>
               </div>
             ))}
@@ -361,7 +418,10 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         ) : (
           <div className="space-y-3">
             {conversations.map((conv) => (
-              <div key={conv.id} className="flex items-start justify-between rounded-lg border border-slate-200 p-4">
+              <div
+                key={conv.id}
+                className="flex items-start justify-between rounded-lg border border-slate-200 p-4"
+              >
                 <div className="flex-1">
                   <p className="font-semibold text-slate-900">{conv.title || 'Sin título'}</p>
                   {conv.context && (
@@ -370,7 +430,8 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                     </span>
                   )}
                   <p className="mt-2 text-xs text-slate-500">
-                    {formatNumber(conv.message_count)} mensajes • Última actividad: {formatShortDate(conv.last_activity)}
+                    {formatNumber(conv.message_count)} mensajes • Última actividad:{' '}
+                    {formatShortDate(conv.last_activity)}
                   </p>
                 </div>
                 <div className="text-right">
@@ -401,10 +462,11 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         ) : (
           <div className="space-y-2">
             {loginActivity.map((activity, idx) => (
-              <div key={idx} className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0">
-                <p className="text-sm text-slate-700">
-                  {formatShortDate(activity.login_date)}
-                </p>
+              <div
+                key={idx}
+                className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0"
+              >
+                <p className="text-sm text-slate-700">{formatShortDate(activity.login_date)}</p>
                 <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
                   {activity.actions_count} acciones
                 </span>
@@ -426,7 +488,10 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         ) : (
           <div className="space-y-2">
             {expensesActivity.map((expense) => (
-              <div key={expense.id} className="flex items-center justify-between border-b border-slate-100 py-3 last:border-0">
+              <div
+                key={expense.id}
+                className="flex items-center justify-between border-b border-slate-100 py-3 last:border-0"
+              >
                 <div>
                   <p className="font-medium text-slate-900">{expense.description}</p>
                   <p className="text-sm text-slate-600">{expense.category}</p>
@@ -434,9 +499,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 </div>
                 <div className="text-right">
                   <p className="font-semibold text-slate-900">{formatCurrency(expense.amount)}</p>
-                  <p className="text-xs text-slate-500">
-                    {formatShortDate(expense.date)}
-                  </p>
+                  <p className="text-xs text-slate-500">{formatShortDate(expense.date)}</p>
                 </div>
               </div>
             ))}
@@ -456,16 +519,23 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         ) : (
           <div className="space-y-3">
             {collaborators.map((collab) => (
-              <div key={collab.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+              <div
+                key={collab.id}
+                className="flex items-center justify-between rounded-lg border border-slate-200 p-4"
+              >
                 <div>
                   <p className="font-semibold text-slate-900">{collab.name || 'Sin nombre'}</p>
                   <p className="text-sm text-slate-600">{collab.email}</p>
                   <p className="text-xs text-slate-500">{collab.tenant_name}</p>
                 </div>
                 <div className="text-right">
-                  <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
-                    collab.role === 'owner' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
-                  }`}>
+                  <span
+                    className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                      collab.role === 'owner'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}
+                  >
                     {collab.role}
                   </span>
                   <p className="mt-1 text-xs text-slate-500">{collab.status}</p>
@@ -499,19 +569,19 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
             </div>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <p className="text-sm font-medium text-slate-700">Onboarding Completado</p>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                user.has_completed_onboarding 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-amber-100 text-amber-700'
-              }`}>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  user.has_completed_onboarding
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-amber-100 text-amber-700'
+                }`}
+              >
                 {user.has_completed_onboarding ? 'Sí' : 'No'}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-slate-700">Última Actualización</p>
-              <p className="text-xs text-slate-500">
-                {formatShortDate(profileChanges.updated_at)}
-              </p>
+              <p className="text-xs text-slate-500">{formatShortDate(profileChanges.updated_at)}</p>
             </div>
           </div>
         ) : (

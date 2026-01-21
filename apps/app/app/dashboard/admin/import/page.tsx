@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { AlertCircle, CheckCircle, FileUp } from "lucide-react";
-import { useRef, useState } from "react";
+import { AlertCircle, CheckCircle, FileUp } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { useToast } from '@/components/notifications/ToastNotifications';
 
 type ImportResult = {
   success: number;
@@ -9,12 +10,13 @@ type ImportResult = {
   details: {
     row: number;
     name: string;
-    status: "success" | "error";
+    status: 'success' | 'error';
     message: string;
   }[];
 };
 
 export default function ImportWizardPage() {
+  const { success, error: showError } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -22,11 +24,11 @@ export default function ImportWizardPage() {
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile && selectedFile.name.endsWith(".csv")) {
+    if (selectedFile && selectedFile.name.endsWith('.csv')) {
       setFile(selectedFile);
       setResult(null);
     } else {
-      alert("Por favor selecciona un archivo CSV");
+      showError('Archivo inválido', 'Por favor selecciona un archivo CSV');
     }
   }
 
@@ -35,23 +37,24 @@ export default function ImportWizardPage() {
 
     setLoading(true);
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append('file', file);
 
     try {
-      const res = await fetch("/api/admin/import", {
-        method: "POST",
+      const res = await fetch('/api/admin/import', {
+        method: 'POST',
         body: formData,
       });
 
       if (res.ok) {
         const data = await res.json();
         setResult(data);
+        success('Importación completada', `${data.success} registros importados exitosamente`);
       } else {
-        alert("Error al procesar la importación");
+        showError('Error de importación', 'No se pudo procesar la importación');
       }
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error al procesar la importación");
+      console.error('Error:', error);
+      showError('Error de importación', 'No se pudo procesar la importación');
     } finally {
       setLoading(false);
     }
@@ -73,9 +76,7 @@ export default function ImportWizardPage() {
         <code className="block text-xs bg-white border border-blue-200 rounded p-2 mt-2 overflow-x-auto">
           name,legal_name,tax_id,email,phone,address,city,postal_code,country
         </code>
-        <p className="text-sm text-blue-800 mt-2">
-          Ejemplo:
-        </p>
+        <p className="text-sm text-blue-800 mt-2">Ejemplo:</p>
         <code className="block text-xs bg-white border border-blue-200 rounded p-2 mt-1 overflow-x-auto">
           Mi Empresa,Mi Empresa SL,12345678A,info@empresa.es,912345678,Calle 1,Madrid,28001,ES
         </code>
@@ -120,7 +121,7 @@ export default function ImportWizardPage() {
             disabled={loading}
             className="inline-flex rounded-lg bg-green-600 px-6 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
           >
-            {loading ? "Importando..." : "Iniciar Importación"}
+            {loading ? 'Importando...' : 'Iniciar Importación'}
           </button>
         </div>
       )}
@@ -163,12 +164,12 @@ export default function ImportWizardPage() {
                 <div
                   key={idx}
                   className={`flex items-start gap-3 p-3 rounded-lg border ${
-                    detail.status === "success"
-                      ? "border-green-200 bg-green-50"
-                      : "border-red-200 bg-red-50"
+                    detail.status === 'success'
+                      ? 'border-green-200 bg-green-50'
+                      : 'border-red-200 bg-red-50'
                   }`}
                 >
-                  {detail.status === "success" ? (
+                  {detail.status === 'success' ? (
                     <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                   ) : (
                     <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -179,7 +180,7 @@ export default function ImportWizardPage() {
                     </p>
                     <p
                       className={`text-xs mt-1 ${
-                        detail.status === "success" ? "text-green-700" : "text-red-700"
+                        detail.status === 'success' ? 'text-green-700' : 'text-red-700'
                       }`}
                     >
                       {detail.message}
@@ -196,7 +197,7 @@ export default function ImportWizardPage() {
               onClick={() => {
                 setFile(null);
                 setResult(null);
-                if (fileInputRef.current) fileInputRef.current.value = "";
+                if (fileInputRef.current) fileInputRef.current.value = '';
               }}
               className="inline-flex rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
             >
