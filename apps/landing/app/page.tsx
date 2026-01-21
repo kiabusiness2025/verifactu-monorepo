@@ -93,9 +93,8 @@ export default function Page() {
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
                 Isaak detecta tu idioma, te acompana con soporte amable y te ayuda a interpretar
                 documentos, plazos y notificaciones. Te guia para subir escrituras, CIF,
-                declaraciones y arrancar 2026 con datos reales de gastos y ventas, con avisos para
-                cierre 2025 y T1 2026.
-              </p>
+                  declaraciones y arrancar 2026 con datos reales de gastos y ventas.
+                </p>
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
                 Verifactu e Isaak no sustituyen a tu gestor habitual. Te dan visibilidad diaria de
                 ventas, gastos y beneficio, con impuesto estimado, para decidir en tiempo real y

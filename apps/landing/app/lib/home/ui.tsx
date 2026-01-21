@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -488,11 +488,11 @@ export function HeroTripleMock() {
               <div className="mt-2 text-xs text-slate-500">Checklist completado al 90%</div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="text-xs font-semibold text-slate-700">Proximos hitos</div>
+              <div className="text-xs font-semibold text-slate-700">Avisos de calendario</div>
               <ul className="mt-2 space-y-1 text-xs text-slate-600">
-                <li>IVA T1 2026: 12 dias</li>
-                <li>Conciliacion banco: pendiente</li>
-                <li>Subida de tickets: 2 faltantes</li>
+                <li>Modelo IVA T1 2026: 12 dias</li>
+                <li>Conciliacion bancaria: pendiente</li>
+                <li>Recordatorio: subir 2 tickets</li>
               </ul>
             </div>
           </div>
@@ -537,7 +537,7 @@ export function HeroTripleMock() {
             </div>
           ))}
           <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] text-blue-700">
-            QR + huella hash simulados en modo demo.
+            Estado VeriFactu visible en cada factura.
           </div>
         </div>
       ),
@@ -559,36 +559,36 @@ export function HeroTripleMock() {
           {(() => {
             const items = [
               {
-                q: 'Isaak, resumen rapido de enero 2026',
-                a: 'Vamos genial. Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.',
-                hint: 'Quieres ver el detalle por cliente?',
-                tone: 'emerald',
+                q: "Isaak, resumen rapido de enero 2026",
+                a: "Vamos genial 😄 Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.",
+                hint: "¿Quieres ver el detalle por cliente? ✨",
+                tone: "emerald",
               },
               {
-                q: 'Que falta para cierre 2025?',
-                a: 'Te faltan 2 facturas y un extracto (ok/alerta). Puedo recordartelo hoy.',
-                hint: 'Te preparo checklist con un clic.',
-                tone: 'amber',
+                q: "Que falta para cierre 2025?",
+                a: "Te faltan 2 facturas y un extracto 🟢🟠. ¿Te lo recuerdo hoy?",
+                hint: "Te preparo checklist con un clic ✅",
+                tone: "amber",
               },
               {
-                q: 'Tengo facturas verificadas?',
-                a: 'Si. 9 facturas con QR y huella hash listos.',
-                hint: 'Compartimos el informe con tu gestor?',
-                tone: 'emerald',
+                q: "Tengo facturas verificadas?",
+                a: "Sí 🙂 9 facturas con QR y huella hash listos.",
+                hint: "¿Compartimos el informe con tu gestor? 🤝",
+                tone: "emerald",
               },
             ];
             const item = items[qaIndex];
             const base =
-              item.tone === 'amber'
-                ? 'from-amber-50 to-slate-50 ring-amber-100 text-amber-700'
-                : 'from-emerald-50 to-slate-50 ring-emerald-100 text-emerald-700';
+              item.tone === "amber"
+                ? "from-amber-50 to-slate-50 ring-amber-100 text-amber-700"
+                : "from-emerald-50 to-slate-50 ring-emerald-100 text-emerald-700";
             return (
               <div className="transition-all duration-500">
                 <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200">
                   <div className="text-[11px] font-semibold text-slate-500">Tu</div>
                   <div className="mt-1 text-[13px] text-slate-800">{item.q}</div>
                 </div>
-                <div className={`mt-2 rounded-2xl bg-gradient-to-r p-2 ring-1 ${base}`}>
+                <div className={"mt-2 rounded-2xl bg-gradient-to-r p-2 ring-1 " + base}>
                   <div className="text-[11px] font-semibold">Isaak</div>
                   <div className="mt-1 text-[13px] text-slate-700">{item.a}</div>
                   <div className="mt-1 text-[11px]">{item.hint}</div>
@@ -1083,9 +1083,9 @@ export function PideseloAIsaakSection() {
               <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
                 <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
                 <div className="mt-1 text-sm text-slate-700">
-              a: 'Te faltan 2 facturas y un extracto (ok/alerta). Puedo recordartelo hoy.',
+                  Te faltan 2 facturas y un extracto.
                   <br />
-                  Te aviso hoy y manana. ?
+                  Te aviso hoy y manana.
                 </div>
               </div>
               <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
@@ -1095,9 +1095,9 @@ export function PideseloAIsaakSection() {
               <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
                 <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
                 <div className="mt-1 text-sm text-slate-700">
-              a: 'Vamos genial. Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.',
+                  Vamos genial :) Ventas 12.480 EUR, gastos 7.130 EUR.
                   <br />
-                  Beneficio estimado 5.350 EUR. ?
+                  Beneficio estimado 5.350 EUR.
                 </div>
               </div>
             </div>
@@ -1152,7 +1152,7 @@ export function PideseloAIsaakSection() {
           />
           <CommandExample
             command="Estamos en cierre 2025, que me falta?"
-            response="Te faltan 2 facturas y un extracto. Puedo recordartelo hoy."
+            response="Te faltan 2 facturas y un extracto. Te aviso hoy y manana."
           />
           <CommandExample
             command="Recordatorios del 1o trimestre 2026"
