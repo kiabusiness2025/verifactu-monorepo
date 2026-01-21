@@ -556,36 +556,34 @@ export function HeroTripleMock() {
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
             </div>
           </div>
-          {[
-            {
-              q: 'Isaak, resumen rapido de enero 2026',
-              a: 'Vamos genial. Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.',
-              hint: 'Quieres ver el detalle por cliente?',
-              tone: 'emerald',
-            },
-            {
-              q: 'Que falta para cierre 2025?',
-              a: 'Te faltan 2 facturas y un extracto (ok/alerta). Puedo recordartelo hoy.',
-              hint: 'Te preparo checklist con un clic.',
-              tone: 'amber',
-            },
-            {
-              q: 'Tengo facturas verificadas?',
-              a: 'Si. 9 facturas con QR y huella hash listos.',
-              hint: 'Compartimos el informe con tu gestor?',
-              tone: 'emerald',
-            },
-          ].map((item, idx) => {
-            const isActive = idx === qaIndex;
+          {(() => {
+            const items = [
+              {
+                q: 'Isaak, resumen rapido de enero 2026',
+                a: 'Vamos genial. Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.',
+                hint: 'Quieres ver el detalle por cliente?',
+                tone: 'emerald',
+              },
+              {
+                q: 'Que falta para cierre 2025?',
+                a: 'Te faltan 2 facturas y un extracto (ok/alerta). Puedo recordartelo hoy.',
+                hint: 'Te preparo checklist con un clic.',
+                tone: 'amber',
+              },
+              {
+                q: 'Tengo facturas verificadas?',
+                a: 'Si. 9 facturas con QR y huella hash listos.',
+                hint: 'Compartimos el informe con tu gestor?',
+                tone: 'emerald',
+              },
+            ];
+            const item = items[qaIndex];
             const base =
               item.tone === 'amber'
                 ? 'from-amber-50 to-slate-50 ring-amber-100 text-amber-700'
                 : 'from-emerald-50 to-slate-50 ring-emerald-100 text-emerald-700';
             return (
-              <div
-                key={item.q}
-                className={`transition-all duration-500 ${isActive ? 'opacity-100' : 'opacity-20'}`}
-              >
+              <div className="transition-all duration-500">
                 <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200">
                   <div className="text-[11px] font-semibold text-slate-500">Tu</div>
                   <div className="mt-1 text-[13px] text-slate-800">{item.q}</div>
@@ -597,7 +595,7 @@ export function HeroTripleMock() {
                 </div>
               </div>
             );
-          })}
+          })()}
         </div>
       ),
     },
@@ -606,20 +604,20 @@ export function HeroTripleMock() {
   const getCardClass = (id: typeof activeId) => {
     const isActive = id === activeId;
     const mobileVisibility = isActive ? 'block' : 'hidden sm:block';
-    return `${mobileVisibility} rounded-3xl border border-slate-200 bg-white p-4 shadow-xl transition-all duration-500 sm:absolute sm:left-1/2 sm:top-1/2 sm:origin-top-left ${positions[id]} ${
+    return `${mobileVisibility} relative mx-auto w-full max-w-[360px] rounded-3xl border border-slate-200 bg-white p-3 shadow-xl transition-all duration-500 sm:absolute sm:left-1/2 sm:top-1/2 sm:origin-top-left sm:max-w-none sm:p-4 ${positions[id]} ${
       isActive ? 'z-30 scale-105 opacity-100' : 'z-10 scale-95 opacity-90'
     }`;
   };
 
   return (
     <div className="relative">
-      <div className="relative space-y-4 sm:min-h-[520px] sm:space-y-0 lg:min-h-[560px]">
+      <div className="relative space-y-4 pb-6 sm:min-h-[520px] sm:space-y-0 sm:pb-0 lg:min-h-[560px]">
         {panels.map((panel) => (
           <button
             key={panel.id}
             type="button"
             onClick={() => setActiveId(panel.id)}
-            className={`${getCardClass(panel.id)} w-full sm:w-[300px] lg:w-[340px]`}
+            className={`${getCardClass(panel.id)} sm:w-[300px] lg:w-[340px]`}
             aria-pressed={activeId === panel.id}
           >
             <div className="flex items-center justify-between">
