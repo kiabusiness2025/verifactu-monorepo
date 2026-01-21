@@ -80,13 +80,30 @@ El panel estará disponible en: `http://localhost:3003`
 
 ## 🔑 Autenticación y Permisos
 
+### Middleware RBAC
+
+El panel implementa un sistema robusto de control de acceso. Ver guía completa: [MIDDLEWARE_RBAC.md](./docs/MIDDLEWARE_RBAC.md)
+
+**Características:**
+- ✅ Protección server-side con NextAuth JWT
+- ✅ Validación de email específico + dominio completo
+- ✅ Validación de roles (ADMIN/SUPPORT)
+- ✅ Redirección automática si no autenticado
+- ✅ 403 Forbidden si no autorizado
+
+**Configuración en `.env.local`:**
+```bash
+ADMIN_ALLOWED_EMAIL="support@verifactu.business"
+ADMIN_ALLOWED_DOMAIN="verifactu.business"
+```
+
 ### Roles
 
 | Rol       | Descripción     | Permisos                                               |
 | --------- | --------------- | ------------------------------------------------------ |
 | `ADMIN`   | Acceso total    | Todos los módulos, impersonación sin límites           |
 | `SUPPORT` | Soporte técnico | Ver datos, impersonación limitada según `supportScope` |
-| `USER`    | Cliente         | Sin acceso al admin panel                              |
+| `USER`    | Cliente         | Sin acceso al admin panel (bloqueado por middleware)   |
 
 ### Support Scope
 
