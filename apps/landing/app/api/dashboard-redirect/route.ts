@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME, buildSessionCookieOptions } from "@verifactu/utils";
 
 export const runtime = "nodejs";
+export const dynamic = 'force-dynamic'; // Prevent static optimization for routes using cookies
 
 /**
  * API Route: /api/dashboard-redirect
