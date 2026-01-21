@@ -13,7 +13,10 @@
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0"
+    "@prisma/client": "^5.22.0",
+    "date-fns": "^4.1.0",
+    "resend": "^6.8.0",
+    "stripe": "^20.2.0"
   },
   "devDependencies": {
     "prisma": "^5.22.0",

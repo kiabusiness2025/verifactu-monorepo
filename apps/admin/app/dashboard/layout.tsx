@@ -68,6 +68,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <NavLink href="/companies" icon="🏢">
               Empresas
             </NavLink>
+            <NavLink href="/operations" icon="⚙️">
+              Operations
+            </NavLink>
             <NavLink href="/audit" icon="📝">
               Audit Log
             </NavLink>

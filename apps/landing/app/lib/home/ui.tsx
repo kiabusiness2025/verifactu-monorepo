@@ -330,43 +330,82 @@ export function StepCard({
 export function DashboardMock() {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-semibold">Isaak Control Center</div>
-        <span className="rounded-full bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200">
-          Suscripcion Business Plus
-        </span>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-[#0060F0]">
+            V
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-[#002060]">Verifactu Business</div>
+            <div className="text-[11px] text-slate-500">Empresa Demo SL</div>
+          </div>
+        </div>
+        <div className="rounded-full bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
+          Buenas tardes, Maria
+        </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <KpiCard label="Ventas del mes" value="48.230 EUR" sub="+12%" />
-        <KpiCard label="Gastos del mes" value="36.900 EUR" sub="+7%" />
-        <KpiCard label="Beneficio" value="12.410 EUR" sub="+8%" />
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="text-xs font-semibold text-slate-700">Resumen general</div>
+        <p className="mt-1 text-xs text-slate-600">
+          Beneficio actualizado: ventas - gastos. Sin cruzar hojas.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <KpiCard label="Ventas mes" value="18.420 EUR" sub="+9%" />
+          <KpiCard label="Gastos mes" value="11.260 EUR" sub="+5%" />
+          <KpiCard label="Beneficio" value="7.160 EUR" sub="+12%" />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <div className="text-xs font-semibold text-slate-700">Acciones</div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-3">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <FileText className="h-4 w-4 text-[#0080F0]" />
+              Factura
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">Crea o revisa cobros</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-3">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <UploadCloud className="h-4 w-4 text-emerald-600" />
+              Documento
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">Sube y organiza</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-3">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <CalendarClock className="h-4 w-4 text-amber-500" />
+              Calendario
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">Plazos fiscales</p>
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-xs font-semibold text-slate-700">Isaak</div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            He detectado un aumento de gastos en proveedores. Quieres que identifique los que mas afectan al margen?
+            Maria, enero 2026 va bien. Te faltan 2 tickets y un extracto. 📌
           </p>
-
           <div className="mt-3 flex gap-2">
             <button className="rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-xs font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB]">
-              Analizar ahora
+              Ver resumen
             </button>
             <button className="rounded-full border border-[#0060F0] bg-white px-4 py-2 text-xs font-semibold text-[#0060F0] hover:bg-[#0060F0]/10">
-              Mas tarde
+              Recordar luego
             </button>
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="text-xs font-semibold text-slate-700">Actividad reciente</div>
+          <div className="text-xs font-semibold text-slate-700">Avisos</div>
           <div className="mt-3 space-y-2">
-            <ActivityItem icon={<FileText className="h-4 w-4 text-[#0080F0]" />} text="Factura VF-2031 emitida y validada" />
-            <ActivityItem icon={<UploadCloud className="h-4 w-4 text-[#0080F0]" />} text="3 tickets reconocidos desde Drive" />
-            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-[#0080F0]" />} text="Recordatorio creado: plazo fiscal en 5 dias" />
-            <ActivityItem icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />} text="Checklist VeriFactu: todo en orden" />
+            <ActivityItem icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />} text="Cierre 2025: checklist al 90%" />
+            <ActivityItem icon={<CalendarClock className="h-4 w-4 text-amber-500" />} text="T1 2026: plazos en 12 dias" />
+            <ActivityItem icon={<FileText className="h-4 w-4 text-[#0080F0]" />} text="Factura VF-2310 validada" />
           </div>
         </div>
       </div>
@@ -708,6 +747,8 @@ export function FeaturesSection() {
 }
 
 export function PideseloAIsaakSection() {
+  const isaakSignupUrl = `${getAppUrl()}/auth/signup?next=/dashboard?isaak=1`;
+  const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
     <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
       <Container>
@@ -720,8 +761,8 @@ export function PideseloAIsaakSection() {
             Un amigo experto que habla tu idioma y te cuida los plazos.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Isaak interpreta documentos, avisa de cierres (ejercicio 2025, T4 2025), ayuda a cargar tus datos reales
-            y te guia mientras la prueba se acerca a su fin.
+            Isaak interpreta documentos, avisa de cierre 2025 y te prepara el 1o trimestre 2026.
+            Te acompana en enero 2026 para que llegues con todo listo.
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-xs text-slate-500">
             Isaak no sustituye a tu gestor o asesor contable. Te ofrece datos de ventas, gastos y beneficio para
@@ -729,30 +770,137 @@ export function PideseloAIsaakSection() {
           </p>
         </div>
 
+        <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-[#002060]">Isaak en vivo</div>
+              <span className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15">
+                Demo interactiva
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Elige la personalidad y prueba preguntas rapidas. Todo se ve en tiempo real.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              <button className="rounded-full border border-[#0060F0] bg-[#0060F0]/10 px-3 py-1 font-semibold text-[#0060F0]">
+                Cercano 😊
+              </button>
+              <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
+                Profesional 🤝
+              </button>
+              <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
+                Minimalista ✅
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-[11px] font-semibold text-slate-600">Preguntas rapidas</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                  Cierre 2025, que falta?
+                </span>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                  Enero 2026, resumen rapido
+                </span>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                  T1 2026, plazos clave
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+                <div className="text-[11px] font-semibold text-slate-500">Tu</div>
+                <div className="mt-1 text-sm text-slate-800">Cierre 2025, que falta?</div>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
+                <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
+                <div className="mt-1 text-sm text-slate-700">
+                  Te faltan 2 facturas y un extracto. 📄
+                  <br />
+                  Te aviso hoy y manana. ✅
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+                <div className="text-[11px] font-semibold text-slate-500">Tu</div>
+                <div className="mt-1 text-sm text-slate-800">Enero 2026, resumen rapido</div>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
+                <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
+                <div className="mt-1 text-sm text-slate-700">
+                  Ventas 12.480 EUR, gastos 7.130 EUR. 💶
+                  <br />
+                  Beneficio estimado 5.350 EUR. ✨
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="text-sm font-semibold text-[#002060]">Tu Isaak, tu estilo</div>
+            <p className="mt-2 text-sm text-slate-600">
+              Elige como quieres que te hable Isaak. Alegre, profesional o minimalista.
+            </p>
+            <div className="mt-4 grid gap-3 text-sm text-slate-600">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="font-semibold text-slate-800">Alegre y optimista 😄</div>
+                <p className="mt-1 text-xs">Mensajes cortos, emoji suave y mucha energia positiva.</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="font-semibold text-slate-800">Profesional 🤝</div>
+                <p className="mt-1 text-xs">Directo, claro y con foco en resultados.</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="font-semibold text-slate-800">Minimalista ✅</div>
+                <p className="mt-1 text-xs">Solo lo esencial. Sin ruido.</p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-2">
+              <Link
+                href={isaakSignupUrl}
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
+              >
+                Hablar con Isaak 💬
+              </Link>
+              <Link
+                href={isaakChatUrl}
+                className="inline-flex items-center justify-center rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Ya tengo cuenta, abrir chat
+              </Link>
+            </div>
+            <p className="mt-3 text-xs text-slate-500">
+              Isaak te acompana en el cierre 2025 y el arranque del 1o trimestre 2026.
+            </p>
+          </div>
+        </div>
+
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <CommandExample
             command="Explicame estas escrituras y el CIF"
-            response="He extraido los datos clave y los he guardado en tu ficha de empresa. Si falta algo, te lo marco para completar en 2 minutos."
+            response="He extraido los datos clave y los guardo en tu ficha. 📄 Te aviso si falta algo. ✅"
           />
           <CommandExample
             command="Estamos en cierre 2025, que me falta?"
-            response="Te faltan 2 facturas de diciembre y un extracto bancario. Quieres que te recuerde los plazos y lo deje listo para tu gestor?"
+            response="Te faltan 2 facturas y un extracto. 📄 Te aviso hoy y manana. ✅"
           />
           <CommandExample
-            command="Recuerdame el 4o trimestre de 2025"
-            response="He creado recordatorios para los plazos del T4 2025 y te avisare con tiempo. Si quieres, preparo el resumen fiscal automatico."
+            command="Recordatorios del 1o trimestre 2026"
+            response="Listo. Te aviso de plazos clave con tiempo. ⏰"
           />
           <CommandExample
             command="Sube estos gastos y ordenalos por trimestre"
-            response="Cargados y clasificados. He creado un resumen por trimestre con deducibles y pendientes de revision."
+            response="Cargados y clasificados. ✅ Te marco deducibles y pendientes. 📌"
           />
           <CommandExample
             command="Prepara un resumen para mi gestor"
-            response="Listo: ventas, gastos y beneficio del periodo, con notas y posibles discrepancias para revisar juntos."
+            response="Listo: ventas, gastos y beneficio. 📊 Te dejo notas claras. 📝"
           />
           <CommandExample
             command="Mi prueba termina en 5 dias"
-            response="Te recomiendo el plan que mejor encaja por tu uso. Si quieres, preparo la transicion para no perder datos."
+            response="Te recomiendo el plan ideal. ✨ Si quieres, hago la transicion. ✅"
           />
         </div>
       </Container>

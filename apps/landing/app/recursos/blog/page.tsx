@@ -1,29 +1,29 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getLandingUrl } from "../../lib/urls";
+import { getLandingUrl, getAppUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
   title: "Blog | Verifactu Business",
-  description:
-    "Consejos prácticos y novedades sobre facturación, fiscalidad y gestión.",
+  description: "Consejos practicos y novedades sobre facturacion, fiscalidad y gestion en 2026.",
 };
 
 const posts = [
   {
-    title: "VeriFactu en 5 minutos",
-    description: "Resumen claro de la obligación y cómo cumplir sin fricción.",
+    title: "VeriFactu 2026 en 5 minutos",
+    description: "Resumen claro de la obligacion y como cumplir sin friccion.",
   },
   {
-    title: "Errores frecuentes al emitir facturas",
-    description: "Cómo evitarlos y ahorrar tiempo en correcciones.",
+    title: "Errores frecuentes en cierre 2025",
+    description: "Como evitarlos y ahorrar tiempo en correcciones.",
   },
   {
-    title: "Control de gastos sin complicaciones",
-    description: "Una rutina mensual simple y efectiva.",
+    title: "Arranque T1 2026 sin sustos",
+    description: "Una rutina simple para ventas, gastos y evidencias.",
   },
 ];
 
 export default function BlogPage() {
+  const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50/70 via-white to-white">
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
@@ -32,7 +32,7 @@ export default function BlogPage() {
             href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-             Volver al inicio
+            Volver al inicio
           </Link>
         </div>
       </div>
@@ -41,7 +41,7 @@ export default function BlogPage() {
         <div className="max-w-2xl">
           <h1 className="text-4xl font-bold text-[#002060]">Blog</h1>
           <p className="mt-4 text-lg text-slate-600">
-            Ideas prácticas para emitir, controlar y cumplir sin dolores de cabeza.
+            Ideas practicas para emitir, controlar y cumplir sin dolores de cabeza.
           </p>
         </div>
 
@@ -51,13 +51,9 @@ export default function BlogPage() {
               key={post.title}
               className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
             >
-              <h2 className="text-xl font-semibold text-[#002060]">
-                {post.title}
-              </h2>
+              <h2 className="text-xl font-semibold text-[#002060]">{post.title}</h2>
               <p className="mt-3 text-sm text-slate-600">{post.description}</p>
-              <div className="mt-6 text-sm text-[#0060F0] hover:text-[#0080F0]">
-                Leer pronto
-              </div>
+              <div className="mt-6 text-sm text-[#0060F0] hover:text-[#0080F0]">Leer pronto</div>
             </article>
           ))}
         </div>
@@ -70,14 +66,13 @@ export default function BlogPage() {
             Ver planes
           </Link>
           <Link
-            href="/demo"
+            href={isaakChatUrl}
             className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
           >
-            Solicitar demo
+            Hablar con Isaak
           </Link>
         </div>
       </section>
     </main>
   );
 }
-

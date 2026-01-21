@@ -1,7 +1,8 @@
-﻿import Link from "next/link";
+import Link from "next/link";
+import { getAppUrl } from "../../lib/urls";
 
 const title = "Estado del servicio | Verifactu Business";
-const description = "Estado operativo de VeriFactu, AEAT y bancos conectados.";
+const description = "Estado operativo de VeriFactu, AEAT e integraciones.";
 
 export const metadata = {
   title,
@@ -33,10 +34,11 @@ type Status = { name: string; state: "operativo" | "incidencia" | "mantenimiento
 const statusList: Status[] = [
   { name: "Verifactu Business", state: "operativo", note: "Sin incidencias" },
   { name: "AEAT VeriFactu", state: "operativo", note: "Validaciones OK" },
-  { name: "Conexión bancaria", state: "operativo", note: "Sin retrasos reportados" },
+  { name: "Conexion bancaria", state: "operativo", note: "Sin retrasos reportados" },
 ];
 
 export default function EstadoPage() {
+  const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:py-16">
@@ -51,8 +53,8 @@ export default function EstadoPage() {
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Estado</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Estado del servicio</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          Aquí verás si hay incidencias en VeriFactu, AEAT o en las integraciones bancarias. Si algo falla, publicaremos
-          actualizaciones y tiempos estimados.
+          Aqui puedes ver incidencias en VeriFactu, AEAT o integraciones. Si algo falla, publicamos actualizaciones y
+          tiempos estimados. Seguimos el cierre 2025 y el arranque del T1 2026 en tiempo real.
         </p>
 
         <div className="mt-8 space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -62,13 +64,13 @@ export default function EstadoPage() {
         </div>
 
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">¿Ves algo raro?</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Ves algo raro?</h2>
           <p className="mt-2 text-sm text-slate-700">
-            Enviamos detalles (capturas, hora aproximada, factura afectada). Prioridad para incidencias VeriFactu/AEAT.
+            Envia detalles (capturas, hora aproximada, factura afectada). Priorizamos incidencias VeriFactu/AEAT.
           </p>
           <div className="mt-4 flex flex-wrap gap-3 text-sm">
             <a
-              href="mailto:soporte@verifactu.business?subject=Incidencia%20servicio"
+              href="mailto:info@verifactu.business?subject=Incidencia%20servicio"
               className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
               Reportar incidencia
@@ -81,24 +83,24 @@ export default function EstadoPage() {
             </Link>
           </div>
           <p className="mt-3 text-xs text-slate-500">
-            Respuesta en horario laboral. Si hay incidente crítico, lo publicaremos aquí.
+            Respuesta en horario laboral. Si hay incidente critico, lo publicamos aqui.
           </p>
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">¿Quieres calcular tu precio o activar la prueba?</div>
+          <div className="text-sm text-slate-600">Quieres calcular tu precio o activar la prueba?</div>
           <div className="flex gap-3">
             <Link
-              href="/demo#calculadora"
+              href="/#precios"
               className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
               Calcula tu precio
             </Link>
             <Link
-              href="/verifactu/soporte"
+              href={isaakChatUrl}
               className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200"
             >
-              Abrir soporte
+              Hablar con Isaak
             </Link>
           </div>
         </div>
@@ -153,4 +155,3 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
     </nav>
   );
 }
-

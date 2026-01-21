@@ -21,7 +21,7 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
       // 🔒 SEGURIDAD: Validar email contra variables de entorno
       const email = (user.email || '').toLowerCase();
       const allowedEmail = (
@@ -30,6 +30,8 @@ export const authOptions: AuthOptions = {
       const allowedDomain = (
         process.env.ADMIN_ALLOWED_DOMAIN || 'verifactu.business'
       ).toLowerCase();
+
+      console.log('🔍 SignIn attempt:', { email, allowedEmail, allowedDomain, profile });
 
       const emailOk = email === allowedEmail || email.endsWith(`@${allowedDomain}`);
 
@@ -74,10 +76,6 @@ export const authOptions: AuthOptions = {
       }
       return session;
     },
-  },
-  pages: {
-    signIn: '/auth/signin',
-    error: '/auth/error',
   },
   debug: process.env.NODE_ENV === 'development',
 };

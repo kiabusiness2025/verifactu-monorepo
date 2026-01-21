@@ -1,37 +1,33 @@
-﻿import Link from "next/link";
-import { getLandingUrl } from "../lib/urls";
+import Link from "next/link";
+import { getLandingUrl, getAppUrl } from "../lib/urls";
 import type { Metadata } from "next";
 import { CheckCircle2, ShieldCheck, FileText, Hash } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Cumplimiento VeriFactu | Verifactu Business",
-  description:
-    "Cómo Verifactu Business cumple el RD 1007/2023: integridad, trazabilidad y evidencias.",
+  description: "Como Verifactu Business cumple el RD 1007/2023: integridad, trazabilidad y evidencias.",
 };
 
 const evidencias = [
   {
     title: "Registro encadenado por documento",
     detail:
-      "Cada documento queda enlazado con el anterior, de forma que cualquier cambio posterior deja rastro.",
+      "Cada documento queda enlazado con el anterior, de forma que cualquier cambio deja rastro.",
     icon: <Hash className="h-5 w-5 text-blue-700" />,
   },
   {
     title: "Fecha y trazabilidad",
-    detail:
-      "Guardamos la fecha de alta y los cambios relevantes (estado, envíos y anulaciones permitidas).",
+    detail: "Guardamos fecha de alta y cambios relevantes (estado, envios y anulaciones permitidas).",
     icon: <ShieldCheck className="h-5 w-5 text-blue-700" />,
   },
   {
     title: "Historial de eventos",
-    detail:
-      "Los eventos críticos (creación, validación, envío y modificaciones permitidas) quedan registrados para consulta.",
+    detail: "Eventos criticos (creacion, validacion, envio y modificaciones) quedan registrados.",
     icon: <FileText className="h-5 w-5 text-blue-700" />,
   },
   {
     title: "Evidencias del documento",
-    detail:
-      "Conservamos evidencias para identificar la versión exacta enviada o descargada.",
+    detail: "Conservamos evidencias para identificar la version exacta enviada o descargada.",
     icon: <CheckCircle2 className="h-5 w-5 text-blue-700" />,
   },
 ];
@@ -39,11 +35,12 @@ const evidencias = [
 const cumplimos = [
   "Integridad y secuencialidad: evitamos cambios posteriores sin rastro.",
   "Trazabilidad completa: historial de eventos con fecha.",
-  "Conservación: custodia de evidencias y huellas durante los plazos legales.",
-  "Disponibilidad: exportación de libros y evidencias bajo demanda para auditoría.",
+  "Conservacion: custodia de evidencias durante los plazos legales.",
+  "Disponibilidad: exportacion de libros y evidencias bajo demanda para auditoria.",
 ];
 
 export default function VerifactuPage() {
+  const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-blue-100 to-white text-slate-900">
       <section className="py-14">
@@ -62,14 +59,15 @@ export default function VerifactuPage() {
               <ShieldCheck className="h-4 w-4 text-blue-700" />
               Cumplimiento VeriFactu (RD 1007/2023)
             </div>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Cómo cumplimos VeriFactu</h1>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Como cumplimos VeriFactu</h1>
             <p className="text-lg text-slate-700">
-              Te mostramos cómo cuidamos la integridad, la trazabilidad y la conservación de tus registros VeriFactu.
+              Mostramos como cuidamos integridad, trazabilidad y conservacion de tus registros. Ideal para el cierre
+              2025 y el arranque del T1 2026.
             </p>
           </div>
 
           <div className="mt-10 grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-2xl font-semibold text-slate-900">Qué cumplimos exactamente</h2>
+            <h2 className="text-2xl font-semibold text-slate-900">Que cumplimos exactamente</h2>
             <ul className="space-y-3 text-sm text-slate-700">
               {cumplimos.map((item) => (
                 <li key={item} className="flex items-start gap-2">
@@ -102,15 +100,32 @@ export default function VerifactuPage() {
           <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">Exportables y evidencias</h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-700">
-              <li>• Libro de facturas emitidas/recibidas con evidencias de integridad y fechas.</li>
-              <li>• Evidencias de documentos y referencia a versiones enviadas/descargadas.</li>
-              <li>• Historial de eventos (creación, validación, envíos y anulaciones permitidas) consultable.</li>
-              <li>• Informe de consistencia bajo demanda.</li>
+              <li>Libro de facturas emitidas/recibidas con evidencias de integridad y fechas.</li>
+              <li>Evidencias de documentos y referencia a versiones enviadas/descargadas.</li>
+              <li>Historial de eventos consultable (creacion, validacion, envios y anulaciones).</li>
+              <li>Informe de consistencia bajo demanda.</li>
             </ul>
+          </div>
+
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-slate-600">Quieres que Isaak lo deje listo contigo?</div>
+            <div className="flex gap-3">
+              <Link
+                href="/auth/signup"
+                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              >
+                Probar con Isaak
+              </Link>
+              <Link
+                href={isaakChatUrl}
+                className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200"
+              >
+                Abrir chat
+              </Link>
+            </div>
           </div>
         </div>
       </section>
     </main>
   );
 }
-

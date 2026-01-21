@@ -26,7 +26,7 @@ export default function ContactoPage() {
       <section className="mx-auto max-w-5xl px-4 py-16">
         <h1 className="text-4xl font-bold text-[#002060]">Contacto</h1>
         <p className="mt-4 text-lg text-slate-600">
-          Estamos aqui para ayudarte. Responderemos en 24-48h laborables.
+          Estamos aqui para ayudarte. Responderemos en 24-48h laborables. Isaak puede guiarte en minutos.
         </p>
 
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

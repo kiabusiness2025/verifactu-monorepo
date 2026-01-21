@@ -1,29 +1,29 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getLandingUrl } from "../../lib/urls";
+import { getLandingUrl, getAppUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
-  title: "Guías y webinars | Verifactu Business",
-  description:
-    "Recursos para cumplir VeriFactu, optimizar facturación y mejorar la gestión diaria.",
+  title: "Guias y webinars | Verifactu Business",
+  description: "Recursos claros para cumplir VeriFactu y cerrar 2025 con un arranque 2026 sin sorpresas.",
 };
 
 const guides = [
   {
-    title: "Guía rápida VeriFactu",
-    description: "Qué exige la AEAT y cómo cumplir sin errores.",
+    title: "Guia rapida VeriFactu 2026",
+    description: "Que exige la AEAT y como cumplir sin errores.",
   },
   {
-    title: "Cierre mensual sin sorpresas",
-    description: "Pasos para revisar ventas, gastos y beneficio.",
+    title: "Cierre 2025 paso a paso",
+    description: "Ventas, gastos, evidencias y checklist final.",
   },
   {
-    title: "Checklist de facturación",
-    description: "Los 10 puntos que evitan rechazos y sanciones.",
+    title: "T1 2026 sin nervios",
+    description: "Plazos, modelos y alertas claras en enero, febrero y marzo.",
   },
 ];
 
 export default function GuiasPage() {
+  const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50/70 via-white to-white">
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
@@ -32,18 +32,17 @@ export default function GuiasPage() {
             href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-             Volver al inicio
+            Volver al inicio
           </Link>
         </div>
       </div>
 
       <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="max-w-2xl">
-        <h1 className="text-4xl font-bold text-[#002060]">Guías y webinars</h1>
-        <p className="mt-4 text-lg text-slate-600">
-          Recursos claros, en lenguaje llano, para que cumplas VeriFactu y
-          tengas control real de tu negocio.
-        </p>
+          <h1 className="text-4xl font-bold text-[#002060]">Guias y webinars</h1>
+          <p className="mt-4 text-lg text-slate-600">
+            Recursos claros, en lenguaje llano, para que cumplas VeriFactu y tengas control real de tu negocio.
+          </p>
         </div>
 
         <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -52,13 +51,9 @@ export default function GuiasPage() {
               key={item.title}
               className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
             >
-              <h2 className="text-xl font-semibold text-[#002060]">
-                {item.title}
-              </h2>
+              <h2 className="text-xl font-semibold text-[#002060]">{item.title}</h2>
               <p className="mt-3 text-sm text-slate-600">{item.description}</p>
-              <div className="mt-6 text-sm text-[#0060F0] hover:text-[#0080F0]">
-                Próximamente
-              </div>
+              <div className="mt-6 text-sm text-[#0060F0] hover:text-[#0080F0]">Proximamente</div>
             </div>
           ))}
         </div>
@@ -71,14 +66,13 @@ export default function GuiasPage() {
             Ver planes
           </Link>
           <Link
-            href="/demo"
+            href={isaakChatUrl}
             className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
           >
-            Solicitar demo
+            Hablar con Isaak
           </Link>
         </div>
       </section>
     </main>
   );
 }
-

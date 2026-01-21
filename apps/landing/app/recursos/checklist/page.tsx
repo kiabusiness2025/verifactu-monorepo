@@ -1,24 +1,25 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getLandingUrl } from "../../lib/urls";
+import { getLandingUrl, getAppUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
   title: "Checklist | Verifactu Business",
-  description:
-    "Checklist práctico para emitir facturas conforme a VeriFactu.",
+  description: "Checklist practico para emitir facturas conforme a VeriFactu en 2026.",
 };
 
 const checklist = [
   "Datos fiscales completos del emisor y receptor.",
-  "Numeración correlativa sin saltos.",
-  "Fecha de emisión correcta y sin duplicados.",
-  "Concepto claro y descripción suficiente.",
-  "Impuestos aplicados según normativa.",
-  "Registro y conservación de facturas.",
-  "Trazabilidad para auditorías y verificación.",
+  "Numeracion correlativa sin saltos.",
+  "Fecha de emision correcta y sin duplicados.",
+  "Concepto claro y descripcion suficiente.",
+  "Impuestos aplicados segun normativa.",
+  "Registro y conservacion de facturas.",
+  "Trazabilidad para auditorias y verificacion.",
+  "Cierre 2025 revisado y T1 2026 con plazos claros.",
 ];
 
 export default function ChecklistPage() {
+  const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50/70 via-white to-white">
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
@@ -27,17 +28,15 @@ export default function ChecklistPage() {
             href={getLandingUrl()}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
           >
-             Volver al inicio
+            Volver al inicio
           </Link>
         </div>
       </div>
 
       <section className="mx-auto max-w-5xl px-4 py-16">
-        <h1 className="text-4xl font-bold text-[#002060]">
-          Checklist VeriFactu
-        </h1>
+        <h1 className="text-4xl font-bold text-[#002060]">Checklist VeriFactu</h1>
         <p className="mt-4 text-lg text-slate-600">
-          Un resumen rápido de lo que necesitas revisar antes de emitir.
+          Un resumen rapido de lo que necesitas revisar antes de emitir. Isaak te avisa si falta algo.
         </p>
 
         <ul className="mt-8 space-y-3">
@@ -59,14 +58,13 @@ export default function ChecklistPage() {
             Ver planes
           </Link>
           <Link
-            href="/demo"
+            href={isaakChatUrl}
             className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
           >
-            Solicitar demo
+            Hablar con Isaak
           </Link>
         </div>
       </section>
     </main>
   );
 }
-

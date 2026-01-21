@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { prisma } from '@verifactu/db';
 
 /**
  * Webhook de Resend para recibir emails entrantes
@@ -133,16 +134,21 @@ export async function POST(request: NextRequest) {
     
     console.log("[WEBHOOK] ✓ Signature válida");
 
-    const payload: ResendEmailPayload = await request.json();
+    const payload: any = await request.json();
     console.log("[WEBHOOK] 📧 Payload recibido:", {
       type: payload.type,
       from: payload.data?.from?.email,
       subject: payload.data?.subject,
     });
 
-    // Solo procesar emails recibidos
+    // Track email status changes (sent, delivered, bounced, etc.)
+    if (payload.type && ['email.sent', 'email.delivered', 'email.bounced', 'email.complained', 'email.delivery_delayed'].includes(payload.type)) {
+      await trackEmailStatus(payload);
+    }
+
+    // Solo procesar emails recibidos para mailbox
     if (payload.type !== "email.received") {
-      return NextResponse.json({ success: true, message: "Event ignored" });
+      return NextResponse.json({ success: true, message: "Event tracked" });
     }
 
     console.log("[WEBHOOK] Email received:", {
@@ -215,13 +221,115 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * Track email status changes from Resend webhooks
+ */
+async function trackEmailStatus(payload: any) {
+  const { type, data } = payload;
+  const messageId = data?.id;
+
+  if (!messageId) {
+    console.log('[WEBHOOK] No messageId in payload, skipping tracking');
+    return;
+  }
+
+  // Check for duplicate webhook
+  const existing = await prisma.webhookEvent.findFirst({
+    where: { externalId: messageId, provider: 'RESEND', eventType: type }
+  });
+
+  if (existing) {
+    console.log('[WEBHOOK] Duplicate Resend webhook, ignoring:', messageId);
+    return;
+  }
+
+  // Create webhook event
+  const webhookEvent = await prisma.webhookEvent.create({
+    data: {
+      provider: 'RESEND',
+      externalId: messageId,
+      eventType: type,
+      payload: payload,
+      signatureOk: true,
+      status: 'RECEIVED'
+    }
+  });
+
+  // Create first attempt
+  const attempt = await prisma.webhookAttempt.create({
+    data: {
+      webhookEventId: webhookEvent.id,
+      attemptNumber: 1,
+      startedAt: new Date()
+    }
+  });
+
+  try {
+    // Update EmailEvent if it exists
+    const emailEvent = await prisma.emailEvent.findUnique({
+      where: { messageId }
+    });
+
+    if (emailEvent) {
+      let status = emailEvent.status;
+      
+      switch (type) {
+        case 'email.sent':
+          status = 'SENT';
+          break;
+        case 'email.delivered':
+          status = 'DELIVERED';
+          break;
+        case 'email.bounced':
+          status = 'BOUNCED';
+          break;
+        case 'email.complained':
+          status = 'COMPLAINED';
+          break;
+      }
+
+      await prisma.emailEvent.update({
+        where: { messageId },
+        data: { status, updatedAt: new Date() }
+      });
+
+      console.log('[WEBHOOK] EmailEvent updated:', messageId, status);
+    }
+
+    // Mark webhook as processed
+    await prisma.$transaction([
+      prisma.webhookEvent.update({
+        where: { id: webhookEvent.id },
+        data: { status: 'PROCESSED', processedAt: new Date() }
+      }),
+      prisma.webhookAttempt.update({
+        where: { id: attempt.id },
+        data: { ok: true, finishedAt: new Date() }
+      })
+    ]);
+  } catch (error: any) {
+    console.error('[WEBHOOK] Error tracking email status:', error.message);
+    
+    await prisma.$transaction([
+      prisma.webhookEvent.update({
+        where: { id: webhookEvent.id },
+        data: { status: 'FAILED', lastError: error.message }
+      }),
+      prisma.webhookAttempt.update({
+        where: { id: attempt.id },
+        data: { ok: false, error: error.message, finishedAt: new Date() }
+      })
+    ]);
+  }
+}
+
 // GET para verificar que el endpoint está activo
 export async function GET() {
   return NextResponse.json({
     service: "Resend Webhook",
     status: "active",
     endpoint: "/api/webhooks/resend",
-    events: ["email.received"],
-    note: "This endpoint receives incoming emails from Resend",
+    events: ["email.received", "email.sent", "email.delivered", "email.bounced", "email.complained"],
+    note: "This endpoint receives incoming emails and tracks email delivery status",
   });
 }

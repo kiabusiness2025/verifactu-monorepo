@@ -2,7 +2,7 @@ name: Auto-fix Build Errors
 
 on:
   workflow_run:
-    workflows: ["Build Check - Admin Panel"]
+    workflows: ['Build Check - Admin Panel']
     types:
       - completed
 
@@ -15,7 +15,7 @@ jobs:
   auto-fix:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -56,7 +56,7 @@ jobs:
           git commit -m "chore: auto-fix linting and formatting errors
 
           Automatically fixed by GitHub Actions after build failure.
-          
+
           Workflow run: ${{ github.event.workflow_run.html_url }}"
           git push
 
