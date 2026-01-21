@@ -28,14 +28,48 @@ enum AuditAction {
   IMPERSONATION_STOP
   USER_VIEW
   COMPANY_VIEW
+  WEBHOOK_RETRY
+  EMAIL_RETRY
+  USER_BLOCK
+  USER_UNBLOCK
+  EMAIL_SEND
+}
+
+enum WebhookProvider {
+  STRIPE
+  RESEND
+  AEAT
+}
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  BOUNCED
+  COMPLAINED
+  FAILED
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  image     String?
-  role      UserRole @default(USER)
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String?
+  image          String?
+  emailVerified  DateTime? // Required by NextAuth PrismaAdapter
+  role           UserRole  @default(USER)
+
+  // Support actions
+  isBlocked      Boolean   @default(false)
+  blockedAt      DateTime?
+  blockedReason  String?
 
   companiesOwned   Company[] @relation("CompanyOwner")
   memberships      CompanyMember[]
@@ -43,6 +77,10 @@ model User {
   subscriptions    Subscription[]
   auditActor       AuditLog[] @relation("AuditActor")
   auditTarget      AuditLog[] @relation("AuditTargetUser")
+
+  // Operations
+  webhookEvents    WebhookEvent[]
+  emailEvents      EmailEvent[]
 
   // NextAuth relations
   accounts Account[]
@@ -54,6 +92,10 @@ model User {
 
 model Company {
   id          String @id @default(cuid())
+  // Operations
+  webhookEvents WebhookEvent[]
+  emailEvents   EmailEvent[]
+
   name        String
   taxId       String? @unique  // NIF/CIF si aplica
   ownerUserId String
@@ -127,6 +169,74 @@ model AuditLog {
   @@index([actorUserId, createdAt])
   @@index([targetUserId, createdAt])
   @@index([targetCompanyId, createdAt])
+}
+
+//
+// Operations Center - Webhooks & Emails
+//
+model WebhookEvent {
+  id           String          @id @default(cuid())
+  provider     WebhookProvider
+  externalId   String?         // Stripe event ID, etc.
+  eventType    String
+  status       WebhookStatus   @default(RECEIVED)
+
+  payload      Json
+  signatureOk  Boolean         @default(false)
+
+  receivedAt   DateTime        @default(now())
+  processedAt  DateTime?
+  lastError    String?
+  
+  attempts     WebhookAttempt[]
+
+  // Optional context
+  companyId    String?
+  userId       String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  user         User?    @relation(fields: [userId], references: [id])
+
+  @@index([provider, receivedAt])
+  @@index([status, receivedAt])
+  @@index([externalId])
+}
+
+model WebhookAttempt {
+  id             String   @id @default(cuid())
+  webhookEventId String
+  attemptNumber  Int
+  ok             Boolean  @default(false)
+  error          String?
+  startedAt      DateTime @default(now())
+  finishedAt     DateTime?
+
+  webhookEvent   WebhookEvent @relation(fields: [webhookEventId], references: [id], onDelete: Cascade)
+
+  @@index([webhookEventId, attemptNumber])
+}
+
+model EmailEvent {
+  id          String      @id @default(cuid())
+  messageId   String?     @unique // Resend message ID
+  to          String
+  template    String?
+  subject     String?
+  status      EmailStatus @default(QUEUED)
+  provider    String      @default("resend")
+  payload     Json?
+  lastError   String?
+
+  userId      String?
+  companyId   String?
+  user        User?    @relation(fields: [userId], references: [id])
+  company     Company? @relation(fields: [companyId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@index([companyId, createdAt])
 }
 
 //
