@@ -703,6 +703,35 @@ function SettingsContent() {
                 </div>
               </div>
 
+              {/* Calendario */}
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Calendario</h3>
+                <div className="space-y-3">
+                  {/* Google Calendar */}
+                  <div className="border border-slate-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 via-red-500 to-yellow-500 flex items-center justify-center text-white font-bold">
+                          📅
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900">Google Calendar</h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Sincroniza eventos y reuniones con tu calendario de Google
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href="/api/integrations/gcalendar/auth"
+                        className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors"
+                      >
+                        Conectar
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Otras Integraciones */}
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-4">Otras Integraciones</h3>
