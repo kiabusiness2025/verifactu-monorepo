@@ -1,11 +1,11 @@
 'use client';
 
+import { useToast } from '@/components/notifications/ToastNotifications';
 import { formatCurrency } from '@/src/lib/formatters';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useToast } from '@/components/notifications/ToastNotifications';
 
 type CompanyData = {
   id: string;

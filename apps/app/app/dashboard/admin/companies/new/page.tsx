@@ -1,10 +1,11 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
+import { useToast } from '@/components/notifications/ToastNotifications';
+import { EInformaSearch } from '@/components/companies/EInformaSearch';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useToast } from '@/components/notifications/ToastNotifications';
 
 export default function NewCompanyPage() {
   const router = useRouter();
@@ -69,6 +70,37 @@ export default function NewCompanyPage() {
         onSubmit={handleSubmit}
         className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm space-y-6"
       >
+        {/* Buscador eInforma */}
+        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-blue-900 mb-2">
+                Buscar empresa en eInforma
+              </h3>
+              <p className="text-xs text-blue-700 mb-3">
+                Busca por nombre o CIF y autocompletaremos los datos de la empresa
+              </p>
+              <EInformaSearch
+                onSelect={(company) => {
+                  setFormData({
+                    name: company.name,
+                    legal_name: company.legal_name,
+                    tax_id: company.tax_id,
+                    email: company.email || '',
+                    phone: company.phone || '',
+                    address: company.address,
+                    city: company.city,
+                    postal_code: company.postal_code,
+                    country: company.country,
+                  });
+                  success('Empresa encontrada', `Datos de ${company.name} autocompletados`);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Información Básica */}
         <div className="space-y-4">
           <h2 className="font-semibold text-gray-900">Información Básica</h2>

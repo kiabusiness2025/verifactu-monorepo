@@ -1,10 +1,10 @@
 'use client';
 
+import { useToast } from '@/components/notifications/ToastNotifications';
 import { adminDelete, adminGet, adminPatch, adminPost, type TenantRow } from '@/lib/adminApi';
 import { formatCurrency, formatNumber } from '@/src/lib/formatters';
 import { Building2, Pencil, Plus, Trash2, TrendingUp, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useToast } from '@/components/notifications/ToastNotifications';
 
 type Tenant = TenantRow & {
   members_count: number;

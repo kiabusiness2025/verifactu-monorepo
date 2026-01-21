@@ -1,22 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/notifications/ToastNotifications';
+import { formatCurrency, formatNumber, formatShortDate } from '@/src/lib/formatters';
 import {
+  Activity,
   ArrowLeft,
+  Building2,
+  Clock,
+  CreditCard,
   Edit2,
   LogIn,
-  Trash2,
-  Building2,
-  CreditCard,
-  Activity,
   MessageSquare,
-  Users,
-  Clock,
   Settings,
+  Users,
 } from 'lucide-react';
-import { useToast } from '@/components/notifications/ToastNotifications';
-import { formatShortDate, formatCurrency, formatNumber } from '@/src/lib/formatters';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface UserDetails {
   user: {

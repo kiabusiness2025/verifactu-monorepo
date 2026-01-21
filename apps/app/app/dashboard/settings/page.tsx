@@ -576,46 +576,196 @@ function SettingsContent() {
           )}
 
           {activeTab === 'integrations' && (
-            <div className="space-y-6">
-              <div className="border border-slate-200 rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-slate-900">Correo Electronico (Resend)</h3>
-                    <p className="text-sm text-slate-600 mt-1">
-                      Envia tus plantillas de email a traves de Resend
-                    </p>
+            <div className="space-y-8">
+              {/* Correo Electrónico */}
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Correo Electrónico</h3>
+                <div className="space-y-3">
+                  {/* Gmail */}
+                  <div className="border border-slate-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-yellow-500 flex items-center justify-center text-white font-bold">
+                          G
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900">Gmail</h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Conecta tu cuenta de Gmail para enviar y recibir emails desde el panel
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href="/api/integrations/gmail/auth"
+                        className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors"
+                      >
+                        Conectar
+                      </a>
+                    </div>
                   </div>
-                  <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                    Conectado
-                  </span>
+
+                  {/* Microsoft/Outlook */}
+                  <div className="border border-slate-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold">
+                          M
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900">Microsoft / Outlook</h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Conecta tu cuenta de Microsoft para gestionar emails de Outlook
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href="/api/integrations/microsoft/auth"
+                        className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors"
+                      >
+                        Conectar
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Resend (Sistema) */}
+                  <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                          R
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900">Resend (Sistema)</h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Servicio de email transaccional para notificaciones automáticas
+                          </p>
+                        </div>
+                      </div>
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                        Activo
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="border border-slate-200 rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-slate-900">Google Sheets</h3>
-                    <p className="text-sm text-slate-600 mt-1">
-                      Sincroniza tus datos con Google Sheets
-                    </p>
+              {/* Almacenamiento */}
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                  Almacenamiento en la Nube
+                </h3>
+                <div className="space-y-3">
+                  {/* Google Drive */}
+                  <div className="border border-slate-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 via-green-500 to-blue-500 flex items-center justify-center text-white font-bold">
+                          D
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900">Google Drive</h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Guarda y sincroniza documentos en Google Drive automáticamente
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href="/api/integrations/gdrive/auth"
+                        className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors"
+                      >
+                        Conectar
+                      </a>
+                    </div>
                   </div>
-                  <button className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium">
-                    Conectar
-                  </button>
+
+                  {/* OneDrive */}
+                  <div className="border border-slate-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white font-bold">
+                          O
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900">OneDrive</h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Guarda documentos en OneDrive y accede desde cualquier lugar
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href="/api/integrations/onedrive/auth"
+                        className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors"
+                      >
+                        Conectar
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="border border-slate-200 rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-slate-900">Zapier</h3>
-                    <p className="text-sm text-slate-600 mt-1">
-                      Automatiza tu flujo de trabajo con Zapier
-                    </p>
+              {/* Otras Integraciones */}
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Otras Integraciones</h3>
+                <div className="space-y-3">
+                  {/* eInforma */}
+                  <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                          e
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900">eInforma</h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Búsqueda y autocompletado de datos de empresas españolas
+                          </p>
+                        </div>
+                      </div>
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                        Activo
+                      </span>
+                    </div>
                   </div>
-                  <button className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium">
-                    Conectar
-                  </button>
+
+                  {/* Google Sheets */}
+                  <div className="border border-slate-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-600 to-emerald-500 flex items-center justify-center text-white font-bold">
+                          S
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900">Google Sheets</h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Exporta datos a hojas de cálculo de Google automáticamente
+                          </p>
+                        </div>
+                      </div>
+                      <button className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium">
+                        Conectar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Zapier */}
+                  <div className="border border-slate-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white font-bold">
+                          Z
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900">Zapier</h4>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Automatiza flujos de trabajo con más de 5,000 aplicaciones
+                          </p>
+                        </div>
+                      </div>
+                      <button className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium">
+                        Conectar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
