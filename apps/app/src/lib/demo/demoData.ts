@@ -94,12 +94,43 @@ function daysAgo(days: number) {
 
 function buildInvoices(count: number): DemoInvoice[] {
   const invoices: DemoInvoice[] = [];
+  const buildDemoQr = (label: string) => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+  <rect width="160" height="160" fill="#fff"/>
+  <rect x="12" y="12" width="36" height="36" fill="#111"/>
+  <rect x="112" y="12" width="36" height="36" fill="#111"/>
+  <rect x="12" y="112" width="36" height="36" fill="#111"/>
+  <rect x="64" y="64" width="32" height="32" fill="#111"/>
+  <text x="80" y="150" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#111">${label}</text>
+</svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  };
+  const buildHash = (seed: string) => {
+    const base = seed.replace(/[^A-Z0-9]/gi, "") || "VF";
+    let out = "";
+    for (let i = 0; i < 64; i += 1) {
+      const code = base.charCodeAt(i % base.length) || 65;
+      out += ((code + i) % 16).toString(16);
+    }
+    return out;
+  };
+
   for (let i = 0; i < count; i += 1) {
     const customer = customers[i % customers.length];
     const issueDate = daysAgo(2 + i * 3);
     const amountNet = 180 + ((i * 47) % 920) + (i % 3) * 35;
     const amountTax = Math.round(amountNet * 0.21 * 100) / 100;
     const amountGross = Math.round((amountNet + amountTax) * 100) / 100;
+    const verifactuStatus =
+      i % 4 === 0 ? "validated" : i % 4 === 1 ? "sent" : i % 4 === 2 ? "pending" : "error";
+    const verifactuQr =
+      verifactuStatus === "validated" || verifactuStatus === "sent"
+        ? buildDemoQr(`VF-2026-${(i + 1).toString().padStart(4, "0")}`)
+        : null;
+    const verifactuHash =
+      verifactuStatus === "validated" || verifactuStatus === "sent"
+        ? buildHash(`VF-2026-${(i + 1).toString().padStart(4, "0")}`)
+        : null;
     invoices.push({
       id: `inv-${i + 1}`,
       number: `VF-2026-${(i + 1).toString().padStart(4, "0")}`,
@@ -110,6 +141,9 @@ function buildInvoices(count: number): DemoInvoice[] {
       amountTax,
       amountGross,
       status: statusCycle[i % statusCycle.length],
+      verifactuStatus,
+      verifactuQr,
+      verifactuHash,
     });
   }
   return invoices;

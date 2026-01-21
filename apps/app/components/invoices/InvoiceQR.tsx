@@ -64,3 +64,4 @@ export function InvoiceQR({ invoice }: InvoiceQRProps) {
     </div>
   );
 }
+
