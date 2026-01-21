@@ -1,8 +1,11 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import { UserRole } from '@verifactu/auth';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import { prisma } from '@/lib/prisma';
 
 const handler = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: 'jwt', maxAge: 8 * 60 * 60 }, // 8 hours
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -18,36 +21,52 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // 🔒 SEGURIDAD: Solo permitir @verifactu.business
-      const email = user.email || '';
+    async signIn({ user }) {
+      // 🔒 SEGURIDAD: Validar email contra variables de entorno
+      const email = (user.email || '').toLowerCase();
+      const allowedEmail = (process.env.ADMIN_ALLOWED_EMAIL || 'support@verifactu.business').toLowerCase();
+      const allowedDomain = (process.env.ADMIN_ALLOWED_DOMAIN || 'verifactu.business').toLowerCase();
       
-      if (!email.endsWith('@verifactu.business')) {
+      const emailOk = email === allowedEmail || email.endsWith(`@${allowedDomain}`);
+      
+      if (!emailOk) {
         console.error('❌ Intento de acceso no autorizado:', email);
         return false;
       }
 
       console.log('✅ Acceso permitido:', email);
-      
-      // TODO: Verificar en DB si el usuario existe y tiene role ADMIN/SUPPORT
-      // const dbUser = await prisma.user.findUnique({ where: { email } });
-      // if (!dbUser || dbUser.role === 'USER') return false;
-      
       return true;
     },
-    async jwt({ token, user, account }) {
-      if (user) {
-        // TODO: Fetch role from database
-        // const dbUser = await prisma.user.findUnique({ where: { email: user.email } });
-        token.role = UserRole.ADMIN; // Default for now
-        token.id = user.id;
+    async jwt({ token }) {
+      // 🔑 Cargar rol desde DB
+      if (token.email) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email },
+            select: { role: true, id: true },
+          });
+          
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.userId = dbUser.id;
+          } else {
+            // Usuario no existe en DB, asignar USER por defecto
+            token.role = 'USER';
+            token.userId = null;
+          }
+        } catch (error) {
+          console.error('Error fetching user from DB:', error);
+          token.role = 'USER';
+          token.userId = null;
+        }
       }
       return token;
     },
     async session({ session, token }) {
+      // 📤 Exponer role y userId en la sesión
       if (session.user) {
-        (session.user as any).id = token.id as string;
-        (session.user as any).role = token.role as UserRole;
+        (session.user as any).role = token.role;
+        (session.user as any).id = token.userId;
       }
       return session;
     },
@@ -56,11 +75,8 @@ const handler = NextAuth({
     signIn: '/auth/signin',
     error: '/auth/error',
   },
-  session: {
-    strategy: 'jwt',
-    maxAge: 8 * 60 * 60, // 8 hours
-  },
   debug: process.env.NODE_ENV === 'development',
 });
 
 export { handler as GET, handler as POST };
+export const authOptions = handler;

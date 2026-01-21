@@ -10,15 +10,15 @@
 
 ### ✅ Completado (100%)
 
-| Componente | Estado | Archivos | Descripción |
-|------------|--------|----------|-------------|
-| Middleware RBAC | ✅ 100% | 1 | Control de acceso granular con JWT |
-| Páginas Dashboard | ✅ 100% | 5 | Overview, users, companies, audit, layout |
-| APIs Admin | ✅ 100% | 7 | Endpoints para gestión y consultas |
-| Sistema Impersonación | ✅ 100% | 1 | JWT cookies firmadas + audit |
-| Audit Logging | ✅ 100% | 1 | Infraestructura de logs de auditoría |
-| Documentación | ✅ 100% | 3 | Guías completas y referencias |
-| Configuración | ✅ 100% | 3 | .env files con variables necesarias |
+| Componente            | Estado  | Archivos | Descripción                               |
+| --------------------- | ------- | -------- | ----------------------------------------- |
+| Middleware RBAC       | ✅ 100% | 1        | Control de acceso granular con JWT        |
+| Páginas Dashboard     | ✅ 100% | 5        | Overview, users, companies, audit, layout |
+| APIs Admin            | ✅ 100% | 7        | Endpoints para gestión y consultas        |
+| Sistema Impersonación | ✅ 100% | 1        | JWT cookies firmadas + audit              |
+| Audit Logging         | ✅ 100% | 1        | Infraestructura de logs de auditoría      |
+| Documentación         | ✅ 100% | 3        | Guías completas y referencias             |
+| Configuración         | ✅ 100% | 3        | .env files con variables necesarias       |
 
 **Total**: 21 archivos nuevos, 3 modificados, ~1600 líneas de código
 
@@ -93,6 +93,7 @@ apps/admin/
 ## 🔐 Sistema de Seguridad
 
 ### Capa 1: Google OAuth
+
 ```typescript
 // OAuth Provider Configuration
 GoogleProvider({
@@ -101,19 +102,20 @@ GoogleProvider({
       hd: 'verifactu.business', // Domain restriction
     },
   },
-})
+});
 ```
 
 ### Capa 2: Middleware RBAC
+
 ```typescript
 // Email Validation (OR logic)
-const emailOk = 
+const emailOk =
   email === "support@verifactu.business" ||  // Specific email
   email.endsWith("@verifactu.business");     // Domain wildcard
 
 // Role Validation (OR logic)
-const roleOk = 
-  role === "SUPPORT" || 
+const roleOk =
+  role === "SUPPORT" ||
   role === "ADMIN";
 
 // Access granted if BOTH are true
@@ -123,6 +125,7 @@ if (!emailOk || !roleOk) {
 ```
 
 ### Capa 3: API Guards
+
 ```typescript
 // Per-endpoint verification
 const session = await getServerSession(authOptions);
@@ -180,13 +183,13 @@ if (!session || user.role not in ['ADMIN', 'SUPPORT']) {
 
 ### Cookie Security
 
-| Feature | Value | Purpose |
-|---------|-------|---------|
-| HttpOnly | true | Prevents XSS attacks |
-| Secure | true | HTTPS only in production |
-| SameSite | Strict | Prevents CSRF attacks |
-| Signed | jose JWT | Prevents tampering |
-| Max-Age | 28800s | Auto-expires after 8h |
+| Feature  | Value    | Purpose                  |
+| -------- | -------- | ------------------------ |
+| HttpOnly | true     | Prevents XSS attacks     |
+| Secure   | true     | HTTPS only in production |
+| SameSite | Strict   | Prevents CSRF attacks    |
+| Signed   | jose JWT | Prevents tampering       |
+| Max-Age  | 28800s   | Auto-expires after 8h    |
 
 ---
 
@@ -194,15 +197,15 @@ if (!session || user.role not in ['ADMIN', 'SUPPORT']) {
 
 ### Event Types
 
-| Event | Trigger | Data Captured |
-|-------|---------|---------------|
+| Event                 | Trigger                    | Data Captured                                 |
+| --------------------- | -------------------------- | --------------------------------------------- |
 | `IMPERSONATION_START` | Admin starts impersonating | admin, target user, target company, timestamp |
-| `IMPERSONATION_STOP` | Admin stops impersonating | admin, target user, duration |
-| `LOGIN` | User signs in | user, timestamp, IP |
-| `LOGOUT` | User signs out | user, timestamp |
-| `USER_CREATED` | (Future) | actor, new user details |
-| `COMPANY_MODIFIED` | (Future) | actor, company, changes |
-| `SETTINGS_CHANGED` | (Future) | actor, settings diff |
+| `IMPERSONATION_STOP`  | Admin stops impersonating  | admin, target user, duration                  |
+| `LOGIN`               | User signs in              | user, timestamp, IP                           |
+| `LOGOUT`              | User signs out             | user, timestamp                               |
+| `USER_CREATED`        | (Future)                   | actor, new user details                       |
+| `COMPANY_MODIFIED`    | (Future)                   | actor, company, changes                       |
+| `SETTINGS_CHANGED`    | (Future)                   | actor, settings diff                          |
 
 ### Schema (Ready for Prisma)
 
@@ -313,15 +316,15 @@ curl -X POST http://localhost:3003/api/admin/impersonation/start \
 
 ## 📦 Dependencies Status
 
-| Package | Status | Purpose |
-|---------|--------|---------|
-| next | ✅ Installed | Framework |
-| next-auth | ✅ Installed | Authentication |
-| jose | ⚠️ Needs install | JWT signing |
-| react | ✅ Installed | UI |
-| @verifactu/ui | ✅ Workspace | Components |
-| @verifactu/auth | ✅ Workspace | Auth utils |
-| @verifactu/integrations | ✅ Workspace | API clients |
+| Package                 | Status           | Purpose        |
+| ----------------------- | ---------------- | -------------- |
+| next                    | ✅ Installed     | Framework      |
+| next-auth               | ✅ Installed     | Authentication |
+| jose                    | ⚠️ Needs install | JWT signing    |
+| react                   | ✅ Installed     | UI             |
+| @verifactu/ui           | ✅ Workspace     | Components     |
+| @verifactu/auth         | ✅ Workspace     | Auth utils     |
+| @verifactu/integrations | ✅ Workspace     | API clients    |
 
 ### Installation Required
 
@@ -369,27 +372,29 @@ See [MVP_IMPLEMENTATION.md](docs/MVP_IMPLEMENTATION.md) for complete Prisma sche
 
 ## 📚 Documentation
 
-| File | Purpose | Status |
-|------|---------|--------|
-| [README.md](README.md) | Main documentation | ✅ Updated |
+| File                                                | Purpose              | Status      |
+| --------------------------------------------------- | -------------------- | ----------- |
+| [README.md](README.md)                              | Main documentation   | ✅ Updated  |
 | [MVP_IMPLEMENTATION.md](docs/MVP_IMPLEMENTATION.md) | Implementation guide | ✅ Complete |
-| [MIDDLEWARE_RBAC.md](docs/MIDDLEWARE_RBAC.md) | Middleware guide | ✅ Complete |
-| [OAUTH_SETUP.md](docs/OAUTH_SETUP.md) | OAuth configuration | ✅ Existing |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture | ✅ Existing |
-| [GITHUB_TOKEN.md](docs/GITHUB_TOKEN.md) | GitHub PAT guide | ✅ Existing |
-| [VERCEL_TOKEN.md](docs/VERCEL_TOKEN.md) | Vercel token guide | ✅ Existing |
+| [MIDDLEWARE_RBAC.md](docs/MIDDLEWARE_RBAC.md)       | Middleware guide     | ✅ Complete |
+| [OAUTH_SETUP.md](docs/OAUTH_SETUP.md)               | OAuth configuration  | ✅ Existing |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)             | Full architecture    | ✅ Existing |
+| [GITHUB_TOKEN.md](docs/GITHUB_TOKEN.md)             | GitHub PAT guide     | ✅ Existing |
+| [VERCEL_TOKEN.md](docs/VERCEL_TOKEN.md)             | Vercel token guide   | ✅ Existing |
 
 ---
 
 ## 🎯 Next Steps (Priority Order)
 
 ### 1. Install Dependencies ⚠️ BLOCKER
+
 ```bash
 # Close all dev servers first
 pnpm install
 ```
 
 ### 2. Test Authentication Flow
+
 ```bash
 pnpm --filter @verifactu/admin dev
 # Visit http://localhost:3003
@@ -397,27 +402,32 @@ pnpm --filter @verifactu/admin dev
 ```
 
 ### 3. Define Prisma Schema
+
 - Create User, Company, AuditLog models
 - Add relations and indexes
 - Run migration
 
 ### 4. Connect APIs to Database
+
 - Replace mock data in all routes
 - Test CRUD operations
 - Verify audit logging
 
 ### 5. Implement Detail Pages
+
 - `/users/[userId]` with full profile
 - `/companies/[companyId]` with metrics
 - Edit forms and actions
 
 ### 6. Advanced Features
+
 - Search with filters
 - Export to CSV
 - Charts and analytics
 - Real-time notifications
 
 ### 7. Deploy to Production
+
 - Configure Cloud Run
 - Set environment variables
 - Set up domain: admin.verifactu.business
@@ -443,14 +453,14 @@ pnpm --filter @verifactu/admin dev
 
 ## 🎉 Success Metrics
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| Core routes | 4 pages | 4 pages | ✅ 100% |
-| API endpoints | 7 routes | 7 routes | ✅ 100% |
-| Security layers | 3 layers | 3 layers | ✅ 100% |
-| Documentation | 3 guides | 3 guides | ✅ 100% |
-| Type safety | 100% | 100% | ✅ 100% |
-| Mock data | Ready for DB | Ready | ✅ 100% |
+| Metric          | Target       | Current  | Status  |
+| --------------- | ------------ | -------- | ------- |
+| Core routes     | 4 pages      | 4 pages  | ✅ 100% |
+| API endpoints   | 7 routes     | 7 routes | ✅ 100% |
+| Security layers | 3 layers     | 3 layers | ✅ 100% |
+| Documentation   | 3 guides     | 3 guides | ✅ 100% |
+| Type safety     | 100%         | 100%     | ✅ 100% |
+| Mock data       | Ready for DB | Ready    | ✅ 100% |
 
 ---
 

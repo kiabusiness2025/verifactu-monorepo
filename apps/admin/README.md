@@ -85,6 +85,7 @@ El panel estará disponible en: `http://localhost:3003`
 El panel implementa un sistema robusto de control de acceso. Ver guía completa: [MIDDLEWARE_RBAC.md](./docs/MIDDLEWARE_RBAC.md)
 
 **Características:**
+
 - ✅ Protección server-side con NextAuth JWT
 - ✅ Validación de email específico + dominio completo
 - ✅ Validación de roles (ADMIN/SUPPORT)
@@ -92,6 +93,7 @@ El panel implementa un sistema robusto de control de acceso. Ver guía completa:
 - ✅ 403 Forbidden si no autorizado
 
 **Configuración en `.env.local`:**
+
 ```bash
 ADMIN_ALLOWED_EMAIL="support@verifactu.business"
 ADMIN_ALLOWED_DOMAIN="verifactu.business"
