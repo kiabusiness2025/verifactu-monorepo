@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "npm install",
-  "buildCommand": "npm run build",
+  "installCommand": "cd ../.. && npx -y pnpm@10.27.0 install --frozen-lockfile",
+  "buildCommand": "cd ../.. && npx -y pnpm@10.27.0 turbo run build --filter=verifactu-landing",
   "outputDirectory": ".next",
   "env": {
     "SESSION_COOKIE_DOMAIN": ".verifactu.business",
