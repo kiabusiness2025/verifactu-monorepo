@@ -1,5 +1,5 @@
 ﻿"use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Briefcase, Building2, Check, ShieldCheck, Sparkles, UserRound } from "lucide-react";
@@ -8,25 +8,20 @@ import Faq from "./components/Faq";
 import PricingCalculatorInline from "./components/PricingCalculatorInline";
 import { getAppUrl } from "./lib/urls";
 
-import { ISAAK_MESSAGES } from "./lib/home/data";
 import {
   ComplianceBadge,
   Container,
   DashboardMock,
   FeaturesSection,
   Footer,
-  HeroMockup,
   PideseloAIsaakSection,
-  PrimaryButton,
   ResourceCard,
-  SecondaryButton,
   StickyCtaBar,
   ThreeSteps,
   TrustBadge,
 } from "./lib/home/ui";
 
 export default function Page() {
-  const isaakMessages = ISAAK_MESSAGES;
   const navLinks = [
     { label: "Inicio", href: "#hero" },
     { label: "Para quien", href: "#para-quien" },
@@ -36,8 +31,6 @@ export default function Page() {
     { label: "Contacto", href: "/recursos/contacto" },
   ];
 
-  const [msgIndex, setMsgIndex] = useState(0);
-  const [benefitTarget, setBenefitTarget] = useState(0);
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
@@ -52,46 +45,11 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (prefersReducedMotion) return;
-    const id = setInterval(() => setMsgIndex((i) => (i + 1) % isaakMessages.length), 5200);
-    return () => clearInterval(id);
-  }, [isaakMessages.length, prefersReducedMotion]);
-
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      setBenefitTarget(12450);
-      return;
-    }
-    let frame = 0;
-    const target = 12450;
-    const duration = 1200;
-    const increment = target / (duration / 16);
-    const animate = () => {
-      frame++;
-      setBenefitTarget((prev) => {
-        const next = prev + increment;
-        return next >= target ? target : next;
-      });
-      if (frame * 16 < duration) requestAnimationFrame(animate);
-    };
-    animate();
-  }, [prefersReducedMotion]);
-
-  useEffect(() => {
     const onScroll = () => setShowStickyCta(window.scrollY > 320);
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const visibleMsgs = useMemo(() => {
-    const a = (msgIndex + isaakMessages.length) % isaakMessages.length;
-    const b = (msgIndex - 1 + isaakMessages.length) % isaakMessages.length;
-    const c = (msgIndex - 2 + isaakMessages.length) % isaakMessages.length;
-    return [isaakMessages[a], isaakMessages[b], isaakMessages[c]];
-  }, [isaakMessages, msgIndex]);
-
-  const benefitValue = Math.round(benefitTarget);
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -187,7 +145,7 @@ export default function Page() {
               animate={prefersReducedMotion ? false : { opacity: 1, y: 0 }}
               transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.08 }}
             >
-              <HeroMockup visibleMsgs={visibleMsgs} benefitValue={benefitValue} />
+              <DashboardMock />
             </motion.div>
           </div>
         </Container>

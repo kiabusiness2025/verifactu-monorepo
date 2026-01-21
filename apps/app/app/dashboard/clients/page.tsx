@@ -4,22 +4,20 @@ import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
 import { useToast } from '@/components/notifications/ToastNotifications';
 import {
-  Users,
-  Plus,
-  Search,
+  Building2,
+  Download,
+  Edit,
+  Euro,
+  FileText,
+  Filter,
   Mail,
   Phone,
-  Building2,
-  FileText,
-  Euro,
-  Calendar,
-  Filter,
-  Download,
-  MoreVertical,
-  Edit,
+  Plus,
+  Search,
   Trash2,
+  Users,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Client {
   id: string;

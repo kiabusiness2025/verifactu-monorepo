@@ -48,7 +48,7 @@ export function EmailHeader() {
                 marginTop: '4px',
               }}
             >
-              soporte@verifactu.business
+              info@verifactu.business
             </div>
             <div
               style={{
@@ -99,10 +99,10 @@ export function EmailFooter() {
       <p style={{ margin: '0 0 12px 0', lineHeight: '1.6' }}>
         Si tienes preguntas, contáctanos en{' '}
         <a
-          href="mailto:soporte@verifactu.business"
+          href="mailto:info@verifactu.business"
           style={{ color: '#0060F0', textDecoration: 'none' }}
         >
-          soporte@verifactu.business
+          info@verifactu.business
         </a>
       </p>
       <p style={{ margin: '0', fontSize: '11px', color: '#9ca8b3' }}>

@@ -153,7 +153,7 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL("/auth/signup", getLandingUrl()));
   }
   if (plan === "enterprise") {
-    return NextResponse.redirect("mailto:soporte@verifactu.business");
+    return NextResponse.redirect("mailto:info@verifactu.business");
   }
 
   const envKey = PLAN_TO_PRICE_ENV[plan];

@@ -6,17 +6,35 @@
     "RESEND_API_KEY",
     "RESEND_FROM",
     "STRIPE_SECRET_KEY",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "MICROSOFT_CLIENT_ID",
+    "MICROSOFT_CLIENT_SECRET",
+    "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL",
+    "VERCEL_TOKEN",
+    "GITHUB_TOKEN",
     "ORGANIZACIÓN_CIF",
     "NOMBRE_DE_LA_ORGANIZACIÓN",
     "DIRECCIÓN DE LA ORGANIZACIÓN"
   ],
   "tasks": {
-    "build": { 
-      "dependsOn": ["^build"], 
-      "outputs": ["apps/app/.next/**", ".next/**", "dist/**"] 
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        "apps/app/.next/**",
+        "apps/admin/.next/**",
+        "apps/landing/.next/**",
+        ".next/**",
+        "dist/**"
+      ]
     },
-    "dev":   { "cache": false },
-    "lint":  {},
-    "test":  {}
+    "dev": { "cache": false },
+    "lint": {},
+    "test": {},
+    "type-check": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    }
   }
 }

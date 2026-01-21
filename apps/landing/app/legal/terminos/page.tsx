@@ -50,13 +50,13 @@ export default function TerminosPage() {
           3. Precios y facturacion
         </h2>
         <p className="mt-3 text-slate-600">
-          Los precios se calculan por tramos de uso. Puedes consultar la politica
+          Los precios de suscripcion se calculan por tramos de uso. Puedes consultar la politica
           publica de precios y medicion aqui:{" "}
           <Link
             href="/politica-de-precios"
             className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
           >
-            Politica de precios
+            Politica de precios de suscripciones
           </Link>
           , y el soporte en{" "}
           <Link
@@ -91,12 +91,12 @@ export default function TerminosPage() {
         <p className="mt-3 text-slate-600">
           Para dudas legales o soporte, contacta en{" "}
           <a
-            href="mailto:soporte@verifactu.business"
+            href="mailto:info@verifactu.business"
             className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
           >
-            soporte@verifactu.business
+            info@verifactu.business
           </a>
-          .
+          . (Alias de soporte@verifactu.business)
         </p>
       </section>
     </main>

@@ -1,7 +1,7 @@
 'use client';
 
-import { useToast } from '@/components/notifications/ToastNotifications';
 import { EInformaSearch } from '@/components/companies/EInformaSearch';
+import { useToast } from '@/components/notifications/ToastNotifications';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

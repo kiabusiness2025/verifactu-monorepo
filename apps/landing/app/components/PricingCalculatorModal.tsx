@@ -1,7 +1,6 @@
-Ôªø"use client";
+"use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { X } from "lucide-react";
 import { estimateBreakdown, estimateNetEur, type PricingInput } from "../lib/pricing/calc";
 
@@ -71,7 +70,7 @@ export default function PricingCalculatorModal({
       if (data.url) {
         window.location.href = data.url;
       } else {
-        console.error("Error al crear sesi√≥n de pago");
+        console.error("Error al crear sesiÛn de pago");
       }
     } catch (error) {
       console.error("Error al iniciar trial:", error);
@@ -93,7 +92,7 @@ export default function PricingCalculatorModal({
           Calcula tu precio
         </h2>
         <p className="mb-8 text-lightbg-600">
-          Ajusta los valores seg√∫n tu actividad. El precio se calcula por uso real.
+          Ajusta los valores seg˙n tu actividad. El precio se calcula por uso real.
         </p>
 
         <div className="space-y-8">
@@ -119,7 +118,7 @@ export default function PricingCalculatorModal({
               Incluye hasta 10 facturas/mes en la cuota base.
             </p>
             <p className="mt-1 text-xs text-gray-500">
-              M√°s de 1.000 facturas/mes requiere presupuesto.
+              M·s de 1.000 facturas/mes requiere presupuesto.
             </p>
             <div className="mt-1 flex justify-between text-xs text-gray-500">
               <span>1</span>
@@ -141,7 +140,7 @@ export default function PricingCalculatorModal({
                   }}
                   className="h-4 w-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
                 />
-                <span>Conciliaci√≥n bancaria</span>
+                <span>ConciliaciÛn bancaria</span>
               </label>
               {bankingEnabled && (
                 <span className="text-2xl font-bold text-[#0060F0]">{movements}</span>
@@ -162,10 +161,10 @@ export default function PricingCalculatorModal({
                   }}
                 />
                 <p className="mt-2 text-xs text-gray-500">
-                  0 movimientos = 0 ‚Ç¨. Si activas conciliaci√≥n y procesas movimientos, se aplica un tramo.
+                  0 movimientos = 0 Ä. Si activas conciliaciÛn y procesas movimientos, se aplica un tramo.
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  M√°s de 2.000 movimientos/mes requiere presupuesto.
+                  M·s de 2.000 movimientos/mes requiere presupuesto.
                 </p>
                 <div className="mt-1 flex justify-between text-xs text-gray-500">
                   <span>0</span>
@@ -187,30 +186,25 @@ export default function PricingCalculatorModal({
             <div>
               <p className="text-sm text-gray-600">Cuota mensual estimada</p>
               <p className="mt-1 text-4xl font-bold text-[#0060F0]">
-                {fmt(monthlyPrice)} ‚Ç¨ <span className="text-2xl text-gray-500">/mes + IVA</span>
+                {fmt(monthlyPrice)} Ä <span className="text-2xl text-gray-500">/mes + IVA</span>
               </p>
               <p className="mt-1 text-sm text-gray-500">
-                Con IVA: {fmt(withVAT)} ‚Ç¨
+                Con IVA: {fmt(withVAT)} Ä
               </p>
               <div className="mt-4 space-y-1 text-xs text-gray-500">
                 <div className="flex items-center justify-between">
                   <span>Base</span>
-                  <span>{fmt(breakdown.base)} ‚Ç¨</span>
+                  <span>{fmt(breakdown.base)} Ä</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tramo facturas ({invoiceLabel(invoices)})</span>
-                  <span>{fmt(breakdown.invoiceAddon)} ‚Ç¨</span>
+                  <span>{fmt(breakdown.invoiceAddon)} Ä</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tramo movimientos ({movementLabel(movements)})</span>
-                  <span>{fmt(breakdown.movementAddon)} ‚Ç¨</span>
+                  <span>{fmt(breakdown.movementAddon)} Ä</span>
                 </div>
               </div>
-              <p className="mt-3 text-xs text-gray-500">
-                <Link href="/politica-de-precios" className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]">
-                  Ver pol√≠tica de medici√≥n de uso
-                </Link>
-              </p>
             </div>
             <button
               onClick={handleStartTrial}
@@ -227,4 +221,5 @@ export default function PricingCalculatorModal({
     </div>
   );
 }
+
 

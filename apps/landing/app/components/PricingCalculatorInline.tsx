@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { estimateBreakdown, estimateNetEur, type PricingInput } from "../lib/pricing/calc";
+import QuoteRequestModal from "./QuoteRequestModal";
 
 export default function PricingCalculatorInline() {
   const [invoices, setInvoices] = useState(1);
   const [movements, setMovements] = useState(0);
   const [bankingEnabled, setBankingEnabled] = useState(false);
   const [error, setError] = useState("");
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
 
   const fmt = (n: number) => n.toLocaleString("es-ES", { maximumFractionDigits: 2 });
   const invoiceLabel = (value: number) => {
@@ -55,7 +56,7 @@ export default function PricingCalculatorInline() {
 
       const data = await response.json();
       if (!response.ok && data?.code === "QUOTE_REQUIRED" && data?.redirect) {
-        window.location.href = data.redirect;
+        setShowQuoteModal(true);
         return;
       }
       if (data.url) {
@@ -195,54 +196,20 @@ export default function PricingCalculatorInline() {
             >
               Empezar 1 mes gratis
             </button>
-            <Link
-              href="/politica-de-precios"
-              className="inline-flex items-center justify-center rounded-lg border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] underline underline-offset-4 hover:bg-[#0060F0]/10 hover:text-[#0080F0]"
-            >
-              Ver politica de medicion de uso
-            </Link>
-            <Link
-              href="/presupuesto"
+            <button
+              type="button"
+              onClick={() => setShowQuoteModal(true)}
               className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Pedir presupuesto
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
-          <div className="text-sm font-semibold text-[#002060]">Mini tabla de tramos</div>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-              <div className="text-[11px] font-semibold uppercase text-slate-500">Facturas</div>
-              <ul className="mt-2 space-y-1">
-                <li>1-10 incluido</li>
-                <li>11-20 +5 EUR</li>
-                <li>51-100 +25 EUR</li>
-                <li>101-200 +35 EUR</li>
-                <li>401-500 +65 EUR</li>
-                <li>&gt;500 pedir presupuesto</li>
-              </ul>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-              <div className="text-[11px] font-semibold uppercase text-slate-500">Movimientos</div>
-              <ul className="mt-2 space-y-1">
-                <li>0 incluido</li>
-                <li>1-20 +5 EUR</li>
-                <li>51-100 +25 EUR</li>
-                <li>101-200 +35 EUR</li>
-                <li>401-500 +65 EUR</li>
-                <li>&gt;1000 pedir presupuesto</li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-3 text-xs text-slate-500">
-            <Link href="/politica-de-precios" className="font-semibold text-[#0060F0] hover:text-[#0080F0]">
-              Ver todos los tramos
-            </Link>
+              Solicitar presupuesto
+            </button>
           </div>
         </div>
       </div>
+      <QuoteRequestModal
+        isOpen={showQuoteModal}
+        onClose={() => setShowQuoteModal(false)}
+      />
     </div>
   );
 }
