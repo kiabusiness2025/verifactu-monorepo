@@ -11,7 +11,7 @@ Guía completa para probar todos los flujos de correos electrónicos en desarrol
 ```bash
 # apps/app/.env.local
 RESEND_API_KEY=re_BK6kKjAd_34XYNfwf6qkHC7FrQQb64gKA
-RESEND_FROM_NOREPLY=Verifactu Business <noreply@verifactu.business>
+RESEND_FROM_NOREPLY=Verifactu Business <notificaciones@verifactu.business>
 RESEND_FROM_SUPPORT=Verifactu Business <soporte@verifactu.business>
 RESEND_FROM_INFO=Verifactu Business <info@verifactu.business>
 NODE_ENV=development
@@ -147,7 +147,7 @@ testEmails();
 ### 1. Email de Verificación
 
 **Trigger**: Usuario se registra  
-**Remitente**: `noreply@verifactu.business`  
+**Remitente**: `notificaciones@verifactu.business`  
 **Contenido**:
 - Botón de verificación con enlace
 - Expiración: 24 horas
@@ -173,7 +173,7 @@ testEmails();
 ### 2. Email de Bienvenida
 
 **Trigger**: Usuario verifica su email  
-**Remitente**: `noreply@verifactu.business`  
+**Remitente**: `notificaciones@verifactu.business`  
 **Contenido**:
 - Saludo personalizado
 - Primeros pasos
@@ -198,7 +198,7 @@ testEmails();
 ### 3. Email de Reset de Contraseña
 
 **Trigger**: Usuario olvida contraseña  
-**Remitente**: `noreply@verifactu.business`  
+**Remitente**: `notificaciones@verifactu.business`  
 **Contenido**:
 - Botón de reset
 - Advertencia de seguridad
@@ -224,7 +224,7 @@ testEmails();
 ### 4. Email de Contraseña Cambiada
 
 **Trigger**: Contraseña modificada exitosamente  
-**Remitente**: `noreply@verifactu.business`  
+**Remitente**: `notificaciones@verifactu.business`  
 **Contenido**:
 - Confirmación del cambio
 - Fecha y hora
@@ -249,7 +249,7 @@ testEmails();
 ### 5. Email de Invitación a Equipo
 
 **Trigger**: Usuario invita a colaborador  
-**Remitente**: `noreply@verifactu.business`  
+**Remitente**: `notificaciones@verifactu.business`  
 **Contenido**:
 - Nombre del invitador
 - Empresa destino
@@ -436,3 +436,4 @@ Después de validar todos los emails:
 3. ✅ Configurar webhook de Resend para soporte
 4. ✅ Implementar tracking de apertura (opcional)
 5. ✅ A/B testing de asuntos (opcional)
+

@@ -1,4 +1,4 @@
-import { EmailContainer, EmailHeader, EmailFooter, CTAButton } from './EmailHeader';
+﻿import { EmailContainer, EmailHeader, EmailFooter, CTAButton } from './EmailHeader';
 
 interface WelcomeEmailProps {
   userName: string;
@@ -195,7 +195,7 @@ export function WelcomeEmailTemplate({
       >
         ¿Necesitas ayuda?{' '}
         <a
-          href="mailto:soporte@verifactu.business"
+          href="mailto:info@verifactu.business"
           style={{ color: '#0060F0', textDecoration: 'none' }}
         >
           Nuestro equipo está aquí
@@ -207,3 +207,4 @@ export function WelcomeEmailTemplate({
     </EmailContainer>
   );
 }
+

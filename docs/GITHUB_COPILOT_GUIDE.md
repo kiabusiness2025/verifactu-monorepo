@@ -299,7 +299,7 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'noreply@verifactu.business',
+        from: 'notificaciones@verifactu.business',
         to,
         subject,
         html: body,
@@ -455,3 +455,4 @@ Ctrl+Shift+P → "GitHub Copilot: Sign Out"
 ---
 
 Last updated: January 2026
+

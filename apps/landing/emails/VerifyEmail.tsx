@@ -1,4 +1,4 @@
-import { EmailContainer, EmailHeader, EmailFooter, CTAButton } from './EmailHeader';
+﻿import { EmailContainer, EmailHeader, EmailFooter, CTAButton } from './EmailHeader';
 
 interface VerifyEmailProps {
   email: string;
@@ -136,7 +136,7 @@ export function VerifyEmailTemplate({
       >
         ¿Problemas para verificar tu correo?{' '}
         <a
-          href="mailto:soporte@verifactu.business?subject=Problemas%20con%20verificaci%C3%B3n%20de%20correo"
+          href="mailto:info@verifactu.business?subject=Problemas%20con%20verificaci%C3%B3n%20de%20correo"
           style={{ color: '#0060F0', textDecoration: 'none' }}
         >
           Contáctanos
@@ -147,3 +147,4 @@ export function VerifyEmailTemplate({
     </EmailContainer>
   );
 }
+

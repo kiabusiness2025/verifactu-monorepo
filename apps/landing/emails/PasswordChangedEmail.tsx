@@ -1,4 +1,4 @@
-import { EmailContainer, EmailHeader, EmailFooter, CTAButton } from './EmailHeader';
+﻿import { EmailContainer, EmailHeader, EmailFooter, CTAButton } from './EmailHeader';
 
 interface PasswordChangedEmailProps {
   userName: string;
@@ -132,10 +132,10 @@ export function PasswordChangedEmailTemplate({
         >
           Contacta inmediatamente a{' '}
           <a
-            href="mailto:soporte@verifactu.business?subject=URGENTE:%20Cambio%20de%20contrase%C3%B1a%20no%20autorizado"
+            href="mailto:info@verifactu.business?subject=URGENTE:%20Cambio%20de%20contrase%C3%B1a%20no%20autorizado"
             style={{ color: '#ff9800', fontWeight: 'bold', textDecoration: 'none' }}
           >
-            soporte@verifactu.business
+            info@verifactu.business
           </a>
           . Tomaremos acción inmediata para proteger tu cuenta.
         </p>
@@ -157,3 +157,4 @@ export function PasswordChangedEmailTemplate({
     </EmailContainer>
   );
 }
+

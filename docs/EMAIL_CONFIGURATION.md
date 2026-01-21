@@ -14,7 +14,7 @@ RESEND_API_KEY=re_BK6kKjAd_34XYNfwf6qkHC7FrQQb64gKA
 
 # Alias de email (via Google Cloud)
 RESEND_FROM_SUPPORT=Verifactu Business <soporte@verifactu.business>
-RESEND_FROM_NOREPLY=Verifactu Business <noreply@verifactu.business>
+RESEND_FROM_NOREPLY=Verifactu Business <notificaciones@verifactu.business>
 RESEND_FROM_INFO=Verifactu Business <info@verifactu.business>
 
 # Administración
@@ -31,8 +31,9 @@ ISAAK_SUPPORT_ENABLED=true
 | Alias | Uso | Descripción |
 |-------|-----|-------------|
 | `soporte@verifactu.business` | **Principal** | Soporte técnico y comunicación bidireccional |
-| `noreply@verifactu.business` | **Autenticación** | Emails de login, verificación, reset contraseña |
-| `info@verifactu.business` | **Informativo** | Newsletter, comunicaciones generales |
+| `notificaciones@verifactu.business` | **Transaccional** | Verificación, login, reset y alertas del sistema |
+| `info@verifactu.business` | **Comercial** | Demos, presupuestos, contacto comercial |
+| `hola@verifactu.business` | **Publico** | Entrada general (landing) |
 | `kiabusiness2025@gmail.com` | **Admin** | Notificaciones internas y escalamiento |
 
 **Gestión**: Alias creados y gestionados vía CLI de Google Cloud
@@ -112,7 +113,7 @@ ISAAK_SUPPORT_ENABLED=true
 
 **Incluye**:
 - Logo de Verifactu
-- Información de contacto: `soporte@verifactu.business`
+- Información de contacto: `info@verifactu.business` (alias publico)
 - Texto descriptivo
 - Estilo corporativo
 
@@ -129,7 +130,7 @@ import { EmailHeader } from './EmailHeader';
 
 **Incluye**:
 - Copyright © 2026 Verifactu Business
-- Enlace a soporte: `soporte@verifactu.business`
+- Enlace a soporte: `soporte@verifactu.business` (centraliza todo)
 - Enlaces legales (Privacidad, Términos)
 - Diseño responsive
 
@@ -339,7 +340,7 @@ Registro de usuarios y comunicaciones generales
 ### Flujo Completo
 
 ```
-Email → soporte@verifactu.business
+Email → soporte@verifactu.business (todos los alias se enrutan aqui)
          ↓
 Webhook Resend → /api/webhooks/resend/inbound
          ↓
@@ -509,3 +510,4 @@ Características:
 - [Resend Docs](https://resend.com/docs)
 - [React Email](https://react.email)
 - [Email Best Practices](https://www.emailonacid.com/blog/article/email-development/email-development-best-practices-2/)
+

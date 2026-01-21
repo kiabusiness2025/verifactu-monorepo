@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Email Service
  * Integraciones con Resend para enviar correos electrónicos
  */
@@ -13,8 +13,8 @@ import { TeamInviteEmailTemplate } from '../../emails/TeamInviteEmail';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 // Alias de emails según contexto
-const EMAIL_FROM_SUPPORT = process.env.RESEND_FROM_SUPPORT || 'Verifactu Business <soporte@verifactu.business>';
-const EMAIL_FROM_NOREPLY = process.env.RESEND_FROM_NOREPLY || 'Verifactu Business <noreply@verifactu.business>';
+const EMAIL_FROM_SUPPORT = process.env.RESEND_FROM_SUPPORT || 'Verifactu Business <info@verifactu.business>';
+const EMAIL_FROM_NOREPLY = process.env.RESEND_FROM_NOREPLY || 'Verifactu Business <notificaciones@verifactu.business>';
 const EMAIL_FROM_INFO = process.env.RESEND_FROM_INFO || 'Verifactu Business <info@verifactu.business>';
 
 export interface SendEmailParams {
@@ -236,7 +236,7 @@ function generateEmailHeader(): string {
         </td>
         <td style="vertical-align:middle;">
           <div style="font-size:14px; font-weight:bold; color:#0d2b4a;">Soporte | Verifactu Business</div>
-          <div style="font-size:13px; color:#1b2a3a; margin-top:4px;">soporte@verifactu.business</div>
+          <div style="font-size:13px; color:#1b2a3a; margin-top:4px;">info@verifactu.business</div>
           <div style="font-size:13px; color:#1b2a3a; margin-top:2px;">verifactu.business</div>
           <div style="font-size:11px; color:#6b7c8a; margin-top:8px;">Registro de usuarios y comunicaciones generales</div>
         </td>
@@ -250,7 +250,7 @@ function generateEmailFooter(): string {
   return `
     <div style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #e0e6eb; font-size: 12px; color: #6b7c8a; text-align: center;">
       <p style="margin: 0 0 8px 0;">© ${currentYear} Verifactu Business. Todos los derechos reservados.</p>
-      <p style="margin: 0 0 12px 0; line-height: 1.6;">Si tienes preguntas, contáctanos en <a href="mailto:soporte@verifactu.business" style="color: #0060F0; text-decoration: none;">soporte@verifactu.business</a></p>
+      <p style="margin: 0 0 12px 0; line-height: 1.6;">Si tienes preguntas, contáctanos en <a href="mailto:info@verifactu.business" style="color: #0060F0; text-decoration: none;">info@verifactu.business</a></p>
       <p style="margin: 0; font-size: 11px; color: #9ca8b3;">
         <a href="https://verifactu.business/privacy" style="color: #6b7c8a; text-decoration: none; margin-right: 16px;">Política de privacidad</a>
         <a href="https://verifactu.business/terms" style="color: #6b7c8a; text-decoration: none;">Términos de servicio</a>
@@ -337,7 +337,7 @@ function generateVerificationEmailHtml({
     </div>
 
     <p style="font-size: 13px; color: #6b7c8a; margin: 24px 0 0 0; line-height: 1.6; text-align: center;">
-      ¿Problemas para verificar tu correo? <a href="mailto:soporte@verifactu.business?subject=Problemas%20con%20verificaci%C3%B3n%20de%20correo" style="color: #0060F0; text-decoration: none;">Contáctanos</a>
+      ¿Problemas para verificar tu correo? <a href="mailto:info@verifactu.business?subject=Problemas%20con%20verificaci%C3%B3n%20de%20correo" style="color: #0060F0; text-decoration: none;">Contáctanos</a>
     </p>
   `;
 
@@ -416,7 +416,7 @@ function generateWelcomeEmailHtml({
     </div>
 
     <p style="font-size: 13px; color: #6b7c8a; margin: 24px 0 0 0; line-height: 1.6; text-align: center;">
-      ¿Necesitas ayuda? <a href="mailto:soporte@verifactu.business" style="color: #0060F0; text-decoration: none;">Nuestro equipo está aquí</a>. Respondemos en menos de 2 horas.
+      ¿Necesitas ayuda? <a href="mailto:info@verifactu.business" style="color: #0060F0; text-decoration: none;">Nuestro equipo está aquí</a>. Respondemos en menos de 2 horas.
     </p>
   `;
 
@@ -485,7 +485,7 @@ function generateResetPasswordEmailHtml({
     <p style="font-size: 13px; color: #6b7c8a; margin: 24px 0 0 0; line-height: 1.6;">
       <strong>¿Problemas para restablecer tu contraseña?</strong>
       <br>
-      Si el enlace no funciona o necesitas ayuda, escribe a <a href="mailto:soporte@verifactu.business?subject=Problemas%20con%20recuperaci%C3%B3n%20de%20contrase%C3%B1a" style="color: #0060F0; text-decoration: none;">soporte@verifactu.business</a>
+      Si el enlace no funciona o necesitas ayuda, escribe a <a href="mailto:info@verifactu.business?subject=Problemas%20con%20recuperaci%C3%B3n%20de%20contrase%C3%B1a" style="color: #0060F0; text-decoration: none;">info@verifactu.business</a>
     </p>
   `;
 
@@ -545,7 +545,7 @@ function generatePasswordChangedEmailHtml({
         <strong>⚠️ Si no fuiste tú quien realizó este cambio:</strong>
       </p>
       <p style="font-size: 13px; color: #0d2b4a; margin: 0; line-height: 1.5;">
-        Contacta inmediatamente a <a href="mailto:soporte@verifactu.business?subject=URGENTE:%20Cambio%20de%20contrase%C3%B1a%20no%20autorizado" style="color: #ff9800; font-weight: bold; text-decoration: none;">soporte@verifactu.business</a>. Tomaremos acción inmediata para proteger tu cuenta.
+        Contacta inmediatamente a <a href="mailto:info@verifactu.business?subject=URGENTE:%20Cambio%20de%20contrase%C3%B1a%20no%20autorizado" style="color: #ff9800; font-weight: bold; text-decoration: none;">info@verifactu.business</a>. Tomaremos acción inmediata para proteger tu cuenta.
       </p>
     </div>
 
@@ -629,9 +629,11 @@ function generateTeamInviteEmailHtml({
     <p style="font-size: 13px; color: #6b7c8a; margin: 24px 0 0 0; line-height: 1.6;">
       <strong>¿Dudas sobre esta invitación?</strong>
       <br>
-      Contacta directamente a ${inviterName} o escribe a <a href="mailto:soporte@verifactu.business" style="color: #0060F0; text-decoration: none;">soporte@verifactu.business</a>
+      Contacta directamente a ${inviterName} o escribe a <a href="mailto:info@verifactu.business" style="color: #0060F0; text-decoration: none;">info@verifactu.business</a>
     </p>
   `;
 
   return wrapEmail(content);
 }
+
+

@@ -35,10 +35,10 @@ export default function PrivacidadPage() {
         <p className="mt-3 text-slate-600">
           Expert Estudios Profesionales, SLU. Contacto:{" "}
           <a
-            href="mailto:soporte@verifactu.business"
+            href="mailto:info@verifactu.business"
             className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
           >
-            soporte@verifactu.business
+            info@verifactu.business
           </a>
           .
         </p>
@@ -67,10 +67,10 @@ export default function PrivacidadPage() {
           Puedes acceder, rectificar o eliminar tus datos. Para ejercer tus
           derechos, escribe a{" "}
           <a
-            href="mailto:soporte@verifactu.business"
+            href="mailto:info@verifactu.business"
             className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
           >
-            soporte@verifactu.business
+            info@verifactu.business
           </a>
           .
         </p>

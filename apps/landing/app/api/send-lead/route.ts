@@ -61,10 +61,10 @@ export async function POST(request: NextRequest) {
       ${message ? `<p><strong>Mensaje:</strong></p><p>${escapeHtml(message)}</p>` : ""}
     `;
 
-    const recipientEmail = process.env.LEAD_EMAIL || "leads@verifactu.business";
+    const recipientEmail = process.env.LEAD_EMAIL || "soporte@verifactu.business";
 
     await resend.emails.send({
-      from: process.env.FROM_EMAIL || "noreply@verifactu.business",
+      from: process.env.FROM_EMAIL || "info@verifactu.business",
       to: recipientEmail,
       subject: `Nuevo lead: ${escapeHtml(name)}`,
       html: emailContent,

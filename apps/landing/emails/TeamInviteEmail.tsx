@@ -1,4 +1,4 @@
-import { EmailContainer, EmailHeader, EmailFooter, CTAButton } from './EmailHeader';
+﻿import { EmailContainer, EmailHeader, EmailFooter, CTAButton } from './EmailHeader';
 
 interface TeamInviteEmailProps {
   inviteeEmail: string;
@@ -177,10 +177,10 @@ export function TeamInviteEmailTemplate({
         <br />
         Contacta directamente a {inviterName} o escribe a{' '}
         <a
-          href="mailto:soporte@verifactu.business"
+          href="mailto:info@verifactu.business"
           style={{ color: '#0060F0', textDecoration: 'none' }}
         >
-          soporte@verifactu.business
+          info@verifactu.business
         </a>
       </p>
 
@@ -188,3 +188,4 @@ export function TeamInviteEmailTemplate({
     </EmailContainer>
   );
 }
+

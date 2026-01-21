@@ -1,4 +1,4 @@
-# 📧 Sistema de Plantillas de Email - Verifactu Business
+﻿# 📧 Sistema de Plantillas de Email - Verifactu Business
 
 ## 📋 Descripción
 
@@ -359,7 +359,7 @@ Luego visita: `http://localhost:3001/api/email-preview`
    - Resend notifica automáticamente
 
 3. **SPF/DKIM:**
-   - Ya configurado en `noreply@verifactu.business`
+   - Ya configurado en `notificaciones@verifactu.business`
    - Asegura que los emails no vayan a spam
 
 4. **Templates Dinámicas:**
@@ -385,3 +385,5 @@ Luego visita: `http://localhost:3001/api/email-preview`
 **Documentación creada por:** Isaak  
 **Fecha:** 14 de Enero de 2026  
 **Versión:** 1.0.0
+
+

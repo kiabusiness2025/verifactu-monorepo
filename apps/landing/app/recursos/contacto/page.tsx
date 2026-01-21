@@ -33,10 +33,10 @@ export default function ContactoPage() {
           <p className="text-slate-700">
             Escribenos a{" "}
             <a
-              href="mailto:soporte@verifactu.business"
+              href="mailto:info@verifactu.business"
               className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
             >
-              soporte@verifactu.business
+              info@verifactu.business
             </a>
             .
           </p>
@@ -74,4 +74,5 @@ export default function ContactoPage() {
     </main>
   );
 }
+
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Email Header Component
  * Encabezado reutilizable para todas las plantillas de correo de Verifactu
  */
@@ -39,7 +39,7 @@ export function EmailHeader() {
                 color: '#0d2b4a',
               }}
             >
-              Soporte | Verifactu Business
+              Verifactu Business
             </div>
             <div
               style={{
@@ -214,3 +214,4 @@ export function CTAButton({
     </table>
   );
 }
+

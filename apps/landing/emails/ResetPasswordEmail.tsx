@@ -1,4 +1,4 @@
-import { EmailContainer, EmailHeader, EmailFooter, CTAButton } from './EmailHeader';
+﻿import { EmailContainer, EmailHeader, EmailFooter, CTAButton } from './EmailHeader';
 
 interface ResetPasswordEmailProps {
   userName: string;
@@ -159,10 +159,10 @@ export function ResetPasswordEmailTemplate({
         <br />
         Si el enlace no funciona o necesitas ayuda, escribe a{' '}
         <a
-          href="mailto:soporte@verifactu.business?subject=Problemas%20con%20recuperaci%C3%B3n%20de%20contrase%C3%B1a"
+          href="mailto:info@verifactu.business?subject=Problemas%20con%20recuperaci%C3%B3n%20de%20contrase%C3%B1a"
           style={{ color: '#0060F0', textDecoration: 'none' }}
         >
-          soporte@verifactu.business
+          info@verifactu.business
         </a>
       </p>
 
@@ -170,3 +170,4 @@ export function ResetPasswordEmailTemplate({
     </EmailContainer>
   );
 }
+

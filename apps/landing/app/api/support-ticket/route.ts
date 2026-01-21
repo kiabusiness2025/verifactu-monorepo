@@ -99,10 +99,10 @@ export async function POST(request: NextRequest) {
     `;
 
     const resend = new Resend(resendApiKey);
-    const recipientEmail = process.env.SUPPORT_EMAIL || "info@verifactu.business";
+    const recipientEmail = process.env.SUPPORT_EMAIL || "soporte@verifactu.business";
 
     await resend.emails.send({
-      from: process.env.FROM_EMAIL || "info@verifactu.business",
+      from: process.env.FROM_EMAIL || "soporte@verifactu.business",
       to: recipientEmail,
       subject: `Ticket soporte: ${escapeHtml(subject)}`,
       html: emailContent,
