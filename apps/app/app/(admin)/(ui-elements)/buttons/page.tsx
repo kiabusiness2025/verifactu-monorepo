@@ -56,28 +56,27 @@ export default function Buttons() {
             </Button>
           </div>
         </ComponentCard>
-        {/* Outline Button */}
+        {/* Secondary Button */}
         <ComponentCard title="Secondary Button">
           <div className="flex items-center gap-5">
-            {/* Outline Button */}
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="secondary">
               Button Text
             </Button>
-            <Button size="md" variant="outline">
+            <Button size="md" variant="secondary">
               Button Text
             </Button>
           </div>
         </ComponentCard>
-        {/* Outline Button with Start Icon */}
-        <ComponentCard title="Outline Button with Left Icon">
+        {/* Secondary Button with Left Icon */}
+        <ComponentCard title="Secondary Button with Left Icon">
           <div className="flex items-center gap-5">
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="secondary">
               <span className="inline-flex items-center gap-2">
                 <BoxIcon />
                 Button Text
               </span>
             </Button>
-            <Button size="md" variant="outline">
+            <Button size="md" variant="secondary">
               <span className="inline-flex items-center gap-2">
                 <BoxIcon />
                 Button Text
@@ -85,16 +84,16 @@ export default function Buttons() {
             </Button>
           </div>
         </ComponentCard>{" "}
-        {/* Outline Button with Start Icon */}
-        <ComponentCard title="Outline Button with Right Icon">
+        {/* Secondary Button with Right Icon */}
+        <ComponentCard title="Secondary Button with Right Icon">
           <div className="flex items-center gap-5">
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="secondary">
               <span className="inline-flex items-center gap-2">
                 Button Text
                 <BoxIcon />
               </span>
             </Button>
-            <Button size="md" variant="outline">
+            <Button size="md" variant="secondary">
               <span className="inline-flex items-center gap-2">
                 Button Text
                 <BoxIcon />
