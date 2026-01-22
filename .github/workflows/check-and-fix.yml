@@ -1,0 +1,54 @@
+name: check-and-fix
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Check & Fix Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '10.27.0'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: |
+          cd apps/app
+          pnpm exec prisma generate
+
+      - name: Type Check All
+        run: |
+          echo "🔍 Running type checks..."
+          cd apps/app && pnpm exec tsc --noEmit
+          cd ../landing && pnpm exec tsc --noEmit
+          echo "✅ Type checks passed"
+
+      - name: Build Validation
+        run: |
+          echo "🏗️ Validating builds..."
+          cd apps/app && pnpm run build
+          cd ../landing && pnpm run build
+          echo "✅ All builds successful"
+
+      - name: Report Status
+        if: success()
+        run: |
+          echo "✅ check-and-fix: ALL CHECKS PASSED"
+          echo "🚀 Deployment approved for production"
