@@ -44,11 +44,13 @@ export async function GET(request: NextRequest) {
         emailVerified: userWithCompanies.emailVerified,
       },
       companiesOwned: userWithCompanies.companiesOwned,
-      memberships: userWithCompanies.memberships.map((m) => ({
+      memberships: userWithCompanies.memberships.map(
+        (m: (typeof userWithCompanies.memberships)[number]) => ({
         id: m.id,
         role: m.role,
         company: m.company,
-      })),
+      })
+      ),
     });
   } catch (error) {
     console.error('[/api/app/me] Error:', error);
