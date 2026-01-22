@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@verifactu/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@verifactu/ui/components/Card';
 import { Badge } from '@verifactu/ui/components/badge';
 import Link from 'next/link';
 
@@ -81,3 +81,4 @@ export default async function OperationsPage() {
     </div>
   );
 }
+

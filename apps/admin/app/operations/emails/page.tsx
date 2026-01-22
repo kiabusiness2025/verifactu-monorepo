@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@verifactu/ui/components/table';
+} from '@verifactu/ui/components/Table';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -138,3 +138,4 @@ export default function EmailsPage() {
     </div>
   );
 }
+

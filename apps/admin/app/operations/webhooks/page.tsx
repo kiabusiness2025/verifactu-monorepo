@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@verifactu/ui/components/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@verifactu/ui/components/Table';
 import { Badge } from '@verifactu/ui/components/badge';
 import { Button } from '@verifactu/ui/components/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@verifactu/ui/components/select';
@@ -117,3 +117,4 @@ export default function WebhooksPage() {
     </div>
   );
 }
+

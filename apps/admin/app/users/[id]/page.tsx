@@ -2,7 +2,7 @@
 
 import { Badge } from '@verifactu/ui/components/badge';
 import { Button } from '@verifactu/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@verifactu/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@verifactu/ui/components/Card';
 import {
   Dialog,
   DialogContent,
