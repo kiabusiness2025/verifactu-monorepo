@@ -145,12 +145,9 @@ const Calendar: React.FC = () => {
           }}
         />
       </div>
-      <Modal
-        isOpen={isOpen}
-        onClose={closeModal}
-        className="max-w-[700px] p-6 lg:p-10"
-      >
-        <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
+      <Modal isOpen={isOpen} onClose={closeModal}>
+        <div className="max-w-[700px] p-6 lg:p-10">
+          <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
           <div>
             <h5 className="mb-2 font-semibold text-gray-800 modal-title text-theme-xl dark:text-white/90 lg:text-2xl">
               {selectedEvent ? "Edit Event" : "Add Event"}
@@ -258,6 +255,7 @@ const Calendar: React.FC = () => {
             >
               {selectedEvent ? "Update Changes" : "Add Event"}
             </button>
+          </div>
           </div>
         </div>
       </Modal>
