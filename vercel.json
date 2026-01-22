@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npx -y pnpm@9.15.4 install",
-  "buildCommand": "npx -y pnpm@9.15.4 run build",
+  "buildCommand": "PRISMA_GENERATE_SKIP_AUTOINSTALL=1 npx -y pnpm@9.15.4 run build",
   "outputDirectory": ".next",
   "framework": "nextjs"
 }
