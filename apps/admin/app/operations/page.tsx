@@ -33,7 +33,7 @@ export default async function OperationsPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Failed</span>
-                  <Badge variant={data.webhooks.failed > 0 ? 'destructive' : 'secondary'}>
+                  <Badge variant={data.webhooks.failed > 0 ? 'danger' : 'success'}>
                     {data.webhooks.failed}
                   </Badge>
                 </div>
@@ -55,7 +55,7 @@ export default async function OperationsPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Failed</span>
-                  <Badge variant={data.emails.failed > 0 ? 'destructive' : 'secondary'}>
+                  <Badge variant={data.emails.failed > 0 ? 'danger' : 'success'}>
                     {data.emails.failed}
                   </Badge>
                 </div>

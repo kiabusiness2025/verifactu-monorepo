@@ -8,18 +8,18 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { useParams } from 'next/navigation';
 
-const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  QUEUED: 'secondary',
-  SENT: 'default',
-  DELIVERED: 'outline',
-  BOUNCED: 'destructive',
-  COMPLAINED: 'destructive',
-  FAILED: 'destructive'
+const STATUS_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
+  QUEUED: 'warning',
+  SENT: 'info',
+  DELIVERED: 'success',
+  BOUNCED: 'danger',
+  COMPLAINED: 'danger',
+  FAILED: 'danger'
 };
 
-const PROVIDER_COLORS: Record<string, 'default' | 'secondary' | 'outline'> = {
+const PROVIDER_COLORS: Record<string, 'default' | 'info'> = {
   RESEND: 'default',
-  GMAIL: 'secondary'
+  GMAIL: 'info'
 };
 
 export default function EmailDetailPage() {
@@ -80,7 +80,7 @@ export default function EmailDetailPage() {
             </Button>
           )}
           <Link href="/operations/emails">
-            <Button variant="outline">Back</Button>
+            <Button variant="secondary">Back</Button>
           </Link>
         </div>
       </div>
@@ -109,8 +109,8 @@ export default function EmailDetailPage() {
               <p className="font-mono text-sm">{email.template || '-'}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge variant={STATUS_COLORS[email.status] || 'secondary'}>{email.status}</Badge>
-              <Badge variant={PROVIDER_COLORS[email.provider] || 'outline'}>{email.provider}</Badge>
+              <Badge variant={STATUS_COLORS[email.status] || 'default'}>{email.status}</Badge>
+              <Badge variant={PROVIDER_COLORS[email.provider] || 'default'}>{email.provider}</Badge>
             </div>
             {email.fromEmail && (
               <div>

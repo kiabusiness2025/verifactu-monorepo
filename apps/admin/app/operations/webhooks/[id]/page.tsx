@@ -8,12 +8,12 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { useParams } from 'next/navigation';
 
-const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  RECEIVED: 'secondary',
-  PROCESSING: 'default',
-  PROCESSED: 'outline',
-  FAILED: 'destructive',
-  IGNORED: 'secondary'
+const STATUS_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
+  RECEIVED: 'warning',
+  PROCESSING: 'info',
+  PROCESSED: 'success',
+  FAILED: 'danger',
+  IGNORED: 'default'
 };
 
 export default function WebhookDetailPage() {
@@ -62,7 +62,7 @@ export default function WebhookDetailPage() {
             </Button>
           )}
           <Link href="/operations/webhooks">
-            <Button variant="outline">Back</Button>
+            <Button variant="secondary">Back</Button>
           </Link>
         </div>
       </div>
@@ -75,7 +75,7 @@ export default function WebhookDetailPage() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">Provider</p>
-              <Badge variant="outline">{webhook.provider}</Badge>
+              <Badge variant="default">{webhook.provider}</Badge>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Event Type</p>
@@ -87,7 +87,7 @@ export default function WebhookDetailPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Signature Valid</p>
-              <Badge variant={webhook.signatureOk ? 'outline' : 'destructive'}>
+              <Badge variant={webhook.signatureOk ? 'success' : 'danger'}>
                 {webhook.signatureOk ? 'Yes' : 'No'}
               </Badge>
             </div>
@@ -119,7 +119,7 @@ export default function WebhookDetailPage() {
                         {format(new Date(attempt.startedAt), 'MMM d, HH:mm:ss')}
                       </p>
                     </div>
-                    <Badge variant={attempt.ok ? 'outline' : 'destructive'}>
+                    <Badge variant={attempt.ok ? 'success' : 'danger'}>
                       {attempt.ok ? 'Success' : 'Failed'}
                     </Badge>
                   </div>

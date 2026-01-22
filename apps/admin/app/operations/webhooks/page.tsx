@@ -8,12 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Link from 'next/link';
 import { format } from 'date-fns';
 
-const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  RECEIVED: 'secondary',
-  PROCESSING: 'default',
-  PROCESSED: 'outline',
-  FAILED: 'destructive',
-  IGNORED: 'secondary'
+const STATUS_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
+  RECEIVED: 'warning',
+  PROCESSING: 'info',
+  PROCESSED: 'success',
+  FAILED: 'danger',
+  IGNORED: 'default'
 };
 
 export default function WebhooksPage() {
@@ -46,7 +46,7 @@ export default function WebhooksPage() {
           <p className="text-muted-foreground">Monitor webhook events from external services</p>
         </div>
         <Link href="/operations">
-          <Button variant="outline">Back to Operations</Button>
+          <Button variant="secondary">Back to Operations</Button>
         </Link>
       </div>
 
@@ -96,7 +96,7 @@ export default function WebhooksPage() {
             {webhooks.map((webhook) => (
               <TableRow key={webhook.id}>
                 <TableCell>
-                  <Badge variant="outline">{webhook.provider}</Badge>
+                  <Badge variant="default">{webhook.provider}</Badge>
                 </TableCell>
                 <TableCell className="font-mono text-sm">{webhook.eventType}</TableCell>
                 <TableCell>

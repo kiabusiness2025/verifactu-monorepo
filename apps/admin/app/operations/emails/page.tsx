@@ -21,18 +21,18 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  QUEUED: 'secondary',
-  SENT: 'default',
-  DELIVERED: 'outline',
-  BOUNCED: 'destructive',
-  COMPLAINED: 'destructive',
-  FAILED: 'destructive',
+const STATUS_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
+  QUEUED: 'warning',
+  SENT: 'info',
+  DELIVERED: 'success',
+  BOUNCED: 'danger',
+  COMPLAINED: 'danger',
+  FAILED: 'danger',
 };
 
-const PROVIDER_COLORS: Record<string, 'default' | 'secondary' | 'outline'> = {
+const PROVIDER_COLORS: Record<string, 'default' | 'info'> = {
   RESEND: 'default',
-  GMAIL: 'secondary',
+  GMAIL: 'info',
 };
 
 export default function EmailsPage() {
@@ -65,7 +65,7 @@ export default function EmailsPage() {
           <p className="text-muted-foreground">Monitor email delivery status</p>
         </div>
         <Link href="/operations">
-          <Button variant="outline">Back to Operations</Button>
+          <Button variant="secondary">Back to Operations</Button>
         </Link>
       </div>
 

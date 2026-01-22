@@ -152,7 +152,7 @@ export default function UserDetailPage() {
           <p className="text-muted-foreground">{user.email}</p>
         </div>
         <Link href="/users">
-          <Button variant="outline">Back to Users</Button>
+          <Button variant="secondary">Back to Users</Button>
         </Link>
       </div>
 
@@ -172,17 +172,17 @@ export default function UserDetailPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Role</p>
-              <Badge variant="outline">{user.role}</Badge>
+              <Badge variant="default">{user.role}</Badge>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Email Verified</p>
-              <Badge variant={user.emailVerified ? 'outline' : 'secondary'}>
+              <Badge variant={user.emailVerified ? 'success' : 'warning'}>
                 {user.emailVerified ? 'Yes' : 'No'}
               </Badge>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Status</p>
-              <Badge variant={user.isBlocked ? 'destructive' : 'outline'}>
+              <Badge variant={user.isBlocked ? 'danger' : 'success'}>
                 {user.isBlocked ? 'Blocked' : 'Active'}
               </Badge>
             </div>
@@ -214,7 +214,7 @@ export default function UserDetailPage() {
                 <Button
                   onClick={handleUnblock}
                   disabled={actionLoading}
-                  variant="outline"
+                  variant="secondary"
                   className="w-full"
                 >
                   Unblock User
@@ -223,7 +223,7 @@ export default function UserDetailPage() {
             ) : (
               <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="destructive" className="w-full">
+                  <Button variant="danger" className="w-full">
                     Block User
                   </Button>
                 </DialogTrigger>
@@ -242,11 +242,11 @@ export default function UserDetailPage() {
                       />
                     </div>
                     <div className="flex gap-2 justify-end">
-                      <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
+                      <Button variant="secondary" onClick={() => setBlockDialogOpen(false)}>
                         Cancel
                       </Button>
                       <Button
-                        variant="destructive"
+                        variant="danger"
                         onClick={handleBlock}
                         disabled={actionLoading || !blockReason.trim()}
                       >
@@ -260,7 +260,7 @@ export default function UserDetailPage() {
 
             <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="w-full">
+                <Button variant="secondary" className="w-full">
                   Send Email
                 </Button>
               </DialogTrigger>
@@ -307,7 +307,7 @@ export default function UserDetailPage() {
                     />
                   </div>
                   <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>
+                    <Button variant="secondary" onClick={() => setEmailDialogOpen(false)}>
                       Cancel
                     </Button>
                     <Button
