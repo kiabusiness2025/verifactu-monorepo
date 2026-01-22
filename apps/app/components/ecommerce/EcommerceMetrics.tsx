@@ -21,9 +21,11 @@ export const EcommerceMetrics = () => {
               3,782
             </h4>
           </div>
-          <Badge color="success">
-            <ArrowUpIcon />
-            11.01%
+          <Badge variant="success">
+            <span className="inline-flex items-center gap-1">
+              <ArrowUpIcon />
+              11.01%
+            </span>
           </Badge>
         </div>
       </div>
@@ -44,9 +46,11 @@ export const EcommerceMetrics = () => {
             </h4>
           </div>
 
-          <Badge color="error">
-            <ArrowDownIcon className="text-error-500" />
-            9.05%
+          <Badge variant="danger">
+            <span className="inline-flex items-center gap-1">
+              <ArrowDownIcon className="text-error-500" />
+              9.05%
+            </span>
           </Badge>
         </div>
       </div>
