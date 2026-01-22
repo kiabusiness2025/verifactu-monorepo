@@ -61,25 +61,22 @@ export default function EmailDetailPage() {
   if (loading) return <p className="p-8">Loading...</p>;
   if (!email) return <p className="p-8">Email not found</p>;
 
-  // Only allow retry for Resend emails with FAILED or BOUNCED status
-  const cancanRetry && (
-            <Button onClick={handleRetry} disabled={retrying}>
-              {retrying ? 'Retrying...' : 'Retry (Resend)'}
-            </Button>
-          )}
-          {email.provider === 'GMAIL' && (email.status === 'FAILED' || email.status === 'BOUNCED') && (
-            <div className="text-sm text-muted-foreground">
-              Gmail emails cannot be retried automatically
-            </divp-8 space-y-6">
-      <div className="flex justify-between items-center">
+  const canRetry =
+    email.provider === 'RESEND' && (email.status === 'FAILED' || email.status === 'BOUNCED');
+  const showGmailNotice =
+    email.provider === 'GMAIL' && (email.status === 'FAILED' || email.status === 'BOUNCED');
+
+  return (
+    <div className="p-8 space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold">Email Details</h1>
           <p className="text-muted-foreground font-mono">{email.id}</p>
         </div>
-        <div className="flex gap-2">
-          {(email.status === 'FAILED' || email.status === 'BOUNCED') && (
+        <div className="flex flex-wrap gap-2">
+          {canRetry && (
             <Button onClick={handleRetry} disabled={retrying}>
-              {retrying ? 'Retrying...' : 'Retry'}
+              {retrying ? 'Retrying...' : 'Retry (Resend)'}
             </Button>
           )}
           <Link href="/operations/emails">
@@ -87,6 +84,11 @@ export default function EmailDetailPage() {
           </Link>
         </div>
       </div>
+      {showGmailNotice && (
+        <div className="text-sm text-muted-foreground">
+          Gmail emails cannot be retried automatically.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
@@ -106,8 +108,9 @@ export default function EmailDetailPage() {
               <p className="text-sm text-muted-foreground">Template</p>
               <p className="font-mono text-sm">{email.template || '-'}</p>
             </div>
-            <div>
-              <p className="t{PROVIDER_COLORS[email.provider]}>{email.provider}</Badge>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={STATUS_COLORS[email.status] || 'secondary'}>{email.status}</Badge>
+              <Badge variant={PROVIDER_COLORS[email.provider] || 'outline'}>{email.provider}</Badge>
             </div>
             {email.fromEmail && (
               <div>
@@ -124,12 +127,7 @@ export default function EmailDetailPage() {
                 <p className="text-sm text-muted-foreground">Thread ID (Gmail)</p>
                 <p className="font-mono text-sm break-all">{email.threadId}</p>
               </div>
-            )}ge variant="outline">{email.provider}</Badge>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Message ID</p>
-              <p className="font-mono text-sm">{email.messageId || '-'}</p>
-            </div>
+            )}
             <div>
               <p className="text-sm text-muted-foreground">Created At</p>
               <p>{format(new Date(email.createdAt), 'MMM d, yyyy HH:mm:ss')}</p>
