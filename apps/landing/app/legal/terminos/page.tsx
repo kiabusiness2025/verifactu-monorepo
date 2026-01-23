@@ -1,5 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  BadgeCheck,
+  FileText,
+  Scale,
+  ShieldCheck,
+  UserCheck,
+  Mail,
+  ExternalLink,
+} from "lucide-react";
 import { getLandingUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
@@ -23,89 +32,136 @@ export default function TerminosPage() {
       </div>
 
       <section className="mx-auto max-w-5xl px-4 py-16">
-        <h1 className="text-4xl font-bold text-[#2361d8]">Terminos y condiciones</h1>
-        <p className="mt-4 text-lg text-slate-600">
-          Estas condiciones regulan el acceso y uso de Verifactu Business. Al usar
-          el servicio aceptas este acuerdo.
-        </p>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/20">
+              <FileText className="h-4 w-4" />
+              Condiciones de servicio
+            </div>
+            <h1 className="text-4xl font-bold text-[#2361d8]">Terminos y condiciones</h1>
+            <p className="text-lg text-slate-600">
+              Estas condiciones regulan el acceso y uso de Verifactu Business. Al usar el servicio aceptas este acuerdo.
+            </p>
+            <p className="text-sm text-slate-500">Ultima actualizacion: 23 de enero de 2026.</p>
+          </div>
+          <div className="rounded-2xl border border-[#2361d8]/15 bg-white p-5 text-sm text-slate-600 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <BadgeCheck className="h-4 w-4" />
+              Aviso importante
+            </div>
+            <p className="mt-2">
+              Isaak es un asistente de apoyo. No sustituye a tu gestor ni a un asesor profesional.
+            </p>
+          </div>
+        </div>
 
-        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
-          1. Servicio
-        </h2>
-        <p className="mt-3 text-slate-600">
-          Verifactu Business proporciona herramientas de facturacion, registro y
-          control basico para PYMEs y autonomos. El servicio puede evolucionar y
-          mejorar con el tiempo.
-        </p>
+        <div className="mt-10 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <ShieldCheck className="h-4 w-4" />
+              Servicio
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              Verifactu Business ofrece facturacion, registro y control basico para PYMEs y autonomos. El servicio
+              evoluciona con mejoras continuas.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <UserCheck className="h-4 w-4" />
+              Cuenta y acceso
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              Eres responsable de custodiar tus credenciales y del uso que se haga desde tu cuenta.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <Scale className="h-4 w-4" />
+              Responsabilidad
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              El servicio se ofrece “tal cual”. Trabajamos para mantener disponibilidad y datos actualizados, sin
+              garantia absoluta.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <BadgeCheck className="h-4 w-4" />
+              Precios y facturacion
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              Los precios se calculan por tramos de uso. Consulta la{" "}
+              <Link href="/politica-de-precios" className="font-semibold text-[#2361d8] underline underline-offset-4">
+                politica de precios
+              </Link>{" "}
+              y nuestro{" "}
+              <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] underline underline-offset-4">
+                contacto
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
 
-        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
-          1.1 Asistente Isaak
-        </h2>
-        <p className="mt-3 text-slate-600">
-          Isaak es un asistente de apoyo para ayudarte a interpretar datos, plazos y documentos. Puedes elegir su
-          personalidad y tono. Isaak no sustituye a tu gestor ni a un asesor profesional.
-        </p>
+        <div className="mt-10 rounded-2xl border border-[#2361d8]/15 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+            <ExternalLink className="h-4 w-4" />
+            Referencias oficiales VeriFactu
+          </div>
+          <p className="mt-2 text-sm text-slate-600">
+            Para normativa y publicaciones oficiales consulta la Agencia Tributaria:
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3 text-sm">
+            <a
+              href="https://www.agenciatributaria.es/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/20 bg-[#2361d8]/5 px-4 py-2 font-semibold text-[#2361d8]"
+            >
+              Agencia Tributaria
+              <ExternalLink className="h-4 w-4" />
+            </a>
+            <a
+              href="https://sede.agenciatributaria.gob.es/Sede/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/20 bg-[#2361d8]/5 px-4 py-2 font-semibold text-[#2361d8]"
+            >
+              Sede electronica
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </div>
+        </div>
 
-        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
-          2. Cuenta y acceso
-        </h2>
-        <p className="mt-3 text-slate-600">
-          Eres responsable de mantener la confidencialidad de tus credenciales y
-          del uso que se haga de tu cuenta.
-        </p>
-
-        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
-          3. Precios y facturacion
-        </h2>
-        <p className="mt-3 text-slate-600">
-          Los precios de suscripcion se calculan por tramos de uso. Puedes consultar la politica
-          publica de precios y medicion aqui:{" "}
-          <Link
-            href="/politica-de-precios"
-            className="text-[#2361d8] underline underline-offset-4 hover:text-[#2361d8]"
-          >
-            Politica de precios de suscripciones
-          </Link>
-          , y el soporte en{" "}
-          <Link
-            href="/verifactu/soporte"
-            className="text-[#2361d8] underline underline-offset-4 hover:text-[#2361d8]"
-          >
-            Centro de soporte
-          </Link>
-          .
-        </p>
-
-        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
-          4. Responsabilidad
-        </h2>
-        <p className="mt-3 text-slate-600">
-          El servicio se ofrece "tal cual". Hacemos esfuerzos razonables para
-          mantener la disponibilidad y la informacion actualizada, sin garantia
-          absoluta.
-        </p>
-
-        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
-          5. Cancelacion
-        </h2>
-        <p className="mt-3 text-slate-600">
-          Puedes cancelar tu suscripcion en cualquier momento. La cancelacion
-          aplica al siguiente periodo de facturacion.
-        </p>
-
-        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
-          6. Contacto
-        </h2>
-        <p className="mt-3 text-slate-600">
-          Para dudas legales o soporte, contacta en{" "}
-          <a
-            href="mailto:info@verifactu.business"
-            className="text-[#2361d8] underline underline-offset-4 hover:text-[#2361d8]"
-          >
-            info@verifactu.business
-          </a>
-          . (Alias de soporte@verifactu.business)
-        </p>
+        <div className="mt-10 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <Scale className="h-4 w-4" />
+              Cancelacion
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              Puedes cancelar tu suscripcion en cualquier momento. La cancelacion aplica al siguiente periodo de
+              facturacion.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <Mail className="h-4 w-4" />
+              Contacto
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              Dudas legales o soporte:{" "}
+              <a
+                href="mailto:info@verifactu.business"
+                className="font-semibold text-[#2361d8] underline underline-offset-4"
+              >
+                info@verifactu.business
+              </a>
+              . (Alias de soporte@verifactu.business)
+            </p>
+          </div>
+        </div>
       </section>
     </main>
   );

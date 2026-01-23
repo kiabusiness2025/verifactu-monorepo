@@ -10,7 +10,7 @@
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible {
-    @apply outline-none ring-2 ring-blue-500 ring-offset-2 rounded;
+    @apply outline-none ring-2 ring-[#2361d8] ring-offset-2 rounded;
   }
 
   /* Better contrast for dark mode */
@@ -20,7 +20,7 @@
     input:focus-visible,
     select:focus-visible,
     textarea:focus-visible {
-      @apply ring-blue-400 ring-offset-slate-900;
+      @apply ring-[#2361d8] ring-offset-slate-900;
     }
   }
 
@@ -39,15 +39,15 @@
   }
 }
 
-/* Paleta corporativa y gradientes */
+/* Paleta corporativa */
 .bg-primary-gradient {
-	@apply bg-gradient-primary;
+	@apply bg-[#2361d8];
 }
 .bg-light-gradient {
-	@apply bg-gradient-light;
+	@apply bg-[#2361d8]/5;
 }
 .bg-metallic-gradient {
-	@apply bg-gradient-metallic;
+	@apply bg-[#2361d8]/15;
 }
 
 .text-metallic {
@@ -63,5 +63,6 @@
 	transition: background 0.3s;
 }
 .btn-metallic:hover {
-	background: linear-gradient(90deg, #e6e8ea 0%, #bfc3c7 60%, #7a7d80 100%);
+	background: #2361d8;
+	color: #ffffff;
 }

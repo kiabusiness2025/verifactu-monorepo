@@ -91,7 +91,7 @@ export default function IntegracionesPage() {
 
       <section className="py-12">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="rounded-3xl border border-[#2361d8]/15 bg-gradient-to-br from-sky-50/70 to-white p-10">
+          <div className="rounded-3xl border border-[#2361d8]/15 bg-white p-10">
             <h2 className="text-2xl font-semibold text-[#2361d8]">
               Necesitas una integracion especifica
             </h2>
@@ -112,5 +112,6 @@ export default function IntegracionesPage() {
     </main>
   );
 }
+
 
 

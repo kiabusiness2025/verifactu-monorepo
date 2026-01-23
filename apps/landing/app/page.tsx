@@ -76,9 +76,9 @@ export default function Page() {
               </div>
               <Link
                 href="/verifactu/estado"
-                className="mt-2 inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15 hover:text-[#2361d8]"
+                className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15 hover:text-[#2361d8]"
               >
-                <span className="h-2 w-2 rounded-full bg-[#0080F0]" aria-hidden="true" />
+                <span className="h-2 w-2 rounded-full bg-[#2361d8]" aria-hidden="true" />
                 Estado: Operativo - Cierre 2025 en marcha, T1 2026 abierto
               </Link>
 
@@ -172,7 +172,7 @@ export default function Page() {
       <section id="para-quien" className="py-16 bg-white">
         <Container>
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] shadow-sm ring-1 ring-[#0080F0]/20">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] shadow-sm ring-1 ring-[#2361d8]/20">
               Para quien es Verifactu + Isaak
             </div>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
@@ -202,11 +202,11 @@ export default function Page() {
             </div>
             <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
               <div
-                className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-blue-100/70 blur-2xl"
+                className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[#2361d8]/10/70 blur-2xl"
                 aria-hidden="true"
               />
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-[#2361d8]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#2361d8]/10 text-[#2361d8]">
                   <Building2 className="h-5 w-5" />
                 </span>
                 <h3 className="text-sm font-semibold text-[#2361d8]">
@@ -298,7 +298,7 @@ export default function Page() {
       >
         <Container>
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-4 py-1.5 text-sm font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-sm font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
               <Sparkles className="h-4 w-4" />
               Dashboard
             </div>
@@ -437,5 +437,7 @@ export default function Page() {
     </div>
   );
 }
+
+
 
 

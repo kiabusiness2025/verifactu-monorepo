@@ -333,7 +333,7 @@ export default function ContactForms() {
                 {ticketForm.attachments.length > 0 && (
                   <div className="flex items-center justify-between text-[11px] text-slate-500">
                     <span>
-                      {ticketForm.attachments.length} adjuntos ·{" "}
+                      {ticketForm.attachments.length} adjuntos Â·{" "}
                       {(totalAttachmentBytes / 1024 / 1024).toFixed(2)} MB
                     </span>
                     <button

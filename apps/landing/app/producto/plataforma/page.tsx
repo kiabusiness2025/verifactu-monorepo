@@ -91,7 +91,7 @@ export default function PlataformaPage() {
 
       <section className="py-12">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="rounded-3xl border border-[#2361d8]/15 bg-gradient-to-br from-sky-50/70 to-white p-10">
+          <div className="rounded-3xl border border-[#2361d8]/15 bg-white p-10">
             <h2 className="text-2xl font-semibold text-[#2361d8]">Disenada para equipos pequenos</h2>
             <p className="mt-4 text-slate-600">
               Pensada para PYMEs que quieren facturar y cumplir sin herramientas complejas.
@@ -116,5 +116,6 @@ export default function PlataformaPage() {
     </main>
   );
 }
+
 
 

@@ -16,7 +16,7 @@ interface PasswordInputProps {
 export function PasswordInput({
   value,
   onChange,
-  placeholder = "Contraseña",
+  placeholder = "ContraseÃ±a",
   required = true,
 }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
@@ -35,7 +35,7 @@ export function PasswordInput({
         type="button"
         onClick={() => setShowPassword(!showPassword)}
         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-colors hover:text-gray-700"
-        aria-label="Mostrar u ocultar contraseña"
+        aria-label="Mostrar u ocultar contraseÃ±a"
       >
         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
       </button>
@@ -131,7 +131,7 @@ export function AuthLayout({
 }: AuthLayoutProps) {
   const landingUrl = getLandingUrl();
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 px-4 py-10">
+    <div className="min-h-screen bg-[#2361d8]/5 px-4 py-10">
       <div className="mx-auto w-full max-w-md">
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-lg">
           <div className="mb-8 text-center">
@@ -180,7 +180,7 @@ export function AuthLayout({
                     className="underline hover:text-[#2361d8]"
                     aria-label="Leer politica de privacidad"
                   >
-                    Política de privacidad
+                    PolÃ­tica de privacidad
                   </Link>
                   <span>|</span>
                   <Link
@@ -188,7 +188,7 @@ export function AuthLayout({
                     className="underline hover:text-[#2361d8]"
                     aria-label="Leer terminos y condiciones"
                   >
-                    Términos y condiciones
+                    TÃ©rminos y condiciones
                   </Link>
                 </div>
               </div>
@@ -205,5 +205,6 @@ export function AuthLayout({
     </div>
   );
 }
+
 
 

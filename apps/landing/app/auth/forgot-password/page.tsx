@@ -61,11 +61,11 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      showToast({ type: "success", title: "Actualizada", message: "Tu contraseña ha sido cambiada" });
+      showToast({ type: "success", title: "Actualizada", message: "Tu contraseÃ±a ha sido cambiada" });
       router.push("/auth/login");
     } catch (err) {
-      setError("Error al actualizar la contraseña. Intenta de nuevo.");
-      showToast({ type: "error", title: "Error", message: "No se pudo actualizar la contraseña" });
+      setError("Error al actualizar la contraseÃ±a. Intenta de nuevo.");
+      showToast({ type: "error", title: "Error", message: "No se pudo actualizar la contraseÃ±a" });
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthLayout
-      title={step === "email" ? "Recuperar contraseña" : "Restablece tu contraseña"}
+      title={step === "email" ? "Recuperar contraseÃ±a" : "Restablece tu contraseÃ±a"}
       subtitle={
         step === "email"
           ? "Te enviaremos un enlace para restablecerla"
@@ -81,8 +81,8 @@ export default function ForgotPasswordPage() {
       }
     >
       {user && (
-        <div className="mb-3 rounded border border-[#2361d8]/20 bg-sky-50/70 p-2 text-xs text-[#2361d8]">
-          Ya has iniciado sesion. Puedes cambiar tu contraseña con el enlace del correo.
+        <div className="mb-3 rounded border border-[#2361d8]/20 bg-[#2361d8]/10 p-2 text-xs text-[#2361d8]">
+          Ya has iniciado sesion. Puedes cambiar tu contraseÃ±a con el enlace del correo.
         </div>
       )}
       {step === "email" && (
@@ -134,7 +134,7 @@ export default function ForgotPasswordPage() {
           transition={{ duration: 0.3 }}
         >
           <div className="mb-4 flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-50/70">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2361d8]/10">
               <Mail className="h-6 w-6 text-[#2361d8]" />
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function ForgotPasswordPage() {
             />
 
             <FormInput
-              label="Nueva contraseña"
+              label="Nueva contraseÃ±a"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -175,7 +175,7 @@ export default function ForgotPasswordPage() {
               disabled={isLoading}
               className="w-full rounded-full bg-[#2361d8] py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoading ? "Actualizando..." : "Actualizar contraseña"}
+              {isLoading ? "Actualizando..." : "Actualizar contraseÃ±a"}
             </button>
           </form>
 
@@ -200,5 +200,6 @@ export default function ForgotPasswordPage() {
     </AuthLayout>
   );
 }
+
 
 

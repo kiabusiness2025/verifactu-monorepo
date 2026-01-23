@@ -70,7 +70,7 @@ export default function PricingCalculatorModal({
       if (data.url) {
         window.location.href = data.url;
       } else {
-        console.error("Error al crear sesión de pago");
+        console.error("Error al crear sesiÃ³n de pago");
       }
     } catch (error) {
       console.error("Error al iniciar trial:", error);
@@ -92,7 +92,7 @@ export default function PricingCalculatorModal({
           Calcula tu precio
         </h2>
         <p className="mb-8 text-lightbg-600">
-          Ajusta los valores según tu actividad. El precio se calcula por uso real.
+          Ajusta los valores segÃºn tu actividad. El precio se calcula por uso real.
         </p>
 
         <div className="space-y-8">
@@ -111,14 +111,14 @@ export default function PricingCalculatorModal({
               onChange={(e) => setInvoices(Number(e.target.value))}
               className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
               style={{
-                background: `linear-gradient(to right, #0060F0 0%, #0060F0 ${((invoices - 1) / 999) * 100}%, #e5e7eb ${((invoices - 1) / 999) * 100}%, #e5e7eb 100%)`,
+                background: `linear-gradient(to right, #2361d8 0%, #2361d8 ${((invoices - 1) / 999) * 100}%, #e5e7eb ${((invoices - 1) / 999) * 100}%, #e5e7eb 100%)`,
               }}
             />
             <p className="mt-2 text-xs text-gray-500">
               Incluye hasta 10 facturas/mes en la cuota base.
             </p>
             <p className="mt-1 text-xs text-gray-500">
-              Más de 1.000 facturas/mes requiere presupuesto.
+              MÃ¡s de 1.000 facturas/mes requiere presupuesto.
             </p>
             <div className="mt-1 flex justify-between text-xs text-gray-500">
               <span>1</span>
@@ -140,7 +140,7 @@ export default function PricingCalculatorModal({
                   }}
                   className="h-4 w-4 rounded border-gray-300 text-[#2361d8] focus:ring-[#2361d8]"
                 />
-                <span>Conciliación bancaria</span>
+                <span>ConciliaciÃ³n bancaria</span>
               </label>
               {bankingEnabled && (
                 <span className="text-2xl font-bold text-[#2361d8]">{movements}</span>
@@ -157,14 +157,14 @@ export default function PricingCalculatorModal({
                   onChange={(e) => setMovements(Number(e.target.value))}
                   className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
                   style={{
-                    background: `linear-gradient(to right, #0060F0 0%, #0060F0 ${(movements / 2000) * 100}%, #e5e7eb ${(movements / 2000) * 100}%, #e5e7eb 100%)`,
+                    background: `linear-gradient(to right, #2361d8 0%, #2361d8 ${(movements / 2000) * 100}%, #e5e7eb ${(movements / 2000) * 100}%, #e5e7eb 100%)`,
                   }}
                 />
                 <p className="mt-2 text-xs text-gray-500">
-                  0 movimientos = 0 €. Si activas conciliación y procesas movimientos, se aplica un tramo.
+                  0 movimientos = 0 â‚¬. Si activas conciliaciÃ³n y procesas movimientos, se aplica un tramo.
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  Más de 2.000 movimientos/mes requiere presupuesto.
+                  MÃ¡s de 2.000 movimientos/mes requiere presupuesto.
                 </p>
                 <div className="mt-1 flex justify-between text-xs text-gray-500">
                   <span>0</span>
@@ -181,28 +181,28 @@ export default function PricingCalculatorModal({
         </div>
 
         {/* Resumen */}
-        <div className="mt-8 rounded-lg bg-sky-50/70 p-6">
+        <div className="mt-8 rounded-lg bg-[#2361d8]/10 p-6">
           <div className="flex items-end justify-between">
             <div>
               <p className="text-sm text-gray-600">Cuota mensual estimada</p>
               <p className="mt-1 text-4xl font-bold text-[#2361d8]">
-                {fmt(monthlyPrice)} € <span className="text-2xl text-gray-500">/mes + IVA</span>
+                {fmt(monthlyPrice)} â‚¬ <span className="text-2xl text-gray-500">/mes + IVA</span>
               </p>
               <p className="mt-1 text-sm text-gray-500">
-                Con IVA: {fmt(withVAT)} €
+                Con IVA: {fmt(withVAT)} â‚¬
               </p>
               <div className="mt-4 space-y-1 text-xs text-gray-500">
                 <div className="flex items-center justify-between">
                   <span>Base</span>
-                  <span>{fmt(breakdown.base)} €</span>
+                  <span>{fmt(breakdown.base)} â‚¬</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tramo facturas ({invoiceLabel(invoices)})</span>
-                  <span>{fmt(breakdown.invoiceAddon)} €</span>
+                  <span>{fmt(breakdown.invoiceAddon)} â‚¬</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tramo movimientos ({movementLabel(movements)})</span>
-                  <span>{fmt(breakdown.movementAddon)} €</span>
+                  <span>{fmt(breakdown.movementAddon)} â‚¬</span>
                 </div>
               </div>
             </div>
@@ -221,6 +221,8 @@ export default function PricingCalculatorModal({
     </div>
   );
 }
+
+
 
 
 

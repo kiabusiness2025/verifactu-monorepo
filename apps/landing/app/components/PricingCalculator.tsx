@@ -121,7 +121,7 @@ export default function PricingCalculator() {
             >
               {plan.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="rounded-full bg-[#0080F0] px-3 py-1 text-xs font-semibold text-white">
+                  <span className="rounded-full bg-[#2361d8] px-3 py-1 text-xs font-semibold text-white">
                     Mas popular
                   </span>
                 </div>
@@ -166,4 +166,5 @@ export default function PricingCalculator() {
     </section>
   );
 }
+
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getLandingUrl, getAppUrl } from "../lib/urls";
 import type { Metadata } from "next";
-import { CheckCircle2, ShieldCheck, FileText, Hash } from "lucide-react";
+import { CheckCircle2, ShieldCheck, FileText, Hash, ExternalLink } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Cumplimiento VeriFactu | Verifactu Business",
@@ -13,22 +13,22 @@ const evidencias = [
     title: "Registro encadenado por documento",
     detail:
       "Cada documento queda enlazado con el anterior, de forma que cualquier cambio deja rastro.",
-    icon: <Hash className="h-5 w-5 text-blue-700" />,
+    icon: <Hash className="h-5 w-5 text-[#2361d8]" />,
   },
   {
     title: "Fecha y trazabilidad",
     detail: "Guardamos fecha de alta y cambios relevantes (estado, envios y anulaciones permitidas).",
-    icon: <ShieldCheck className="h-5 w-5 text-blue-700" />,
+    icon: <ShieldCheck className="h-5 w-5 text-[#2361d8]" />,
   },
   {
     title: "Historial de eventos",
     detail: "Eventos criticos (creacion, validacion, envio y modificaciones) quedan registrados.",
-    icon: <FileText className="h-5 w-5 text-blue-700" />,
+    icon: <FileText className="h-5 w-5 text-[#2361d8]" />,
   },
   {
     title: "Evidencias del documento",
     detail: "Conservamos evidencias para identificar la version exacta enviada o descargada.",
-    icon: <CheckCircle2 className="h-5 w-5 text-blue-700" />,
+    icon: <CheckCircle2 className="h-5 w-5 text-[#2361d8]" />,
   },
 ];
 
@@ -48,7 +48,7 @@ export default function VerifactuPage() {
           <div className="mb-4 text-sm">
             <Link
               href={getLandingUrl()}
-              className="text-blue-700 font-semibold hover:text-blue-800"
+              className="text-[#2361d8] font-semibold hover:text-[#1f55c0]"
               aria-label="Volver al inicio"
             >
               Volver al inicio
@@ -56,10 +56,12 @@ export default function VerifactuPage() {
           </div>
           <div className="max-w-3xl space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
-              <ShieldCheck className="h-4 w-4 text-blue-700" />
+              <ShieldCheck className="h-4 w-4 text-[#2361d8]" />
               Cumplimiento VeriFactu (RD 1007/2023)
             </div>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Como cumplimos VeriFactu</h1>
+            <h1 className="text-4xl font-bold tracking-tight text-[#2361d8] sm:text-5xl">
+              Como cumplimos VeriFactu
+            </h1>
             <p className="text-lg text-slate-700">
               Mostramos como cuidamos integridad, trazabilidad y conservacion de tus registros. Ideal para el cierre
               2025 y el arranque del T1 2026.
@@ -71,7 +73,7 @@ export default function VerifactuPage() {
             <ul className="space-y-3 text-sm text-slate-700">
               {cumplimos.map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-blue-700" />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#2361d8]" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -85,7 +87,7 @@ export default function VerifactuPage() {
                 className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2361d8]/10">
                     {ev.icon}
                   </div>
                   <div>
@@ -107,12 +109,39 @@ export default function VerifactuPage() {
             </ul>
           </div>
 
+          <div className="mt-8 rounded-3xl border border-[#2361d8]/15 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-[#2361d8]">Fuentes oficiales</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Para documentacion oficial y normativa, consulta los canales de la Agencia Tributaria:
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <a
+                href="https://www.agenciatributaria.es/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/20 bg-[#2361d8]/5 px-4 py-2 text-sm font-semibold text-[#2361d8]"
+              >
+                Agencia Tributaria
+                <ExternalLink className="h-4 w-4" />
+              </a>
+              <a
+                href="https://sede.agenciatributaria.gob.es/Sede/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/20 bg-[#2361d8]/5 px-4 py-2 text-sm font-semibold text-[#2361d8]"
+              >
+                Sede electronica
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-slate-600">Quieres que Isaak lo deje listo contigo?</div>
             <div className="flex gap-3">
               <Link
                 href="/auth/signup"
-                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                className="rounded-full bg-[#2361d8] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f55c0]"
               >
                 Probar con Isaak
               </Link>

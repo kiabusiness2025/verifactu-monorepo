@@ -120,7 +120,7 @@ export default function VerifyEmailPage() {
         transition={{ duration: 0.3 }}
       >
         <div className="mb-4 flex justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-50/70">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2361d8]/10">
             <Mail className="h-6 w-6 text-[#2361d8]" />
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function VerifyEmailPage() {
           <p className="text-sm text-gray-500">Haz clic en el enlace del correo para verificar tu cuenta.</p>
         </div>
 
-        <div className="rounded-lg border border-[#2361d8]/20 bg-sky-50/70 p-3 text-sm text-[#2361d8]">
+        <div className="rounded-lg border border-[#2361d8]/20 bg-[#2361d8]/10 p-3 text-sm text-[#2361d8]">
           <strong>Tip:</strong> No ves el correo? Revisa tu carpeta de spam.
         </div>
 
@@ -182,5 +182,6 @@ export default function VerifyEmailPage() {
     </AuthLayout>
   );
 }
+
 
 

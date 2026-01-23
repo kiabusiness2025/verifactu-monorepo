@@ -150,7 +150,7 @@ export function HeroMockup({
 
   return (
     <div className="relative">
-      <div className="absolute -right-6 top-10 hidden h-40 w-40 rounded-full bg-blue-100 blur-3xl lg:block" />
+      <div className="absolute -right-6 top-10 hidden h-40 w-40 rounded-full bg-[#2361d8]/10 blur-3xl lg:block" />
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
@@ -219,7 +219,7 @@ export function HeroMockup({
 }
 
 export function MsgDot({ type }: { type: IsaakMsg['type'] }) {
-  const cls = type === 'ok' ? 'bg-emerald-500' : type === 'warn' ? 'bg-amber-500' : 'bg-[#0080F0]';
+  const cls = type === 'ok' ? 'bg-emerald-500' : type === 'warn' ? 'bg-amber-500' : 'bg-[#2361d8]';
   return <div className={`h-3.5 w-3.5 rounded-full ${cls}`} />;
 }
 
@@ -338,7 +338,7 @@ export function StepCard({
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200">
           {icon}
         </div>
-        <div className="rounded-full bg-sky-50/70 px-3 py-1 text-xs font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15">
+        <div className="rounded-full bg-[#2361d8]/10 px-3 py-1 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
           {n}
         </div>
       </div>
@@ -353,7 +353,7 @@ export function DashboardMock() {
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-[#2361d8]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2361d8]/10 text-sm font-semibold text-[#2361d8]">
             V
           </div>
           <div>
@@ -561,34 +561,34 @@ export function HeroTripleMock() {
               {
                 q: "Isaak, resumen rapido de enero 2026",
                 a: "Vamos genial ?? Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.",
-                hint: "¿Quieres ver el detalle por cliente? ?",
+                hint: "Â¿Quieres ver el detalle por cliente? ?",
                 tone: "emerald",
               },
               {
                 q: "Que falta para cierre 2025?",
-                a: "Te faltan 2 facturas y un extracto ????. ¿Te lo recuerdo hoy?",
+                a: "Te faltan 2 facturas y un extracto ????. Â¿Te lo recuerdo hoy?",
                 hint: "Te preparo checklist con un clic ?",
                 tone: "amber",
               },
               {
                 q: "Tengo facturas verificadas?",
-                a: "Sí ?? 9 facturas con QR y huella hash listos.",
-                hint: "¿Compartimos el informe con tu gestor? ??",
+                a: "SÃ­ ?? 9 facturas con QR y huella hash listos.",
+                hint: "Â¿Compartimos el informe con tu gestor? ??",
                 tone: "emerald",
               },
             ];
             const item = items[qaIndex];
             const base =
               item.tone === "amber"
-                ? "from-amber-50 to-slate-50 ring-amber-100 text-amber-700"
-                : "from-emerald-50 to-slate-50 ring-emerald-100 text-emerald-700";
+                ? "bg-amber-50 ring-amber-100 text-amber-700"
+                : "bg-emerald-50 ring-emerald-100 text-emerald-700";
             return (
               <div className="transition-all duration-500">
                 <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200">
                   <div className="text-[11px] font-semibold text-slate-500">Tu</div>
                   <div className="mt-1 text-[13px] text-slate-800">{item.q}</div>
                 </div>
-                <div className={"mt-2 rounded-2xl bg-gradient-to-r p-2 ring-1 " + base}>
+                <div className={"mt-2 rounded-2xl p-2 ring-1 " + base}>
                   <div className="text-[11px] font-semibold">Isaak</div>
                   <div className="mt-1 text-[13px] text-slate-700">{item.a}</div>
                   <div className="mt-1 text-[11px]">{item.hint}</div>
@@ -1018,7 +1018,7 @@ export function PideseloAIsaakSection() {
     <section className="py-16 bg-[#2361d8]/5">
       <Container>
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-4 py-1.5 text-sm font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-sm font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
             <Sparkles className="h-4 w-4 text-[#2361d8]" />
             Pideselo a Isaak
           </div>
@@ -1040,7 +1040,7 @@ export function PideseloAIsaakSection() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold text-[#2361d8]">Isaak en vivo</div>
-              <span className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15">
+              <span className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
                 Demo interactiva
               </span>
             </div>
@@ -1175,6 +1175,8 @@ export function PideseloAIsaakSection() {
     </section>
   );
 }
+
+
 
 
 

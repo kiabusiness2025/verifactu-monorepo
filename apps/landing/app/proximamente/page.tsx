@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import Link from "next/link";
 import { Clock, ArrowLeft } from "lucide-react";
 import { getLandingUrl } from "../lib/urls";
@@ -11,9 +11,9 @@ export const metadata = {
 
 export default function ProximamentePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#2361d8]/5 flex items-center justify-center px-4">
       <div className="max-w-lg w-full text-center">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-100 mb-6">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#2361d8]/10 mb-6">
           <Clock className="w-10 h-10 text-blue-600" />
         </div>
         
@@ -36,6 +36,8 @@ export default function ProximamentePage() {
     </div>
   );
 }
+
+
 
 
 

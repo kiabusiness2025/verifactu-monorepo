@@ -278,7 +278,7 @@ export default function DemoPage({
 
         <div className="grid gap-8 lg:grid-cols-[1.1fr,0.9fr]">
           <section className="space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
               Demo guiada
               <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/20">
                 2 min
@@ -347,15 +347,15 @@ export default function DemoPage({
 
             <ul className="grid gap-2 text-sm text-slate-700">
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 h-2 w-2 rounded-full bg-[#0080F0]" />
+                <span className="mt-0.5 h-2 w-2 rounded-full bg-[#2361d8]" />
                 Vista previa con datos de ejemplo, sin riesgo.
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 h-2 w-2 rounded-full bg-[#0080F0]" />
+                <span className="mt-0.5 h-2 w-2 rounded-full bg-[#2361d8]" />
                 Para activar la demo personalizada, necesitamos tu registro y el formulario.
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 h-2 w-2 rounded-full bg-[#0080F0]" />
+                <span className="mt-0.5 h-2 w-2 rounded-full bg-[#2361d8]" />
                 Te contactamos para preparar la demo con tus datos.
               </li>
             </ul>
@@ -485,5 +485,7 @@ export default function DemoPage({
     </main>
   );
 }
+
+
 
 

@@ -102,7 +102,7 @@ export default function PricingCalculatorInline() {
             onChange={(e) => setInvoices(Number(e.target.value))}
             className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
             style={{
-              background: `linear-gradient(to right, #0060F0 0%, #0060F0 ${((invoices - 1) / 999) * 100}%, #e5e7eb ${((invoices - 1) / 999) * 100}%, #e5e7eb 100%)`,
+              background: `linear-gradient(to right, #2361d8 0%, #2361d8 ${((invoices - 1) / 999) * 100}%, #e5e7eb ${((invoices - 1) / 999) * 100}%, #e5e7eb 100%)`,
             }}
           />
           <p className="mt-2 text-xs text-gray-500">Incluye hasta 10 en la base.</p>
@@ -143,7 +143,7 @@ export default function PricingCalculatorInline() {
                 onChange={(e) => setMovements(Number(e.target.value))}
                 className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
                 style={{
-                  background: `linear-gradient(to right, #0060F0 0%, #0060F0 ${(movements / 2000) * 100}%, #e5e7eb ${(movements / 2000) * 100}%, #e5e7eb 100%)`,
+                  background: `linear-gradient(to right, #2361d8 0%, #2361d8 ${(movements / 2000) * 100}%, #e5e7eb ${(movements / 2000) * 100}%, #e5e7eb 100%)`,
                 }}
               />
               <p className="mt-2 text-xs text-gray-500">
@@ -160,7 +160,7 @@ export default function PricingCalculatorInline() {
           )}
         </div>
 
-        <div className="rounded-2xl bg-sky-50/70 p-5">
+        <div className="rounded-2xl bg-[#2361d8]/10 p-5">
           <p className="text-sm text-gray-600">Cuota mensual estimada</p>
           <p className="mt-1 text-3xl font-bold text-[#2361d8]">
             {fmt(monthlyPrice)} EUR{" "}
@@ -213,4 +213,6 @@ export default function PricingCalculatorInline() {
     </div>
   );
 }
+
+
 

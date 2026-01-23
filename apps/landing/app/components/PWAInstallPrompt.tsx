@@ -83,7 +83,7 @@ export function PWAInstallPrompt() {
             Instalar Verifactu
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Accede m·s r·pido instalando la app en tu dispositivo
+            Accede m√°s r√°pido instalando la app en tu dispositivo
           </p>
         </div>
       </div>
@@ -99,7 +99,7 @@ export function PWAInstallPrompt() {
           onClick={handleDismiss}
           className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition text-sm"
         >
-          M·s tarde
+          M√°s tarde
         </button>
       </div>
     </div>

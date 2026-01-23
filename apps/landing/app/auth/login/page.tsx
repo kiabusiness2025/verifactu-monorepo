@@ -185,11 +185,11 @@ export default function LoginPage() {
     setError("");
     setPasswordError("");
     if (password.length < 8) {
-      setPasswordError("La contraseña debe tener al menos 8 caracteres");
+      setPasswordError("La contraseÃ±a debe tener al menos 8 caracteres");
       return false;
     }
     if (password !== confirmPassword) {
-      setPasswordError("Las contraseñas no coinciden");
+      setPasswordError("Las contraseÃ±as no coinciden");
       return false;
     }
 
@@ -279,7 +279,7 @@ export default function LoginPage() {
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="block text-sm font-medium text-gray-700">Contraseña</label>
+            <label className="block text-sm font-medium text-gray-700">ContraseÃ±a</label>
             {mode === "login" && (
               <Link
                 href="/auth/forgot-password"
@@ -305,7 +305,7 @@ export default function LoginPage() {
         {mode === "signup" && (
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
-              Confirmar contraseña <span className="text-red-500">*</span>
+              Confirmar contraseÃ±a <span className="text-red-500">*</span>
             </label>
             <PasswordInput
               value={confirmPassword}
@@ -313,7 +313,7 @@ export default function LoginPage() {
                 setConfirmPassword(e.target.value);
                 setPasswordError("");
               }}
-              placeholder="Repite tu contraseña"
+              placeholder="Repite tu contraseÃ±a"
               required
             />
           </div>

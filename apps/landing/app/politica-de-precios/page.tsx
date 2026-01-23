@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Calculator, CreditCard, FileText, Info, MessageCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Politica de precios | Verifactu Business",
@@ -9,123 +10,130 @@ export const metadata: Metadata = {
 
 export default function PoliticaDePreciosPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-3xl font-bold">Politica de precios y medicion de uso</h1>
-      <p className="mt-6 text-gray-700">
-        Tu cuota mensual se compone de base y tramos de uso (facturas y, si activas conciliacion, movimientos
-        bancarios). Los importes mostrados son sin IVA. Isaak te avisa antes de renovar.
-      </p>
+    <main className="bg-[#2361d8]/5">
+      <section className="mx-auto max-w-5xl px-6 py-14">
+        <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/20">
+          <Calculator className="h-4 w-4" />
+          Politica de precios
+        </div>
+        <h1 className="mt-4 text-4xl font-bold text-[#2361d8]">Precios y medicion de uso</h1>
+        <p className="mt-4 max-w-2xl text-lg text-slate-600">
+          Tu cuota mensual se compone de base y tramos de uso (facturas y, si activas conciliacion, movimientos
+          bancarios). Los importes mostrados son sin IVA. Isaak te avisa antes de renovar.
+        </p>
 
-      <h2 className="mt-10 text-xl font-semibold">Base mensual</h2>
-      <ul className="mt-3 list-disc pl-6 text-gray-700">
-        <li>
-          Incluye hasta <strong>10 facturas emitidas al mes</strong>.
-        </li>
-        <li>
-          Conciliacion bancaria opcional: <strong>0 movimientos</strong> no tiene coste; si procesas movimientos se aplica
-          un tramo.
-        </li>
-        <li>
-          La calculadora cubre hasta <strong>1.000 facturas/mes</strong> y <strong>2.000 movimientos/mes</strong>. Por
-          encima de esos limites, ofrecemos presupuesto personalizado e integraciones avanzadas.
-        </li>
-      </ul>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <CreditCard className="h-4 w-4" />
+              Base mensual
+            </div>
+            <ul className="mt-2 list-disc pl-6 text-sm text-slate-600">
+              <li>Incluye hasta 10 facturas emitidas al mes.</li>
+              <li>Conciliacion bancaria opcional: 0 movimientos sin coste.</li>
+              <li>Calculadora hasta 1.000 facturas y 2.000 movimientos.</li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <FileText className="h-4 w-4" />
+              Medicion de uso
+            </div>
+            <ul className="mt-2 list-disc pl-6 text-sm text-slate-600">
+              <li>Facturas emitidas en el mes.</li>
+              <li>Movimientos importados/sincronizados.</li>
+              <li>Excel cuenta como registros procesados.</li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <Info className="h-4 w-4" />
+              Precio final
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              La calculadora muestra un estimado. Ajustamos por uso real y avisamos antes de cobrar.
+            </p>
+          </div>
+        </div>
 
-      <h2 className="mt-10 text-xl font-semibold">Tramos completos</h2>
-      <div className="mt-3 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-          <div className="text-xs font-semibold uppercase text-slate-500">Facturas</div>
-          <ul className="mt-2 space-y-1">
-            <li>1-10 incluido</li>
-            <li>11-20 +5 EUR</li>
-            <li>21-30 +10 EUR</li>
-            <li>31-40 +15 EUR</li>
-            <li>41-50 +20 EUR</li>
-            <li>51-100 +25 EUR</li>
-            <li>101-200 +35 EUR</li>
-            <li>201-300 +45 EUR</li>
-            <li>301-400 +55 EUR</li>
-            <li>401-500 +65 EUR</li>
-            <li>501-1000 +85 EUR</li>
-            <li>&gt;1000 presupuesto</li>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+            <div className="text-xs font-semibold uppercase text-slate-500">Facturas</div>
+            <ul className="mt-2 space-y-1">
+              <li>1-10 incluido</li>
+              <li>11-20 +5 EUR</li>
+              <li>21-30 +10 EUR</li>
+              <li>31-40 +15 EUR</li>
+              <li>41-50 +20 EUR</li>
+              <li>51-100 +25 EUR</li>
+              <li>101-200 +35 EUR</li>
+              <li>201-300 +45 EUR</li>
+              <li>301-400 +55 EUR</li>
+              <li>401-500 +65 EUR</li>
+              <li>501-1000 +85 EUR</li>
+              <li>&gt;1000 presupuesto</li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+            <div className="text-xs font-semibold uppercase text-slate-500">Movimientos</div>
+            <ul className="mt-2 space-y-1">
+              <li>0 incluido</li>
+              <li>1-20 +5 EUR</li>
+              <li>21-30 +10 EUR</li>
+              <li>31-40 +15 EUR</li>
+              <li>41-50 +20 EUR</li>
+              <li>51-100 +25 EUR</li>
+              <li>101-200 +35 EUR</li>
+              <li>201-300 +45 EUR</li>
+              <li>301-400 +55 EUR</li>
+              <li>401-500 +65 EUR</li>
+              <li>501-1000 +85 EUR</li>
+              <li>1001-2000 +105 EUR</li>
+              <li>&gt;2000 presupuesto</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-10 rounded-2xl border border-[#2361d8]/15 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+            <Info className="h-4 w-4" />
+            Ejemplos reales
+          </div>
+          <ul className="mt-2 list-disc pl-6 text-sm text-slate-600">
+            <li>Autonomo: 15 facturas / sin conciliacion = 19 + 5 = 24 EUR.</li>
+            <li>PYME: 120 facturas + 300 movimientos = 19 + 35 + 45 = 99 EUR.</li>
           </ul>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-          <div className="text-xs font-semibold uppercase text-slate-500">Movimientos</div>
-          <ul className="mt-2 space-y-1">
-            <li>0 incluido</li>
-            <li>1-20 +5 EUR</li>
-            <li>21-30 +10 EUR</li>
-            <li>31-40 +15 EUR</li>
-            <li>41-50 +20 EUR</li>
-            <li>51-100 +25 EUR</li>
-            <li>101-200 +35 EUR</li>
-            <li>201-300 +45 EUR</li>
-            <li>301-400 +55 EUR</li>
-            <li>401-500 +65 EUR</li>
-            <li>501-1000 +85 EUR</li>
-            <li>1001-2000 +105 EUR</li>
-            <li>&gt;2000 presupuesto</li>
-          </ul>
+
+        <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+            <MessageCircle className="h-4 w-4" />
+            Limites y presupuestos
+          </div>
+          <p className="mt-2 text-sm text-slate-600">
+            Si superas los limites de la calculadora, te ofrecemos presupuesto con integraciones y SLA.{" "}
+            <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] underline underline-offset-4">
+              Contactanos
+            </Link>{" "}
+            para una propuesta personalizada.
+          </p>
         </div>
-      </div>
 
-      <h2 className="mt-10 text-xl font-semibold">Ejemplos reales</h2>
-      <ul className="mt-3 list-disc pl-6 text-gray-700">
-        <li>Autonomo: 15 facturas / sin conciliacion = 19 + 5 = 24 EUR.</li>
-        <li>PYME: 120 facturas + 300 movimientos = 19 + 35 + 45 = 99 EUR.</li>
-      </ul>
-
-      <h2 className="mt-10 text-xl font-semibold">Precio estimado vs precio final</h2>
-      <p className="mt-3 text-gray-700">
-        La calculadora muestra un precio estimado. Durante la prueba gratuita y/o el mes en curso podemos medir tu uso
-        real (facturas emitidas y movimientos procesados) para ajustar el tramo. Te avisaremos del importe antes de
-        cobrar.
-      </p>
-
-      <h2 className="mt-10 text-xl font-semibold">Como medimos el uso</h2>
-      <ul className="mt-3 list-disc pl-6 text-gray-700">
-        <li>
-          <strong>Facturas emitidas</strong>: numero de facturas generadas/emitidas en el mes.
-        </li>
-        <li>
-          <strong>Movimientos bancarios</strong>: numero de movimientos importados/sincronizados y procesados para
-          conciliacion.
-        </li>
-        <li>
-          Si importas mediante Excel, se calcula igualmente por el numero de registros procesados.
-        </li>
-      </ul>
-
-      <h2 className="mt-10 text-xl font-semibold">Que pasa si supero limites</h2>
-      <p className="mt-3 text-gray-700">
-        Si superas los limites de la calculadora, te ofrecemos presupuesto con integraciones y SLA.{" "}
-        <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
-          Contactanos
-        </Link>{" "}
-        para una propuesta personalizada.
-      </p>
-
-      <h2 className="mt-10 text-xl font-semibold">Cambios y cancelacion</h2>
-      <p className="mt-3 text-gray-700">
-        Podemos ajustar tramos o importes para reflejar costes e incorporar mejoras. Si hay cambios, se comunicaran con
-        antelacion razonable. Puedes cancelar en cualquier momento segun las condiciones de tu suscripcion.
-      </p>
-
-      <div className="mt-12 flex flex-col gap-3 sm:flex-row">
-        <Link
-          href="/#precios"
-          className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
-        >
-          Calcular precio
-        </Link>
-        <Link
-          href="/auth/signup"
-          className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
-        >
-          Probar con Isaak
-        </Link>
-      </div>
+        <div className="mt-12 flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/#precios"
+            className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
+          >
+            Calcular precio
+          </Link>
+          <Link
+            href="/auth/signup"
+            className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
+          >
+            Probar con Isaak
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

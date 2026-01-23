@@ -17,7 +17,7 @@ export default function IsaakChat() {
     {
       id: "1",
       role: "assistant",
-      content: "Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perder·s acceso a tus datos.\nYo me encargo de cuidarlos. ??",
+      content: "Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perder√°s acceso a tus datos.\nYo me encargo de cuidarlos. ??",
       timestamp: new Date(),
     },
   ]);
@@ -112,7 +112,7 @@ export default function IsaakChat() {
             <div className="flex items-center justify-between border-b border-slate-200 bg-[#2361d8] px-4 py-3 text-white">
               <div>
                 <div className="font-semibold">Isaak</div>
-                <div className="text-xs opacity-90">AquÌ para ayudarte</div>
+                <div className="text-xs opacity-90">Aqu√≠ para ayudarte</div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -181,7 +181,7 @@ export default function IsaakChat() {
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2361d8] text-white transition hover:bg-[#0056D6] disabled:bg-slate-300"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2361d8] text-white transition hover:bg-[#1f55c0] disabled:bg-slate-300"
                   aria-label="Enviar mensaje"
                 >
                   <Send className="h-4 w-4" />
@@ -194,5 +194,6 @@ export default function IsaakChat() {
     </>
   );
 }
+
 
 
