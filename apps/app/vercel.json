@@ -1,5 +1,5 @@
 {
   "installCommand": "cd ../.. && npx -y pnpm@9.15.4 install --no-frozen-lockfile",
-  "buildCommand": "PRISMA_GENERATE_SKIP_AUTOINSTALL=true npx -y pnpm@9.15.4 exec prisma generate --schema=./prisma/schema.prisma && npx -y pnpm@9.15.4 run build",
+  "buildCommand": "../../node_modules/.bin/prisma generate --schema=./prisma/schema.prisma && pnpm run build",
   "framework": "nextjs"
 }
