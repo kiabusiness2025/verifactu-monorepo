@@ -1,5 +1,5 @@
 {
-  "installCommand": "cd ../.. && npx -y pnpm@9.15.4 install --no-frozen-lockfile && cd apps/app && PRISMA_GENERATE_SKIP_AUTOINSTALL=true PRISMA_SKIP_POSTINSTALL_GENERATE=true npm() { echo 'npm blocked'; return 0; } && export -f npm && ../../node_modules/.bin/prisma generate --schema=./prisma/schema.prisma",
+  "installCommand": "cd ../.. && npx -y pnpm@9.15.4 install --no-frozen-lockfile",
   "buildCommand": "pnpm run build",
   "framework": "nextjs"
 }
