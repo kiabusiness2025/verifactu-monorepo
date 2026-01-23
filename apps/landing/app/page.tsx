@@ -82,23 +82,23 @@ export default function Page() {
                 Estado: Operativo - Cierre 2025 en marcha, T1 2026 abierto
               </Link>
 
-              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-[#2361d8] sm:text-6xl">
+              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-[#011c67] sm:text-6xl">
                 Emite facturas VeriFactu sin errores
                 <br />
-                <span className="bg-[#2361d8] bg-clip-text text-transparent">
+                <span className="text-[#2361d8]">
                   y entiende tu negocio en un panel.
                 </span>
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
-                Isaak detecta tu idioma, te acompana con soporte amable y te ayuda a interpretar
-                documentos, plazos y notificaciones. Te guia para subir escrituras, CIF,
-                  declaraciones y arrancar 2026 con datos reales de gastos y ventas.
-                </p>
+                Isaak detecta tu idioma, te acompaña con soporte amable y te ayuda a interpretar
+                documentos, plazos y notificaciones. Te guía para subir escrituras, CIF y
+                declaraciones, y arrancar 2026 con datos reales de gastos y ventas.
+              </p>
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
                 Verifactu e Isaak no sustituyen a tu gestor habitual. Te dan visibilidad diaria de
                 ventas, gastos y beneficio, con impuesto estimado, para decidir en tiempo real y
-                comparar o compartir resultados con tu asesoria.
+                comparar o compartir resultados con tu asesoría.
               </div>
 
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
@@ -173,10 +173,10 @@ export default function Page() {
         <Container>
           <div className="text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] shadow-sm ring-1 ring-[#2361d8]/20">
-              Para quien es Verifactu + Isaak
+              Para quién es Verifactu + Isaak
             </div>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
-              Para quien quiere control diario, sin volverse contable
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
+              Para quién quiere control diario, sin volverse contable
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
               Verifactu te ayuda a cumplir con VeriFactu. Isaak te ayuda a entender tu negocio.
@@ -193,10 +193,10 @@ export default function Page() {
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-[#2361d8]">
                   <UserRound className="h-5 w-5" />
                 </span>
-                <h3 className="text-sm font-semibold text-[#2361d8]">Autonomos y microempresas</h3>
+                <h3 className="text-sm font-semibold text-[#011c67]">Autónomos y microempresas</h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                Emite facturas VeriFactu sin dudas y ve cada dia cuanto estas vendiendo y cuanto te
+                Emite facturas VeriFactu sin dudas y ve cada día cuánto estás vendiendo y cuánto te
                 queda.
               </p>
             </div>
@@ -209,9 +209,7 @@ export default function Page() {
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#2361d8]/10 text-[#2361d8]">
                   <Building2 className="h-5 w-5" />
                 </span>
-                <h3 className="text-sm font-semibold text-[#2361d8]">
-                  PYMEs que necesitan visibilidad real
-                </h3>
+                <h3 className="text-sm font-semibold text-[#011c67]">PYMES que necesitan visibilidad real</h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
                 Controla ventas, gastos y beneficio estimado con un panel simple, y detecta
@@ -227,8 +225,8 @@ export default function Page() {
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-[#3B4B96]">
                   <Briefcase className="h-5 w-5" />
                 </span>
-                <h3 className="text-sm font-semibold text-[#2361d8]">
-                  Empresas con asesoria que quieren ir un paso por delante
+                <h3 className="text-sm font-semibold text-[#011c67]">
+                  Empresas con asesoría que quieren ir un paso por delante
                 </h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
@@ -239,7 +237,7 @@ export default function Page() {
           </div>
 
           <div className="mt-12 rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-            <div className="text-sm font-semibold text-[#2361d8]">Lo que cambia cuando lo usas</div>
+              <div className="text-sm font-semibold text-[#2361d8]">Lo que cambia cuando lo usas</div>
             <ul className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
@@ -247,22 +245,22 @@ export default function Page() {
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
-                Impuesto orientativo (IVA/IRPF/IS segun configuracion) para decidir con tiempo.
+                Impuesto orientativo (IVA/IRPF/IS según configuración) para decidir con tiempo.
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
-                Documentos ordenados y listos para compartir con tu asesoria.
+                Documentos ordenados y listos para compartir con tu asesoría.
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
-                Menos friccion: Isaak guia, revisa y propone proximos pasos.
+                Menos fricción: Isaak guía, revisa y propone próximos pasos.
               </li>
             </ul>
             <p className="mt-5 text-xs text-slate-500">
               Aviso: Verifactu e Isaak no sustituyen a tu gestor o asesor fiscal. Te aportan
-              visibilidad y organizacion para que puedas decidir antes y colaborar mejor con tu
-              asesoria. Las cifras e impuestos mostrados son orientativos y dependen de la
-              informacion disponible.
+              visibilidad y organización para que puedas decidir antes y colaborar mejor con tu
+              asesoría. Las cifras e impuestos mostrados son orientativos y dependen de la
+              información disponible.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -275,7 +273,7 @@ export default function Page() {
                 href="/recursos/contacto"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Solicitar informacion
+                Solicitar información
               </Link>
             </div>
           </div>
@@ -285,7 +283,7 @@ export default function Page() {
               Deja de esperar al cierre de mes
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Con Isaak tienes ventas, gastos y beneficio estimado hoy. VeriFactu, al dia.
+              Con Isaak tienes ventas, gastos y beneficio estimado hoy. VeriFactu, al día.
             </p>
           </div>
         </Container>
@@ -302,7 +300,7 @@ export default function Page() {
               <Sparkles className="h-4 w-4" />
               Dashboard
             </div>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
               Ventas - Gastos = Beneficio
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
@@ -321,7 +319,7 @@ export default function Page() {
       <section id="precios" className="py-16">
         <Container>
           <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
               Precio que se ajusta a tu uso real
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
@@ -352,7 +350,7 @@ export default function Page() {
         <Container>
           <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-[#2361d8] sm:text-3xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-[#011c67] sm:text-3xl">
                 Cumple con calma.
               </h2>
               <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
@@ -370,7 +368,7 @@ export default function Page() {
       <section id="faq" className="py-16 bg-[#2361d8]/5">
         <Container>
           <div className="text-center mb-12">
-            <h3 className="text-2xl font-semibold tracking-tight text-[#2361d8] sm:text-3xl">
+            <h3 className="text-2xl font-semibold tracking-tight text-[#011c67] sm:text-3xl">
               Preguntas frecuentes
             </h3>
             <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
@@ -384,7 +382,7 @@ export default function Page() {
       {/* Resources */}
       <section className="py-14 bg-[#2361d8]/5">
         <Container>
-          <h3 className="text-center text-2xl font-semibold tracking-tight text-[#2361d8] sm:text-3xl">
+          <h3 className="text-center text-2xl font-semibold tracking-tight text-[#011c67] sm:text-3xl">
             Recursos para dominar VeriFactu e Isaak.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
@@ -396,8 +394,8 @@ export default function Page() {
             <ResourceCard
               tag="Guia"
               title="Manual VeriFactu 2026"
-              desc="Requisitos y checklist practico para operar con confianza este ano."
-              cta="Descargar guia"
+              desc="Requisitos y checklist práctico para operar con confianza este año."
+              cta="Descargar guía"
             />
             <ResourceCard
               tag="Primeros pasos"

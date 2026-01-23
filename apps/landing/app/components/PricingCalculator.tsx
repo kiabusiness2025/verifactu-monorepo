@@ -29,7 +29,7 @@ const PRICING_PLANS: Plan[] = [
   {
     name: "Profesional",
     price: 29,
-    period: "/mes o 290 EUR/ano",
+    period: "/mes o 290 EUR/año",
     users: "1 empresa - usuarios ilimitados",
     features: [
       "Facturacion VeriFactu completa",
@@ -44,7 +44,7 @@ const PRICING_PLANS: Plan[] = [
   {
     name: "Business",
     price: 69,
-    period: "/mes o 690 EUR/ano",
+    period: "/mes o 690 EUR/año",
     users: "Multiempresa (hasta 3)",
     features: [
       "Todo en Profesional",
@@ -63,7 +63,7 @@ const PRICING_PLANS: Plan[] = [
     features: [
       "Configuracion personalizada",
       "Integracion completa con tu sistema",
-      "Firma electronica",
+      "Firma electrónica",
       "Flujos automaticos",
       "SLA garantizado",
       "Equipo dedicado",
@@ -95,12 +95,12 @@ export default function PricingCalculator() {
     <section className="py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
             Empieza gratis. Paga solo cuando tu negocio crece.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
             <strong>Todos los planes incluyen:</strong> Acceso permanente a tus datos - Prueba gratuita de 30 dias -
-            Posibilidad de cambiar o pausar sin perder informacion
+            Posibilidad de cambiar o pausar sin perder información
           </p>
         </div>
 

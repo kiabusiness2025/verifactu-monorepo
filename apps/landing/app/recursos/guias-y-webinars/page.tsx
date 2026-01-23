@@ -1,24 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BookOpen, Video, ArrowRight, Calendar } from "lucide-react";
 import { getLandingUrl, getAppUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
-  title: "Guias y webinars | Verifactu Business",
+  title: "Guías y webinars | Verifactu Business",
   description: "Recursos claros para cumplir VeriFactu y cerrar 2025 con un arranque 2026 sin sorpresas.",
 };
 
 const guides = [
   {
-    title: "Guia rapida VeriFactu 2026",
-    description: "Que exige la AEAT y como cumplir sin errores.",
+    title: "Guía rápida VeriFactu 2026",
+    description: "Qué exige la AEAT y cómo cumplir sin errores.",
+    meta: "PDF + video",
   },
   {
     title: "Cierre 2025 paso a paso",
     description: "Ventas, gastos, evidencias y checklist final.",
+    meta: "Checklist",
   },
   {
     title: "T1 2026 sin nervios",
     description: "Plazos, modelos y alertas claras en enero, febrero y marzo.",
+    meta: "Calendario",
   },
 ];
 
@@ -39,7 +43,11 @@ export default function GuiasPage() {
 
       <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="max-w-2xl">
-          <h1 className="text-4xl font-bold text-[#2361d8]">Guias y webinars</h1>
+          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/20">
+            <BookOpen className="h-4 w-4" />
+            Recursos guiados
+          </div>
+          <h1 className="mt-4 text-4xl font-bold text-[#011c67]">Guías y webinars</h1>
           <p className="mt-4 text-lg text-slate-600">
             Recursos claros, en lenguaje llano, para que cumplas VeriFactu y tengas control real de tu negocio.
           </p>
@@ -51,11 +59,36 @@ export default function GuiasPage() {
               key={item.title}
               className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
             >
-              <h2 className="text-xl font-semibold text-[#2361d8]">{item.title}</h2>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#2361d8]/5 px-3 py-1 text-xs font-semibold text-[#2361d8]">
+                <Video className="h-3.5 w-3.5" />
+                {item.meta}
+              </div>
+              <h2 className="text-xl font-semibold text-[#011c67]">{item.title}</h2>
               <p className="mt-3 text-sm text-slate-600">{item.description}</p>
-              <div className="mt-6 text-sm text-[#2361d8] hover:text-[#2361d8]">Proximamente</div>
+              <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+                Proximamente
+                <ArrowRight className="h-4 w-4" />
+              </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+            <Calendar className="h-4 w-4" />
+            Pide una guía
+          </div>
+          <p className="mt-2 text-sm text-slate-600">
+            Si necesitas una guía concreta, cuéntanos tu caso y la priorizamos.
+          </p>
+          <div className="mt-4">
+            <Link
+              href="/recursos/contacto"
+              className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-5 py-2 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
+            >
+              Solicitar guía
+            </Link>
+          </div>
         </div>
 
         <div className="mt-12 flex flex-col gap-3 sm:flex-row">

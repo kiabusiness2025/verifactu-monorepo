@@ -65,7 +65,7 @@ export function DemoLeadForm() {
       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
         Acceso a la demo
       </p>
-      <h2 className="mt-1 text-lg font-semibold text-[#2361d8]">
+      <h2 className="mt-1 text-lg font-semibold text-[#011c67]">
         Te aviso cuando este listo para tu caso?
       </h2>
       <p className="mt-2 text-sm leading-6 text-slate-600">

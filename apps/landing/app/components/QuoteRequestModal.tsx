@@ -26,7 +26,7 @@ export default function QuoteRequestModal({
         >
           <X className="h-5 w-5" />
         </button>
-        <h2 className="text-2xl font-bold text-[#2361d8]">{title}</h2>
+        <h2 className="text-2xl font-bold text-[#011c67]">{title}</h2>
         <p className="mt-2 text-sm text-slate-600">{description}</p>
         <div className="mt-6">
           <QuoteRequestForm />

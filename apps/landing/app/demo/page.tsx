@@ -54,7 +54,7 @@ function DemoRequestModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       `Empresa: ${form.company || '-'}`,
       `Web: ${form.website || '-'}`,
       `Sector: ${form.sector || '-'}`,
-      `Tamano equipo: ${form.teamSize || '-'}`,
+      `Tamaño equipo: ${form.teamSize || '-'}`,
       `Facturas/mes: ${form.invoices || '-'}`,
       `Movimientos/mes: ${form.movements || '-'}`,
       `Telefono: ${form.phone || '-'}`,
@@ -100,7 +100,7 @@ function DemoRequestModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         </button>
 
         <div className="space-y-3">
-          <h2 className="text-2xl font-semibold text-[#2361d8]">
+          <h2 className="text-2xl font-semibold text-[#011c67]">
             Solicitar demo personalizada para tu empresa
           </h2>
           <p className="text-sm text-slate-600">
@@ -173,7 +173,7 @@ function DemoRequestModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
             />
           </label>
           <label className="flex flex-col gap-1 text-sm text-slate-700">
-            Tamano de equipo
+            Tamaño de equipo
             <input
               value={form.teamSize}
               onChange={(e) => setForm((v) => ({ ...v, teamSize: e.target.value }))}
@@ -214,7 +214,7 @@ function DemoRequestModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
               value={form.notes}
               onChange={(e) => setForm((v) => ({ ...v, notes: e.target.value }))}
               className="min-h-[90px] rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder="Cuentanos lo que necesitas ver en la demo."
+              placeholder="Cuéntanos lo que necesitas ver en la demo."
             />
           </label>
 
@@ -284,8 +284,8 @@ export default function DemoPage({
                 2 min
               </span>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
-              Pruebalo sin miedo. Todo ya esta listo.
+            <h1 className="text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
+              Pruébalo sin miedo. Todo ya está listo.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-600">
               Entra, toca botones y revisa el panel. Esta vista previa es segura y usa datos de
@@ -293,13 +293,13 @@ export default function DemoPage({
             </p>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="text-sm font-semibold text-[#2361d8]">Que ver en 30 segundos</div>
+              <div className="text-sm font-semibold text-[#2361d8]">Qué ver en 30 segundos</div>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
                 <li>Panel con ventas, gastos y beneficio en un vistazo.</li>
                 <li>
-                  Flujo Factura {'->'} Validacion {'->'} Envio VeriFactu.
+                  Flujo Factura {'->'} validación {'->'} Envío VeriFactu.
                 </li>
-                <li>Isaak sugiriendo acciones utiles por seccion.</li>
+                <li>Isaak sugiriendo acciones útiles por sección.</li>
               </ul>
             </div>
 
@@ -320,7 +320,7 @@ export default function DemoPage({
             <div className="text-xs text-slate-500">1 mes gratis, sin permanencia.</div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="text-sm font-semibold text-[#2361d8]">Que pasa despues</div>
+              <div className="text-sm font-semibold text-[#2361d8]">Qué pasa después</div>
               <ol className="mt-3 list-decimal pl-5 text-sm text-slate-600">
                 <li>Creas tu cuenta y confirmas tu empresa.</li>
                 <li>Emites 1 factura de prueba o importas datos.</li>
@@ -400,13 +400,13 @@ export default function DemoPage({
                 <div className="rounded-xl border border-[#2361d8]/20 bg-white p-4">
                   <div className="text-sm font-semibold text-[#2361d8]">Isaak</div>
                   <p className="mt-2 text-xs text-slate-600">
-                    "Te ayudo con cierre 2025 y enero 2026. Revisamos?"
+                    Te ayudo con cierre 2025 y enero 2026. ¿Revisamos?
                   </p>
                 </div>
               </div>
             </div>
             <p className="text-xs leading-5 text-slate-500">
-              La demo personalizada se activa tras registro y validacion de tu empresa.
+              La demo personalizada se activa tras registro y validación de tu empresa.
             </p>
           </section>
         </div>
@@ -415,12 +415,11 @@ export default function DemoPage({
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-[#2361d8]">
+                <h2 className="text-2xl font-bold tracking-tight text-[#011c67]">
                   Calcula tu precio personalizado
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Sin cuotas fijas. Pagas segun tu uso real: facturas emitidas y movimientos
-                  conciliados.
+                  Sin cuotas fijas. Pagas según tu uso real: facturas emitidas y movimientos conciliados.
                 </p>
               </div>
               <Link
@@ -457,7 +456,7 @@ export default function DemoPage({
             </div>
 
             <div className="mt-6 rounded-2xl border border-[#2361d8]/15 bg-white p-4 text-sm text-slate-700">
-              Si ya estas convencido, calcula tu precio y activa la prueba gratuita.
+              Si ya estás convencido, calcula tu precio y activa la prueba gratuita.
             </div>
           </div>
         </section>

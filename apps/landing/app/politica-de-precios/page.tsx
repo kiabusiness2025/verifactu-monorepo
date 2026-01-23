@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Calculator, CreditCard, FileText, Info, MessageCircle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Politica de precios | Verifactu Business",
+  title: "Política de precios | Verifactu Business",
   description:
-    "Como se calcula el precio, que se incluye en la cuota y como medimos el uso en Verifactu Business.",
+    "Cómo se calcula el precio, qué se incluye en la cuota y cómo medimos el uso en Verifactu Business.",
 };
 
 export default function PoliticaDePreciosPage() {
@@ -14,11 +14,11 @@ export default function PoliticaDePreciosPage() {
       <section className="mx-auto max-w-5xl px-6 py-14">
         <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/20">
           <Calculator className="h-4 w-4" />
-          Politica de precios
+          Política de precios
         </div>
-        <h1 className="mt-4 text-4xl font-bold text-[#2361d8]">Precios y medicion de uso</h1>
+        <h1 className="mt-4 text-4xl font-bold text-[#011c67]">Precios y medición de uso</h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-600">
-          Tu cuota mensual se compone de base y tramos de uso (facturas y, si activas conciliacion, movimientos
+          Tu cuota mensual se compone de base y tramos de uso (facturas y, si activas conciliación, movimientos
           bancarios). Los importes mostrados son sin IVA. Isaak te avisa antes de renovar.
         </p>
 
@@ -30,14 +30,14 @@ export default function PoliticaDePreciosPage() {
             </div>
             <ul className="mt-2 list-disc pl-6 text-sm text-slate-600">
               <li>Incluye hasta 10 facturas emitidas al mes.</li>
-              <li>Conciliacion bancaria opcional: 0 movimientos sin coste.</li>
+              <li>Conciliación bancaria opcional: 0 movimientos sin coste.</li>
               <li>Calculadora hasta 1.000 facturas y 2.000 movimientos.</li>
             </ul>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
               <FileText className="h-4 w-4" />
-              Medicion de uso
+              Medición de uso
             </div>
             <ul className="mt-2 list-disc pl-6 text-sm text-slate-600">
               <li>Facturas emitidas en el mes.</li>
@@ -111,9 +111,9 @@ export default function PoliticaDePreciosPage() {
             Limites y presupuestos
           </div>
           <p className="mt-2 text-sm text-slate-600">
-            Si superas los limites de la calculadora, te ofrecemos presupuesto con integraciones y SLA.{" "}
+              Si superas los límites de la calculadora, te ofrecemos presupuesto con integraciones y SLA.{" "}
             <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] underline underline-offset-4">
-              Contactanos
+              Contáctanos
             </Link>{" "}
             para una propuesta personalizada.
           </p>

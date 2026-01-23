@@ -785,7 +785,7 @@ export function Footer() {
           <FooterCol
             title="Recursos"
             links={[
-              { label: 'Guias y webinars', href: '/recursos/guias-y-webinars' },
+              { label: 'Guías y webinars', href: '/recursos/guias-y-webinars' },
               { label: 'Checklist', href: '/recursos/checklist' },
               { label: 'Blog', href: '/recursos/blog' },
               { label: 'Contacto', href: '/recursos/contacto' },
@@ -795,7 +795,7 @@ export function Footer() {
             title="Legal"
             links={[
               { label: 'VeriFactu', href: '/verifactu' },
-              { label: 'Politica de privacidad', href: '/legal/privacidad' },
+              { label: 'Política de privacidad', href: '/legal/privacidad' },
               { label: 'Terminos de servicio', href: '/legal/terminos' },
               { label: 'Cookies', href: '/legal/cookies' },
             ]}
@@ -818,7 +818,7 @@ export function Footer() {
                 className="hover:text-blue-300 transition"
                 aria-label="Leer politica de privacidad"
               >
-                Politica de privacidad
+                Política de privacidad
               </Link>
               <Link
                 href="/legal/terminos"
@@ -885,7 +885,7 @@ export function PriceDisplay({ price, isYearly }: { price: number | null; isYear
   return (
     <div>
       <div className="text-4xl font-bold text-slate-900">{price} EUR</div>
-      <div className="text-sm text-slate-500">{isYearly ? '/ano' : '/mes'}</div>
+      <div className="text-sm text-slate-500">{isYearly ? '/año' : '/mes'}</div>
     </div>
   );
 }
@@ -912,7 +912,7 @@ export function ComplianceBadge() {
             <span className="text-sm font-semibold text-green-700">Cumplimiento Certificado</span>
           </div>
           <p className="mt-3 text-xs text-slate-500">
-            Sistema homologado segun normativa de la Agencia Tributaria
+            Sistema homologado según normativa de la Agencia Tributaria
           </p>
         </div>
       </div>
@@ -924,7 +924,7 @@ export function ThreeSteps() {
   return (
     <section className="py-16 bg-[#2361d8]/5">
       <Container>
-        <h3 className="text-center text-2xl font-semibold tracking-tight text-[#2361d8] sm:text-3xl">
+        <h3 className="text-center text-2xl font-semibold tracking-tight text-[#011c67] sm:text-3xl">
           Del envio al cobro en tres pasos.
         </h3>
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
@@ -960,18 +960,18 @@ export function FeaturesSection() {
   return (
     <section className="py-16">
       <Container>
-        <h2 className="text-center text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
+        <h2 className="text-center text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
           Lo que ves es lo que tienes: Ventas, Gastos, Beneficio.
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-lightbg-600 sm:text-lg">
           El dashboard muestra solo lo esencial. Isaak entiende documentos, detecta el idioma y te
-          guia con alertas y recordatorios cuando se acercan cierres y plazos fiscales.
+          guía con alertas y recordatorios cuando se acercan cierres y plazos fiscales.
         </p>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <FeatureCard
             icon={<TrendingUp className="h-5 w-5 text-[#2361d8]" />}
-            title="Emision sin friccion"
+            title="Emisión sin fricción"
             bullets={[
               'Sube facturas y tickets en cualquier idioma',
               'Isaak interpreta y clasifica al instante',
@@ -983,7 +983,7 @@ export function FeaturesSection() {
             title="Gastos guiados"
             bullets={[
               'Documentos, extractos y justificantes',
-              'Deducible segun tu actividad',
+              'Deducible según tu actividad',
               'Recordatorios de cierres y plazos',
             ]}
           />
@@ -1022,17 +1022,17 @@ export function PideseloAIsaakSection() {
             <Sparkles className="h-4 w-4 text-[#2361d8]" />
             Pideselo a Isaak
           </div>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
+          <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
             Un amigo experto que habla tu idioma y te cuida los plazos.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Isaak interpreta documentos, avisa de cierre 2025 y te prepara el 1o trimestre 2026. Te
-            acompana en enero 2026 para que llegues con todo listo.
+            Isaak interpreta documentos, avisa de cierre 2025 y te prepara el 1º trimestre 2026. Te
+            acompaña en enero 2026 para que llegues con todo listo.
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-xs text-slate-500">
             Isaak no sustituye a tu gestor o asesor contable. Te ofrece datos de ventas, gastos y
             beneficio para decidir en tiempo real y revisar lo que te preparen al cierre de mes,
-            trimestre o ano.
+            trimestre o año.
           </p>
         </div>
 
@@ -1050,13 +1050,13 @@ export function PideseloAIsaakSection() {
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               <button className="rounded-full border border-[#2361d8] bg-[#2361d8]/10 px-3 py-1 font-semibold text-[#2361d8]">
-                Cercano ??
+                Cercano 😊
               </button>
               <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
-                Profesional ??
+                Profesional 🤝
               </button>
               <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
-                Minimalista ?
+                Minimalista ✨
               </button>
             </div>
 
@@ -1140,7 +1140,7 @@ export function PideseloAIsaakSection() {
               </Link>
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              Isaak te acompana en el cierre 2025 y el arranque del 1o trimestre 2026.
+              Isaak te acompaña en el cierre 2025 y el arranque del 1º trimestre 2026.
             </p>
           </div>
         </div>
@@ -1155,7 +1155,7 @@ export function PideseloAIsaakSection() {
             response="Te faltan 2 facturas y un extracto. Te aviso hoy y manana."
           />
           <CommandExample
-            command="Recordatorios del 1o trimestre 2026"
+            command="Recordatorios del 1º trimestre 2026"
             response="Listo. Te aviso de plazos clave con tiempo."
           />
           <CommandExample

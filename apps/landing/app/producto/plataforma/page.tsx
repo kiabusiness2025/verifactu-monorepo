@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getLandingUrl, getAppUrl } from "../../lib/urls";
-import { ArrowRight, ShieldCheck, FileCheck2, LayoutDashboard } from "lucide-react";
+import { ArrowRight, ShieldCheck, FileCheck2, LayoutDashboard, CheckCircle2 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Plataforma | Verifactu Business",
@@ -16,7 +16,7 @@ const modules = [
   },
   {
     title: "Cumplimiento VeriFactu",
-    description: "Emision y trazabilidad conforme a la normativa.",
+    description: "Emisión y trazabilidad conforme a la normativa.",
     icon: FileCheck2,
   },
   {
@@ -44,12 +44,16 @@ export default function PlataformaPage() {
       <section className="py-16">
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
-            <h1 className="text-4xl font-bold text-[#2361d8] sm:text-5xl">
-              La plataforma que simplifica tu gestion diaria
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
+              <CheckCircle2 className="h-4 w-4 text-[#2361d8]" />
+              Producto · Plataforma
+            </div>
+            <h1 className="text-4xl font-bold text-[#011c67] sm:text-5xl">
+              La plataforma que simplifica tu gestión diaria
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Todo lo esencial para emitir, controlar y cumplir, sin pantallas innecesarias. Isaak te acompana en el
-              cierre 2025 y el arranque del T1 2026.
+              Todo lo esencial para emitir, controlar y cumplir, sin pantallas innecesarias. Isaak te acompaña en cada
+              paso para mantener el orden.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -81,7 +85,7 @@ export default function PlataformaPage() {
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#2361d8]/10">
                   <item.icon className="h-6 w-6 text-[#2361d8]" />
                 </div>
-                <h2 className="text-lg font-semibold text-[#2361d8]">{item.title}</h2>
+                <h2 className="text-lg font-semibold text-[#011c67]">{item.title}</h2>
                 <p className="mt-2 text-sm text-slate-600">{item.description}</p>
               </div>
             ))}
@@ -92,10 +96,24 @@ export default function PlataformaPage() {
       <section className="py-12">
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-3xl border border-[#2361d8]/15 bg-white p-10">
-            <h2 className="text-2xl font-semibold text-[#2361d8]">Disenada para equipos pequenos</h2>
+            <h2 className="text-2xl font-semibold text-[#011c67]">Diseñada para equipos pequeños</h2>
             <p className="mt-4 text-slate-600">
               Pensada para PYMEs que quieren facturar y cumplir sin herramientas complejas.
             </p>
+            <ul className="mt-6 space-y-3 text-slate-700">
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-[#2361d8]" />
+                Roles claros, permisos por equipo y acceso seguro.
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-[#2361d8]" />
+                Documentos ordenados y trazables por cliente.
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-[#2361d8]" />
+                Panel unificado para ventas, gastos e IVA.
+              </li>
+            </ul>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/#precios"

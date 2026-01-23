@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { getAppUrl } from "../../lib/urls";
 
-const title = "Que es VeriFactu | Verifactu Business";
+const title = "Qué es VeriFactu | Verifactu Business";
 const description =
-  "VeriFactu es el sistema de facturacion verificable que garantiza trazabilidad, auditoria y cumplimiento con la AEAT.";
+  "VeriFactu es el sistema de facturación verificable que garantiza trazabilidad, auditoría y cumplimiento con la AEAT.";
 
 export const metadata = {
   title,
@@ -39,46 +39,46 @@ export default function QueEsVeriFactuPage() {
           items={[
             { label: "Inicio", href: "/" },
             { label: "VeriFactu", href: "/verifactu/que-es" },
-            { label: "Que es" },
+            { label: "Qué es" },
           ]}
         />
 
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">VeriFactu</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Que es VeriFactu</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Qué es VeriFactu</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          VeriFactu es el estandar de facturacion verificable exigido por la AEAT. Cada factura queda sellada con hash y
-          marca temporal para asegurar integridad y trazabilidad. Asi, tu cierre 2025 y el arranque del T1 2026 quedan
-          listos y auditables sin friccion.
+          VeriFactu es el estándar de facturación verificable exigido por la AEAT. Cada factura queda sellada con hash y
+          marca temporal para asegurar integridad y trazabilidad. Así, tu cierre 2025 y el arranque del T1 2026 quedan
+          listos y auditables sin fricción.
         </p>
 
         <div className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:grid-cols-2">
-          <Feature title="Trazabilidad automatica" desc="Cada factura queda sellada con hash y marca temporal." />
-          <Feature title="Integridad anti-manipulacion" desc="Historico inmutable: sin sobrescrituras ni borrados." />
-          <Feature title="Auditoria simplificada" desc="Exporta registros y evidencias en un clic." />
-          <Feature title="Listo para la AEAT" desc="Cumple requisitos tecnicos y de reporte." />
+          <Feature title="Trazabilidad automática" desc="Cada factura queda sellada con hash y marca temporal." />
+          <Feature title="Integridad anti-manipulación" desc="Histórico inmutable: sin sobrescrituras ni borrados." />
+          <Feature title="auditoría simplificada" desc="Exporta registros y evidencias en un clic." />
+          <Feature title="Listo para la AEAT" desc="Cumple requisitos técnicos y de reporte." />
         </div>
 
         <div className="mt-10 space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">Por que integrarlo con Isaak</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Por qué integrarlo con Isaak</h2>
           <p className="text-sm leading-6 text-slate-700">
-            Isaak aplica reglas, valida envios y te avisa si algo se desvía. Combina cumplimiento con un panel claro de
-            ventas, gastos y beneficio. Te da contexto rapido para enero 2026 y el T1 2026.
+            Isaak aplica reglas, valida envíos y te avisa si algo se desvía. Combina cumplimiento con un panel claro de
+            ventas, gastos y beneficio. Te da contexto rápido para enero 2026 y el T1 2026.
           </p>
           <div className="flex flex-wrap gap-3 text-sm">
             <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-100">
               Cumplimiento automatizado
             </span>
             <span className="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-blue-100">
-              Alertas y validacion
+              Alertas y validación
             </span>
             <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700 ring-1 ring-slate-200">
-              Exportaciones listas para auditoria
+              Exportaciones listas para auditoría
             </span>
           </div>
         </div>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Quieres que Isaak te guie paso a paso?</div>
+          <div className="text-sm text-slate-600">¿Quieres que Isaak te guíe paso a paso?</div>
           <div className="flex gap-3">
             <Link
               href="/auth/signup"

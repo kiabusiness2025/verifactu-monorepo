@@ -88,7 +88,7 @@ export default function PricingCalculatorModal({
           <X className="h-6 w-6" />
         </button>
 
-        <h2 className="mb-2 text-3xl font-bold text-[#2361d8]">
+        <h2 className="mb-2 text-3xl font-bold text-[#011c67]">
           Calcula tu precio
         </h2>
         <p className="mb-8 text-lightbg-600">

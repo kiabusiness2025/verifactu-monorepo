@@ -5,7 +5,7 @@ import { CheckCircle2, ShieldCheck, FileText, Hash, ExternalLink } from "lucide-
 
 export const metadata: Metadata = {
   title: "Cumplimiento VeriFactu | Verifactu Business",
-  description: "Como Verifactu Business cumple el RD 1007/2023: integridad, trazabilidad y evidencias.",
+  description: "Cómo Verifactu Business cumple el RD 1007/2023: integridad, trazabilidad y evidencias.",
 };
 
 const evidencias = [
@@ -35,8 +35,8 @@ const evidencias = [
 const cumplimos = [
   "Integridad y secuencialidad: evitamos cambios posteriores sin rastro.",
   "Trazabilidad completa: historial de eventos con fecha.",
-  "Conservacion: custodia de evidencias durante los plazos legales.",
-  "Disponibilidad: exportacion de libros y evidencias bajo demanda para auditoria.",
+  "Conservación: custodia de evidencias durante los plazos legales.",
+  "Disponibilidad: exportación de libros y evidencias bajo demanda para auditoría.",
 ];
 
 export default function VerifactuPage() {
@@ -59,8 +59,8 @@ export default function VerifactuPage() {
               <ShieldCheck className="h-4 w-4 text-[#2361d8]" />
               Cumplimiento VeriFactu (RD 1007/2023)
             </div>
-            <h1 className="text-4xl font-bold tracking-tight text-[#2361d8] sm:text-5xl">
-              Como cumplimos VeriFactu
+            <h1 className="text-4xl font-bold tracking-tight text-[#011c67] sm:text-5xl">
+              Cómo cumplimos VeriFactu
             </h1>
             <p className="text-lg text-slate-700">
               Mostramos como cuidamos integridad, trazabilidad y conservacion de tus registros. Ideal para el cierre
@@ -110,7 +110,7 @@ export default function VerifactuPage() {
           </div>
 
           <div className="mt-8 rounded-3xl border border-[#2361d8]/15 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#2361d8]">Fuentes oficiales</h2>
+            <h2 className="text-xl font-semibold text-[#011c67]">Fuentes oficiales</h2>
             <p className="mt-2 text-sm text-slate-600">
               Para documentacion oficial y normativa, consulta los canales de la Agencia Tributaria:
             </p>
@@ -130,14 +130,14 @@ export default function VerifactuPage() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/20 bg-[#2361d8]/5 px-4 py-2 text-sm font-semibold text-[#2361d8]"
               >
-                Sede electronica
+                Sede electrónica
                 <ExternalLink className="h-4 w-4" />
               </a>
             </div>
           </div>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-slate-600">Quieres que Isaak lo deje listo contigo?</div>
+            <div className="text-sm text-slate-600">¿Quieres que Isaak lo deje listo contigo?</div>
             <div className="flex gap-3">
               <Link
                 href="/auth/signup"

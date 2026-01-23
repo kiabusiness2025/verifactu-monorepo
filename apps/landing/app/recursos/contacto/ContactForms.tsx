@@ -320,7 +320,7 @@ export default function ContactForms() {
                     }
                     const total = files.reduce((sum, file) => sum + file.size, 0);
                     if (total > MAX_TOTAL_BYTES) {
-                      setAttachmentError("El tamano total supera 10MB.");
+                      setAttachmentError("El tamaño total supera 10MB.");
                       return;
                     }
                     setTicketForm({ ...ticketForm, attachments: files });

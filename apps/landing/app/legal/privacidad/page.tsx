@@ -11,9 +11,9 @@ import {
 import { getLandingUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
-  title: "Politica de privacidad | Verifactu Business",
+  title: "Política de privacidad | Verifactu Business",
   description:
-    "Informacion sobre el tratamiento de datos personales en Verifactu Business.",
+    "Información sobre el tratamiento de datos personales en Verifactu Business.",
 };
 
 export default function PrivacidadPage() {
@@ -37,7 +37,7 @@ export default function PrivacidadPage() {
               <ShieldCheck className="h-4 w-4" />
               Privacidad y datos
             </div>
-            <h1 className="text-4xl font-bold text-[#2361d8]">Politica de privacidad</h1>
+            <h1 className="text-4xl font-bold text-[#011c67]">Política de privacidad</h1>
             <p className="text-lg text-slate-600">
               Esta politica explica que datos recogemos, para que los usamos y como puedes ejercer tus derechos.
             </p>

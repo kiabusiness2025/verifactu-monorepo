@@ -4,9 +4,9 @@ import { Cookie, Settings, ShieldCheck, Mail } from "lucide-react";
 import { getLandingUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
-  title: "Politica de cookies | Verifactu Business",
+  title: "Política de cookies | Verifactu Business",
   description:
-    "Informacion sobre el uso de cookies en Verifactu Business.",
+    "Información sobre el uso de cookies en Verifactu Business.",
 };
 
 export default function CookiesPage() {
@@ -30,7 +30,7 @@ export default function CookiesPage() {
               <Cookie className="h-4 w-4" />
               Cookies y preferencias
             </div>
-            <h1 className="text-4xl font-bold text-[#2361d8]">Politica de cookies</h1>
+            <h1 className="text-4xl font-bold text-[#011c67]">Política de cookies</h1>
             <p className="text-lg text-slate-600">
               Usamos cookies para mejorar tu experiencia y para analitica basica del uso del sitio.
             </p>

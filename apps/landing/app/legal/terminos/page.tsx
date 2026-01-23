@@ -12,9 +12,9 @@ import {
 import { getLandingUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
-  title: "Terminos y condiciones | Verifactu Business",
+  title: "Términos y condiciones | Verifactu Business",
   description:
-    "Terminos y condiciones de uso de Verifactu Business.",
+    "Términos y condiciones de uso de Verifactu Business.",
 };
 
 export default function TerminosPage() {
@@ -38,11 +38,11 @@ export default function TerminosPage() {
               <FileText className="h-4 w-4" />
               Condiciones de servicio
             </div>
-            <h1 className="text-4xl font-bold text-[#2361d8]">Terminos y condiciones</h1>
+            <h1 className="text-4xl font-bold text-[#011c67]">Términos y condiciones</h1>
             <p className="text-lg text-slate-600">
               Estas condiciones regulan el acceso y uso de Verifactu Business. Al usar el servicio aceptas este acuerdo.
             </p>
-            <p className="text-sm text-slate-500">Ultima actualizacion: 23 de enero de 2026.</p>
+            <p className="text-sm text-slate-500">Última actualización: 23 de enero de 2026.</p>
           </div>
           <div className="rounded-2xl border border-[#2361d8]/15 bg-white p-5 text-sm text-slate-600 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
@@ -62,7 +62,7 @@ export default function TerminosPage() {
               Servicio
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Verifactu Business ofrece facturacion, registro y control basico para PYMEs y autonomos. El servicio
+              Verifactu Business ofrece facturación, registro y control básico para PYMEs y autónomos. El servicio
               evoluciona con mejoras continuas.
             </p>
           </div>
@@ -81,19 +81,18 @@ export default function TerminosPage() {
               Responsabilidad
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              El servicio se ofrece “tal cual”. Trabajamos para mantener disponibilidad y datos actualizados, sin
-              garantia absoluta.
+              El servicio se ofrece tal cual. Trabajamos para mantener disponibilidad y datos actualizados, sin garantía absoluta.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
               <BadgeCheck className="h-4 w-4" />
-              Precios y facturacion
+              Precios y facturación
             </div>
             <p className="mt-2 text-sm text-slate-600">
               Los precios se calculan por tramos de uso. Consulta la{" "}
               <Link href="/politica-de-precios" className="font-semibold text-[#2361d8] underline underline-offset-4">
-                politica de precios
+                política de precios
               </Link>{" "}
               y nuestro{" "}
               <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] underline underline-offset-4">
@@ -128,7 +127,7 @@ export default function TerminosPage() {
               rel="noreferrer"
               className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/20 bg-[#2361d8]/5 px-4 py-2 font-semibold text-[#2361d8]"
             >
-              Sede electronica
+              Sede electrónica
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>

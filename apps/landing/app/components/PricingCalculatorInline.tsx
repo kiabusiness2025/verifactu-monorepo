@@ -74,7 +74,7 @@ export default function PricingCalculatorInline() {
     <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="space-y-8">
         <div className="text-center">
-          <h3 className="text-2xl font-semibold text-[#2361d8]">Calcula tu precio</h3>
+          <h3 className="text-2xl font-semibold text-[#011c67]">Calcula tu precio</h3>
           <p className="mt-2 text-sm text-lightbg-600">
             Base 19 EUR/mes + IVA. Incluye hasta 10 facturas/mes.
           </p>

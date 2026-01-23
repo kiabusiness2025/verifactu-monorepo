@@ -117,12 +117,12 @@ const FAQ_DATA: {
     question: "Puedo ver beneficio e impuesto estimado?",
     answer: (
       <>
-        Si. Obtienes un beneficio aproximado y un impuesto estimado para comparar con tu asesoria y ajustar decisiones
+        Si. Obtienes un beneficio aproximado y un impuesto estimado para comparar con tu asesoría y ajustar decisiones
         a tiempo.
       </>
     ),
     answerText:
-      "Si. Obtienes un beneficio aproximado y un impuesto estimado para comparar con tu asesoria y ajustar decisiones a tiempo.",
+      "Si. Obtienes un beneficio aproximado y un impuesto estimado para comparar con tu asesoría y ajustar decisiones a tiempo.",
   },
   {
     question: "Puedo exportar y compartir con mi gestoria?",

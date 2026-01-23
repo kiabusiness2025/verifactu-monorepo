@@ -146,7 +146,7 @@ export function AuthLayout({
                 <span aria-hidden="true">&larr;</span> Volver al inicio
               </a>
             </div>
-            <h1 className="mb-2 text-2xl font-bold text-[#2361d8]">{title}</h1>
+            <h1 className="mb-2 text-2xl font-bold text-[#011c67]">{title}</h1>
             {subtitle && <p className="text-gray-600">{subtitle}</p>}
           </div>
 
@@ -198,7 +198,7 @@ export function AuthLayout({
 
         <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4 text-center text-xs text-gray-600">
           <p>
-            <strong>Tu informacion siempre esta segura.</strong> Guardamos tus datos con cifrado y control de acceso.
+            <strong>Tu información siempre está segura.</strong> Guardamos tus datos con cifrado y control de acceso.
           </p>
         </div>
       </div>

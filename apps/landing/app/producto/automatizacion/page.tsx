@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getLandingUrl, getAppUrl } from "../../lib/urls";
-import { ArrowRight, Bot, RefreshCcw, ShieldCheck } from "lucide-react";
+import { ArrowRight, Bot, RefreshCcw, ShieldCheck, CheckCircle2 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Automatizacion | Verifactu Business",
-  description: "Flujos automaticos para facturar, cumplir VeriFactu y reducir errores.",
+  title: "Automatización | Verifactu Business",
+  description: "Flujos automáticos para facturar, cumplir VeriFactu y reducir errores.",
 };
 
 const flows = [
   {
-    title: "Factura -> Validacion",
+    title: "Factura -> Validación",
     description: "Genera, valida y registra sin pasos manuales.",
     icon: RefreshCcw,
   },
@@ -21,7 +21,7 @@ const flows = [
   },
   {
     title: "Cumplimiento continuo",
-    description: "Trazabilidad y conservacion siempre activas.",
+    description: "Trazabilidad y conservación siempre activas.",
     icon: ShieldCheck,
   },
 ];
@@ -44,11 +44,16 @@ export default function AutomatizacionPage() {
       <section className="py-16">
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
-            <h1 className="text-4xl font-bold text-[#2361d8] sm:text-5xl">
-              Automatizacion sin friccion
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
+              <Bot className="h-4 w-4 text-[#2361d8]" />
+              Producto · Automatizacion
+            </div>
+            <h1 className="text-4xl font-bold text-[#011c67] sm:text-5xl">
+              Automatización sin fricción
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Menos tareas repetitivas, menos errores y mas tiempo para tu negocio. Ideal para cierre 2025 y T1 2026.
+              Menos tareas repetitivas, menos errores y más tiempo para tu negocio. Isaak se encarga de vigilar cada
+              paso.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -80,7 +85,7 @@ export default function AutomatizacionPage() {
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#2361d8]/10">
                   <item.icon className="h-6 w-6 text-[#2361d8]" />
                 </div>
-                <h2 className="text-lg font-semibold text-[#2361d8]">{item.title}</h2>
+                <h2 className="text-lg font-semibold text-[#011c67]">{item.title}</h2>
                 <p className="mt-2 text-sm text-slate-600">{item.description}</p>
               </div>
             ))}
@@ -91,10 +96,24 @@ export default function AutomatizacionPage() {
       <section className="py-12">
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-3xl border border-[#2361d8]/15 bg-white p-10">
-            <h2 className="text-2xl font-semibold text-[#2361d8]">Isaak como copiloto</h2>
+            <h2 className="text-2xl font-semibold text-[#011c67]">Isaak como copiloto</h2>
             <p className="mt-4 text-slate-600">
               Isaak revisa tus datos y te avisa antes de que haya errores o incoherencias. Tu cierre llega limpio.
             </p>
+            <ul className="mt-6 space-y-3 text-slate-700">
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-[#2361d8]" />
+                Alertas automáticas cuando falta documentación.
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-[#2361d8]" />
+                Recomendaciones accionables para corregir en segundos.
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-[#2361d8]" />
+                Calendario fiscal ordenado y sin sustos.
+              </li>
+            </ul>
           </div>
         </div>
       </section>
