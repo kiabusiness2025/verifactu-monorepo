@@ -400,7 +400,7 @@ export default function DemoPage({
                 <div className="rounded-xl border border-[#2361d8]/20 bg-white p-4">
                   <div className="text-sm font-semibold text-[#2361d8]">Isaak</div>
                   <p className="mt-2 text-xs text-slate-600">
-                    Te ayudo con cierre 2025 y enero 2026. ¿Revisamos?
+                    Te ayudo con cierre 2025 y enero 2026. ¿Revisamos?&quot;
                   </p>
                 </div>
               </div>
@@ -419,7 +419,8 @@ export default function DemoPage({
                   Calcula tu precio personalizado
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Sin cuotas fijas. Pagas según tu uso real: facturas emitidas y movimientos conciliados.
+                  Sin cuotas fijas. Pagas según tu uso real: facturas emitidas y movimientos
+                  conciliados.
                 </p>
               </div>
               <Link
@@ -484,7 +485,3 @@ export default function DemoPage({
     </main>
   );
 }
-
-
-
-
