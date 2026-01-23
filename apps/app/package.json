@@ -9,9 +9,7 @@
     "start": "next start -p 8080",
     "lint": "next lint",
     "test": "jest",
-    "test:watch": "jest --watch",
-    "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
-    "postinstall": "pnpm run prisma:generate"
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.9",
