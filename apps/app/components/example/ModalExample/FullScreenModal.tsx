@@ -51,7 +51,7 @@ export default function FullScreenModal() {
             </p>
           </div>
           <div className="flex items-center justify-end w-full gap-3 mt-8">
-            <Button size="sm" variant="outline" onClick={closeFullscreenModal}>
+            <Button size="sm" variant="secondary" onClick={closeFullscreenModal}>
               Close
             </Button>
             <Button size="sm" onClick={handleSave}>

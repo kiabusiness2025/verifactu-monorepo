@@ -20,16 +20,16 @@ jobs:
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 10.27.0
+          version: 9.15.4
 
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.x
           cache: pnpm
 
       - name: 📦 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: 🔍 Generate Prisma Client
         run: pnpm --filter verifactu-app run prisma:generate || pnpm --filter verifactu-app exec prisma generate
@@ -47,16 +47,16 @@ jobs:
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 10.27.0
+          version: 9.15.4
 
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.x
           cache: pnpm
 
       - name: 📦 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: 🔍 Type check landing
         run: pnpm --filter verifactu-landing exec tsc --noEmit
@@ -72,16 +72,16 @@ jobs:
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 10.27.0
+          version: 9.15.4
 
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.x
           cache: pnpm
 
       - name: 📦 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: 🔍 Generate Prisma Client (db package)
         run: cd packages/db && pnpm db:generate
@@ -99,16 +99,16 @@ jobs:
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 10.27.0
+          version: 9.15.4
 
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.x
           cache: pnpm
 
       - name: 📦 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: 🧹 Lint app
         run: pnpm --filter verifactu-app run lint || echo "⚠️ Lint warnings found"

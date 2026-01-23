@@ -1,10 +1,12 @@
 # Deployment Guide - Scenario A (Unified PostgreSQL Auth)
+
 **Date**: January 21, 2026  
 **Status**: Ready for Production Deployment
 
 ## Overview
 
 This guide covers the deployment of Scenario A implementation to production (Vercel), including:
+
 - Prisma Accelerate configuration
 - Environment variables setup
 - Vercel deployment
@@ -16,12 +18,14 @@ This guide covers the deployment of Scenario A implementation to production (Ver
 ## Prerequisites
 
 ✅ **Completed:**
+
 - Cloud SQL database configured (verifactu_production)
 - Migrations applied successfully
 - Code committed and pushed to GitHub
 - Local testing verified (code compiles without errors)
 
 🔲 **Required Access:**
+
 - Vercel account (kiabusiness2025/verifactu team)
 - Prisma Cloud account (for Accelerate)
 - Google Cloud Console access (for Cloud SQL)
@@ -34,6 +38,7 @@ This guide covers the deployment of Scenario A implementation to production (Ver
 Prisma Accelerate provides connection pooling, essential for serverless deployments.
 
 ### 1.1 Access Prisma Cloud Console
+
 ```
 URL: https://console.prisma.io/
 Login with your Prisma account
@@ -42,6 +47,7 @@ Login with your Prisma account
 ### 1.2 Create/Update Project
 
 **If no project exists:**
+
 1. Click "New Project"
 2. Name: `verifactu-production`
 3. Region: Select closest to your Cloud SQL instance
@@ -49,17 +55,20 @@ Login with your Prisma account
    - Recommended Accelerate region: `us-east-1`
 
 **If project exists:**
+
 1. Navigate to existing project
 2. Go to Settings → Database Connection
 
 ### 1.3 Configure Database Connection
 
 **Backend Connection String** (Cloud SQL direct):
+
 ```
 postgres://verifactu_user:AcUvSl2K8Vdt5Q9PMIFoXziJp407YHRD@34.14.99.83:5432/verifactu_production?sslmode=require
 ```
 
 **Settings:**
+
 - Connection pooling: Enabled
 - Max connections: `10` (adjust based on Cloud SQL tier)
 - Timeout: `10s`
@@ -68,6 +77,7 @@ postgres://verifactu_user:AcUvSl2K8Vdt5Q9PMIFoXziJp407YHRD@34.14.99.83:5432/veri
 ### 1.4 Get Accelerate Connection String
 
 After configuration, Prisma will provide:
+
 ```
 prisma://accelerate.prisma-data.net/?api_key=eyJhb...YOUR_API_KEY
 ```
@@ -75,6 +85,7 @@ prisma://accelerate.prisma-data.net/?api_key=eyJhb...YOUR_API_KEY
 **⚠️ IMPORTANT:** Copy this string - you'll need it for Vercel env vars.
 
 **Test Connection:**
+
 ```bash
 # Install Prisma CLI if needed
 npm install -g prisma
@@ -88,11 +99,13 @@ prisma db pull --url="prisma://accelerate.prisma-data.net/?api_key=YOUR_KEY"
 ## Step 2: Configure Vercel Environment Variables
 
 You need to update env vars for **3 projects**:
+
 1. `verifactu-app` (client dashboard)
 2. `verifactu-admin` (admin panel)
 3. `verifactu-landing` (if using shared DB)
 
 ### 2.1 Access Vercel Dashboard
+
 ```
 URL: https://vercel.com/kiabusiness2025
 Navigate to each project → Settings → Environment Variables
@@ -101,11 +114,13 @@ Navigate to each project → Settings → Environment Variables
 ### 2.2 Required Variables for `verifactu-app`
 
 **Database:**
+
 ```bash
 DATABASE_URL=prisma://accelerate.prisma-data.net/?api_key=YOUR_API_KEY
 ```
 
 **Firebase Admin SDK:**
+
 ```bash
 FIREBASE_ADMIN_PROJECT_ID=verifactu-business-480212
 FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-xxxxx@verifactu-business-480212.iam.gserviceaccount.com
@@ -113,17 +128,20 @@ FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQI...YOUR_KEY...EN
 ```
 
 **⚠️ Note on Private Key:**
+
 - Must be in quotes
 - Newlines as `\n` (literal backslash-n, not actual newlines)
 - Copy from your local `.env.local` file
 
 **Next.js Config:**
+
 ```bash
 NEXT_PUBLIC_API_URL=https://verifactu-app.vercel.app
 NODE_ENV=production
 ```
 
 **Environment Selection:**
+
 - Production: ✅
 - Preview: ✅ (recommended)
 - Development: ❌ (use local .env.local)
@@ -131,34 +149,40 @@ NODE_ENV=production
 ### 2.3 Required Variables for `verifactu-admin`
 
 **Database:**
+
 ```bash
 DATABASE_URL=prisma://accelerate.prisma-data.net/?api_key=YOUR_API_KEY
 ```
 
 **NextAuth:**
+
 ```bash
 NEXTAUTH_URL=https://verifactu-admin.vercel.app
 NEXTAUTH_SECRET=<generate_new_secure_random_string>
 ```
 
 Generate secret:
+
 ```bash
 openssl rand -base64 32
 ```
 
 **Google OAuth (Workspace):**
+
 ```bash
 GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-xxxxx
 ```
 
 **Gmail API (if using):**
+
 ```bash
 GOOGLE_SERVICE_ACCOUNT_EMAIL=api-drive-gmail-calendario@verifactu-business-480212.iam.gserviceaccount.com
 GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...END PRIVATE KEY-----\n"
 ```
 
 **Environment Selection:**
+
 - Production: ✅
 - Preview: ✅
 - Development: ❌
@@ -166,6 +190,7 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...END PRIVATE 
 ### 2.4 Update Existing Variables
 
 If you already have `DATABASE_URL` set (pointing to old DB or Vercel Postgres):
+
 1. **Edit** the variable (don't add new one)
 2. Replace value with Prisma Accelerate URL
 3. Save changes
@@ -185,6 +210,7 @@ Since you pushed to `main` branch, Vercel should auto-deploy:
 ### 3.2 Manual Deployment (If Needed)
 
 **Via Vercel CLI:**
+
 ```bash
 # Install Vercel CLI
 npm install -g vercel
@@ -202,6 +228,7 @@ vercel --prod
 ```
 
 **Via Vercel Dashboard:**
+
 1. Go to project → Deployments tab
 2. Click "Redeploy" on latest deployment
 3. Check "Use existing Build Cache": ❌ (force fresh build)
@@ -214,18 +241,21 @@ Check build logs for errors:
 **Common Issues:**
 
 **Issue:** `Cannot find module '@verifactu/db'`
+
 ```bash
 # Solution: Ensure pnpm workspace is configured
 # Check vercel.json has installCommand
 ```
 
 **Issue:** `Prisma Client not generated`
+
 ```bash
 # Solution: Ensure prebuild script in package.json:
 "prebuild": "prisma generate"
 ```
 
 **Issue:** `Database connection failed`
+
 ```bash
 # Solution: Verify Prisma Accelerate URL is correct
 # Test connection from local machine first
@@ -242,6 +272,7 @@ Check build logs for errors:
 **Production:** Remove dev IPs, add only Vercel IPs
 
 **Option A: Use Vercel IP Ranges**
+
 ```bash
 # Vercel IP ranges (check latest: https://vercel.com/docs/concepts/security/secure-compute)
 # Example IPs (update with actual Vercel ranges):
@@ -255,6 +286,7 @@ gcloud sql instances patch app-fdc \
 ```
 
 **Option B: Use Private IP (Recommended for production)**
+
 ```bash
 # Enable Private IP for Cloud SQL
 gcloud sql instances patch app-fdc \
@@ -271,6 +303,7 @@ gcloud sql instances patch app-fdc \
 ### 4.2 Update Database User Permissions
 
 **Create Read-Only User for Analytics/Reporting:**
+
 ```bash
 gcloud sql users create verifactu_readonly \
   --instance=app-fdc \
@@ -289,6 +322,7 @@ EOF
 ### 4.3 Enable Cloud SQL Backups
 
 **Automated Daily Backups:**
+
 ```bash
 gcloud sql instances patch app-fdc \
   --backup-start-time=03:00 \
@@ -298,6 +332,7 @@ gcloud sql instances patch app-fdc \
 ```
 
 **Manual Backup (Before Major Changes):**
+
 ```bash
 gcloud sql backups create \
   --instance=app-fdc \
@@ -308,6 +343,7 @@ gcloud sql backups create \
 ### 4.4 Enable Audit Logging
 
 **Database Audit Logs:**
+
 ```bash
 gcloud sql instances patch app-fdc \
   --database-flags=log_statement=all,log_min_duration_statement=100 \
@@ -325,6 +361,7 @@ Ensure admin actions are logged.
 ### 5.1 Check Deployment Status
 
 **Vercel:**
+
 ```
 Apps:
 - https://verifactu-app.vercel.app
@@ -338,6 +375,7 @@ Check:
 ```
 
 **Cloud SQL:**
+
 ```bash
 # Check instance status
 gcloud sql instances describe app-fdc \
@@ -348,6 +386,7 @@ gcloud sql instances describe app-fdc \
 ```
 
 **Prisma Accelerate:**
+
 ```
 Console: https://console.prisma.io/
 Check:
@@ -359,6 +398,7 @@ Check:
 ### 5.2 Test Authentication Flows
 
 **Test 1: Firebase Authentication**
+
 ```bash
 # Get Firebase token from client app
 # Replace with your deployed URL
@@ -370,6 +410,7 @@ curl -H "Authorization: Bearer <FIREBASE_TOKEN>" \
 ```
 
 **Test 2: Admin Panel Login**
+
 ```bash
 # Browser test:
 1. Navigate to https://verifactu-admin.vercel.app
@@ -379,6 +420,7 @@ curl -H "Authorization: Bearer <FIREBASE_TOKEN>" \
 ```
 
 **Test 3: Company Creation**
+
 ```bash
 curl -X POST https://verifactu-app.vercel.app/api/tenants \
   -H "Authorization: Bearer <FIREBASE_TOKEN>" \
@@ -389,6 +431,7 @@ curl -X POST https://verifactu-app.vercel.app/api/tenants \
 ```
 
 **Test 4: Cross-App Data Visibility**
+
 ```bash
 1. Create company via client app (Test 3)
 2. Login to admin panel
@@ -399,11 +442,13 @@ curl -X POST https://verifactu-app.vercel.app/api/tenants \
 ### 5.3 Monitor Performance
 
 **Prisma Accelerate Dashboard:**
+
 - Query latency (should be < 100ms p95)
 - Cache hit rate (target > 80%)
 - Active connections (should be < max configured)
 
 **Vercel Functions:**
+
 ```bash
 # Check function logs
 vercel logs verifactu-app --prod
@@ -413,6 +458,7 @@ vercel logs verifactu-app --prod | grep ERROR
 ```
 
 **Cloud SQL Metrics:**
+
 ```bash
 # CPU usage
 gcloud sql instances describe app-fdc \
@@ -428,11 +474,13 @@ gcloud sql instances describe app-fdc \
 ### 5.4 Check Error Rates
 
 **Expected Behavior:**
+
 - 401 errors: Normal (invalid/expired tokens)
 - 500 errors: Should be 0% or < 0.1%
 - Database errors: Should be 0%
 
 **If high error rates:**
+
 1. Check Vercel function logs
 2. Verify env vars are correct
 3. Test Prisma Accelerate connection
@@ -445,12 +493,14 @@ gcloud sql instances describe app-fdc \
 ### 6.1 Immediate Rollback
 
 **Via Vercel Dashboard:**
+
 1. Go to Deployments tab
 2. Find previous working deployment
 3. Click "..." menu → "Promote to Production"
 4. Confirm promotion
 
 **Via Vercel CLI:**
+
 ```bash
 vercel rollback <deployment-url> --prod
 ```
@@ -458,6 +508,7 @@ vercel rollback <deployment-url> --prod
 ### 6.2 Revert Database Changes
 
 **If migration causes issues:**
+
 ```bash
 # Connect to Cloud SQL
 psql "postgres://verifactu_user:PASSWORD@34.14.99.83:5432/verifactu_production?sslmode=require"
@@ -477,6 +528,7 @@ gcloud sql backups restore <BACKUP_ID> \
 ### 6.3 Communication Plan
 
 **If rollback is required:**
+
 1. Notify team via Slack/email
 2. Update status page (if applicable)
 3. Document issue and resolution
@@ -487,6 +539,7 @@ gcloud sql backups restore <BACKUP_ID> \
 ## Post-Deployment Checklist
 
 ### Functional Testing
+
 - [ ] Firebase users can sign in via client app
 - [ ] Admin users can sign in via Google Workspace
 - [ ] Companies created via app appear in admin panel
@@ -495,6 +548,7 @@ gcloud sql backups restore <BACKUP_ID> \
 - [ ] All queries hitting PostgreSQL (check Cloud SQL metrics)
 
 ### Performance
+
 - [ ] API response times < 500ms (p95)
 - [ ] Prisma Accelerate cache hit rate > 70%
 - [ ] Cloud SQL CPU usage < 50%
@@ -502,6 +556,7 @@ gcloud sql backups restore <BACKUP_ID> \
 - [ ] Function cold starts < 2s
 
 ### Security
+
 - [ ] Only necessary IPs authorized on Cloud SQL
 - [ ] HTTPS enabled on all endpoints
 - [ ] Firebase tokens validated correctly
@@ -509,6 +564,7 @@ gcloud sql backups restore <BACKUP_ID> \
 - [ ] No sensitive data in logs/errors
 
 ### Monitoring
+
 - [ ] Vercel error tracking enabled
 - [ ] Cloud SQL monitoring alerts configured
 - [ ] Prisma Accelerate monitoring active
@@ -525,6 +581,7 @@ gcloud sql backups restore <BACKUP_ID> \
 **Cause:** Prisma Client not regenerated after schema changes
 
 **Solution:**
+
 ```bash
 # Regenerate in packages/db
 cd packages/db
@@ -543,6 +600,7 @@ git push origin main
 **Cause:** Prisma Accelerate or Cloud SQL unreachable
 
 **Solution:**
+
 1. Check Cloud SQL instance is running
 2. Verify Prisma Accelerate URL is correct
 3. Test connection from local machine
@@ -555,6 +613,7 @@ git push origin main
 **Cause:** Wrong Firebase Admin credentials in Vercel
 
 **Solution:**
+
 1. Verify `FIREBASE_ADMIN_*` env vars in Vercel
 2. Check private key has correct newline escaping (`\n`)
 3. Ensure project ID matches Firebase console
@@ -567,6 +626,7 @@ git push origin main
 **Cause:** Workspace dependencies not resolved
 
 **Solution:**
+
 ```bash
 # Ensure apps/app/package.json includes:
 "dependencies": {
@@ -587,18 +647,21 @@ git push origin main
 ## Next Actions
 
 ### Immediate (Today)
+
 1. ✅ Configure Prisma Accelerate
 2. ✅ Update Vercel environment variables
 3. ✅ Deploy to production
 4. ✅ Run smoke tests
 
 ### Short-term (This Week)
+
 5. Set up monitoring alerts
 6. Restrict Cloud SQL IPs to Vercel only
 7. Enable automated backups
 8. Document any issues encountered
 
 ### Medium-term (This Month)
+
 9. Migrate existing Firestore data (if any)
 10. Set up staging environment
 11. Configure CI/CD pipeline
@@ -609,16 +672,19 @@ git push origin main
 ## Support & Resources
 
 **Documentation:**
+
 - [SCENARIO_A_IMPLEMENTATION.md](./SCENARIO_A_IMPLEMENTATION.md) - Implementation details
 - [TESTING_AUTH_FLOWS.md](./TESTING_AUTH_FLOWS.md) - Testing scenarios
 - [CLOUD_SQL_SETUP.md](./CLOUD_SQL_SETUP.md) - Database setup
 
 **External Resources:**
+
 - Prisma Accelerate: https://www.prisma.io/docs/accelerate
 - Vercel Environment Variables: https://vercel.com/docs/concepts/projects/environment-variables
 - Cloud SQL Security: https://cloud.google.com/sql/docs/postgres/security
 
 **Team Contacts:**
+
 - Database issues: Check Cloud SQL console
 - Deployment issues: Check Vercel dashboard
 - Auth issues: Review Firebase Admin SDK logs

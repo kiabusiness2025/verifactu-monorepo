@@ -129,7 +129,7 @@ export function OnboardingTour({ isOpen, onComplete, onSkip }: OnboardingTourPro
         <div className="flex items-center justify-between gap-4">
           <Button
             onClick={handlePrev}
-            variant="outline"
+            variant="secondary"
             className="rounded-xl border-slate-300 text-slate-700"
             disabled={currentStep === 0}
           >

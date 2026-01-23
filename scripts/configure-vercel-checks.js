@@ -21,7 +21,9 @@ const TEAM_ID = projectData.orgId;
 if (!VERCEL_TOKEN) {
   console.error('❌ Error: VERCEL_TOKEN environment variable no está configurada');
   console.log('   Ejecuta: vercel token create');
-  console.log('   Luego: set VERCEL_TOKEN=tu_token (Windows) o export VERCEL_TOKEN=tu_token (Linux/Mac)');
+  console.log(
+    '   Luego: set VERCEL_TOKEN=tu_token (Windows) o export VERCEL_TOKEN=tu_token (Linux/Mac)'
+  );
   process.exit(1);
 }
 
@@ -35,10 +37,10 @@ const checksConfig = {
     checks: [
       {
         name: 'Auto-Fix & Deploy',
-        path: '.github/workflows/auto-fix-and-deploy.yml'
-      }
-    ]
-  }
+        path: '.github/workflows/auto-fix-and-deploy.yml',
+      },
+    ],
+  },
 };
 
 // Hacer request a la API de Vercel
@@ -47,9 +49,9 @@ const options = {
   path: `/v9/projects/${PROJECT_ID}`,
   method: 'PATCH',
   headers: {
-    'Authorization': `Bearer ${VERCEL_TOKEN}`,
-    'Content-Type': 'application/json'
-  }
+    Authorization: `Bearer ${VERCEL_TOKEN}`,
+    'Content-Type': 'application/json',
+  },
 };
 
 if (TEAM_ID.startsWith('team_')) {
@@ -69,13 +71,17 @@ const req = https.request(options, (res) => {
       console.log('📋 Configuración aplicada:');
       console.log('   - Deployment Protection: ENABLED');
       console.log('   - Check requerido: Auto-Fix & Deploy workflow');
-      console.log('\n💡 Ahora Vercel esperará a que pasen los checks de GitHub antes de desplegar.\n');
+      console.log(
+        '\n💡 Ahora Vercel esperará a que pasen los checks de GitHub antes de desplegar.\n'
+      );
     } else {
       console.error(`❌ Error al configurar checks (HTTP ${res.statusCode})`);
       console.error('Respuesta:', data);
-      
+
       if (res.statusCode === 403) {
-        console.log('\n💡 Tip: Asegúrate de que tu token tenga permisos para modificar el proyecto');
+        console.log(
+          '\n💡 Tip: Asegúrate de que tu token tenga permisos para modificar el proyecto'
+        );
       }
     }
   });

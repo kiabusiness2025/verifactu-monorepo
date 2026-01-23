@@ -1,30 +1,30 @@
 {
-    "name": "@verifactu/ui",
-    "version": "0.0.0",
-    "main": "./index.tsx",
-    "types": "./index.tsx",
-    "exports": {
-        ".": "./index.tsx",
-        "./components/*": "./components/*"
-    },
-    "license": "MIT",
-    "scripts": {
-        "lint": "eslint . --max-warnings 0"
-    },
-    "devDependencies": {
-        "@types/react": "~18.3.27",
-        "@types/react-dom": "~18.3.7",
-        "@typescript-eslint/eslint-plugin": "^8.15.0",
-        "@typescript-eslint/parser": "^8.15.0",
-        "@verifactu/eslint-config": "file:../eslint-config",
-        "@verifactu/typescript-config": "file:../typescript-config",
-        "eslint": "^8.57.0",
-        "next": "14.2.35",
-        "typescript": "^5.9.3"
-    },
-    "peerDependencies": {
-        "next": "^14.0.0",
-        "react": "^18.0.0",
-        "react-dom": "^18.0.0"
-    }
+  "name": "@verifactu/ui",
+  "version": "0.0.0",
+  "main": "./index.tsx",
+  "types": "./index.tsx",
+  "exports": {
+    ".": "./index.tsx",
+    "./components/*": "./components/*"
+  },
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.27",
+    "@types/react-dom": "~18.3.7",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "@verifactu/eslint-config": "file:../eslint-config",
+    "@verifactu/typescript-config": "file:../typescript-config",
+    "eslint": "^8.57.0",
+    "next": "14.2.35",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
 }

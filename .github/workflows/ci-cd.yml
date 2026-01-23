@@ -25,14 +25,14 @@ jobs:
 
       - uses: pnpm/action-setup@v2
         with:
-          version: 10.27.0
+          version: 9.15.4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22.x'
           cache: 'pnpm'
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: ESLint Check
         run: pnpm --filter verifactu-app lint
@@ -45,14 +45,14 @@ jobs:
 
       - uses: pnpm/action-setup@v2
         with:
-          version: 10.27.0
+          version: 9.15.4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22.x'
           cache: 'pnpm'
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: TypeScript Compiler Check
         run: pnpm --filter verifactu-app exec tsc --noEmit
@@ -66,14 +66,14 @@ jobs:
 
       - uses: pnpm/action-setup@v2
         with:
-          version: 10.27.0
+          version: 9.15.4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22.x'
           cache: 'pnpm'
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: Build Application
         run: pnpm run build
@@ -92,14 +92,14 @@ jobs:
 
       - uses: pnpm/action-setup@v2
         with:
-          version: 10.27.0
+          version: 9.15.4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22.x'
           cache: 'pnpm'
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: Run Tests
         run: pnpm --filter verifactu-app test:ci --coverage

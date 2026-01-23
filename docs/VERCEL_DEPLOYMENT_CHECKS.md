@@ -5,6 +5,7 @@ Este documento explica cómo configurar **GitHub Checks** en Vercel para que los
 ## 🎯 Objetivo
 
 Asegurar que ningún deployment llegue a producción sin que:
+
 - ✅ Los type checks de TypeScript pasen
 - ✅ Los builds de app y landing compilen exitosamente
 - ✅ El workflow `Auto-Fix & Deploy` complete sin errores
@@ -85,6 +86,7 @@ Después de configurar, deberías ver:
 ## 🎨 Configuración Actual
 
 **Project**: `verifactu-monorepo-app`
+
 - **Project ID**: `prj_ZBVvfBkBG6b4MmSCD9aRQM7QAPAU`
 - **Team ID**: `team_VKgEl6B4kMmqwaplJcykx3KP`
 - **Workflow monitoreado**: `.github/workflows/auto-fix-and-deploy.yml`
@@ -92,13 +94,15 @@ Después de configurar, deberías ver:
 ## 📊 Comportamiento Esperado
 
 ### Antes (sin checks):
+
 ```
 git push → Vercel build inmediato → Production (aunque haya errores)
 ```
 
 ### Después (con checks):
+
 ```
-git push 
+git push
 → GitHub Actions ejecuta workflow
 → Type checks ✓
 → Builds ✓
@@ -109,14 +113,17 @@ git push
 ## 🚨 Troubleshooting
 
 ### "Checks never complete"
+
 - Verifica que el workflow esté configurado para `push` y `pull_request`
 - Asegúrate de que el nombre del workflow coincida exactamente
 
 ### "Deployment bypasses checks"
+
 - Revisa que Deployment Protection esté en "Enabled"
 - Verifica que esté aplicado a la branch `main`
 
 ### "Checks fail pero quiero desplegar"
+
 - Puedes hacer override manual en Vercel Dashboard
 - O usar: `vercel --force` (no recomendado en producción)
 

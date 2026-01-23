@@ -32,7 +32,7 @@ export default function VerticallyCenteredModal() {
           </p>
 
           <div className="flex items-center justify-center w-full gap-3 mt-8">
-            <Button size="sm" variant="outline" onClick={closeModal}>
+            <Button size="sm" variant="secondary" onClick={closeModal}>
               Close
             </Button>
             <Button size="sm" onClick={handleSave}>

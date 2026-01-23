@@ -23,24 +23,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.20.0'
-          cache: 'npm'
+          node-version: '22.x'
+          cache: 'pnpm'
 
-      - name: Cache node modules
-        uses: actions/cache@v3
-        id: cache-deps
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          version: 9.15.4
 
       - name: Install dependencies
-        if: steps.cache-deps.outputs.cache-hit != 'true'
-        run: npm ci --prefer-offline --no-audit
+        run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: Check missing dependencies (app)
         run: node scripts/check-dependencies.js apps/app
@@ -48,7 +40,7 @@ jobs:
       - name: Build app
         run: |
           cd apps/app
-          npm run build
+          pnpm run build
         env:
           CI: true
           DATABASE_URL: 'postgresql://dummy:dummy@localhost:5432/dummy'
@@ -59,7 +51,7 @@ jobs:
       - name: Type check (app)
         run: |
           cd apps/app
-          npx tsc --noEmit
+          pnpm exec tsc --noEmit
 
       - name: Comment on PR (failure)
         if: failure() && github.event_name == 'pull_request'
@@ -70,7 +62,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ **App build failed**\n\nCheck the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\nPlease fix the build locally before pushing:\n```bash\ncd apps/app\nnpm run build\n```'
+              body: '❌ **App build failed**\n\nCheck the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\nPlease fix the build locally before pushing:\n```bash\ncd apps/app\npnpm run build\n```'
             })
 
       - name: Comment on PR (success)
@@ -96,24 +88,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.20.0'
-          cache: 'npm'
+          node-version: '22.x'
+          cache: 'pnpm'
 
-      - name: Cache node modules
-        uses: actions/cache@v3
-        id: cache-deps
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          version: 9.15.4
 
       - name: Install dependencies
-        if: steps.cache-deps.outputs.cache-hit != 'true'
-        run: npm ci --prefer-offline --no-audit
+        run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: Check missing dependencies (landing)
         run: node scripts/check-dependencies.js apps/landing
@@ -121,7 +105,7 @@ jobs:
       - name: Build landing
         run: |
           cd apps/landing
-          npm run build
+          pnpm run build
         env:
           CI: true
           NEXTAUTH_SECRET: 'dummy-secret-for-build'
@@ -130,7 +114,7 @@ jobs:
       - name: Type check (landing)
         run: |
           cd apps/landing
-          npx tsc --noEmit
+          pnpm exec tsc --noEmit
 
       - name: Comment on PR (failure)
         if: failure() && github.event_name == 'pull_request'
@@ -141,7 +125,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ **Landing build failed**\n\nCheck the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\nPlease fix the build locally before pushing:\n```bash\ncd apps/landing\nnpm run build\n```'
+              body: '❌ **Landing build failed**\n\nCheck the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\nPlease fix the build locally before pushing:\n```bash\ncd apps/landing\npnpm run build\n```'
             })
 
       - name: Comment on PR (success)
@@ -172,3 +156,5 @@ jobs:
             echo "❌ Some builds failed. Fix errors before deploying."
             exit 1
           fi
+
+

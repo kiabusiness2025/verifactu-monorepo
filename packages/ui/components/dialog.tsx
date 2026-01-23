@@ -20,26 +20,31 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
   );
 };
 
-export const DialogTrigger: React.FC<{ asChild?: boolean; children: React.ReactNode }> = ({ children }) => (
-  <>{children}</>
-);
+export const DialogTrigger: React.FC<{ asChild?: boolean; children: React.ReactNode }> = ({
+  children,
+}) => <>{children}</>;
 
-export const DialogContent: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`p-6 ${className}`}>{children}</div>
-);
+export const DialogContent: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
+}) => <div className={`p-6 ${className}`}>{children}</div>;
 
-export const DialogHeader: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`mb-4 ${className}`}>{children}</div>
-);
+export const DialogHeader: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
+}) => <div className={`mb-4 ${className}`}>{children}</div>;
 
-export const DialogTitle: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <h2 className={`text-xl font-semibold ${className}`}>{children}</h2>
-);
+export const DialogTitle: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
+}) => <h2 className={`text-xl font-semibold ${className}`}>{children}</h2>;
 
-export const DialogDescription: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <p className={`text-sm text-gray-600 ${className}`}>{children}</p>
-);
+export const DialogDescription: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
+}) => <p className={`text-sm text-gray-600 ${className}`}>{children}</p>;
 
-export const DialogFooter: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`mt-6 flex justify-end gap-2 ${className}`}>{children}</div>
-);
+export const DialogFooter: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
+}) => <div className={`mt-6 flex justify-end gap-2 ${className}`}>{children}</div>;

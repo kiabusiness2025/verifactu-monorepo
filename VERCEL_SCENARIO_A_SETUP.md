@@ -1,4 +1,5 @@
 # 🚀 Configuración Vercel para Scenario A
+
 **Fecha**: 21 de enero de 2026  
 **Prisma Accelerate**: ✅ Configurado
 
@@ -21,7 +22,8 @@ Tu URL (cópiala completa desde el dashboard de Prisma):
 prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza19Va09UenlOLXVoTDBYYmxtRzRNRkwi...
 ```
 
-⚠️ **IMPORTANTE**: 
+⚠️ **IMPORTANTE**:
+
 - El API key debe estar **completo** (no terminar en ...)
 - Cópialo desde: https://console.prisma.io/ → Tu proyecto → Connection String
 - La URL completa puede ser muy larga (300+ caracteres)
@@ -35,6 +37,7 @@ prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cC
 ### Variables a Configurar:
 
 #### 1. Base de Datos
+
 ```
 Name: DATABASE_URL
 Value: [PEGA AQUÍ LA URL COMPLETA DE PRISMA ACCELERATE]
@@ -42,8 +45,9 @@ Environments: Production ✅, Preview ✅, Development ❌
 ```
 
 #### 2. Firebase Admin SDK
+
 ```
-Name: FIREBASE_ADMIN_PROJECT_ID  
+Name: FIREBASE_ADMIN_PROJECT_ID
 Value: verifactu-business-480212
 Environments: Production ✅, Preview ✅
 
@@ -57,6 +61,7 @@ Environments: Production ✅, Preview ✅
 ```
 
 💡 **Cómo obtener estos valores**:
+
 - Los tienes en tu archivo local: `apps/app/.env.local`
 - Copia exactamente como están (incluyendo las comillas para la private key)
 - Los `\n` deben ser LITERALES (backslash seguido de n, NO saltos de línea reales)
@@ -70,6 +75,7 @@ Environments: Production ✅, Preview ✅
 ### Variables a Configurar:
 
 #### 1. Base de Datos (misma que app)
+
 ```
 Name: DATABASE_URL
 Value: [MISMA URL DE PRISMA ACCELERATE QUE ANTES]
@@ -77,6 +83,7 @@ Environments: Production ✅, Preview ✅
 ```
 
 #### 2. NextAuth
+
 ```
 Name: NEXTAUTH_URL
 Value: https://verifactu-admin.vercel.app
@@ -88,6 +95,7 @@ Environments: Production ✅, Preview ✅
 ```
 
 **Generar NEXTAUTH_SECRET**:
+
 ```bash
 # Opción 1: Con OpenSSL (en tu terminal)
 openssl rand -base64 32
@@ -97,22 +105,25 @@ openssl rand -base64 32
 ```
 
 #### 3. Google OAuth (Workspace)
+
 ```
 Name: GOOGLE_CLIENT_ID
 Value: [Tu Client ID de Google Cloud Console]
 Environments: Production ✅, Preview ✅
 
-Name: GOOGLE_CLIENT_SECRET  
+Name: GOOGLE_CLIENT_SECRET
 Value: [Tu Client Secret de Google Cloud Console]
 Environments: Production ✅, Preview ✅
 ```
 
 💡 **Dónde obtener**:
+
 - Google Cloud Console: https://console.cloud.google.com/apis/credentials
 - Proyecto: verifactu-business-480212
 - Busca el OAuth 2.0 Client que usas para el admin panel
 
 #### 4. Gmail API (Service Account - opcional si usas Gmail)
+
 ```
 Name: GOOGLE_SERVICE_ACCOUNT_EMAIL
 Value: api-drive-gmail-calendario@verifactu-business-480212.iam.gserviceaccount.com
@@ -128,20 +139,23 @@ Environments: Production ✅, Preview ✅
 ## ✅ Checklist de Configuración
 
 ### Antes de Configurar
+
 - [ ] Tengo la URL completa de Prisma Accelerate (no cortada)
 - [ ] Tengo acceso al archivo `.env.local` local para copiar valores
 - [ ] Tengo acceso a Vercel Dashboard
 
 ### Durante Configuración
+
 - [ ] **verifactu-app**: DATABASE_URL configurada
-- [ ] **verifactu-app**: FIREBASE_ADMIN_* (3 variables) configuradas
-- [ ] **verifactu-admin**: DATABASE_URL configurada  
-- [ ] **verifactu-admin**: NEXTAUTH_* (2 variables) configuradas
-- [ ] **verifactu-admin**: GOOGLE_CLIENT_* (2 variables) configuradas
+- [ ] **verifactu-app**: FIREBASE*ADMIN*\* (3 variables) configuradas
+- [ ] **verifactu-admin**: DATABASE_URL configurada
+- [ ] **verifactu-admin**: NEXTAUTH\_\* (2 variables) configuradas
+- [ ] **verifactu-admin**: GOOGLE*CLIENT*\* (2 variables) configuradas
 - [ ] Todas las variables marcadas para "Production" y "Preview"
 - [ ] Guardé los cambios en cada proyecto
 
 ### Después de Configurar
+
 - [ ] Verificar que Vercel está desplegando (auto-deploy por push)
 - [ ] O forzar redeploy manual
 - [ ] Esperar a que builds completen (~5-10 min)
@@ -156,6 +170,7 @@ Environments: Production ✅, Preview ✅
 Como ya hiciste push a `main`, Vercel debería estar desplegando automáticamente.
 
 **Verifica el estado**:
+
 1. Ve a: https://vercel.com/kiabusiness2025
 2. Busca tus proyectos (verifactu-app, verifactu-admin)
 3. Deberías ver "Building..." o "Ready"
@@ -167,6 +182,7 @@ Si ves errores en el build → Ve a los logs y verifica que las env vars estén 
 Si el auto-deploy falló o quieres forzar rebuild:
 
 **Método 1: Vercel Dashboard**
+
 1. Ve al proyecto → Deployments
 2. Encuentra el último deployment
 3. Click "..." → "Redeploy"
@@ -174,6 +190,7 @@ Si el auto-deploy falló o quieres forzar rebuild:
 5. Click "Redeploy"
 
 **Método 2: Vercel CLI**
+
 ```bash
 # Instalar CLI (si no lo tienes)
 npm install -g vercel
@@ -195,6 +212,7 @@ vercel --prod
 ## 🧪 Testing Post-Deployment
 
 ### Test 1: Apps están live
+
 ```bash
 # Verifica que responden
 curl -I https://verifactu-app.vercel.app
@@ -204,6 +222,7 @@ curl -I https://verifactu-admin.vercel.app
 ```
 
 ### Test 2: Firebase Auth (necesitas token real)
+
 ```bash
 # Después de login en tu app Firebase, obtén el token:
 # const token = await firebase.auth().currentUser.getIdToken()
@@ -215,12 +234,14 @@ curl -H "Authorization: Bearer TU_TOKEN_FIREBASE" \
 ```
 
 ### Test 3: Admin Panel Login
+
 1. Ve a: https://verifactu-admin.vercel.app
 2. Click "Sign in with Google"
 3. Usa tu cuenta @verifactu.business
 4. Deberías ver el dashboard
 
 ### Test 4: Verificar logs
+
 ```bash
 # Ver logs en tiempo real
 vercel logs verifactu-app --prod
@@ -239,6 +260,7 @@ vercel logs verifactu-app --prod | grep -i error
 **Causa**: URL de Prisma Accelerate incorrecta o cortada
 
 **Solución**:
+
 1. Ve a https://console.prisma.io/
 2. Copia TODA la URL (debería ser larga)
 3. Verifica que termina con el API key completo (no "...")
@@ -249,8 +271,9 @@ vercel logs verifactu-app --prod | grep -i error
 **Causa**: Credenciales Firebase incorrectas
 
 **Solución**:
+
 1. Verifica `FIREBASE_ADMIN_PROJECT_ID`: debe ser `verifactu-business-480212`
-2. Verifica `FIREBASE_ADMIN_PRIVATE_KEY`: 
+2. Verifica `FIREBASE_ADMIN_PRIVATE_KEY`:
    - Debe empezar con `"-----BEGIN PRIVATE KEY-----\n`
    - Debe terminar con `\n-----END PRIVATE KEY-----\n"`
    - Los `\n` son LITERALES (no saltos de línea reales)
@@ -259,6 +282,7 @@ vercel logs verifactu-app --prod | grep -i error
 ### ❌ Error: "NEXTAUTH_SECRET is not set"
 
 **Solución**:
+
 ```bash
 # Genera uno nuevo
 openssl rand -base64 32
@@ -272,6 +296,7 @@ openssl rand -base64 32
 ### ❌ Build exitoso pero functions fallan
 
 **Solución**:
+
 1. Revisa Vercel function logs: `vercel logs verifactu-app --prod`
 2. Busca errores específicos
 3. Usualmente es problema de env vars o Prisma Client no generado
@@ -282,18 +307,22 @@ openssl rand -base64 32
 ## 📊 Monitoring Post-Deployment
 
 ### Prisma Accelerate Dashboard
+
 **URL**: https://console.prisma.io/
 
 **Qué verificar**:
+
 - ✅ Connection status: "Active"
 - ✅ Query latency: < 100ms (p95)
 - ✅ Cache hit rate: > 70%
 - ❌ Error rate: 0%
 
 ### Vercel Dashboard
+
 **URL**: https://vercel.com/kiabusiness2025
 
 **Qué verificar**:
+
 - ✅ Deployment status: "Ready"
 - ✅ Function execution: < 3s
 - ❌ Function errors: 0%
@@ -304,18 +333,21 @@ openssl rand -base64 32
 ## 🎯 Próximos Pasos Después del Deploy
 
 ### Inmediato (hoy)
+
 1. ✅ Configura todas las env vars en Vercel
 2. ✅ Verifica que deployments completan exitosamente
 3. ✅ Prueba auth flows (Firebase + Google Workspace)
 4. ✅ Verifica que datos se leen/escriben correctamente
 
 ### Corto plazo (esta semana)
+
 5. 🔒 Limita IPs autorizadas en Cloud SQL (solo Vercel, no tu IP local)
 6. 📊 Configura alertas de monitoreo
 7. 💾 Habilita backups automáticos de Cloud SQL
 8. 📝 Documenta URLs de producción para el equipo
 
 ### Mediano plazo (este mes)
+
 9. 🔄 Migra datos existentes de Firestore (si aplica)
 10. 🧪 Configura entorno de staging
 11. 🤖 Configura CI/CD con tests automáticos

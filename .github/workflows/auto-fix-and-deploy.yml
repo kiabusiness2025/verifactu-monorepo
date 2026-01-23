@@ -18,8 +18,8 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: '20.x'
-  PNPM_VERSION: '10.27.0'
+  NODE_VERSION: '22.x'
+  PNPM_VERSION: '9.15.4'
 
 jobs:
   detect-and-fix:
@@ -59,7 +59,7 @@ jobs:
           restore-keys: ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --node-linker=isolated
 
       - name: Analyze error context from Isaak
         if: github.event.inputs.error_context != ''

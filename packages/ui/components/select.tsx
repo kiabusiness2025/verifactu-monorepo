@@ -9,7 +9,13 @@ export interface SelectProps {
   disabled?: boolean;
 }
 
-export const Select: React.FC<SelectProps> = ({ children, value, onValueChange, defaultValue, disabled }) => {
+export const Select: React.FC<SelectProps> = ({
+  children,
+  value,
+  onValueChange,
+  defaultValue,
+  disabled,
+}) => {
   return (
     <select
       value={value}
@@ -23,9 +29,10 @@ export const Select: React.FC<SelectProps> = ({ children, value, onValueChange, 
   );
 };
 
-export const SelectTrigger: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`relative ${className}`}>{children}</div>
-);
+export const SelectTrigger: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = '',
+}) => <div className={`relative ${className}`}>{children}</div>;
 
 export const SelectValue: React.FC<{ placeholder?: string }> = ({ placeholder }) => (
   <span className="text-gray-500">{placeholder}</span>
@@ -35,6 +42,7 @@ export const SelectContent: React.FC<{ children: React.ReactNode }> = ({ childre
   <>{children}</>
 );
 
-export const SelectItem: React.FC<{ value: string; children: React.ReactNode }> = ({ value, children }) => (
-  <option value={value}>{children}</option>
-);
+export const SelectItem: React.FC<{ value: string; children: React.ReactNode }> = ({
+  value,
+  children,
+}) => <option value={value}>{children}</option>;
