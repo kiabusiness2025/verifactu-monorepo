@@ -1,68 +1,113 @@
-import { getServerSession } from 'next-auth';
+﻿import { getServerSession } from 'next-auth';
 import Link from 'next/link';
-import { authOptions } from '../api/auth/[...nextauth]/route';
+import { redirect } from 'next/navigation';
+import { format, subDays } from 'date-fns';
+import { authOptions } from '@/lib/auth-options';
+import { prisma } from '@/lib/prisma';
 
 export default async function OverviewPage() {
   const session = await getServerSession(authOptions);
-  const userName = session?.user?.name || session?.user?.email;
+  if (!session?.user) {
+    redirect('/api/auth/signin');
+  }
 
-  // TODO: Fetch real stats from database
-  const stats = {
-    totalUsers: 0,
-    totalCompanies: 0,
-    activeImpersonations: 0,
-    recentAudits: 0,
-  };
+  const userName = session.user?.name || session.user?.email;
+  const now = new Date();
+  const since24h = subDays(now, 1);
+  const since7d = subDays(now, 7);
+
+  const [totalUsers, totalCompanies, recentAudits, impersonations24h, recentActivity] =
+    await Promise.all([
+      prisma.user.count(),
+      prisma.company.count(),
+      prisma.auditLog.count({ where: { createdAt: { gte: since7d } } }),
+      prisma.auditLog.count({
+        where: { action: 'IMPERSONATION_START', createdAt: { gte: since24h } },
+      }),
+      prisma.auditLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+        include: {
+          actorUser: { select: { email: true, name: true } },
+          targetUser: { select: { email: true, name: true } },
+          targetCompany: { select: { name: true } },
+        },
+      }),
+    ]);
 
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Bienvenido, {userName}</h1>
-        <p className="text-gray-600 mt-2">Panel de administración de Verifactu Business</p>
+        <p className="mt-2 text-gray-600">Panel de administración de Verifactu Business</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard title="Total Usuarios" value={stats.totalUsers} icon="👥" href="/users" />
-        <StatCard title="Total Empresas" value={stats.totalCompanies} icon="🏢" href="/companies" />
+      <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Total Usuarios" value={totalUsers} icon="U" href="/users" />
+        <StatCard title="Total Empresas" value={totalCompanies} icon="E" href="/companies" />
         <StatCard
-          title="Impersonaciones Activas"
-          value={stats.activeImpersonations}
-          icon="🔄"
-          variant={stats.activeImpersonations > 0 ? 'warning' : 'default'}
+          title="Impersonaciones (24h)"
+          value={impersonations24h}
+          icon="I"
+          variant={impersonations24h > 0 ? 'warning' : 'default'}
         />
-        <StatCard title="Auditorías Recientes" value={stats.recentAudits} icon="📝" href="/audit" />
+        <StatCard title="Auditorías (7 días)" value={recentAudits} icon="A" href="/audit" />
       </div>
 
-      {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Acciones Rápidas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Acciones rápidas</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <QuickAction
             href="/users"
-            icon="👥"
+            icon="U"
             title="Ver Usuarios"
             description="Gestionar usuarios del sistema"
           />
           <QuickAction
             href="/companies"
-            icon="🏢"
+            icon="E"
             title="Ver Empresas"
             description="Gestionar empresas y sus datos"
           />
           <QuickAction
             href="/audit"
-            icon="📝"
+            icon="A"
             title="Ver Auditoría"
             description="Revisar logs de actividad"
           />
         </div>
       </div>
 
-      {/* Recent Activity - TODO: Fetch from database */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Actividad Reciente</h2>
-        <div className="text-gray-500 text-center py-8">No hay actividad reciente</div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Actividad reciente</h2>
+        {recentActivity.length === 0 ? (
+          <div className="text-gray-500 text-center py-8">No hay actividad reciente</div>
+        ) : (
+          <div className="space-y-3">
+            {recentActivity.map((item) => {
+              const actor = item.actorUser?.name || item.actorUser?.email || 'Sistema';
+              const target =
+                item.targetUser?.email ||
+                item.targetCompany?.name ||
+                item.targetCompanyId ||
+                item.targetUserId ||
+                'N/A';
+              return (
+                <div
+                  key={item.id}
+                  className="flex flex-col gap-1 rounded-lg border border-gray-100 p-3"
+                >
+                  <div className="text-sm text-gray-800">
+                    <span className="font-semibold">{actor}</span> · {item.action}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Objetivo: {target} · {format(new Date(item.createdAt), 'MMM d, yyyy HH:mm')}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -87,10 +132,10 @@ function StatCard({
   const content = (
     <>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-2xl">{icon}</span>
+        <span className="text-2xl font-semibold text-slate-700">{icon}</span>
         {variant === 'warning' && value > 0 && (
           <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded">
-            ⚠️ Activo
+            Activo
           </span>
         )}
       </div>
@@ -129,7 +174,7 @@ function QuickAction({
       href={href}
       className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all"
     >
-      <span className="text-3xl">{icon}</span>
+      <span className="text-2xl font-semibold text-slate-700">{icon}</span>
       <div>
         <h3 className="font-semibold text-gray-900">{title}</h3>
         <p className="text-sm text-gray-600 mt-1">{description}</p>
