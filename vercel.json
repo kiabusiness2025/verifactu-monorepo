@@ -1,7 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npx -y pnpm@9.15.4 install --node-linker=isolated",
-  "buildCommand": "cd apps/app && npx -y pnpm@9.15.4 run build",
-  "outputDirectory": "apps/app/.next",
-  "framework": "nextjs"
+  "buildCommand": "pnpm run build --filter=verifactu-app",
+  "installCommand": "pnpm install",
+  "devCommand": "pnpm run dev --filter=verifactu-app",
+  "framework": "nextjs",
+  "outputDirectory": "apps/app/.next"
 }
