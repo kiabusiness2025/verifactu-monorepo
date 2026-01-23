@@ -38,16 +38,18 @@ export async function listTenantsForUser(userId: string): Promise<Tenant[]> {
     });
   });
 
-  memberCompanies.forEach((membership: { company: { id: string; name: string; createdAt: Date } }) => {
-    if (!companyMap.has(membership.company.id)) {
-      companyMap.set(membership.company.id, {
-        id: membership.company.id,
-        name: membership.company.name,
-        createdAt: membership.company.createdAt,
-        created_at: membership.company.createdAt.toISOString(),
-      });
+  memberCompanies.forEach(
+    (membership: { company: { id: string; name: string; createdAt: Date } }) => {
+      if (!companyMap.has(membership.company.id)) {
+        companyMap.set(membership.company.id, {
+          id: membership.company.id,
+          name: membership.company.name,
+          createdAt: membership.company.createdAt,
+          created_at: membership.company.createdAt.toISOString(),
+        });
+      }
     }
-  });
+  );
 
   return Array.from(companyMap.values());
 }

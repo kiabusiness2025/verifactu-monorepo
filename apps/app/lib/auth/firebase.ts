@@ -3,8 +3,8 @@
  * Verifies Firebase tokens and manages SQL user synchronization
  */
 
-import { prisma } from '@verifactu/db';
 import type { AuthProvider, User } from '@prisma/client';
+import { prisma } from '@verifactu/db';
 import { getFirebaseAuth } from '../firebase-admin';
 
 export interface FirebaseTokenPayload {

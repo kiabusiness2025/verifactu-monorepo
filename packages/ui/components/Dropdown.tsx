@@ -7,7 +7,12 @@ export interface DropdownProps {
   className?: string;
 }
 
-export const Dropdown: React.FC<DropdownProps> = ({ isOpen, onClose, children, className = '' }) => {
+export const Dropdown: React.FC<DropdownProps> = ({
+  isOpen,
+  onClose,
+  children,
+  className = '',
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -30,14 +35,19 @@ export interface DropdownItemProps {
   href?: string;
 }
 
-export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onItemClick, className = '', href }) => {
+export const DropdownItem: React.FC<DropdownItemProps> = ({
+  children,
+  onItemClick,
+  className = '',
+  href,
+}) => {
   const handleClick = () => {
     if (onItemClick) onItemClick();
     if (href) {
       window.location.href = href;
     }
   };
-  
+
   return (
     <button
       type="button"
