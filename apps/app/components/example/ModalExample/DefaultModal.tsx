@@ -1,15 +1,14 @@
-"use client";
-import React from "react";
-import ComponentCard from "../../common/ComponentCard";
+'use client';
+import ComponentCard from '../../common/ComponentCard';
 
-import { Modal, Button } from "@verifactu/ui";
-import { useModal } from "@/hooks/useModal";
+import { useModal } from '@/hooks/useModal';
+import { Button, Modal } from '@verifactu/ui';
 
 export default function DefaultModal() {
   const { isOpen, openModal, closeModal } = useModal();
   const handleSave = () => {
     // Handle save logic here
-    console.log("Saving changes...");
+    console.log('Saving changes...');
     closeModal();
   };
   return (
@@ -18,24 +17,18 @@ export default function DefaultModal() {
         <Button size="sm" onClick={openModal}>
           Open Modal
         </Button>
-        <Modal
-          isOpen={isOpen}
-          onClose={closeModal}
-          className="max-w-[600px] p-5 lg:p-10"
-        >
+        <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[600px] p-5 lg:p-10">
           <h4 className="font-semibold text-gray-800 mb-7 text-title-sm dark:text-white/90">
             Modal Heading
           </h4>
           <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            Pellentesque euismod est quis mauris lacinia pharetra. Sed a ligula
-            ac odio condimentum aliquet a nec nulla. Aliquam bibendum ex sit
-            amet ipsum rutrum feugiat ultrices enim quam.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod est quis
+            mauris lacinia pharetra. Sed a ligula ac odio condimentum aliquet a nec nulla. Aliquam
+            bibendum ex sit amet ipsum rutrum feugiat ultrices enim quam.
           </p>
           <p className="mt-5 text-sm leading-6 text-gray-500 dark:text-gray-400">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            Pellentesque euismod est quis mauris lacinia pharetra. Sed a ligula
-            ac odio.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod est quis
+            mauris lacinia pharetra. Sed a ligula ac odio.
           </p>
           <div className="flex items-center justify-end w-full gap-3 mt-8">
             <Button size="sm" variant="secondary" onClick={closeModal}>

@@ -1,16 +1,15 @@
-"use client";
-import React from "react";
-import ComponentCard from "../../common/ComponentCard";
-import { Modal, Button } from "@verifactu/ui";
-import Label from "../../form/Label";
-import Input from "../../form/input/InputField";
-import { useModal } from "@/hooks/useModal";
+'use client';
+import { useModal } from '@/hooks/useModal';
+import { Button, Modal } from '@verifactu/ui';
+import ComponentCard from '../../common/ComponentCard';
+import Label from '../../form/Label';
+import Input from '../../form/input/InputField';
 
 export default function FormInModal() {
   const { isOpen, openModal, closeModal } = useModal();
   const handleSave = () => {
     // Handle save logic here
-    console.log("Saving changes...");
+    console.log('Saving changes...');
     closeModal();
   };
   return (
@@ -18,11 +17,7 @@ export default function FormInModal() {
       <Button size="sm" onClick={openModal}>
         Open Modal
       </Button>
-      <Modal
-        isOpen={isOpen}
-        onClose={closeModal}
-        className="max-w-[584px] p-5 lg:p-10"
-      >
+      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[584px] p-5 lg:p-10">
         <form className="">
           <h4 className="mb-6 text-lg font-medium text-gray-800 dark:text-white/90">
             Personal Information

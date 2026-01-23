@@ -1,14 +1,13 @@
-"use client";
-import React from "react";
-import ComponentCard from "../../common/ComponentCard";
-import { Modal, Button } from "@verifactu/ui";
-import { useModal } from "@/hooks/useModal";
+'use client';
+import { useModal } from '@/hooks/useModal';
+import { Button, Modal } from '@verifactu/ui';
+import ComponentCard from '../../common/ComponentCard';
 
 export default function VerticallyCenteredModal() {
   const { isOpen, openModal, closeModal } = useModal();
   const handleSave = () => {
     // Handle save logic here
-    console.log("Saving changes...");
+    console.log('Saving changes...');
     closeModal();
   };
   return (
@@ -27,8 +26,8 @@ export default function VerticallyCenteredModal() {
             All Done! Success Confirmed
           </h4>
           <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            Pellentesque euismod est quis mauris lacinia pharetra.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod est quis
+            mauris lacinia pharetra.
           </p>
 
           <div className="flex items-center justify-center w-full gap-3 mt-8">

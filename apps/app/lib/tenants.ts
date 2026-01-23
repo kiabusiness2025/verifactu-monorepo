@@ -29,7 +29,7 @@ export async function listTenantsForUser(userId: string): Promise<Tenant[]> {
   // Combine and deduplicate
   const companyMap = new Map<string, Tenant>();
 
-  ownedCompanies.forEach((company) => {
+  ownedCompanies.forEach((company: { id: string; name: string; createdAt: Date }) => {
     companyMap.set(company.id, {
       id: company.id,
       name: company.name,
@@ -38,7 +38,7 @@ export async function listTenantsForUser(userId: string): Promise<Tenant[]> {
     });
   });
 
-  memberCompanies.forEach((membership) => {
+  memberCompanies.forEach((membership: { company: { id: string; name: string; createdAt: Date } }) => {
     if (!companyMap.has(membership.company.id)) {
       companyMap.set(membership.company.id, {
         id: membership.company.id,

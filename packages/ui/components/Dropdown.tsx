@@ -27,13 +27,21 @@ export interface DropdownItemProps {
   children: React.ReactNode;
   onItemClick?: () => void;
   className?: string;
+  href?: string;
 }
 
-export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onItemClick, className = '' }) => {
+export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onItemClick, className = '', href }) => {
+  const handleClick = () => {
+    if (onItemClick) onItemClick();
+    if (href) {
+      window.location.href = href;
+    }
+  };
+  
   return (
     <button
       type="button"
-      onClick={onItemClick}
+      onClick={handleClick}
       className={`px-3 py-2 text-sm ${className}`}
       role="menuitem"
     >

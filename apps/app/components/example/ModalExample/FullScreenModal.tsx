@@ -1,8 +1,8 @@
-"use client";
-import { useModal } from "@/hooks/useModal";
-import ComponentCard from "../../common/ComponentCard";
+'use client';
+import { useModal } from '@/hooks/useModal';
+import ComponentCard from '../../common/ComponentCard';
 
-import { Modal, Button } from "@verifactu/ui";
+import { Button, Modal } from '@verifactu/ui';
 
 export default function FullScreenModal() {
   const {
@@ -12,7 +12,7 @@ export default function FullScreenModal() {
   } = useModal();
   const handleSave = () => {
     // Handle save logic here
-    console.log("Saving changes...");
+    console.log('Saving changes...');
     closeFullscreenModal();
   };
   return (
@@ -32,22 +32,19 @@ export default function FullScreenModal() {
               Modal Heading
             </h4>
             <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              Pellentesque euismod est quis mauris lacinia pharetra. Sed a
-              ligula ac odio condimentum aliquet a nec nulla. Aliquam bibendum
-              ex sit amet ipsum rutrum feugiat ultrices enim quam.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod est quis
+              mauris lacinia pharetra. Sed a ligula ac odio condimentum aliquet a nec nulla. Aliquam
+              bibendum ex sit amet ipsum rutrum feugiat ultrices enim quam.
             </p>
             <p className="mt-5 text-sm leading-6 text-gray-500 dark:text-gray-400">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              Pellentesque euismod est quis mauris lacinia pharetra. Sed a
-              ligula ac odio condimentum aliquet a nec nulla. Aliquam bibendum
-              ex sit amet ipsum rutrum feugiat ultrices enim quam odio
-              condimentum aliquet a nec nulla pellentesque euismod est quis
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod est quis
+              mauris lacinia pharetra. Sed a ligula ac odio condimentum aliquet a nec nulla. Aliquam
+              bibendum ex sit amet ipsum rutrum feugiat ultrices enim quam odio condimentum aliquet
+              a nec nulla pellentesque euismod est quis mauris lacinia pharetra.
+            </p>
+            <p className="mt-5 text-sm leading-6 text-gray-500 dark:text-gray-400">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod est quis
               mauris lacinia pharetra.
-            </p>
-            <p className="mt-5 text-sm leading-6 text-gray-500 dark:text-gray-400">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              Pellentesque euismod est quis mauris lacinia pharetra.
             </p>
           </div>
           <div className="flex items-center justify-end w-full gap-3 mt-8">

@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { Button } from "@verifactu/ui";
+import { Button } from '@verifactu/ui';
 import {
-  ChevronRight,
+  Bell,
+  Building2,
+  CheckCircle2,
   ChevronLeft,
-  X,
+  ChevronRight,
+  MessageSquare,
   Receipt,
   TrendingUp,
-  MessageSquare,
-  CheckCircle2,
-  Building2,
-  Bell,
-} from "lucide-react";
+  X,
+} from 'lucide-react';
+import React, { useState } from 'react';
 
 interface OnboardingTourProps {
   isOpen: boolean;
@@ -29,39 +29,37 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    title: "Bienvenido a Empresa Demo SL",
+    title: 'Bienvenido a Empresa Demo SL',
     description:
-      "Estas en una empresa de prueba con datos reales. Explora libremente sin miedo a romper nada.",
+      'Estas en una empresa de prueba con datos reales. Explora libremente sin miedo a romper nada.',
     icon: <Building2 className="h-8 w-8 text-blue-600" />,
-    tip: "Cuando quieras, crea tu empresa desde Configuracion > Empresa.",
+    tip: 'Cuando quieras, crea tu empresa desde Configuracion > Empresa.',
   },
   {
-    title: "Registra tus ventas y gastos",
+    title: 'Registra tus ventas y gastos',
     description:
-      "Anade facturas emitidas y recibidas de forma sencilla. Solo los datos esenciales, sin friccion.",
+      'Anade facturas emitidas y recibidas de forma sencilla. Solo los datos esenciales, sin friccion.',
     icon: <Receipt className="h-8 w-8 text-blue-600" />,
-    tip: "Isaak puede ayudarte a registrar facturas mas rapido.",
+    tip: 'Isaak puede ayudarte a registrar facturas mas rapido.',
   },
   {
-    title: "Ve tu beneficio en tiempo real",
-    description:
-      "Ventas - gastos = beneficio. Asi de simple. Siempre actualizado, siempre claro.",
+    title: 'Ve tu beneficio en tiempo real',
+    description: 'Ventas - gastos = beneficio. Asi de simple. Siempre actualizado, siempre claro.',
     icon: <TrendingUp className="h-8 w-8 text-emerald-600" />,
-    tip: "Los graficos se actualizan automaticamente con cada factura.",
+    tip: 'Los graficos se actualizan automaticamente con cada factura.',
   },
   {
-    title: "Preguntale a Isaak",
+    title: 'Preguntale a Isaak',
     description:
-      "Tu asistente fiscal esta disponible 24/7. Pregunta sobre impuestos, facturas o tu negocio.",
+      'Tu asistente fiscal esta disponible 24/7. Pregunta sobre impuestos, facturas o tu negocio.',
     icon: <MessageSquare className="h-8 w-8 text-cyan-600" />,
-    tip: "Isaak habla tu idioma, sin tecnicismos fiscales.",
+    tip: 'Isaak habla tu idioma, sin tecnicismos fiscales.',
   },
   {
-    title: "No pierdas fechas fiscales",
-    description:
-      "Recibe recordatorios de IVA, IRPF y otros impuestos con tiempo suficiente.",
+    title: 'No pierdas fechas fiscales',
+    description: 'Recibe recordatorios de IVA, IRPF y otros impuestos con tiempo suficiente.',
     icon: <Bell className="h-8 w-8 text-orange-600" />,
-    tip: "Configura tus notificaciones en ajustes.",
+    tip: 'Configura tus notificaciones en ajustes.',
   },
 ];
 
@@ -102,7 +100,7 @@ export function OnboardingTour({ isOpen, onComplete, onSkip }: OnboardingTourPro
             <div
               key={index}
               className={`h-1 flex-1 rounded-full transition-colors ${
-                index <= currentStep ? "bg-blue-600" : "bg-slate-200"
+                index <= currentStep ? 'bg-blue-600' : 'bg-slate-200'
               }`}
             />
           ))}
@@ -116,9 +114,7 @@ export function OnboardingTour({ isOpen, onComplete, onSkip }: OnboardingTourPro
 
         <div className="mb-8 text-center">
           <h3 className="mb-3 text-2xl font-bold text-slate-900">{step.title}</h3>
-          <p className="mb-4 text-base leading-relaxed text-slate-600">
-            {step.description}
-          </p>
+          <p className="mb-4 text-base leading-relaxed text-slate-600">{step.description}</p>
           <div className="rounded-xl bg-blue-50 p-4">
             <p className="text-sm text-slate-700">
               <strong>Consejo:</strong> {step.tip}
@@ -161,10 +157,7 @@ export function OnboardingTour({ isOpen, onComplete, onSkip }: OnboardingTourPro
 
         {!isLastStep && (
           <div className="mt-4 text-center">
-            <button
-              onClick={onSkip}
-              className="text-sm text-slate-500 hover:text-slate-700"
-            >
+            <button onClick={onSkip} className="text-sm text-slate-500 hover:text-slate-700">
               Saltar tour
             </button>
           </div>

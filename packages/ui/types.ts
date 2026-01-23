@@ -18,6 +18,8 @@ export interface ModalProps {
   footer?: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  isFullscreen?: boolean;
+  showCloseButton?: boolean;
 }
 
 export interface TableColumn<T> {
