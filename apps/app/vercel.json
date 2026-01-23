@@ -1,5 +1,5 @@
 {
   "installCommand": "cd ../.. && npx -y pnpm@9.15.4 install --no-frozen-lockfile",
-  "buildCommand": "npx -y pnpm@9.15.4 --filter=verifactu-app exec prisma generate --schema=./prisma/schema.prisma && npx -y pnpm@9.15.4 --filter=verifactu-app run build",
+  "buildCommand": "cd ../.. && npx -y pnpm@9.15.4 --filter=verifactu-app run build",
   "framework": "nextjs"
 }
