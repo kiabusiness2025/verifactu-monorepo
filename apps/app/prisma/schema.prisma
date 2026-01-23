@@ -1,0 +1,354 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  legalName String?  @map("legal_name")
+  nif       String?
+  isDemo    Boolean  @default(false) @map("is_demo")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  users              Membership[]
+  userPref           UserPreference[]
+  subscriptions      Subscription[]
+  invoices           Invoice[]
+  invoiceLines       InvoiceLine[]
+  payments           Payment[]
+  customers          Customer[]
+  suppliers          Supplier[]
+  articles           Article[]
+  expenses           ExpenseRecord[]
+  isaakConversations IsaakConversation[]
+
+  @@map("tenants")
+}
+
+model User {
+  id        String   @id @db.Text
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  memberships        Membership[]
+  preferences        UserPreference?
+  invoicesCreatedBy  Invoice[]           @relation("CreatedByUser")
+  isaakConversations IsaakConversation[]
+
+  @@map("users")
+}
+
+model Membership {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  userId    String   @map("user_id") @db.Text
+  role      String   @default("member")
+  status    String   @default("active")
+  invitedBy String?  @map("invited_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@index([tenantId])
+  @@map("memberships")
+}
+
+model UserPreference {
+  userId            String   @id @map("user_id") @db.Text
+  preferredTenantId String?  @map("preferred_tenant_id") @db.Uuid
+  updatedAt         DateTime @default(now()) @map("updated_at") @db.Timestamptz
+
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredTenant Tenant? @relation(fields: [preferredTenantId], references: [id], onDelete: SetNull)
+
+  @@map("user_preferences")
+}
+
+model Plan {
+  id                  Int      @id @default(autoincrement())
+  code                String   @unique
+  name                String
+  fixedMonthly        Decimal  @default(0) @map("fixed_monthly")
+  variableRate        Decimal  @default(0) @map("variable_rate")
+  maxInvoicesPerMonth Int?     @map("max_invoices_per_month")
+  maxRevenuePerMonth  Decimal? @map("max_revenue_per_month")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  planId             Int       @map("plan_id")
+  status             String    @default("active")
+  trialEndsAt        DateTime? @map("trial_ends_at") @db.Timestamptz
+  currentPeriodStart DateTime? @map("current_period_start") @db.Timestamptz
+  currentPeriodEnd   DateTime? @map("current_period_end") @db.Timestamptz
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  @@index([tenantId, status])
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  customerId      String?  @map("customer_id") @db.Uuid // Referencia al cliente
+  number          String
+  issueDate       DateTime @map("issue_date") @db.Date
+  customerName    String   @map("customer_name") // Mantener para compatibilidad
+  customerNif     String?  @map("customer_nif")
+  currency        String   @default("EUR") @db.Char(3)
+  amountGross     Decimal  @map("amount_gross")
+  amountTax       Decimal  @map("amount_tax")
+  amountNet       Decimal  @map("amount_net")
+  status          String   @default("draft")
+  notes           String?
+  verifactuStatus String?  @map("verifactu_status") // 'pending','sent','validated','error'
+  verifactuQr     String?  @map("verifactu_qr") // Código QR en base64 o URL
+  verifactuHash   String?  @map("verifactu_hash") // Hash/huella digital SHA-256
+  createdBy       String   @map("created_by") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  createdByUser User          @relation("CreatedByUser", fields: [createdBy], references: [id])
+  payments      Payment[]
+  lines         InvoiceLine[]
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@map("invoices")
+}
+
+model Payment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId String   @map("invoice_id") @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  amount    Decimal
+  method    String   @default("bank_transfer")
+  reference String?
+  paidAt    DateTime @map("paid_at") @db.Date
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([tenantId])
+  @@map("payments")
+}
+
+// ==================== CUSTOMERS ====================
+
+model Customer {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  name         String // Razón social o nombre del cliente
+  email        String?
+  phone        String?
+  nif          String? // NIF/CIF/DNI del cliente
+  address      String?
+  city         String?
+  postalCode   String?  @map("postal_code")
+  country      String?  @default("ES")
+  paymentTerms String?  @map("payment_terms") // "30 días", "Inmediato", etc
+  notes        String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+
+  @@index([tenantId])
+  @@index([nif])
+  @@index([email])
+  @@map("customers")
+}
+
+// ==================== SUPPLIERS ====================
+
+model Supplier {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  name         String // Razón social proveedor
+  email        String?
+  phone        String?
+  nif          String? // NIF/CIF del proveedor
+  address      String?
+  city         String?
+  postalCode   String?  @map("postal_code")
+  country      String?  @default("ES")
+  accountCode  String?  @map("account_code") // Código contable
+  paymentTerms String?  @map("payment_terms")
+  notes        String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  expenses ExpenseRecord[]
+
+  @@index([tenantId])
+  @@index([nif])
+  @@index([email])
+  @@map("suppliers")
+}
+
+// ==================== ARTICLES/PRODUCTS ====================
+
+model Article {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  code        String // SKU o código producto
+  name        String // Descripción
+  description String?
+  category    String? // "Servicios", "Productos", "Consultoría", etc
+  unitPrice   Decimal  @map("unit_price") // Precio sin IVA
+  taxRate     Decimal  @default(0.21) @map("tax_rate") // % IVA (0.21 = 21%)
+  accountCode String?  @map("account_code") // Código contable (4xx para ingresos)
+  unit        String   @default("ud") // "ud", "h", "kg", etc
+  stock       Int? // Stock actual (opcional)
+  notes       String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoiceLines InvoiceLine[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([category])
+  @@map("articles")
+}
+
+// ==================== INVOICE LINES ====================
+
+model InvoiceLine {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId String   @map("invoice_id") @db.Uuid
+  articleId String   @map("article_id") @db.Uuid
+  quantity  Decimal
+  unitPrice Decimal  @map("unit_price")
+  taxRate   Decimal  @default(0.21) @map("tax_rate")
+  discount  Decimal? @default(0) // Descuento en %
+  lineTotal Decimal  @map("line_total") // Total sin IVA
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  invoice  Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  article  Article @relation(fields: [articleId], references: [id])
+  Tenant   Tenant? @relation(fields: [tenantId], references: [id])
+  tenantId String? @db.Uuid
+
+  @@index([invoiceId])
+  @@index([articleId])
+  @@map("invoice_lines")
+}
+
+// ==================== EXPENSE RECORDS ====================
+
+model ExpenseRecord {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  supplierId  String?  @map("supplier_id") @db.Uuid // Opcional si es gasto sin proveedor
+  date        DateTime @map("date") @db.Date
+  description String
+  category    String // "Suministros", "Viajes", "Teléfono", "Servicios", etc
+  amount      Decimal
+  taxRate     Decimal  @default(0.21) @map("tax_rate")
+  accountCode String?  @map("account_code") // Código contable (6xx para gastos)
+  reference   String? // Número documento, comprobante, etc
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([supplierId])
+  @@index([date])
+  @@index([category])
+  @@map("expense_records")
+}
+
+// ==================== ISAAK CONVERSATIONS ====================
+
+model IsaakConversation {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  userId       String   @map("user_id") @db.Text
+  title        String? // Título auto-generado basado en el primer mensaje
+  context      String? // Contexto de negocio (facturas, impuestos, etc)
+  summary      String? // Resumen de la conversación
+  messageCount Int      @default(0) @map("message_count")
+  lastActivity DateTime @map("last_activity") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant   Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages IsaakConversationMsg[]
+  shares   IsaakConversationShare[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([lastActivity])
+  @@map("isaak_conversations")
+}
+
+model IsaakConversationMsg {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  role           String // "user" o "assistant"
+  content        String // El mensaje en sí
+  tokens         Int? // Tokens usados (para monitoreo)
+  metadata       Json? // Datos adicionales (mood, categoría, etc)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  conversation IsaakConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([role])
+  @@index([createdAt])
+  @@map("isaak_conversation_messages")
+}
+
+model IsaakConversationShare {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  shareToken     String    @unique @map("share_token")
+  passwordHash   String?   @map("password_hash")
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz
+  accessCount    Int       @default(0) @map("access_count")
+  lastAccessedAt DateTime? @map("last_accessed_at") @db.Timestamptz
+  createdBy      String    @map("created_by") @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  conversation IsaakConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([shareToken])
+  @@index([conversationId])
+  @@index([expiresAt])
+  @@map("isaak_conversation_shares")
+}
+

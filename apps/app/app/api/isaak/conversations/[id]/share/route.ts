@@ -132,7 +132,7 @@ export async function GET(
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 
     return NextResponse.json({
-      shares: shares.map(share => ({
+      shares: shares.map((share: typeof shares[number]) => ({
         id: share.id,
         shareUrl: `${baseUrl}/shared/conversation/${share.shareToken}`,
         expiresAt: share.expiresAt,
