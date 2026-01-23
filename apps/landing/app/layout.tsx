@@ -1,4 +1,4 @@
-﻿import type { Metadata, Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { Space_Grotesk } from "next/font/google";
@@ -98,7 +98,7 @@ export default function RootLayout({
         {/* Skip to main content link for accessibility */}
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:bg-[#0060F0] focus:text-white focus:px-4 focus:py-2 focus:rounded-br"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:bg-[#2361d8] focus:text-white focus:px-4 focus:py-2 focus:rounded-br"
         >
           Ir al contenido principal
         </a>
@@ -119,4 +119,5 @@ export default function RootLayout({
     </html>
   );
 }
+
 

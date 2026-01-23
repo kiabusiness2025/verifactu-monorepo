@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -24,15 +24,15 @@ const baseStyles = [
 // Variant styles
 const variants: Record<ButtonVariant, string> = {
   primary: [
-    'bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white',
-    'hover:from-[#0056D6] hover:to-[#1AA3DB]',
-    'focus:ring-[#0060F0]',
+    'bg-[#2361d8] text-white',
+    'hover:bg-[#1f55c0]',
+    'focus:ring-[#2361d8]',
     'shadow-sm hover:shadow-md',
   ].join(' '),
   secondary: [
-    'border border-[#0060F0] text-[#0060F0] bg-white',
-    'hover:bg-[#0060F0]/10 active:bg-[#0060F0]/15',
-    'focus:ring-[#0060F0]',
+    'border border-[#2361d8] text-[#2361d8] bg-white',
+    'hover:bg-[#2361d8]/10 active:bg-[#2361d8]/15',
+    'focus:ring-[#2361d8]',
   ].join(' '),
   ghost: [
     'bg-transparent text-gray-600',
@@ -148,4 +148,5 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export { Button, type ButtonProps };
+
 

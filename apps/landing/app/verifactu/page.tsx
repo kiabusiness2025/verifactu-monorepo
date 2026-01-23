@@ -42,7 +42,7 @@ const cumplimos = [
 export default function VerifactuPage() {
   const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-blue-100 to-white text-slate-900">
+    <main className="min-h-screen bg-[#2361d8]/5 text-slate-900">
       <section className="py-14">
         <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
           <div className="mb-4 text-sm">
@@ -129,3 +129,4 @@ export default function VerifactuPage() {
     </main>
   );
 }
+

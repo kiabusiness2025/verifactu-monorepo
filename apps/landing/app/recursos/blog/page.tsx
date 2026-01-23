@@ -25,12 +25,12 @@ const posts = [
 export default function BlogPage() {
   const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-50/70 via-white to-white">
+    <main className="min-h-screen bg-[#2361d8]/5">
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-4">
           <Link
             href={getLandingUrl()}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#2361d8] hover:text-[#2361d8]"
           >
             Volver al inicio
           </Link>
@@ -39,7 +39,7 @@ export default function BlogPage() {
 
       <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="max-w-2xl">
-          <h1 className="text-4xl font-bold text-[#002060]">Blog</h1>
+          <h1 className="text-4xl font-bold text-[#2361d8]">Blog</h1>
           <p className="mt-4 text-lg text-slate-600">
             Ideas practicas para emitir, controlar y cumplir sin dolores de cabeza.
           </p>
@@ -51,9 +51,9 @@ export default function BlogPage() {
               key={post.title}
               className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
             >
-              <h2 className="text-xl font-semibold text-[#002060]">{post.title}</h2>
+              <h2 className="text-xl font-semibold text-[#2361d8]">{post.title}</h2>
               <p className="mt-3 text-sm text-slate-600">{post.description}</p>
-              <div className="mt-6 text-sm text-[#0060F0] hover:text-[#0080F0]">Leer pronto</div>
+              <div className="mt-6 text-sm text-[#2361d8] hover:text-[#2361d8]">Leer pronto</div>
             </article>
           ))}
         </div>
@@ -61,13 +61,13 @@ export default function BlogPage() {
         <div className="mt-12 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/#precios"
-            className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 text-sm font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB]"
+            className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
           >
             Ver planes
           </Link>
           <Link
             href={isaakChatUrl}
-            className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
+            className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
           >
             Hablar con Isaak
           </Link>
@@ -76,3 +76,5 @@ export default function BlogPage() {
     </main>
   );
 }
+
+

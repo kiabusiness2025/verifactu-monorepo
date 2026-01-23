@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -78,7 +78,7 @@ export function StickyCtaBar({ show }: { show: boolean }) {
       aria-hidden={!show}
     >
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
-        <div className="text-sm font-semibold text-[#002060]">
+        <div className="text-sm font-semibold text-[#2361d8]">
           Prueba gratis y ve a Isaak en accion
         </div>
         <div className="flex gap-2">
@@ -116,12 +116,12 @@ export function CommandExample({ command, response }: { command: string; respons
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl bg-gradient-to-br from-blue-50 to-slate-50 p-4 ring-1 ring-slate-200/50">
+      <div className="mt-4 rounded-xl bg-white p-4 ring-1 ring-slate-200/50">
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0060F0]">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#2361d8]">
             <CheckCircle2 className="h-3.5 w-3.5 text-white" />
           </div>
-          <div className="text-xs font-semibold text-[#002060]">Respuesta de Isaak</div>
+          <div className="text-xs font-semibold text-[#2361d8]">Respuesta de Isaak</div>
         </div>
         <p className="mt-2 text-sm leading-6 text-slate-700">{response}</p>
       </div>
@@ -154,10 +154,10 @@ export function HeroMockup({
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-            <Sparkles className="h-4 w-4 text-[#0080F0]" />
+            <Sparkles className="h-4 w-4 text-[#2361d8]" />
             Isaak
           </div>
-          <button className="text-xs font-medium text-[#0060F0] hover:text-[#0080F0]">
+          <button className="text-xs font-medium text-[#2361d8] hover:text-[#2361d8]">
             Conectar
           </button>
         </div>
@@ -269,7 +269,7 @@ export function MiniInvoice() {
         </div>
       </div>
 
-      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#0060F0] px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
         <CheckCircle2 className="h-4 w-4" />
         Validado por Isaak
       </div>
@@ -281,7 +281,7 @@ export function Stat({ label, value, desc }: { label: string; value: string; des
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
       <div>
-        <div className="text-lg font-semibold text-[#002060]">{label}</div>
+        <div className="text-lg font-semibold text-[#2361d8]">{label}</div>
         <div className="text-xs font-semibold text-slate-800">{value}</div>
       </div>
       <div className="text-right text-xs text-slate-500">{desc}</div>
@@ -314,7 +314,7 @@ export function FeatureCard({
           </li>
         ))}
       </ul>
-      <button className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]">
+      <button className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#2361d8] hover:text-[#2361d8]">
         Ver mas <ChevronRight className="h-4 w-4" />
       </button>
     </div>
@@ -338,7 +338,7 @@ export function StepCard({
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200">
           {icon}
         </div>
-        <div className="rounded-full bg-sky-50/70 px-3 py-1 text-xs font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15">
+        <div className="rounded-full bg-sky-50/70 px-3 py-1 text-xs font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15">
           {n}
         </div>
       </div>
@@ -353,11 +353,11 @@ export function DashboardMock() {
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-[#0060F0]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-[#2361d8]">
             V
           </div>
           <div>
-            <div className="text-sm font-semibold text-[#002060]">Verifactu Business</div>
+            <div className="text-sm font-semibold text-[#2361d8]">Verifactu Business</div>
             <div className="text-[11px] text-slate-500">Empresa Demo SL</div>
           </div>
         </div>
@@ -383,7 +383,7 @@ export function DashboardMock() {
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-3">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-              <FileText className="h-4 w-4 text-[#0080F0]" />
+              <FileText className="h-4 w-4 text-[#2361d8]" />
               Factura
             </div>
             <p className="mt-1 text-[11px] text-slate-500">Crea o revisa cobros</p>
@@ -412,10 +412,10 @@ export function DashboardMock() {
             Maria, enero 2026 va bien. Te faltan 2 tickets y un extracto. ??
           </p>
           <div className="mt-3 flex gap-2">
-            <button className="rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-xs font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB]">
+            <button className="rounded-full bg-[#2361d8] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1f55c0]">
               Ver resumen
             </button>
-            <button className="rounded-full border border-[#0060F0] bg-white px-4 py-2 text-xs font-semibold text-[#0060F0] hover:bg-[#0060F0]/10">
+            <button className="rounded-full border border-[#2361d8] bg-white px-4 py-2 text-xs font-semibold text-[#2361d8] hover:bg-[#2361d8]/10">
               Recordar luego
             </button>
           </div>
@@ -433,7 +433,7 @@ export function DashboardMock() {
               text="T1 2026: plazos en 12 dias"
             />
             <ActivityItem
-              icon={<FileText className="h-4 w-4 text-[#0080F0]" />}
+              icon={<FileText className="h-4 w-4 text-[#2361d8]" />}
               text="Factura VF-2310 validada"
             />
           </div>
@@ -560,20 +560,20 @@ export function HeroTripleMock() {
             const items = [
               {
                 q: "Isaak, resumen rapido de enero 2026",
-                a: "Vamos genial 😄 Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.",
-                hint: "¿Quieres ver el detalle por cliente? ✨",
+                a: "Vamos genial ?? Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.",
+                hint: "�Quieres ver el detalle por cliente? ?",
                 tone: "emerald",
               },
               {
                 q: "Que falta para cierre 2025?",
-                a: "Te faltan 2 facturas y un extracto 🟢🟠. ¿Te lo recuerdo hoy?",
-                hint: "Te preparo checklist con un clic ✅",
+                a: "Te faltan 2 facturas y un extracto ????. �Te lo recuerdo hoy?",
+                hint: "Te preparo checklist con un clic ?",
                 tone: "amber",
               },
               {
                 q: "Tengo facturas verificadas?",
-                a: "Sí 🙂 9 facturas con QR y huella hash listos.",
-                hint: "¿Compartimos el informe con tu gestor? 🤝",
+                a: "S� ?? 9 facturas con QR y huella hash listos.",
+                hint: "�Compartimos el informe con tu gestor? ??",
                 tone: "emerald",
               },
             ];
@@ -698,7 +698,7 @@ export function ResourceCard({
       </div>
       <div className="mt-4 text-sm font-semibold">{title}</div>
       <div className="mt-2 text-sm leading-6 text-slate-600">{desc}</div>
-      <button className="mt-4 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-xs font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB]">
+      <button className="mt-4 inline-flex items-center gap-1 rounded-full bg-[#2361d8] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1f55c0]">
         {cta} <ChevronRight className="h-4 w-4" />
       </button>
     </div>
@@ -717,7 +717,7 @@ export function Li({ children }: { children: React.ReactNode }) {
 export function Footer() {
   return (
     <footer
-      className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-slate-100"
+      className="relative bg-[#2361d8] text-slate-100"
       role="contentinfo"
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -922,9 +922,9 @@ export function ComplianceBadge() {
 
 export function ThreeSteps() {
   return (
-    <section className="py-16 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white">
+    <section className="py-16 bg-[#2361d8]/5">
       <Container>
-        <h3 className="text-center text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
+        <h3 className="text-center text-2xl font-semibold tracking-tight text-[#2361d8] sm:text-3xl">
           Del envio al cobro en tres pasos.
         </h3>
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
@@ -936,19 +936,19 @@ export function ThreeSteps() {
             n={1}
             title="Configura Isaak"
             desc="Define tus datos, series y reglas. Conecta Drive y calendario para automatizar el orden."
-            icon={<LayoutDashboard className="h-5 w-5 text-[#0080F0]" />}
+            icon={<LayoutDashboard className="h-5 w-5 text-[#2361d8]" />}
           />
           <StepCard
             n={2}
             title="Emite y valida"
             desc="Genera la factura y valida automaticamente con VeriFactu antes de enviarla."
-            icon={<FileText className="h-5 w-5 text-[#0080F0]" />}
+            icon={<FileText className="h-5 w-5 text-[#2361d8]" />}
           />
           <StepCard
             n={3}
             title="Cobra y analiza"
             desc="Isaak monitoriza el ciclo, detecta incidencias y te resume impacto en margen."
-            icon={<Wallet className="h-5 w-5 text-[#0080F0]" />}
+            icon={<Wallet className="h-5 w-5 text-[#2361d8]" />}
           />
         </div>
       </Container>
@@ -960,7 +960,7 @@ export function FeaturesSection() {
   return (
     <section className="py-16">
       <Container>
-        <h2 className="text-center text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
+        <h2 className="text-center text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
           Lo que ves es lo que tienes: Ventas, Gastos, Beneficio.
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-lightbg-600 sm:text-lg">
@@ -970,7 +970,7 @@ export function FeaturesSection() {
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <FeatureCard
-            icon={<TrendingUp className="h-5 w-5 text-[#0080F0]" />}
+            icon={<TrendingUp className="h-5 w-5 text-[#2361d8]" />}
             title="Emision sin friccion"
             bullets={[
               'Sube facturas y tickets en cualquier idioma',
@@ -979,7 +979,7 @@ export function FeaturesSection() {
             ]}
           />
           <FeatureCard
-            icon={<BadgeCheck className="h-5 w-5 text-[#0080F0]" />}
+            icon={<BadgeCheck className="h-5 w-5 text-[#2361d8]" />}
             title="Gastos guiados"
             bullets={[
               'Documentos, extractos y justificantes',
@@ -988,7 +988,7 @@ export function FeaturesSection() {
             ]}
           />
           <FeatureCard
-            icon={<Sparkles className="h-5 w-5 text-[#0080F0]" />}
+            icon={<Sparkles className="h-5 w-5 text-[#2361d8]" />}
             title="Dashboard claro"
             bullets={[
               'Ventas, gastos y beneficio en tiempo real',
@@ -997,7 +997,7 @@ export function FeaturesSection() {
             ]}
           />
           <FeatureCard
-            icon={<FileText className="h-5 w-5 text-[#0080F0]" />}
+            icon={<FileText className="h-5 w-5 text-[#2361d8]" />}
             title="Bajo demanda con Isaak"
             bullets={[
               'Soporte cercano y en tu idioma',
@@ -1015,14 +1015,14 @@ export function PideseloAIsaakSection() {
   const isaakSignupUrl = `${getAppUrl()}/auth/signup?next=/dashboard?isaak=1`;
   const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   return (
-    <section className="py-16 bg-gradient-to-b from-blue-50 via-blue-100 to-white">
+    <section className="py-16 bg-[#2361d8]/5">
       <Container>
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-4 py-1.5 text-sm font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15">
-            <Sparkles className="h-4 w-4 text-[#0080F0]" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-4 py-1.5 text-sm font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15">
+            <Sparkles className="h-4 w-4 text-[#2361d8]" />
             Pideselo a Isaak
           </div>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
+          <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
             Un amigo experto que habla tu idioma y te cuida los plazos.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
@@ -1039,8 +1039,8 @@ export function PideseloAIsaakSection() {
         <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-semibold text-[#002060]">Isaak en vivo</div>
-              <span className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15">
+              <div className="text-sm font-semibold text-[#2361d8]">Isaak en vivo</div>
+              <span className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15">
                 Demo interactiva
               </span>
             </div>
@@ -1049,7 +1049,7 @@ export function PideseloAIsaakSection() {
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <button className="rounded-full border border-[#0060F0] bg-[#0060F0]/10 px-3 py-1 font-semibold text-[#0060F0]">
+              <button className="rounded-full border border-[#2361d8] bg-[#2361d8]/10 px-3 py-1 font-semibold text-[#2361d8]">
                 Cercano ??
               </button>
               <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
@@ -1080,8 +1080,8 @@ export function PideseloAIsaakSection() {
                 <div className="text-[11px] font-semibold text-slate-500">Tu</div>
                 <div className="mt-1 text-sm text-slate-800">Cierre 2025, que falta?</div>
               </div>
-              <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
-                <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
+              <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
+                <div className="text-[11px] font-semibold text-[#2361d8]">Isaak</div>
                 <div className="mt-1 text-sm text-slate-700">
                   Te faltan 2 facturas y un extracto.
                   <br />
@@ -1092,8 +1092,8 @@ export function PideseloAIsaakSection() {
                 <div className="text-[11px] font-semibold text-slate-500">Tu</div>
                 <div className="mt-1 text-sm text-slate-800">Enero 2026, resumen rapido</div>
               </div>
-              <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-slate-50 p-3 ring-1 ring-slate-200">
-                <div className="text-[11px] font-semibold text-[#002060]">Isaak</div>
+              <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
+                <div className="text-[11px] font-semibold text-[#2361d8]">Isaak</div>
                 <div className="mt-1 text-sm text-slate-700">
                   Vamos genial :) Ventas 12.480 EUR, gastos 7.130 EUR.
                   <br />
@@ -1104,7 +1104,7 @@ export function PideseloAIsaakSection() {
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-semibold text-[#002060]">Tu Isaak, tu estilo</div>
+            <div className="text-sm font-semibold text-[#2361d8]">Tu Isaak, tu estilo</div>
             <p className="mt-2 text-sm text-slate-600">
               Elige como quieres que te hable Isaak. Alegre, profesional o minimalista.
             </p>
@@ -1128,7 +1128,7 @@ export function PideseloAIsaakSection() {
             <div className="mt-6 flex flex-col gap-2">
               <Link
                 href={isaakSignupUrl}
-                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
+                className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
               >
                 Hablar con Isaak ??
               </Link>
@@ -1175,4 +1175,6 @@ export function PideseloAIsaakSection() {
     </section>
   );
 }
+
+
 

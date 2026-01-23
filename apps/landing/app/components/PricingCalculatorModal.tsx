@@ -88,7 +88,7 @@ export default function PricingCalculatorModal({
           <X className="h-6 w-6" />
         </button>
 
-        <h2 className="mb-2 text-3xl font-bold text-[#002060]">
+        <h2 className="mb-2 text-3xl font-bold text-[#2361d8]">
           Calcula tu precio
         </h2>
         <p className="mb-8 text-lightbg-600">
@@ -100,7 +100,7 @@ export default function PricingCalculatorModal({
           <div>
             <label className="mb-3 flex items-center justify-between text-sm font-medium text-gray-700">
               <span>Facturas emitidas / mes</span>
-              <span className="text-2xl font-bold text-[#0060F0]">{invoices}</span>
+              <span className="text-2xl font-bold text-[#2361d8]">{invoices}</span>
             </label>
             <input
               type="range"
@@ -138,12 +138,12 @@ export default function PricingCalculatorModal({
                     setBankingEnabled(enabled);
                     if (!enabled) setMovements(0);
                   }}
-                  className="h-4 w-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
+                  className="h-4 w-4 rounded border-gray-300 text-[#2361d8] focus:ring-[#2361d8]"
                 />
                 <span>Conciliación bancaria</span>
               </label>
               {bankingEnabled && (
-                <span className="text-2xl font-bold text-[#0060F0]">{movements}</span>
+                <span className="text-2xl font-bold text-[#2361d8]">{movements}</span>
               )}
             </div>
             {bankingEnabled && (
@@ -185,7 +185,7 @@ export default function PricingCalculatorModal({
           <div className="flex items-end justify-between">
             <div>
               <p className="text-sm text-gray-600">Cuota mensual estimada</p>
-              <p className="mt-1 text-4xl font-bold text-[#0060F0]">
+              <p className="mt-1 text-4xl font-bold text-[#2361d8]">
                 {fmt(monthlyPrice)} € <span className="text-2xl text-gray-500">/mes + IVA</span>
               </p>
               <p className="mt-1 text-sm text-gray-500">
@@ -208,7 +208,7 @@ export default function PricingCalculatorModal({
             </div>
             <button
               onClick={handleStartTrial}
-              className="rounded-lg bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 font-semibold text-white shadow-lg transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
+              className="rounded-lg bg-[#2361d8] px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
             >
               Empezar 1 mes gratis
             </button>
@@ -221,5 +221,6 @@ export default function PricingCalculatorModal({
     </div>
   );
 }
+
 
 

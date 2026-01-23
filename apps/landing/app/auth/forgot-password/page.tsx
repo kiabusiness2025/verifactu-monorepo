@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -61,11 +61,11 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      showToast({ type: "success", title: "Actualizada", message: "Tu contraseÃ±a ha sido cambiada" });
+      showToast({ type: "success", title: "Actualizada", message: "Tu contraseña ha sido cambiada" });
       router.push("/auth/login");
     } catch (err) {
-      setError("Error al actualizar la contraseÃ±a. Intenta de nuevo.");
-      showToast({ type: "error", title: "Error", message: "No se pudo actualizar la contraseÃ±a" });
+      setError("Error al actualizar la contraseña. Intenta de nuevo.");
+      showToast({ type: "error", title: "Error", message: "No se pudo actualizar la contraseña" });
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthLayout
-      title={step === "email" ? "Recuperar contraseÃ±a" : "Restablece tu contraseÃ±a"}
+      title={step === "email" ? "Recuperar contraseña" : "Restablece tu contraseña"}
       subtitle={
         step === "email"
           ? "Te enviaremos un enlace para restablecerla"
@@ -81,8 +81,8 @@ export default function ForgotPasswordPage() {
       }
     >
       {user && (
-        <div className="mb-3 rounded border border-[#0060F0]/20 bg-sky-50/70 p-2 text-xs text-[#0060F0]">
-          Ya has iniciado sesion. Puedes cambiar tu contraseÃ±a con el enlace del correo.
+        <div className="mb-3 rounded border border-[#2361d8]/20 bg-sky-50/70 p-2 text-xs text-[#2361d8]">
+          Ya has iniciado sesion. Puedes cambiar tu contraseña con el enlace del correo.
         </div>
       )}
       {step === "email" && (
@@ -111,14 +111,14 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-full bg-[#2361d8] py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? "Enviando..." : "Enviar enlace"}
           </button>
 
           <Link
             href="/auth/login"
-            className="flex items-center justify-center gap-2 text-sm font-medium text-[#0060F0] hover:text-[#0080F0]"
+            className="flex items-center justify-center gap-2 text-sm font-medium text-[#2361d8] hover:text-[#2361d8]"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver a login
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
         >
           <div className="mb-4 flex justify-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-50/70">
-              <Mail className="h-6 w-6 text-[#0060F0]" />
+              <Mail className="h-6 w-6 text-[#2361d8]" />
             </div>
           </div>
 
@@ -162,7 +162,7 @@ export default function ForgotPasswordPage() {
             />
 
             <FormInput
-              label="Nueva contraseÃ±a"
+              label="Nueva contraseña"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -173,15 +173,15 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-full bg-[#2361d8] py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoading ? "Actualizando..." : "Actualizar contraseÃ±a"}
+              {isLoading ? "Actualizando..." : "Actualizar contraseña"}
             </button>
           </form>
 
           <button
             onClick={() => setStep("email")}
-            className="w-full text-sm font-medium text-[#0060F0] hover:text-[#0080F0]"
+            className="w-full text-sm font-medium text-[#2361d8] hover:text-[#2361d8]"
           >
             No recibiste el codigo? Intenta de nuevo
           </button>
@@ -192,7 +192,7 @@ export default function ForgotPasswordPage() {
         <p>Necesitas ayuda?</p>
         <a
           href="mailto:soporte@verifactu.business"
-          className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+          className="font-medium text-[#2361d8] hover:text-[#2361d8]"
         >
           Contactanos
         </a>
@@ -200,4 +200,5 @@ export default function ForgotPasswordPage() {
     </AuthLayout>
   );
 }
+
 

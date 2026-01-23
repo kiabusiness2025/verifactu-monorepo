@@ -95,7 +95,7 @@ export default function PricingCalculator() {
     <section className="py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
             Empieza gratis. Paga solo cuando tu negocio crece.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
@@ -149,8 +149,8 @@ export default function PricingCalculator() {
                 className={[
                   "mt-6 w-full rounded-full px-4 py-2.5 text-sm font-semibold shadow-md transition",
                   plan.highlight
-                    ? "bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white hover:from-[#0056D6] hover:to-[#1AA3DB]"
-                    : "border border-[#0060F0] bg-white text-[#0060F0] hover:bg-[#0060F0]/10",
+                    ? "bg-[#2361d8] text-white hover:bg-[#1f55c0]"
+                    : "border border-[#2361d8] bg-white text-[#2361d8] hover:bg-[#2361d8]/10",
                 ].join(" ")}
               >
                 {plan.price === null ? "Contactar" : "Comenzar"}
@@ -166,3 +166,4 @@ export default function PricingCalculator() {
     </section>
   );
 }
+

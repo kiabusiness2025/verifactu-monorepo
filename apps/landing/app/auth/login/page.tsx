@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
@@ -91,9 +91,9 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50/70 via-white to-blue-50/40">
+      <div className="flex min-h-screen items-center justify-center bg-[#2361d8]/5">
         <div className="text-center">
-          <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-[#0060F0]"></div>
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-[#2361d8]"></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -102,9 +102,9 @@ export default function LoginPage() {
 
   if (user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50/70 via-white to-blue-50/40">
+      <div className="flex min-h-screen items-center justify-center bg-[#2361d8]/5">
         <div className="text-center">
-          <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-[#0060F0]"></div>
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-[#2361d8]"></div>
           <p className="mt-4 text-gray-600">Redirigiendo...</p>
         </div>
       </div>
@@ -185,11 +185,11 @@ export default function LoginPage() {
     setError("");
     setPasswordError("");
     if (password.length < 8) {
-      setPasswordError("La contraseÃ±a debe tener al menos 8 caracteres");
+      setPasswordError("La contraseña debe tener al menos 8 caracteres");
       return false;
     }
     if (password !== confirmPassword) {
-      setPasswordError("Las contraseÃ±as no coinciden");
+      setPasswordError("Las contraseñas no coinciden");
       return false;
     }
 
@@ -236,7 +236,7 @@ export default function LoginPage() {
           onClick={() => setMode("login")}
           className={`flex-1 rounded-lg border py-2 ${
             mode === "login"
-              ? "border-[#0060F0] bg-[#0060F0] text-white"
+              ? "border-[#2361d8] bg-[#2361d8] text-white"
               : "border-gray-300 bg-white text-gray-700"
           }`}
         >
@@ -247,7 +247,7 @@ export default function LoginPage() {
           onClick={() => setMode("signup")}
           className={`flex-1 rounded-lg border py-2 ${
             mode === "signup"
-              ? "border-[#0060F0] bg-[#0060F0] text-white"
+              ? "border-[#2361d8] bg-[#2361d8] text-white"
               : "border-gray-300 bg-white text-gray-700"
           }`}
         >
@@ -279,11 +279,11 @@ export default function LoginPage() {
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="block text-sm font-medium text-gray-700">ContraseÃ±a</label>
+            <label className="block text-sm font-medium text-gray-700">Contraseña</label>
             {mode === "login" && (
               <Link
                 href="/auth/forgot-password"
-                className="text-sm font-medium text-[#0060F0] hover:text-[#0080F0]"
+                className="text-sm font-medium text-[#2361d8] hover:text-[#2361d8]"
               >
                 La olvidaste?
               </Link>
@@ -305,7 +305,7 @@ export default function LoginPage() {
         {mode === "signup" && (
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
-              Confirmar contraseÃ±a <span className="text-red-500">*</span>
+              Confirmar contraseña <span className="text-red-500">*</span>
             </label>
             <PasswordInput
               value={confirmPassword}
@@ -313,7 +313,7 @@ export default function LoginPage() {
                 setConfirmPassword(e.target.value);
                 setPasswordError("");
               }}
-              placeholder="Repite tu contraseÃ±a"
+              placeholder="Repite tu contraseña"
               required
             />
           </div>
@@ -328,13 +328,13 @@ export default function LoginPage() {
                 setAgreeTerms(e.target.checked);
                 setError("");
               }}
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-[#2361d8] focus:ring-[#2361d8]"
             />
             <span className="text-gray-600">
               Acepto los{" "}
               <Link
                 href="/legal/terminos"
-                className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+                className="font-medium text-[#2361d8] hover:text-[#2361d8]"
                 aria-label="Leer terminos y condiciones"
               >
                 terminos y condiciones
@@ -342,7 +342,7 @@ export default function LoginPage() {
               y la{" "}
               <Link
                 href="/legal/privacidad"
-                className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+                className="font-medium text-[#2361d8] hover:text-[#2361d8]"
                 aria-label="Leer politica de privacidad"
               >
                 politica de privacidad
@@ -354,7 +354,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-full bg-[#2361d8] py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading
             ? mode === "login"
@@ -379,7 +379,7 @@ export default function LoginPage() {
         type="button"
         onClick={handleGoogleLogin}
         disabled={isLoading}
-        className="flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-3 rounded-full bg-[#2361d8] px-4 py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
@@ -423,3 +423,5 @@ export default function LoginPage() {
     </AuthLayout>
   );
 }
+
+

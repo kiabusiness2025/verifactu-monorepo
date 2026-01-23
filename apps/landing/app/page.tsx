@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -58,7 +58,7 @@ export default function Page() {
 
       {/* HERO */}
       <section id="hero" className="relative">
-        <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white" />
+        <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-[#2361d8]/5" />
         <Container className="pt-14 pb-10">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <motion.div
@@ -71,21 +71,21 @@ export default function Page() {
               }
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
-                <ShieldCheck className="h-4 w-4 text-[#0080F0]" />
+                <ShieldCheck className="h-4 w-4 text-[#2361d8]" />
                 Cumplimiento VeriFactu con Isaak
               </div>
               <Link
                 href="/verifactu/estado"
-                className="mt-2 inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-3 py-1 text-[11px] font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15 hover:text-[#0060F0]"
+                className="mt-2 inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15 hover:text-[#2361d8]"
               >
                 <span className="h-2 w-2 rounded-full bg-[#0080F0]" aria-hidden="true" />
                 Estado: Operativo - Cierre 2025 en marcha, T1 2026 abierto
               </Link>
 
-              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-[#002060] sm:text-6xl">
+              <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-[#2361d8] sm:text-6xl">
                 Emite facturas VeriFactu sin errores
                 <br />
-                <span className="bg-gradient-to-r from-[#0060F0] to-[#20B0F0] bg-clip-text text-transparent">
+                <span className="bg-[#2361d8] bg-clip-text text-transparent">
                   y entiende tu negocio en un panel.
                 </span>
               </h1>
@@ -105,7 +105,7 @@ export default function Page() {
                 Fuente oficial:{' '}
                 <a
                   href="https://www.agenciatributaria.es/AEAT.internet/Inicio/La_Agencia_Tributaria/Tramites_y_servicios/VeriFactu.shtml"
-                  className="font-semibold text-[#0060F0] hover:text-[#0080F0]"
+                  className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -117,14 +117,14 @@ export default function Page() {
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setShowPricingModal(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 font-semibold text-white shadow-lg transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
                   type="button"
                 >
                   Calcular precio
                 </button>
                 <Link
                   href={appDemoUrl}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#0060F0] bg-white px-6 py-3 font-semibold text-[#0060F0] shadow-sm transition hover:bg-[#0060F0]/10"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2361d8] bg-white px-6 py-3 font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#2361d8]/10"
                 >
                   Ver demo
                 </Link>
@@ -132,7 +132,7 @@ export default function Page() {
               <div className="mt-3 text-sm text-slate-600">
                 <Link
                   href="/auth/signup"
-                  className="font-semibold text-[#0060F0] hover:text-[#0080F0]"
+                  className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
                 >
                   Empezar 1 mes gratis
                 </Link>
@@ -140,11 +140,11 @@ export default function Page() {
 
               <div className="mt-7 flex flex-wrap gap-2">
                 <TrustBadge
-                  icon={<Sparkles className="h-4 w-4 text-[#0080F0]" />}
+                  icon={<Sparkles className="h-4 w-4 text-[#2361d8]" />}
                   text="Isaak incluido"
                 />
                 <TrustBadge
-                  icon={<ShieldCheck className="h-4 w-4 text-[#0080F0]" />}
+                  icon={<ShieldCheck className="h-4 w-4 text-[#2361d8]" />}
                   text="Cumplimiento"
                 />
                 <TrustBadge
@@ -169,13 +169,13 @@ export default function Page() {
         </Container>
       </section>
 
-      <section id="para-quien" className="py-16 bg-gradient-to-b from-white via-sky-50/40 to-white">
+      <section id="para-quien" className="py-16 bg-white">
         <Container>
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#0080F0] shadow-sm ring-1 ring-[#0080F0]/20">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] shadow-sm ring-1 ring-[#0080F0]/20">
               Para quien es Verifactu + Isaak
             </div>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
               Para quien quiere control diario, sin volverse contable
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
@@ -190,10 +190,10 @@ export default function Page() {
                 aria-hidden="true"
               />
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-[#0060F0]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-[#2361d8]">
                   <UserRound className="h-5 w-5" />
                 </span>
-                <h3 className="text-sm font-semibold text-[#002060]">Autonomos y microempresas</h3>
+                <h3 className="text-sm font-semibold text-[#2361d8]">Autonomos y microempresas</h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
                 Emite facturas VeriFactu sin dudas y ve cada dia cuanto estas vendiendo y cuanto te
@@ -206,10 +206,10 @@ export default function Page() {
                 aria-hidden="true"
               />
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-[#0060F0]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-[#2361d8]">
                   <Building2 className="h-5 w-5" />
                 </span>
-                <h3 className="text-sm font-semibold text-[#002060]">
+                <h3 className="text-sm font-semibold text-[#2361d8]">
                   PYMEs que necesitan visibilidad real
                 </h3>
               </div>
@@ -227,7 +227,7 @@ export default function Page() {
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-[#3B4B96]">
                   <Briefcase className="h-5 w-5" />
                 </span>
-                <h3 className="text-sm font-semibold text-[#002060]">
+                <h3 className="text-sm font-semibold text-[#2361d8]">
                   Empresas con asesoria que quieren ir un paso por delante
                 </h3>
               </div>
@@ -239,7 +239,7 @@ export default function Page() {
           </div>
 
           <div className="mt-12 rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-            <div className="text-sm font-semibold text-[#002060]">Lo que cambia cuando lo usas</div>
+            <div className="text-sm font-semibold text-[#2361d8]">Lo que cambia cuando lo usas</div>
             <ul className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
@@ -267,21 +267,21 @@ export default function Page() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/auth/signup"
-                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
+                className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
               >
                 Empezar 1 mes gratis
               </Link>
               <Link
                 href="/recursos/contacto"
-                className="inline-flex items-center justify-center rounded-full border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
+                className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
                 Solicitar informacion
               </Link>
             </div>
           </div>
 
-          <div className="mt-10 rounded-2xl border border-slate-200 bg-gradient-to-r from-sky-50/70 to-white p-6 text-center">
-            <div className="text-sm font-semibold text-[#002060]">
+          <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 text-center">
+            <div className="text-sm font-semibold text-[#2361d8]">
               Deja de esperar al cierre de mes
             </div>
             <p className="mt-2 text-sm text-slate-600">
@@ -294,15 +294,15 @@ export default function Page() {
       {/* Dashboard preview */}
       <section
         id="dashboard"
-        className="py-16 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white"
+        className="py-16 bg-[#2361d8]/5"
       >
         <Container>
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-4 py-1.5 text-sm font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15">
+            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-4 py-1.5 text-sm font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15">
               <Sparkles className="h-4 w-4" />
               Dashboard
             </div>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
               Ventas - Gastos = Beneficio
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
@@ -321,7 +321,7 @@ export default function Page() {
       <section id="precios" className="py-16">
         <Container>
           <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
               Precio que se ajusta a tu uso real
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
@@ -352,7 +352,7 @@ export default function Page() {
         <Container>
           <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-[#2361d8] sm:text-3xl">
                 Cumple con calma.
               </h2>
               <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
@@ -367,10 +367,10 @@ export default function Page() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="py-16 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white">
+      <section id="faq" className="py-16 bg-[#2361d8]/5">
         <Container>
           <div className="text-center mb-12">
-            <h3 className="text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
+            <h3 className="text-2xl font-semibold tracking-tight text-[#2361d8] sm:text-3xl">
               Preguntas frecuentes
             </h3>
             <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
@@ -382,9 +382,9 @@ export default function Page() {
       </section>
 
       {/* Resources */}
-      <section className="py-14 bg-gradient-to-b from-sky-50/70 via-blue-50/40 to-white">
+      <section className="py-14 bg-[#2361d8]/5">
         <Container>
-          <h3 className="text-center text-2xl font-semibold tracking-tight text-[#002060] sm:text-3xl">
+          <h3 className="text-center text-2xl font-semibold tracking-tight text-[#2361d8] sm:text-3xl">
             Recursos para dominar VeriFactu e Isaak.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-lightbg-600 sm:text-base">
@@ -437,3 +437,5 @@ export default function Page() {
     </div>
   );
 }
+
+

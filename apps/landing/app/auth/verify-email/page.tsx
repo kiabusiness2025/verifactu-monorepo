@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -121,7 +121,7 @@ export default function VerifyEmailPage() {
       >
         <div className="mb-4 flex justify-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-50/70">
-            <Mail className="h-6 w-6 text-[#0060F0]" />
+            <Mail className="h-6 w-6 text-[#2361d8]" />
           </div>
         </div>
 
@@ -143,7 +143,7 @@ export default function VerifyEmailPage() {
           <p className="text-sm text-gray-500">Haz clic en el enlace del correo para verificar tu cuenta.</p>
         </div>
 
-        <div className="rounded-lg border border-[#0060F0]/20 bg-sky-50/70 p-3 text-sm text-[#0060F0]">
+        <div className="rounded-lg border border-[#2361d8]/20 bg-sky-50/70 p-3 text-sm text-[#2361d8]">
           <strong>Tip:</strong> No ves el correo? Revisa tu carpeta de spam.
         </div>
 
@@ -163,7 +163,7 @@ export default function VerifyEmailPage() {
 
           <a
             href="/auth/login"
-            className="block w-full py-3 text-center font-medium text-[#0060F0] hover:text-[#0080F0]"
+            className="block w-full py-3 text-center font-medium text-[#2361d8] hover:text-[#2361d8]"
           >
             Volver a login
           </a>
@@ -174,7 +174,7 @@ export default function VerifyEmailPage() {
         <p>Problemas?</p>
         <a
           href="mailto:soporte@verifactu.business"
-          className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+          className="font-medium text-[#2361d8] hover:text-[#2361d8]"
         >
           Contactanos
         </a>
@@ -182,4 +182,5 @@ export default function VerifyEmailPage() {
     </AuthLayout>
   );
 }
+
 

@@ -100,7 +100,7 @@ export default function PoliticaDePreciosPage() {
       <h2 className="mt-10 text-xl font-semibold">Que pasa si supero limites</h2>
       <p className="mt-3 text-gray-700">
         Si superas los limites de la calculadora, te ofrecemos presupuesto con integraciones y SLA.{" "}
-        <Link href="/recursos/contacto" className="font-semibold text-[#0060F0] hover:text-[#0080F0]">
+        <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
           Contactanos
         </Link>{" "}
         para una propuesta personalizada.
@@ -115,13 +115,13 @@ export default function PoliticaDePreciosPage() {
       <div className="mt-12 flex flex-col gap-3 sm:flex-row">
         <Link
           href="/#precios"
-          className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 text-sm font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB]"
+          className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
         >
           Calcular precio
         </Link>
         <Link
           href="/auth/signup"
-          className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-6 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
+          className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
         >
           Probar con Isaak
         </Link>
@@ -129,3 +129,4 @@ export default function PoliticaDePreciosPage() {
     </main>
   );
 }
+

@@ -100,7 +100,7 @@ function DemoRequestModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         </button>
 
         <div className="space-y-3">
-          <h2 className="text-2xl font-semibold text-[#002060]">
+          <h2 className="text-2xl font-semibold text-[#2361d8]">
             Solicitar demo personalizada para tu empresa
           </h2>
           <p className="text-sm text-slate-600">
@@ -110,13 +110,13 @@ function DemoRequestModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           <div className="flex flex-wrap gap-2 text-sm">
             <Link
               href="/auth/signup"
-              className="rounded-lg bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-3 py-2 font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB]"
+              className="rounded-lg bg-[#2361d8] px-3 py-2 font-semibold text-white hover:bg-[#1f55c0]"
             >
               Crear cuenta
             </Link>
             <Link
               href="/auth/login"
-              className="rounded-lg border border-[#0060F0] px-3 py-2 font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
+              className="rounded-lg border border-[#2361d8] px-3 py-2 font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
             >
               Ya tengo cuenta
             </Link>
@@ -222,7 +222,7 @@ function DemoRequestModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
             <button
               type="submit"
               disabled={!canSubmit || status === 'sending' || status === 'success'}
-              className="w-full rounded-xl bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 text-sm font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl bg-[#2361d8] px-4 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {status === 'sending'
                 ? 'Enviando...'
@@ -263,7 +263,7 @@ export default function DemoPage({
   const showCheckoutSuccess = checkoutParam === 'success';
 
   return (
-    <main className="bg-gradient-to-b from-slate-50 via-white to-slate-50">
+    <main className="bg-[#2361d8]/5">
       <Header navLinks={demoNavLinks} />
 
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
@@ -278,13 +278,13 @@ export default function DemoPage({
 
         <div className="grid gap-8 lg:grid-cols-[1.1fr,0.9fr]">
           <section className="space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-3 py-1 text-[11px] font-semibold text-[#0080F0] ring-1 ring-[#0080F0]/15">
+            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50/70 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#0080F0]/15">
               Demo guiada
-              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-[#0060F0] ring-1 ring-[#0060F0]/20">
+              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/20">
                 2 min
               </span>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-[#002060] sm:text-4xl">
+            <h1 className="text-3xl font-bold tracking-tight text-[#2361d8] sm:text-4xl">
               Pruebalo sin miedo. Todo ya esta listo.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-600">
@@ -293,7 +293,7 @@ export default function DemoPage({
             </p>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="text-sm font-semibold text-[#002060]">Que ver en 30 segundos</div>
+              <div className="text-sm font-semibold text-[#2361d8]">Que ver en 30 segundos</div>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
                 <li>Panel con ventas, gastos y beneficio en un vistazo.</li>
                 <li>
@@ -306,13 +306,13 @@ export default function DemoPage({
             <div id="solicitar-demo" className="flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={() => setIsRequestOpen(true)}
-                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
+                className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f55c0]"
               >
                 Solicitar demo personalizada
               </button>
               <Link
                 href="/auth/signup"
-                className="inline-flex items-center justify-center rounded-xl border border-[#0060F0] px-5 py-3 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
+                className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-5 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
                 Crear cuenta
               </Link>
@@ -320,7 +320,7 @@ export default function DemoPage({
             <div className="text-xs text-slate-500">1 mes gratis, sin permanencia.</div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="text-sm font-semibold text-[#002060]">Que pasa despues</div>
+              <div className="text-sm font-semibold text-[#2361d8]">Que pasa despues</div>
               <ol className="mt-3 list-decimal pl-5 text-sm text-slate-600">
                 <li>Creas tu cuenta y confirmas tu empresa.</li>
                 <li>Emites 1 factura de prueba o importas datos.</li>
@@ -334,13 +334,13 @@ export default function DemoPage({
                   const el = document.getElementById('calculadora');
                   el?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="font-semibold text-[#0060F0] hover:text-[#0080F0]"
+                className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
                 type="button"
               >
                 Calcula tu precio
               </button>
               <span className="px-2 text-slate-400">.</span>
-              <Link className="font-semibold text-[#0060F0] hover:text-[#0080F0]" href="/">
+              <Link className="font-semibold text-[#2361d8] hover:text-[#2361d8]" href="/">
                 Volver a Home
               </Link>
             </div>
@@ -365,7 +365,7 @@ export default function DemoPage({
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
                 <p className="text-xs font-semibold text-slate-600">Vista previa (mock)</p>
-                <span className="text-xs font-semibold text-[#0060F0]">Solo ejemplo</span>
+                <span className="text-xs font-semibold text-[#2361d8]">Solo ejemplo</span>
               </div>
               <div className="grid gap-4 p-6">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -375,15 +375,15 @@ export default function DemoPage({
                   <div className="mt-3 grid grid-cols-3 gap-3">
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Ventas</div>
-                      <div className="mt-1 text-lg font-semibold text-[#002060]">18.240 EUR</div>
+                      <div className="mt-1 text-lg font-semibold text-[#2361d8]">18.240 EUR</div>
                     </div>
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Gastos</div>
-                      <div className="mt-1 text-lg font-semibold text-[#002060]">6.430 EUR</div>
+                      <div className="mt-1 text-lg font-semibold text-[#2361d8]">6.430 EUR</div>
                     </div>
                     <div className="rounded-lg bg-white p-3 shadow-sm">
                       <div className="text-[11px] text-slate-500">Beneficio</div>
-                      <div className="mt-1 text-lg font-semibold text-[#002060]">11.810 EUR</div>
+                      <div className="mt-1 text-lg font-semibold text-[#2361d8]">11.810 EUR</div>
                     </div>
                   </div>
                 </div>
@@ -397,8 +397,8 @@ export default function DemoPage({
                     <div>Factura #F-1025 - 980 EUR - Pendiente</div>
                   </div>
                 </div>
-                <div className="rounded-xl border border-[#0060F0]/20 bg-gradient-to-r from-sky-50/70 to-white p-4">
-                  <div className="text-sm font-semibold text-[#002060]">Isaak</div>
+                <div className="rounded-xl border border-[#2361d8]/20 bg-white p-4">
+                  <div className="text-sm font-semibold text-[#2361d8]">Isaak</div>
                   <p className="mt-2 text-xs text-slate-600">
                     "Te ayudo con cierre 2025 y enero 2026. Revisamos?"
                   </p>
@@ -415,7 +415,7 @@ export default function DemoPage({
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-[#002060]">
+                <h2 className="text-2xl font-bold tracking-tight text-[#2361d8]">
                   Calcula tu precio personalizado
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
@@ -425,7 +425,7 @@ export default function DemoPage({
               </div>
               <Link
                 href="/auth/signup"
-                className="text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
+                className="text-sm font-semibold text-[#2361d8] hover:text-[#2361d8]"
               >
                 Activar prueba gratuita
               </Link>
@@ -456,7 +456,7 @@ export default function DemoPage({
               </div>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-[#0060F0]/15 bg-gradient-to-r from-sky-50/70 to-white p-4 text-sm text-slate-700">
+            <div className="mt-6 rounded-2xl border border-[#2361d8]/15 bg-white p-4 text-sm text-slate-700">
               Si ya estas convencido, calcula tu precio y activa la prueba gratuita.
             </div>
           </div>
@@ -469,11 +469,11 @@ export default function DemoPage({
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span className="font-semibold text-slate-800">Verifactu Business</span>
           <div className="flex flex-wrap gap-3 text-xs">
-            <Link className="hover:text-[#0080F0]" href="/" aria-label="Ir a pagina de inicio">
+            <Link className="hover:text-[#2361d8]" href="/" aria-label="Ir a pagina de inicio">
               Ir a Home
             </Link>
             <Link
-              className="hover:text-[#0080F0]"
+              className="hover:text-[#2361d8]"
               href="/auth/signup"
               aria-label="Crear nueva cuenta"
             >
@@ -485,3 +485,5 @@ export default function DemoPage({
     </main>
   );
 }
+
+

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -148,7 +148,7 @@ export default function ContactForms() {
         onSubmit={handleContactSubmit}
         className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
       >
-        <div className="text-sm font-semibold text-[#002060]">Contacto rapido</div>
+        <div className="text-sm font-semibold text-[#2361d8]">Contacto rapido</div>
         <p className="mt-2 text-sm text-slate-600">
           Para consultas comerciales, demos o dudas generales.
         </p>
@@ -185,7 +185,7 @@ export default function ContactForms() {
           <button
             type="submit"
             disabled={contactStatus === "loading"}
-            className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-5 py-2 text-sm font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-lg bg-[#2361d8] px-5 py-2 text-sm font-semibold text-white hover:bg-[#1f55c0] disabled:opacity-60"
           >
             {contactStatus === "loading" ? "Enviando..." : "Enviar contacto"}
           </button>
@@ -203,7 +203,7 @@ export default function ContactForms() {
           onSubmit={handleTicketSubmit}
           className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
         >
-          <div className="text-sm font-semibold text-[#002060]">Ticket de soporte</div>
+          <div className="text-sm font-semibold text-[#2361d8]">Ticket de soporte</div>
           <p className="mt-2 text-sm text-slate-600">
             Para incidencias tecnicas o problemas con facturas y envios.
           </p>
@@ -333,7 +333,7 @@ export default function ContactForms() {
                 {ticketForm.attachments.length > 0 && (
                   <div className="flex items-center justify-between text-[11px] text-slate-500">
                     <span>
-                      {ticketForm.attachments.length} adjuntos ·{" "}
+                      {ticketForm.attachments.length} adjuntos �{" "}
                       {(totalAttachmentBytes / 1024 / 1024).toFixed(2)} MB
                     </span>
                     <button
@@ -403,7 +403,7 @@ export default function ContactForms() {
             <button
               type="submit"
               disabled={ticketStatus === "loading"}
-              className="inline-flex items-center justify-center rounded-lg border border-[#0060F0] px-5 py-2 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10 disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-lg border border-[#2361d8] px-5 py-2 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10 disabled:opacity-60"
             >
               {ticketStatus === "loading" ? "Enviando..." : "Crear ticket"}
             </button>
@@ -417,14 +417,14 @@ export default function ContactForms() {
         </form>
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-sm font-semibold text-[#002060]">Ticket de soporte</div>
+          <div className="text-sm font-semibold text-[#2361d8]">Ticket de soporte</div>
           <p className="mt-2 text-sm text-slate-600">
             Inicia sesion para abrir un ticket. Usaremos tus datos para responder mas rapido.
           </p>
           <div className="mt-4">
             <Link
               href="/auth/login"
-              className="inline-flex items-center justify-center rounded-lg border border-[#0060F0] px-5 py-2 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
+              className="inline-flex items-center justify-center rounded-lg border border-[#2361d8] px-5 py-2 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
             >
               Acceder para soporte
             </Link>
@@ -434,4 +434,5 @@ export default function ContactForms() {
     </div>
   );
 }
+
 

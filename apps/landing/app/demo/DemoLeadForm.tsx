@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useMemo, useState } from "react";
 
@@ -65,7 +65,7 @@ export function DemoLeadForm() {
       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
         Acceso a la demo
       </p>
-      <h2 className="mt-1 text-lg font-semibold text-[#002060]">
+      <h2 className="mt-1 text-lg font-semibold text-[#2361d8]">
         Te aviso cuando este listo para tu caso?
       </h2>
       <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -78,7 +78,7 @@ export function DemoLeadForm() {
           <input
             value={form.name}
             onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0060F0]/20"
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2361d8]/20"
             placeholder="Tu nombre"
             autoComplete="name"
           />
@@ -89,7 +89,7 @@ export function DemoLeadForm() {
           <input
             value={form.email}
             onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0060F0]/20"
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2361d8]/20"
             placeholder="tu@email.com"
             autoComplete="email"
           />
@@ -102,7 +102,7 @@ export function DemoLeadForm() {
           <input
             value={form.company}
             onChange={(e) => setForm((v) => ({ ...v, company: e.target.value }))}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0060F0]/20"
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2361d8]/20"
             placeholder="Empresa Demo SL"
             autoComplete="organization"
           />
@@ -111,7 +111,7 @@ export function DemoLeadForm() {
         <button
           type="submit"
           disabled={!canSubmit || status === "sending" || status === "success"}
-          className="w-full rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-sm font-semibold text-white hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-full bg-[#2361d8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {status === "sending"
             ? "Enviando..."
@@ -137,5 +137,6 @@ export function DemoLeadForm() {
     </section>
   );
 }
+
 
 

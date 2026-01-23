@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getLandingUrl } from "../../lib/urls";
 
@@ -10,12 +10,12 @@ export const metadata: Metadata = {
 
 export default function PrivacidadPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-50/70 via-white to-white">
+    <main className="min-h-screen bg-[#2361d8]/5">
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-4 py-4">
           <Link
             href={getLandingUrl()}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#2361d8] hover:text-[#2361d8]"
           >
             Volver al inicio
           </Link>
@@ -23,27 +23,27 @@ export default function PrivacidadPage() {
       </div>
 
       <section className="mx-auto max-w-5xl px-4 py-16">
-        <h1 className="text-4xl font-bold text-[#002060]">Politica de privacidad</h1>
+        <h1 className="text-4xl font-bold text-[#2361d8]">Politica de privacidad</h1>
         <p className="mt-4 text-lg text-slate-600">
           Esta politica explica que datos recogemos, para que los usamos y como
           puedes ejercer tus derechos.
         </p>
 
-        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
           1. Responsable
         </h2>
         <p className="mt-3 text-slate-600">
           Expert Estudios Profesionales, SLU. Contacto:{" "}
           <a
             href="mailto:info@verifactu.business"
-            className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
+            className="text-[#2361d8] underline underline-offset-4 hover:text-[#2361d8]"
           >
             info@verifactu.business
           </a>
           .
         </p>
 
-        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
           2. Datos que tratamos
         </h2>
         <ul className="mt-3 list-disc pl-6 text-slate-600">
@@ -52,7 +52,7 @@ export default function PrivacidadPage() {
           <li>Datos de facturacion si contratas un plan de pago.</li>
         </ul>
 
-        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
           3. Finalidad
         </h2>
         <p className="mt-3 text-slate-600">
@@ -60,7 +60,7 @@ export default function PrivacidadPage() {
           atender soporte y cumplir obligaciones legales.
         </p>
 
-        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
           4. Tus derechos
         </h2>
         <p className="mt-3 text-slate-600">
@@ -68,14 +68,14 @@ export default function PrivacidadPage() {
           derechos, escribe a{" "}
           <a
             href="mailto:info@verifactu.business"
-            className="text-[#0060F0] underline underline-offset-4 hover:text-[#0080F0]"
+            className="text-[#2361d8] underline underline-offset-4 hover:text-[#2361d8]"
           >
             info@verifactu.business
           </a>
           .
         </p>
 
-        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
           5. Subencargados
         </h2>
         <p className="mt-3 text-slate-600">
@@ -83,7 +83,7 @@ export default function PrivacidadPage() {
           Resend (email) y Google Cloud / Vertex AI (IA y hosting).
         </p>
 
-        <h2 className="mt-10 text-2xl font-semibold text-[#002060]">
+        <h2 className="mt-10 text-2xl font-semibold text-[#2361d8]">
           6. Retencion
         </h2>
         <p className="mt-3 text-slate-600">
@@ -94,5 +94,7 @@ export default function PrivacidadPage() {
     </main>
   );
 }
+
+
 
 

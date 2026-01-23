@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -16,7 +16,7 @@ interface PasswordInputProps {
 export function PasswordInput({
   value,
   onChange,
-  placeholder = "ContraseÃ±a",
+  placeholder = "Contraseña",
   required = true,
 }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,13 +29,13 @@ export function PasswordInput({
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 transition-all focus:border-[#0060F0] focus:outline-none focus:ring-2 focus:ring-[#0060F0]/20"
+        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 transition-all focus:border-[#2361d8] focus:outline-none focus:ring-2 focus:ring-[#2361d8]/20"
       />
       <button
         type="button"
         onClick={() => setShowPassword(!showPassword)}
         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-colors hover:text-gray-700"
-        aria-label="Mostrar u ocultar contraseÃ±a"
+        aria-label="Mostrar u ocultar contraseña"
       >
         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
       </button>
@@ -76,7 +76,7 @@ export function FormInput({
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className={`w-full rounded-lg border bg-white px-4 py-3 text-gray-900 placeholder-gray-500 transition-all focus:border-[#0060F0] focus:outline-none focus:ring-2 focus:ring-[#0060F0]/20 ${
+        className={`w-full rounded-lg border bg-white px-4 py-3 text-gray-900 placeholder-gray-500 transition-all focus:border-[#2361d8] focus:outline-none focus:ring-2 focus:ring-[#2361d8]/20 ${
           error ? "border-red-500" : "border-gray-300"
         }`}
       />
@@ -89,7 +89,7 @@ export function GoogleAuthButton() {
   return (
     <button
       type="button"
-      className="flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
+      className="flex w-full items-center justify-center gap-3 rounded-full bg-[#2361d8] px-4 py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0]"
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24">
         <path
@@ -141,12 +141,12 @@ export function AuthLayout({
             <div className="mb-4">
               <a
                 href={landingUrl}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[#0060F0] hover:text-[#0080F0]"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[#2361d8] hover:text-[#2361d8]"
               >
                 <span aria-hidden="true">&larr;</span> Volver al inicio
               </a>
             </div>
-            <h1 className="mb-2 text-2xl font-bold text-[#002060]">{title}</h1>
+            <h1 className="mb-2 text-2xl font-bold text-[#2361d8]">{title}</h1>
             {subtitle && <p className="text-gray-600">{subtitle}</p>}
           </div>
 
@@ -160,7 +160,7 @@ export function AuthLayout({
                   {" "}
                   <a
                     href={footerLink.href}
-                    className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+                    className="font-medium text-[#2361d8] hover:text-[#2361d8]"
                   >
                     {footerLink.label}
                   </a>
@@ -169,7 +169,7 @@ export function AuthLayout({
               <div className="mt-4 flex flex-col items-center gap-1 text-xs text-gray-500">
                 <Link
                   href={landingUrl}
-                  className="underline hover:text-[#0080F0]"
+                  className="underline hover:text-[#2361d8]"
                   aria-label="Volver al inicio"
                 >
                   Volver al inicio
@@ -177,18 +177,18 @@ export function AuthLayout({
                 <div className="flex gap-2">
                   <Link
                     href="/legal/privacidad"
-                    className="underline hover:text-[#0080F0]"
+                    className="underline hover:text-[#2361d8]"
                     aria-label="Leer politica de privacidad"
                   >
-                    PolÃ­tica de privacidad
+                    Política de privacidad
                   </Link>
                   <span>|</span>
                   <Link
                     href="/legal/terminos"
-                    className="underline hover:text-[#0080F0]"
+                    className="underline hover:text-[#2361d8]"
                     aria-label="Leer terminos y condiciones"
                   >
-                    TÃ©rminos y condiciones
+                    Términos y condiciones
                   </Link>
                 </div>
               </div>
@@ -205,4 +205,5 @@ export function AuthLayout({
     </div>
   );
 }
+
 

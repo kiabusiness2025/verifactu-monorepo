@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 // v1.0.3 - Updated with blue shield favicon
 import React, { useState } from "react";
@@ -75,7 +75,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
           ) : (
             <Link
               href="/auth/login"
-              className="rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-2 text-sm font-semibold text-white shadow-md transition-all hover:from-[#0056D6] hover:to-[#1AA3DB]"
+              className="rounded-full bg-[#2361d8] px-6 py-2 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#1f55c0]"
               aria-label="Acceder a tu cuenta"
             >
               Acceder
@@ -116,7 +116,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
               {user ? (
                 <>
                   <DashboardLink
-                    className="w-full justify-center rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-sm font-semibold text-white shadow-md hover:from-[#0056D6] hover:to-[#1AA3DB]"
+                    className="w-full justify-center rounded-full bg-[#2361d8] px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-[#1f55c0]"
                     ariaLabel="Ir al Dashboard"
                   />
                   <button
@@ -129,7 +129,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
                       });
                       setIsOpen(false);
                     }}
-                    className="w-full rounded-full border border-[#0060F0] px-4 py-2 text-sm font-semibold text-[#0060F0] hover:bg-[#0060F0]/10"
+                    className="w-full rounded-full border border-[#2361d8] px-4 py-2 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
                     aria-label="Cerrar sesion"
                   >
                     Salir
@@ -139,7 +139,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
                 <Link
                   href="/auth/login"
                   onClick={() => setIsOpen(false)}
-                  className="w-full rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-center text-sm font-semibold text-white shadow-md hover:from-[#0056D6] hover:to-[#1AA3DB]"
+                  className="w-full rounded-full bg-[#2361d8] px-4 py-2 text-center text-sm font-semibold text-white shadow-md hover:bg-[#1f55c0]"
                   aria-label="Acceder a tu cuenta"
                 >
                   Acceder
@@ -151,7 +151,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="rounded-lg px-3 py-2 font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#0060F0]"
+                  className="rounded-lg px-3 py-2 font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#2361d8]"
                 >
                   {link.label}
                 </Link>
@@ -163,4 +163,5 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
     </header>
   );
 }
+
 

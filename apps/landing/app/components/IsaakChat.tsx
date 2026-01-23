@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,7 +17,7 @@ export default function IsaakChat() {
     {
       id: "1",
       role: "assistant",
-      content: "Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perderás acceso a tus datos.\nYo me encargo de cuidarlos. 🔒",
+      content: "Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perder�s acceso a tus datos.\nYo me encargo de cuidarlos. ??",
       timestamp: new Date(),
     },
   ]);
@@ -92,7 +92,7 @@ export default function IsaakChat() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white shadow-lg transition hover:shadow-xl"
+        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#2361d8] text-white shadow-lg transition hover:shadow-xl"
         aria-label="Abrir chat con Isaak"
       >
         <MessageCircle className="h-6 w-6" />
@@ -109,10 +109,10 @@ export default function IsaakChat() {
             className="fixed bottom-24 right-6 z-40 flex h-96 w-80 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:w-96"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 text-white">
+            <div className="flex items-center justify-between border-b border-slate-200 bg-[#2361d8] px-4 py-3 text-white">
               <div>
                 <div className="font-semibold">Isaak</div>
-                <div className="text-xs opacity-90">Aquí para ayudarte</div>
+                <div className="text-xs opacity-90">Aqu� para ayudarte</div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -140,7 +140,7 @@ export default function IsaakChat() {
                     className={[
                       "max-w-xs rounded-lg px-4 py-2 text-sm",
                       message.role === "user"
-                        ? "bg-[#0060F0] text-white"
+                        ? "bg-[#2361d8] text-white"
                         : "bg-slate-100 text-slate-900",
                     ].join(" ")}
                   >
@@ -181,7 +181,7 @@ export default function IsaakChat() {
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0060F0] text-white transition hover:bg-[#0056D6] disabled:bg-slate-300"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2361d8] text-white transition hover:bg-[#0056D6] disabled:bg-slate-300"
                   aria-label="Enviar mensaje"
                 >
                   <Send className="h-4 w-4" />
@@ -194,4 +194,5 @@ export default function IsaakChat() {
     </>
   );
 }
+
 

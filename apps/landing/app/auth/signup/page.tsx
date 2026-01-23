@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -33,12 +33,12 @@ export default function SignupPage() {
     setPasswordError("");
 
     if (password.length < 8) {
-      setPasswordError("La contraseÃ±a debe tener al menos 8 caracteres");
+      setPasswordError("La contraseña debe tener al menos 8 caracteres");
       return false;
     }
 
     if (password !== confirmPassword) {
-      setPasswordError("Las contraseÃ±as no coinciden");
+      setPasswordError("Las contraseñas no coinciden");
       return false;
     }
 
@@ -154,7 +154,7 @@ export default function SignupPage() {
 
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">
-            ContraseÃ±a <span className="text-red-500">*</span>
+            Contraseña <span className="text-red-500">*</span>
           </label>
           <PasswordInput
             value={password}
@@ -170,7 +170,7 @@ export default function SignupPage() {
 
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">
-            Confirmar contraseÃ±a <span className="text-red-500">*</span>
+            Confirmar contraseña <span className="text-red-500">*</span>
           </label>
           <PasswordInput
             value={confirmPassword}
@@ -178,7 +178,7 @@ export default function SignupPage() {
               setConfirmPassword(e.target.value);
               setPasswordError("");
             }}
-            placeholder="Repite tu contraseÃ±a"
+            placeholder="Repite tu contraseña"
             required
           />
         </div>
@@ -191,13 +191,13 @@ export default function SignupPage() {
               setAgreeTerms(e.target.checked);
               setError("");
             }}
-            className="mt-1 h-4 w-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-[#2361d8] focus:ring-[#2361d8]"
           />
           <span className="text-gray-600">
             Acepto los{" "}
             <Link
               href="/legal/terminos"
-              className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+              className="font-medium text-[#2361d8] hover:text-[#2361d8]"
               aria-label="Leer terminos y condiciones"
             >
               terminos y condiciones
@@ -205,7 +205,7 @@ export default function SignupPage() {
             y la{" "}
             <Link
               href="/legal/privacidad"
-              className="font-medium text-[#0060F0] hover:text-[#0080F0]"
+              className="font-medium text-[#2361d8] hover:text-[#2361d8]"
               aria-label="Leer politica de privacidad"
             >
               politica de privacidad
@@ -216,7 +216,7 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-full bg-[#2361d8] py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? "Creando cuenta..." : "Crear cuenta"}
         </button>
@@ -235,7 +235,7 @@ export default function SignupPage() {
         type="button"
         onClick={handleGoogleSignup}
         disabled={isLoading}
-        className="flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-3 font-semibold text-white shadow-md transition hover:from-[#0056D6] hover:to-[#1AA3DB] disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-3 rounded-full bg-[#2361d8] px-4 py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
@@ -275,4 +275,5 @@ export default function SignupPage() {
     </AuthLayout>
   );
 }
+
 

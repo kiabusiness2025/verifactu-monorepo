@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -22,7 +22,7 @@ interface DashboardLinkProps {
  * before redirecting to the app dashboard.
  */
 export function DashboardLink({
-  className = "px-6 py-2 rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white font-semibold shadow-md hover:from-[#0056D6] hover:to-[#1AA3DB] transition-all text-sm",
+  className = "px-6 py-2 rounded-full bg-[#2361d8] text-white font-semibold shadow-md hover:bg-[#1f55c0] transition-all text-sm",
   ariaLabel = "Ir al Dashboard",
   children = "Dashboard",
 }: DashboardLinkProps) {
@@ -61,4 +61,5 @@ export function DashboardLink({
     </Link>
   );
 }
+
 

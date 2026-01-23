@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import Link from "next/link";
@@ -13,13 +13,13 @@ const FAQ_DATA: {
     answer: (
       <>
         Pagas por uso real: base mensual + tramo de facturas + (opcional) tramo de movimientos. Puedes{" "}
-        <Link href="/#precios" className="font-semibold text-[#0060F0] hover:text-[#0080F0]">
+        <Link href="/#precios" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
           calcular tu precio
         </Link>{" "}
         en la landing y revisar la{" "}
         <Link
           href="/politica-de-precios"
-          className="font-semibold text-[#0060F0] hover:text-[#0080F0]"
+          className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
         >
           politica de precios de suscripciones
         </Link>
@@ -34,7 +34,7 @@ const FAQ_DATA: {
     answer: (
       <>
         Tienes 1 mes gratis. El cobro se activa solo si confirmas la suscripcion. Puedes{" "}
-        <Link href="/auth/signup" className="font-semibold text-[#0060F0] hover:text-[#0080F0]">
+        <Link href="/auth/signup" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
           probar gratis
         </Link>{" "}
         y ver el precio antes de activar.
@@ -49,7 +49,7 @@ const FAQ_DATA: {
       <>
         Factura emitida o generada en el mes. Si se numera, cuenta en el tramo correspondiente. Si necesitas un plan
         a medida,{" "}
-        <Link href="/presupuesto" className="font-semibold text-[#0060F0] hover:text-[#0080F0]">
+        <Link href="/presupuesto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
           solicita presupuesto
         </Link>
         .
@@ -77,7 +77,7 @@ const FAQ_DATA: {
         la{" "}
         <Link
           href="/politica-de-precios"
-          className="font-semibold text-[#0060F0] hover:text-[#0080F0]"
+          className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
         >
           politica de precios
         </Link>
@@ -104,7 +104,7 @@ const FAQ_DATA: {
       <>
         Interpreta documentos, clasifica gastos, sugiere acciones, avisa de plazos y genera resumenes con ventas,
         gastos y beneficio. Si tienes dudas,{" "}
-        <Link href="/recursos/contacto" className="font-semibold text-[#0060F0] hover:text-[#0080F0]">
+        <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
           contacta con nosotros
         </Link>
         .
@@ -129,7 +129,7 @@ const FAQ_DATA: {
     answer: (
       <>
         Si. Puedes exportar en PDF o Excel y compartir resultados con tu gestor o asesor cuando lo necesites.{" "}
-        <Link href="/recursos/contacto" className="font-semibold text-[#0060F0] hover:text-[#0080F0]">
+        <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
           Pide ayuda
         </Link>{" "}
         si quieres un formato concreto.
@@ -144,7 +144,7 @@ const FAQ_DATA: {
       <>
         El precio se ajusta al tramo correspondiente. Siempre veras el importe antes de renovar. Si superas los limites
         de la calculadora,{" "}
-        <Link href="/presupuesto" className="font-semibold text-[#0060F0] hover:text-[#0080F0]">
+        <Link href="/presupuesto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
           solicita presupuesto
         </Link>
         .
@@ -158,7 +158,7 @@ const FAQ_DATA: {
     answer: (
       <>
         Si. Incluye sellado, trazabilidad y evidencias exportables para auditoria. Puedes ver el estado en{" "}
-        <Link href="/verifactu/estado" className="font-semibold text-[#0060F0] hover:text-[#0080F0]">
+        <Link href="/verifactu/estado" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
           estado del servicio
         </Link>
         .
@@ -222,4 +222,5 @@ export default function Faq() {
     </div>
   );
 }
+
 

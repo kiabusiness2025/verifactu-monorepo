@@ -74,7 +74,7 @@ export default function PricingCalculatorInline() {
     <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="space-y-8">
         <div className="text-center">
-          <h3 className="text-2xl font-semibold text-[#002060]">Calcula tu precio</h3>
+          <h3 className="text-2xl font-semibold text-[#2361d8]">Calcula tu precio</h3>
           <p className="mt-2 text-sm text-lightbg-600">
             Base 19 EUR/mes + IVA. Incluye hasta 10 facturas/mes.
           </p>
@@ -91,7 +91,7 @@ export default function PricingCalculatorInline() {
         <div>
           <label className="mb-3 flex items-center justify-between text-sm font-medium text-gray-700">
             <span>Facturas emitidas / mes</span>
-            <span className="text-2xl font-bold text-[#0060F0]">{invoices}</span>
+            <span className="text-2xl font-bold text-[#2361d8]">{invoices}</span>
           </label>
           <input
             type="range"
@@ -124,12 +124,12 @@ export default function PricingCalculatorInline() {
                   setBankingEnabled(enabled);
                   if (!enabled) setMovements(0);
                 }}
-                className="h-4 w-4 rounded border-gray-300 text-[#0060F0] focus:ring-[#0060F0]"
+                className="h-4 w-4 rounded border-gray-300 text-[#2361d8] focus:ring-[#2361d8]"
               />
               <span>Conciliacion bancaria</span>
             </label>
             {bankingEnabled && (
-              <span className="text-2xl font-bold text-[#0060F0]">{movements}</span>
+              <span className="text-2xl font-bold text-[#2361d8]">{movements}</span>
             )}
           </div>
           {bankingEnabled && (
@@ -162,7 +162,7 @@ export default function PricingCalculatorInline() {
 
         <div className="rounded-2xl bg-sky-50/70 p-5">
           <p className="text-sm text-gray-600">Cuota mensual estimada</p>
-          <p className="mt-1 text-3xl font-bold text-[#0060F0]">
+          <p className="mt-1 text-3xl font-bold text-[#2361d8]">
             {fmt(monthlyPrice)} EUR{" "}
             <span className="text-base text-gray-500">/mes + IVA</span>
           </p>
@@ -192,7 +192,7 @@ export default function PricingCalculatorInline() {
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <button
               onClick={handleStartTrial}
-              className="rounded-lg bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-6 py-3 font-semibold text-white shadow-lg transition hover:from-[#0056D6] hover:to-[#1AA3DB]"
+              className="rounded-lg bg-[#2361d8] px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
             >
               Empezar 1 mes gratis
             </button>
@@ -213,3 +213,4 @@ export default function PricingCalculatorInline() {
     </div>
   );
 }
+

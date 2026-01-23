@@ -1,4 +1,4 @@
-Ôªø"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Download, X } from "lucide-react";
@@ -75,7 +75,7 @@ export function PWAInstallPrompt() {
       </button>
 
       <div className="flex items-start gap-3 mb-3">
-        <div className="flex-shrink-0 w-12 h-12 bg-[#0060F0] rounded-lg flex items-center justify-center">
+        <div className="flex-shrink-0 w-12 h-12 bg-[#2361d8] rounded-lg flex items-center justify-center">
           <Download className="w-6 h-6 text-white" />
         </div>
         <div className="flex-1 min-w-0">
@@ -83,7 +83,7 @@ export function PWAInstallPrompt() {
             Instalar Verifactu
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Accede m√°s r√°pido instalando la app en tu dispositivo
+            Accede m·s r·pido instalando la app en tu dispositivo
           </p>
         </div>
       </div>
@@ -91,7 +91,7 @@ export function PWAInstallPrompt() {
       <div className="flex gap-2">
         <button
           onClick={handleInstall}
-          className="flex-1 px-4 py-2 bg-[#0060F0] text-white rounded-lg hover:bg-[#0050D0] transition font-medium text-sm"
+          className="flex-1 px-4 py-2 bg-[#2361d8] text-white rounded-lg hover:bg-[#0050D0] transition font-medium text-sm"
         >
           Instalar
         </button>
@@ -99,10 +99,11 @@ export function PWAInstallPrompt() {
           onClick={handleDismiss}
           className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition text-sm"
         >
-          M√°s tarde
+          M·s tarde
         </button>
       </div>
     </div>
   );
 }
+
 
