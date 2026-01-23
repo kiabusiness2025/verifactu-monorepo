@@ -1,5 +1,5 @@
 {
-  "installCommand": "cd ../.. && npx -y pnpm@9.15.4 install --no-frozen-lockfile && cd apps/app && npx -y pnpm@9.15.4 exec prisma generate --schema=./prisma/schema.prisma",
+  "installCommand": "cd ../.. && npx -y pnpm@9.15.4 install --no-frozen-lockfile && cd apps/app && PRISMA_SKIP_POSTINSTALL_GENERATE=1 npx -y pnpm@9.15.4 exec prisma generate --schema=./prisma/schema.prisma",
   "buildCommand": "npx -y pnpm@9.15.4 run build",
   "framework": "nextjs"
 }
