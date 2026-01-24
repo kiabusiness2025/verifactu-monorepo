@@ -27,7 +27,9 @@ export async function GET() {
           targetUserId: payload.targetUserId,
           targetCompanyId: payload.targetCompanyId,
           startedAt: new Date(payload.startedAt).toISOString(),
-          expiresAt: new Date(payload.expiresAt).toISOString(),
+          expiresAt: payload.expiresAt
+            ? new Date(payload.expiresAt).toISOString()
+            : undefined,
         };
       }
     }
