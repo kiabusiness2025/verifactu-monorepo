@@ -124,7 +124,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       prisma.emailEvent.create({
         data: {
           messageId: emailResult.messageId,
-          threadId: emailResult.threadId, // Only populated for Gmail
+          threadId: 'threadId' in emailResult ? emailResult.threadId : null, // Only populated for Gmail
           to: user.email,
           fromEmail: emailResult.fromEmail, // Hardcoded per provider
           template,
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({
       success: true,
       messageId: emailResult.messageId,
-      threadId: emailResult.threadId,
+      threadId: 'threadId' in emailResult ? emailResult.threadId : null,
       provider,
       fromEmail: emailResult.fromEmail,
     });
