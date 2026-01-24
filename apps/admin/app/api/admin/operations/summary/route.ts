@@ -22,7 +22,7 @@ export async function GET() {
   // Log audit
   await prisma.auditLog.create({
     data: {
-      adminUserId: session.userId!,
+      actorUserId: session.userId!,
       action: 'COMPANY_VIEW', // Reusing existing action
       metadata: { section: 'operations_summary' }
     }

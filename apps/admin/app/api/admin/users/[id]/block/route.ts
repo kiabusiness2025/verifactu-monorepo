@@ -37,7 +37,7 @@ export async function POST(
     }),
     prisma.auditLog.create({
       data: {
-        adminUserId: session.userId!,
+        actorUserId: session.userId!,
         action: 'USER_BLOCK',
         targetUserId: params.id,
         metadata: { reason }

@@ -53,7 +53,7 @@ export async function POST(
       }),
       prisma.auditLog.create({
         data: {
-          adminUserId: session.userId!,
+          actorUserId: session.userId!,
           action: 'WEBHOOK_RETRY',
           targetUserId: webhook.userId || undefined,
           metadata: { webhookId: webhook.id, provider: webhook.provider, attemptNumber }

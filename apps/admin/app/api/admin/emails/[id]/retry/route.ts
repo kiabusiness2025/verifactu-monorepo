@@ -48,7 +48,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       }),
       prisma.auditLog.create({
         data: {
-          adminUserId: session.userId!,
+          actorUserId: session.userId!,
           action: 'EMAIL_RETRY',
           targetUserId: email.userId || undefined,
           metadata: { emailId: email.id, to: email.to },

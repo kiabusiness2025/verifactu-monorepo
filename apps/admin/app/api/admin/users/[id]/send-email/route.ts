@@ -136,7 +136,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       }),
       prisma.auditLog.create({
         data: {
-          adminUserId: session.userId!,
+          actorUserId: session.userId!,
           action: 'EMAIL_SEND',
           targetUserId: params.id,
           metadata: {

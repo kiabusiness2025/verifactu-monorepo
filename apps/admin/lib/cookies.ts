@@ -48,10 +48,9 @@ export function clearImpersonationCookie() {
 /**
  * Get current impersonation context from cookie
  */
-export async function getImpersonation(): Promise<ImpersonationPayload | null> {
-  const token = cookies().get(COOKIE_NAME)?.value;
-  if (!token) return null;
-
+export async function verifyImpersonationToken(
+  token: string
+): Promise<ImpersonationPayload | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret());
     return payload as unknown as ImpersonationPayload;
@@ -59,6 +58,12 @@ export async function getImpersonation(): Promise<ImpersonationPayload | null> {
     console.error('Invalid impersonation token:', error);
     return null;
   }
+}
+
+export async function getImpersonation(): Promise<ImpersonationPayload | null> {
+  const token = cookies().get(COOKIE_NAME)?.value;
+  if (!token) return null;
+  return verifyImpersonationToken(token);
 }
 
 export { COOKIE_NAME as IMPERSONATION_COOKIE_NAME };
