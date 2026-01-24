@@ -7,6 +7,7 @@ export interface ImpersonationPayload {
   targetUserId: string;
   targetCompanyId: string;
   startedAt: string;
+  expiresAt?: string;
 }
 
 function getSecret() {
@@ -19,7 +20,10 @@ function getSecret() {
  * Set impersonation cookie with signed JWT
  */
 export async function setImpersonationCookie(payload: ImpersonationPayload) {
-  const token = await new SignJWT(payload)
+  const expiresAt =
+    payload.expiresAt ?? new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
+  const tokenPayload = { ...payload, expiresAt };
+  const token = await new SignJWT(tokenPayload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('8h')
