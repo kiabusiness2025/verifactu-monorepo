@@ -2,7 +2,7 @@ import { IMPERSONATION_COOKIE_NAME, verifyImpersonationToken } from '@/lib/cooki
 import { getServerSession } from 'next-auth';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { authOptions } from '../../lib/auth-options';
+import { authOptions } from '@/lib/auth-options';
 
 export async function GET() {
   try {
