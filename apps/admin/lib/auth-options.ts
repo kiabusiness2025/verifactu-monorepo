@@ -23,7 +23,9 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       // 🔒 SEGURIDAD: Validar email contra variables de entorno
-      const email = (user.email || '').toLowerCase();
+      const profileEmail = (profile as { email?: string } | undefined)?.email;
+      const profileHd = (profile as { hd?: string } | undefined)?.hd;
+      const email = (user.email || profileEmail || '').toLowerCase();
       const allowedEmail = (
         process.env.ADMIN_ALLOWED_EMAIL || 'support@verifactu.business'
       ).toLowerCase();
@@ -33,9 +35,11 @@ export const authOptions: AuthOptions = {
 
       console.log('🔍 SignIn attempt:', { email, allowedEmail, allowedDomain, profile });
 
-      const emailOk = email === allowedEmail || email.endsWith(`@${allowedDomain}`);
+      const emailOk = !!email && (email === allowedEmail || email.endsWith(`@${allowedDomain}`));
 
-      if (!emailOk) {
+      const domainOk = !!profileHd && profileHd.toLowerCase() === allowedDomain;
+
+      if (!emailOk && !domainOk) {
         console.error('❌ Intento de acceso no autorizado:', email);
         return false;
       }
