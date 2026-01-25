@@ -1011,7 +1011,6 @@ export function FeaturesSection() {
   );
 }
 
-
 export function PídeseloAIsaakSection() {
   const isaakSignupUrl = `${getAppUrl()}/auth/signup?next=/dashboard?isaak=1`;
   const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
@@ -1106,7 +1105,9 @@ export function PídeseloAIsaakSection() {
     return () => clearInterval(intervalId);
   }, [isaakDialogue.length]);
 
-  const visibleQas = [0, 1, 2].map((offset) => isaakDialogue[(qaIndex + offset) % isaakDialogue.length]);
+  const visibleQas = [0, 1, 2].map(
+    (offset) => isaakDialogue[(qaIndex + offset) % isaakDialogue.length]
+  );
 
   return (
     <section className="py-16 bg-[#2361d8]/5">
@@ -1120,11 +1121,12 @@ export function PídeseloAIsaakSection() {
             Un amigo experto que habla tu idioma y te cuida los plazos.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Isaak entiende documentos, te acompaña en 2026 y convierte tu día a día en decisiones claras.
+            Isaak entiende documentos, te acompaña en 2026 y convierte tu día a día en decisiones
+            claras.
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-xs text-slate-500">
-            Isaak no sustituye a tu asesor. Te ofrece visibilidad diaria de ventas, gastos y beneficio para
-            decidir en tiempo real y llegar al cierre con todo ordenado.
+            Isaak no sustituye a tu asesor. Te ofrece visibilidad diaria de ventas, gastos y
+            beneficio para decidir en tiempo real y llegar al cierre con todo ordenado.
           </p>
         </div>
 
@@ -1188,7 +1190,9 @@ export function PídeseloAIsaakSection() {
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-semibold text-[#2361d8]">Deja de esperar al cierre de mes</div>
+            <div className="text-sm font-semibold text-[#2361d8]">
+              Deja de esperar al cierre de mes
+            </div>
             <p className="mt-2 text-sm text-slate-600">
               Con Isaak tienes ventas, gastos y beneficio estimado hoy. VeriFactu, al día.
             </p>
@@ -1214,7 +1218,9 @@ export function PídeseloAIsaakSection() {
                   <BadgeCheck className="h-4 w-4 text-[#2361d8]" />
                   <span className="font-semibold">VeriFactu, siempre operativo</span>
                 </div>
-                <p className="mt-1 text-xs">Trazabilidad y control listos para cumplir sin sustos.</p>
+                <p className="mt-1 text-xs">
+                  Trazabilidad y control listos para cumplir sin sustos.
+                </p>
               </div>
             </div>
 
@@ -1240,7 +1246,9 @@ export function PídeseloAIsaakSection() {
 
         <div className="mt-12">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="text-sm font-semibold text-[#2361d8]">Funciones principales de Isaak</div>
+            <div className="text-sm font-semibold text-[#2361d8]">
+              Funciones principales de Isaak
+            </div>
             <p className="mt-2 text-sm text-slate-600">
               Todo lo que necesitas para estar al día sin esperar al cierre.
             </p>
@@ -1278,7 +1286,9 @@ export function PídeseloAIsaakSection() {
                   <UploadCloud className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-800">Clasificación automática</div>
+                  <div className="text-sm font-semibold text-slate-800">
+                    Clasificación automática
+                  </div>
                   <p className="mt-1 text-xs text-slate-600">
                     Sube gastos y los ordena por trimestre con deducibles marcados.
                   </p>
@@ -1291,7 +1301,9 @@ export function PídeseloAIsaakSection() {
                   <TrendingUp className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-800">Beneficio en tiempo real</div>
+                  <div className="text-sm font-semibold text-slate-800">
+                    Beneficio en tiempo real
+                  </div>
                   <p className="mt-1 text-xs text-slate-600">
                     Ventas, gastos y beneficio estimado hoy, sin esperar al cierre.
                   </p>
@@ -1317,7 +1329,9 @@ export function PídeseloAIsaakSection() {
                   <BadgeCheck className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-800">Cumplimiento sin estrés</div>
+                  <div className="text-sm font-semibold text-slate-800">
+                    Cumplimiento sin estrés
+                  </div>
                   <p className="mt-1 text-xs text-slate-600">
                     Te guía para llegar a tiempo y con todo correctamente preparado.
                   </p>
@@ -1330,4 +1344,3 @@ export function PídeseloAIsaakSection() {
     </section>
   );
 }
-
