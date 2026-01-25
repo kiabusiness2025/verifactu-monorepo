@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { authOptions } from '../api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
