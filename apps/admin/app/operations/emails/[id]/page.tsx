@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@verifactu/ui/components/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@verifactu/ui';
 import { Badge } from '@verifactu/ui/components/badge';
 import { Button } from '@verifactu/ui/components/button';
 import Link from 'next/link';

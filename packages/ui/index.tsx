@@ -4,6 +4,7 @@ import React from 'react';
 export { AccessibleButton } from './components/AccessibleButton';
 export { AccessibleInput } from './components/AccessibleInput';
 export { Badge } from './components/Badge';
+export { Card, CardContent, CardHeader, CardTitle } from './components/Card';
 export { Dropdown, DropdownItem } from './components/Dropdown';
 export { Modal } from './components/Modal';
 
@@ -22,22 +23,6 @@ export { Input } from './components/input';
 export { Label } from './components/label';
 export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/select';
 export { Textarea } from './components/textarea';
-
-// Card subcomponents (inline to avoid case-sensitivity issues)
-export const CardHeader: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => <div className={`px-6 py-4 border-b ${className}`}>{children}</div>;
-
-export const CardTitle: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => <h3 className={`text-lg font-semibold ${className}`}>{children}</h3>;
-
-export const CardContent: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => <div className={`px-6 py-4 ${className}`}>{children}</div>;
 
 // Table subcomponents (inline to avoid case-sensitivity issues)
 export const TableHeader: React.FC<{ children: React.ReactNode; className?: string }> = ({
