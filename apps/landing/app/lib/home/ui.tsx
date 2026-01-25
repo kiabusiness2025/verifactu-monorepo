@@ -1011,28 +1011,120 @@ export function FeaturesSection() {
   );
 }
 
+
 export function PideseloAIsaakSection() {
   const isaakSignupUrl = `${getAppUrl()}/auth/signup?next=/dashboard?isaak=1`;
   const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
+  const isaakDialogue = [
+    {
+      q: 'Isaak, ?qu? falta para cerrar 2025?',
+      a: 'Te faltan 2 facturas y un extracto bancario. Te aviso hoy ?',
+    },
+    {
+      q: 'Resumen r?pido de enero 2026',
+      a: 'Vamos genial ?? Ventas 12.480 ?, gastos 7.130 ?. Beneficio 5.350 ?.',
+    },
+    {
+      q: '?C?mo voy de IVA este trimestre?',
+      a: 'Estimaci?n al d?a: 2.140 ? a ingresar. Te recuerdo fechas clave ??',
+    },
+    {
+      q: '?Tengo facturas con errores?',
+      a: 'Detect? 1 factura sin NIF del cliente. ?La corrijo ahora? ??',
+    },
+    {
+      q: 'Sube estos tickets y clasif?calos',
+      a: 'Listo ? Clasificados por proveedor y trimestre. Te marco deducibles.',
+    },
+    {
+      q: '?Qu? plazo tengo esta semana?',
+      a: 'Tienes conciliaci?n pendiente y el registro de 3 facturas. Te gu?o.',
+    },
+    {
+      q: '?C?mo va mi beneficio hoy?',
+      a: 'Beneficio estimado: 5.350 ?. Mejora del +12% vs. mes pasado ??',
+    },
+    {
+      q: 'Quiero un informe para mi gestor',
+      a: 'Preparado ?? Ventas, gastos, IVA y notas clave en un clic.',
+    },
+    {
+      q: '?Alg?n riesgo para el cierre?',
+      a: 'Solo faltan 2 documentos. Si los subes hoy, cierre sin estr?s ??',
+    },
+    {
+      q: '?Puedes revisar mis cobros?',
+      a: 'S?. Hay 3 pendientes y 1 vencido. Te preparo recordatorios ??',
+    },
+    {
+      q: 'Expl?came este CIF',
+      a: 'Te dejo el desglose y lo guardo en tu ficha de cliente ??',
+    },
+    {
+      q: '?Tengo deducibles nuevos?',
+      a: 'S?, 4 gastos deducibles este mes. Te los resalto ??',
+    },
+    {
+      q: '?C?mo va mi caja?',
+      a: 'Saldo previsto 18.240 ? en 10 d?as. Todo en verde ?',
+    },
+    {
+      q: 'Crea un recordatorio de impuestos',
+      a: 'Hecho. Te aviso 7 d?as antes y el mismo d?a ?',
+    },
+    {
+      q: '?Cu?nto me queda para mi meta mensual?',
+      a: 'Te faltan 1.920 ? para el objetivo. Vamos bien ??',
+    },
+    {
+      q: '?Hay facturas verificadas?',
+      a: 'S?, 9 facturas con trazabilidad en regla. Todo OK ?',
+    },
+    {
+      q: 'Necesito priorizar tareas',
+      a: '1) Subir extracto, 2) Confirmar NIF, 3) Conciliar banco.',
+    },
+    {
+      q: '?Puedes estimar el trimestre?',
+      a: 'T1 2026 estimado: ventas 38.200 ?, beneficio 16.540 ? ??',
+    },
+    {
+      q: 'Actualiza mis clientes top',
+      a: 'Listo: 3 clientes concentran el 62% de ingresos.',
+    },
+    {
+      q: '?Puedo ver todo en un panel?',
+      a: 'S?. KPIs y alertas en tu dashboard en tiempo real ?',
+    },
+  ];
+  const [qaIndex, setQaIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const intervalId = setInterval(() => {
+      setQaIndex((prev) => (prev + 1) % isaakDialogue.length);
+    }, 4200);
+    return () => clearInterval(intervalId);
+  }, [isaakDialogue.length]);
+
+  const visibleQas = [0, 1, 2].map((offset) => isaakDialogue[(qaIndex + offset) % isaakDialogue.length]);
+
   return (
     <section className="py-16 bg-[#2361d8]/5">
       <Container>
         <div className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-sm font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
             <Sparkles className="h-4 w-4 text-[#2361d8]" />
-            Pideselo a Isaak
+            P?deselo a Isaak
           </div>
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
             Un amigo experto que habla tu idioma y te cuida los plazos.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Isaak interpreta documentos, avisa de cierre 2025 y te prepara el 1º trimestre 2026. Te
-            acompaña en enero 2026 para que llegues con todo listo.
+            Isaak entiende documentos, te acompa?a en 2026 y convierte tu d?a a d?a en decisiones claras.
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-xs text-slate-500">
-            Isaak no sustituye a tu gestor o asesor contable. Te ofrece datos de ventas, gastos y
-            beneficio para decidir en tiempo real y revisar lo que te preparen al cierre de mes,
-            trimestre o año.
+            Isaak no sustituye a tu asesor. Te ofrece visibilidad diaria de ventas, gastos y beneficio para
+            decidir en tiempo real y llegar al cierre con todo ordenado.
           </p>
         </div>
 
@@ -1045,83 +1137,84 @@ export function PideseloAIsaakSection() {
               </span>
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Elige la personalidad y prueba preguntas rapidas. Todo se ve en tiempo real.
+              Cambia las preguntas y mira c?mo responde Isaak con tono cercano y optimista.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               <button className="rounded-full border border-[#2361d8] bg-[#2361d8]/10 px-3 py-1 font-semibold text-[#2361d8]">
-                Cercano 😊
+                Cercano ??
               </button>
               <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
-                Profesional 🤝
+                Profesional ??
               </button>
               <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
-                Minimalista ✨
+                Minimalista ?
               </button>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-[11px] font-semibold text-slate-600">Preguntas rapidas</div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-                  Cierre 2025, que falta?
-                </span>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-                  Enero 2026, resumen rapido
-                </span>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-                  T1 2026, plazos clave
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
-                <div className="text-[11px] font-semibold text-slate-500">Tu</div>
-                <div className="mt-1 text-sm text-slate-800">Cierre 2025, que falta?</div>
-              </div>
-              <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
-                <div className="text-[11px] font-semibold text-[#2361d8]">Isaak</div>
-                <div className="mt-1 text-sm text-slate-700">
-                  Te faltan 2 facturas y un extracto.
-                  <br />
-                  Te aviso hoy y manana.
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                <div className="text-sm font-semibold text-slate-700">Chat con Isaak</div>
+                <div className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  <span className="h-2 w-2 rounded-full bg-rose-400" />
                 </div>
               </div>
-              <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
-                <div className="text-[11px] font-semibold text-slate-500">Tu</div>
-                <div className="mt-1 text-sm text-slate-800">Enero 2026, resumen rapido</div>
-              </div>
-              <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
-                <div className="text-[11px] font-semibold text-[#2361d8]">Isaak</div>
-                <div className="mt-1 text-sm text-slate-700">
-                  Vamos genial :) Ventas 12.480 EUR, gastos 7.130 EUR.
-                  <br />
-                  Beneficio estimado 5.350 EUR.
-                </div>
+              <div className="flex flex-col gap-3 p-4">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {visibleQas.map((item, index) => (
+                    <motion.div
+                      key={`${qaIndex}-${index}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.35 }}
+                      className="space-y-2"
+                    >
+                      <div className="rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                        <div className="text-[11px] font-semibold text-slate-500">T?</div>
+                        <div className="mt-1">{item.q}</div>
+                      </div>
+                      <div className="rounded-2xl bg-[#2361d8]/10 px-3 py-2 text-sm text-slate-700">
+                        <div className="text-[11px] font-semibold text-[#2361d8]">Isaak</div>
+                        <div className="mt-1">{item.a}</div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             </div>
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-semibold text-[#2361d8]">Tu Isaak, tu estilo</div>
+            <div className="text-sm font-semibold text-[#2361d8]">Deja de esperar al cierre de mes</div>
             <p className="mt-2 text-sm text-slate-600">
-              Elige como quieres que te hable Isaak. Alegre, profesional o minimalista.
+              Con Isaak tienes ventas, gastos y beneficio estimado hoy. VeriFactu, al d?a.
             </p>
             <div className="mt-4 grid gap-3 text-sm text-slate-600">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="font-semibold text-slate-800">Alegre y optimista ??</div>
+                <div className="flex items-center gap-2 text-slate-800">
+                  <TrendingUp className="h-4 w-4 text-[#2361d8]" />
+                  <span className="font-semibold">Beneficio estimado en tiempo real</span>
+                </div>
                 <p className="mt-1 text-xs">
-                  Mensajes cortos, emoji suave y mucha energia positiva.
+                  Ves el impacto de ventas y gastos cada d?a, sin esperar a tu gestor.
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="font-semibold text-slate-800">Profesional ??</div>
-                <p className="mt-1 text-xs">Directo, claro y con foco en resultados.</p>
+                <div className="flex items-center gap-2 text-slate-800">
+                  <CalendarClock className="h-4 w-4 text-[#2361d8]" />
+                  <span className="font-semibold">Avisos de calendario y plazos</span>
+                </div>
+                <p className="mt-1 text-xs">Recordatorios claros para no dejar nada fuera.</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <div className="font-semibold text-slate-800">Minimalista ?</div>
-                <p className="mt-1 text-xs">Solo lo esencial. Sin ruido.</p>
+                <div className="flex items-center gap-2 text-slate-800">
+                  <BadgeCheck className="h-4 w-4 text-[#2361d8]" />
+                  <span className="font-semibold">VeriFactu, siempre operativo</span>
+                </div>
+                <p className="mt-1 text-xs">Trazabilidad y control listos para cumplir sin sustos.</p>
               </div>
             </div>
 
@@ -1140,26 +1233,26 @@ export function PideseloAIsaakSection() {
               </Link>
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              Isaak te acompaña en el cierre 2025 y el arranque del 1º trimestre 2026.
+              Isaak te acompa?a en el cierre 2025 y el arranque del primer trimestre de 2026.
             </p>
           </div>
         </div>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <CommandExample
-            command="Explicame estas escrituras y el CIF"
-            response="He extraido los datos clave y los guardo en tu ficha. Te aviso si falta algo."
+            command="Expl?came estas escrituras y el CIF"
+            response="He extra?do los datos clave y los guardo en tu ficha. Te aviso si falta algo."
           />
           <CommandExample
-            command="Estamos en cierre 2025, que me falta?"
-            response="Te faltan 2 facturas y un extracto. Te aviso hoy y manana."
+            command="Estamos en cierre 2025, ?qu? me falta?"
+            response="Te faltan 2 facturas y un extracto. Te aviso hoy y ma?ana."
           />
           <CommandExample
-            command="Recordatorios del 1º trimestre 2026"
+            command="Recordatorios del primer trimestre 2026"
             response="Listo. Te aviso de plazos clave con tiempo."
           />
           <CommandExample
-            command="Sube estos gastos y ordenalos por trimestre"
+            command="Sube estos gastos y ord?nalos por trimestre"
             response="Cargados y clasificados. Te marco deducibles y pendientes."
           />
           <CommandExample
@@ -1167,16 +1260,12 @@ export function PideseloAIsaakSection() {
             response="Listo: ventas, gastos y beneficio. Te dejo notas claras."
           />
           <CommandExample
-            command="Mi prueba termina en 5 dias"
-            response="Te recomiendo el plan ideal. Si quieres, hago la transicion."
+            command="Mi prueba termina en 5 d?as"
+            response="Te recomiendo el plan ideal. Si quieres, hago la transici?n."
           />
         </div>
       </Container>
     </section>
   );
 }
-
-
-
-
 
