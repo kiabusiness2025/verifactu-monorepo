@@ -464,9 +464,12 @@ export function HeroTripleMock() {
   }, []);
 
   const positions = {
-    resumen: 'sm:translate-x-[-150px] sm:translate-y-[-360px] lg:translate-x-[-170px] lg:translate-y-[-400px]',
-    facturas: 'sm:translate-x-[140px] sm:translate-y-[-330px] lg:translate-x-[170px] lg:translate-y-[-360px]',
-    isaak: 'sm:translate-x-[-10px] sm:translate-y-[-70px] lg:translate-x-[-20px] lg:translate-y-[-40px]',
+    resumen:
+      'sm:translate-x-[-150px] sm:translate-y-[-360px] lg:translate-x-[-170px] lg:translate-y-[-400px]',
+    facturas:
+      'sm:translate-x-[140px] sm:translate-y-[-330px] lg:translate-x-[170px] lg:translate-y-[-360px]',
+    isaak:
+      'sm:translate-x-[-10px] sm:translate-y-[-70px] lg:translate-x-[-20px] lg:translate-y-[-40px]',
   } as const;
 
   const panels = [
@@ -559,36 +562,36 @@ export function HeroTripleMock() {
           {(() => {
             const items = [
               {
-                q: "Isaak, resumen rapido de enero 2026",
-                a: "Vamos genial ?? Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.",
-                hint: "¿Quieres ver el detalle por cliente? ?",
-                tone: "emerald",
+                q: 'Isaak, resumen rapido de enero 2026',
+                a: 'Vamos genial ?? Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.',
+                hint: '¿Quieres ver el detalle por cliente? ?',
+                tone: 'emerald',
               },
               {
-                q: "Que falta para cierre 2025?",
-                a: "Te faltan 2 facturas y un extracto ????. ¿Te lo recuerdo hoy?",
-                hint: "Te preparo checklist con un clic ?",
-                tone: "amber",
+                q: 'Que falta para cierre 2025?',
+                a: 'Te faltan 2 facturas y un extracto ????. ¿Te lo recuerdo hoy?',
+                hint: 'Te preparo checklist con un clic ?',
+                tone: 'amber',
               },
               {
-                q: "Tengo facturas verificadas?",
-                a: "Sí ?? 9 facturas con QR y huella hash listos.",
-                hint: "¿Compartimos el informe con tu gestor? ??",
-                tone: "emerald",
+                q: 'Tengo facturas verificadas?',
+                a: 'Sí ?? 9 facturas con QR y huella hash listos.',
+                hint: '¿Compartimos el informe con tu gestor? ??',
+                tone: 'emerald',
               },
             ];
             const item = items[qaIndex];
             const base =
-              item.tone === "amber"
-                ? "bg-amber-50 ring-amber-100 text-amber-700"
-                : "bg-emerald-50 ring-emerald-100 text-emerald-700";
+              item.tone === 'amber'
+                ? 'bg-amber-50 ring-amber-100 text-amber-700'
+                : 'bg-emerald-50 ring-emerald-100 text-emerald-700';
             return (
               <div className="transition-all duration-500">
                 <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200">
                   <div className="text-[11px] font-semibold text-slate-500">Tu</div>
                   <div className="mt-1 text-[13px] text-slate-800">{item.q}</div>
                 </div>
-                <div className={"mt-2 rounded-2xl p-2 ring-1 " + base}>
+                <div className={'mt-2 rounded-2xl p-2 ring-1 ' + base}>
                   <div className="text-[11px] font-semibold">Isaak</div>
                   <div className="mt-1 text-[13px] text-slate-700">{item.a}</div>
                   <div className="mt-1 text-[11px]">{item.hint}</div>
@@ -716,10 +719,7 @@ export function Li({ children }: { children: React.ReactNode }) {
 
 export function Footer() {
   return (
-    <footer
-      className="relative bg-[#2361d8] text-slate-100"
-      role="contentinfo"
-    >
+    <footer className="relative bg-[#2361d8] text-slate-100" role="contentinfo">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-600/10 blur-3xl" />
@@ -1012,7 +1012,7 @@ export function FeaturesSection() {
 }
 
 
-export function PideseloAIsaakSection() {
+export function PídeseloAIsaakSection() {
   const isaakSignupUrl = `${getAppUrl()}/auth/signup?next=/dashboard?isaak=1`;
   const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   const isaakDialogue = [
@@ -1021,27 +1021,27 @@ export function PideseloAIsaakSection() {
       a: 'Te faltan 2 facturas y un extracto bancario. Te aviso hoy ?',
     },
     {
-      q: 'Resumen r?pido de enero 2026',
+      q: 'Resumen rápido de enero 2026',
       a: 'Vamos genial ?? Ventas 12.480 ?, gastos 7.130 ?. Beneficio 5.350 ?.',
     },
     {
-      q: '?C?mo voy de IVA este trimestre?',
-      a: 'Estimaci?n al d?a: 2.140 ? a ingresar. Te recuerdo fechas clave ??',
+      q: '¿Cómo voy de IVA este trimestre?',
+      a: 'Estimación al día: 2.140 ? a ingresar. Te recuerdo fechas clave ??',
     },
     {
-      q: '?Tengo facturas con errores?',
-      a: 'Detect? 1 factura sin NIF del cliente. ?La corrijo ahora? ??',
+      q: '¿Tengo facturas con errores?',
+      a: 'Detectú 1 factura sin NIF del cliente. ¿La corrijo ahora? ??',
     },
     {
-      q: 'Sube estos tickets y clasif?calos',
+      q: 'Sube estos tickets y clasifícalos',
       a: 'Listo ? Clasificados por proveedor y trimestre. Te marco deducibles.',
     },
     {
-      q: '?Qu? plazo tengo esta semana?',
-      a: 'Tienes conciliaci?n pendiente y el registro de 3 facturas. Te gu?o.',
+      q: '¿Qué plazo tengo esta semana?',
+      a: 'Tienes conciliación pendiente y el registro de 3 facturas. Te guío.',
     },
     {
-      q: '?C?mo va mi beneficio hoy?',
+      q: '¿Cómo va mi beneficio hoy?',
       a: 'Beneficio estimado: 5.350 ?. Mejora del +12% vs. mes pasado ??',
     },
     {
@@ -1049,43 +1049,43 @@ export function PideseloAIsaakSection() {
       a: 'Preparado ?? Ventas, gastos, IVA y notas clave en un clic.',
     },
     {
-      q: '?Alg?n riesgo para el cierre?',
-      a: 'Solo faltan 2 documentos. Si los subes hoy, cierre sin estr?s ??',
+      q: '¿Algún riesgo para el cierre?',
+      a: 'Solo faltan 2 documentos. Si los subes hoy, cierre sin estrés ??',
     },
     {
-      q: '?Puedes revisar mis cobros?',
-      a: 'S?. Hay 3 pendientes y 1 vencido. Te preparo recordatorios ??',
+      q: '¿Puedes revisar mis cobros?',
+      a: 'Sí. Hay 3 pendientes y 1 vencido. Te preparo recordatorios ??',
     },
     {
-      q: 'Expl?came este CIF',
+      q: 'Explícame este CIF',
       a: 'Te dejo el desglose y lo guardo en tu ficha de cliente ??',
     },
     {
-      q: '?Tengo deducibles nuevos?',
-      a: 'S?, 4 gastos deducibles este mes. Te los resalto ??',
+      q: '¿Tengo deducibles nuevos?',
+      a: 'Sí, 4 gastos deducibles este mes. Te los resalto ??',
     },
     {
-      q: '?C?mo va mi caja?',
-      a: 'Saldo previsto 18.240 ? en 10 d?as. Todo en verde ?',
+      q: '¿Cómo va mi caja?',
+      a: 'Saldo previsto 18.240 ? en 10 días. Todo en verde ?',
     },
     {
       q: 'Crea un recordatorio de impuestos',
-      a: 'Hecho. Te aviso 7 d?as antes y el mismo d?a ?',
+      a: 'Hecho. Te aviso 7 días antes y el mismo día ?',
     },
     {
-      q: '?Cu?nto me queda para mi meta mensual?',
+      q: '¿Cuánto me queda para mi meta mensual?',
       a: 'Te faltan 1.920 ? para el objetivo. Vamos bien ??',
     },
     {
-      q: '?Hay facturas verificadas?',
-      a: 'S?, 9 facturas con trazabilidad en regla. Todo OK ?',
+      q: '¿Hay facturas verificadas?',
+      a: 'Sí, 9 facturas con trazabilidad en regla. Todo OK ?',
     },
     {
       q: 'Necesito priorizar tareas',
       a: '1) Subir extracto, 2) Confirmar NIF, 3) Conciliar banco.',
     },
     {
-      q: '?Puedes estimar el trimestre?',
+      q: '¿Puedes estimar el trimestre?',
       a: 'T1 2026 estimado: ventas 38.200 ?, beneficio 16.540 ? ??',
     },
     {
@@ -1093,8 +1093,8 @@ export function PideseloAIsaakSection() {
       a: 'Listo: 3 clientes concentran el 62% de ingresos.',
     },
     {
-      q: '?Puedo ver todo en un panel?',
-      a: 'S?. KPIs y alertas en tu dashboard en tiempo real ?',
+      q: '¿Puedo ver todo en un panel?',
+      a: 'Sí. KPIs y alertas en tu dashboard en tiempo real ?',
     },
   ];
   const [qaIndex, setQaIndex] = React.useState(0);
@@ -1114,13 +1114,13 @@ export function PideseloAIsaakSection() {
         <div className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-sm font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
             <Sparkles className="h-4 w-4 text-[#2361d8]" />
-            P?deselo a Isaak
+            Pídeselo a Isaak
           </div>
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
             Un amigo experto que habla tu idioma y te cuida los plazos.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Isaak entiende documentos, te acompa?a en 2026 y convierte tu d?a a d?a en decisiones claras.
+            Isaak entiende documentos, te acompaña en 2026 y convierte tu día a día en decisiones claras.
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-xs text-slate-500">
             Isaak no sustituye a tu asesor. Te ofrece visibilidad diaria de ventas, gastos y beneficio para
@@ -1137,7 +1137,7 @@ export function PideseloAIsaakSection() {
               </span>
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Cambia las preguntas y mira c?mo responde Isaak con tono cercano y optimista.
+              Cambia las preguntas y mira cómo responde Isaak con tono cercano y optimista.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
@@ -1173,7 +1173,7 @@ export function PideseloAIsaakSection() {
                       className="space-y-2"
                     >
                       <div className="rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                        <div className="text-[11px] font-semibold text-slate-500">T?</div>
+                        <div className="text-[11px] font-semibold text-slate-500">Tú</div>
                         <div className="mt-1">{item.q}</div>
                       </div>
                       <div className="rounded-2xl bg-[#2361d8]/10 px-3 py-2 text-sm text-slate-700">
@@ -1190,7 +1190,7 @@ export function PideseloAIsaakSection() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="text-sm font-semibold text-[#2361d8]">Deja de esperar al cierre de mes</div>
             <p className="mt-2 text-sm text-slate-600">
-              Con Isaak tienes ventas, gastos y beneficio estimado hoy. VeriFactu, al d?a.
+              Con Isaak tienes ventas, gastos y beneficio estimado hoy. VeriFactu, al día.
             </p>
             <div className="mt-4 grid gap-3 text-sm text-slate-600">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
@@ -1199,7 +1199,7 @@ export function PideseloAIsaakSection() {
                   <span className="font-semibold">Beneficio estimado en tiempo real</span>
                 </div>
                 <p className="mt-1 text-xs">
-                  Ves el impacto de ventas y gastos cada d?a, sin esperar a tu gestor.
+                  Ves el impacto de ventas y gastos cada día, sin esperar a tu gestor.
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
@@ -1233,36 +1233,98 @@ export function PideseloAIsaakSection() {
               </Link>
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              Isaak te acompa?a en el cierre 2025 y el arranque del primer trimestre de 2026.
+              Isaak te acompaña en el cierre 2025 y el arranque del primer trimestre de 2026.
             </p>
           </div>
         </div>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          <CommandExample
-            command="Expl?came estas escrituras y el CIF"
-            response="He extra?do los datos clave y los guardo en tu ficha. Te aviso si falta algo."
-          />
-          <CommandExample
-            command="Estamos en cierre 2025, ?qu? me falta?"
-            response="Te faltan 2 facturas y un extracto. Te aviso hoy y ma?ana."
-          />
-          <CommandExample
-            command="Recordatorios del primer trimestre 2026"
-            response="Listo. Te aviso de plazos clave con tiempo."
-          />
-          <CommandExample
-            command="Sube estos gastos y ord?nalos por trimestre"
-            response="Cargados y clasificados. Te marco deducibles y pendientes."
-          />
-          <CommandExample
-            command="Prepara un resumen para mi gestor"
-            response="Listo: ventas, gastos y beneficio. Te dejo notas claras."
-          />
-          <CommandExample
-            command="Mi prueba termina en 5 d?as"
-            response="Te recomiendo el plan ideal. Si quieres, hago la transici?n."
-          />
+        <div className="mt-12">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="text-sm font-semibold text-[#2361d8]">Funciones principales de Isaak</div>
+            <p className="mt-2 text-sm text-slate-600">
+              Todo lo que necesitas para estar al día sin esperar al cierre.
+            </p>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-[#2361d8]/10 p-2 text-[#2361d8]">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">Lectura de documentos</div>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Extrae datos clave de escrituras, facturas y CIF para tu ficha.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-[#2361d8]/10 p-2 text-[#2361d8]">
+                  <CalendarClock className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">Plazos y recordatorios</div>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Avisos del trimestre y tareas clave para evitar retrasos.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-[#2361d8]/10 p-2 text-[#2361d8]">
+                  <UploadCloud className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">Clasificación automática</div>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Sube gastos y los ordena por trimestre con deducibles marcados.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-[#2361d8]/10 p-2 text-[#2361d8]">
+                  <TrendingUp className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">Beneficio en tiempo real</div>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Ventas, gastos y beneficio estimado hoy, sin esperar al cierre.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-[#2361d8]/10 p-2 text-[#2361d8]">
+                  <LayoutDashboard className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">Resumen para tu gestor</div>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Informe claro con ventas, gastos y notas listas para enviar.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-[#2361d8]/10 p-2 text-[#2361d8]">
+                  <BadgeCheck className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">Cumplimiento sin estrés</div>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Te guía para llegar a tiempo y con todo correctamente preparado.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </Container>
     </section>
