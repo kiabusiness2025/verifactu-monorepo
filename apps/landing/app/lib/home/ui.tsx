@@ -1011,7 +1011,7 @@ export function FeaturesSection() {
   );
 }
 
-export function PídeseloAIsaakSection() {
+export function PideseloAIsaakSection() {
   const isaakSignupUrl = `${getAppUrl()}/auth/signup?next=/dashboard?isaak=1`;
   const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
   const isaakDialogue = [
