@@ -30,7 +30,8 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "debug:app": "NODE_OPTIONS=--inspect-brk pnpm dev",
-    "debug:tests": "NODE_OPTIONS=--inspect-brk pnpm test -- --watch"
+    "debug:tests": "NODE_OPTIONS=--inspect-brk pnpm test -- --watch",
+    "deploy:vercel": "curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_ZBVvfBkBG6b4MmSCD9aRQM7QAPAU/9x0EH6QY9J"
   },
   "devDependencies": {
     "@next/env": "^16.1.1",
@@ -38,6 +39,8 @@
     "@testing-library/react": "^16.1.0",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.2.3",
     "eslint": "^8.57.0",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
@@ -70,6 +73,7 @@
     ],
     "ignoredBuiltDependencies": [
       "@swc/core",
+      "@verifactu/db",
       "esbuild",
       "sharp"
     ]
