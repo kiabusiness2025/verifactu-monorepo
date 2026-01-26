@@ -1,3 +1,7 @@
+// DEPRECATED: Usar Modal desde src/modal (con 'use client')
+
+'use client';
+
 import React, { useEffect } from 'react';
 import type { ModalProps } from '../types';
 
