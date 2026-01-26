@@ -3,9 +3,9 @@
  * Verifies Firebase tokens and manages SQL user synchronization
  */
 
-import type { AuthProvider, User } from '@prisma/client';
-import { prisma } from '@verifactu/db';
+import { PrismaClient, type User } from '@prisma/client';
 import { getFirebaseAuth } from '../firebase-admin';
+const prisma = new PrismaClient();
 
 export interface FirebaseTokenPayload {
   uid: string;
@@ -85,7 +85,7 @@ export async function getOrCreateSqlUserFromFirebase(
     user = await prisma.user.update({
       where: { id: user.id },
       data: {
-        authProvider: AuthProvider.FIREBASE,
+        authProvider: "FIREBASE",
         authSubject: uid,
         name: name || user.name, // Update name if provided
       },
@@ -98,7 +98,7 @@ export async function getOrCreateSqlUserFromFirebase(
     data: {
       email,
       name: name || email.split('@')[0], // Use email prefix if no name
-      authProvider: AuthProvider.FIREBASE,
+      authProvider: "FIREBASE",
       authSubject: uid,
     },
   });
@@ -113,7 +113,14 @@ export async function getOrCreateSqlUserFromFirebase(
 export async function getUserWithCompanies(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
-    include: {
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      image: true,
+      role: true,
+      emailVerified: true,
+      createdAt: true,
       companiesOwned: {
         include: {
           owner: {
