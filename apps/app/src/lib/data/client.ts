@@ -42,3 +42,38 @@ export function getIsaakExamples(mode: DataMode) {
   }
   return [];
 }
+
+export function getCustomers(mode: DataMode) {
+  if (mode === "demo") {
+    return demoData.customers;
+  }
+  return [];
+}
+
+export function getBankMovements(mode: DataMode) {
+  if (mode === "demo") {
+    return demoData.bankMovements;
+  }
+  return [];
+}
+
+export function getDocuments(mode: DataMode) {
+  if (mode === "demo") {
+    return demoData.documents;
+  }
+  return [];
+}
+
+export function getCalendar(mode: DataMode) {
+  if (mode === "demo") {
+    return demoData.calendarItems;
+  }
+  return [];
+}
+
+export function getIsaakCards(mode: DataMode) {
+  if (mode === "demo") {
+    return demoData.isaakCards;
+  }
+  return [];
+}

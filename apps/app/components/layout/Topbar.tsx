@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCreateCompanyModal } from "@/context/CreateCompanyModalContext";
 import { LayoutGrid, Shield, Plus } from "lucide-react";
 import { getUserFirstName } from "@/lib/getUserName";
+import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
 
 type TopbarProps = {
   onToggleSidebar: () => void;
@@ -295,7 +296,16 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
                     ))
                   )}
                 </select>
-                {!isDemo && (
+                {isDemo ? (
+                  <DemoLockedButton
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100"
+                    aria-label="Crear empresa"
+                    title="Crear empresa"
+                    toastMessage="Disponible en la prueba con tus datos"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </DemoLockedButton>
+                ) : (
                   <>
                     {handleCreateCompany ? (
                       <button

@@ -2,6 +2,7 @@ type DemoTenant = {
   id: string;
   name: string;
   nif: string;
+  legalName: string;
   createdAt: string;
 };
 
@@ -14,7 +15,7 @@ export type DemoInvoice = {
   amountNet: number;
   amountTax: number;
   amountGross: number;
-  status: 'paid' | 'pending' | 'overdue' | 'sent';
+  status: "paid" | "pending" | "overdue" | "sent";
   verifactuStatus?: string | null;
   verifactuQr?: string | null;
   verifactuHash?: string | null;
@@ -24,9 +25,57 @@ export type DemoPayment = {
   id: string;
   invoiceId: string;
   amount: number;
-  method: 'bank_transfer';
+  method: "bank_transfer";
   reference: string;
   paidAt: string;
+};
+
+export type DemoCustomer = {
+  id: string;
+  name: string;
+  nif: string;
+  email?: string;
+};
+
+export type DemoBankMovement = {
+  id: string;
+  date: string;
+  concept: string;
+  amount: number;
+  reconciled: boolean;
+};
+
+export type DemoDocument = {
+  id: string;
+  type: "AEAT" | "SS" | "Contrato" | "Factura" | "Otro";
+  date: string;
+  name: string;
+  status: "valid" | "pending" | "archived";
+  statusLabel: string;
+};
+
+export type DemoCalendarItem = {
+  id: string;
+  date: string;
+  title: string;
+  description: string;
+  status: "soon" | "due" | "ok";
+  statusLabel: string;
+};
+
+export type DemoIsaakExample = {
+  prompt: string;
+  answer: string;
+};
+
+export type DemoIsaakCard = {
+  id: string;
+  title: string;
+  badge: string;
+  tone: "info" | "ok" | "warn";
+  message: string;
+  response: string;
+  footer: string;
 };
 
 type DemoKpis = {
@@ -36,6 +85,11 @@ type DemoKpis = {
   vatEstimated: number;
   invoicesCount: number;
   lastUpdated: string;
+  ventasMes: number;
+  gastosMes: number;
+  beneficioMes: number;
+  ivaEstimado: number;
+  facturasPendientes: number;
 };
 
 type DemoPnl = {
@@ -47,39 +101,44 @@ type DemoPnl = {
   vatEstimated: number;
 };
 
-type DemoIsaakExample = {
-  prompt: string;
-  answer: string;
-};
-
 export type DemoData = {
   tenant: DemoTenant;
   kpis: DemoKpis;
   pnl: DemoPnl;
   invoices: DemoInvoice[];
   payments: DemoPayment[];
+  customers: DemoCustomer[];
+  bankMovements: DemoBankMovement[];
+  documents: DemoDocument[];
+  calendarItems: DemoCalendarItem[];
   isaakExamples: DemoIsaakExample[];
+  isaakCards: DemoIsaakCard[];
 };
 
-const customers = [
-  { name: 'Nova Retail SL', nif: 'B10981234' },
-  { name: 'Cima Logistics', nif: 'B45892017' },
-  { name: 'Luna Tech', nif: 'B76234109' },
-  { name: 'Alba Studio', nif: 'B30129844' },
-  { name: 'Mercurio Labs', nif: 'B88765012' },
-  { name: 'Eco Servicios', nif: 'B21340098' },
-  { name: 'Orion Media', nif: 'B56890321' },
-  { name: 'Sierra Consult', nif: 'B11234567' },
-  { name: 'Delta Foods', nif: 'B99001122' },
-  { name: 'Tramo Energia', nif: 'B77112233' },
-  { name: 'Kite Market', nif: 'B66004591' },
-  { name: 'Arco Creativo', nif: 'B54007891' },
+const rawCustomers = [
+  { name: "Nova Retail SL", nif: "B10981234", email: "contabilidad@novaretail.es" },
+  { name: "Cima Logistics", nif: "B45892017", email: "finanzas@cimalogistics.es" },
+  { name: "Luna Tech", nif: "B76234109", email: "pagos@lunatech.es" },
+  { name: "Alba Studio", nif: "B30129844", email: "hola@alba.studio" },
+  { name: "Mercurio Labs", nif: "B88765012", email: "conta@mercuriolabs.es" },
+  { name: "Eco Servicios", nif: "B21340098", email: "facturacion@ecoservicios.es" },
+  { name: "Orion Media", nif: "B56890321", email: "payments@orionmedia.es" },
+  { name: "Sierra Consult", nif: "B11234567", email: "info@sierraconsult.es" },
+  { name: "Delta Foods", nif: "B99001122", email: "admin@deltafoods.es" },
+  { name: "Tramo Energia", nif: "B77112233", email: "cobros@tramoenergia.es" },
 ];
 
-const statusCycle: DemoInvoice['status'][] = ['paid', 'paid', 'pending', 'sent', 'overdue'];
+const customers: DemoCustomer[] = rawCustomers.map((customer, index) => ({
+  id: `cust-${index + 1}`,
+  name: customer.name,
+  nif: customer.nif,
+  email: customer.email,
+}));
+
+const statusCycle: DemoInvoice["status"][] = ["paid", "paid", "pending", "sent", "overdue"];
 
 function pad(value: number) {
-  return value.toString().padStart(2, '0');
+  return value.toString().padStart(2, "0");
 }
 
 function formatDate(date: Date) {
@@ -89,6 +148,12 @@ function formatDate(date: Date) {
 function daysAgo(days: number) {
   const date = new Date();
   date.setDate(date.getDate() - days);
+  return date;
+}
+
+function daysFromNow(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
   return date;
 }
 
@@ -106,8 +171,8 @@ function buildInvoices(count: number): DemoInvoice[] {
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   };
   const buildHash = (seed: string) => {
-    const base = seed.replace(/[^A-Z0-9]/gi, '') || 'VF';
-    let out = '';
+    const base = seed.replace(/[^A-Z0-9]/gi, "") || "VF";
+    let out = "";
     for (let i = 0; i < 64; i += 1) {
       const code = base.charCodeAt(i % base.length) || 65;
       out += ((code + i) % 16).toString(16);
@@ -122,18 +187,18 @@ function buildInvoices(count: number): DemoInvoice[] {
     const amountTax = Math.round(amountNet * 0.21 * 100) / 100;
     const amountGross = Math.round((amountNet + amountTax) * 100) / 100;
     const verifactuStatus =
-      i % 4 === 0 ? 'validated' : i % 4 === 1 ? 'sent' : i % 4 === 2 ? 'pending' : 'error';
+      i % 4 === 0 ? "validated" : i % 4 === 1 ? "sent" : i % 4 === 2 ? "pending" : "error";
     const verifactuQr =
-      verifactuStatus === 'validated' || verifactuStatus === 'sent'
-        ? buildDemoQr(`VF-2026-${(i + 1).toString().padStart(4, '0')}`)
+      verifactuStatus === "validated" || verifactuStatus === "sent"
+        ? buildDemoQr(`VF-2026-${(i + 1).toString().padStart(4, "0")}`)
         : null;
     const verifactuHash =
-      verifactuStatus === 'validated' || verifactuStatus === 'sent'
-        ? buildHash(`VF-2026-${(i + 1).toString().padStart(4, '0')}`)
+      verifactuStatus === "validated" || verifactuStatus === "sent"
+        ? buildHash(`VF-2026-${(i + 1).toString().padStart(4, "0")}`)
         : null;
     invoices.push({
       id: `inv-${i + 1}`,
-      number: `VF-2026-${(i + 1).toString().padStart(4, '0')}`,
+      number: `VF-2026-${(i + 1).toString().padStart(4, "0")}`,
       issueDate: formatDate(issueDate),
       customerName: customer.name,
       customerNif: customer.nif,
@@ -151,7 +216,7 @@ function buildInvoices(count: number): DemoInvoice[] {
 
 function buildPayments(invoices: DemoInvoice[], count: number): DemoPayment[] {
   const payments: DemoPayment[] = [];
-  const paidInvoices = invoices.filter((inv) => inv.status === 'paid');
+  const paidInvoices = invoices.filter((inv) => inv.status === "paid");
   for (let i = 0; i < count && i < paidInvoices.length; i += 1) {
     const invoice = paidInvoices[i];
     const paidAt = daysAgo(1 + i * 4);
@@ -159,7 +224,7 @@ function buildPayments(invoices: DemoInvoice[], count: number): DemoPayment[] {
       id: `pay-${i + 1}`,
       invoiceId: invoice.id,
       amount: invoice.amountGross,
-      method: 'bank_transfer',
+      method: "bank_transfer",
       reference: `TRF-${invoice.number}`,
       paidAt: formatDate(paidAt),
     });
@@ -167,8 +232,135 @@ function buildPayments(invoices: DemoInvoice[], count: number): DemoPayment[] {
   return payments;
 }
 
+function buildBankMovements(count: number): DemoBankMovement[] {
+  const concepts = [
+    "Cobro factura",
+    "Cuota software",
+    "Pago proveedor",
+    "Nomina equipo",
+    "Impuesto trimestral",
+    "Cobro tarjeta",
+    "Alquiler oficina",
+  ];
+  return Array.from({ length: count }, (_, index) => {
+    const date = daysAgo(index);
+    const amount = Math.round((index % 2 === 0 ? 1 : -1) * (120 + (index * 17) % 980) * 100) / 100;
+    return {
+      id: `mov-${index + 1}`,
+      date: formatDate(date),
+      concept: `${concepts[index % concepts.length]} ${index + 1}`,
+      amount,
+      reconciled: index % 3 !== 0,
+    };
+  });
+}
+
+function buildDocuments(count: number): DemoDocument[] {
+  const types: DemoDocument["type"][] = ["AEAT", "SS", "Contrato", "Factura", "Otro"];
+  return Array.from({ length: count }, (_, index) => {
+    const date = daysAgo(4 + index * 2);
+    const status = index % 4 === 0 ? "pending" : index % 5 === 0 ? "archived" : "valid";
+    return {
+      id: `doc-${index + 1}`,
+      type: types[index % types.length],
+      date: formatDate(date),
+      name: `Documento ${index + 1} - ${types[index % types.length]}`,
+      status,
+      statusLabel: status === "valid" ? "Validado" : status === "pending" ? "Pendiente" : "Archivado",
+    };
+  });
+}
+
+function buildCalendarItems(): DemoCalendarItem[] {
+  return [
+    {
+      id: "cal-1",
+      date: formatDate(daysFromNow(3)),
+      title: "Modelo 303 - IVA",
+      description: "Presentacion trimestral de IVA",
+      status: "soon",
+      statusLabel: "Proximo",
+    },
+    {
+      id: "cal-2",
+      date: formatDate(daysFromNow(7)),
+      title: "Modelo 111",
+      description: "Retenciones de profesionales",
+      status: "soon",
+      statusLabel: "Proximo",
+    },
+    {
+      id: "cal-3",
+      date: formatDate(daysFromNow(1)),
+      title: "Envio VeriFactu",
+      description: "Envio diario de facturas emitidas",
+      status: "due",
+      statusLabel: "Hoy",
+    },
+    {
+      id: "cal-4",
+      date: formatDate(daysFromNow(12)),
+      title: "Cierre mensual",
+      description: "Revisar conciliaciones y gastos",
+      status: "ok",
+      statusLabel: "Programado",
+    },
+    {
+      id: "cal-5",
+      date: formatDate(daysFromNow(20)),
+      title: "Pago seguro social",
+      description: "Cuota de autonomos y equipo",
+      status: "ok",
+      statusLabel: "Programado",
+    },
+    {
+      id: "cal-6",
+      date: formatDate(daysFromNow(5)),
+      title: "Cobros pendientes",
+      description: "Seguimiento de facturas vencidas",
+      status: "soon",
+      statusLabel: "Proximo",
+    },
+    {
+      id: "cal-7",
+      date: formatDate(daysFromNow(9)),
+      title: "Actualizacion contable",
+      description: "Exportar datos para tu gestor",
+      status: "ok",
+      statusLabel: "Programado",
+    },
+    {
+      id: "cal-8",
+      date: formatDate(daysFromNow(2)),
+      title: "Conciliar banco",
+      description: "Revisar movimientos pendientes",
+      status: "due",
+      statusLabel: "Hoy",
+    },
+    {
+      id: "cal-9",
+      date: formatDate(daysFromNow(14)),
+      title: "Factura recurrente",
+      description: "Emitir factura mensual",
+      status: "ok",
+      statusLabel: "Programado",
+    },
+    {
+      id: "cal-10",
+      date: formatDate(daysFromNow(6)),
+      title: "Registro de gastos",
+      description: "Subir tickets pendientes",
+      status: "soon",
+      statusLabel: "Proximo",
+    },
+  ];
+}
+
 const invoices = buildInvoices(42);
 const payments = buildPayments(invoices, 16);
+const bankMovements = buildBankMovements(50);
+const documents = buildDocuments(20);
+const calendarItems = buildCalendarItems();
 
 function inLastDays(dateStr: string, days: number) {
   const date = new Date(dateStr);
@@ -183,12 +375,76 @@ const vatEstimated = invoicesMonth.reduce((sum, inv) => sum + inv.amountTax, 0);
 const expensesMonth = Math.round(revenueMonth * 0.32 * 100) / 100;
 const profitMonth = Math.round((revenueMonth - expensesMonth) * 100) / 100;
 const marginMonth = revenueMonth > 0 ? profitMonth / revenueMonth : 0;
+const facturasPendientes = invoices.filter((inv) => inv.status !== "paid").length;
+
+const isaakExamples: DemoIsaakExample[] = [
+  {
+    prompt: "Cual es mi beneficio estimado este mes?",
+    answer: "En demo vemos un beneficio estimado de 7.160 EUR y margen del 31%.",
+  },
+  {
+    prompt: "Tengo facturas vencidas?",
+    answer: "Hay 3 facturas vencidas. Puedo preparar recordatorios automaticos.",
+  },
+  {
+    prompt: "Que documentos faltan para cerrar el trimestre?",
+    answer: "Faltan 2 tickets y 1 contrato firmado para completar el cierre.",
+  },
+  {
+    prompt: "Puedes resumirme los gastos mas altos?",
+    answer: "Claro: proveedores (34%), alquiler (18%) y herramientas (12%).",
+  },
+  {
+    prompt: "Prepara un informe para mi gestor",
+    answer: "Listo: ventas, gastos, IVA estimado y notas para revisar.",
+  },
+];
+
+const isaakCards: DemoIsaakCard[] = [
+  {
+    id: "isaak-1",
+    title: "Resumen diario",
+    badge: "Hoy",
+    tone: "ok",
+    message: "Ventas +12% y margen estable.",
+    response: "He detectado 3 cobros pendientes. Te preparo recordatorios.",
+    footer: "Isaak usa tus datos reales cuando activas la prueba.",
+  },
+  {
+    id: "isaak-2",
+    title: "Cierre trimestral",
+    badge: "Prioridad",
+    tone: "warn",
+    message: "Faltan 2 facturas y 1 ticket por registrar.",
+    response: "Te aviso hoy y manana para llegar al cierre 2025 sin sorpresas.",
+    footer: "Simulacion demo para mostrar flujo de trabajo.",
+  },
+  {
+    id: "isaak-3",
+    title: "IVA estimado",
+    badge: "Info",
+    tone: "info",
+    message: "IVA estimado del periodo: 3.420 EUR.",
+    response: "Puedo revisar si hay gastos deducibles pendientes.",
+    footer: "Activa la prueba para conectar tu banco.",
+  },
+  {
+    id: "isaak-4",
+    title: "Clientes clave",
+    badge: "OK",
+    tone: "ok",
+    message: "Tus 3 clientes principales concentran el 48% de ingresos.",
+    response: "Quieres que programe alertas para sus cobros?",
+    footer: "En demo los clientes son simulados.",
+  },
+];
 
 export const demoData: DemoData = {
   tenant: {
-    id: 'demo-tenant',
-    name: 'Empresa Demo SL',
-    nif: 'B12345678',
+    id: "demo-tenant",
+    name: "Empresa Demo SL",
+    legalName: "Empresa Demo SL",
+    nif: "B12345678",
     createdAt: formatDate(daysAgo(200)),
   },
   kpis: {
@@ -198,115 +454,26 @@ export const demoData: DemoData = {
     vatEstimated: Math.round(vatEstimated * 100) / 100,
     invoicesCount: invoicesMonth.length,
     lastUpdated: new Date().toISOString(),
+    ventasMes: Math.round(revenueMonth * 100) / 100,
+    gastosMes: expensesMonth,
+    beneficioMes: profitMonth,
+    ivaEstimado: Math.round(vatEstimated * 100) / 100,
+    facturasPendientes,
   },
   pnl: {
-    periodLabel: 'Mes actual',
+    periodLabel: "Periodo actual",
     revenue: Math.round(revenueMonth * 100) / 100,
     expenses: expensesMonth,
     profit: profitMonth,
-    margin: Math.round(marginMonth * 10000) / 100,
+    margin: marginMonth,
     vatEstimated: Math.round(vatEstimated * 100) / 100,
   },
   invoices,
   payments,
-  isaakExamples: [
-    {
-      prompt: 'Resume ventas y gastos del mes actual',
-      answer: 'Ventas netas 18.420 EUR, gastos 5.890 EUR y beneficio estimado 12.530 EUR.',
-    },
-    {
-      prompt: 'Que facturas estan pendientes de cobro?',
-      answer: 'Hay 4 facturas pendientes por un total de 8.210 EUR. Quieres enviar recordatorios?',
-    },
-    {
-      prompt: 'Prepara un resumen para mi asesoria',
-      answer:
-        'Listo: ventas, gastos y beneficio acumulado con IVA estimado. Puedo compartirlo en un enlace seguro.',
-    },
-    {
-      prompt: 'Revisa el IVA estimado del trimestre',
-      answer:
-        'IVA repercutido estimado: 3.870 EUR. Puedo marcar gastos deducibles si faltan tickets.',
-    },
-    {
-      prompt: 'Detecta variaciones frente al mes pasado',
-      answer: 'Ventas +12%, gastos +7%. El margen sube al 68%.',
-    },
-    {
-      prompt: 'Emite una factura VeriFactu para Nova Retail SL',
-      answer: 'He preparado el borrador VF-2026-0043 con 21% IVA. Solo falta confirmar la fecha.',
-    },
-    {
-      prompt: 'Valida si una factura cumple VeriFactu',
-      answer: 'La factura tiene numeracion correlativa y hash correcto. Lista para envio.',
-    },
-    {
-      prompt: 'Sube las escrituras y vincula al expediente',
-      answer: 'Documento cargado y etiquetado como societario. Quieres avisar a tu asesor?',
-    },
-    {
-      prompt: 'Guarda el CIF de la empresa',
-      answer: 'CIF guardado y asociado al perfil. Puedo usarlo en futuras facturas.',
-    },
-    {
-      prompt: 'Muestrame los documentos del ultimo trimestre',
-      answer: 'Tengo 18 documentos: 10 facturas, 6 gastos y 2 contratos. Los ordeno por fecha?',
-    },
-    {
-      prompt: 'Calcula el beneficio estimado hoy',
-      answer: 'Beneficio estimado hoy: 12.530 EUR. Margen 68,0%.',
-    },
-    {
-      prompt: 'Genera un aviso de cierre trimestral',
-      answer: 'Aviso programado para el dia 20 con checklist de ventas y gastos.',
-    },
-    {
-      prompt: 'Conecta movimientos bancarios de enero',
-      answer: 'En demo no puedo conectar bancos, pero te muestro como quedaria la conciliacion.',
-    },
-    {
-      prompt: 'Comparte un resumen con mi gestoria',
-      answer: 'Resumen listo con ventas, gastos e IVA estimado. Puedo compartir por enlace seguro.',
-    },
-    {
-      prompt: 'Detecta gastos duplicados',
-      answer: 'He encontrado 2 gastos similares del mismo proveedor en 48h.',
-    },
-    {
-      prompt: 'Crea una factura recurrente mensual',
-      answer: 'Plantilla recurrente creada. Se emitira el dia 1 de cada mes.',
-    },
-    {
-      prompt: 'Exporta libros de facturas',
-      answer: 'Exportacion preparada con trazabilidad VeriFactu y fechas.',
-    },
-    {
-      prompt: 'Marca esta factura como cobrada',
-      answer: 'En demo no puedo registrar cobros reales, pero actualizaria el estado a cobrada.',
-    },
-    {
-      prompt: 'Que impuestos tengo aproximados?',
-      answer: 'IVA estimado 3.870 EUR. IRPF/IS depende de tu configuracion y gastos deducibles.',
-    },
-    {
-      prompt: 'Organiza gastos por proyecto',
-      answer: "Proyecto 'Web 2026' tiene 12 gastos y margen 62%.",
-    },
-    {
-      prompt: 'Revisa vencimientos proximos',
-      answer: '3 facturas vencen en 7 dias. Puedo programar recordatorios.',
-    },
-    {
-      prompt: 'Mostrar facturas emitidas en febrero',
-      answer: 'En febrero emitiste 9 facturas por 14.200 EUR netos.',
-    },
-    {
-      prompt: 'Ver documentos pendientes de revisar',
-      answer: 'Tienes 4 tickets sin categoria. Te los muestro para clasificar.',
-    },
-    {
-      prompt: 'Ayudame con una rectificativa',
-      answer: 'Te guiare paso a paso: motivo, numero original y nueva base imponible.',
-    },
-  ],
+  customers,
+  bankMovements,
+  documents,
+  calendarItems,
+  isaakExamples,
+  isaakCards,
 };

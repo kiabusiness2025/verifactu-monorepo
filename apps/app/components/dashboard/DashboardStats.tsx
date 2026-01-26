@@ -5,6 +5,7 @@ import { FileText, Receipt, FolderUp } from "lucide-react";
 import { useDataMode } from "@/src/lib/data/useDataMode";
 import { getKpis } from "@/src/lib/data/client";
 import { formatCurrency } from "@/src/lib/formatters";
+import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
 
 type Stat = {
   title: string;
@@ -21,6 +22,7 @@ const toneClasses: Record<NonNullable<Stat["tone"]>, string> = {
 
 export function DashboardStats() {
   const dataMode = useDataMode();
+  const isDemo = dataMode === "demo";
   const kpis = getKpis(dataMode);
 
   const stats: Stat[] = kpis
@@ -69,24 +71,49 @@ export function DashboardStats() {
           </div>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#0b6cfb]/10 text-[#0b6cfb]">
-              <FileText className="h-4 w-4" />
-            </span>
-            <span>1. Crea tu primera factura</span>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
-              <Receipt className="h-4 w-4" />
-            </span>
-            <span>2. Registra un gasto recurrente</span>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
-              <FolderUp className="h-4 w-4" />
-            </span>
-            <span>3. Sube un documento fiscal</span>
-          </div>
+          {[
+            {
+              icon: FileText,
+              label: "1. Crea tu primera factura",
+              color: "bg-[#0b6cfb]/10 text-[#0b6cfb]",
+            },
+            {
+              icon: Receipt,
+              label: "2. Registra un gasto recurrente",
+              color: "bg-emerald-100 text-emerald-600",
+            },
+            {
+              icon: FolderUp,
+              label: "3. Sube un documento fiscal",
+              color: "bg-amber-100 text-amber-700",
+            },
+          ].map((step) => {
+            const content = (
+              <>
+                <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${step.color}`}>
+                  <step.icon className="h-4 w-4" />
+                </span>
+                <span>{step.label}</span>
+              </>
+            );
+
+            return isDemo ? (
+              <DemoLockedButton
+                key={step.label}
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600"
+                toastMessage="Disponible con tu prueba"
+              >
+                {content}
+              </DemoLockedButton>
+            ) : (
+              <div
+                key={step.label}
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-600"
+              >
+                {content}
+              </div>
+            );
+          })}
         </div>
       </div>
     );

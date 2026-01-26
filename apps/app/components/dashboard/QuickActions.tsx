@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useCreateCompanyModal } from "@/context/CreateCompanyModalContext";
+import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
 
 type Action = {
   label: string;
@@ -80,45 +81,66 @@ export function QuickActions({ isDemo = false }: { isDemo?: boolean }) {
     },
   ];
 
+  const cardClassName =
+    "group flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md";
+
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-      {actions.map((action) => (
-        <button
-          key={action.label}
-          onClick={() => {
-            if (isDemo) return;
-            if (action.onClick) {
-              action.onClick();
-              return;
-            }
-            router.push(action.href);
-          }}
-          disabled={isDemo}
-          className="group flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-[#0b214a]">
-                {action.label}
-              </p>
-              <p className="text-xs text-slate-500">{action.description}</p>
+      {actions.map((action) => {
+        const content = (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-[#0b214a]">
+                  {action.label}
+                </p>
+                <p className="text-xs text-slate-500">{action.description}</p>
+              </div>
+              <span
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${action.accent} text-xs font-semibold text-white shadow-sm`}
+              >
+                <action.icon className="h-5 w-5" aria-hidden="true" />
+              </span>
             </div>
-            <span
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${action.accent} text-xs font-semibold text-white shadow-sm`}
+            <div className="mt-4 flex items-center justify-between">
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                {action.badge}
+              </span>
+              <span className="text-xs font-semibold text-[#0b6cfb]">
+                Ir
+              </span>
+            </div>
+          </>
+        );
+
+        if (isDemo) {
+          return (
+            <DemoLockedButton
+              key={action.label}
+              className={cardClassName}
+              toastMessage="Disponible con tu prueba"
             >
-              <action.icon className="h-5 w-5" aria-hidden="true" />
-            </span>
-          </div>
-          <div className="mt-4 flex items-center justify-between">
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-              {action.badge}
-            </span>
-            <span className="text-xs font-semibold text-[#0b6cfb]">
-              Ir
-            </span>
-          </div>
-        </button>
-      ))}
+              {content}
+            </DemoLockedButton>
+          );
+        }
+
+        return (
+          <button
+            key={action.label}
+            onClick={() => {
+              if (action.onClick) {
+                action.onClick();
+                return;
+              }
+              router.push(action.href);
+            }}
+            className={cardClassName}
+          >
+            {content}
+          </button>
+        );
+      })}
     </div>
   );
 }
