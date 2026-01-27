@@ -1,22 +1,14 @@
 'use client';
 
-import { Search, Building2, MapPin, Phone, Mail, Users, TrendingUp } from 'lucide-react';
+import { Search, Building2, MapPin } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 interface EInformaCompany {
-  id: string;
+  einformaId: string;
   name: string;
-  legal_name: string;
-  tax_id: string;
-  address: string;
-  city: string;
-  postal_code: string;
-  country: string;
-  email?: string;
-  phone?: string;
-  employees?: number;
-  revenue?: number;
-  sector?: string;
+  nif: string;
+  province?: string;
+  city?: string;
 }
 
 interface EInformaSearchProps {
@@ -56,7 +48,7 @@ export function EInformaSearch({
 
       setLoading(true);
       try {
-        const res = await fetch(`/api/einforma/search?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/onboarding/einforma/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
 
         if (data.ok) {
@@ -128,7 +120,7 @@ export function EInformaSearch({
           <div className="p-2 space-y-1">
             {results.map((company, index) => (
               <button
-                key={company.id}
+                key={company.einformaId}
                 type="button"
                 onClick={() => handleSelect(company)}
                 className={`w-full text-left p-3 rounded-lg transition-colors ${
@@ -143,60 +135,28 @@ export function EInformaSearch({
                       <Building2 className="h-4 w-4 text-blue-600 flex-shrink-0" />
                       <h3 className="font-semibold text-slate-900 truncate">{company.name}</h3>
                     </div>
-                    <p className="text-xs text-slate-600 mt-0.5">{company.legal_name}</p>
-
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-500">
                       <span className="flex items-center gap-1 font-medium text-slate-700">
-                        <span className="font-semibold">CIF:</span> {company.tax_id}
+                        <span className="font-semibold">CIF:</span> {company.nif}
                       </span>
-                      {company.sector && (
+                      {(company.city || company.province) && (
                         <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                          {company.sector}
+                          {[company.city, company.province].filter(Boolean).join(", ")}
                         </span>
                       )}
                     </div>
 
                     <div className="mt-2 space-y-1">
-                      {company.address && (
+                      {(company.city || company.province) && (
                         <div className="flex items-center gap-1.5 text-xs text-slate-600">
                           <MapPin className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">
-                            {company.address}, {company.postal_code} {company.city}
+                            {[company.city, company.province].filter(Boolean).join(", ")}
                           </span>
                         </div>
                       )}
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
-                        {company.phone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {company.phone}
-                          </span>
-                        )}
-                        {company.email && (
-                          <span className="flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {company.email}
-                          </span>
-                        )}
-                      </div>
                     </div>
 
-                    {(company.employees || company.revenue) && (
-                      <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
-                        {company.employees && (
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {company.employees} empleados
-                          </span>
-                        )}
-                        {company.revenue && (
-                          <span className="flex items-center gap-1">
-                            <TrendingUp className="h-3 w-3" />
-                            {(company.revenue / 1000000).toFixed(1)}M€
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
               </button>
@@ -205,7 +165,7 @@ export function EInformaSearch({
 
           <div className="border-t border-slate-200 p-2 bg-slate-50">
             <p className="text-xs text-slate-500 text-center">
-              ↑ ↓ para navegar • Enter para seleccionar • Esc para cerrar
+              Usa Arriba/Abajo para navegar, Enter para seleccionar, Esc para cerrar
             </p>
           </div>
         </div>

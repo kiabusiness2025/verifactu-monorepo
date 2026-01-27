@@ -5,12 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useIsaakUI } from "@/context/IsaakUIContext";
-import { useIsaakContext } from "@/hooks/useIsaakContext";
 import { useLogout } from "@/hooks/useLogout";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreateCompanyModal } from "@/context/CreateCompanyModalContext";
 import { LayoutGrid, Shield, Plus } from "lucide-react";
-import { getUserFirstName } from "@/lib/getUserName";
 import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
 
 type TopbarProps = {
@@ -39,8 +37,6 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   const createCompanyModal = useCreateCompanyModal();
   const { setCompany } = useIsaakUI();
   const { user: firebaseUser, signOut: firebaseSignOut } = useAuth();
-  const userName = getUserFirstName(firebaseUser);
-  const { greeting } = useIsaakContext(userName);
   const { logout, isLoggingOut } = useLogout();
   const [tenants, setTenants] = useState<TenantOption[]>([]);
   const [activeTenantId, setActiveTenantId] = useState("");
@@ -49,7 +45,11 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   const [isSwitching, setIsSwitching] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDemoFallback, setIsDemoFallback] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const effectiveDemo = isDemo || isDemoFallback;
+  const allowDemoFallback = process.env.NODE_ENV !== "production";
+  const demoOption = { id: "demo", name: demoCompanyName };
 
   const availablePanels: PanelOption[] = [
     {
@@ -90,7 +90,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   }, [showUserMenu]);
 
   useEffect(() => {
-    if (isDemo) {
+    if (effectiveDemo) {
       setIsAdmin(false);
       return;
     }
@@ -105,10 +105,10 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
       }
     }
     checkAdminStatus();
-  }, [firebaseUser, isDemo]);
+  }, [firebaseUser, effectiveDemo]);
 
   useEffect(() => {
-    if (isDemo) {
+    if (effectiveDemo) {
       const demoTenant = { id: "demo", name: demoCompanyName };
       setTenants([demoTenant]);
       setActiveTenantId(demoTenant.id);
@@ -128,6 +128,23 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
         }
 
         const items = Array.isArray(data.tenants) ? data.tenants : [];
+        if (items.length === 0) {
+          if (mounted) {
+            setTenants([]);
+            setActiveTenantId("");
+            setCompany("Empresa");
+            setTenantLogoURL(null);
+            setIsLoadingTenants(false);
+            setIsDemoFallback(allowDemoFallback);
+            setIsAdmin(false);
+          }
+          if (allowDemoFallback && typeof window !== "undefined") {
+            window.__VF_DEMO_MODE__ = true;
+            window.localStorage.setItem("vf_demo_mode", "1");
+            window.dispatchEvent(new Event("vf-demo-mode"));
+          }
+          return;
+        }
         const preferredId =
           typeof data.preferredTenantId === "string"
             ? data.preferredTenantId
@@ -146,12 +163,27 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
           if (initialId) {
             loadTenantLogo(initialId);
           }
+          if (typeof window !== "undefined") {
+            window.localStorage.removeItem("vf_demo_mode");
+            window.__VF_DEMO_MODE__ = false;
+            window.dispatchEvent(new Event("vf-demo-mode"));
+          }
         }
       } catch (error) {
         console.error("Failed to load tenants:", error);
         if (mounted) {
+          const demoTenant = { id: "demo", name: demoCompanyName };
           setTenants([]);
           setActiveTenantId("");
+          setCompany("Empresa");
+          setTenantLogoURL(null);
+          setIsDemoFallback(allowDemoFallback);
+          setIsAdmin(false);
+        }
+        if (allowDemoFallback && typeof window !== "undefined") {
+          window.__VF_DEMO_MODE__ = true;
+          window.localStorage.setItem("vf_demo_mode", "1");
+          window.dispatchEvent(new Event("vf-demo-mode"));
         }
       } finally {
         if (mounted) setIsLoadingTenants(false);
@@ -161,10 +193,10 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
     return () => {
       mounted = false;
     };
-  }, [demoCompanyName, isDemo, setCompany]);
+  }, [demoCompanyName, effectiveDemo, setCompany]);
 
   async function loadTenantLogo(tenantId: string) {
-    if (isDemo) return;
+    if (effectiveDemo) return;
     try {
       const res = await fetch(`/api/tenant/logo?tenantId=${tenantId}`, {
         credentials: "include"
@@ -182,7 +214,22 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   }
 
   async function handleTenantChange(nextId: string) {
-    if (isDemo) return;
+    if (nextId === "__add__") {
+      router.push("/dashboard/onboarding?next=/dashboard");
+      return;
+    }
+    if (nextId === "demo") {
+      setIsDemoFallback(true);
+      setActiveTenantId("demo");
+      setCompany(demoCompanyName);
+      if (typeof window !== "undefined") {
+        window.__VF_DEMO_MODE__ = true;
+        window.localStorage.setItem("vf_demo_mode", "1");
+        window.dispatchEvent(new Event("vf-demo-mode"));
+      }
+      return;
+    }
+    if (effectiveDemo) return;
     if (!nextId || nextId === activeTenantId) return;
     setIsSwitching(true);
     try {
@@ -202,6 +249,11 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
       if (selected?.name) setCompany(selected.name);
       // Cargar logo del nuevo tenant
       loadTenantLogo(nextId);
+      if (typeof window !== "undefined") {
+        window.__VF_DEMO_MODE__ = false;
+        window.localStorage.removeItem("vf_demo_mode");
+        window.dispatchEvent(new Event("vf-demo-mode"));
+      }
     } catch (error) {
       console.error("Failed to switch tenant:", error);
     } finally {
@@ -209,10 +261,10 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
     }
   }
 
-  const tenantOptions = isDemo ? [{ id: "demo", name: demoCompanyName }] : tenants;
-  const tenantSelectDisabled = isDemo || isLoadingTenants || isSwitching || tenantOptions.length === 0;
+  const tenantOptions = effectiveDemo ? [demoOption] : [...tenants, demoOption];
+  const tenantSelectDisabled = isLoadingTenants || isSwitching || tenantOptions.length === 0;
   const handleCreateCompany =
-    !isDemo && createCompanyModal?.openModal ? () => createCompanyModal.openModal() : undefined;
+    !effectiveDemo && createCompanyModal?.openModal ? () => createCompanyModal.openModal() : undefined;
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur">
@@ -264,13 +316,13 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
 
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-sm font-semibold text-[#0b214a]">
-            <span>{greeting}</span>
+            <span>Panel de cliente</span>
             {currentPanel?.id === "admin" && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
                 Modo admin
               </span>
             )}
-            {isDemo && (
+            {effectiveDemo && (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                 Modo demo
               </span>
@@ -286,17 +338,17 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
                   disabled={tenantSelectDisabled}
                   className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
                 >
-                  {tenantOptions.length === 0 ? (
+                  {!effectiveDemo && tenants.length === 0 && (
                     <option value="">Sin empresas</option>
-                  ) : (
-                    tenantOptions.map((tenant) => (
-                      <option key={tenant.id} value={tenant.id}>
-                        {tenant.name}
-                      </option>
-                    ))
                   )}
+                  {tenantOptions.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>
+                      {tenant.name}
+                    </option>
+                  ))}
+                  <option value="__add__">+ Anadir empresa</option>
                 </select>
-                {isDemo ? (
+                {effectiveDemo ? (
                   <DemoLockedButton
                     className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100"
                     aria-label="Crear empresa"

@@ -55,7 +55,7 @@ async function getTenantForUser(uid: string, email: string, displayName?: string
     `INSERT INTO users (id, email, name)
      VALUES ($1, $2, $3)
      ON CONFLICT (email)
-     DO UPDATE SET name = EXCLUDED.name
+     DO UPDATE SET name = EXCLUDED.name, updated_at = NOW()
      RETURNING id`,
     [uid, email, userName]
   );

@@ -19,6 +19,7 @@ model Tenant {
   users              Membership[]
   userPref           UserPreference[]
   subscriptions      Subscription[]
+  profile            TenantProfile?
   invoices           Invoice[]
   invoiceLines       InvoiceLine[]
   payments           Payment[]
@@ -31,11 +32,28 @@ model Tenant {
   @@map("tenants")
 }
 
+model TenantProfile {
+  tenantId          String    @id @map("tenant_id") @db.Uuid
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  source            String    @default("manual")
+  sourceId          String?   @map("source_id")
+  cnae              String?
+  incorporationDate DateTime? @map("incorporation_date") @db.Date
+  address           String?
+  city              String?
+  province          String?
+  representative    String?
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("tenant_profiles")
+}
+
 model User {
   id        String   @id @db.Text
   email     String   @unique
   name      String?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   memberships        Membership[]
   preferences        UserPreference?
