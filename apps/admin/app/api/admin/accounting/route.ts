@@ -60,17 +60,17 @@ export async function GET(req: Request) {
     }>(
       `SELECT 
         COUNT(DISTINCT i.id) as total_invoices,
-        COALESCE(SUM(i.total), 0) as total_revenue,
+        COALESCE(SUM(i.amount_gross), 0) as total_revenue,
         COUNT(DISTINCT e.id) as total_expenses,
-        COALESCE(SUM(e.amount_gross), 0) as total_costs
+        COALESCE(SUM(e.amount), 0) as total_costs
        FROM tenants t
        LEFT JOIN invoices i ON i.tenant_id = t.id 
-         AND i.issue_date >= $1 
-         AND i.issue_date <= $2
+         AND i.issue_date >= $1::date 
+         AND i.issue_date <= $2::date
          AND i.status IN ('sent', 'paid')
-       LEFT JOIN expenses e ON e.tenant_id = t.id
-         AND e.issue_date >= $1 
-         AND e.issue_date <= $2`,
+       LEFT JOIN expense_records e ON e.tenant_id = t.id
+         AND e.date >= $1::date 
+         AND e.date <= $2::date`,
       [startDate, endDate]
     );
 
@@ -90,7 +90,7 @@ export async function GET(req: Request) {
     }>(
       `SELECT 
         TO_CHAR(DATE_TRUNC('month', date_series), 'YYYY-MM') as month,
-        COALESCE(SUM(i.total), 0) as revenue,
+        COALESCE(SUM(i.amount_gross), 0) as revenue,
         COUNT(DISTINCT i.id) as invoices
        FROM (
          SELECT generate_series(
@@ -121,12 +121,12 @@ export async function GET(req: Request) {
       `SELECT 
         t.id as tenant_id,
         COALESCE(t.legal_name, t.name) as legal_name,
-        COALESCE(SUM(i.total), 0) as revenue,
+        COALESCE(SUM(i.amount_gross), 0) as revenue,
         COUNT(DISTINCT i.id) as invoices
        FROM tenants t
        LEFT JOIN invoices i ON i.tenant_id = t.id
-         AND i.issue_date >= $1
-         AND i.issue_date <= $2
+         AND i.issue_date >= $1::date
+         AND i.issue_date <= $2::date
          AND i.status IN ('sent', 'paid')
        GROUP BY t.id, t.legal_name, t.name
        ORDER BY revenue DESC
