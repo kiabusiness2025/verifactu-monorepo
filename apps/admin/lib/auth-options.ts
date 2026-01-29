@@ -51,21 +51,52 @@ export const authOptions: AuthOptions = {
       // 🔑 Cargar rol desde DB
       if (token.email) {
         try {
-          const dbUser = await prisma.user.findUnique({
+          let dbUser = await prisma.user.findUnique({
             where: { email: token.email },
-            select: { role: true, id: true },
+            select: { role: true, id: true, name: true },
           });
 
-          if (dbUser) {
+          // Si no existe, crearlo con rol ADMIN si el email es admin
+          const allowedEmail = (process.env.ADMIN_ALLOWED_EMAIL || 'support@verifactu.business').toLowerCase();
+          const allowedDomain = (process.env.ADMIN_ALLOWED_DOMAIN || 'verifactu.business').toLowerCase();
+          const isAdmin = token.email === allowedEmail || token.email.endsWith(`@${allowedDomain}`);
+
+          if (!dbUser) {
+            dbUser = await prisma.user.create({
+              data: {
+                email: token.email,
+                role: isAdmin ? 'ADMIN' : 'USER',
+              },
+              select: { role: true, id: true, name: true },
+            });
             token.role = dbUser.role;
             token.userId = dbUser.id;
+
+            // Sincronizar usuario en Firebase
+            try {
+              const { firebaseAuth } = await import('./firebase-admin');
+              await firebaseAuth.createUser({
+                email: token.email,
+                displayName: dbUser.name || token.email,
+              });
+              console.log('✅ Usuario sincronizado en Firebase:', token.email);
+            } catch (fbError) {
+              console.error('❌ Error creando usuario en Firebase:', fbError);
+            }
           } else {
-            // Usuario no existe en DB, asignar USER por defecto
-            token.role = 'USER';
-            token.userId = null;
+            // Si existe y es admin, actualizar rol si corresponde
+            if (isAdmin && dbUser.role !== 'ADMIN') {
+              dbUser = await prisma.user.update({
+                where: { email: token.email },
+                data: { role: 'ADMIN' },
+              select: { role: true, id: true, name: true },
+            });
+            }
+            token.role = dbUser.role;
+            token.userId = dbUser.id;
           }
         } catch (error) {
-          console.error('Error fetching user from DB:', error);
+          console.error('Error syncing user in DB/Firebase:', error);
           token.role = 'USER';
           token.userId = null;
         }

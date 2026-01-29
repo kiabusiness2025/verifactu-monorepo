@@ -1,62 +1,44 @@
-# Panel de Administración - Verifactu Business
 
-Panel de administración interno para gestión de usuarios, empresas, suscripciones y operaciones del sistema Verifactu.
+# Admin Panel – Verifactu Business
 
-## 🔐 Acceso Restringido
+Panel de administración para gestión de usuarios, empresas, suscripciones y operaciones.
 
-**Dominio:** `admin.verifactu.business`  
-**Acceso:** Solo usuarios con email `@verifactu.business` (Google Workspace OAuth)  
-**Roles:** `SUPPORT` y `ADMIN`
+## 🚀 Stack
+- Next.js 14 (App Router)
+- TypeScript
+- Stripe (suscripciones)
+- Resend (emails)
+- Firebase Auth
+- PostgreSQL
 
-## 🏗️ Arquitectura
-
+## 📁 Estructura
 ```
 apps/admin/
-├── app/                    # Next.js 14 App Router
-│   ├── api/               # API Routes
-│   ├── auth/              # Autenticación
-│   ├── dashboard/         # Panel principal
-│   │   ├── overview/      # KPIs y métricas
-│   │   ├── users/         # Gestión de usuarios
-│   │   ├── companies/     # Gestión de empresas
-│   │   ├── billing/       # Stripe & suscripciones
-│   │   ├── operations/    # Webhooks, logs, errores
-│   │   ├── einforma/      # Búsquedas e informes
-│   │   ├── email/         # Resend monitor
-│   │   ├── deployments/   # Vercel & GitHub
-│   │   └── audit/         # Logs de auditoría
-│   └── layout.tsx
-├── components/            # Componentes específicos
-├── lib/                   # Utilidades
-├── public/                # Recursos estáticos
-└── .env.local            # Credenciales (NO commitear)
+├── app/           # App router y páginas admin
+├── components/    # Componentes específicos
+├── lib/           # Utilidades
+├── public/        # Recursos estáticos
+├── .env.local     # Variables de entorno
 ```
 
-## 📦 Paquetes Compartidos
+## 🔗 Paquetes Compartidos
+- @verifactu/auth
+- @verifactu/ui
+- @verifactu/integrations
 
-El panel usa packages compartidos del monorepo:
+## 🛠️ Scripts útiles
+- `pnpm dev` – Desarrollo local
+- `pnpm build` – Build producción
+- `pnpm lint` – Lint
+- `pnpm type-check` – Type check
 
-- `@verifactu/auth` - Autenticación, RBAC, guards
-- `@verifactu/ui` - Componentes UI accesibles
-- `@verifactu/integrations` - Clients para Stripe, Vercel, GitHub, etc.
+## ⚡ Primeros pasos
+1. Copia `.env.example` a `.env.local` y configura credenciales
+2. `pnpm install`
+3. `pnpm dev`
 
-## 🚀 Inicio Rápido
-
-### 1. Instalar dependencias
-
-```bash
-pnpm install
-```
-
-### 2. Configurar credenciales
-
-Copia el archivo `.env.example` a `.env.local` y completa las credenciales:
-
-```bash
-cp .env.example .env.local
-```
-
-Credenciales requeridas:
+---
+Actualizado: enero 2026
 
 - ✅ Google OAuth (ya configurado)
 - ⚠️ GitHub Personal Access Token (necesario)
@@ -80,17 +62,13 @@ El panel estará disponible en: `http://localhost:3003`
 
 ## 🔑 Autenticación y Permisos
 
-### Middleware RBAC
+### Sincronización automática Google/Firebase → Prisma
 
-El panel implementa un sistema robusto de control de acceso. Ver guía completa: [MIDDLEWARE_RBAC.md](./docs/MIDDLEWARE_RBAC.md)
-
-**Características:**
-
-- ✅ Protección server-side con NextAuth JWT
-- ✅ Validación de email específico + dominio completo
-- ✅ Validación de roles (ADMIN/SUPPORT)
-- ✅ Redirección automática si no autenticado
-- ✅ 403 Forbidden si no autorizado
+Al iniciar sesión con Google/Firebase:
+- Si el usuario no existe en Prisma y el email es admin, se crea automáticamente con rol ADMIN.
+- Si el usuario existe y el email es admin, se actualiza el rol a ADMIN si es necesario.
+- El acceso admin está garantizado para soporte@verifactu.business y kiabusiness2025@gmail.com.
+- El flujo es transparente: solo inicia sesión con Google y tendrás acceso admin si tu email está autorizado.
 
 **Configuración en `.env.local`:**
 
@@ -98,6 +76,8 @@ El panel implementa un sistema robusto de control de acceso. Ver guía completa:
 ADMIN_ALLOWED_EMAIL="support@verifactu.business"
 ADMIN_ALLOWED_DOMAIN="verifactu.business"
 ```
+
+Ver guía completa: [MIDDLEWARE_RBAC.md](./docs/MIDDLEWARE_RBAC.md)
 
 ### Roles
 

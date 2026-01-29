@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+﻿import { redirect } from 'next/navigation';
 
 export default function AdminRoot() {
-  redirect('/overview');
+  redirect('/dashboard/admin');
 }

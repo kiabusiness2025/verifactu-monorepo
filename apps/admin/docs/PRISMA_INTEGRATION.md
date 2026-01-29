@@ -18,10 +18,8 @@ Conectar el admin panel con la base de datos PostgreSQL usando Prisma para reemp
 
 ### ⏳ Pendiente
 
-- [ ] Crear schema Prisma completo
-- [ ] Ejecutar migraciones
-- [ ] Actualizar APIs para usar Prisma
-- [ ] Poblar datos iniciales (seed)
+
+- [x] Sincronización automática: al iniciar sesión con Google/Firebase, si el usuario no existe en Prisma y el email es admin, se crea automáticamente con rol ADMIN. Si existe y el email es admin, se actualiza el rol a ADMIN si es necesario.
 
 ---
 

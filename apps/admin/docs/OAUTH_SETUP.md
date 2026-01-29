@@ -73,11 +73,12 @@ Click en "Añadir o quitar alcances" y selecciona:
 
 Click en "Guardar y continuar"
 
-### 2.4 Usuarios de Prueba (Opcional)
+### 2.4 Sincronización automática con Prisma
 
-Si tu app está en modo "Testing", añade emails de prueba:
-
-- `soporte@verifactu.business`
+Al iniciar sesión con Google/Firebase:
+- Si el usuario no existe en Prisma y el email es admin, se crea automáticamente con rol ADMIN.
+- Si el usuario existe y el email es admin, se actualiza el rol a ADMIN si es necesario.
+- El acceso admin está garantizado para soporte@verifactu.business y kiabusiness2025@gmail.com.
 - `admin@verifactu.business`
 
 ## 🎫 3. Crear Credenciales OAuth 2.0

@@ -8,8 +8,39 @@ export type AdminSession = {
   email?: string | null;
 };
 
+type SessionLike = {
+  user?: {
+    id?: string | null;
+    role?: string | null;
+    email?: string | null;
+    name?: string | null;
+  } | null;
+};
+
+function isLocalBypassEnabled() {
+  return process.env.ADMIN_LOCAL_BYPASS === "1" && process.env.NODE_ENV !== "production";
+}
+
+export async function getAdminSessionOrNull(): Promise<SessionLike | null> {
+  const session = (await getServerSession(authOptions)) as SessionLike | null;
+  if (session?.user) return session;
+
+  if (isLocalBypassEnabled()) {
+    return {
+      user: {
+        id: "local-admin",
+        role: "ADMIN",
+        email: "local@verifactu.business",
+        name: "Admin Local",
+      },
+    };
+  }
+
+  return null;
+}
+
 export async function requireAdminSession(): Promise<AdminSession> {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSessionOrNull();
   if (!session?.user) {
     throw NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

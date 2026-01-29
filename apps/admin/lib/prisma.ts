@@ -1,2 +1,5 @@
-// Re-export prisma from shared db package
-export { prisma } from '@verifactu/db';
+// Re-export prisma from shared db package (named + default for compatibility)
+import { prisma } from '@verifactu/db';
+
+export { prisma };
+export default prisma;

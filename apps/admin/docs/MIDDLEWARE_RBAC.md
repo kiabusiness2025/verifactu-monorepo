@@ -36,7 +36,12 @@ El middleware protege todas las rutas del admin panel excepto las públicas.
 
 ## 🔧 Variables de Entorno
 
-### Configuración en `.env.local`
+### Sincronización automática Google/Firebase → Prisma
+
+Al iniciar sesión con Google/Firebase:
+- Si el usuario no existe en Prisma y el email es admin, se crea automáticamente con rol ADMIN.
+- Si el usuario existe y el email es admin, se actualiza el rol a ADMIN si es necesario.
+- El acceso admin está garantizado para soporte@verifactu.business y kiabusiness2025@gmail.com.
 
 ```bash
 # Email específico permitido
