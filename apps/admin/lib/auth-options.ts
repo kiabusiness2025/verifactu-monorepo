@@ -3,6 +3,16 @@ import { AuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { prisma } from './prisma';
 
+// Provide sensible defaults in local dev to avoid NextAuth warnings.
+if (process.env.NODE_ENV !== 'production') {
+  if (!process.env.NEXTAUTH_URL) {
+    process.env.NEXTAUTH_URL = 'http://localhost:3010';
+  }
+  if (!process.env.NEXTAUTH_SECRET) {
+    process.env.NEXTAUTH_SECRET = 'dev-admin-secret';
+  }
+}
+
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: 'jwt', maxAge: 8 * 60 * 60 }, // 8 hours
@@ -112,5 +122,5 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env.NEXTAUTH_DEBUG === 'true',
 };

@@ -3,6 +3,7 @@
 export async function requireAdmin(_req: Request): Promise<{ email: string; userId: string }> {
   const allowLocalBypass =
     process.env.ADMIN_LOCAL_BYPASS === '1' && process.env.NODE_ENV !== 'production';
+  const isDev = process.env.NODE_ENV !== 'production';
   if (allowLocalBypass) {
     return { email: 'local-bypass@verifactu.business', userId: 'local-bypass' };
   }
@@ -15,6 +16,11 @@ export async function requireAdmin(_req: Request): Promise<{ email: string; user
     .split(',')
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
+
+  // Allow any authenticated user in dev if no admin list is configured.
+  if (isDev && adminEmails.length === 0 && email) {
+    return { email, userId };
+  }
 
   if (!email || adminEmails.length === 0 || !adminEmails.includes(email)) {
     throw new Error('FORBIDDEN: Admin access required');
