@@ -21,6 +21,30 @@ apps/admin/
 +-- docs/          # guias internas
 ```
 
+## Sitemap (control tower)
+Rutas nuevas (no eliminan las rutas legacy `/dashboard/admin/*`):
+- `/login`, `/logout`
+- `/dashboard`
+- `/tenants`, `/tenants/new`, `/tenants/[id]`, `/tenants/[id]/overview`
+- `/tenants/[id]/users`
+- `/tenants/[id]/billing`
+- `/tenants/[id]/integrations`, `/integrations/banks`, `/integrations/verifactu`
+- `/tenants/[id]/emails`
+- `/tenants/[id]/audit`
+- `/users` (busqueda global)
+- `/support-sessions`
+- `/audit-log`
+- `/operations`, `/operations/jobs`, `/operations/webhooks`, `/operations/errors`
+- `/settings`
+
+APIs sugeridas (admin):
+- `/api/health`
+- `/api/admin/tenants` (POST crear)
+- `/api/admin/support-sessions/start` (POST iniciar)
+- `/api/admin/support-sessions/stop` (POST parar)
+- `/api/admin/users` (GET busqueda global)
+- `/api/admin/operations/retry` (POST reintentos)
+
 ## Variables de entorno (minimo)
 Recomendado en `apps/admin/.env.local`:
 
@@ -64,9 +88,11 @@ GITHUB_TOKEN=
 ```
 
 ## Arranque local
+El script de `dev` ya fija el puerto 3003. Usa:
 ```
-pnpm --filter verifactu-admin dev -- --port 3010
+pnpm --filter verifactu-admin dev
 ```
+URL local: `http://localhost:3003`
 
 ## Migraciones y seed
 ```
@@ -80,8 +106,9 @@ pnpm -F @verifactu/db exec prisma db seed
 - NextAuth warnings (dev): `NEXTAUTH_URL` y `NEXTAUTH_SECRET` deben existir.
 
 ## Siguientes pasos
-1) Finalizar paneles: usuarios, suscripciones, email, vercel, soporte, auditoria.
-2) Conectar Resend y Stripe con datos reales.
-3) Revisar permisos SUPPORT y logs de auditoria.
+1) Reemplazar placeholders por datos reales en tenants/billing/integrations.
+2) Añadir handlers reales para soporte (handoff seguro, expiracion de token).
+3) Conectar Resend y Stripe con datos reales.
+4) Revisar permisos SUPPORT y logs de auditoria.
 
 Actualizado: enero 2026
