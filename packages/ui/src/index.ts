@@ -1,5 +1,5 @@
-export * from "./theme/ThemeProvider";
 export * from "./theme/ModeToggle";
+export * from "./theme/ThemeProvider";
 
 export * from "./app-shell/AppShell";
 export * from "./app-shell/types";
@@ -37,8 +37,8 @@ export type { BadgeProps } from "./badge/Badge";
 export { Logo } from "./logo/Logo";
 
 // Table
-export { Table, TableHeader, TableBody, TableRow, TableCell } from "./table";
-export type { TableProps, TableHeaderProps, TableBodyProps, TableRowProps, TableCellProps } from "./table";
+export { Table, TableBody, TableCell, TableHeader, TableRow } from "./table";
+export type { TableBodyProps, TableCellProps, TableHeaderProps, TableProps, TableRowProps } from "./table";
 
 // App shell
 export { AppShell } from "./app-shell/AppShell";
@@ -52,8 +52,8 @@ export { StatusBadge } from "./badges/StatusBadge";
 export type { StatusVariant } from "./badges/StatusBadge";
 
 // Theme
-export { ThemeProvider } from "./theme/ThemeProvider";
 export { ModeToggle } from "./theme/ModeToggle";
+export { ThemeProvider } from "./theme/ThemeProvider";
 
 // Isaak
 export { IsaakDock } from "./isaak/IsaakDock";

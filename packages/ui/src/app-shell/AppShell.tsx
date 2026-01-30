@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
+import * as React from "react";
+import { IsaakDock } from "../isaak/IsaakDock";
 import { cn } from "../lib/utils";
 import { ModeToggle } from "../theme/ModeToggle";
-import { IsaakDock } from "../isaak/IsaakDock";
 import type { NavItem } from "./types";
 
 type Props = {
