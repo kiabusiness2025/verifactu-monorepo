@@ -63,7 +63,7 @@ export const authOptions: AuthOptions = {
         try {
           let dbUser = await prisma.user.findUnique({
             where: { email: token.email },
-            select: { role: true, id: true, name: true },
+            select: { platformRole: true, id: true, displayName: true, firebaseUid: true },
           });
 
           // Si no existe, crearlo con rol ADMIN si el email es admin
@@ -72,14 +72,16 @@ export const authOptions: AuthOptions = {
           const isAdmin = token.email === allowedEmail || token.email.endsWith(`@${allowedDomain}`);
 
           if (!dbUser) {
+            const firebaseUid = token.sub || token.email;
             dbUser = await prisma.user.create({
               data: {
                 email: token.email,
-                role: isAdmin ? 'ADMIN' : 'USER',
+                firebaseUid,
+                platformRole: isAdmin ? 'SUPERADMIN' : 'USER',
               },
-              select: { role: true, id: true, name: true },
+              select: { platformRole: true, id: true, displayName: true, firebaseUid: true },
             });
-            token.role = dbUser.role;
+            token.role = dbUser.platformRole;
             token.userId = dbUser.id;
 
             // Sincronizar usuario en Firebase
@@ -87,7 +89,7 @@ export const authOptions: AuthOptions = {
               const { firebaseAuth } = await import('./firebase-admin');
               await firebaseAuth.createUser({
                 email: token.email,
-                displayName: dbUser.name || token.email,
+                displayName: dbUser.displayName || token.email,
               });
               console.log('✅ Usuario sincronizado en Firebase:', token.email);
             } catch (fbError) {
@@ -95,14 +97,14 @@ export const authOptions: AuthOptions = {
             }
           } else {
             // Si existe y es admin, actualizar rol si corresponde
-            if (isAdmin && dbUser.role !== 'ADMIN') {
+            if (isAdmin && dbUser.platformRole !== 'SUPERADMIN') {
               dbUser = await prisma.user.update({
                 where: { email: token.email },
-                data: { role: 'ADMIN' },
-              select: { role: true, id: true, name: true },
-            });
+                data: { platformRole: 'SUPERADMIN' },
+                select: { platformRole: true, id: true, displayName: true, firebaseUid: true },
+              });
             }
-            token.role = dbUser.role;
+            token.role = dbUser.platformRole;
             token.userId = dbUser.id;
           }
         } catch (error) {

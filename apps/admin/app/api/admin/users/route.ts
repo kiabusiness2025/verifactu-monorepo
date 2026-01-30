@@ -27,9 +27,9 @@ export async function GET() {
       select: {
         id: true,
         email: true,
-        name: true,
+        displayName: true,
         createdAt: true,
-        tenantMemberships: {
+        memberships: {
           select: {
             role: true,
             tenant: {
@@ -44,13 +44,16 @@ export async function GET() {
       },
     });
 
+    type UserRow = (typeof users)[number];
+    type MembershipRow = UserRow["memberships"][number];
+
     return NextResponse.json({
-      users: users.map((user) => ({
+      users: users.map((user: UserRow) => ({
         id: user.id,
         email: user.email,
-        displayName: user.name,
+        displayName: user.displayName,
         createdAt: user.createdAt.toISOString(),
-        tenants: user.tenantMemberships.map((membership) => ({
+        tenants: user.memberships.map((membership: MembershipRow) => ({
           tenantId: membership.tenant.id,
           legalName: membership.tenant.legalName ?? membership.tenant.name,
           role: membership.role,
