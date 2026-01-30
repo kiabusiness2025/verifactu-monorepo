@@ -1,10 +1,10 @@
-import { ThemeProvider } from "@verifactu/ui";
 import "./globals.css";
+import { ThemeProvider } from "@verifactu/ui";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className="vf-client">
+      <body>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

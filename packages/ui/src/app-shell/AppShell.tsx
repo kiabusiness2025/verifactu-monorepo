@@ -16,6 +16,7 @@ type Props = {
   children: React.ReactNode;
   showThemeToggle?: boolean;
   showIsaak?: boolean;
+  isaakExtraContext?: Record<string, any>;
 };
 
 export function AppShell({
@@ -27,18 +28,14 @@ export function AppShell({
   children,
   showThemeToggle,
   showIsaak,
+  isaakExtraContext,
 }: Props) {
   const isAdmin = variant === "admin";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="flex">
-        <aside
-          className={cn(
-            "hidden md:flex md:flex-col border-r bg-card",
-            isAdmin ? "w-[260px]" : "w-[280px]"
-          )}
-        >
+        <aside className={`hidden md:flex md:flex-col border-r bg-card ${isAdmin ? "w-[260px]" : "w-[280px]"}`}>
           <div className="h-14 flex items-center px-4 border-b">
             <div className="flex items-center gap-2 min-w-0">
               <div className="h-8 w-8 rounded-xl bg-primary/10 border border-primary/15" />
@@ -53,8 +50,7 @@ export function AppShell({
             </div>
           </div>
 
-          <nav className={cn("p-2", isAdmin ? "text-sm" : "text-[15px]")}
-          >
+          <nav className={`p-2 ${isAdmin ? "text-sm" : "text-[15px]"}`}>
             {nav.map((item) => {
               const active = item.match ? item.match(pathname) : pathname.startsWith(item.href);
               return (
@@ -89,14 +85,11 @@ export function AppShell({
             </div>
           </header>
 
-          <div className={cn("px-4 py-6", isAdmin ? "max-w-[1600px]" : "max-w-[1400px]")}
-          >
-            {children}
-          </div>
+          <div className={`${isAdmin ? "max-w-[1600px]" : "max-w-[1400px]"} px-4 py-6`}>{children}</div>
         </main>
       </div>
 
-      {showIsaak ? <IsaakDock /> : null}
+      {showIsaak ? <IsaakDock extraContext={isaakExtraContext} /> : null}
     </div>
   );
 }

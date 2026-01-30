@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { MessageCircle, X } from "lucide-react";
 import { cn } from "../lib/utils";
-import { Button } from "../shadcn/button";
+import { Button } from "../components/ui/button";
 import { useIsaakContext } from "./useIsaakContext";
 
 function IsaakPanel({ context }: { context: any }) {
@@ -27,15 +28,15 @@ function IsaakPanel({ context }: { context: any }) {
   );
 }
 
-export function IsaakDock() {
+export function IsaakDock({ extraContext }: { extraContext?: Record<string, any> }) {
   const [open, setOpen] = React.useState(false);
-  const context = useIsaakContext();
+  const context = useIsaakContext(extraContext);
 
   return (
     <>
       <div className="fixed bottom-5 right-5 z-50">
-        <Button className="rounded-full shadow" size="sm" onClick={() => setOpen(true)}>
-          Isaak
+        <Button className="rounded-full shadow-soft" size="icon" onClick={() => setOpen(true)}>
+          <MessageCircle className="h-5 w-5" />
         </Button>
       </div>
 
@@ -48,7 +49,7 @@ export function IsaakDock() {
       >
         <div className="absolute top-2 right-2">
           <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Cerrar">
-            X
+            <X className="h-4 w-4" />
           </Button>
         </div>
         <IsaakPanel context={context} />
