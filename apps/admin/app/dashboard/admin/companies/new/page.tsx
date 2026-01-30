@@ -71,7 +71,7 @@ export default function NewCompanyPage() {
         className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm space-y-6"
       >
         {/* Buscador eInforma */}
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
             <Sparkles className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">

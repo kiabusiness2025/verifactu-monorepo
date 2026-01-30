@@ -1,3 +1,11 @@
+export * from "./theme/ThemeProvider";
+export * from "./theme/ModeToggle";
+
+export * from "./app-shell/AppShell";
+export * from "./app-shell/types";
+
+export * from "./isaak/IsaakDock";
+export * from "./isaak/useIsaakContext";
 // Button
 export { Button } from "./button/Button";
 export type { ButtonProps } from "./button/Button";
@@ -34,7 +42,7 @@ export type { TableProps, TableHeaderProps, TableBodyProps, TableRowProps, Table
 
 // App shell
 export { AppShell } from "./app-shell/AppShell";
-export type { NavItem } from "./app-shell/AppShell";
+export type { NavItem } from "./app-shell/types";
 
 // Header
 export { PageHeader } from "./header/PageHeader";
@@ -49,8 +57,7 @@ export { ModeToggle } from "./theme/ModeToggle";
 
 // Isaak
 export { IsaakDock } from "./isaak/IsaakDock";
-export { IsaakProvider, useIsaakContext } from "./isaak/useIsaakContext";
-export type { IsaakTone } from "./isaak/useIsaakContext";
+export { useIsaakContext } from "./isaak/useIsaakContext";
 
 // Utils
-export { cn } from "./utils/cn";
+export { cn } from "./lib/utils";

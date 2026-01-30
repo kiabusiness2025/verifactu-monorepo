@@ -225,7 +225,7 @@ export function AdminChat() {
   return (
     <div className="flex flex-col h-[600px] bg-white rounded-lg border border-gray-200 shadow-sm">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-purple-600">
+      <div className="px-4 py-3 border-b border-gray-200 bg-slate-900">
         <div className="flex items-center gap-2 mb-3">
           <Terminal className="w-5 h-5 text-white" />
           <h3 className="font-semibold text-white">Chat de Administración</h3>

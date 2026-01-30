@@ -1,0 +1,54 @@
+@layer base {
+  :root {
+    --background: 220 33% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --muted: 220 20% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --border: 220 16% 91%;
+    --input: 220 16% 91%;
+
+    /* Brand: azul web */
+    --primary: 214 100% 56%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 214 100% 56%;
+
+    --accent: 220 20% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --radius: 14px;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 98%;
+
+    --muted: 222 20% 14%;
+    --muted-foreground: 215 20% 65%;
+
+    --border: 222 18% 18%;
+    --input: 222 18% 18%;
+
+    --primary: 214 100% 62%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 214 100% 62%;
+
+    --accent: 222 20% 14%;
+    --accent-foreground: 210 40% 98%;
+  }
+}
+
+/* Pequeño “flat premium”: sombras suaves unificadas */
+.shadow-soft {
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}

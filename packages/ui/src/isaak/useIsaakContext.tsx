@@ -1,36 +1,29 @@
 "use client";
 
-import * as React from "react";
+import { useMemo } from "react";
+import { usePathname } from "next/navigation";
 
-export type IsaakTone = "cercano" | "profesional" | "minimalista" | "breve";
-
-type IsaakContextValue = {
-  open: boolean;
-  setOpen: (value: boolean) => void;
-  tone: IsaakTone;
-  setTone: (value: IsaakTone) => void;
-};
-
-const IsaakContext = React.createContext<IsaakContextValue | null>(null);
-
-export function IsaakProvider({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = React.useState(false);
-  const [tone, setTone] = React.useState<IsaakTone>("cercano");
-
-  const value = React.useMemo(() => ({ open, setOpen, tone, setTone }), [open, tone]);
-
-  return <IsaakContext.Provider value={value}>{children}</IsaakContext.Provider>;
+function moduleFromPath(pathname: string) {
+  if (pathname.startsWith("/invoices")) return { module: "Facturacion", key: "invoices" };
+  if (pathname.startsWith("/customers")) return { module: "Clientes", key: "customers" };
+  if (pathname.startsWith("/banking")) return { module: "Bancos", key: "banking" };
+  if (pathname.startsWith("/documents")) return { module: "Documentos", key: "documents" };
+  if (pathname.startsWith("/calendar")) return { module: "Calendario", key: "calendar" };
+  if (pathname.startsWith("/settings")) return { module: "Configuracion", key: "settings" };
+  if (pathname.startsWith("/assistant")) return { module: "Isaak", key: "isaak" };
+  return { module: "Dashboard", key: "dashboard" };
 }
 
-export function useIsaakContext() {
-  const ctx = React.useContext(IsaakContext);
-  if (!ctx) {
+export function useIsaakContext(extra?: Record<string, any>) {
+  const pathname = usePathname();
+
+  return useMemo(() => {
+    const mod = moduleFromPath(pathname);
     return {
-      open: false,
-      setOpen: () => undefined,
-      tone: "cercano" as IsaakTone,
-      setTone: () => undefined,
-    } satisfies IsaakContextValue;
-  }
-  return ctx;
+      pathname,
+      module: mod.module,
+      moduleKey: mod.key,
+      ...extra,
+    };
+  }, [pathname, extra]);
 }

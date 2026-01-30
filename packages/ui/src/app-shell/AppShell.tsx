@@ -2,16 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { cn } from "../utils/cn";
+import { cn } from "../lib/utils";
 import { ModeToggle } from "../theme/ModeToggle";
 import { IsaakDock } from "../isaak/IsaakDock";
-
-export type NavItem = {
-  label: string;
-  href: string;
-  icon?: React.ReactNode;
-  match?: (pathname: string) => boolean;
-};
+import type { NavItem } from "./types";
 
 type Props = {
   variant: "client" | "admin";
@@ -37,17 +31,25 @@ export function AppShell({
   const isAdmin = variant === "admin";
 
   return (
-    <div className={cn("min-h-screen", isAdmin ? "vf-admin" : "vf-client")}>
+    <div className="min-h-screen bg-background text-foreground">
       <div className="flex">
         <aside
           className={cn(
-            "hidden md:flex md:flex-col border-r",
+            "hidden md:flex md:flex-col border-r bg-card",
             isAdmin ? "w-[260px]" : "w-[280px]"
           )}
         >
           <div className="h-14 flex items-center px-4 border-b">
-            <div className="font-semibold tracking-tight">
-              {isAdmin ? "Verifactu • Admin" : "Verifactu"}
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="h-8 w-8 rounded-xl bg-primary/10 border border-primary/15" />
+              <div className="min-w-0">
+                <div className="text-sm font-semibold leading-tight truncate">
+                  {isAdmin ? "Verifactu Admin" : "Verifactu Business"}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {isAdmin ? "Backoffice" : "Panel de cliente"}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -60,30 +62,27 @@ export function AppShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-3 py-2 transition",
+                    "flex items-center gap-2 rounded-xl px-3 py-2 transition",
                     active
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                      ? "bg-primary/10 text-foreground border border-primary/15"
+                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                   )}
                 >
                   {item.icon}
-                  <span>{item.label}</span>
+                  <span className="truncate">{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
           <div className="mt-auto p-3 border-t text-xs text-muted-foreground">
-            {isAdmin ? "Control tower" : "ERP + Veri*Factu"}
+            {isAdmin ? "Operaciones y soporte" : "ERP + Veri*Factu + Isaak"}
           </div>
         </aside>
 
         <main className="flex-1 min-w-0">
-          <header className="h-14 border-b flex items-center justify-between px-4">
-            <div className="flex items-center gap-3 min-w-0">
-              {headerLeft}
-            </div>
-
+          <header className="h-14 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-4">
+            <div className="flex items-center gap-3 min-w-0">{headerLeft}</div>
             <div className="flex items-center gap-2">
               {headerRight}
               {showThemeToggle ? <ModeToggle /> : null}

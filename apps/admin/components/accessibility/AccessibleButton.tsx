@@ -38,7 +38,7 @@ export const AccessibleButton = React.forwardRef<HTMLButtonElement, AccessibleBu
 
     const variantClasses = {
       primary:
-        'bg-gradient-to-r from-[#0060F0] to-[#20B0F0] text-white hover:from-[#0056D6] hover:to-[#1AA3DB] focus-visible:ring-blue-500',
+        'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500',
       secondary:
         'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 focus-visible:ring-slate-500',
       ghost: 'bg-transparent text-slate-700 hover:bg-slate-100 focus-visible:ring-slate-500',

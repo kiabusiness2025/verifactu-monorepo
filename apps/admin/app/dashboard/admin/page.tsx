@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
         <div className="grid gap-3 sm:grid-cols-3">
           <Link
             href="/dashboard/admin/companies/new"
-            className="rounded-xl bg-gradient-to-r from-[#0b6cfb] to-[#2bb2ff] px-4 py-4 text-sm font-semibold text-white shadow-sm hover:from-[#0a5be0] hover:to-[#1ca3ef] text-center"
+            className="rounded-xl bg-blue-600 px-4 py-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 text-center"
           >
             + Crear empresa
           </Link>

@@ -14,8 +14,8 @@ export { StatusBadge } from './src/badges/StatusBadge';
 export { ThemeProvider } from './src/theme/ThemeProvider';
 export { ModeToggle } from './src/theme/ModeToggle';
 export { IsaakDock } from './src/isaak/IsaakDock';
-export { IsaakProvider, useIsaakContext } from './src/isaak/useIsaakContext';
-export { cn } from './src/utils/cn';
+export { useIsaakContext } from './src/isaak/useIsaakContext';
+export { cn } from './src/lib/utils';
 
 // Compatibility exports (alias and additional components)
 export { Button } from './components/button';
@@ -37,6 +37,5 @@ export { Textarea } from './components/textarea';
 
 // Types
 export type { BadgeVariant, CardProps, ModalProps, TableColumn } from './types';
-export type { NavItem } from './src/app-shell/AppShell';
+export type { NavItem } from './src/app-shell/types';
 export type { StatusVariant } from './src/badges/StatusBadge';
-export type { IsaakTone } from './src/isaak/useIsaakContext';
