@@ -1,4 +1,4 @@
-// Eliminado @ts-nocheck: el archivo debe compilar con tipado estricto
+﻿// Eliminado @ts-nocheck: el archivo debe compilar con tipado estricto
 import {
     calculateTenantProfit,
     getCurrentMonthSummary,
@@ -30,7 +30,7 @@ const ISAAK_SYSTEM_BASE = `Eres Isaak, el asistente experto en contabilidad y fi
 
 **Reglas clave:**
 1. Prioriza claridad sobre sofisticación técnica
-2. Usa lenguaje natural: "ventas − gastos = beneficio"
+2. Usa lenguaje natural: "ventas - gastos = beneficio"
 3. NO inventes funcionalidades que no existen
 4. Si no sabes algo, sugiere consultar con un asesor
 5. NUNCA menciones términos técnicos internos (OCR, API, pipelines, etc.)`;
@@ -46,7 +46,7 @@ const ISAAK_CONTEXT_PROMPTS = {
 - Ayuda con preguntas específicas sobre sus facturas, gastos y beneficio
 - Sé práctico: "Tu beneficio este mes es X"
 - Sugiere acciones: "¿Quieres subir un gasto?" o "¿Revisamos tus facturas pendientes?"
-- Sé su co-piloto, no un chatbot genérico`,
+- Sé su copiloto, no un chatbot genérico`,
 
   admin: `Tu contexto: El usuario es un administrador del sistema.
 - Proporciona información técnica y operativa cuando sea necesario
@@ -117,7 +117,7 @@ export async function POST(req: Request) {
       temperature: 0.7,
       tools: {
         calculateProfit: tool({
-          description: 'Calcula el beneficio real (ventas − gastos) consultando la base de datos',
+          description: 'Calcula el beneficio real (ventas - gastos) consultando la base de datos',
           parameters: z.object({
             startDate: z.string().optional(),
             endDate: z.string().optional(),
@@ -142,7 +142,7 @@ export async function POST(req: Request) {
               expenses: data.expenses,
               profit: data.profit,
               margin: data.margin,
-              message: `En ${period || 'ese periodo'}: has facturado ${data.sales}€, gastado ${data.expenses}€. Tu beneficio es ${data.profit}€ (margen del ${data.margin}%)`,
+              message: `En ${period || 'ese período'}: has facturado ${data.sales}€, gastado ${data.expenses}€. Tu beneficio es ${data.profit}€ (margen del ${data.margin}%)`,
             };
           },
         }),
@@ -228,3 +228,5 @@ export async function POST(req: Request) {
     return new Response('Error al procesar tu mensaje', { status: 500 });
   }
 }
+
+
