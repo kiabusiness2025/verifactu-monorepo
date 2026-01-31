@@ -1,16 +1,15 @@
-// @ts-nocheck
-import { openai } from '@ai-sdk/openai';
-import { streamText, tool } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
-import { z } from 'zod';
-import { cookies } from 'next/headers';
-import { verifySessionToken, readSessionSecret, SESSION_COOKIE_NAME } from '@verifactu/utils';
-import { 
-  calculateTenantProfit, 
-  getPendingVeriFactuInvoices,
-  getExpenseCategories,
-  getCurrentMonthSummary 
+// Eliminado @ts-nocheck: el archivo debe compilar con tipado estricto
+import {
+    calculateTenantProfit,
+    getCurrentMonthSummary,
+    getExpenseCategories,
+    getPendingVeriFactuInvoices
 } from '@/lib/db-queries';
+import { createOpenAI, openai } from '@ai-sdk/openai';
+import { readSessionSecret, SESSION_COOKIE_NAME, verifySessionToken } from '@verifactu/utils';
+import { streamText, tool } from 'ai';
+import { cookies } from 'next/headers';
+import { z } from 'zod';
 
 // Helpers
 function getMonthName(month: number): string {

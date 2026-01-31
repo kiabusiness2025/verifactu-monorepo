@@ -1,3 +1,4 @@
+export { ActionCard, MetricCard } from './src/dashboard/widgets';
 // UI Components Package
 
 export { AccessibleButton } from './components/AccessibleButton';
