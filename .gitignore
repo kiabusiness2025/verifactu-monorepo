@@ -18,10 +18,18 @@ landing/dist*.pem
 
 .github/agents/
 .turbo/
+.pnpm-store/
 .env.local
 **/.env*
 
 .env*
+
+# Local temp profiles/cache
+.tmp-profile/
+.npm-cache/
+*.out.log
+*.err.log
+*.dev.log
 
 # Local brand packs / artifacts (keep out of git)
 brand/verifactu_business_brand_pack_v2/
