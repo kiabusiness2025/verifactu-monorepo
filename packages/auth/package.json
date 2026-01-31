@@ -9,7 +9,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "next-auth": "^4.24.5",
+    "next-auth": "^4.24.12",
     "jose": "^5.2.0"
   },
   "devDependencies": {
