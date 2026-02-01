@@ -1,9 +1,15 @@
+import { fileURLToPath } from "url";
+import path from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const isVercel = process.env.VERCEL === "1";
 
 const nextConfig = {
   ...(isVercel ? {} : { output: "standalone" }),
   eslint: { ignoreDuringBuilds: true },
-  transpilePackages: ["@verifactu/ui", "@verifactu/utils", "@verifactu/db"],
+  transpilePackages: ["@verifactu/ui", "@verifactu/utils", "@verifactu/db", "@verifactu/core"],
   i18n: {
     locales: ["es"],
     defaultLocale: "es",
@@ -27,6 +33,7 @@ const nextConfig = {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       "@": __dirname,
+      "@verifactu/db": path.resolve(__dirname, "../../packages/db"),
     };
     return config;
   },

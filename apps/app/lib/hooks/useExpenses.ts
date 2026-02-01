@@ -130,7 +130,7 @@ export function useExpenses(initialPage = 1, limit = 20) {
 
   useEffect(() => {
     fetchExpenses(initialPage);
-  }, []);
+  }, [fetchExpenses, initialPage]);
 
   return {
     expenses,

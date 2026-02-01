@@ -18,7 +18,7 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user }) {
       // Only allow @verifactu.business emails for admin panel
       const email = user.email || '';
       
@@ -32,7 +32,7 @@ export const authOptions: AuthOptions = {
 
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         // TODO: Fetch user role from database
         // const dbUser = await prisma.user.findUnique({ where: { email: user.email } });

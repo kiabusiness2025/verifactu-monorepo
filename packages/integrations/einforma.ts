@@ -16,8 +16,9 @@ export const eInformaClient = {
   apiKey: process.env.EINFORMA_API_KEY || '',
 };
 
-export async function searchCompany(query: string): Promise<EInformaCompany[]> {
+export async function searchCompany(_query: string): Promise<EInformaCompany[]> {
   try {
+    void _query;
     // TODO: Implement real eInforma API call
     // const response = await fetch(`${eInformaClient.baseUrl}/search`, {
     //   method: 'POST',

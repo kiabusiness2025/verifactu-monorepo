@@ -80,12 +80,12 @@ export async function GET(request: NextRequest) {
     const user = await prisma.user.findUnique({
       where: { id: uid },
       include: {
-        memberships: {
+        tenantMemberships: {
           include: {
             tenant: true,
           },
         },
-        preferences: {
+        tenantPreferences: {
           include: {
             preferredTenant: true,
           },

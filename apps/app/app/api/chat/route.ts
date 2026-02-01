@@ -7,7 +7,7 @@ import {
 } from '@/lib/db-queries';
 import { createOpenAI, openai } from '@ai-sdk/openai';
 import { readSessionSecret, SESSION_COOKIE_NAME, verifySessionToken } from '@verifactu/utils';
-import { streamText, tool } from 'ai';
+import { streamText, tool, zodSchema } from 'ai';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 
@@ -118,11 +118,13 @@ export async function POST(req: Request) {
       tools: {
         calculateProfit: tool({
           description: 'Calcula el beneficio real (ventas - gastos) consultando la base de datos',
-          parameters: z.object({
-            startDate: z.string().optional(),
-            endDate: z.string().optional(),
-            period: z.string().optional(),
-          }),
+          inputSchema: zodSchema(
+            z.object({
+              startDate: z.string().optional(),
+              endDate: z.string().optional(),
+              period: z.string().optional(),
+            })
+          ),
           execute: async ({ startDate, endDate, period }) => {
             if (!activeTenantId) return { message: 'No hay empresa seleccionada', sales: 0, expenses: 0, profit: 0, margin: 0 };
             
@@ -149,10 +151,12 @@ export async function POST(req: Request) {
 
         checkVeriFactuDeadlines: tool({
           description: 'Consulta plazos VeriFactu y facturas pendientes de enviar',
-          parameters: z.object({
-            month: z.number().min(1).max(12).optional(),
-            year: z.number().optional(),
-          }),
+          inputSchema: zodSchema(
+            z.object({
+              month: z.number().min(1).max(12).optional(),
+              year: z.number().optional(),
+            })
+          ),
           execute: async ({ month, year }) => {
             if (!activeTenantId) return { deadline: '', pendingCount: 0, message: 'No hay empresa seleccionada' };
             
@@ -179,10 +183,12 @@ export async function POST(req: Request) {
 
         suggestExpenseCategory: tool({
           description: 'Sugiere la categoría fiscal adecuada para un gasto',
-          parameters: z.object({
-            description: z.string(),
-            amount: z.number().optional(),
-          }),
+          inputSchema: zodSchema(
+            z.object({
+              description: z.string(),
+              amount: z.number().optional(),
+            })
+          ),
           execute: async ({ description, amount }) => {
             if (!activeTenantId) return { categoryId: undefined, categoryName: 'N/A', deductible: false, message: 'No hay empresa seleccionada' };
             
@@ -222,7 +228,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error('[Isaak Chat API]', error);
     return new Response('Error al procesar tu mensaje', { status: 500 });

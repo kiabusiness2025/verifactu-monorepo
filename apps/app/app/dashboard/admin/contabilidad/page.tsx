@@ -2,7 +2,7 @@
 
 import { formatCurrency, formatPercent } from "@/src/lib/formatters";
 import { Calendar, DollarSign, FileText, TrendingDown, TrendingUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type GlobalStats = {
   total_invoices: number;
@@ -26,11 +26,8 @@ export default function AdminContabilidadPage() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("current_month");
 
-  useEffect(() => {
-    fetchData();
-  }, [period]);
-
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await fetch(`/api/admin/accounting?period=${period}`);
       if (res.ok) {
@@ -43,7 +40,11 @@ export default function AdminContabilidadPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [period]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return (
     <main className="space-y-6">

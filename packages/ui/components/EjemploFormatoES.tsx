@@ -1,11 +1,10 @@
-'use client';
+﻿"use client";
 
-import React, { useEffect, useState } from 'react';
-import dayjs from 'dayjs';
-import 'dayjs/locale/es';
-import { formatDate, formatCurrency } from '@verifactu/utils';
+import React, { useEffect, useState } from "react";
+import dayjs from "dayjs";
+import "dayjs/locale/es";
 
-dayjs.locale('es');
+dayjs.locale("es");
 
 export const EjemploFormatoES: React.FC = () => {
   const [mounted, setMounted] = useState(false);
@@ -19,12 +18,22 @@ export const EjemploFormatoES: React.FC = () => {
 
   if (!mounted || !fecha) return null;
 
+  const fechaIntl = new Intl.DateTimeFormat("es-ES", {
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(fecha);
+
+  const moneda = new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+  }).format(cantidad);
+
   return (
-    <div style={{ padding: 16, fontFamily: 'sans-serif' }}>
+    <div style={{ padding: 16, fontFamily: "sans-serif" }}>
       <h2>Ejemplo de formato espanol</h2>
-      <p>Fecha (Intl): {formatDate(fecha, { dateStyle: 'full', timeStyle: 'short' })}</p>
-      <p>Fecha (dayjs): {dayjs(fecha).format('DD MMMM YYYY, HH:mm')}</p>
-      <p>Moneda: {formatCurrency(cantidad)}</p>
+      <p>Fecha (Intl): {fechaIntl}</p>
+      <p>Fecha (dayjs): {dayjs(fecha).format("DD MMMM YYYY, HH:mm")}</p>
+      <p>Moneda: {moneda}</p>
     </div>
   );
 };

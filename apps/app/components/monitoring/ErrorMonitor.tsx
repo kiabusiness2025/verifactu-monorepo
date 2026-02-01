@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 type ErrorReport = {
   type: 'broken_image' | 'broken_link' | 'empty_button' | 'slow_load' | 'console_error';
@@ -13,6 +13,48 @@ type ErrorReport = {
 export function ErrorMonitor() {
   const errorQueue = useRef<ErrorReport[]>([]);
   const reportTimer = useRef<NodeJS.Timeout>();
+
+  const sendErrorBatch = useCallback(async (errors: ErrorReport[]) => {
+    try {
+      await fetch('/api/monitor/error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          errors,
+          userAgent: navigator.userAgent,
+          viewport: {
+            width: window.innerWidth,
+            height: window.innerHeight
+          },
+          performance: {
+            navigation: performance.getEntriesByType('navigation')[0],
+            memory: (performance as any).memory
+          }
+        })
+      });
+    } catch (error) {
+      console.warn('Failed to report errors:', error);
+    }
+  }, []);
+
+  const reportError = useCallback((error: ErrorReport) => {
+    errorQueue.current.push(error);
+
+    // Batch reporting - enviar cada 5 segundos o cuando haya 5 errores
+    if (reportTimer.current) {
+      clearTimeout(reportTimer.current);
+    }
+
+    const shouldSendNow = errorQueue.current.length >= 5;
+    const delay = shouldSendNow ? 0 : 5000;
+
+    reportTimer.current = setTimeout(() => {
+      if (errorQueue.current.length > 0) {
+        sendErrorBatch(errorQueue.current);
+        errorQueue.current = [];
+      }
+    }, delay);
+  }, [sendErrorBatch]);
 
   useEffect(() => {
     // Detectar imágenes rotas
@@ -139,49 +181,7 @@ export function ErrorMonitor() {
         clearTimeout(reportTimer.current);
       }
     };
-  }, []);
-
-  const reportError = (error: ErrorReport) => {
-    errorQueue.current.push(error);
-
-    // Batch reporting - enviar cada 5 segundos o cuando haya 5 errores
-    if (reportTimer.current) {
-      clearTimeout(reportTimer.current);
-    }
-
-    const shouldSendNow = errorQueue.current.length >= 5;
-    const delay = shouldSendNow ? 0 : 5000;
-
-    reportTimer.current = setTimeout(() => {
-      if (errorQueue.current.length > 0) {
-        sendErrorBatch(errorQueue.current);
-        errorQueue.current = [];
-      }
-    }, delay);
-  };
-
-  const sendErrorBatch = async (errors: ErrorReport[]) => {
-    try {
-      await fetch('/api/monitor/error', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          errors,
-          userAgent: navigator.userAgent,
-          viewport: {
-            width: window.innerWidth,
-            height: window.innerHeight
-          },
-          performance: {
-            navigation: performance.getEntriesByType('navigation')[0],
-            memory: (performance as any).memory
-          }
-        })
-      });
-    } catch (error) {
-      console.warn('Failed to report errors:', error);
-    }
-  };
+  }, [reportError]);
 
   return null; // Este componente no renderiza nada
 }

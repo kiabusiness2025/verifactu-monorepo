@@ -19,8 +19,9 @@ export const AccessibleInput = React.forwardRef<HTMLInputElement, AccessibleInpu
     { label, showLabel = true, error, helperText, required = false, className = '', id, ...props },
     ref
   ) => {
-    // Generate unique ID if not provided
-    const inputId = id || `input-${React.useId()}`;
+    // Generate stable unique ID without conditional hook calls
+    const reactId = React.useId();
+    const inputId = id ?? `input-${reactId}`;
     const errorId = error ? `${inputId}-error` : undefined;
     const helperId = helperText ? `${inputId}-helper` : undefined;
 
@@ -98,7 +99,8 @@ export const AccessibleSelect = React.forwardRef<HTMLSelectElement, AccessibleSe
     },
     ref
   ) => {
-    const selectId = id || `select-${React.useId()}`;
+    const reactSelectId = React.useId();
+    const selectId = id ?? `select-${reactSelectId}`;
     const errorId = error ? `${selectId}-error` : undefined;
     const helperId = helperText ? `${selectId}-helper` : undefined;
 

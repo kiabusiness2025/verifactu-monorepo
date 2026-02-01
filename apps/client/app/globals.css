@@ -1,3 +1,7 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer base {
   :root {
     --background: 220 33% 98%;
@@ -48,7 +52,7 @@
   }
 }
 
-/* Pequeño “flat premium”: sombras suaves unificadas */
+/* Pequeno "flat premium": sombras suaves unificadas */
 .shadow-soft {
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
 }

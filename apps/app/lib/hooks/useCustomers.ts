@@ -125,7 +125,7 @@ export function useCustomers(initialPage = 1, limit = 20) {
 
   useEffect(() => {
     fetchCustomers(initialPage);
-  }, []);
+  }, [fetchCustomers, initialPage]);
 
   return {
     customers,

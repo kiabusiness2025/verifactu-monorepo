@@ -101,6 +101,10 @@
     display: none;
     -webkit-appearance: none;
   }
+
+  .shadow-soft {
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+  }
 }
 
 /* third-party libraries CSS */

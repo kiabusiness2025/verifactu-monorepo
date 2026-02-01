@@ -1,6 +1,13 @@
 import React from "react";
 
-type BadgeVariant = "light" | "solid";
+type BadgeVariant =
+  | "light"
+  | "solid"
+  | "default"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info";
 type BadgeSize = "sm" | "md";
 type BadgeColor =
   | "primary"
@@ -12,12 +19,13 @@ type BadgeColor =
   | "dark";
 
 export interface BadgeProps {
-  variant?: BadgeVariant; // Light or solid variant
+  variant?: BadgeVariant; // Visual style or status tone
   size?: BadgeSize; // Badge size
-  color?: BadgeColor; // Badge color
+  color?: BadgeColor; // Badge color (used with light/solid)
   startIcon?: React.ReactNode; // Icon at the start
   endIcon?: React.ReactNode; // Icon at the end
   children: React.ReactNode; // Badge content
+  className?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -27,6 +35,7 @@ export const Badge: React.FC<BadgeProps> = ({
   startIcon,
   endIcon,
   children,
+  className = "",
 }) => {
   const baseStyles =
     "inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium";
@@ -63,12 +72,30 @@ export const Badge: React.FC<BadgeProps> = ({
     },
   };
 
+  const statusToColor: Record<
+    Exclude<BadgeVariant, "light" | "solid">,
+    BadgeColor
+  > = {
+    default: "primary",
+    success: "success",
+    warning: "warning",
+    danger: "error",
+    info: "info",
+  };
+
+  const resolvedVariant =
+    variant === "light" || variant === "solid" ? variant : "light";
+  const resolvedColor =
+    variant === "light" || variant === "solid"
+      ? color
+      : statusToColor[variant];
+
   // Get styles based on size and color variant
   const sizeClass = sizeStyles[size];
-  const colorStyles = variants[variant][color];
+  const colorStyles = variants[resolvedVariant][resolvedColor];
 
   return (
-    <span className={`${baseStyles} ${sizeClass} ${colorStyles}`}>
+    <span className={`${baseStyles} ${sizeClass} ${colorStyles} ${className}`}>
       {startIcon && <span className="mr-1">{startIcon}</span>}
       {children}
       {endIcon && <span className="ml-1">{endIcon}</span>}

@@ -1,183 +1,128 @@
-# 📚 Documentación Verifactu Business
+# Documentacion Verifactu Business
 
-## 📋 Índice Rápido
+## Indice rapido
 
-### 🎯 Comenzar Aquí
-- **[README.md](../README.md)** - Descripción general del proyecto
-- **[ARQUITECTURA_UNIFICADA.md](../ARQUITECTURA_UNIFICADA.md)** - Arquitectura completa (Vercel + Firebase + Prisma)
+### Comenzar aqui
+- [README.md](../README.md) - Descripcion general del proyecto
+- [ARQUITECTURA_UNIFICADA.md](root/ARQUITECTURA_UNIFICADA.md) - Arquitectura completa (Vercel + Firebase + Prisma)
 
-### 🔐 Autenticación
-
-**Setup/** (Configuración)
+### Autenticacion
+**setup/**
 - [setup/FIREBASE_CONSOLE_ACCESO.md](setup/FIREBASE_CONSOLE_ACCESO.md) - Acceso Firebase Console
-- [setup/FIREBASE_AUTH_SETUP.md](setup/FIREBASE_AUTH_SETUP.md) - Autenticación Firebase
+- [setup/FIREBASE_AUTH_SETUP.md](setup/FIREBASE_AUTH_SETUP.md) - Autenticacion Firebase
 - [setup/MULTI_TENANT_AUTH_SETUP.md](setup/MULTI_TENANT_AUTH_SETUP.md) - Multi-tenant setup
 
-**Web/** (En raíz)
-- [../FACEBOOK_OAUTH_SETUP.md](../FACEBOOK_OAUTH_SETUP.md) - Facebook OAuth
-- [../SECURITY.md](../SECURITY.md) - Políticas de seguridad
+**root/**
+- [root/FACEBOOK_OAUTH_SETUP.md](root/FACEBOOK_OAUTH_SETUP.md) - Facebook OAuth
+- [../SECURITY.md](../SECURITY.md) - Politicas de seguridad
 
-### 🚀 Despliegue
-
-**deployment/** (Guías de despliegue)
+### Despliegue
+**deployment/**
 - [deployment/VERCEL_DEPLOYMENT_GUIDE.md](deployment/VERCEL_DEPLOYMENT_GUIDE.md) - Vercel
 - [deployment/CLOUD_RUN_QUICK_REFERENCE.md](deployment/CLOUD_RUN_QUICK_REFERENCE.md) - Cloud Run
 - [deployment/GITHUB_CLOUD_BUILD_SETUP.md](deployment/GITHUB_CLOUD_BUILD_SETUP.md) - CI/CD
 
-**Web/** (En raíz)
-- [../GOOGLE_CLOUD_RUN_IAM.md](../GOOGLE_CLOUD_RUN_IAM.md) - Permisos IAM (opcional)
+**root/**
+- [root/GOOGLE_CLOUD_RUN_IAM.md](root/GOOGLE_CLOUD_RUN_IAM.md) - Permisos IAM (opcional)
 
-### � GitHub & Colaboración
+### GitHub y colaboracion
+**root/**
+- [root/PULL_REQUEST_WORKFLOW.md](root/PULL_REQUEST_WORKFLOW.md) - Flujo de PR (paso a paso)
+- [root/BRANCH_PROTECTION_RULES.md](root/BRANCH_PROTECTION_RULES.md) - Reglas de proteccion
+- [root/GITHUB_INTEGRATION.md](root/GITHUB_INTEGRATION.md) - Integracion GitHub + VS Code
+- [root/GITHUB_PR_VSCODE_GUIDE.md](root/GITHUB_PR_VSCODE_GUIDE.md) - Usar PRs desde VS Code
+- [root/GITHUB_CHEATSHEET.md](root/GITHUB_CHEATSHEET.md) - Referencia rapida
+- [root/GITHUB_ACTIONS_GUIDE.md](root/GITHUB_ACTIONS_GUIDE.md) - Workflows y automatizacion
+- [root/DEPENDABOT_GUIDE.md](root/DEPENDABOT_GUIDE.md) - Automatizacion de dependencias
 
-**Web/** (En raíz)
-- [PULL_REQUEST_WORKFLOW.md](PULL_REQUEST_WORKFLOW.md) - Flujo de PR (paso a paso)
-- [BRANCH_PROTECTION_RULES.md](BRANCH_PROTECTION_RULES.md) - Reglas de protección
-- [GITHUB_INTEGRATION.md](GITHUB_INTEGRATION.md) - Integración GitHub + VS Code
-- [GITHUB_PR_VSCODE_GUIDE.md](GITHUB_PR_VSCODE_GUIDE.md) - Usar PRs desde VS Code
-- [GITHUB_CHEATSHEET.md](GITHUB_CHEATSHEET.md) - Referencia rápida- [DEPENDABOT_GUIDE.md](DEPENDABOT_GUIDE.md) - Automatización de dependencias### 🐙 GitHub & Colaboración
-
-**Web/** (En raíz)
-- [PULL_REQUEST_WORKFLOW.md](PULL_REQUEST_WORKFLOW.md) - Flujo de PR (paso a paso)
-- [BRANCH_PROTECTION_RULES.md](BRANCH_PROTECTION_RULES.md) - Reglas de protección
-- [GITHUB_INTEGRATION.md](GITHUB_INTEGRATION.md) - Integración GitHub + VS Code
-- [GITHUB_PR_VSCODE_GUIDE.md](GITHUB_PR_VSCODE_GUIDE.md) - Usar PRs desde VS Code
-- [GITHUB_CHEATSHEET.md](GITHUB_CHEATSHEET.md) - Referencia rápida
-- [GITHUB_ACTIONS_GUIDE.md](GITHUB_ACTIONS_GUIDE.md) - Workflows y automatización
-- [DEPENDABOT_GUIDE.md](DEPENDABOT_GUIDE.md) - Automatización de dependencias
-### �📱 Flutter / Mobile
-
-**setup/** (Instalación)
-- [setup/FLUTTER_INSTALLATION_GUIDE.md](setup/FLUTTER_INSTALLATION_GUIDE.md) - Instalación Flutter
+### Flutter / Mobile
+**setup/**
+- [setup/FLUTTER_INSTALLATION_GUIDE.md](setup/FLUTTER_INSTALLATION_GUIDE.md) - Instalacion Flutter
 - [setup/FLUTTER_SETUP.md](setup/FLUTTER_SETUP.md) - Setup del proyecto
 
-**Mobile** (Apps)
+**Mobile**
 - [../apps/mobile/QUICK_START.md](../apps/mobile/QUICK_START.md) - Quick start
 
-### 🗄️ Base de Datos
-
-**setup/** (Configuración)
+### Base de datos
+**setup/**
 - [setup/DB_SETUP_GUIDE.md](setup/DB_SETUP_GUIDE.md) - PostgreSQL + Prisma
-- **Schema:** [../apps/app/prisma/schema.prisma](../apps/app/prisma/schema.prisma)
+- **Schema:** [../packages/db/prisma/schema.prisma](../packages/db/prisma/schema.prisma)
 
-### 🤖 AI / Genkit
-
-**ai/** (Documentación de IA)
+### AI / Genkit
+**ai/**
 - [ai/ISAAK_V3_QUICK_START.md](ai/ISAAK_V3_QUICK_START.md) - Quick start Genkit
 - [ai/ISAAK_V3_TESTING_GUIDE.md](ai/ISAAK_V3_TESTING_GUIDE.md) - Testing
 - [ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md](ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md) - Checklist
 
-### 📊 Estado del Proyecto
+### Estado del proyecto
+**root/**
+- [root/PROJECT_STATUS.md](root/PROJECT_STATUS.md) - Estado actual
+- [root/IMPLEMENTATION_STATUS.md](root/IMPLEMENTATION_STATUS.md) - Estado de implementacion
+- [root/PROJECT_DELIVERABLES.md](root/PROJECT_DELIVERABLES.md) - Entregables
 
-**Web/** (En raíz)
-- [../PROJECT_STATUS.md](../PROJECT_STATUS.md) - Estado actual
-- [../IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md) - Estado de implementación
-- [../DELIVERABLES.md](../DELIVERABLES.md) - Entregables
+### Branding
+**root/**
+- [root/BRANDING.md](root/BRANDING.md) - Guia de branding
+- [root/MANIFESTO.md](root/MANIFESTO.md) - Manifiesto de la marca
 
-### 🎨 Branding
-
-**Web/** (En raíz)
-- [../BRANDING.md](../BRANDING.md) - Guía de branding
-- [../MANIFESTO.md](../MANIFESTO.md) - Manifesto de la marca
-
-### 📈 Optimización
-
-**optimization/** (Performance y auditorías)
+### Optimizacion
+**optimization/**
 - [optimization/LANDING_OPTIMIZATION_STATUS.md](optimization/LANDING_OPTIMIZATION_STATUS.md) - Performance
 - [optimization/ACCESSIBILITY_AUDIT.md](optimization/ACCESSIBILITY_AUDIT.md) - Accesibilidad
-- [optimization/IMAGE_OPTIMIZATION_GUIDE.md](optimization/IMAGE_OPTIMIZATION_GUIDE.md) - Imágenes
+- [optimization/IMAGE_OPTIMIZATION_GUIDE.md](optimization/IMAGE_OPTIMIZATION_GUIDE.md) - Imagenes
 
-### 🗂️ Archivos Legados
-
-**legacy/** - Código y docs antiguos
-- Early implementations
-- Configuration files
-- Deprecated guides
+### Archivos legados
+**legacy/**
+- Implementaciones tempranas
+- Configuraciones obsoletas
+- Guias deprecadas
 
 ---
 
-## 🗂️ Estructura del Proyecto
+## Estructura del proyecto
 
 ```
 verifactu-monorepo/
-├── apps/
-│   ├── app/                    # Next.js - Aplicación principal
-│   ├── landing/                # Next.js - Landing page
-│   ├── api/                    # API backend
-│   └── mobile/                 # Flutter - App móvil
-├── packages/
-│   ├── ui/                     # Componentes UI compartidos
-│   ├── utils/                  # Utilidades compartidas
-│   ├── eslint-config/          # Config ESLint
-│   └── typescript-config/      # Config TypeScript
-├── db/
-│   ├── schema.sql              # Schema PostgreSQL
-│   └── init-complete.sql       # Datos iniciales
-├── docs/                       # Documentación
-├── scripts/                    # Scripts de desarrollo
-├── brand/                      # Assets de branding
-└── ops/                        # Configuración operacional
+  apps/
+    app/        # App cliente (dashboard principal)
+    client/     # App cliente alternativa o legacy (si aplica)
+    admin/      # Backoffice / control tower
+    landing/    # Marketing + login
+    api/        # API backend (si aplica)
+    mobile/     # Flutter
+  packages/
+    ui/         # UI compartida
+    utils/      # Utilidades compartidas
+    db/         # Prisma + acceso DB
+    auth/       # Auth helpers
+    integrations/ # Integraciones externas
+    eslint-config/
+    typescript-config/
+  docs/         # Documentacion
+  scripts/      # Scripts de desarrollo
+  brand/        # Assets de branding
+  ops/          # Operaciones
 ```
 
 ---
 
-## ⚡ Inicio Rápido
-
-### Web (Next.js)
+## Inicio rapido (Web)
 
 ```bash
-# Instalar dependencias
 pnpm install
-
-# Desarrollo
 pnpm dev:app        # http://localhost:3000
 pnpm dev:landing    # http://localhost:3001
-
-# Build
-pnpm build
-```
-
-### Mobile (Flutter)
-
-```bash
-cd apps/mobile
-
-# Desarrollo
-flutter run -d chrome
-
-# Build APK (Android)
-flutter build apk
-
-# Build IPA (iOS)
-flutter build ios
+pnpm dev:admin      # http://localhost:3002 (o 3010)
 ```
 
 ---
 
-## 🔧 Tecnologías Principales
+## Tecnologias principales
 
-### Frontend
-- **Next.js 14** - React framework
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **Flutter** - Mobile app
-
-### Backend
-- **Firebase** - Auth, Firestore, Remote Config, Analytics
-- **PostgreSQL** - Relational database
-- **Prisma ORM** - Database ORM
-- **Genkit AI** - AI features
-
-### Deployment
-- **Vercel** - Web hosting
-- **Firebase** - Backend services
-- **Google Cloud Run** - Optional API hosting
+Frontend: Next.js, TypeScript, Tailwind CSS  
+Backend: Firebase, PostgreSQL, Prisma, Genkit  
+Deployment: Vercel, Firebase, Google Cloud Run (opcional)
 
 ---
 
-## 📞 Contacto
-
-**Email:** kiabusiness2025@gmail.com
-
----
-
-**Última actualización:** Enero 2026
+Ultima actualizacion: Febrero 2026

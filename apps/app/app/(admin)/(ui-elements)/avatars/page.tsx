@@ -1,19 +1,29 @@
 'use client';
 
+import Image from 'next/image';
 import ComponentCard from '@/components/common/ComponentCard';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 // import { Avatar } from "@verifactu/ui"; // TODO: Create Avatar component
 
 // Temporary placeholder until Avatar is implemented
-const Avatar = ({ src, size, status }: any) => {
-  const sizeMap: any = {
+const Avatar = ({ src, size, status }: { src: string; size: string; status?: string }) => {
+  const sizeMap: Record<string, string> = {
     xsmall: 'w-8 h-8',
     small: 'w-10 h-10',
     medium: 'w-12 h-12',
     large: 'w-16 h-16',
     xlarge: 'w-20 h-20',
   };
-  return <img src={src} className={`rounded-full ${sizeMap[size] || 'w-12 h-12'}`} alt="Avatar" />;
+  const classes = `rounded-full ${sizeMap[size] || 'w-12 h-12'}`;
+  return (
+    <Image
+      src={src}
+      alt="Avatar"
+      width={80}
+      height={80}
+      className={classes}
+    />
+  );
 };
 
 export default function AvatarPage() {

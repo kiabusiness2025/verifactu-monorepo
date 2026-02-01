@@ -1,6 +1,13 @@
 import { ReactNode } from 'react';
 
-export type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info';
+export type BadgeVariant =
+  | 'default'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'info'
+  | 'light'
+  | 'solid';
 
 export interface CardProps {
   title?: string;
@@ -24,6 +31,6 @@ export interface ModalProps {
 
 export interface TableColumn<T> {
   header: string;
-  accessor: (item: T) => any;
+  accessor: (item: T) => ReactNode;
   render?: (item: T) => ReactNode;
 }

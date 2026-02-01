@@ -85,11 +85,13 @@ export function IsaakDrawer() {
       let assistantContent = "";
 
       if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
+        let done = false;
+        while (!done) {
+          const result = await reader.read();
+          done = result.done;
           if (done) break;
 
-          const chunk = decoder.decode(value);
+          const chunk = decoder.decode(result.value);
           assistantContent += chunk;
         }
       }

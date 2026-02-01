@@ -4,6 +4,7 @@ Plataforma SaaS para facturacion y cumplimiento VeriFactu. Monorepo con apps web
 
 ## Apps
 - apps/app: App principal (clientes)
+- apps/client: App cliente alternativa o legacy (si aplica)
 - apps/landing: Marketing + login
 - apps/admin: Panel de administracion
 - packages/*: UI, utils, db, auth, integrations
@@ -20,6 +21,10 @@ La documentacion detallada de variables esta en:
 - apps/admin/README.md (admin)
 - apps/app/.env.example (app)
 - apps/landing/.env.example (landing)
+- docs/README.md (indice de documentacion)
+
+## Documentacion
+- docs/INDEX.md (indice general)
 
 ## Siguientes pasos (prioridad)
 1) Terminar paneles admin: usuarios, suscripciones, emails, Vercel, soporte.

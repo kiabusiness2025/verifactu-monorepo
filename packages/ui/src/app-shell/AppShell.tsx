@@ -16,7 +16,7 @@ type Props = {
   children: React.ReactNode;
   showThemeToggle?: boolean;
   showIsaak?: boolean;
-  isaakExtraContext?: Record<string, any>;
+  isaakExtraContext?: Record<string, unknown>;
 };
 
 export function AppShell({

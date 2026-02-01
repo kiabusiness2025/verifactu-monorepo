@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MessageSquare, Search, Trash2, Share2, Clock, ChevronRight } from "lucide-react";
 import { formatShortDate } from "@/src/lib/formatters";
@@ -22,6 +22,40 @@ interface GroupedConversations {
   older: Conversation[];
 }
 
+const groupByDate = (convs: Conversation[]): GroupedConversations => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const groups: GroupedConversations = {
+    today: [],
+    yesterday: [],
+    thisWeek: [],
+    thisMonth: [],
+    older: [],
+  };
+
+  convs.forEach((conv) => {
+    const date = new Date(conv.lastActivity);
+
+    if (date >= today) {
+      groups.today.push(conv);
+    } else if (date >= yesterday) {
+      groups.yesterday.push(conv);
+    } else if (date >= weekAgo) {
+      groups.thisWeek.push(conv);
+    } else if (date >= monthAgo) {
+      groups.thisMonth.push(conv);
+    } else {
+      groups.older.push(conv);
+    }
+  });
+
+  return groups;
+};
+
 export default function IsaakHistoryPage() {
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -30,11 +64,7 @@ export default function IsaakHistoryPage() {
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchConversations();
-  }, [search]);
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -51,41 +81,11 @@ export default function IsaakHistoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search]);
 
-  const groupByDate = (convs: Conversation[]): GroupedConversations => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    const groups: GroupedConversations = {
-      today: [],
-      yesterday: [],
-      thisWeek: [],
-      thisMonth: [],
-      older: []
-    };
-
-    convs.forEach(conv => {
-      const date = new Date(conv.lastActivity);
-
-      if (date >= today) {
-        groups.today.push(conv);
-      } else if (date >= yesterday) {
-        groups.yesterday.push(conv);
-      } else if (date >= weekAgo) {
-        groups.thisWeek.push(conv);
-      } else if (date >= monthAgo) {
-        groups.thisMonth.push(conv);
-      } else {
-        groups.older.push(conv);
-      }
-    });
-
-    return groups;
-  };
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar esta conversación? No se puede deshacer.")) return;

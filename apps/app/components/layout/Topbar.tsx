@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -50,6 +50,27 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   const effectiveDemo = isDemo || isDemoFallback;
   const allowDemoFallback = process.env.NODE_ENV !== "production";
   const demoOption = { id: "demo", name: demoCompanyName };
+
+  const loadTenantLogo = useCallback(
+    async (tenantId: string) => {
+      if (effectiveDemo) return;
+      try {
+        const res = await fetch(`/api/tenant/logo?tenantId=${tenantId}`, {
+          credentials: "include"
+        });
+        const data = await res.json();
+        if (data.ok && data.logoURL) {
+          setTenantLogoURL(data.logoURL);
+        } else {
+          setTenantLogoURL(null);
+        }
+      } catch (error) {
+        console.error("Failed to load tenant logo:", error);
+        setTenantLogoURL(null);
+      }
+    },
+    [effectiveDemo]
+  );
 
   const availablePanels: PanelOption[] = [
     {
@@ -193,25 +214,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
     return () => {
       mounted = false;
     };
-  }, [demoCompanyName, effectiveDemo, setCompany]);
-
-  async function loadTenantLogo(tenantId: string) {
-    if (effectiveDemo) return;
-    try {
-      const res = await fetch(`/api/tenant/logo?tenantId=${tenantId}`, {
-        credentials: "include"
-      });
-      const data = await res.json();
-      if (data.ok && data.logoURL) {
-        setTenantLogoURL(data.logoURL);
-      } else {
-        setTenantLogoURL(null);
-      }
-    } catch (error) {
-      console.error("Failed to load tenant logo:", error);
-      setTenantLogoURL(null);
-    }
-  }
+  }, [demoCompanyName, effectiveDemo, setCompany, allowDemoFallback, loadTenantLogo]);
 
   async function handleTenantChange(nextId: string) {
     if (nextId === "__add__") {

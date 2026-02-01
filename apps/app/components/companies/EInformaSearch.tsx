@@ -3,7 +3,7 @@
 import { Search, Building2, MapPin } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
-interface EInformaCompany {
+export interface EInformaCompany {
   einformaId: string;
   name: string;
   nif: string;

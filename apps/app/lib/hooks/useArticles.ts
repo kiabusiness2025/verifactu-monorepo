@@ -127,7 +127,7 @@ export function useArticles(initialPage = 1, limit = 20) {
 
   useEffect(() => {
     fetchArticles(initialPage);
-  }, []);
+  }, [fetchArticles, initialPage]);
 
   return {
     articles,

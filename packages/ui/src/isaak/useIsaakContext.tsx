@@ -14,7 +14,7 @@ function moduleFromPath(pathname: string) {
   return { module: "Dashboard", key: "dashboard" };
 }
 
-export function useIsaakContext(extra?: Record<string, any>) {
+export function useIsaakContext(extra?: Record<string, unknown>) {
   const pathname = usePathname();
 
   return useMemo(() => {

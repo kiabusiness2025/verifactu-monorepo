@@ -212,6 +212,7 @@ export function IsaakSmartFloating() {
       preferences.voiceEnabled,
       preferences.voiceLanguage,
       isSpeaking,
+      tone,
     ]
   );
 

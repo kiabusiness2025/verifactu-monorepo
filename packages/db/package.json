@@ -4,6 +4,9 @@
   "private": true,
   "main": "./index.ts",
   "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
   "scripts": {
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

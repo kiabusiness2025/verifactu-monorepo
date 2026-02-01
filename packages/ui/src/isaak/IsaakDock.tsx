@@ -6,14 +6,14 @@ import { cn } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import { useIsaakContext } from "./useIsaakContext";
 
-function IsaakPanel({ context }: { context: any }) {
+function IsaakPanel({ context }: { context: Record<string, unknown> }) {
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-3 border-b">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm font-semibold">Isaak</div>
-            <div className="text-xs text-muted-foreground">Contexto: {context.module}</div>
+          <div className="text-xs text-muted-foreground">Contexto: {String(context.module ?? "")}</div>
           </div>
         </div>
       </div>
@@ -28,7 +28,7 @@ function IsaakPanel({ context }: { context: any }) {
   );
 }
 
-export function IsaakDock({ extraContext }: { extraContext?: Record<string, any> }) {
+export function IsaakDock({ extraContext }: { extraContext?: Record<string, unknown> }) {
   const [open, setOpen] = React.useState(false);
   const context = useIsaakContext(extraContext);
 

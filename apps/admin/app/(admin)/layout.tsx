@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { AppShell } from "@verifactu/ui/app-shell/AppShell";
-import { navAdmin } from "@/src/navAdmin";
+import { AppShell } from "@verifactu/ui";
+import { navAdmin } from "../../src/navAdmin";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

@@ -126,7 +126,7 @@ export function useSuppliers(initialPage = 1, limit = 20) {
 
   useEffect(() => {
     fetchSuppliers(initialPage);
-  }, []);
+  }, [fetchSuppliers, initialPage]);
 
   return {
     suppliers,

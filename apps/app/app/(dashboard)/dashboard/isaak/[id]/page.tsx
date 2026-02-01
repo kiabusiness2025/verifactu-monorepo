@@ -3,7 +3,7 @@
 import { formatShortDate, formatTime } from "@/src/lib/formatters";
 import { ArrowLeft, Bot, Download, Edit2, Save, Share2, User, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Message {
   id: string;
@@ -28,11 +28,7 @@ export default function ConversationDetailPage({ params }: { params: { id: strin
   const [editingLast, setEditingLast] = useState(false);
   const [editedContent, setEditedContent] = useState("");
 
-  useEffect(() => {
-    fetchConversation();
-  }, [params.id]);
-
-  const fetchConversation = async () => {
+  const fetchConversation = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/isaak/conversations/${params.id}`);
@@ -48,7 +44,11 @@ export default function ConversationDetailPage({ params }: { params: { id: strin
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, router]);
+
+  useEffect(() => {
+    fetchConversation();
+  }, [fetchConversation]);
 
   const handleShare = async () => {
     try {

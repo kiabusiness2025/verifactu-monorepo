@@ -1,9 +1,9 @@
 "use client";
 import * as React from "react";
 import { usePathname, useParams, useSearchParams } from "next/navigation";
-import { AppShell } from "@verifactu/ui/app-shell/AppShell";
-import { navClient } from "@/src/navClient";
-import { useCurrentTenant } from "@/src/tenant/useCurrentTenant";
+import { AppShell } from "@verifactu/ui";
+import { navClient } from "../../../src/navClient";
+import { useCurrentTenant } from "../../../src/tenant/useCurrentTenant";
 
 export default function AppShellLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

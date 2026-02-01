@@ -6,6 +6,13 @@ export * from "./app-shell/types";
 
 export * from "./isaak/IsaakDock";
 export * from "./isaak/useIsaakContext";
+
+// Dashboard
+export * from "./dashboard/SectionTitle";
+export * from "./dashboard/ActionCard";
+export * from "./dashboard/MetricCard";
+export * from "./dashboard/NoticeCard";
+export * from "./dashboard/ToastCard";
 // Button
 export { Button } from "./button/Button";
 export type { ButtonProps } from "./button/Button";

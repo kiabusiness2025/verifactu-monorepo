@@ -46,7 +46,7 @@ export interface AuditLog {
   targetUserId?: string;
   targetCompanyId?: string;
   action: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp: Date;
   ip?: string;
   userAgent?: string;

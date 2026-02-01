@@ -1,3 +1,4 @@
-// Re-export unified Prisma client from @verifactu/db
-export { prisma } from '@verifactu/db';
+import { prisma } from "@verifactu/db";
+
+export { prisma };
 export default prisma;

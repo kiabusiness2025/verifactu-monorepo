@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
-import { requireAdmin } from "@/lib/adminAuth";
+import { query } from "../../../../lib/db";
+import { requireAdmin } from "../../../../lib/adminAuth";
 
 export const runtime = "nodejs";
 export const dynamic = 'force-dynamic';

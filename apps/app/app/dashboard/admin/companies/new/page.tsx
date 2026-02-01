@@ -82,18 +82,43 @@ export default function NewCompanyPage() {
                 Busca por nombre o CIF y autocompletaremos los datos de la empresa
               </p>
               <EInformaSearch
-                onSelect={(company) => {
-                  setFormData({
+                onSelect={async (company) => {
+                  try {
+                    const res = await fetch(
+                      `/api/onboarding/einforma/company?einformaId=${encodeURIComponent(
+                        company.einformaId
+                      )}`
+                    );
+                    const data = await res.json();
+
+                    if (res.ok && data?.company) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        name: data.company.name ?? company.name,
+                        legal_name: data.company.legalName ?? company.name,
+                        tax_id: data.company.nif ?? company.nif ?? '',
+                        address: data.company.address ?? '',
+                        city: data.company.city ?? '',
+                        country: 'ES',
+                      }));
+                      success(
+                        'Empresa encontrada',
+                        `Datos de ${data.company.name ?? company.name} autocompletados`
+                      );
+                      return;
+                    }
+                  } catch (err) {
+                    console.error('Error fetching company details:', err);
+                  }
+
+                  setFormData((prev) => ({
+                    ...prev,
                     name: company.name,
-                    legal_name: company.legal_name,
-                    tax_id: company.tax_id,
-                    email: company.email || '',
-                    phone: company.phone || '',
-                    address: company.address,
-                    city: company.city,
-                    postal_code: company.postal_code,
-                    country: company.country,
-                  });
+                    legal_name: company.name,
+                    tax_id: company.nif ?? '',
+                    city: company.city ?? '',
+                    country: 'ES',
+                  }));
                   success('Empresa encontrada', `Datos de ${company.name} autocompletados`);
                 }}
               />
@@ -101,9 +126,9 @@ export default function NewCompanyPage() {
           </div>
         </div>
 
-        {/* Información Básica */}
+        {/* Informacion Basica */}
         <div className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Información Básica</h2>
+          <h2 className="font-semibold text-gray-900">Informacion Basica</h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -128,7 +153,7 @@ export default function NewCompanyPage() {
                 htmlFor="new-company-legal-name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Razón Social
+                Razon Social
               </label>
               <input
                 id="new-company-legal-name"
@@ -184,7 +209,7 @@ export default function NewCompanyPage() {
                 htmlFor="new-company-phone"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Teléfono
+                Telefono
               </label>
               <input
                 id="new-company-phone"
@@ -200,7 +225,7 @@ export default function NewCompanyPage() {
                 htmlFor="new-company-country"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                País
+                Pais
               </label>
               <select
                 id="new-company-country"
@@ -208,7 +233,7 @@ export default function NewCompanyPage() {
                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                <option value="ES">España</option>
+                <option value="ES">Espana</option>
                 <option value="PT">Portugal</option>
                 <option value="FR">Francia</option>
                 <option value="IT">Italia</option>
@@ -217,9 +242,9 @@ export default function NewCompanyPage() {
           </div>
         </div>
 
-        {/* Dirección */}
+        {/* Direccion */}
         <div className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Dirección</h2>
+          <h2 className="font-semibold text-gray-900">Direccion</h2>
 
           <div>
             <label
@@ -259,7 +284,7 @@ export default function NewCompanyPage() {
                 htmlFor="new-company-postal-code"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Código Postal
+                Codigo Postal
               </label>
               <input
                 id="new-company-postal-code"
@@ -292,3 +317,4 @@ export default function NewCompanyPage() {
     </main>
   );
 }
+
