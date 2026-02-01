@@ -1,10 +1,12 @@
-"use client";
+'use client';
 
-import React, { createContext, useCallback, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useState } from 'react';
 
 type IsaakUIContextValue = {
   company: string;
   setCompany: (v: string) => void;
+  extraContext: Record<string, unknown>;
+  setExtraContext: (v: Record<string, unknown>) => void;
   isDrawerOpen: boolean;
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -13,12 +15,9 @@ type IsaakUIContextValue = {
 
 const IsaakUIContext = createContext<IsaakUIContextValue | undefined>(undefined);
 
-export function IsaakUIProvider({ 
-  children
-}: { 
-  children: React.ReactNode;
-}) {
-  const [company, setCompany] = useState("");
+export function IsaakUIProvider({ children }: { children: React.ReactNode }) {
+  const [company, setCompany] = useState('');
+  const [extraContext, setExtraContext] = useState<Record<string, unknown>>({});
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const openDrawer = useCallback(() => {
@@ -29,7 +28,16 @@ export function IsaakUIProvider({
 
   return (
     <IsaakUIContext.Provider
-      value={{ company, setCompany, isDrawerOpen, openDrawer, closeDrawer, toggleDrawer }}
+      value={{
+        company,
+        setCompany,
+        extraContext,
+        setExtraContext,
+        isDrawerOpen,
+        openDrawer,
+        closeDrawer,
+        toggleDrawer,
+      }}
     >
       {children}
     </IsaakUIContext.Provider>
@@ -39,7 +47,7 @@ export function IsaakUIProvider({
 export function useIsaakUI() {
   const ctx = useContext(IsaakUIContext);
   if (!ctx) {
-    throw new Error("useIsaakUI must be used within IsaakUIProvider");
+    throw new Error('useIsaakUI must be used within IsaakUIProvider');
   }
   return ctx;
 }

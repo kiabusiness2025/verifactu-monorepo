@@ -1,36 +1,36 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef, useState } from "react";
-import { useIsaakUI } from "@/context/IsaakUIContext";
-import { useIsaakContext } from "@/hooks/useIsaakContext";
+import React, { useEffect, useRef, useState } from 'react';
+import { useIsaakUI } from '@/context/IsaakUIContext';
+import { useIsaakContext } from '@/hooks/useIsaakContext';
 
 type Message = {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
 };
 
 export function IsaakDrawer() {
-  const { company, isDrawerOpen, closeDrawer } = useIsaakUI();
+  const { company, extraContext, isDrawerOpen, closeDrawer } = useIsaakUI();
   const { title, suggestions } = useIsaakContext();
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Solo mostrar mensaje de bienvenida si es Empresa Demo SL
-  const isDemoCompany = company && company.toLowerCase().includes("demo");
+  const isDemoCompany = company && company.toLowerCase().includes('demo');
 
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isDemoCompany || messages.length > 0) return;
     setMessages([
       {
-        id: "welcome",
-        role: "assistant",
+        id: 'welcome',
+        role: 'assistant',
         content:
-          "Hola! Soy Isaak. Estas en Empresa Demo SL. Explora los datos de ejemplo o crea tu empresa desde Configuracion > Empresa.",
+          'Hola! Soy Isaak. Estas en Empresa Demo SL. Explora los datos de ejemplo o crea tu empresa desde Configuracion > Empresa.',
       },
     ]);
   }, [isDemoCompany, messages.length]);
@@ -41,14 +41,14 @@ export function IsaakDrawer() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeDrawer();
+      if (e.key === 'Escape') closeDrawer();
     };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [closeDrawer]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,31 +58,32 @@ export function IsaakDrawer() {
     // Add user message
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
-      role: "user",
+      role: 'user',
       content: input,
     };
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    setInput('');
     setIsLoading(true);
 
     try {
       // Send to chat API
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [...messages, userMessage],
+          context: extraContext,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Chat error");
+        throw new Error('Chat error');
       }
 
       // Handle streaming response
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let assistantContent = "";
+      let assistantContent = '';
 
       if (reader) {
         let done = false;
@@ -98,16 +99,16 @@ export function IsaakDrawer() {
 
       const assistantMessage: Message = {
         id: `msg-${Date.now()}`,
-        role: "assistant",
-        content: assistantContent || "No pude procesar tu solicitud.",
+        role: 'assistant',
+        content: assistantContent || 'No pude procesar tu solicitud.',
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error("Chat error:", error);
+      console.error('Chat error:', error);
       const errorMessage: Message = {
         id: `msg-${Date.now()}`,
-        role: "assistant",
-        content: "Disculpa, ocurrio un error. Intenta de nuevo.",
+        role: 'assistant',
+        content: 'Disculpa, ocurrio un error. Intenta de nuevo.',
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -133,7 +134,7 @@ export function IsaakDrawer() {
       )}
       <aside
         className={`fixed right-0 top-0 z-40 h-full w-full max-w-md transform border-l border-slate-200 bg-white shadow-2xl transition-transform duration-300 ${
-          isDrawerOpen ? "translate-x-0" : "translate-x-full"
+          isDrawerOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         aria-label="Isaak drawer"
       >
@@ -157,13 +158,13 @@ export function IsaakDrawer() {
             <div
               key={m.id}
               className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
-                m.role === "assistant"
-                  ? "self-start bg-slate-50 text-slate-700"
-                  : "self-end bg-blue-600 text-white"
+                m.role === 'assistant'
+                  ? 'self-start bg-slate-50 text-slate-700'
+                  : 'self-end bg-blue-600 text-white'
               }`}
             >
               <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] opacity-70">
-                {m.role === "assistant" ? "Isaak" : "Tu"}
+                {m.role === 'assistant' ? 'Isaak' : 'Tu'}
               </span>
               <span className="mt-1 block whitespace-pre-wrap">{m.content}</span>
             </div>
@@ -177,11 +178,11 @@ export function IsaakDrawer() {
                 <div className="h-2 w-2 animate-pulse rounded-full bg-slate-400" />
                 <div
                   className="h-2 w-2 animate-pulse rounded-full bg-slate-400"
-                  style={{ animationDelay: "0.2s" }}
+                  style={{ animationDelay: '0.2s' }}
                 />
                 <div
                   className="h-2 w-2 animate-pulse rounded-full bg-slate-400"
-                  style={{ animationDelay: "0.4s" }}
+                  style={{ animationDelay: '0.4s' }}
                 />
               </div>
             </div>

@@ -370,6 +370,20 @@ model UserPreference {
   @@map("user_preferences")
 }
 
+model UserOnboarding {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @unique @map("user_id")
+  demoTenantId String?  @map("demo_tenant_id") @db.Uuid
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  demoTenant Tenant? @relation(fields: [demoTenantId], references: [id], onDelete: SetNull)
+
+  @@index([demoTenantId])
+  @@map("user_onboarding")
+}
+
 model Plan {
   id                  Int      @id @default(autoincrement())
   code                String   @unique
