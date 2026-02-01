@@ -3,9 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button } from '@verifactu/ui/components/ui/button';
-import { Card, CardContent } from '@verifactu/ui/components/ui/card';
-import { SectionTitle } from '@verifactu/ui';
+import { Button, SectionTitle } from '@verifactu/ui';
 import { Building2, Plus } from 'lucide-react';
 import { useToast } from '@/components/notifications/ToastNotifications';
 import { useAuth } from '@/hooks/useAuth';
@@ -201,8 +199,8 @@ export default function DashboardPage() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.4fr] gap-4">
-        <Card className="shadow-soft rounded-2xl border-slate-200">
-          <CardContent className="p-5 space-y-4">
+        <div className="shadow-soft rounded-2xl border border-slate-200 bg-white">
+          <div className="p-5 space-y-4">
             <div className="text-sm font-semibold text-slate-900">Perfiles</div>
             <div className="max-h-[320px] overflow-y-auto pr-1 space-y-2">
               {companies.map((company) => {
@@ -231,11 +229,11 @@ export default function DashboardPage() {
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="shadow-soft rounded-2xl border-slate-200">
-          <CardContent className="p-5 space-y-4">
+        <div className="shadow-soft rounded-2xl border border-slate-200 bg-white">
+          <div className="p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-2xl bg-[#2361d8]/10 border border-[#2361d8]/20 flex items-center justify-center">
@@ -288,13 +286,13 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       <SectionTitle title="Acciones con Isaak" />
-      <Card className="shadow-soft rounded-2xl border-slate-200">
-        <CardContent className="p-4 space-y-3">
+      <div className="shadow-soft rounded-2xl border border-slate-200 bg-white">
+        <div className="p-4 space-y-3">
           {isaakActions.map((item) => (
             <div
               key={item.id}
@@ -314,8 +312,8 @@ export default function DashboardPage() {
               </Link>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
