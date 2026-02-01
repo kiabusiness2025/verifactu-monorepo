@@ -1,12 +1,14 @@
 ﻿'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@verifactu/ui/components/ui/button';
 import { Card, CardContent } from '@verifactu/ui/components/ui/card';
-import { NoticeCard, SectionTitle } from '@verifactu/ui';
-import { Building2, ChevronDown, Plus } from 'lucide-react';
+import { SectionTitle } from '@verifactu/ui';
+import { Building2, Plus } from 'lucide-react';
 import { useToast } from '@/components/notifications/ToastNotifications';
+import { useAuth } from '@/hooks/useAuth';
 
 const companies = [
   {
@@ -61,11 +63,35 @@ const exercises = [
   { id: '2024', label: 'Ejercicio 2024' },
 ];
 
+const isaakActions = [
+  {
+    id: 'invoice',
+    title: 'Isaak, emite nueva factura venta',
+    action: 'Nueva factura Veri*Factu',
+    href: '/dashboard/invoices',
+  },
+  {
+    id: 'expense',
+    title: 'Contabiliza esta factura de gasto',
+    action: 'Importar archivo',
+    href: '/dashboard/documents',
+  },
+  {
+    id: 'hacienda',
+    title: 'Interpreta esta notificación de Hacienda',
+    action: 'Subir documentos',
+    href: '/dashboard/documents',
+  },
+];
+
 export default function DashboardPage() {
   const router = useRouter();
   const { info } = useToast();
+  const { user } = useAuth();
   const [exerciseId, setExerciseId] = useState('2026');
   const [activeCompanyId, setActiveCompanyId] = useState('demo');
+
+  const userName = user?.displayName || user?.email?.split('@')?.[0] || 'Usuario';
 
   const exerciseLabel = useMemo(() => {
     return exercises.find((item) => item.id === exerciseId)?.label ?? 'Ejercicio';
@@ -85,36 +111,18 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-soft rounded-2xl border-slate-200">
-        <CardContent className="p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="text-xs tracking-[0.35em] text-slate-400">INICIO</div>
-            <div className="mt-1 text-lg font-semibold text-[#011c67]">Resumen de tu empresa</div>
-            <div className="mt-2 text-sm text-slate-500">
-              Ventas, gastos y beneficio estimado en tiempo real.
-            </div>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-xs tracking-[0.35em] text-slate-400">INICIO</div>
+          <div className="mt-1 text-lg font-semibold text-[#011c67]">Hola, {userName}</div>
+          <div className="mt-2 text-sm text-slate-500">
+            Resumen de tu empresa y acciones rápidas para hoy.
           </div>
-          <div className="flex flex-wrap gap-2">
-            <div className="relative">
-              <select
-                value={exerciseId}
-                onChange={(e) => setExerciseId(e.target.value)}
-                className="h-10 w-full appearance-none rounded-full border border-slate-200 bg-white px-4 pr-9 text-sm text-slate-700 shadow-sm focus:border-[#2361d8] focus:outline-none focus:ring-2 focus:ring-[#2361d8]/20"
-              >
-                {exercises.map((exercise) => (
-                  <option key={exercise.id} value={exercise.id}>
-                    {exercise.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-slate-400" />
-            </div>
-            <Button className="rounded-full" onClick={() => router.push('/dashboard/settings')}>
-              Ver ajustes
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+        <Button className="rounded-full" onClick={() => router.push('/dashboard/settings')}>
+          Ver ajustes
+        </Button>
+      </div>
 
       <SectionTitle
         title="Tus empresas"
@@ -162,7 +170,7 @@ export default function DashboardPage() {
 
         <Card className="shadow-soft rounded-2xl border-slate-200">
           <CardContent className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-2xl bg-[#2361d8]/10 border border-[#2361d8]/20 flex items-center justify-center">
                   <Building2 className="h-5 w-5 text-[#2361d8]" />
@@ -177,8 +185,19 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-500">
-              {exerciseLabel} · Cifras estimadas
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs text-slate-500">
+              <span>{exerciseLabel} · Cifras estimadas</span>
+              <select
+                value={exerciseId}
+                onChange={(e) => setExerciseId(e.target.value)}
+                className="h-8 rounded-full border border-slate-200 bg-white px-3 text-xs text-slate-700 shadow-sm focus:border-[#2361d8] focus:outline-none focus:ring-2 focus:ring-[#2361d8]/20"
+              >
+                {exercises.map((exercise) => (
+                  <option key={exercise.id} value={exercise.id}>
+                    {exercise.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -207,17 +226,30 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <SectionTitle title="Avisos" />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <NoticeCard
-          label="Resumen"
-          text="Tu beneficio estimado está actualizado con las facturas de hoy."
-        />
-        <NoticeCard
-          label="Veri*Factu"
-          text="Recuerda revisar los plazos de emisión para cumplir con la AEAT."
-        />
-      </div>
+      <SectionTitle title="Acciones con Isaak" />
+      <Card className="shadow-soft rounded-2xl border-slate-200">
+        <CardContent className="p-4 space-y-3">
+          {isaakActions.map((item) => (
+            <div
+              key={item.id}
+              className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <div className="text-sm font-semibold text-slate-900">{item.title}</div>
+                <div className="text-xs text-slate-500">
+                  Isaak preparará la acción y el borrador.
+                </div>
+              </div>
+              <Link
+                href={item.href}
+                className="inline-flex h-9 items-center justify-center rounded-full border border-[#2361d8]/20 bg-[#2361d8]/10 px-4 text-xs font-semibold text-[#2361d8] transition hover:bg-[#2361d8]/20"
+              >
+                {item.action}
+              </Link>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
