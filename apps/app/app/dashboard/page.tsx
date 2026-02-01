@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, SectionTitle } from '@verifactu/ui';
@@ -153,6 +153,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [exerciseId, setExerciseId] = useState('2026');
   const [activeCompanyId, setActiveCompanyId] = useState('demo');
+  const [isaakActions, setIsaakActions] = useState(isaakActionsByCompany.demo);
 
   const userName = user?.displayName || user?.email?.split('@')?.[0] || 'Usuario';
 
@@ -163,7 +164,30 @@ export default function DashboardPage() {
   const activeCompany = useMemo(() => {
     return companies.find((company) => company.id === activeCompanyId) ?? companies[0];
   }, [activeCompanyId]);
-  const isaakActions = isaakActionsByCompany[activeCompanyId] || isaakActionsByCompany.demo;
+  useEffect(() => {
+    let mounted = true;
+    async function loadActions() {
+      try {
+        const res = await fetch(
+          `/api/dashboard/actions?tenantId=${encodeURIComponent(activeCompanyId)}`,
+          { credentials: 'include' }
+        );
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.ok || !Array.isArray(data.actions)) {
+          throw new Error('Invalid actions payload');
+        }
+        if (mounted) setIsaakActions(data.actions);
+      } catch (error) {
+        if (mounted) {
+          setIsaakActions(isaakActionsByCompany[activeCompanyId] || isaakActionsByCompany.demo);
+        }
+      }
+    }
+    loadActions();
+    return () => {
+      mounted = false;
+    };
+  }, [activeCompanyId]);
 
   const handleAddCompany = () => {
     info(
