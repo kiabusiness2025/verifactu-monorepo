@@ -1,15 +1,15 @@
-"use client";
+﻿'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { useIsaakUI } from "@/context/IsaakUIContext";
-import { useLogout } from "@/hooks/useLogout";
-import { useAuth } from "@/hooks/useAuth";
-import { useCreateCompanyModal } from "@/context/CreateCompanyModalContext";
-import { LayoutGrid, Shield, Plus } from "lucide-react";
-import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
+import { useIsaakUI } from '@/context/IsaakUIContext';
+import { useLogout } from '@/hooks/useLogout';
+import { useAuth } from '@/hooks/useAuth';
+import { useCreateCompanyModal } from '@/context/CreateCompanyModalContext';
+import { LayoutGrid, Shield, Plus } from 'lucide-react';
+import { DemoLockedButton } from '@/components/demo/DemoLockedButton';
 
 type TopbarProps = {
   onToggleSidebar: () => void;
@@ -31,7 +31,12 @@ type PanelOption = {
   description: string;
 };
 
-export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, demoCompanyName = "Empresa Demo SL" }: TopbarProps) {
+export function Topbar({
+  onToggleSidebar,
+  onOpenPreferences,
+  isDemo = false,
+  demoCompanyName = 'Empresa Demo SL',
+}: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const createCompanyModal = useCreateCompanyModal();
@@ -39,7 +44,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   const { user: firebaseUser, signOut: firebaseSignOut } = useAuth();
   const { logout, isLoggingOut } = useLogout();
   const [tenants, setTenants] = useState<TenantOption[]>([]);
-  const [activeTenantId, setActiveTenantId] = useState("");
+  const [activeTenantId, setActiveTenantId] = useState('');
   const [tenantLogoURL, setTenantLogoURL] = useState<string | null>(null);
   const [isLoadingTenants, setIsLoadingTenants] = useState(true);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -48,15 +53,15 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   const [isDemoFallback, setIsDemoFallback] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const effectiveDemo = isDemo || isDemoFallback;
-  const allowDemoFallback = process.env.NODE_ENV !== "production";
-  const demoOption = { id: "demo", name: demoCompanyName };
+  const allowDemoFallback = process.env.NODE_ENV !== 'production';
+  const demoOption = { id: 'demo', name: demoCompanyName };
 
   const loadTenantLogo = useCallback(
     async (tenantId: string) => {
       if (effectiveDemo) return;
       try {
         const res = await fetch(`/api/tenant/logo?tenantId=${tenantId}`, {
-          credentials: "include"
+          credentials: 'include',
         });
         const data = await res.json();
         if (data.ok && data.logoURL) {
@@ -65,7 +70,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
           setTenantLogoURL(null);
         }
       } catch (error) {
-        console.error("Failed to load tenant logo:", error);
+        console.error('Failed to load tenant logo:', error);
         setTenantLogoURL(null);
       }
     },
@@ -74,28 +79,28 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
 
   const availablePanels: PanelOption[] = [
     {
-      id: "dashboard",
-      name: "Panel Principal",
-      path: "/dashboard",
-      icon: "dashboard",
-      description: "Gestion de tu empresa",
+      id: 'dashboard',
+      name: 'Panel Principal',
+      path: '/dashboard',
+      icon: 'dashboard',
+      description: 'Gestion de tu empresa',
     },
     ...(isAdmin
       ? [
           {
-            id: "admin",
-            name: "Panel de Admin",
-            path: "/dashboard/admin",
-            icon: "admin",
-            description: "Control del sistema",
+            id: 'admin',
+            name: 'Panel de Admin',
+            path: '/dashboard/admin',
+            icon: 'admin',
+            description: 'Control del sistema',
           },
         ]
       : []),
   ];
 
-  const currentPanel = pathname?.startsWith("/dashboard/admin")
-    ? availablePanels.find((panel) => panel.id === "admin")
-    : availablePanels.find((panel) => panel.id === "dashboard");
+  const currentPanel = pathname?.startsWith('/dashboard/admin')
+    ? availablePanels.find((panel) => panel.id === 'admin')
+    : availablePanels.find((panel) => panel.id === 'dashboard');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -105,8 +110,8 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
     };
 
     if (showUserMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showUserMenu]);
 
@@ -117,11 +122,11 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
     }
     async function checkAdminStatus() {
       try {
-        const res = await fetch("/api/admin/check", { credentials: "include" });
+        const res = await fetch('/api/admin/check', { credentials: 'include' });
         const data = await res.json().catch(() => ({ isAdmin: false }));
         setIsAdmin(data.isAdmin === true);
       } catch (error) {
-        console.error("Failed to check admin status:", error);
+        console.error('Failed to check admin status:', error);
         setIsAdmin(false);
       }
     }
@@ -130,7 +135,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
 
   useEffect(() => {
     if (effectiveDemo) {
-      const demoTenant = { id: "demo", name: demoCompanyName };
+      const demoTenant = { id: 'demo', name: demoCompanyName };
       setTenants([demoTenant]);
       setActiveTenantId(demoTenant.id);
       setCompany(demoTenant.name);
@@ -142,39 +147,35 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
     async function loadTenants() {
       setIsLoadingTenants(true);
       try {
-        const res = await fetch("/api/tenants", { credentials: "include" });
+        const res = await fetch('/api/tenants', { credentials: 'include' });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data?.ok) {
-          throw new Error(data?.error || "Failed to load tenants");
+          throw new Error(data?.error || 'Failed to load tenants');
         }
 
         const items = Array.isArray(data.tenants) ? data.tenants : [];
         if (items.length === 0) {
           if (mounted) {
             setTenants([]);
-            setActiveTenantId("");
-            setCompany("Empresa");
+            setActiveTenantId('');
+            setCompany('Empresa');
             setTenantLogoURL(null);
             setIsLoadingTenants(false);
             setIsDemoFallback(allowDemoFallback);
             setIsAdmin(false);
           }
-          if (allowDemoFallback && typeof window !== "undefined") {
+          if (allowDemoFallback && typeof window !== 'undefined') {
             window.__VF_DEMO_MODE__ = true;
-            window.localStorage.setItem("vf_demo_mode", "1");
-            window.dispatchEvent(new Event("vf-demo-mode"));
+            window.localStorage.setItem('vf_demo_mode', '1');
+            window.dispatchEvent(new Event('vf-demo-mode'));
           }
           return;
         }
         const preferredId =
-          typeof data.preferredTenantId === "string"
-            ? data.preferredTenantId
-            : "";
-        const initialId = preferredId || items[0]?.id || "";
+          typeof data.preferredTenantId === 'string' ? data.preferredTenantId : '';
+        const initialId = preferredId || items[0]?.id || '';
         const initialName =
-          items.find((t: TenantOption) => t.id === initialId)?.name ||
-          items[0]?.name ||
-          "Empresa";
+          items.find((t: TenantOption) => t.id === initialId)?.name || items[0]?.name || 'Empresa';
 
         if (mounted) {
           setTenants(items);
@@ -184,27 +185,27 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
           if (initialId) {
             loadTenantLogo(initialId);
           }
-          if (typeof window !== "undefined") {
-            window.localStorage.removeItem("vf_demo_mode");
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem('vf_demo_mode');
             window.__VF_DEMO_MODE__ = false;
-            window.dispatchEvent(new Event("vf-demo-mode"));
+            window.dispatchEvent(new Event('vf-demo-mode'));
           }
         }
       } catch (error) {
-        console.error("Failed to load tenants:", error);
+        console.error('Failed to load tenants:', error);
         if (mounted) {
-          const demoTenant = { id: "demo", name: demoCompanyName };
+          const demoTenant = { id: 'demo', name: demoCompanyName };
           setTenants([]);
-          setActiveTenantId("");
-          setCompany("Empresa");
+          setActiveTenantId('');
+          setCompany('Empresa');
           setTenantLogoURL(null);
           setIsDemoFallback(allowDemoFallback);
           setIsAdmin(false);
         }
-        if (allowDemoFallback && typeof window !== "undefined") {
+        if (allowDemoFallback && typeof window !== 'undefined') {
           window.__VF_DEMO_MODE__ = true;
-          window.localStorage.setItem("vf_demo_mode", "1");
-          window.dispatchEvent(new Event("vf-demo-mode"));
+          window.localStorage.setItem('vf_demo_mode', '1');
+          window.dispatchEvent(new Event('vf-demo-mode'));
         }
       } finally {
         if (mounted) setIsLoadingTenants(false);
@@ -217,18 +218,18 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   }, [demoCompanyName, effectiveDemo, setCompany, allowDemoFallback, loadTenantLogo]);
 
   async function handleTenantChange(nextId: string) {
-    if (nextId === "__add__") {
-      router.push("/dashboard/onboarding?next=/dashboard");
+    if (nextId === '__add__') {
+      router.push('/dashboard/onboarding?next=/dashboard');
       return;
     }
-    if (nextId === "demo") {
+    if (nextId === 'demo') {
       setIsDemoFallback(true);
-      setActiveTenantId("demo");
+      setActiveTenantId('demo');
       setCompany(demoCompanyName);
-      if (typeof window !== "undefined") {
+      if (typeof window !== 'undefined') {
         window.__VF_DEMO_MODE__ = true;
-        window.localStorage.setItem("vf_demo_mode", "1");
-        window.dispatchEvent(new Event("vf-demo-mode"));
+        window.localStorage.setItem('vf_demo_mode', '1');
+        window.dispatchEvent(new Event('vf-demo-mode'));
       }
       return;
     }
@@ -236,15 +237,15 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
     if (!nextId || nextId === activeTenantId) return;
     setIsSwitching(true);
     try {
-      const res = await fetch("/api/session/tenant-switch", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/session/tenant-switch', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenantId: nextId }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || "Failed to switch tenant");
+        throw new Error(data?.error || 'Failed to switch tenant');
       }
 
       setActiveTenantId(nextId);
@@ -252,13 +253,13 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
       if (selected?.name) setCompany(selected.name);
       // Cargar logo del nuevo tenant
       loadTenantLogo(nextId);
-      if (typeof window !== "undefined") {
+      if (typeof window !== 'undefined') {
         window.__VF_DEMO_MODE__ = false;
-        window.localStorage.removeItem("vf_demo_mode");
-        window.dispatchEvent(new Event("vf-demo-mode"));
+        window.localStorage.removeItem('vf_demo_mode');
+        window.dispatchEvent(new Event('vf-demo-mode'));
       }
     } catch (error) {
-      console.error("Failed to switch tenant:", error);
+      console.error('Failed to switch tenant:', error);
     } finally {
       setIsSwitching(false);
     }
@@ -267,7 +268,9 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
   const tenantOptions = effectiveDemo ? [demoOption] : [...tenants, demoOption];
   const tenantSelectDisabled = isLoadingTenants || isSwitching || tenantOptions.length === 0;
   const handleCreateCompany =
-    !effectiveDemo && createCompanyModal?.openModal ? () => createCompanyModal.openModal() : undefined;
+    !effectiveDemo && createCompanyModal?.openModal
+      ? () => createCompanyModal.openModal()
+      : undefined;
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur">
@@ -292,7 +295,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
             </svg>
           </button>
           <div className="flex items-center gap-2">
-            {tenantLogoURL && currentPanel?.id !== "admin" ? (
+            {tenantLogoURL && currentPanel?.id !== 'admin' ? (
               <Image
                 src={tenantLogoURL}
                 alt="Logo de empresa"
@@ -318,9 +321,9 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
         </div>
 
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#0b214a]">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#011c67]">
             <span>Panel de cliente</span>
-            {currentPanel?.id === "admin" && (
+            {currentPanel?.id === 'admin' && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
                 Modo admin
               </span>
@@ -333,17 +336,15 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            {currentPanel?.id !== "admin" && (
+            {currentPanel?.id !== 'admin' && (
               <>
                 <select
-                  value={activeTenantId || ""}
+                  value={activeTenantId || ''}
                   onChange={(e) => handleTenantChange(e.target.value)}
                   disabled={tenantSelectDisabled}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#0b6cfb] focus:outline-none focus:ring-2 focus:ring-[#0b6cfb]/20 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#2361d8] focus:outline-none focus:ring-2 focus:ring-[#2361d8]/20 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
                 >
-                  {!effectiveDemo && tenants.length === 0 && (
-                    <option value="">Sin empresas</option>
-                  )}
+                  {!effectiveDemo && tenants.length === 0 && <option value="">Sin empresas</option>}
                   {tenantOptions.map((tenant) => (
                     <option key={tenant.id} value={tenant.id}>
                       {tenant.name}
@@ -410,19 +411,19 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0b6cfb]/10 text-sm font-semibold text-[#0b6cfb] ring-1 ring-[#0b6cfb]/20 transition-colors hover:bg-[#0b6cfb]/20"
-                title={firebaseUser?.email || "Usuario"}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2361d8]/10 text-sm font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/20 transition-colors hover:bg-[#2361d8]/20"
+                title={firebaseUser?.email || 'Usuario'}
               >
                 {firebaseUser?.photoURL ? (
                   <Image
                     src={firebaseUser.photoURL}
-                    alt={firebaseUser.displayName || "Usuario"}
+                    alt={firebaseUser.displayName || 'Usuario'}
                     width={40}
                     height={40}
                     className="rounded-full"
                   />
                 ) : (
-                  firebaseUser?.email?.[0].toUpperCase() || "U"
+                  firebaseUser?.email?.[0].toUpperCase() || 'U'
                 )}
               </button>
               {showUserMenu && (
@@ -431,11 +432,9 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
                     {firebaseUser && (
                       <div className="px-4 py-3 border-b border-slate-200">
                         <p className="text-sm font-medium text-slate-900">
-                          {firebaseUser.displayName || "Usuario"}
+                          {firebaseUser.displayName || 'Usuario'}
                         </p>
-                        <p className="text-xs text-slate-500 truncate">
-                          {firebaseUser.email}
-                        </p>
+                        <p className="text-xs text-slate-500 truncate">{firebaseUser.email}</p>
                         {!firebaseUser.emailVerified && (
                           <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded">
                             Email no verificado
@@ -461,19 +460,19 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
                                 }}
                                 className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                                   isActive
-                                    ? "bg-[#0b6cfb]/10 text-[#0b6cfb] font-medium"
-                                    : "text-slate-700 hover:bg-slate-100"
+                                    ? 'bg-[#2361d8]/10 text-[#2361d8] font-medium'
+                                    : 'text-slate-700 hover:bg-slate-100'
                                 }`}
                               >
                                 <div className="flex items-start gap-2">
                                   <span
                                     className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${
                                       isActive
-                                        ? "bg-[#0b6cfb] text-white"
-                                        : "bg-slate-200 text-slate-700"
+                                        ? 'bg-[#2361d8] text-white'
+                                        : 'bg-slate-200 text-slate-700'
                                     }`}
                                   >
-                                    {panel.icon === "admin" ? (
+                                    {panel.icon === 'admin' ? (
                                       <Shield className="h-4 w-4" />
                                     ) : (
                                       <LayoutGrid className="h-4 w-4" />
@@ -556,7 +555,7 @@ export function Topbar({ onToggleSidebar, onOpenPreferences, isDemo = false, dem
                           d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                         />
                       </svg>
-                      {isLoggingOut ? "Cerrando sesion..." : "Cerrar sesion"}
+                      {isLoggingOut ? 'Cerrando sesion...' : 'Cerrar sesion'}
                     </button>
                   </div>
                 </div>

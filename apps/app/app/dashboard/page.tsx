@@ -1,169 +1,130 @@
-﻿import {
-  ActionCard,
-  Card,
-  CardContent,
-  MetricCard,
-  NoticeCard,
-  SectionTitle,
-  ToastCard,
-} from "@verifactu/ui";
-import { Button } from "@verifactu/ui";
-import {
-  Building2,
-  CalendarDays,
-  FileText,
-  Folder,
-  Users,
-  Wallet,
-} from "lucide-react";
+﻿'use client';
+
+import { useRouter } from 'next/navigation';
+import { Button } from '@verifactu/ui/components/ui/button';
+import { Card, CardContent } from '@verifactu/ui/components/ui/card';
+import { NoticeCard, SectionTitle } from '@verifactu/ui';
+import { Plus, Building2 } from 'lucide-react';
+import { useToast } from '@/components/notifications/ToastNotifications';
+
+const demoCompany = {
+  id: 'demo',
+  name: 'Empresa Demo SL',
+  nif: 'B12345678',
+  status: 'Demo',
+  metrics: {
+    ventas: '1.995,00 €',
+    gastos: '638,40 €',
+    beneficio: '1.356,60 €',
+  },
+};
 
 export default function DashboardPage() {
-  const demo = true;
+  const router = useRouter();
+  const { info } = useToast();
+
+  const handleAddCompany = () => {
+    info(
+      'Disponible con tu prueba',
+      'Activa tu prueba para crear una empresa real y conectar tus datos.'
+    );
+    router.push('/dashboard/onboarding?next=/dashboard');
+  };
 
   return (
     <div className="space-y-6">
       <Card className="shadow-soft rounded-2xl">
-        <CardContent className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <CardContent className="p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="flex items-center gap-2">
-              <div className="text-sm font-semibold">Buenas noches, Usuario</div>
-              {demo ? (
-                <span className="rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground">
-                  MODO DEMO
-                </span>
-              ) : null}
-            </div>
-
-            <div className="text-xs text-muted-foreground mt-1">ESTAS EN: RESUMEN GENERAL</div>
-
-            <div className="text-sm text-muted-foreground mt-3">
-              Tu beneficio se actualiza solo: ventas - gastos. No tienes que cruzar hojas.
+            <div className="text-xs tracking-[0.3em] text-slate-400">INICIO</div>
+            <div className="mt-1 text-lg font-semibold text-slate-900">Resumen de tu empresa</div>
+            <div className="mt-2 text-sm text-slate-500">
+              Ventas, gastos y beneficio estimado en tiempo real.
             </div>
           </div>
-
-          <Button className="rounded-full">Ver resumen</Button>
+          <Button className="rounded-full" onClick={() => router.push('/dashboard/settings')}>
+            Ver ajustes
+          </Button>
         </CardContent>
       </Card>
 
       <SectionTitle
-        title="Acciones"
+        title="Tus empresas"
         right={
-          <span className="rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground">
-            HOY
-          </span>
+          <Button variant="outline" className="rounded-full" onClick={handleAddCompany}>
+            <Plus className="h-4 w-4 mr-2" />
+            Añadir empresa
+          </Button>
         }
       />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-        <ActionCard
-          title="Factura"
-          subtitle="Crea o revisa cobros"
-          tag="Ventas"
-          href="/invoices"
-          icon={<FileText className="h-4 w-4 text-primary" />}
-        />
-        <ActionCard
-          title="Gasto"
-          subtitle="Registra proveedores"
-          tag="Pagos"
-          href="/expenses"
-          icon={<Wallet className="h-4 w-4 text-emerald-500" />}
-        />
-        <ActionCard
-          title="Documento"
-          subtitle="Sube y organiza"
-          tag="Archivo"
-          href="/documents"
-          icon={<Folder className="h-4 w-4 text-amber-500" />}
-        />
-        <ActionCard
-          title="Calendario"
-          subtitle="Mira plazos"
-          tag="Fiscal"
-          href="/calendar"
-          icon={<CalendarDays className="h-4 w-4 text-orange-500" />}
-        />
-        <ActionCard
-          title="Nueva empresa"
-          subtitle="Crear o importar"
-          tag="Empresa"
-          href="/settings/company"
-          icon={<Building2 className="h-4 w-4 text-primary" />}
-        />
-        <ActionCard
-          title="Clientes"
-          subtitle="Gestiona contactos"
-          tag="Contactos"
-          href="/customers"
-          icon={<Users className="h-4 w-4 text-indigo-500" />}
-        />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="shadow-soft rounded-2xl border-slate-200">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-2xl bg-[#2361d8]/10 border border-[#2361d8]/20 flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-[#2361d8]" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">{demoCompany.name}</div>
+                  <div className="text-xs text-slate-500">NIF {demoCompany.nif}</div>
+                </div>
+              </div>
+              <span className="rounded-full border px-2 py-0.5 text-[10px] text-slate-500">
+                {demoCompany.status}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-xl border bg-white p-3">
+                <div className="text-[11px] uppercase tracking-widest text-slate-400">Ventas</div>
+                <div className="mt-2 text-sm font-semibold text-slate-900">
+                  {demoCompany.metrics.ventas}
+                </div>
+              </div>
+              <div className="rounded-xl border bg-white p-3">
+                <div className="text-[11px] uppercase tracking-widest text-slate-400">Gastos</div>
+                <div className="mt-2 text-sm font-semibold text-slate-900">
+                  {demoCompany.metrics.gastos}
+                </div>
+              </div>
+              <div className="rounded-xl border bg-white p-3">
+                <div className="text-[11px] uppercase tracking-widest text-slate-400">
+                  Beneficio
+                </div>
+                <div className="mt-2 text-sm font-semibold text-slate-900">
+                  {demoCompany.metrics.beneficio}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-soft rounded-2xl border-dashed border-slate-200">
+          <CardContent className="p-5 flex flex-col justify-between h-full">
+            <div>
+              <div className="text-sm font-semibold text-slate-900">Añade otra empresa</div>
+              <div className="mt-1 text-sm text-slate-500">
+                Importa datos reales y activa tu prueba de 30 días.
+              </div>
+            </div>
+            <Button className="mt-4 rounded-full w-fit" onClick={handleAddCompany}>
+              Activar prueba
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
-      <SectionTitle
-        title="Estado"
-        right={
-          <span className="rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground">
-            METRICS
-          </span>
-        }
-      />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <MetricCard
-          title="Ventas mes"
-          value="1.995,00 EUR"
-          hint="6 facturas emitidas"
-          badge={{ label: "Listo", tone: "ok" }}
-        />
-        <MetricCard
-          title="Gastos mes"
-          value="638,40 EUR"
-          hint="Estimacion por ratio historico"
-          badge={{ label: "Info", tone: "info" }}
-        />
-        <MetricCard
-          title="Beneficio"
-          value="1.356,60 EUR"
-          hint="Actualizado hoy"
-          badge={{ label: "Listo", tone: "ok" }}
-        />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <MetricCard
-          title="IVA estimado"
-          value="418,95 EUR"
-          hint="Segun facturas del periodo"
-          badge={{ label: "Info", tone: "info" }}
-        />
-      </div>
-
-      <SectionTitle
-        title="Avisos"
-        right={
-          <span className="rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground">
-            DEMO
-          </span>
-        }
-      />
+      <SectionTitle title="Avisos de Isaak" />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <NoticeCard
-          label="Recordatorio"
-          text="Mantener la numeracion ordenada ayuda a cumplir Veri*Factu."
+          label="Resumen"
+          text="Tu beneficio estimado está actualizado con las facturas de hoy."
         />
         <NoticeCard
-          label="Consejo de Isaak"
-          text="Revisa vencimientos cada viernes para evitar cargos de financiacion."
-        />
-      </div>
-
-      <div className="fixed right-6 bottom-24 z-40 space-y-3 hidden md:block">
-        <ToastCard
-          title="Tu resumen hoy"
-          text="Haz clic para ver tu beneficio del mes y facturas pendientes."
-          tone="info"
-        />
-        <ToastCard
-          title="Recordatorio Veri*Factu"
-          text="Has subido tus facturas de hoy a la AEAT? Yo te ayudo si tienes dudas."
-          tone="warn"
+          label="Veri*Factu"
+          text="Recuerda revisar los plazos de emisión para cumplir con la AEAT."
         />
       </div>
     </div>

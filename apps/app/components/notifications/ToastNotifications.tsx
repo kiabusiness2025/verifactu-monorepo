@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Toast Notification System
  * Accessible notification system with multiple variants and auto-dismiss
  */
