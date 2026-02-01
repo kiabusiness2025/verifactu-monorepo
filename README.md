@@ -37,7 +37,7 @@ La documentacion detallada de variables esta en:
 2. Completar onboarding con eInforma y activar trial.
 3. Verificar permisos y auditoria (admin/support).
 4. Revisar seeds y datos demo.
-5. Dashboard /app: "Acciones con Isaak" debe ser dinamico por empresa/tenant (ahora es demo estatico).
+5. Dashboard /app: "Acciones con Isaak" ya dinamico por empresa demo (pendiente conectar a tenants reales).
 
 ## Desarrollo rapido
 

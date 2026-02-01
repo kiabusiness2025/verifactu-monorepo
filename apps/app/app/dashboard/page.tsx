@@ -63,26 +63,91 @@ const exercises = [
   { id: '2024', label: 'Ejercicio 2024' },
 ];
 
-const isaakActions = [
-  {
-    id: 'invoice',
-    title: 'Isaak, emite nueva factura venta',
-    action: 'Nueva factura Veri*Factu',
-    href: '/dashboard/invoices',
-  },
-  {
-    id: 'expense',
-    title: 'Contabiliza esta factura de gasto',
-    action: 'Importar archivo',
-    href: '/dashboard/documents',
-  },
-  {
-    id: 'hacienda',
-    title: 'Interpreta esta notificación de Hacienda',
-    action: 'Subir documentos',
-    href: '/dashboard/documents',
-  },
-];
+const isaakActionsByCompany: Record<
+  string,
+  { id: string; title: string; action: string; href: string }[]
+> = {
+  demo: [
+    {
+      id: 'invoice',
+      title: 'Isaak, emite nueva factura venta',
+      action: 'Nueva factura Veri*Factu',
+      href: '/dashboard/invoices',
+    },
+    {
+      id: 'expense',
+      title: 'Contabiliza esta factura de gasto',
+      action: 'Importar archivo',
+      href: '/dashboard/documents',
+    },
+    {
+      id: 'hacienda',
+      title: 'Interpreta esta notificación de Hacienda',
+      action: 'Subir documentos',
+      href: '/dashboard/documents',
+    },
+  ],
+  alpina: [
+    {
+      id: 'banking',
+      title: 'Conciliar movimientos bancarios pendientes',
+      action: 'Ir a Bancos',
+      href: '/dashboard/banking',
+    },
+    {
+      id: 'clients',
+      title: 'Revisar clientes con facturas vencidas',
+      action: 'Ver clientes',
+      href: '/dashboard/customers',
+    },
+    {
+      id: 'verifactu',
+      title: 'Enviar facturas del día a Veri*Factu',
+      action: 'Abrir facturas',
+      href: '/dashboard/invoices',
+    },
+  ],
+  norte: [
+    {
+      id: 'expense',
+      title: 'Registrar gasto con factura escaneada',
+      action: 'Subir documentos',
+      href: '/dashboard/documents',
+    },
+    {
+      id: 'calendar',
+      title: 'Revisar próximos plazos fiscales',
+      action: 'Ver calendario',
+      href: '/dashboard/calendar',
+    },
+    {
+      id: 'benefit',
+      title: 'Actualizar resumen de beneficio mensual',
+      action: 'Ver resumen',
+      href: '/dashboard',
+    },
+  ],
+  nova: [
+    {
+      id: 'sales',
+      title: 'Emitir factura recurrente a clientes clave',
+      action: 'Nueva factura',
+      href: '/dashboard/invoices',
+    },
+    {
+      id: 'docs',
+      title: 'Guardar contrato mercantil reciente',
+      action: 'Subir documento',
+      href: '/dashboard/documents',
+    },
+    {
+      id: 'tax',
+      title: 'Preparar modelo trimestral con Isaak',
+      action: 'Ver ajustes',
+      href: '/dashboard/settings',
+    },
+  ],
+};
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -100,6 +165,7 @@ export default function DashboardPage() {
   const activeCompany = useMemo(() => {
     return companies.find((company) => company.id === activeCompanyId) ?? companies[0];
   }, [activeCompanyId]);
+  const isaakActions = isaakActionsByCompany[activeCompanyId] || isaakActionsByCompany.demo;
 
   const handleAddCompany = () => {
     info(
