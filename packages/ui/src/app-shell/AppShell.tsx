@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import * as React from "react";
-import { IsaakDock } from "../isaak/IsaakDock";
-import { cn } from "../lib/utils";
-import { ModeToggle } from "../theme/ModeToggle";
-import type { NavItem } from "./types";
+import Link from 'next/link';
+import * as React from 'react';
+import { IsaakDock } from '../isaak/IsaakDock';
+import { cn } from '../lib/utils';
+import { ModeToggle } from '../theme/ModeToggle';
+import type { NavItem } from './types';
 
 type Props = {
-  variant: "client" | "admin";
+  variant: 'client' | 'admin';
   nav: NavItem[];
   pathname: string;
   headerLeft?: React.ReactNode;
@@ -30,27 +30,29 @@ export function AppShell({
   showIsaak,
   isaakExtraContext,
 }: Props) {
-  const isAdmin = variant === "admin";
+  const isAdmin = variant === 'admin';
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="flex">
-        <aside className={`hidden md:flex md:flex-col border-r bg-card ${isAdmin ? "w-[260px]" : "w-[280px]"}`}>
+        <aside
+          className={`hidden md:flex md:flex-col border-r bg-card ${isAdmin ? 'w-[260px]' : 'w-[280px]'}`}
+        >
           <div className="h-14 flex items-center px-4 border-b">
             <div className="flex items-center gap-2 min-w-0">
               <div className="h-8 w-8 rounded-xl bg-primary/10 border border-primary/15" />
               <div className="min-w-0">
                 <div className="text-sm font-semibold leading-tight truncate">
-                  {isAdmin ? "Verifactu Admin" : "Verifactu Business"}
+                  {isAdmin ? 'Verifactu Admin' : 'Verifactu Business'}
                 </div>
                 <div className="text-xs text-muted-foreground truncate">
-                  {isAdmin ? "Backoffice" : "Panel de cliente"}
+                  {isAdmin ? 'Backoffice' : 'Panel de cliente'}
                 </div>
               </div>
             </div>
           </div>
 
-          <nav className={`p-2 ${isAdmin ? "text-sm" : "text-[15px]"}`}>
+          <nav className={`p-2 ${isAdmin ? 'text-sm' : 'text-[15px]'}`}>
             {nav.map((item) => {
               const active = item.match ? item.match(pathname) : pathname.startsWith(item.href);
               return (
@@ -58,10 +60,10 @@ export function AppShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 rounded-xl px-3 py-2 transition",
+                    'flex items-center gap-2 rounded-xl px-3 py-2 transition',
                     active
-                      ? "bg-primary/10 text-foreground border border-primary/15"
-                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      ? 'bg-primary/10 text-foreground border border-primary/15'
+                      : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
                   )}
                 >
                   {item.icon}
@@ -72,7 +74,7 @@ export function AppShell({
           </nav>
 
           <div className="mt-auto p-3 border-t text-xs text-muted-foreground">
-            {isAdmin ? "Operaciones y soporte" : "ERP + Veri*Factu + Isaak"}
+            {isAdmin ? 'Operaciones y soporte' : 'ERP + Veri*Factu + Isaak'}
           </div>
         </aside>
 
@@ -85,7 +87,9 @@ export function AppShell({
             </div>
           </header>
 
-          <div className={`${isAdmin ? "max-w-[1600px]" : "max-w-[1400px]"} px-4 py-6`}>{children}</div>
+          <div className={`${isAdmin ? 'max-w-[1600px]' : 'max-w-[1400px]'} px-4 py-6`}>
+            {children}
+          </div>
         </main>
       </div>
 

@@ -1,5 +1,5 @@
-import * as React from "react";
-import { cn } from "../lib/utils";
+import * as React from 'react';
+import { cn } from '../lib/utils';
 
 export function SectionTitle({
   title,
@@ -11,7 +11,7 @@ export function SectionTitle({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center justify-between", className)}>
+    <div className={cn('flex items-center justify-between', className)}>
       <div className="text-xs tracking-widest text-muted-foreground">{title.toUpperCase()}</div>
       {right ? <div>{right}</div> : null}
     </div>

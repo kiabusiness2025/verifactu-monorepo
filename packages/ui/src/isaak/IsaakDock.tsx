@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { MessageCircle, X } from "lucide-react";
-import { cn } from "../lib/utils";
-import { Button } from "../components/ui/button";
-import { useIsaakContext } from "./useIsaakContext";
+import * as React from 'react';
+import { MessageCircle, X } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { Button } from '../components/ui/button';
+import { useIsaakContext } from './useIsaakContext';
 
 function IsaakPanel({ context }: { context: Record<string, unknown> }) {
   return (
@@ -13,7 +13,9 @@ function IsaakPanel({ context }: { context: Record<string, unknown> }) {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm font-semibold">Isaak</div>
-          <div className="text-xs text-muted-foreground">Contexto: {String(context.module ?? "")}</div>
+            <div className="text-xs text-muted-foreground">
+              Contexto: {String(context.module ?? '')}
+            </div>
           </div>
         </div>
       </div>
@@ -42,10 +44,10 @@ export function IsaakDock({ extraContext }: { extraContext?: Record<string, unkn
 
       <div
         className={cn(
-          "fixed bottom-5 right-5 z-50 w-[420px] h-[70vh] rounded-2xl border bg-background shadow overflow-hidden",
-          open ? "block" : "hidden"
+          'fixed bottom-5 right-5 z-50 w-[420px] h-[70vh] rounded-2xl border bg-background shadow overflow-hidden',
+          open ? 'block' : 'hidden'
         )}
-        style={{ transform: "translateY(-56px)" }}
+        style={{ transform: 'translateY(-56px)' }}
       >
         <div className="absolute top-2 right-2">
           <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Cerrar">

@@ -152,40 +152,45 @@ verifactu-monorepo/
 ## 🔗 Mapeo de Documentación
 
 ### Autenticación
-| Tema | Ubicación | Descripción |
-|------|-----------|-------------|
-| Firebase Console | [docs/setup/FIREBASE_CONSOLE_ACCESO.md](docs/setup/FIREBASE_CONSOLE_ACCESO.md) | URLs y acceso a Firebase |
-| Auth Setup | [docs/setup/FIREBASE_AUTH_SETUP.md](docs/setup/FIREBASE_AUTH_SETUP.md) | Configuración autenticación |
-| Multi-tenant | [docs/setup/MULTI_TENANT_AUTH_SETUP.md](docs/setup/MULTI_TENANT_AUTH_SETUP.md) | Estructura multi-tenant |
-| Facebook OAuth | [FACEBOOK_OAUTH_SETUP.md](FACEBOOK_OAUTH_SETUP.md) | Facebook login |
-| Seguridad | [SECURITY.md](SECURITY.md) | Políticas y mejores prácticas |
+
+| Tema             | Ubicación                                                                      | Descripción                   |
+| ---------------- | ------------------------------------------------------------------------------ | ----------------------------- |
+| Firebase Console | [docs/setup/FIREBASE_CONSOLE_ACCESO.md](docs/setup/FIREBASE_CONSOLE_ACCESO.md) | URLs y acceso a Firebase      |
+| Auth Setup       | [docs/setup/FIREBASE_AUTH_SETUP.md](docs/setup/FIREBASE_AUTH_SETUP.md)         | Configuración autenticación   |
+| Multi-tenant     | [docs/setup/MULTI_TENANT_AUTH_SETUP.md](docs/setup/MULTI_TENANT_AUTH_SETUP.md) | Estructura multi-tenant       |
+| Facebook OAuth   | [FACEBOOK_OAUTH_SETUP.md](FACEBOOK_OAUTH_SETUP.md)                             | Facebook login                |
+| Seguridad        | [SECURITY.md](SECURITY.md)                                                     | Políticas y mejores prácticas |
 
 ### Despliegue
-| Tema | Ubicación | Descripción |
-|------|-----------|-------------|
-| Vercel | [docs/deployment/VERCEL_DEPLOYMENT_GUIDE.md](docs/deployment/VERCEL_DEPLOYMENT_GUIDE.md) | Despliegue en Vercel |
-| Cloud Run | [docs/deployment/CLOUD_RUN_QUICK_REFERENCE.md](docs/deployment/CLOUD_RUN_QUICK_REFERENCE.md) | Google Cloud Run |
-| CI/CD | [docs/deployment/GITHUB_CLOUD_BUILD_SETUP.md](docs/deployment/GITHUB_CLOUD_BUILD_SETUP.md) | GitHub Actions / Cloud Build |
-| IAM | [GOOGLE_CLOUD_RUN_IAM.md](GOOGLE_CLOUD_RUN_IAM.md) | Permisos Google Cloud |
+
+| Tema      | Ubicación                                                                                    | Descripción                  |
+| --------- | -------------------------------------------------------------------------------------------- | ---------------------------- |
+| Vercel    | [docs/deployment/VERCEL_DEPLOYMENT_GUIDE.md](docs/deployment/VERCEL_DEPLOYMENT_GUIDE.md)     | Despliegue en Vercel         |
+| Cloud Run | [docs/deployment/CLOUD_RUN_QUICK_REFERENCE.md](docs/deployment/CLOUD_RUN_QUICK_REFERENCE.md) | Google Cloud Run             |
+| CI/CD     | [docs/deployment/GITHUB_CLOUD_BUILD_SETUP.md](docs/deployment/GITHUB_CLOUD_BUILD_SETUP.md)   | GitHub Actions / Cloud Build |
+| IAM       | [GOOGLE_CLOUD_RUN_IAM.md](GOOGLE_CLOUD_RUN_IAM.md)                                           | Permisos Google Cloud        |
 
 ### Mobile
-| Tema | Ubicación | Descripción |
-|------|-----------|-------------|
-| Flutter Install | [docs/setup/FLUTTER_INSTALLATION_GUIDE.md](docs/setup/FLUTTER_INSTALLATION_GUIDE.md) | Instalar Flutter |
-| Flutter Setup | [docs/setup/FLUTTER_SETUP.md](docs/setup/FLUTTER_SETUP.md) | Configurar proyecto |
-| Mobile Quick Start | [apps/mobile/QUICK_START.md](apps/mobile/QUICK_START.md) | Empezar con app móvil |
+
+| Tema               | Ubicación                                                                            | Descripción           |
+| ------------------ | ------------------------------------------------------------------------------------ | --------------------- |
+| Flutter Install    | [docs/setup/FLUTTER_INSTALLATION_GUIDE.md](docs/setup/FLUTTER_INSTALLATION_GUIDE.md) | Instalar Flutter      |
+| Flutter Setup      | [docs/setup/FLUTTER_SETUP.md](docs/setup/FLUTTER_SETUP.md)                           | Configurar proyecto   |
+| Mobile Quick Start | [apps/mobile/QUICK_START.md](apps/mobile/QUICK_START.md)                             | Empezar con app móvil |
 
 ### Base de Datos
-| Tema | Ubicación | Descripción |
-|------|-----------|-------------|
-| Setup | [docs/setup/DB_SETUP_GUIDE.md](docs/setup/DB_SETUP_GUIDE.md) | PostgreSQL + Prisma |
-| Schema | [apps/app/prisma/schema.prisma](apps/app/prisma/schema.prisma) | 8 modelos de datos |
+
+| Tema   | Ubicación                                                      | Descripción         |
+| ------ | -------------------------------------------------------------- | ------------------- |
+| Setup  | [docs/setup/DB_SETUP_GUIDE.md](docs/setup/DB_SETUP_GUIDE.md)   | PostgreSQL + Prisma |
+| Schema | [apps/app/prisma/schema.prisma](apps/app/prisma/schema.prisma) | 8 modelos de datos  |
 
 ### AI / Genkit
-| Tema | Ubicación | Descripción |
-|------|-----------|-------------|
-| Quick Start | [docs/ai/ISAAK_V3_QUICK_START.md](docs/ai/ISAAK_V3_QUICK_START.md) | Empezar con Genkit |
-| Testing | [docs/ai/ISAAK_V3_TESTING_GUIDE.md](docs/ai/ISAAK_V3_TESTING_GUIDE.md) | Testing de flows |
+
+| Tema           | Ubicación                                                                                    | Descripción        |
+| -------------- | -------------------------------------------------------------------------------------------- | ------------------ |
+| Quick Start    | [docs/ai/ISAAK_V3_QUICK_START.md](docs/ai/ISAAK_V3_QUICK_START.md)                           | Empezar con Genkit |
+| Testing        | [docs/ai/ISAAK_V3_TESTING_GUIDE.md](docs/ai/ISAAK_V3_TESTING_GUIDE.md)                       | Testing de flows   |
 | Implementation | [docs/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md](docs/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md) | Checklist completo |
 
 ---
@@ -193,15 +198,18 @@ verifactu-monorepo/
 ## 📊 Estado Actual del Proyecto
 
 **Completado:** ✅
+
 - Next.js app con autenticación Firebase (email, Google, Microsoft, Facebook)
 - Flutter app con Firebase integration
 - PostgreSQL con Prisma ORM (8 modelos)
 - Firestore security rules (multi-tenant)
+
 ---
 
 ## 📚 DOCUMENTOS PRINCIPALES (Actualizados)
 
 ### Esenciales
+
 - **[README.md](README.md)** - Overview y quickstart
 - **[ARQUITECTURA_UNIFICADA.md](ARQUITECTURA_UNIFICADA.md)** - Arquitectura completa
 - **[PROJECT_DELIVERABLES.md](PROJECT_DELIVERABLES.md)** - Features entregadas
@@ -209,6 +217,7 @@ verifactu-monorepo/
 - **[BRANDING.md](BRANDING.md)** - Guía de marca
 
 ### Técnicos
+
 - **[AUTH_FLOW_REFERENCE.md](AUTH_FLOW_REFERENCE.md)** - Flujo de autenticación
 - **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Resumen ejecutivo
 - **[EMAIL_SYSTEM_SUMMARY.md](EMAIL_SYSTEM_SUMMARY.md)** - Sistema de emails
@@ -216,6 +225,7 @@ verifactu-monorepo/
 - **[ISAAK_VERCEL_INTEGRATION.md](ISAAK_VERCEL_INTEGRATION.md)** - CI/CD y tooling
 
 ### Setup
+
 - **[QUICK_START.md](QUICK_START.md)** - Inicio rápido
 - **[GOOGLE_OAUTH_SETUP_STEPS.md](GOOGLE_OAUTH_SETUP_STEPS.md)** - OAuth Google
 - **[FACEBOOK_OAUTH_SETUP.md](FACEBOOK_OAUTH_SETUP.md)** - OAuth Facebook
@@ -226,18 +236,18 @@ verifactu-monorepo/
 
 ## 🔧 Tecnologías Principales
 
-| Capa | Tecnología | Versión |
-|------|-----------|---------|
-| Frontend Web | Next.js | 14.2.35 |
-| Frontend Mobile | Flutter | 3.38.6 |
-| Language | TypeScript | Strict |
-| Styling | Tailwind CSS | Latest |
-| Backend Auth | Firebase | 12.x |
-| Backend DB | PostgreSQL | 15+ |
-| ORM | Prisma | 5.20.0 |
-| AI | Genkit | 1.27.0 (disabled) |
-| Hosting | Vercel | - |
-| Package Manager | pnpm | 10.27.0 |
+| Capa            | Tecnología   | Versión           |
+| --------------- | ------------ | ----------------- |
+| Frontend Web    | Next.js      | 14.2.35           |
+| Frontend Mobile | Flutter      | 3.38.6            |
+| Language        | TypeScript   | Strict            |
+| Styling         | Tailwind CSS | Latest            |
+| Backend Auth    | Firebase     | 12.x              |
+| Backend DB      | PostgreSQL   | 15+               |
+| ORM             | Prisma       | 5.20.0            |
+| AI              | Genkit       | 1.27.0 (disabled) |
+| Hosting         | Vercel       | -                 |
+| Package Manager | pnpm         | 10.27.0           |
 
 ---
 
@@ -246,6 +256,7 @@ verifactu-monorepo/
 **Email:** kiabusiness2025@gmail.com
 
 **URLs Importantes:**
+
 - 🌐 Landing: https://verifactu.business
 - 📱 App: https://app.verifactu.business
 - 🔥 Firebase Console: https://console.firebase.google.com/project/verifactu-business

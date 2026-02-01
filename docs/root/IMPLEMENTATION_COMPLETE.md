@@ -5,6 +5,7 @@
 He configurado completamente **todas las opciones de buzón de correo electrónico** desde el panel de administración para la cuenta **soporte@verifactu.business**.
 
 Ahora puedes:
+
 - ✅ **Ver bandeja de entrada** - Recibe y visualiza emails automáticamente
 - ✅ **Enviar respuestas** - Responde directamente desde soporte@verifactu.business
 - ✅ **Gestionar estado** - Marca como pendiente, respondido o archivado
@@ -35,9 +36,10 @@ GET /api/admin/emails/send?emailId=uuid
 **Nuevo botón:** "Responder desde soporte@verifactu.business"
 
 **Modal elegante con:**
+
 - Campo "Desde" (read-only): soporte@verifactu.business
 - Campo "Para" (auto-rellenado): email del remitente
-- Campo "Asunto" (editable): Re: ... 
+- Campo "Asunto" (editable): Re: ...
 - Campo "Mensaje" (libre): tu respuesta
 - Contador de caracteres
 - Estados: Enviando, Éxito, Error
@@ -47,6 +49,7 @@ GET /api/admin/emails/send?emailId=uuid
 **Archivo:** `db/migrations/003_add_email_responses_table.sql`
 
 **Nueva tabla:** `admin_email_responses`
+
 ```sql
 - id (UUID)
 - admin_email_id (referencia al email original)
@@ -60,6 +63,7 @@ GET /api/admin/emails/send?emailId=uuid
 ```
 
 **Índices creados:**
+
 - `idx_admin_email_responses_email_id` - Por email original
 - `idx_admin_email_responses_sent_at` - Por fecha
 - `idx_admin_email_responses_response_id` - Por ID respuesta
@@ -103,6 +107,7 @@ He creado 6 documentos detallados:
 **Archivo:** `scripts/test-email-responses.js`
 
 Ejecuta las 3 pruebas automáticas:
+
 ```bash
 node scripts/test-email-responses.js
 ```
@@ -119,6 +124,7 @@ psql "$env:DATABASE_URL" -f "db/migrations/003_add_email_responses_table.sql"
 ```
 
 **Verificar que funcionó:**
+
 ```bash
 psql "$env:DATABASE_URL" -c "SELECT * FROM information_schema.tables WHERE table_name = 'admin_email_responses';"
 ```
@@ -145,32 +151,35 @@ Espera a que veas "✓ Ready"
 
 ## 📍 Archivos Importantes
 
-| Archivo | Propósito | Tipo |
-|---------|----------|------|
-| [QUICKSTART_MAILBOX.md](QUICKSTART_MAILBOX.md) | Comienza aquí | 📖 Guía |
-| `apps/app/app/api/admin/emails/send/route.ts` | API endpoint | 💻 Código |
-| `apps/app/app/dashboard/admin/emails/page.tsx` | UI del panel | 🎨 Componente |
-| `db/migrations/003_add_email_responses_table.sql` | BD | 💾 Migración |
+| Archivo                                                                    | Propósito           | Tipo             |
+| -------------------------------------------------------------------------- | ------------------- | ---------------- |
+| [QUICKSTART_MAILBOX.md](QUICKSTART_MAILBOX.md)                             | Comienza aquí       | 📖 Guía          |
+| `apps/app/app/api/admin/emails/send/route.ts`                              | API endpoint        | 💻 Código        |
+| `apps/app/app/dashboard/admin/emails/page.tsx`                             | UI del panel        | 🎨 Componente    |
+| `db/migrations/003_add_email_responses_table.sql`                          | BD                  | 💾 Migración     |
 | [docs/MAILBOX_ADMIN_CONFIGURATION.md](docs/MAILBOX_ADMIN_CONFIGURATION.md) | Referencia completa | 📚 Documentación |
-| `scripts/test-email-responses.js` | Pruebas | 🧪 Script |
+| `scripts/test-email-responses.js`                                          | Pruebas             | 🧪 Script        |
 
 ---
 
 ## ✨ Características Implementadas
 
 ### Seguridad ✅
+
 - Autenticación requerida (solo admins)
 - Validación de campos obligatorios
 - SQL injection prevention (prepared statements)
 - Auditoría: se registra quién respondió, cuándo y qué
 
 ### Performance ✅
+
 - Índices en BD para búsquedas rápidas
 - Paginación de emails
 - Queries optimizadas
 - Modal eficiente en React
 
 ### UX ✅
+
 - Modal elegante y responsive
 - Estados visuales claros (enviando, éxito, error)
 - Contador de caracteres
@@ -178,6 +187,7 @@ Espera a que veas "✓ Ready"
 - Cierre automático post-envío
 
 ### Funcionalidad ✅
+
 - Envío con Resend API
 - Historial completo en BD
 - Headers de email (In-Reply-To, References)
@@ -267,17 +277,21 @@ R: Solo usuarios en `ADMIN_EMAILS`.
 ## 📞 Soporte / Troubleshooting
 
 ### "psql: command not found"
+
 Instala PostgreSQL: https://www.postgresql.org/download/
 
 ### "Table doesn't exist"
+
 ```bash
 psql "$env:DATABASE_URL" -f "db/migrations/003_add_email_responses_table.sql"
 ```
 
 ### "Failed to send email"
+
 Verificar en Vercel que `RESEND_API_KEY` está configurada
 
 ### "Modal no aparece"
+
 ```javascript
 // En console (F12)
 localStorage.clear();
@@ -293,16 +307,19 @@ location.reload();
 Una vez todo funcione:
 
 1. **Probar en staging:**
+
    ```bash
    vercel
    ```
 
 2. **Desplegar a producción:**
+
    ```bash
    vercel --prod
    ```
 
 3. **Monitorear logs:**
+
    ```bash
    vercel logs --prod
    ```
@@ -331,13 +348,13 @@ Una vez todo funcione:
 
 ## 📚 Documentación
 
-| Documento | Contenido | Lectura |
-|-----------|----------|---------|
-| **[QUICKSTART_MAILBOX.md](QUICKSTART_MAILBOX.md)** | Inicio rápido | 5 min |
-| **[MAILBOX_ADMIN_CONFIGURATION.md](docs/MAILBOX_ADMIN_CONFIGURATION.md)** | Guía completa | 30 min |
-| **[APPLY_MIGRATIONS.md](docs/APPLY_MIGRATIONS.md)** | Pasos BD | 10 min |
-| **[MAILBOX_IMPLEMENTATION_SUMMARY.md](MAILBOX_IMPLEMENTATION_SUMMARY.md)** | Detalles técnicos | 20 min |
-| **[CHANGELOG_MAILBOX.md](CHANGELOG_MAILBOX.md)** | Cambios realizados | 10 min |
+| Documento                                                                  | Contenido          | Lectura |
+| -------------------------------------------------------------------------- | ------------------ | ------- |
+| **[QUICKSTART_MAILBOX.md](QUICKSTART_MAILBOX.md)**                         | Inicio rápido      | 5 min   |
+| **[MAILBOX_ADMIN_CONFIGURATION.md](docs/MAILBOX_ADMIN_CONFIGURATION.md)**  | Guía completa      | 30 min  |
+| **[APPLY_MIGRATIONS.md](docs/APPLY_MIGRATIONS.md)**                        | Pasos BD           | 10 min  |
+| **[MAILBOX_IMPLEMENTATION_SUMMARY.md](MAILBOX_IMPLEMENTATION_SUMMARY.md)** | Detalles técnicos  | 20 min  |
+| **[CHANGELOG_MAILBOX.md](CHANGELOG_MAILBOX.md)**                           | Cambios realizados | 10 min  |
 
 ---
 
@@ -345,7 +362,7 @@ Una vez todo funcione:
 
 El sistema está completamente implementado y listo para usar.
 
-**Próximo paso:** 
+**Próximo paso:**
 👉 Abre [QUICKSTART_MAILBOX.md](QUICKSTART_MAILBOX.md) y sigue los 3 pasos.
 
 ---

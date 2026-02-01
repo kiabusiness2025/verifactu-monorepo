@@ -21,12 +21,14 @@ Admin Panel:   Muestra los 3 usuarios       ✅ SINCRONIZADO
 ### 1. Sincronización Automática (Listo ahora)
 
 **Archivo:** `apps/landing/lib/syncUser.ts` (NUEVO)
+
 ```typescript
-export async function syncUserToDB(user: User)
-export async function syncUserSilent(user: User)
+export async function syncUserToDB(user: User);
+export async function syncUserSilent(user: User);
 ```
 
 **Integrado en:** `apps/landing/lib/auth.ts`
+
 ```typescript
 signUpWithEmail()   ← ahora llama syncUserSilent()
 signInWithEmail()   ← ahora llama syncUserSilent()
@@ -40,17 +42,19 @@ signInWithGoogle()  ← ahora llama syncUserSilent()
 ### 2. Firebase Storage por Tenant (Listo)
 
 **Archivos creados:**
+
 - `apps/app/lib/storage.ts` ← Funciones de upload/delete
 - `apps/app/app/api/storage/upload/route.ts` ← Endpoint API
 - `storage.rules` ← Reglas de seguridad
 
 **Funciones disponibles:**
+
 ```typescript
-uploadToStorage(tenantId, category, file)     // Genérico
-uploadInvoice(tenantId, file)                 // Solo PDFs/XMLs
-uploadDocument(tenantId, file)                // Solo docs
-uploadAvatar(tenantId, userId, file)          // Avatars
-deleteFromStorage(tenantId, category, file)   // Eliminar
+uploadToStorage(tenantId, category, file); // Genérico
+uploadInvoice(tenantId, file); // Solo PDFs/XMLs
+uploadDocument(tenantId, file); // Solo docs
+uploadAvatar(tenantId, userId, file); // Avatars
+deleteFromStorage(tenantId, category, file); // Eliminar
 ```
 
 ---
@@ -84,8 +88,8 @@ https://localhost:3000/dashboard/admin/users
 import { uploadDocument } from '@/lib/storage';
 
 // Crear archivo de prueba
-const file = new File(['test content'], 'test.pdf', { 
-  type: 'application/pdf' 
+const file = new File(['test content'], 'test.pdf', {
+  type: 'application/pdf',
 });
 
 // Upload
@@ -127,7 +131,7 @@ import { sendVerificationEmail } from '@/lib/email/emailService';
 const emailResult = await sendVerificationEmail({
   email: user.email || '',
   userName: fullName || email.split('@')[0],
-  verificationLink: `${process.env.NEXT_PUBLIC_LANDING_URL}/auth/verify-email?token=...`
+  verificationLink: `${process.env.NEXT_PUBLIC_LANDING_URL}/auth/verify-email?token=...`,
   // TODO: Generar token de verificación
 });
 
@@ -142,14 +146,14 @@ if (!emailResult.success) {
 **Archivo:** `apps/landing/app/auth/verify-email/page.tsx`
 
 ```typescript
-// Agregar import  
+// Agregar import
 import { sendWelcomeEmail } from '@/lib/email/emailService';
 
 // Cuando se verifica el email:
 const emailResult = await sendWelcomeEmail({
   userName: user.displayName || 'Usuario',
   email: user.email!,
-  dashboardLink: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
+  dashboardLink: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
 });
 ```
 
@@ -157,15 +161,15 @@ const emailResult = await sendWelcomeEmail({
 
 ## 📊 Resumen de Cambios
 
-| Feature | Archivos | Estado |
-|---------|----------|--------|
-| **Sync Users** | `syncUser.ts` + `auth.ts` | ✅ LISTO |
-| **Storage SDK** | `lib/storage.ts` | ✅ LISTO |
-| **Storage API** | `app/api/storage/upload/route.ts` | ✅ LISTO |
-| **Storage Rules** | `storage.rules` | ✅ LISTO |
-| **Emails** | `lib/email/emailService.ts` | ✅ LISTO |
-| **Email Templates** | `emails/*.tsx` | ✅ LISTO |
-| **Email Integration** | PENDIENTE | ⏳ A IMPLEMENTAR |
+| Feature               | Archivos                          | Estado           |
+| --------------------- | --------------------------------- | ---------------- |
+| **Sync Users**        | `syncUser.ts` + `auth.ts`         | ✅ LISTO         |
+| **Storage SDK**       | `lib/storage.ts`                  | ✅ LISTO         |
+| **Storage API**       | `app/api/storage/upload/route.ts` | ✅ LISTO         |
+| **Storage Rules**     | `storage.rules`                   | ✅ LISTO         |
+| **Emails**            | `lib/email/emailService.ts`       | ✅ LISTO         |
+| **Email Templates**   | `emails/*.tsx`                    | ✅ LISTO         |
+| **Email Integration** | PENDIENTE                         | ⏳ A IMPLEMENTAR |
 
 ---
 
@@ -202,7 +206,6 @@ R: Sí, en desarrollo funciona. En producción necesitas las reglas.
 
 1. **Ahora** (5 min)
    - Probar sincronización (crear usuario → verificar admin)
-   
 2. **Dentro de 10 min** (30 min)
    - Integrar emails en signup/verify-email
    - Configurar RESEND_API_KEY
@@ -217,4 +220,3 @@ R: Sí, en desarrollo funciona. En producción necesitas las reglas.
 **¿Listo para testear?** 🚀
 
 Abre: https://localhost:3001/auth/login y crea un nuevo usuario
-

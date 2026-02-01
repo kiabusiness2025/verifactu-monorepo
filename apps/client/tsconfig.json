@@ -9,49 +9,22 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@/lib/*": [
-        "./lib/*"
-      ],
-      "@/src/*": [
-        "./src/*"
-      ],
-      "@/src/lib/*": [
-        "./src/lib/*"
-      ],
-      "@verifactu/utils": [
-        "../../packages/utils"
-      ],
-      "@verifactu/utils/*": [
-        "../../packages/utils/*"
-      ],
-      "@verifactu/ui": [
-        "../../packages/ui/index.tsx"
-      ],
-      "@verifactu/ui/*": [
-        "../../packages/ui/src/*"
-      ],
-      "@verifactu/db": [
-        "../../packages/db"
-      ],
-      "@verifactu/db/*": [
-        "../../packages/db/*"
-      ]
+      "@/*": ["./*"],
+      "@/lib/*": ["./lib/*"],
+      "@/src/*": ["./src/*"],
+      "@/src/lib/*": ["./src/lib/*"],
+      "@verifactu/utils": ["../../packages/utils"],
+      "@verifactu/utils/*": ["../../packages/utils/*"],
+      "@verifactu/ui": ["../../packages/ui/index.tsx"],
+      "@verifactu/ui/*": ["../../packages/ui/src/*"],
+      "@verifactu/db": ["../../packages/db"],
+      "@verifactu/db/*": ["../../packages/db/*"]
     },
     "allowJs": true,
     "isolatedModules": true,
     "jsx": "preserve",
     "esModuleInterop": true
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

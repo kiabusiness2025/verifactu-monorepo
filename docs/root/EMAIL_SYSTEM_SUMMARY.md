@@ -91,25 +91,30 @@
 Cada plantilla tiene mensajes calmantes diseñados para **reducir miedo fiscal**:
 
 #### Verificación
+
 - 💡 "Puedes trabajar con tranquilidad en tu contabilidad"
 - 💡 "Solo necesitamos verificar tu correo para completar el registro"
 
 #### Bienvenida
+
 - 🎉 "Tu cuenta está lista. A partir de ahora, gestiona con confianza"
 - 💝 "Los usuarios que completan su perfil reportan 3x más confianza"
 - 🌟 "Asistente Isaak disponible 24/7"
 
 #### Reset Contraseña
+
 - 🔐 "No te preocupes, esto es seguro y solo tú puedes completarlo"
 - 💡 "Una vez cambies tu contraseña, nada se pierde"
 - ✅ "Tu contraseña está encriptada y segura"
 
 #### Cambio Confirmado
+
 - 🛡️ "Tu cuenta está protegida"
 - 💡 "Todos tus datos siguen intactos y protegidos"
 - 🚨 "Si no fuiste tú, actúa rápido"
 
 #### Invitación
+
 - 🔒 "Cada rol tiene permisos específicos para tu privacidad"
 - ✨ "Colaboren en facturas y documentos con total seguridad"
 
@@ -119,11 +124,11 @@ Cada plantilla tiene mensajes calmantes diseñados para **reducir miedo fiscal**
 
 ```typescript
 import {
-  sendVerificationEmail,      // ✅
-  sendWelcomeEmail,          // ✅
-  sendResetPasswordEmail,    // ✅
-  sendPasswordChangedEmail,  // ✅
-  sendTeamInviteEmail        // ✅
+  sendVerificationEmail, // ✅
+  sendWelcomeEmail, // ✅
+  sendResetPasswordEmail, // ✅
+  sendPasswordChangedEmail, // ✅
+  sendTeamInviteEmail, // ✅
 } from '@/lib/email/emailService';
 
 // Todos retornan:
@@ -132,6 +137,7 @@ import {
 ```
 
 **Ya configurado en package.json:**
+
 ```json
 {
   "resend": "^3.4.0"
@@ -139,6 +145,7 @@ import {
 ```
 
 **Variables de entorno:**
+
 ```dotenv
 RESEND_API_KEY=re_XXXXXXXXXXXXXXXXXX  // Tu API key
 ```
@@ -169,47 +176,52 @@ apps/landing/
 ## 🚀 Cómo Usarlo
 
 ### Paso 1: Registrar usuario
+
 ```typescript
 // apps/landing/app/api/auth/register/route.ts
 await sendVerificationEmail({
   email: user.email,
   userName: user.name,
-  verificationLink: '...'
+  verificationLink: '...',
 });
 ```
 
 ### Paso 2: Verificar email
+
 ```typescript
 // apps/landing/app/api/auth/verify-email/route.ts
 await sendWelcomeEmail({
   userName: user.name,
   email: user.email,
-  dashboardLink: '...'
+  dashboardLink: '...',
 });
 ```
 
 ### Paso 3: Olvide contraseña
+
 ```typescript
 // apps/landing/app/api/auth/forgot-password/route.ts
 await sendResetPasswordEmail({
   userName: user.name,
   email: user.email,
   resetLink: '...',
-  expiryMinutes: 60
+  expiryMinutes: 60,
 });
 ```
 
 ### Paso 4: Cambio de contraseña
+
 ```typescript
 // apps/landing/app/api/auth/reset-password/route.ts
 await sendPasswordChangedEmail({
   userName: user.name,
   email: user.email,
-  dashboardLink: '...'
+  dashboardLink: '...',
 });
 ```
 
 ### Paso 5: Invitar a equipo
+
 ```typescript
 // apps/landing/app/api/team/invite/route.ts
 await sendTeamInviteEmail({
@@ -217,7 +229,7 @@ await sendTeamInviteEmail({
   inviterName: currentUser.name,
   companyName: company.name,
   acceptLink: '...',
-  role: 'contador'  // o 'gerente', 'asistente'
+  role: 'contador', // o 'gerente', 'asistente'
 });
 ```
 
@@ -268,19 +280,24 @@ Cada email incluye:
 ## 🎨 Personalización
 
 ### Cambiar Colores
+
 Edita en `EmailHeader.tsx`:
+
 ```tsx
 <div style={{ color: '#0060F0' }}>  // Cambiar #0060F0
 ```
 
 ### Cambiar Logo
+
 Edita en `EmailHeader.tsx`:
+
 ```tsx
 <img src="https://verifactu.business/brand/logo-horizontal-light.png" />
 // Cambiar URL aquí
 ```
 
 ### Agregar Nueva Plantilla
+
 ```typescript
 // 1. Crear: apps/landing/emails/NewEmail.tsx
 export function NewEmailTemplate({ data }: Props) {
@@ -333,17 +350,17 @@ Próximos pasos para integrar en los endpoints de autenticación:
 
 ## 📊 Estadísticas
 
-| Métrica | Valor |
-|---------|-------|
-| Plantillas | 5 |
-| Componentes reutilizables | 4 |
-| Funciones de envío | 5 |
-| Líneas de código HTML | ~2000 |
-| Líneas de código TypeScript | ~500 |
-| Responsive breakpoints | 3 (mobile/tablet/desktop) |
-| Dispositivos soportados | 20+ |
-| Integraciones | Resend |
-| Tiempo de implementación | ~2 horas |
+| Métrica                     | Valor                     |
+| --------------------------- | ------------------------- |
+| Plantillas                  | 5                         |
+| Componentes reutilizables   | 4                         |
+| Funciones de envío          | 5                         |
+| Líneas de código HTML       | ~2000                     |
+| Líneas de código TypeScript | ~500                      |
+| Responsive breakpoints      | 3 (mobile/tablet/desktop) |
+| Dispositivos soportados     | 20+                       |
+| Integraciones               | Resend                    |
+| Tiempo de implementación    | ~2 horas                  |
 
 ---
 

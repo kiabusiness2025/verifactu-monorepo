@@ -5,6 +5,7 @@
 `ADMIN_EMAILS` es una variable de entorno que define qué usuarios tienen acceso al **Panel de Administración** en `/dashboard/admin`.
 
 Solo los emails listados en esta variable podrán:
+
 - Ver usuarios del sistema
 - Gestionar empresas (crear, editar, eliminar)
 - Ver datos de contabilidad consolidados
@@ -16,7 +17,8 @@ Solo los emails listados en esta variable podrán:
 ADMIN_EMAILS=email1@dominio.com,email2@dominio.com,email3@dominio.com
 ```
 
-**Importante:** 
+**Importante:**
+
 - Separar emails con comas (sin espacios)
 - No incluir espacios al inicio ni final
 - Los emails NO son case-sensitive (se comparan en minúsculas)
@@ -37,12 +39,14 @@ ADMIN_EMAILS=email1@dominio.com,email2@dominio.com,email3@dominio.com
 ### Redeploy rápido
 
 Opción A - Desde terminal:
+
 ```bash
 cd apps/app
 vercel --prod
 ```
 
 Opción B - Desde Vercel dashboard:
+
 1. Ir a: Deployments
 2. Hacer click en los 3 puntos del último deployment
 3. Click en "Redeploy"
@@ -66,6 +70,7 @@ ADMIN_EMAILS=kiabusiness2025@gmail.com,otro.admin@empresa.com
 ## Seguridad
 
 ⚠️ **IMPORTANTE:**
+
 - Solo agregar emails de personas de confianza
 - Los admins pueden ver TODOS los datos de TODAS las empresas
 - Pueden crear, modificar y eliminar empresas

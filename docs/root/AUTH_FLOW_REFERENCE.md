@@ -8,6 +8,7 @@
 ## 📋 RESUMEN EJECUTIVO
 
 El flujo de autenticación está **correctamente configurado** en:
+
 - ✅ Variables de entorno (local y Vercel)
 - ✅ Gestión de cookies de sesión
 - ✅ URLs de redirección (Landing ↔ App)
@@ -36,6 +37,7 @@ Middleware valida cookie → Renderiza dashboard
 ```
 
 **Simplificaciones aplicadas:**
+
 - ❌ Eliminados parámetros `?next=...` en URLs
 - ❌ Eliminada lógica compleja de `resolveNextUrl()`
 - ❌ Eliminada validación redundante en `ProtectedRoute`
@@ -49,6 +51,7 @@ Middleware valida cookie → Renderiza dashboard
 ### Desarrollo Local
 
 **`.env.local` (raíz y ambas apps):**
+
 ```dotenv
 SESSION_SECRET=792231500a928ab8dacaaa8b4441b97f5f02234477bd69e236703f8dc1cce38e
 SESSION_COOKIE_DOMAIN=.localhost
@@ -62,6 +65,7 @@ NEXT_PUBLIC_LANDING_URL=http://localhost:3001
 ### Producción (Vercel)
 
 **Landing (`apps/landing/vercel.json`):**
+
 ```json
 {
   "env": {
@@ -73,6 +77,7 @@ NEXT_PUBLIC_LANDING_URL=http://localhost:3001
 ```
 
 **App (`apps/app/vercel.json`):**
+
 ```json
 {
   "env": {
@@ -84,6 +89,7 @@ NEXT_PUBLIC_LANDING_URL=http://localhost:3001
 ```
 
 **Secrets en GitHub/Vercel:**
+
 - `SESSION_SECRET` - 64 caracteres hex (mismo en ambos proyectos)
 - Variables de Firebase (API keys, project ID, etc.)
 
@@ -95,7 +101,7 @@ NEXT_PUBLIC_LANDING_URL=http://localhost:3001
 
 ```typescript
 const redirectToDashboard = () => {
-  console.log("[🧠 LOGIN] Redirecting to dashboard...");
+  console.log('[🧠 LOGIN] Redirecting to dashboard...');
   window.location.href = `${appUrl}/dashboard`;
 };
 
@@ -108,13 +114,13 @@ redirectToDashboard();
 ```typescript
 export async function middleware(req: NextRequest) {
   const session = await getSessionPayload();
-  
+
   if (!session) {
-    console.log("[🧠 MW] ❌ No session - redirecting to login");
+    console.log('[🧠 MW] ❌ No session - redirecting to login');
     return NextResponse.redirect(`${landingUrl}/auth/login`);
   }
-  
-  console.log("[🧠 MW] ✅ Valid session found");
+
+  console.log('[🧠 MW] ✅ Valid session found');
   return NextResponse.next();
 }
 ```
@@ -153,6 +159,7 @@ Para seguir el flujo completo, busca estos prefijos en la consola:
 - `[🧠 ProtectedRoute]` - Client-side component mount
 
 **Flujo esperado:**
+
 ```
 [🧠 LOGIN] Component mounted
 [🧠 LOGIN] Google button clicked
@@ -223,8 +230,12 @@ useEffect(() => {
 
 ```typescript
 // ❌ Antiguo
-function resolveNextUrl(next: string) { /* 30 líneas */ }
-function getRedirectUrl() { /* 15 líneas */ }
+function resolveNextUrl(next: string) {
+  /* 30 líneas */
+}
+function getRedirectUrl() {
+  /* 15 líneas */
+}
 
 // ✅ Nuevo
 const redirectToDashboard = () => {
@@ -241,6 +252,7 @@ const redirectToDashboard = () => {
 **Síntoma:** Usuario autenticado en landing pero no en app
 
 **Solución:**
+
 1. Verifica `SESSION_COOKIE_DOMAIN=.verifactu.business` (con punto inicial)
 2. Verifica `SESSION_COOKIE_SAMESITE=none`
 3. Verifica `SESSION_SECRET` es idéntico en ambos proyectos
@@ -250,6 +262,7 @@ const redirectToDashboard = () => {
 **Síntoma:** Error al crear usuario con Firebase Auth
 
 **Solución:**
+
 - Schema debe usar `TEXT` para `users.id`, no `UUID`
 - Firebase UIDs no son UUIDs válidos
 
@@ -258,6 +271,7 @@ const redirectToDashboard = () => {
 **Síntoma:** Página recarga infinitamente
 
 **Solución:**
+
 - Elimina validaciones de sesión en el cliente
 - Deja que solo el middleware maneje auth
 - Verifica que middleware no redirige a sí mismo

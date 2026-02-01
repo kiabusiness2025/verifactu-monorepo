@@ -7,6 +7,7 @@
 **Por qué:** Sin esto, la app no puede leer las cookies de sesión en producción.
 
 **Acción:**
+
 ```bash
 # Reemplazar apps/app/vercel.json con:
 ```
@@ -31,6 +32,7 @@
 **URL:** https://vercel.com/kseniasprojects/app/settings/environment-variables
 
 **Qué verificar:**
+
 - [ ] Variable `SESSION_SECRET` existe
 - [ ] Valor es: `792231500a928ab8dacaaa8b4441b97f5f02234477bd69e236703f8dc1cce38e`
 - [ ] Está configurada en AMBAS apps (landing y app)
@@ -44,6 +46,7 @@
 **URL:** https://vercel.com/kseniasprojects/verifactu-landing/settings/environment-variables
 
 **Qué verificar:**
+
 - [ ] Variable `SESSION_SECRET` existe
 - [ ] Valor es el **MISMO** que en app: `792231500a928ab8dacaaa8b4441b97f5f02234477bd69e236703f8dc1cce38e`
 
@@ -54,6 +57,7 @@
 ## 🧪 TESTING POST-ACTUALIZACIÓN
 
 ### Local (Verificar primero)
+
 ```bash
 cd c:\dev\verifactu-monorepo
 
@@ -131,32 +135,35 @@ grep "^SESSION_SECRET" .env.local
 
 ## 🎯 STATUS FINAL
 
-| Tarea | Status | Responsable | Deadline |
-|-------|--------|-------------|----------|
-| Crear getAppUrl() | ✅ DONE | Isaak | 2026-01-14 |
-| Actualizar DashboardLink | ✅ DONE | Isaak | 2026-01-14 |
-| Actualizar login/page.tsx | ✅ DONE | Isaak | 2026-01-14 |
-| Commit & Push | ✅ DONE | Isaak | 2026-01-14 |
-| **Actualizar apps/app/vercel.json** | ⏳ PENDIENTE | **AHORA** | Inmediato |
-| **Verificar SESSION_SECRET Vercel** | ⏳ PENDIENTE | **AHORA** | Inmediato |
-| Test local | ⏳ PENDIENTE | Manual | Después cambios |
-| Test producción | ⏳ PENDIENTE | Manual | Después deploy |
+| Tarea                               | Status       | Responsable | Deadline        |
+| ----------------------------------- | ------------ | ----------- | --------------- |
+| Crear getAppUrl()                   | ✅ DONE      | Isaak       | 2026-01-14      |
+| Actualizar DashboardLink            | ✅ DONE      | Isaak       | 2026-01-14      |
+| Actualizar login/page.tsx           | ✅ DONE      | Isaak       | 2026-01-14      |
+| Commit & Push                       | ✅ DONE      | Isaak       | 2026-01-14      |
+| **Actualizar apps/app/vercel.json** | ⏳ PENDIENTE | **AHORA**   | Inmediato       |
+| **Verificar SESSION_SECRET Vercel** | ⏳ PENDIENTE | **AHORA**   | Inmediato       |
+| Test local                          | ⏳ PENDIENTE | Manual      | Después cambios |
+| Test producción                     | ⏳ PENDIENTE | Manual      | Después deploy  |
 
 ---
 
 ## 🚨 PROBLEMAS CONOCIDOS Y SOLUCIONES
 
 ### "Dashboard button abre /auth/login en lugar de app.verifactu.business"
+
 - **Causa:** NEXT_PUBLIC_APP_URL no configurado en prod
 - **Solución:** ✅ RESUELTO con getAppUrl()
 - **Status:** FIXED en commit c8007ffe
 
 ### "Usuario logueado en landing pero app dice unauthorized"
+
 - **Causa:** SESSION_SECRET diferente entre apps
 - **Solución:** Verificar que son idénticos en .env y Vercel
 - **Check:** `grep SESSION_SECRET .env.local apps/landing/.env.local apps/app/.env.local`
 
-### "Cookie __session no se comparte entre landing y app"
+### "Cookie \_\_session no se comparte entre landing y app"
+
 - **Causa:** SESSION_COOKIE_DOMAIN no está en app/vercel.json
 - **Solución:** Agregar vercel.json con domain=.verifactu.business
 - **Status:** PENDIENTE

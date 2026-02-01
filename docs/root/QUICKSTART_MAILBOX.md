@@ -39,6 +39,7 @@ psql "$DATABASE_URL" -c "SELECT * FROM information_schema.tables WHERE table_nam
 ```
 
 **Resultado esperado:**
+
 ```
  schemaname | tablename                | tableowner
 ─────────────┼──────────────────────────┼───────────
@@ -52,6 +53,7 @@ pnpm dev
 ```
 
 Espera hasta que veas:
+
 ```
 ✓ Ready in XXX ms
 ```
@@ -59,11 +61,13 @@ Espera hasta que veas:
 ### Paso 3: Acceder al Panel
 
 Abre tu navegador:
+
 ```
 http://localhost:3000/dashboard/admin/emails
 ```
 
 Deberías ver:
+
 - 📥 Tab "Bandeja de entrada"
 - 🧪 Tab "Testing"
 
@@ -80,6 +84,7 @@ Deberías ver:
 #### Opción B: Ver emails existentes
 
 Si ya tienes emails en la bandeja:
+
 1. Haz click en Tab "Bandeja de entrada"
 2. Deberías ver emails listados por fecha
 
@@ -97,10 +102,11 @@ Si ya tienes emails en la bandeja:
    - Mensaje: Tu respuesta (vacío, escribe aquí)
 
 4. **Escribe tu respuesta**, por ejemplo:
+
    ```
    Hola,
 
-   Gracias por contactar a Verifactu. 
+   Gracias por contactar a Verifactu.
    Hemos recibido tu mensaje y te responderemos pronto.
 
    Saludos,
@@ -124,8 +130,9 @@ node scripts/test-email-responses.js
 ```
 
 Debería mostrar:
+
 - ✅ GET /api/admin/emails - Obtener lista
-- ✅ POST /api/admin/emails/send - Enviar respuesta  
+- ✅ POST /api/admin/emails/send - Enviar respuesta
 - ✅ GET /api/admin/emails/send?emailId=... - Obtener respuestas
 
 ### Verificación Manual en BD
@@ -138,9 +145,9 @@ psql "$DATABASE_URL"
 SELECT * FROM admin_email_responses ORDER BY sent_at DESC LIMIT 5;
 
 -- Ver emails con respuestas
-SELECT id, subject, status, responded_at 
-FROM admin_emails 
-WHERE responded_at IS NOT NULL 
+SELECT id, subject, status, responded_at
+FROM admin_emails
+WHERE responded_at IS NOT NULL
 ORDER BY responded_at DESC;
 ```
 
@@ -151,16 +158,20 @@ ORDER BY responded_at DESC;
 ### Nuevos Archivos:
 
 1. **API Endpoint**
+
    ```
    apps/app/app/api/admin/emails/send/route.ts
    ```
+
    - POST para enviar respuestas
    - GET para obtener historial de respuestas
 
 2. **Migración BD**
+
    ```
    db/migrations/003_add_email_responses_table.sql
    ```
+
    - Tabla `admin_email_responses`
    - Índices para performance
 
@@ -176,9 +187,11 @@ ORDER BY responded_at DESC;
 ### Archivos Modificados:
 
 1. **Panel UI**
+
    ```
    apps/app/app/dashboard/admin/emails/page.tsx
    ```
+
    - Nuevo modal de respuesta
    - Botón "Responder desde soporte@verifactu.business"
    - Estado y manejo de errores
@@ -210,11 +223,13 @@ psql "$env:DATABASE_URL" -f "db/migrations/003_add_email_responses_table.sql"
 ### "Failed to send email" en UI
 
 **Verificar en Vercel:**
+
 1. Ve a: https://vercel.com/ksenias-projects-16d8d1fb/verifactu-app
 2. Settings → Environment Variables
 3. Verifica que `RESEND_API_KEY` existe
 
 **Ver logs:**
+
 ```bash
 vercel logs --prod
 # Busca: "Error sending response email"
@@ -263,15 +278,18 @@ Para información detallada, consulta:
 ## 🔐 Seguridad
 
 ✅ **Autenticación:**
+
 - Solo admins pueden enviar emails (ADMIN_EMAILS)
 - Requiere sesión válida
 
 ✅ **Auditoría:**
+
 - Se registra quién respondió
 - Cuándo se envió la respuesta
 - ID de mensaje de Resend
 
 ✅ **Validación:**
+
 - Campos obligatorios verificados
 - SQL injection prevenido (prepared statements)
 - Tokens CSRF integrados
@@ -283,11 +301,13 @@ Para información detallada, consulta:
 Cuando todo funcione, puedes:
 
 1. **Ir a producción:**
+
    ```bash
    vercel --prod
    ```
 
 2. **Ver logs en producción:**
+
    ```bash
    vercel logs --prod --app=verifactu-app
    ```
@@ -317,7 +337,7 @@ Si algo no funciona:
 
 **¡Listo!** ✅
 
-Ya puedes gestionar emails desde el panel admin. 
+Ya puedes gestionar emails desde el panel admin.
 
 Cualquier pregunta, revisa la documentación en `/docs` o los comentarios en el código.
 

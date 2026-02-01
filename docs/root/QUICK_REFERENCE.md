@@ -8,16 +8,19 @@
 ## 🔘 BUTTON COMPONENT
 
 ### Import
+
 ```tsx
 import { Button } from '@/components/ui';
 ```
 
 ### Basic Usage
+
 ```tsx
 <Button>Click me</Button>
 ```
 
 ### Variants
+
 ```tsx
 <Button variant="primary">Primary (default)</Button>
 <Button variant="secondary">Secondary</Button>
@@ -27,6 +30,7 @@ import { Button } from '@/components/ui';
 ```
 
 ### Sizes
+
 ```tsx
 <Button size="sm">Small</Button>
 <Button size="md">Medium (default)</Button>
@@ -35,31 +39,27 @@ import { Button } from '@/components/ui';
 ```
 
 ### With Icon
+
 ```tsx
 import { ChevronRight } from 'lucide-react';
 
-<Button
-  variant="primary"
-  icon={<ChevronRight size={20} />}
->
+<Button variant="primary" icon={<ChevronRight size={20} />}>
   Next step
-</Button>
+</Button>;
 ```
 
 ### Loading State
+
 ```tsx
 const [isLoading, setIsLoading] = useState(false);
 
-<Button
-  isLoading={isLoading}
-  disabled={isLoading}
-  onClick={handleSubmit}
->
+<Button isLoading={isLoading} disabled={isLoading} onClick={handleSubmit}>
   {isLoading ? 'Guardando...' : 'Guardar'}
-</Button>
+</Button>;
 ```
 
 ### Full Width
+
 ```tsx
 <Button fullWidth variant="primary">
   Take full width
@@ -67,6 +67,7 @@ const [isLoading, setIsLoading] = useState(false);
 ```
 
 ### Complete Example (Hero CTA)
+
 ```tsx
 <Button
   variant="primary"
@@ -84,33 +85,32 @@ const [isLoading, setIsLoading] = useState(false);
 ## 🖼️ OPTIMIZED IMAGE COMPONENT
 
 ### Import
+
 ```tsx
 import { OptimizedImage } from '@/components/ui';
 ```
 
 ### Basic Usage
+
 ```tsx
-<OptimizedImage
-  src="/images/hero.jpg"
-  alt="Dashboard preview"
-  width={1200}
-  height={630}
-/>
+<OptimizedImage src="/images/hero.jpg" alt="Dashboard preview" width={1200} height={630} />
 ```
 
 ### Hero Image (Priority Loading)
+
 ```tsx
 <OptimizedImage
   src="/images/hero.jpg"
   alt="Verifactu dashboard showing sales and expenses"
   width={1920}
   height={1080}
-  priority={true}  // ← ONLY for above-fold images
+  priority={true} // ← ONLY for above-fold images
   sizes="100vw"
 />
 ```
 
 ### Feature Grid (50% width on desktop)
+
 ```tsx
 <OptimizedImage
   src="/images/feature.jpg"
@@ -122,6 +122,7 @@ import { OptimizedImage } from '@/components/ui';
 ```
 
 ### Logo (Contain, not Cover)
+
 ```tsx
 <OptimizedImage
   src="/brand/logo.svg"
@@ -134,17 +135,19 @@ import { OptimizedImage } from '@/components/ui';
 ```
 
 ### With Quality Adjustment
+
 ```tsx
 <OptimizedImage
   src="/images/photo.jpg"
   alt="Team photo"
   width={800}
   height={600}
-  quality={60}  // Lower quality = smaller file
+  quality={60} // Lower quality = smaller file
 />
 ```
 
 ### Complete Example (Feature Card)
+
 ```tsx
 <div className="rounded-lg overflow-hidden aspect-video">
   <OptimizedImage
@@ -164,15 +167,15 @@ import { OptimizedImage } from '@/components/ui';
 ## 🔗 LINKS BEST PRACTICES
 
 ### Internal Link (Use Link Component)
+
 ```tsx
 import Link from 'next/link';
 
-<Link href="/pricing">
-  View pricing plans
-</Link>
+<Link href="/pricing">View pricing plans</Link>;
 ```
 
 ### External Link (Security + Accessibility)
+
 ```tsx
 <a
   href="https://example.com"
@@ -185,6 +188,7 @@ import Link from 'next/link';
 ```
 
 ### Icon-Only Link
+
 ```tsx
 <a
   href="https://twitter.com/verifactu"
@@ -197,6 +201,7 @@ import Link from 'next/link';
 ```
 
 ### Anchor/Hash Link
+
 ```tsx
 // Link to section
 <a href="#features">Jump to features</a>
@@ -217,6 +222,7 @@ import Link from 'next/link';
 ## 🎨 COMMON PATTERNS
 
 ### Hero Section
+
 ```tsx
 <section className="relative w-full h-screen">
   <OptimizedImage
@@ -230,9 +236,7 @@ import Link from 'next/link';
   />
   <div className="absolute inset-0 flex items-center justify-center bg-black/40">
     <div className="text-center">
-      <h1 className="text-4xl font-bold text-white mb-4">
-        Gestiona tus ventas con tranquilidad
-      </h1>
+      <h1 className="text-4xl font-bold text-white mb-4">Gestiona tus ventas con tranquilidad</h1>
       <Button variant="primary" size="lg">
         Empezar gratis
       </Button>
@@ -242,6 +246,7 @@ import Link from 'next/link';
 ```
 
 ### Feature Grid
+
 ```tsx
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
   {features.map((feature) => (
@@ -267,6 +272,7 @@ import Link from 'next/link';
 ```
 
 ### Pricing Cards
+
 ```tsx
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
   {plans.map((plan) => (
@@ -281,10 +287,7 @@ import Link from 'next/link';
           </li>
         ))}
       </ul>
-      <Button
-        variant={plan.isPopular ? 'primary' : 'secondary'}
-        fullWidth
-      >
+      <Button variant={plan.isPopular ? 'primary' : 'secondary'} fullWidth>
         Seleccionar
       </Button>
     </div>
@@ -293,16 +296,13 @@ import Link from 'next/link';
 ```
 
 ### Navigation
+
 ```tsx
 <nav className="flex gap-6">
   <Link href="/">Home</Link>
   <Link href="/features">Features</Link>
   <Link href="/pricing">Pricing</Link>
-  <a
-    href="https://docs.example.com"
-    rel="noopener noreferrer"
-    target="_blank"
-  >
+  <a href="https://docs.example.com" rel="noopener noreferrer" target="_blank">
     Docs
   </a>
   <Button variant="primary" size="sm">
@@ -316,6 +316,7 @@ import Link from 'next/link';
 ## ⚙️ TAILWIND CLASSES REFERENCE
 
 ### Button Styling (Manual - for reference only)
+
 ```css
 /* Primary Button */
 .btn-primary {
@@ -346,6 +347,7 @@ import Link from 'next/link';
 ## 🧪 TESTING CHECKLIST
 
 ### Button Component
+
 - [ ] Click works on all variants
 - [ ] Keyboard (Enter, Space) activates button
 - [ ] Focus visible on all buttons
@@ -356,6 +358,7 @@ import Link from 'next/link';
 - [ ] Mobile touch works (44x44px)
 
 ### OptimizedImage Component
+
 - [ ] Image loads and displays
 - [ ] Image is responsive (resize window)
 - [ ] Lazy loads below fold (use DevTools)
@@ -366,6 +369,7 @@ import Link from 'next/link';
 - [ ] Performance improves (check Lighthouse)
 
 ### Links
+
 - [ ] Internal links navigate correctly
 - [ ] External links open in new tab
 - [ ] Keyboard navigation works
@@ -377,22 +381,26 @@ import Link from 'next/link';
 ## 🔍 DEBUGGING TIPS
 
 ### Button not appearing
+
 - Check import: `import { Button } from '@/components/ui'`
 - Check className is not being overridden
 - Check variant/size are valid values
 
 ### Image not showing
+
 - Check `src` path starts with `/` (relative to public/)
 - Check `alt` is not empty
 - Check width/height are correct
 - Check file exists in public/ folder
 
 ### Image stretched/distorted
+
 - Verify width/height aspect ratio matches image
 - Check `objectFit` setting (cover vs contain)
 - Adjust with `sizes` attribute
 
 ### Performance not improving
+
 - Make sure to use `priority={true}` ONLY on above-fold images
 - Check DevTools to verify images are responsive
 - Verify WebP format is being used
@@ -404,19 +412,19 @@ import Link from 'next/link';
 
 ```tsx
 // Full width (hero, banner)
-sizes="100vw"
+sizes = '100vw';
 
 // Two columns (50% on desktop)
-sizes="(max-width: 768px) 100vw, 50vw"
+sizes = '(max-width: 768px) 100vw, 50vw';
 
 // Three columns (33% on desktop)
-sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+sizes = '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw';
 
 // Custom container (fits 1200px container)
-sizes="(max-width: 768px) 100vw, 1200px"
+sizes = '(max-width: 768px) 100vw, 1200px';
 
 // Sidebar + content
-sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 700px"
+sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 700px';
 ```
 
 ---
@@ -424,6 +432,7 @@ sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 700px"
 ## 🎯 PRIORITY CHECKLIST
 
 ### Implement First (Order)
+
 1. [ ] Button component in page.tsx (hero)
 2. [ ] Button component in Features.tsx
 3. [ ] Button component in Pricing
@@ -434,6 +443,7 @@ sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 700px"
 8. [ ] Audit links (internal/external, rel attributes)
 
 ### Expected After Each Step
+
 1. After buttons: Code cleaner, more consistent styling
 2. After images: Lighthouse Performance +5-15 points
 3. After accessibility: Lighthouse Accessibility 95+
@@ -444,6 +454,7 @@ sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 700px"
 **Use this guide for rapid reference during implementation.**
 
 For detailed information, see the main documentation files:
+
 - BUTTON_COMPONENT_GUIDE.md
 - IMAGE_OPTIMIZATION_GUIDE.md
 - ACCESSIBILITY_AUDIT.md

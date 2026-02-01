@@ -112,8 +112,8 @@ Si necesitas más datos, puedes agregar:
 
 ```typescript
 provider.addScope('public_profile'); // Nombre, foto de perfil
-provider.addScope('user_birthday');  // Fecha de nacimiento
-provider.addScope('user_location');  // Ubicación
+provider.addScope('user_birthday'); // Fecha de nacimiento
+provider.addScope('user_location'); // Ubicación
 ```
 
 ---
@@ -150,6 +150,7 @@ URL: https://console.firebase.google.com/project/verifactu-business/authenticati
 ```
 
 Deberías ver el nuevo usuario con:
+
 - **Provider:** facebook.com
 - **Email:** (del perfil de Facebook)
 - **Nombre:** (del perfil de Facebook)
@@ -172,10 +173,10 @@ const handleFacebookLogin = async () => {
     provider.addScope('email'); // Solicitar acceso al email
     const userCredential = await signInWithPopup(auth, provider);
     trackLogin('facebook');
-    
+
     // Sincronizar con Prisma (auto-crear tenant, membership, etc.)
     await syncUserWithPrisma(userCredential.user);
-    
+
     router.push('/dashboard');
   } catch (err: any) {
     console.error('Facebook auth error:', err);
@@ -236,6 +237,7 @@ const handleFacebookLogin = async () => {
 
 **Causa:** Facebook App no está en modo "Live"  
 **Solución:**
+
 1. Ve a **Settings > Basic** en Facebook Developers
 2. Completa toda la información requerida
 3. Activa el switch **"App Mode: Live"**
@@ -244,6 +246,7 @@ const handleFacebookLogin = async () => {
 
 **Causa:** La URI no está registrada en Facebook  
 **Solución:**
+
 1. Verifica las URIs en **Facebook Login > Settings**
 2. Asegúrate de incluir:
    - `https://verifactu-business.firebaseapp.com/__/auth/handler`
@@ -253,6 +256,7 @@ const handleFacebookLogin = async () => {
 
 **Causa:** Usuario no tiene email público en Facebook  
 **Solución:**
+
 - Solicita permisos adicionales: `provider.addScope('email')`
 - Verifica que el email esté visible en la configuración de privacidad del usuario
 
@@ -260,6 +264,7 @@ const handleFacebookLogin = async () => {
 
 **Causa:** App de Facebook tiene restricciones geográficas  
 **Solución:**
+
 1. Ve a **Settings > Basic**
 2. En **App Restrictions**, elimina restricciones de país
 

@@ -21,7 +21,7 @@ export const authOptions: AuthOptions = {
     async signIn({ user }) {
       // Only allow @verifactu.business emails for admin panel
       const email = user.email || '';
-      
+
       if (!email.endsWith('@verifactu.business')) {
         return false;
       }
@@ -36,7 +36,7 @@ export const authOptions: AuthOptions = {
       if (user) {
         // TODO: Fetch user role from database
         // const dbUser = await prisma.user.findUnique({ where: { email: user.email } });
-        
+
         token.role = UserRole.ADMIN; // Default for now
         token.id = user.id;
       }

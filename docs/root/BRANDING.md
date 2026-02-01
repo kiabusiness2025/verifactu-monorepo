@@ -3,21 +3,25 @@
 ## 📦 Assets Generados (Branding Pack Completo)
 
 ### Logo Master
+
 - **`logo.png`** (800px width) - Logo fuente de alta resolución generado desde SVG
 
 ### Logos Horizontales
+
 - **`logo/logo-horizontal.png`** - Logo completo (uso general)
 - **`logo/logo-horizontal-light.png`** - Variante para fondos claros
 - **`logo/logo-horizontal-dark.png`** - Variante para fondos oscuros
 - **`logo-full.svg`** (200×60px) - SVG vectorial del logo completo
 
 ### Iconos de Escudo
+
 - **`icon/icon-shield-128.png`** (128×128px) - Escudo pequeño
 - **`icon/icon-shield-256.png`** (256×256px) - Escudo mediano
 - **`icon/icon-shield-512.png`** (512×512px) - Escudo grande
 - **`shield-icon.svg`** (60×60px) - SVG vectorial del escudo
 
 ### Favicons
+
 - **`favicon/favicon-16.png`** (16×16px) - Favicon navegador pequeño
 - **`favicon/favicon-32.png`** (32×32px) - Favicon navegador estándar
 - **`favicon/favicon-48.png`** (48×48px) - Favicon navegador grande
@@ -26,16 +30,19 @@
 - **`favicon/apple-touch-icon.png`** (180×180px) - Para dispositivos Apple
 
 ### PWA App Icons
+
 - **`app/icon-192.png`** (192×192px) - PWA icon estándar
 - **`app/icon-512.png`** (512×512px) - PWA icon grande
 - **`app/app-icon-1024.png`** (1024×1024px) - App Store / Play Store
 
 ### Social Media / OpenGraph
+
 - **`social/logo-600.png`** (600×600px) - Logo cuadrado para avatares
 - **`social/og-1200x630.png`** (1200×630px) - OpenGraph para compartir en redes
 - **`og-image.svg`** (1200×630px) - SVG OpenGraph con diseño completo
 
 ### Logo Oficial AEAT
+
 - **`logo-aeat-verifactu.jpg`** - Logo oficial de VeriFactu (Agencia Tributaria)
 
 ## 📂 Estructura de Archivos
@@ -73,17 +80,20 @@ apps/
 ## 🎨 Especificaciones de Diseño
 
 ### Colores
+
 - **Azul Primario**: `#2563eb` (Tailwind blue-600)
 - **Azul Oscuro**: `#1e40af` (Tailwind blue-800)
 - **Azul Claro**: `#3b82f6` (Tailwind blue-500)
 - **Blanco**: `#ffffff`
 
 ### Tipografía
+
 - **Font**: `system-ui, -apple-system, sans-serif`
 - **"Verifactu"**: Bold 700, tamaño 20px
 - **"BUSINESS"**: SemiBold 600, tamaño 8px, uppercase
 
 ### Gradiente
+
 ```css
 linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)
 ```
@@ -91,13 +101,16 @@ linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)
 ## 🔧 Componentes Actualizados
 
 ### 1. BrandLogo Component
+
 **Ubicación**: `apps/landing/src/components/brand/BrandLogo.tsx`
 
 **Props**:
+
 - `variant?: "header" | "footer" | "auth"` - Tamaño del logo
 - `className?: string` - Clases CSS adicionales
 
 **Uso**:
+
 ```tsx
 import BrandLogo from "@/components/brand/BrandLogo";
 
@@ -112,19 +125,23 @@ import BrandLogo from "@/components/brand/BrandLogo";
 ```
 
 ### 2. AuthComponents
+
 **Ubicación**: `apps/landing/app/components/AuthComponents.tsx`
 
 Integra `<BrandLogo variant="auth" />` en el layout de autenticación.
 
 ### 3. AppSidebar
+
 **Ubicación**: `apps/app/layout/AppSidebar.tsx`
 
 Usa `logo-full.svg` cuando está expandido y `shield-icon.svg` cuando está colapsado.
 
 ## 📱 Manifest.json
+
 **Ubicación**: `apps/landing/public/manifest.json`
 
 Actualizado para usar SVG icons en lugar de PNG:
+
 ```json
 "icons": [
   {
@@ -137,9 +154,11 @@ Actualizado para usar SVG icons en lugar de PNG:
 ```
 
 ## 🌐 Metadata SEO
+
 **Ubicación**: `apps/landing/app/layout.tsx`
 
 Actualizado con nuevos assets:
+
 ```tsx
 icons: {
   icon: [
@@ -170,6 +189,7 @@ Los siguientes archivos obsoletos fueron eliminados para evitar confusiones:
 ## ✅ Páginas Implementadas
 
 ### Landing App
+
 - ✅ Navbar (Header.tsx)
 - ✅ Footer (page.tsx)
 - ✅ Login (app/auth/login/page.tsx)
@@ -178,6 +198,7 @@ Los siguientes archivos obsoletos fueron eliminados para evitar confusiones:
 - ✅ Verify Email (app/auth/verify-email/page.tsx)
 
 ### Main App
+
 - ✅ Sidebar (layout/AppSidebar.tsx)
 
 ## 🚀 Testing

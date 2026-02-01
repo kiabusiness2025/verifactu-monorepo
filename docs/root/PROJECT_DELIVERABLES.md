@@ -52,6 +52,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 ### API Endpoints (24 Total)
 
 **Clientes (5):**
+
 - `GET /api/customers` - Listar
 - `POST /api/customers` - Crear
 - `GET /api/customers/[id]` - Detalle
@@ -59,17 +60,21 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 - `DELETE /api/customers/[id]` - Eliminar
 
 **Proveedores (5):**
+
 - Misma estructura que clientes en `/api/suppliers`
 
 **Artículos (5):**
+
 - Misma estructura en `/api/articles`
 - Incluye validación de SKU único
 
 **Gastos (5):**
+
 - Misma estructura en `/api/expenses`
 - Incluye cálculo de IVA automático
 
 **Facturas (4):**
+
 - `GET /api/invoices` - Listar
 - `POST /api/invoices` - Crear con líneas
 - `GET /api/invoices/[id]` - Detalle
@@ -78,6 +83,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 ### Base de Datos (PostgreSQL + Prisma)
 
 **8 Modelos principales:**
+
 - `User` - Usuarios con Firebase Auth
 - `Tenant` - Empresas/Clientes (multi-tenant)
 - `Membership` - Relación User ↔ Tenant
@@ -88,6 +94,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 - `Invoice` + `InvoiceLine` - Facturas con líneas
 
 **Características:**
+
 - ✅ Multi-tenant por defecto
 - ✅ Soft deletes opcionales
 - ✅ Campos de auditoría (created/updated)
@@ -103,13 +110,15 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 **UI Components (`components/ui/`):**
 
 **1. Button.tsx** (180 líneas)
+
 - 5 variantes: primary, secondary, ghost, danger, success
 - 4 tamaños: sm, md, lg, xl
 - Estado de loading con spinner animado
-- Completa accesibilidad (aria-*)
+- Completa accesibilidad (aria-\*)
 - TypeScript completo
 
 **2. OptimizedImage.tsx** (120 líneas)
+
 - Wrapper de Next.js Image
 - Conversión automática WebP/AVIF
 - Lazy loading
@@ -117,12 +126,14 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 - Blur placeholder
 
 **3. Faq.tsx**
+
 - Acordeón interactivo
 - Persistencia con localStorage
 - Animaciones Framer Motion
 - Schema.org FAQPage
 
 **4. Header.tsx**
+
 - Links optimizados (Next.js)
 - Menú móvil accesible
 - aria-labels completos
@@ -130,12 +141,14 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 ### Configuración Next.js
 
 **next.config.js:**
+
 - Optimización de imágenes (AVIF/WebP)
 - Headers de seguridad (6+ directivas)
 - Cache de assets (1 año)
 - DNS prefetch habilitado
 
 **sitemap.ts:**
+
 - Generación dinámica
 - 16 páginas mapeadas
 - Prioridades configuradas
@@ -161,6 +174,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 ## 🔐 AUTENTICACIÓN
 
 **Flujo simplificado:**
+
 1. Usuario en landing → Firebase Auth (Email/Google/Facebook)
 2. Backend verifica idToken → Crea usuario/tenant en PostgreSQL
 3. Firma JWT → Cookie `__session` con dominio `.verifactu.business`
@@ -168,6 +182,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 5. Middleware valida cookie → Renderiza dashboard
 
 **Componentes:**
+
 - Login page con OAuth social
 - Middleware Next.js para protección de rutas
 - API session endpoint (`/api/auth/session`)
@@ -182,12 +197,14 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 ### Estado: En desarrollo
 
 **Stack:**
+
 - Flutter 3.38
 - Firebase Auth integration
 - Offline-first con SQLite
 - Sincronización en tiempo real
 
 **Funcionalidades planeadas:**
+
 - Login con biometría
 - Escaneo de facturas (OCR)
 - Notificaciones push
@@ -200,17 +217,20 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 ### Producción
 
 **Landing:**
+
 - URL: https://verifactu.business
 - Hosting: Vercel
 - Build: Next.js 14 (SSR + SSG)
 
 **App:**
+
 - URL: https://app.verifactu.business
 - Hosting: Vercel
 - Build: Next.js 14 (SSR)
 - Database: PostgreSQL (Vercel Postgres)
 
 **Workflows GitHub Actions:**
+
 - Deploy automático en push a `main`
 - Build verification antes de merge
 - Auto-fix workflow (deshabilitado temporalmente)
@@ -218,6 +238,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 ### Configuración Variables de Entorno
 
 **Requeridas en ambas apps:**
+
 - `SESSION_SECRET` - JWT signing key
 - `SESSION_COOKIE_DOMAIN` - `.verifactu.business`
 - Firebase config (API keys, project ID, etc.)
@@ -230,6 +251,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 ## 📚 DOCUMENTACIÓN
 
 **Documentos principales:**
+
 - [README.md](README.md) - Overview del proyecto
 - [ARQUITECTURA_UNIFICADA.md](ARQUITECTURA_UNIFICADA.md) - Arquitectura técnica
 - [AUTH_FLOW_REFERENCE.md](AUTH_FLOW_REFERENCE.md) - Flujo de autenticación
@@ -239,6 +261,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 - [MANIFESTO.md](MANIFESTO.md) - Principios del producto
 
 **Documentación técnica (`docs/`):**
+
 - Setup guides (Firebase, OAuth, Database)
 - Architecture decisions
 - API references
@@ -249,6 +272,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 ## ✅ FEATURES COMPLETADAS
 
 ### Dashboard App
+
 - ✅ Autenticación multi-tenant
 - ✅ CRUD completo de entidades (6 recursos)
 - ✅ API RESTful (24 endpoints)
@@ -258,6 +282,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 - ✅ Mobile-responsive
 
 ### Landing Page
+
 - ✅ SEO optimizado (sitemap, meta tags)
 - ✅ Componentes accesibles (WCAG AA)
 - ✅ Performance optimized (imágenes, cache)
@@ -266,6 +291,7 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 - ✅ Mobile-first design
 
 ### DevOps
+
 - ✅ Monorepo con Turbo
 - ✅ CI/CD con GitHub Actions
 - ✅ Deployment automático Vercel
@@ -277,16 +303,19 @@ El dashboard está **100% operativo** con todas las funcionalidades core impleme
 ## 🎯 PRÓXIMOS PASOS
 
 ### Prioridad Alta
+
 1. **VeriFactu Integration** - Integrar con SNI (Sistema de Notificación Inmediata)
 2. **Invoice Templates** - Templates PDF para facturas
 3. **Email System** - Envío automático de facturas por email
 
 ### Prioridad Media
+
 4. **Reports & Analytics** - Dashboard con gráficos avanzados
 5. **Mobile App MVP** - Versión básica funcional
 6. **Payment Gateway** - Integración Stripe/PayPal
 
 ### Prioridad Baja
+
 7. **Advanced Search** - Búsqueda full-text
 8. **Bulk Operations** - Importar/exportar CSV
 9. **API Public** - REST API para integraciones externas

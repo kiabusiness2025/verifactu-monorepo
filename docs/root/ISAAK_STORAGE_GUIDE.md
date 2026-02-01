@@ -3,6 +3,7 @@
 ## Overview
 
 El sistema de almacenamiento de conversaciones con Isaak permite:
+
 - ✅ Guardar automáticamente cada mensaje (user + assistant)
 - ✅ Ver historial de conversaciones
 - ✅ Buscar en conversaciones anteriores
@@ -14,6 +15,7 @@ El sistema de almacenamiento de conversaciones con Isaak permite:
 Se agregaron 2 modelos a Prisma:
 
 ### `IsaakConversation`
+
 ```prisma
 model IsaakConversation {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -25,7 +27,7 @@ model IsaakConversation {
   messageCount Int    @default(0)
   lastActivity DateTime
   createdAt   DateTime @default(now())
-  
+
   tenant   Tenant                @relation(...)
   user     User                  @relation(...)
   messages IsaakConversationMsg[]
@@ -33,6 +35,7 @@ model IsaakConversation {
 ```
 
 ### `IsaakConversationMsg`
+
 ```prisma
 model IsaakConversationMsg {
   id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -42,7 +45,7 @@ model IsaakConversationMsg {
   tokens         Int?   // Tokens Vertex AI
   metadata       Json?  // Datos adicionales
   createdAt      DateTime @default(now())
-  
+
   conversation IsaakConversation @relation(...)
 }
 ```
@@ -100,34 +103,34 @@ import { useIsaakChat } from '@/lib/hooks/useIsaakChat';
 
 function MyComponent() {
   const {
-    conversation,      // Conversación actual
-    conversations,     // Todas las conversaciones
-    loading,           // Estado de carga
-    error,             // Errores
-    
+    conversation, // Conversación actual
+    conversations, // Todas las conversaciones
+    loading, // Estado de carga
+    error, // Errores
+
     loadConversations, // (search?: string) => Promise<void>
-    loadConversation,  // (id: string) => Promise<void>
-    createConversation,// (title?, context?) => Promise<Conversation>
-    saveMessage,       // (role, content, tokens?, metadata?) => Promise<Message>
-    deleteMessage,     // (messageId) => Promise<void>
-    updateConversation,// (updates) => Promise<Conversation>
-    deleteConversation,// (id) => Promise<void>
+    loadConversation, // (id: string) => Promise<void>
+    createConversation, // (title?, context?) => Promise<Conversation>
+    saveMessage, // (role, content, tokens?, metadata?) => Promise<Message>
+    deleteMessage, // (messageId) => Promise<void>
+    updateConversation, // (updates) => Promise<Conversation>
+    deleteConversation, // (id) => Promise<void>
   } = useIsaakChat({
     conversationId: 'optional-id-to-load',
-    autoLoad: true
+    autoLoad: true,
   });
 
   // Uso:
   const handleSendMessage = async (userMessage: string) => {
     // 1. Guardar mensaje usuario
     await saveMessage('user', userMessage);
-    
+
     // 2. Obtener respuesta de Vertex AI
     const response = await fetch('/api/vertex-chat', {
       method: 'POST',
-      body: JSON.stringify({ message: userMessage })
+      body: JSON.stringify({ message: userMessage }),
     });
-    
+
     // 3. Guardar respuesta
     const data = await response.json();
     await saveMessage('assistant', data.text);
@@ -173,7 +176,7 @@ Función helper que maneja todo automáticamente:
 import { sendIsaakMessageWithStorage } from '@/lib/isaakChatStorage';
 
 const { response, messageId } = await sendIsaakMessageWithStorage(
-  "¿Cómo hago una factura?",
+  '¿Cómo hago una factura?',
   conversationId
 );
 
@@ -181,6 +184,7 @@ console.log(response); // Respuesta de Isaak
 ```
 
 Esto:
+
 1. Guarda el mensaje del usuario
 2. Llama a `/api/vertex-chat`
 3. Guarda la respuesta de Isaak
@@ -246,7 +250,7 @@ export function IsaakChatAdvanced() {
   return (
     <div>
       <button onClick={handleNewChat}>+ Nueva conversación</button>
-      
+
       <div className="conversation-list">
         {conversations.map(conv => (
           <div key={conv.id} className="conversation-item">
@@ -302,14 +306,14 @@ const { messages, saveMessage } = useIsaakChatStorage();
 const handleSend = async (userInput: string) => {
   // 1. Guardar mensaje usuario
   await saveMessage('user', userInput);
-  
+
   // 2. Get Isaak response
   const res = await fetch('/api/vertex-chat', {
     method: 'POST',
-    body: JSON.stringify({ message: userInput })
+    body: JSON.stringify({ message: userInput }),
   });
   const data = await res.json();
-  
+
   // 3. Guardar respuesta
   await saveMessage('assistant', data.text);
 };
@@ -337,15 +341,15 @@ const stats = await prisma.isaakConversationMsg.groupBy({
   by: ['content'],
   where: { role: 'user' },
   _count: true,
-  orderBy: { _count: { id: 'desc' } }
+  orderBy: { _count: { id: 'desc' } },
 });
 
 // Satisfacción (custom metadata)
 const satisfaction = await prisma.isaakConversationMsg.findMany({
-  where: { 
+  where: {
     role: 'assistant',
-    metadata: { path: ['rating'], equals: 5 }
-  }
+    metadata: { path: ['rating'], equals: 5 },
+  },
 });
 ```
 
@@ -360,6 +364,7 @@ const satisfaction = await prisma.isaakConversationMsg.findMany({
 ---
 
 **Next Steps:**
+
 1. Ejecutar migration de Prisma
 2. Integrar en tu componente de chat
 3. Probar guardar/recuperar mensajes

@@ -4,7 +4,7 @@
 
 ### 📚 Documentation (5 New Guides)
 
-1. **GITHUB_PR_VSCODE_GUIDE.md** 
+1. **GITHUB_PR_VSCODE_GUIDE.md**
    - How to use GitHub Pull Requests extension in VS Code
    - Step-by-step workflow for creating, reviewing, and merging PRs
    - Authentication and troubleshooting
@@ -36,6 +36,7 @@
 ### 🔐 Configurations Already in Place
 
 From previous sessions:
+
 - ✅ **`.github/pull_request_template.md`** - Auto-filled PR template
 - ✅ **`CODEOWNERS`** - Code owner assignment (@kiabusiness2025)
 - ✅ **`.github/ISSUE_TEMPLATE/bug_report.md`** - Structured bug reports
@@ -46,17 +47,17 @@ From previous sessions:
 
 ### 📊 Features Configured
 
-| Feature | Status | Location |
-|---------|--------|----------|
-| PR Templates | ✅ Active | `.github/pull_request_template.md` |
-| Branch Protection | ✅ Ready* | Settings → Branches (manual enable) |
-| Code Owners | ✅ Active | `CODEOWNERS` file |
-| Issue Templates | ✅ Active | `.github/ISSUE_TEMPLATE/` |
-| GitHub Actions | ✅ Active | `.github/workflows/ci-cd.yml` |
-| Dependabot | ✅ Active | `.github/dependabot.yml` |
-| PR Extension | ✅ Recommended | `GitHub.vscode-pull-request-github` |
+| Feature           | Status         | Location                            |
+| ----------------- | -------------- | ----------------------------------- |
+| PR Templates      | ✅ Active      | `.github/pull_request_template.md`  |
+| Branch Protection | ✅ Ready\*     | Settings → Branches (manual enable) |
+| Code Owners       | ✅ Active      | `CODEOWNERS` file                   |
+| Issue Templates   | ✅ Active      | `.github/ISSUE_TEMPLATE/`           |
+| GitHub Actions    | ✅ Active      | `.github/workflows/ci-cd.yml`       |
+| Dependabot        | ✅ Active      | `.github/dependabot.yml`            |
+| PR Extension      | ✅ Recommended | `GitHub.vscode-pull-request-github` |
 
-*Branch protection rules need manual enabling in GitHub Settings
+\*Branch protection rules need manual enabling in GitHub Settings
 
 ---
 
@@ -65,6 +66,7 @@ From previous sessions:
 ### For Developers
 
 **1. Create a Feature Branch**
+
 ```bash
 git checkout -b feature/my-feature
 git add .
@@ -73,12 +75,14 @@ git push origin feature/my-feature
 ```
 
 **2. Create Pull Request**
+
 - Option A: VS Code → Command Palette → "GitHub: Create Pull Request"
 - Option B: GitHub web → Click "Compare & pull request"
 - Option C: GitHub CLI → `gh pr create`
 
 **3. Fill PR Template**
 The template auto-fills with sections:
+
 - Description (required)
 - Type (Feature/Bug/Refactor/Docs)
 - Related Issues
@@ -87,6 +91,7 @@ The template auto-fills with sections:
 
 **4. GitHub Actions Runs Automatically**
 5 jobs run in sequence:
+
 - ✓ Lint (2 min)
 - ✓ TypeCheck (3 min)
 - ✓ Build (5 min)
@@ -94,10 +99,12 @@ The template auto-fills with sections:
 - ✓ Deploy preview (2 min)
 
 **5. Wait for Code Owner Review**
+
 - @kiabusiness2025 auto-assigned
 - Approval required to merge
 
 **6. Merge When Approved**
+
 - Click "Merge Pull Request"
 - Choose merge strategy (Squash recommended)
 - Auto-deploys to Vercel when tests pass
@@ -134,16 +141,17 @@ gh pr checks
 
 ### VS Code Shortcuts
 
-| Action | Shortcut |
-|--------|----------|
-| Command Palette | Ctrl+Shift+P |
-| GitHub Panel | Click GitHub icon |
-| Create PR | Ctrl+Shift+P → "Create PR" |
-| View PRs | GitHub panel → Pull Requests |
+| Action          | Shortcut                     |
+| --------------- | ---------------------------- |
+| Command Palette | Ctrl+Shift+P                 |
+| GitHub Panel    | Click GitHub icon            |
+| Create PR       | Ctrl+Shift+P → "Create PR"   |
+| View PRs        | GitHub panel → Pull Requests |
 
 ### GitHub Actions Status
 
 View in:
+
 - VS Code: PR → "Checks" tab
 - GitHub Web: https://github.com/kiabusiness2025/verifactu-monorepo/actions
 
@@ -156,6 +164,7 @@ View in:
 **Go to:** GitHub → Settings → Branches
 
 **Add rule for `main` branch:**
+
 - ✓ Require pull request reviews (1 approval)
 - ✓ Require status checks:
   - Lint
@@ -170,6 +179,7 @@ View in:
 ### 2. Configure Notifications (Optional)
 
 VS Code Settings (Ctrl+,):
+
 ```
 GitHub: Pull Requests notifications = on
 GitHub: Pull Requests hideWhenNotFocused = true
@@ -178,6 +188,7 @@ GitHub: Pull Requests hideWhenNotFocused = true
 ### 3. Team Onboarding
 
 Share with team:
+
 - `docs/GITHUB_CHEATSHEET.md` - Quick reference
 - `docs/PULL_REQUEST_WORKFLOW.md` - Step-by-step guide
 - `docs/DEVELOPMENT.md` - Dev setup
@@ -191,7 +202,7 @@ All new guides are in `docs/` folder:
 ```
 docs/
 ├── GITHUB_PR_VSCODE_GUIDE.md      # VS Code PR extension usage
-├── GITHUB_INTEGRATION.md           # Full integration overview  
+├── GITHUB_INTEGRATION.md           # Full integration overview
 ├── GITHUB_CHEATSHEET.md            # Quick reference
 ├── GITHUB_ACTIONS_GUIDE.md         # CI/CD workflows
 ├── DEPENDABOT_GUIDE.md             # Dependency updates
@@ -201,6 +212,7 @@ docs/
 ```
 
 Each guide includes:
+
 - Clear explanations
 - Code examples
 - Troubleshooting
@@ -212,6 +224,7 @@ Each guide includes:
 ## 🔍 What's Now Automated
 
 ### GitHub Actions (Every Push to Main)
+
 - ✅ Linting (ESLint)
 - ✅ Type checking (TypeScript)
 - ✅ Building (Next.js)
@@ -219,12 +232,14 @@ Each guide includes:
 - ✅ Preview deployment (Vercel)
 
 ### Dependabot (Every Monday)
+
 - ✅ NPM updates at 3am UTC
 - ✅ GitHub Actions updates at 4am UTC
 - ✅ Auto-creates PRs with updates
 - ✅ Runs CI/CD on PR
 
 ### PR Checks
+
 - ✅ All 5 GitHub Actions jobs required
 - ✅ Code owner review required
 - ✅ Conversation resolution required
@@ -235,6 +250,7 @@ Each guide includes:
 ## 💡 Pro Tips
 
 ### Faster Iterations
+
 ```bash
 # Make changes and amend to previous commit
 git add .
@@ -244,6 +260,7 @@ git push --force-with-lease
 ```
 
 ### Review Others' PRs
+
 1. Click GitHub → Pull Requests
 2. Select PR to review
 3. Click "Changes" tab
@@ -251,6 +268,7 @@ git push --force-with-lease
 5. Click "Review Changes" → "Approve" or "Request Changes"
 
 ### Check Status Without PR
+
 ```bash
 # View recent workflow runs
 gh run list
@@ -260,6 +278,7 @@ gh run view <run-id> --log
 ```
 
 ### Auto-Merge (Optional)
+
 ```bash
 # Merge automatically when tests pass
 gh pr merge --auto --squash 123
@@ -274,6 +293,7 @@ gh pr merge --auto --squash 123
 **Latest Commit:** 0efa5d8b (GitHub collaboration docs)
 
 **Configured:**
+
 - ✅ Email management system (working)
 - ✅ Workflow DevKit integration (durable async)
 - ✅ ESLint strict mode (enforced)
@@ -283,6 +303,7 @@ gh pr merge --auto --squash 123
 - ✅ Comprehensive documentation (7 guides)
 
 **Status:**
+
 - 🔄 Vercel deployment (auto on main push)
 - ⏳ Branch protection (ready to enable)
 - ✅ Team ready to start using
@@ -294,14 +315,17 @@ gh pr merge --auto --squash 123
 ### For This Project
 
 **Quick Start:**
+
 - [GITHUB_CHEATSHEET.md](GITHUB_CHEATSHEET.md) - 5 min read
 - [PULL_REQUEST_WORKFLOW.md](PULL_REQUEST_WORKFLOW.md) - 10 min read
 
 **Deep Dive:**
+
 - [GITHUB_INTEGRATION.md](GITHUB_INTEGRATION.md) - 15 min read
 - [GITHUB_ACTIONS_GUIDE.md](GITHUB_ACTIONS_GUIDE.md) - 20 min read
 
 **External Resources:**
+
 - [GitHub Docs](https://docs.github.com)
 - [GitHub Actions Marketplace](https://github.com/marketplace?type=actions)
 - [Dependabot Documentation](https://docs.github.com/en/code-security/dependabot)
@@ -311,6 +335,7 @@ gh pr merge --auto --squash 123
 ## ✨ Summary
 
 **What's been set up:**
+
 - Complete GitHub collaboration workflow
 - Automated testing via GitHub Actions
 - Automated dependency updates via Dependabot
@@ -318,12 +343,14 @@ gh pr merge --auto --squash 123
 - Comprehensive team documentation
 
 **What's ready to use:**
+
 - PR creation and review in VS Code
 - GitHub Actions validation on every PR
 - Dependabot updates every Monday
 - Branch protection when enabled
 
 **What team needs to do:**
+
 1. Read GITHUB_CHEATSHEET.md (5 min)
 2. Create first feature branch
 3. Submit PR and see workflow in action

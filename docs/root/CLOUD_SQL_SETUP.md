@@ -123,6 +123,7 @@
 2. **Crear usuario de aplicación:**
    - Ir a: Users tab
    - Click: **ADD USER ACCOUNT**
+
    ```
    Username: verifactu_user
    Password: [GENERAR FUERTE - guardar en LastPass/1Password]

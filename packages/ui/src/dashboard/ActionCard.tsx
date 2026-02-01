@@ -1,6 +1,6 @@
-import * as React from "react";
-import Link from "next/link";
-import { cn } from "../lib/utils";
+import * as React from 'react';
+import Link from 'next/link';
+import { cn } from '../lib/utils';
 
 export function ActionCard({
   title,
@@ -21,7 +21,7 @@ export function ActionCard({
     <Link
       href={href}
       className={cn(
-        "group block rounded-2xl border bg-card p-4 shadow-soft transition hover:bg-muted/30",
+        'group block rounded-2xl border bg-card p-4 shadow-soft transition hover:bg-muted/30',
         className
       )}
     >

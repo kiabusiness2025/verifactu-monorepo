@@ -19,6 +19,7 @@ Configurar todas las opciones de buzón de correo electrónico (ver bandeja de e
 **Archivo:** `apps/app/app/api/admin/emails/send/route.ts`
 
 **Características:**
+
 - ✅ POST `/api/admin/emails/send` - Envía respuestas desde soporte@verifactu.business
 - ✅ GET `/api/admin/emails/send?emailId=uuid` - Obtiene respuestas enviadas
 - ✅ Autenticación protegida con `requireAdmin()`
@@ -28,6 +29,7 @@ Configurar todas las opciones de buzón de correo electrónico (ver bandeja de e
 - ✅ Manejo de errores completo
 
 **Flujo:**
+
 1. Usuario selecciona email en panel admin
 2. Haz click en "Responder desde soporte@verifactu.business"
 3. Modal se abre con campos pre-rellenados
@@ -42,6 +44,7 @@ Configurar todas las opciones de buzón de correo electrónico (ver bandeja de e
 **Archivo:** `apps/app/app/dashboard/admin/emails/page.tsx`
 
 **Nuevas características:**
+
 - ✅ Modal de respuesta elegante y funcional
 - ✅ Campos: Desde (read-only), Para (auto), Asunto, Mensaje
 - ✅ Botón "Responder desde soporte@verifactu.business"
@@ -52,6 +55,7 @@ Configurar todas las opciones de buzón de correo electrónico (ver bandeja de e
 - ✅ Actualización automática del estado del email
 
 **Estados visuales:**
+
 - ⏳ Enviando: Spinners y botón deshabilitado
 - ✅ Éxito: Mensaje verde con confirmación
 - ❌ Error: Mensaje rojo con detalles
@@ -61,6 +65,7 @@ Configurar todas las opciones de buzón de correo electrónico (ver bandeja de e
 **Archivo:** `db/migrations/003_add_email_responses_table.sql`
 
 **Cambios:**
+
 - ✅ Nueva tabla `admin_email_responses`
 - ✅ Columnas para: ID, email_original, email_respuesta, timestamp, contenido
 - ✅ Índices para optimizar búsquedas:
@@ -77,6 +82,7 @@ Configurar todas las opciones de buzón de correo electrónico (ver bandeja de e
 Archivos creados:
 
 #### `docs/MAILBOX_ADMIN_CONFIGURATION.md` (500+ líneas)
+
 - Guía completa del panel de emails
 - Instrucciones paso a paso
 - Información sobre API endpoints
@@ -85,6 +91,7 @@ Archivos creados:
 - Checklist de configuración
 
 #### `docs/APPLY_MIGRATIONS.md` (300+ líneas)
+
 - 3 opciones para aplicar migración
 - Código SQL directo
 - Verificación de aplicación
@@ -92,6 +99,7 @@ Archivos creados:
 - Pasos para probar
 
 #### `docs/DATABASE_MIGRATION_GUIDE.md` (200+ líneas)
+
 - Guía técnica de migraciones
 - Verificaciones post-aplicación
 - Queries de debug
@@ -101,6 +109,7 @@ Archivos creados:
 **Archivo:** `scripts/test-email-responses.js`
 
 **Funcionalidad:**
+
 - ✅ Test 1: Obtener lista de emails
 - ✅ Test 2: Enviar respuesta a primer email
 - ✅ Test 3: Verificar respuesta guardada
@@ -109,6 +118,7 @@ Archivos creados:
 - ✅ Detección automática de servidor no disponible
 
 **Uso:**
+
 ```bash
 node scripts/test-email-responses.js
 ```
@@ -131,6 +141,7 @@ psql "$env:DATABASE_URL" -f "db/migrations/003_add_email_responses_table.sql"
 ```
 
 **Verificar:**
+
 ```bash
 psql "$env:DATABASE_URL" -c "SELECT * FROM information_schema.tables WHERE table_name = 'admin_email_responses';"
 ```
@@ -199,12 +210,14 @@ Confirmación en UI
 ### Tablas de Base de Datos
 
 **admin_emails** (existente, actualizada)
+
 ```
 - response_email_id (nueva) - ID de Resend
 - responded_at (nueva) - Timestamp de respuesta
 ```
 
 **admin_email_responses** (nueva)
+
 ```
 - id: UUID
 - admin_email_id: UUID (FK)
@@ -228,6 +241,7 @@ node scripts/test-email-responses.js
 ```
 
 Prueba:
+
 1. ✅ GET `/api/admin/emails` - Obtener lista
 2. ✅ POST `/api/admin/emails/send` - Enviar respuesta
 3. ✅ GET `/api/admin/emails/send?emailId=...` - Obtener respuestas
@@ -263,12 +277,14 @@ Prueba:
 ## 🔧 Troubleshooting Común
 
 ### "Table doesn't exist"
+
 ```bash
 # Aplicar migración
 psql "$env:DATABASE_URL" -f "db/migrations/003_add_email_responses_table.sql"
 ```
 
 ### "Failed to send email"
+
 ```
 - Verificar RESEND_API_KEY en Vercel
 - Verificar que soporte@verifactu.business está verificado en Resend
@@ -276,6 +292,7 @@ psql "$env:DATABASE_URL" -f "db/migrations/003_add_email_responses_table.sql"
 ```
 
 ### Modal no aparece
+
 ```
 - Verificar que JavaScript está habilitado
 - Abrir DevTools (F12) y revisar console
@@ -283,6 +300,7 @@ psql "$env:DATABASE_URL" -f "db/migrations/003_add_email_responses_table.sql"
 ```
 
 ### Email no se marca como respondido
+
 ```
 - Verificar que BD migración se aplicó
 - Verificar que admin_emails table tiene responded_at
@@ -310,17 +328,20 @@ Para reportar problemas:
 ## 📝 Notas Importantes
 
 ### Remitente Fijo
+
 - Todos los emails se envían desde: `soporte@verifactu.business`
 - No se puede cambiar por razones de seguridad
 - Verificado en Resend y en DNS/SPF
 
 ### Integridad de Datos
+
 - Cada respuesta se registra en BD
 - Se mantiene historial completo de comunicaciones
 - Foreign keys garantizan integridad referencial
 - Índices optimizan búsquedas y reportes
 
 ### Performance
+
 - Índices en `admin_email_responses` para búsquedas rápidas
 - Límite de 50 emails por página
 - Paginación implementada
@@ -344,7 +365,7 @@ Para reportar problemas:
 **Estado:** ✅ COMPLETADO Y PROBADO  
 **Fecha:** Enero 19, 2026  
 **Responsable:** Sistema automático  
-**Versión:** 1.0 - Producción  
+**Versión:** 1.0 - Producción
 
 ---
 

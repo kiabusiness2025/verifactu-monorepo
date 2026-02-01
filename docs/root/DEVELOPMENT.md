@@ -3,6 +3,7 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 20+
 - pnpm 10.27.0+
 - Docker & Docker Compose (optional but recommended)
@@ -30,6 +31,7 @@ pnpm dev
 ```
 
 Visit:
+
 - App: http://localhost:3000
 - Landing: http://localhost:3001
 
@@ -38,6 +40,7 @@ Visit:
 ## 📋 Available Commands
 
 ### Development
+
 ```bash
 make dev              # Start dev servers
 make build            # Build for production
@@ -45,6 +48,7 @@ make start            # Start production server
 ```
 
 ### Code Quality
+
 ```bash
 make lint             # Run ESLint
 make lint-fix         # Fix ESLint errors
@@ -53,6 +57,7 @@ make typecheck        # Run TypeScript check
 ```
 
 ### Testing
+
 ```bash
 make test             # Run tests once
 make test-watch       # Run tests in watch mode
@@ -60,18 +65,21 @@ make test-ci          # Run tests with coverage
 ```
 
 ### Debugging
+
 ```bash
 make debug-app        # Debug the app with inspector
 make debug-tests      # Debug tests with inspector
 ```
 
 ### Database
+
 ```bash
 make db-migrate       # Run migrations
 make db-studio        # Open Prisma Studio
 ```
 
 ### Docker
+
 ```bash
 make docker-up        # Start containers
 make docker-down      # Stop containers
@@ -89,6 +97,7 @@ docker-compose up -d
 ```
 
 This starts:
+
 - **PostgreSQL** (port 5432): `verifactu` / `verifactu_dev_pass`
 - **Redis** (port 6379): Optional caching
 - **SQL Server** (commented out, uncomment if needed)
@@ -96,6 +105,7 @@ This starts:
 ### Environment Variables
 
 Create `apps/app/.env.local`:
+
 ```env
 DATABASE_URL="postgresql://verifactu:verifactu_dev_pass@localhost:5432/verifactu"
 REDIS_URL="redis://localhost:6379"
@@ -106,6 +116,7 @@ REDIS_URL="redis://localhost:6379"
 ## 🔧 VS Code Setup
 
 ### Recommended Extensions
+
 - ESLint
 - Prettier
 - TypeScript Next
@@ -121,6 +132,7 @@ VS Code will automatically prompt to install recommended extensions on first ope
 ### Debugging
 
 **Press F5** or go to **Run & Debug** to start debugging:
+
 - **Next.js App**: Debug the server
 - **Debug Tests**: Debug Jest tests
 - **Full Stack Debug**: Debug both app and browser
@@ -130,23 +142,27 @@ VS Code will automatically prompt to install recommended extensions on first ope
 ## 📊 Code Quality Standards
 
 ### ESLint
+
 ```bash
 pnpm lint           # Check for errors
 pnpm lint:fix       # Auto-fix errors
 ```
 
 ### Prettier
+
 ```bash
 pnpm format         # Format all files
 pnpm format:check   # Check formatting
 ```
 
 ### TypeScript
+
 ```bash
 pnpm typecheck      # Check types
 ```
 
 ### All Checks
+
 ```bash
 pnpm validate:all   # Run all quality checks
 ```
@@ -156,11 +172,13 @@ pnpm validate:all   # Run all quality checks
 ## 🪝 Git Hooks
 
 Pre-commit hooks automatically:
+
 1. Run ESLint on staged files
 2. Format with Prettier
 3. Prevent commits with lint errors
 
 Enable hooks:
+
 ```bash
 chmod +x .husky/pre-commit
 ```
@@ -170,6 +188,7 @@ chmod +x .husky/pre-commit
 ## 📝 Workflow
 
 ### Feature Branch
+
 ```bash
 git checkout -b feature/my-feature
 pnpm dev
@@ -181,6 +200,7 @@ git push
 ```
 
 ### Create Pull Request
+
 1. Push to GitHub
 2. Create PR
 3. GitHub Actions will automatically:
@@ -209,6 +229,7 @@ make debug-app
 ## 🚀 CI/CD with GitHub Actions
 
 Push to `main` or `develop` to trigger:
+
 1. **Lint** check
 2. **TypeScript** check
 3. **Build** verification
@@ -231,6 +252,7 @@ pnpm start          # Start production server
 ## 🆘 Troubleshooting
 
 ### Port already in use
+
 ```bash
 # Find and kill process
 lsof -i :3000
@@ -238,6 +260,7 @@ kill -9 <PID>
 ```
 
 ### pnpm install fails
+
 ```bash
 # Clear cache
 pnpm store prune
@@ -247,6 +270,7 @@ pnpm install
 ```
 
 ### Debugger won't attach
+
 ```bash
 # Kill existing process
 pkill -f "node"
@@ -256,6 +280,7 @@ make debug-app
 ```
 
 ### Docker issues
+
 ```bash
 # Stop and remove containers
 docker-compose down -v

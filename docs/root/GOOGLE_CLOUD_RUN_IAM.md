@@ -7,11 +7,13 @@ Si vas a desplegar tu aplicación en **Google Cloud Run**, necesitas configurar 
 ## 🎯 ¿Cuándo Necesitas Esto?
 
 ✅ **SÍ necesitas configurar permisos si:**
+
 - Vas a desplegar en Google Cloud Run
 - Estás usando Genkit con Firebase telemetry (`enableFirebaseTelemetry()`)
 - Quieres ver métricas, traces y logs en Google Cloud Console
 
 ❌ **NO necesitas configurar permisos si:**
+
 - Solo despliegas en Vercel (tu caso actual)
 - No usas Genkit (o Genkit está deshabilitado)
 - Solo usas Firebase para autenticación/Firestore (no telemetry)
@@ -56,16 +58,19 @@ Si vas a desplegar tu aplicación en **Google Cloud Run**, necesitas configurar 
 Si en el futuro decides migrar a Cloud Run, estos son los roles necesarios:
 
 ### 1. **Escritor de métricas de Monitoring**
+
 - **Role ID:** `roles/monitoring.metricWriter`
 - **Propósito:** Permite escribir métricas personalizadas a Cloud Monitoring
 - **Usado por:** Genkit para enviar métricas de rendimiento (latencia, errores, uso)
 
 ### 2. **Agente de Cloud Trace**
+
 - **Role ID:** `roles/cloudtrace.agent`
 - **Propósito:** Permite enviar datos de tracing (seguimiento de solicitudes)
 - **Usado por:** Genkit para rastrear llamadas a AI (flows: analyzeInvoice, isaakChat, etc.)
 
 ### 3. **Escritor de registros**
+
 - **Role ID:** `roles/logging.logWriter`
 - **Propósito:** Permite escribir logs estructurados a Cloud Logging
 - **Usado por:** Genkit para logs de errores, advertencias y debug
@@ -91,6 +96,7 @@ Cloud Run usa una cuenta de servicio por defecto:
 ```
 
 En tu caso:
+
 ```
 verifactu-business-compute@developer.gserviceaccount.com
 ```
@@ -261,6 +267,7 @@ URL: https://console.cloud.google.com/monitoring/metrics-explorer?project=verifa
 ```
 
 Busca métricas con prefijo:
+
 - `custom.googleapis.com/genkit/*`
 - `genkit.dev/*`
 
@@ -271,6 +278,7 @@ URL: https://console.cloud.google.com/traces/list?project=verifactu-business
 ```
 
 Deberías ver traces de:
+
 - `analyzeInvoice` flow
 - `isaakChat` flow
 - `verifactuCompliance` flow
@@ -282,6 +290,7 @@ URL: https://console.cloud.google.com/logs/query?project=verifactu-business
 ```
 
 Filtrar por:
+
 ```
 resource.type="cloud_run_revision"
 jsonPayload.component="genkit"
@@ -343,6 +352,7 @@ gcloud projects get-iam-policy verifactu-business --format=json > iam-policy.jso
 
 **Causa:** Falta el rol `monitoring.metricWriter`  
 **Solución:**
+
 ```powershell
 gcloud projects add-iam-policy-binding verifactu-business `
   --member="serviceAccount:YOUR_SA@verifactu-business.iam.gserviceaccount.com" `
@@ -353,6 +363,7 @@ gcloud projects add-iam-policy-binding verifactu-business `
 
 **Causa:** API de Cloud Trace no habilitada  
 **Solución:**
+
 ```powershell
 gcloud services enable cloudtrace.googleapis.com --project=verifactu-business
 ```
@@ -361,6 +372,7 @@ gcloud services enable cloudtrace.googleapis.com --project=verifactu-business
 
 **Causa:** Falta el rol `logging.logWriter` o API no habilitada  
 **Solución:**
+
 ```powershell
 # Habilitar API
 gcloud services enable logging.googleapis.com --project=verifactu-business
@@ -378,20 +390,24 @@ gcloud projects add-iam-policy-binding verifactu-business `
 Estos servicios tienen costos asociados:
 
 ### Cloud Monitoring (Métricas)
+
 - **Gratis:** Primeros 150 MB/mes de métricas
 - **Costo:** $0.2580 USD por MB después del límite gratuito
 
 ### Cloud Trace
+
 - **Gratis:** Primeros 2.5 millones de spans/mes
 - **Costo:** $0.20 USD por millón de spans después
 
 ### Cloud Logging
+
 - **Gratis:** Primeros 50 GB/mes de logs
 - **Costo:** $0.50 USD por GB después
 
 **Estimación para app pequeña:** <$5 USD/mes
 
 Ver costos actuales:
+
 ```
 URL: https://console.cloud.google.com/billing/reports?project=verifactu-business
 ```
@@ -403,6 +419,7 @@ URL: https://console.cloud.google.com/billing/reports?project=verifactu-business
 Si decides migrar de Vercel a Cloud Run en el futuro:
 
 ### Ventajas de Cloud Run
+
 - ✅ Integración nativa con Firebase/Genkit
 - ✅ Telemetría automática sin configuración adicional
 - ✅ Escalado automático a 0 instancias (pay-per-use)
@@ -410,13 +427,16 @@ Si decides migrar de Vercel a Cloud Run en el futuro:
 - ✅ Control total sobre el runtime
 
 ### Desventajas vs Vercel
+
 - ❌ Más complejo de configurar
 - ❌ Requiere gestión de permisos IAM
 - ❌ Sin CDN global integrado (necesitas Cloud CDN)
 - ❌ Sin preview deployments automáticos
 
 ### Cuándo Migrar
+
 Considera Cloud Run si:
+
 - Necesitas telemetría detallada de Genkit
 - Usas intensivamente AI (muchas llamadas a Genkit)
 - Quieres unificar toda la infraestructura en Google Cloud
@@ -427,17 +447,20 @@ Considera Cloud Run si:
 ## ✅ Checklist de Configuración (Para Cloud Run)
 
 ### Pre-requisitos
+
 - [ ] Proyecto de Google Cloud creado
 - [ ] Facturación habilitada
 - [ ] gcloud CLI instalado y autenticado
 
 ### Habilitar APIs
+
 - [ ] Cloud Run API: `gcloud services enable run.googleapis.com`
 - [ ] Cloud Monitoring API: `gcloud services enable monitoring.googleapis.com`
 - [ ] Cloud Trace API: `gcloud services enable cloudtrace.googleapis.com`
 - [ ] Cloud Logging API: `gcloud services enable logging.googleapis.com`
 
 ### Configurar IAM
+
 - [ ] Identificar cuenta de servicio
 - [ ] Asignar rol `monitoring.metricWriter`
 - [ ] Asignar rol `cloudtrace.agent`
@@ -445,12 +468,14 @@ Considera Cloud Run si:
 - [ ] Verificar roles con `gcloud projects get-iam-policy`
 
 ### Desplegar
+
 - [ ] Construir imagen Docker
 - [ ] Subir a Google Container Registry
 - [ ] Desplegar en Cloud Run
 - [ ] Configurar variables de entorno (DATABASE_URL, GOOGLE_AI_API_KEY, etc.)
 
 ### Verificar
+
 - [ ] Servicio accesible vía URL pública
 - [ ] Métricas visibles en Cloud Monitoring
 - [ ] Traces visibles en Cloud Trace
@@ -473,17 +498,20 @@ Considera Cloud Run si:
 ## 📝 Conclusión
 
 **Para tu setup actual (Vercel + Firebase):**
+
 - ✅ **No necesitas configurar estos permisos ahora**
 - ✅ Vercel maneja el hosting y deployment
 - ✅ Firebase funciona sin permisos IAM adicionales
 - ✅ Genkit está deshabilitado (`genkit.ts.disabled`)
 
 **Cuándo sí necesitarás configurar permisos:**
+
 1. Cuando habilites Genkit (renombrar `genkit.ts.disabled` a `genkit.ts`)
 2. Cuando despliegues en Google Cloud Run
 3. Cuando necesites telemetría de AI en Google Cloud Monitoring
 
 **Próximos pasos recomendados:**
+
 1. ✅ Completar configuración de Facebook OAuth (ver `FACEBOOK_OAUTH_SETUP.md`)
 2. ✅ Desplegar Firestore rules (`firebase deploy --only firestore:rules`)
 3. ✅ Configurar Google AI API Key para Genkit
