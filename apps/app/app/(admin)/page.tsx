@@ -1,8 +1,10 @@
-import React from "react";
-import { IsaakGreetingCard } from "@/components/isaak/IsaakGreetingCard";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import { InsightTicker } from "@/components/dashboard/InsightTicker";
+﻿'use client';
+
+import React from 'react';
+import { IsaakGreetingCard } from '@/components/isaak/IsaakGreetingCard';
+import { DashboardStats } from '@/components/dashboard/DashboardStats';
+import { QuickActions } from '@/components/dashboard/QuickActions';
+import { InsightTicker } from '@/components/dashboard/InsightTicker';
 
 export default function Dashboard() {
   // TODO: Obtener actividad real desde API
@@ -25,9 +27,7 @@ export default function Dashboard() {
           </p>
           {activity.length === 0 ? (
             <div className="mt-6 text-center">
-              <p className="text-sm text-slate-600">
-                📝 Tu actividad aparecerá aquí
-              </p>
+              <p className="text-sm text-slate-600">Tu actividad aparecera aqui</p>
             </div>
           ) : (
             <div className="mt-3 space-y-2">

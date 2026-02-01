@@ -1,16 +1,12 @@
-"use client";
+﻿'use client';
 
-import React, { useState } from "react";
-import { IsaakUIProvider } from "@/context/IsaakUIContext";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Topbar } from "@/components/layout/Topbar";
-import { IsaakDrawer } from "@/components/isaak/IsaakDrawer";
+import React, { useState } from 'react';
+import { IsaakUIProvider } from '@/context/IsaakUIContext';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { Topbar } from '@/components/layout/Topbar';
+import { IsaakDrawer } from '@/components/isaak/IsaakDrawer';
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -26,8 +22,12 @@ export default function AdminLayout({
             <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <span className="font-semibold text-slate-800">Verifactu Business</span>
               <div className="flex flex-wrap gap-3 text-xs">
-                <a className="hover:text-blue-700" href="/">Ir a Home</a>
-                <a className="hover:text-blue-700" href="/dashboard/settings">Configuración</a>
+                <a className="hover:text-blue-700" href="/">
+                  Ir a Home
+                </a>
+                <a className="hover:text-blue-700" href="/dashboard/settings">
+                  Configuracion
+                </a>
               </div>
             </div>
           </footer>
