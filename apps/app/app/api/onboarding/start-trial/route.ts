@@ -87,6 +87,12 @@ export async function POST(req: Request) {
       update: { preferredTenantId: tenant.id },
     });
 
+    await tx.userOnboarding.upsert({
+      where: { userId: uid },
+      create: { userId: uid, demoTenantId: tenant.id },
+      update: { demoTenantId: tenant.id },
+    });
+
     const subscription = await tx.tenantSubscription.create({
       data: {
         tenantId: tenant.id,

@@ -99,6 +99,7 @@ model User {
   // Client app relations
   tenantMemberships  Membership[]
   tenantPreferences  UserPreference?
+  onboarding         UserOnboarding?
   invoicesCreatedBy  Invoice[]           @relation("CreatedByUser")
   isaakConversations IsaakConversation[]
 
@@ -320,6 +321,7 @@ model Tenant {
   articles            Article[]
   expenses            ExpenseRecord[]
   isaakConversations  IsaakConversation[]
+  demoOnboardings     UserOnboarding[]
 
   @@map("tenants")
 }

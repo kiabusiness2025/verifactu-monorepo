@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Button, SectionTitle } from '@verifactu/ui';
+import { SectionTitle } from '@verifactu/ui';
 import { Building2, Plus } from 'lucide-react';
 import { formatCurrency } from '@/src/lib/formatters';
 import { getDashboardSummary } from '@/src/server/dashboard/getDashboardSummary';
@@ -53,20 +53,24 @@ export default async function DashboardPage() {
             Resumen de tu empresa y acciones r�pidas para hoy.
           </div>
         </div>
-        <Button asChild className="rounded-full">
-          <Link href="/dashboard/settings">Ver ajustes</Link>
-        </Button>
+        <Link
+          href="/dashboard/settings"
+          className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          Ver ajustes
+        </Link>
       </div>
 
       <SectionTitle
         title="Tus empresas"
         right={
-          <Button asChild variant="outline" className="rounded-full">
-            <Link href="/dashboard/onboarding?next=/dashboard">
-              <Plus className="mr-2 h-4 w-4" />
-              A�adir empresa
-            </Link>
-          </Button>
+          <Link
+            href="/dashboard/onboarding?next=/dashboard"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Añadir empresa
+          </Link>
         }
       />
 
@@ -99,7 +103,7 @@ export default async function DashboardPage() {
                         {statusLabel}
                       </span>
                     </div>
-                    <div className="mt-2 text-xs text-[#2361d8] font-medium">Ver perfil ?</div>
+                    <div className="mt-2 text-xs text-[#2361d8] font-medium">Ver perfil</div>
                   </Link>
                 );
               })}
