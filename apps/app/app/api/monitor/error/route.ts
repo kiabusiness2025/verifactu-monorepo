@@ -24,14 +24,26 @@ type IsaakAnalysis = {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: ErrorBatch = await request.json();
-    const { errors, userAgent, viewport, performance: perfData } = body;
+    const body = (await request.json().catch(() => ({}))) as Partial<ErrorBatch>;
+    const errors = Array.isArray(body.errors) ? body.errors : [];
+    const userAgent = body.userAgent ?? 'unknown';
+    const viewport = body.viewport ?? { width: 0, height: 0 };
+    const perfData = body.performance;
 
     console.log(`[ERROR MONITOR] Received ${errors.length} error(s):`);
     errors.forEach((err, idx) => {
       console.log(`  ${idx + 1}. ${err.type} at ${err.url}`);
       console.log(`     Details:`, JSON.stringify(err.details, null, 2));
     });
+
+    if (errors.length === 0) {
+      return NextResponse.json({
+        success: true,
+        received: 0,
+        analyses: [],
+        autoFixTriggered: false
+      });
+    }
 
     // Analizar errores con Isaak
     const analyses = await Promise.all(

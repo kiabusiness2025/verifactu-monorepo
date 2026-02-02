@@ -5,7 +5,7 @@ const STATIC_CACHE = `verifactu-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `verifactu-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `verifactu-api-${CACHE_VERSION}`;
 
-// Assets críticos para offline
+// Assets cr�ticos para offline
 const STATIC_ASSETS = [
   "/dashboard",
   "/demo",
@@ -71,7 +71,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request).catch(() => {
         return new Response(
-          JSON.stringify({ error: "Offline - cambios pendientes de sincronización" }),
+          JSON.stringify({ error: "Offline - cambios pendientes de sincronizaci�n" }),
           {
             status: 503,
             headers: { "Content-Type": "application/json" },
@@ -119,7 +119,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Estrategia Cache First para páginas y assets estáticos
+  // Estrategia Cache First para p�ginas y assets est�ticos
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -140,7 +140,7 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() => {
-          // Si es navegación, mostrar página offline
+          // Si es navegaci�n, mostrar página offline
           if (request.mode === "navigate") {
             return caches.match("/offline");
           }
@@ -149,14 +149,12 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
-  );
-});
 
 self.addEventListener("push", (event) => {
   const data = event.data?.json() ?? {};
   const title = data.title || "Verifactu Business";
   const options = {
-    body: data.body || "Nueva notificacion",
+    body: data.body || "Nueva notificaci�n",
     icon: "/android-chrome-192x192.png",
     badge: "/favicon-48x48.png",
     tag: data.tag || "default",
