@@ -27,13 +27,21 @@ if (process.env.NODE_ENV !== 'production') {
   }
 }
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || '';
+if (!googleClientId) {
+  console.warn('[auth] GOOGLE_CLIENT_ID is missing');
+} else {
+  console.info('[auth] GOOGLE_CLIENT_ID loaded (last6):', googleClientId.slice(-6));
+}
+
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: { strategy: 'jwt', maxAge: 8 * 60 * 60 }, // 8 hours
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
       authorization: {
         params: {
           prompt: 'consent',
