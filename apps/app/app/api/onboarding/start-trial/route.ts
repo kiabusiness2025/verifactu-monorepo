@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
-import { getSessionPayload, requireUserId } from "../../../../lib/session";
-import { ensureRole } from "../../../../lib/authz";
-import { Roles } from "../../../../lib/roles";
-import { prisma } from "../../../../lib/prisma";
-import { upsertUser } from "../../../../lib/tenants";
-import { Prisma } from "@prisma/client";
+import { NextResponse } from 'next/server';
+import { getSessionPayload, requireUserId } from '../../../../lib/session';
+import { ensureRole } from '../../../../lib/authz';
+import { Roles } from '../../../../lib/roles';
+import { prisma } from '../../../../lib/prisma';
+import { upsertUser } from '../../../../lib/tenants';
+import { Prisma } from '@prisma/client';
 
 type TrialPayload = {
   name: string;
@@ -13,20 +13,19 @@ type TrialPayload = {
 };
 
 async function resolvePlanId(): Promise<number> {
-  const preferredCodes = ["base", "pro", "trial"];
+  const preferredCodes = ['base', 'pro', 'trial'];
   const plan =
     (await prisma.plan.findFirst({
       where: { code: { in: preferredCodes } },
-      orderBy: { id: "asc" },
-    })) ||
-    (await prisma.plan.findFirst({ orderBy: { id: "asc" } }));
+      orderBy: { id: 'asc' },
+    })) || (await prisma.plan.findFirst({ orderBy: { id: 'asc' } }));
 
   if (plan) return plan.id;
 
   const created = await prisma.plan.create({
     data: {
-      code: "trial",
-      name: "Plan Trial",
+      code: 'trial',
+      name: 'Plan Trial',
       fixedMonthly: new Prisma.Decimal(0),
       variableRate: new Prisma.Decimal(0),
     },
@@ -43,12 +42,12 @@ export async function POST(req: Request) {
   const uid = requireUserId(session);
   const body = (await req.json().catch(() => null)) as TrialPayload | null;
 
-  const name = typeof body?.name === "string" ? body.name.trim() : "";
-  const legalName = typeof body?.legalName === "string" ? body.legalName.trim() : "";
-  const nif = typeof body?.nif === "string" ? body.nif.trim() : "";
+  const name = typeof body?.name === 'string' ? body.name.trim() : '';
+  const legalName = typeof body?.legalName === 'string' ? body.legalName.trim() : '';
+  const nif = typeof body?.nif === 'string' ? body.nif.trim() : '';
 
   if (!name) {
-    return NextResponse.json({ ok: false, error: "name required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'name required' }, { status: 400 });
   }
 
   await upsertUser({
@@ -76,8 +75,8 @@ export async function POST(req: Request) {
       data: {
         tenantId: tenant.id,
         userId: uid,
-        role: "owner",
-        status: "active",
+        role: 'owner',
+        status: 'active',
       },
     });
 
@@ -97,7 +96,7 @@ export async function POST(req: Request) {
       data: {
         tenantId: tenant.id,
         planId,
-        status: "trial",
+        status: 'trial',
         trialEndsAt,
         currentPeriodStart: now,
         currentPeriodEnd: trialEndsAt,
