@@ -3,6 +3,20 @@ import { AuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { prisma } from './prisma';
 
+function getAdminAllowlist() {
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  const allowedEmail = (
+    process.env.ADMIN_ALLOWED_EMAIL || 'support@verifactu.business'
+  ).toLowerCase();
+  const allowedDomain = (process.env.ADMIN_ALLOWED_DOMAIN || 'verifactu.business').toLowerCase();
+
+  return { adminEmails, allowedEmail, allowedDomain };
+}
+
 // Provide sensible defaults in local dev to avoid NextAuth warnings.
 if (process.env.NODE_ENV !== 'production') {
   if (!process.env.NEXTAUTH_URL) {
@@ -25,51 +39,55 @@ export const authOptions: AuthOptions = {
           prompt: 'consent',
           access_type: 'offline',
           response_type: 'code',
-          hd: 'verifactu.business', // Restricción de dominio Workspace
+          hd: 'verifactu.business', // Workspace domain restriction
         },
       },
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // 🔒 SEGURIDAD: Validar email contra variables de entorno
+    async signIn({ user, profile }) {
+      const { adminEmails, allowedEmail, allowedDomain } = getAdminAllowlist();
+
       const profileEmail = (profile as { email?: string } | undefined)?.email;
       const profileHd = (profile as { hd?: string } | undefined)?.hd;
       const email = (user.email || profileEmail || '').toLowerCase();
-      const allowedEmail = (
-        process.env.ADMIN_ALLOWED_EMAIL || 'support@verifactu.business'
-      ).toLowerCase();
-      const allowedDomain = (
-        process.env.ADMIN_ALLOWED_DOMAIN || 'verifactu.business'
-      ).toLowerCase();
 
-      console.log('🔍 SignIn attempt:', { email, allowedEmail, allowedDomain, profile });
+      console.log('SignIn attempt:', {
+        email,
+        allowedEmail,
+        allowedDomain,
+        adminEmails,
+        profileHd,
+      });
 
-      const emailOk = !!email && (email === allowedEmail || email.endsWith(`@${allowedDomain}`));
+      const emailOk =
+        (!!email && adminEmails.includes(email)) ||
+        email === allowedEmail ||
+        (allowedDomain && email.endsWith(`@${allowedDomain}`));
 
       const domainOk = !!profileHd && profileHd.toLowerCase() === allowedDomain;
 
       if (!emailOk && !domainOk) {
-        console.error('❌ Intento de acceso no autorizado:', email);
+        console.error('Access denied for email:', email);
         return false;
       }
 
-      console.log('✅ Acceso permitido:', email);
+      console.log('Access granted for email:', email);
       return true;
     },
     async jwt({ token }) {
-      // 🔑 Cargar rol desde DB
       if (token.email) {
         try {
+          const { adminEmails, allowedEmail, allowedDomain } = getAdminAllowlist();
           let dbUser = await prisma.user.findUnique({
             where: { email: token.email },
             select: { role: true, id: true, name: true, authSubject: true },
           });
 
-          // Si no existe, crearlo con rol ADMIN si el email es admin
-          const allowedEmail = (process.env.ADMIN_ALLOWED_EMAIL || 'support@verifactu.business').toLowerCase();
-          const allowedDomain = (process.env.ADMIN_ALLOWED_DOMAIN || 'verifactu.business').toLowerCase();
-          const isAdmin = token.email === allowedEmail || token.email.endsWith(`@${allowedDomain}`);
+          const isAdmin =
+            adminEmails.includes(token.email) ||
+            token.email === allowedEmail ||
+            token.email.endsWith(`@${allowedDomain}`);
 
           if (!dbUser) {
             const authSubject = token.sub || token.email;
@@ -86,19 +104,18 @@ export const authOptions: AuthOptions = {
             token.role = dbUser.role;
             token.userId = dbUser.id;
 
-            // Sincronizar usuario en Firebase
+            // Sync user in Firebase (best effort)
             try {
               const { firebaseAuth } = await import('./firebase-admin');
               await firebaseAuth.createUser({
                 email: token.email,
                 displayName: dbUser.name || token.email,
               });
-              console.log('✅ Usuario sincronizado en Firebase:', token.email);
+              console.log('Firebase user created:', token.email);
             } catch (fbError) {
-              console.error('❌ Error creando usuario en Firebase:', fbError);
+              console.error('Error creating Firebase user:', fbError);
             }
           } else {
-            // Si existe y es admin, actualizar rol si corresponde
             if (isAdmin && dbUser.role !== 'ADMIN') {
               dbUser = await prisma.user.update({
                 where: { email: token.email },
@@ -118,7 +135,6 @@ export const authOptions: AuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      // 📤 Exponer role y userId en la sesión
       if (session.user) {
         (session.user as any).role = token.role;
         (session.user as any).id = token.userId;

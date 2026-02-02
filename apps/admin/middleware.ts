@@ -35,12 +35,19 @@ export async function middleware(req: NextRequest) {
   const email = (token.email || '').toLowerCase();
   const role = (token.role || 'USER') as string;
 
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
   const allowedEmail = (
     process.env.ADMIN_ALLOWED_EMAIL || 'support@verifactu.business'
   ).toLowerCase();
   const allowedDomain = (process.env.ADMIN_ALLOWED_DOMAIN || 'verifactu.business').toLowerCase();
 
-  const emailOk = email === allowedEmail || email.endsWith(`@${allowedDomain}`);
+  const emailOk =
+    (!!email && adminEmails.includes(email)) ||
+    email === allowedEmail ||
+    (allowedDomain && email.endsWith(`@${allowedDomain}`));
 
   // Si el email es valido, permitir acceso (el rol se puede ajustar despues en la DB)
   if (!emailOk) {

@@ -16,13 +16,22 @@ export async function requireAdmin(_req: Request): Promise<{ email: string; user
     .split(',')
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
+  const allowedEmail = (
+    process.env.ADMIN_ALLOWED_EMAIL || 'support@verifactu.business'
+  ).toLowerCase();
+  const allowedDomain = (process.env.ADMIN_ALLOWED_DOMAIN || 'verifactu.business').toLowerCase();
 
   // Allow any authenticated user in dev if no admin list is configured.
   if (isDev && adminEmails.length === 0 && email) {
     return { email, userId };
   }
 
-  if (!email || adminEmails.length === 0 || !adminEmails.includes(email)) {
+  const emailOk =
+    (!!email && adminEmails.includes(email)) ||
+    email === allowedEmail ||
+    (allowedDomain && email.endsWith(`@${allowedDomain}`));
+
+  if (!email || !emailOk) {
     throw new Error('FORBIDDEN: Admin access required');
   }
 
