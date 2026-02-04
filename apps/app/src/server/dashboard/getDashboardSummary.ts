@@ -172,6 +172,30 @@ function buildActions({
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   const session = await getSessionPayload();
+  if (!session?.uid) {
+    return {
+      user: { id: '', name: 'Usuario', email: null },
+      tenants: [],
+      activeTenant: null,
+      activeTenantId: null,
+      supportMode: false,
+      supportSessionId: null,
+      demoMode: true,
+      metrics: { sales: 0, expenses: 0, profit: 0, tax: 0 },
+      actions: buildActions({
+        tenantId: null,
+        demoMode: true,
+        invoiceCount: 0,
+        expenseCount: 0,
+        vatEstimated: 0,
+        draftInvoicesCount: 0,
+        unpaidInvoicesCount: 0,
+        hasBankIntegration: false,
+        hasVerifactuIntegration: false,
+        unprocessedDocsCount: 0,
+      }),
+    };
+  }
   const uid = requireUserId(session);
 
   const memberships = await prisma.membership.findMany({
@@ -207,7 +231,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
         nif: resolved.tenant.nif,
         isDemo: resolved.tenant.isDemo ?? false,
       }
-    : tenants.find((tenant) => tenant.id === activeTenantId) ?? null;
+    : (tenants.find((tenant) => tenant.id === activeTenantId) ?? null);
 
   const onboarding = await prisma.userOnboarding.findUnique({
     where: { userId: uid },
