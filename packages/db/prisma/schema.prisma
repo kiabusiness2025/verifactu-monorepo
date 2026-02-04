@@ -340,6 +340,9 @@ model TenantProfile {
 
   source            String    @default("manual")
   sourceId          String?   @map("source_id")
+  einformaLastSyncAt DateTime? @map("einforma_last_sync_at") @db.Timestamptz
+  einformaTaxIdVerified Boolean? @map("einforma_tax_id_verified")
+  einformaRaw       Json?     @map("einforma_raw")
   cnae              String?
   incorporationDate DateTime? @map("incorporation_date") @db.Date
   address           String?
@@ -349,6 +352,21 @@ model TenantProfile {
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("tenant_profiles")
+}
+
+model EinformaLookup {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  queryType  String   @map("query_type")
+  queryValue String   @map("query_value")
+  raw        Json
+  normalized Json
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([queryType, queryValue])
+  @@index([expiresAt])
+  @@map("einforma_lookups")
 }
 
 model Membership {
