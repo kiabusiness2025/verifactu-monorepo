@@ -42,3 +42,10 @@ client_secret_*.json
 *.pem
 *.key
 
+# Local env / vercel imports (never commit)
+admin-vercel-import.env
+ADMIN_ENV_VERCEL.md
+
+# Just in case (variants)
+*.vercel*.env
+*.import*.env
