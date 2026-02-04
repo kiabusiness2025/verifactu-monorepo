@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 /**
  * GET /api/articles/[id]
@@ -9,12 +10,20 @@ import { getSessionPayload } from '@/lib/session';
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const article = await prisma.article.findFirst({
-      where: { id: params.id, tenantId: session.tenantId },
+      where: { id: params.id, tenantId },
       include: { invoiceLines: { select: { id: true, invoiceId: true, quantity: true, unitPrice: true } } },
     });
 
@@ -36,12 +45,20 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const existing = await prisma.article.findFirst({
-      where: { id: params.id, tenantId: session.tenantId },
+      where: { id: params.id, tenantId },
     });
 
     if (!existing) {
@@ -54,7 +71,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     // Check for duplicate code if code is being changed
     if (code && code !== existing.code) {
       const duplicate = await prisma.article.findFirst({
-        where: { tenantId: session.tenantId, code },
+        where: { tenantId, code },
       });
       if (duplicate) {
         return NextResponse.json({ error: 'Article code already exists' }, { status: 409 });
@@ -92,12 +109,20 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const existing = await prisma.article.findFirst({
-      where: { id: params.id, tenantId: session.tenantId },
+      where: { id: params.id, tenantId },
     });
 
     if (!existing) {

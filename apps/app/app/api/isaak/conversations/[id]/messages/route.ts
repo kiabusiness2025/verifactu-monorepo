@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionPayload } from '@/lib/session';
 import prisma from '@/lib/prisma';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,11 +24,19 @@ export async function POST(
 ) {
   try {
     const session = await getSessionPayload();
-    if (!session) {
+    if (!session || !session.uid) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const conversationId = params.id;
@@ -51,7 +60,7 @@ export async function POST(
     const conversation = await prisma.isaakConversation.findFirst({
       where: {
         id: conversationId,
-        tenantId: session.tenantId,
+        tenantId,
         userId: session.uid,
       },
     });
@@ -107,11 +116,19 @@ export async function GET(
 ) {
   try {
     const session = await getSessionPayload();
-    if (!session) {
+    if (!session || !session.uid) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const conversationId = params.id;
@@ -123,7 +140,7 @@ export async function GET(
     const conversation = await prisma.isaakConversation.findFirst({
       where: {
         id: conversationId,
-        tenantId: session.tenantId,
+        tenantId,
         userId: session.uid,
       },
     });
@@ -175,11 +192,19 @@ export async function DELETE(
 ) {
   try {
     const session = await getSessionPayload();
-    if (!session) {
+    if (!session || !session.uid) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const conversationId = params.id;
@@ -189,7 +214,7 @@ export async function DELETE(
     const conversation = await prisma.isaakConversation.findFirst({
       where: {
         id: conversationId,
-        tenantId: session.tenantId,
+        tenantId,
         userId: session.uid,
       },
     });

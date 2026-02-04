@@ -7,6 +7,7 @@ import {
   type SessionPayload,
 } from "@verifactu/utils";
 import { getLandingUrl, getAppUrl } from "@verifactu/utils";
+import { SUPPORT_SESSION_COOKIE, verifySupportToken } from "@/src/server/support/supportToken";
 
 async function getSessionPayload(req: NextRequest): Promise<SessionPayload | null> {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
@@ -33,6 +34,28 @@ export async function middleware(req: NextRequest) {
   // Demo is always public
   if (pathname === "/demo" || pathname.startsWith("/demo/")) {
     return NextResponse.next();
+  }
+
+  // Support handoff route is public (token protected)
+  if (pathname.startsWith("/support/handoff")) {
+    return NextResponse.next();
+  }
+
+  const supportToken = req.cookies.get(SUPPORT_SESSION_COOKIE)?.value;
+  if (supportToken) {
+    try {
+      const support = await verifySupportToken(supportToken);
+      const headers = new Headers(req.headers);
+      headers.set("x-support-tenant-id", support.tenantId);
+      headers.set("x-support-user-id", support.userId);
+      headers.set("x-support-session-id", support.supportSessionId);
+      headers.set("x-support-admin-id", support.adminId);
+      return NextResponse.next({ request: { headers } });
+    } catch {
+      const response = NextResponse.next();
+      response.cookies.delete(SUPPORT_SESSION_COOKIE);
+      return response;
+    }
   }
 
   // Admin routes are public - served without authentication requirement

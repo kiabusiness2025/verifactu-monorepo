@@ -1,12 +1,21 @@
 import { getSessionPayload } from '@/lib/session';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -17,7 +26,7 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit;
 
     const where: any = {
-      tenantId: session.tenantId,
+      tenantId,
       ...(search && {
         OR: [
           { number: { contains: search, mode: 'insensitive' } },
@@ -60,8 +69,16 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const data = await req.json();
@@ -69,7 +86,7 @@ export async function POST(req: NextRequest) {
     // Validate customer exists and belongs to tenant
     if (data.customerId) {
       const customer = await prisma.customer.findFirst({
-        where: { id: data.customerId, tenantId: session.tenantId },
+        where: { id: data.customerId, tenantId },
       });
 
       if (!customer) {
@@ -81,7 +98,7 @@ export async function POST(req: NextRequest) {
     const invoice = await prisma.invoice.create({
       data: {
         createdBy: session.uid,
-        tenantId: session.tenantId,
+        tenantId,
         customerId: data.customerId,
         customerName: data.customerName || 'Por especificar',
         number: data.number,
@@ -130,6 +147,41 @@ export async function POST(req: NextRequest) {
         lines: { include: { article: true } },
       },
     });
+
+    try {
+      let actorUserId = session.uid;
+      let impersonatedUserId: string | null = null;
+      let supportSessionId: string | null = null;
+
+      if (resolved.supportMode && resolved.supportSessionId) {
+        const supportSession = await prisma.supportSession.findUnique({
+          where: { id: resolved.supportSessionId },
+          select: { adminId: true, userId: true },
+        });
+        if (supportSession) {
+          actorUserId = supportSession.adminId;
+          impersonatedUserId = supportSession.userId;
+          supportSessionId = resolved.supportSessionId;
+        }
+      }
+
+      await prisma.auditLog.create({
+        data: {
+          actorUserId,
+          action: "COMPANY_VIEW",
+          metadata: {
+            action: "INVOICE.CREATE",
+            tenantId,
+            invoiceId: updated.id,
+            supportMode: resolved.supportMode,
+            supportSessionId,
+            impersonatedUserId,
+          },
+        },
+      });
+    } catch {
+      // Audit logging should not block the request.
+    }
 
     return NextResponse.json(updated, { status: 201 });
   } catch (error) {

@@ -1,16 +1,25 @@
 import { getSessionPayload } from '@/lib/session';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const invoice = await prisma.invoice.findFirst({
-      where: { id: params.id, tenantId: session.tenantId },
+      where: { id: params.id, tenantId },
       include: {
         customer: true,
         lines: {
@@ -33,13 +42,21 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     // Verify invoice ownership
     const existing = await prisma.invoice.findFirst({
-      where: { id: params.id, tenantId: session.tenantId },
+      where: { id: params.id, tenantId },
     });
 
     if (!existing) {
@@ -71,13 +88,21 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     // Verify invoice ownership
     const existing = await prisma.invoice.findFirst({
-      where: { id: params.id, tenantId: session.tenantId },
+      where: { id: params.id, tenantId },
     });
 
     if (!existing) {
@@ -87,6 +112,41 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     await prisma.invoice.delete({
       where: { id: params.id },
     });
+
+    try {
+      let actorUserId = session.uid;
+      let impersonatedUserId: string | null = null;
+      let supportSessionId: string | null = null;
+
+      if (resolved.supportMode && resolved.supportSessionId) {
+        const supportSession = await prisma.supportSession.findUnique({
+          where: { id: resolved.supportSessionId },
+          select: { adminId: true, userId: true },
+        });
+        if (supportSession) {
+          actorUserId = supportSession.adminId;
+          impersonatedUserId = supportSession.userId;
+          supportSessionId = resolved.supportSessionId;
+        }
+      }
+
+      await prisma.auditLog.create({
+        data: {
+          actorUserId,
+          action: "COMPANY_VIEW",
+          metadata: {
+            action: "INVOICE.DELETE",
+            tenantId,
+            invoiceId: params.id,
+            supportMode: resolved.supportMode,
+            supportSessionId,
+            impersonatedUserId,
+          },
+        },
+      });
+    } catch {
+      // Audit logging should not block the request.
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

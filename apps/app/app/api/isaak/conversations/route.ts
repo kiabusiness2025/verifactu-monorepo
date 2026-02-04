@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionPayload } from '@/lib/session';
 import prisma from '@/lib/prisma';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,11 +18,19 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const searchParams = req.nextUrl.searchParams;
@@ -32,7 +41,7 @@ export async function GET(req: NextRequest) {
     // Obtener conversaciones del usuario
     const conversations = await prisma.isaakConversation.findMany({
       where: {
-        tenantId: session.tenantId,
+        tenantId,
         userId: session.uid,
         ...(search && {
           OR: [
@@ -53,7 +62,7 @@ export async function GET(req: NextRequest) {
 
     const total = await prisma.isaakConversation.count({
       where: {
-        tenantId: session.tenantId,
+        tenantId,
         userId: session.uid,
       },
     });
@@ -83,18 +92,26 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const { title, context } = await req.json();
 
     const conversation = await prisma.isaakConversation.create({
       data: {
-        tenantId: session.tenantId,
+        tenantId,
         userId: session.uid,
         title: title || 'Nueva conversación con Isaak',
         context: context || null,

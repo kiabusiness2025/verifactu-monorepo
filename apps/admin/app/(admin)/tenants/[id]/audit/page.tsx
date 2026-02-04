@@ -5,7 +5,7 @@ export default function TenantAuditPage() {
     <PlaceholderPage
       title="Auditoria del tenant"
       description="Eventos de seguridad y acciones administrativas del tenant."
-      legacyHref="/audit"
+      legacyHref="/audit-log"
     />
   );
 }

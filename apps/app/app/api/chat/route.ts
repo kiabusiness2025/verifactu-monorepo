@@ -6,10 +6,10 @@ import {
     getPendingVeriFactuInvoices
 } from '@/lib/db-queries';
 import { createOpenAI, openai } from '@ai-sdk/openai';
-import { readSessionSecret, SESSION_COOKIE_NAME, verifySessionToken } from '@verifactu/utils';
 import { streamText, tool, zodSchema } from 'ai';
-import { cookies } from 'next/headers';
 import { z } from 'zod';
+import { getSessionPayload } from '@/lib/session';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 // Helpers
 function getMonthName(month: number): string {
@@ -64,16 +64,17 @@ function buildIsaakSystem(context?: string): string {
   return `${ISAAK_SYSTEM_BASE}\n\n${contextPrompt}`;
 }
 
-async function getSessionTenantId(): Promise<string | null> {
+async function getResolvedTenantId(): Promise<string | null> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-    if (!token) return null;
-    const secret = readSessionSecret();
-    const payload = await verifySessionToken(token, secret);
-    return payload?.tenantId || null;
+    const session = await getSessionPayload();
+    if (!session?.uid) return null;
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    return resolved.tenantId;
   } catch (error) {
-    console.error('Error getting session tenant:', error);
+    console.error('Error resolving tenant:', error);
     return null;
   }
 }
@@ -82,13 +83,23 @@ export async function POST(req: Request) {
   try {
     const { messages, context } = await req.json();
     
-    // Obtener tenantId de la sesión
-    const activeTenantId = await getSessionTenantId();
+    const session = await getSessionPayload();
     
     // Context puede venir del cliente (landing no necesita tenant)
     const contextType = context?.type || 'dashboard';
     
-    if (contextType === 'dashboard' && !activeTenantId) {
+    let activeTenantId: string | null = null;
+    if (contextType === 'dashboard' || contextType === 'admin') {
+      if (!session?.uid) {
+        return new Response(
+          JSON.stringify({ error: 'No tenant found in session' }),
+          { status: 401, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      activeTenantId = await getResolvedTenantId();
+    }
+
+    if ((contextType === 'dashboard' || contextType === 'admin') && !activeTenantId) {
       return new Response(
         JSON.stringify({ error: 'No tenant found in session' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }

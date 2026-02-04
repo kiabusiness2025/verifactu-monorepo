@@ -1,5 +1,6 @@
 import { prisma } from '@verifactu/db';
 import { getSessionPayload, requireUserId } from '@/lib/session';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 type DashboardTenant = {
   id: string;
@@ -32,6 +33,8 @@ export type DashboardSummary = {
   tenants: DashboardTenant[];
   activeTenant: DashboardTenant | null;
   activeTenantId: string | null;
+  supportMode: boolean;
+  supportSessionId: string | null;
   demoMode: boolean;
   metrics: DashboardMetrics;
   actions: IsaakAction[];
@@ -188,16 +191,23 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   const preference = await prisma.userPreference.findUnique({
     where: { userId: uid },
   });
+  const resolved = await resolveActiveTenant({
+    userId: uid,
+    sessionTenantId: session?.tenantId ?? null,
+    tenants,
+    defaultTenantId: preference?.preferredTenantId ?? tenants[0]?.id ?? null,
+  });
 
-  const tenantFromSession =
-    session?.tenantId && tenants.find((tenant) => tenant.id === session.tenantId)
-      ? session.tenantId
-      : null;
-
-  const activeTenantId =
-    tenantFromSession ?? preference?.preferredTenantId ?? tenants[0]?.id ?? null;
-
-  const activeTenant = tenants.find((tenant) => tenant.id === activeTenantId) ?? null;
+  const activeTenantId = resolved.tenantId;
+  const activeTenant = resolved.tenant
+    ? {
+        id: resolved.tenant.id,
+        name: resolved.tenant.name,
+        legalName: resolved.tenant.legalName,
+        nif: resolved.tenant.nif,
+        isDemo: resolved.tenant.isDemo ?? false,
+      }
+    : tenants.find((tenant) => tenant.id === activeTenantId) ?? null;
 
   const onboarding = await prisma.userOnboarding.findUnique({
     where: { userId: uid },
@@ -316,6 +326,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     tenants,
     activeTenant,
     activeTenantId,
+    supportMode: resolved.supportMode,
+    supportSessionId: resolved.supportSessionId,
     demoMode,
     metrics,
     actions: buildActions({

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionPayload } from '@/lib/session';
 import { uploadToStorage } from '@/lib/storage';
+import prisma from '@/lib/prisma';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,12 +20,16 @@ export async function POST(req: NextRequest) {
   try {
     // Verificar autenticación
     const session = await getSessionPayload();
-    if (!session) {
+    if (!session || !session.uid) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
 
     // Obtener FormData
     const formData = await req.formData();
@@ -47,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Usar tenantId del usuario
-    const tenantId = session.tenantId;
+    const tenantId = resolved.tenantId;
     if (!tenantId) {
       return NextResponse.json(
         { error: 'No tenant associated' },
@@ -68,6 +74,42 @@ export async function POST(req: NextRequest) {
         { error: result.error },
         { status: 400 }
       );
+    }
+
+    try {
+      let actorUserId = session.uid;
+      let impersonatedUserId: string | null = null;
+      let supportSessionId: string | null = null;
+
+      if (resolved.supportMode && resolved.supportSessionId) {
+        const supportSession = await prisma.supportSession.findUnique({
+          where: { id: resolved.supportSessionId },
+          select: { adminId: true, userId: true },
+        });
+        if (supportSession) {
+          actorUserId = supportSession.adminId;
+          impersonatedUserId = supportSession.userId;
+          supportSessionId = resolved.supportSessionId;
+        }
+      }
+
+      await prisma.auditLog.create({
+        data: {
+          actorUserId,
+          action: "COMPANY_VIEW",
+          metadata: {
+            action: "STORAGE.UPLOAD",
+            tenantId,
+            category,
+            fileName: result.file?.name ?? null,
+            supportMode: resolved.supportMode,
+            supportSessionId,
+            impersonatedUserId,
+          },
+        },
+      });
+    } catch {
+      // Audit logging should not block the request.
     }
 
     return NextResponse.json({
@@ -98,12 +140,16 @@ export async function DELETE(req: NextRequest) {
   try {
     // Verificar autenticación
     const session = await getSessionPayload();
-    if (!session) {
+    if (!session || !session.uid) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
 
     const body = await req.json();
     const { category, fileName } = body;
@@ -115,7 +161,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const tenantId = session.tenantId;
+    const tenantId = resolved.tenantId;
     if (!tenantId) {
       return NextResponse.json(
         { error: 'No tenant associated' },
@@ -131,6 +177,42 @@ export async function DELETE(req: NextRequest) {
         { error: (result as { success: false; error: string }).error },
         { status: 400 }
       );
+    }
+
+    try {
+      let actorUserId = session.uid;
+      let impersonatedUserId: string | null = null;
+      let supportSessionId: string | null = null;
+
+      if (resolved.supportMode && resolved.supportSessionId) {
+        const supportSession = await prisma.supportSession.findUnique({
+          where: { id: resolved.supportSessionId },
+          select: { adminId: true, userId: true },
+        });
+        if (supportSession) {
+          actorUserId = supportSession.adminId;
+          impersonatedUserId = supportSession.userId;
+          supportSessionId = resolved.supportSessionId;
+        }
+      }
+
+      await prisma.auditLog.create({
+        data: {
+          actorUserId,
+          action: "COMPANY_VIEW",
+          metadata: {
+            action: "STORAGE.DELETE",
+            tenantId,
+            category,
+            fileName,
+            supportMode: resolved.supportMode,
+            supportSessionId,
+            impersonatedUserId,
+          },
+        },
+      });
+    } catch {
+      // Audit logging should not block the request.
     }
 
     return NextResponse.json({ success: true });

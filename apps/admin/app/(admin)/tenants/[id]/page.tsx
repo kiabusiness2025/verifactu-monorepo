@@ -1,9 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function TenantOverviewPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  redirect(`/dashboard/admin/companies/${params.id}`);
+export default function TenantIndexPage({ params }: { params: { id: string } }) {
+  redirect(`/tenants/${params.id}/overview`);
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 /**
  * GET /api/customers
@@ -9,8 +10,16 @@ import { getSessionPayload } from '@/lib/session';
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -20,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = { tenantId: session.tenantId };
+    const where: any = { tenantId };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -61,8 +70,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const body = await request.json();
@@ -74,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     const customer = await prisma.customer.create({
       data: {
-        tenantId: session.tenantId,
+        tenantId,
         name,
         email: email || null,
         phone: phone || null,
@@ -87,6 +104,41 @@ export async function POST(request: NextRequest) {
         notes: notes || null,
       },
     });
+
+    try {
+      let actorUserId = session.uid;
+      let impersonatedUserId: string | null = null;
+      let supportSessionId: string | null = null;
+
+      if (resolved.supportMode && resolved.supportSessionId) {
+        const supportSession = await prisma.supportSession.findUnique({
+          where: { id: resolved.supportSessionId },
+          select: { adminId: true, userId: true },
+        });
+        if (supportSession) {
+          actorUserId = supportSession.adminId;
+          impersonatedUserId = supportSession.userId;
+          supportSessionId = resolved.supportSessionId;
+        }
+      }
+
+      await prisma.auditLog.create({
+        data: {
+          actorUserId,
+          action: "COMPANY_VIEW",
+          metadata: {
+            action: "CUSTOMER.CREATE",
+            tenantId,
+            customerId: customer.id,
+            supportMode: resolved.supportMode,
+            supportSessionId,
+            impersonatedUserId,
+          },
+        },
+      });
+    } catch {
+      // Audit logging should not block the request.
+    }
 
     return NextResponse.json(customer, { status: 201 });
   } catch (error) {

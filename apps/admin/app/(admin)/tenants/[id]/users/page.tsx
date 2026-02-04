@@ -5,7 +5,7 @@ export default function TenantUsersPage() {
     <PlaceholderPage
       title="Usuarios del tenant"
       description="Vista de usuarios asociados a este tenant. Se habilitara la gestion avanzada aqui."
-      legacyHref="/dashboard/admin/usuarios"
+      legacyHref="/users"
     />
   );
 }

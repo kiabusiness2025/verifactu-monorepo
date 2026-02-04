@@ -26,6 +26,11 @@ enum AuditAction {
   ADMIN_LOGOUT
   IMPERSONATION_START
   IMPERSONATION_STOP
+  SUPPORT_SESSION_START
+  SUPPORT_SESSION_END
+  SUPPORT_IMPERSONATE
+  TENANT_SUSPEND
+  TENANT_ACTIVATE
   USER_VIEW
   COMPANY_VIEW
   WEBHOOK_RETRY
@@ -93,6 +98,8 @@ model User {
   subscriptions    Subscription[]
   auditActor       AuditLog[] @relation("AuditActor")
   auditTarget      AuditLog[] @relation("AuditTargetUser")
+  supportSessionsAsUser  SupportSession[] @relation("SupportSessionUser")
+  supportSessionsAsAdmin SupportSession[] @relation("SupportSessionAdmin")
   webhookEvents    WebhookEvent[]
   emailEvents      EmailEvent[]
 
@@ -322,6 +329,7 @@ model Tenant {
   expenses            ExpenseRecord[]
   isaakConversations  IsaakConversation[]
   demoOnboardings     UserOnboarding[]
+  supportSessions     SupportSession[]
 
   @@map("tenants")
 }
@@ -409,13 +417,45 @@ model TenantSubscription {
   trialEndsAt        DateTime? @map("trial_ends_at") @db.Timestamptz
   currentPeriodStart DateTime? @map("current_period_start") @db.Timestamptz
   currentPeriodEnd   DateTime? @map("current_period_end") @db.Timestamptz
+  stripeCustomerId     String?  @map("stripe_customer_id")
+  stripeSubscriptionId String?  @map("stripe_subscription_id")
+  stripePriceId        String?  @map("stripe_price_id")
+  stripeStatus         String?  @map("stripe_status")
+  cancelAtPeriodEnd    Boolean? @default(false) @map("cancel_at_period_end")
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   plan   Plan   @relation(fields: [planId], references: [id])
 
   @@index([tenantId, status])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
   @@map("tenant_subscriptions")
+}
+
+model SupportSession {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  tenantId  String   @map("tenant_id") @db.Uuid
+  userId    String   @map("user_id")
+  adminId   String   @map("admin_id")
+
+  reason    String
+  startedAt DateTime @default(now()) @map("started_at") @db.Timestamptz
+  endedAt   DateTime? @map("ended_at") @db.Timestamptz
+
+  ip        String?  @map("ip")
+  userAgent String?  @map("user_agent")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation("SupportSessionUser", fields: [userId], references: [id], onDelete: Cascade)
+  admin  User   @relation("SupportSessionAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, startedAt])
+  @@index([userId, startedAt])
+  @@index([adminId, startedAt])
+  @@map("support_sessions")
 }
 
 model Invoice {

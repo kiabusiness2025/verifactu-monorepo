@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 /**
  * GET /api/articles
@@ -9,8 +10,16 @@ import { getSessionPayload } from '@/lib/session';
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -21,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = { tenantId: session.tenantId, isActive: true };
+    const where: any = { tenantId, isActive: true };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -65,8 +74,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionPayload();
-    if (!session || !session.tenantId || !session.uid) {
+    if (!session || !session.uid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const resolved = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
     const body = await request.json();
@@ -78,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     // Check for duplicate code
     const existing = await prisma.article.findFirst({
-      where: { tenantId: session.tenantId, code },
+      where: { tenantId, code },
     });
 
     if (existing) {
@@ -87,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     const article = await prisma.article.create({
       data: {
-        tenantId: session.tenantId,
+        tenantId,
         code,
         name,
         description: description || null,

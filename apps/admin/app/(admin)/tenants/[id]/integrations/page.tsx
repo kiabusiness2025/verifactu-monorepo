@@ -5,7 +5,12 @@ export default function TenantIntegrationsPage() {
     <PlaceholderPage
       title="Integraciones del tenant"
       description="Estado de integraciones activas para este tenant."
-      legacyHref="/dashboard/admin/integrations"
+      legacyHref="/integrations"
+      actions={[
+        { label: "Stripe", href: "/integrations/stripe" },
+        { label: "Resend", href: "/integrations/resend" },
+        { label: "Veri*Factu", href: "/integrations/verifactu" },
+      ]}
     />
   );
 }

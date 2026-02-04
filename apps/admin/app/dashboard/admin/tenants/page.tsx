@@ -1,12 +1,13 @@
-﻿'use client';
+"use client";
 
-import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
-import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
-import { TableSkeleton } from '@/components/accessibility/LoadingSkeleton';
-import { useToast } from '@/components/notifications/ToastNotifications';
-import { adminGet, adminPatch, adminPost } from '@/lib/adminApi';
-import { formatCurrency } from '@/src/lib/formatters';
-import { useEffect, useMemo, useState } from 'react';
+import { AccessibleButton } from "@/components/accessibility/AccessibleButton";
+import { AccessibleInput } from "@/components/accessibility/AccessibleFormInputs";
+import { TableSkeleton } from "@/components/accessibility/LoadingSkeleton";
+import { useToast } from "@/components/notifications/ToastNotifications";
+import { adminGet, adminPatch, adminPost } from "@/lib/adminApi";
+import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 
 type TenantRow = {
   id: string;
@@ -58,42 +59,43 @@ export default function AdminTenantsPage() {
   const { success, error: showError } = useToast();
   const [items, setItems] = useState<TenantRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<TenantRow | null>(null);
   const [form, setForm] = useState<TenantForm>({
-    legalName: '',
-    taxId: '',
-    address: '',
-    cnae: '',
+    legalName: "",
+    taxId: "",
+    address: "",
+    cnae: "",
   });
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<EinformaSearchItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState('');
+  const [searchError, setSearchError] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
-    if (search.trim()) params.set('q', search.trim());
-    if (statusFilter !== 'all') params.set('status', statusFilter);
-    if (from) params.set('from', from);
-    if (to) params.set('to', to);
+    if (search.trim()) params.set("q", search.trim());
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
     return params.toString();
   }, [search, statusFilter, from, to]);
 
   function resetEinforma() {
-    setSearchQuery('');
+    setSearchQuery("");
     setSearchResults([]);
     setSearchLoading(false);
-    setSearchError('');
+    setSearchError("");
     setProfileLoading(false);
   }
 
@@ -101,13 +103,13 @@ export default function AdminTenantsPage() {
     let mounted = true;
     async function load() {
       setLoading(true);
-      setError('');
+      setError("");
       try {
         const data = await adminGet<TenantsResponse>(`/api/admin/tenants?${queryString}`);
         if (mounted) setItems(data.items || []);
       } catch (err) {
         if (mounted) {
-          setError(err instanceof Error ? err.message : 'Error al cargar');
+          setError(err instanceof Error ? err.message : "Error al cargar");
         }
       } finally {
         if (mounted) setLoading(false);
@@ -125,23 +127,23 @@ export default function AdminTenantsPage() {
     if (query.length < 3) {
       setSearchResults([]);
       setSearchLoading(false);
-      setSearchError('');
+      setSearchError("");
       return;
     }
 
     setSearchLoading(true);
-    setSearchError('');
+    setSearchError("");
     const timeout = window.setTimeout(async () => {
       try {
         const res = await fetch(`/api/admin/einforma/search?q=${encodeURIComponent(query)}`);
         const data = await res.json().catch(() => null);
         if (!res.ok) {
-          throw new Error(data?.error || 'Error en la busqueda');
+          throw new Error(data?.error || "Error en la busqueda");
         }
         setSearchResults(Array.isArray(data?.items) ? data.items : []);
       } catch (err) {
         setSearchResults([]);
-        setSearchError(err instanceof Error ? err.message : 'Error al buscar');
+        setSearchError(err instanceof Error ? err.message : "Error al buscar");
       } finally {
         setSearchLoading(false);
       }
@@ -153,18 +155,18 @@ export default function AdminTenantsPage() {
   function buildAddress(profile: EinformaCompanyProfile) {
     const address = profile.address || {};
     const parts = [address.street, address.zip, address.city, address.province].filter(Boolean);
-    return parts.join(', ');
+    return parts.join(", ");
   }
 
   async function applyEinformaProfile(item: EinformaSearchItem) {
-    setSearchError('');
+    setSearchError("");
     setSearchResults([]);
-    setSearchQuery(item.name || item.nif || '');
+    setSearchQuery(item.name || item.nif || "");
     if (!item?.nif) {
       setForm((prev) => ({
         ...prev,
         legalName: item?.name || prev.legalName,
-        taxId: '',
+        taxId: "",
       }));
       return;
     }
@@ -176,23 +178,23 @@ export default function AdminTenantsPage() {
       );
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(data?.error || 'No se pudo cargar la empresa');
+        throw new Error(data?.error || "No se pudo cargar la empresa");
       }
 
       const profile: EinformaCompanyProfile | undefined = data?.profile;
       if (!profile) {
-        throw new Error('No se pudo cargar la empresa');
+        throw new Error("No se pudo cargar la empresa");
       }
 
       setForm((prev) => ({
         ...prev,
         legalName: profile.legalName || profile.name || prev.legalName,
-        taxId: (profile.nif || item.nif || prev.taxId || '').toUpperCase(),
-        address: buildAddress(profile) || prev.address || '',
-        cnae: profile.cnae || prev.cnae || '',
+        taxId: (profile.nif || item.nif || prev.taxId || "").toUpperCase(),
+        address: buildAddress(profile) || prev.address || "",
+        cnae: profile.cnae || prev.cnae || "",
       }));
     } catch (err) {
-      setSearchError(err instanceof Error ? err.message : 'Error al cargar');
+      setSearchError(err instanceof Error ? err.message : "Error al cargar");
     } finally {
       setProfileLoading(false);
     }
@@ -200,8 +202,8 @@ export default function AdminTenantsPage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ legalName: '', taxId: '', address: '', cnae: '' });
-    setError('');
+    setForm({ legalName: "", taxId: "", address: "", cnae: "" });
+    setError("");
     resetEinforma();
     setShowModal(true);
   }
@@ -209,12 +211,12 @@ export default function AdminTenantsPage() {
   function openEdit(tenant: TenantRow) {
     setEditing(tenant);
     setForm({
-      legalName: tenant.legalName || '',
-      taxId: tenant.taxId || '',
-      address: '',
-      cnae: '',
+      legalName: tenant.legalName || "",
+      taxId: tenant.taxId || "",
+      address: "",
+      cnae: "",
     });
-    setError('');
+    setError("");
     resetEinforma();
     setShowModal(true);
   }
@@ -222,7 +224,7 @@ export default function AdminTenantsPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    setError('');
+    setError("");
     try {
       if (editing) {
         const res = await adminPatch<{ tenant: TenantRow }>(
@@ -231,12 +233,12 @@ export default function AdminTenantsPage() {
         );
         setItems((prev) => prev.map((t) => (t.id === editing.id ? res.tenant : t)));
       } else {
-        const res = await adminPost<{ tenant: TenantRow }>('/api/admin/tenants', form);
+        const res = await adminPost<{ tenant: TenantRow }>("/api/admin/tenants", form);
         setItems((prev) => [res.tenant, ...prev]);
       }
       setShowModal(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar');
+      setError(err instanceof Error ? err.message : "Error al guardar");
     } finally {
       setSaving(false);
     }
@@ -245,9 +247,47 @@ export default function AdminTenantsPage() {
   async function setActiveTenant(tenantId: string) {
     try {
       await adminPost(`/api/admin/tenants/${tenantId}/set-active`, {});
-      success('Empresa activada correctamente');
+      success("Empresa activada correctamente");
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'No se pudo activar');
+      showError(err instanceof Error ? err.message : "No se pudo activar");
+    }
+  }
+
+  async function toggleTenantStatus(tenant: TenantRow) {
+    const isSuspended = (tenant.status || "").toLowerCase() === "suspended";
+    const endpoint = isSuspended
+      ? `/api/admin/tenants/${tenant.id}/unsuspend`
+      : `/api/admin/tenants/${tenant.id}/suspend`;
+    try {
+      await adminPost(endpoint, {});
+      success(isSuspended ? "Empresa activada" : "Empresa suspendida");
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === tenant.id
+            ? { ...item, status: isSuspended ? "active" : "suspended" }
+            : item
+        )
+      );
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "No se pudo actualizar el estado");
+    }
+  }
+
+  async function startSupportSession(tenant: TenantRow) {
+    try {
+      const res = await adminPost<{
+        handoffToken: string;
+        tenantId?: string;
+      }>("/api/admin/support-sessions/start", {
+        tenantId: tenant.id,
+        reason: "support",
+      });
+      const token = res.handoffToken;
+      const url = `${appUrl}/support/handoff?token=${encodeURIComponent(token)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+      success("Sesion de soporte iniciada");
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "No se pudo iniciar soporte");
     }
   }
 
@@ -255,7 +295,7 @@ export default function AdminTenantsPage() {
     <main className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Empresas</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Tenants</h1>
           <p className="text-sm text-slate-600">{items.length} empresas en la vista actual</p>
         </div>
         <AccessibleButton onClick={openCreate} ariaLabel="Crear nueva empresa">
@@ -279,6 +319,7 @@ export default function AdminTenantsPage() {
           <option value="all">Estado: todos</option>
           <option value="trial">Trial</option>
           <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
         </select>
         <AccessibleInput
           label="Fecha desde"
@@ -297,7 +338,7 @@ export default function AdminTenantsPage() {
       </div>
 
       {loading ? (
-        <TableSkeleton rows={5} columns={7} />
+        <TableSkeleton rows={5} columns={8} />
       ) : error ? (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           {error}
@@ -313,6 +354,7 @@ export default function AdminTenantsPage() {
                 <th className="px-4 py-3 text-right">Facturas mes</th>
                 <th className="px-4 py-3 text-right">Ingresos mes</th>
                 <th className="px-4 py-3 text-right">Miembros</th>
+                <th className="px-4 py-3 text-right">Alta</th>
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
@@ -323,7 +365,7 @@ export default function AdminTenantsPage() {
                   <td className="px-4 py-3 text-slate-600">{tenant.taxId}</td>
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                      {tenant.status || 'active'}
+                      {tenant.status || "active"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right text-slate-700">
@@ -333,15 +375,32 @@ export default function AdminTenantsPage() {
                     {formatCurrency(tenant.revenueThisMonth)}
                   </td>
                   <td className="px-4 py-3 text-right text-slate-700">{tenant.membersCount}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">
+                    {tenant.createdAt ? formatShortDate(tenant.createdAt) : "--"}
+                  </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Link
+                        href={`/tenants/${tenant.id}/overview`}
+                        className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Ver detalle
+                      </Link>
+                      <AccessibleButton
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => startSupportSession(tenant)}
+                        ariaLabel={`Entrar como ${tenant.legalName}`}
+                      >
+                        Entrar como
+                      </AccessibleButton>
                       <AccessibleButton
                         variant="secondary"
                         size="sm"
                         onClick={() => setActiveTenant(tenant.id)}
-                        ariaLabel={`Activar empresa ${tenant.legalName}`}
+                        ariaLabel={`Seleccionar empresa ${tenant.legalName}`}
                       >
-                        Activar
+                        Seleccionar
                       </AccessibleButton>
                       <AccessibleButton
                         variant="secondary"
@@ -351,13 +410,23 @@ export default function AdminTenantsPage() {
                       >
                         Editar
                       </AccessibleButton>
+                      <AccessibleButton
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => toggleTenantStatus(tenant)}
+                        ariaLabel={`Cambiar estado de ${tenant.legalName}`}
+                      >
+                        {(tenant.status || "").toLowerCase() === "suspended"
+                          ? "Activar"
+                          : "Suspender"}
+                      </AccessibleButton>
                     </div>
                   </td>
                 </tr>
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td className="px-4 py-6 text-center text-sm text-slate-500" colSpan={7}>
+                  <td className="px-4 py-6 text-center text-sm text-slate-500" colSpan={8}>
                     No hay empresas para los filtros actuales.
                   </td>
                 </tr>
@@ -372,7 +441,7 @@ export default function AdminTenantsPage() {
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 p-4">
               <h2 className="text-lg font-semibold text-slate-900">
-                {editing ? 'Editar empresa' : 'Crear empresa'}
+                {editing ? "Editar empresa" : "Crear empresa"}
               </h2>
               <AccessibleButton
                 variant="ghost"
@@ -393,7 +462,7 @@ export default function AdminTenantsPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Minimo 3 caracteres"
-                    helperText={searchLoading ? 'Buscando...' : undefined}
+                    helperText={searchLoading ? "Buscando..." : undefined}
                     error={searchError || undefined}
                   />
                 </label>
@@ -408,7 +477,7 @@ export default function AdminTenantsPage() {
                       >
                         <span className="font-medium text-slate-900">{item.name}</span>
                         <span className="text-xs text-slate-500">
-                          {item.nif || item.province || 'Sin CIF'}
+                          {item.nif || item.province || "Sin CIF"}
                         </span>
                       </button>
                     ))}
@@ -457,9 +526,9 @@ export default function AdminTenantsPage() {
                   type="submit"
                   loading={saving}
                   disabled={saving}
-                  ariaLabel={editing ? 'Guardar cambios de empresa' : 'Crear empresa'}
+                  ariaLabel={editing ? "Guardar cambios de empresa" : "Crear empresa"}
                 >
-                  {saving ? 'Guardando...' : 'Guardar'}
+                  {saving ? "Guardando..." : "Guardar"}
                 </AccessibleButton>
               </div>
             </form>

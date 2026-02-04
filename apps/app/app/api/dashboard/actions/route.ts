@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getSessionPayload } from '@/lib/session';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 const actionsByTenant: Record<
   string,
@@ -87,8 +89,16 @@ const actionsByTenant: Record<
 };
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const tenantId = searchParams.get('tenantId') ?? 'demo';
+  const session = await getSessionPayload();
+  if (!session || !session.uid) {
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const resolved = await resolveActiveTenant({
+    userId: session.uid,
+    sessionTenantId: session.tenantId ?? null,
+  });
+  const tenantId = resolved.tenantId ?? 'demo';
   const actions = actionsByTenant[tenantId] ?? actionsByTenant.demo;
 
   return NextResponse.json({ ok: true, actions });

@@ -6,7 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken, readSessionSecret } from "@verifactu/utils";
+import { getSessionPayload } from "@/lib/session";
+import { resolveActiveTenant } from "@/src/server/tenant/resolveActiveTenant";
 import { query } from "@/lib/db";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
@@ -50,26 +51,33 @@ async function verifyTenantAccess(userId: string, tenantId: string): Promise<boo
  */
 export async function GET(req: NextRequest) {
   try {
-    const sessionToken = req.cookies.get("session")?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
+    const session = await getSessionPayload();
+    if (!session?.uid) {
+      return NextResponse.json({ ok: false, error: "Token inv??lido" }, { status: 401 });
     }
 
-    const sessionSecret = readSessionSecret();
-    const payload = await verifySessionToken(sessionToken, sessionSecret);
-    
-    if (!payload || !payload.uid) {
-      return NextResponse.json({ ok: false, error: "Token inválido" }, { status: 401 });
-    }
-
-    const userId: string = payload.uid;
+    const userId: string = session.uid;
 
     const tenantIdParam = req.nextUrl.searchParams.get("tenantId");
-    if (!tenantIdParam) {
+    const resolved = await resolveActiveTenant({
+      userId,
+      sessionTenantId: session.tenantId ?? null,
+    });
+
+    let tenantId = resolved.tenantId;
+    if (tenantIdParam && tenantIdParam !== tenantId) {
+      if (resolved.supportMode) {
+        return NextResponse.json({ ok: false, error: "Modo soporte activo" }, { status: 403 });
+      }
+      const hasAccess = await verifyTenantAccess(userId, tenantIdParam);
+      if (!hasAccess) {
+        return NextResponse.json({ ok: false, error: "Sin permisos" }, { status: 403 });
+      }
+      tenantId = tenantIdParam;
+    }
+    if (!tenantId) {
       return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
     }
-
-    const tenantId: string = tenantIdParam;
 
     // Verificar acceso
     const hasAccess = await verifyTenantAccess(userId, tenantId);
@@ -100,38 +108,45 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/**
- * POST /api/tenant/logo
- * Subir logo del tenant a Firebase Storage
- */
 export async function POST(req: NextRequest) {
   try {
-    const sessionToken = req.cookies.get("session")?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
+    const session = await getSessionPayload();
+    if (!session?.uid) {
+      return NextResponse.json({ ok: false, error: "Token inv??lido" }, { status: 401 });
     }
 
-    const sessionSecret = readSessionSecret();
-    const payload = await verifySessionToken(sessionToken, sessionSecret);
-    
-    if (!payload || !payload.uid) {
-      return NextResponse.json({ ok: false, error: "Token inválido" }, { status: 401 });
-    }
-
-    const userId: string = payload.uid;
+    const userId: string = session.uid;
 
     const body = await req.json();
     const { tenantId: tenantIdRaw, logoURL: logoURLRaw } = body;
 
-    if (!tenantIdRaw) {
-      return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
-    }
+    const resolved = await resolveActiveTenant({
+      userId,
+      sessionTenantId: session.tenantId ?? null,
+    });
 
     if (!logoURLRaw) {
       return NextResponse.json({ ok: false, error: "logoURL requerido" }, { status: 400 });
     }
 
-    const tenantId: string = tenantIdRaw;
+    let tenantId: string | null = resolved.tenantId;
+    if (tenantIdRaw && tenantIdRaw !== tenantId) {
+      if (resolved.supportMode) {
+        return NextResponse.json({ ok: false, error: "Modo soporte activo" }, { status: 403 });
+      }
+      const hasAccess = await verifyTenantAccess(userId, tenantIdRaw);
+      if (!hasAccess) {
+        return NextResponse.json(
+          { ok: false, error: "Sin permisos para modificar este tenant" },
+          { status: 403 }
+        );
+      }
+      tenantId = tenantIdRaw;
+    }
+    if (!tenantId) {
+      return NextResponse.json({ ok: false, error: "tenantId requerido" }, { status: 400 });
+    }
+
     const logoURL: string = logoURLRaw;
 
     // Verificar acceso
@@ -155,7 +170,7 @@ export async function POST(req: NextRequest) {
 
     if (!matches) {
       return NextResponse.json(
-        { ok: false, error: "Formato de imagen inválido. Use data URL o URL externa." },
+        { ok: false, error: "Formato de imagen inv??lido. Use data URL o URL externa." },
         { status: 400 }
       );
     }
@@ -166,7 +181,7 @@ export async function POST(req: NextRequest) {
     // Validar que es una imagen
     if (!mimeType.startsWith("image/")) {
       return NextResponse.json(
-        { ok: false, error: "Solo se permiten imágenes" },
+        { ok: false, error: "Solo se permiten im??genes" },
         { status: 400 }
       );
     }
@@ -174,7 +189,7 @@ export async function POST(req: NextRequest) {
     // Convertir base64 a Buffer
     const buffer = Buffer.from(base64Data, "base64");
 
-    // Validar tamaño (5MB máximo)
+    // Validar tama??o (5MB m??ximo)
     const maxSize = 5 * 1024 * 1024;
     if (buffer.length > maxSize) {
       return NextResponse.json(
@@ -183,7 +198,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Obtener extensión
+    // Obtener extensi??n
     const extension = mimeType.split("/")[1] || "png";
 
     // Subir a Firebase Storage
@@ -201,7 +216,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // Obtener URL pública
+    // Obtener URL p??blica
     const downloadURL = await getDownloadURL(storageRef);
 
     // Actualizar en base de datos

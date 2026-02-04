@@ -43,6 +43,8 @@ export default async function DashboardPage() {
         demoMode={demoMode}
         moduleKey="dashboard"
         companyName={activeTenant?.name ?? null}
+        supportMode={data.supportMode}
+        supportSessionId={data.supportSessionId}
       />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
