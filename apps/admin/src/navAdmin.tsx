@@ -1,14 +1,14 @@
 import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  Shield,
-  CreditCard,
-  Mail,
-  Settings,
-  ClipboardList,
-  Plug,
   AlertTriangle,
+  Building2,
+  ClipboardList,
+  CreditCard,
+  LayoutDashboard,
+  Mail,
+  Plug,
+  Settings,
+  Shield,
+  Users,
 } from 'lucide-react';
 
 export const navAdmin = [
