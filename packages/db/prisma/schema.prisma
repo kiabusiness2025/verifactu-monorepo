@@ -344,10 +344,18 @@ model TenantProfile {
   einformaTaxIdVerified Boolean? @map("einforma_tax_id_verified")
   einformaRaw       Json?     @map("einforma_raw")
   cnae              String?
+  cnaeCode          String?   @map("cnae_code")
+  cnaeText          String?   @map("cnae_text")
+  legalForm         String?   @map("legal_form")
+  status            String?
+  website           String?
+  capitalSocial     Decimal?  @map("capital_social")
   incorporationDate DateTime? @map("incorporation_date") @db.Date
   address           String?
+  postalCode        String?   @map("postal_code")
   city              String?
   province          String?
+  country           String?
   representative    String?
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 

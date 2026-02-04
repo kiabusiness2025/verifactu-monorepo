@@ -14,13 +14,39 @@ type TenantPayload = {
   nif: string;
   extra?: {
     cnae?: string;
+    legalForm?: string;
+    status?: string;
+    website?: string;
+    capitalSocial?: number;
     incorporationDate?: string;
     address?: string;
     city?: string;
     province?: string;
+    country?: string;
     representative?: string;
   };
 };
+
+function splitCnae(value?: string) {
+  if (!value) return { code: undefined, text: undefined };
+  const parts = value
+    .split(' - ')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return { code: undefined, text: undefined };
+  if (parts.length === 1) return { code: parts[0], text: undefined };
+  return { code: parts[0], text: parts.slice(1).join(' - ') };
+}
+
+function normalizeCity(value?: string) {
+  if (!value) return { postalCode: undefined, city: undefined };
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(\d{5})\s+([^()]+)(?:\s*\(.*\))?$/);
+  if (match) {
+    return { postalCode: match[1], city: match[2].trim() };
+  }
+  return { postalCode: undefined, city: trimmed.split('(')[0]?.trim() || trimmed };
+}
 
 async function resolvePlanId(): Promise<number> {
   const preferredCodes = ['base', 'pro', 'trial'];
@@ -141,6 +167,8 @@ export async function POST(req: Request) {
 
     if (body?.extra) {
       const isEinforma = source === 'einforma';
+      const cnaeParts = splitCnae(body.extra.cnae);
+      const cityParts = normalizeCity(body.extra.city);
       await tx.tenantProfile.upsert({
         where: { tenantId: tenant.id },
         create: {
@@ -148,12 +176,20 @@ export async function POST(req: Request) {
           source,
           sourceId: einformaId,
           cnae: body.extra.cnae || undefined,
+          cnaeCode: cnaeParts.code,
+          cnaeText: cnaeParts.text,
+          legalForm: body.extra.legalForm || undefined,
+          status: body.extra.status || undefined,
+          website: body.extra.website || undefined,
+          capitalSocial: body.extra.capitalSocial ?? undefined,
           incorporationDate: body.extra.incorporationDate
             ? new Date(body.extra.incorporationDate)
             : undefined,
           address: body.extra.address || undefined,
-          city: body.extra.city || undefined,
+          postalCode: cityParts.postalCode,
+          city: cityParts.city || undefined,
           province: body.extra.province || undefined,
+          country: body.extra.country || undefined,
           representative: body.extra.representative || undefined,
           einformaLastSyncAt: isEinforma ? new Date() : undefined,
           einformaTaxIdVerified: isEinforma ? true : undefined,
@@ -162,12 +198,20 @@ export async function POST(req: Request) {
           source,
           sourceId: einformaId,
           cnae: body.extra.cnae || undefined,
+          cnaeCode: cnaeParts.code,
+          cnaeText: cnaeParts.text,
+          legalForm: body.extra.legalForm || undefined,
+          status: body.extra.status || undefined,
+          website: body.extra.website || undefined,
+          capitalSocial: body.extra.capitalSocial ?? undefined,
           incorporationDate: body.extra.incorporationDate
             ? new Date(body.extra.incorporationDate)
             : undefined,
           address: body.extra.address || undefined,
-          city: body.extra.city || undefined,
+          postalCode: cityParts.postalCode,
+          city: cityParts.city || undefined,
           province: body.extra.province || undefined,
+          country: body.extra.country || undefined,
           representative: body.extra.representative || undefined,
           einformaLastSyncAt: isEinforma ? new Date() : undefined,
           einformaTaxIdVerified: isEinforma ? true : undefined,
