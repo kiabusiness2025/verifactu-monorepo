@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 
@@ -9,7 +9,13 @@ interface SuppliersFormProps {
   loading?: boolean;
 }
 
-export function SuppliersForm({ supplier, onSubmit, onCancel, loading = false }: SuppliersFormProps) {
+export function SuppliersForm({
+  supplier,
+  onSubmit,
+  onCancel,
+  loading = false,
+}: SuppliersFormProps) {
+  const [einformaLoading, setEinformaLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -30,7 +36,9 @@ export function SuppliersForm({ supplier, onSubmit, onCancel, loading = false }:
     }
   }, [supplier]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -40,8 +48,39 @@ export function SuppliersForm({ supplier, onSubmit, onCancel, loading = false }:
     await onSubmit(formData);
   };
 
+  const handleEinforma = async () => {
+    const taxId = formData.nif.trim();
+    if (!taxId) return;
+    setEinformaLoading(true);
+    try {
+      const res = await fetch(
+        `/api/integrations/einforma/company?taxId=${encodeURIComponent(taxId)}`
+      );
+      const data = await res.json();
+      const profile = data?.profile;
+      if (!res.ok || !profile) return;
+      setFormData((prev) => ({
+        ...prev,
+        name: profile.legalName || profile.name || prev.name,
+        address: profile.address?.street || prev.address,
+        city: profile.address?.city || prev.city,
+        postalCode: profile.address?.zip || prev.postalCode,
+        country: profile.address?.country || prev.country,
+        email: profile.email || prev.email,
+        phone: profile.phone || prev.phone,
+      }));
+    } catch (error) {
+      console.error('eInforma autocomplete error:', error);
+    } finally {
+      setEinformaLoading(false);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg border border-gray-200">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 bg-white p-6 rounded-lg border border-gray-200"
+    >
       <h2 className="text-xl font-semibold text-gray-900">
         {supplier ? 'Editar Proveedor' : 'Nuevo Proveedor'}
       </h2>
@@ -86,14 +125,24 @@ export function SuppliersForm({ supplier, onSubmit, onCancel, loading = false }:
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">NIF/CIF</label>
-          <input
-            type="text"
-            name="nif"
-            value={formData.nif}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="12345678A"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              name="nif"
+              value={formData.nif}
+              onChange={handleChange}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="12345678A"
+            />
+            <button
+              type="button"
+              onClick={handleEinforma}
+              disabled={einformaLoading || !formData.nif.trim()}
+              className="px-3 py-2 text-xs font-medium border rounded-lg text-blue-700 border-blue-200 hover:bg-blue-50 disabled:opacity-50"
+            >
+              {einformaLoading ? 'Buscandoâ€¦' : 'Autocompletar'}
+            </button>
+          </div>
         </div>
 
         <div className="col-span-2">

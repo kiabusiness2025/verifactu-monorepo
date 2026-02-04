@@ -1,4 +1,5 @@
-import "server-only";
+import 'server-only';
+import { prisma } from '@/lib/prisma';
 
 type TokenCache = { accessToken: string; expiresAt: number };
 
@@ -10,11 +11,7 @@ function requireEnv(name: string) {
   return value;
 }
 
-async function fetchWithTimeout(
-  input: RequestInfo,
-  init: RequestInit = {},
-  timeoutMs = 8000
-) {
+async function fetchWithTimeout(input: RequestInfo, init: RequestInit = {}, timeoutMs = 8000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -30,28 +27,34 @@ async function getAccessToken(): Promise<string> {
     return tokenCache.accessToken;
   }
 
-  const tokenUrl = requireEnv("EINFORMA_TOKEN_URL");
-  const clientId = requireEnv("EINFORMA_CLIENT_ID");
-  const clientSecret = requireEnv("EINFORMA_CLIENT_SECRET");
+  const tokenUrl = requireEnv('EINFORMA_TOKEN_URL');
+  const clientId = requireEnv('EINFORMA_CLIENT_ID');
+  const clientSecret = requireEnv('EINFORMA_CLIENT_SECRET');
   const timeoutMs = Number(process.env.EINFORMA_TIMEOUT_MS ?? 8000);
 
   const body = new URLSearchParams();
-  body.set("grant_type", "client_credentials");
-  body.set("client_id", clientId);
-  body.set("client_secret", clientSecret);
+  body.set('grant_type', 'client_credentials');
+  body.set('client_id', clientId);
+  body.set('client_secret', clientSecret);
+  body.set(
+    'scope',
+    process.env.EINFORMA_SCOPE ??
+      process.env.EINFORMA_AUDIENCE_OR_SCOPE ??
+      'buscar:consultar:empresas'
+  );
 
   const res = await fetchWithTimeout(
     tokenUrl,
     {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
     },
     timeoutMs
   );
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
+    const text = await res.text().catch(() => '');
     throw new Error(`eInforma token error ${res.status}: ${text}`);
   }
 
@@ -68,14 +71,27 @@ export type EinformaSearchItem = {
   name: string;
   nif?: string;
   province?: string;
+  city?: string;
   id?: string;
 };
 
 export type EinformaCompanyProfile = {
   name: string;
   legalName?: string;
+  tradeName?: string;
   nif?: string;
   cnae?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  legalForm?: string;
+  status?: string;
+  employees?: number;
+  sales?: number;
+  salesYear?: number;
+  capitalSocial?: number;
+  lastBalanceDate?: string;
+  sourceId?: string;
   address?: {
     street?: string;
     zip?: string;
@@ -89,15 +105,16 @@ export type EinformaCompanyProfile = {
 };
 
 async function einformaRequest<T>(path: string, params?: Record<string, string>) {
-  const base = requireEnv("EINFORMA_API_BASE_URL");
+  const base =
+    process.env.EINFORMA_API_BASE_URL ??
+    process.env.EINFORMA_BASE_URL ??
+    requireEnv('EINFORMA_API_BASE_URL');
   const token = await getAccessToken();
   const timeoutMs = Number(process.env.EINFORMA_TIMEOUT_MS ?? 8000);
 
   const url = new URL(path, base);
   if (params) {
-    Object.entries(params).forEach(([key, value]) =>
-      url.searchParams.set(key, value)
-    );
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
   }
 
   const res = await fetchWithTimeout(
@@ -109,46 +126,134 @@ async function einformaRequest<T>(path: string, params?: Record<string, string>)
   );
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
+    const text = await res.text().catch(() => '');
     throw new Error(`eInforma API error ${res.status}: ${text}`);
   }
 
   return res.json() as Promise<T>;
 }
 
-export async function searchCompanies(q: string): Promise<EinformaSearchItem[]> {
-  const data = await einformaRequest<any>("/search", { q });
-  return (data?.items ?? []).map((item: any) => ({
-    name: item?.name ?? item?.denominacion ?? "",
-    nif: item?.nif ?? item?.cif,
-    province: item?.province ?? item?.provincia,
-    id: item?.id ?? item?.codigo,
-  }));
+function normalizeSearchResults(data: any): Array<any> {
+  return (
+    data?.resultado?.empresaResultado ??
+    data?.empresaResultado ??
+    data?.resultado?.empresa ??
+    data?.empresa ??
+    data?.items ??
+    []
+  );
 }
 
-export async function getCompanyProfileByNif(
-  nif: string
-): Promise<EinformaCompanyProfile> {
-  const data = await einformaRequest<any>("/company", { nif });
-  return {
-    name: data?.name ?? data?.denominacion ?? "",
-    legalName: data?.legalName ?? data?.razonSocial,
-    nif: data?.nif ?? data?.cif,
-    cnae: data?.cnae ?? data?.codigoCnae,
-    address: {
-      street: data?.address?.street ?? data?.domicilio,
-      zip: data?.address?.zip ?? data?.cp,
-      city: data?.address?.city ?? data?.municipio,
-      province: data?.address?.province ?? data?.provincia,
-      country: data?.address?.country ?? "ES",
+function normalizeTaxId(value: string) {
+  return value.replace(/\s+/g, '').toUpperCase();
+}
+
+function ttlFromDays(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
+async function getCache<T>(queryType: string, queryValue: string) {
+  const item = await prisma.einformaLookup.findUnique({
+    where: { queryType_queryValue: { queryType, queryValue } },
+    select: { expiresAt: true, normalized: true },
+  });
+  if (!item) return null;
+  if (item.expiresAt <= new Date()) return null;
+  return item.normalized as T;
+}
+
+async function setCache(
+  queryType: string,
+  queryValue: string,
+  raw: unknown,
+  normalized: unknown,
+  ttlDays: number
+) {
+  const expiresAt = ttlFromDays(ttlDays);
+  await prisma.einformaLookup.upsert({
+    where: { queryType_queryValue: { queryType, queryValue } },
+    create: {
+      queryType,
+      queryValue,
+      raw: raw as any,
+      normalized: normalized as any,
+      expiresAt,
     },
-    constitutionDate: data?.constitutionDate ?? data?.fechaConstitucion,
-    representatives: (data?.representatives ?? data?.administradores ?? []).map(
-      (rep: any) => ({
-        name: rep?.name ?? rep?.nombre,
-        role: rep?.role ?? rep?.cargo,
-      })
-    ),
+    update: {
+      raw: raw as any,
+      normalized: normalized as any,
+      expiresAt,
+    },
+  });
+}
+
+export async function searchCompanies(q: string): Promise<EinformaSearchItem[]> {
+  const queryValue = q.trim().toLowerCase();
+  if (!queryValue) return [];
+
+  const cached = await getCache<EinformaSearchItem[]>('NAME', queryValue);
+  if (cached) return cached;
+
+  const data = await einformaRequest<any>('/companies', { companySearch: q });
+  const items = normalizeSearchResults(data);
+  const normalized = (Array.isArray(items) ? items : []).map((item: any) => ({
+    name: item?.denominacion ?? item?.name ?? item?.denominacionBusqueda ?? '',
+    nif: item?.identificativo ?? item?.nif ?? item?.cif,
+    province: item?.provincia ?? item?.province,
+    city: item?.localidad ?? item?.city,
+    id: item?.id ?? item?.identificativo ?? item?.codigo,
+  }));
+
+  await setCache('NAME', queryValue, data, normalized, 7);
+  return normalized;
+}
+
+export async function getCompanyProfileByNif(nifOrId: string): Promise<EinformaCompanyProfile> {
+  const queryValue = normalizeTaxId(nifOrId);
+  const cached = await getCache<EinformaCompanyProfile>('TAX_ID', queryValue);
+  if (cached) return cached;
+
+  const data = await einformaRequest<any>(`/companies/${encodeURIComponent(nifOrId)}/report`);
+  const item = data?.empresa ?? data?.company ?? data;
+  const normalized = {
+    name: item?.denominacion ?? item?.name ?? '',
+    tradeName: item?.nombreComercial ?? item?.tradeName,
+    legalName: item?.razonSocial ?? item?.legalName,
+    nif: item?.identificativo ?? item?.nif ?? item?.cif,
+    cnae: item?.cnae ?? item?.codigoCnae,
+    email: item?.email,
+    phone: item?.telefono ?? item?.phone,
+    website: item?.web ?? item?.website,
+    legalForm: item?.formaJuridica ?? item?.legalForm,
+    status: item?.situacion ?? item?.status,
+    employees:
+      typeof item?.empleados === 'number' ? item.empleados : Number(item?.empleados ?? NaN),
+    sales: typeof item?.ventas === 'number' ? item.ventas : Number(item?.ventas ?? NaN),
+    salesYear:
+      typeof item?.anioVentas === 'number' ? item.anioVentas : Number(item?.anioVentas ?? NaN),
+    capitalSocial:
+      typeof item?.capitalSocial === 'number'
+        ? item.capitalSocial
+        : Number(item?.capitalSocial ?? NaN),
+    lastBalanceDate: item?.fechaUltimoBalance ?? item?.lastBalanceDate,
+    sourceId: item?.identificativo ?? item?.id ?? item?.codigo,
+    address: {
+      street: item?.domicilioSocial ?? item?.address?.street,
+      zip: item?.cp ?? item?.address?.zip,
+      city: item?.localidad ?? item?.address?.city,
+      province: item?.provincia ?? item?.address?.province,
+      country: item?.address?.country ?? 'ES',
+    },
+    constitutionDate: item?.fechaConstitucion ?? item?.constitutionDate,
+    representatives: (item?.administradores ?? item?.representatives ?? []).map((rep: any) => ({
+      name: rep?.nombre ?? rep?.name,
+      role: rep?.cargo ?? rep?.role,
+    })),
     raw: data,
-  };
+  } satisfies EinformaCompanyProfile;
+
+  await setCache('TAX_ID', queryValue, data, normalized, 30);
+  return normalized;
 }

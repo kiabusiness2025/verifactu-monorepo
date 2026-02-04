@@ -1,14 +1,8 @@
-"use client";
+'use client';
 
-import { DashboardSkeleton } from "@/components/accessibility/LoadingSkeleton";
-import DashboardDataExporter from "@/components/dashboard/DashboardDataExporter";
-import { adminGet, type AccountingData } from "@/lib/adminApi";
-import {
-  formatCurrency,
-  formatDateTime,
-  formatNumber,
-  formatTime,
-} from "@/src/lib/formatters";
+import { DashboardSkeleton } from '@/components/accessibility/LoadingSkeleton';
+import { adminGet, type AccountingData } from '@/lib/adminApi';
+import { formatCurrency, formatDateTime, formatNumber, formatTime } from '@/src/lib/formatters';
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -19,13 +13,13 @@ import {
   RefreshCw,
   TrendingUp,
   Users,
-} from "lucide-react";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-type OverviewTotals = AccountingData["totals"];
+type OverviewTotals = AccountingData['totals'];
 
 export default function AdminDashboardPage() {
   const [totals, setTotals] = useState<OverviewTotals | null>(null);
@@ -35,7 +29,7 @@ export default function AdminDashboardPage() {
     Array<{ id: string; legalName: string; createdAt?: string }>
   >([]);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
+  const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,12 +37,12 @@ export default function AdminDashboardPage() {
     async function load() {
       try {
         const [accounting, tenantsResponse, usersResponse] = await Promise.all([
-          adminGet<AccountingData>("/api/admin/accounting?period=current_month"),
+          adminGet<AccountingData>('/api/admin/accounting?period=current_month'),
           adminGet<{
             items: Array<{ id: string; legalName: string; createdAt?: string }>;
             total: number;
-          }>("/api/admin/tenants?page=1&pageSize=5"),
-          adminGet<{ users: Array<{ id: string }> }>("/api/admin/users"),
+          }>('/api/admin/tenants?page=1&pageSize=5'),
+          adminGet<{ users: Array<{ id: string }> }>('/api/admin/users'),
         ]);
 
         if (mounted) {
@@ -56,12 +50,12 @@ export default function AdminDashboardPage() {
           setTenantCount(tenantsResponse.total || 0);
           setUserCount(usersResponse.users?.length || 0);
           setRecentTenants(tenantsResponse.items || []);
-          setStatus("ok");
+          setStatus('ok');
           setLastCheckedAt(formatTime(new Date()));
         }
       } catch (error) {
         if (mounted) {
-          setStatus("error");
+          setStatus('error');
         }
       } finally {
         if (mounted) {
@@ -78,19 +72,19 @@ export default function AdminDashboardPage() {
   const incidents = useMemo(
     () => [
       {
-        id: "webhooks",
-        title: "Webhooks",
-        description: "Sin incidencias críticas en las últimas 24h.",
+        id: 'webhooks',
+        title: 'Webhooks',
+        description: 'Sin incidencias críticas en las últimas 24h.',
       },
       {
-        id: "verifactu",
-        title: "Veri*Factu",
-        description: "Sin errores críticos registrados.",
+        id: 'verifactu',
+        title: 'Veri*Factu',
+        description: 'Sin errores críticos registrados.',
       },
       {
-        id: "emails",
-        title: "Emails",
-        description: "Sin rebotes recientes detectados.",
+        id: 'emails',
+        title: 'Emails',
+        description: 'Sin rebotes recientes detectados.',
       },
     ],
     []
@@ -109,7 +103,7 @@ export default function AdminDashboardPage() {
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <RefreshCw className="h-3.5 w-3.5" />
-          {lastCheckedAt ? `Actualizado ${lastCheckedAt}` : "Actualizando..."}
+          {lastCheckedAt ? `Actualizado ${lastCheckedAt}` : 'Actualizando...'}
         </div>
       </div>
 
@@ -120,9 +114,7 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Usuarios</p>
-                <p className="text-2xl font-semibold text-slate-900">
-                  {formatNumber(userCount)}
-                </p>
+                <p className="text-2xl font-semibold text-slate-900">{formatNumber(userCount)}</p>
               </div>
               <Users className="h-8 w-8 text-blue-500" />
             </div>
@@ -132,9 +124,7 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Tenants activos</p>
-                <p className="text-2xl font-semibold text-slate-900">
-                  {formatNumber(tenantCount)}
-                </p>
+                <p className="text-2xl font-semibold text-slate-900">{formatNumber(tenantCount)}</p>
               </div>
               <Building className="h-8 w-8 text-purple-500" />
             </div>
@@ -166,10 +156,10 @@ export default function AdminDashboardPage() {
               <TrendingUp className="h-8 w-8 text-slate-700" />
             </div>
             <div className="mt-2 text-xs text-slate-500">
-              Margen{" "}
+              Margen{' '}
               {totals?.revenue
                 ? (((totals.revenue - totals.expenses) / totals.revenue) * 100).toFixed(1)
-                : "0.0"}
+                : '0.0'}
               %
             </div>
           </div>
@@ -235,7 +225,7 @@ export default function AdminDashboardPage() {
                 >
                   <div className="truncate text-slate-700">{tenant.legalName}</div>
                   <div className="text-slate-400">
-                    {tenant.createdAt ? formatDateTime(tenant.createdAt) : "--"}
+                    {tenant.createdAt ? formatDateTime(tenant.createdAt) : '--'}
                   </div>
                 </div>
               ))
@@ -267,13 +257,11 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {status === "error" ? (
+      {status === 'error' ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
           No se pudieron cargar algunas métricas. Reintenta en unos segundos.
         </div>
       ) : null}
-
-      <DashboardDataExporter />
     </div>
   );
 }

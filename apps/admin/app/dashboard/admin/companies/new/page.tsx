@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { EInformaSearch } from '@/components/companies/EInformaSearch';
 import { useToast } from '@/components/notifications/ToastNotifications';
@@ -21,7 +21,31 @@ export default function NewCompanyPage() {
     city: '',
     postal_code: '',
     country: 'ES',
+    cnae: '',
+    incorporation_date: '',
+    province: '',
+    representative: '',
+    source: 'manual',
+    source_id: '',
   });
+  const [einformaExtra, setEinformaExtra] = useState<{
+    tradeName?: string;
+    legalForm?: string;
+    status?: string;
+    employees?: number;
+    sales?: number;
+    salesYear?: number;
+    capitalSocial?: number;
+    lastBalanceDate?: string;
+    website?: string;
+  } | null>(null);
+
+  const formatDateInput = (value?: string) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toISOString().slice(0, 10);
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -98,7 +122,11 @@ export default function NewCompanyPage() {
                     const profile = data?.profile;
 
                     if (!res.ok || !profile) {
-                      setFormData((prev) => ({ ...prev, name: company.name, tax_id: company.nif || '' }));
+                      setFormData((prev) => ({
+                        ...prev,
+                        name: company.name,
+                        tax_id: company.nif || '',
+                      }));
                       showError('No se pudo cargar la ficha', 'Completa los datos manualmente');
                       return;
                     }
@@ -113,11 +141,35 @@ export default function NewCompanyPage() {
                       city: profile.address?.city || '',
                       postal_code: profile.address?.zip || '',
                       country: profile.address?.country || 'ES',
+                      cnae: profile.cnae || '',
+                      incorporation_date: formatDateInput(profile.constitutionDate),
+                      province: profile.address?.province || '',
+                      representative: profile.representatives?.[0]?.name || '',
+                      source: 'einforma',
+                      source_id: profile.sourceId || company.id || profile.nif || '',
                     });
-                    success('Empresa encontrada', `Datos de ${profile.name || company.name} autocompletados`);
+                    setEinformaExtra({
+                      tradeName: profile.tradeName,
+                      legalForm: profile.legalForm,
+                      status: profile.status,
+                      employees: profile.employees,
+                      sales: profile.sales,
+                      salesYear: profile.salesYear,
+                      capitalSocial: profile.capitalSocial,
+                      lastBalanceDate: profile.lastBalanceDate,
+                      website: profile.website,
+                    });
+                    success(
+                      'Empresa encontrada',
+                      `Datos de ${profile.name || company.name} autocompletados`
+                    );
                   } catch (error) {
                     console.error('eInforma profile error:', error);
-                    setFormData((prev) => ({ ...prev, name: company.name, tax_id: company.nif || '' }));
+                    setFormData((prev) => ({
+                      ...prev,
+                      name: company.name,
+                      tax_id: company.nif || '',
+                    }));
                     showError('Error al consultar eInforma', 'Completa los datos manualmente');
                   }
                 }}
@@ -125,7 +177,6 @@ export default function NewCompanyPage() {
             </div>
           </div>
         </div>
-
         {/* Información Básica */}
         <div className="space-y-4">
           <h2 className="font-semibold text-gray-900">Información Básica</h2>
@@ -198,7 +249,6 @@ export default function NewCompanyPage() {
             </div>
           </div>
         </div>
-
         {/* Contacto */}
         <div className="space-y-4">
           <h2 className="font-semibold text-gray-900">Contacto</h2>
@@ -241,7 +291,6 @@ export default function NewCompanyPage() {
             </div>
           </div>
         </div>
-
         {/* Dirección */}
         <div className="space-y-4">
           <h2 className="font-semibold text-gray-900">Dirección</h2>
@@ -296,8 +345,134 @@ export default function NewCompanyPage() {
             </div>
           </div>
         </div>
-
-        {/* Acciones */}
+        {/* Datos fiscales eInforma */}
+        <div className="space-y-4">
+          <h2 className="font-semibold text-gray-900">Datos fiscales eInforma</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="new-company-cnae"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                CNAE
+              </label>
+              <input
+                id="new-company-cnae"
+                type="text"
+                value={formData.cnae}
+                onChange={(e) => setFormData({ ...formData, cnae: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="new-company-incorporation-date"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Fecha de constitución
+              </label>
+              <input
+                id="new-company-incorporation-date"
+                type="date"
+                value={formData.incorporation_date}
+                onChange={(e) => setFormData({ ...formData, incorporation_date: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="new-company-province"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Provincia
+              </label>
+              <input
+                id="new-company-province"
+                type="text"
+                value={formData.province}
+                onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="new-company-representative"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Representante
+              </label>
+              <input
+                id="new-company-representative"
+                type="text"
+                value={formData.representative}
+                onChange={(e) => setFormData({ ...formData, representative: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+        {einformaExtra ? (
+          <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h3 className="text-sm font-semibold text-slate-900">Datos ampliados (eInforma)</h3>
+            <div className="grid gap-3 sm:grid-cols-2 text-xs text-slate-700">
+              {einformaExtra.tradeName ? (
+                <div>
+                  <span className="text-slate-500">Nombre comercial</span>
+                  <div className="font-medium">{einformaExtra.tradeName}</div>
+                </div>
+              ) : null}
+              {einformaExtra.legalForm ? (
+                <div>
+                  <span className="text-slate-500">Forma jurídica</span>
+                  <div className="font-medium">{einformaExtra.legalForm}</div>
+                </div>
+              ) : null}
+              {einformaExtra.status ? (
+                <div>
+                  <span className="text-slate-500">Situación</span>
+                  <div className="font-medium">{einformaExtra.status}</div>
+                </div>
+              ) : null}
+              {einformaExtra.website ? (
+                <div>
+                  <span className="text-slate-500">Web</span>
+                  <div className="font-medium">{einformaExtra.website}</div>
+                </div>
+              ) : null}
+              {Number.isFinite(einformaExtra.employees) ? (
+                <div>
+                  <span className="text-slate-500">Empleados</span>
+                  <div className="font-medium">{einformaExtra.employees}</div>
+                </div>
+              ) : null}
+              {Number.isFinite(einformaExtra.sales) ? (
+                <div>
+                  <span className="text-slate-500">Ventas</span>
+                  <div className="font-medium">{einformaExtra.sales}</div>
+                </div>
+              ) : null}
+              {Number.isFinite(einformaExtra.salesYear) ? (
+                <div>
+                  <span className="text-slate-500">Año ventas</span>
+                  <div className="font-medium">{einformaExtra.salesYear}</div>
+                </div>
+              ) : null}
+              {Number.isFinite(einformaExtra.capitalSocial) ? (
+                <div>
+                  <span className="text-slate-500">Capital social</span>
+                  <div className="font-medium">{einformaExtra.capitalSocial}</div>
+                </div>
+              ) : null}
+              {einformaExtra.lastBalanceDate ? (
+                <div>
+                  <span className="text-slate-500">Último balance</span>
+                  <div className="font-medium">{einformaExtra.lastBalanceDate}</div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+        \n {/* Acciones */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
           <Link
             href="/dashboard/admin/companies"

@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
-import { ensureRole } from "@/lib/authz";
-import { Roles } from "@/lib/roles";
-import { getSessionPayload, requireUserId } from "@/lib/session";
-import { upsertUser } from "@/lib/tenants";
+import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { ensureRole } from '@/lib/authz';
+import { Roles } from '@/lib/roles';
+import { getSessionPayload, requireUserId } from '@/lib/session';
+import { upsertUser } from '@/lib/tenants';
 
 type TenantPayload = {
-  source?: "einforma" | "manual";
+  source?: 'einforma' | 'manual';
   einformaId?: string;
   name: string;
   legalName?: string;
@@ -23,20 +23,19 @@ type TenantPayload = {
 };
 
 async function resolvePlanId(): Promise<number> {
-  const preferredCodes = ["base", "pro", "trial"];
+  const preferredCodes = ['base', 'pro', 'trial'];
   const plan =
     (await prisma.plan.findFirst({
       where: { code: { in: preferredCodes } },
-      orderBy: { id: "asc" },
-    })) ||
-    (await prisma.plan.findFirst({ orderBy: { id: "asc" } }));
+      orderBy: { id: 'asc' },
+    })) || (await prisma.plan.findFirst({ orderBy: { id: 'asc' } }));
 
   if (plan) return plan.id;
 
   const created = await prisma.plan.create({
     data: {
-      code: "trial",
-      name: "Plan Trial",
+      code: 'trial',
+      name: 'Plan Trial',
       fixedMonthly: new Prisma.Decimal(0),
       variableRate: new Prisma.Decimal(0),
     },
@@ -53,19 +52,14 @@ export async function POST(req: Request) {
   const uid = requireUserId(session);
   const body = (await req.json().catch(() => null)) as TenantPayload | null;
 
-  const name = typeof body?.name === "string" ? body.name.trim() : "";
-  const legalName =
-    typeof body?.legalName === "string" ? body.legalName.trim() : "";
-  const nif = typeof body?.nif === "string" ? body.nif.trim() : "";
-  const source = body?.source === "einforma" ? "einforma" : "manual";
-  const einformaId =
-    typeof body?.einformaId === "string" ? body.einformaId.trim() : undefined;
+  const name = typeof body?.name === 'string' ? body.name.trim() : '';
+  const legalName = typeof body?.legalName === 'string' ? body.legalName.trim() : '';
+  const nif = typeof body?.nif === 'string' ? body.nif.trim() : '';
+  const source = body?.source === 'einforma' ? 'einforma' : 'manual';
+  const einformaId = typeof body?.einformaId === 'string' ? body.einformaId.trim() : undefined;
 
   if (!name || !nif) {
-    return NextResponse.json(
-      { ok: false, error: "name and nif required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ ok: false, error: 'name and nif required' }, { status: 400 });
   }
 
   await upsertUser({
@@ -91,16 +85,16 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({
         ok: true,
-        action: "ALREADY_MEMBER",
+        action: 'ALREADY_MEMBER',
         tenantId: existingTenant.id,
       });
     }
 
     return NextResponse.json({
       ok: true,
-      action: "REQUEST_ACCESS",
+      action: 'REQUEST_ACCESS',
       tenantId: existingTenant.id,
-      message: "Tu usuario no pertenece a esta empresa",
+      message: 'Tu usuario no pertenece a esta empresa',
     });
   }
 
@@ -123,8 +117,8 @@ export async function POST(req: Request) {
       data: {
         tenantId: tenant.id,
         userId: uid,
-        role: "owner",
-        status: "active",
+        role: 'owner',
+        status: 'active',
       },
     });
 
@@ -138,7 +132,7 @@ export async function POST(req: Request) {
       data: {
         tenantId: tenant.id,
         planId,
-        status: "trial",
+        status: 'trial',
         trialEndsAt,
         currentPeriodStart: now,
         currentPeriodEnd: trialEndsAt,
@@ -146,6 +140,7 @@ export async function POST(req: Request) {
     });
 
     if (body?.extra) {
+      const isEinforma = source === 'einforma';
       await tx.tenantProfile.upsert({
         where: { tenantId: tenant.id },
         create: {
@@ -160,6 +155,8 @@ export async function POST(req: Request) {
           city: body.extra.city || undefined,
           province: body.extra.province || undefined,
           representative: body.extra.representative || undefined,
+          einformaLastSyncAt: isEinforma ? new Date() : undefined,
+          einformaTaxIdVerified: isEinforma ? true : undefined,
         },
         update: {
           source,
@@ -172,6 +169,8 @@ export async function POST(req: Request) {
           city: body.extra.city || undefined,
           province: body.extra.province || undefined,
           representative: body.extra.representative || undefined,
+          einformaLastSyncAt: isEinforma ? new Date() : undefined,
+          einformaTaxIdVerified: isEinforma ? true : undefined,
         },
       });
     }
@@ -181,7 +180,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    action: "CREATED",
+    action: 'CREATED',
     tenantId: result.tenant.id,
     trial: {
       status: result.subscription.status,

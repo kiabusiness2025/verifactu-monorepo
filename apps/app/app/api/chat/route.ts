@@ -1,19 +1,34 @@
 ﻿// Eliminado @ts-nocheck: el archivo debe compilar con tipado estricto
 import {
-    calculateTenantProfit,
-    getCurrentMonthSummary,
-    getExpenseCategories,
-    getPendingVeriFactuInvoices
+  calculateTenantProfit,
+  getCurrentMonthSummary,
+  getExpenseCategories,
+  getPendingVeriFactuInvoices,
 } from '@/lib/db-queries';
 import { createOpenAI, openai } from '@ai-sdk/openai';
 import { streamText, tool, zodSchema } from 'ai';
 import { z } from 'zod';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { prisma } from '@/lib/prisma';
+import { getCompanyProfileByNif, searchCompanies } from '@/server/einforma';
 
 // Helpers
 function getMonthName(month: number): string {
-  const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const months = [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ];
   return months[month - 1] || 'Mes desconocido';
 }
 
@@ -82,33 +97,33 @@ async function getResolvedTenantId(): Promise<string | null> {
 export async function POST(req: Request) {
   try {
     const { messages, context } = await req.json();
-    
+
     const session = await getSessionPayload();
-    
+
     // Context puede venir del cliente (landing no necesita tenant)
     const contextType = context?.type || 'dashboard';
-    
+
     let activeTenantId: string | null = null;
     if (contextType === 'dashboard' || contextType === 'admin') {
       if (!session?.uid) {
-        return new Response(
-          JSON.stringify({ error: 'No tenant found in session' }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } }
-        );
+        return new Response(JSON.stringify({ error: 'No tenant found in session' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
       activeTenantId = await getResolvedTenantId();
     }
 
     if ((contextType === 'dashboard' || contextType === 'admin') && !activeTenantId) {
-      return new Response(
-        JSON.stringify({ error: 'No tenant found in session' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'No tenant found in session' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Usar AI Gateway de Vercel en lugar de OpenAI directo
     const aiGatewayApiKey = process.env.CLAVE_API_AI_VERCEL || process.env.VERCEL_AI_API_KEY;
-    
+
     if (!aiGatewayApiKey) {
       console.warn('[Isaak Chat API] AI Gateway key not found, falling back to OpenAI direct');
     }
@@ -137,8 +152,15 @@ export async function POST(req: Request) {
             })
           ),
           execute: async ({ startDate, endDate, period }) => {
-            if (!activeTenantId) return { message: 'No hay empresa seleccionada', sales: 0, expenses: 0, profit: 0, margin: 0 };
-            
+            if (!activeTenantId)
+              return {
+                message: 'No hay empresa seleccionada',
+                sales: 0,
+                expenses: 0,
+                profit: 0,
+                margin: 0,
+              };
+
             if (!startDate || !endDate) {
               const data = await getCurrentMonthSummary(activeTenantId);
               return {
@@ -169,15 +191,16 @@ export async function POST(req: Request) {
             })
           ),
           execute: async ({ month, year }) => {
-            if (!activeTenantId) return { deadline: '', pendingCount: 0, message: 'No hay empresa seleccionada' };
-            
+            if (!activeTenantId)
+              return { deadline: '', pendingCount: 0, message: 'No hay empresa seleccionada' };
+
             const currentMonth = month || new Date().getMonth() + 1;
             const currentYear = year || new Date().getFullYear();
             const pending = await getPendingVeriFactuInvoices(activeTenantId);
             const deadline = `15/${(currentMonth % 12) + 1}/${currentMonth === 12 ? currentYear + 1 : currentYear}`;
-            
+
             let message = `Para las facturas de ${getMonthName(currentMonth)}/${currentYear}, debes enviarlas a la AEAT antes del ${deadline}.`;
-            
+
             if (pending.length > 0) {
               message += ` Tienes ${pending.length} factura(s) pendiente(s) de enviar:\n`;
               pending.slice(0, 3).forEach((inv: any) => {
@@ -187,7 +210,7 @@ export async function POST(req: Request) {
             } else {
               message += ` ¡Todo al día! No tienes facturas pendientes.`;
             }
-            
+
             return { deadline, pendingCount: pending.length, message };
           },
         }),
@@ -201,32 +224,49 @@ export async function POST(req: Request) {
             })
           ),
           execute: async ({ description, amount }) => {
-            if (!activeTenantId) return { categoryId: undefined, categoryName: 'N/A', deductible: false, message: 'No hay empresa seleccionada' };
-            
+            if (!activeTenantId)
+              return {
+                categoryId: undefined,
+                categoryName: 'N/A',
+                deductible: false,
+                message: 'No hay empresa seleccionada',
+              };
+
             const categories = await getExpenseCategories();
             const lower = description.toLowerCase();
-            let matchedCategory = categories.find(cat => cat.code === 'other');
-            
-            if (lower.includes('alquiler') || lower.includes('oficina')) {
-              matchedCategory = categories.find(cat => cat.code === 'office');
-            } else if (lower.includes('software') || lower.includes('suscripción') || lower.includes('licencia')) {
-              matchedCategory = categories.find(cat => cat.code === 'software');
-            } else if (lower.includes('publicidad') || lower.includes('marketing')) {
-              matchedCategory = categories.find(cat => cat.code === 'marketing');
-            } else if (lower.includes('viaje') || lower.includes('gasolina') || lower.includes('hotel')) {
-              matchedCategory = categories.find(cat => cat.code === 'travel');
-            } else if (lower.includes('asesor') || lower.includes('gestor') || lower.includes('abogado')) {
-              matchedCategory = categories.find(cat => cat.code === 'professional');
-            } else if (lower.includes('seguro')) {
-              matchedCategory = categories.find(cat => cat.code === 'insurance');
-            } else if (lower.includes('impuesto') || lower.includes('tasa')) {
-              matchedCategory = categories.find(cat => cat.code === 'taxes');
-            } else if (lower.includes('banco') || lower.includes('comisión')) {
-              matchedCategory = categories.find(cat => cat.code === 'banking');
-            } else if (lower.includes('formación') || lower.includes('curso')) {
-              matchedCategory = categories.find(cat => cat.code === 'training');
-            }
+            let matchedCategory = categories.find((cat) => cat.code === 'other');
 
+            if (lower.includes('alquiler') || lower.includes('oficina')) {
+              matchedCategory = categories.find((cat) => cat.code === 'office');
+            } else if (
+              lower.includes('software') ||
+              lower.includes('suscripción') ||
+              lower.includes('licencia')
+            ) {
+              matchedCategory = categories.find((cat) => cat.code === 'software');
+            } else if (lower.includes('publicidad') || lower.includes('marketing')) {
+              matchedCategory = categories.find((cat) => cat.code === 'marketing');
+            } else if (
+              lower.includes('viaje') ||
+              lower.includes('gasolina') ||
+              lower.includes('hotel')
+            ) {
+              matchedCategory = categories.find((cat) => cat.code === 'travel');
+            } else if (
+              lower.includes('asesor') ||
+              lower.includes('gestor') ||
+              lower.includes('abogado')
+            ) {
+              matchedCategory = categories.find((cat) => cat.code === 'professional');
+            } else if (lower.includes('seguro')) {
+              matchedCategory = categories.find((cat) => cat.code === 'insurance');
+            } else if (lower.includes('impuesto') || lower.includes('tasa')) {
+              matchedCategory = categories.find((cat) => cat.code === 'taxes');
+            } else if (lower.includes('banco') || lower.includes('comisión')) {
+              matchedCategory = categories.find((cat) => cat.code === 'banking');
+            } else if (lower.includes('formación') || lower.includes('curso')) {
+              matchedCategory = categories.find((cat) => cat.code === 'training');
+            }
 
             return {
               categoryId: matchedCategory?.id,
@@ -234,6 +274,85 @@ export async function POST(req: Request) {
               deductible: matchedCategory?.is_deductible ?? true,
               message: `"${description}" → **${matchedCategory?.name || 'Otros gastos'}**${!matchedCategory?.is_deductible ? ' (⚠️ no deducible)' : ''}${amount ? ` | ${amount}€` : ''}`,
             };
+          },
+        }),
+
+        einformaSearchCompanies: tool({
+          description: 'Busca empresas en eInforma por nombre o CIF/NIF',
+          inputSchema: zodSchema(
+            z.object({
+              query: z.string().min(3),
+            })
+          ),
+          execute: async ({ query }) => {
+            const items = await searchCompanies(query);
+            return { items };
+          },
+        }),
+
+        einformaGetCompanyByTaxId: tool({
+          description: 'Obtiene la ficha de empresa por CIF/NIF desde eInforma',
+          inputSchema: zodSchema(
+            z.object({
+              taxId: z.string().min(3),
+            })
+          ),
+          execute: async ({ taxId }) => {
+            const profile = await getCompanyProfileByNif(taxId);
+            return { profile };
+          },
+        }),
+
+        einformaEnrichTenantFromTaxId: tool({
+          description: 'Enriquece el tenant activo con datos de eInforma',
+          inputSchema: zodSchema(
+            z.object({
+              taxId: z.string().min(3),
+            })
+          ),
+          execute: async ({ taxId }) => {
+            if (!activeTenantId) {
+              return { ok: false, message: 'No hay empresa seleccionada' };
+            }
+            const profile = await getCompanyProfileByNif(taxId);
+            const verified = !!profile.nif && profile.nif.toUpperCase() === taxId.toUpperCase();
+
+            await prisma.tenantProfile.upsert({
+              where: { tenantId: activeTenantId },
+              create: {
+                tenantId: activeTenantId,
+                source: 'einforma',
+                sourceId: profile.sourceId ?? taxId,
+                cnae: profile.cnae || undefined,
+                incorporationDate: profile.constitutionDate
+                  ? new Date(profile.constitutionDate)
+                  : undefined,
+                address: profile.address?.street || undefined,
+                city: profile.address?.city || undefined,
+                province: profile.address?.province || undefined,
+                representative: profile.representatives?.[0]?.name || undefined,
+                einformaLastSyncAt: new Date(),
+                einformaTaxIdVerified: verified,
+                einformaRaw: profile.raw ?? undefined,
+              },
+              update: {
+                source: 'einforma',
+                sourceId: profile.sourceId ?? taxId,
+                cnae: profile.cnae || undefined,
+                incorporationDate: profile.constitutionDate
+                  ? new Date(profile.constitutionDate)
+                  : undefined,
+                address: profile.address?.street || undefined,
+                city: profile.address?.city || undefined,
+                province: profile.address?.province || undefined,
+                representative: profile.representatives?.[0]?.name || undefined,
+                einformaLastSyncAt: new Date(),
+                einformaTaxIdVerified: verified,
+                einformaRaw: profile.raw ?? undefined,
+              },
+            });
+
+            return { ok: true, profile };
           },
         }),
       },
@@ -245,5 +364,3 @@ export async function POST(req: Request) {
     return new Response('Error al procesar tu mensaje', { status: 500 });
   }
 }
-
-
