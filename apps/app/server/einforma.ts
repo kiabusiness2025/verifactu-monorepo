@@ -120,7 +120,10 @@ async function einformaRequest<T>(path: string, params?: Record<string, string>)
   const res = await fetchWithTimeout(
     url.toString(),
     {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
     },
     timeoutMs
   );
