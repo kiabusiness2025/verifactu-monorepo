@@ -9,7 +9,10 @@ export const dynamic = 'force-dynamic';
 
 function splitCnae(value?: string) {
   if (!value) return { code: undefined, text: undefined };
-  const parts = value.split(' - ').map((part) => part.trim()).filter(Boolean);
+  const parts = value
+    .split(' - ')
+    .map((part) => part.trim())
+    .filter(Boolean);
   if (parts.length === 0) return { code: undefined, text: undefined };
   if (parts.length === 1) return { code: parts[0], text: undefined };
   return { code: parts[0], text: parts.slice(1).join(' - ') };
@@ -83,7 +86,13 @@ export async function GET(req: Request) {
         withinDays(tenantProfile.einformaLastSyncAt, 30)
       ) {
         const raw = tenantProfile.einformaRaw as any;
-        const rawNif = safeString(raw?.empresa?.identificativo ?? raw?.empresa?.nif ?? raw?.empresa?.cif ?? raw?.nif ?? raw?.cif);
+        const rawNif = safeString(
+          raw?.empresa?.identificativo ??
+            raw?.empresa?.nif ??
+            raw?.empresa?.cif ??
+            raw?.nif ??
+            raw?.cif
+        );
         const sourceId = safeString(tenantProfile.sourceId);
         if (rawNif === safeString(taxId) || sourceId === safeString(taxId)) {
           const profile = {
@@ -95,18 +104,21 @@ export async function GET(req: Request) {
             legalForm: tenantProfile.legalForm ?? raw?.empresa?.formaJuridica ?? raw?.formaJuridica,
             status: tenantProfile.status ?? raw?.empresa?.situacion ?? raw?.situacion,
             website: tenantProfile.website ?? raw?.empresa?.web ?? raw?.web,
-            capitalSocial: tenantProfile.capitalSocial ?? raw?.empresa?.capitalSocial ?? raw?.capitalSocial,
+            capitalSocial:
+              tenantProfile.capitalSocial ?? raw?.empresa?.capitalSocial ?? raw?.capitalSocial,
             constitutionDate: tenantProfile.incorporationDate
               ? tenantProfile.incorporationDate.toISOString().slice(0, 10)
-              : raw?.empresa?.fechaConstitucion ?? raw?.fechaConstitucion,
+              : (raw?.empresa?.fechaConstitucion ?? raw?.fechaConstitucion),
             address: {
-              street: tenantProfile.address ?? raw?.empresa?.domicilioSocial ?? raw?.domicilioSocial,
+              street:
+                tenantProfile.address ?? raw?.empresa?.domicilioSocial ?? raw?.domicilioSocial,
               zip: tenantProfile.postalCode ?? raw?.empresa?.cp ?? raw?.cp,
               city: tenantProfile.city ?? raw?.empresa?.localidad ?? raw?.localidad,
               province: tenantProfile.province ?? raw?.empresa?.provincia ?? raw?.provincia,
               country: tenantProfile.country ?? raw?.empresa?.country ?? raw?.country ?? 'ES',
             },
-            sourceId: tenantProfile.sourceId ?? raw?.empresa?.identificativo ?? raw?.empresa?.id ?? raw?.id,
+            sourceId:
+              tenantProfile.sourceId ?? raw?.empresa?.identificativo ?? raw?.empresa?.id ?? raw?.id,
             raw,
           };
 
