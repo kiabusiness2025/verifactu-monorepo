@@ -2,9 +2,15 @@
  * Script para encontrar el UID de un usuario por email
  */
 
-const pg = require("pg");
+/* eslint-disable @typescript-eslint/no-require-imports, no-undef */
+const pg = require('pg');
 
-const DATABASE_URL = 'postgres://ac6301a89a331d0804886bc5ec74defbf3936e04b3df46e947d11351cd05781e:sk_L9ITUf1tpNp5pYgh_mMJV@db.prisma.io:5432/postgres?sslmode=require';
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  console.error('❌ Error: DATABASE_URL no está definida');
+  process.exit(1);
+}
 
 const EMAIL = process.argv[2] || 'kiabusiness2025@gmail.com';
 
@@ -15,12 +21,12 @@ const pool = new pg.Pool({
 
 async function findUser() {
   const client = await pool.connect();
-  
+
   try {
     console.log(`🔍 Buscando usuario: ${EMAIL}`);
 
     const result = await client.query(
-      "SELECT id, email, name, created_at FROM users WHERE email = $1",
+      'SELECT id, email, name, created_at FROM users WHERE email = $1',
       [EMAIL]
     );
 
@@ -44,7 +50,7 @@ async function findUser() {
       );
 
       console.log(`\n📋 Memberships (${memberships.rows.length}):`);
-      memberships.rows.forEach(m => {
+      memberships.rows.forEach((m) => {
         const demoTag = m.is_demo ? ' [DEMO]' : '';
         console.log(`   - ${m.tenant_name}${demoTag} (${m.role}, ${m.status})`);
       });
@@ -64,7 +70,6 @@ async function findUser() {
       console.log(`\n💡 Para agregar a Empresa Demo:`);
       console.log(`   node scripts/add-admin-to-demo.js ${user.id}`);
     }
-
   } catch (error) {
     console.error('❌ Error:', error);
     process.exit(1);

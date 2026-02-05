@@ -3,9 +3,15 @@
  * Ejecutar: node scripts/add-admin-to-demo.js [USER_ID]
  */
 
-const pg = require("pg");
+/* eslint-disable @typescript-eslint/no-require-imports, no-undef */
+const pg = require('pg');
 
-const DATABASE_URL = 'postgres://ac6301a89a331d0804886bc5ec74defbf3936e04b3df46e947d11351cd05781e:sk_L9ITUf1tpNp5pYgh_mMJV@db.prisma.io:5432/postgres?sslmode=require';
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  console.error('❌ Error: DATABASE_URL no está definida');
+  process.exit(1);
+}
 
 // ID del usuario admin (kiabusiness2025@gmail.com)
 // Deberías obtenerlo desde Firebase Console o ejecutar el script con el UID como argumento
@@ -24,7 +30,7 @@ const pool = new pg.Pool({
 
 async function addAdminToDemo() {
   const client = await pool.connect();
-  
+
   try {
     console.log(`🔄 Agregando usuario ${USER_ID} a Empresa Demo SL...`);
 
@@ -43,7 +49,7 @@ async function addAdminToDemo() {
 
     // 2. Verificar si ya tiene membership
     const existingMembership = await client.query(
-      "SELECT id FROM memberships WHERE user_id = $1 AND tenant_id = $2",
+      'SELECT id FROM memberships WHERE user_id = $1 AND tenant_id = $2',
       [USER_ID, demoTenantId]
     );
 
@@ -61,7 +67,7 @@ async function addAdminToDemo() {
 
     // 4. Actualizar preferred_tenant_id si no tiene
     const prefsResult = await client.query(
-      "SELECT user_id, preferred_tenant_id FROM user_preferences WHERE user_id = $1",
+      'SELECT user_id, preferred_tenant_id FROM user_preferences WHERE user_id = $1',
       [USER_ID]
     );
 
@@ -76,16 +82,17 @@ async function addAdminToDemo() {
     } else if (!prefsResult.rows[0].preferred_tenant_id) {
       // Actualizar preferencias
       await client.query(
-        "UPDATE user_preferences SET preferred_tenant_id = $1 WHERE user_id = $2",
+        'UPDATE user_preferences SET preferred_tenant_id = $1 WHERE user_id = $2',
         [demoTenantId, USER_ID]
       );
       console.log('✓ Empresa Demo establecida como preferida');
     } else {
-      console.log(`ℹ️  Usuario ya tiene tenant preferido: ${prefsResult.rows[0].preferred_tenant_id}`);
+      console.log(
+        `ℹ️  Usuario ya tiene tenant preferido: ${prefsResult.rows[0].preferred_tenant_id}`
+      );
     }
 
     console.log('\n✅ Operación completada. Recarga la app para ver los cambios.');
-
   } catch (error) {
     console.error('❌ Error:', error);
     process.exit(1);

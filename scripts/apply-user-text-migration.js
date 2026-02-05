@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports, no-undef */
 /**
  * Apply database migration: users.id UUID → TEXT
  * Run: node scripts/apply-user-text-migration.js
@@ -6,8 +7,12 @@
 
 const { Client } = require('pg');
 
-const DATABASE_URL = process.env.DATABASE_URL || 
-  'postgres://ac6301a89a331d0804886bc5ec74defbf3936e04b3df46e947d11351cd05781e:sk_L9ITUf1tpNp5pYgh_mMJV@db.prisma.io:5432/postgres?sslmode=require';
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  console.error('❌ Error: DATABASE_URL no está definida');
+  process.exit(1);
+}
 
 const migration = `
 BEGIN;
@@ -53,15 +58,15 @@ COMMIT;
 async function applyMigration() {
   console.log('🔄 Connecting to database...');
   const client = new Client({ connectionString: DATABASE_URL });
-  
+
   try {
     await client.connect();
     console.log('✅ Connected');
-    
+
     console.log('🔄 Applying migration (DROP & CREATE tables)...');
     await client.query(migration);
     console.log('✅ Migration applied successfully');
-    
+
     console.log('\n📊 Verifying schema...');
     const result = await client.query(`
       SELECT column_name, data_type 
@@ -69,14 +74,13 @@ async function applyMigration() {
       WHERE table_name = 'users' 
       ORDER BY ordinal_position;
     `);
-    
+
     console.log('\nUsers table schema:');
-    result.rows.forEach(row => {
+    result.rows.forEach((row) => {
       console.log(`  ${row.column_name}: ${row.data_type}`);
     });
-    
+
     console.log('\n✅ All done! You can now test Google login.');
-    
   } catch (error) {
     console.error('❌ Migration failed:', error.message);
     process.exit(1);
