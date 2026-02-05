@@ -49,3 +49,4 @@ ADMIN_ENV_VERCEL.md
 # Just in case (variants)
 *.vercel*.env
 *.import*.env
+.tmp/

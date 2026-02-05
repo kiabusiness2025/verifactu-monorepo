@@ -110,7 +110,28 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ ok: true, profile });
+    const normalized = {
+      name: profile.name ?? null,
+      nif: profile.nif ?? null,
+      sourceId: profile.sourceId ?? profile.nif ?? null,
+      cnae: profile.cnae ?? null,
+      cnaeCode: cnaeParts.code ?? null,
+      cnaeText: cnaeParts.text ?? null,
+      legalForm: profile.legalForm ?? null,
+      status: profile.status ?? null,
+      incorporationDate: profile.constitutionDate
+        ? new Date(profile.constitutionDate).toISOString()
+        : null,
+      address: profile.address?.street ?? null,
+      postalCode: cityParts.postalCode ?? null,
+      city: cityParts.city ?? null,
+      province: profile.address?.province ?? null,
+      country: profile.address?.country ?? 'ES',
+      website: profile.website ?? null,
+      capitalSocial: profile.capitalSocial ?? null,
+    };
+
+    return NextResponse.json({ ok: true, profile, normalized });
   } catch (error) {
     console.error('eInforma enrich error:', error);
     return NextResponse.json({ error: 'No se pudo enriquecer el tenant' }, { status: 500 });

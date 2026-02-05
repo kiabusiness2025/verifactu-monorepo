@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
 import { SUPPORT_SESSION_COOKIE, verifySupportToken } from '@/src/server/support/supportToken';
 import { prisma } from '@verifactu/db';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 

@@ -23,6 +23,10 @@ export default function NewCompanyPage() {
     country: 'ES',
     cnae: '',
     incorporation_date: '',
+    legal_form: '',
+    status: '',
+    website: '',
+    capital_social: '',
     province: '',
     representative: '',
     source: 'manual',
@@ -39,6 +43,12 @@ export default function NewCompanyPage() {
     lastBalanceDate?: string;
     website?: string;
   } | null>(null);
+  const [einformaMeta, setEinformaMeta] = useState<{
+    cached?: boolean;
+    cacheSource?: string;
+    lastSyncAt?: string | null;
+  } | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const formatDateInput = (value?: string) => {
     if (!value) return '';
@@ -46,6 +56,18 @@ export default function NewCompanyPage() {
     if (Number.isNaN(date.getTime())) return value;
     return date.toISOString().slice(0, 10);
   };
+
+  const hasEinformaExtra =
+    !!einformaExtra &&
+    (Boolean(einformaExtra.tradeName) ||
+      Boolean(einformaExtra.legalForm) ||
+      Boolean(einformaExtra.status) ||
+      Boolean(einformaExtra.website) ||
+      Number.isFinite(einformaExtra.employees) ||
+      Number.isFinite(einformaExtra.sales) ||
+      Number.isFinite(einformaExtra.salesYear) ||
+      Number.isFinite(einformaExtra.capitalSocial) ||
+      Boolean(einformaExtra.lastBalanceDate));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -107,7 +129,7 @@ export default function NewCompanyPage() {
               </p>
               <EInformaSearch
                 onSelect={async (company) => {
-                  try {
+                  async function fetchProfile(refresh: boolean) {
                     const nifOrId = company.nif || company.id || '';
                     if (!nifOrId) {
                       setFormData((prev) => ({ ...prev, name: company.name }));
@@ -116,10 +138,13 @@ export default function NewCompanyPage() {
                     }
 
                     const res = await fetch(
-                      `/api/admin/einforma/profile?nif=${encodeURIComponent(nifOrId)}`
+                      `/api/admin/einforma/profile?nif=${encodeURIComponent(nifOrId)}${
+                        refresh ? '&refresh=1' : ''
+                      }`
                     );
                     const data = await res.json();
                     const profile = data?.profile;
+                    const normalized = data?.normalized;
 
                     if (!res.ok || !profile) {
                       setFormData((prev) => ({
@@ -138,11 +163,17 @@ export default function NewCompanyPage() {
                       email: profile.email || '',
                       phone: profile.phone || '',
                       address: profile.address?.street || '',
-                      city: profile.address?.city || '',
-                      postal_code: profile.address?.zip || '',
+                      city: normalized?.city || profile.address?.city || '',
+                      postal_code: normalized?.postalCode || profile.address?.zip || '',
                       country: profile.address?.country || 'ES',
                       cnae: profile.cnae || '',
                       incorporation_date: formatDateInput(profile.constitutionDate),
+                      legal_form: profile.legalForm || '',
+                      status: profile.status || '',
+                      website: profile.website || '',
+                      capital_social: Number.isFinite(profile.capitalSocial)
+                        ? String(profile.capitalSocial)
+                        : '',
                       province: profile.address?.province || '',
                       representative: profile.representatives?.[0]?.name || '',
                       source: 'einforma',
@@ -159,10 +190,19 @@ export default function NewCompanyPage() {
                       lastBalanceDate: profile.lastBalanceDate,
                       website: profile.website,
                     });
+                    setEinformaMeta({
+                      cached: data?.cached,
+                      cacheSource: data?.cacheSource,
+                      lastSyncAt: data?.lastSyncAt ?? null,
+                    });
                     success(
                       'Empresa encontrada',
                       `Datos de ${profile.name || company.name} autocompletados`
                     );
+                  }
+
+                  try {
+                    await fetchProfile(false);
                   } catch (error) {
                     console.error('eInforma profile error:', error);
                     setFormData((prev) => ({
@@ -174,12 +214,111 @@ export default function NewCompanyPage() {
                   }
                 }}
               />
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-blue-700">
+                {einformaMeta?.cacheSource === 'tenantProfile' && einformaMeta.cached ? (
+                  <span className="rounded-full border border-blue-200 bg-white px-2 py-0.5 text-[11px] text-blue-700">
+                    Snapshot (≤30 días)
+                  </span>
+                ) : einformaMeta ? (
+                  <span className="rounded-full border border-blue-200 bg-white px-2 py-0.5 text-[11px] text-blue-700">
+                    eInforma (live)
+                  </span>
+                ) : null}
+                {einformaMeta?.lastSyncAt ? (
+                  <span className="text-blue-700/80">
+                    Actualizado:{' '}
+                    {new Intl.DateTimeFormat('es-ES', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    }).format(new Date(einformaMeta.lastSyncAt))}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const nifOrId = formData.tax_id?.trim();
+                    if (!nifOrId || isRefreshing) return;
+                    setIsRefreshing(true);
+                    try {
+                      const res = await fetch(
+                        `/api/admin/einforma/profile?nif=${encodeURIComponent(nifOrId)}&refresh=1`
+                      );
+                      const data = await res.json();
+                      if (!res.ok || !data?.profile) {
+                        showError('No se pudo actualizar', 'Vuelve a intentarlo');
+                        return;
+                      }
+                      const profile = data.profile;
+                      const normalized = data.normalized;
+                      setFormData((prev) => ({
+                        ...prev,
+                        name: profile.name || prev.name,
+                        legal_name: profile.legalName || prev.legal_name,
+                        tax_id: profile.nif || prev.tax_id,
+                        email: profile.email || prev.email,
+                        phone: profile.phone || prev.phone,
+                        address: profile.address?.street || prev.address,
+                        city: normalized?.city || profile.address?.city || prev.city,
+                        postal_code:
+                          normalized?.postalCode || profile.address?.zip || prev.postal_code,
+                        country: profile.address?.country || prev.country,
+                        cnae: profile.cnae || prev.cnae,
+                        incorporation_date:
+                          formatDateInput(profile.constitutionDate) || prev.incorporation_date,
+                        legal_form: profile.legalForm || prev.legal_form,
+                        status: profile.status || prev.status,
+                        website: profile.website || prev.website,
+                        capital_social: Number.isFinite(profile.capitalSocial)
+                          ? String(profile.capitalSocial)
+                          : prev.capital_social,
+                        province: profile.address?.province || prev.province,
+                        representative: profile.representatives?.[0]?.name || prev.representative,
+                        source: 'einforma',
+                        source_id: profile.sourceId || prev.source_id,
+                      }));
+                      setEinformaExtra((prev) => ({
+                        ...prev,
+                        tradeName: profile.tradeName ?? prev?.tradeName,
+                        legalForm: profile.legalForm ?? prev?.legalForm,
+                        status: profile.status ?? prev?.status,
+                        employees: profile.employees ?? prev?.employees,
+                        sales: profile.sales ?? prev?.sales,
+                        salesYear: profile.salesYear ?? prev?.salesYear,
+                        capitalSocial: profile.capitalSocial ?? prev?.capitalSocial,
+                        lastBalanceDate: profile.lastBalanceDate ?? prev?.lastBalanceDate,
+                        website: profile.website ?? prev?.website,
+                      }));
+                      setEinformaMeta({
+                        cached: data?.cached,
+                        cacheSource: data?.cacheSource,
+                        lastSyncAt: data?.lastSyncAt ?? null,
+                      });
+                      success('Ficha actualizada', 'Datos actualizados desde eInforma');
+                    } catch (error) {
+                      console.error(error);
+                      showError('No se pudo actualizar', 'Vuelve a intentarlo');
+                    } finally {
+                      setIsRefreshing(false);
+                    }
+                  }}
+                  disabled={!formData.tax_id || isRefreshing}
+                  className="rounded-full border border-blue-200 px-3 py-1 text-[11px] font-medium text-blue-700 hover:bg-blue-100/60 disabled:opacity-50"
+                  title="No se ha llamado a eInforma si hay snapshot"
+                >
+                  {isRefreshing ? 'Actualizando…' : 'Actualizar'}
+                </button>
+                {einformaMeta?.cacheSource === 'tenantProfile' && einformaMeta.cached ? (
+                  <span className="text-blue-700/70">
+                    No se ha llamado a eInforma (ahorro de créditos)
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
-        {/* Información Básica */}
+        {/* Datos fiscales */}
         <div className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Información Básica</h2>
+          <h2 className="font-semibold text-gray-900">Datos fiscales</h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -231,7 +370,13 @@ export default function NewCompanyPage() {
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
+          </div>
+        </div>
+        {/* Contacto */}
+        <div className="space-y-4">
+          <h2 className="font-semibold text-gray-900">Contacto</h2>
 
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label
                 htmlFor="new-company-email"
@@ -247,13 +392,7 @@ export default function NewCompanyPage() {
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-          </div>
-        </div>
-        {/* Contacto */}
-        <div className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Contacto</h2>
 
-          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label
                 htmlFor="new-company-phone"
@@ -343,11 +482,27 @@ export default function NewCompanyPage() {
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
+
+            <div>
+              <label
+                htmlFor="new-company-province"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Provincia
+              </label>
+              <input
+                id="new-company-province"
+                type="text"
+                value={formData.province}
+                onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
           </div>
         </div>
-        {/* Datos fiscales eInforma */}
+        {/* Actividad (CNAE) */}
         <div className="space-y-4">
-          <h2 className="font-semibold text-gray-900">Datos fiscales eInforma</h2>
+          <h2 className="font-semibold text-gray-900">Actividad (CNAE)</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label
@@ -379,18 +534,69 @@ export default function NewCompanyPage() {
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
+          </div>
+        </div>
+        {/* Legal */}
+        <div className="space-y-4">
+          <h2 className="font-semibold text-gray-900">Legal</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label
-                htmlFor="new-company-province"
+                htmlFor="new-company-legal-form"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Provincia
+                Forma jurídica
               </label>
               <input
-                id="new-company-province"
+                id="new-company-legal-form"
                 type="text"
-                value={formData.province}
-                onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                value={formData.legal_form}
+                onChange={(e) => setFormData({ ...formData, legal_form: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="new-company-status"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Situación
+              </label>
+              <input
+                id="new-company-status"
+                type="text"
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="new-company-capital-social"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Capital social
+              </label>
+              <input
+                id="new-company-capital-social"
+                type="text"
+                value={formData.capital_social}
+                onChange={(e) => setFormData({ ...formData, capital_social: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="new-company-website"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Web
+              </label>
+              <input
+                id="new-company-website"
+                type="url"
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
@@ -411,7 +617,7 @@ export default function NewCompanyPage() {
             </div>
           </div>
         </div>
-        {einformaExtra ? (
+        {hasEinformaExtra ? (
           <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <h3 className="text-sm font-semibold text-slate-900">Datos ampliados (eInforma)</h3>
             <div className="grid gap-3 sm:grid-cols-2 text-xs text-slate-700">
@@ -472,7 +678,7 @@ export default function NewCompanyPage() {
             </div>
           </div>
         ) : null}
-        \n {/* Acciones */}
+        {/* Acciones */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
           <Link
             href="/dashboard/admin/companies"

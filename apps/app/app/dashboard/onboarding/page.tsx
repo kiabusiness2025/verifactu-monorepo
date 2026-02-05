@@ -11,11 +11,20 @@ type SelectedCompany = {
   legalName?: string;
   nif?: string;
   cnae?: string;
+  cnaeCode?: string;
+  cnaeText?: string;
+  legalForm?: string;
+  status?: string;
+  website?: string;
+  capitalSocial?: number;
   incorporationDate?: string;
   address?: string;
   city?: string;
+  postalCode?: string;
   province?: string;
+  country?: string;
   representative?: string;
+  raw?: unknown;
 };
 
 export default function OnboardingPage() {
@@ -62,17 +71,27 @@ export default function OnboardingPage() {
       const data = await res.json().catch(() => null);
       if (res.ok && data?.ok) {
         const info = data.company;
+        const normalized = data.normalized ?? {};
         setSelected({
           einformaId: company.einformaId,
           name: info.name,
           legalName: info.legalName,
           nif: info.nif,
           cnae: info.cnae,
+          cnaeCode: normalized.cnaeCode,
+          cnaeText: normalized.cnaeText,
+          legalForm: info.legalForm,
+          status: info.status,
+          website: info.website,
+          capitalSocial: info.capitalSocial,
           incorporationDate: info.incorporationDate,
           address: info.address,
-          city: info.city,
+          city: normalized.city ?? info.city,
+          postalCode: normalized.postalCode,
           province: info.province,
+          country: info.country,
           representative: info.representative,
+          raw: info.raw,
         });
         setCompanyName(info.name || company.name);
         setLegalName(info.legalName || info.name || company.name);
@@ -100,12 +119,17 @@ export default function OnboardingPage() {
           name: companyName.trim(),
           legalName: legalName.trim(),
           nif: nif.trim(),
-          extra: selected
+              extra: selected
             ? {
                 cnae: selected.cnae,
+                legalForm: selected.legalForm,
+                status: selected.status,
+                website: selected.website,
+                capitalSocial: selected.capitalSocial,
                 incorporationDate: selected.incorporationDate,
                 address: selected.address,
                 city: selected.city,
+                country: selected.country,
                 province: selected.province,
                 representative: selected.representative,
               }
@@ -154,7 +178,7 @@ export default function OnboardingPage() {
       );
     } catch (error) {
       console.error(error);
-      showError("Error al activar la prueba", "Vuelve a intentarlo en unos segundos.");
+      showError("Error al activar la prueba", "Vuelve a intentarlo en unos seg?ndos.");
     } finally {
       setIsSubmitting(false);
     }
@@ -165,11 +189,11 @@ export default function OnboardingPage() {
       <div className="mx-auto w-full max-w-2xl space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-semibold text-[#0b214a]">
-            Anadir tu empresa
+            A?adir tu empresa
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Busca tu empresa en eInforma o crea los datos manualmente. Al continuar
-            activaras 30 dias de prueba.
+            activar?s 30 d?as de prueba.
           </p>
 
           <div className="mt-6 space-y-4">
@@ -188,10 +212,10 @@ export default function OnboardingPage() {
             </div>
 
             <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">
-              <p className="font-semibold">Vas a activar 30 dias de prueba</p>
+              <p className="font-semibold">Vas a activar 30 d?as de prueba</p>
               <p className="mt-1 text-xs text-blue-800">
-                Durante la prueba puedes emitir facturas Verifactu y subir documentacion.
-                Antes de cobrar, recibiras un aviso con tu cuota estimada segun tu uso.
+                Durante la prueba puedes emitir facturas Verifactu y subir documentaci?n.
+                Antes de cobrar, recibir?s un aviso con tu cuota estimada seg?n tu uso.
               </p>
             </div>
           </div>
@@ -214,7 +238,7 @@ export default function OnboardingPage() {
             </label>
 
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-              Razon social
+              Raz?n social
               <input
                 value={legalName}
                 onChange={(e) => setLegalName(e.target.value)}
@@ -235,8 +259,72 @@ export default function OnboardingPage() {
             </label>
 
             {selected && (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                Datos cargados desde eInforma. Puedes editarlos si es necesario.
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-600 space-y-2">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Datos fiscales
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div>
+                    <span className="text-slate-500">NIF:</span> {selected.nif ?? "—"}
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Estado:</span> {selected.status ?? "—"}
+                  </div>
+                </div>
+
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Dirección
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div>{selected.address ?? "—"}</div>
+                  <div>
+                    {selected.postalCode ? `${selected.postalCode} ` : ""}
+                    {selected.city ?? "—"}
+                  </div>
+                  <div>{selected.province ?? "—"}</div>
+                  <div>{selected.country ?? "—"}</div>
+                </div>
+
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Actividad (CNAE)
+                </div>
+                <div>
+                  {selected.cnaeCode ? `${selected.cnaeCode} — ` : ""}
+                  {selected.cnaeText ?? selected.cnae ?? "—"}
+                </div>
+
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                  Legal
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div>
+                    <span className="text-slate-500">Forma jurídica:</span>{" "}
+                    {selected.legalForm ?? "—"}
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Capital social:</span>{" "}
+                    {selected.capitalSocial ?? "—"}
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Constitución:</span>{" "}
+                    {selected.incorporationDate ?? "—"}
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Web:</span>{" "}
+                    {selected.website ?? "—"}
+                  </div>
+                </div>
+
+                {selected.raw ? (
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                      Información ampliada
+                    </div>
+                    <div className="mt-2 text-xs text-slate-500">
+                      Disponible desde el snapshot de eInforma.
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
 
