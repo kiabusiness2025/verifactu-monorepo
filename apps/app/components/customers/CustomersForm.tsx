@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/components/notifications/ToastNotifications';
 import { Customer } from '@/lib/hooks/useCustomers';
 
 interface CustomersFormProps {
@@ -22,6 +23,7 @@ export function CustomersForm({
     cacheSource?: string;
     lastSyncAt?: string | null;
   } | null>(null);
+  const toast = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -64,9 +66,15 @@ export function CustomersForm({
     await onSubmit(formData);
   };
 
+  const normalizedNif = formData.nif.trim().toUpperCase();
+  const isValidNif = /^[A-Z0-9]{8,9}$/.test(normalizedNif);
+
   const handleEinforma = async () => {
-    const taxId = formData.nif.trim();
-    if (!taxId) return;
+    const taxId = normalizedNif;
+    if (!taxId || !isValidNif) {
+      toast.warning('NIF/CIF inválido', 'Introduce un NIF/CIF válido antes de autocompletar.');
+      return;
+    }
     setEinformaLoading(true);
     setEinformaMeta(null);
     try {
@@ -75,7 +83,10 @@ export function CustomersForm({
       );
       const data = await res.json();
       const normalized = data?.normalized;
-      if (!res.ok || !normalized) return;
+      if (!res.ok || !normalized) {
+        toast.error('No se pudo completar', data?.error ?? 'Consulta fallida en eInforma.');
+        return;
+      }
       setFormData((prev) => ({
         ...prev,
         name: normalized.name || prev.name,
@@ -91,8 +102,13 @@ export function CustomersForm({
         cacheSource: data?.cacheSource,
         lastSyncAt: data?.lastSyncAt ?? null,
       });
+      toast.success(
+        'Datos completados',
+        data?.cached ? 'Se usó snapshot de eInforma.' : 'Datos traídos desde eInforma.'
+      );
     } catch (error) {
       console.error('eInforma autocomplete error:', error);
+      toast.error('Error de eInforma', 'No se pudo completar la ficha.');
     } finally {
       setEinformaLoading(false);
     }
@@ -159,7 +175,7 @@ export function CustomersForm({
             <button
               type="button"
               onClick={handleEinforma}
-              disabled={einformaLoading || !formData.nif.trim()}
+              disabled={einformaLoading || !normalizedNif || !isValidNif}
               className="px-3 py-2 text-xs font-medium border rounded-lg text-blue-700 border-blue-200 hover:bg-blue-50 disabled:opacity-50"
             >
               {einformaLoading ? 'Buscando…' : 'Autocompletar con eInforma'}
@@ -175,6 +191,11 @@ export function CustomersForm({
           {einformaMeta?.cached && einformaMeta.lastSyncAt ? (
             <div className="mt-1 text-[11px] text-slate-500">
               Actualizado: {new Date(einformaMeta.lastSyncAt).toLocaleString('es-ES')}
+            </div>
+          ) : null}
+          {!einformaLoading && normalizedNif && !isValidNif ? (
+            <div className="mt-1 text-[11px] text-amber-600">
+              NIF/CIF no válido. Revisa el formato antes de buscar.
             </div>
           ) : null}
         </div>
