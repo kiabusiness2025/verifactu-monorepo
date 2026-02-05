@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@verifactu/db';
 
 type ErrorReport = {
   type: 'broken_image' | 'broken_link' | 'empty_button' | 'slow_load' | 'console_error' | 'runtime_error' | 'not_found';
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
     const userAgent = body.userAgent ?? 'unknown';
     const viewport = body.viewport ?? { width: 0, height: 0 };
     const perfData = body.performance;
+    const source = request.headers.get('host') ?? 'unknown';
 
     console.log(`[ERROR MONITOR] Received ${errors.length} error(s):`);
     errors.forEach((err, idx) => {
@@ -64,8 +66,26 @@ export async function POST(request: NextRequest) {
       ));
     }
 
-    // Guardar en base de datos (opcional)
-    // await saveErrorsToDatabase(errors, analyses);
+    // Guardar en base de datos (best-effort, no bloquea la respuesta)
+    try {
+      await Promise.all(
+        errors.map(error =>
+          prisma.errorEvent.create({
+            data: {
+              source,
+              type: error.type,
+              url: error.url,
+              details: error.details ?? null,
+              userAgent,
+              viewport,
+              performance: perfData ?? null
+            }
+          })
+        )
+      );
+    } catch (dbError) {
+      console.error('[ERROR MONITOR] Failed to persist error events:', dbError);
+    }
 
     return NextResponse.json({
       success: true,

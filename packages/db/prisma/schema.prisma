@@ -199,6 +199,24 @@ model AuditLog {
   @@index([targetCompanyId, createdAt])
 }
 
+// ==================== OPERATIONS: ERROR MONITOR ====================
+
+model ErrorEvent {
+  id          String   @id @default(cuid())
+  source      String?
+  type        String
+  url         String
+  details     Json?
+  userAgent   String?
+  viewport    Json?
+  performance Json?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
+  @@index([source, createdAt])
+}
+
 // ==================== OPERATIONS: WEBHOOKS & EMAILS ====================
 
 model WebhookEvent {
