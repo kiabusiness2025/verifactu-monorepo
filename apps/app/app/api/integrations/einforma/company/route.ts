@@ -110,17 +110,31 @@ export async function GET(req: Request) {
             raw,
           };
 
+          const cnaeParts = splitCnae(profile.cnae);
           return NextResponse.json({
             ok: true,
             profile,
             normalized: {
-              cnaeCode: tenantProfile.cnaeCode ?? splitCnae(profile.cnae).code,
-              cnaeText: tenantProfile.cnaeText ?? splitCnae(profile.cnae).text,
+              name: profile.legalName || profile.name || null,
+              nif: profile.nif || taxId,
+              sourceId: profile.sourceId ?? profile.nif ?? null,
+              cnae: profile.cnae ?? null,
+              cnaeCode: tenantProfile.cnaeCode ?? cnaeParts.code ?? null,
+              cnaeText: tenantProfile.cnaeText ?? cnaeParts.text ?? null,
+              legalForm: profile.legalForm ?? null,
+              status: profile.status ?? null,
+              incorporationDate: profile.constitutionDate ?? null,
+              address: profile.address?.street ?? null,
               postalCode: tenantProfile.postalCode ?? profile.address?.zip ?? null,
               city: tenantProfile.city ?? profile.address?.city ?? null,
+              province: profile.address?.province ?? null,
+              country: profile.address?.country ?? 'ES',
+              website: profile.website ?? null,
+              capitalSocial: profile.capitalSocial ?? null,
             },
             cached: true,
             cacheSource: 'tenantProfile',
+            lastSyncAt: tenantProfile.einformaLastSyncAt?.toISOString() ?? null,
           });
         }
       }
@@ -134,13 +148,26 @@ export async function GET(req: Request) {
       ok: true,
       profile,
       normalized: {
+        name: profile.legalName || profile.name || null,
+        nif: profile.nif || taxId,
+        sourceId: profile.sourceId ?? profile.nif ?? null,
+        cnae: profile.cnae ?? null,
         cnaeCode: cnaeParts.code,
         cnaeText: cnaeParts.text,
         postalCode: cityParts.postalCode,
         city: cityParts.city,
+        legalForm: profile.legalForm ?? null,
+        status: profile.status ?? null,
+        incorporationDate: profile.constitutionDate ?? null,
+        address: profile.address?.street ?? null,
+        province: profile.address?.province ?? null,
+        country: profile.address?.country ?? 'ES',
+        website: profile.website ?? null,
+        capitalSocial: profile.capitalSocial ?? null,
       },
       cached: false,
       cacheSource: 'einforma',
+      lastSyncAt: null,
     });
   } catch (error) {
     console.error('eInforma company error:', error);
