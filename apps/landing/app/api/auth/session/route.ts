@@ -1,24 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 import {
   signSessionToken,
   readSessionSecret,
   buildSessionCookieOptions,
   type SessionPayload,
-} from "@verifactu/utils";
-import admin from "firebase-admin";
-import { Pool } from "pg";
+} from '@verifactu/utils';
+import admin from 'firebase-admin';
+import { Pool } from 'pg';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 let pool: Pool | null = null;
 
 function getDbPool() {
   if (!pool) {
+    const directUrl =
+      process.env.DIRECT_DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
+    if (!directUrl) {
+      throw new Error('Missing DATABASE_URL/DIRECT_DATABASE_URL/POSTGRES_URL');
+    }
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.DATABASE_URL?.includes("sslmode=require")
-        ? { rejectUnauthorized: false }
-        : false,
+      connectionString: directUrl,
+      ssl: directUrl.includes('sslmode=require') ? { rejectUnauthorized: false } : false,
     });
   }
   return pool;
@@ -38,9 +41,9 @@ function initFirebaseAdmin() {
 
   admin.initializeApp({
     credential: admin.credential.cert({
-      projectId: requireEnv("FIREBASE_ADMIN_PROJECT_ID"),
-      clientEmail: requireEnv("FIREBASE_ADMIN_CLIENT_EMAIL"),
-      privateKey: requireEnv("FIREBASE_ADMIN_PRIVATE_KEY").replace(/\\n/g, "\n"),
+      projectId: requireEnv('FIREBASE_ADMIN_PROJECT_ID'),
+      clientEmail: requireEnv('FIREBASE_ADMIN_CLIENT_EMAIL'),
+      privateKey: requireEnv('FIREBASE_ADMIN_PRIVATE_KEY').replace(/\\n/g, '\n'),
     }),
   });
 }
@@ -49,7 +52,7 @@ async function getTenantForUser(uid: string, email: string, displayName?: string
   const dbPool = getDbPool();
 
   // Usar el nombre de Firebase si está disponible, sino el email
-  const userName = displayName || email.split("@")[0];
+  const userName = displayName || email.split('@')[0];
 
   await dbPool.query(
     `INSERT INTO users (id, email, name)
@@ -80,16 +83,16 @@ export async function POST(req: Request) {
 
     const { idToken } = await req.json().catch(() => ({}));
     if (!idToken) {
-      return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
+      return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
     }
 
     const decoded = await admin.auth().verifyIdToken(idToken);
-    
+
     // Obtener información del usuario de Firebase
     const userRecord = await admin.auth().getUser(decoded.uid);
     const displayName = userRecord.displayName || decoded.name || undefined;
-    
-    const tenantId = await getTenantForUser(decoded.uid, decoded.email || "", displayName);
+
+    const tenantId = await getTenantForUser(decoded.uid, decoded.email || '', displayName);
 
     const rolesRaw = (decoded as any).roles ?? (decoded as any).role ?? [];
     const tenantsRaw = (decoded as any).tenants ?? (decoded as any).tenant ?? [];
@@ -108,17 +111,17 @@ export async function POST(req: Request) {
       uid: decoded.uid,
       email: decoded.email ?? null,
       tenantId: tenantId || undefined,
-      role: roles[0] ?? "member",
+      role: roles[0] ?? 'member',
       roles,
       tenants,
       ver: 1,
     };
 
     const secret = readSessionSecret();
-    const token = await signSessionToken({ payload, secret, expiresIn: "30d" });
+    const token = await signSessionToken({ payload, secret, expiresIn: '30d' });
 
     const url = new URL(req.url);
-    const host = req.headers.get("host");
+    const host = req.headers.get('host');
     const cookieOpts = buildSessionCookieOptions({
       url: url.toString(),
       host,
@@ -133,11 +136,11 @@ export async function POST(req: Request) {
     res.cookies.set(cookieOpts);
     return res;
   } catch (error) {
-    console.error("[API] Error in POST /api/auth/session:", {
+    console.error('[API] Error in POST /api/auth/session:', {
       error: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }
