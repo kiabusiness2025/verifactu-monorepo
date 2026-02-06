@@ -14,7 +14,7 @@ type NormalizedCompany = {
   province?: string | null;
   country?: string | null;
   website?: string | null;
-  capitalSocial?: string | number | null;
+  capitalSocial?: number | null;
 };
 
 type Meta = {
@@ -40,6 +40,17 @@ function normalizeTaxId(value: string) {
 
 function isValidTaxId(value: string) {
   return /^[A-Z0-9]{8,9}$/.test(value);
+}
+
+function normalizeCapitalSocial(value: unknown) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string') {
+    const normalized = value.replace(/\./g, '').replace(',', '.').trim();
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
 }
 
 export function EinformaAutofillButton({
@@ -82,9 +93,17 @@ export function EinformaAutofillButton({
         lastSyncAt: data.lastSyncAt ?? null,
       };
 
+      const normalizedCompany: NormalizedCompany = {
+        ...(data.normalized ?? {}),
+        capitalSocial: normalizeCapitalSocial(data?.normalized?.capitalSocial),
+      };
+
       setMeta(nextMeta);
-      onApply(data.normalized as NormalizedCompany, nextMeta);
-      success('eInforma', data.cached ? 'Datos completados desde snapshot' : 'Datos completados desde eInforma');
+      onApply(normalizedCompany, nextMeta);
+      success(
+        'eInforma',
+        data.cached ? 'Datos completados desde snapshot' : 'Datos completados desde eInforma'
+      );
     } catch (err) {
       console.error('eInforma autofill error:', err);
       showError('eInforma', 'No se pudo completar la empresa');
@@ -96,7 +115,11 @@ export function EinformaAutofillButton({
   return (
     <div className={className}>
       <div className="flex flex-wrap items-center gap-2">
-        <AccessibleButton type="button" onClick={() => handleClick(false)} disabled={!canSearch || loading}>
+        <AccessibleButton
+          type="button"
+          onClick={() => handleClick(false)}
+          disabled={!canSearch || loading}
+        >
           {loading ? 'Buscando...' : 'Autocompletar con eInforma'}
         </AccessibleButton>
         {refreshable ? (
