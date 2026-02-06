@@ -1,7 +1,7 @@
+import { normalizeCanonicalExpense } from '@/lib/expenses/canonical';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
-import { normalizeCanonicalExpense } from '@/lib/expenses/canonical';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**

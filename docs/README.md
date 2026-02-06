@@ -5,51 +5,51 @@
 ### Comenzar aqui
 
 - [README.md](../README.md) - Descripcion general del proyecto
-- [ARQUITECTURA_UNIFICADA.md](root/ARQUITECTURA_UNIFICADA.md) - Arquitectura completa (Vercel + Firebase + Prisma)
+- [ARQUITECTURA_UNIFICADA.md](legacy/root/ARQUITECTURA_UNIFICADA.md) - Arquitectura completa (Vercel + Firebase + Prisma)
 
 ### Autenticacion
 
-**setup/**
+**ops/setup/**
 
-- [setup/FIREBASE_CONSOLE_ACCESO.md](setup/FIREBASE_CONSOLE_ACCESO.md) - Acceso Firebase Console
-- [setup/FIREBASE_AUTH_SETUP.md](setup/FIREBASE_AUTH_SETUP.md) - Autenticacion Firebase
-- [setup/MULTI_TENANT_AUTH_SETUP.md](setup/MULTI_TENANT_AUTH_SETUP.md) - Multi-tenant setup
+- [ops/setup/FIREBASE_CONSOLE_ACCESO.md](ops/setup/FIREBASE_CONSOLE_ACCESO.md) - Acceso Firebase Console
+- [ops/setup/FIREBASE_AUTH_SETUP.md](ops/setup/FIREBASE_AUTH_SETUP.md) - Autenticacion Firebase
+- [ops/setup/MULTI_TENANT_AUTH_SETUP.md](ops/setup/MULTI_TENANT_AUTH_SETUP.md) - Multi-tenant setup
 
-**root/**
+**legacy/root/**
 
-- [root/FACEBOOK_OAUTH_SETUP.md](root/FACEBOOK_OAUTH_SETUP.md) - Facebook OAuth
+- [legacy/root/FACEBOOK_OAUTH_SETUP.md](legacy/root/FACEBOOK_OAUTH_SETUP.md) - Facebook OAuth
 - [../SECURITY.md](../SECURITY.md) - Politicas de seguridad
 
 ### Despliegue
 
-**deployment/**
+**ops/deployment/**
 
-- [deployment/VERCEL_DEPLOYMENT_GUIDE.md](deployment/VERCEL_DEPLOYMENT_GUIDE.md) - Vercel
-- [deployment/CLOUD_RUN_QUICK_REFERENCE.md](deployment/CLOUD_RUN_QUICK_REFERENCE.md) - Cloud Run
-- [deployment/GITHUB_CLOUD_BUILD_SETUP.md](deployment/GITHUB_CLOUD_BUILD_SETUP.md) - CI/CD
+- [ops/deployment/VERCEL_DEPLOYMENT_GUIDE.md](ops/deployment/VERCEL_DEPLOYMENT_GUIDE.md) - Vercel
+- [ops/deployment/CLOUD_RUN_QUICK_REFERENCE.md](ops/deployment/CLOUD_RUN_QUICK_REFERENCE.md) - Cloud Run
+- [ops/deployment/GITHUB_CLOUD_BUILD_SETUP.md](ops/deployment/GITHUB_CLOUD_BUILD_SETUP.md) - CI/CD
 
-**root/**
+**legacy/root/**
 
-- [root/GOOGLE_CLOUD_RUN_IAM.md](root/GOOGLE_CLOUD_RUN_IAM.md) - Permisos IAM (opcional)
+- [legacy/root/GOOGLE_CLOUD_RUN_IAM.md](legacy/root/GOOGLE_CLOUD_RUN_IAM.md) - Permisos IAM (opcional)
 
 ### GitHub y colaboracion
 
-**root/**
+**legacy/root/**
 
-- [root/PULL_REQUEST_WORKFLOW.md](root/PULL_REQUEST_WORKFLOW.md) - Flujo de PR (paso a paso)
-- [root/BRANCH_PROTECTION_RULES.md](root/BRANCH_PROTECTION_RULES.md) - Reglas de proteccion
-- [root/GITHUB_INTEGRATION.md](root/GITHUB_INTEGRATION.md) - Integracion GitHub + VS Code
-- [root/GITHUB_PR_VSCODE_GUIDE.md](root/GITHUB_PR_VSCODE_GUIDE.md) - Usar PRs desde VS Code
-- [root/GITHUB_CHEATSHEET.md](root/GITHUB_CHEATSHEET.md) - Referencia rapida
-- [root/GITHUB_ACTIONS_GUIDE.md](root/GITHUB_ACTIONS_GUIDE.md) - Workflows y automatizacion
-- [root/DEPENDABOT_GUIDE.md](root/DEPENDABOT_GUIDE.md) - Automatizacion de dependencias
+- [legacy/root/PULL_REQUEST_WORKFLOW.md](legacy/root/PULL_REQUEST_WORKFLOW.md) - Flujo de PR (paso a paso)
+- [legacy/root/BRANCH_PROTECTION_RULES.md](legacy/root/BRANCH_PROTECTION_RULES.md) - Reglas de proteccion
+- [legacy/root/GITHUB_INTEGRATION.md](legacy/root/GITHUB_INTEGRATION.md) - Integracion GitHub + VS Code
+- [legacy/root/GITHUB_PR_VSCODE_GUIDE.md](legacy/root/GITHUB_PR_VSCODE_GUIDE.md) - Usar PRs desde VS Code
+- [legacy/root/GITHUB_CHEATSHEET.md](legacy/root/GITHUB_CHEATSHEET.md) - Referencia rapida
+- [legacy/root/GITHUB_ACTIONS_GUIDE.md](legacy/root/GITHUB_ACTIONS_GUIDE.md) - Workflows y automatizacion
+- [legacy/root/DEPENDABOT_GUIDE.md](legacy/root/DEPENDABOT_GUIDE.md) - Automatizacion de dependencias
 
 ### Flutter / Mobile
 
-**setup/**
+**ops/setup/**
 
-- [setup/FLUTTER_INSTALLATION_GUIDE.md](setup/FLUTTER_INSTALLATION_GUIDE.md) - Instalacion Flutter
-- [setup/FLUTTER_SETUP.md](setup/FLUTTER_SETUP.md) - Setup del proyecto
+- [ops/setup/FLUTTER_INSTALLATION_GUIDE.md](ops/setup/FLUTTER_INSTALLATION_GUIDE.md) - Instalacion Flutter
+- [ops/setup/FLUTTER_SETUP.md](ops/setup/FLUTTER_SETUP.md) - Setup del proyecto
 
 **Mobile**
 
@@ -57,41 +57,41 @@
 
 ### Base de datos
 
-**setup/**
+**ops/setup/**
 
-- [setup/DB_SETUP_GUIDE.md](setup/DB_SETUP_GUIDE.md) - PostgreSQL + Prisma
+- [ops/setup/DB_SETUP_GUIDE.md](ops/setup/DB_SETUP_GUIDE.md) - PostgreSQL + Prisma
 - **Schema:** [../packages/db/prisma/schema.prisma](../packages/db/prisma/schema.prisma)
 
 ### AI / Genkit
 
-**ai/**
+**engineering/ai/**
 
-- [ai/ISAAK_V3_QUICK_START.md](ai/ISAAK_V3_QUICK_START.md) - Quick start Genkit
-- [ai/ISAAK_V3_TESTING_GUIDE.md](ai/ISAAK_V3_TESTING_GUIDE.md) - Testing
-- [ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md](ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md) - Checklist
+- [engineering/ai/ISAAK_V3_QUICK_START.md](engineering/ai/ISAAK_V3_QUICK_START.md) - Quick start Genkit
+- [engineering/ai/ISAAK_V3_TESTING_GUIDE.md](engineering/ai/ISAAK_V3_TESTING_GUIDE.md) - Testing
+- [engineering/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md](engineering/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md) - Checklist
 
 ### Estado del proyecto
 
-**root/**
+**legacy/root/**
 
-- [root/PROJECT_STATUS.md](root/PROJECT_STATUS.md) - Estado actual
-- [root/IMPLEMENTATION_STATUS.md](root/IMPLEMENTATION_STATUS.md) - Estado de implementacion
-- [root/PROJECT_DELIVERABLES.md](root/PROJECT_DELIVERABLES.md) - Entregables
+- [legacy/root/PROJECT_STATUS.md](legacy/root/PROJECT_STATUS.md) - Estado actual
+- [legacy/root/IMPLEMENTATION_STATUS.md](legacy/root/IMPLEMENTATION_STATUS.md) - Estado de implementacion
+- [legacy/root/PROJECT_DELIVERABLES.md](legacy/root/PROJECT_DELIVERABLES.md) - Entregables
 
 ### Branding
 
-**root/**
+**legacy/root/**
 
-- [root/BRANDING.md](root/BRANDING.md) - Guia de branding
-- [root/MANIFESTO.md](root/MANIFESTO.md) - Manifiesto de la marca
+- [legacy/root/BRANDING.md](legacy/root/BRANDING.md) - Guia de branding
+- [legacy/root/MANIFESTO.md](legacy/root/MANIFESTO.md) - Manifiesto de la marca
 
 ### Optimizacion
 
-**optimization/**
+**engineering/optimization/**
 
-- [optimization/LANDING_OPTIMIZATION_STATUS.md](optimization/LANDING_OPTIMIZATION_STATUS.md) - Performance
-- [optimization/ACCESSIBILITY_AUDIT.md](optimization/ACCESSIBILITY_AUDIT.md) - Accesibilidad
-- [optimization/IMAGE_OPTIMIZATION_GUIDE.md](optimization/IMAGE_OPTIMIZATION_GUIDE.md) - Imagenes
+- [engineering/optimization/LANDING_OPTIMIZATION_STATUS.md](engineering/optimization/LANDING_OPTIMIZATION_STATUS.md) - Performance
+- [engineering/optimization/ACCESSIBILITY_AUDIT.md](engineering/optimization/ACCESSIBILITY_AUDIT.md) - Accesibilidad
+- [engineering/optimization/IMAGE_OPTIMIZATION_GUIDE.md](engineering/optimization/IMAGE_OPTIMIZATION_GUIDE.md) - Imagenes
 
 ### Archivos legados
 

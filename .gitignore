@@ -27,6 +27,12 @@ landing/dist*.pem
 # Local temp profiles/cache
 .tmp-profile/
 .npm-cache/
+.cache/
+.eslintcache
+.pnpm-debug.log*
+.pnpm-store/
+.swc/
+.output/
 *.out.log
 *.err.log
 *.dev.log

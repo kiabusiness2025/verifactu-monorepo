@@ -1,7 +1,7 @@
-import { getSessionPayload } from '@/lib/session';
 import prisma from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {

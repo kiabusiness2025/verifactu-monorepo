@@ -1,10 +1,11 @@
-# Indice de documentacion
+# Índice de documentación
 
 Entrada principal: [README.md](README.md)
 
 Resumen:
 
-- Arquitectura y estado: docs/root/\*
-- Despliegue: docs/deployment/\*
-- Setup: docs/setup/\*
-- AI: docs/ai/\*
+- Producto: docs/product/\*
+- Ingeniería: docs/engineering/\*
+- Operaciones: docs/ops/\*
+- Seguridad: docs/security/\*
+- Histórico: docs/legacy/\*
