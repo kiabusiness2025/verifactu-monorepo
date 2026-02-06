@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { formatCurrency, formatNumber, formatShortDate } from "@/src/lib/formatters";
 
 interface ExpensesTableProps {
   expenses: any[];
   loading: boolean;
-  onEdit: (expense: any) => void;
-  onDelete: (id: string) => void;
   pagination: {
     total: number;
     page: number;
@@ -19,13 +16,9 @@ interface ExpensesTableProps {
 export function ExpensesTable({
   expenses,
   loading,
-  onEdit,
-  onDelete,
   pagination,
   onPageChange,
 }: ExpensesTableProps) {
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-
   if (loading && expenses.length === 0) {
     return <div className="text-center py-8">Cargando gastos...</div>;
   }
@@ -62,7 +55,6 @@ export function ExpensesTable({
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Proveedor</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Importe</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">IVA</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -79,42 +71,6 @@ export function ExpensesTable({
                 </td>
                 <td className="px-6 py-4 text-right text-sm text-gray-600">
                   {formatCurrency(parseFloat(expense.amount) * parseFloat(expense.taxRate))}
-                </td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  <button
-                    onClick={() => onEdit(expense)}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => setDeleteConfirm(expense.id)}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium"
-                  >
-                    Borrar
-                  </button>
-                  {deleteConfirm === expense.id && (
-                    <div className="absolute bg-white border border-gray-300 rounded p-3 shadow-lg z-10">
-                      <p className="text-sm mb-3">¿Confirmar borrado?</p>
-                      <div className="space-x-2">
-                        <button
-                          onClick={() => {
-                            onDelete(expense.id);
-                            setDeleteConfirm(null);
-                          }}
-                          className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-                        >
-                          Sí
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(null)}
-                          className="bg-gray-400 text-white px-3 py-1 rounded text-sm hover:bg-gray-500"
-                        >
-                          No
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </td>
               </tr>
             ))}

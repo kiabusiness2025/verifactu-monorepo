@@ -1,17 +1,17 @@
 ﻿// Eliminado @ts-nocheck: el archivo debe compilar con tipado estricto
 import {
-  calculateTenantProfit,
-  getCurrentMonthSummary,
-  getExpenseCategories,
-  getPendingVeriFactuInvoices,
+    calculateTenantProfit,
+    getCurrentMonthSummary,
+    getExpenseCategories,
+    getPendingVeriFactuInvoices,
 } from '@/lib/db-queries';
+import { prisma } from '@/lib/prisma';
+import { getSessionPayload } from '@/lib/session';
+import { getCompanyProfileByNif, searchCompanies } from '@/server/einforma';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { createOpenAI, openai } from '@ai-sdk/openai';
 import { streamText, tool, zodSchema } from 'ai';
 import { z } from 'zod';
-import { getSessionPayload } from '@/lib/session';
-import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
-import { prisma } from '@/lib/prisma';
-import { getCompanyProfileByNif, searchCompanies } from '@/server/einforma';
 
 // Helpers
 function getMonthName(month: number): string {
@@ -273,6 +273,86 @@ export async function POST(req: Request) {
               categoryName: matchedCategory?.name || 'Otros gastos',
               deductible: matchedCategory?.is_deductible ?? true,
               message: `"${description}" → **${matchedCategory?.name || 'Otros gastos'}**${!matchedCategory?.is_deductible ? ' (⚠️ no deducible)' : ''}${amount ? ` | ${amount}€` : ''}`,
+            };
+          },
+        }),
+
+        registerExpense: tool({
+          description: 'Registra un gasto validado por Isaak',
+          inputSchema: zodSchema(
+            z.object({
+              description: z.string(),
+              amount: z.number().positive(),
+              date: z.string(),
+              taxRate: z.number().optional(),
+              reference: z.string().optional(),
+              notes: z.string().optional(),
+            })
+          ),
+          execute: async ({ description, amount, date, taxRate, reference, notes }) => {
+            if (!activeTenantId) {
+              return { ok: false, message: 'No hay empresa seleccionada' };
+            }
+
+            const categories = await getExpenseCategories();
+            const lower = description.toLowerCase();
+            let matchedCategory = categories.find((cat) => cat.code === 'other');
+
+            if (lower.includes('alquiler') || lower.includes('oficina')) {
+              matchedCategory = categories.find((cat) => cat.code === 'office');
+            } else if (
+              lower.includes('software') ||
+              lower.includes('suscripción') ||
+              lower.includes('licencia')
+            ) {
+              matchedCategory = categories.find((cat) => cat.code === 'software');
+            } else if (lower.includes('publicidad') || lower.includes('marketing')) {
+              matchedCategory = categories.find((cat) => cat.code === 'marketing');
+            } else if (
+              lower.includes('viaje') ||
+              lower.includes('gasolina') ||
+              lower.includes('hotel')
+            ) {
+              matchedCategory = categories.find((cat) => cat.code === 'travel');
+            } else if (
+              lower.includes('asesor') ||
+              lower.includes('gestor') ||
+              lower.includes('abogado')
+            ) {
+              matchedCategory = categories.find((cat) => cat.code === 'professional');
+            } else if (lower.includes('seguro')) {
+              matchedCategory = categories.find((cat) => cat.code === 'insurance');
+            } else if (lower.includes('impuesto') || lower.includes('tasa')) {
+              matchedCategory = categories.find((cat) => cat.code === 'taxes');
+            } else if (lower.includes('banco') || lower.includes('comisión')) {
+              matchedCategory = categories.find((cat) => cat.code === 'banking');
+            } else if (lower.includes('formación') || lower.includes('curso')) {
+              matchedCategory = categories.find((cat) => cat.code === 'training');
+            }
+
+            const categoryName = matchedCategory?.name || 'Otros gastos';
+            const isDeductible = matchedCategory?.is_deductible ?? true;
+            const rate = typeof taxRate === 'number' ? taxRate : 0.21;
+
+            const expense = await prisma.expenseRecord.create({
+              data: {
+                tenantId: activeTenantId,
+                date: new Date(date),
+                description,
+                category: categoryName,
+                amount,
+                taxRate: rate,
+                reference: reference || null,
+                notes: [notes, `Deducible:${isDeductible ? 'sí' : 'no'}`].filter(Boolean).join(' | ') || null,
+              },
+            });
+
+            return {
+              ok: true,
+              expenseId: expense.id,
+              categoryName,
+              deductible: isDeductible,
+              message: `Gasto registrado como ${categoryName}${isDeductible ? '' : ' (no deducible)'}.`,
             };
           },
         }),

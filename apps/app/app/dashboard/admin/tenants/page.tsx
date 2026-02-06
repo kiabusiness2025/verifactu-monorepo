@@ -6,6 +6,7 @@ import { TableSkeleton } from '@/components/accessibility/LoadingSkeleton';
 import { useToast } from '@/components/notifications/ToastNotifications';
 import { adminGet, adminPatch, adminPost } from '@/lib/adminApi';
 import { formatCurrency } from '@/src/lib/formatters';
+import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import { useEffect, useMemo, useState } from 'react';
 
 type TenantRow = {
@@ -79,6 +80,7 @@ export default function AdminTenantsPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
+  const [einformaMeta, setEinformaMeta] = useState<{ cached?: boolean; cacheSource?: string | null; lastSyncAt?: string | null } | null>(null);
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
@@ -95,6 +97,24 @@ export default function AdminTenantsPage() {
     setSearchLoading(false);
     setSearchError('');
     setProfileLoading(false);
+    setEinformaMeta(null);
+  }
+
+  function applyNormalized(normalized: {
+    legalName?: string | null;
+    name?: string | null;
+    nif?: string | null;
+    address?: string | null;
+    cnae?: string | null;
+    cnaeCode?: string | null;
+  }) {
+    setForm((prev) => ({
+      ...prev,
+      legalName: prev.legalName || normalized.legalName || normalized.name || '',
+      taxId: prev.taxId || normalized.nif || '',
+      address: prev.address || normalized.address || '',
+      cnae: prev.cnae || normalized.cnae || normalized.cnaeCode || '',
+    }));
   }
 
   useEffect(() => {
@@ -430,6 +450,20 @@ export default function AdminTenantsPage() {
                 value={form.taxId}
                 onChange={(e) => setForm((v) => ({ ...v, taxId: e.target.value.toUpperCase() }))}
               />
+              <EinformaAutofillButton
+                taxIdValue={form.taxId}
+                onApply={(normalized, meta) => {
+                  applyNormalized(normalized);
+                  setEinformaMeta(meta);
+                }}
+                endpoint="/api/admin/einforma/profile"
+              />
+              {einformaMeta?.lastSyncAt ? (
+                <div className="text-xs text-slate-500">
+                  {einformaMeta.cached ? 'Snapshot (<=30 dias)' : 'eInforma (live)'} · Actualizado:{' '}
+                  {einformaMeta.lastSyncAt}
+                </div>
+              ) : null}
               <AccessibleInput
                 label="Direccion"
                 value={form.address}

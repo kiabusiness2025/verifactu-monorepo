@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { EInformaSearch } from "@/components/companies/EInformaSearch";
 import { useToast } from "@/components/notifications/ToastNotifications";
+import { EinformaAutofillButton } from "@/src/components/einforma/EinformaAutofillButton";
 
 type SelectedCompany = {
   einformaId?: string;
@@ -45,6 +46,49 @@ export default function OnboardingPage() {
   }, [searchParams]);
 
   const canSubmit = companyName.trim().length > 0 && nif.trim().length > 0;
+
+  function applyNormalized(normalized: {
+    name?: string | null;
+    legalName?: string | null;
+    nif?: string | null;
+    cnae?: string | null;
+    cnaeCode?: string | null;
+    cnaeText?: string | null;
+    legalForm?: string | null;
+    status?: string | null;
+    incorporationDate?: string | null;
+    address?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+    province?: string | null;
+    country?: string | null;
+    website?: string | null;
+    capitalSocial?: number | null;
+  }) {
+    setSelected((prev) => ({
+      ...prev,
+      name: prev?.name || normalized.name || "",
+      legalName: prev?.legalName || normalized.legalName || normalized.name || "",
+      nif: prev?.nif || normalized.nif || "",
+      cnae: prev?.cnae || normalized.cnae || null,
+      cnaeCode: prev?.cnaeCode || normalized.cnaeCode || null,
+      cnaeText: prev?.cnaeText || normalized.cnaeText || null,
+      legalForm: prev?.legalForm || normalized.legalForm || null,
+      status: prev?.status || normalized.status || null,
+      website: prev?.website || normalized.website || null,
+      capitalSocial: prev?.capitalSocial || normalized.capitalSocial || null,
+      incorporationDate: prev?.incorporationDate || normalized.incorporationDate || null,
+      address: prev?.address || normalized.address || null,
+      city: prev?.city || normalized.city || null,
+      postalCode: prev?.postalCode || normalized.postalCode || null,
+      province: prev?.province || normalized.province || null,
+      country: prev?.country || normalized.country || null,
+    }));
+
+    if (!companyName.trim()) setCompanyName(normalized.name || normalized.legalName || "");
+    if (!legalName.trim()) setLegalName(normalized.legalName || normalized.name || "");
+    if (!nif.trim()) setNif(normalized.nif || "");
+  }
 
   async function handleSelect(company: {
     einformaId: string;
@@ -257,6 +301,7 @@ export default function OnboardingPage() {
                 autoComplete="off"
               />
             </label>
+            <EinformaAutofillButton taxIdValue={nif} onApply={applyNormalized} />
 
             {selected && (
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-600 space-y-2">

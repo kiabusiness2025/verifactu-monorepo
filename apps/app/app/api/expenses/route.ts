@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * GET /api/expenses
@@ -98,11 +98,29 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { date, description, category, amount, taxRate, supplierId, accountCode, reference, notes } = body;
+    const {
+      date,
+      description,
+      amount,
+      taxRate,
+      supplierId,
+      accountCode,
+      reference,
+      notes,
+      source,
+      categoryId,
+    } = body;
 
-    if (!date || !description || !category || !amount) {
+    if (!date || !description || !amount) {
       return NextResponse.json(
-        { error: 'Date, description, category, and amount are required' },
+        { error: 'Falta información del gasto' },
+        { status: 400 }
+      );
+    }
+
+    if (source !== 'isaak' || !categoryId) {
+      return NextResponse.json(
+        { error: 'Para registrar un gasto, usa Isaak' },
         { status: 400 }
       );
     }
@@ -117,18 +135,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const categories = await prisma.$queryRaw<{ name: string; is_deductible: boolean }[]>`
+      SELECT name, is_deductible
+      FROM expense_categories
+      WHERE id = ${Number(categoryId)}
+      LIMIT 1
+    `;
+
+    if (!categories.length) {
+      return NextResponse.json({ error: 'Categoría no válida' }, { status: 400 });
+    }
+
+    const categoryName = categories[0].name;
+    const isDeductible = categories[0].is_deductible;
+    const noteParts = [notes, `Deducible:${isDeductible ? 'sí' : 'no'}`].filter(Boolean).join(' | ');
+
     const expense = await prisma.expenseRecord.create({
       data: {
         tenantId,
         date: new Date(date),
         description,
-        category,
+        category: categoryName,
         amount: parseFloat(amount),
         taxRate: parseFloat(taxRate) || 0.21,
         supplierId: supplierId || null,
         accountCode: accountCode || null,
         reference: reference || null,
-        notes: notes || null,
+        notes: noteParts || null,
       },
       include: { supplier: { select: { id: true, name: true } } },
     });

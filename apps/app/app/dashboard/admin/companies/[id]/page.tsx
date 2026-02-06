@@ -1,6 +1,7 @@
 'use client';
 
 import { useToast } from '@/components/notifications/ToastNotifications';
+import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import { formatCurrency } from '@/src/lib/formatters';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -33,6 +34,12 @@ export default function EditCompanyPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [company, setCompany] = useState<CompanyData | null>(null);
+  const [einformaMeta, setEinformaMeta] = useState<{
+    cached?: boolean;
+    cacheSource?: string | null;
+    lastSyncAt?: string | null;
+  } | null>(null);
+  const [einformaSourceId, setEinformaSourceId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     legal_name: '',
@@ -44,6 +51,29 @@ export default function EditCompanyPage() {
     postal_code: '',
     country: 'ES',
   });
+
+  function applyNormalized(normalized: {
+    name?: string | null;
+    legalName?: string | null;
+    nif?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    country?: string | null;
+    sourceId?: string | null;
+  }) {
+    setFormData((prev) => ({
+      ...prev,
+      name: prev.name || normalized.name || normalized.legalName || '',
+      legal_name: prev.legal_name || normalized.legalName || normalized.name || '',
+      tax_id: prev.tax_id || normalized.nif || '',
+      address: prev.address || normalized.address || '',
+      city: prev.city || normalized.city || '',
+      postal_code: prev.postal_code || normalized.postalCode || '',
+      country: prev.country || normalized.country || prev.country,
+    }));
+    setEinformaSourceId(normalized.sourceId ?? null);
+  }
 
   useEffect(() => {
     fetchCompany();
@@ -228,6 +258,24 @@ export default function EditCompanyPage() {
                 onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
+            </div>
+            <div className="sm:col-span-2">
+              <EinformaAutofillButton
+                taxIdValue={formData.tax_id}
+                onApply={(normalized, meta) => {
+                  applyNormalized(normalized);
+                  setEinformaMeta(meta);
+                }}
+                endpoint="/api/admin/einforma/profile"
+                refreshable
+              />
+              {einformaMeta?.lastSyncAt ? (
+                <div className="mt-2 text-xs text-slate-500">
+                  {einformaMeta.cached ? 'Snapshot (<=30 dias)' : 'eInforma (live)'} · Actualizado:{' '}
+                  {einformaMeta.lastSyncAt}
+                  {einformaSourceId ? ` · sourceId: ${einformaSourceId}` : ''}
+                </div>
+              ) : null}
             </div>
 
             <div>

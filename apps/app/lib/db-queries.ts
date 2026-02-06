@@ -1,29 +1,4 @@
-import { Pool } from 'pg';
-
-// Singleton connection pool
-let pool: Pool | null = null;
-
-export function getPool() {
-  if (!pool) {
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.DATABASE_URL?.includes('sslmode=require')
-        ? { rejectUnauthorized: false }
-        : false,
-    });
-  }
-  return pool;
-}
-
-export async function query<T = any>(text: string, params?: any[]): Promise<T[]> {
-  const client = await getPool().connect();
-  try {
-    const result = await client.query(text, params);
-    return result.rows;
-  } finally {
-    client.release();
-  }
-}
+import { prisma } from '@/lib/prisma';
 
 // Calcular beneficio de un tenant en un periodo
 export async function calculateTenantProfit(
@@ -32,23 +7,21 @@ export async function calculateTenantProfit(
   endDate: string
 ) {
   const [salesData, expensesData] = await Promise.all([
-    query<{ total: string }>(
-      `SELECT COALESCE(SUM(total), 0) as total 
-       FROM invoices 
-       WHERE tenant_id = $1 
-         AND issue_date >= $2 
-         AND issue_date <= $3 
-         AND status IN ('sent', 'paid')`,
-      [tenantId, startDate, endDate]
-    ),
-    query<{ total: string }>(
-      `SELECT COALESCE(SUM(amount_gross), 0) as total 
-       FROM expenses 
-       WHERE tenant_id = $1 
-         AND issue_date >= $2 
-         AND issue_date <= $3`,
-      [tenantId, startDate, endDate]
-    ),
+    prisma.$queryRaw<{ total: string }[]>`
+      SELECT COALESCE(SUM(amount_gross), 0) as total
+      FROM invoices
+      WHERE tenant_id = ${tenantId}
+        AND issue_date >= ${startDate}
+        AND issue_date <= ${endDate}
+        AND status IN ('sent', 'paid')
+    `,
+    prisma.$queryRaw<{ total: string }[]>`
+      SELECT COALESCE(SUM(amount * (1 + tax_rate)), 0) as total
+      FROM expense_records
+      WHERE tenant_id = ${tenantId}
+        AND date >= ${startDate}
+        AND date <= ${endDate}
+    `,
   ]);
 
   const sales = parseFloat(salesData[0]?.total || '0');
@@ -66,36 +39,35 @@ export async function calculateTenantProfit(
 
 // Obtener facturas pendientes de enviar a VeriFactu
 export async function getPendingVeriFactuInvoices(tenantId: string) {
-  return query<{
+  return prisma.$queryRaw<{
     id: string;
     number: string;
     issue_date: string;
     total: string;
     verifactu_status: string | null;
-  }>(
-    `SELECT id, number, issue_date, total, verifactu_status
-     FROM invoices
-     WHERE tenant_id = $1
-       AND status IN ('sent', 'paid')
-       AND (verifactu_status IS NULL OR verifactu_status = 'pending')
-     ORDER BY issue_date DESC
-     LIMIT 10`,
-    [tenantId]
-  );
+  }[]>`
+    SELECT id, number, issue_date, amount_gross as total, verifactu_status
+    FROM invoices
+    WHERE tenant_id = ${tenantId}
+      AND status IN ('sent', 'paid')
+      AND (verifactu_status IS NULL OR verifactu_status = 'pending')
+    ORDER BY issue_date DESC
+    LIMIT 10
+  `;
 }
 
 // Obtener categorías de gastos
 export async function getExpenseCategories() {
-  return query<{
+  return prisma.$queryRaw<{
     id: number;
     code: string;
     name: string;
     is_deductible: boolean;
-  }>(
-    `SELECT id, code, name, is_deductible
-     FROM expense_categories
-     ORDER BY name`
-  );
+  }[]>`
+    SELECT id, code, name, is_deductible
+    FROM expense_categories
+    ORDER BY name
+  `;
 }
 
 // Insertar gasto con categoría sugerida
@@ -110,25 +82,47 @@ export async function createExpense(data: {
   description: string;
   source: string;
 }) {
-  const result = await query<{ id: string }>(
-    `INSERT INTO expenses (
-      tenant_id, category_id, supplier_name, 
-      amount_gross, amount_tax, amount_net,
-      issue_date, invoice_number, source
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    RETURNING id`,
-    [
-      data.tenantId,
-      data.categoryId,
-      data.supplierName,
-      data.amountGross,
-      data.amountTax,
-      data.amountNet,
-      data.issueDate,
-      data.description,
-      data.source,
-    ]
-  );
+  const categories = await prisma.$queryRaw<{ name: string }[]>`
+    SELECT name
+    FROM expense_categories
+    WHERE id = ${data.categoryId}
+    LIMIT 1
+  `;
+  const category = categories[0]?.name || 'Otros gastos';
+  const amountNet = Number.isFinite(data.amountNet) ? data.amountNet : data.amountGross;
+  const taxRate = amountNet > 0 ? data.amountTax / amountNet : 0;
+  const notesParts = [data.source ? `source:${data.source}` : '', data.supplierName ? `proveedor:${data.supplierName}` : '']
+    .filter(Boolean)
+    .join(' | ');
+
+  const result = await prisma.$queryRaw<{ id: string }[]>`
+    INSERT INTO expense_records (
+      tenant_id,
+      date,
+      description,
+      category,
+      amount,
+      tax_rate,
+      account_code,
+      reference,
+      notes,
+      created_at,
+      updated_at
+    ) VALUES (
+      ${data.tenantId},
+      ${data.issueDate},
+      ${data.description},
+      ${category},
+      ${amountNet},
+      ${taxRate},
+      NULL,
+      NULL,
+      ${notesParts || null},
+      NOW(),
+      NOW()
+    )
+    RETURNING id
+  `;
   return result[0];
 }
 

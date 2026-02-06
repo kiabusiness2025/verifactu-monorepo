@@ -80,12 +80,19 @@ STRIPE_WEBHOOK_SECRET=
 # eInforma
 EINFORMA_CLIENT_ID=
 EINFORMA_CLIENT_SECRET=
-EINFORMA_BASE_URL=https://developers.einforma.com/api/v1
+EINFORMA_TOKEN_URL=
+EINFORMA_API_BASE_URL=
+EINFORMA_SCOPE=
+EINFORMA_TIMEOUT_MS=8000
 
 # Vercel/GitHub
 VERCEL_TOKEN=
 GITHUB_TOKEN=
 ```
+
+Documentacion eInforma:
+- `docs/runbooks/einforma-credentials.md`
+- `docs/runbooks/einforma-mapping.md`
 
 ## Arranque local
 El script de `dev` ya fija el puerto 3003. Usa:
@@ -107,7 +114,7 @@ pnpm -F @verifactu/db exec prisma db seed
 
 ## Siguientes pasos
 1) Reemplazar placeholders por datos reales en tenants/billing/integrations.
-2) Añadir handlers reales para soporte (handoff seguro, expiracion de token).
+2) Anadir handlers reales para soporte (handoff seguro, expiracion de token).
 3) Conectar Resend y Stripe con datos reales.
 4) Revisar permisos SUPPORT y logs de auditoria.
 

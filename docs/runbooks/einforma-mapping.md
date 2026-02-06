@@ -1,54 +1,61 @@
-# eInforma ? ficha de empresa (mapeo)
+# eInforma - ficha de empresa (mapeo)
 
 ## Response normalizado (API interna)
 
 ```ts
-company: {
+normalized: {
   name,
   nif,
+  sourceId,
   cnae,
+  cnaeCode,
+  cnaeText,
   legalForm,
   status,
-  constitutionDate,
-  address: { street, city, province, country },
+  incorporationDate,
+  address,
+  postalCode,
+  city,
+  province,
+  country,
   website,
-  capitalSocial,
-  sourceId
+  capitalSocial
 }
 ```
 
-## Campos operativos ? TenantProfile
+## Campos operativos -> TenantProfile
 
 - **legalName / name**
-  - si `company.legalName` existe ? usar como nombre fiscal
-  - si no ? `company.name`
-- **taxId / nif** ? `company.nif`
-- **website** ? `company.website`
-- **legalForm** ? `company.legalForm`
-- **status** ? `company.status`
-- **constitutionDate** ? `company.constitutionDate` (Date)
-- **capitalSocial** ? `company.capitalSocial`
+  - si `normalized.legalName` existe -> usar como nombre fiscal
+  - si no -> `normalized.name`
+- **taxId / nif** -> `normalized.nif`
+- **website** -> `normalized.website`
+- **legalForm** -> `normalized.legalForm`
+- **status** -> `normalized.status`
+- **incorporationDate** -> `normalized.incorporationDate`
+- **capitalSocial** -> `normalized.capitalSocial`
 
 ### CNAE
 
 - `cnaeCode` = parte izquierda (ej. `8532`)
-- `cnaeText` = parte derecha (ej. `Educaci�n secundaria t�cnica y profesional`)
+- `cnaeText` = parte derecha (ej. `Educacion secundaria tecnica y profesional`)
 
-### Direcci�n
+### Direccion
 
-- `street` = `address.street`
-- `province` = `address.province`
-- `country` = `address.country`
-- `city` y `postalCode` se normalizan (ver abajo)
+- `address` = `normalized.address`
+- `postalCode` = `normalized.postalCode`
+- `city` = `normalized.city`
+- `province` = `normalized.province`
+- `country` = `normalized.country`
 
 ### Metadatos
 
-- `einformaSourceId` = `company.sourceId`
+- `einformaSourceId` = `normalized.sourceId`
 - `einformaLastSyncAt` = now()
 - `einformaTaxIdVerified` = true
 - `einformaRaw` = snapshot completo (JSON)
 
-## Normalizaci�n recomendada (city + postalCode)
+## Normalizacion recomendada (city + postalCode)
 
 Si `address.city` viene como:
 
@@ -67,16 +74,15 @@ Regex MVP:
 ^(\d{5})\s+([^()]+)(?:\s*\(.*\))?$
 ```
 
-Si no hay match, dejar `postalCode` vac�o y limpiar `city` quitando lo que hay entre par�ntesis.
-
-## Snapshot m�ximo valor (sin gastar llamadas extra)
+## Snapshot maximo valor (sin gastar llamadas extra)
 
 - Guardar el `raw` completo (`einformaRaw`).
 - Renderizar tabs extra (BORME/cuentas/representantes) solo si existen en `raw`.
-- Si luego hay endpoints premium, a�adir bot�n **Actualizar** con aviso de coste.
+- Si luego hay endpoints premium, anadir boton **Actualizar** con aviso de coste.
 
-## UI recomendada (para ahorrar cr�ditos)
+## UI recomendada (para ahorrar creditos)
 
-- **B�squeda**: solo por nombre/CIF con resultados m�nimos.
+- **Busqueda**: solo por nombre/CIF con resultados minimos.
 - **Detalle**: llamar `/company` solo al seleccionar un resultado.
 - **Guardar**: persistir en TenantProfile + snapshot.
+- **Admin**: mostrar badge Snapshot/Live y boton **Actualizar** (refresh=1).

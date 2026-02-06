@@ -2,6 +2,7 @@
 
 import { EInformaSearch } from '@/components/companies/EInformaSearch';
 import { useToast } from '@/components/notifications/ToastNotifications';
+import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -22,6 +23,29 @@ export default function NewCompanyPage() {
     postal_code: '',
     country: 'ES',
   });
+
+  function applyNormalized(normalized: {
+    name?: string | null;
+    legalName?: string | null;
+    nif?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    province?: string | null;
+    country?: string | null;
+    website?: string | null;
+  }) {
+    setFormData((prev) => ({
+      ...prev,
+      name: prev.name || normalized.name || normalized.legalName || '',
+      legal_name: prev.legal_name || normalized.legalName || normalized.name || '',
+      tax_id: prev.tax_id || normalized.nif || '',
+      address: prev.address || normalized.address || '',
+      city: prev.city || normalized.city || '',
+      postal_code: prev.postal_code || normalized.postalCode || '',
+      country: prev.country || normalized.country || prev.country,
+    }));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -178,6 +202,13 @@ export default function NewCompanyPage() {
                 value={formData.tax_id}
                 onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <EinformaAutofillButton
+                taxIdValue={formData.tax_id}
+                onApply={applyNormalized}
+                endpoint="/api/admin/einforma/profile"
               />
             </div>
 

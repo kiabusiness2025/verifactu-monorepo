@@ -1,31 +1,14 @@
-import { NextResponse } from 'next/server';
+import { prisma } from '@verifactu/db';
 import {
-  signSessionToken,
-  readSessionSecret,
-  buildSessionCookieOptions,
-  type SessionPayload,
+    buildSessionCookieOptions,
+    readSessionSecret,
+    signSessionToken,
+    type SessionPayload,
 } from '@verifactu/utils';
 import admin from 'firebase-admin';
-import { Pool } from 'pg';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
-
-let pool: Pool | null = null;
-
-function getDbPool() {
-  if (!pool) {
-    const directUrl =
-      process.env.DIRECT_DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
-    if (!directUrl) {
-      throw new Error('Missing DATABASE_URL/DIRECT_DATABASE_URL/POSTGRES_URL');
-    }
-    pool = new Pool({
-      connectionString: directUrl,
-      ssl: directUrl.includes('sslmode=require') ? { rejectUnauthorized: false } : false,
-    });
-  }
-  return pool;
-}
 
 function requireEnv(name: string) {
   const v = process.env[name];
@@ -49,32 +32,46 @@ function initFirebaseAdmin() {
 }
 
 async function getTenantForUser(uid: string, email: string, displayName?: string) {
-  const dbPool = getDbPool();
-
   // Usar el nombre de Firebase si está disponible, sino el email
   const userName = displayName || email.split('@')[0];
 
-  await dbPool.query(
-    `INSERT INTO users (id, email, name)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (email)
-     DO UPDATE SET name = EXCLUDED.name, updated_at = NOW()
-     RETURNING id`,
-    [uid, email, userName]
-  );
+  let user = await prisma.user.findFirst({
+    where: { authSubject: uid },
+  });
 
-  const membershipResult = await dbPool.query(
-    `SELECT tenant_id FROM memberships
-     WHERE user_id = $1 AND status = 'active'
-     LIMIT 1`,
-    [uid]
-  );
-
-  if (membershipResult.rows.length > 0) {
-    return membershipResult.rows[0].tenant_id as string;
+  if (!user && email) {
+    user = await prisma.user.findFirst({
+      where: { email },
+    });
   }
 
-  return null;
+  if (user) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email,
+        name: userName,
+        authProvider: 'FIREBASE',
+        authSubject: uid,
+      },
+    });
+  } else {
+    user = await prisma.user.create({
+      data: {
+        email,
+        name: userName,
+        authProvider: 'FIREBASE',
+        authSubject: uid,
+      },
+    });
+  }
+
+  const membership = await prisma.membership.findFirst({
+    where: { userId: user.id, status: 'active' },
+    select: { tenantId: true },
+  });
+
+  return membership?.tenantId ?? null;
 }
 
 export async function POST(req: Request) {
@@ -92,7 +89,11 @@ export async function POST(req: Request) {
     const userRecord = await admin.auth().getUser(decoded.uid);
     const displayName = userRecord.displayName || decoded.name || undefined;
 
-    const tenantId = await getTenantForUser(decoded.uid, decoded.email || '', displayName);
+    if (!decoded.email) {
+      return NextResponse.json({ error: 'Missing email' }, { status: 400 });
+    }
+
+    const tenantId = await getTenantForUser(decoded.uid, decoded.email, displayName);
 
     const rolesRaw = (decoded as any).roles ?? (decoded as any).role ?? [];
     const tenantsRaw = (decoded as any).tenants ?? (decoded as any).tenant ?? [];

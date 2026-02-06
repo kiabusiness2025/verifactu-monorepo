@@ -3,6 +3,7 @@
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
 import { useToast } from '@/components/notifications/ToastNotifications';
+import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import {
   Building2,
   Download,
@@ -57,6 +58,27 @@ export default function ClientsPage() {
     paymentTerms: 'Contado',
     notes: '',
   });
+
+  const applyEinforma = (normalized: {
+    name?: string | null;
+    legalName?: string | null;
+    nif?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    country?: string | null;
+  }) => {
+    setFormData((prev) => ({
+      ...prev,
+      name: prev.name || normalized.legalName || normalized.name || '',
+      company: prev.company || normalized.name || normalized.legalName || '',
+      nif: prev.nif || normalized.nif || prev.nif,
+      address: prev.address || normalized.address || '',
+      postalCode: prev.postalCode || normalized.postalCode || '',
+      city: prev.city || normalized.city || '',
+      country: prev.country || normalized.country || prev.country,
+    }));
+  };
 
   useEffect(() => {
     loadClients();
@@ -447,6 +469,12 @@ export default function ClientsPage() {
                   value={formData.nif}
                   onChange={(e) => setFormData({ ...formData, nif: e.target.value })}
                 />
+                <div className="sm:col-span-2">
+                  <EinformaAutofillButton
+                    taxIdValue={formData.nif}
+                    onApply={(normalized) => applyEinforma(normalized)}
+                  />
+                </div>
                 <AccessibleInput
                   label="Condiciones de pago"
                   type="text"

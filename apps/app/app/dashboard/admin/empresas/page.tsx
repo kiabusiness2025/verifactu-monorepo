@@ -3,6 +3,7 @@
 import { useToast } from '@/components/notifications/ToastNotifications';
 import { adminDelete, adminGet, adminPatch, adminPost, type TenantRow } from '@/lib/adminApi';
 import { formatCurrency, formatNumber } from '@/src/lib/formatters';
+import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import { Building2, Pencil, Plus, Trash2, TrendingUp, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -24,6 +25,11 @@ export default function AdminEmpresasPage() {
     address: '',
     cnae: '',
   });
+  const [einformaMeta, setEinformaMeta] = useState<{
+    cached?: boolean;
+    cacheSource?: string | null;
+    lastSyncAt?: string | null;
+  } | null>(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -45,6 +51,7 @@ export default function AdminEmpresasPage() {
   function openCreateModal() {
     setEditingTenant(null);
     setFormData({ legalName: '', taxId: '', address: '', cnae: '' });
+    setEinformaMeta(null);
     setError('');
     setShowModal(true);
   }
@@ -57,8 +64,26 @@ export default function AdminEmpresasPage() {
       address: tenant.address || '',
       cnae: tenant.cnae || '',
     });
+    setEinformaMeta(null);
     setError('');
     setShowModal(true);
+  }
+
+  function applyNormalized(normalized: {
+    legalName?: string | null;
+    name?: string | null;
+    nif?: string | null;
+    address?: string | null;
+    cnae?: string | null;
+    cnaeCode?: string | null;
+  }) {
+    setFormData((prev) => ({
+      ...prev,
+      legalName: prev.legalName || normalized.legalName || normalized.name || '',
+      taxId: prev.taxId || normalized.nif || '',
+      address: prev.address || normalized.address || '',
+      cnae: prev.cnae || normalized.cnae || normalized.cnaeCode || '',
+    }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -262,6 +287,22 @@ export default function AdminEmpresasPage() {
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="B12345678"
                 />
+              </div>
+              <div>
+                <EinformaAutofillButton
+                  taxIdValue={formData.taxId}
+                  onApply={(normalized, meta) => {
+                    applyNormalized(normalized);
+                    setEinformaMeta(meta);
+                  }}
+                  endpoint="/api/admin/einforma/profile"
+                />
+                {einformaMeta?.lastSyncAt ? (
+                  <div className="mt-2 text-xs text-slate-500">
+                    {einformaMeta.cached ? 'Snapshot (<=30 dias)' : 'eInforma (live)'} · Actualizado:{' '}
+                    {einformaMeta.lastSyncAt}
+                  </div>
+                ) : null}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
