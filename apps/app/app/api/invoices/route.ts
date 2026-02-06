@@ -103,9 +103,10 @@ export async function POST(req: NextRequest) {
         customerName: data.customerName || 'Por especificar',
         number: data.number,
         issueDate: new Date(data.issueDate),
-        status: 'pending',
+        status: 'draft',
         amountNet: data.lineItems.reduce(
-          (sum: number, line: any) => sum + line.quantity * line.unitPrice * (1 - line.discount / 100),
+          (sum: number, line: any) =>
+            sum + line.quantity * line.unitPrice * (1 - line.discount / 100),
           0
         ),
         amountTax: data.lineItems.reduce(
@@ -134,9 +135,11 @@ export async function POST(req: NextRequest) {
     });
 
     // Update amountGross
-    const netAmount = typeof invoice.amountNet === 'number' ? invoice.amountNet : invoice.amountNet.toNumber();
-    const taxAmount = typeof invoice.amountTax === 'number' ? invoice.amountTax : invoice.amountTax.toNumber();
-    
+    const netAmount =
+      typeof invoice.amountNet === 'number' ? invoice.amountNet : invoice.amountNet.toNumber();
+    const taxAmount =
+      typeof invoice.amountTax === 'number' ? invoice.amountTax : invoice.amountTax.toNumber();
+
     const updated = await prisma.invoice.update({
       where: { id: invoice.id },
       data: {
@@ -168,9 +171,9 @@ export async function POST(req: NextRequest) {
       await prisma.auditLog.create({
         data: {
           actorUserId,
-          action: "COMPANY_VIEW",
+          action: 'COMPANY_VIEW',
           metadata: {
-            action: "INVOICE.CREATE",
+            action: 'INVOICE.CREATE',
             tenantId,
             invoiceId: updated.id,
             supportMode: resolved.supportMode,

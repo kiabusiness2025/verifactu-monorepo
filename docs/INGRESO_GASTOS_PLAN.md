@@ -43,7 +43,7 @@ Si confirmas, preparo la primera etapa (PDF) con pantallas simples y flujo compl
 ## Estado actual (PDF + foto + Excel)
 
 - Pantalla de documentos con subida de PDF, foto o Excel.
-- Mensaje claro de que Isaak revisa y registra si corresponde.
+- Tras subir, Isaak solicita fecha, importe y descripción para registrar.
 
 ## Preparación para voz (más adelante)
 

@@ -157,6 +157,7 @@ export async function POST(request: NextRequest) {
     const expense = await prisma.expenseRecord.create({
       data: {
         tenantId,
+        status: 'received',
         date: new Date(expenseInput.date),
         description: expenseInput.description,
         category: categoryName,

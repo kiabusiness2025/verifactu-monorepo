@@ -656,6 +656,7 @@ model ExpenseRecord {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId    String   @map("tenant_id") @db.Uuid
   supplierId  String?  @map("supplier_id") @db.Uuid
+  status      String   @default("received")
   date        DateTime @map("date") @db.Date
   description String
   category    String

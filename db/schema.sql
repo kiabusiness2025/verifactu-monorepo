@@ -154,6 +154,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     amount_gross     numeric(14,2) NOT NULL,
     amount_tax       numeric(14,2) NOT NULL DEFAULT 0,
     amount_net       numeric(14,2) NOT NULL,
+    status           text NOT NULL DEFAULT 'received',
     source           text,        -- 'upload','email','isaak-scan', etc.
     is_deductible    boolean,
     deduction_reason text,

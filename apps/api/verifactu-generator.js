@@ -3,8 +3,8 @@
  * Genera códigos QR y huellas digitales según normativa AEAT
  */
 
-const crypto = require('crypto');
-const QRCode = require('qrcode');
+import { createHash } from 'crypto';
+import QRCode from 'qrcode';
 
 /**
  * Calcula el hash SHA-256 de la factura para cadena VeriFactu
@@ -12,7 +12,7 @@ const QRCode = require('qrcode');
  * @param {string|null} previousHash - Hash de la factura anterior (null si es la primera)
  * @returns {string} Hash hexadecimal
  */
-function calculateInvoiceHash(invoice, previousHash = null) {
+export function calculateInvoiceHash(invoice, previousHash = null) {
   // Datos a incluir en el hash según normativa VeriFactu
   const dataString = [
     invoice.nif || invoice.tenant_nif,
@@ -21,10 +21,10 @@ function calculateInvoiceHash(invoice, previousHash = null) {
     invoice.amountNet || invoice.amount_net,
     invoice.amountTax || invoice.amount_tax,
     invoice.amountGross || invoice.amount_gross,
-    previousHash || '' // Cadena de bloques
+    previousHash || '', // Cadena de bloques
   ].join('|');
 
-  const hash = crypto.createHash('sha256').update(dataString).digest('hex');
+  const hash = createHash('sha256').update(dataString).digest('hex');
   return hash;
 }
 
@@ -34,25 +34,28 @@ function calculateInvoiceHash(invoice, previousHash = null) {
  * @param {string} hash - Hash de la factura
  * @returns {Promise<string>} Imagen QR en base64
  */
-async function generateInvoiceQR(invoice, hash) {
+export async function generateInvoiceQR(invoice, hash) {
   // URL con datos VeriFactu para validación AEAT
   const qrData = {
     nif: invoice.nif || invoice.tenant_nif,
     numero: invoice.number,
     fecha: invoice.issueDate,
     importe: invoice.amountGross || invoice.amount_gross,
-    hash: hash.substring(0, 16) // Primeros 16 caracteres del hash
+    hash: hash.substring(0, 16), // Primeros 16 caracteres del hash
   };
 
-  const qrString = `https://verifactu.agenciatributaria.gob.es/verify?` +
-    Object.entries(qrData).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  const qrString =
+    `https://verifactu.agenciatributaria.gob.es/verify?` +
+    Object.entries(qrData)
+      .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+      .join('&');
 
   try {
     // Generar QR como data URL (base64)
     const qrImage = await QRCode.toDataURL(qrString, {
       errorCorrectionLevel: 'M',
       width: 256,
-      margin: 2
+      margin: 2,
     });
     return qrImage;
   } catch (err) {
@@ -67,14 +70,14 @@ async function generateInvoiceQR(invoice, hash) {
  * @param {string|null} previousHash - Hash de la factura anterior
  * @returns {Promise<Object>} { hash, qr }
  */
-async function processInvoiceVeriFactu(invoice, previousHash = null) {
+export async function processInvoiceVeriFactu(invoice, previousHash = null) {
   const hash = calculateInvoiceHash(invoice, previousHash);
   const qr = await generateInvoiceQR(invoice, hash);
 
   return {
     verifactu_hash: hash,
     verifactu_qr: qr,
-    verifactu_status: 'pending'
+    verifactu_status: 'pending',
   };
 }
 
@@ -84,21 +87,21 @@ async function processInvoiceVeriFactu(invoice, previousHash = null) {
  * @param {string} tenantId - UUID del tenant
  * @returns {Promise<string|null>} Último hash o null
  */
-async function getLastInvoiceHash(db, tenantId) {
+export async function getLastInvoiceHash(db, tenantId) {
   try {
     // Si es Prisma
     if (db.invoice && typeof db.invoice.findFirst === 'function') {
       const lastInvoice = await db.invoice.findFirst({
-        where: { 
+        where: {
           tenantId,
-          verifactuHash: { not: null }
+          verifactuHash: { not: null },
         },
         orderBy: { createdAt: 'desc' },
-        select: { verifactuHash: true }
+        select: { verifactuHash: true },
       });
       return lastInvoice?.verifactuHash || null;
     }
-    
+
     // Si es cliente PostgreSQL directo
     if (typeof db.query === 'function') {
       const result = await db.query(
@@ -116,10 +119,3 @@ async function getLastInvoiceHash(db, tenantId) {
     return null;
   }
 }
-
-module.exports = {
-  calculateInvoiceHash,
-  generateInvoiceQR,
-  processInvoiceVeriFactu,
-  getLastInvoiceHash
-};

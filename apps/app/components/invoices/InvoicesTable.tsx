@@ -1,12 +1,19 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
+import { useState } from 'react';
+import { formatCurrency, formatShortDate } from '@/src/lib/formatters';
 import { useCustomers } from '@/lib/hooks/useCustomers';
 import { CheckCircle, AlertCircle, Clock, QrCode } from 'lucide-react';
 import { InvoiceQR } from './InvoiceQR';
 
-export function InvoicesTable({ invoices, loading, pagination, onEdit, onDelete, onPageChange }: any) {
+export function InvoicesTable({
+  invoices,
+  loading,
+  pagination,
+  onEdit,
+  onDelete,
+  onPageChange,
+}: any) {
   const { customers } = useCustomers();
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
 
@@ -16,12 +23,17 @@ export function InvoicesTable({ invoices, loading, pagination, onEdit, onDelete,
 
   const getVeriFactuBadge = (status?: string | null) => {
     if (!status) return null;
-    
+
     const configs = {
-      validated: { icon: CheckCircle, bg: 'bg-green-100', text: 'text-green-700', label: 'Validado' },
+      validated: {
+        icon: CheckCircle,
+        bg: 'bg-green-100',
+        text: 'text-green-700',
+        label: 'Validado',
+      },
       pending: { icon: Clock, bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pendiente' },
       error: { icon: AlertCircle, bg: 'bg-red-100', text: 'text-red-700', label: 'Error' },
-      sent: { icon: Clock, bg: 'bg-blue-100', text: 'text-blue-700', label: 'Enviado' }
+      sent: { icon: Clock, bg: 'bg-blue-100', text: 'text-blue-700', label: 'Enviado' },
     };
 
     const config = configs[status as keyof typeof configs];
@@ -29,8 +41,30 @@ export function InvoicesTable({ invoices, loading, pagination, onEdit, onDelete,
 
     const Icon = config.icon;
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${config.bg} ${config.text}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${config.bg} ${config.text}`}
+      >
         <Icon className="w-3 h-3" />
+        {config.label}
+      </span>
+    );
+  };
+
+  const getInvoiceStatusBadge = (status?: string | null) => {
+    const value = status || 'pending';
+    const configs = {
+      draft: { bg: 'bg-slate-100', text: 'text-slate-700', label: 'Borrador' },
+      pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pendiente' },
+      sent: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Enviada' },
+      paid: { bg: 'bg-green-100', text: 'text-green-700', label: 'Pagada' },
+      overdue: { bg: 'bg-red-100', text: 'text-red-700', label: 'Vencida' },
+      canceled: { bg: 'bg-slate-200', text: 'text-slate-700', label: 'Cancelada' },
+    };
+    const config = configs[value as keyof typeof configs] || configs.pending;
+    return (
+      <span
+        className={`inline-block px-2 py-1 rounded text-xs font-medium ${config.bg} ${config.text}`}
+      >
         {config.label}
       </span>
     );
@@ -69,11 +103,7 @@ export function InvoicesTable({ invoices, loading, pagination, onEdit, onDelete,
                 <td className="px-6 py-3 text-right font-medium text-gray-900">
                   {formatCurrency(invoice.amountGross || 0)}
                 </td>
-                <td className="px-6 py-3">
-                  <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">
-                    Pendiente
-                  </span>
-                </td>
+                <td className="px-6 py-3">{getInvoiceStatusBadge(invoice.status)}</td>
                 <td className="px-6 py-3 text-center">
                   {invoice.verifactuStatus ? (
                     <button
@@ -114,7 +144,9 @@ export function InvoicesTable({ invoices, loading, pagination, onEdit, onDelete,
                 key={i + 1}
                 onClick={() => onPageChange(i + 1)}
                 className={`px-3 py-1 rounded ${
-                  pagination.page === i + 1 ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300'
+                  pagination.page === i + 1
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white border border-gray-300'
                 }`}
               >
                 {i + 1}
@@ -126,11 +158,22 @@ export function InvoicesTable({ invoices, loading, pagination, onEdit, onDelete,
 
       {/* Modal QR VeriFactu */}
       {selectedInvoice && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedInvoice(null)}>
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setSelectedInvoice(null)}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Factura {selectedInvoice.number}</h3>
-              <button onClick={() => setSelectedInvoice(null)} className="text-gray-500 hover:text-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Factura {selectedInvoice.number}
+              </h3>
+              <button
+                onClick={() => setSelectedInvoice(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
                 ✕
               </button>
             </div>

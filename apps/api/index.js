@@ -134,6 +134,12 @@ const WSDL_FILE = process.env.AEAT_WSDL_FILE || '/var/secrets/aeat_wsdl/wsdl_url
 
 app.get('/api/healthz', (_req, res) => res.status(200).send('ok'));
 
+app.get('/', (_req, res) =>
+  res
+    .status(200)
+    .json({ ok: true, service: 'verifactu-api', status: 'online', health: '/api/healthz' })
+);
+
 function buildEmptyDashboardSummary(extra = {}) {
   return {
     totals: { sales: 0, expenses: 0, profit: 0 },
@@ -233,7 +239,7 @@ app.post('/api/verifactu/register-invoice', async (req, res) => {
 const PORT = process.env.PORT || 8080;
 
 // Solo iniciar el servidor si el script se ejecuta directamente
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   app.listen(PORT, () => log.info(`API listening on :${PORT}`));
 }
 

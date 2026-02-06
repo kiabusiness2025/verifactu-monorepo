@@ -12,3 +12,4 @@ yarn-error.log*
 # Build output
 /dist
 .vercel
+.env*.local
