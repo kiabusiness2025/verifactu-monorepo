@@ -1,27 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Transpile workspace packages
-  transpilePackages: ['@verifactu/ui', '@verifactu/utils'],
-  
+  transpilePackages: ['@verifactu/ui', '@verifactu/utils', '@verifactu/db'],
+
   // Skip linting during builds
   eslint: { ignoreDuringBuilds: true },
-  
+
   // Production configuration
   poweredByHeader: false,
   compress: true,
-  
+
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000, // 1 year
   },
-  
+
   // Cache and rebuild
   onDemandEntries: {
     maxInactiveAge: 1000,
     pagesBufferLength: 2,
   },
-  
+
   // Webpack configuration para manejar dependencias opcionales
   webpack: (config, { isServer }) => {
     if (isServer) {
@@ -29,7 +29,7 @@ const nextConfig = {
     }
     return config;
   },
-  
+
   // Headers for security and performance
   headers: async () => {
     return [
@@ -38,23 +38,23 @@ const nextConfig = {
         headers: [
           {
             key: 'X-DNS-Prefetch-Control',
-            value: 'on'
+            value: 'on',
           },
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
+            value: 'strict-origin-when-cross-origin',
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(), microphone=(), geolocation=()',
           },
         ],
       },
@@ -80,7 +80,7 @@ const nextConfig = {
       },
     ];
   },
-  
+
   // Rewrites para esos sitemap y robots
   rewrites: async () => {
     return {

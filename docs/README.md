@@ -27,6 +27,7 @@
 - [ops/deployment/VERCEL_DEPLOYMENT_GUIDE.md](ops/deployment/VERCEL_DEPLOYMENT_GUIDE.md) - Vercel
 - [ops/deployment/CLOUD_RUN_QUICK_REFERENCE.md](ops/deployment/CLOUD_RUN_QUICK_REFERENCE.md) - Cloud Run
 - [ops/deployment/GITHUB_CLOUD_BUILD_SETUP.md](ops/deployment/GITHUB_CLOUD_BUILD_SETUP.md) - CI/CD
+- [ops/CI_CHECKLIST.md](ops/CI_CHECKLIST.md) - Checklist mínimo de CI
 
 **legacy/root/**
 
