@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { normalizeCanonicalExpense } from '@/lib/expenses/canonical';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -33,18 +34,18 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     const where: any = { tenantId };
-    
+
     if (search) {
       where.OR = [
         { description: { contains: search, mode: 'insensitive' } },
         { reference: { contains: search, mode: 'insensitive' } },
       ];
     }
-    
+
     if (category) {
       where.category = { contains: category, mode: 'insensitive' };
     }
-    
+
     if (fromDate && toDate) {
       where.date = {
         gte: new Date(fromDate),
@@ -98,37 +99,34 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const {
-      date,
-      description,
-      amount,
-      taxRate,
-      supplierId,
-      accountCode,
-      reference,
-      notes,
-      source,
-      categoryId,
-    } = body;
-
-    if (!date || !description || !amount) {
+    let expenseInput;
+    try {
+      expenseInput = normalizeCanonicalExpense({
+        tenantId,
+        date: body?.date,
+        description: body?.description,
+        amount: Number(body?.amount),
+        taxRate: body?.taxRate ? Number(body?.taxRate) : undefined,
+        categoryId: body?.categoryId ? Number(body?.categoryId) : undefined,
+        reference: body?.reference,
+        notes: body?.notes,
+        source: body?.source,
+      });
+    } catch (error) {
       return NextResponse.json(
-        { error: 'Falta información del gasto' },
+        { error: error instanceof Error ? error.message : 'Falta información del gasto' },
         { status: 400 }
       );
     }
 
-    if (source !== 'isaak' || !categoryId) {
-      return NextResponse.json(
-        { error: 'Para registrar un gasto, usa Isaak' },
-        { status: 400 }
-      );
+    if (expenseInput.source !== 'isaak' || !expenseInput.categoryId) {
+      return NextResponse.json({ error: 'Para registrar un gasto, usa Isaak' }, { status: 400 });
     }
 
     // Verify supplier ownership if provided
-    if (supplierId) {
+    if (body?.supplierId) {
       const supplier = await prisma.supplier.findFirst({
-        where: { id: supplierId, tenantId },
+        where: { id: body.supplierId, tenantId },
       });
       if (!supplier) {
         return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
@@ -138,7 +136,7 @@ export async function POST(request: NextRequest) {
     const categories = await prisma.$queryRaw<{ name: string; is_deductible: boolean }[]>`
       SELECT name, is_deductible
       FROM expense_categories
-      WHERE id = ${Number(categoryId)}
+      WHERE id = ${expenseInput.categoryId}
       LIMIT 1
     `;
 
@@ -148,19 +146,25 @@ export async function POST(request: NextRequest) {
 
     const categoryName = categories[0].name;
     const isDeductible = categories[0].is_deductible;
-    const noteParts = [notes, `Deducible:${isDeductible ? 'sí' : 'no'}`].filter(Boolean).join(' | ');
+    const noteParts = [
+      expenseInput.notes,
+      `Deducible:${isDeductible ? 'sí' : 'no'}`,
+      `Origen:${expenseInput.source}`,
+    ]
+      .filter(Boolean)
+      .join(' | ');
 
     const expense = await prisma.expenseRecord.create({
       data: {
         tenantId,
-        date: new Date(date),
-        description,
+        date: new Date(expenseInput.date),
+        description: expenseInput.description,
         category: categoryName,
-        amount: parseFloat(amount),
-        taxRate: parseFloat(taxRate) || 0.21,
-        supplierId: supplierId || null,
-        accountCode: accountCode || null,
-        reference: reference || null,
+        amount: expenseInput.amount,
+        taxRate: expenseInput.taxRate,
+        supplierId: body?.supplierId || null,
+        accountCode: body?.accountCode || null,
+        reference: expenseInput.reference || null,
         notes: noteParts || null,
       },
       include: { supplier: { select: { id: true, name: true } } },
@@ -186,9 +190,9 @@ export async function POST(request: NextRequest) {
       await prisma.auditLog.create({
         data: {
           actorUserId,
-          action: "COMPANY_VIEW",
+          action: 'COMPANY_VIEW',
           metadata: {
-            action: "EXPENSE.CREATE",
+            action: 'EXPENSE.CREATE',
             tenantId,
             expenseId: expense.id,
             supportMode: resolved.supportMode,

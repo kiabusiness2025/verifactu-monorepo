@@ -4,22 +4,22 @@
 
 ```ts
 normalized: {
-  name,
-  nif,
-  sourceId,
-  cnae,
-  cnaeCode,
-  cnaeText,
-  legalForm,
-  status,
-  incorporationDate,
-  address,
-  postalCode,
-  city,
-  province,
-  country,
-  website,
-  capitalSocial
+  (name,
+    nif,
+    sourceId,
+    cnae,
+    cnaeCode,
+    cnaeText,
+    legalForm,
+    status,
+    incorporationDate,
+    address,
+    postalCode,
+    city,
+    province,
+    country,
+    website,
+    capitalSocial);
 }
 ```
 

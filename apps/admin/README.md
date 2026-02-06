@@ -3,6 +3,7 @@
 Panel de administracion para gestion de usuarios, empresas, suscripciones y operaciones.
 
 ## Stack
+
 - Next.js 14 (App Router)
 - TypeScript
 - Prisma + Postgres
@@ -12,6 +13,7 @@ Panel de administracion para gestion de usuarios, empresas, suscripciones y oper
 - Firebase Admin (sincronizacion)
 
 ## Estructura
+
 ```
 apps/admin/
 +-- app/           # rutas y paginas
@@ -22,7 +24,9 @@ apps/admin/
 ```
 
 ## Sitemap (control tower)
+
 Rutas nuevas (no eliminan las rutas legacy `/dashboard/admin/*`):
+
 - `/login`, `/logout`
 - `/dashboard`
 - `/tenants`, `/tenants/new`, `/tenants/[id]`, `/tenants/[id]/overview`
@@ -38,6 +42,7 @@ Rutas nuevas (no eliminan las rutas legacy `/dashboard/admin/*`):
 - `/settings`
 
 APIs sugeridas (admin):
+
 - `/api/health`
 - `/api/admin/tenants` (POST crear)
 - `/api/admin/support-sessions/start` (POST iniciar)
@@ -46,6 +51,7 @@ APIs sugeridas (admin):
 - `/api/admin/operations/retry` (POST reintentos)
 
 ## Variables de entorno (minimo)
+
 Recomendado en `apps/admin/.env.local`:
 
 ```
@@ -91,31 +97,38 @@ GITHUB_TOKEN=
 ```
 
 Documentacion eInforma:
+
 - `docs/runbooks/einforma-credentials.md`
 - `docs/runbooks/einforma-mapping.md`
 
 ## Arranque local
+
 El script de `dev` ya fija el puerto 3003. Usa:
+
 ```
 pnpm --filter verifactu-admin dev
 ```
+
 URL local: `http://localhost:3003`
 
 ## Migraciones y seed
+
 ```
 pnpm -F @verifactu/db exec prisma migrate deploy
 pnpm -F @verifactu/db exec prisma db seed
 ```
 
 ## Troubleshooting rapido
+
 - `Invalid DATABASE_URL`: revisa que comience con `postgres://` y no tenga comentarios al final.
 - `relation does not exist`: faltan migraciones en la BD.
 - NextAuth warnings (dev): `NEXTAUTH_URL` y `NEXTAUTH_SECRET` deben existir.
 
 ## Siguientes pasos
-1) Reemplazar placeholders por datos reales en tenants/billing/integrations.
-2) Anadir handlers reales para soporte (handoff seguro, expiracion de token).
-3) Conectar Resend y Stripe con datos reales.
-4) Revisar permisos SUPPORT y logs de auditoria.
+
+1. Reemplazar placeholders por datos reales en tenants/billing/integrations.
+2. Anadir handlers reales para soporte (handoff seguro, expiracion de token).
+3. Conectar Resend y Stripe con datos reales.
+4. Revisar permisos SUPPORT y logs de auditoria.
 
 Actualizado: enero 2026

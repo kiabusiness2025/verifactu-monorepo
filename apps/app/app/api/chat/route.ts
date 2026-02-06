@@ -1,10 +1,11 @@
 ﻿// Eliminado @ts-nocheck: el archivo debe compilar con tipado estricto
 import {
-    calculateTenantProfit,
-    getCurrentMonthSummary,
-    getExpenseCategories,
-    getPendingVeriFactuInvoices,
+  calculateTenantProfit,
+  getCurrentMonthSummary,
+  getExpenseCategories,
+  getPendingVeriFactuInvoices,
 } from '@/lib/db-queries';
+import { normalizeCanonicalExpense } from '@/lib/expenses/canonical';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { getCompanyProfileByNif, searchCompanies } from '@/server/einforma';
@@ -332,25 +333,53 @@ export async function POST(req: Request) {
 
             const categoryName = matchedCategory?.name || 'Otros gastos';
             const isDeductible = matchedCategory?.is_deductible ?? true;
-            const rate = typeof taxRate === 'number' ? taxRate : 0.21;
+
+            let canonical;
+            try {
+              canonical = normalizeCanonicalExpense({
+                tenantId: activeTenantId,
+                date,
+                description,
+                amount,
+                taxRate,
+                categoryId: matchedCategory?.id,
+                categoryName,
+                deductible: isDeductible,
+                reference,
+                notes,
+                source: 'isaak',
+              });
+            } catch (error) {
+              return {
+                ok: false,
+                message: error instanceof Error ? error.message : 'Datos de gasto inválidos',
+              };
+            }
 
             const expense = await prisma.expenseRecord.create({
               data: {
-                tenantId: activeTenantId,
-                date: new Date(date),
-                description,
-                category: categoryName,
-                amount,
-                taxRate: rate,
-                reference: reference || null,
-                notes: [notes, `Deducible:${isDeductible ? 'sí' : 'no'}`].filter(Boolean).join(' | ') || null,
+                tenantId: canonical.tenantId,
+                date: new Date(canonical.date),
+                description: canonical.description,
+                category: canonical.categoryName || categoryName,
+                amount: canonical.amount,
+                taxRate: canonical.taxRate,
+                reference: canonical.reference || null,
+                notes:
+                  [
+                    canonical.notes,
+                    `Deducible:${isDeductible ? 'sí' : 'no'}`,
+                    `Origen:${canonical.source}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' | ') || null,
               },
             });
 
             return {
               ok: true,
               expenseId: expense.id,
-              categoryName,
+              categoryName: canonical.categoryName || categoryName,
               deductible: isDeductible,
               message: `Gasto registrado como ${categoryName}${isDeductible ? '' : ' (no deducible)'}.`,
             };
