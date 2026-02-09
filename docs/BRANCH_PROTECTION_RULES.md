@@ -13,10 +13,9 @@ Este documento describe las reglas de protección de ramas configuradas en Verif
 
 2. **Require status checks to pass before merging**
    - Required checks:
-     - ESLint Validation
-     - TypeScript Compilation
-     - Build Verification
-     - Test Suite
+       - Pre-Deployment Validation / Validate App Build
+       - Pre-Deployment Validation / Validate Landing Build
+       - Build Check - Admin Panel / Build Admin Panel
    - Require branches to be up to date: YES
 
 3. **Require code owner review**
@@ -53,10 +52,9 @@ Este documento describe las reglas de protección de ramas configuradas en Verif
 
 2. **Require status checks to pass before merging**
    - Required checks:
-     - ESLint Validation
-     - TypeScript Compilation
-     - Build Verification
-     - Test Suite
+   - Pre-Deployment Validation / Validate App Build
+   - Pre-Deployment Validation / Validate Landing Build
+   - Build Check - Admin Panel / Build Admin Panel
 
 3. **Allow force pushes**: NO
 4. **Allow deletions**: NO

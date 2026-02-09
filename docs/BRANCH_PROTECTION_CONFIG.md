@@ -14,8 +14,9 @@
 
 **Required Checks**:
 
-- ✅ `Validate App Build` - Ensures apps/app compiles successfully
-- ✅ `Validate Landing Build` - Ensures apps/landing compiles successfully
+- ✅ `Pre-Deployment Validation / Validate App Build` - Ensures apps/app compiles successfully
+- ✅ `Pre-Deployment Validation / Validate Landing Build` - Ensures apps/landing compiles successfully
+- ✅ `Build Check - Admin Panel / Build Admin Panel` - Ensures apps/admin compiles successfully
 
 ### Other Settings
 
@@ -88,7 +89,11 @@ gh api repos/kiabusiness2025/verifactu-monorepo/branches/main/protection \
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": ["Validate App Build", "Validate Landing Build"]
+    "contexts": [
+      "Pre-Deployment Validation / Validate App Build",
+      "Pre-Deployment Validation / Validate Landing Build",
+      "Build Check - Admin Panel / Build Admin Panel"
+    ]
   },
   "enforce_admins": false,
   "required_pull_request_reviews": null,
@@ -101,10 +106,11 @@ gh api repos/kiabusiness2025/verifactu-monorepo/branches/main/protection \
 
 ### Context Names
 
-These must match exactly the job names in `.github/workflows/pre-deployment-check.yml`:
+These must match exactly the workflow/job names:
 
-- `Validate App Build` → `validate-app` job
-- `Validate Landing Build` → `validate-landing` job
+- `Pre-Deployment Validation / Validate App Build` → `.github/workflows/pre-deployment-check.yml` / `validate-app`
+- `Pre-Deployment Validation / Validate Landing Build` → `.github/workflows/pre-deployment-check.yml` / `validate-landing`
+- `Build Check - Admin Panel / Build Admin Panel` → `.github/workflows/build-admin.yml` / `build-admin`
 
 ---
 
