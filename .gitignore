@@ -4,6 +4,7 @@ dist/
 out/
 .env*
 !**/.env.example
+!**/.env.local.example
 .DS_Store
 *.log
 *.tsbuildinfo
@@ -51,6 +52,21 @@ client_secret_*.json
 # Local env / vercel imports (never commit)
 admin-vercel-import.env
 ADMIN_ENV_VERCEL.md
+*-vercel-import*.env
+ADMIN_ENV_*.md
+env/
+.env_backup/
+**/.env.local
+**/.env.*.local
+**/*.env
+!**/.env.example
+!**/.env.local.example
+.env.vercel
+**/.vercel/.env*
+archive/env/
+docs/legacy/.env.txt
+apps/landing/.env.local.vercel-token.bak
+env-audit.txt
 
 # Just in case (variants)
 *.vercel*.env

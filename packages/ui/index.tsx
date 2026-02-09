@@ -4,7 +4,6 @@
 export { AccessibleButton } from './components/AccessibleButton';
 export { AccessibleInput } from './components/AccessibleInput';
 export { Card, CardContent, CardHeader, CardTitle } from './components/Card';
-export { EjemploFormatoES } from './components/EjemploFormatoES';
 export {
   Dialog,
   DialogContent,
@@ -14,6 +13,7 @@ export {
   DialogTitle,
   DialogTrigger,
 } from './components/dialog';
+export { EjemploFormatoES } from './components/EjemploFormatoES';
 export { Input } from './components/input';
 export { Label } from './components/label';
 export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/select';

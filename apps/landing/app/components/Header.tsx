@@ -1,28 +1,37 @@
-"use client";
+'use client';
 
 // v1.0.3 - Updated with blue shield favicon
-import React, { useState } from "react";
-import Link from "next/link";
-import { Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "../context/AuthContext";
-import { logout } from "../lib/auth";
-import { useToast } from "./Toast";
-import BrandLogo from "./BrandLogo";
-import { DashboardLink } from "./DashboardLink";
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Menu, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import { logout } from '../lib/auth';
+import { useToast } from './Toast';
+import BrandLogo from './BrandLogo';
+import { DashboardLink } from './DashboardLink';
 
 type NavLink = { label: string; href: string };
 
 export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const { showToast } = useToast();
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   const defaultNavLinks: NavLink[] = [
-    { label: "VeriFactu", href: "/verifactu/que-es" },
-    { label: "Calcula tu precio", href: "/#precios" },
-    { label: "Recursos", href: "/recursos/guias-y-webinars" },
-    { label: "Soporte", href: "/verifactu/soporte" },
+    { label: 'VeriFactu', href: '/verifactu/que-es' },
+    { label: 'Calcula tu precio', href: '/#precios' },
+    { label: 'Recursos', href: '/recursos/guias-y-webinars' },
+    { label: 'Soporte', href: '/verifactu/soporte' },
   ];
 
   const links = navLinks ?? defaultNavLinks;
@@ -37,10 +46,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
         <BrandLogo variant="header" />
 
         {/* Desktop Navigation */}
-        <nav
-          className="hidden items-center gap-8 md:flex"
-          aria-label="Navegacion principal"
-        >
+        <nav className="hidden items-center gap-8 md:flex" aria-label="Navegacion principal">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -61,9 +67,9 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
                 onClick={async () => {
                   await logout();
                   showToast({
-                    type: "success",
-                    title: "Sesion cerrada",
-                    message: "Has salido correctamente",
+                    type: 'success',
+                    title: 'Sesion cerrada',
+                    message: 'Has salido correctamente',
                   });
                 }}
                 className="rounded-lg bg-slate-700 px-6 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
@@ -88,7 +94,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-            aria-label={isOpen ? "Cerrar menu de navegacion" : "Abrir menu de navegacion"}
+            aria-label={isOpen ? 'Cerrar menu de navegacion' : 'Abrir menu de navegacion'}
             aria-expanded={isOpen}
             aria-controls="mobile-menu"
           >
@@ -106,7 +112,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
+            animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
             id="mobile-menu"
@@ -123,9 +129,9 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
                     onClick={async () => {
                       await logout();
                       showToast({
-                        type: "success",
-                        title: "Sesion cerrada",
-                        message: "Has salido correctamente",
+                        type: 'success',
+                        title: 'Sesion cerrada',
+                        message: 'Has salido correctamente',
                       });
                       setIsOpen(false);
                     }}
@@ -163,5 +169,3 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
     </header>
   );
 }
-
-

@@ -1,21 +1,24 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Download, X } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Download, X } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
 export function PWAInstallPrompt() {
+  const [mounted, setMounted] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+
     // Check if already installed
-    if (window.matchMedia("(display-mode: standalone)").matches) {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
       return;
     }
@@ -23,20 +26,20 @@ export function PWAInstallPrompt() {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      
+
       // Show prompt after 5 seconds if not dismissed before
       setTimeout(() => {
-        const dismissed = localStorage.getItem("pwa-prompt-dismissed");
+        const dismissed = localStorage.getItem('pwa-prompt-dismissed');
         if (!dismissed) {
           setShowPrompt(true);
         }
       }, 5000);
     };
 
-    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener('beforeinstallprompt', handler);
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener('beforeinstallprompt', handler);
     };
   }, []);
 
@@ -46,8 +49,8 @@ export function PWAInstallPrompt() {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
 
-    if (outcome === "accepted") {
-      console.log("[PWA] User accepted install");
+    if (outcome === 'accepted') {
+      console.log('[PWA] User accepted install');
       setIsInstalled(true);
     }
 
@@ -57,10 +60,10 @@ export function PWAInstallPrompt() {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem("pwa-prompt-dismissed", "true");
+    localStorage.setItem('pwa-prompt-dismissed', 'true');
   };
 
-  if (isInstalled || !showPrompt || !deferredPrompt) {
+  if (!mounted || isInstalled || !showPrompt || !deferredPrompt) {
     return null;
   }
 
@@ -79,9 +82,7 @@ export function PWAInstallPrompt() {
           <Download className="w-6 h-6 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-slate-900 dark:text-white mb-1">
-            Instalar Verifactu
-          </h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-1">Instalar Verifactu</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Accede más rápido instalando la app en tu dispositivo
           </p>
@@ -105,5 +106,3 @@ export function PWAInstallPrompt() {
     </div>
   );
 }
-
-

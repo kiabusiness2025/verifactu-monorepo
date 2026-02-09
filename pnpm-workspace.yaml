@@ -1,5 +1,6 @@
 packages:
   - 'apps/*'
+  - '!apps/client'
   - 'packages/*'
 
 # Allow build scripts for native deps required by Next.js

@@ -1,37 +1,47 @@
-"use client";
+'use client';
 
-import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, MessageCircle } from "lucide-react";
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Send, X, MessageCircle } from 'lucide-react';
 
 type Message = {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 };
 
 export default function IsaakChat() {
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: "1",
-      role: "assistant",
-      content: "Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perderás acceso a tus datos.\nYo me encargo de cuidarlos. ??",
+      id: '1',
+      role: 'assistant',
+      content:
+        'Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perderás acceso a tus datos.\nYo me encargo de cuidarlos. ??',
       timestamp: new Date(),
     },
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  if (!mounted) {
+    return null;
+  }
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,41 +50,40 @@ export default function IsaakChat() {
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: "user",
+      role: 'user',
       content: input,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    setInput('');
     setIsLoading(true);
 
     try {
       // Call the chat API
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input }),
       });
 
-      if (!response.ok) throw new Error("Failed to get response");
+      if (!response.ok) throw new Error('Failed to get response');
 
       const data = await response.json();
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.response || "Lo siento, no pude procesar tu pregunta. Intenta de nuevo.",
+        role: 'assistant',
+        content: data.response || 'Lo siento, no pude procesar tu pregunta. Intenta de nuevo.',
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error("Chat error:", error);
+      console.error('Chat error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
-        role: "assistant",
-        content:
-          "Disculpa, tengo un problema temporal. Intenta de nuevo en unos segundos.",
+        role: 'assistant',
+        content: 'Disculpa, tengo un problema temporal. Intenta de nuevo en unos segundos.',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -132,17 +141,17 @@ export default function IsaakChat() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
                   className={[
-                    "flex",
-                    message.role === "user" ? "justify-end" : "justify-start",
-                  ].join(" ")}
+                    'flex',
+                    message.role === 'user' ? 'justify-end' : 'justify-start',
+                  ].join(' ')}
                 >
                   <div
                     className={[
-                      "max-w-xs rounded-lg px-4 py-2 text-sm",
-                      message.role === "user"
-                        ? "bg-[#2361d8] text-white"
-                        : "bg-slate-100 text-slate-900",
-                    ].join(" ")}
+                      'max-w-xs rounded-lg px-4 py-2 text-sm',
+                      message.role === 'user'
+                        ? 'bg-[#2361d8] text-white'
+                        : 'bg-slate-100 text-slate-900',
+                    ].join(' ')}
                   >
                     {message.content}
                   </div>
@@ -156,8 +165,14 @@ export default function IsaakChat() {
                 >
                   <div className="flex gap-1 rounded-lg bg-slate-100 px-4 py-2">
                     <div className="h-2 w-2 rounded-full bg-slate-400 animate-pulse" />
-                    <div className="h-2 w-2 rounded-full bg-slate-400 animate-pulse" style={{ animationDelay: "0.2s" }} />
-                    <div className="h-2 w-2 rounded-full bg-slate-400 animate-pulse" style={{ animationDelay: "0.4s" }} />
+                    <div
+                      className="h-2 w-2 rounded-full bg-slate-400 animate-pulse"
+                      style={{ animationDelay: '0.2s' }}
+                    />
+                    <div
+                      className="h-2 w-2 rounded-full bg-slate-400 animate-pulse"
+                      style={{ animationDelay: '0.4s' }}
+                    />
                   </div>
                 </motion.div>
               )}
@@ -194,6 +209,3 @@ export default function IsaakChat() {
     </>
   );
 }
-
-
-

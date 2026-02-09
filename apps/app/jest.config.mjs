@@ -1,4 +1,4 @@
-import nextJest from 'next/jest.js'
+import nextJest from '../../node_modules/next/jest.js'
 
 const createJestConfig = nextJest({
   // Proporciona la ruta a tu aplicación Next.js para cargar next.config.mjs y los archivos .env en tu entorno de prueba

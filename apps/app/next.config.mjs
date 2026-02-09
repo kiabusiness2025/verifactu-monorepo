@@ -1,7 +1,8 @@
 ﻿const isVercel = process.env.VERCEL === '1';
+const useStandalone = process.env.STANDALONE_BUILD === '1';
 
 const nextConfig = {
-  ...(isVercel ? {} : { output: 'standalone' }),
+  ...(useStandalone && !isVercel ? { output: 'standalone' } : {}),
   eslint: { ignoreDuringBuilds: true },
   transpilePackages: ['@verifactu/ui', '@verifactu/utils', '@verifactu/db'],
   i18n: {
