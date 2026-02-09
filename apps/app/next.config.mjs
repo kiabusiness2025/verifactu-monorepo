@@ -5,10 +5,6 @@ const nextConfig = {
   ...(useStandalone && !isVercel ? { output: 'standalone' } : {}),
   eslint: { ignoreDuringBuilds: true },
   transpilePackages: ['@verifactu/ui', '@verifactu/utils', '@verifactu/db'],
-  i18n: {
-    locales: ['es'],
-    defaultLocale: 'es',
-  },
   headers: async () => [
     {
       source: '/sw.js',

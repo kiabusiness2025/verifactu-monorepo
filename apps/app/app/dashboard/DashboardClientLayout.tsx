@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import React, { useState, Suspense } from "react";
-import { usePathname } from "next/navigation";
-import { IsaakUIProvider, useIsaakUI } from "@/context/IsaakUIContext";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Topbar } from "@/components/layout/Topbar";
-import { IsaakDrawer } from "@/components/isaak/IsaakDrawer";
-import { IsaakSmartFloating } from "@/components/isaak/IsaakSmartFloating";
-import { IsaakProactiveBubbles } from "@/components/isaak/IsaakProactiveBubbles";
-import { IsaakPreferencesModal } from "@/components/isaak/IsaakPreferencesModal";
-import { IsaakDeadlineNotifications } from "@/components/isaak/IsaakDeadlineNotifications";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
-import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
-import { useOnboarding } from "@/hooks/useOnboarding";
-import { CreateCompanyModalProvider } from "@/context/CreateCompanyModalContext";
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { IsaakDeadlineNotifications } from '@/components/isaak/IsaakDeadlineNotifications';
+import { IsaakDrawer } from '@/components/isaak/IsaakDrawer';
+import { IsaakPreferencesModal } from '@/components/isaak/IsaakPreferencesModal';
+import { IsaakProactiveBubbles } from '@/components/isaak/IsaakProactiveBubbles';
+import { IsaakSmartFloating } from '@/components/isaak/IsaakSmartFloating';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { Topbar } from '@/components/layout/Topbar';
+import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+import { WelcomeModal } from '@/components/onboarding/WelcomeModal';
+import { CreateCompanyModalProvider } from '@/context/CreateCompanyModalContext';
+import { IsaakUIProvider, useIsaakUI } from '@/context/IsaakUIContext';
+import { useOnboarding } from '@/hooks/useOnboarding';
+import { usePathname } from 'next/navigation';
+import React, { Suspense, useState } from 'react';
 
 function OnboardingFlow({ isAdminRoute }: { isAdminRoute: boolean }) {
   const { company } = useIsaakUI();
-  const isDemoCompany = company?.toLowerCase().includes("demo");
+  const isDemoCompany = company?.toLowerCase().includes('demo');
   const { hasSeenWelcome, markWelcomeSeen, markOnboardingComplete } = useOnboarding();
   const [showTour, setShowTour] = useState(false);
 
@@ -53,13 +53,9 @@ type Props = {
   supportTenantName?: string | null;
 };
 
-export default function DashboardClientLayout({
-  children,
-  supportMode,
-  supportTenantName,
-}: Props) {
+export default function DashboardClientLayout({ children, supportMode, supportTenantName }: Props) {
   const pathname = usePathname();
-  const isAdminRoute = pathname?.startsWith("/dashboard/admin");
+  const isAdminRoute = pathname?.startsWith('/dashboard/admin') ?? false;
   const enableIsaak = false;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -80,7 +76,7 @@ export default function DashboardClientLayout({
                     <span className="text-xs text-amber-800">
                       {supportTenantName
                         ? `Estás viendo la cuenta de ${supportTenantName}`
-                        : "Estás viendo la cuenta del cliente"}
+                        : 'Estás viendo la cuenta del cliente'}
                     </span>
                   </div>
                   <form action="/api/support/end" method="post">

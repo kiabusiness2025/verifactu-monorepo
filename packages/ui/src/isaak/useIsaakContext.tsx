@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
+import { useMemo } from 'react';
 
 function moduleFromPath(pathname: string) {
   if (pathname.startsWith('/invoices')) return { module: 'Facturacion', key: 'invoices' };
@@ -15,7 +15,7 @@ function moduleFromPath(pathname: string) {
 }
 
 export function useIsaakContext(extra?: Record<string, unknown>) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
 
   return useMemo(() => {
     const mod = moduleFromPath(pathname);

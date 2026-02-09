@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/fix-client-reference-manifests.mjs",
+    "build": "node scripts/clean-next.mjs && next build && node scripts/fix-client-reference-manifests.mjs",
     "start": "next start -p 8080",
     "lint": "next lint",
     "test": "jest",

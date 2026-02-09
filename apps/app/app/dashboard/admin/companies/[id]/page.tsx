@@ -29,7 +29,8 @@ export default function EditCompanyPage() {
   const params = useParams();
   const router = useRouter();
   const { success, error: showError } = useToast();
-  const companyId = params.id as string;
+  const companyId =
+    typeof params?.id === 'string' ? params.id : Array.isArray(params?.id) ? params.id[0] : '';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,6 +77,10 @@ export default function EditCompanyPage() {
   }
 
   useEffect(() => {
+    if (!companyId) {
+      setLoading(false);
+      return;
+    }
     fetchCompany();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);

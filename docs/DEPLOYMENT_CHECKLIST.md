@@ -4,17 +4,59 @@ Lecciones aprendidas de deploys anteriores para evitar errores comunes.
 
 ---
 
+## ✅ Checklist Operativo (rápido)
+
+### Pre‑deploy
+
+- [ ] CI pasó (job: CI / build)
+- [ ] Vercel proyectos con root = repo y build por filtro
+- [ ] Variables de entorno cargadas por proyecto (solo lo necesario)
+- [ ] `env/.env.base` actualizado y `.env.local` regenerados con `node scripts/env-build.mjs`
+
+### Smoke checklist
+
+**App**
+
+- [ ] /dashboard carga
+- [ ] Navegación principal funciona
+
+**Admin**
+
+- [ ] /dashboard carga
+- [ ] /tenants carga
+
+**Landing**
+
+- [ ] Home carga
+- [ ] /legal/cookies carga
+
+### Post‑deploy
+
+- [ ] Revisar logs de Vercel (app/admin/landing)
+- [ ] Revisar errores en monitoring (si aplica)
+- [ ] Confirmar checks requeridos en branch protection
+
+### Validación local (2026-02-09)
+
+- [x] Build App: `pnpm -C apps/app build` (ok; aviso esperado por ruta /dashboard usando cookies)
+- [x] Build Admin: `pnpm -C apps/admin build` (ok)
+- [x] Build Landing: `pnpm -C apps/landing build` (ok)
+
+---
+
 ## ⚠️ Errores Comunes y Cómo Evitarlos
 
 ### 1. Uso Correcto de `query()` de PostgreSQL
 
 **❌ INCORRECTO:**
+
 ```typescript
 const result = await query('SELECT * FROM users');
 const users = result.rows; // ❌ query() YA retorna rows
 ```
 
 **✅ CORRECTO:**
+
 ```typescript
 const users = await query('SELECT * FROM users');
 // users ya es un array directamente
@@ -24,6 +66,7 @@ if (users.length > 0) {
 ```
 
 **Ubicación:** `apps/app/lib/db.ts`
+
 - La función `query()` está envuelta y retorna `res.rows` directamente
 - No necesitas acceder a `.rows` otra vez
 
@@ -32,12 +75,14 @@ if (users.length > 0) {
 ### 2. Imports de Firebase Admin
 
 **❌ INCORRECTO:**
+
 ```typescript
 import { getFirebaseAdminAuth } from '@/lib/firebase-admin';
 import { auth } from '@/lib/firebase/firebase-admin-app';
 ```
 
 **✅ CORRECTO:**
+
 ```typescript
 import { getFirebaseAuth } from '@/lib/firebase-admin';
 
@@ -47,6 +92,7 @@ const user = await auth.getUser(userId);
 ```
 
 **Archivo:** `apps/app/lib/firebase-admin.ts`
+
 - Función exportada: `getFirebaseAuth()` (no `getFirebaseAdminAuth`)
 - No existe `@/lib/firebase/firebase-admin-app`
 
@@ -55,23 +101,26 @@ const user = await auth.getUser(userId);
 ### 3. Tokens de Sesión
 
 **❌ INCORRECTO:**
+
 ```typescript
 import { signToken } from '@verifactu/utils';
 const token = await signToken(payload, secret);
 ```
 
 **✅ CORRECTO:**
+
 ```typescript
 import { signSessionToken, readSessionSecret } from '@verifactu/utils';
 
 const token = await signSessionToken({
   payload: sessionPayload,
   secret: readSessionSecret(),
-  expiresIn: '8h'
+  expiresIn: '8h',
 });
 ```
 
 **Ubicación:** `packages/utils/session.ts`
+
 - Función correcta: `signSessionToken()` (no `signToken`)
 - Usar `readSessionSecret()` para obtener el secret del .env
 
@@ -80,6 +129,7 @@ const token = await signSessionToken({
 ### 4. TypeScript: SessionPayload
 
 **❌ INCORRECTO:**
+
 ```typescript
 const sessionPayload = {
   uid: user.uid,
@@ -88,6 +138,7 @@ const sessionPayload = {
 ```
 
 **✅ CORRECTO:**
+
 ```typescript
 const sessionPayload = {
   uid: user.uid,
@@ -96,6 +147,7 @@ const sessionPayload = {
 ```
 
 **Type definition:**
+
 ```typescript
 export type SessionPayload = {
   tenantId?: string; // Nota el '?' - es opcional, no nullable
@@ -107,6 +159,7 @@ export type SessionPayload = {
 ### 5. Verificación de Admin
 
 **❌ INCORRECTO:**
+
 ```typescript
 import { verifyAdminAccess } from '@/lib/adminAuth';
 const check = await verifyAdminAccess(request);
@@ -114,6 +167,7 @@ if (!check.isAdmin) { ... }
 ```
 
 **✅ CORRECTO:**
+
 ```typescript
 import { requireAdmin } from '@/lib/adminAuth';
 
@@ -122,6 +176,7 @@ await requireAdmin(request);
 ```
 
 **Archivo:** `apps/app/lib/adminAuth.ts`
+
 - Función correcta: `requireAdmin()` (no `verifyAdminAccess`)
 - Lanza error automáticamente si no es admin, simplifica el código
 
@@ -130,11 +185,13 @@ await requireAdmin(request);
 ### 6. Handlers de Formularios en React
 
 **❌ INCORRECTO:**
+
 ```tsx
 <form onSubmit={handleSaveProfile}> {/* función no definida */}
 ```
 
 **✅ CORRECTO:**
+
 ```tsx
 // Definir el handler primero
 const handleSaveProfile = async (e: React.FormEvent) => {
@@ -155,6 +212,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
 Antes de hacer push a `main`:
 
 ### Build Local
+
 ```bash
 cd apps/app
 pnpm build
@@ -163,17 +221,20 @@ pnpm build
 Si el build local pasa, hay alta probabilidad de que Vercel también pase.
 
 ### Verificar Imports
+
 - [ ] ¿Usas `query()` correctamente sin `.rows`?
 - [ ] ¿Imports de Firebase Admin son `getFirebaseAuth()`?
 - [ ] ¿Tokens de sesión usan `signSessionToken()`?
 - [ ] ¿Admin checks usan `requireAdmin()`?
 
 ### TypeScript Strict
+
 - [ ] ¿`tenantId` es `undefined` en lugar de `null`?
 - [ ] ¿Todos los handlers de formularios están definidos?
 - [ ] ¿No hay propiedades duplicadas en objetos JSON?
 
 ### Pruebas Manuales
+
 - [ ] Iniciar sesión funciona
 - [ ] Panel admin accesible (si aplica)
 - [ ] No hay errores en consola del navegador
@@ -199,20 +260,24 @@ Si el build local pasa, hay alta probabilidad de que Vercel también pase.
 ## 📚 Referencias Rápidas
 
 ### Funciones de DB
+
 - `query<T>(sql, params)` → retorna `T[]` directamente
 - `one<T>(sql, params)` → retorna `T | null` (primer resultado)
 - `tx<T>(fn)` → transacción
 
 ### Funciones de Firebase
+
 - `getFirebaseAuth()` → Auth instance
 - `verifyIdToken(token)` → decoded token
 
 ### Funciones de Sesión
+
 - `signSessionToken(options)` → string
 - `readSessionSecret()` → string
-- `SESSION_COOKIE_NAME` → '__session'
+- `SESSION_COOKIE_NAME` → '\_\_session'
 
 ### Funciones de Admin
+
 - `requireAdmin(request)` → void (throws si no es admin)
 - `getCurrentUserEmail()` → Promise<string | null>
 
@@ -221,17 +286,20 @@ Si el build local pasa, hay alta probabilidad de que Vercel también pase.
 ## 🎯 Scripts Útiles
 
 ### Verificar Build Antes de Push
+
 ```bash
 # Desde la raíz del monorepo
 pnpm --filter verifactu-app build
 ```
 
 ### Ver Logs de Vercel en Tiempo Real
+
 ```bash
 vercel logs --follow
 ```
 
 ### Deploy Manual desde CLI
+
 ```bash
 cd apps/app
 vercel --prod
