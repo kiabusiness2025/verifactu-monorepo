@@ -10,7 +10,11 @@ const useStandalone = process.env.STANDALONE_BUILD === '1';
 const nextConfig = {
   outputFileTracingRoot: path.resolve(__dirname, '..', '..'),
   outputFileTracingExcludes: {
-    '*': ['**/node_modules/@opentelemetry/api/**'],
+    '*': [
+      '**/node_modules/@opentelemetry/api/**',
+      '**/node_modules/client-only/**',
+      '**/node_modules/server-only/**',
+    ],
   },
   ...(useStandalone && !isVercel ? { output: 'standalone' } : {}),
   eslint: { ignoreDuringBuilds: true },
