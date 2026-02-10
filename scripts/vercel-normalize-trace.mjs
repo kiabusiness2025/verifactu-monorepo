@@ -40,13 +40,20 @@ function normalizeEntries(filePath) {
         normalized.push(entry);
         continue;
       }
-      const absPath = resolve(baseDir, entry);
-      const relPath = relative(rootDir, absPath).replace(/\\/g, "/");
+
+      let relPath = entry.replace(/^\.\//, "");
+
+      if (relPath.startsWith("..")) {
+        const absPath = resolve(baseDir, relPath);
+        relPath = relative(rootDir, absPath).replace(/\\/g, "/");
+      }
+
       if (!relPath.startsWith("..")) {
         normalized.push(relPath);
       } else {
         updated = true;
       }
+
       if (relPath !== entry) {
         updated = true;
       }
