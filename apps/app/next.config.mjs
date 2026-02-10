@@ -1,7 +1,14 @@
-﻿const isVercel = process.env.VERCEL === '1';
+﻿import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const isVercel = process.env.VERCEL === '1';
 const useStandalone = process.env.STANDALONE_BUILD === '1';
 
 const nextConfig = {
+  outputFileTracingRoot: path.resolve(__dirname, '..', '..'),
   ...(useStandalone && !isVercel ? { output: 'standalone' } : {}),
   eslint: { ignoreDuringBuilds: true },
   transpilePackages: ['@verifactu/ui', '@verifactu/utils', '@verifactu/db'],
