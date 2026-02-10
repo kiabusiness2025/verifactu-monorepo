@@ -8,6 +8,9 @@ const isVercel = process.env.VERCEL === "1";
 
 const nextConfig = {
   outputFileTracingRoot: path.resolve(__dirname, "..", ".."),
+  outputFileTracingExcludes: {
+    "*": ["**/node_modules/@opentelemetry/api/**"],
+  },
   ...(isVercel ? {} : { output: "standalone" }),
   eslint: { ignoreDuringBuilds: true },
   transpilePackages: ["@verifactu/ui", "@verifactu/utils", "@verifactu/db", "@verifactu/core"],

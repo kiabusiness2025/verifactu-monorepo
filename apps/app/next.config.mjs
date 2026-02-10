@@ -9,6 +9,9 @@ const useStandalone = process.env.STANDALONE_BUILD === '1';
 
 const nextConfig = {
   outputFileTracingRoot: path.resolve(__dirname, '..', '..'),
+  outputFileTracingExcludes: {
+    '*': ['**/node_modules/@opentelemetry/api/**'],
+  },
   ...(useStandalone && !isVercel ? { output: 'standalone' } : {}),
   eslint: { ignoreDuringBuilds: true },
   transpilePackages: ['@verifactu/ui', '@verifactu/utils', '@verifactu/db'],

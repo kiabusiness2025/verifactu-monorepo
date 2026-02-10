@@ -3,6 +3,9 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: path.join(__dirname, '..', '..'),
+  outputFileTracingExcludes: {
+    '*': ['**/node_modules/@opentelemetry/api/**'],
+  },
   // Transpile workspace packages
   transpilePackages: ['@verifactu/ui', '@verifactu/utils', '@verifactu/db'],
 
