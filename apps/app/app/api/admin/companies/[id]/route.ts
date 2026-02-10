@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = 'force-dynamic';
@@ -7,10 +7,10 @@ export const dynamic = 'force-dynamic';
 // GET - Obtener una empresa específica
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const companyId = params.id;
+    const { id: companyId } = await params;
 
     const [company] = await query<{
       id: string;
@@ -68,10 +68,10 @@ export async function GET(
 // PUT - Actualizar empresa
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const companyId = params.id;
+    const { id: companyId } = await params;
     const body = await req.json();
 
     const { name, legal_name, tax_id, email, phone, address, city, postal_code, country } = body;
@@ -105,10 +105,10 @@ export async function PUT(
 // DELETE - Eliminar empresa
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const companyId = params.id;
+    const { id: companyId } = await params;
 
     await query("DELETE FROM tenants WHERE id = $1", [companyId]);
 

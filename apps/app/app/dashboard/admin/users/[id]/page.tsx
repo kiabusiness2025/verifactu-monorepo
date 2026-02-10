@@ -3,18 +3,18 @@
 import { useToast } from '@/components/notifications/ToastNotifications';
 import { formatCurrency, formatNumber, formatShortDate } from '@/src/lib/formatters';
 import {
-  Activity,
-  ArrowLeft,
-  Building2,
-  Clock,
-  CreditCard,
-  Edit2,
-  LogIn,
-  MessageSquare,
-  Settings,
-  Users,
+    Activity,
+    ArrowLeft,
+    Building2,
+    Clock,
+    CreditCard,
+    Edit2,
+    LogIn,
+    MessageSquare,
+    Settings,
+    Users,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface UserDetails {
@@ -97,7 +97,13 @@ interface UserDetails {
   }>;
 }
 
-export default function UserDetailPage({ params }: { params: { id: string } }) {
+export default function UserDetailPage() {
+  const params = useParams<{ id?: string | string[] }>();
+  const userId = typeof params?.id === 'string'
+    ? params.id
+    : Array.isArray(params?.id)
+      ? params.id[0]
+      : '';
   const router = useRouter();
   const { success, error: showError, warning } = useToast();
   const [data, setData] = useState<UserDetails | null>(null);
@@ -107,12 +113,13 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetchUserDetails();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+  }, [userId]);
 
   const fetchUserDetails = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/admin/users/${params.id}`);
+      if (!userId) return;
+      const res = await fetch(`/api/admin/users/${userId}`);
       if (res.ok) {
         const userData = await res.json();
         setData(userData);
@@ -139,7 +146,8 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
     try {
       setIsImpersonating(true);
-      const res = await fetch(`/api/admin/users/${params.id}/impersonate`, {
+      if (!userId) return;
+      const res = await fetch(`/api/admin/users/${userId}/impersonate`, {
         method: 'POST',
       });
 

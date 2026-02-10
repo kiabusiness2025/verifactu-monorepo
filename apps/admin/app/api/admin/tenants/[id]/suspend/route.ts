@@ -4,10 +4,11 @@ export const runtime = "nodejs";
 
 export async function POST(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: tenantId } = await params;
   return NextResponse.json({
     status: "suspended",
-    tenantId: params.id,
+    tenantId,
   });
 }

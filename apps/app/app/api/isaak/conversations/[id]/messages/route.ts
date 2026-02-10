@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSessionPayload } from '@/lib/session';
 import prisma from '@/lib/prisma';
+import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,72 +13,6 @@ export const dynamic = 'force-dynamic';
  * Body:
  * {
  *   "role": "user" | "assistant",
- *   "content": string,
- *   "tokens": number? (opcional),
- *   "metadata": object? (opcional)
- * }
- */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getSessionPayload();
-    if (!session || !session.uid) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    const resolved = await resolveActiveTenant({
-      userId: session.uid,
-      sessionTenantId: session.tenantId ?? null,
-    });
-    const tenantId = resolved.tenantId;
-    if (!tenantId) {
-      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
-    }
-
-    const conversationId = params.id;
-    const { role, content, tokens, metadata } = await req.json();
-
-    if (!role || !content) {
-      return NextResponse.json(
-        { error: 'Missing required fields: role, content' },
-        { status: 400 }
-      );
-    }
-
-    if (!['user', 'assistant'].includes(role)) {
-      return NextResponse.json(
-        { error: 'Invalid role. Must be "user" or "assistant"' },
-        { status: 400 }
-      );
-    }
-
-    // Verificar que la conversación pertenece al usuario/tenant
-    const conversation = await prisma.isaakConversation.findFirst({
-      where: {
-        id: conversationId,
-        tenantId,
-        userId: session.uid,
-      },
-    });
-
-    if (!conversation) {
-      return NextResponse.json(
-        { error: 'Conversation not found or access denied' },
-        { status: 404 }
-      );
-    }
-
-    // Guardar mensaje
-    const message = await prisma.isaakConversationMsg.create({
-      data: {
-        conversationId,
-        role,
-        content,
-        tokens: tokens || null,
         metadata: metadata || null,
       },
     });
@@ -112,9 +46,10 @@ export async function POST(
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: conversationId } = await params;
     const session = await getSessionPayload();
     if (!session || !session.uid) {
       return NextResponse.json(
@@ -131,7 +66,6 @@ export async function GET(
       return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
-    const conversationId = params.id;
     const searchParams = req.nextUrl.searchParams;
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200);
     const offset = parseInt(searchParams.get('offset') || '0');
@@ -182,71 +116,3 @@ export async function GET(
   }
 }
 
-/**
- * DELETE /api/isaak/conversations/[id]/messages/[messageId]
- * Eliminar un mensaje específico
- */
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string; messageId: string } }
-) {
-  try {
-    const session = await getSessionPayload();
-    if (!session || !session.uid) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    const resolved = await resolveActiveTenant({
-      userId: session.uid,
-      sessionTenantId: session.tenantId ?? null,
-    });
-    const tenantId = resolved.tenantId;
-    if (!tenantId) {
-      return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
-    }
-
-    const conversationId = params.id;
-    const messageId = params.messageId;
-
-    // Verificar acceso a la conversación
-    const conversation = await prisma.isaakConversation.findFirst({
-      where: {
-        id: conversationId,
-        tenantId,
-        userId: session.uid,
-      },
-    });
-
-    if (!conversation) {
-      return NextResponse.json(
-        { error: 'Conversation not found or access denied' },
-        { status: 404 }
-      );
-    }
-
-    // Eliminar mensaje
-    await prisma.isaakConversationMsg.delete({
-      where: {
-        id: messageId,
-      },
-    });
-
-    // Decrementar contador
-    await prisma.isaakConversation.update({
-      where: { id: conversationId },
-      data: {
-        messageCount: { decrement: 1 },
-      },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('[ISAAK] Delete message error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete message' },
-      { status: 500 }
-    );
-  }
-}

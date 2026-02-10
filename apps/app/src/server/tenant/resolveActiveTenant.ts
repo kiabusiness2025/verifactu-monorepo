@@ -1,9 +1,9 @@
-import { cookies } from "next/headers";
-import { prisma } from "@verifactu/db";
 import {
-  SUPPORT_SESSION_COOKIE,
-  verifySupportToken,
+    SUPPORT_SESSION_COOKIE,
+    verifySupportToken,
 } from "@/src/server/support/supportToken";
+import { prisma } from "@verifactu/db";
+import { cookies } from "next/headers";
 
 export type TenantLite = {
   id: string;
@@ -26,7 +26,7 @@ export async function resolveActiveTenant(input: {
   tenants?: TenantLite[];
   defaultTenantId?: string | null;
 }): Promise<ActiveTenantResult> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supportToken = cookieStore.get(SUPPORT_SESSION_COOKIE)?.value;
 
   if (supportToken) {

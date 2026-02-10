@@ -2,7 +2,7 @@
 
 import { formatShortDate, formatTime } from "@/src/lib/formatters";
 import { ArrowLeft, Bot, Download, Edit2, Save, Share2, User, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 interface Message {
@@ -21,8 +21,14 @@ interface Conversation {
   messages: Message[];
 }
 
-export default function ConversationDetailPage({ params }: { params: { id: string } }) {
+export default function ConversationDetailPage() {
   const router = useRouter();
+  const params = useParams<{ id?: string | string[] }>();
+  const conversationId = typeof params?.id === "string"
+    ? params.id
+    : Array.isArray(params?.id)
+      ? params.id[0]
+      : "";
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingLast, setEditingLast] = useState(false);
@@ -31,7 +37,8 @@ export default function ConversationDetailPage({ params }: { params: { id: strin
   const fetchConversation = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/isaak/conversations/${params.id}`);
+      if (!conversationId) return;
+      const res = await fetch(`/api/isaak/conversations/${conversationId}`);
       if (res.ok) {
         const data = await res.json();
         setConversation(data.conversation);
@@ -44,7 +51,7 @@ export default function ConversationDetailPage({ params }: { params: { id: strin
     } finally {
       setLoading(false);
     }
-  }, [params.id, router]);
+  }, [conversationId, router]);
 
   useEffect(() => {
     fetchConversation();
@@ -52,7 +59,8 @@ export default function ConversationDetailPage({ params }: { params: { id: strin
 
   const handleShare = async () => {
     try {
-      const res = await fetch(`/api/isaak/conversations/${params.id}/share`, {
+      if (!conversationId) return;
+      const res = await fetch(`/api/isaak/conversations/${conversationId}/share`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ expiresInHours: 24 })

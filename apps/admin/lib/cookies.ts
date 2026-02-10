@@ -29,7 +29,8 @@ export async function setImpersonationCookie(payload: ImpersonationPayload) {
     .setExpirationTime('8h')
     .sign(getSecret());
 
-  cookies().set(COOKIE_NAME, token, {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -41,8 +42,9 @@ export async function setImpersonationCookie(payload: ImpersonationPayload) {
 /**
  * Clear impersonation cookie
  */
-export function clearImpersonationCookie() {
-  cookies().set(COOKIE_NAME, '', {
+export async function clearImpersonationCookie() {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, '', {
     httpOnly: true,
     path: '/',
     maxAge: 0,
@@ -65,7 +67,8 @@ export async function verifyImpersonationToken(
 }
 
 export async function getImpersonation(): Promise<ImpersonationPayload | null> {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
   return verifyImpersonationToken(token);
 }

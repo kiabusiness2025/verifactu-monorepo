@@ -23,7 +23,7 @@ export async function GET(req: Request) {
   try {
     console.log('[🔄 Dashboard Redirect] START');
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
     if (!sessionCookie?.value) {

@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * GET /api/suppliers/[id]
  * Get supplier details
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     const supplier = await prisma.supplier.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
       include: { expenses: { select: { id: true, date: true, amount: true, description: true } } },
     });
 
@@ -42,7 +43,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  * PATCH /api/suppliers/[id]
  * Update supplier
  */
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -58,7 +60,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const existing = await prisma.supplier.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
     });
 
     if (!existing) {
@@ -69,7 +71,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const { name, email, phone, nif, address, city, postalCode, country, accountCode, paymentTerms, notes, isActive } = body;
 
     const supplier = await prisma.supplier.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...(name && { name }),
         ...(email !== undefined && { email }),
@@ -97,7 +99,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  * DELETE /api/suppliers/[id]
  * Delete supplier
  */
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -113,14 +116,14 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     const existing = await prisma.supplier.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
     });
 
     if (!existing) {
       return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
     }
 
-    await prisma.supplier.delete({ where: { id: params.id } });
+    await prisma.supplier.delete({ where: { id: id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

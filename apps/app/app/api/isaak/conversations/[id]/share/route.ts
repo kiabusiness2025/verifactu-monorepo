@@ -4,19 +4,20 @@
  * Genera un enlace temporal para compartir la conversación
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getSessionPayload } from '@/lib/session';
 import prisma from '@/lib/prisma';
+import { getSessionPayload } from '@/lib/session';
 import { randomBytes } from 'crypto';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: conversationId } = await params;
     const session = await getSessionPayload();
     if (!session || !session.uid) {
       return NextResponse.json(
@@ -25,7 +26,6 @@ export async function POST(
       );
     }
 
-    const conversationId = params.id;
     const body = await req.json();
     const { expiresInHours = 24 } = body;
 
@@ -88,9 +88,10 @@ export async function POST(
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: conversationId } = await params;
     const session = await getSessionPayload();
     if (!session || !session.uid) {
       return NextResponse.json(
@@ -99,7 +100,6 @@ export async function GET(
       );
     }
 
-    const conversationId = params.id;
 
     // Verificar ownership
     const conversation = await prisma.isaakConversation.findFirst({

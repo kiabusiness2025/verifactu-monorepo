@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
 
-export default function TenantIndexPage({ params }: { params: { id: string } }) {
-  redirect(`/tenants/${params.id}/overview`);
+export default async function TenantIndexPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  redirect(`/tenants/${id}/overview`);
 }

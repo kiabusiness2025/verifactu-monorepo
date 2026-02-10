@@ -18,14 +18,18 @@ async function issueInvoice(_params: {
   return { status: "PENDING", id: _params.invoiceId };
 }
 
-export async function POST(req: Request, ctx: { params: { invoiceId: string } }) {
+export async function POST(
+  req: Request,
+  ctx: { params: Promise<{ invoiceId: string }> }
+) {
   try {
+    const { invoiceId } = await ctx.params;
     const { userId, tenantId } = await requireAuth(req);
 
     const result = await issueInvoice({
       prisma,
       tenantId,
-      invoiceId: ctx.params.invoiceId,
+      invoiceId,
       actorUserId: userId,
     });
 

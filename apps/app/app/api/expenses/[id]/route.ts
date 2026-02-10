@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * GET /api/expenses/[id]
  * Get expense details
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     const expense = await prisma.expenseRecord.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
       include: { supplier: true, tenant: { select: { name: true } } },
     });
 
@@ -42,7 +43,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  * PATCH /api/expenses/[id]
  * Update expense
  */
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -58,7 +60,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const existing = await prisma.expenseRecord.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
     });
 
     if (!existing) {
@@ -79,7 +81,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const expense = await prisma.expenseRecord.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...(date && { date: new Date(date) }),
         ...(description && { description }),
@@ -105,7 +107,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  * DELETE /api/expenses/[id]
  * Delete expense
  */
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -121,14 +124,14 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     const existing = await prisma.expenseRecord.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
     });
 
     if (!existing) {
       return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     }
 
-    await prisma.expenseRecord.delete({ where: { id: params.id } });
+    await prisma.expenseRecord.delete({ where: { id: id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

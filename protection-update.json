@@ -1,0 +1,16 @@
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": [
+      "Pre-Deployment Validation / Validate App Build",
+      "Pre-Deployment Validation / Validate Landing Build",
+      "Build Check - Admin Panel / Build Admin Panel"
+    ]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "required_linear_history": false,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}

@@ -8,18 +8,18 @@
  * - Actividad reciente
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
 import { requireAdmin } from '@/lib/adminAuth';
+import { query } from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Verificar acceso admin
     await requireAdmin(request);
 
-    const userId = params.id;
+    const { id: userId } = await params;
 
     // Obtener datos del usuario
     const userResult = await query(
@@ -248,11 +248,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  *
  * Actualiza datos del usuario
  */
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin(request);
 
-    const userId = params.id;
+    const { id: userId } = await params;
     const body = await request.json();
     const { name, email } = body;
 
@@ -280,11 +280,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  *
  * Elimina usuario (soft delete o hard delete según configuración)
  */
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin(request);
 
-    const userId = params.id;
+    const { id: userId } = await params;
 
     // TODO: Implementar lógica de eliminación
     // Considerar: eliminar de Firebase Auth también

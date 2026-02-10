@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSessionPayload } from '@/lib/session';
 import prisma from '@/lib/prisma';
+import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,9 +12,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getSessionPayload();
     if (!session || !session.uid) {
       return NextResponse.json(
@@ -33,7 +34,7 @@ export async function GET(
 
     const conversation = await prisma.isaakConversation.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId,
         userId: session.uid,
       },
@@ -74,9 +75,10 @@ export async function GET(
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getSessionPayload();
     if (!session || !session.uid) {
       return NextResponse.json(
@@ -96,7 +98,7 @@ export async function PATCH(
     // Verificar acceso
     const conversation = await prisma.isaakConversation.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId,
         userId: session.uid,
       },
@@ -113,7 +115,7 @@ export async function PATCH(
     const { title, summary, context } = body;
 
     const updated = await prisma.isaakConversation.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...(title && { title }),
         ...(summary && { summary }),
@@ -137,9 +139,10 @@ export async function PATCH(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getSessionPayload();
     if (!session || !session.uid) {
       return NextResponse.json(
@@ -159,7 +162,7 @@ export async function DELETE(
     // Verificar acceso
     const conversation = await prisma.isaakConversation.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId,
         userId: session.uid,
       },
@@ -174,7 +177,7 @@ export async function DELETE(
 
     // Eliminar conversación (cascada elimina mensajes)
     await prisma.isaakConversation.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ success: true });

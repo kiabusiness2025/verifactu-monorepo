@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
 import Header from '../components/Header';
 import PricingCalculatorInline from '../components/PricingCalculatorInline';
@@ -245,11 +246,8 @@ function DemoRequestModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
   );
 }
 
-export default function DemoPage({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | string[] | undefined };
-}) {
+export default function DemoPage() {
+  const searchParams = useSearchParams();
   const [isRequestOpen, setIsRequestOpen] = useState(false);
 
   const demoNavLinks = [
@@ -258,8 +256,7 @@ export default function DemoPage({
     { label: 'Solicitar demo personalizada', href: '#solicitar-demo' },
   ];
 
-  const checkoutParam =
-    typeof searchParams?.checkout === 'string' ? searchParams.checkout : undefined;
+  const checkoutParam = searchParams?.get('checkout') ?? undefined;
   const showCheckoutSuccess = checkoutParam === 'success';
 
   return (

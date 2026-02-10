@@ -1,16 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
-import Stripe from 'stripe';
 import { prisma } from '@verifactu/db';
+import { headers } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16'
-});
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+function getStripeClient() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) return null;
+  return new Stripe(secretKey, {
+    apiVersion: '2025-12-15.clover'
+  });
+}
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripeClient();
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+  if (!stripe || !webhookSecret) {
+    return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
+  }
   const body = await req.text();
-  const signature = headers().get('stripe-signature');
+  const signature = (await headers()).get('stripe-signature');
 
   if (!signature) {
     return NextResponse.json({ error: 'Missing signature' }, { status: 400 });

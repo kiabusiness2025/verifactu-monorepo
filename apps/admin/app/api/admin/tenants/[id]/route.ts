@@ -1,12 +1,13 @@
-import { NextResponse } from "next/server";
-import { query, one } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
+import { one, query } from "@/lib/db";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: tenantId } = await params;
     await requireAdmin(_req);
     const tenant = await one<{
       id: string;
@@ -18,7 +19,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     }>(
       `SELECT id, legal_name, tax_id, address, cnae, created_at
        FROM tenants WHERE id = $1`,
-      [params.id]
+      [tenantId]
     );
 
     if (!tenant) {
@@ -43,8 +44,9 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: tenantId } = await params;
     await requireAdmin(req);
 
     const body = await req.json();
@@ -64,7 +66,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       `UPDATE tenants
        SET legal_name = $1, tax_id = $2, address = $3, cnae = $4, updated_at = now()
        WHERE id = $5`,
-      [legalName, taxId, address, cnae, params.id]
+      [legalName, taxId, address, cnae, tenantId]
     );
 
     const tenant = await one<{
@@ -75,7 +77,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }>(
       `SELECT id, legal_name, tax_id, created_at
        FROM tenants WHERE id = $1`,
-      [params.id]
+      [tenantId]
     );
 
     if (!tenant) {

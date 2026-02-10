@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
+import { query } from "@/lib/db";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = 'force-dynamic';
 
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: tenantId } = await params;
     const admin = await requireAdmin(_req);
-    const tenantId = params.id;
 
     // Asegurar membership owner para el admin
     await query(

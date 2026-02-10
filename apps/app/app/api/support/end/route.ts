@@ -6,7 +6,8 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
-  const token = cookies().get(SUPPORT_SESSION_COOKIE)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SUPPORT_SESSION_COOKIE)?.value;
 
   if (!token) {
     return NextResponse.json({ error: 'No support session' }, { status: 400 });

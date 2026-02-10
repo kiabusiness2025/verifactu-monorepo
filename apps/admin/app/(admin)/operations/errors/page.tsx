@@ -20,7 +20,7 @@ function extractMessage(details: unknown) {
 }
 
 type PageProps = {
-  searchParams?: { type?: string };
+  searchParams?: Promise<{ type?: string }>;
 };
 
 const TYPE_OPTIONS = [
@@ -35,7 +35,8 @@ const TYPE_OPTIONS = [
 ];
 
 export default async function OperationsErrorsPage({ searchParams }: PageProps) {
-  const typeFilterRaw = searchParams?.type?.trim();
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const typeFilterRaw = resolvedSearchParams?.type?.trim();
   const typeFilter =
     typeFilterRaw && typeFilterRaw !== "all" ? typeFilterRaw : null;
 

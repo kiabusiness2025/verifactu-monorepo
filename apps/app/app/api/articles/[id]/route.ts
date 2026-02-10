@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * GET /api/articles/[id]
  * Get article details
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     const article = await prisma.article.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
       include: { invoiceLines: { select: { id: true, invoiceId: true, quantity: true, unitPrice: true } } },
     });
 
@@ -42,7 +43,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  * PATCH /api/articles/[id]
  * Update article
  */
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -58,7 +60,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const existing = await prisma.article.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
     });
 
     if (!existing) {
@@ -79,7 +81,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const article = await prisma.article.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...(code && { code }),
         ...(name && { name }),
@@ -106,7 +108,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  * DELETE /api/articles/[id]
  * Delete article
  */
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -122,14 +125,14 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     const existing = await prisma.article.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
     });
 
     if (!existing) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 });
     }
 
-    await prisma.article.delete({ where: { id: params.id } });
+    await prisma.article.delete({ where: { id: id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

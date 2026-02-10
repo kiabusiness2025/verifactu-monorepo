@@ -1,14 +1,14 @@
-import type { Metadata, Viewport } from "next";
-import React, { Suspense } from "react";
-import dynamic from "next/dynamic";
-import { Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import { AuthProvider } from "./context/AuthContext";
+import type { Metadata, Viewport } from "next";
+import { Space_Grotesk } from "next/font/google";
+import React, { Suspense } from "react";
+import { GoogleTagManager } from "../components/GoogleTagManager";
 import CookieBanner from "./components/CookieBanner";
 import DevStatusBanner from "./components/DevStatusBanner";
-import { ToastProvider } from "./components/Toast";
-import { GoogleTagManager } from "../components/GoogleTagManager";
+import IsaakChatClient from "./components/IsaakChatClient";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
+import { ToastProvider } from "./components/Toast";
+import { AuthProvider } from "./context/AuthContext";
 
 import "./globals.css";
 
@@ -16,10 +16,6 @@ const display = Space_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
-});
-
-const IsaakChat = dynamic(() => import("./components/IsaakChat"), {
-  ssr: false,
 });
 
 const title = "Verifactu Business";
@@ -110,7 +106,7 @@ export default function RootLayout({
             </main>
             {process.env.NODE_ENV !== "production" && <DevStatusBanner />}
             <CookieBanner />
-            <IsaakChat />
+            <IsaakChatClient />
             <PWAInstallPrompt />
             <Analytics />
           </ToastProvider>

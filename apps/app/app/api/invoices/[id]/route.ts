@@ -1,9 +1,10 @@
-import { getSessionPayload } from '@/lib/session';
 import prisma from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 
     const invoice = await prisma.invoice.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
       include: {
         customer: true,
         lines: {
@@ -39,7 +40,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -56,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     // Verify invoice ownership
     const existing = await prisma.invoice.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
     });
 
     if (!existing) {
@@ -66,7 +68,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const data = await req.json();
 
     const updated = await prisma.invoice.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...(data.status && { status: data.status }),
         ...(data.notes && { notes: data.notes }),
@@ -85,7 +87,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const session = await getSessionPayload();
     if (!session || !session.uid) {
@@ -102,7 +105,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     // Verify invoice ownership
     const existing = await prisma.invoice.findFirst({
-      where: { id: params.id, tenantId },
+      where: { id: id, tenantId },
     });
 
     if (!existing) {
@@ -110,7 +113,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     await prisma.invoice.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     try {
@@ -137,7 +140,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
           metadata: {
             action: "INVOICE.DELETE",
             tenantId,
-            invoiceId: params.id,
+            invoiceId: id,
             supportMode: resolved.supportMode,
             supportSessionId,
             impersonatedUserId,
