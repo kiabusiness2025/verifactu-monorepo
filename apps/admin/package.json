@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3003",
-    "build": "next build && node ../../scripts/vercel-copy-next.mjs",
+    "build": "node ../../scripts/vercel-prepare.mjs && next build && node ../../scripts/vercel-copy-next.mjs",
     "start": "next start -p 3003",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
