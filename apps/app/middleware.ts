@@ -23,6 +23,13 @@ async function getSessionPayload(req: NextRequest): Promise<SessionPayload | nul
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  if (pathname.startsWith("/api/admin")) {
+    return NextResponse.json(
+      { error: "Legacy admin API removed. Use admin.verifactu.business." },
+      { status: 410 }
+    );
+  }
+
   // Force legacy admin routes to the new admin app
   if (pathname.startsWith("/dashboard/admin")) {
     const adminBase =
@@ -97,5 +104,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/onboarding", "/demo/:path*"],
+  matcher: ["/", "/dashboard/:path*", "/onboarding", "/demo/:path*", "/api/admin/:path*"],
 };
