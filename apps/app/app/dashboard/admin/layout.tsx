@@ -1,16 +1,1 @@
-import { redirect } from "next/navigation";
-
-export const dynamic = "force-dynamic";
-
-export default function AdminLayout({
-}: {
-  children: React.ReactNode;
-}) {
-  const target =
-    process.env.NEXT_PUBLIC_ADMIN_URL ??
-    (process.env.NODE_ENV === "development"
-      ? "http://localhost:3003"
-      : "https://admin.verifactu.business");
-
-  redirect(target);
-}
+export { default, dynamic } from "./_redirect";
