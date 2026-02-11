@@ -196,17 +196,20 @@ export async function GET(req: Request) {
       capitalSocial: profile.capitalSocial ?? null,
     };
 
+    const rawPayload = profile.raw ?? profile;
+    const rawJson = JSON.parse(JSON.stringify(rawPayload));
+
     await prisma.einformaLookup.upsert({
       where: { queryType_queryValue: { queryType: 'TAX_ID', queryValue: taxId } },
       create: {
         queryType: 'TAX_ID',
         queryValue: taxId,
-        raw: profile,
+        raw: rawJson,
         normalized,
         expiresAt: addDays(30),
       },
       update: {
-        raw: profile,
+        raw: rawJson,
         normalized,
         expiresAt: addDays(30),
       },
