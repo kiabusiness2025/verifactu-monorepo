@@ -1,5 +1,5 @@
-import 'server-only';
 import { prisma } from '@verifactu/db';
+import 'server-only';
 
 type TokenCache = { accessToken: string; expiresAt: number };
 
@@ -201,7 +201,7 @@ function normalizeSearchResults(data: any): Array<any> {
 }
 
 export async function searchCompanies(q: string): Promise<EinformaSearchItem[]> {
-  const queryValue = q.trim().toLowerCase();
+  const queryValue = q.trim().toUpperCase();
   if (!queryValue) return [];
 
   const cached = await getCache<EinformaSearchItem[]>('NAME', queryValue);
@@ -209,42 +209,32 @@ export async function searchCompanies(q: string): Promise<EinformaSearchItem[]> 
 
   let lastError: unknown = null;
 
-  // 1. Buscar por companySearch (nombre, marca, etc.)
-  try {
-    const data = await einformaRequest<any>('/companies', { companySearch: q });
-    const items = normalizeSearchResults(data);
-    if (Array.isArray(items) && items.length > 0) {
-      const normalized = items.map((item: any) => ({
-        name: item?.denominacion ?? item?.name ?? item?.denominacionBusqueda ?? '',
-        nif: item?.identificativo ?? item?.nif ?? item?.cif,
-        province: item?.provincia ?? item?.province,
-        city: item?.localidad ?? item?.city,
-        id: item?.id ?? item?.identificativo ?? item?.codigo,
-      }));
-      await setCache('NAME', queryValue, data, normalized, 7);
-      return normalized;
-    }
-  } catch (error) {
-    lastError = error;
-  }
+  const candidates = [
+    q.trim(),
+    q.trim().toUpperCase(),
+    q.trim().toLowerCase(),
+    `${q.trim()}*`,
+    `*${q.trim()}*`,
+  ].filter(Boolean);
 
-  // 2. Si no hay resultados, buscar por NIF (opcional, si la API lo soporta)
-  try {
-    const data = await einformaRequest<any>('/companies', { companySearch: q });
-    const items = normalizeSearchResults(data);
-    if (Array.isArray(items) && items.length > 0) {
-      const normalized = items.map((item: any) => ({
-        name: item?.denominacion ?? item?.name ?? item?.denominacionBusqueda ?? '',
-        nif: item?.identificativo ?? item?.nif ?? item?.cif,
-        province: item?.provincia ?? item?.province,
-        city: item?.localidad ?? item?.city,
-        id: item?.id ?? item?.identificativo ?? item?.codigo,
-      }));
-      await setCache('NAME', queryValue, data, normalized, 7);
-      return normalized;
+  for (const candidate of candidates) {
+    try {
+      const data = await einformaRequest<any>('/companies', { companySearch: candidate });
+      const items = normalizeSearchResults(data);
+      if (Array.isArray(items) && items.length > 0) {
+        const normalized = items.map((item: any) => ({
+          name: item?.denominacion ?? item?.name ?? item?.denominacionBusqueda ?? '',
+          nif: item?.identificativo ?? item?.nif ?? item?.cif,
+          province: item?.provincia ?? item?.province,
+          city: item?.localidad ?? item?.city,
+          id: item?.id ?? item?.identificativo ?? item?.codigo,
+        }));
+        await setCache('NAME', queryValue, data, normalized, 7);
+        return normalized;
+      }
+    } catch (error) {
+      lastError = error;
     }
-  } catch (error) {
-    lastError = error;
   }
 
   if (lastError) {

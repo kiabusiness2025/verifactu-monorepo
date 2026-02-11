@@ -4,10 +4,10 @@ Plataforma SaaS para facturacion y cumplimiento VeriFactu. Monorepo con apps web
 
 ## Apps
 
-- apps/app: App principal (clientes)
+- apps/app: App principal (clientes) -> /app
 - apps/client: App cliente alternativa o legacy (si aplica)
 - apps/landing: Marketing + login
-- apps/admin: Panel de administracion
+- apps/admin: Panel de administracion -> /admin
 - packages/\*: UI, utils, db, auth, integrations
 
 ## Implementaciones clave (resumen)
@@ -42,9 +42,15 @@ La documentacion detallada de variables esta en:
 ## Desarrollo rapido
 
 - Instalar dependencias: pnpm install
-- App cliente: pnpm --filter verifactu-app dev
-- Admin: pnpm --filter verifactu-admin dev
+- App cliente: pnpm --filter verifactu-app dev (http://localhost:3000)
+- Admin: pnpm --filter verifactu-admin dev (http://localhost:3003)
 - Landing: pnpm --filter verifactu-landing dev
+
+## Rutas y paneles
+
+- Panel de Cliente: https://app.verifactu.business
+- Panel de Admin: https://admin.verifactu.business
+- /dashboard/admin en apps/app redirige al admin nuevo.
 
 ## Base de datos
 

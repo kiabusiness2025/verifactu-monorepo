@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
-import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { getCompanyProfileByNif } from '@/server/einforma';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

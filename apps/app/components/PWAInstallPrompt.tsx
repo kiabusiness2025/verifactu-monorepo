@@ -98,8 +98,8 @@ export function PWAInstallPrompt() {
             </h3>
             <p className="text-sm text-slate-600 mb-4">
               {isIOS
-                ? "Toca el boton Compartir y luego \"Anadir a pantalla de inicio\" para acceso rapido."
-                : "Instala la app para acceder mas rapido y recibir notificaciones."}
+                ? "Toca el botón Compartir y luego \"Añadir a pantalla de inicio\" para acceso rápido."
+                : "Instala la app para acceder más rápido y recibir notificaciones."}
             </p>
 
             {!isIOS && deferredPrompt && (
@@ -108,7 +108,7 @@ export function PWAInstallPrompt() {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Instalar aplicacion
+                Instalar aplicación
               </button>
             )}
 
@@ -118,7 +118,7 @@ export function PWAInstallPrompt() {
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M16 5l-1.42 1.42-1.59-1.59V16h-1.98V4.83L9.42 6.42 8 5l4-4 4 4zm4 5v11c0 1.1-.9 2-2 2H6c-1.11 0-2-.9-2-2V10c0-1.11.89-2 2-2h3v2H6v11h12V10h-3V8h3c1.1 0 2 .89 2 2z"/>
                 </svg>
-                <span>2. &quot;Anadir a pantalla de inicio&quot;</span>
+                <span>2. &quot;Añadir a pantalla de inicio&quot;</span>
               </div>
             )}
           </div>

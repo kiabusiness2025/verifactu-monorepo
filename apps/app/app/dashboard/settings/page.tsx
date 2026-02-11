@@ -3,8 +3,8 @@
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
 import { useToast } from '@/components/notifications/ToastNotifications';
-import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
+import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import { formatDateTime } from '@/src/lib/formatters';
 import { Camera } from 'lucide-react';
 import { useSession } from 'next-auth/react';

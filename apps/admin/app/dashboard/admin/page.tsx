@@ -4,15 +4,15 @@ import { DashboardSkeleton } from '@/components/accessibility/LoadingSkeleton';
 import { adminGet, type AccountingData } from '@/lib/adminApi';
 import { formatCurrency, formatDateTime, formatNumber, formatTime } from '@/src/lib/formatters';
 import {
-  AlertTriangle,
-  ArrowUpRight,
-  Building,
-  DollarSign,
-  FileWarning,
-  ListChecks,
-  RefreshCw,
-  TrendingUp,
-  Users,
+    AlertTriangle,
+    ArrowUpRight,
+    Building,
+    DollarSign,
+    FileWarning,
+    ListChecks,
+    RefreshCw,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -168,7 +168,7 @@ export default function AdminDashboardPage() {
 
       <div>
         <h2 className="text-sm font-semibold text-slate-900 mb-3">Acciones rápidas</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             href="/dashboard/admin/companies/new"
             className="rounded-xl bg-blue-600 px-4 py-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 text-center"
@@ -186,6 +186,36 @@ export default function AdminDashboardPage() {
             className="rounded-xl border-2 border-purple-500 px-4 py-4 text-sm font-semibold text-purple-600 hover:bg-purple-50 text-center"
           >
             Revisar correos
+          </Link>
+          <Link
+            href="/integrations/stripe"
+            className="rounded-xl border-2 border-emerald-500 px-4 py-4 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 text-center"
+          >
+            Ver suscripciones
+          </Link>
+          <Link
+            href="/support-sessions"
+            className="rounded-xl border-2 border-slate-300 px-4 py-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 text-center"
+          >
+            Sesiones de soporte
+          </Link>
+          <Link
+            href="/operations"
+            className="rounded-xl border-2 border-amber-400 px-4 py-4 text-sm font-semibold text-amber-700 hover:bg-amber-50 text-center"
+          >
+            Incidencias
+          </Link>
+          <Link
+            href="/dashboard/admin/integrations"
+            className="rounded-xl border-2 border-slate-400 px-4 py-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 text-center"
+          >
+            Integraciones
+          </Link>
+          <Link
+            href="/dashboard/admin/chat"
+            className="rounded-xl border-2 border-blue-400 px-4 py-4 text-sm font-semibold text-blue-700 hover:bg-blue-50 text-center"
+          >
+            Hablar con Isaak
           </Link>
         </div>
       </div>

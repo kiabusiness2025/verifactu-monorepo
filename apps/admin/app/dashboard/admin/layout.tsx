@@ -1,8 +1,8 @@
 "use client";
 
+import { AlertTriangle, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlertTriangle, ShieldCheck } from "lucide-react";
 
 // Force dynamic rendering for admin routes
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,15 @@ const adminNav = [
   { label: "Resumen", href: "/dashboard/admin" },
   { label: "Usuarios", href: "/dashboard/admin/users" },
   { label: "Empresas", href: "/dashboard/admin/companies" },
+  { label: "Tenants", href: "/dashboard/admin/tenants" },
   { label: "Contabilidad", href: "/dashboard/admin/accounting" },
+  { label: "Integraciones", href: "/dashboard/admin/integrations" },
+  { label: "Stripe", href: "/integrations/stripe" },
+  { label: "Emails", href: "/dashboard/admin/emails" },
+  { label: "Incidencias", href: "/operations" },
+  { label: "Soporte", href: "/support-sessions" },
+  { label: "Isaak", href: "/dashboard/admin/chat" },
+  { label: "Configuración", href: "/settings" },
 ];
 
 export default function AdminLayout({

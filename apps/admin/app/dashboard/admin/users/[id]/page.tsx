@@ -109,6 +109,7 @@ export default function UserDetailPage() {
   const [data, setData] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 
   useEffect(() => {
     fetchUserDetails();
@@ -135,37 +136,46 @@ export default function UserDetailPage() {
     }
   };
 
-  const handleImpersonate = async () => {
-    if (
-      !confirm(
-        `¿Entrar al dashboard como ${data?.user.email}?\n\nPodrás ver y gestionar su cuenta como si fueras ese usuario.`
-      )
-    ) {
+  const handleImpersonate = async (tenantId?: string) => {
+    if (!data) return;
+
+    if (!confirm(`¿Abrir el panel de ${data.user.email}?`)) {
+      return;
+    }
+
+    const preferredTenantId =
+      tenantId ||
+      data.user.preferred_tenant_id ||
+      data.memberships.find((membership) => membership.status === 'active')?.tenant_id ||
+      data.memberships[0]?.tenant_id;
+
+    if (!preferredTenantId) {
+      showError('Sin empresa', 'Este usuario no tiene empresas asignadas todavía');
       return;
     }
 
     try {
       setIsImpersonating(true);
       if (!userId) return;
-      const res = await fetch(`/api/admin/users/${userId}/impersonate`, {
+      const res = await fetch('/api/admin/support-sessions/start', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: preferredTenantId, userId, reason: 'support' }),
       });
 
       if (res.ok) {
         const result = await res.json();
-        success('Suplantaci\u00f3n exitosa', `Entrando como ${data?.user.email}`);
-        // Redirigir al dashboard del usuario
-        window.location.href = result.redirectTo || '/dashboard';
+        const token = result.handoffToken as string;
+        const url = `${appUrl}/support/handoff?token=${encodeURIComponent(token)}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+        success('Acceso iniciado', `Panel abierto para ${data.user.email}`);
       } else {
-        const error = await res.json();
-        showError(
-          'Error de suplantaci\u00f3n',
-          error.error || 'No se pudo acceder como este usuario'
-        );
+        const error = await res.json().catch(() => ({}));
+        showError('Error de acceso', error.error || 'No se pudo abrir el panel de este usuario');
       }
     } catch (error) {
-      console.error('Impersonation error:', error);
-      showError('Error de suplantaci\u00f3n', 'No se pudo acceder como este usuario');
+      console.error('Support handoff error:', error);
+      showError('Error de acceso', 'No se pudo abrir el panel de este usuario');
     } finally {
       setIsImpersonating(false);
     }
@@ -223,12 +233,12 @@ export default function UserDetailPage() {
             Editar
           </button>
           <button
-            onClick={handleImpersonate}
+            onClick={() => handleImpersonate()}
             disabled={isImpersonating}
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-blue-400"
           >
             <LogIn className="h-4 w-4" />
-            {isImpersonating ? 'Entrando...' : 'Entrar como usuario'}
+            {isImpersonating ? 'Abriendo...' : 'Abrir panel'}
           </button>
         </div>
       </div>
@@ -292,10 +302,10 @@ export default function UserDetailPage() {
 
         {memberships.length === 0 ? (
           <p className="text-sm text-slate-500">Sin empresas asociadas</p>
-        ) : (
-          <div className="space-y-3">
-            {memberships.map((m) => (
               <div
+                key={m.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-4"
+              >
                 key={m.id}
                 className="flex items-center justify-between rounded-lg border border-slate-200 p-4"
               >
@@ -306,6 +316,13 @@ export default function UserDetailPage() {
                   )}
                   {m.tenant_nif && <p className="text-xs text-slate-500">NIF: {m.tenant_nif}</p>}
                   <p className="mt-1 text-xs text-slate-500">
+                <button
+                  onClick={() => handleImpersonate(m.tenant_id)}
+                  className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  Abrir panel
+                </button>
                     Miembro desde {formatShortDate(m.created_at)}
                   </p>
                 </div>

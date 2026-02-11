@@ -24,7 +24,7 @@ import { useToast } from '@/components/notifications/ToastNotifications';
   <div className="flex gap-3">
     <HelpCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
     <div className="text-sm text-blue-900">
-      <p className="font-semibold mb-1">Informacion</p>
+      <p className="font-semibold mb-1">Información</p>
       <p className="text-blue-700">
         Inserta emails de prueba para poblar la bandeja y prueba envÃ­os reales con todas las
         opciones de Resend. Todos los correos se envÃ­an siempre desde{' '}
@@ -656,7 +656,7 @@ export default function AdminEmailsPage() {
               <div className="flex gap-3">
                 <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
                 <div className="text-sm text-blue-900">
-                  <p className="font-semibold mb-1">Informacion</p>
+                  <p className="font-semibold mb-1">Información</p>
                   <p className="text-blue-700">
                     Para ver emails reales, configura el webhook de Resend y una base de datos para
                     almacenar los mensajes entrantes.
@@ -828,7 +828,7 @@ export default function AdminEmailsPage() {
             <div className="flex gap-3">
               <HelpCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-900">
-                <p className="font-semibold mb-1">Informacion</p>
+                <p className="font-semibold mb-1">Información</p>
                 <p className="text-blue-700">
                   EnvÃ­a correos a tus clientes con todas las opciones de Resend. Todos los correos
                   se envÃ­an desde <strong>Verifactu Business</strong> usando
@@ -910,7 +910,7 @@ export default function AdminEmailsPage() {
                 <div className="flex gap-3">
                   <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-amber-900">
-                    <p className="font-semibold mb-1">Informacion</p>
+                    <p className="font-semibold mb-1">Información</p>
                     <p>
                       En <strong>desarrollo local</strong>, usa la pestana &quot;Insertar email de
                       prueba&quot; para crear emails de prueba. En <strong>produccion</strong>, los

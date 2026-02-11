@@ -158,7 +158,46 @@ export async function POST(req: Request) {
     const admin = await requireAdmin(req);
 
     const body = await req.json();
-    const { legalName, taxId, address, cnae } = body;
+    const normalized = body?.normalized ?? null;
+    const profile = body?.profile ?? null;
+    const isEinforma = !!normalized;
+
+    const legalName = String(
+      normalized?.legalName || normalized?.name || body?.legalName || ''
+    ).trim();
+    const taxId = String(normalized?.nif || body?.taxId || '').trim().toUpperCase();
+    const address = isEinforma
+      ? String(normalized?.address || profile?.address?.street || '').trim() || null
+      : body?.address
+      ? String(body.address).trim()
+      : null;
+    const cnae = isEinforma
+      ? String(profile?.cnae || '').trim() || null
+      : body?.cnae
+      ? String(body.cnae).trim()
+      : null;
+
+    const cnaeCode = normalized?.cnaeCode ?? null;
+    const cnaeText = normalized?.cnaeText ?? null;
+    const legalForm = profile?.legalForm ?? null;
+    const status = profile?.status ?? null;
+    const website = profile?.website ?? null;
+    const capitalSocialRaw = profile?.capitalSocial;
+    const capitalSocial = Number.isFinite(Number(capitalSocialRaw))
+      ? Number(capitalSocialRaw)
+      : null;
+    const incorporationDate = profile?.constitutionDate
+      ? new Date(profile.constitutionDate)
+      : null;
+    const postalCode = normalized?.postalCode ?? profile?.address?.zip ?? null;
+    const city = normalized?.city ?? profile?.address?.city ?? null;
+    const province = normalized?.province ?? profile?.address?.province ?? null;
+    const country = normalized?.country ?? profile?.address?.country ?? null;
+    const sourceId = normalized?.sourceId ?? normalized?.nif ?? profile?.sourceId ?? null;
+    const einformaTaxIdVerified =
+      !!taxId && !!normalized?.nif && String(normalized.nif).toUpperCase() === taxId;
+    const einformaRaw = isEinforma ? profile?.raw ?? profile ?? null : null;
+    const profileSource = isEinforma ? 'einforma' : 'manual';
 
     // Validación básica
     if (!legalName || !taxId) {
@@ -191,13 +230,73 @@ export async function POST(req: Request) {
       [tenantId, legalName, legalName, taxId, now]
     );
 
-    if (address || cnae) {
+    if (address || cnae || isEinforma) {
       await query(
-        `INSERT INTO tenant_profiles (tenant_id, source, cnae, address, updated_at)
-         VALUES ($1, 'manual', $2, $3, $4)
+        `INSERT INTO tenant_profiles (
+           tenant_id,
+           source,
+           source_id,
+           cnae,
+           cnae_code,
+           cnae_text,
+           legal_form,
+           status,
+           website,
+           capital_social,
+           incorporation_date,
+           address,
+           postal_code,
+           city,
+           province,
+           country,
+           einforma_last_sync_at,
+           einforma_tax_id_verified,
+           einforma_raw,
+           updated_at
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
          ON CONFLICT (tenant_id) DO UPDATE
-         SET cnae = EXCLUDED.cnae, address = EXCLUDED.address, updated_at = EXCLUDED.updated_at`,
-        [tenantId, cnae || null, address || null, now]
+         SET source = EXCLUDED.source,
+             source_id = EXCLUDED.source_id,
+             cnae = EXCLUDED.cnae,
+             cnae_code = EXCLUDED.cnae_code,
+             cnae_text = EXCLUDED.cnae_text,
+             legal_form = EXCLUDED.legal_form,
+             status = EXCLUDED.status,
+             website = EXCLUDED.website,
+             capital_social = EXCLUDED.capital_social,
+             incorporation_date = EXCLUDED.incorporation_date,
+             address = EXCLUDED.address,
+             postal_code = EXCLUDED.postal_code,
+             city = EXCLUDED.city,
+             province = EXCLUDED.province,
+             country = EXCLUDED.country,
+             einforma_last_sync_at = EXCLUDED.einforma_last_sync_at,
+             einforma_tax_id_verified = EXCLUDED.einforma_tax_id_verified,
+             einforma_raw = EXCLUDED.einforma_raw,
+             updated_at = EXCLUDED.updated_at`,
+        [
+          tenantId,
+          profileSource,
+          sourceId,
+          cnae,
+          cnaeCode,
+          cnaeText,
+          legalForm,
+          status,
+          website,
+          capitalSocial,
+          incorporationDate,
+          address,
+          postalCode,
+          city,
+          province,
+          country,
+          isEinforma ? now : null,
+          isEinforma ? einformaTaxIdVerified : null,
+          einformaRaw,
+          now,
+        ]
       );
     }
 

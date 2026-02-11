@@ -109,11 +109,11 @@
 ```
 verifactu-monorepo/
   apps/
-    app/        # App cliente (dashboard principal)
+    app/        # App cliente (dashboard principal) -> /app
     client/     # App cliente alternativa o legacy (si aplica)
-    admin/      # Backoffice / control tower
+    admin/      # Backoffice / control tower -> /admin
     landing/    # Marketing + login
-    api/        # API backend (si aplica)
+    api/        # API backend (si aplica, no tocar)
     mobile/     # Flutter
   packages/
     ui/         # UI compartida
@@ -137,7 +137,13 @@ verifactu-monorepo/
 pnpm install
 pnpm dev:app        # http://localhost:3000
 pnpm dev:landing    # http://localhost:3001
-pnpm dev:admin      # http://localhost:3002 (o 3010)
+pnpm dev:admin      # http://localhost:3003
+
+## Rutas y paneles
+
+- Panel de Cliente: https://app.verifactu.business
+- Panel de Admin: https://admin.verifactu.business
+- /dashboard/admin en apps/app redirige al admin nuevo.
 ```
 
 ---

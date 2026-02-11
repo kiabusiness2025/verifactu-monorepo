@@ -23,6 +23,19 @@ async function getSessionPayload(req: NextRequest): Promise<SessionPayload | nul
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Force legacy admin routes to the new admin app
+  if (pathname.startsWith("/dashboard/admin")) {
+    const adminBase =
+      process.env.NEXT_PUBLIC_ADMIN_URL ??
+      (process.env.NODE_ENV === "development"
+        ? "http://localhost:3003"
+        : "https://admin.verifactu.business");
+    const target = new URL(adminBase);
+    target.pathname = pathname;
+    target.search = req.nextUrl.search;
+    return NextResponse.redirect(target, { status: 308 });
+  }
+
   // Redirect /dashboard/admin/tenants -> /dashboard/admin/companies
   if (pathname === "/dashboard/admin/tenants" || pathname.startsWith("/dashboard/admin/tenants/")) {
     const newPath = pathname.replace("/dashboard/admin/tenants", "/dashboard/admin/companies");

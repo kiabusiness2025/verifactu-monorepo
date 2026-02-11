@@ -27,12 +27,6 @@ type TenantsResponse = {
   total: number;
 };
 
-type TenantForm = {
-  legalName: string;
-  taxId: string;
-  address?: string;
-  cnae?: string;
-};
 
 type EinformaSearchItem = {
   name: string;
@@ -53,6 +47,26 @@ type EinformaCompanyProfile = {
     province?: string;
     country?: string;
   };
+  legalForm?: string;
+  status?: string;
+  website?: string;
+  capitalSocial?: number | string;
+  constitutionDate?: string;
+  raw?: unknown;
+};
+
+type EinformaNormalized = {
+  name?: string | null;
+  legalName?: string | null;
+  nif?: string | null;
+  address?: string | null;
+  province?: string | null;
+  country?: string | null;
+  cnaeCode?: string | null;
+  cnaeText?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  sourceId?: string | null;
 };
 
 export default function AdminTenantsPage() {
@@ -69,12 +83,8 @@ export default function AdminTenantsPage() {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<TenantRow | null>(null);
-  const [form, setForm] = useState<TenantForm>({
-    legalName: "",
-    taxId: "",
-    address: "",
-    cnae: "",
-  });
+  const [selectedProfile, setSelectedProfile] = useState<EinformaCompanyProfile | null>(null);
+  const [selectedNormalized, setSelectedNormalized] = useState<EinformaNormalized | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<EinformaSearchItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -97,6 +107,8 @@ export default function AdminTenantsPage() {
     setSearchLoading(false);
     setSearchError("");
     setProfileLoading(false);
+    setSelectedProfile(null);
+    setSelectedNormalized(null);
   }
 
   useEffect(() => {
@@ -152,22 +164,17 @@ export default function AdminTenantsPage() {
     return () => window.clearTimeout(timeout);
   }, [searchQuery, showModal]);
 
-  function buildAddress(profile: EinformaCompanyProfile) {
-    const address = profile.address || {};
-    const parts = [address.street, address.zip, address.city, address.province].filter(Boolean);
-    return parts.join(", ");
-  }
-
   async function applyEinformaProfile(item: EinformaSearchItem) {
     setSearchError("");
     setSearchResults([]);
     setSearchQuery(item.name || item.nif || "");
     if (!item?.nif) {
-      setForm((prev) => ({
-        ...prev,
-        legalName: item?.name || prev.legalName,
-        taxId: "",
-      }));
+      setSelectedProfile({ name: item?.name || "", nif: "" });
+      setSelectedNormalized({
+        name: item?.name || null,
+        legalName: item?.name || null,
+        nif: null,
+      });
       return;
     }
 
@@ -182,17 +189,27 @@ export default function AdminTenantsPage() {
       }
 
       const profile: EinformaCompanyProfile | undefined = data?.profile;
+      const normalized: EinformaNormalized | undefined = data?.normalized;
       if (!profile) {
         throw new Error("No se pudo cargar la empresa");
       }
 
-      setForm((prev) => ({
-        ...prev,
-        legalName: profile.legalName || profile.name || prev.legalName,
-        taxId: (profile.nif || item.nif || prev.taxId || "").toUpperCase(),
-        address: buildAddress(profile) || prev.address || "",
-        cnae: profile.cnae || prev.cnae || "",
-      }));
+      setSelectedProfile(profile);
+      setSelectedNormalized(
+        normalized || {
+          name: profile.legalName || profile.name || null,
+          legalName: profile.legalName || null,
+          nif: (profile.nif || item.nif || "").toUpperCase(),
+          address: profile.address?.street || null,
+          province: profile.address?.province || null,
+          country: profile.address?.country || 'ES',
+          cnaeCode: null,
+          cnaeText: null,
+          postalCode: profile.address?.zip || null,
+          city: profile.address?.city || null,
+          sourceId: null,
+        }
+      );
     } catch (err) {
       setSearchError(err instanceof Error ? err.message : "Error al cargar");
     } finally {
@@ -202,7 +219,6 @@ export default function AdminTenantsPage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ legalName: "", taxId: "", address: "", cnae: "" });
     setError("");
     resetEinforma();
     setShowModal(true);
@@ -210,12 +226,6 @@ export default function AdminTenantsPage() {
 
   function openEdit(tenant: TenantRow) {
     setEditing(tenant);
-    setForm({
-      legalName: tenant.legalName || "",
-      taxId: tenant.taxId || "",
-      address: "",
-      cnae: "",
-    });
     setError("");
     resetEinforma();
     setShowModal(true);
@@ -223,17 +233,33 @@ export default function AdminTenantsPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!selectedNormalized) {
+      setError("Selecciona una empresa en el buscador para continuar.");
+      return;
+    }
+    if (!selectedNormalized.nif) {
+      setError("La empresa seleccionada no tiene CIF/NIF válido.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
       if (editing) {
         const res = await adminPatch<{ tenant: TenantRow }>(
           `/api/admin/tenants/${editing.id}`,
-          form
+          {
+            source: "einforma",
+            normalized: selectedNormalized,
+            profile: selectedProfile,
+          }
         );
         setItems((prev) => prev.map((t) => (t.id === editing.id ? res.tenant : t)));
       } else {
-        const res = await adminPost<{ tenant: TenantRow }>("/api/admin/tenants", form);
+        const res = await adminPost<{ tenant: TenantRow }>("/api/admin/tenants", {
+          source: "einforma",
+          normalized: selectedNormalized,
+          profile: selectedProfile,
+        });
         setItems((prev) => [res.tenant, ...prev]);
       }
       setShowModal(false);
@@ -487,28 +513,70 @@ export default function AdminTenantsPage() {
                   <div className="text-xs text-slate-500">Cargando datos de empresa...</div>
                 )}
               </div>
-              <AccessibleInput
-                label="Razon social"
-                required
-                value={form.legalName}
-                onChange={(e) => setForm((v) => ({ ...v, legalName: e.target.value }))}
-              />
-              <AccessibleInput
-                label="CIF"
-                required
-                value={form.taxId}
-                onChange={(e) => setForm((v) => ({ ...v, taxId: e.target.value.toUpperCase() }))}
-              />
-              <AccessibleInput
-                label="Direccion"
-                value={form.address}
-                onChange={(e) => setForm((v) => ({ ...v, address: e.target.value }))}
-              />
-              <AccessibleInput
-                label="CNAE"
-                value={form.cnae}
-                onChange={(e) => setForm((v) => ({ ...v, cnae: e.target.value }))}
-              />
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                <div className="font-semibold text-slate-900">Datos de empresa</div>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  <div>
+                    <div className="text-xs text-slate-500">Razón social</div>
+                    <div className="text-slate-900">
+                      {selectedNormalized?.legalName || selectedNormalized?.name || "--"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">CIF/NIF</div>
+                    <div className="text-slate-900">{selectedNormalized?.nif || "--"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Dirección</div>
+                    <div className="text-slate-900">{selectedNormalized?.address || "--"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Ciudad</div>
+                    <div className="text-slate-900">{selectedNormalized?.city || "--"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Provincia</div>
+                    <div className="text-slate-900">{selectedNormalized?.province || "--"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Código postal</div>
+                    <div className="text-slate-900">{selectedNormalized?.postalCode || "--"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">CNAE</div>
+                    <div className="text-slate-900">
+                      {selectedProfile?.cnae ||
+                        [selectedNormalized?.cnaeCode, selectedNormalized?.cnaeText]
+                          .filter(Boolean)
+                          .join(" - ") ||
+                        "--"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Web</div>
+                    <div className="text-slate-900">{selectedProfile?.website || "--"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Forma jurídica</div>
+                    <div className="text-slate-900">{selectedProfile?.legalForm || "--"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Estado</div>
+                    <div className="text-slate-900">{selectedProfile?.status || "--"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Capital social</div>
+                    <div className="text-slate-900">
+                      {selectedProfile?.capitalSocial ?? "--"}
+                    </div>
+                  </div>
+                </div>
+                {!selectedNormalized && (
+                  <div className="mt-3 text-xs text-slate-500">
+                    Selecciona una empresa en el buscador para completar los datos.
+                  </div>
+                )}
+              </div>
               {error && (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                   {error}

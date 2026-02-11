@@ -1,12 +1,12 @@
-# Índice de documentación
+# Indice de documentacion
 
 Entrada principal: [README.md](README.md)
 
 Resumen:
 
-- Producto: docs/product/\*
-- Ingeniería: docs/engineering/\*
-- Operaciones: docs/ops/\*
+- Producto: docs/product/*
+- Ingenieria: docs/engineering/*
+- Operaciones: docs/ops/*
 - CI: docs/ops/CI_CHECKLIST.md
-- Seguridad: docs/security/\*
-- Histórico: docs/legacy/\*
+- Seguridad: docs/security/*
+- Historico: docs/legacy/*

@@ -20,6 +20,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 
   useEffect(() => {
     let mounted = true;
@@ -75,30 +76,39 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleImpersonate = async (userId: string, email: string) => {
-    if (!confirm(`¿Entrar al dashboard como ${email}?`)) return;
+  const handleImpersonate = async (userId: string, email: string, tenants: UserRow['tenants']) => {
+    if (!confirm(`¿Abrir el panel de ${email}?`)) return;
+
+    const primaryTenantId = tenants?.[0]?.tenantId;
+    if (!primaryTenantId) {
+      showError('Sin empresa', 'Este usuario no tiene empresas asignadas todavía');
+      return;
+    }
 
     try {
-      const res = await fetch(`/api/admin/users/${userId}/impersonate`, {
+      const res = await fetch('/api/admin/support-sessions/start', {
         method: 'POST',
         credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: primaryTenantId, userId, reason: 'support' }),
       });
 
       if (res.ok) {
-        success('Acceso como usuario', `Entrando al dashboard como ${email}`);
-        // Esperar un poco para asegurar que la cookie se estableció
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        window.location.href = '/dashboard';
+        const result = await res.json();
+        const token = result.handoffToken as string;
+        const url = `${appUrl}/support/handoff?token=${encodeURIComponent(token)}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+        success('Acceso iniciado', `Panel abierto para ${email}`);
       } else {
-        const errorData = await res.json();
+        const errorData = await res.json().catch(() => ({}));
         showError(
-          'Error de impersonación',
-          errorData.error || 'No se pudo acceder como este usuario'
+          'Error de acceso',
+          errorData.error || 'No se pudo abrir el panel de este usuario'
         );
       }
     } catch (error) {
-      console.error('Impersonation error:', error);
-      showError('Error de impersonación', 'No se pudo acceder como este usuario');
+      console.error('Support handoff error:', error);
+      showError('Error de acceso', 'No se pudo abrir el panel de este usuario');
     }
   };
 
@@ -225,12 +235,12 @@ export default function AdminUsersPage() {
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                   <button
-                    onClick={() => handleImpersonate(user.id, user.email)}
+                    onClick={() => handleImpersonate(user.id, user.email, user.tenants)}
                     className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#0b6cfb] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0a5be0]"
-                    title="Entrar como usuario"
+                    title="Abrir panel"
                   >
                     <LogIn className="h-3.5 w-3.5" />
-                    Entrar
+                    Abrir panel
                   </button>
                 </div>
               </div>
@@ -291,12 +301,12 @@ export default function AdminUsersPage() {
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                         <button
-                          onClick={() => handleImpersonate(user.id, user.email)}
+                          onClick={() => handleImpersonate(user.id, user.email, user.tenants)}
                           className="flex items-center gap-1 rounded-lg bg-[#0b6cfb] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0a5be0]"
-                          title="Entrar como usuario"
+                          title="Abrir panel"
                         >
                           <LogIn className="h-3.5 w-3.5" />
-                          Entrar
+                          Abrir panel
                         </button>
                       </div>
                     </td>
