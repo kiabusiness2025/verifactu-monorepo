@@ -1,13 +1,14 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import {
-  verifySessionToken,
-  readSessionSecret,
-  SESSION_COOKIE_NAME,
-  type SessionPayload,
-} from "@verifactu/utils";
-import { getLandingUrl, getAppUrl } from "@verifactu/utils";
 import { SUPPORT_SESSION_COOKIE, verifySupportToken } from "@/src/server/support/supportToken";
+import {
+    getAppUrl,
+    getLandingUrl,
+    readSessionSecret,
+    SESSION_COOKIE_NAME,
+    verifySessionToken,
+    type SessionPayload,
+} from "@verifactu/utils";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 async function getSessionPayload(req: NextRequest): Promise<SessionPayload | null> {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
