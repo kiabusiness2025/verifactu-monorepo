@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { User, onAuthStateChanged } from "firebase/auth";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { auth, isFirebaseConfigComplete, isFirebaseReady } from "../lib/firebase";
 import { mintSessionCookie } from "../lib/serverSession";
 
@@ -19,6 +19,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const hasSyncedSession = useRef(false);
 
+  const readRememberDevice = () => {
+    if (typeof window === "undefined") return true;
+    const stored = window.localStorage.getItem("vf_remember_device");
+    if (stored === null) return true;
+    return stored === "true";
+  };
+
   useEffect(() => {
     if (!isFirebaseConfigComplete || !auth || !isFirebaseReady) {
       console.warn("Auth deshabilitado: configura NEXT_PUBLIC_FIREBASE_* en Vercel/entorno.");
@@ -33,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Sync session cookie if user is authenticated and we haven't synced yet
       if (currentUser && !hasSyncedSession.current) {
         try {
-          await mintSessionCookie(currentUser);
+          await mintSessionCookie(currentUser, { rememberDevice: readRememberDevice() });
           hasSyncedSession.current = true;
         } catch (error) {
           console.error("Failed to sync session cookie:", error);

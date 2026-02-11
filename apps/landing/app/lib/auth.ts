@@ -1,18 +1,22 @@
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  OAuthProvider,
-  sendPasswordResetEmail,
-  confirmPasswordReset,
-  sendEmailVerification,
-  signOut,
-  User,
-  AuthError,
+    AuthError,
+    confirmPasswordReset,
+    createUserWithEmailAndPassword,
+    GoogleAuthProvider,
+    OAuthProvider,
+    sendEmailVerification,
+    sendPasswordResetEmail,
+    signInWithEmailAndPassword,
+    signInWithPopup,
+    signOut,
+    User,
 } from "firebase/auth";
 import { auth, isFirebaseConfigComplete, isFirebaseReady } from "./firebase";
-import { mintSessionCookie, clearSessionCookie } from "./serverSession";
+import { clearSessionCookie, mintSessionCookie } from "./serverSession";
+
+type SignInOptions = {
+  rememberDevice?: boolean;
+};
 
 const authUnavailable = () => ({
   user: null as any,
@@ -115,7 +119,8 @@ export const signUpWithEmail = async (
  */
 export const signInWithEmail = async (
   email: string,
-  password: string
+  password: string,
+  options: SignInOptions = {}
 ): Promise<{ user: User; error: null } | { user: null; error: AuthErrorMessage }> => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
@@ -135,7 +140,9 @@ export const signInWithEmail = async (
 
     // Mint session cookie once here
     try {
-      await mintSessionCookie(userCredential.user);
+      await mintSessionCookie(userCredential.user, {
+        rememberDevice: options.rememberDevice,
+      });
     } catch (cookieError) {
       console.error("Failed to mint session cookie after email login:", cookieError);
       return {
@@ -161,7 +168,7 @@ export const signInWithEmail = async (
 /**
  * Sign in with Google
  */
-export const signInWithGoogle = async (): Promise<
+export const signInWithGoogle = async (options: SignInOptions = {}): Promise<
   { user: User; error: null } | { user: null; error: AuthErrorMessage }
 > => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
@@ -170,7 +177,9 @@ export const signInWithGoogle = async (): Promise<
     const userCredential = await signInWithPopup(auth, provider);
 
     try {
-      await mintSessionCookie(userCredential.user);
+      await mintSessionCookie(userCredential.user, {
+        rememberDevice: options.rememberDevice,
+      });
     } catch (cookieError) {
       console.error("Failed to mint session cookie after Google login:", cookieError);
       return {
@@ -196,7 +205,7 @@ export const signInWithGoogle = async (): Promise<
 /**
  * Sign in with Microsoft
  */
-export const signInWithMicrosoft = async (): Promise<
+export const signInWithMicrosoft = async (options: SignInOptions = {}): Promise<
   { user: User; error: null } | { user: null; error: AuthErrorMessage }
 > => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
@@ -205,7 +214,9 @@ export const signInWithMicrosoft = async (): Promise<
     const userCredential = await signInWithPopup(auth, provider);
 
     try {
-      await mintSessionCookie(userCredential.user);
+      await mintSessionCookie(userCredential.user, {
+        rememberDevice: options.rememberDevice,
+      });
     } catch (cookieError) {
       console.error("Failed to mint session cookie after Microsoft login:", cookieError);
       return {

@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
+import { query } from "@/lib/db";
 import { randomUUID } from "crypto";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = 'force-dynamic';
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
       where.push(
         `(LOWER(t.legal_name) LIKE $${params.length - 2} OR LOWER(t.name) LIKE $${
           params.length - 1
-        } OR LOWER(t.tax_id) LIKE $${params.length})`
+        } OR LOWER(t.nif) LIKE $${params.length})`
       );
     }
 
@@ -61,7 +61,7 @@ export async function GET(req: Request) {
        FROM tenants t
        LEFT JOIN LATERAL (
          SELECT status
-         FROM subscriptions s
+         FROM tenant_subscriptions s
          WHERE s.tenant_id = t.id
          ORDER BY s.created_at DESC
          LIMIT 1
@@ -74,7 +74,7 @@ export async function GET(req: Request) {
       id: string;
       name: string;
       legal_name: string;
-      tax_id: string | null;
+      nif: string | null;
       address: string | null;
       cnae: string | null;
       created_at: string;
@@ -87,28 +87,29 @@ export async function GET(req: Request) {
         t.id,
         t.name,
         COALESCE(t.legal_name, t.name) as legal_name,
-        t.tax_id,
-        t.address,
-        t.cnae,
+        t.nif,
+        tp.address,
+        tp.cnae,
         t.created_at,
         COUNT(DISTINCT m.user_id) as members_count,
         COUNT(DISTINCT i.id) as invoices_this_month,
-        COALESCE(SUM(i.total), 0) as revenue_this_month,
+        COALESCE(SUM(i.amount_gross), 0) as revenue_this_month,
         COALESCE(sub.status, 'trial') as status
        FROM tenants t
+       LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id
        LEFT JOIN memberships m ON m.tenant_id = t.id AND m.status = 'active'
        LEFT JOIN invoices i ON i.tenant_id = t.id AND i.status IN ('sent', 'paid')
          AND i.issue_date >= DATE_TRUNC('month', CURRENT_DATE)
          AND i.issue_date < (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month')
        LEFT JOIN LATERAL (
          SELECT status
-         FROM subscriptions s
+         FROM tenant_subscriptions s
          WHERE s.tenant_id = t.id
          ORDER BY s.created_at DESC
          LIMIT 1
        ) sub ON true
        ${whereClause}
-       GROUP BY t.id, t.name, t.legal_name, t.tax_id, t.address, t.cnae, t.created_at
+       GROUP BY t.id, t.name, t.legal_name, t.nif, tp.address, tp.cnae, t.created_at
        ORDER BY t.created_at DESC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, pageSize, offset]
@@ -118,7 +119,7 @@ export async function GET(req: Request) {
     const transformedTenants = tenants.map((t) => ({
       id: t.id,
       legalName: t.legal_name,
-      taxId: t.tax_id || "",
+      taxId: t.nif || "",
       address: t.address,
       cnae: t.cnae,
       createdAt: t.created_at,
@@ -169,7 +170,7 @@ export async function POST(req: Request) {
 
     // Verificar que no exista ya un tenant con ese taxId
     const existing = await query<{ id: string }>(
-      `SELECT id FROM tenants WHERE tax_id = $1 LIMIT 1`,
+      `SELECT id FROM tenants WHERE nif = $1 LIMIT 1`,
       [taxId]
     );
 
@@ -185,10 +186,20 @@ export async function POST(req: Request) {
 
     // Crear tenant
     await query(
-      `INSERT INTO tenants (id, name, legal_name, tax_id, address, cnae, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [tenantId, legalName, legalName, taxId, address || null, cnae || null, now, now]
+      `INSERT INTO tenants (id, name, legal_name, nif, created_at)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [tenantId, legalName, legalName, taxId, now]
     );
+
+    if (address || cnae) {
+      await query(
+        `INSERT INTO tenant_profiles (tenant_id, source, cnae, address, updated_at)
+         VALUES ($1, 'manual', $2, $3, $4)
+         ON CONFLICT (tenant_id) DO UPDATE
+         SET cnae = EXCLUDED.cnae, address = EXCLUDED.address, updated_at = EXCLUDED.updated_at`,
+        [tenantId, cnae || null, address || null, now]
+      );
+    }
 
     // Crear membership owner para el admin
     await query(
@@ -212,13 +223,15 @@ export async function POST(req: Request) {
       id: string;
       name: string;
       legal_name: string;
-      tax_id: string;
+      nif: string | null;
       address: string | null;
       cnae: string | null;
       created_at: string;
     }>(
-      `SELECT id, name, legal_name, tax_id, address, cnae, created_at
-       FROM tenants WHERE id = $1`,
+      `SELECT t.id, t.name, t.legal_name, t.nif, t.created_at, tp.address, tp.cnae
+       FROM tenants t
+       LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id
+       WHERE t.id = $1`,
       [tenantId]
     );
 
@@ -226,7 +239,7 @@ export async function POST(req: Request) {
       tenant: {
         id: tenant.id,
         legalName: tenant.legal_name,
-        taxId: tenant.tax_id,
+        taxId: tenant.nif || '',
         address: tenant.address,
         cnae: tenant.cnae,
         createdAt: tenant.created_at,

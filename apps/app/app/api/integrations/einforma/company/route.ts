@@ -37,6 +37,10 @@ function safeString(value?: string | null) {
   return value ? value.trim().toUpperCase() : '';
 }
 
+function addDays(days: number) {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getSessionPayload();
@@ -55,6 +59,23 @@ export async function GET(req: Request) {
       userId: session.uid,
       sessionTenantId: session.tenantId ?? null,
     });
+
+    // Cache global por taxId (EinformaLookup)
+    const lookup = await prisma.einformaLookup.findUnique({
+      where: { queryType_queryValue: { queryType: 'TAX_ID', queryValue: taxId } },
+      select: { raw: true, normalized: true, expiresAt: true, updatedAt: true },
+    });
+
+    if (lookup && lookup.expiresAt > new Date()) {
+      return NextResponse.json({
+        ok: true,
+        profile: lookup.raw,
+        normalized: lookup.normalized,
+        cached: true,
+        cacheSource: 'einformaLookup',
+        lastSyncAt: lookup.updatedAt?.toISOString() ?? null,
+      });
+    }
 
     if (resolved.tenantId) {
       const tenantProfile = await prisma.tenantProfile.findUnique({
@@ -156,27 +177,45 @@ export async function GET(req: Request) {
     const cnaeParts = splitCnae(profile.cnae);
     const cityParts = normalizeCity(profile.address?.city);
 
+    const normalized = {
+      name: profile.legalName || profile.name || null,
+      nif: profile.nif || taxId,
+      sourceId: profile.sourceId ?? profile.nif ?? null,
+      cnae: profile.cnae ?? null,
+      cnaeCode: cnaeParts.code,
+      cnaeText: cnaeParts.text,
+      postalCode: cityParts.postalCode,
+      city: cityParts.city,
+      legalForm: profile.legalForm ?? null,
+      status: profile.status ?? null,
+      incorporationDate: profile.constitutionDate ?? null,
+      address: profile.address?.street ?? null,
+      province: profile.address?.province ?? null,
+      country: profile.address?.country ?? 'ES',
+      website: profile.website ?? null,
+      capitalSocial: profile.capitalSocial ?? null,
+    };
+
+    await prisma.einformaLookup.upsert({
+      where: { queryType_queryValue: { queryType: 'TAX_ID', queryValue: taxId } },
+      create: {
+        queryType: 'TAX_ID',
+        queryValue: taxId,
+        raw: profile,
+        normalized,
+        expiresAt: addDays(30),
+      },
+      update: {
+        raw: profile,
+        normalized,
+        expiresAt: addDays(30),
+      },
+    });
+
     return NextResponse.json({
       ok: true,
       profile,
-      normalized: {
-        name: profile.legalName || profile.name || null,
-        nif: profile.nif || taxId,
-        sourceId: profile.sourceId ?? profile.nif ?? null,
-        cnae: profile.cnae ?? null,
-        cnaeCode: cnaeParts.code,
-        cnaeText: cnaeParts.text,
-        postalCode: cityParts.postalCode,
-        city: cityParts.city,
-        legalForm: profile.legalForm ?? null,
-        status: profile.status ?? null,
-        incorporationDate: profile.constitutionDate ?? null,
-        address: profile.address?.street ?? null,
-        province: profile.address?.province ?? null,
-        country: profile.address?.country ?? 'ES',
-        website: profile.website ?? null,
-        capitalSocial: profile.capitalSocial ?? null,
-      },
+      normalized,
       cached: false,
       cacheSource: 'einforma',
       lastSyncAt: null,

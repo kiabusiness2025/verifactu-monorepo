@@ -1,11 +1,16 @@
 import type { User } from "firebase/auth";
 
+export type MintSessionOptions = {
+  rememberDevice?: boolean;
+};
+
 /**
  * Mints a new session cookie by calling the backend session endpoint
  * with the user's Firebase ID token.
  */
-export async function mintSessionCookie(user: User) {
+export async function mintSessionCookie(user: User, options: MintSessionOptions = {}) {
   try {
+    const rememberDevice = options.rememberDevice ?? true;
     console.log("[🧠 AUTH] mintSessionCookie START", {
       uid: user.uid,
       email: user.email,
@@ -18,7 +23,7 @@ export async function mintSessionCookie(user: User) {
     const res = await fetch("/api/auth/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify({ idToken, rememberDevice }),
     });
 
     if (!res.ok) {

@@ -10,6 +10,7 @@ export type SessionPayload = JWTPayload & {
   role?: string; // Primary role for backwards compatibility
   roles?: string[];
   tenants?: string[];
+  rememberDevice?: boolean;
 };
 
 export type SessionSameSite = "lax" | "strict" | "none";

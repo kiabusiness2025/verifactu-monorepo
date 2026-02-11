@@ -12,13 +12,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const tenant = await one<{
       id: string;
       legal_name: string | null;
-      tax_id: string | null;
+      nif: string | null;
       address: string | null;
       cnae: string | null;
       created_at: string;
     }>(
-      `SELECT id, legal_name, tax_id, address, cnae, created_at
-       FROM tenants WHERE id = $1`,
+      `SELECT t.id, t.legal_name, t.nif, t.created_at, tp.address, tp.cnae
+       FROM tenants t
+       LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id
+       WHERE t.id = $1`,
       [tenantId]
     );
 
@@ -30,7 +32,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       tenant: {
         id: tenant.id,
         legalName: tenant.legal_name ?? "",
-        taxId: tenant.tax_id ?? "",
+        taxId: tenant.nif ?? "",
         address: tenant.address ?? null,
         cnae: tenant.cnae ?? null,
         createdAt: tenant.created_at,
@@ -64,19 +66,32 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     await query(
       `UPDATE tenants
-       SET legal_name = $1, tax_id = $2, address = $3, cnae = $4, updated_at = now()
-       WHERE id = $5`,
-      [legalName, taxId, address, cnae, tenantId]
+       SET legal_name = $1, nif = $2
+       WHERE id = $3`,
+      [legalName, taxId, tenantId]
+    );
+
+    const now = new Date().toISOString();
+    await query(
+      `INSERT INTO tenant_profiles (tenant_id, source, cnae, address, updated_at)
+       VALUES ($1, 'manual', $2, $3, $4)
+       ON CONFLICT (tenant_id) DO UPDATE
+       SET cnae = EXCLUDED.cnae, address = EXCLUDED.address, updated_at = EXCLUDED.updated_at`,
+      [tenantId, cnae, address, now]
     );
 
     const tenant = await one<{
       id: string;
       legal_name: string | null;
-      tax_id: string | null;
+      nif: string | null;
+      address: string | null;
+      cnae: string | null;
       created_at: string;
     }>(
-      `SELECT id, legal_name, tax_id, created_at
-       FROM tenants WHERE id = $1`,
+      `SELECT t.id, t.legal_name, t.nif, t.created_at, tp.address, tp.cnae
+       FROM tenants t
+       LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id
+       WHERE t.id = $1`,
       [tenantId]
     );
 
@@ -88,9 +103,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       tenant: {
         id: tenant.id,
         legalName: tenant.legal_name ?? "",
-        taxId: tenant.tax_id ?? "",
-        address,
-        cnae,
+        taxId: tenant.nif ?? "",
+        address: tenant.address ?? null,
+        cnae: tenant.cnae ?? null,
         createdAt: tenant.created_at,
         membersCount: 0,
         invoicesThisMonth: 0,

@@ -3,14 +3,24 @@
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
 import { useToast } from '@/components/notifications/ToastNotifications';
+import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
+import { formatDateTime } from '@/src/lib/formatters';
 import { Camera } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
-const ALLOWED_TABS = new Set(['profile', 'general', 'billing', 'integrations', 'team', 'isaak']);
+const ALLOWED_TABS = new Set([
+  'profile',
+  'general',
+  'billing',
+  'integrations',
+  'team',
+  'isaak',
+  'sessions',
+]);
 
 function SettingsContent() {
   const sessionData = useSession();
@@ -29,6 +39,15 @@ function SettingsContent() {
   const [isCreatingTenant, setIsCreatingTenant] = useState(false);
   const [createTenantError, setCreateTenantError] = useState<string | null>(null);
   const [createTenantSuccess, setCreateTenantSuccess] = useState<string | null>(null);
+  const [sessionInfo, setSessionInfo] = useState<{
+    email: string | null;
+    tenantId: string | null;
+    issuedAt: string | null;
+    expiresAt: string | null;
+    rememberDevice: boolean | null;
+  } | null>(null);
+  const [sessionInfoLoading, setSessionInfoLoading] = useState(false);
+  const [sessionInfoError, setSessionInfoError] = useState<string | null>(null);
 
   const [profileSettings, setProfileSettings] = useState({
     displayName: session?.user?.name || '',
@@ -45,6 +64,11 @@ function SettingsContent() {
     postalCode: '',
     taxId: '',
   });
+  const [einformaMeta, setEinformaMeta] = useState<{
+    cached?: boolean;
+    cacheSource?: string | null;
+    lastSyncAt?: string | null;
+  } | null>(null);
 
   const handleSaveGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +159,36 @@ function SettingsContent() {
       setActiveTab(tabParam);
     }
   }, [activeTab, tabParam]);
+
+  useEffect(() => {
+    if (activeTab !== 'sessions') return;
+    let mounted = true;
+    async function loadSessionInfo() {
+      setSessionInfoLoading(true);
+      setSessionInfoError(null);
+      try {
+        const res = await fetch('/api/session/info', { credentials: 'include' });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.ok) {
+          throw new Error(data?.error || 'No se pudo cargar la sesión');
+        }
+        if (mounted) {
+          setSessionInfo(data.session || null);
+        }
+      } catch {
+        if (mounted) {
+          setSessionInfo(null);
+          setSessionInfoError('No se pudo cargar la sesión.');
+        }
+      } finally {
+        if (mounted) setSessionInfoLoading(false);
+      }
+    }
+    loadSessionInfo();
+    return () => {
+      mounted = false;
+    };
+  }, [activeTab]);
 
   useEffect(() => {
     async function loadLogo() {
@@ -294,6 +348,16 @@ function SettingsContent() {
             }`}
           >
             Isaak
+          </button>
+          <button
+            onClick={() => setActiveTab('sessions')}
+            className={`flex-shrink-0 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'sessions'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Sesiones
           </button>
         </div>
 
@@ -495,6 +559,32 @@ function SettingsContent() {
                       setGeneralSettings({ ...generalSettings, taxId: e.target.value })
                     }
                   />
+                  <EinformaAutofillButton
+                    taxIdValue={generalSettings.taxId}
+                    onApply={(normalized, meta) => {
+                      setGeneralSettings((prev) => ({
+                        ...prev,
+                        companyName:
+                          prev.companyName ||
+                          normalized.legalName ||
+                          normalized.name ||
+                          prev.companyName,
+                        taxId: prev.taxId || normalized.nif || prev.taxId,
+                        address: prev.address || normalized.address || prev.address,
+                        city: prev.city || normalized.city || prev.city,
+                        postalCode: prev.postalCode || normalized.postalCode || prev.postalCode,
+                        country: prev.country || normalized.country || prev.country,
+                        website: prev.website || normalized.website || prev.website,
+                      }));
+                      setEinformaMeta(meta);
+                    }}
+                  />
+                  {einformaMeta?.lastSyncAt ? (
+                    <div className="mt-2 text-xs text-slate-500">
+                      {einformaMeta.cached ? 'Snapshot (<=30 dias)' : 'eInforma (live)'} · Actualizado:{' '}
+                      {einformaMeta.lastSyncAt}
+                    </div>
+                  ) : null}
 
                   <AccessibleInput
                     label="Dirección"
@@ -826,6 +916,50 @@ function SettingsContent() {
           {activeTab === 'isaak' && (
             <div>
               <IsaakToneSettings />
+            </div>
+          )}
+
+          {activeTab === 'sessions' && (
+            <div className="space-y-6">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <h3 className="text-sm font-semibold text-slate-900">Sesión actual</h3>
+                <p className="mt-1 text-xs text-slate-600">
+                  Detalles básicos de tu acceso en este dispositivo.
+                </p>
+
+                {sessionInfoLoading ? (
+                  <p className="mt-3 text-sm text-slate-500">Cargando…</p>
+                ) : sessionInfoError ? (
+                  <p className="mt-3 text-sm text-amber-600">{sessionInfoError}</p>
+                ) : !sessionInfo ? (
+                  <p className="mt-3 text-sm text-slate-500">No hay una sesión activa.</p>
+                ) : (
+                  <div className="mt-4 space-y-2 text-sm text-slate-700">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-slate-500">Inicio de sesión</span>
+                      <span>
+                        {sessionInfo.issuedAt ? formatDateTime(sessionInfo.issuedAt) : '—'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-slate-500">Caduca</span>
+                      <span>
+                        {sessionInfo.expiresAt ? formatDateTime(sessionInfo.expiresAt) : '—'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-slate-500">Recordar este dispositivo</span>
+                      <span>
+                        {sessionInfo.rememberDevice === null
+                          ? '—'
+                          : sessionInfo.rememberDevice
+                          ? 'Sí'
+                          : 'No'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

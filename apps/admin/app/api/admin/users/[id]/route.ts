@@ -80,7 +80,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         p.name as plan_name,
         p.code as plan_code,
         p.fixed_monthly
-      FROM subscriptions s
+      FROM tenant_subscriptions s
       JOIN tenants t ON s.tenant_id = t.id
       JOIN plans p ON s.plan_id = p.id
       WHERE s.tenant_id IN (

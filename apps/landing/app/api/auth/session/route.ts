@@ -78,7 +78,7 @@ export async function POST(req: Request) {
   try {
     initFirebaseAdmin();
 
-    const { idToken } = await req.json().catch(() => ({}));
+    const { idToken, rememberDevice } = await req.json().catch(() => ({}));
     if (!idToken) {
       return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
     }
@@ -108,6 +108,7 @@ export async function POST(req: Request) {
         ? [String(tenantsRaw)]
         : [];
 
+    const remember = rememberDevice !== false;
     const payload: SessionPayload = {
       uid: decoded.uid,
       email: decoded.email ?? null,
@@ -116,10 +117,11 @@ export async function POST(req: Request) {
       roles,
       tenants,
       ver: 1,
+      rememberDevice: remember,
     };
 
     const secret = readSessionSecret();
-    const token = await signSessionToken({ payload, secret, expiresIn: '30d' });
+    const token = await signSessionToken({ payload, secret, expiresIn: remember ? '30d' : '1d' });
 
     const url = new URL(req.url);
     const host = req.headers.get('host');
@@ -130,7 +132,7 @@ export async function POST(req: Request) {
       secureEnv: process.env.SESSION_COOKIE_SECURE,
       sameSiteEnv: process.env.SESSION_COOKIE_SAMESITE,
       value: token,
-      maxAgeSeconds: 60 * 60 * 24 * 30,
+      maxAgeSeconds: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24,
     });
 
     const res = NextResponse.json({ ok: true });

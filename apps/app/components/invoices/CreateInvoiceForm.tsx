@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { EinformaAutofillButton } from "@/src/components/einforma/EinformaAutofillButton";
 
 export function CreateInvoiceForm() {
   const [invoice, setInvoice] = useState({
@@ -21,6 +22,21 @@ export function CreateInvoiceForm() {
       nif: "A12345678",
     },
   });
+
+  const applyNormalized = (normalized: {
+    name?: string | null;
+    legalName?: string | null;
+    nif?: string | null;
+  }) => {
+    setInvoice((prev) => ({
+      ...prev,
+      customer: {
+        ...prev.customer,
+        name: prev.customer.name || normalized.legalName || normalized.name || "",
+        nif: prev.customer.nif || normalized.nif || prev.customer.nif,
+      },
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +110,12 @@ export function CreateInvoiceForm() {
                   customer: { ...invoice.customer, nif: e.target.value },
                 })
               }
+            />
+          </div>
+          <div>
+            <EinformaAutofillButton
+              taxIdValue={invoice.customer.nif}
+              onApply={applyNormalized}
             />
           </div>
         </div>

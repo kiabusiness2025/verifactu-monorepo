@@ -36,6 +36,10 @@ function withinDays(date: Date, days: number) {
   return Date.now() - date.getTime() <= ms;
 }
 
+function addDays(days: number) {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+}
+
 function extractRawTaxId(raw: unknown) {
   const data = raw as any;
   const value =
@@ -62,6 +66,7 @@ export async function GET(req: Request) {
     }
 
     const normalizedNif = normalizeTaxId(nif);
+
     const tenant = await prisma.tenant.findFirst({
       where: { nif: normalizedNif },
       include: { profile: true },
@@ -127,10 +132,17 @@ export async function GET(req: Request) {
         ok: true,
         profile,
         normalized: {
+          name: profile.legalName || profile.name || null,
+          legalName: profile.legalName ?? null,
+          nif: profile.nif || normalizedNif,
+          address: profile.address?.street ?? null,
+          province: profile.address?.province ?? null,
+          country: profile.address?.country ?? 'ES',
           cnaeCode: tenant.profile.cnaeCode ?? null,
           cnaeText: tenant.profile.cnaeText ?? null,
           postalCode: tenant.profile.postalCode ?? null,
           city: tenant.profile.city ?? null,
+          sourceId: profile.sourceId ?? profile.nif ?? null,
         },
         cached: true,
         cacheSource: "tenantProfile",
@@ -138,9 +150,60 @@ export async function GET(req: Request) {
       });
     }
 
+    if (!refresh) {
+      const lookup = await prisma.einformaLookup.findUnique({
+        where: { queryType_queryValue: { queryType: "TAX_ID", queryValue: normalizedNif } },
+        select: { raw: true, normalized: true, expiresAt: true, updatedAt: true },
+      });
+
+      if (lookup && lookup.expiresAt > new Date()) {
+        try {
+          await prisma.auditLog.create({
+            data: {
+              actorUserId: admin.userId,
+              action: "COMPANY_VIEW",
+              targetCompanyId: tenant?.id,
+              metadata: {
+                action: "EINFORMA.PROFILE_FETCH",
+                cached: true,
+                refresh,
+                taxId: normalizedNif,
+                tenantId: tenant?.id ?? null,
+                cacheSource: "einformaLookup",
+              },
+            },
+          });
+        } catch (error) {
+          console.error("Error logging audit event:", error);
+        }
+
+        return NextResponse.json({
+          ok: true,
+          profile: lookup.raw,
+          normalized: lookup.normalized,
+          cached: true,
+          cacheSource: "einformaLookup",
+          lastSyncAt: lookup.updatedAt?.toISOString() ?? null,
+        });
+      }
+    }
+
     const profile = await getCompanyProfileByNif(nif);
     const cnaeParts = splitCnae(profile.cnae);
     const cityParts = normalizeCity(profile.address?.city);
+    const normalized = {
+      name: profile.legalName || profile.name || null,
+      legalName: profile.legalName ?? null,
+      nif: profile.nif || normalizedNif,
+      address: profile.address?.street ?? null,
+      province: profile.address?.province ?? null,
+      country: profile.address?.country ?? 'ES',
+      cnaeCode: cnaeParts.code ?? null,
+      cnaeText: cnaeParts.text ?? null,
+      postalCode: cityParts.postalCode ?? null,
+      city: cityParts.city ?? null,
+      sourceId: profile.sourceId ?? profile.nif ?? null,
+    };
 
     if (tenant?.id) {
       try {
@@ -200,6 +263,26 @@ export async function GET(req: Request) {
     }
 
     try {
+      await prisma.einformaLookup.upsert({
+        where: { queryType_queryValue: { queryType: "TAX_ID", queryValue: normalizedNif } },
+        create: {
+          queryType: "TAX_ID",
+          queryValue: normalizedNif,
+          raw: profile.raw ?? profile,
+          normalized,
+          expiresAt: addDays(30),
+        },
+        update: {
+          raw: profile.raw ?? profile,
+          normalized,
+          expiresAt: addDays(30),
+        },
+      });
+    } catch (error) {
+      console.error("Error saving eInforma lookup cache:", error);
+    }
+
+    try {
       await prisma.auditLog.create({
         data: {
           actorUserId: admin.userId,
@@ -221,12 +304,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       ok: true,
       profile,
-      normalized: {
-        cnaeCode: cnaeParts.code,
-        cnaeText: cnaeParts.text,
-        postalCode: cityParts.postalCode,
-        city: cityParts.city,
-      },
+      normalized,
       cached: false,
       cacheSource: "einforma",
       lastSyncAt: new Date().toISOString(),

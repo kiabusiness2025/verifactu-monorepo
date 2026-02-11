@@ -4,15 +4,15 @@ import { DashboardSkeleton } from "@/components/accessibility/LoadingSkeleton";
 import { adminGet, type AccountingData } from "@/lib/adminApi";
 import { formatCurrency, formatDateTime, formatNumber, formatTime } from "@/src/lib/formatters";
 import {
-  AlertTriangle,
-  ArrowUpRight,
-  Building,
-  DollarSign,
-  FileWarning,
-  ListChecks,
-  RefreshCw,
-  TrendingUp,
-  Users,
+    AlertTriangle,
+    ArrowUpRight,
+    Building,
+    DollarSign,
+    FileWarning,
+    ListChecks,
+    RefreshCw,
+    TrendingUp,
+    Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -28,6 +28,10 @@ export default function AdminDashboardPage() {
   const [recentTenants, setRecentTenants] = useState<
     Array<{ id: string; legalName: string; createdAt?: string }>
   >([]);
+  const [sessionInfo, setSessionInfo] = useState<{
+    expires: string | null;
+    user: { email: string | null; name: string | null };
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
@@ -36,13 +40,16 @@ export default function AdminDashboardPage() {
     let mounted = true;
     async function load() {
       try {
-        const [accounting, tenantsResponse, usersResponse] = await Promise.all([
+        const [accounting, tenantsResponse, usersResponse, sessionResponse] = await Promise.all([
           adminGet<AccountingData>("/api/admin/accounting?period=current_month"),
           adminGet<{
             items: Array<{ id: string; legalName: string; createdAt?: string }>;
             total: number;
           }>("/api/admin/tenants?page=1&pageSize=5"),
           adminGet<{ users: Array<{ id: string }> }>("/api/admin/users"),
+          adminGet<{ ok: boolean; session: { expires: string | null; user: { email: string | null; name: string | null } } }>(
+            "/api/admin/session"
+          ),
         ]);
 
         if (mounted) {
@@ -50,6 +57,7 @@ export default function AdminDashboardPage() {
           setTenantCount(tenantsResponse.total || 0);
           setUserCount(usersResponse.users?.length || 0);
           setRecentTenants(tenantsResponse.items || []);
+          setSessionInfo(sessionResponse?.ok ? sessionResponse.session : null);
           setStatus("ok");
           setLastCheckedAt(formatTime(new Date()));
         }
@@ -165,6 +173,23 @@ export default function AdminDashboardPage() {
                 ? (((totals.revenue - totals.expenses) / totals.revenue) * 100).toFixed(1)
                 : "0.0"}
               %
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-600">Sesión actual</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {sessionInfo?.user?.email || "—"}
+                </p>
+              </div>
+              <ListChecks className="h-8 w-8 text-slate-500" />
+            </div>
+            <div className="mt-2 text-xs text-slate-500">
+              {sessionInfo?.expires
+                ? `Caduca ${formatDateTime(sessionInfo.expires)}`
+                : "Sin datos de caducidad"}
             </div>
           </div>
         </div>

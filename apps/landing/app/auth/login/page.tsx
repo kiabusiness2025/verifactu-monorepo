@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import type { User } from "firebase/auth";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import React, { useRef, useState } from "react";
 import { AuthLayout, FormInput, PasswordInput } from "../../components/AuthComponents";
+import { useToast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import {
-  signInWithEmail,
-  signUpWithEmail,
-  signInWithGoogle,
-  signInWithMicrosoft,
+    signInWithEmail,
+    signInWithGoogle,
+    signInWithMicrosoft,
+    signUpWithEmail,
 } from "../../lib/auth";
 import { mintSessionCookie } from "../../lib/serverSession";
-import { useToast } from "../../components/Toast";
 import { getAppUrl } from "../../lib/urls";
-import type { User } from "firebase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,6 +30,12 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [passwordError, setPasswordError] = useState("");
+  const [rememberDevice, setRememberDevice] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const stored = window.localStorage.getItem("vf_remember_device");
+    if (stored === null) return true;
+    return stored === "true";
+  });
   const hasRedirected = useRef(false);
 
   const appUrl = getAppUrl();
@@ -78,7 +84,7 @@ export default function LoginPage() {
 
   React.useEffect(() => {
     if (!authLoading && user && !hasRedirected.current) {
-      mintSessionCookie(user as User)
+      mintSessionCookie(user as User, { rememberDevice })
         .then(() => {
           hasRedirected.current = true;
           redirectToDashboard();
@@ -87,7 +93,12 @@ export default function LoginPage() {
           hasRedirected.current = false;
         });
     }
-  }, [user, authLoading, redirectToDashboard]);
+  }, [user, authLoading, redirectToDashboard, rememberDevice]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("vf_remember_device", String(rememberDevice));
+  }, [rememberDevice]);
 
   if (authLoading) {
     return (
@@ -117,7 +128,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const result = await signInWithEmail(email, password);
+      const result = await signInWithEmail(email, password, { rememberDevice });
 
       if (result.error) {
         setError(result.error.userMessage);
@@ -140,7 +151,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle({ rememberDevice });
 
       if (result.error) {
         setError(result.error.userMessage);
@@ -163,7 +174,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const result = await signInWithMicrosoft();
+      const result = await signInWithMicrosoft({ rememberDevice });
 
       if (result.error) {
         setError(result.error.userMessage);
@@ -301,6 +312,18 @@ export default function LoginPage() {
             <p className="mt-1 text-sm text-red-500">{passwordError}</p>
           )}
         </div>
+
+        {mode === "login" && (
+          <label className="flex items-center gap-2 text-sm text-gray-600">
+            <input
+              type="checkbox"
+              checked={rememberDevice}
+              onChange={(e) => setRememberDevice(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-[#2361d8] focus:ring-[#2361d8]"
+            />
+            Recordar este dispositivo
+          </label>
+        )}
 
         {mode === "signup" && (
           <div>
