@@ -62,6 +62,8 @@ function SettingsContent() {
     address: '',
     city: '',
     postalCode: '',
+    country: '',
+    website: '',
     taxId: '',
   });
   const [einformaMeta, setEinformaMeta] = useState<{
@@ -610,6 +612,24 @@ function SettingsContent() {
                     value={generalSettings.postalCode}
                     onChange={(e) =>
                       setGeneralSettings({ ...generalSettings, postalCode: e.target.value })
+                    }
+                  />
+
+                  <AccessibleInput
+                    label="País"
+                    type="text"
+                    value={generalSettings.country}
+                    onChange={(e) =>
+                      setGeneralSettings({ ...generalSettings, country: e.target.value })
+                    }
+                  />
+
+                  <AccessibleInput
+                    label="Web"
+                    type="text"
+                    value={generalSettings.website}
+                    onChange={(e) =>
+                      setGeneralSettings({ ...generalSettings, website: e.target.value })
                     }
                   />
                 </div>
