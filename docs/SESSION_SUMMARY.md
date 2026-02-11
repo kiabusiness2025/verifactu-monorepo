@@ -6,6 +6,18 @@
 
 ---
 
+## 🧭 Actualizaciones recientes (11 Feb 2026)
+
+- ✅ Admin: navegación ampliada y accesos directos para usuarios, empresas/tenants, integraciones, Stripe, soporte e Isaak.
+- ✅ Soporte seguro: acceso al panel cliente desde Admin usando sesiones de soporte (handoff) en usuarios y empresas.
+- ✅ eInforma: búsqueda mejorada con variantes y cache consistente.
+- ✅ Empresas: alta/edición solo automática desde eInforma (sin formulario manual) y guardado de perfil completo.
+- ✅ Redirecciones: /dashboard/admin apunta al admin nuevo; /app y /client redirigen al panel cliente actualizado.
+- ✅ Documentación: README y docs/README con rutas /app y /admin; INDEX.md con mojibake corregido.
+- ✅ Despliegues: Admin/App/Landing en estado Ready en Vercel tras correcciones de build.
+
+---
+
 ## 🏆 Major Achievements
 
 ### From Crisis to Excellence
