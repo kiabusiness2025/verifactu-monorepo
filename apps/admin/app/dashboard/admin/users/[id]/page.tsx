@@ -302,12 +302,12 @@ export default function UserDetailPage() {
 
         {memberships.length === 0 ? (
           <p className="text-sm text-slate-500">Sin empresas asociadas</p>
+        ) : (
+          <div className="space-y-3">
+            {memberships.map((m) => (
               <div
                 key={m.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-4"
-              >
-                key={m.id}
-                className="flex items-center justify-between rounded-lg border border-slate-200 p-4"
               >
                 <div>
                   <p className="font-semibold text-slate-900">{m.tenant_name}</p>
@@ -316,32 +316,34 @@ export default function UserDetailPage() {
                   )}
                   {m.tenant_nif && <p className="text-xs text-slate-500">NIF: {m.tenant_nif}</p>}
                   <p className="mt-1 text-xs text-slate-500">
-                <button
-                  onClick={() => handleImpersonate(m.tenant_id)}
-                  className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  <LogIn className="h-3.5 w-3.5" />
-                  Abrir panel
-                </button>
                     Miembro desde {formatShortDate(m.created_at)}
                   </p>
                 </div>
-                <div className="text-right">
-                  <span
-                    className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
-                      m.role === 'owner'
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'bg-blue-100 text-blue-700'
-                    }`}
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => handleImpersonate(m.tenant_id)}
+                    className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    {m.role === 'owner' ? 'Propietario' : 'Miembro'}
-                  </span>
-                  {m.is_demo && (
-                    <span className="ml-2 inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
-                      DEMO
+                    <LogIn className="h-3.5 w-3.5" />
+                    Abrir panel
+                  </button>
+                  <div className="text-right">
+                    <span
+                      className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                        m.role === 'owner'
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'bg-blue-100 text-blue-700'
+                      }`}
+                    >
+                      {m.role === 'owner' ? 'Propietario' : 'Miembro'}
                     </span>
-                  )}
-                  <p className="mt-1 text-xs text-slate-500">{m.status}</p>
+                    {m.is_demo && (
+                      <span className="ml-2 inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                        DEMO
+                      </span>
+                    )}
+                    <p className="mt-1 text-xs text-slate-500">{m.status}</p>
+                  </div>
                 </div>
               </div>
             ))}
