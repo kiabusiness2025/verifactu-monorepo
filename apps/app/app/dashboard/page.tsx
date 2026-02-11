@@ -10,6 +10,8 @@ import { getDashboardSummary } from '@/src/server/dashboard/getDashboardSummary'
 
 import { IsaakContextBridge } from '@/components/isaak/IsaakContextBridge';
 
+export const dynamic = 'force-dynamic';
+
 const exercises = [
   { id: '2026', label: 'Ejercicio 2026' },
 
