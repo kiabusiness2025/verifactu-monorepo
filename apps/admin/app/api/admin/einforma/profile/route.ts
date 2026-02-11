@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rateLimit";
 import { getCompanyProfileByNif } from "@/server/einforma";
 
 export const runtime = "nodejs";
@@ -56,6 +57,18 @@ function extractRawTaxId(raw: unknown) {
 export async function GET(req: Request) {
   try {
     const admin = await requireAdmin(req);
+
+    const limiter = rateLimit(req, {
+      limit: 20,
+      windowMs: 60_000,
+      keyPrefix: "einforma-admin-profile"
+    });
+    if (!limiter.ok) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429, headers: { "Retry-After": String(limiter.retryAfter) } }
+      );
+    }
 
     const { searchParams } = new URL(req.url);
     const nif = (searchParams.get("nif") ?? "").trim().toUpperCase();

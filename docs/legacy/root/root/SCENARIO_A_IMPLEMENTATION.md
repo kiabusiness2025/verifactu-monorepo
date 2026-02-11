@@ -12,7 +12,7 @@ Successfully implemented unified authentication architecture using PostgreSQL as
 ### Cloud SQL Configuration
 
 - **Instance**: `app-fdc` (PostgreSQL 17, db-f1-micro)
-- **IP**: 34.14.99.83
+- **IP**: <REDACTED>
 - **Database**: verifactu_production
 - **User**: verifactu_user
 - **Connection**: SSL required
@@ -103,24 +103,24 @@ CompanyMember (id, companyId, userId, role)
 
 ```bash
 # Database (Cloud SQL)
-DATABASE_URL="postgres://verifactu_user:AcUvSl2K8Vdt5Q9PMIFoXziJp407YHRD@34.14.99.83:5432/verifactu_production?sslmode=require"
+DATABASE_URL="postgres://<REDACTED_USER>:<REDACTED_PASSWORD>@<REDACTED_HOST>:5432/<REDACTED_DB>?sslmode=require"
 
 # Firebase Admin SDK (already configured)
-FIREBASE_ADMIN_PROJECT_ID=verifactu-business-480212
-FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-...@verifactu-business-480212.iam.gserviceaccount.com
-FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_ADMIN_PROJECT_ID=<REDACTED_PROJECT_ID>
+FIREBASE_ADMIN_CLIENT_EMAIL=<REDACTED_CLIENT_EMAIL>
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n<REDACTED>\n-----END PRIVATE KEY-----\n"
 ```
 
 ### apps/admin/.env.local
 
 ```bash
 # Database (Cloud SQL) - same connection
-DATABASE_URL="postgres://verifactu_user:AcUvSl2K8Vdt5Q9PMIFoXziJp407YHRD@34.14.99.83:5432/verifactu_production?sslmode=require"
+DATABASE_URL="postgres://<REDACTED_USER>:<REDACTED_PASSWORD>@<REDACTED_HOST>:5432/<REDACTED_DB>?sslmode=require"
 
 # NextAuth + Google Workspace (already configured)
-NEXTAUTH_SECRET=...
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
+NEXTAUTH_SECRET=<REDACTED>
+GOOGLE_CLIENT_ID=<REDACTED>
+GOOGLE_CLIENT_SECRET=<REDACTED>
 ```
 
 ## Testing Checklist
@@ -158,7 +158,7 @@ GOOGLE_CLIENT_SECRET=...
 # Go to https://console.prisma.io/
 # Project: verifactu-production
 # Settings → Connection String
-# Update to: postgres://verifactu_user:AcUvSl2K8Vdt5Q9PMIFoXziJp407YHRD@34.14.99.83:5432/verifactu_production?sslmode=require
+# Update to: postgres://<REDACTED_USER>:<REDACTED_PASSWORD>@<REDACTED_HOST>:5432/<REDACTED_DB>?sslmode=require
 ```
 
 ### 2. Deploy to Vercel
@@ -304,7 +304,7 @@ Client App (Firebase Auth)
 ### Database Connection Issues
 
 - Verify IP whitelisted: `gcloud sql instances describe app-fdc`
-- Test connection: `psql "postgresql://verifactu_user:...@34.14.99.83:5432/verifactu_production?sslmode=require"`
+- Test connection: `psql "postgresql://<REDACTED_USER>:<REDACTED_PASSWORD>@<REDACTED_HOST>:5432/<REDACTED_DB>?sslmode=require"`
 - Check Cloud SQL instance status (should be RUNNABLE)
 
 ## Success Criteria ✅

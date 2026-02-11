@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@verifactu/db';
+import { rateLimit } from '@/lib/rateLimit';
 
 type ErrorReport = {
   type: 'broken_image' | 'broken_link' | 'empty_button' | 'slow_load' | 'console_error' | 'runtime_error' | 'not_found';
@@ -23,8 +24,102 @@ type IsaakAnalysis = {
   action: 'auto_fix' | 'manual_review' | 'ignore';
 };
 
+const SENSITIVE_KEYS = new Set([
+  'authorization',
+  'cookie',
+  'token',
+  'password',
+  'secret',
+  'email',
+  'phone',
+  'nif',
+  'cif',
+  'dni'
+]);
+
+function maskString(value: string) {
+  const trimmed = value.length > 500 ? `${value.slice(0, 500)}…` : value;
+  const withoutEmails = trimmed.replace(
+    /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+    '[redacted-email]'
+  );
+  return withoutEmails.replace(
+    /eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/g,
+    '[redacted-token]'
+  );
+}
+
+function sanitizePayload(value: unknown, depth = 0): unknown {
+  if (value === null || value === undefined) return value;
+  if (depth > 4) return '[redacted-depth]';
+  if (typeof value === 'string') return maskString(value);
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  if (Array.isArray(value)) {
+    return value.slice(0, 20).map((item) => sanitizePayload(item, depth + 1));
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>);
+    const result: Record<string, unknown> = {};
+    for (const [key, item] of entries) {
+      if (SENSITIVE_KEYS.has(key.toLowerCase())) {
+        result[key] = '[redacted]';
+        continue;
+      }
+      result[key] = sanitizePayload(item, depth + 1);
+    }
+    return result;
+  }
+  return '[redacted]';
+}
+
+function getBearerToken(request: NextRequest) {
+  const header = request.headers.get('authorization');
+  if (!header) return null;
+  const [type, token] = header.split(' ');
+  if (type?.toLowerCase() !== 'bearer' || !token) return null;
+  return token;
+}
+
+function isAutoFixEnabled() {
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.ENABLE_ISAAK_AUTO_FIX === 'true';
+  }
+  return process.env.ENABLE_ISAAK_AUTO_FIX !== 'false';
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const monitorToken = process.env.MONITOR_API_TOKEN;
+    if (process.env.NODE_ENV === 'production' && !monitorToken) {
+      return NextResponse.json({ success: false, error: 'Monitor disabled' }, { status: 503 });
+    }
+    if (monitorToken) {
+      const headerToken = request.headers.get('x-monitor-token') ?? getBearerToken(request);
+      if (!headerToken || headerToken !== monitorToken) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
+    const monitorToken = process.env.MONITOR_API_TOKEN;
+    if (monitorToken) {
+      const headerToken = request.headers.get('x-monitor-token') ?? getBearerToken(request);
+      if (!headerToken || headerToken !== monitorToken) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
+    const limiter = rateLimit(request, {
+      limit: 60,
+      windowMs: 60_000,
+      keyPrefix: 'monitor-error'
+    });
+    if (!limiter.ok) {
+      return NextResponse.json(
+        { success: false, error: 'Rate limit exceeded' },
+        { status: 429, headers: { 'Retry-After': String(limiter.retryAfter) } }
+      );
+    }
+
     const body = (await request.json().catch(() => ({}))) as Partial<ErrorBatch>;
     const errors = Array.isArray(body.errors) ? body.errors : [];
     const userAgent = body.userAgent ?? 'unknown';
@@ -32,13 +127,15 @@ export async function POST(request: NextRequest) {
     const perfData = body.performance;
     const source = request.headers.get('host') ?? 'unknown';
 
-    console.log(`[ERROR MONITOR] Received ${errors.length} error(s):`);
-    errors.forEach((err, idx) => {
-      console.log(`  ${idx + 1}. ${err.type} at ${err.url}`);
-      console.log(`     Details:`, JSON.stringify(err.details, null, 2));
-    });
+    const sanitizedErrors = errors.slice(0, 25).map((error) => ({
+      ...error,
+      details: sanitizePayload(error.details)
+    }));
+    const sanitizedPerformance = sanitizePayload(perfData);
 
-    if (errors.length === 0) {
+    console.log(`[ERROR MONITOR] Received ${sanitizedErrors.length} error(s) from ${source}.`);
+
+    if (sanitizedErrors.length === 0) {
       return NextResponse.json({
         success: true,
         received: 0,
@@ -49,7 +146,7 @@ export async function POST(request: NextRequest) {
 
     // Analizar errores con Isaak
     const analyses = await Promise.all(
-      errors.map(error => analyzeWithIsaak(error))
+      sanitizedErrors.map(error => analyzeWithIsaak(error))
     );
 
     // Filtrar errores que requieren auto-fix
@@ -57,19 +154,31 @@ export async function POST(request: NextRequest) {
       a => a.action === 'auto_fix' && ['critical', 'high'].includes(a.severity)
     );
 
-    if (criticalErrors.length > 0) {
+    const autoFixEnabled = isAutoFixEnabled();
+    if (autoFixEnabled && criticalErrors.length > 0) {
       console.log(`[ISAAK] ${criticalErrors.length} errores críticos detectados. Iniciando auto-fix...`);
       
       // Trigger auto-fix workflow
-      await triggerAutoFix(errors.filter((_, idx) => 
+      await triggerAutoFix(sanitizedErrors.filter((_, idx) => 
         analyses[idx].action === 'auto_fix'
       ));
     }
 
     // Guardar en base de datos (best-effort, no bloquea la respuesta)
     try {
+    const monitorToken = process.env.MONITOR_API_TOKEN;
+    if (process.env.NODE_ENV === 'production' && !monitorToken) {
+      return NextResponse.json({ success: false, error: 'Monitor disabled' }, { status: 503 });
+    }
+    if (monitorToken) {
+      const headerToken = request.headers.get('x-monitor-token') ?? getBearerToken(request);
+      if (!headerToken || headerToken !== monitorToken) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
       await Promise.all(
-        errors.map(error =>
+        sanitizedErrors.map(error =>
           prisma.errorEvent.create({
             data: {
               source,
@@ -78,7 +187,7 @@ export async function POST(request: NextRequest) {
               details: error.details ?? null,
               userAgent,
               viewport,
-              performance: perfData ?? null
+              performance: sanitizedPerformance ?? null
             }
           })
         )
@@ -89,9 +198,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      received: errors.length,
+      received: sanitizedErrors.length,
       analyses,
-      autoFixTriggered: criticalErrors.length > 0
+      autoFixTriggered: autoFixEnabled && criticalErrors.length > 0
     });
 
   } catch (error) {
@@ -195,6 +304,17 @@ function extractFilesFromStack(stack: string): string[] {
 
 async function triggerAutoFix(errors: ErrorReport[]) {
   try {
+    const monitorToken = process.env.MONITOR_API_TOKEN;
+    if (process.env.NODE_ENV === 'production' && !monitorToken) {
+      return NextResponse.json({ success: false, error: 'Monitor disabled' }, { status: 503 });
+    }
+    if (monitorToken) {
+      const headerToken = request.headers.get('x-monitor-token') ?? getBearerToken(request);
+      if (!headerToken || headerToken !== monitorToken) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
     // Opción 1: Usar GitHub Actions workflow_dispatch
     const githubToken = process.env.GITHUB_TOKEN;
     const githubRepo = process.env.GITHUB_REPOSITORY || 'owner/repo';

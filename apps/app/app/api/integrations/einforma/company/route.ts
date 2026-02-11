@@ -3,6 +3,7 @@ import { getSessionPayload } from '@/lib/session';
 import { getCompanyProfileByNif } from '@/server/einforma';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,18 @@ export async function GET(req: Request) {
     const session = await getSessionPayload();
     if (!session?.uid) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    const limiter = rateLimit(req, {
+      limit: 20,
+      windowMs: 60_000,
+      keyPrefix: 'einforma-integrations-company'
+    });
+    if (!limiter.ok) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429, headers: { 'Retry-After': String(limiter.retryAfter) } }
+      );
     }
 
     const { searchParams } = new URL(req.url);

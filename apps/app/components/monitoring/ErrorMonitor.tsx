@@ -13,12 +13,18 @@ type ErrorReport = {
 export function ErrorMonitor() {
   const errorQueue = useRef<ErrorReport[]>([]);
   const reportTimer = useRef<NodeJS.Timeout>();
+  const monitorToken = process.env.NEXT_PUBLIC_MONITOR_TOKEN;
+  const monitorEnabled = process.env.NEXT_PUBLIC_MONITOR_ENABLED === "true";
 
   const sendErrorBatch = useCallback(async (errors: ErrorReport[]) => {
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (monitorToken) {
+        headers['x-monitor-token'] = monitorToken;
+      }
       await fetch('/api/monitor/error', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           errors,
           userAgent: navigator.userAgent,
@@ -35,7 +41,7 @@ export function ErrorMonitor() {
     } catch (error) {
       console.warn('Failed to report errors:', error);
     }
-  }, []);
+  }, [monitorToken]);
 
   const reportError = useCallback((error: ErrorReport) => {
     errorQueue.current.push(error);
@@ -57,6 +63,7 @@ export function ErrorMonitor() {
   }, [sendErrorBatch]);
 
   useEffect(() => {
+    if (!monitorEnabled) return;
     // Detectar imágenes rotas
     const checkBrokenImages = () => {
       const images = document.querySelectorAll('img');
@@ -181,7 +188,8 @@ export function ErrorMonitor() {
         clearTimeout(reportTimer.current);
       }
     };
-  }, [reportError]);
+  }, [monitorEnabled, reportError]);
 
   return null; // Este componente no renderiza nada
 }
+

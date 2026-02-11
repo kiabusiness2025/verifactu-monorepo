@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ensureRole } from "@/lib/authz";
 import { Roles } from "@/lib/roles";
 import { getSessionPayload } from "@/lib/session";
+import { rateLimit } from "@/lib/rateLimit";
 import { getCompanyProfileByNif } from "@/server/einforma";
 
 export const runtime = "nodejs";
@@ -11,6 +12,18 @@ export async function GET(req: Request) {
   const session = await getSessionPayload();
   const guard = ensureRole({ session, minRole: Roles.default });
   if (guard) return guard;
+
+  const limiter = rateLimit(req, {
+    limit: 20,
+    windowMs: 60_000,
+    keyPrefix: "einforma-onboarding-company"
+  });
+  if (!limiter.ok) {
+    return NextResponse.json(
+      { ok: false, error: "rate limit exceeded" },
+      { status: 429, headers: { "Retry-After": String(limiter.retryAfter) } }
+    );
+  }
 
   const { searchParams } = new URL(req.url);
   const einformaId = searchParams.get("einformaId")?.trim();

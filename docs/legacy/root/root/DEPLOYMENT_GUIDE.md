@@ -64,7 +64,7 @@ Login with your Prisma account
 **Backend Connection String** (Cloud SQL direct):
 
 ```
-postgres://verifactu_user:AcUvSl2K8Vdt5Q9PMIFoXziJp407YHRD@34.14.99.83:5432/verifactu_production?sslmode=require
+postgres://<REDACTED_USER>:<REDACTED_PASSWORD>@<REDACTED_HOST>:5432/<REDACTED_DB>?sslmode=require
 ```
 
 **Settings:**
@@ -116,15 +116,15 @@ Navigate to each project → Settings → Environment Variables
 **Database:**
 
 ```bash
-DATABASE_URL=prisma://accelerate.prisma-data.net/?api_key=YOUR_API_KEY
+DATABASE_URL=prisma://accelerate.prisma-data.net/?api_key=<REDACTED>
 ```
 
 **Firebase Admin SDK:**
 
 ```bash
-FIREBASE_ADMIN_PROJECT_ID=verifactu-business-480212
-FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-xxxxx@verifactu-business-480212.iam.gserviceaccount.com
-FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQI...YOUR_KEY...END PRIVATE KEY-----\n"
+FIREBASE_ADMIN_PROJECT_ID=<REDACTED_PROJECT_ID>
+FIREBASE_ADMIN_CLIENT_EMAIL=<REDACTED_CLIENT_EMAIL>
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n<REDACTED>\nEND PRIVATE KEY-----\n"
 ```
 
 **⚠️ Note on Private Key:**
@@ -151,14 +151,14 @@ NODE_ENV=production
 **Database:**
 
 ```bash
-DATABASE_URL=prisma://accelerate.prisma-data.net/?api_key=YOUR_API_KEY
+DATABASE_URL=prisma://accelerate.prisma-data.net/?api_key=<REDACTED>
 ```
 
 **NextAuth:**
 
 ```bash
 NEXTAUTH_URL=https://verifactu-admin.vercel.app
-NEXTAUTH_SECRET=<generate_new_secure_random_string>
+NEXTAUTH_SECRET=<REDACTED>
 ```
 
 Generate secret:
@@ -170,15 +170,15 @@ openssl rand -base64 32
 **Google OAuth (Workspace):**
 
 ```bash
-GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=GOCSPX-xxxxx
+GOOGLE_CLIENT_ID=<REDACTED>
+GOOGLE_CLIENT_SECRET=<REDACTED>
 ```
 
 **Gmail API (if using):**
 
 ```bash
-GOOGLE_SERVICE_ACCOUNT_EMAIL=api-drive-gmail-calendario@verifactu-business-480212.iam.gserviceaccount.com
-GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...END PRIVATE KEY-----\n"
+GOOGLE_SERVICE_ACCOUNT_EMAIL=<REDACTED_CLIENT_EMAIL>
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n<REDACTED>\nEND PRIVATE KEY-----\n"
 ```
 
 **Environment Selection:**
@@ -311,7 +311,7 @@ gcloud sql users create verifactu_readonly \
   --project=verifactu-business
 
 # Grant read-only access via SQL
-psql "postgres://verifactu_user:PASSWORD@34.14.99.83:5432/verifactu_production?sslmode=require" <<EOF
+psql "postgres://<REDACTED_USER>:<REDACTED_PASSWORD>@<REDACTED_HOST>:5432/<REDACTED_DB>?sslmode=require" <<EOF
 GRANT CONNECT ON DATABASE verifactu_production TO verifactu_readonly;
 GRANT USAGE ON SCHEMA public TO verifactu_readonly;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO verifactu_readonly;
@@ -511,7 +511,7 @@ vercel rollback <deployment-url> --prod
 
 ```bash
 # Connect to Cloud SQL
-psql "postgres://verifactu_user:PASSWORD@34.14.99.83:5432/verifactu_production?sslmode=require"
+psql "postgres://<REDACTED_USER>:<REDACTED_PASSWORD>@<REDACTED_HOST>:5432/<REDACTED_DB>?sslmode=require"
 
 # Check migration history
 SELECT * FROM "_prisma_migrations" ORDER BY finished_at DESC LIMIT 5;

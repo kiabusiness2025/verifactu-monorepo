@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/adminAuth";
+import { rateLimit } from "@/lib/rateLimit";
 import { searchCompanies } from "@/server/einforma";
 
 export const runtime = "nodejs";
@@ -17,6 +18,18 @@ function addDays(days: number) {
 export async function GET(req: Request) {
   try {
     await requireAdmin(req);
+
+    const limiter = rateLimit(req, {
+      limit: 30,
+      windowMs: 60_000,
+      keyPrefix: "einforma-admin-search"
+    });
+    if (!limiter.ok) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429, headers: { "Retry-After": String(limiter.retryAfter) } }
+      );
+    }
 
     const { searchParams } = new URL(req.url);
     const q = (searchParams.get("q") ?? "").trim();

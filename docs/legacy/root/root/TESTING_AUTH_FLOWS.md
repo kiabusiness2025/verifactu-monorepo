@@ -17,25 +17,25 @@
 #### apps/app/.env.local
 
 ```bash
-# Cloud SQL Connection
-DATABASE_URL="postgres://verifactu_user:AcUvSl2K8Vdt5Q9PMIFoXziJp407YHRD@34.14.99.83:5432/verifactu_production?sslmode=require"
+# Cloud SQL Connection (redacted)
+DATABASE_URL="postgres://<REDACTED_USER>:<REDACTED_PASSWORD>@<REDACTED_HOST>:5432/<REDACTED_DB>?sslmode=require"
 
-# Firebase Admin SDK
-FIREBASE_ADMIN_PROJECT_ID=verifactu-business-480212
-FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-...@verifactu-business-480212.iam.gserviceaccount.com
-FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+# Firebase Admin SDK (redacted)
+FIREBASE_ADMIN_PROJECT_ID=<REDACTED_PROJECT_ID>
+FIREBASE_ADMIN_CLIENT_EMAIL=<REDACTED_CLIENT_EMAIL>
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n<REDACTED>\n-----END PRIVATE KEY-----\n"
 ```
 
 #### apps/admin/.env.local
 
 ```bash
-# Same Cloud SQL Connection
-DATABASE_URL="postgres://verifactu_user:AcUvSl2K8Vdt5Q9PMIFoXziJp407YHRD@34.14.99.83:5432/verifactu_production?sslmode=require"
+# Same Cloud SQL Connection (redacted)
+DATABASE_URL="postgres://<REDACTED_USER>:<REDACTED_PASSWORD>@<REDACTED_HOST>:5432/<REDACTED_DB>?sslmode=require"
 
-# NextAuth + Google Workspace
-NEXTAUTH_SECRET=...
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
+# NextAuth + Google Workspace (redacted)
+NEXTAUTH_SECRET=<REDACTED>
+GOOGLE_CLIENT_ID=<REDACTED>
+GOOGLE_CLIENT_SECRET=<REDACTED>
 ```
 
 ## Test Scenarios
@@ -376,7 +376,7 @@ gcloud sql instances patch app-fdc \
   --project=verifactu-business
 
 # Test connection
-psql "postgresql://verifactu_user:PASSWORD@34.14.99.83:5432/verifactu_production?sslmode=require" \
+psql "postgresql://<REDACTED_USER>:<REDACTED_PASSWORD>@<REDACTED_HOST>:5432/<REDACTED_DB>?sslmode=require" \
   -c "SELECT 1;"
 ```
 

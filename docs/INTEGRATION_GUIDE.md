@@ -1,5 +1,7 @@
 # 🔌 Guía de Integración - Componentes Accesibles
 
+> Nota: el panel admin legacy en `apps/app/app/dashboard/admin` fue retirado. El panel admin actual vive en `apps/admin`.
+
 ## Integración Completada ✅
 
 ### 1. ToastProvider (Notificaciones Globales)
