@@ -165,10 +165,10 @@ export async function POST(request: NextRequest) {
               source,
               type: error.type,
               url: error.url,
-              details: error.details ?? null,
+              details: error.details ?? undefined,
               userAgent,
               viewport,
-              performance: sanitizedPerformance ?? null
+              performance: sanitizedPerformance ?? undefined
             }
           })
         )
