@@ -285,17 +285,6 @@ function extractFilesFromStack(stack: string): string[] {
 
 async function triggerAutoFix(errors: ErrorReport[]) {
   try {
-    const monitorToken = process.env.MONITOR_API_TOKEN;
-    if (process.env.NODE_ENV === 'production' && !monitorToken) {
-      return NextResponse.json({ success: false, error: 'Monitor disabled' }, { status: 503 });
-    }
-    if (monitorToken) {
-      const headerToken = request.headers.get('x-monitor-token') ?? getBearerToken(request);
-      if (!headerToken || headerToken !== monitorToken) {
-        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-      }
-    }
-
     // Opción 1: Usar GitHub Actions workflow_dispatch
     const githubToken = process.env.GITHUB_TOKEN;
     const githubRepo = process.env.GITHUB_REPOSITORY || 'owner/repo';
