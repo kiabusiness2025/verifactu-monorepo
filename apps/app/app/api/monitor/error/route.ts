@@ -100,14 +100,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const monitorToken = process.env.MONITOR_API_TOKEN;
-    if (monitorToken) {
-      const headerToken = request.headers.get('x-monitor-token') ?? getBearerToken(request);
-      if (!headerToken || headerToken !== monitorToken) {
-        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-      }
-    }
-
     const limiter = rateLimit(request, {
       limit: 60,
       windowMs: 60_000,
@@ -166,17 +158,6 @@ export async function POST(request: NextRequest) {
 
     // Guardar en base de datos (best-effort, no bloquea la respuesta)
     try {
-    const monitorToken = process.env.MONITOR_API_TOKEN;
-    if (process.env.NODE_ENV === 'production' && !monitorToken) {
-      return NextResponse.json({ success: false, error: 'Monitor disabled' }, { status: 503 });
-    }
-    if (monitorToken) {
-      const headerToken = request.headers.get('x-monitor-token') ?? getBearerToken(request);
-      if (!headerToken || headerToken !== monitorToken) {
-        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-      }
-    }
-
       await Promise.all(
         sanitizedErrors.map(error =>
           prisma.errorEvent.create({
