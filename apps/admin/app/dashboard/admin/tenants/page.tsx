@@ -7,6 +7,7 @@ import { useToast } from "@/components/notifications/ToastNotifications";
 import { adminGet, adminPatch, adminPost } from "@/lib/adminApi";
 import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 type TenantRow = {
@@ -69,7 +70,62 @@ type EinformaNormalized = {
   sourceId?: string | null;
 };
 
+function normalizeText(value?: string) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function queryTokens(query: string) {
+  return normalizeText(query)
+    .split(/[\s_]+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0);
+}
+
+function matchesAllTokensInOrder(target: string, tokens: string[]) {
+  let cursor = 0;
+  for (const token of tokens) {
+    const idx = target.indexOf(token, cursor);
+    if (idx === -1) return false;
+    cursor = idx + token.length;
+  }
+  return true;
+}
+
+function matchesAllTokens(name: string, nif: string, tokens: string[]) {
+  return tokens.every((token) => name.includes(token) || (nif && nif.includes(token)));
+}
+
+function searchScore(item: EinformaSearchItem, query: string) {
+  const q = normalizeText(query);
+  const tokens = queryTokens(query);
+  const name = normalizeText(item.name);
+  const nif = normalizeText(item.nif);
+  if (!q) return 999;
+  if (tokens.length >= 2) {
+    if (name === q) return 0;
+    if (name.startsWith(q)) return 1;
+    if (name.includes(q)) return 2;
+    if (matchesAllTokensInOrder(name, tokens)) return 3;
+    if (matchesAllTokens(name, nif, tokens)) return 4;
+    return 999;
+  }
+  if (nif && nif === q) return 0;
+  if (name === q) return 1;
+  if (name.startsWith(q)) return 2;
+  if (name.includes(` ${q}`)) return 3;
+  if (name.includes(q)) return 4;
+  if (nif && nif.startsWith(q)) return 5;
+  return 999;
+}
+
 export default function AdminTenantsPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { success, error: showError } = useToast();
   const [items, setItems] = useState<TenantRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,7 +208,23 @@ export default function AdminTenantsPage() {
         if (!res.ok) {
           throw new Error(data?.error || "Error en la busqueda");
         }
-        setSearchResults(Array.isArray(data?.items) ? data.items : []);
+        const items = Array.isArray(data?.items) ? data.items : [];
+        const sorted = [...items]
+          .map((item, index) => ({ item, index }))
+          .sort((a, b) => {
+            const byScore = searchScore(a.item, query) - searchScore(b.item, query);
+            if (byScore !== 0) return byScore;
+            return a.index - b.index;
+          })
+          .map(({ item }) => item);
+        const tokens = queryTokens(query);
+        const strict = tokens.length >= 2;
+        const filtered = strict
+          ? sorted.filter((item) =>
+              matchesAllTokens(normalizeText(item.name), normalizeText(item.nif), tokens)
+            )
+          : sorted;
+        setSearchResults(filtered);
       } catch (err) {
         setSearchResults([]);
         setSearchError(err instanceof Error ? err.message : "Error al buscar");
@@ -163,6 +235,15 @@ export default function AdminTenantsPage() {
 
     return () => window.clearTimeout(timeout);
   }, [searchQuery, showModal]);
+
+  useEffect(() => {
+    const shouldOpenCreate = searchParams.get("create") === "1";
+    if (!shouldOpenCreate || showModal) return;
+    setEditing(null);
+    setError("");
+    resetEinforma();
+    setShowModal(true);
+  }, [searchParams, showModal]);
 
   async function applyEinformaProfile(item: EinformaSearchItem) {
     setSearchError("");
@@ -222,6 +303,9 @@ export default function AdminTenantsPage() {
     setError("");
     resetEinforma();
     setShowModal(true);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("create", "1");
+    router.replace(`${pathname}?${params.toString()}`);
   }
 
   function openEdit(tenant: TenantRow) {
@@ -263,6 +347,10 @@ export default function AdminTenantsPage() {
         setItems((prev) => [res.tenant, ...prev]);
       }
       setShowModal(false);
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("create");
+      const next = params.toString();
+      router.replace(next ? `${pathname}?${next}` : pathname);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar");
     } finally {
@@ -321,7 +409,7 @@ export default function AdminTenantsPage() {
     <main className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Tenants</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Empresas</h1>
           <p className="text-sm text-slate-600">{items.length} empresas en la vista actual</p>
         </div>
         <AccessibleButton onClick={openCreate} ariaLabel="Crear nueva empresa">
@@ -472,7 +560,13 @@ export default function AdminTenantsPage() {
               <AccessibleButton
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.delete("create");
+                  const next = params.toString();
+                  router.replace(next ? `${pathname}?${next}` : pathname);
+                }}
                 ariaLabel="Cerrar modal"
               >
                 X
@@ -492,6 +586,10 @@ export default function AdminTenantsPage() {
                     error={searchError || undefined}
                   />
                 </label>
+                <p className="text-[11px] text-slate-500">
+                  Puedes buscar con 1 palabra. Si hay muchos resultados, afina con 2+ palabras o
+                  CIF exacto.
+                </p>
                 {searchResults.length > 0 && (
                   <div className="max-h-48 overflow-auto rounded-lg border border-slate-200 text-sm">
                     {searchResults.map((item) => (
@@ -585,7 +683,13 @@ export default function AdminTenantsPage() {
               <div className="flex gap-2">
                 <AccessibleButton
                   variant="secondary"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete("create");
+                    const next = params.toString();
+                    router.replace(next ? `${pathname}?${next}` : pathname);
+                  }}
                   ariaLabel="Cancelar"
                 >
                   Cancelar

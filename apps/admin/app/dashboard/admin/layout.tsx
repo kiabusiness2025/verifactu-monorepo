@@ -11,7 +11,6 @@ const adminNav = [
   { label: "Resumen", href: "/dashboard/admin" },
   { label: "Usuarios", href: "/dashboard/admin/users" },
   { label: "Empresas", href: "/dashboard/admin/companies" },
-  { label: "Tenants", href: "/dashboard/admin/tenants" },
   { label: "Contabilidad", href: "/dashboard/admin/accounting" },
   { label: "Integraciones", href: "/dashboard/admin/integrations" },
   { label: "Stripe", href: "/integrations/stripe" },
