@@ -198,8 +198,10 @@ async function einformaRequest<T>(path: string, params?: Record<string, string>)
   const token = await getAccessToken();
   const timeoutMs = Number(process.env.EINFORMA_TIMEOUT_MS ?? 8000);
 
-  // Construir la URL y codificar parámetros manualmente para evitar problemas de encoding
-  const url = new URL(path, base);
+  // Preserve base path (e.g. /api/v1) by forcing relative paths.
+  const baseUrl = base.endsWith('/') ? base : `${base}/`;
+  const relativePath = path.replace(/^\/+/, '');
+  const url = new URL(relativePath, baseUrl);
   if (params && Object.keys(params).length > 0) {
     // Usar URLSearchParams para codificar correctamente
     const searchParams = new URLSearchParams();
