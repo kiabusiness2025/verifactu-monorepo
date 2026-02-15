@@ -114,6 +114,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const legalForm = profile?.legalForm ?? null;
     const status = profile?.status ?? null;
     const website = profile?.website ?? null;
+    const email = profile?.email ?? null;
+    const phone = profile?.phone ?? null;
+    const employeesRaw = profile?.employees;
+    const employees = Number.isFinite(Number(employeesRaw)) ? Number(employeesRaw) : null;
+    const salesRaw = profile?.sales;
+    const sales = Number.isFinite(Number(salesRaw)) ? Number(salesRaw) : null;
+    const salesYearRaw = profile?.salesYear;
+    const salesYear = Number.isFinite(Number(salesYearRaw)) ? Number(salesYearRaw) : null;
     const capitalSocialRaw = profile?.capitalSocial;
     const capitalSocial = Number.isFinite(Number(capitalSocialRaw))
       ? Number(capitalSocialRaw)
@@ -125,6 +133,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const city = normalized?.city ?? profile?.address?.city ?? null;
     const province = normalized?.province ?? profile?.address?.province ?? null;
     const country = normalized?.country ?? profile?.address?.country ?? null;
+    const lastBalanceDate = profile?.lastBalanceDate ? new Date(profile.lastBalanceDate) : null;
     const representative = profile?.representatives?.[0]?.name ?? null;
     const sourceId = normalized?.sourceId ?? normalized?.nif ?? profile?.sourceId ?? null;
     const adminEditHistoryFromPayload = Array.isArray(body?.adminEditHistory)
@@ -190,6 +199,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         { column: "province", value: province },
         { column: "country", value: country },
         { column: "representative", value: representative },
+        { column: "email", value: email },
+        { column: "phone", value: phone },
+        { column: "employees", value: employees },
+        { column: "sales", value: sales },
+        { column: "sales_year", value: salesYear },
+        { column: "last_balance_date", value: lastBalanceDate },
         { column: "einforma_last_sync_at", value: isEinforma ? now : null },
         { column: "einforma_tax_id_verified", value: isEinforma ? einformaTaxIdVerified : null },
         { column: "einforma_raw", value: einformaRaw },

@@ -41,6 +41,8 @@ type EinformaCompanyProfile = {
   legalName?: string;
   nif?: string;
   cnae?: string;
+  email?: string;
+  phone?: string;
   address?: {
     street?: string;
     zip?: string;
@@ -51,8 +53,12 @@ type EinformaCompanyProfile = {
   legalForm?: string;
   status?: string;
   website?: string;
+  employees?: number | string;
+  sales?: number | string;
+  salesYear?: number | string;
   capitalSocial?: number | string;
   constitutionDate?: string;
+  lastBalanceDate?: string;
   representatives?: Array<{ name: string; role?: string }>;
   raw?: unknown;
 };
@@ -334,6 +340,14 @@ export default function AdminTenantsPage() {
           city: profile.address?.city || null,
           sourceId: item.id || null,
         }
+      );
+      setSelectedNormalized((prev) =>
+        prev
+          ? {
+              ...prev,
+              province: prev.province || item.province || null,
+            }
+          : prev
       );
     } catch (err) {
       setSearchError("No se pudieron recuperar los datos de la empresa");
@@ -886,6 +900,97 @@ export default function AdminTenantsPage() {
                       <div className="text-slate-900">
                         {selectedProfile?.representatives?.[0]?.name || "--"}
                       </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Email</div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedProfile?.email || ""}
+                        onChange={(e) => updateProfileField("email", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedProfile?.email || "--"}</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Teléfono</div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedProfile?.phone || ""}
+                        onChange={(e) => updateProfileField("phone", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedProfile?.phone || "--"}</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Empleados</div>
+                    {manualEditMode ? (
+                      <input
+                        type="number"
+                        value={selectedProfile?.employees != null ? String(selectedProfile.employees) : ""}
+                        onChange={(e) => updateProfileField("employees", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedProfile?.employees ?? "--"}</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Ventas</div>
+                    {manualEditMode ? (
+                      <input
+                        type="number"
+                        value={selectedProfile?.sales != null ? String(selectedProfile.sales) : ""}
+                        onChange={(e) => updateProfileField("sales", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedProfile?.sales ?? "--"}</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Año de ventas</div>
+                    {manualEditMode ? (
+                      <input
+                        type="number"
+                        value={selectedProfile?.salesYear != null ? String(selectedProfile.salesYear) : ""}
+                        onChange={(e) => updateProfileField("salesYear", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedProfile?.salesYear ?? "--"}</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Fecha constitución</div>
+                    {manualEditMode ? (
+                      <input
+                        type="date"
+                        value={selectedProfile?.constitutionDate || ""}
+                        onChange={(e) => updateProfileField("constitutionDate", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedProfile?.constitutionDate || "--"}</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Fecha último balance</div>
+                    {manualEditMode ? (
+                      <input
+                        type="date"
+                        value={selectedProfile?.lastBalanceDate || ""}
+                        onChange={(e) => updateProfileField("lastBalanceDate", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedProfile?.lastBalanceDate || "--"}</div>
                     )}
                   </div>
                 </div>

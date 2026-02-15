@@ -21,12 +21,16 @@ Definir un flujo único de alta y gestión de empresa entre `admin` y `app`, sep
 - Al seleccionar una empresa, se intenta cargar ficha completa usando claves candidatas (`nif`, `id`) para evitar falsos negativos.
 - Se corrigió la pérdida de resultados por normalización agresiva del identificador.
 - Se evita el efecto de “doble búsqueda” tras seleccionar una empresa.
+- En Admin se exponen también campos ampliados de perfil cuando existen:
+  - `email`, `phone`, `employees`, `sales`, `salesYear`, `capitalSocial`, `constitutionDate`, `lastBalanceDate`.
 
 ### Persistencia y cache
 - Al crear empresa desde admin se crea `tenant` y `tenant_profile`.
 - Se persiste `source`, `source_id`, snapshot mercantil y metadata de sincronización.
 - `einforma_raw` guarda el payload completo del proveedor (`raw`), incluyendo campos no mapeados aún.
 - `admin_edit_history` guarda solo historial de correcciones manuales hechas desde Admin.
+- Columnas adicionales en `tenant_profiles` para explotación Admin:
+  - `email`, `phone`, `employees`, `sales`, `sales_year`, `last_balance_date`.
 - El endpoint de perfil consulta primero snapshot local y lookup cache antes de ir al proveedor externo.
 - Se incorporó fallback de listado de empresas en `/api/admin/tenants` para esquemas mixtos (degradado sin 500).
 

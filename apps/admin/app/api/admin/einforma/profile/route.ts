@@ -54,6 +54,17 @@ function extractRawTaxId(raw: unknown) {
   return value ? normalizeTaxId(String(value)) : null;
 }
 
+function getRawCompanyNode(raw: unknown) {
+  const data = raw as any;
+  return data?.empresa ?? data?.company ?? data ?? {};
+}
+
+function readMaybeNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 export async function GET(req: Request) {
   try {
     const admin = await requireAdmin(req);
@@ -96,6 +107,11 @@ export async function GET(req: Request) {
       withinDays(tenant.profile.einformaLastSyncAt, 30) &&
       cachedTaxId === normalizedNif
     ) {
+      const rawCompany = getRawCompanyNode(tenant.profile.einformaRaw);
+      const rawRepresentative =
+        rawCompany?.administradores?.[0]?.nombre ??
+        rawCompany?.representatives?.[0]?.name ??
+        undefined;
       const profile = {
         name: tenant.name ?? '',
         legalName: tenant.legalName ?? undefined,
@@ -104,19 +120,47 @@ export async function GET(req: Request) {
         legalForm: tenant.profile.legalForm ?? undefined,
         status: tenant.profile.status ?? undefined,
         website: tenant.profile.website ?? undefined,
+        email: rawCompany?.email ?? undefined,
+        phone: rawCompany?.telefono ?? rawCompany?.phone ?? undefined,
+        employees: readMaybeNumber(rawCompany?.empleados),
+        sales: readMaybeNumber(rawCompany?.ventas),
+        salesYear: readMaybeNumber(rawCompany?.anioVentas),
         capitalSocial:
           typeof tenant.profile.capitalSocial === 'number'
             ? tenant.profile.capitalSocial
             : tenant.profile.capitalSocial ?? undefined,
         constitutionDate: tenant.profile.incorporationDate
           ? tenant.profile.incorporationDate.toISOString().slice(0, 10)
-          : undefined,
+          : rawCompany?.fechaConstitucion ?? rawCompany?.constitutionDate ?? undefined,
+        lastBalanceDate:
+          rawCompany?.fechaUltimoBalance ?? rawCompany?.lastBalanceDate ?? undefined,
         sourceId: tenant.profile.sourceId ?? undefined,
+        representatives: tenant.profile.representative
+          ? [{ name: tenant.profile.representative }]
+          : rawRepresentative
+          ? [{ name: rawRepresentative }]
+          : undefined,
         address: {
-          street: tenant.profile.address ?? undefined,
-          zip: tenant.profile.postalCode ?? undefined,
-          city: tenant.profile.city ?? undefined,
-          province: tenant.profile.province ?? undefined,
+          street:
+            tenant.profile.address ??
+            rawCompany?.domicilioSocial ??
+            rawCompany?.address?.street ??
+            undefined,
+          zip:
+            tenant.profile.postalCode ??
+            rawCompany?.cp ??
+            rawCompany?.address?.zip ??
+            undefined,
+          city:
+            tenant.profile.city ??
+            rawCompany?.localidad ??
+            rawCompany?.address?.city ??
+            undefined,
+          province:
+            tenant.profile.province ??
+            rawCompany?.provincia ??
+            rawCompany?.address?.province ??
+            undefined,
           country: tenant.profile.country ?? 'ES',
         },
         raw: tenant.profile.einformaRaw ?? undefined,
@@ -231,6 +275,7 @@ export async function GET(req: Request) {
             cnaeText: cnaeParts.text,
             legalForm: profile.legalForm || undefined,
             status: profile.status || undefined,
+            representative: profile.representatives?.[0]?.name || undefined,
             website: profile.website || undefined,
             capitalSocial: profile.capitalSocial ?? undefined,
             incorporationDate: profile.constitutionDate
@@ -254,6 +299,7 @@ export async function GET(req: Request) {
             cnaeText: cnaeParts.text,
             legalForm: profile.legalForm || undefined,
             status: profile.status || undefined,
+            representative: profile.representatives?.[0]?.name || undefined,
             website: profile.website || undefined,
             capitalSocial: profile.capitalSocial ?? undefined,
             incorporationDate: profile.constitutionDate
