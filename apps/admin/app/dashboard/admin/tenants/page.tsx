@@ -111,6 +111,38 @@ function matchesAllTokens(name: string, nif: string, tokens: string[]) {
   return tokens.every((token) => name.includes(token) || (nif && nif.includes(token)));
 }
 
+function profileCompletenessScore(profile?: EinformaCompanyProfile, normalized?: EinformaNormalized) {
+  if (!profile) return -1;
+  let score = 0;
+  const bump = (value: unknown, points = 1) => {
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim() === "") return;
+    score += points;
+  };
+
+  bump(profile.legalName, 1);
+  bump(profile.nif, 1);
+  bump(profile.cnae, 1);
+  bump(profile.legalForm, 2);
+  bump(profile.status, 2);
+  bump(profile.website, 1);
+  bump(profile.email, 2);
+  bump(profile.phone, 2);
+  bump(profile.employees, 1);
+  bump(profile.sales, 1);
+  bump(profile.salesYear, 1);
+  bump(profile.capitalSocial, 1);
+  bump(profile.constitutionDate, 1);
+  bump(profile.lastBalanceDate, 1);
+  bump(profile.representatives?.[0]?.name, 2);
+  bump(profile.address?.street, 1);
+  bump(profile.address?.city, 1);
+  bump(profile.address?.province, 1);
+  bump(profile.address?.zip, 1);
+  bump(normalized?.sourceId, 1);
+  return score;
+}
+
 function searchScore(item: EinformaSearchItem, query: string) {
   const q = normalizeText(query);
   const tokens = queryTokens(query);
@@ -302,18 +334,20 @@ export default function AdminTenantsPage() {
 
     setProfileLoading(true);
     try {
-      let data: any = null;
-      let fetched = false;
+      const hits: Array<{ data: any; score: number }> = [];
       for (const key of candidateKeys) {
         const res = await fetch(`/api/admin/einforma/profile?nif=${encodeURIComponent(key)}`);
         const json = await res.json().catch(() => null);
         if (res.ok && json?.profile) {
-          data = json;
-          fetched = true;
-          break;
+          hits.push({
+            data: json,
+            score: profileCompletenessScore(json.profile, json.normalized),
+          });
         }
       }
-      if (!fetched) throw new Error("No se pudo cargar la empresa seleccionada");
+      if (hits.length === 0) throw new Error("No se pudo cargar la empresa seleccionada");
+      hits.sort((a, b) => b.score - a.score);
+      const data = hits[0].data;
 
       const profile: EinformaCompanyProfile | undefined = data?.profile;
       const normalized: EinformaNormalized | undefined = data?.normalized;
@@ -899,6 +933,14 @@ export default function AdminTenantsPage() {
                   Cancelar
                 </AccessibleButton>
                 <AccessibleButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setManualEditMode((prev) => !prev)}
+                  ariaLabel="Editar datos manualmente"
+                >
+                  {manualEditMode ? "Cerrar edición" : "Editar"}
+                </AccessibleButton>
+                <AccessibleButton
                   type="submit"
                   loading={saving}
                   disabled={saving}
@@ -927,18 +969,6 @@ export default function AdminTenantsPage() {
                   Isaak te ayudará a localizar la empresa manualmente y, si no se resuelve, se
                   abrirá incidencia de soporte para escalar el caso.
                 </p>
-              </div>
-              </div>
-              <div className="border-t border-slate-200 p-4">
-              <div className="flex flex-wrap gap-2">
-                <AccessibleButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setManualEditMode((prev) => !prev)}
-                  ariaLabel="Activar edición manual"
-                >
-                  {manualEditMode ? "Cerrar edición manual" : "Algunos datos son incorrectos"}
-                </AccessibleButton>
               </div>
               </div>
             </form>
