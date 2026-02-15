@@ -18,6 +18,8 @@ function addDays(days: number) {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const debug = searchParams.get("debug") === "1";
+  const refresh = searchParams.get("refresh") === "1";
+  const deep = searchParams.get("deep") === "1";
   try {
     await requireAdmin(req);
 
@@ -45,7 +47,7 @@ export async function GET(req: Request) {
       select: { normalized: true, raw: true, expiresAt: true, updatedAt: true },
     });
 
-    if (lookup && lookup.expiresAt > new Date()) {
+    if (!refresh && !deep && lookup && lookup.expiresAt > new Date()) {
       const cachedItems = Array.isArray(lookup.normalized)
         ? lookup.normalized
         : ((lookup.normalized as any)?.items ?? (lookup.raw as any)?.items ?? lookup.raw ?? []);
@@ -57,7 +59,7 @@ export async function GET(req: Request) {
       });
     }
 
-    const items = await searchCompanies(q);
+    const items = await searchCompanies(q, { bypassCache: refresh || deep, deepSearch: deep });
     const rawJson = JSON.parse(JSON.stringify(items));
     await prisma.einformaLookup.upsert({
       where: { queryType_queryValue: { queryType: "NAME", queryValue: normalizedQuery } },

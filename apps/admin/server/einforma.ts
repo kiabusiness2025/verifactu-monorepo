@@ -145,6 +145,11 @@ export type EinformaCompanyProfile = {
   raw?: unknown;
 };
 
+type SearchCompaniesOptions = {
+  bypassCache?: boolean;
+  deepSearch?: boolean;
+};
+
 function normalizeTaxId(value: string) {
   return value.replace(/\s+/g, '').toUpperCase();
 }
@@ -243,39 +248,63 @@ function normalizeSearchResults(data: any): Array<any> {
   );
 }
 
-export async function searchCompanies(q: string): Promise<EinformaSearchItem[]> {
+export async function searchCompanies(
+  q: string,
+  options?: SearchCompaniesOptions
+): Promise<EinformaSearchItem[]> {
   const queryValue = q.trim().toUpperCase();
   if (!queryValue) return [];
 
-  const cached = await getCache<EinformaSearchItem[]>('NAME', queryValue);
-  if (cached) return cached;
+  if (!options?.bypassCache) {
+    const cached = await getCache<EinformaSearchItem[]>('NAME', queryValue);
+    if (cached) return cached;
+  }
 
   let lastError: unknown = null;
+
+  const deepCandidates = options?.deepSearch
+    ? [`"${q.trim()}"`, `${q.trim()}*`, `*${q.trim()}*`]
+    : [];
 
   const candidates = [
     q.trim(),
     q.trim().toUpperCase(),
     q.trim().toLowerCase(),
+    ...deepCandidates,
   ].filter(Boolean);
+
+  const merged = new Map<string, EinformaSearchItem>();
 
   for (const candidate of candidates) {
     try {
       const data = await einformaRequest<any>('/companies', { companySearch: candidate });
       const items = normalizeSearchResults(data);
       if (Array.isArray(items) && items.length > 0) {
-        const normalized = items.map((item: any) => ({
+        const normalized = items.map((item: any): EinformaSearchItem => ({
           name: item?.denominacion ?? item?.name ?? item?.denominacionBusqueda ?? '',
           nif: item?.identificativo ?? item?.nif ?? item?.cif,
           province: item?.provincia ?? item?.province,
           city: item?.localidad ?? item?.city,
           id: item?.id ?? item?.identificativo ?? item?.codigo,
         }));
-        await setCache('NAME', queryValue, data, normalized, 7);
-        return normalized;
+        for (const row of normalized) {
+          const key = `${row.id ?? ''}|${row.nif ?? ''}|${row.name}`.toUpperCase();
+          if (!merged.has(key)) merged.set(key, row);
+        }
+        if (!options?.deepSearch) {
+          await setCache('NAME', queryValue, data, normalized, 7);
+          return normalized;
+        }
       }
     } catch (error) {
       lastError = error;
     }
+  }
+
+  if (options?.deepSearch && merged.size > 0) {
+    const output = Array.from(merged.values());
+    await setCache('NAME', queryValue, { deep: true, count: output.length }, output, 7);
+    return output;
   }
 
   if (lastError) {

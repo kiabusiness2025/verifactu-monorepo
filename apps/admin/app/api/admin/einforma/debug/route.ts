@@ -31,6 +31,9 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const q = (searchParams.get("q") ?? "expert").trim();
+    const refresh = searchParams.get("refresh") === "1";
+    const deep = searchParams.get("deep") === "1";
+    const expect = (searchParams.get("expect") ?? "").trim().toLowerCase();
 
     if (q.length < 3) {
       return NextResponse.json(
@@ -60,17 +63,25 @@ export async function GET(req: Request) {
     };
 
     const startedAt = Date.now();
-    const items = await searchCompanies(q);
+    const items = await searchCompanies(q, { bypassCache: refresh || deep, deepSearch: deep });
     const elapsedMs = Date.now() - startedAt;
+    const exactMatches = expect
+      ? items.filter((item) => (item.name ?? "").toLowerCase().includes(expect))
+      : [];
 
     return NextResponse.json({
       ok: true,
       query: q,
+      refresh,
+      deep,
       elapsedMs,
       envCheck,
       envPreview,
       count: items.length,
       sample: items.slice(0, 5),
+      expectedName: expect || null,
+      expectedMatches: exactMatches.slice(0, 10),
+      expectedCount: exactMatches.length,
     });
   } catch (error) {
     return NextResponse.json(
