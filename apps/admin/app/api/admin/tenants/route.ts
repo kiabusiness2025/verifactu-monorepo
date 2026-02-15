@@ -375,6 +375,7 @@ export async function POST(req: Request) {
     const legalForm = profile?.legalForm ?? null;
     const status = profile?.status ?? null;
     const website = profile?.website ?? null;
+    const representative = profile?.representatives?.[0]?.name ?? null;
     const capitalSocialRaw = profile?.capitalSocial;
     const capitalSocial = Number.isFinite(Number(capitalSocialRaw))
       ? Number(capitalSocialRaw)
@@ -400,11 +401,17 @@ export async function POST(req: Request) {
       );
     }
 
+    const hasTenantNif = await columnExists("tenants", "nif");
+    const hasTenantTaxId = await columnExists("tenants", "tax_id");
+    const tenantTaxColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
+
     // Verificar que no exista ya un tenant con ese taxId
-    const existing = await query<{ id: string }>(
-      `SELECT id FROM tenants WHERE nif = $1 LIMIT 1`,
-      [taxId]
-    );
+    const existing = tenantTaxColumn
+      ? await query<{ id: string }>(
+          `SELECT id FROM tenants WHERE ${tenantTaxColumn} = $1 LIMIT 1`,
+          [taxId]
+        )
+      : [];
 
     if (existing.length > 0) {
       return NextResponse.json(
@@ -416,81 +423,87 @@ export async function POST(req: Request) {
     const tenantId = randomUUID();
     const now = new Date().toISOString();
 
-    // Crear tenant
+    // Crear tenant con compatibilidad de esquema
+    const tenantFields = ["id", "name", "created_at"];
+    const tenantValues: Array<string | null> = [tenantId, legalName, now];
+    if (await columnExists("tenants", "legal_name")) {
+      tenantFields.push("legal_name");
+      tenantValues.push(legalName);
+    }
+    if (tenantTaxColumn) {
+      tenantFields.push(tenantTaxColumn);
+      tenantValues.push(taxId);
+    }
+    const tenantPlaceholders = tenantFields.map((_, i) => `$${i + 1}`).join(", ");
     await query(
-      `INSERT INTO tenants (id, name, legal_name, nif, created_at)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [tenantId, legalName, legalName, taxId, now]
+      `INSERT INTO tenants (${tenantFields.join(", ")})
+       VALUES (${tenantPlaceholders})`,
+      tenantValues
     );
 
     if (address || cnae || isEinforma) {
-      await query(
-        `INSERT INTO tenant_profiles (
-           tenant_id,
-           source,
-           source_id,
-           cnae,
-           cnae_code,
-           cnae_text,
-           legal_form,
-           status,
-           website,
-           capital_social,
-           incorporation_date,
-           address,
-           postal_code,
-           city,
-           province,
-           country,
-           einforma_last_sync_at,
-           einforma_tax_id_verified,
-           einforma_raw,
-           updated_at
-         )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
-         ON CONFLICT (tenant_id) DO UPDATE
-         SET source = EXCLUDED.source,
-             source_id = EXCLUDED.source_id,
-             cnae = EXCLUDED.cnae,
-             cnae_code = EXCLUDED.cnae_code,
-             cnae_text = EXCLUDED.cnae_text,
-             legal_form = EXCLUDED.legal_form,
-             status = EXCLUDED.status,
-             website = EXCLUDED.website,
-             capital_social = EXCLUDED.capital_social,
-             incorporation_date = EXCLUDED.incorporation_date,
-             address = EXCLUDED.address,
-             postal_code = EXCLUDED.postal_code,
-             city = EXCLUDED.city,
-             province = EXCLUDED.province,
-             country = EXCLUDED.country,
-             einforma_last_sync_at = EXCLUDED.einforma_last_sync_at,
-             einforma_tax_id_verified = EXCLUDED.einforma_tax_id_verified,
-             einforma_raw = EXCLUDED.einforma_raw,
-             updated_at = EXCLUDED.updated_at`,
-        [
-          tenantId,
-          profileSource,
-          sourceId,
-          cnae,
-          cnaeCode,
-          cnaeText,
-          legalForm,
-          status,
-          website,
-          capitalSocial,
-          incorporationDate,
-          address,
-          postalCode,
-          city,
-          province,
-          country,
-          isEinforma ? now : null,
-          isEinforma ? einformaTaxIdVerified : null,
-          einformaRaw,
-          now,
-        ]
-      );
+      try {
+        const hasTenantProfiles = await tableExists("tenant_profiles");
+        if (hasTenantProfiles) {
+          const profileCandidates: Array<{ column: string; value: unknown }> = [
+            { column: "tenant_id", value: tenantId },
+            { column: "source", value: profileSource },
+            { column: "source_id", value: sourceId },
+            { column: "cnae", value: cnae },
+            { column: "cnae_code", value: cnaeCode },
+            { column: "cnae_text", value: cnaeText },
+            { column: "legal_form", value: legalForm },
+            { column: "status", value: status },
+            { column: "website", value: website },
+            { column: "capital_social", value: capitalSocial },
+            { column: "incorporation_date", value: incorporationDate },
+            { column: "address", value: address },
+            { column: "postal_code", value: postalCode },
+            { column: "city", value: city },
+            { column: "province", value: province },
+            { column: "country", value: country },
+            { column: "representative", value: representative },
+            { column: "einforma_last_sync_at", value: isEinforma ? now : null },
+            { column: "einforma_tax_id_verified", value: isEinforma ? einformaTaxIdVerified : null },
+            { column: "einforma_raw", value: einformaRaw },
+            { column: "updated_at", value: now },
+          ];
+          const availableColumns: string[] = [];
+          const values: unknown[] = [];
+          for (const candidate of profileCandidates) {
+            if (await columnExists("tenant_profiles", candidate.column)) {
+              availableColumns.push(candidate.column);
+              values.push(candidate.value);
+            }
+          }
+
+          if (availableColumns.length > 0) {
+            const placeholders = availableColumns.map((_, i) => `$${i + 1}`).join(", ");
+            const updates = availableColumns
+              .filter((col) => col !== "tenant_id")
+              .map((col) => `${col} = EXCLUDED.${col}`)
+              .join(", ");
+            if (updates.length > 0) {
+              await query(
+                `INSERT INTO tenant_profiles (${availableColumns.join(", ")})
+                 VALUES (${placeholders})
+                 ON CONFLICT (tenant_id) DO UPDATE
+                 SET ${updates}`,
+                values
+              );
+            } else {
+              await query(
+                `INSERT INTO tenant_profiles (${availableColumns.join(", ")})
+                 VALUES (${placeholders})
+                 ON CONFLICT (tenant_id) DO NOTHING`,
+                values
+              );
+            }
+          }
+        }
+      } catch (profileError) {
+        console.error("Error creating/updating tenant_profile snapshot:", profileError);
+      }
     }
 
     // Crear membership owner para el admin
@@ -520,13 +533,15 @@ export async function POST(req: Request) {
     );
 
     // Marcar empresa activa para el admin
-    await query(
-      `INSERT INTO user_preferences (user_id, preferred_tenant_id, updated_at)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (user_id) DO UPDATE
-       SET preferred_tenant_id = EXCLUDED.preferred_tenant_id, updated_at = EXCLUDED.updated_at`,
-      [admin.userId, tenantId, now]
-    );
+    if (await tableExists("user_preferences")) {
+      await query(
+        `INSERT INTO user_preferences (user_id, preferred_tenant_id, updated_at)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id) DO UPDATE
+         SET preferred_tenant_id = EXCLUDED.preferred_tenant_id, updated_at = EXCLUDED.updated_at`,
+        [admin.userId, tenantId, now]
+      );
+    }
 
     // Obtener el tenant creado con estadísticas
     const [tenant] = await query<{
@@ -538,9 +553,21 @@ export async function POST(req: Request) {
       cnae: string | null;
       created_at: string;
     }>(
-      `SELECT t.id, t.name, t.legal_name, t.nif, t.created_at, tp.address, tp.cnae
+      `SELECT 
+         t.id, 
+         t.name, 
+         ${await columnExists("tenants", "legal_name") ? "t.legal_name" : "t.name as legal_name"}, 
+         ${
+           tenantTaxColumn ? `t.${tenantTaxColumn} as nif` : "NULL::text as nif"
+         }, 
+         t.created_at, 
+         ${
+           await tableExists("tenant_profiles")
+             ? "tp.address, tp.cnae"
+             : "NULL::text as address, NULL::text as cnae"
+         }
        FROM tenants t
-       LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id
+       ${await tableExists("tenant_profiles") ? "LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id" : ""}
        WHERE t.id = $1`,
       [tenantId]
     );
