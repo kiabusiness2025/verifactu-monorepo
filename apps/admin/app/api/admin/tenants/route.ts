@@ -517,11 +517,11 @@ export async function POST(req: Request) {
     }
 
     const tenantId = randomUUID();
-    const now = new Date().toISOString();
+    const now = new Date();
 
     // Crear tenant con compatibilidad de esquema
     const tenantFields = ["id", "name", "created_at"];
-    const tenantValues: Array<string | null> = [tenantId, legalName, now];
+    const tenantValues: unknown[] = [tenantId, legalName, now];
     if (await columnExists("tenants", "legal_name")) {
       tenantFields.push("legal_name");
       tenantValues.push(legalName);
@@ -531,7 +531,11 @@ export async function POST(req: Request) {
       tenantValues.push(taxId);
     }
     const tenantPlaceholders = tenantFields
-      .map((field, i) => (field === "id" ? `$${i + 1}::uuid` : `$${i + 1}`))
+      .map((field, i) => {
+        if (field === "id") return `$${i + 1}::uuid`;
+        if (field === "created_at") return `$${i + 1}::timestamptz`;
+        return `$${i + 1}`;
+      })
       .join(", ");
     await query(
       `INSERT INTO tenants (${tenantFields.join(", ")})
@@ -584,7 +588,16 @@ export async function POST(req: Request) {
 
           if (availableColumns.length > 0) {
             const placeholders = availableColumns
-              .map((column, i) => (column === "tenant_id" ? `$${i + 1}::uuid` : `$${i + 1}`))
+              .map((column, i) => {
+                if (column === "tenant_id") return `$${i + 1}::uuid`;
+                if (column === "updated_at" || column === "einforma_last_sync_at") {
+                  return `$${i + 1}::timestamptz`;
+                }
+                if (column === "incorporation_date" || column === "last_balance_date") {
+                  return `$${i + 1}::date`;
+                }
+                return `$${i + 1}`;
+              })
               .join(", ");
             const updates = availableColumns
               .filter((col) => col !== "tenant_id")
@@ -644,7 +657,7 @@ export async function POST(req: Request) {
         ]);
 
         const fields = ["user_id"];
-        const values: Array<string> = [adminUserId];
+        const values: unknown[] = [adminUserId];
         if (hasPreferredTenantId) {
           fields.push("preferred_tenant_id");
           values.push(tenantId);
@@ -658,6 +671,7 @@ export async function POST(req: Request) {
         const castedPlaceholders = fields
           .map((field, i) => {
             if (field === "preferred_tenant_id") return `$${i + 1}::uuid`;
+            if (field === "updated_at") return `$${i + 1}::timestamptz`;
             return `$${i + 1}`;
           })
           .join(", ");
