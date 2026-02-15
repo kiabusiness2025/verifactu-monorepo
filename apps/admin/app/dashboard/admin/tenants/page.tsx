@@ -8,7 +8,7 @@ import { adminGet, adminPatch, adminPost } from "@/lib/adminApi";
 import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type TenantRow = {
   id: string;
@@ -144,9 +144,8 @@ export default function AdminTenantsPage() {
   const [searchResults, setSearchResults] = useState<EinformaSearchItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [skipNextSearch, setSkipNextSearch] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [moreInfoOpen, setMoreInfoOpen] = useState(false);
+  const skipNextSearchRef = useRef(false);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
 
   const queryString = useMemo(() => {
@@ -164,7 +163,6 @@ export default function AdminTenantsPage() {
     setSearchLoading(false);
     setSearchError("");
     setProfileLoading(false);
-    setMoreInfoOpen(false);
     setSelectedProfile(null);
     setSelectedNormalized(null);
   }
@@ -203,8 +201,8 @@ export default function AdminTenantsPage() {
 
   useEffect(() => {
     if (!showModal) return;
-    if (skipNextSearch) {
-      setSkipNextSearch(false);
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false;
       return;
     }
     const query = searchQuery.trim();
@@ -250,7 +248,7 @@ export default function AdminTenantsPage() {
     }, 350);
 
     return () => window.clearTimeout(timeout);
-  }, [searchQuery, showModal, skipNextSearch]);
+  }, [searchQuery, showModal]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -265,7 +263,7 @@ export default function AdminTenantsPage() {
   async function applyEinformaProfile(item: EinformaSearchItem) {
     setSearchError("");
     setSearchResults([]);
-    setSkipNextSearch(true);
+    skipNextSearchRef.current = true;
     setSearchQuery(item.name || item.nif || "");
     const candidateKeys = [item?.nif, item?.id]
       .map((value) => String(value ?? "").trim())
@@ -317,7 +315,6 @@ export default function AdminTenantsPage() {
           sourceId: item.id || null,
         }
       );
-      setMoreInfoOpen(false);
     } catch (err) {
       setSearchError("No se pudieron recuperar los datos de la empresa");
     } finally {
@@ -325,68 +322,15 @@ export default function AdminTenantsPage() {
     }
   }
 
-  async function loadMoreEinformaInfo() {
-    const lookup = (
-      selectedNormalized?.sourceId ||
-      selectedNormalized?.nif ||
-      selectedProfile?.nif ||
-      ""
-    ).trim();
-    if (!lookup) {
-      setSearchError("Selecciona una empresa válida para ver más información.");
-      return;
-    }
-    setProfileLoading(true);
-    setSearchError("");
-    try {
-      const res = await fetch(
-        `/api/admin/einforma/profile?nif=${encodeURIComponent(lookup)}&refresh=1`
-      );
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.profile) {
-        throw new Error("No se pudo cargar información ampliada");
-      }
-      const profile: EinformaCompanyProfile = data.profile;
-      const normalized: EinformaNormalized | undefined = data?.normalized;
-      setSelectedProfile(profile);
-      if (normalized) {
-        setSelectedNormalized(normalized);
-      }
-      setMoreInfoOpen(true);
-      success("Información ampliada cargada");
-    } catch (err) {
-      setSearchError(err instanceof Error ? err.message : "Error al cargar más información");
-    } finally {
-      setProfileLoading(false);
-    }
-  }
-
-  function openSupportTicket() {
-    const now = new Date().toISOString();
-    const subject = `Incidencia búsqueda empresa - no aparece o datos incompletos`;
-    const body = [
-      "Hola soporte,",
-      "",
-      "Quiero abrir incidencia sobre búsqueda de empresa en Admin > Empresas.",
-      "",
-      `Consulta usada: ${searchQuery || "(vacía)"}`,
-      `Razón social seleccionada: ${
-        selectedNormalized?.legalName || selectedNormalized?.name || "(sin selección)"
-      }`,
+  function openIsaakAssistance() {
+    const context = [
+      "Ayuda con búsqueda de empresa en Admin > Empresas.",
+      `Consulta: ${searchQuery || "(vacía)"}`,
+      `Razón social: ${selectedNormalized?.legalName || selectedNormalized?.name || "(sin selección)"}`,
       `CIF/NIF: ${selectedNormalized?.nif || "(no disponible)"}`,
       `sourceId: ${selectedNormalized?.sourceId || "(no disponible)"}`,
-      `URL: ${typeof window !== "undefined" ? window.location.href : ""}`,
-      `Fecha ISO: ${now}`,
-      "",
-      "Describe aquí el problema observado:",
-      "- ",
-    ].join("\n");
-    const mailto = `mailto:soporte@verifactu.business?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(body)}`;
-    if (typeof window !== "undefined") {
-      window.location.href = mailto;
-    }
+    ].join(" | ");
+    router.push(`/dashboard/admin/chat?context=${encodeURIComponent(context)}`);
   }
 
   function openCreate() {
@@ -770,39 +714,26 @@ export default function AdminTenantsPage() {
                 </div>
               )}
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <p className="text-xs text-slate-600">
-                  ¿No aparece la empresa o faltan datos? Usa una de estas opciones.
+                <p className="text-sm font-semibold text-slate-800">Información sobre herramienta</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  La búsqueda funciona por nombre o CIF/NIF. Si hay muchos resultados, añade más
+                  palabras o usa el CIF/NIF exacto para afinar.
                 </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <AccessibleButton
-                    type="button"
-                    variant="secondary"
-                    onClick={loadMoreEinformaInfo}
-                    loading={profileLoading}
-                    disabled={profileLoading || !selectedNormalized}
-                    ariaLabel="Cargar más información"
-                  >
-                    Más información
-                  </AccessibleButton>
-                  <AccessibleButton
-                    type="button"
-                    variant="secondary"
-                    onClick={openSupportTicket}
-                    ariaLabel="Abrir incidencia de soporte"
-                  >
-                    Abrir incidencia soporte
-                  </AccessibleButton>
-                </div>
-                {moreInfoOpen && selectedProfile?.raw ? (
-                  <details className="mt-3 rounded border border-slate-200 bg-white p-2">
-                    <summary className="cursor-pointer text-xs font-medium text-slate-700">
-                      Ver datos ampliados (raw eInforma)
-                    </summary>
-                    <pre className="mt-2 max-h-56 overflow-auto rounded bg-slate-900 p-2 text-[10px] text-slate-100">
-                      {JSON.stringify(selectedProfile.raw, null, 2)}
-                    </pre>
-                  </details>
-                ) : null}
+                <p className="mt-1 text-xs text-slate-600">
+                  Los datos mostrados provienen de información pública del Registro Mercantil y se
+                  muestran con carácter informativo.
+                </p>
+                <button
+                  type="button"
+                  onClick={openIsaakAssistance}
+                  className="mt-2 text-xs font-medium text-blue-700 underline underline-offset-2 hover:text-blue-800"
+                >
+                  No aparece tu empresa en el listado, pulsa aquí
+                </button>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Isaak te ayudará a localizar la empresa manualmente y, si no se resuelve, se
+                  abrirá incidencia de soporte para escalar el caso.
+                </p>
               </div>
               <div className="flex gap-2">
                 <AccessibleButton

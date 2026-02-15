@@ -71,14 +71,14 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const nif = (searchParams.get("nif") ?? "").trim().toUpperCase();
+    const lookupKey = (searchParams.get("nif") ?? "").trim();
     const refresh = (searchParams.get("refresh") ?? "").trim() === "1";
 
-    if (!nif) {
-      return NextResponse.json({ error: "Falta nif" }, { status: 400 });
+    if (!lookupKey) {
+      return NextResponse.json({ error: "Falta identificador" }, { status: 400 });
     }
 
-    const normalizedNif = normalizeTaxId(nif);
+    const normalizedNif = normalizeTaxId(lookupKey);
 
     const tenant = await prisma.tenant.findFirst({
       where: { nif: normalizedNif },
@@ -201,7 +201,7 @@ export async function GET(req: Request) {
       }
     }
 
-    const profile = await getCompanyProfileByNif(nif);
+    const profile = await getCompanyProfileByNif(lookupKey);
     const cnaeParts = splitCnae(profile.cnae);
     const cityParts = normalizeCity(profile.address?.city);
     const normalized = {
