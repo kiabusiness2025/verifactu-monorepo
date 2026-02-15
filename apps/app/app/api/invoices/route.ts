@@ -81,6 +81,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
+    const issuerSnapshot = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        id: true,
+        name: true,
+        legalName: true,
+        nif: true,
+        profile: {
+          select: {
+            source: true,
+            sourceId: true,
+            cnae: true,
+            cnaeCode: true,
+            cnaeText: true,
+            legalForm: true,
+            status: true,
+            website: true,
+            incorporationDate: true,
+            address: true,
+            postalCode: true,
+            city: true,
+            province: true,
+            country: true,
+            representative: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
     const data = await req.json();
 
     // Validate customer exists and belongs to tenant
@@ -176,6 +206,7 @@ export async function POST(req: NextRequest) {
             action: 'INVOICE.CREATE',
             tenantId,
             invoiceId: updated.id,
+            issuerSnapshot,
             supportMode: resolved.supportMode,
             supportSessionId,
             impersonatedUserId,
