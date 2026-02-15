@@ -7,7 +7,7 @@ import { useToast } from "@/components/notifications/ToastNotifications";
 import { adminGet, adminPatch, adminPost } from "@/lib/adminApi";
 import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 type TenantRow = {
@@ -125,7 +125,6 @@ function searchScore(item: EinformaSearchItem, query: string) {
 export default function AdminTenantsPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { success, error: showError } = useToast();
   const [items, setItems] = useState<TenantRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,6 +164,16 @@ export default function AdminTenantsPage() {
     setProfileLoading(false);
     setSelectedProfile(null);
     setSelectedNormalized(null);
+  }
+
+  function readCurrentParams() {
+    if (typeof window === "undefined") return new URLSearchParams();
+    return new URLSearchParams(window.location.search);
+  }
+
+  function replaceWithParams(params: URLSearchParams) {
+    const next = params.toString();
+    router.replace(next ? `${pathname}?${next}` : pathname);
   }
 
   useEffect(() => {
@@ -237,13 +246,14 @@ export default function AdminTenantsPage() {
   }, [searchQuery, showModal]);
 
   useEffect(() => {
-    const shouldOpenCreate = searchParams.get("create") === "1";
+    if (typeof window === "undefined") return;
+    const shouldOpenCreate = new URLSearchParams(window.location.search).get("create") === "1";
     if (!shouldOpenCreate || showModal) return;
     setEditing(null);
     setError("");
     resetEinforma();
     setShowModal(true);
-  }, [searchParams, showModal]);
+  }, [showModal]);
 
   async function applyEinformaProfile(item: EinformaSearchItem) {
     setSearchError("");
@@ -303,9 +313,9 @@ export default function AdminTenantsPage() {
     setError("");
     resetEinforma();
     setShowModal(true);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = readCurrentParams();
     params.set("create", "1");
-    router.replace(`${pathname}?${params.toString()}`);
+    replaceWithParams(params);
   }
 
   function openEdit(tenant: TenantRow) {
@@ -347,10 +357,9 @@ export default function AdminTenantsPage() {
         setItems((prev) => [res.tenant, ...prev]);
       }
       setShowModal(false);
-      const params = new URLSearchParams(searchParams.toString());
+      const params = readCurrentParams();
       params.delete("create");
-      const next = params.toString();
-      router.replace(next ? `${pathname}?${next}` : pathname);
+      replaceWithParams(params);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar");
     } finally {
@@ -562,10 +571,9 @@ export default function AdminTenantsPage() {
                 size="sm"
                 onClick={() => {
                   setShowModal(false);
-                  const params = new URLSearchParams(searchParams.toString());
+                  const params = readCurrentParams();
                   params.delete("create");
-                  const next = params.toString();
-                  router.replace(next ? `${pathname}?${next}` : pathname);
+                  replaceWithParams(params);
                 }}
                 ariaLabel="Cerrar modal"
               >
@@ -685,10 +693,9 @@ export default function AdminTenantsPage() {
                   variant="secondary"
                   onClick={() => {
                     setShowModal(false);
-                    const params = new URLSearchParams(searchParams.toString());
+                    const params = readCurrentParams();
                     params.delete("create");
-                    const next = params.toString();
-                    router.replace(next ? `${pathname}?${next}` : pathname);
+                    replaceWithParams(params);
                   }}
                   ariaLabel="Cancelar"
                 >
