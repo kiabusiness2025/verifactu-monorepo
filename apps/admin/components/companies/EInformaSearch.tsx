@@ -40,7 +40,7 @@ function companyScore(company: EInformaCompany, query: string) {
 
 export function EInformaSearch({
   onSelect,
-  placeholder = 'Buscar por CIF o nombre (mejor 2+ palabras)...',
+  placeholder = 'Buscar por CIF o nombre (también 1 palabra)...',
 }: EInformaSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<EInformaCompany[]>([]);
@@ -155,7 +155,7 @@ export function EInformaSearch({
         />
       </div>
       <p className="mt-1 text-[11px] text-slate-500">
-        Consejo: para nombres genéricos, usa 2+ palabras (ej. "expert estudios") o CIF exacto.
+        Puedes buscar con 1 palabra. Si hay muchos resultados, afina con 2+ palabras o CIF exacto.
       </p>
 
       {/* Results Dropdown */}
@@ -232,7 +232,9 @@ export function EInformaSearch({
           <div className="text-center text-sm text-slate-600">
             <Building2 className="h-8 w-8 mx-auto mb-2 text-slate-400" />
             <p className="font-medium">No se encontraron empresas</p>
-            <p className="text-xs mt-1">Prueba con 2+ palabras o CIF exacto (ej. "expert estudios").</p>
+            <p className="text-xs mt-1">
+              Prueba otra combinación: 1 palabra, 2+ palabras o CIF exacto.
+            </p>
           </div>
         </div>
       )}
