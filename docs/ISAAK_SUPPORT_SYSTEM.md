@@ -362,6 +362,66 @@ Implementar dashboard en `/dashboard/admin/support`:
 
 ---
 
+## 🧭 Playbook: Empresa No Aparece o Datos Incompletos (Admin > Empresas)
+
+### Objetivo
+Estandarizar la actuación de Isaak cuando un usuario indica:
+- "Mi empresa no aparece en la búsqueda"
+- "Aparece en el listado pero no se completan los datos"
+
+### Contexto mínimo que Isaak debe recopilar
+1. Texto exacto de búsqueda usado por el usuario.
+2. Razón social esperada.
+3. CIF/NIF esperado (si lo conoce).
+4. Captura o mensaje de error mostrado.
+5. Fecha/hora aproximada del intento.
+
+### Flujo de actuación recomendado
+1. Pedir al usuario búsqueda con mayor precisión:
+   - nombre completo o 2+ palabras.
+   - CIF/NIF exacto si está disponible.
+2. Verificar si hubo selección correcta en el desplegable.
+3. Si la ficha no se completa:
+   - pedir reintento con recarga de sesión.
+   - capturar el error visible y la consulta exacta.
+4. Intentar localización manual de la empresa en fuentes públicas fiables.
+5. Si no se resuelve:
+   - escalar a soporte humano con todo el contexto estructurado.
+
+### Plantilla de escalado que Isaak debe generar
+```
+Asunto: Incidencia búsqueda empresa - alta admin
+
+Contexto:
+- Consulta usada:
+- Razón social esperada:
+- CIF/NIF esperado:
+- Resultado observado:
+- Error mostrado:
+- Fecha/hora:
+- URL/pantalla:
+
+Acciones realizadas por Isaak:
+- Ajuste de consulta:
+- Verificación manual en fuentes públicas:
+- Resultado:
+
+Solicitud:
+- Revisar mapeo/carga de datos de empresa y validar sincronización.
+```
+
+### Criterios de severidad
+- `high`: empresa crítica para onboarding y sin alternativa operativa.
+- `medium`: empresa aparece pero no hidrata campos.
+- `low`: resultado incompleto con alternativa manual viable.
+
+### Mensajes de cara al usuario (guía)
+- Evitar lenguaje técnico interno de proveedor.
+- Confirmar pasos concretos y siguientes acciones.
+- Si hay escalado: indicar que soporte continuará con el caso y que no necesita repetir información.
+
+---
+
 ## 📚 Referencias
 
 - [Resend Webhooks](https://resend.com/docs/webhooks)

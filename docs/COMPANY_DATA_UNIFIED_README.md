@@ -1,78 +1,69 @@
 # Datos de Empresa Unificados (Admin + App)
 
 ## Objetivo
-Definir un flujo único para gestionar datos de empresa en `admin` y `app`, separando:
-- Datos mercantiles (fuente pública: Registro Mercantil / eInforma).
-- Datos fiscales y operativos (fuente principal: AEAT + validación del cliente).
+Definir un flujo único de alta y gestión de empresa entre `admin` y `app`, separando:
+- Datos mercantiles de fuente pública (solo referencia legal).
+- Datos fiscales/operativos (editable por cliente bajo responsabilidad).
 
-## Estado actual (implementado)
-- En `admin`, al crear empresa desde eInforma:
-  - Se autocompleta ficha mercantil.
-  - Los campos mercantiles quedan bloqueados para edición manual.
-  - Se informa al usuario que los datos provienen de fuente pública y que incidencias van por soporte.
-- La búsqueda eInforma ya funciona con ranking mejorado de resultados por coincidencia.
-- El endpoint de creación en `admin` crea `tenant` y `tenant_profile`.
-- Flujo inicial de colaboradores:
-  - Pestaña `Contacto y usuarios` en alta de empresa de admin.
-  - Alta de colaboradores por email + rol.
-  - Envío de invitación por correo con enlace de aceptación (basado en plantilla de invitación de equipo ya definida en `apps/app/lib/email/emailService.ts`).
-  - Activación de membership al aceptar invitación.
+## Estado actual implementado
+### Flujo de creación en Admin (unificado)
+- La creación de empresa se realiza desde modal en `Empresas` (`/dashboard/admin/companies`).
+- La ruta `/dashboard/admin/companies/new` redirige al mismo flujo con `?create=1`.
+- Se eliminó la duplicidad visual de menú (`Tenants`) para reducir confusión.
 
-## Principio funcional
-1. `Registro Mercantil (eInforma)` = verdad mercantil (solo lectura en UI).
-2. `AEAT + cliente` = verdad fiscal/operativa (editable bajo responsabilidad).
-3. ISAaK consume ambos planos:
-   - Mercantil: identidad legal y contexto.
-   - Fiscal/operativo: clasificación, deducibilidad y calendario fiscal.
+### Búsqueda y selección de empresa
+- Búsqueda con debounce y ranking por relevancia.
+- Para consultas de 2+ palabras, se exige coincidencia de todos los términos para reducir ruido.
+- Soporte de búsqueda por identificador fiscal y por identificador interno del proveedor de datos.
+- Mensajería de ayuda para afinar búsquedas en casos de alta cardinalidad.
 
-## UI objetivo
-### Pestaña 1: Datos Mercantiles (solo lectura)
-- Razón social, NIF/CIF, forma jurídica, estado, domicilio social, CNAE mercantil, representante(s).
-- Aviso legal:
-  - Datos extraídos del Registro Mercantil.
-  - Si no coinciden, abrir ticket de soporte con evidencia documental.
+### Carga de perfil mercantil
+- Al seleccionar una empresa, se intenta cargar ficha completa usando claves candidatas (`nif`, `id`) para evitar falsos negativos.
+- Se corrigió la pérdida de resultados por normalización agresiva del identificador.
+- Se evita el efecto de “doble búsqueda” tras seleccionar una empresa.
 
-### Pestaña 2: Datos Fiscales / Facturación (editable)
-- Domicilio fiscal (puede diferir del social).
-- Actividades económicas (IAE/CNAE fiscal).
-- Obligaciones fiscales para calendario:
-  - Empleados: modelos `111` y `190`.
-  - Local en alquiler: modelos `115` y `180`.
-  - Representante no residente: `210`, `216`, `296`.
-  - Representante residente (según caso): `100`, `214`, `123`, `720`.
-- Campo de responsabilidad:
-  - “Datos introducidos por el cliente bajo su responsabilidad”.
+### Persistencia y cache
+- Al crear empresa desde admin se crea `tenant` y `tenant_profile`.
+- Se persiste `source`, `source_id`, snapshot mercantil y metadata de sincronización.
+- El endpoint de perfil consulta primero snapshot local y lookup cache antes de ir al proveedor externo.
+- Se incorporó fallback de listado de empresas en `/api/admin/tenants` para esquemas mixtos (degradado sin 500).
 
-## ISAaK: guías requeridas
-- Guía: obtener/modificar datos censales en AEAT.
-- Guía: cómo obtener y subir certificado IAE.
-- Guía: cómo revisar obligaciones que alimentan calendario fiscal.
-- Guía: impacto de actividades declaradas en deducibilidad de gastos/ventas.
+### Colaboradores y ownership
+- Alta de colaboradores por email + rol en el flujo de creación.
+- Envío de invitación por correo y aceptación posterior.
+- `support@verifactu.business` se asigna automáticamente con rol `owner`.
+- Modelo multiempresa activo por `memberships` (N:M usuario-empresa).
 
-## Flujo de alta Admin -> App
-## Implementado
-- Alta de empresa en `admin` crea `tenant` y `tenant_profile`.
-- `support@verifactu.business` se asigna automáticamente con rol `owner` (superadmin operativo) en empresas creadas desde:
-  - `admin` (alta de empresas/tenants).
-  - `app` (onboarding de tenant).
-- Usuarios pueden administrar múltiples empresas vía tabla `memberships` (relación N:M).
+## Principios funcionales
+1. Datos mercantiles = referencia legal pública.
+2. Datos fiscales/operativos = responsabilidad del cliente.
+3. Isaak usa ambos planos para asistencia, clasificación y calendario.
 
-## Pendiente
-- Mejorar UX de aceptación de invitaciones (pantalla dedicada + estados detallados).
-- Revisión completa del flujo de provisión de usuarios base por empresa según vertical y tipo de cliente.
-- Política inicial recomendada:
-  - `OWNER_ADMIN` (titular / responsable principal).
-  - `ACCOUNTANT` (asesoría/contable).
-  - `READ_ONLY` (consulta).
+## UX y comunicación al usuario (vigente)
+### En el modal de creación
+- Bloque `Información sobre herramienta`:
+  - cómo funciona la búsqueda.
+  - que los datos son públicos del Registro Mercantil.
+- Enlace de ayuda:
+  - `No aparece tu empresa en el listado, pulsa aquí`
+  - redirige a Isaak en admin con contexto pre-cargado del caso.
+
+### Criterio de marca en UI
+- Evitar menciones explícitas del proveedor de datos en mensajes de error/ayuda generales.
+- Mantener el detalle técnico solo donde sea estrictamente necesario para diagnóstico.
 
 ## Reglas de datos
-- Campos mercantiles no se editan manualmente cuando `source = einforma`.
-- Campos fiscales sí son editables y versionables.
-- Registrar `source`, `source_id`, `updated_at`, y evidencia de cambios críticos.
+- Mercantil:
+  - se rellena desde fuente pública.
+  - se guarda snapshot de referencia.
+- Fiscal:
+  - editable en módulos fiscales/facturación (roadmap).
+- Trazabilidad:
+  - conservar `source`, `source_id`, `updated_at` y raw de sincronización cuando aplique.
 
-## Próximos pasos técnicos
-1. Crear modelo persistente para `fiscal_profile` (AEAT/IAE/obligaciones).
-2. Implementar pestaña fiscal en `admin` y en `app`.
-3. Integrar reglas de calendario fiscal según flags y residencia.
-4. Integrar en ISAaK clasificación fiscal por actividad declarada.
-5. Añadir auditoría de cambios para datos fiscales sensibles.
+## Roadmap inmediato
+1. Modelo `fiscal_profile` persistente (AEAT/IAE/obligaciones).
+2. Pestaña fiscal en admin y app con validación y responsabilidad explícita.
+3. Reglas automáticas para calendario fiscal por obligaciones.
+4. Auditoría de cambios en datos fiscales sensibles.
+5. Dashboard de calidad de datos mercantiles/fiscales (coherencia y discrepancias).
