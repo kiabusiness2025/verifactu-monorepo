@@ -154,6 +154,88 @@ function normalizeTaxId(value: string) {
   return value.replace(/\s+/g, '').toUpperCase();
 }
 
+function parseOptionalNumber(value: unknown) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function getByPath(obj: any, path: string) {
+  return path
+    .split('.')
+    .reduce((acc, key) => (acc && typeof acc === 'object' ? acc[key] : undefined), obj);
+}
+
+function pickFirst(obj: any, paths: string[]) {
+  for (const path of paths) {
+    const value = getByPath(obj, path);
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function normalizeRepresentatives(item: any) {
+  const repKeys = new Set([
+    'administradores',
+    'representatives',
+    'representantes',
+    'administrador',
+    'representante',
+  ]);
+  const queue: any[] = [item];
+  const collected: Array<{ name: string; role?: string }> = [];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || typeof current !== 'object') continue;
+
+    for (const [rawKey, rawValue] of Object.entries(current)) {
+      const key = String(rawKey).toLowerCase();
+      if (repKeys.has(key)) {
+        if (Array.isArray(rawValue)) {
+          for (const rep of rawValue) {
+            if (typeof rep === 'string') {
+              const name = rep.trim();
+              if (name) collected.push({ name });
+              continue;
+            }
+            const name =
+              rep?.nombre ?? rep?.name ?? rep?.administrador ?? rep?.representante ?? '';
+            const role = rep?.cargo ?? rep?.role ?? rep?.tipo ?? undefined;
+            if (String(name).trim()) collected.push({ name: String(name).trim(), role });
+          }
+        } else if (typeof rawValue === 'string') {
+          const name = rawValue.trim();
+          if (name) collected.push({ name });
+        } else if (rawValue && typeof rawValue === 'object') {
+          const name =
+            (rawValue as any)?.nombre ??
+            (rawValue as any)?.name ??
+            (rawValue as any)?.administrador ??
+            (rawValue as any)?.representante ??
+            '';
+          const role =
+            (rawValue as any)?.cargo ?? (rawValue as any)?.role ?? (rawValue as any)?.tipo;
+          if (String(name).trim()) collected.push({ name: String(name).trim(), role });
+        }
+      }
+
+      if (rawValue && typeof rawValue === 'object') queue.push(rawValue);
+    }
+  }
+
+  const dedup = new Map<string, { name: string; role?: string }>();
+  for (const rep of collected) {
+    const k = rep.name.toLowerCase();
+    if (!dedup.has(k)) dedup.set(k, rep);
+  }
+  return Array.from(dedup.values());
+}
+
 function sanitizeMaybeTaxId(value: unknown) {
   const candidate = String(value ?? '')
     .trim()
@@ -323,47 +405,70 @@ export async function searchCompanies(
   return [];
 }
 
-export async function getCompanyProfileByNif(nifOrId: string): Promise<EinformaCompanyProfile> {
+export async function getCompanyProfileByNif(
+  nifOrId: string,
+  options?: { bypassCache?: boolean }
+): Promise<EinformaCompanyProfile> {
   const queryValue = normalizeTaxId(nifOrId);
-  const cached = await getCache<EinformaCompanyProfile>('TAX_ID', queryValue);
-  if (cached) return cached;
+  const cached = options?.bypassCache
+    ? null
+    : await getCache<EinformaCompanyProfile>('TAX_ID', queryValue);
+  if (cached) {
+    const rawItem = (cached?.raw as any)?.empresa ?? (cached?.raw as any)?.company ?? cached?.raw;
+    const reps = normalizeRepresentatives(rawItem);
+    return {
+      ...cached,
+      legalForm:
+        cached.legalForm ??
+        (pickFirst(rawItem, ['formaJuridica', 'legalForm', 'datosGenerales.formaJuridica']) as
+          | string
+          | undefined),
+      status:
+        cached.status ??
+        (pickFirst(rawItem, ['situacion', 'status', 'estado', 'estadoActual']) as
+          | string
+          | undefined),
+      representatives: cached.representatives?.length ? cached.representatives : reps,
+    };
+  }
 
   const data = await einformaRequest<any>(`/companies/${encodeURIComponent(nifOrId)}/report`);
-  const item = data?.empresa ?? data?.company ?? data;
+  const item = data?.empresa ?? data?.company ?? data?.resultado?.empresa ?? data;
+  const reps = normalizeRepresentatives(item);
   const normalized = {
-    name: item?.denominacion ?? item?.name ?? '',
-    tradeName: item?.nombreComercial ?? item?.tradeName,
-    legalName: item?.razonSocial ?? item?.legalName,
-    nif: sanitizeMaybeTaxId(item?.identificativo ?? item?.nif ?? item?.cif),
-    cnae: item?.cnae ?? item?.codigoCnae,
-    email: item?.email,
-    phone: item?.telefono ?? item?.phone,
-    website: item?.web ?? item?.website,
-    legalForm: item?.formaJuridica ?? item?.legalForm,
-    status: item?.situacion ?? item?.status,
-    employees:
-      typeof item?.empleados === 'number' ? item.empleados : Number(item?.empleados ?? NaN),
-    sales: typeof item?.ventas === 'number' ? item.ventas : Number(item?.ventas ?? NaN),
-    salesYear:
-      typeof item?.anioVentas === 'number' ? item.anioVentas : Number(item?.anioVentas ?? NaN),
-    capitalSocial:
-      typeof item?.capitalSocial === 'number'
-        ? item.capitalSocial
-        : Number(item?.capitalSocial ?? NaN),
-    lastBalanceDate: item?.fechaUltimoBalance ?? item?.lastBalanceDate,
-    sourceId: item?.id ?? item?.codigo ?? sanitizeMaybeTaxId(item?.identificativo),
+    name: pickFirst(item, ['denominacion', 'name']) ?? '',
+    tradeName: pickFirst(item, ['nombreComercial', 'tradeName']) as string | undefined,
+    legalName: pickFirst(item, ['razonSocial', 'legalName']) as string | undefined,
+    nif: sanitizeMaybeTaxId(pickFirst(item, ['identificativo', 'nif', 'cif'])),
+    cnae: pickFirst(item, ['cnae', 'codigoCnae']) as string | undefined,
+    email: pickFirst(item, ['email', 'contacto.email']) as string | undefined,
+    phone: pickFirst(item, ['telefono', 'phone', 'contacto.telefono']) as string | undefined,
+    website: pickFirst(item, ['web', 'website']) as string | undefined,
+    legalForm: pickFirst(item, ['formaJuridica', 'legalForm', 'datosGenerales.formaJuridica']) as
+      | string
+      | undefined,
+    status: pickFirst(item, ['situacion', 'status', 'estado', 'estadoActual']) as
+      | string
+      | undefined,
+    employees: parseOptionalNumber(pickFirst(item, ['empleados', 'employees'])),
+    sales: parseOptionalNumber(pickFirst(item, ['ventas', 'sales'])),
+    salesYear: parseOptionalNumber(pickFirst(item, ['anioVentas', 'salesYear'])),
+    capitalSocial: parseOptionalNumber(pickFirst(item, ['capitalSocial', 'capital'])),
+    lastBalanceDate: pickFirst(item, ['fechaUltimoBalance', 'lastBalanceDate']) as
+      | string
+      | undefined,
+    sourceId: pickFirst(item, ['id', 'codigo']) ?? sanitizeMaybeTaxId(item?.identificativo),
     address: {
-      street: item?.domicilioSocial ?? item?.address?.street,
-      zip: item?.cp ?? item?.address?.zip,
-      city: item?.localidad ?? item?.address?.city,
-      province: item?.provincia ?? item?.address?.province,
+      street: (pickFirst(item, ['domicilioSocial', 'address.street']) as string | undefined),
+      zip: (pickFirst(item, ['cp', 'address.zip']) as string | undefined),
+      city: (pickFirst(item, ['localidad', 'address.city']) as string | undefined),
+      province: (pickFirst(item, ['provincia', 'address.province']) as string | undefined),
       country: item?.address?.country ?? 'ES',
     },
-    constitutionDate: item?.fechaConstitucion ?? item?.constitutionDate,
-    representatives: (item?.administradores ?? item?.representatives ?? []).map((rep: any) => ({
-      name: rep?.nombre ?? rep?.name,
-      role: rep?.cargo ?? rep?.role,
-    })),
+    constitutionDate: pickFirst(item, ['fechaConstitucion', 'constitutionDate']) as
+      | string
+      | undefined,
+    representatives: reps,
     raw: data,
   } satisfies EinformaCompanyProfile;
 

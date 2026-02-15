@@ -245,7 +245,7 @@ export async function GET(req: Request) {
       }
     }
 
-    const profile = await getCompanyProfileByNif(lookupKey);
+    const profile = await getCompanyProfileByNif(lookupKey, { bypassCache: refresh });
     const cnaeParts = splitCnae(profile.cnae);
     const cityParts = normalizeCity(profile.address?.city);
     const normalized = {
