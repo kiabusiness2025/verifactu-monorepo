@@ -144,6 +144,7 @@ export default function AdminTenantsPage() {
   const [searchResults, setSearchResults] = useState<EinformaSearchItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [skipNextSearch, setSkipNextSearch] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [moreInfoOpen, setMoreInfoOpen] = useState(false);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
@@ -202,6 +203,10 @@ export default function AdminTenantsPage() {
 
   useEffect(() => {
     if (!showModal) return;
+    if (skipNextSearch) {
+      setSkipNextSearch(false);
+      return;
+    }
     const query = searchQuery.trim();
     if (query.length < 3) {
       setSearchResults([]);
@@ -217,7 +222,7 @@ export default function AdminTenantsPage() {
         const res = await fetch(`/api/admin/einforma/search?q=${encodeURIComponent(query)}`);
         const data = await res.json().catch(() => null);
         if (!res.ok) {
-          throw new Error(data?.error || "Error en la busqueda");
+          throw new Error("No se pudo realizar la búsqueda");
         }
         const items = Array.isArray(data?.items) ? data.items : [];
         const sorted = [...items]
@@ -238,14 +243,14 @@ export default function AdminTenantsPage() {
         setSearchResults(filtered);
       } catch (err) {
         setSearchResults([]);
-        setSearchError(err instanceof Error ? err.message : "Error al buscar");
+        setSearchError("No se pudo realizar la búsqueda");
       } finally {
         setSearchLoading(false);
       }
     }, 350);
 
     return () => window.clearTimeout(timeout);
-  }, [searchQuery, showModal]);
+  }, [searchQuery, showModal, skipNextSearch]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -260,9 +265,12 @@ export default function AdminTenantsPage() {
   async function applyEinformaProfile(item: EinformaSearchItem) {
     setSearchError("");
     setSearchResults([]);
+    setSkipNextSearch(true);
     setSearchQuery(item.name || item.nif || "");
-    const lookupKey = (item?.id || item?.nif || "").trim();
-    if (!lookupKey) {
+    const candidateKeys = [item?.nif, item?.id]
+      .map((value) => String(value ?? "").trim())
+      .filter((value, index, arr) => value.length > 0 && arr.indexOf(value) === index);
+    if (candidateKeys.length === 0) {
       setSelectedProfile({ name: item?.name || "", nif: "" });
       setSelectedNormalized({
         name: item?.name || null,
@@ -274,18 +282,23 @@ export default function AdminTenantsPage() {
 
     setProfileLoading(true);
     try {
-      const res = await fetch(
-        `/api/admin/einforma/profile?nif=${encodeURIComponent(lookupKey)}`
-      );
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        throw new Error(data?.error || "No se pudo cargar la empresa");
+      let data: any = null;
+      let fetched = false;
+      for (const key of candidateKeys) {
+        const res = await fetch(`/api/admin/einforma/profile?nif=${encodeURIComponent(key)}`);
+        const json = await res.json().catch(() => null);
+        if (res.ok && json?.profile) {
+          data = json;
+          fetched = true;
+          break;
+        }
       }
+      if (!fetched) throw new Error("No se pudo cargar la empresa seleccionada");
 
       const profile: EinformaCompanyProfile | undefined = data?.profile;
       const normalized: EinformaNormalized | undefined = data?.normalized;
       if (!profile) {
-        throw new Error("No se pudo cargar la empresa");
+        throw new Error("No se pudo cargar la empresa seleccionada");
       }
 
       setSelectedProfile(profile);
@@ -306,7 +319,7 @@ export default function AdminTenantsPage() {
       );
       setMoreInfoOpen(false);
     } catch (err) {
-      setSearchError(err instanceof Error ? err.message : "Error al cargar");
+      setSearchError("No se pudieron recuperar los datos de la empresa");
     } finally {
       setProfileLoading(false);
     }
@@ -331,7 +344,7 @@ export default function AdminTenantsPage() {
       );
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.profile) {
-        throw new Error(data?.error || "No se pudo cargar información ampliada");
+        throw new Error("No se pudo cargar información ampliada");
       }
       const profile: EinformaCompanyProfile = data.profile;
       const normalized: EinformaNormalized | undefined = data?.normalized;
@@ -350,11 +363,11 @@ export default function AdminTenantsPage() {
 
   function openSupportTicket() {
     const now = new Date().toISOString();
-    const subject = `Incidencia eInforma - Empresa no aparece o datos incompletos`;
+    const subject = `Incidencia búsqueda empresa - no aparece o datos incompletos`;
     const body = [
       "Hola soporte,",
       "",
-      "Quiero abrir incidencia sobre búsqueda eInforma en Admin > Empresas.",
+      "Quiero abrir incidencia sobre búsqueda de empresa en Admin > Empresas.",
       "",
       `Consulta usada: ${searchQuery || "(vacía)"}`,
       `Razón social seleccionada: ${
@@ -767,9 +780,9 @@ export default function AdminTenantsPage() {
                     onClick={loadMoreEinformaInfo}
                     loading={profileLoading}
                     disabled={profileLoading || !selectedNormalized}
-                    ariaLabel="Cargar más información de eInforma"
+                    ariaLabel="Cargar más información"
                   >
-                    Más información eInforma
+                    Más información
                   </AccessibleButton>
                   <AccessibleButton
                     type="button"
