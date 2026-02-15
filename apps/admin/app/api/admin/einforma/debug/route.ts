@@ -39,6 +39,7 @@ export async function GET(req: Request) {
       EINFORMA_CLIENT_ID: hasEnv("EINFORMA_CLIENT_ID"),
       EINFORMA_CLIENT_SECRET: hasEnv("EINFORMA_CLIENT_SECRET"),
       EINFORMA_SCOPE: hasEnv("EINFORMA_SCOPE"),
+      EINFORMA_AUDIENCE: hasEnv("EINFORMA_AUDIENCE"),
       EINFORMA_AUDIENCE_OR_SCOPE: hasEnv("EINFORMA_AUDIENCE_OR_SCOPE"),
     };
 
@@ -65,4 +66,3 @@ export async function GET(req: Request) {
     );
   }
 }
-

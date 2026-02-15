@@ -5,6 +5,10 @@ type TokenCache = { accessToken: string; expiresAt: number };
 
 let tokenCache: TokenCache | null = null;
 
+function looksLikeAudience(value: string) {
+  return value.startsWith('http://') || value.startsWith('https://') || value.includes('/');
+}
+
 function requireEnv(name: string) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing env var ${name}`);
@@ -36,12 +40,28 @@ async function getAccessToken(): Promise<string> {
   body.set('grant_type', 'client_credentials');
   body.set('client_id', clientId);
   body.set('client_secret', clientSecret);
-  body.set(
-    'scope',
-    process.env.EINFORMA_SCOPE ??
-      process.env.EINFORMA_AUDIENCE_OR_SCOPE ??
-      'buscar:consultar:empresas'
-  );
+  const scope = process.env.EINFORMA_SCOPE?.trim();
+  const audience = process.env.EINFORMA_AUDIENCE?.trim();
+  const legacyScopeOrAudience = process.env.EINFORMA_AUDIENCE_OR_SCOPE?.trim();
+
+  if (scope) {
+    body.set('scope', scope);
+  }
+  if (audience) {
+    body.set('audience', audience);
+  }
+
+  if (!scope && !audience) {
+    if (legacyScopeOrAudience) {
+      if (looksLikeAudience(legacyScopeOrAudience)) {
+        body.set('audience', legacyScopeOrAudience);
+      } else {
+        body.set('scope', legacyScopeOrAudience);
+      }
+    } else {
+      body.set('scope', 'buscar:consultar:empresas');
+    }
+  }
 
   const res = await fetchWithTimeout(
     tokenUrl,
