@@ -16,6 +16,8 @@ function addDays(days: number) {
 }
 
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const debug = searchParams.get("debug") === "1";
   try {
     await requireAdmin(req);
 
@@ -31,9 +33,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const { searchParams } = new URL(req.url);
     const q = (searchParams.get("q") ?? "").trim();
-    const debug = searchParams.get("debug") === "1";
 
     if (q.length < 3) {
       return NextResponse.json({ items: [] });
