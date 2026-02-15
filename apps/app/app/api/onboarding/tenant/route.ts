@@ -148,6 +148,35 @@ export async function POST(req: Request) {
       },
     });
 
+    const supportUser = await tx.user.upsert({
+      where: { email: 'support@verifactu.business' },
+      update: { role: 'ADMIN', name: 'Verifactu Support' },
+      create: {
+        email: 'support@verifactu.business',
+        name: 'Verifactu Support',
+        role: 'ADMIN',
+      },
+    });
+
+    await tx.membership.upsert({
+      where: {
+        tenantId_userId: {
+          tenantId: tenant.id,
+          userId: supportUser.id,
+        },
+      },
+      create: {
+        tenantId: tenant.id,
+        userId: supportUser.id,
+        role: 'owner',
+        status: 'active',
+      },
+      update: {
+        role: 'owner',
+        status: 'active',
+      },
+    });
+
     await tx.userPreference.upsert({
       where: { userId: uid },
       create: { userId: uid, preferredTenantId: tenant.id },

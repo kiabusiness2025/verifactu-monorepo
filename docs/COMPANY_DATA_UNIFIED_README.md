@@ -12,6 +12,11 @@ Definir un flujo único para gestionar datos de empresa en `admin` y `app`, sepa
   - Se informa al usuario que los datos provienen de fuente pública y que incidencias van por soporte.
 - La búsqueda eInforma ya funciona con ranking mejorado de resultados por coincidencia.
 - El endpoint de creación en `admin` crea `tenant` y `tenant_profile`.
+- Flujo inicial de colaboradores:
+  - Pestaña `Contacto y usuarios` en alta de empresa de admin.
+  - Alta de colaboradores por email + rol.
+  - Envío de invitación por correo con enlace de aceptación (basado en plantilla de invitación de equipo ya definida en `apps/app/lib/email/emailService.ts`).
+  - Activación de membership al aceptar invitación.
 
 ## Principio funcional
 1. `Registro Mercantil (eInforma)` = verdad mercantil (solo lectura en UI).
@@ -47,9 +52,14 @@ Definir un flujo único para gestionar datos de empresa en `admin` y `app`, sepa
 ## Flujo de alta Admin -> App
 ## Implementado
 - Alta de empresa en `admin` crea `tenant` y `tenant_profile`.
+- `support@verifactu.business` se asigna automáticamente con rol `owner` (superadmin operativo) en empresas creadas desde:
+  - `admin` (alta de empresas/tenants).
+  - `app` (onboarding de tenant).
+- Usuarios pueden administrar múltiples empresas vía tabla `memberships` (relación N:M).
 
 ## Pendiente
-- Provisionado automático de usuarios base y roles de acceso en `app` al crear empresa en `admin`.
+- Mejorar UX de aceptación de invitaciones (pantalla dedicada + estados detallados).
+- Revisión completa del flujo de provisión de usuarios base por empresa según vertical y tipo de cliente.
 - Política inicial recomendada:
   - `OWNER_ADMIN` (titular / responsable principal).
   - `ACCOUNTANT` (asesoría/contable).
