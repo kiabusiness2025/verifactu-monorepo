@@ -2,7 +2,7 @@
 
 import { EInformaSearch } from '@/components/companies/EInformaSearch';
 import { useToast } from '@/components/notifications/ToastNotifications';
-import { ArrowLeft, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -55,6 +55,7 @@ export default function NewCompanyPage() {
   } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'mercantile' | 'contact'>('mercantile');
+  const [manualMercantileEdit, setManualMercantileEdit] = useState(false);
   const [collaborators, setCollaborators] = useState<CollaboratorDraft[]>([]);
 
   const formatDateInput = (value?: string) => {
@@ -62,6 +63,12 @@ export default function NewCompanyPage() {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
     return date.toISOString().slice(0, 10);
+  };
+  const normalizeMaybeTaxId = (value?: string) => {
+    const candidate = (value ?? '').trim().toUpperCase();
+    if (!candidate) return '';
+    if (!/[0-9]/.test(candidate)) return '';
+    return candidate;
   };
 
   const hasEinformaExtra =
@@ -75,7 +82,7 @@ export default function NewCompanyPage() {
       Number.isFinite(einformaExtra.salesYear) ||
       Number.isFinite(einformaExtra.capitalSocial) ||
       Boolean(einformaExtra.lastBalanceDate));
-  const mercantileDataLocked = formData.source === 'einforma';
+  const mercantileDataLocked = formData.source === 'einforma' && !manualMercantileEdit;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -149,10 +156,14 @@ export default function NewCompanyPage() {
               <EInformaSearch
                 onSelect={async (company) => {
                   async function fetchProfile(refresh: boolean) {
-                    const nifOrId = company.nif || company.id || '';
+                    const candidateTaxId = normalizeMaybeTaxId(company.nif);
+                    const nifOrId = company.id || candidateTaxId || '';
                     if (!nifOrId) {
                       setFormData((prev) => ({ ...prev, name: company.name }));
-                      success('Empresa encontrada', `Datos de ${company.name} autocompletados`);
+                      showError(
+                        'No se pudo cargar ficha completa',
+                        'Selecciona otra empresa o completa los datos manualmente'
+                      );
                       return;
                     }
 
@@ -169,16 +180,18 @@ export default function NewCompanyPage() {
                       setFormData((prev) => ({
                         ...prev,
                         name: company.name,
-                        tax_id: company.nif || '',
+                        tax_id: candidateTaxId || '',
                       }));
                       showError('No se pudo cargar la ficha', 'Completa los datos manualmente');
                       return;
                     }
 
+                    const profileTaxId = normalizeMaybeTaxId(profile.nif);
+                    setManualMercantileEdit(false);
                     setFormData({
                       name: profile.name || company.name,
                       legal_name: profile.legalName || '',
-                      tax_id: profile.nif || company.nif || '',
+                      tax_id: profileTaxId || candidateTaxId || '',
                       email: profile.email || '',
                       phone: profile.phone || '',
                       address: profile.address?.street || '',
@@ -196,7 +209,7 @@ export default function NewCompanyPage() {
                       province: profile.address?.province || '',
                       representative: profile.representatives?.[0]?.name || '',
                       source: 'einforma',
-                      source_id: profile.sourceId || company.id || profile.nif || '',
+                      source_id: profile.sourceId || company.id || profileTaxId || '',
                     });
                     setEinformaExtra({
                       tradeName: profile.tradeName,
@@ -224,10 +237,11 @@ export default function NewCompanyPage() {
                     await fetchProfile(false);
                   } catch (error) {
                     console.error('eInforma profile error:', error);
+                    const candidateTaxId = normalizeMaybeTaxId(company.nif);
                     setFormData((prev) => ({
                       ...prev,
                       name: company.name,
-                      tax_id: company.nif || '',
+                      tax_id: candidateTaxId || '',
                     }));
                     showError('Error al consultar eInforma', 'Completa los datos manualmente');
                   }
@@ -255,7 +269,7 @@ export default function NewCompanyPage() {
                 <button
                   type="button"
                   onClick={async () => {
-                    const nifOrId = formData.tax_id?.trim();
+                    const nifOrId = (formData.source_id || formData.tax_id || '').trim();
                     if (!nifOrId || isRefreshing) return;
                     setIsRefreshing(true);
                     try {
@@ -273,7 +287,7 @@ export default function NewCompanyPage() {
                         ...prev,
                         name: profile.name || prev.name,
                         legal_name: profile.legalName || prev.legal_name,
-                        tax_id: profile.nif || prev.tax_id,
+                        tax_id: normalizeMaybeTaxId(profile.nif) || prev.tax_id,
                         email: profile.email || prev.email,
                         phone: profile.phone || prev.phone,
                         address: profile.address?.street || prev.address,
@@ -293,7 +307,11 @@ export default function NewCompanyPage() {
                         province: profile.address?.province || prev.province,
                         representative: profile.representatives?.[0]?.name || prev.representative,
                         source: 'einforma',
-                        source_id: profile.sourceId || prev.source_id,
+                        source_id:
+                          profile.sourceId ||
+                          prev.source_id ||
+                          normalizeMaybeTaxId(profile.nif) ||
+                          '',
                       }));
                       setEinformaExtra((prev) => ({
                         ...prev,
@@ -359,13 +377,34 @@ export default function NewCompanyPage() {
             Contacto y usuarios
           </button>
         </div>
+        {formData.source === 'einforma' ? (
+          <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+            <p>
+              Datos cargados desde eInforma. Puedes mantenerlos bloqueados o activar edición manual
+              bajo tu responsabilidad.
+            </p>
+            <button
+              type="button"
+              onClick={() => setManualMercantileEdit((prev) => !prev)}
+              className={`inline-flex items-center gap-1 rounded-md border px-3 py-1.5 font-medium ${
+                manualMercantileEdit
+                  ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              {manualMercantileEdit ? 'Bloquear edición' : 'Editar manualmente'}
+            </button>
+          </div>
+        ) : null}
         {mercantileDataLocked ? (
           <div className="space-y-3">
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
               <p className="font-semibold">Datos mercantiles bloqueados</p>
               <p className="mt-1">
                 Estos datos se han extraído de información pública vigente en el Registro
-                Mercantil y no se pueden modificar manualmente desde este formulario.
+                Mercantil. Solo pueden editarse activando la opción de lápiz, bajo tu
+                responsabilidad.
               </p>
               <p className="mt-1">
                 Si no coinciden con tu documentación, abre incidencia en Soporte (ticket) y
@@ -384,6 +423,15 @@ export default function NewCompanyPage() {
                 certificado IAE.
               </p>
             </div>
+          </div>
+        ) : null}
+        {formData.source === 'einforma' && manualMercantileEdit ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+            <p className="font-semibold">Edición manual activada</p>
+            <p className="mt-1">
+              Vas a modificar datos de referencia mercantil importados de eInforma. Guarda solo si
+              has verificado la documentación.
+            </p>
           </div>
         ) : null}
 

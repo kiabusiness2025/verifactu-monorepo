@@ -179,17 +179,6 @@ export function EInformaSearch({
                       <Building2 className="h-4 w-4 text-blue-600 flex-shrink-0" />
                       <h3 className="font-semibold text-slate-900 truncate">{company.name}</h3>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-500">
-                      <span className="flex items-center gap-1 font-medium text-slate-700">
-                        <span className="font-semibold">CIF:</span> {company.nif}
-                      </span>
-                      {(company.city || company.province) && (
-                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                          {[company.city, company.province].filter(Boolean).join(", ")}
-                        </span>
-                      )}
-                    </div>
-
                     <div className="mt-2 space-y-1">
                       {(company.city || company.province) && (
                         <div className="flex items-center gap-1.5 text-xs text-slate-600">

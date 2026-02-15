@@ -154,6 +154,15 @@ function normalizeTaxId(value: string) {
   return value.replace(/\s+/g, '').toUpperCase();
 }
 
+function sanitizeMaybeTaxId(value: unknown) {
+  const candidate = String(value ?? '')
+    .trim()
+    .toUpperCase();
+  if (!candidate) return undefined;
+  if (!/[0-9]/.test(candidate)) return undefined;
+  return candidate;
+}
+
 function ttlFromDays(days: number) {
   const date = new Date();
   date.setDate(date.getDate() + days);
@@ -282,10 +291,10 @@ export async function searchCompanies(
       if (Array.isArray(items) && items.length > 0) {
         const normalized = items.map((item: any): EinformaSearchItem => ({
           name: item?.denominacion ?? item?.name ?? item?.denominacionBusqueda ?? '',
-          nif: item?.identificativo ?? item?.nif ?? item?.cif,
+          nif: sanitizeMaybeTaxId(item?.identificativo ?? item?.nif ?? item?.cif),
           province: item?.provincia ?? item?.province,
           city: item?.localidad ?? item?.city,
-          id: item?.id ?? item?.identificativo ?? item?.codigo,
+          id: item?.id ?? item?.codigo ?? sanitizeMaybeTaxId(item?.identificativo),
         }));
         for (const row of normalized) {
           const key = `${row.id ?? ''}|${row.nif ?? ''}|${row.name}`.toUpperCase();
@@ -325,7 +334,7 @@ export async function getCompanyProfileByNif(nifOrId: string): Promise<EinformaC
     name: item?.denominacion ?? item?.name ?? '',
     tradeName: item?.nombreComercial ?? item?.tradeName,
     legalName: item?.razonSocial ?? item?.legalName,
-    nif: item?.identificativo ?? item?.nif ?? item?.cif,
+    nif: sanitizeMaybeTaxId(item?.identificativo ?? item?.nif ?? item?.cif),
     cnae: item?.cnae ?? item?.codigoCnae,
     email: item?.email,
     phone: item?.telefono ?? item?.phone,
@@ -342,7 +351,7 @@ export async function getCompanyProfileByNif(nifOrId: string): Promise<EinformaC
         ? item.capitalSocial
         : Number(item?.capitalSocial ?? NaN),
     lastBalanceDate: item?.fechaUltimoBalance ?? item?.lastBalanceDate,
-    sourceId: item?.identificativo ?? item?.id ?? item?.codigo,
+    sourceId: item?.id ?? item?.codigo ?? sanitizeMaybeTaxId(item?.identificativo),
     address: {
       street: item?.domicilioSocial ?? item?.address?.street,
       zip: item?.cp ?? item?.address?.zip,
