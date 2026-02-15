@@ -145,6 +145,7 @@ export default function AdminTenantsPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
+  const [moreInfoOpen, setMoreInfoOpen] = useState(false);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
 
   const queryString = useMemo(() => {
@@ -162,6 +163,7 @@ export default function AdminTenantsPage() {
     setSearchLoading(false);
     setSearchError("");
     setProfileLoading(false);
+    setMoreInfoOpen(false);
     setSelectedProfile(null);
     setSelectedNormalized(null);
   }
@@ -302,10 +304,75 @@ export default function AdminTenantsPage() {
           sourceId: item.id || null,
         }
       );
+      setMoreInfoOpen(false);
     } catch (err) {
       setSearchError(err instanceof Error ? err.message : "Error al cargar");
     } finally {
       setProfileLoading(false);
+    }
+  }
+
+  async function loadMoreEinformaInfo() {
+    const lookup = (
+      selectedNormalized?.sourceId ||
+      selectedNormalized?.nif ||
+      selectedProfile?.nif ||
+      ""
+    ).trim();
+    if (!lookup) {
+      setSearchError("Selecciona una empresa válida para ver más información.");
+      return;
+    }
+    setProfileLoading(true);
+    setSearchError("");
+    try {
+      const res = await fetch(
+        `/api/admin/einforma/profile?nif=${encodeURIComponent(lookup)}&refresh=1`
+      );
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.profile) {
+        throw new Error(data?.error || "No se pudo cargar información ampliada");
+      }
+      const profile: EinformaCompanyProfile = data.profile;
+      const normalized: EinformaNormalized | undefined = data?.normalized;
+      setSelectedProfile(profile);
+      if (normalized) {
+        setSelectedNormalized(normalized);
+      }
+      setMoreInfoOpen(true);
+      success("Información ampliada cargada");
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "Error al cargar más información");
+    } finally {
+      setProfileLoading(false);
+    }
+  }
+
+  function openSupportTicket() {
+    const now = new Date().toISOString();
+    const subject = `Incidencia eInforma - Empresa no aparece o datos incompletos`;
+    const body = [
+      "Hola soporte,",
+      "",
+      "Quiero abrir incidencia sobre búsqueda eInforma en Admin > Empresas.",
+      "",
+      `Consulta usada: ${searchQuery || "(vacía)"}`,
+      `Razón social seleccionada: ${
+        selectedNormalized?.legalName || selectedNormalized?.name || "(sin selección)"
+      }`,
+      `CIF/NIF: ${selectedNormalized?.nif || "(no disponible)"}`,
+      `sourceId: ${selectedNormalized?.sourceId || "(no disponible)"}`,
+      `URL: ${typeof window !== "undefined" ? window.location.href : ""}`,
+      `Fecha ISO: ${now}`,
+      "",
+      "Describe aquí el problema observado:",
+      "- ",
+    ].join("\n");
+    const mailto = `mailto:soporte@verifactu.business?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+    if (typeof window !== "undefined") {
+      window.location.href = mailto;
     }
   }
 
@@ -689,6 +756,41 @@ export default function AdminTenantsPage() {
                   {error}
                 </div>
               )}
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs text-slate-600">
+                  ¿No aparece la empresa o faltan datos? Usa una de estas opciones.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <AccessibleButton
+                    type="button"
+                    variant="secondary"
+                    onClick={loadMoreEinformaInfo}
+                    loading={profileLoading}
+                    disabled={profileLoading || !selectedNormalized}
+                    ariaLabel="Cargar más información de eInforma"
+                  >
+                    Más información eInforma
+                  </AccessibleButton>
+                  <AccessibleButton
+                    type="button"
+                    variant="secondary"
+                    onClick={openSupportTicket}
+                    ariaLabel="Abrir incidencia de soporte"
+                  >
+                    Abrir incidencia soporte
+                  </AccessibleButton>
+                </div>
+                {moreInfoOpen && selectedProfile?.raw ? (
+                  <details className="mt-3 rounded border border-slate-200 bg-white p-2">
+                    <summary className="cursor-pointer text-xs font-medium text-slate-700">
+                      Ver datos ampliados (raw eInforma)
+                    </summary>
+                    <pre className="mt-2 max-h-56 overflow-auto rounded bg-slate-900 p-2 text-[10px] text-slate-100">
+                      {JSON.stringify(selectedProfile.raw, null, 2)}
+                    </pre>
+                  </details>
+                ) : null}
+              </div>
               <div className="flex gap-2">
                 <AccessibleButton
                   variant="secondary"
