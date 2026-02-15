@@ -10,6 +10,7 @@ Definir un flujo único de alta y gestión de empresa entre `admin` y `app`, sep
 - La creación de empresa se realiza desde modal en `Empresas` (`/dashboard/admin/companies`).
 - La ruta `/dashboard/admin/companies/new` redirige al mismo flujo con `?create=1`.
 - Se eliminó la duplicidad visual de menú (`Tenants`) para reducir confusión.
+- La ruta legacy `/dashboard/admin/empresas` reutiliza la misma vista para evitar doble modal/UX.
 
 ### Búsqueda y selección de empresa
 - Búsqueda con debounce y ranking por relevancia.
@@ -21,8 +22,15 @@ Definir un flujo único de alta y gestión de empresa entre `admin` y `app`, sep
 - Al seleccionar una empresa, se intenta cargar ficha completa usando claves candidatas (`nif`, `id`) para evitar falsos negativos.
 - Se corrigió la pérdida de resultados por normalización agresiva del identificador.
 - Se evita el efecto de “doble búsqueda” tras seleccionar una empresa.
+- Se mejoró el fallback de perfil cacheado: si faltan campos en snapshot local, se extraen del `raw` persistido.
 - En Admin se exponen también campos ampliados de perfil cuando existen:
   - `email`, `phone`, `employees`, `sales`, `salesYear`, `capitalSocial`, `constitutionDate`, `lastBalanceDate`.
+
+### UX modal Admin (últimos ajustes)
+- `Datos básicos` y `Datos ampliados` son secciones desplegables con indicador visual.
+- Se añadieron botones rápidos `Guardar` y `Cancelar` antes del bloque informativo.
+- El bloque inferior mantiene la opción `Algunos datos son incorrectos` solo para flujo Admin.
+- En ficha de empresa Admin se habilitó `Exportar PDF` (vía impresión del documento corporativo).
 
 ### Persistencia y cache
 - Al crear empresa desde admin se crea `tenant` y `tenant_profile`.
@@ -74,6 +82,31 @@ Definir un flujo único de alta y gestión de empresa entre `admin` y `app`, sep
   - editable en módulos fiscales/facturación (roadmap).
 - Trazabilidad:
   - conservar `source`, `source_id`, `updated_at`, `einforma_raw` y `admin_edit_history` cuando aplique.
+
+## Limpieza TS/Workspace (operativa)
+### Síntoma observado
+- `tsc` puede fallar con `Cannot find module '@verifactu/*'` cuando los symlinks de workspace quedan apuntando a rutas externas (ej: host local Windows) o cuando `node_modules` queda parcialmente instalado.
+
+### Endurecimiento aplicado
+- `apps/admin/tsconfig.json` ahora añade `paths` explícitos para:
+  - `@verifactu/auth`
+  - `@verifactu/db`
+  - `@verifactu/integrations`
+  - `@verifactu/ui`
+  - `@verifactu/utils`
+- Esto evita depender exclusivamente de symlinks de `node_modules` para resolución interna del monorepo.
+
+### Procedimiento recomendado de recuperación
+1. Eliminar módulos corruptos del paquete afectado (ejemplo Admin):
+   - `rm -rf apps/admin/node_modules`
+2. Reinstalar con store en ruta escribible y modo CI:
+   - `CI=true pnpm install --filter verifactu-admin... --frozen-lockfile --store-dir /tmp/pnpm-store`
+3. Verificar tipos:
+   - `pnpm -w --filter verifactu-admin exec tsc --noEmit`
+
+### Notas de entorno
+- Si hay errores `EAI_AGAIN`, el problema es conectividad DNS/red al registro npm.
+- Si hay errores `EPERM`/`EACCES`, revisar permisos/owner del store o usar `--store-dir /tmp/pnpm-store`.
 
 ## Definición de `raw`
 - `raw` = respuesta completa devuelta por el proveedor de datos para una empresa concreta.

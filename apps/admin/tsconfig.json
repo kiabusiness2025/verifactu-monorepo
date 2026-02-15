@@ -13,7 +13,13 @@
       "@/*": ["./*"],
       "@/lib/*": ["./lib/*"],
       "@/src/*": ["./src/*"],
-      "@/components/*": ["./components/*"]
+      "@/components/*": ["./components/*"],
+      "@verifactu/auth": ["../../packages/auth/index.ts"],
+      "@verifactu/db": ["../../packages/db/index.ts"],
+      "@verifactu/integrations": ["../../packages/integrations/index.ts"],
+      "@verifactu/ui": ["../../packages/ui/index.tsx"],
+      "@verifactu/ui/*": ["../../packages/ui/*", "../../packages/ui/src/*"],
+      "@verifactu/utils": ["../../packages/utils/index.ts"]
     },
     "allowJs": true,
     "isolatedModules": true,
