@@ -38,6 +38,60 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const hasTenantTaxId = await columnExists("tenants", "tax_id");
     const taxIdColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
     const hasTenantProfiles = await tableExists("tenant_profiles");
+    const [
+      hasProfilePostalCode,
+      hasProfileCity,
+      hasProfileProvince,
+      hasProfileCountry,
+      hasProfileLegalForm,
+      hasProfileStatus,
+      hasProfileWebsite,
+      hasProfileCapitalSocial,
+      hasProfileIncorporationDate,
+      hasProfileRepresentative,
+      hasProfileEmail,
+      hasProfilePhone,
+      hasProfileEmployees,
+      hasProfileSales,
+      hasProfileSalesYear,
+      hasProfileLastBalanceDate,
+    ] = hasTenantProfiles
+      ? await Promise.all([
+          columnExists("tenant_profiles", "postal_code"),
+          columnExists("tenant_profiles", "city"),
+          columnExists("tenant_profiles", "province"),
+          columnExists("tenant_profiles", "country"),
+          columnExists("tenant_profiles", "legal_form"),
+          columnExists("tenant_profiles", "status"),
+          columnExists("tenant_profiles", "website"),
+          columnExists("tenant_profiles", "capital_social"),
+          columnExists("tenant_profiles", "incorporation_date"),
+          columnExists("tenant_profiles", "representative"),
+          columnExists("tenant_profiles", "email"),
+          columnExists("tenant_profiles", "phone"),
+          columnExists("tenant_profiles", "employees"),
+          columnExists("tenant_profiles", "sales"),
+          columnExists("tenant_profiles", "sales_year"),
+          columnExists("tenant_profiles", "last_balance_date"),
+        ])
+      : [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+        ];
 
     const tenant = await one<{
       id: string;
@@ -45,6 +99,22 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       nif: string | null;
       address: string | null;
       cnae: string | null;
+      postal_code: string | null;
+      city: string | null;
+      province: string | null;
+      country: string | null;
+      legal_form: string | null;
+      profile_status: string | null;
+      website: string | null;
+      capital_social: string | null;
+      incorporation_date: string | null;
+      representative: string | null;
+      email: string | null;
+      phone: string | null;
+      employees: number | null;
+      sales: string | null;
+      sales_year: number | null;
+      last_balance_date: string | null;
       created_at: string;
     }>(
       `SELECT
@@ -52,8 +122,42 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
          ${hasTenantLegalName ? "t.legal_name" : "t.name"} as legal_name,
          ${taxIdColumn ? `t.${taxIdColumn}` : "NULL::text"} as nif,
          t.created_at,
-       ${hasTenantProfiles ? "tp.address" : "NULL::text"} as address,
-       ${hasTenantProfiles ? "tp.cnae" : "NULL::text"} as cnae
+         ${hasTenantProfiles ? "tp.address" : "NULL::text"} as address,
+         ${hasTenantProfiles ? "tp.cnae" : "NULL::text"} as cnae,
+         ${hasTenantProfiles && hasProfilePostalCode ? "tp.postal_code" : "NULL::text"} as postal_code,
+         ${hasTenantProfiles && hasProfileCity ? "tp.city" : "NULL::text"} as city,
+         ${hasTenantProfiles && hasProfileProvince ? "tp.province" : "NULL::text"} as province,
+         ${hasTenantProfiles && hasProfileCountry ? "tp.country" : "NULL::text"} as country,
+         ${hasTenantProfiles && hasProfileLegalForm ? "tp.legal_form" : "NULL::text"} as legal_form,
+         ${hasTenantProfiles && hasProfileStatus ? "tp.status" : "NULL::text"} as profile_status,
+         ${hasTenantProfiles && hasProfileWebsite ? "tp.website" : "NULL::text"} as website,
+         ${
+           hasTenantProfiles && hasProfileCapitalSocial
+             ? "tp.capital_social::text"
+             : "NULL::text"
+         } as capital_social,
+         ${
+           hasTenantProfiles && hasProfileIncorporationDate
+             ? "tp.incorporation_date::text"
+             : "NULL::text"
+         } as incorporation_date,
+         ${
+           hasTenantProfiles && hasProfileRepresentative
+             ? "tp.representative"
+             : "NULL::text"
+         } as representative,
+         ${hasTenantProfiles && hasProfileEmail ? "tp.email" : "NULL::text"} as email,
+         ${hasTenantProfiles && hasProfilePhone ? "tp.phone" : "NULL::text"} as phone,
+         ${
+           hasTenantProfiles && hasProfileEmployees ? "tp.employees" : "NULL::int"
+         } as employees,
+         ${hasTenantProfiles && hasProfileSales ? "tp.sales::text" : "NULL::text"} as sales,
+         ${hasTenantProfiles && hasProfileSalesYear ? "tp.sales_year" : "NULL::int"} as sales_year,
+         ${
+           hasTenantProfiles && hasProfileLastBalanceDate
+             ? "tp.last_balance_date::text"
+             : "NULL::text"
+         } as last_balance_date
        FROM tenants t
        ${hasTenantProfiles ? "LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id" : ""}
        WHERE t.id = $1`,
@@ -71,6 +175,22 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         taxId: tenant.nif ?? "",
         address: tenant.address ?? null,
         cnae: tenant.cnae ?? null,
+        postalCode: tenant.postal_code ?? null,
+        city: tenant.city ?? null,
+        province: tenant.province ?? null,
+        country: tenant.country ?? null,
+        legalForm: tenant.legal_form ?? null,
+        profileStatus: tenant.profile_status ?? null,
+        website: tenant.website ?? null,
+        capitalSocial: tenant.capital_social ?? null,
+        incorporationDate: tenant.incorporation_date ?? null,
+        representative: tenant.representative ?? null,
+        email: tenant.email ?? null,
+        phone: tenant.phone ?? null,
+        employees: tenant.employees ?? null,
+        sales: tenant.sales ?? null,
+        salesYear: tenant.sales_year ?? null,
+        lastBalanceDate: tenant.last_balance_date ?? null,
         createdAt: tenant.created_at,
       },
     });

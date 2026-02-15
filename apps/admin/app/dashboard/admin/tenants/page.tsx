@@ -3,9 +3,7 @@
 import { AccessibleButton } from "@/components/accessibility/AccessibleButton";
 import { AccessibleInput } from "@/components/accessibility/AccessibleFormInputs";
 import { TableSkeleton } from "@/components/accessibility/LoadingSkeleton";
-import { useToast } from "@/components/notifications/ToastNotifications";
 import { adminGet, adminPatch, adminPost } from "@/lib/adminApi";
-import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -139,7 +137,6 @@ function searchScore(item: EinformaSearchItem, query: string) {
 export default function AdminTenantsPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const { success, error: showError } = useToast();
   const [items, setItems] = useState<TenantRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -162,7 +159,6 @@ export default function AdminTenantsPage() {
   const skipNextSearchRef = useRef(false);
   const [manualEditMode, setManualEditMode] = useState(false);
   const [editHistory, setEditHistory] = useState<EditHistoryEntry[]>([]);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
@@ -421,13 +417,6 @@ export default function AdminTenantsPage() {
     replaceWithParams(params);
   }
 
-  function openEdit(tenant: TenantRow) {
-    setEditing(tenant);
-    setError("");
-    resetEinforma();
-    setShowModal(true);
-  }
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedNormalized) {
@@ -477,53 +466,6 @@ export default function AdminTenantsPage() {
     }
   }
 
-  async function setActiveTenant(tenantId: string) {
-    try {
-      await adminPost(`/api/admin/tenants/${tenantId}/set-active`, {});
-      success("Empresa activada correctamente");
-    } catch (err) {
-      showError(err instanceof Error ? err.message : "No se pudo activar");
-    }
-  }
-
-  async function toggleTenantStatus(tenant: TenantRow) {
-    const isSuspended = (tenant.status || "").toLowerCase() === "suspended";
-    const endpoint = isSuspended
-      ? `/api/admin/tenants/${tenant.id}/unsuspend`
-      : `/api/admin/tenants/${tenant.id}/suspend`;
-    try {
-      await adminPost(endpoint, {});
-      success(isSuspended ? "Empresa activada" : "Empresa suspendida");
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === tenant.id
-            ? { ...item, status: isSuspended ? "active" : "suspended" }
-            : item
-        )
-      );
-    } catch (err) {
-      showError(err instanceof Error ? err.message : "No se pudo actualizar el estado");
-    }
-  }
-
-  async function startSupportSession(tenant: TenantRow) {
-    try {
-      const res = await adminPost<{
-        handoffToken: string;
-        tenantId?: string;
-      }>("/api/admin/support-sessions/start", {
-        tenantId: tenant.id,
-        reason: "support",
-      });
-      const token = res.handoffToken;
-      const url = `${appUrl}/support/handoff?token=${encodeURIComponent(token)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-      success("Sesion de soporte iniciada");
-    } catch (err) {
-      showError(err instanceof Error ? err.message : "No se pudo iniciar soporte");
-    }
-  }
-
   return (
     <main className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -536,7 +478,7 @@ export default function AdminTenantsPage() {
         </AccessibleButton>
       </header>
 
-      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-4">
+      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-1">
         <AccessibleInput
           label="Buscar"
           showLabel={false}
@@ -544,34 +486,10 @@ export default function AdminTenantsPage() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por CIF o nombre"
         />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-        >
-          <option value="all">Estado: todos</option>
-          <option value="trial">Trial</option>
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-        </select>
-        <AccessibleInput
-          label="Fecha desde"
-          showLabel={false}
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-        />
-        <AccessibleInput
-          label="Fecha hasta"
-          showLabel={false}
-          type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-        />
       </div>
 
       {loading ? (
-        <TableSkeleton rows={5} columns={8} />
+        <TableSkeleton rows={5} columns={3} />
       ) : error ? (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           {error}
@@ -581,13 +499,8 @@ export default function AdminTenantsPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-4 py-3">Razon social</th>
+                <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">CIF</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3 text-right">Facturas mes</th>
-                <th className="px-4 py-3 text-right">Ingresos mes</th>
-                <th className="px-4 py-3 text-right">Miembros</th>
-                <th className="px-4 py-3 text-right">Alta</th>
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
@@ -596,70 +509,21 @@ export default function AdminTenantsPage() {
                 <tr key={tenant.id}>
                   <td className="px-4 py-3 font-medium text-slate-900">{tenant.legalName}</td>
                   <td className="px-4 py-3 text-slate-600">{tenant.taxId}</td>
-                  <td className="px-4 py-3">
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                      {tenant.status || "active"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right text-slate-700">
-                    {tenant.invoicesThisMonth}
-                  </td>
-                  <td className="px-4 py-3 text-right text-slate-700">
-                    {formatCurrency(tenant.revenueThisMonth)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-slate-700">{tenant.membersCount}</td>
-                  <td className="px-4 py-3 text-right text-slate-600">
-                    {tenant.createdAt ? formatShortDate(tenant.createdAt) : "--"}
-                  </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex flex-wrap justify-end gap-2">
                       <Link
                         href={`/tenants/${tenant.id}/overview`}
                         className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                       >
-                        Ver detalle
+                        Ver ficha
                       </Link>
-                      <AccessibleButton
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => startSupportSession(tenant)}
-                        ariaLabel={`Entrar como ${tenant.legalName}`}
-                      >
-                        Entrar como
-                      </AccessibleButton>
-                      <AccessibleButton
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setActiveTenant(tenant.id)}
-                        ariaLabel={`Seleccionar empresa ${tenant.legalName}`}
-                      >
-                        Seleccionar
-                      </AccessibleButton>
-                      <AccessibleButton
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => openEdit(tenant)}
-                        ariaLabel={`Editar empresa ${tenant.legalName}`}
-                      >
-                        Editar
-                      </AccessibleButton>
-                      <AccessibleButton
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => toggleTenantStatus(tenant)}
-                        ariaLabel={`Cambiar estado de ${tenant.legalName}`}
-                      >
-                        {(tenant.status || "").toLowerCase() === "suspended"
-                          ? "Activar"
-                          : "Suspender"}
-                      </AccessibleButton>
                     </div>
                   </td>
                 </tr>
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td className="px-4 py-6 text-center text-sm text-slate-500" colSpan={8}>
+                  <td className="px-4 py-6 text-center text-sm text-slate-500" colSpan={3}>
                     No hay empresas para los filtros actuales.
                   </td>
                 </tr>
@@ -671,7 +535,7 @@ export default function AdminTenantsPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+          <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 p-4">
               <h2 className="text-lg font-semibold text-slate-900">
                 {editing ? "Editar empresa" : "Crear empresa"}
@@ -690,7 +554,8 @@ export default function AdminTenantsPage() {
                 X
               </AccessibleButton>
             </div>
-            <form onSubmit={onSubmit} className="space-y-4 p-4">
+            <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
               <div className="space-y-2">
                 <label className="block text-sm text-slate-700">
                   Buscar empresa (nombre o CIF)
@@ -729,9 +594,11 @@ export default function AdminTenantsPage() {
                   <div className="text-xs text-slate-500">Cargando datos de empresa...</div>
                 )}
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
-                <div className="font-semibold text-slate-900">Datos de empresa</div>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <details open className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                <summary className="cursor-pointer list-none font-semibold text-slate-900">
+                  Datos básicos
+                </summary>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <div>
                     <div className="text-xs text-slate-500">Razón social</div>
                     {manualEditMode ? (
@@ -837,6 +704,13 @@ export default function AdminTenantsPage() {
                       </div>
                     )}
                   </div>
+                </div>
+              </details>
+              <details className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                <summary className="cursor-pointer list-none font-semibold text-slate-900">
+                  Datos ampliados
+                </summary>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <div>
                     <div className="text-xs text-slate-500">Web</div>
                     <input
@@ -994,12 +868,12 @@ export default function AdminTenantsPage() {
                     )}
                   </div>
                 </div>
-                {!selectedNormalized && (
+              </details>
+              {!selectedNormalized && (
                   <div className="mt-3 text-xs text-slate-500">
                     Selecciona una empresa en el buscador para completar los datos.
                   </div>
-                )}
-              </div>
+              )}
               {error && (
                 <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                   {error}
@@ -1026,7 +900,9 @@ export default function AdminTenantsPage() {
                   abrirá incidencia de soporte para escalar el caso.
                 </p>
               </div>
-              <div className="flex gap-2">
+              </div>
+              <div className="border-t border-slate-200 p-4">
+              <div className="flex flex-wrap gap-2">
                 <AccessibleButton
                   variant="secondary"
                   onClick={() => {
@@ -1059,6 +935,7 @@ export default function AdminTenantsPage() {
                     ? "Guardar con correcciones"
                     : "Todos los datos son correctos"}
                 </AccessibleButton>
+              </div>
               </div>
             </form>
           </div>
