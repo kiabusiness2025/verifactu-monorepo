@@ -481,7 +481,7 @@ export default function AdminTenantsPage() {
         );
         setItems((prev) => prev.map((t) => (t.id === editing.id ? res.tenant : t)));
       } else {
-        const res = await adminPost<{ tenant: TenantRow }>("/api/admin/tenants", {
+        const res = await adminPost<{ tenant: TenantRow }>("/api/admin/tenants?debug=1", {
           source: "einforma",
           normalized: selectedNormalized,
           profile: selectedProfile,
