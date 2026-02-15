@@ -24,11 +24,41 @@ function normalizeText(value?: string) {
     .trim();
 }
 
+function queryTokens(query: string) {
+  return normalizeText(query)
+    .split(/[\s_]+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0);
+}
+
+function matchesAllTokensInOrder(target: string, tokens: string[]) {
+  let cursor = 0;
+  for (const token of tokens) {
+    const idx = target.indexOf(token, cursor);
+    if (idx === -1) return false;
+    cursor = idx + token.length;
+  }
+  return true;
+}
+
+function matchesAllTokens(name: string, nif: string, tokens: string[]) {
+  return tokens.every((token) => name.includes(token) || (nif && nif.includes(token)));
+}
+
 function companyScore(company: EInformaCompany, query: string) {
   const q = normalizeText(query);
+  const tokens = queryTokens(query);
   const name = normalizeText(company.name);
   const nif = normalizeText(company.nif);
   if (!q) return 999;
+  if (tokens.length >= 2) {
+    if (name === q) return 0;
+    if (name.startsWith(q)) return 1;
+    if (name.includes(q)) return 2;
+    if (matchesAllTokensInOrder(name, tokens)) return 3;
+    if (matchesAllTokens(name, nif, tokens)) return 4;
+    return 999;
+  }
   if (nif && nif === q) return 0;
   if (name === q) return 1;
   if (name.startsWith(q)) return 2;
@@ -90,7 +120,14 @@ export function EInformaSearch({
             return a.index - b.index;
           })
           .map(({ item }) => item);
-        setResults(sorted);
+        const tokens = queryTokens(query);
+        const strict = tokens.length >= 2;
+        const filtered = strict
+          ? sorted.filter((item) =>
+              matchesAllTokens(normalizeText(item.name), normalizeText(item.nif), tokens)
+            )
+          : sorted;
+        setResults(filtered);
         setSelectedIndex(-1);
         setShowResults(true);
       } catch (error) {
