@@ -31,6 +31,57 @@ async function columnExists(tableName: string, columnName: string) {
   return !!rows[0]?.exists;
 }
 
+async function ensureMembership(
+  tenantId: string,
+  userId: string,
+  desiredRole: "owner" | "member" = "owner"
+) {
+  const [hasRole, hasStatus] = await Promise.all([
+    columnExists("memberships", "role"),
+    columnExists("memberships", "status"),
+  ]);
+
+  const existing = await query<{ id: string }>(
+    `SELECT id FROM memberships WHERE tenant_id = $1 AND user_id = $2 LIMIT 1`,
+    [tenantId, userId]
+  );
+
+  if (existing.length > 0) {
+    const updates: string[] = [];
+    const values: Array<string> = [tenantId, userId];
+    if (hasRole) {
+      values.push(desiredRole);
+      updates.push(`role = $${values.length}`);
+    }
+    if (hasStatus) {
+      values.push("active");
+      updates.push(`status = $${values.length}`);
+    }
+    if (updates.length > 0) {
+      await query(
+        `UPDATE memberships
+         SET ${updates.join(", ")}
+         WHERE tenant_id = $1 AND user_id = $2`,
+        values
+      );
+    }
+    return;
+  }
+
+  const fields = ["tenant_id", "user_id"];
+  const values: Array<string> = [tenantId, userId];
+  if (hasRole) {
+    fields.push("role");
+    values.push(desiredRole);
+  }
+  if (hasStatus) {
+    fields.push("status");
+    values.push("active");
+  }
+  const placeholders = fields.map((_, i) => `$${i + 1}`).join(", ");
+  await query(`INSERT INTO memberships (${fields.join(", ")}) VALUES (${placeholders})`, values);
+}
+
 export async function GET(req: Request) {
   try {
     await requireAdmin(req);
@@ -346,9 +397,36 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const debug = searchParams.get("debug") === "1";
   try {
     // Verificar que el usuario es admin
     const admin = await requireAdmin(req);
+    let adminUserId = String(admin.userId || "").trim();
+
+    if (!adminUserId) {
+      try {
+        const adminByEmail = await prisma.user.findUnique({
+          where: { email: admin.email.toLowerCase() },
+          select: { id: true },
+        });
+        if (adminByEmail?.id) {
+          adminUserId = adminByEmail.id;
+        } else {
+          const createdAdmin = await prisma.user.create({
+            data: {
+              email: admin.email.toLowerCase(),
+              name: admin.email.split("@")[0] || "Admin",
+              role: "ADMIN",
+            },
+            select: { id: true },
+          });
+          adminUserId = createdAdmin.id;
+        }
+      } catch (adminUserResolveError) {
+        console.error("Error resolving admin user id:", adminUserResolveError);
+      }
+    }
 
     const body = await req.json();
     const normalized = body?.normalized ?? null;
@@ -529,41 +607,72 @@ export async function POST(req: Request) {
       }
     }
 
-    // Crear membership owner para el admin
-    await query(
-      `INSERT INTO memberships (tenant_id, user_id, role, status)
-       VALUES ($1, $2, 'owner', 'active')
-       ON CONFLICT (tenant_id, user_id) DO NOTHING`,
-      [tenantId, admin.userId]
-    );
+    // Crear membership owner para el admin (compatibilidad entre esquemas)
+    if (!adminUserId) {
+      throw new Error("ADMIN_USER_ID_MISSING");
+    }
+    await ensureMembership(tenantId, adminUserId, "owner");
 
-    const supportUser = await prisma.user.upsert({
-      where: { email: "support@verifactu.business" },
-      update: { role: "ADMIN", name: "Verifactu Support" },
-      create: {
-        email: "support@verifactu.business",
-        name: "Verifactu Support",
-        role: "ADMIN",
-      },
-    });
-
-    await query(
-      `INSERT INTO memberships (tenant_id, user_id, role, status)
-       VALUES ($1, $2, 'owner', 'active')
-       ON CONFLICT (tenant_id, user_id) DO UPDATE
-       SET role = 'owner', status = 'active'`,
-      [tenantId, supportUser.id]
-    );
+    try {
+      const supportUser = await prisma.user.upsert({
+        where: { email: "support@verifactu.business" },
+        update: { role: "ADMIN", name: "Verifactu Support" },
+        create: {
+          email: "support@verifactu.business",
+          name: "Verifactu Support",
+          role: "ADMIN",
+        },
+      });
+      await ensureMembership(tenantId, supportUser.id, "owner");
+    } catch (supportError) {
+      // No bloquear alta de empresa por usuario de soporte
+      console.error("Error assigning support owner membership:", supportError);
+    }
 
     // Marcar empresa activa para el admin
     if (await tableExists("user_preferences")) {
-      await query(
-        `INSERT INTO user_preferences (user_id, preferred_tenant_id, updated_at)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (user_id) DO UPDATE
-         SET preferred_tenant_id = EXCLUDED.preferred_tenant_id, updated_at = EXCLUDED.updated_at`,
-        [admin.userId, tenantId, now]
-      );
+      try {
+        const [hasPreferredTenantId, hasUpdatedAt] = await Promise.all([
+          columnExists("user_preferences", "preferred_tenant_id"),
+          columnExists("user_preferences", "updated_at"),
+        ]);
+
+        const fields = ["user_id"];
+        const values: Array<string> = [adminUserId];
+        if (hasPreferredTenantId) {
+          fields.push("preferred_tenant_id");
+          values.push(tenantId);
+        }
+        if (hasUpdatedAt) {
+          fields.push("updated_at");
+          values.push(now);
+        }
+
+        const placeholders = fields.map((_, i) => `$${i + 1}`).join(", ");
+        const updates: string[] = [];
+        if (hasPreferredTenantId) updates.push("preferred_tenant_id = EXCLUDED.preferred_tenant_id");
+        if (hasUpdatedAt) updates.push("updated_at = EXCLUDED.updated_at");
+
+        if (updates.length > 0) {
+          await query(
+            `INSERT INTO user_preferences (${fields.join(", ")})
+             VALUES (${placeholders})
+             ON CONFLICT (user_id) DO UPDATE
+             SET ${updates.join(", ")}`,
+            values
+          );
+        } else {
+          await query(
+            `INSERT INTO user_preferences (${fields.join(", ")})
+             VALUES (${placeholders})
+             ON CONFLICT (user_id) DO NOTHING`,
+            values
+          );
+        }
+      } catch (userPrefError) {
+        // No bloquear alta de empresa por preferencias de usuario
+        console.error("Error updating user_preferences:", userPrefError);
+      }
     }
 
     // Obtener el tenant creado con estadísticas
@@ -619,8 +728,11 @@ export async function POST(req: Request) {
       );
     }
 
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { ok: false, error: "Error al crear la empresa" },
+      debug
+        ? { ok: false, error: "Error al crear la empresa", debugMessage: message }
+        : { ok: false, error: "Error al crear la empresa" },
       { status: 500 }
     );
   }

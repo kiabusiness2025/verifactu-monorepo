@@ -81,6 +81,24 @@ function readMaybeNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+function hasStrongExpandedSnapshot(profile: {
+  legalForm?: string | null;
+  status?: string | null;
+  website?: string | null;
+  representative?: string | null;
+  incorporationDate?: Date | null;
+  einformaRaw?: unknown;
+}) {
+  const expandedCount = [
+    profile.legalForm,
+    profile.status,
+    profile.website,
+    profile.representative,
+    profile.incorporationDate,
+  ].filter((value) => value != null && String(value).trim() !== "").length;
+  return expandedCount >= 2 || profile.einformaRaw != null;
+}
+
 export async function GET(req: Request) {
   try {
     const admin = await requireAdmin(req);
@@ -116,13 +134,22 @@ export async function GET(req: Request) {
       ? normalizeTaxId(tenant.profile.sourceId)
       : extractRawTaxId(tenant?.profile?.einformaRaw);
 
-    if (
+    const useTenantSnapshot =
       !refresh &&
       tenant?.profile?.einformaLastSyncAt &&
       tenant.profile.einformaTaxIdVerified &&
       withinDays(tenant.profile.einformaLastSyncAt, 30) &&
-      cachedTaxId === normalizedNif
-    ) {
+      cachedTaxId === normalizedNif &&
+      hasStrongExpandedSnapshot({
+        legalForm: tenant.profile.legalForm,
+        status: tenant.profile.status,
+        website: tenant.profile.website,
+        representative: tenant.profile.representative,
+        incorporationDate: tenant.profile.incorporationDate,
+        einformaRaw: tenant.profile.einformaRaw,
+      });
+
+    if (useTenantSnapshot) {
       const rawCompany = getRawCompanyNode(tenant.profile.einformaRaw);
       const rawRepresentative =
         pickFirst(rawCompany, [
@@ -313,6 +340,14 @@ export async function GET(req: Request) {
             legalForm: profile.legalForm || undefined,
             status: profile.status || undefined,
             representative: profile.representatives?.[0]?.name || undefined,
+            email: profile.email || undefined,
+            phone: profile.phone || undefined,
+            employees: readMaybeNumber(profile.employees) ?? undefined,
+            sales: readMaybeNumber(profile.sales) ?? undefined,
+            salesYear: readMaybeNumber(profile.salesYear) ?? undefined,
+            lastBalanceDate: profile.lastBalanceDate
+              ? new Date(profile.lastBalanceDate)
+              : undefined,
             website: profile.website || undefined,
             capitalSocial: profile.capitalSocial ?? undefined,
             incorporationDate: profile.constitutionDate
@@ -337,6 +372,14 @@ export async function GET(req: Request) {
             legalForm: profile.legalForm || undefined,
             status: profile.status || undefined,
             representative: profile.representatives?.[0]?.name || undefined,
+            email: profile.email || undefined,
+            phone: profile.phone || undefined,
+            employees: readMaybeNumber(profile.employees) ?? undefined,
+            sales: readMaybeNumber(profile.sales) ?? undefined,
+            salesYear: readMaybeNumber(profile.salesYear) ?? undefined,
+            lastBalanceDate: profile.lastBalanceDate
+              ? new Date(profile.lastBalanceDate)
+              : undefined,
             website: profile.website || undefined,
             capitalSocial: profile.capitalSocial ?? undefined,
             incorporationDate: profile.constitutionDate

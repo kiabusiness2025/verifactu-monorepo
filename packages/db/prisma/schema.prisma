@@ -361,6 +361,7 @@ model TenantProfile {
   einformaLastSyncAt DateTime? @map("einforma_last_sync_at") @db.Timestamptz
   einformaTaxIdVerified Boolean? @map("einforma_tax_id_verified")
   einformaRaw       Json?     @map("einforma_raw")
+  adminEditHistory  Json?     @map("admin_edit_history")
   cnae              String?
   cnaeCode          String?   @map("cnae_code")
   cnaeText          String?   @map("cnae_text")
@@ -375,6 +376,12 @@ model TenantProfile {
   province          String?
   country           String?
   representative    String?
+  email             String?
+  phone             String?
+  employees         Int?
+  sales             Decimal?
+  salesYear         Int?      @map("sales_year")
+  lastBalanceDate   DateTime? @map("last_balance_date") @db.Date
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("tenant_profiles")
