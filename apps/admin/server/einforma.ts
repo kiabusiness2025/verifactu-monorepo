@@ -9,6 +9,10 @@ function looksLikeAudience(value: string) {
   return value.startsWith('http://') || value.startsWith('https://') || value.includes('/');
 }
 
+function isInvalidGrant(status: number, text: string) {
+  return status === 400 && text.includes('invalid_grant');
+}
+
 function requireEnv(name: string) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing env var ${name}`);
@@ -36,55 +40,72 @@ async function getAccessToken(): Promise<string> {
   const clientSecret = requireEnv('EINFORMA_CLIENT_SECRET');
   const timeoutMs = Number(process.env.EINFORMA_TIMEOUT_MS ?? 8000);
 
-  const body = new URLSearchParams();
-  body.set('grant_type', 'client_credentials');
-  body.set('client_id', clientId);
-  body.set('client_secret', clientSecret);
   const scope = process.env.EINFORMA_SCOPE?.trim();
   const audience = process.env.EINFORMA_AUDIENCE?.trim();
   const legacyScopeOrAudience = process.env.EINFORMA_AUDIENCE_OR_SCOPE?.trim();
+  const basePayload: Record<string, string> = {
+    grant_type: 'client_credentials',
+    client_id: clientId,
+    client_secret: clientSecret,
+  };
 
-  if (scope) {
-    body.set('scope', scope);
+  const candidates: Record<string, string>[] = [];
+  if (scope || audience) {
+    candidates.push({
+      ...basePayload,
+      ...(scope ? { scope } : {}),
+      ...(audience ? { audience } : {}),
+    });
+  } else if (legacyScopeOrAudience) {
+    candidates.push({
+      ...basePayload,
+      ...(looksLikeAudience(legacyScopeOrAudience)
+        ? { audience: legacyScopeOrAudience }
+        : { scope: legacyScopeOrAudience }),
+    });
+    candidates.push({
+      ...basePayload,
+      ...(looksLikeAudience(legacyScopeOrAudience)
+        ? { scope: legacyScopeOrAudience }
+        : { audience: legacyScopeOrAudience }),
+    });
+  } else {
+    candidates.push({ ...basePayload, scope: 'buscar:consultar:empresas' });
   }
-  if (audience) {
-    body.set('audience', audience);
-  }
+  // Some OAuth providers reject provided scope/audience and only work with default server scope.
+  candidates.push(basePayload);
 
-  if (!scope && !audience) {
-    if (legacyScopeOrAudience) {
-      if (looksLikeAudience(legacyScopeOrAudience)) {
-        body.set('audience', legacyScopeOrAudience);
-      } else {
-        body.set('scope', legacyScopeOrAudience);
-      }
-    } else {
-      body.set('scope', 'buscar:consultar:empresas');
+  let lastError = '';
+  for (const payload of candidates) {
+    const body = new URLSearchParams(payload);
+    const res = await fetchWithTimeout(
+      tokenUrl,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      },
+      timeoutMs
+    );
+
+    if (res.ok) {
+      const json = (await res.json()) as {
+        access_token: string;
+        expires_in?: number;
+      };
+      const expiresInMs = (json.expires_in ?? 3600) * 1000;
+      tokenCache = { accessToken: json.access_token, expiresAt: now + expiresInMs };
+      return json.access_token;
+    }
+
+    const text = await res.text().catch(() => '');
+    lastError = `eInforma token error ${res.status}: ${text}`;
+    if (!isInvalidGrant(res.status, text)) {
+      throw new Error(lastError);
     }
   }
 
-  const res = await fetchWithTimeout(
-    tokenUrl,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
-    },
-    timeoutMs
-  );
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`eInforma token error ${res.status}: ${text}`);
-  }
-
-  const json = (await res.json()) as {
-    access_token: string;
-    expires_in?: number;
-  };
-  const expiresInMs = (json.expires_in ?? 3600) * 1000;
-  tokenCache = { accessToken: json.access_token, expiresAt: now + expiresInMs };
-  return json.access_token;
+  throw new Error(lastError || 'eInforma token error: unknown');
 }
 
 export type EinformaSearchItem = {
