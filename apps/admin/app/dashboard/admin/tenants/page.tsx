@@ -427,26 +427,10 @@ export default function AdminTenantsPage() {
     setSaving(true);
     setError("");
     try {
-      const existingRaw =
-        selectedProfile?.raw && typeof selectedProfile.raw === "object" && !Array.isArray(selectedProfile.raw)
-          ? (selectedProfile.raw as Record<string, unknown>)
-          : {};
-      const existingHistory = Array.isArray((existingRaw as any).manualEditHistory)
-        ? ((existingRaw as any).manualEditHistory as unknown[])
-        : [];
-      const profilePayload =
-        selectedProfile && editHistory.length > 0
-          ? {
-              ...selectedProfile,
-              raw: {
-                ...existingRaw,
-                manualEditHistory: [
-                  ...existingHistory,
-                  ...editHistory.map((entry) => ({ ...entry, source: "admin_companies_modal" })),
-                ],
-              },
-            }
-          : selectedProfile;
+      const adminEditHistory =
+        editHistory.length > 0
+          ? editHistory.map((entry) => ({ ...entry, source: "admin_companies_modal" }))
+          : [];
 
       if (editing) {
         const res = await adminPatch<{ tenant: TenantRow }>(
@@ -454,7 +438,8 @@ export default function AdminTenantsPage() {
           {
             source: "einforma",
             normalized: selectedNormalized,
-            profile: profilePayload,
+            profile: selectedProfile,
+            adminEditHistory,
           }
         );
         setItems((prev) => prev.map((t) => (t.id === editing.id ? res.tenant : t)));
@@ -462,7 +447,8 @@ export default function AdminTenantsPage() {
         const res = await adminPost<{ tenant: TenantRow }>("/api/admin/tenants", {
           source: "einforma",
           normalized: selectedNormalized,
-          profile: profilePayload,
+          profile: selectedProfile,
+          adminEditHistory,
         });
         setItems((prev) => [res.tenant, ...prev]);
       }
@@ -915,7 +901,6 @@ export default function AdminTenantsPage() {
                 </div>
               )}
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <p className="text-sm font-semibold text-slate-800">Información sobre herramienta</p>
                 <p className="mt-1 text-xs text-slate-600">
                   La búsqueda funciona por nombre o CIF/NIF. Si hay muchos resultados, añade más
                   palabras o usa el CIF/NIF exacto para afinar.

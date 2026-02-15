@@ -25,6 +25,8 @@ Definir un flujo único de alta y gestión de empresa entre `admin` y `app`, sep
 ### Persistencia y cache
 - Al crear empresa desde admin se crea `tenant` y `tenant_profile`.
 - Se persiste `source`, `source_id`, snapshot mercantil y metadata de sincronización.
+- `einforma_raw` guarda el payload completo del proveedor (`raw`), incluyendo campos no mapeados aún.
+- `admin_edit_history` guarda solo historial de correcciones manuales hechas desde Admin.
 - El endpoint de perfil consulta primero snapshot local y lookup cache antes de ir al proveedor externo.
 - Se incorporó fallback de listado de empresas en `/api/admin/tenants` para esquemas mixtos (degradado sin 500).
 
@@ -41,7 +43,7 @@ Definir un flujo único de alta y gestión de empresa entre `admin` y `app`, sep
 
 ## UX y comunicación al usuario (vigente)
 ### En el modal de creación
-- Bloque `Información sobre herramienta`:
+- Texto informativo:
   - cómo funciona la búsqueda.
   - que los datos son públicos del Registro Mercantil.
 - Enlace de ayuda:
@@ -55,11 +57,19 @@ Definir un flujo único de alta y gestión de empresa entre `admin` y `app`, sep
 ## Reglas de datos
 - Mercantil:
   - se rellena desde fuente pública.
-  - se guarda snapshot de referencia.
+  - se guarda snapshot de referencia en `einforma_raw`.
 - Fiscal:
   - editable en módulos fiscales/facturación (roadmap).
 - Trazabilidad:
-  - conservar `source`, `source_id`, `updated_at` y raw de sincronización cuando aplique.
+  - conservar `source`, `source_id`, `updated_at`, `einforma_raw` y `admin_edit_history` cuando aplique.
+
+## Definición de `raw`
+- `raw` = respuesta completa devuelta por el proveedor de datos para una empresa concreta.
+- Uso principal:
+  - Diagnóstico cuando un campo visible no coincide.
+  - Reprocesado para mapear nuevos campos sin volver a consumir crédito.
+  - Evidencia técnica para soporte/escalado.
+- En UI no se expone completo al cliente final; se usa internamente en Admin/soporte.
 
 ## Roadmap inmediato
 1. Modelo `fiscal_profile` persistente (AEAT/IAE/obligaciones).

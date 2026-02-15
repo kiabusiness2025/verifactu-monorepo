@@ -5,10 +5,40 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = 'force-dynamic';
 
+async function tableExists(tableName: string) {
+  const rows = await query<{ exists: boolean }>(
+    `SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = $1
+    ) as exists`,
+    [tableName]
+  );
+  return !!rows[0]?.exists;
+}
+
+async function columnExists(tableName: string, columnName: string) {
+  const rows = await query<{ exists: boolean }>(
+    `SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2
+    ) as exists`,
+    [tableName, columnName]
+  );
+  return !!rows[0]?.exists;
+}
+
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: tenantId } = await params;
     await requireAdmin(_req);
+    const hasTenantLegalName = await columnExists("tenants", "legal_name");
+    const hasTenantNif = await columnExists("tenants", "nif");
+    const hasTenantTaxId = await columnExists("tenants", "tax_id");
+    const taxIdColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
+    const hasTenantProfiles = await tableExists("tenant_profiles");
+
     const tenant = await one<{
       id: string;
       legal_name: string | null;
@@ -17,9 +47,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       cnae: string | null;
       created_at: string;
     }>(
-      `SELECT t.id, t.legal_name, t.nif, t.created_at, tp.address, tp.cnae
+      `SELECT
+         t.id,
+         ${hasTenantLegalName ? "t.legal_name" : "t.name"} as legal_name,
+         ${taxIdColumn ? `t.${taxIdColumn}` : "NULL::text"} as nif,
+         t.created_at,
+       ${hasTenantProfiles ? "tp.address" : "NULL::text"} as address,
+       ${hasTenantProfiles ? "tp.cnae" : "NULL::text"} as cnae
        FROM tenants t
-       LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id
+       ${hasTenantProfiles ? "LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id" : ""}
        WHERE t.id = $1`,
       [tenantId]
     );
@@ -89,7 +125,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const city = normalized?.city ?? profile?.address?.city ?? null;
     const province = normalized?.province ?? profile?.address?.province ?? null;
     const country = normalized?.country ?? profile?.address?.country ?? null;
+    const representative = profile?.representatives?.[0]?.name ?? null;
     const sourceId = normalized?.sourceId ?? normalized?.nif ?? profile?.sourceId ?? null;
+    const adminEditHistoryFromPayload = Array.isArray(body?.adminEditHistory)
+      ? body.adminEditHistory
+      : null;
+    const adminEditHistoryFromRaw = Array.isArray(profile?.raw?.manualEditHistory)
+      ? profile.raw.manualEditHistory
+      : null;
+    const adminEditHistory = adminEditHistoryFromPayload ?? adminEditHistoryFromRaw ?? null;
     const einformaTaxIdVerified =
       !!taxId && !!normalized?.nif && String(normalized.nif).toUpperCase() === taxId;
     const einformaRaw = isEinforma ? profile?.raw ?? profile ?? null : null;
@@ -102,81 +146,89 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       );
     }
 
+    const hasTenantLegalName = await columnExists("tenants", "legal_name");
+    const hasTenantNif = await columnExists("tenants", "nif");
+    const hasTenantTaxId = await columnExists("tenants", "tax_id");
+    const tenantTaxColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
+
+    const updateSet = ["name = $1"];
+    const updateValues: unknown[] = [legalName];
+    if (hasTenantLegalName) {
+      updateSet.push(`legal_name = $${updateValues.length + 1}`);
+      updateValues.push(legalName);
+    }
+    if (tenantTaxColumn) {
+      updateSet.push(`${tenantTaxColumn} = $${updateValues.length + 1}`);
+      updateValues.push(taxId);
+    }
+    updateValues.push(tenantId);
     await query(
       `UPDATE tenants
-       SET legal_name = $1, nif = $2
-       WHERE id = $3`,
-      [legalName, taxId, tenantId]
+       SET ${updateSet.join(", ")}
+       WHERE id = $${updateValues.length}`,
+      updateValues
     );
 
     const now = new Date().toISOString();
-    await query(
-      `INSERT INTO tenant_profiles (
-         tenant_id,
-         source,
-         source_id,
-         cnae,
-         cnae_code,
-         cnae_text,
-         legal_form,
-         status,
-         website,
-         capital_social,
-         incorporation_date,
-         address,
-         postal_code,
-         city,
-         province,
-         country,
-         einforma_last_sync_at,
-         einforma_tax_id_verified,
-         einforma_raw,
-         updated_at
-       )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
-       ON CONFLICT (tenant_id) DO UPDATE
-       SET source = EXCLUDED.source,
-           source_id = EXCLUDED.source_id,
-           cnae = EXCLUDED.cnae,
-           cnae_code = EXCLUDED.cnae_code,
-           cnae_text = EXCLUDED.cnae_text,
-           legal_form = EXCLUDED.legal_form,
-           status = EXCLUDED.status,
-           website = EXCLUDED.website,
-           capital_social = EXCLUDED.capital_social,
-           incorporation_date = EXCLUDED.incorporation_date,
-           address = EXCLUDED.address,
-           postal_code = EXCLUDED.postal_code,
-           city = EXCLUDED.city,
-           province = EXCLUDED.province,
-           country = EXCLUDED.country,
-           einforma_last_sync_at = EXCLUDED.einforma_last_sync_at,
-           einforma_tax_id_verified = EXCLUDED.einforma_tax_id_verified,
-           einforma_raw = EXCLUDED.einforma_raw,
-           updated_at = EXCLUDED.updated_at`,
-      [
-        tenantId,
-        profileSource,
-        sourceId,
-        cnae,
-        cnaeCode,
-        cnaeText,
-        legalForm,
-        status,
-        website,
-        capitalSocial,
-        incorporationDate,
-        address,
-        postalCode,
-        city,
-        province,
-        country,
-        isEinforma ? now : null,
-        isEinforma ? einformaTaxIdVerified : null,
-        einformaRaw,
-        now,
-      ]
-    );
+    const hasTenantProfiles = await tableExists("tenant_profiles");
+    if (hasTenantProfiles) {
+      const profileCandidates: Array<{ column: string; value: unknown }> = [
+        { column: "tenant_id", value: tenantId },
+        { column: "source", value: profileSource },
+        { column: "source_id", value: sourceId },
+        { column: "cnae", value: cnae },
+        { column: "cnae_code", value: cnaeCode },
+        { column: "cnae_text", value: cnaeText },
+        { column: "legal_form", value: legalForm },
+        { column: "status", value: status },
+        { column: "website", value: website },
+        { column: "capital_social", value: capitalSocial },
+        { column: "incorporation_date", value: incorporationDate },
+        { column: "address", value: address },
+        { column: "postal_code", value: postalCode },
+        { column: "city", value: city },
+        { column: "province", value: province },
+        { column: "country", value: country },
+        { column: "representative", value: representative },
+        { column: "einforma_last_sync_at", value: isEinforma ? now : null },
+        { column: "einforma_tax_id_verified", value: isEinforma ? einformaTaxIdVerified : null },
+        { column: "einforma_raw", value: einformaRaw },
+        { column: "admin_edit_history", value: adminEditHistory },
+        { column: "updated_at", value: now },
+      ];
+      const availableColumns: string[] = [];
+      const values: unknown[] = [];
+      for (const candidate of profileCandidates) {
+        if (await columnExists("tenant_profiles", candidate.column)) {
+          availableColumns.push(candidate.column);
+          values.push(candidate.value);
+        }
+      }
+
+      if (availableColumns.length > 0) {
+        const placeholders = availableColumns.map((_, i) => `$${i + 1}`).join(", ");
+        const updates = availableColumns
+          .filter((col) => col !== "tenant_id")
+          .map((col) => `${col} = EXCLUDED.${col}`)
+          .join(", ");
+        if (updates.length > 0) {
+          await query(
+            `INSERT INTO tenant_profiles (${availableColumns.join(", ")})
+             VALUES (${placeholders})
+             ON CONFLICT (tenant_id) DO UPDATE
+             SET ${updates}`,
+            values
+          );
+        } else {
+          await query(
+            `INSERT INTO tenant_profiles (${availableColumns.join(", ")})
+             VALUES (${placeholders})
+             ON CONFLICT (tenant_id) DO NOTHING`,
+            values
+          );
+        }
+      }
+    }
 
     const tenant = await one<{
       id: string;
@@ -186,9 +238,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       cnae: string | null;
       created_at: string;
     }>(
-      `SELECT t.id, t.legal_name, t.nif, t.created_at, tp.address, tp.cnae
+      `SELECT
+         t.id,
+         ${hasTenantLegalName ? "t.legal_name" : "t.name"} as legal_name,
+         ${tenantTaxColumn ? `t.${tenantTaxColumn}` : "NULL::text"} as nif,
+         t.created_at,
+         ${hasTenantProfiles ? "tp.address" : "NULL::text"} as address,
+         ${hasTenantProfiles ? "tp.cnae" : "NULL::text"} as cnae
        FROM tenants t
-       LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id
+       ${hasTenantProfiles ? "LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id" : ""}
        WHERE t.id = $1`,
       [tenantId]
     );

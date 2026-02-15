@@ -388,6 +388,13 @@ export async function POST(req: Request) {
     const province = normalized?.province ?? profile?.address?.province ?? null;
     const country = normalized?.country ?? profile?.address?.country ?? null;
     const sourceId = normalized?.sourceId ?? normalized?.nif ?? profile?.sourceId ?? null;
+    const adminEditHistoryFromPayload = Array.isArray(body?.adminEditHistory)
+      ? body.adminEditHistory
+      : null;
+    const adminEditHistoryFromRaw = Array.isArray(profile?.raw?.manualEditHistory)
+      ? profile.raw.manualEditHistory
+      : null;
+    const adminEditHistory = adminEditHistoryFromPayload ?? adminEditHistoryFromRaw ?? null;
     const einformaTaxIdVerified =
       !!taxId && !!normalized?.nif && String(normalized.nif).toUpperCase() === taxId;
     const einformaRaw = isEinforma ? profile?.raw ?? profile ?? null : null;
@@ -466,6 +473,7 @@ export async function POST(req: Request) {
             { column: "einforma_last_sync_at", value: isEinforma ? now : null },
             { column: "einforma_tax_id_verified", value: isEinforma ? einformaTaxIdVerified : null },
             { column: "einforma_raw", value: einformaRaw },
+            { column: "admin_edit_history", value: adminEditHistory },
             { column: "updated_at", value: now },
           ];
           const availableColumns: string[] = [];
