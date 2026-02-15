@@ -16,6 +16,28 @@ interface EInformaSearchProps {
   placeholder?: string;
 }
 
+function normalizeText(value?: string) {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function companyScore(company: EInformaCompany, query: string) {
+  const q = normalizeText(query);
+  const name = normalizeText(company.name);
+  const nif = normalizeText(company.nif);
+  if (!q) return 999;
+  if (nif && nif === q) return 0;
+  if (name === q) return 1;
+  if (name.startsWith(q)) return 2;
+  if (name.includes(` ${q}`)) return 3;
+  if (name.includes(q)) return 4;
+  if (nif && nif.startsWith(q)) return 5;
+  return 999;
+}
+
 export function EInformaSearch({
   onSelect,
   placeholder = 'Buscar por nombre o CIF...',
@@ -59,8 +81,17 @@ export function EInformaSearch({
           setShowResults(true);
           return;
         }
-        const items = data?.items ?? [];
-        setResults(Array.isArray(items) ? items : []);
+        const items = Array.isArray(data?.items) ? data.items : [];
+        const sorted = [...items]
+          .map((item, index) => ({ item, index }))
+          .sort((a, b) => {
+            const byScore = companyScore(a.item, query) - companyScore(b.item, query);
+            if (byScore !== 0) return byScore;
+            return a.index - b.index;
+          })
+          .map(({ item }) => item);
+        setResults(sorted);
+        setSelectedIndex(-1);
         setShowResults(true);
       } catch (error) {
         console.error('Error searching:', error);

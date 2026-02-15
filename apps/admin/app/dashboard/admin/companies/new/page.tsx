@@ -68,6 +68,7 @@ export default function NewCompanyPage() {
       Number.isFinite(einformaExtra.salesYear) ||
       Number.isFinite(einformaExtra.capitalSocial) ||
       Boolean(einformaExtra.lastBalanceDate));
+  const mercantileDataLocked = formData.source === 'einforma';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -316,6 +317,38 @@ export default function NewCompanyPage() {
             </div>
           </div>
         </div>
+        {mercantileDataLocked ? (
+          <div className="space-y-3">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+              <p className="font-semibold">Datos mercantiles bloqueados</p>
+              <p className="mt-1">
+                Estos datos se han extraído de información pública vigente en el Registro
+                Mercantil y no se pueden modificar manualmente desde este formulario.
+              </p>
+              <p className="mt-1">
+                Si no coinciden con tu documentación, abre incidencia en Soporte (ticket) y
+                adjunta evidencias de la información correcta.
+              </p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+              <p className="font-semibold">Registro Mercantil vs Agencia Tributaria</p>
+              <p className="mt-1">
+                Los datos mercantiles no tienen por qué coincidir con los datos fiscales/de
+                actividad de la AEAT. En la siguiente iteración se habilitará la pestaña de datos
+                fiscales y de facturación para IAE, domicilio fiscal y obligaciones tributarias.
+              </p>
+              <p className="mt-1">
+                ISAaK dispondrá de guía para obtención/actualización de datos AEAT y para carga de
+                certificado IAE.
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        <fieldset
+          disabled={mercantileDataLocked}
+          className={mercantileDataLocked ? 'space-y-6 opacity-80' : 'space-y-6'}
+        >
         {/* Datos fiscales */}
         <div className="space-y-4">
           <h2 className="font-semibold text-gray-900">Datos fiscales</h2>
@@ -617,6 +650,7 @@ export default function NewCompanyPage() {
             </div>
           </div>
         </div>
+        </fieldset>
         {hasEinformaExtra ? (
           <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <h3 className="text-sm font-semibold text-slate-900">Datos ampliados (eInforma)</h3>
