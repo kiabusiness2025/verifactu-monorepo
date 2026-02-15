@@ -54,6 +54,14 @@ Definir un flujo único de alta y gestión de empresa entre `admin` y `app`, sep
   - `No aparece tu empresa en el listado, pulsa aquí`
   - redirige a Isaak en admin con contexto pre-cargado del caso.
 
+### En panel Cliente (onboarding)
+- El buscador muestra solo datos básicos en UI: `nombre`, `CIF/NIF`, `dirección`.
+- Antes de guardar se informa que:
+  - en modo prueba solo se permite 1 empresa real.
+  - los datos principales del alta no se pueden modificar desde ese flujo.
+- Acciones de cierre del alta: `Guardar` o `Cancelar`.
+- Aunque la UI sea básica, el backend conserva snapshot completo (`raw`) para soporte/Admin.
+
 ### Criterio de marca en UI
 - Evitar menciones explícitas del proveedor de datos en mensajes de error/ayuda generales.
 - Mantener el detalle técnico solo donde sea estrictamente necesario para diagnóstico.

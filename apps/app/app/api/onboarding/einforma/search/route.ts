@@ -63,7 +63,7 @@ export async function GET(req: Request) {
           name: item.name,
           nif: item.nif ?? "",
           province: item.province ?? "",
-          city: "",
+          city: item.city ?? "",
         }));
 
       return NextResponse.json({
@@ -98,7 +98,7 @@ export async function GET(req: Request) {
       name: item.name,
       nif: item.nif ?? "",
       province: item.province ?? "",
-      city: "",
+      city: item.city ?? "",
     }));
 
     return NextResponse.json({ ok: true, results });

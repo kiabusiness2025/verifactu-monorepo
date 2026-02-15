@@ -14,16 +14,26 @@ type TenantPayload = {
   nif: string;
   extra?: {
     cnae?: string;
+    cnaeCode?: string;
+    cnaeText?: string;
     legalForm?: string;
     status?: string;
     website?: string;
     capitalSocial?: number;
     incorporationDate?: string;
     address?: string;
+    postalCode?: string;
     city?: string;
     province?: string;
     country?: string;
     representative?: string;
+    email?: string;
+    phone?: string;
+    employees?: number;
+    sales?: number;
+    salesYear?: number;
+    lastBalanceDate?: string;
+    raw?: unknown;
   };
 };
 
@@ -124,6 +134,28 @@ export async function POST(req: Request) {
     });
   }
 
+  const existingRealMembership = await prisma.membership.findFirst({
+    where: {
+      userId: uid,
+      status: 'active',
+      tenant: { isDemo: false },
+    },
+    select: { tenantId: true },
+  });
+
+  if (existingRealMembership) {
+    return NextResponse.json(
+      {
+        ok: false,
+        action: 'TRIAL_LIMIT_REACHED',
+        error:
+          'En modo prueba solo puedes usar una empresa con datos reales. Para añadir otra, contrata un plan.',
+        billingUrl: '/dashboard/settings?tab=billing',
+      },
+      { status: 409 }
+    );
+  }
+
   const now = new Date();
   const trialEndsAt = new Date(now);
   trialEndsAt.setDate(trialEndsAt.getDate() + 30);
@@ -198,6 +230,8 @@ export async function POST(req: Request) {
       const isEinforma = source === 'einforma';
       const cnaeParts = splitCnae(body.extra.cnae);
       const cityParts = normalizeCity(body.extra.city);
+      const profileRaw =
+        body.extra.raw && typeof body.extra.raw === 'object' ? body.extra.raw : undefined;
       await tx.tenantProfile.upsert({
         where: { tenantId: tenant.id },
         create: {
@@ -205,8 +239,8 @@ export async function POST(req: Request) {
           source,
           sourceId: einformaId,
           cnae: body.extra.cnae || undefined,
-          cnaeCode: cnaeParts.code,
-          cnaeText: cnaeParts.text,
+          cnaeCode: body.extra.cnaeCode || cnaeParts.code,
+          cnaeText: body.extra.cnaeText || cnaeParts.text,
           legalForm: body.extra.legalForm || undefined,
           status: body.extra.status || undefined,
           website: body.extra.website || undefined,
@@ -215,11 +249,12 @@ export async function POST(req: Request) {
             ? new Date(body.extra.incorporationDate)
             : undefined,
           address: body.extra.address || undefined,
-          postalCode: cityParts.postalCode,
+          postalCode: body.extra.postalCode || cityParts.postalCode,
           city: cityParts.city || undefined,
           province: body.extra.province || undefined,
           country: body.extra.country || undefined,
           representative: body.extra.representative || undefined,
+          einformaRaw: profileRaw,
           einformaLastSyncAt: isEinforma ? new Date() : undefined,
           einformaTaxIdVerified: isEinforma ? true : undefined,
         },
@@ -227,8 +262,8 @@ export async function POST(req: Request) {
           source,
           sourceId: einformaId,
           cnae: body.extra.cnae || undefined,
-          cnaeCode: cnaeParts.code,
-          cnaeText: cnaeParts.text,
+          cnaeCode: body.extra.cnaeCode || cnaeParts.code,
+          cnaeText: body.extra.cnaeText || cnaeParts.text,
           legalForm: body.extra.legalForm || undefined,
           status: body.extra.status || undefined,
           website: body.extra.website || undefined,
@@ -237,11 +272,12 @@ export async function POST(req: Request) {
             ? new Date(body.extra.incorporationDate)
             : undefined,
           address: body.extra.address || undefined,
-          postalCode: cityParts.postalCode,
+          postalCode: body.extra.postalCode || cityParts.postalCode,
           city: cityParts.city || undefined,
           province: body.extra.province || undefined,
           country: body.extra.country || undefined,
           representative: body.extra.representative || undefined,
+          einformaRaw: profileRaw,
           einformaLastSyncAt: isEinforma ? new Date() : undefined,
           einformaTaxIdVerified: isEinforma ? true : undefined,
         },

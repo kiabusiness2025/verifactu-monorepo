@@ -16,7 +16,7 @@ export async function GET() {
 
   const memberships = await prisma.membership.findMany({
     where: { userId: uid, status: "active" },
-    select: { tenantId: true },
+    select: { tenantId: true, tenant: { select: { isDemo: true } } },
   });
 
   const pref = await prisma.userPreference.findUnique({
@@ -26,6 +26,7 @@ export async function GET() {
 
   const preferredTenantId = pref?.preferredTenantId ?? null;
   const hasAnyTenant = memberships.length > 0;
+  const hasRealTenant = memberships.some((membership) => !membership.tenant?.isDemo);
 
   let trial: { status: string; trialEndsAt: string | null } | null = null;
   if (preferredTenantId) {
@@ -46,6 +47,7 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     hasAnyTenant,
+    hasRealTenant,
     preferredTenantId,
     trial,
   });

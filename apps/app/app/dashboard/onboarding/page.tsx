@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EInformaSearch } from "@/components/companies/EInformaSearch";
 import { useToast } from "@/components/notifications/ToastNotifications";
 import { EinformaAutofillButton } from "@/src/components/einforma/EinformaAutofillButton";
@@ -16,6 +16,12 @@ type SelectedCompany = {
   cnaeText?: string;
   legalForm?: string;
   status?: string;
+  email?: string;
+  phone?: string;
+  employees?: number;
+  sales?: number;
+  salesYear?: number;
+  lastBalanceDate?: string;
   website?: string;
   capitalSocial?: number;
   incorporationDate?: string;
@@ -39,6 +45,7 @@ export default function OnboardingPage() {
   const [nif, setNif] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [hasRealTenant, setHasRealTenant] = useState(false);
 
   const nextUrl = useMemo(() => {
     const next = searchParams?.get("next");
@@ -46,6 +53,25 @@ export default function OnboardingPage() {
   }, [searchParams]);
 
   const canSubmit = companyName.trim().length > 0 && nif.trim().length > 0;
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadStatus() {
+      try {
+        const res = await fetch("/api/onboarding/status", { credentials: "include" });
+        const data = await res.json().catch(() => null);
+        if (!mounted) return;
+        setHasRealTenant(Boolean(data?.hasRealTenant));
+      } catch {
+        if (!mounted) return;
+        setHasRealTenant(false);
+      }
+    }
+    loadStatus();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   function applyNormalized(normalized: {
     name?: string | null;
@@ -126,14 +152,20 @@ export default function OnboardingPage() {
           cnaeText: normalized.cnaeText,
           legalForm: info.legalForm,
           status: info.status,
+          email: info.email,
+          phone: info.phone,
+          employees: info.employees,
+          sales: info.sales,
+          salesYear: info.salesYear,
+          lastBalanceDate: info.lastBalanceDate,
           website: info.website,
           capitalSocial: info.capitalSocial,
           incorporationDate: info.incorporationDate,
           address: info.address,
           city: normalized.city ?? info.city,
-          postalCode: normalized.postalCode,
+          postalCode: normalized.postalCode ?? info.postalCode,
           province: info.province,
-          country: info.country,
+          country: normalized.country ?? info.country,
           representative: info.representative,
           raw: info.raw,
         });
@@ -151,6 +183,13 @@ export default function OnboardingPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!canSubmit || isSubmitting) return;
+    if (hasRealTenant) {
+      showError(
+        "Límite del modo prueba",
+        "Ya tienes una empresa real activa en prueba. Para añadir otra, contrata un plan."
+      );
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -166,16 +205,26 @@ export default function OnboardingPage() {
               extra: selected
             ? {
                 cnae: selected.cnae,
+                cnaeCode: selected.cnaeCode,
+                cnaeText: selected.cnaeText,
                 legalForm: selected.legalForm,
                 status: selected.status,
                 website: selected.website,
                 capitalSocial: selected.capitalSocial,
                 incorporationDate: selected.incorporationDate,
                 address: selected.address,
+                postalCode: selected.postalCode,
                 city: selected.city,
                 country: selected.country,
                 province: selected.province,
                 representative: selected.representative,
+                email: selected.email,
+                phone: selected.phone,
+                employees: selected.employees,
+                sales: selected.sales,
+                salesYear: selected.salesYear,
+                lastBalanceDate: selected.lastBalanceDate,
+                raw: selected.raw,
               }
             : undefined,
         }),
@@ -183,6 +232,16 @@ export default function OnboardingPage() {
 
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
+        if (data?.action === "TRIAL_LIMIT_REACHED") {
+          const billingUrl =
+            typeof data?.billingUrl === "string" ? data.billingUrl : "/dashboard/settings?tab=billing";
+          showError(
+            "Límite del modo prueba",
+            "En modo prueba solo puedes usar una empresa real. Te llevamos a planes."
+          );
+          router.push(billingUrl);
+          return;
+        }
         throw new Error(data?.error || "No se pudo activar la prueba");
       }
 
@@ -262,6 +321,11 @@ export default function OnboardingPage() {
                 Antes de cobrar, recibir?s un aviso con tu cuota estimada seg?n tu uso.
               </p>
             </div>
+            {hasRealTenant ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                Ya tienes una empresa real en modo prueba. Para añadir otra empresa, necesitas contratar un plan.
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -306,80 +370,46 @@ export default function OnboardingPage() {
             {selected && (
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-600 space-y-2">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Datos fiscales
+                  Resumen básico
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
-                    <span className="text-slate-500">NIF:</span> {selected.nif ?? "—"}
+                    <span className="text-slate-500">Nombre:</span> {selected.legalName ?? selected.name ?? "—"}
                   </div>
                   <div>
-                    <span className="text-slate-500">Estado:</span> {selected.status ?? "—"}
-                  </div>
-                </div>
-
-                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Dirección
-                </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <div>{selected.address ?? "—"}</div>
-                  <div>
-                    {selected.postalCode ? `${selected.postalCode} ` : ""}
-                    {selected.city ?? "—"}
-                  </div>
-                  <div>{selected.province ?? "—"}</div>
-                  <div>{selected.country ?? "—"}</div>
-                </div>
-
-                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Actividad (CNAE)
-                </div>
-                <div>
-                  {selected.cnaeCode ? `${selected.cnaeCode} — ` : ""}
-                  {selected.cnaeText ?? selected.cnae ?? "—"}
-                </div>
-
-                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                  Legal
-                </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <div>
-                    <span className="text-slate-500">Forma jurídica:</span>{" "}
-                    {selected.legalForm ?? "—"}
+                    <span className="text-slate-500">CIF/NIF:</span> {selected.nif ?? "—"}
                   </div>
                   <div>
-                    <span className="text-slate-500">Capital social:</span>{" "}
-                    {selected.capitalSocial ?? "—"}
+                    <span className="text-slate-500">Dirección:</span> {selected.address ?? "—"}
                   </div>
                   <div>
-                    <span className="text-slate-500">Constitución:</span>{" "}
-                    {selected.incorporationDate ?? "—"}
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Web:</span>{" "}
-                    {selected.website ?? "—"}
+                    <span className="text-slate-500">Localidad:</span>{" "}
+                    {[selected.postalCode, selected.city, selected.province].filter(Boolean).join(" ") || "—"}
                   </div>
                 </div>
-
-                {selected.raw ? (
-                  <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                      Información ampliada
-                    </div>
-                    <div className="mt-2 text-xs text-slate-500">
-                      Disponible desde el snapshot de eInforma.
-                    </div>
-                  </div>
-                ) : null}
               </div>
             )}
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+              En modo prueba solo puedes usar una empresa con datos reales. Revisa bien estos datos principales:
+              después de guardar no podrás modificarlos desde este flujo.
+            </div>
 
-            <button
-              type="submit"
-              disabled={!canSubmit || isSubmitting}
-              className="w-full rounded-xl bg-[#0b6cfb] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#095edb] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSubmitting ? "Activando prueba..." : "Activar prueba y entrar al panel"}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard")}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={!canSubmit || isSubmitting || hasRealTenant}
+                className="w-full rounded-xl bg-[#0b6cfb] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#095edb] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "Guardando..." : "Guardar"}
+              </button>
+            </div>
           </form>
         </div>
       </div>

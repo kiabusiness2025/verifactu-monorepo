@@ -39,6 +39,7 @@ function SettingsContent() {
   const [isCreatingTenant, setIsCreatingTenant] = useState(false);
   const [createTenantError, setCreateTenantError] = useState<string | null>(null);
   const [createTenantSuccess, setCreateTenantSuccess] = useState<string | null>(null);
+  const [createTenantBillingUrl, setCreateTenantBillingUrl] = useState<string | null>(null);
   const [sessionInfo, setSessionInfo] = useState<{
     email: string | null;
     tenantId: string | null;
@@ -91,6 +92,7 @@ function SettingsContent() {
     const name = newTenantName.trim();
     setCreateTenantError(null);
     setCreateTenantSuccess(null);
+    setCreateTenantBillingUrl(null);
 
     if (!name) {
       setCreateTenantError('Introduce un nombre para la empresa.');
@@ -108,6 +110,13 @@ function SettingsContent() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
+        if (data?.action === 'TRIAL_LIMIT_REACHED') {
+          setCreateTenantBillingUrl(
+            typeof data?.billingUrl === 'string'
+              ? data.billingUrl
+              : '/dashboard/settings?tab=billing'
+          );
+        }
         throw new Error(data?.error || 'No se pudo crear la empresa');
       }
 
@@ -442,7 +451,7 @@ function SettingsContent() {
               >
                 <h3 className="text-sm font-semibold text-slate-900">Crear empresa nueva</h3>
                 <p className="mt-1 text-xs text-slate-600">
-                  Si estas en Empresa Demo SL, crea tu empresa aqui y empieza con tus datos reales.
+                  En modo prueba solo puedes usar una empresa con datos reales.
                 </p>
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
                   <div className="flex-1">
@@ -468,6 +477,14 @@ function SettingsContent() {
                 {createTenantSuccess && (
                   <p className="mt-2 text-xs text-emerald-600">{createTenantSuccess}</p>
                 )}
+                {createTenantError && createTenantBillingUrl ? (
+                  <a
+                    href={createTenantBillingUrl}
+                    className="mt-2 inline-block text-xs font-semibold text-blue-700 underline"
+                  >
+                    Contratar plan para añadir más empresas
+                  </a>
+                ) : null}
               </form>
 
               <form onSubmit={handleSaveGeneral} className="space-y-6">

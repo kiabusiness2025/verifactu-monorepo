@@ -136,10 +136,16 @@ export function EInformaSearch({
                       <h3 className="font-semibold text-slate-900 truncate">{company.name}</h3>
                     </div>
                     <div className="mt-2 space-y-1">
+                      {company.nif ? (
+                        <div className="text-xs text-slate-600">
+                          <span className="text-slate-500">CIF/NIF:</span> {company.nif}
+                        </div>
+                      ) : null}
                       {(company.city || company.province) && (
                         <div className="flex items-center gap-1.5 text-xs text-slate-600">
                           <MapPin className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">
+                            <span className="text-slate-500">Dirección:</span>{" "}
                             {[company.city, company.province].filter(Boolean).join(", ")}
                           </span>
                         </div>

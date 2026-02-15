@@ -29,6 +29,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "name required" }, { status: 400 });
   }
 
+  const existingTenants = await listTenantsForUser(uid).catch(() => []);
+  if (existingTenants.length >= 1) {
+    return NextResponse.json(
+      {
+        ok: false,
+        action: "TRIAL_LIMIT_REACHED",
+        error:
+          "En modo prueba solo puedes usar una empresa. Para añadir otra empresa, contrata un plan.",
+        billingUrl: "/dashboard/settings?tab=billing",
+      },
+      { status: 409 }
+    );
+  }
+
   const tenantId = await createTenantWithOwner({ name, ownerId: uid, nif: nif || null });
   return NextResponse.json({ ok: true, tenant: { id: tenantId, name, ownerId: uid } });
 }

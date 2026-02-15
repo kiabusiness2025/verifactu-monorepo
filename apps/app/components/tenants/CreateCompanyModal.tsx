@@ -13,6 +13,7 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [billingUrl, setBillingUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -20,6 +21,7 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
       setNif("");
       setError("");
       setSuccess("");
+      setBillingUrl(null);
       setIsSubmitting(false);
     }
   }, [isOpen]);
@@ -45,7 +47,12 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || "No se pudo crear la empresa");
+        if (data?.action === "TRIAL_LIMIT_REACHED") {
+          setBillingUrl(typeof data?.billingUrl === "string" ? data.billingUrl : "/dashboard/settings?tab=billing");
+        }
+        throw new Error(
+          data?.error || "No se pudo guardar la empresa"
+        );
       }
 
       const tenantId = data?.tenant?.id as string | undefined;
@@ -58,14 +65,14 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
         });
       }
 
-      setSuccess("Empresa creada. Te hemos cambiado a la nueva empresa.");
+      setSuccess("Empresa guardada. Te hemos cambiado a la nueva empresa.");
       setTimeout(() => {
         onClose();
         window.location.reload();
       }, 600);
     } catch (err) {
       console.error("Create company error:", err);
-      setError("No se pudo crear la empresa. Intenta de nuevo.");
+      setError(err instanceof Error ? err.message : "No se pudo guardar la empresa. Intenta de nuevo.");
     } finally {
       setIsSubmitting(false);
     }
@@ -76,14 +83,6 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
       <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-        >
-          Cerrar
-        </button>
-
         <h2 className="text-xl font-semibold text-slate-900">Crear empresa</h2>
         <p className="mt-1 text-sm text-slate-600">
           Crea una nueva empresa para trabajar con datos reales.
@@ -115,6 +114,13 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
+              {billingUrl ? (
+                <div className="mt-2">
+                  <a href={billingUrl} className="font-semibold underline">
+                    Ver planes
+                  </a>
+                </div>
+              ) : null}
             </div>
           )}
           {success && (
@@ -136,7 +142,7 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
               disabled={isSubmitting}
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
-              {isSubmitting ? "Creando..." : "Crear empresa"}
+              {isSubmitting ? "Guardando..." : "Guardar"}
             </button>
           </div>
         </form>
