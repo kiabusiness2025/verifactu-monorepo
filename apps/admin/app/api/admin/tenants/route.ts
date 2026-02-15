@@ -1,14 +1,38 @@
 import { requireAdmin } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
+import prisma from "@/lib/prisma";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = 'force-dynamic';
 
+async function tableExists(tableName: string) {
+  const rows = await query<{ exists: boolean }>(
+    `SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = $1
+    ) as exists`,
+    [tableName]
+  );
+  return !!rows[0]?.exists;
+}
+
+async function columnExists(tableName: string, columnName: string) {
+  const rows = await query<{ exists: boolean }>(
+    `SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2
+    ) as exists`,
+    [tableName, columnName]
+  );
+  return !!rows[0]?.exists;
+}
+
 export async function GET(req: Request) {
   try {
-    // Verificar que el usuario es admin
     await requireAdmin(req);
 
     const { searchParams } = new URL(req.url);
@@ -23,21 +47,102 @@ export async function GET(req: Request) {
     );
     const offset = (page - 1) * pageSize;
 
+    const [
+      hasTenantIsDemo,
+      hasTenantLegalName,
+      hasTenantNif,
+      hasTenantTaxId,
+      hasTenantProfiles,
+      hasTenantSubscriptions,
+      hasSubscriptions,
+      hasInvoices,
+      hasInvoiceAmountGross,
+      hasInvoiceTotal,
+      hasInvoiceIssueDate,
+      hasInvoiceStatus,
+    ] = await Promise.all([
+      columnExists("tenants", "is_demo"),
+      columnExists("tenants", "legal_name"),
+      columnExists("tenants", "nif"),
+      columnExists("tenants", "tax_id"),
+      tableExists("tenant_profiles"),
+      tableExists("tenant_subscriptions"),
+      tableExists("subscriptions"),
+      tableExists("invoices"),
+      columnExists("invoices", "amount_gross"),
+      columnExists("invoices", "total"),
+      columnExists("invoices", "issue_date"),
+      columnExists("invoices", "status"),
+    ]);
+
+    const taxIdColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
+    const legalNameExpr = hasTenantLegalName ? "COALESCE(t.legal_name, t.name)" : "t.name";
+    const subJoin = hasTenantSubscriptions
+      ? `LEFT JOIN LATERAL (
+           SELECT status
+           FROM tenant_subscriptions s
+           WHERE s.tenant_id = t.id
+           ORDER BY s.created_at DESC
+           LIMIT 1
+         ) sub ON true`
+      : hasSubscriptions
+      ? `LEFT JOIN LATERAL (
+           SELECT status
+           FROM subscriptions s
+           WHERE s.tenant_id = t.id
+           ORDER BY s.created_at DESC
+           LIMIT 1
+         ) sub ON true`
+      : `LEFT JOIN LATERAL (
+           SELECT 'trial'::text as status
+         ) sub ON true`;
+
+    const invoiceAmountColumn = hasInvoiceAmountGross
+      ? "amount_gross"
+      : hasInvoiceTotal
+      ? "total"
+      : null;
+    const canUseInvoiceMetrics = hasInvoices && hasInvoiceIssueDate && !!invoiceAmountColumn;
+    const invoiceJoin = canUseInvoiceMetrics
+      ? `LEFT JOIN invoices i ON i.tenant_id = t.id
+         ${hasInvoiceStatus ? "AND i.status IN ('sent', 'paid')" : ""}
+         AND i.issue_date >= DATE_TRUNC('month', CURRENT_DATE)
+         AND i.issue_date < (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month')`
+      : "";
+    const invoiceCountExpr = canUseInvoiceMetrics
+      ? "COUNT(DISTINCT i.id)::int as invoices_this_month"
+      : "0::int as invoices_this_month";
+    const invoiceRevenueExpr = canUseInvoiceMetrics
+      ? `COALESCE(SUM(i.${invoiceAmountColumn}), 0) as revenue_this_month`
+      : "0::numeric as revenue_this_month";
+
+    const profileJoin = hasTenantProfiles
+      ? "LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id"
+      : "";
+    const profileAddressExpr = hasTenantProfiles ? "tp.address as address" : "NULL::text as address";
+    const profileCnaeExpr = hasTenantProfiles ? "tp.cnae as cnae" : "NULL::text as cnae";
+
     const where: string[] = [];
     const params: Array<string | number> = [];
 
-    // FILTRAR EMPRESAS DEMO: Excluir tenants con is_demo = TRUE
-    where.push(`(t.is_demo IS NULL OR t.is_demo = FALSE)`);
+    if (hasTenantIsDemo) {
+      where.push(`(t.is_demo IS NULL OR t.is_demo = FALSE)`);
+    }
 
     if (q) {
       params.push(`%${q}%`);
       params.push(`%${q}%`);
-      params.push(`%${q}%`);
-      where.push(
-        `(LOWER(t.legal_name) LIKE $${params.length - 2} OR LOWER(t.name) LIKE $${
-          params.length - 1
-        } OR LOWER(t.nif) LIKE $${params.length})`
-      );
+      if (taxIdColumn) params.push(`%${q}%`);
+      const legalNameParamIndex = params.length - (taxIdColumn ? 2 : 1);
+      const nameParamIndex = params.length - (taxIdColumn ? 1 : 0);
+      const conditions = [
+        `LOWER(${legalNameExpr}) LIKE $${legalNameParamIndex}`,
+        `LOWER(t.name) LIKE $${nameParamIndex}`,
+      ];
+      if (taxIdColumn) {
+        conditions.push(`LOWER(t.${taxIdColumn}) LIKE $${params.length}`);
+      }
+      where.push(`(${conditions.join(" OR ")})`);
     }
 
     if (from) {
@@ -59,22 +164,15 @@ export async function GET(req: Request) {
     const countRows = await query<{ total: number }>(
       `SELECT COUNT(*)::int as total
        FROM tenants t
-       LEFT JOIN LATERAL (
-         SELECT status
-         FROM tenant_subscriptions s
-         WHERE s.tenant_id = t.id
-         ORDER BY s.created_at DESC
-         LIMIT 1
-       ) sub ON true
+       ${subJoin}
        ${whereClause}`,
       params
     );
 
     const tenants = await query<{
       id: string;
-      name: string;
       legal_name: string;
-      nif: string | null;
+      tax_id: string | null;
       address: string | null;
       cnae: string | null;
       created_at: string;
@@ -85,31 +183,24 @@ export async function GET(req: Request) {
     }>(
       `SELECT 
         t.id,
-        t.name,
-        COALESCE(t.legal_name, t.name) as legal_name,
-        t.nif,
-        tp.address,
-        tp.cnae,
+        ${legalNameExpr} as legal_name,
+        ${taxIdColumn ? `t.${taxIdColumn}` : "NULL::text"} as tax_id,
+        ${profileAddressExpr},
+        ${profileCnaeExpr},
         t.created_at,
         COUNT(DISTINCT m.user_id) as members_count,
-        COUNT(DISTINCT i.id) as invoices_this_month,
-        COALESCE(SUM(i.amount_gross), 0) as revenue_this_month,
+        ${invoiceCountExpr},
+        ${invoiceRevenueExpr},
         COALESCE(sub.status, 'trial') as status
        FROM tenants t
-       LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id
+       ${profileJoin}
        LEFT JOIN memberships m ON m.tenant_id = t.id AND m.status = 'active'
-       LEFT JOIN invoices i ON i.tenant_id = t.id AND i.status IN ('sent', 'paid')
-         AND i.issue_date >= DATE_TRUNC('month', CURRENT_DATE)
-         AND i.issue_date < (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month')
-       LEFT JOIN LATERAL (
-         SELECT status
-         FROM tenant_subscriptions s
-         WHERE s.tenant_id = t.id
-         ORDER BY s.created_at DESC
-         LIMIT 1
-       ) sub ON true
+       ${invoiceJoin}
+       ${subJoin}
        ${whereClause}
-       GROUP BY t.id, t.name, t.legal_name, t.nif, tp.address, tp.cnae, t.created_at
+       GROUP BY t.id, ${hasTenantLegalName ? "t.legal_name, " : ""}t.name, ${
+        taxIdColumn ? `t.${taxIdColumn}, ` : ""
+      }${hasTenantProfiles ? "tp.address, tp.cnae, " : ""}t.created_at
        ORDER BY t.created_at DESC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, pageSize, offset]
@@ -119,7 +210,7 @@ export async function GET(req: Request) {
     const transformedTenants = tenants.map((t) => ({
       id: t.id,
       legalName: t.legal_name,
-      taxId: t.nif || "",
+      taxId: t.tax_id || "",
       address: t.address,
       cnae: t.cnae,
       createdAt: t.created_at,
@@ -306,6 +397,24 @@ export async function POST(req: Request) {
        VALUES ($1, $2, 'owner', 'active')
        ON CONFLICT (tenant_id, user_id) DO NOTHING`,
       [tenantId, admin.userId]
+    );
+
+    const supportUser = await prisma.user.upsert({
+      where: { email: "support@verifactu.business" },
+      update: { role: "ADMIN", name: "Verifactu Support" },
+      create: {
+        email: "support@verifactu.business",
+        name: "Verifactu Support",
+        role: "ADMIN",
+      },
+    });
+
+    await query(
+      `INSERT INTO memberships (tenant_id, user_id, role, status)
+       VALUES ($1, $2, 'owner', 'active')
+       ON CONFLICT (tenant_id, user_id) DO UPDATE
+       SET role = 'owner', status = 'active'`,
+      [tenantId, supportUser.id]
     );
 
     // Marcar empresa activa para el admin
