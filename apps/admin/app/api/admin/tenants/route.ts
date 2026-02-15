@@ -42,7 +42,7 @@ async function ensureMembership(
   ]);
 
   const existing = await query<{ id: string }>(
-    `SELECT id FROM memberships WHERE tenant_id = $1 AND user_id = $2 LIMIT 1`,
+    `SELECT id FROM memberships WHERE tenant_id = $1::uuid AND user_id = $2 LIMIT 1`,
     [tenantId, userId]
   );
 
@@ -61,7 +61,7 @@ async function ensureMembership(
       await query(
         `UPDATE memberships
          SET ${updates.join(", ")}
-         WHERE tenant_id = $1 AND user_id = $2`,
+         WHERE tenant_id = $1::uuid AND user_id = $2`,
         values
       );
     }
@@ -78,7 +78,9 @@ async function ensureMembership(
     fields.push("status");
     values.push("active");
   }
-  const placeholders = fields.map((_, i) => `$${i + 1}`).join(", ");
+  const placeholders = fields
+    .map((field, i) => (field === "tenant_id" ? `$${i + 1}::uuid` : `$${i + 1}`))
+    .join(", ");
   await query(`INSERT INTO memberships (${fields.join(", ")}) VALUES (${placeholders})`, values);
 }
 
@@ -528,7 +530,9 @@ export async function POST(req: Request) {
       tenantFields.push(tenantTaxColumn);
       tenantValues.push(taxId);
     }
-    const tenantPlaceholders = tenantFields.map((_, i) => `$${i + 1}`).join(", ");
+    const tenantPlaceholders = tenantFields
+      .map((field, i) => (field === "id" ? `$${i + 1}::uuid` : `$${i + 1}`))
+      .join(", ");
     await query(
       `INSERT INTO tenants (${tenantFields.join(", ")})
        VALUES (${tenantPlaceholders})`,
@@ -579,7 +583,9 @@ export async function POST(req: Request) {
           }
 
           if (availableColumns.length > 0) {
-            const placeholders = availableColumns.map((_, i) => `$${i + 1}`).join(", ");
+            const placeholders = availableColumns
+              .map((column, i) => (column === "tenant_id" ? `$${i + 1}::uuid` : `$${i + 1}`))
+              .join(", ");
             const updates = availableColumns
               .filter((col) => col !== "tenant_id")
               .map((col) => `${col} = EXCLUDED.${col}`)
@@ -649,6 +655,12 @@ export async function POST(req: Request) {
         }
 
         const placeholders = fields.map((_, i) => `$${i + 1}`).join(", ");
+        const castedPlaceholders = fields
+          .map((field, i) => {
+            if (field === "preferred_tenant_id") return `$${i + 1}::uuid`;
+            return `$${i + 1}`;
+          })
+          .join(", ");
         const updates: string[] = [];
         if (hasPreferredTenantId) updates.push("preferred_tenant_id = EXCLUDED.preferred_tenant_id");
         if (hasUpdatedAt) updates.push("updated_at = EXCLUDED.updated_at");
@@ -656,7 +668,7 @@ export async function POST(req: Request) {
         if (updates.length > 0) {
           await query(
             `INSERT INTO user_preferences (${fields.join(", ")})
-             VALUES (${placeholders})
+             VALUES (${castedPlaceholders})
              ON CONFLICT (user_id) DO UPDATE
              SET ${updates.join(", ")}`,
             values
@@ -664,7 +676,7 @@ export async function POST(req: Request) {
         } else {
           await query(
             `INSERT INTO user_preferences (${fields.join(", ")})
-             VALUES (${placeholders})
+             VALUES (${castedPlaceholders})
              ON CONFLICT (user_id) DO NOTHING`,
             values
           );
@@ -700,7 +712,7 @@ export async function POST(req: Request) {
          }
        FROM tenants t
        ${await tableExists("tenant_profiles") ? "LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id" : ""}
-       WHERE t.id = $1`,
+       WHERE t.id = $1::uuid`,
       [tenantId]
     );
 
