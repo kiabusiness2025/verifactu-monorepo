@@ -236,6 +236,96 @@ export async function GET(req: Request) {
       );
     }
 
+    try {
+      const { searchParams } = new URL(req.url);
+      const q = (searchParams.get("q") || "").trim().toLowerCase();
+      const from = searchParams.get("from");
+      const to = searchParams.get("to");
+      const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
+      const pageSize = Math.min(
+        Math.max(parseInt(searchParams.get("pageSize") || "25", 10), 1),
+        100
+      );
+      const offset = (page - 1) * pageSize;
+
+      const hasTenantLegalName = await columnExists("tenants", "legal_name");
+      const hasTenantNif = await columnExists("tenants", "nif");
+      const hasTenantTaxId = await columnExists("tenants", "tax_id");
+      const taxIdColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
+      const legalNameExpr = hasTenantLegalName ? "COALESCE(t.legal_name, t.name)" : "t.name";
+
+      const where: string[] = [];
+      const params: Array<string | number> = [];
+
+      if (q) {
+        params.push(`%${q}%`);
+        params.push(`%${q}%`);
+        if (taxIdColumn) params.push(`%${q}%`);
+        const legalNameParamIndex = params.length - (taxIdColumn ? 2 : 1);
+        const nameParamIndex = params.length - (taxIdColumn ? 1 : 0);
+        const conditions = [
+          `LOWER(${legalNameExpr}) LIKE $${legalNameParamIndex}`,
+          `LOWER(t.name) LIKE $${nameParamIndex}`,
+        ];
+        if (taxIdColumn) {
+          conditions.push(`LOWER(t.${taxIdColumn}) LIKE $${params.length}`);
+        }
+        where.push(`(${conditions.join(" OR ")})`);
+      }
+      if (from) {
+        params.push(from);
+        where.push(`t.created_at >= $${params.length}`);
+      }
+      if (to) {
+        params.push(to);
+        where.push(`t.created_at <= $${params.length}`);
+      }
+
+      const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+      const countRows = await query<{ total: number }>(
+        `SELECT COUNT(*)::int as total FROM tenants t ${whereClause}`,
+        params
+      );
+      const tenants = await query<{
+        id: string;
+        legal_name: string;
+        tax_id: string | null;
+        created_at: string;
+      }>(
+        `SELECT
+          t.id,
+          ${legalNameExpr} as legal_name,
+          ${taxIdColumn ? `t.${taxIdColumn}` : "NULL::text"} as tax_id,
+          t.created_at
+         FROM tenants t
+         ${whereClause}
+         ORDER BY t.created_at DESC
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, pageSize, offset]
+      );
+
+      return NextResponse.json({
+        items: tenants.map((t) => ({
+          id: t.id,
+          legalName: t.legal_name,
+          taxId: t.tax_id || "",
+          address: null,
+          cnae: null,
+          createdAt: t.created_at,
+          membersCount: 0,
+          invoicesThisMonth: 0,
+          revenueThisMonth: 0,
+          status: "trial",
+        })),
+        page,
+        pageSize,
+        total: countRows[0]?.total || 0,
+        degraded: true,
+      });
+    } catch (fallbackError) {
+      console.error("Fallback tenants query failed:", fallbackError);
+    }
+
     return NextResponse.json(
       { ok: false, error: "Failed to fetch tenants" },
       { status: 500 }

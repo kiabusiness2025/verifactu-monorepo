@@ -259,7 +259,8 @@ export default function AdminTenantsPage() {
     setSearchError("");
     setSearchResults([]);
     setSearchQuery(item.name || item.nif || "");
-    if (!item?.nif) {
+    const lookupKey = (item?.id || item?.nif || "").trim();
+    if (!lookupKey) {
       setSelectedProfile({ name: item?.name || "", nif: "" });
       setSelectedNormalized({
         name: item?.name || null,
@@ -272,7 +273,7 @@ export default function AdminTenantsPage() {
     setProfileLoading(true);
     try {
       const res = await fetch(
-        `/api/admin/einforma/profile?nif=${encodeURIComponent(item.nif.toUpperCase())}`
+        `/api/admin/einforma/profile?nif=${encodeURIComponent(lookupKey)}`
       );
       const data = await res.json().catch(() => null);
       if (!res.ok) {
@@ -298,7 +299,7 @@ export default function AdminTenantsPage() {
           cnaeText: null,
           postalCode: profile.address?.zip || null,
           city: profile.address?.city || null,
-          sourceId: null,
+          sourceId: item.id || null,
         }
       );
     } catch (err) {
