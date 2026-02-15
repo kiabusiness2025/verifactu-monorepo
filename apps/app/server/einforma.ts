@@ -170,7 +170,7 @@ async function einformaRequest<T>(path: string, params?: Record<string, string>)
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`eInforma API error ${res.status}: ${text}`);
+    throw new Error(`eInforma API error ${res.status} [${url.toString()}]: ${text}`);
   }
 
   return res.json() as Promise<T>;

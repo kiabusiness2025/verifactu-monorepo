@@ -9,6 +9,17 @@ function hasEnv(name: string) {
   return Boolean(process.env[name]?.trim());
 }
 
+function valuePreview(name: string) {
+  const raw = process.env[name]?.trim();
+  if (!raw) return null;
+  try {
+    const u = new URL(raw);
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return raw;
+  }
+}
+
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
   return String(error);
@@ -42,6 +53,11 @@ export async function GET(req: Request) {
       EINFORMA_AUDIENCE: hasEnv("EINFORMA_AUDIENCE"),
       EINFORMA_AUDIENCE_OR_SCOPE: hasEnv("EINFORMA_AUDIENCE_OR_SCOPE"),
     };
+    const envPreview = {
+      EINFORMA_TOKEN_URL: valuePreview("EINFORMA_TOKEN_URL"),
+      EINFORMA_API_BASE_URL: valuePreview("EINFORMA_API_BASE_URL"),
+      EINFORMA_BASE_URL: valuePreview("EINFORMA_BASE_URL"),
+    };
 
     const startedAt = Date.now();
     const items = await searchCompanies(q);
@@ -52,6 +68,7 @@ export async function GET(req: Request) {
       query: q,
       elapsedMs,
       envCheck,
+      envPreview,
       count: items.length,
       sample: items.slice(0, 5),
     });
