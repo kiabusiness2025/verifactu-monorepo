@@ -172,18 +172,16 @@ export default function TenantOverviewPage() {
     win.print();
   }
 
-  function exportSheet() {
+  function exportPdf() {
     if (!tenant) return;
     const html = buildCompanySheetHtml(tenant);
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `verifactu-ficha-${tenant.taxId || tenant.id}.html`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    const win = window.open("", "_blank", "noopener,noreferrer");
+    if (!win) return;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    win.print();
   }
 
   if (loading) {
@@ -216,8 +214,8 @@ export default function TenantOverviewPage() {
             <AccessibleButton variant="secondary" size="sm" onClick={printSheet}>
               Imprimir ficha
             </AccessibleButton>
-            <AccessibleButton variant="secondary" size="sm" onClick={exportSheet}>
-              Exportar ficha
+            <AccessibleButton variant="secondary" size="sm" onClick={exportPdf}>
+              Exportar PDF
             </AccessibleButton>
             <Link
               href={`/tenants/${tenantId}/billing`}

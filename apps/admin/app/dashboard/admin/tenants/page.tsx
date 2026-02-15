@@ -595,8 +595,11 @@ export default function AdminTenantsPage() {
                 )}
               </div>
               <details open className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
-                <summary className="cursor-pointer list-none font-semibold text-slate-900">
-                  Datos básicos
+                <summary className="flex cursor-pointer list-none items-center justify-between font-semibold text-slate-900">
+                  <span>Datos básicos</span>
+                  <span aria-hidden="true" className="text-xs text-slate-500">
+                    ▾
+                  </span>
                 </summary>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <div>
@@ -707,8 +710,11 @@ export default function AdminTenantsPage() {
                 </div>
               </details>
               <details className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
-                <summary className="cursor-pointer list-none font-semibold text-slate-900">
-                  Datos ampliados
+                <summary className="flex cursor-pointer list-none items-center justify-between font-semibold text-slate-900">
+                  <span>Datos ampliados</span>
+                  <span aria-hidden="true" className="text-xs text-slate-500">
+                    ▾
+                  </span>
                 </summary>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <div>
@@ -879,6 +885,28 @@ export default function AdminTenantsPage() {
                   {error}
                 </div>
               )}
+              <div className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-3">
+                <AccessibleButton
+                  variant="secondary"
+                  onClick={() => {
+                    setShowModal(false);
+                    const params = readCurrentParams();
+                    params.delete("create");
+                    replaceWithParams(params);
+                  }}
+                  ariaLabel="Cancelar"
+                >
+                  Cancelar
+                </AccessibleButton>
+                <AccessibleButton
+                  type="submit"
+                  loading={saving}
+                  disabled={saving}
+                  ariaLabel={editing ? "Guardar cambios de empresa" : "Guardar empresa"}
+                >
+                  {saving ? "Guardando..." : "Guardar"}
+                </AccessibleButton>
+              </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <p className="mt-1 text-xs text-slate-600">
                   La búsqueda funciona por nombre o CIF/NIF. Si hay muchos resultados, añade más
@@ -904,36 +932,12 @@ export default function AdminTenantsPage() {
               <div className="border-t border-slate-200 p-4">
               <div className="flex flex-wrap gap-2">
                 <AccessibleButton
-                  variant="secondary"
-                  onClick={() => {
-                    setShowModal(false);
-                    const params = readCurrentParams();
-                    params.delete("create");
-                    replaceWithParams(params);
-                  }}
-                  ariaLabel="Cancelar"
-                >
-                  Cancelar
-                </AccessibleButton>
-                <AccessibleButton
                   type="button"
                   variant="secondary"
                   onClick={() => setManualEditMode((prev) => !prev)}
                   ariaLabel="Activar edición manual"
                 >
                   {manualEditMode ? "Cerrar edición manual" : "Algunos datos son incorrectos"}
-                </AccessibleButton>
-                <AccessibleButton
-                  type="submit"
-                  loading={saving}
-                  disabled={saving}
-                  ariaLabel={editing ? "Guardar cambios de empresa" : "Crear empresa"}
-                >
-                  {saving
-                    ? "Guardando..."
-                    : manualEditMode
-                    ? "Guardar con correcciones"
-                    : "Todos los datos son correctos"}
                 </AccessibleButton>
               </div>
               </div>

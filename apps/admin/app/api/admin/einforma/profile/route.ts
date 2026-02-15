@@ -59,6 +59,22 @@ function getRawCompanyNode(raw: unknown) {
   return data?.empresa ?? data?.company ?? data ?? {};
 }
 
+function getByPath(obj: any, path: string) {
+  return path
+    .split(".")
+    .reduce((acc, key) => (acc && typeof acc === "object" ? acc[key] : undefined), obj);
+}
+
+function pickFirst(obj: any, paths: string[]) {
+  for (const path of paths) {
+    const value = getByPath(obj, path);
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return value;
+    }
+  }
+  return undefined;
+}
+
 function readMaybeNumber(value: unknown) {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   const parsed = Number(value);
@@ -109,31 +125,54 @@ export async function GET(req: Request) {
     ) {
       const rawCompany = getRawCompanyNode(tenant.profile.einformaRaw);
       const rawRepresentative =
-        rawCompany?.administradores?.[0]?.nombre ??
-        rawCompany?.representatives?.[0]?.name ??
+        pickFirst(rawCompany, [
+          "administradores.0.nombre",
+          "representatives.0.name",
+          "representantes.0.nombre",
+          "administrador",
+          "representante",
+        ]) ??
         undefined;
       const profile = {
         name: tenant.name ?? '',
         legalName: tenant.legalName ?? undefined,
         nif: tenant.nif ?? normalizedNif,
         cnae: tenant.profile.cnae ?? undefined,
-        legalForm: tenant.profile.legalForm ?? undefined,
-        status: tenant.profile.status ?? undefined,
-        website: tenant.profile.website ?? undefined,
-        email: rawCompany?.email ?? undefined,
-        phone: rawCompany?.telefono ?? rawCompany?.phone ?? undefined,
-        employees: readMaybeNumber(rawCompany?.empleados),
-        sales: readMaybeNumber(rawCompany?.ventas),
-        salesYear: readMaybeNumber(rawCompany?.anioVentas),
+        legalForm:
+          tenant.profile.legalForm ??
+          (pickFirst(rawCompany, ["formaJuridica", "legalForm", "datosGenerales.formaJuridica"]) as
+            | string
+            | undefined),
+        status:
+          tenant.profile.status ??
+          (pickFirst(rawCompany, ["situacion", "status", "estado", "estadoActual"]) as
+            | string
+            | undefined),
+        website:
+          tenant.profile.website ??
+          (pickFirst(rawCompany, ["web", "website"]) as string | undefined),
+        email: (pickFirst(rawCompany, ["email", "contacto.email"]) as string | undefined),
+        phone: (pickFirst(rawCompany, ["telefono", "phone", "contacto.telefono"]) as
+          | string
+          | undefined),
+        employees: readMaybeNumber(pickFirst(rawCompany, ["empleados", "employees"])),
+        sales: readMaybeNumber(pickFirst(rawCompany, ["ventas", "sales"])),
+        salesYear: readMaybeNumber(pickFirst(rawCompany, ["anioVentas", "salesYear"])),
         capitalSocial:
           typeof tenant.profile.capitalSocial === 'number'
             ? tenant.profile.capitalSocial
-            : tenant.profile.capitalSocial ?? undefined,
+            : tenant.profile.capitalSocial ??
+              readMaybeNumber(pickFirst(rawCompany, ["capitalSocial", "capital"])) ??
+              undefined,
         constitutionDate: tenant.profile.incorporationDate
           ? tenant.profile.incorporationDate.toISOString().slice(0, 10)
-          : rawCompany?.fechaConstitucion ?? rawCompany?.constitutionDate ?? undefined,
+          : (pickFirst(rawCompany, ["fechaConstitucion", "constitutionDate"]) as
+              | string
+              | undefined),
         lastBalanceDate:
-          rawCompany?.fechaUltimoBalance ?? rawCompany?.lastBalanceDate ?? undefined,
+          (pickFirst(rawCompany, ["fechaUltimoBalance", "lastBalanceDate"]) as
+            | string
+            | undefined),
         sourceId: tenant.profile.sourceId ?? undefined,
         representatives: tenant.profile.representative
           ? [{ name: tenant.profile.representative }]
@@ -143,23 +182,21 @@ export async function GET(req: Request) {
         address: {
           street:
             tenant.profile.address ??
-            rawCompany?.domicilioSocial ??
-            rawCompany?.address?.street ??
+            (pickFirst(rawCompany, ["domicilioSocial", "address.street"]) as
+              | string
+              | undefined) ??
             undefined,
           zip:
             tenant.profile.postalCode ??
-            rawCompany?.cp ??
-            rawCompany?.address?.zip ??
+            (pickFirst(rawCompany, ["cp", "address.zip"]) as string | undefined) ??
             undefined,
           city:
             tenant.profile.city ??
-            rawCompany?.localidad ??
-            rawCompany?.address?.city ??
+            (pickFirst(rawCompany, ["localidad", "address.city"]) as string | undefined) ??
             undefined,
           province:
             tenant.profile.province ??
-            rawCompany?.provincia ??
-            rawCompany?.address?.province ??
+            (pickFirst(rawCompany, ["provincia", "address.province"]) as string | undefined) ??
             undefined,
           country: tenant.profile.country ?? 'ES',
         },
