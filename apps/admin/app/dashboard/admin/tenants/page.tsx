@@ -53,6 +53,7 @@ type EinformaCompanyProfile = {
   website?: string;
   capitalSocial?: number | string;
   constitutionDate?: string;
+  representatives?: Array<{ name: string; role?: string }>;
   raw?: unknown;
 };
 
@@ -68,6 +69,13 @@ type EinformaNormalized = {
   postalCode?: string | null;
   city?: string | null;
   sourceId?: string | null;
+};
+
+type EditHistoryEntry = {
+  field: string;
+  from: string;
+  to: string;
+  at: string;
 };
 
 function normalizeText(value?: string) {
@@ -146,6 +154,8 @@ export default function AdminTenantsPage() {
   const [searchError, setSearchError] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
   const skipNextSearchRef = useRef(false);
+  const [manualEditMode, setManualEditMode] = useState(false);
+  const [editHistory, setEditHistory] = useState<EditHistoryEntry[]>([]);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
 
   const queryString = useMemo(() => {
@@ -163,6 +173,8 @@ export default function AdminTenantsPage() {
     setSearchLoading(false);
     setSearchError("");
     setProfileLoading(false);
+    setManualEditMode(false);
+    setEditHistory([]);
     setSelectedProfile(null);
     setSelectedNormalized(null);
   }
@@ -238,7 +250,15 @@ export default function AdminTenantsPage() {
               matchesAllTokens(normalizeText(item.name), normalizeText(item.nif), tokens)
             )
           : sorted;
-        setSearchResults(filtered);
+        const deduped: EinformaSearchItem[] = [];
+        const seen = new Set<string>();
+        for (const row of filtered) {
+          const key = normalizeText(`${row.name ?? ""}|${row.nif ?? ""}|${row.province ?? ""}`);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          deduped.push(row);
+        }
+        setSearchResults(deduped);
       } catch (err) {
         setSearchResults([]);
         setSearchError("No se pudo realizar la búsqueda");
@@ -306,7 +326,7 @@ export default function AdminTenantsPage() {
           legalName: profile.legalName || null,
           nif: (profile.nif || item.nif || "").toUpperCase(),
           address: profile.address?.street || null,
-          province: profile.address?.province || null,
+          province: profile.address?.province || item.province || null,
           country: profile.address?.country || 'ES',
           cnaeCode: null,
           cnaeText: null,
@@ -320,6 +340,50 @@ export default function AdminTenantsPage() {
     } finally {
       setProfileLoading(false);
     }
+  }
+
+  function registerEdit(field: string, fromValue: unknown, toValue: unknown) {
+    const from = String(fromValue ?? "").trim();
+    const to = String(toValue ?? "").trim();
+    if (from === to) return;
+    setEditHistory((prev) => [...prev, { field, from, to, at: new Date().toISOString() }]);
+  }
+
+  function updateNormalizedField<K extends keyof EinformaNormalized>(
+    field: K,
+    value: EinformaNormalized[K]
+  ) {
+    setSelectedNormalized((prev) => {
+      if (!prev) return prev;
+      registerEdit(`normalized.${String(field)}`, prev[field], value);
+      return { ...prev, [field]: value };
+    });
+  }
+
+  function updateProfileField<K extends keyof EinformaCompanyProfile>(
+    field: K,
+    value: EinformaCompanyProfile[K]
+  ) {
+    setSelectedProfile((prev) => {
+      if (!prev) return prev;
+      registerEdit(`profile.${String(field)}`, prev[field], value);
+      return { ...prev, [field]: value };
+    });
+  }
+
+  function updateRepresentativeName(value: string) {
+    setSelectedProfile((prev) => {
+      if (!prev) return prev;
+      const previousName = prev.representatives?.[0]?.name ?? "";
+      registerEdit("profile.representative", previousName, value);
+      const representatives = [...(prev.representatives ?? [])];
+      if (representatives.length === 0) {
+        representatives.push({ name: value });
+      } else {
+        representatives[0] = { ...representatives[0], name: value };
+      }
+      return { ...prev, representatives };
+    });
   }
 
   function openIsaakAssistance() {
@@ -363,13 +427,34 @@ export default function AdminTenantsPage() {
     setSaving(true);
     setError("");
     try {
+      const existingRaw =
+        selectedProfile?.raw && typeof selectedProfile.raw === "object" && !Array.isArray(selectedProfile.raw)
+          ? (selectedProfile.raw as Record<string, unknown>)
+          : {};
+      const existingHistory = Array.isArray((existingRaw as any).manualEditHistory)
+        ? ((existingRaw as any).manualEditHistory as unknown[])
+        : [];
+      const profilePayload =
+        selectedProfile && editHistory.length > 0
+          ? {
+              ...selectedProfile,
+              raw: {
+                ...existingRaw,
+                manualEditHistory: [
+                  ...existingHistory,
+                  ...editHistory.map((entry) => ({ ...entry, source: "admin_companies_modal" })),
+                ],
+              },
+            }
+          : selectedProfile;
+
       if (editing) {
         const res = await adminPatch<{ tenant: TenantRow }>(
           `/api/admin/tenants/${editing.id}`,
           {
             source: "einforma",
             normalized: selectedNormalized,
-            profile: selectedProfile,
+            profile: profilePayload,
           }
         );
         setItems((prev) => prev.map((t) => (t.id === editing.id ? res.tenant : t)));
@@ -377,7 +462,7 @@ export default function AdminTenantsPage() {
         const res = await adminPost<{ tenant: TenantRow }>("/api/admin/tenants", {
           source: "einforma",
           normalized: selectedNormalized,
-          profile: selectedProfile,
+          profile: profilePayload,
         });
         setItems((prev) => [res.tenant, ...prev]);
       }
@@ -649,57 +734,173 @@ export default function AdminTenantsPage() {
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <div>
                     <div className="text-xs text-slate-500">Razón social</div>
-                    <div className="text-slate-900">
-                      {selectedNormalized?.legalName || selectedNormalized?.name || "--"}
-                    </div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedNormalized?.legalName || selectedNormalized?.name || ""}
+                        onChange={(e) => updateNormalizedField("legalName", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">
+                        {selectedNormalized?.legalName || selectedNormalized?.name || "--"}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">CIF/NIF</div>
-                    <div className="text-slate-900">{selectedNormalized?.nif || "--"}</div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedNormalized?.nif || ""}
+                        onChange={(e) => updateNormalizedField("nif", e.target.value.toUpperCase())}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedNormalized?.nif || "--"}</div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Dirección</div>
-                    <div className="text-slate-900">{selectedNormalized?.address || "--"}</div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedNormalized?.address || ""}
+                        onChange={(e) => updateNormalizedField("address", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedNormalized?.address || "--"}</div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Ciudad</div>
-                    <div className="text-slate-900">{selectedNormalized?.city || "--"}</div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedNormalized?.city || ""}
+                        onChange={(e) => updateNormalizedField("city", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedNormalized?.city || "--"}</div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Provincia</div>
-                    <div className="text-slate-900">{selectedNormalized?.province || "--"}</div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedNormalized?.province || ""}
+                        onChange={(e) => updateNormalizedField("province", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedNormalized?.province || "--"}</div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Código postal</div>
-                    <div className="text-slate-900">{selectedNormalized?.postalCode || "--"}</div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedNormalized?.postalCode || ""}
+                        onChange={(e) => updateNormalizedField("postalCode", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedNormalized?.postalCode || "--"}</div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">CNAE</div>
-                    <div className="text-slate-900">
-                      {selectedProfile?.cnae ||
-                        [selectedNormalized?.cnaeCode, selectedNormalized?.cnaeText]
-                          .filter(Boolean)
-                          .join(" - ") ||
-                        "--"}
-                    </div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={
+                          selectedProfile?.cnae ||
+                          [selectedNormalized?.cnaeCode, selectedNormalized?.cnaeText]
+                            .filter(Boolean)
+                            .join(" - ") ||
+                          ""
+                        }
+                        onChange={(e) => updateProfileField("cnae", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">
+                        {selectedProfile?.cnae ||
+                          [selectedNormalized?.cnaeCode, selectedNormalized?.cnaeText]
+                            .filter(Boolean)
+                            .join(" - ") ||
+                          "--"}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Web</div>
-                    <div className="text-slate-900">{selectedProfile?.website || "--"}</div>
+                    <input
+                      type="text"
+                      value={selectedProfile?.website || ""}
+                      onChange={(e) => updateProfileField("website", e.target.value)}
+                      className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                    />
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Forma jurídica</div>
-                    <div className="text-slate-900">{selectedProfile?.legalForm || "--"}</div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedProfile?.legalForm || ""}
+                        onChange={(e) => updateProfileField("legalForm", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedProfile?.legalForm || "--"}</div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Estado</div>
-                    <div className="text-slate-900">{selectedProfile?.status || "--"}</div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedProfile?.status || ""}
+                        onChange={(e) => updateProfileField("status", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">{selectedProfile?.status || "--"}</div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-slate-500">Capital social</div>
-                    <div className="text-slate-900">
-                      {selectedProfile?.capitalSocial ?? "--"}
-                    </div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedProfile?.capitalSocial != null ? String(selectedProfile.capitalSocial) : ""}
+                        onChange={(e) => updateProfileField("capitalSocial", e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">
+                        {selectedProfile?.capitalSocial ?? "--"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">Representante / administrador</div>
+                    {manualEditMode ? (
+                      <input
+                        type="text"
+                        value={selectedProfile?.representatives?.[0]?.name || ""}
+                        onChange={(e) => updateRepresentativeName(e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                      />
+                    ) : (
+                      <div className="text-slate-900">
+                        {selectedProfile?.representatives?.[0]?.name || "--"}
+                      </div>
+                    )}
                   </div>
                 </div>
                 {!selectedNormalized && (
@@ -749,12 +950,24 @@ export default function AdminTenantsPage() {
                   Cancelar
                 </AccessibleButton>
                 <AccessibleButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setManualEditMode((prev) => !prev)}
+                  ariaLabel="Activar edición manual"
+                >
+                  {manualEditMode ? "Cerrar edición manual" : "Algunos datos son incorrectos"}
+                </AccessibleButton>
+                <AccessibleButton
                   type="submit"
                   loading={saving}
                   disabled={saving}
                   ariaLabel={editing ? "Guardar cambios de empresa" : "Crear empresa"}
                 >
-                  {saving ? "Guardando..." : "Guardar"}
+                  {saving
+                    ? "Guardando..."
+                    : manualEditMode
+                    ? "Guardar con correcciones"
+                    : "Todos los datos son correctos"}
                 </AccessibleButton>
               </div>
             </form>
