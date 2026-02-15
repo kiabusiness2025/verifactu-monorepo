@@ -33,6 +33,7 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const q = (searchParams.get("q") ?? "").trim();
+    const debug = searchParams.get("debug") === "1";
 
     if (q.length < 3) {
       return NextResponse.json({ items: [] });
@@ -82,8 +83,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "No se pudo consultar eInforma" },
+      debug
+        ? { error: "No se pudo consultar eInforma", debugMessage: message }
+        : { error: "No se pudo consultar eInforma" },
       { status: 500 }
     );
   }

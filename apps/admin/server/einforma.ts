@@ -213,8 +213,6 @@ export async function searchCompanies(q: string): Promise<EinformaSearchItem[]> 
     q.trim(),
     q.trim().toUpperCase(),
     q.trim().toLowerCase(),
-    `${q.trim()}*`,
-    `*${q.trim()}*`,
   ].filter(Boolean);
 
   for (const candidate of candidates) {

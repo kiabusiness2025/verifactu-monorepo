@@ -22,6 +22,7 @@ export function EInformaSearch({
 }: EInformaSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<EInformaCompany[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -42,20 +43,30 @@ export function EInformaSearch({
     const searchCompanies = async () => {
       if (query.trim().length < 3) {
         setResults([]);
+        setSearchError(null);
         setShowResults(false);
         return;
       }
 
       setLoading(true);
+      setSearchError(null);
       try {
         const res = await fetch(`/api/admin/einforma/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
+        if (!res.ok) {
+          setResults([]);
+          setSearchError(data?.error ?? 'No se pudo consultar eInforma');
+          setShowResults(true);
+          return;
+        }
         const items = data?.items ?? [];
         setResults(Array.isArray(items) ? items : []);
         setShowResults(true);
       } catch (error) {
         console.error('Error searching:', error);
         setResults([]);
+        setSearchError('No se pudo consultar eInforma');
+        setShowResults(true);
       } finally {
         setLoading(false);
       }
@@ -86,6 +97,7 @@ export function EInformaSearch({
     onSelect(company);
     setQuery('');
     setResults([]);
+    setSearchError(null);
     setShowResults(false);
     setSelectedIndex(-1);
   };
@@ -169,8 +181,19 @@ export function EInformaSearch({
         </div>
       )}
 
+      {/* Search Error */}
+      {showResults && query.length >= 3 && !loading && !!searchError && (
+        <div className="absolute z-50 mt-2 w-full rounded-lg border border-red-200 bg-white shadow-lg p-4">
+          <div className="text-center text-sm text-red-700">
+            <Building2 className="h-8 w-8 mx-auto mb-2 text-red-300" />
+            <p className="font-medium">No se pudo buscar en eInforma</p>
+            <p className="text-xs mt-1">{searchError}</p>
+          </div>
+        </div>
+      )}
+
       {/* No Results */}
-      {showResults && query.length >= 3 && !loading && results.length === 0 && (
+      {showResults && query.length >= 3 && !loading && !searchError && results.length === 0 && (
         <div className="absolute z-50 mt-2 w-full rounded-lg border border-slate-200 bg-white shadow-lg p-4">
           <div className="text-center text-sm text-slate-600">
             <Building2 className="h-8 w-8 mx-auto mb-2 text-slate-400" />
