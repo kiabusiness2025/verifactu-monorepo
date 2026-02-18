@@ -7,17 +7,24 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSessionPayload();
   let supportMode = false;
   let supportTenantName: string | null = null;
 
-  if (session?.uid) {
-    const resolved = await resolveActiveTenant({
-      userId: session.uid,
-      sessionTenantId: session.tenantId ?? null,
+  try {
+    const session = await getSessionPayload();
+
+    if (session?.uid) {
+      const resolved = await resolveActiveTenant({
+        userId: session.uid,
+        sessionTenantId: session.tenantId ?? null,
+      });
+      supportMode = resolved.supportMode;
+      supportTenantName = resolved.tenant?.legalName || resolved.tenant?.name || null;
+    }
+  } catch (error) {
+    console.error("[dashboard/layout] failed to resolve support tenant context", {
+      message: error instanceof Error ? error.message : String(error),
     });
-    supportMode = resolved.supportMode;
-    supportTenantName = resolved.tenant?.legalName || resolved.tenant?.name || null;
   }
 
   return (
