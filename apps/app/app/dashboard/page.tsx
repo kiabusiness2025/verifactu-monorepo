@@ -20,59 +20,57 @@ const exercises = [
 ];
 
 export default async function DashboardPage() {
-  let data;
-
   try {
-    data = await getDashboardSummary();
-  } catch (error) {
-    console.error('[dashboard] getDashboardSummary failed', {
-      message: error instanceof Error ? error.message : String(error),
+    let data;
 
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    try {
+      data = await getDashboardSummary();
+    } catch (error) {
+      console.error('[dashboard] getDashboardSummary failed', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+          <div className="text-sm font-semibold text-slate-900">No se pudo cargar el dashboard</div>
+          <div className="mt-2 text-xs text-slate-500">
+            Reintenta en unos segundos. Si el error persiste, contacta con soporte.
+          </div>
+        </div>
+      );
+    }
+
+    const activeTenant = data.activeTenant ?? data.tenants[0] ?? null;
+
+    const activeTenantId = data.activeTenantId ?? activeTenant?.id ?? null;
+
+    const demoMode = data.demoMode;
+
+    const currentYear = new Date().getFullYear().toString();
+
+    const exerciseLabel =
+      exercises.find((item) => item.id === currentYear)?.label ?? `Ejercicio ${currentYear}`;
+
+    const tenants = data.tenants.length
+      ? data.tenants
+      : [
+          {
+            id: 'demo',
+
+            name: 'Empresa Demo SL',
+
+            nif: 'B12345678',
+
+            legalName: null,
+
+            isDemo: true,
+          },
+        ];
+
+    const tenantStatus = demoMode ? 'Demo' : 'Activa';
 
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
-        <div className="text-sm font-semibold text-slate-900">No se pudo cargar el dashboard</div>
-
-        <div className="mt-2 text-xs text-slate-500">
-          Reintenta en unos segundos. Si el error persiste, contacta con soporte.
-        </div>
-      </div>
-    );
-  }
-
-  const activeTenant = data.activeTenant ?? data.tenants[0] ?? null;
-
-  const activeTenantId = data.activeTenantId ?? activeTenant?.id ?? null;
-
-  const demoMode = data.demoMode;
-
-  const currentYear = new Date().getFullYear().toString();
-
-  const exerciseLabel =
-    exercises.find((item) => item.id === currentYear)?.label ?? `Ejercicio ${currentYear}`;
-
-  const tenants = data.tenants.length
-    ? data.tenants
-    : [
-        {
-          id: 'demo',
-
-          name: 'Empresa Demo SL',
-
-          nif: 'B12345678',
-
-          legalName: null,
-
-          isDemo: true,
-        },
-      ];
-
-  const tenantStatus = demoMode ? 'Demo' : 'Activa';
-
-  return (
-    <div className="space-y-6">
+      <div className="space-y-6">
       <IsaakContextBridge
         tenantId={activeTenantId}
         demoMode={demoMode}
@@ -256,6 +254,20 @@ export default async function DashboardPage() {
           ))}
         </div>
       </div>
-    </div>
-  );
+      </div>
+    );
+  } catch (error) {
+    console.error('[dashboard] render failed', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+        <div className="text-sm font-semibold text-slate-900">No se pudo cargar el dashboard</div>
+        <div className="mt-2 text-xs text-slate-500">
+          Reintenta en unos segundos. Si el error persiste, contacta con soporte.
+        </div>
+      </div>
+    );
+  }
 }
