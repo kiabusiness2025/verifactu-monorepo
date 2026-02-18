@@ -116,21 +116,9 @@ export function Topbar({
   }, [showUserMenu]);
 
   useEffect(() => {
-    if (effectiveDemo) {
-      setIsAdmin(false);
-      return;
-    }
-    async function checkAdminStatus() {
-      try {
-        const res = await fetch('/api/admin/check', { credentials: 'include' });
-        const data = await res.json().catch(() => ({ isAdmin: false }));
-        setIsAdmin(data.isAdmin === true);
-      } catch (error) {
-        console.error('Failed to check admin status:', error);
-        setIsAdmin(false);
-      }
-    }
-    checkAdminStatus();
+    // Legacy /api/admin/* endpoints are no longer served on app.verifactu.business.
+    // Admin access is handled on admin.verifactu.business.
+    setIsAdmin(false);
   }, [firebaseUser, effectiveDemo]);
 
   useEffect(() => {
