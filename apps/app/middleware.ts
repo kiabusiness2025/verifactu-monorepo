@@ -24,6 +24,11 @@ async function getSessionPayload(req: NextRequest): Promise<SessionPayload | nul
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Backward compatibility for cached clients still probing legacy admin status.
+  if (pathname === "/api/admin/check") {
+    return NextResponse.json({ isAdmin: false }, { status: 200 });
+  }
+
   if (pathname.startsWith("/api/admin")) {
     return NextResponse.json(
       { error: "Legacy admin API removed. Use admin.verifactu.business." },
