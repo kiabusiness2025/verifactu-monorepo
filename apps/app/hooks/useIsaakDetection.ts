@@ -31,7 +31,7 @@ export function useIsaakDetection(): IsaakDetection {
     if (pathname.includes('/dashboard/admin')) {
       context = 'admin';
       role = 'admin';
-    } else if (pathname.includes('/dashboard')) {
+    } else if (pathname.includes('/dashboard') || pathname.includes('/demo')) {
       context = 'dashboard';
       role = 'user';
     } else {

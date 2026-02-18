@@ -16,14 +16,16 @@ export type IsaakContext = {
   sabiasQue?: string;
 };
 
-function resolveSection(pathname: string): { key: string; title: string } {
-  if (pathname.startsWith("/dashboard/invoices")) return { key: "invoices", title: "Facturacion" };
-  if (pathname.startsWith("/dashboard/documents")) return { key: "documents", title: "Documentos" };
-  if (pathname.startsWith("/dashboard/banks")) return { key: "banks", title: "Bancos" };
-  if (pathname.startsWith("/dashboard/calendar")) return { key: "calendar", title: "Calendario" };
-  if (pathname.startsWith("/dashboard/settings")) return { key: "settings", title: "Configuracion" };
-  if (pathname.startsWith("/dashboard/clients")) return { key: "clients", title: "Clientes" };
-  return { key: "dashboard", title: "Resumen general" };
+function resolveSection(pathname: string): { key: string; title: string; basePath: string } {
+  const isDemo = pathname.startsWith("/demo");
+  const basePath = isDemo ? "/demo" : "/dashboard";
+  if (pathname.startsWith(`${basePath}/invoices`)) return { key: "invoices", title: "Facturacion", basePath };
+  if (pathname.startsWith(`${basePath}/documents`)) return { key: "documents", title: "Documentos", basePath };
+  if (pathname.startsWith(`${basePath}/banks`)) return { key: "banks", title: "Bancos", basePath };
+  if (pathname.startsWith(`${basePath}/calendar`)) return { key: "calendar", title: "Calendario", basePath };
+  if (pathname.startsWith(`${basePath}/settings`)) return { key: "settings", title: "Configuracion", basePath };
+  if (pathname.startsWith(`${basePath}/clients`)) return { key: "clients", title: "Clientes", basePath };
+  return { key: "dashboard", title: "Resumen general", basePath };
 }
 
 const sabiasQuePool: Record<string, string[]> = {
@@ -62,7 +64,7 @@ function dayOfYearLocal(date: Date): number {
 export function useIsaakContext(userName?: string): IsaakContext {
   const pathname = usePathname() || "/dashboard";
 
-  const { key, title } = useMemo(() => resolveSection(pathname), [pathname]);
+  const { key, title, basePath } = useMemo(() => resolveSection(pathname), [pathname]);
 
   // Important for hydration: the initial render must be deterministic.
   // We compute the "dynamic" parts (time-based greeting / rotating tip) only after mount.
@@ -88,38 +90,38 @@ export function useIsaakContext(userName?: string): IsaakContext {
       switch (key) {
         case "invoices":
           return [
-            { label: "Emitir factura VeriFactu", href: "/dashboard/invoices" },
-            { label: "Revisar borradores", href: "/dashboard/invoices" },
+            { label: "Emitir factura VeriFactu", href: `${basePath}/invoices` },
+            { label: "Revisar borradores", href: `${basePath}/invoices` },
           ];
         case "documents":
           return [
-            { label: "Subir documento", href: "/dashboard/documents" },
-            { label: "Compartir con asesor", href: "/dashboard/documents" },
+            { label: "Subir documento", href: `${basePath}/documents` },
+            { label: "Compartir con asesor", href: `${basePath}/documents` },
           ];
         case "banks":
           return [
-            { label: "Conciliar movimientos", href: "/dashboard/banks" },
-            { label: "Ver pendientes", href: "/dashboard/banks" },
+            { label: "Conciliar movimientos", href: `${basePath}/banks` },
+            { label: "Ver pendientes", href: `${basePath}/banks` },
           ];
         case "calendar":
           return [
-            { label: "Ver plazos fiscales", href: "/dashboard/calendar" },
-            { label: "Crear recordatorio", href: "/dashboard/calendar" },
+            { label: "Ver plazos fiscales", href: `${basePath}/calendar` },
+            { label: "Crear recordatorio", href: `${basePath}/calendar` },
           ];
         case "settings":
           return [
-            { label: "Configurar VeriFactu", href: "/dashboard/settings" },
-            { label: "Anadir usuario", href: "/dashboard/settings" },
+            { label: "Configurar VeriFactu", href: `${basePath}/settings` },
+            { label: "Anadir usuario", href: `${basePath}/settings` },
           ];
         case "clients":
           return [
-            { label: "Anadir cliente", href: "/dashboard/clients" },
-            { label: "Ver fichas", href: "/dashboard/clients" },
+            { label: "Anadir cliente", href: `${basePath}/clients` },
+            { label: "Ver fichas", href: `${basePath}/clients` },
           ];
         default:
           return [
-            { label: "Ver resumen", href: "/dashboard" },
-            { label: "Preguntar a Isaak", href: "/dashboard" },
+            { label: "Ver resumen", href: `${basePath}` },
+            { label: "Preguntar a Isaak", href: `${basePath}` },
           ];
       }
     })();
@@ -133,5 +135,5 @@ export function useIsaakContext(userName?: string): IsaakContext {
       suggestions,
       sabiasQue,
     };
-  }, [greetingPrefix, key, pathname, sabiasQue, title, userName]);
+  }, [basePath, greetingPrefix, key, pathname, sabiasQue, title, userName]);
 }

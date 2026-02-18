@@ -12,6 +12,7 @@ export interface ProactiveMessage {
   title: string;
   message: string;
   action?: string;
+  href?: string;
   icon: ProactiveMessageType;
   delay: number;
 }

@@ -444,204 +444,104 @@ export function DashboardMock() {
 }
 
 export function HeroTripleMock() {
-  const [activeId, setActiveId] = React.useState<'resumen' | 'facturas' | 'isaak'>('resumen');
-  const [qaIndex, setQaIndex] = React.useState(0);
+  const slides = [
+    {
+      id: "overview",
+      title: "Resumen demo",
+      caption: "Vista general con KPIs, empresa activa y acciones rápidas con Isaak.",
+      src: "/assets/hero/demo-overview.svg",
+    },
+    {
+      id: "invoices",
+      title: "Facturas en demo",
+      caption: "Listado de facturas con estados y métricas para validar el flujo completo.",
+      src: "/assets/hero/demo-invoices.svg",
+    },
+    {
+      id: "isaak",
+      title: "Asistente flotante",
+      caption: "Isaak con mensajes proactivos según la sección para guiar al usuario.",
+      src: "/assets/hero/demo-isaak.svg",
+    },
+  ] as const;
+  const [activeIndex, setActiveIndex] = React.useState(0);
+
   React.useEffect(() => {
-    const order: Array<typeof activeId> = ['resumen', 'facturas', 'isaak'];
     const interval = setInterval(() => {
-      setActiveId((prev) => {
-        const idx = order.indexOf(prev);
-        return order[(idx + 1) % order.length];
-      });
-    }, 4200);
+      setActiveIndex((prev) => (prev + 1) % slides.length);
+    }, 4500);
     return () => clearInterval(interval);
-  }, []);
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setQaIndex((prev) => (prev + 1) % 3);
-    }, 5200);
-    return () => clearInterval(interval);
-  }, []);
-
-  const positions = {
-    resumen:
-      'sm:translate-x-[-150px] sm:translate-y-[-360px] lg:translate-x-[-170px] lg:translate-y-[-400px]',
-    facturas:
-      'sm:translate-x-[140px] sm:translate-y-[-330px] lg:translate-x-[170px] lg:translate-y-[-360px]',
-    isaak:
-      'sm:translate-x-[-10px] sm:translate-y-[-70px] lg:translate-x-[-20px] lg:translate-y-[-40px]',
-  } as const;
-
-  const panels = [
-    {
-      id: 'resumen' as const,
-      title: 'Resumen general',
-      desc: 'Ventas, gastos y beneficio en un vistazo.',
-      content: (
-        <div className="mt-4 grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <KpiCard label="Ventas mes" value="18.420 EUR" sub="+9%" />
-            <KpiCard label="Gastos mes" value="11.260 EUR" sub="+5%" />
-            <KpiCard label="Beneficio" value="7.160 EUR" sub="+12%" />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-xs font-semibold text-slate-700">Ultimo cierre</div>
-              <div className="mt-2 text-sm text-slate-600">Diciembre 2025: margen 31%</div>
-              <div className="mt-2 text-xs text-slate-500">Checklist completado al 90%</div>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="text-xs font-semibold text-slate-700">Avisos de calendario</div>
-              <ul className="mt-2 space-y-1 text-xs text-slate-600">
-                <li>Modelo IVA T1 2026: 12 dias</li>
-                <li>Conciliacion bancaria: pendiente</li>
-                <li>Recordatorio: subir 2 tickets</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'facturas' as const,
-      title: 'Facturas verificadas',
-      desc: 'Estado VeriFactu con QR y huella.',
-      content: (
-        <div className="mt-4 space-y-3 text-xs text-slate-600">
-          {[
-            {
-              number: 'VF-2026-0132',
-              client: 'Nova Retail',
-              amount: '1.240 EUR',
-              status: 'Validado AEAT',
-            },
-            { number: 'VF-2026-0133', client: 'Luna Tech', amount: '980 EUR', status: 'Enviado' },
-            {
-              number: 'VF-2026-0134',
-              client: 'Eco Servicios',
-              amount: '410 EUR',
-              status: 'Pendiente',
-            },
-          ].map((row) => (
-            <div
-              key={row.number}
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2"
-            >
-              <div>
-                <div className="text-[11px] font-semibold text-slate-800">{row.number}</div>
-                <div className="text-[11px] text-slate-500">{row.client}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-[11px] font-semibold text-slate-800">{row.amount}</div>
-                <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                  {row.status}
-                </span>
-              </div>
-            </div>
-          ))}
-          <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] text-blue-700">
-            Estado VeriFactu visible en cada factura.
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'isaak' as const,
-      title: 'Isaak en vivo',
-      desc: 'Respuestas inmediatas y accionables.',
-      content: (
-        <div className="mt-4 space-y-2">
-          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2">
-            <div className="text-xs font-semibold text-slate-700">Chat con Isaak</div>
-            <div className="flex gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span className="h-2 w-2 rounded-full bg-amber-400" />
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            </div>
-          </div>
-          {(() => {
-            const items = [
-              {
-                q: 'Isaak, resumen rapido de enero 2026',
-                a: 'Vamos genial ?? Ventas 12.480 EUR, gastos 7.130 EUR. Beneficio 5.350 EUR.',
-                hint: '¿Quieres ver el detalle por cliente? ?',
-                tone: 'emerald',
-              },
-              {
-                q: 'Que falta para cierre 2025?',
-                a: 'Te faltan 2 facturas y un extracto ????. ¿Te lo recuerdo hoy?',
-                hint: 'Te preparo checklist con un clic ?',
-                tone: 'amber',
-              },
-              {
-                q: 'Tengo facturas verificadas?',
-                a: 'Sí ?? 9 facturas con QR y huella hash listos.',
-                hint: '¿Compartimos el informe con tu gestor? ??',
-                tone: 'emerald',
-              },
-            ];
-            const item = items[qaIndex];
-            const base =
-              item.tone === 'amber'
-                ? 'bg-amber-50 ring-amber-100 text-amber-700'
-                : 'bg-emerald-50 ring-emerald-100 text-emerald-700';
-            return (
-              <div className="transition-all duration-500">
-                <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200">
-                  <div className="text-[11px] font-semibold text-slate-500">Tu</div>
-                  <div className="mt-1 text-[13px] text-slate-800">{item.q}</div>
-                </div>
-                <div className={'mt-2 rounded-2xl p-2 ring-1 ' + base}>
-                  <div className="text-[11px] font-semibold">Isaak</div>
-                  <div className="mt-1 text-[13px] text-slate-700">{item.a}</div>
-                  <div className="mt-1 text-[11px]">{item.hint}</div>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-      ),
-    },
-  ];
-
-  const getCardClass = (id: typeof activeId) => {
-    const isActive = id === activeId;
-    const mobileVisibility = isActive ? 'block' : 'hidden sm:block';
-    return `${mobileVisibility} relative mx-auto w-full max-w-[360px] rounded-3xl border border-slate-200 bg-white p-3 shadow-xl transition-all duration-500 sm:absolute sm:left-1/2 sm:top-1/2 sm:origin-top-left sm:max-w-none sm:p-4 ${positions[id]} ${
-      isActive ? 'z-30 scale-105 opacity-100' : 'z-10 scale-95 opacity-90'
-    }`;
-  };
+  }, [slides.length]);
 
   return (
-    <div className="relative">
-      <div className="relative space-y-4 pb-6 sm:min-h-[520px] sm:space-y-0 sm:pb-0 lg:min-h-[560px]">
-        {panels.map((panel) => (
+    <div className="relative rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-xl backdrop-blur sm:p-5">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+        <div className="relative aspect-[16/10] w-full">
+          {slides.map((slide, idx) => {
+            const isActive = idx === activeIndex;
+            return (
+              <button
+                key={slide.id}
+                type="button"
+                onClick={() => setActiveIndex(idx)}
+                className={`absolute inset-0 transition-opacity duration-500 ${isActive ? "opacity-100" : "pointer-events-none opacity-0"}`}
+                aria-label={`Ver mockup ${slide.title}`}
+                aria-pressed={isActive}
+              >
+                <Image src={slide.src} alt={slide.title} fill className="object-cover" priority={idx === 0} />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2361d8]">
+            Demo Verifactu
+          </div>
+          <div className="mt-1 text-sm font-semibold text-slate-900">{slides[activeIndex].title}</div>
+          <p className="mt-1 text-xs text-slate-600">{slides[activeIndex].caption}</p>
+        </div>
+        <div className="mt-1 flex gap-1.5">
+          {slides.map((slide, idx) => (
+            <button
+              key={slide.id}
+              type="button"
+              onClick={() => setActiveIndex(idx)}
+              className={`h-2.5 w-2.5 rounded-full transition ${idx === activeIndex ? "bg-[#2361d8]" : "bg-slate-300 hover:bg-slate-400"}`}
+              aria-label={`Ir a ${slide.title}`}
+              aria-pressed={idx === activeIndex}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        {slides.map((slide, idx) => (
           <button
-            key={panel.id}
+            key={slide.id}
             type="button"
-            onClick={() => setActiveId(panel.id)}
-            className={`${getCardClass(panel.id)} sm:w-[300px] lg:w-[340px]`}
-            aria-pressed={activeId === panel.id}
+            onClick={() => setActiveIndex(idx)}
+            className={`overflow-hidden rounded-xl border text-left transition ${
+              idx === activeIndex
+                ? "border-[#2361d8] bg-[#2361d8]/5 shadow-sm"
+                : "border-slate-200 bg-white hover:border-slate-300"
+            }`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-700">{panel.title}</div>
-                <p className="mt-1 text-xs text-slate-500">{panel.desc}</p>
-              </div>
-              <div className="flex gap-1">
-                <span className="h-2 w-2 rounded-full bg-rose-400" />
-                <span className="h-2 w-2 rounded-full bg-amber-400" />
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              </div>
+            <div className="relative h-16 w-full">
+              <Image src={slide.src} alt={`${slide.title} miniatura`} fill className="object-cover" />
             </div>
-            {panel.content}
+            <div className="px-2 py-1.5 text-[11px] font-medium text-slate-700">{slide.title}</div>
           </button>
         ))}
       </div>
+
+      <div className="pointer-events-none absolute -right-5 -top-5 h-24 w-24 rounded-full bg-blue-200/40 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-6 -left-6 h-28 w-28 rounded-full bg-cyan-200/40 blur-2xl" />
     </div>
   );
 }
-
 export function KpiCard({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4">

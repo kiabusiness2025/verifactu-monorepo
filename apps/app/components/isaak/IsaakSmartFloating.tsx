@@ -46,6 +46,7 @@ export function IsaakSmartFloating() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showPreferences, setShowPreferences] = useState(false);
+  const hasUserMessages = messages.some((msg) => msg.role === "user");
 
   const contextKey = `${detection.context}:${detection.role}`;
   const context = getIsaakFloatingContext(
@@ -324,8 +325,8 @@ export function IsaakSmartFloating() {
 
             {/* Mensajes */}
             <div className="flex-1 overflow-y-auto space-y-3 p-4 bg-gray-50">
-              {messages.length === 1 ? (
-                // Mostrar sugerencias
+              {!hasUserMessages ? (
+                // Mostrar sugerencias iniciales antes de que el usuario pregunte
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-600 mb-3">
                     {context.greeting}
@@ -348,7 +349,9 @@ export function IsaakSmartFloating() {
                     </button>
                   ))}
                 </div>
-              ) : (
+              ) : null}
+
+              {messages.length > 0 ? (
                 messages.map((msg) => (
                   <div
                     key={msg.id}
@@ -367,7 +370,7 @@ export function IsaakSmartFloating() {
                     </div>
                   </div>
                 ))
-              )}
+              ) : null}
 
               {isLoading && (
                 <div className="flex justify-start">

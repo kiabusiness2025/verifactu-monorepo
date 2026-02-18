@@ -12,6 +12,7 @@ type ProactiveMessage = {
   title: string;
   message: string;
   action?: string;
+  href?: string;
   icon: "info" | "warning" | "success" | "tip";
   delay: number;
 };
@@ -116,11 +117,14 @@ export function IsaakProactiveBubbles() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">{msg.title}</h3>
                   <p className="mt-1 text-sm text-gray-700">{msg.message}</p>
-                  {msg.action && (
-                    <button className="mt-2 text-xs font-medium text-blue-600 hover:text-blue-700">
+                  {msg.action && msg.href ? (
+                    <a
+                      href={msg.href}
+                      className="mt-2 inline-block text-xs font-medium text-blue-600 hover:text-blue-700"
+                    >
                       {msg.action} →
-                    </button>
-                  )}
+                    </a>
+                  ) : null}
                 </div>
                 <button
                   onClick={() => handleDismiss(msg.id)}

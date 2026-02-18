@@ -1,13 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { getAppUrl, getLandingUrl } from "@/lib/urls";
 import { IsaakUIProvider } from "@/context/IsaakUIContext";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
+import { IsaakDrawer } from "@/components/isaak/IsaakDrawer";
+import { IsaakProactiveBubbles } from "@/components/isaak/IsaakProactiveBubbles";
+import { IsaakSmartFloating } from "@/components/isaak/IsaakSmartFloating";
 
 export default function DemoLayout({ children }: { children: React.ReactNode }) {
+  const enableIsaak = true;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const appUrl = getAppUrl();
   const landingUrl = getLandingUrl();
@@ -71,6 +75,16 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
           </div>
         </div>
       </div>
+
+      {enableIsaak ? <IsaakDrawer /> : null}
+
+      {enableIsaak ? (
+        <Suspense fallback={null}>
+          <IsaakSmartFloating />
+          <IsaakProactiveBubbles />
+        </Suspense>
+      ) : null}
+
     </IsaakUIProvider>
   );
 }
