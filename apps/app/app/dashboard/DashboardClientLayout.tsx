@@ -14,7 +14,7 @@ import { CreateCompanyModalProvider } from '@/context/CreateCompanyModalContext'
 import { IsaakUIProvider, useIsaakUI } from '@/context/IsaakUIContext';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { usePathname } from 'next/navigation';
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 
 function OnboardingFlow({ isAdminRoute }: { isAdminRoute: boolean }) {
   const { company } = useIsaakUI();
@@ -57,9 +57,23 @@ export default function DashboardClientLayout({ children, supportMode, supportTe
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith('/dashboard/admin') ?? false;
   const enableIsaak = false;
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
+
+  useEffect(() => {
+    const readDemoMode = () => {
+      if (typeof window === 'undefined') return;
+      const fromStorage = window.localStorage.getItem('vf_demo_mode') === '1';
+      const fromGlobal = window.__VF_DEMO_MODE__ === true;
+      setIsDemoMode(fromStorage || fromGlobal || pathname?.startsWith('/demo') === true);
+    };
+
+    readDemoMode();
+    window.addEventListener('vf-demo-mode', readDemoMode);
+    return () => window.removeEventListener('vf-demo-mode', readDemoMode);
+  }, [pathname]);
 
   return (
     <ProtectedRoute requireEmailVerification={true}>
@@ -89,7 +103,11 @@ export default function DashboardClientLayout({ children, supportMode, supportTe
             ) : null}
 
             <div className="app-shell flex min-h-screen">
-              <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+              <Sidebar
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+                isDemo={isDemoMode}
+              />
               <div className="flex min-h-screen w-full flex-col lg:pl-72">
                 <Topbar
                   onToggleSidebar={() => setSidebarOpen((v) => !v)}

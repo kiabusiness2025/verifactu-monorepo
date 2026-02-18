@@ -53,7 +53,7 @@ export function Topbar({
   const [isDemoFallback, setIsDemoFallback] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const effectiveDemo = isDemo || isDemoFallback;
-  const allowDemoFallback = process.env.NODE_ENV !== 'production';
+  const allowDemoFallback = true;
   const demoOption = { id: 'demo', name: demoCompanyName };
 
   const loadTenantLogo = useCallback(
