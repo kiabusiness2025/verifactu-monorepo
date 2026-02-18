@@ -5,7 +5,7 @@ import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs
 import { useToast } from '@/components/notifications/ToastNotifications';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
 import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
-import { formatDateTime } from '@/src/lib/formatters';
+import { formatCurrency, formatDateTime } from '@/src/lib/formatters';
 import { Camera } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
@@ -669,7 +669,7 @@ function SettingsContent() {
             <div className="space-y-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-semibold text-blue-900 mb-2">Plan Actual</h3>
-                <p className="text-blue-800 text-sm">Plan Profesional - EUR 99/mes</p>
+                <p className="text-blue-800 text-sm">Plan Profesional - {formatCurrency(99)}/mes</p>
               </div>
 
               <div>
@@ -691,7 +691,7 @@ function SettingsContent() {
                       <p className="text-sm text-slate-600">14 Enero, 2026</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-slate-900">EUR 99.00</p>
+                      <p className="font-medium text-slate-900">{formatCurrency(99)}</p>
                       <button className="text-blue-600 hover:text-blue-800 text-sm">
                         Descargar PDF
                       </button>

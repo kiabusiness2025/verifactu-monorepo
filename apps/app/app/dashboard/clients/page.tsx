@@ -4,6 +4,7 @@ import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
 import { useToast } from '@/components/notifications/ToastNotifications';
 import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
+import { formatCurrency } from '@/src/lib/formatters';
 import {
   Building2,
   Download,
@@ -269,7 +270,7 @@ export default function ClientsPage() {
             <div>
               <p className="text-sm text-slate-600">Ingresos Totales</p>
               <p className="text-2xl font-bold text-slate-900 mt-1">
-                {(clients.reduce((sum, c) => sum + (c.totalRevenue || 0), 0) / 1000).toFixed(1)}k€
+                {formatCurrency(clients.reduce((sum, c) => sum + (c.totalRevenue || 0), 0))}
               </p>
             </div>
             <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
@@ -399,7 +400,7 @@ export default function ClientsPage() {
                       {client.totalInvoices || 0}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-slate-900">
-                      {((client.totalRevenue || 0) / 1000).toFixed(1)}k€
+                      {formatCurrency(client.totalRevenue || 0)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
