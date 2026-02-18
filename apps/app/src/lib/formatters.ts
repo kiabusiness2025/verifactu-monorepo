@@ -3,6 +3,7 @@ const currencyFormatter = new Intl.NumberFormat("es-ES", {
   currency: "EUR",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
+  useGrouping: "always",
 });
 
 const percentFormatter = new Intl.NumberFormat("es-ES", {
@@ -29,7 +30,9 @@ const timeFormatter = new Intl.DateTimeFormat("es-ES", {
   minute: "2-digit",
 });
 
-const numberFormatter = new Intl.NumberFormat("es-ES");
+const numberFormatter = new Intl.NumberFormat("es-ES", {
+  useGrouping: "always",
+});
 
 export function formatCurrency(value: number) {
   return currencyFormatter.format(value);
