@@ -1,12 +1,11 @@
 import Link from 'next/link';
 
-import { SectionTitle } from '@verifactu/ui';
-
 import { Building2, Plus } from 'lucide-react';
 
 import { formatCurrency } from '@/src/lib/formatters';
 
 import { getDashboardSummary } from '@/src/server/dashboard/getDashboardSummary';
+import { SectionTitle } from '@/components/dashboard/SectionTitle';
 
 import { IsaakContextBridge } from '@/components/isaak/IsaakContextBridge';
 
