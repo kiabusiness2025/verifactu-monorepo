@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { X, Download, Smartphone } from "lucide-react";
@@ -18,17 +18,17 @@ export function PWAInstallPrompt() {
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(iOS);
 
-    // Detectar si ya estÃ¡ instalado
+    // Detectar si ya está instalado
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
     if (isStandalone) return;
 
-    // Check si ya se rechazÃ³ antes
+    // Check si ya se rechazó antes
     const dismissed = localStorage.getItem("pwa-install-dismissed");
     if (dismissed) {
       const dismissedDate = new Date(dismissed);
       const now = new Date();
       const daysSince = (now.getTime() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
-      if (daysSince < 30) return; // No mostrar por 30 dÃ­as
+      if (daysSince < 30) return; // No mostrar por 30 días
     }
 
     // Esperar 10 segundos antes de mostrar (para no ser intrusivo)
