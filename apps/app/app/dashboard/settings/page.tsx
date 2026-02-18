@@ -296,7 +296,7 @@ function SettingsContent() {
 
   return (
     <div className="max-w-4xl">
-      <h1 className="text-3xl font-bold text-slate-900 mb-6">Configuracion</h1>
+      <h1 className="text-3xl font-bold text-slate-900 mb-6">Configuración</h1>
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
         <div className="border-b border-slate-200 flex overflow-x-auto">
@@ -415,17 +415,17 @@ function SettingsContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Cambiar Contrasena
+                    Cambiar contraseña
                   </label>
                   <AccessibleButton
                     variant="secondary"
                     onClick={() => success('Próximamente: funcionalidad de cambiar contraseña')}
                     ariaLabel="Actualizar contraseña"
                   >
-                    Actualizar contrasena
+                    Actualizar contraseña
                   </AccessibleButton>
                   <p className="mt-1 text-xs text-slate-500">
-                    Se te enviara un email para restablecer tu contrasena
+                    Se te enviará un email para restablecer tu contraseña
                   </p>
                 </div>
               </div>
@@ -600,7 +600,7 @@ function SettingsContent() {
                   />
                   {einformaMeta?.lastSyncAt ? (
                     <div className="mt-2 text-xs text-slate-500">
-                      {einformaMeta.cached ? 'Snapshot (<=30 dias)' : 'eInforma (live)'} · Actualizado:{' '}
+                      {einformaMeta.cached ? 'Snapshot (<=30 días)' : 'eInforma (live)'} · Actualizado:{' '}
                       {einformaMeta.lastSyncAt}
                     </div>
                   ) : null}

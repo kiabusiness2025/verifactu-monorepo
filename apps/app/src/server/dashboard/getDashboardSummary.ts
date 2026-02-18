@@ -90,7 +90,7 @@ function buildActions({
       },
       {
         id: 'hacienda',
-        title: `Interpreta esta notificacion de Hacienda${demoSuffix}`,
+        title: `Interpreta esta notificación de Hacienda${demoSuffix}`,
         action: 'Subir documentos',
         href: '/dashboard/documents',
       },
@@ -127,7 +127,7 @@ function buildActions({
   if (!hasBankIntegration) {
     actions.push({
       id: 'banking-connect',
-      title: `Conectar banco para conciliacion automatica${demoSuffix}`,
+      title: `Conectar banco para conciliación automática${demoSuffix}`,
       action: 'Conectar banco',
       href: '/dashboard/banks',
     });
@@ -157,7 +157,7 @@ function buildActions({
     ...actions,
     {
       id: 'invoice',
-      title: `Emitir factura Veri*Factu para el ultimo cobro${demoSuffix}`,
+      title: `Emitir factura Veri*Factu para el último cobro${demoSuffix}`,
       action: 'Nueva factura',
       href: '/dashboard/invoices',
     },

@@ -129,7 +129,7 @@ export default function DashboardClientLayout({ children, supportMode, supportTe
                         Ir a Home
                       </a>
                       <a className="hover:text-blue-700" href="/dashboard/settings">
-                        Configuracion
+                        Configuración
                       </a>
                     </div>
                   </div>
