@@ -93,7 +93,7 @@ export function SuppliersForm({
       });
       toast.success(
         'Datos completados',
-        data?.cached ? 'Se us? snapshot de eInforma.' : 'Datos tra?dos desde eInforma.'
+        data?.cached ? 'Se usó snapshot de eInforma.' : 'Datos traídos desde eInforma.'
       );
     } catch (error) {
       console.error('eInforma autocomplete error:', error);

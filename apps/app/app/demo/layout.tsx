@@ -59,7 +59,7 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
           <div className="fixed inset-x-0 bottom-4 z-30 px-4">
             <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
               <div className="text-sm font-semibold text-[#0b214a]">
-                Estas en demo. Listo para usar tu propia empresa?
+                Estás en demo. ¿Listo para usar tu propia empresa?
               </div>
               <a
                 href={loginUrl}

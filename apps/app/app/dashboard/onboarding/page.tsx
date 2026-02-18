@@ -271,7 +271,7 @@ export default function OnboardingPage() {
 
       success(
         "Prueba activada",
-        `Tienes 30 dias para probar Verifactu + Isaak con tu empresa. La prueba termina el ${formattedEndsAt}.`
+        `Tienes 30 días para probar Verifactu + Isaak con tu empresa. La prueba termina el ${formattedEndsAt}.`
       );
 
       router.push(
@@ -281,7 +281,7 @@ export default function OnboardingPage() {
       );
     } catch (error) {
       console.error(error);
-      showError("Error al activar la prueba", "Vuelve a intentarlo en unos seg?ndos.");
+      showError("Error al activar la prueba", "Vuelve a intentarlo en unos segundos.");
     } finally {
       setIsSubmitting(false);
     }
@@ -292,11 +292,11 @@ export default function OnboardingPage() {
       <div className="mx-auto w-full max-w-2xl space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-semibold text-[#0b214a]">
-            A?adir tu empresa
+            Añadir tu empresa
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Busca tu empresa en eInforma o crea los datos manualmente. Al continuar
-            activar?s 30 d?as de prueba.
+            activarás 30 días de prueba.
           </p>
 
           <div className="mt-6 space-y-4">
@@ -315,10 +315,10 @@ export default function OnboardingPage() {
             </div>
 
             <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">
-              <p className="font-semibold">Vas a activar 30 d?as de prueba</p>
+              <p className="font-semibold">Vas a activar 30 días de prueba</p>
               <p className="mt-1 text-xs text-blue-800">
-                Durante la prueba puedes emitir facturas Verifactu y subir documentaci?n.
-                Antes de cobrar, recibir?s un aviso con tu cuota estimada seg?n tu uso.
+                Durante la prueba puedes emitir facturas Verifactu y subir documentación.
+                Antes de cobrar, recibirás un aviso con tu cuota estimada según tu uso.
               </p>
             </div>
             {hasRealTenant ? (
@@ -346,7 +346,7 @@ export default function OnboardingPage() {
             </label>
 
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-              Raz?n social
+              Razón social
               <input
                 value={legalName}
                 onChange={(e) => setLegalName(e.target.value)}
