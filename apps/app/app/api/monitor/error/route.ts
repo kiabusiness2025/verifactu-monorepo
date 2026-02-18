@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
   try {
     const monitorToken = process.env.MONITOR_API_TOKEN;
     if (process.env.NODE_ENV === 'production' && !monitorToken) {
-      return NextResponse.json({ success: false, error: 'Monitor disabled' }, { status: 503 });
+      return new NextResponse(null, { status: 204 });
     }
     if (monitorToken) {
       const headerToken = request.headers.get('x-monitor-token') ?? getBearerToken(request);
