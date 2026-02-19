@@ -468,6 +468,7 @@ export function HeroTripleMock() {
     },
   ] as const;
   const [activeIndex, setActiveIndex] = React.useState(0);
+  const [sampleIndex, setSampleIndex] = React.useState(0);
 
   const isaakSamplesBySlide: Record<(typeof slides)[number]["id"], string[]> = {
     overview: [
@@ -493,6 +494,18 @@ export function HeroTripleMock() {
     }, 4500);
     return () => clearInterval(interval);
   }, [slides.length]);
+
+  React.useEffect(() => {
+    setSampleIndex(0);
+  }, [activeIndex]);
+
+  React.useEffect(() => {
+    const totalSamples = isaakSamplesBySlide[slides[activeIndex].id].length;
+    const interval = setInterval(() => {
+      setSampleIndex((prev) => (prev + 1) % totalSamples);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, [activeIndex]);
 
   const progress = `${((activeIndex + 1) / slides.length) * 100}%`;
 
@@ -576,12 +589,18 @@ export function HeroTripleMock() {
 
       <div className="pointer-events-none absolute -right-5 top-20 w-[300px] rounded-xl border border-blue-200 bg-white/95 p-3 text-[11px] shadow-md">
         <div className="font-semibold text-[#2361d8]">Isaak sugiere</div>
-        <div className="mt-2 space-y-1.5 text-slate-700">
-          {isaakSamplesBySlide[slides[activeIndex].id].map((sample) => (
-            <div key={sample} className="rounded-lg bg-blue-50 px-2 py-1.5">
-              {sample}
-            </div>
-          ))}
+        <div className="mt-2 text-slate-700">
+          <div className="rounded-lg bg-blue-50 px-2 py-1.5 transition-all duration-500">
+            {isaakSamplesBySlide[slides[activeIndex].id][sampleIndex]}
+          </div>
+          <div className="mt-2 flex gap-1">
+            {isaakSamplesBySlide[slides[activeIndex].id].map((sample, idx) => (
+              <span
+                key={sample}
+                className={`h-1.5 w-1.5 rounded-full ${idx === sampleIndex ? "bg-[#2361d8]" : "bg-blue-200"}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
       <div className="pointer-events-none absolute -left-4 bottom-20 rounded-xl border border-emerald-200 bg-white/95 px-3 py-2 text-[11px] font-semibold text-emerald-700 shadow-md">
