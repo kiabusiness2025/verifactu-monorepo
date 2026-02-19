@@ -23,6 +23,7 @@
     "precommit": "bash scripts/pre-commit.sh",
     "install-hooks": "cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
     "pre-deploy": "node scripts/pre-deploy-check.js",
+    "check:encoding": "node scripts/check-text-encoding.js apps/app",
     "auto-fix": "node scripts/auto-fix-typescript.js",
     "validate": "pnpm run typecheck && pnpm run lint && pnpm run build",
     "validate:all": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test && pnpm run build",
@@ -32,7 +33,9 @@
     "docker:logs": "docker-compose logs -f",
     "debug:app": "NODE_OPTIONS=--inspect-brk pnpm dev",
     "debug:tests": "NODE_OPTIONS=--inspect-brk pnpm test -- --watch",
-    "deploy:vercel": "curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_ZBVvfBkBG6b4MmSCD9aRQM7QAPAU/9x0EH6QY9J"
+    "deploy:vercel": "curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_ZBVvfBkBG6b4MmSCD9aRQM7QAPAU/9x0EH6QY9J",
+    "capture:demo:mockups": "node scripts/capture-demo-mockups.mjs",
+    "capture:demo:hero": "node scripts/capture-demo-mockups.mjs --replace-hero"
   },
   "devDependencies": {
     "@next/env": "^16.1.1",
