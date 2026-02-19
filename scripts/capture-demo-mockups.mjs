@@ -21,6 +21,15 @@ function run(cmd, args, opts = {}) {
   }
 }
 
+function resolveSystemChromiumPath() {
+  const candidates = [
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ];
+  return candidates.find((candidate) => fs.existsSync(candidate)) || null;
+}
+
 function updateHeroSourcesToPng() {
   const uiFile = path.resolve(process.cwd(), 'apps/landing/app/lib/home/ui.tsx');
   const raw = fs.readFileSync(uiFile, 'utf8');
@@ -107,7 +116,17 @@ async function captureScreenshots(args) {
   const outDirAbs = path.resolve(process.cwd(), args.outDir);
   fs.mkdirSync(outDirAbs, { recursive: true });
 
-  const browser = await chromium.launch({ headless: true });
+  let browser;
+  try {
+    browser = await chromium.launch({ headless: true });
+  } catch (error) {
+    const systemChromium = resolveSystemChromiumPath();
+    if (!systemChromium) {
+      throw error;
+    }
+    console.warn(`Playwright bundled browser unavailable. Falling back to system Chromium: ${systemChromium}`);
+    browser = await chromium.launch({ headless: true, executablePath: systemChromium });
+  }
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 
   for (let i = 0; i < routes.length; i += 1) {

@@ -473,9 +473,18 @@ export function HeroTripleMock() {
     return () => clearInterval(interval);
   }, [slides.length]);
 
+  const progress = `${((activeIndex + 1) / slides.length) * 100}%`;
+
   return (
-    <div className="relative rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-xl backdrop-blur sm:p-5">
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+    <div className="relative rounded-[28px] border border-slate-200/90 bg-gradient-to-b from-white to-slate-50 p-4 shadow-[0_18px_60px_-24px_rgba(15,23,42,0.35)] backdrop-blur sm:p-5">
+      <div className="mb-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2">
+        <div className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-500" />
+          Demo en vivo
+        </div>
+        <div className="text-[11px] font-medium text-slate-500">Mockups reales del producto</div>
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-inner">
         <div className="relative aspect-[16/10] w-full">
           {slides.map((slide, idx) => {
             const isActive = idx === activeIndex;
@@ -516,6 +525,12 @@ export function HeroTripleMock() {
           ))}
         </div>
       </div>
+      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-[#2361d8] to-[#20B0F0] transition-all duration-500"
+          style={{ width: progress }}
+        />
+      </div>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
         {slides.map((slide, idx) => (
@@ -537,6 +552,12 @@ export function HeroTripleMock() {
         ))}
       </div>
 
+      <div className="pointer-events-none absolute -right-4 top-20 rounded-xl border border-blue-200 bg-white/95 px-3 py-2 text-[11px] font-semibold text-[#2361d8] shadow-md">
+        Isaak flotante activo
+      </div>
+      <div className="pointer-events-none absolute -left-4 bottom-20 rounded-xl border border-emerald-200 bg-white/95 px-3 py-2 text-[11px] font-semibold text-emerald-700 shadow-md">
+        KPI + facturas + tareas
+      </div>
       <div className="pointer-events-none absolute -right-5 -top-5 h-24 w-24 rounded-full bg-blue-200/40 blur-2xl" />
       <div className="pointer-events-none absolute -bottom-6 -left-6 h-28 w-28 rounded-full bg-cyan-200/40 blur-2xl" />
     </div>

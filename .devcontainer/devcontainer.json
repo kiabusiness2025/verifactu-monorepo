@@ -54,6 +54,6 @@
       }
     }
   },
-  "postCreateCommand": "pnpm install && pnpm run build",
+  "postCreateCommand": "pnpm install && (pnpm exec playwright install chromium || true) && pnpm run build",
   "remoteUser": "node"
 }
