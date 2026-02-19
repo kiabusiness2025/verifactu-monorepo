@@ -448,23 +448,44 @@ export function HeroTripleMock() {
     {
       id: "overview",
       title: "Resumen demo",
-      caption: "Vista general con KPIs, empresa activa y acciones rápidas con Isaak.",
+      caption: "KPIs, empresa activa y tareas del día.",
       src: "/assets/hero/demo-overview.svg",
+      mini: "Inicio",
     },
     {
       id: "invoices",
       title: "Facturas en demo",
-      caption: "Listado de facturas con estados y métricas para validar el flujo completo.",
+      caption: "Estados, importes y validación VeriFactu.",
       src: "/assets/hero/demo-invoices.svg",
+      mini: "Facturas",
     },
     {
       id: "isaak",
       title: "Asistente flotante",
-      caption: "Isaak con mensajes proactivos según la sección para guiar al usuario.",
+      caption: "Mensajes proactivos según la sección activa.",
       src: "/assets/hero/demo-isaak.svg",
+      mini: "Isaak",
     },
   ] as const;
   const [activeIndex, setActiveIndex] = React.useState(0);
+
+  const isaakSamplesBySlide: Record<(typeof slides)[number]["id"], string[]> = {
+    overview: [
+      "Inicio: \"Tu beneficio hoy es 2.876,40 EUR\"",
+      "Clientes: \"Te faltan 2 seguimientos de cobro\"",
+      "Bancos: \"Hay 3 movimientos sin conciliar\"",
+    ],
+    invoices: [
+      "Facturas: \"1 factura pendiente de cobro\"",
+      "Documentos: \"Sube el ticket y lo clasifico\"",
+      "Calendario: \"Modelo IVA en 12 dias\"",
+    ],
+    isaak: [
+      "Configuracion: \"Conecta eInforma en 1 paso\"",
+      "Facturas: \"Preparo borrador VeriFactu\"",
+      "Inicio: \"Quieres resumen semanal?\"",
+    ],
+  };
 
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -506,11 +527,11 @@ export function HeroTripleMock() {
 
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2361d8]">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2361d8]">
             Demo Verifactu
           </div>
-          <div className="mt-1 text-sm font-semibold text-slate-900">{slides[activeIndex].title}</div>
-          <p className="mt-1 text-xs text-slate-600">{slides[activeIndex].caption}</p>
+          <div className="mt-1 text-lg font-semibold text-slate-900">{slides[activeIndex].title}</div>
+          <p className="mt-1 text-sm text-slate-600">{slides[activeIndex].caption}</p>
         </div>
         <div className="mt-1 flex gap-1.5">
           {slides.map((slide, idx) => (
@@ -544,16 +565,24 @@ export function HeroTripleMock() {
                 : "border-slate-200 bg-white hover:border-slate-300"
             }`}
           >
-            <div className="relative h-16 w-full">
+            <div className="relative h-14 w-full">
               <Image src={slide.src} alt={`${slide.title} miniatura`} fill className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 to-transparent" />
             </div>
-            <div className="px-2 py-1.5 text-[11px] font-medium text-slate-700">{slide.title}</div>
+            <div className="px-2 py-1.5 text-[11px] font-semibold text-slate-700">{slide.mini}</div>
           </button>
         ))}
       </div>
 
-      <div className="pointer-events-none absolute -right-4 top-20 rounded-xl border border-blue-200 bg-white/95 px-3 py-2 text-[11px] font-semibold text-[#2361d8] shadow-md">
-        Isaak flotante activo
+      <div className="pointer-events-none absolute -right-5 top-20 w-[300px] rounded-xl border border-blue-200 bg-white/95 p-3 text-[11px] shadow-md">
+        <div className="font-semibold text-[#2361d8]">Isaak sugiere</div>
+        <div className="mt-2 space-y-1.5 text-slate-700">
+          {isaakSamplesBySlide[slides[activeIndex].id].map((sample) => (
+            <div key={sample} className="rounded-lg bg-blue-50 px-2 py-1.5">
+              {sample}
+            </div>
+          ))}
+        </div>
       </div>
       <div className="pointer-events-none absolute -left-4 bottom-20 rounded-xl border border-emerald-200 bg-white/95 px-3 py-2 text-[11px] font-semibold text-emerald-700 shadow-md">
         KPI + facturas + tareas
