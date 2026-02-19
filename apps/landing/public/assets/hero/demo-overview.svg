@@ -1,53 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" fill="none">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="1000" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F8FBFF"/>
-      <stop offset="1" stop-color="#EEF4FF"/>
-    </linearGradient>
-  </defs>
-  <rect width="1600" height="1000" fill="url(#bg)"/>
-  <rect x="48" y="36" width="280" height="928" rx="26" fill="#FFFFFF" stroke="#DDE7F9"/>
-  <rect x="82" y="96" width="210" height="20" rx="10" fill="#C8D8F8"/>
-  <rect x="82" y="160" width="210" height="52" rx="14" fill="#EAF1FF"/>
-  <rect x="82" y="228" width="210" height="52" rx="14" fill="#EAF1FF"/>
-  <rect x="82" y="296" width="210" height="52" rx="14" fill="#EAF1FF"/>
-  <rect x="82" y="364" width="210" height="52" rx="14" fill="#DCE9FF"/>
-  <rect x="82" y="432" width="210" height="52" rx="14" fill="#EAF1FF"/>
+  <rect width="1600" height="1000" fill="#F5F8FF"/>
+  <rect x="36" y="30" width="260" height="940" rx="24" fill="#FFFFFF" stroke="#DDE6F8"/>
+  <text x="68" y="90" fill="#16315C" font-size="22" font-family="Arial, sans-serif" font-weight="700">VERIFACTU</text>
+  <text x="68" y="126" fill="#415A84" font-size="15" font-family="Arial, sans-serif">Panel de cliente</text>
+  <rect x="56" y="168" width="220" height="52" rx="14" fill="#E8F0FF"/>
+  <text x="90" y="199" fill="#1E4FBF" font-size="16" font-family="Arial, sans-serif" font-weight="700">Inicio</text>
+  <text x="68" y="268" fill="#445A80" font-size="16" font-family="Arial, sans-serif">Facturas</text>
+  <text x="68" y="322" fill="#445A80" font-size="16" font-family="Arial, sans-serif">Clientes</text>
+  <text x="68" y="376" fill="#445A80" font-size="16" font-family="Arial, sans-serif">Bancos</text>
+  <text x="68" y="430" fill="#445A80" font-size="16" font-family="Arial, sans-serif">Documentos</text>
+  <text x="68" y="484" fill="#445A80" font-size="16" font-family="Arial, sans-serif">Calendario</text>
+  <text x="68" y="538" fill="#445A80" font-size="16" font-family="Arial, sans-serif">Configuracion</text>
 
-  <rect x="360" y="36" width="1192" height="82" rx="18" fill="#FFFFFF" stroke="#DDE7F9"/>
-  <rect x="392" y="68" width="260" height="20" rx="10" fill="#CCDBF8"/>
-  <rect x="1320" y="58" width="200" height="40" rx="20" fill="#EAF1FF"/>
+  <rect x="320" y="30" width="1244" height="90" rx="18" fill="#FFFFFF" stroke="#DDE6F8"/>
+  <text x="360" y="82" fill="#102A53" font-size="34" font-family="Arial, sans-serif" font-weight="700">Hola, kiabusiness2025</text>
+  <text x="1240" y="82" fill="#4E648A" font-size="15" font-family="Arial, sans-serif">Empresa Demo SL</text>
 
-  <rect x="360" y="146" width="1192" height="818" rx="26" fill="#F5F8FF" stroke="#DDE7F9"/>
-  <rect x="406" y="198" width="740" height="320" rx="20" fill="#FFFFFF" stroke="#DDE7F9"/>
-  <rect x="1180" y="198" width="326" height="320" rx="20" fill="#FFFFFF" stroke="#DDE7F9"/>
+  <rect x="320" y="140" width="1244" height="830" rx="26" fill="#F8FBFF" stroke="#DDE6F8"/>
+  <text x="360" y="198" fill="#415A84" font-size="14" font-family="Arial, sans-serif" font-weight="700">INICIO</text>
+  <text x="360" y="230" fill="#102A53" font-size="28" font-family="Arial, sans-serif" font-weight="700">Resumen de tu empresa</text>
+  <text x="360" y="258" fill="#60769A" font-size="15" font-family="Arial, sans-serif">Ventas, gastos y acciones para hoy.</text>
 
-  <rect x="446" y="246" width="190" height="20" rx="10" fill="#2F67E8" opacity="0.15"/>
-  <rect x="446" y="280" width="260" height="14" rx="7" fill="#9EB8F3"/>
-  <rect x="446" y="308" width="330" height="14" rx="7" fill="#C8D8F8"/>
+  <rect x="360" y="290" width="820" height="260" rx="20" fill="#FFFFFF" stroke="#DDE6F8"/>
+  <text x="392" y="332" fill="#16315C" font-size="20" font-family="Arial, sans-serif" font-weight="700">Empresa Demo SL</text>
+  <text x="392" y="360" fill="#60769A" font-size="14" font-family="Arial, sans-serif">NIF B12345678  ·  Ejercicio 2026</text>
 
-  <rect x="446" y="356" width="204" height="120" rx="16" fill="#F6F9FF" stroke="#E3EBFA"/>
-  <rect x="670" y="356" width="204" height="120" rx="16" fill="#F6F9FF" stroke="#E3EBFA"/>
-  <rect x="894" y="356" width="204" height="120" rx="16" fill="#F6F9FF" stroke="#E3EBFA"/>
-  <rect x="472" y="386" width="90" height="12" rx="6" fill="#A7BFF5"/>
-  <rect x="472" y="408" width="132" height="18" rx="9" fill="#2F67E8" opacity="0.75"/>
-  <rect x="696" y="386" width="90" height="12" rx="6" fill="#A7BFF5"/>
-  <rect x="696" y="408" width="132" height="18" rx="9" fill="#2F67E8" opacity="0.75"/>
-  <rect x="920" y="386" width="90" height="12" rx="6" fill="#A7BFF5"/>
-  <rect x="920" y="408" width="132" height="18" rx="9" fill="#2F67E8" opacity="0.75"/>
+  <rect x="392" y="392" width="240" height="126" rx="14" fill="#F2F7FF" stroke="#E2EAFB"/>
+  <text x="412" y="424" fill="#60769A" font-size="13" font-family="Arial, sans-serif" font-weight="700">VENTAS MES</text>
+  <text x="412" y="462" fill="#0E2A58" font-size="32" font-family="Arial, sans-serif" font-weight="700">4.230,00 EUR</text>
+  <text x="412" y="490" fill="#4C8D63" font-size="13" font-family="Arial, sans-serif">+12,4% vs mes anterior</text>
 
-  <rect x="1222" y="246" width="182" height="18" rx="9" fill="#B7CBF7"/>
-  <rect x="1222" y="278" width="246" height="14" rx="7" fill="#DAE6FC"/>
-  <rect x="1222" y="306" width="220" height="14" rx="7" fill="#E8F0FF"/>
-  <rect x="1222" y="346" width="246" height="60" rx="14" fill="#EDF4FF"/>
-  <rect x="1222" y="420" width="246" height="60" rx="14" fill="#EDF4FF"/>
+  <rect x="650" y="392" width="240" height="126" rx="14" fill="#F2F7FF" stroke="#E2EAFB"/>
+  <text x="670" y="424" fill="#60769A" font-size="13" font-family="Arial, sans-serif" font-weight="700">GASTOS MES</text>
+  <text x="670" y="462" fill="#0E2A58" font-size="32" font-family="Arial, sans-serif" font-weight="700">1.353,60 EUR</text>
+  <text x="670" y="490" fill="#60769A" font-size="13" font-family="Arial, sans-serif">Estimacion por ratio historico</text>
 
-  <rect x="406" y="548" width="1100" height="366" rx="20" fill="#FFFFFF" stroke="#DDE7F9"/>
-  <rect x="446" y="590" width="330" height="18" rx="9" fill="#AFC5F5"/>
-  <rect x="446" y="624" width="1020" height="74" rx="16" fill="#F7FAFF" stroke="#E4ECFA"/>
-  <rect x="446" y="716" width="1020" height="74" rx="16" fill="#F7FAFF" stroke="#E4ECFA"/>
-  <rect x="446" y="808" width="1020" height="74" rx="16" fill="#F7FAFF" stroke="#E4ECFA"/>
+  <rect x="908" y="392" width="240" height="126" rx="14" fill="#F2F7FF" stroke="#E2EAFB"/>
+  <text x="928" y="424" fill="#60769A" font-size="13" font-family="Arial, sans-serif" font-weight="700">BENEFICIO</text>
+  <text x="928" y="462" fill="#0E2A58" font-size="32" font-family="Arial, sans-serif" font-weight="700">2.876,40 EUR</text>
+  <text x="928" y="490" fill="#4C8D63" font-size="13" font-family="Arial, sans-serif">Margen: 68,0%</text>
 
-  <circle cx="1460" cy="874" r="54" fill="#2563EB"/>
-  <path d="M1432 878c0-18 15-32 33-32s33 14 33 32-15 32-33 32a35 35 0 0 1-13-3l-20 9 6-20a31 31 0 0 1-6-18Z" fill="#fff" opacity="0.92"/>
+  <rect x="1200" y="290" width="364" height="260" rx="20" fill="#FFFFFF" stroke="#DDE6F8"/>
+  <text x="1232" y="332" fill="#16315C" font-size="18" font-family="Arial, sans-serif" font-weight="700">Acciones con Isaak</text>
+  <rect x="1232" y="356" width="300" height="52" rx="12" fill="#EEF4FF"/>
+  <text x="1248" y="387" fill="#275BC9" font-size="14" font-family="Arial, sans-serif">Emitir factura VeriFactu</text>
+  <rect x="1232" y="420" width="300" height="52" rx="12" fill="#EEF4FF"/>
+  <text x="1248" y="451" fill="#275BC9" font-size="14" font-family="Arial, sans-serif">Subir ticket de combustible</text>
+  <rect x="1232" y="484" width="300" height="52" rx="12" fill="#EEF4FF"/>
+  <text x="1248" y="515" fill="#275BC9" font-size="14" font-family="Arial, sans-serif">Revisar cobros pendientes</text>
+
+  <rect x="360" y="574" width="1204" height="360" rx="20" fill="#FFFFFF" stroke="#DDE6F8"/>
+  <text x="392" y="614" fill="#16315C" font-size="18" font-family="Arial, sans-serif" font-weight="700">Facturas recientes</text>
+  <rect x="392" y="636" width="1140" height="66" rx="12" fill="#FAFCFF" stroke="#E6EDFB"/>
+  <text x="418" y="674" fill="#0E2A58" font-size="15" font-family="Arial, sans-serif">VF-2026-0139  ·  Nova Retail  ·  1.240,00 EUR</text>
+  <text x="1260" y="674" fill="#3F935E" font-size="14" font-family="Arial, sans-serif">Cobrada</text>
+
+  <rect x="392" y="716" width="1140" height="66" rx="12" fill="#FAFCFF" stroke="#E6EDFB"/>
+  <text x="418" y="754" fill="#0E2A58" font-size="15" font-family="Arial, sans-serif">VF-2026-0140  ·  Luna Tech  ·  980,00 EUR</text>
+  <text x="1244" y="754" fill="#A67800" font-size="14" font-family="Arial, sans-serif">Pendiente</text>
+
+  <rect x="392" y="796" width="1140" height="66" rx="12" fill="#FAFCFF" stroke="#E6EDFB"/>
+  <text x="418" y="834" fill="#0E2A58" font-size="15" font-family="Arial, sans-serif">VF-2026-0141  ·  Eco Servicios  ·  410,00 EUR</text>
+  <text x="1260" y="834" fill="#3F935E" font-size="14" font-family="Arial, sans-serif">Cobrada</text>
+
+  <circle cx="1496" cy="900" r="48" fill="#2563EB"/>
+  <text x="1474" y="909" fill="#FFFFFF" font-size="20" font-family="Arial, sans-serif" font-weight="700">IA</text>
 </svg>
