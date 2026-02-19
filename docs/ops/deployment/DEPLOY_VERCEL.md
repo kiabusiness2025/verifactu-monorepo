@@ -20,7 +20,7 @@ Para actualizar productos/precios de los planes:
 **Rutas y enlaces:**
 
 - Header.tsx: el botón “Dashboard” apunta a `/dashboard` en app.verifactu.business.
-- page.tsx (landing): la demo abre `/dashboard` en la app.
+- page.tsx (landing): la demo abre `/demo` en la app.
 - Tras login/signup (incluido Google), redirige a `/dashboard`; si ya hay sesión, también va a `/dashboard`.
 
 **Helpers de URLs:**
@@ -37,11 +37,14 @@ Para actualizar productos/precios de los planes:
 
 **Middleware de protección:**
 
-- Nuevo `middleware.ts`: protege `/dashboard` y `/dashboard/*`.
-  - Si no hay sesión (cookies estándar), redirige a https://www.verifactu.business/auth/login?next=<url-actual>.
+- `middleware.ts` protege `/dashboard` y `/dashboard/*`.
+  - Si no hay sesión (cookies estándar), redirige a `https://www.verifactu.business/auth/login?next=<url-actual>`.
   - Si hay sesión y accede a `/`, redirige a `/dashboard`.
   - Si hay sesión en `/dashboard`, deja pasar.
-- Config matcher: `/`, `/dashboard/:path*`.
+- `/demo` y `/demo/*` son públicos (sin login).
+- `/api/admin/check` mantiene compatibilidad y responde `200` con `isAdmin: false`.
+- `/api/admin/*` responde `410` (legacy admin API removed).
+- Config matcher: `/`, `/dashboard/:path*`, `/onboarding`, `/demo/:path*`, `/api/admin/:path*`.
 
 **Notas:**
 

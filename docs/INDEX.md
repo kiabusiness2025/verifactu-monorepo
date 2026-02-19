@@ -7,6 +7,8 @@ Resumen:
 - Producto: docs/product/*
 - Ingenieria: docs/engineering/*
 - Operaciones: docs/ops/*
+- Demo app flow: docs/DEMO_FLOW.md
+- Demo hero capture: docs/DEMO_CAPTURE_README.md
 - CI: docs/ops/CI_CHECKLIST.md
 - Seguridad: docs/security/*
 - Historico: docs/legacy/*
