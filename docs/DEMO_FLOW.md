@@ -131,6 +131,10 @@ Scripts:
 5. Probar CTA "Probar con mis datos (1 mes gratis)" y validar redireccion a login/onboarding.
 6. Revisar que importes/fechas se muestren en formato `es-ES`.
 
+Checklist operativa detallada:
+
+- `docs/DEMO_QA_CHECKLIST.md`
+
 ## Archivos clave
 
 - `apps/app/app/demo/layout.tsx`
@@ -144,4 +148,3 @@ Scripts:
 - `apps/app/app/demo/isaak/page.tsx`
 - `apps/app/app/demo/[...path]/page.tsx`
 - `apps/app/middleware.ts`
-
