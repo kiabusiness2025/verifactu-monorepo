@@ -469,6 +469,8 @@ export function HeroTripleMock() {
   ] as const;
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [sampleIndex, setSampleIndex] = React.useState(0);
+  const [viewMode, setViewMode] = React.useState<"video" | "slides">("video");
+  const [videoAvailable, setVideoAvailable] = React.useState(true);
 
   const isaakSamplesBySlide: Record<(typeof slides)[number]["id"], string[]> = {
     overview: [
@@ -516,10 +518,49 @@ export function HeroTripleMock() {
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-500" />
           Demo en vivo
         </div>
-        <div className="text-[11px] font-medium text-slate-500">Mockups reales del producto</div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setViewMode("video")}
+            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+              viewMode === "video"
+                ? "bg-[#2361d8] text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            Video
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("slides")}
+            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+              viewMode === "slides"
+                ? "bg-[#2361d8] text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            Mockups
+          </button>
+        </div>
       </div>
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-inner">
         <div className="relative aspect-[16/10] w-full">
+          {viewMode === "video" && videoAvailable ? (
+            <video
+              className="h-full w-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+              poster={slides[activeIndex].src}
+              onError={() => {
+                setVideoAvailable(false);
+                setViewMode("slides");
+              }}
+            >
+              <source src="/assets/hero/generated/demo-hero.mp4" type="video/mp4" />
+            </video>
+          ) : null}
           {slides.map((slide, idx) => {
             const isActive = idx === activeIndex;
             return (
@@ -527,7 +568,11 @@ export function HeroTripleMock() {
                 key={slide.id}
                 type="button"
                 onClick={() => setActiveIndex(idx)}
-                className={`absolute inset-0 transition-opacity duration-500 ${isActive ? "opacity-100" : "pointer-events-none opacity-0"}`}
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  (viewMode === "slides" || !videoAvailable) && isActive
+                    ? "opacity-100"
+                    : "pointer-events-none opacity-0"
+                }`}
                 aria-label={`Ver mockup ${slide.title}`}
                 aria-pressed={isActive}
               >
