@@ -71,7 +71,7 @@ export function SecondaryButton({
 }
 
 export function StickyCtaBar({ show }: { show: boolean }) {
-  const appDemoUrl = `${getAppUrl()}/demo`;
+  const appUrl = getAppUrl();
   return (
     <div
       className={`fixed inset-x-0 bottom-4 z-30 px-4 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
@@ -79,14 +79,14 @@ export function StickyCtaBar({ show }: { show: boolean }) {
     >
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
         <div className="text-sm font-semibold text-[#2361d8]">
-          Prueba gratis y ve a Isaak en accion
+          Empieza gratis y mantén acceso de lectura y exportación.
         </div>
         <div className="flex gap-2">
-          <Link href="/auth/signup">
-            <PrimaryButton className="h-10 px-4 text-sm">Probar gratis</PrimaryButton>
+          <Link href={appUrl}>
+            <PrimaryButton className="h-10 px-4 text-sm">Empezar gratis (para siempre)</PrimaryButton>
           </Link>
-          <SecondaryButton href={appDemoUrl} className="h-10 px-4 text-sm">
-            Ver demo
+          <SecondaryButton href="/planes" className="h-10 px-4 text-sm">
+            Ver planes
           </SecondaryButton>
         </div>
       </div>
@@ -476,7 +476,7 @@ export function HeroTripleMock() {
     overview: [
       "Inicio: \"Tu beneficio hoy es 2.876,40 EUR\"",
       "Clientes: \"Te faltan 2 seguimientos de cobro\"",
-      "Bancos: \"Hay 3 movimientos sin conciliar\"",
+      "Bancos: \"Revisa el saldo previsto para esta semana\"",
     ],
     invoices: [
       "Facturas: \"1 factura pendiente de cobro\"",
@@ -784,14 +784,14 @@ export function Footer() {
               { label: 'Dashboard', href: '#dashboard' },
               { label: 'Features', href: '#features' },
               { label: 'FAQ', href: '#faq' },
-              { label: 'Precios', href: '#precios' },
+              { label: 'Planes', href: '#planes' },
             ]}
           />
           <FooterCol
             title="VeriFactu"
             links={[
               { label: 'Que es', href: '/verifactu/que-es' },
-              { label: 'Calcula precio', href: '/#precios' },
+              { label: 'Ver planes', href: '/planes' },
               { label: 'Soporte', href: '/verifactu/soporte' },
               { label: 'Estado del servicio', href: '/verifactu/estado' },
             ]}
@@ -1051,7 +1051,7 @@ export function PideseloAIsaakSection() {
     },
     {
       q: '¿Qué plazo tengo esta semana?',
-      a: 'Tienes conciliación pendiente y el registro de 3 facturas. Te guío.',
+      a: 'Tienes 3 facturas por revisar y un recordatorio fiscal activo. Te guío.',
     },
     {
       q: '¿Cómo va mi beneficio hoy?',

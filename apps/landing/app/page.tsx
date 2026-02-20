@@ -7,6 +7,7 @@ import Header from './components/Header';
 import Faq from './components/Faq';
 import PricingCalculatorInline from './components/PricingCalculatorInline';
 import { getAppUrl } from './lib/urls';
+import { EXCESS_TEXT_LINES, EXCESS_TEXT_TITLE, PLAN_LIST } from './lib/plans';
 
 import {
   ComplianceBadge,
@@ -25,17 +26,16 @@ import {
 export default function Page() {
   const navLinks = [
     { label: 'Inicio', href: '#hero' },
-    { label: 'Para quien', href: '#para-quien' },
-    { label: 'Features', href: '#features' },
-    { label: 'Precios', href: '#precios' },
+    { label: 'Para quién', href: '#para-quien' },
+    { label: 'Dashboard', href: '#dashboard' },
+    { label: 'Planes', href: '#planes' },
     { label: 'FAQ', href: '#faq' },
     { label: 'Contacto', href: '/recursos/contacto' },
   ];
 
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [showPricingModal, setShowPricingModal] = useState(false);
-  const appDemoUrl = `${getAppUrl()}/demo`;
+  const appUrl = getAppUrl();
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -83,17 +83,12 @@ export default function Page() {
               </Link>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-[#011c67] sm:text-6xl">
-                Emite facturas VeriFactu sin errores
-                <br />
-                <span className="text-[#2361d8]">
-                  y entiende tu negocio en un panel.
-                </span>
+                Cumple VeriFactu y controla tus ventas - gastos = beneficio.
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
-                Isaak detecta tu idioma, te acompaña con soporte amable y te ayuda a interpretar
-                documentos, plazos y notificaciones. Te guía para subir escrituras, CIF y
-                declaraciones, y arrancar 2026 con datos reales de gastos y ventas.
+                Factura y registra gastos con Isaak. Exporta libros e informes en Excel para
+                presentar o compartir con tu asesoría.
               </p>
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
                 Verifactu e Isaak no sustituyen a tu gestor habitual. Te dan visibilidad diaria de
@@ -115,28 +110,23 @@ export default function Page() {
               </div>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <button
-                  onClick={() => setShowPricingModal(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
-                  type="button"
-                >
-                  Calcular precio
-                </button>
                 <Link
-                  href={appDemoUrl}
+                  href={appUrl}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
+                >
+                  Empezar gratis (para siempre)
+                </Link>
+                <Link
+                  href="/planes"
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2361d8] bg-white px-6 py-3 font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#2361d8]/10"
                 >
-                  Ver demo
+                  Ver planes
                 </Link>
               </div>
-              <div className="mt-3 text-sm text-slate-600">
-                <Link
-                  href="/auth/signup"
-                  className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
-                >
-                  Empezar 1 mes gratis
-                </Link>
-              </div>
+              <p className="mt-3 text-sm text-slate-600">
+                30 días para crear y registrar. Después, acceso en modo lectura y exportación AEAT
+                (Excel).
+              </p>
 
               <div className="mt-7 flex flex-wrap gap-2">
                 <TrustBadge
@@ -196,8 +186,8 @@ export default function Page() {
                 <h3 className="text-sm font-semibold text-[#011c67]">Autónomos y microempresas</h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                Emite facturas VeriFactu sin dudas y ve cada día cuánto estás vendiendo y cuánto te
-                queda.
+                ERP sencillo para emitir y registrar. Visibilidad diaria de ventas, gastos y
+                beneficio sin fricción.
               </p>
             </div>
             <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
@@ -212,8 +202,7 @@ export default function Page() {
                 <h3 className="text-sm font-semibold text-[#011c67]">PYMES que necesitan visibilidad real</h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                Controla ventas, gastos y beneficio estimado con un panel simple, y detecta
-                problemas antes de fin de mes.
+                Control diario, sin volverse contable. Detecta desvíos antes del cierre de mes.
               </p>
             </div>
             <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
@@ -230,8 +219,7 @@ export default function Page() {
                 </h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                Comparte tus cifras y documentos con tu gestoria para trabajar con datos
-                actualizados, no con sorpresas.
+                Contrasta y comparte con asesoría usando libros e informes en Excel con trazabilidad.
               </p>
             </div>
           </div>
@@ -264,10 +252,10 @@ export default function Page() {
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/auth/signup"
+                href={appUrl}
                 className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
               >
-                Empezar 1 mes gratis
+                Empezar gratis (para siempre)
               </Link>
               <Link
                 href="/recursos/contacto"
@@ -315,26 +303,71 @@ export default function Page() {
         </Container>
       </section>
 
-      {/* Pricing */}
-      <section id="precios" className="py-16">
+      {/* Planes */}
+      <section id="planes" className="py-16">
         <Container>
           <div className="text-center">
             <h2 className="text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
-              Precio que se ajusta a tu uso real
+              Planes claros para cumplir y tener control
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-              Solo mensual - 1 mes gratis - aviso antes de renovar.
+              Todos incluyen VeriFactu + gastos + export Excel. En Empresa y Pro añadimos
+              integración contable (si tu software tiene API).
             </p>
+
+            <div className="mt-10 grid gap-4 text-left lg:grid-cols-4">
+              {PLAN_LIST.map((plan) => (
+                <article
+                  key={plan.id}
+                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    {plan.name}
+                  </div>
+                  <div className="mt-3 text-3xl font-bold text-[#011c67]">{plan.priceEur} EUR</div>
+                  <div className="text-sm text-slate-500">/mes</div>
+                  <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                    <li>Hasta {plan.includedInvoices} facturas/mes</li>
+                    {plan.includes.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                    <li>
+                      {plan.hasAccountingIntegration
+                        ? "Integración contable (si tiene API)"
+                        : "Sin integración contable"}
+                    </li>
+                  </ul>
+                </article>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                href="/planes"
+                className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
+              >
+                Ver todos los detalles
+              </Link>
+              <Link
+                href={appUrl}
+                className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
+              >
+                Empezar gratis (para siempre)
+              </Link>
+            </div>
+
+            <div className="mx-auto mt-10 max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm">
+              <h3 className="text-xl font-semibold text-[#011c67]">{EXCESS_TEXT_TITLE}</h3>
+              <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                {EXCESS_TEXT_LINES.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
+              </div>
+            </div>
 
             <div className="mt-8 flex justify-center">
               <PricingCalculatorInline />
             </div>
-
-            <p className="mx-auto mt-6 max-w-2xl text-xs text-slate-500">
-              Precio orientativo. La cuota final se basa en facturas emitidas y movimientos
-              procesados (si activas conciliacion bancaria). Hasta 1.000 facturas y 2.000
-              movimientos; si superas estos limites ofrecemos presupuesto. IVA no incluido.
-            </p>
           </div>
         </Container>
       </section>
@@ -415,23 +448,6 @@ export default function Page() {
 
       <Footer />
       <StickyCtaBar show={showStickyCta} />
-
-      {showPricingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
-          <div className="relative w-full max-w-4xl rounded-3xl bg-white p-4 shadow-2xl">
-            <button
-              onClick={() => setShowPricingModal(false)}
-              className="absolute right-4 top-4 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-              type="button"
-            >
-              Cerrar
-            </button>
-            <div className="mt-6">
-              <PricingCalculatorInline />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
