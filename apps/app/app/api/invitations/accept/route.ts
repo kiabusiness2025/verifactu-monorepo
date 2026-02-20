@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSessionPayload } from '@/lib/session';
 import { normalizeRole } from '@/lib/roles';
-import { readSessionSecret, verifySessionToken } from '@verifactu/utils';
+import { getSessionPayload } from '@/lib/session';
+import { verifySessionTokenFromEnv } from '@verifactu/utils';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,11 +17,12 @@ export async function GET(req: Request) {
   const session = await getSessionPayload();
   if (!session?.uid) {
     const nextPath = `/api/invitations/accept?token=${encodeURIComponent(token)}`;
-    return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(nextPath)}`, url.origin));
+    return NextResponse.redirect(
+      new URL(`/login?next=${encodeURIComponent(nextPath)}`, url.origin)
+    );
   }
 
-  const secret = readSessionSecret();
-  const payload = await verifySessionToken(token, secret);
+  const payload = await verifySessionTokenFromEnv(token);
   if (!payload) {
     return NextResponse.redirect(new URL('/dashboard?invite=invalid-token', url.origin));
   }
@@ -75,4 +76,3 @@ export async function GET(req: Request) {
 
   return NextResponse.redirect(new URL('/dashboard?invite=accepted', url.origin));
 }
-

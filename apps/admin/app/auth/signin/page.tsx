@@ -1,33 +1,57 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+
 export default function SignInPage() {
+  const [rememberDevice, setRememberDevice] = useState(true);
+  const signInHref = useMemo(
+    () => `/api/auth/signin/google?rememberDevice=${rememberDevice ? '1' : '0'}`,
+    [rememberDevice]
+  );
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Verifactu Admin
-          </h1>
-          <p className="text-slate-600">
-            Panel de Administración Interno
-          </p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Verifactu Admin</h1>
+          <p className="text-slate-600">Panel de Administración Interno</p>
         </div>
 
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <svg
+                className="w-5 h-5 text-blue-600 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
               <div>
                 <h3 className="text-sm font-semibold text-blue-900">Acceso Restringido</h3>
-                <p className="text-sm text-blue-700 mt-1">
-                  Solo usuarios @verifactu.business
-                </p>
+                <p className="text-sm text-blue-700 mt-1">Solo usuarios @verifactu.business</p>
               </div>
             </div>
           </div>
 
+          <label className="flex items-center gap-3 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              checked={rememberDevice}
+              onChange={(e) => setRememberDevice(e.target.checked)}
+            />
+            Recordar este dispositivo
+          </label>
+
           <a
-            href="/api/auth/signin/google"
+            href={signInHref}
             className="flex items-center justify-center gap-3 w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium text-slate-700"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -54,7 +78,8 @@ export default function SignInPage() {
 
         <div className="mt-8 pt-6 border-t border-slate-200">
           <p className="text-xs text-center text-slate-500">
-            Al iniciar sesión, aceptas cumplir con las políticas de seguridad y auditoría de Verifactu Business
+            Al iniciar sesión, aceptas cumplir con las políticas de seguridad y auditoría de
+            Verifactu Business
           </p>
         </div>
       </div>

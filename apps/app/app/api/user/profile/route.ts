@@ -1,18 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken, readSessionSecret } from "@verifactu/utils";
-import { query } from "@/lib/db";
+import { query } from '@/lib/db';
+import { verifySessionTokenFromEnv } from '@verifactu/utils';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {
-    const sessionCookie = req.cookies.get("session")?.value;
+    const sessionCookie = req.cookies.get('session')?.value;
     if (!sessionCookie) {
-      return NextResponse.json({ error: "No session" }, { status: 401 });
+      return NextResponse.json({ error: 'No session' }, { status: 401 });
     }
 
-    const secret = readSessionSecret();
-    const payload = await verifySessionToken(sessionCookie, secret);
+    const payload = await verifySessionTokenFromEnv(sessionCookie);
     if (!payload?.uid) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
     const result = await query(
@@ -23,7 +22,7 @@ export async function GET(req: NextRequest) {
     );
 
     if (result.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const user = result[0];
@@ -40,22 +39,21 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("GET /api/user/profile error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error('GET /api/user/profile error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PATCH(req: NextRequest) {
   try {
-    const sessionCookie = req.cookies.get("session")?.value;
+    const sessionCookie = req.cookies.get('session')?.value;
     if (!sessionCookie) {
-      return NextResponse.json({ error: "No session" }, { status: 401 });
+      return NextResponse.json({ error: 'No session' }, { status: 401 });
     }
 
-    const secret = readSessionSecret();
-    const payload = await verifySessionToken(sessionCookie, secret);
+    const payload = await verifySessionTokenFromEnv(sessionCookie);
     if (!payload?.uid) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
     const body = await req.json();
@@ -63,7 +61,7 @@ export async function PATCH(req: NextRequest) {
 
     // Validar datos
     if (name !== undefined && (!name || name.trim().length === 0)) {
-      return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
+      return NextResponse.json({ error: 'Name cannot be empty' }, { status: 400 });
     }
 
     const updates: string[] = [];
@@ -89,7 +87,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (updates.length === 0) {
-      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
 
     updates.push(`updated_at = NOW()`);
@@ -97,7 +95,7 @@ export async function PATCH(req: NextRequest) {
 
     const sql = `
       UPDATE users
-      SET ${updates.join(", ")}
+      SET ${updates.join(', ')}
       WHERE id = $${paramIndex}
       RETURNING id, email, name, phone, photo_url, updated_at
     `;
@@ -105,7 +103,7 @@ export async function PATCH(req: NextRequest) {
     const result = await query(sql, values);
 
     if (result.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const user = result[0];
@@ -121,7 +119,7 @@ export async function PATCH(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("PATCH /api/user/profile error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error('PATCH /api/user/profile error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

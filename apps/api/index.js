@@ -62,32 +62,41 @@ async function getUserFromSession(req) {
   if (!match) return null;
 
   const token = decodeURIComponent(match[1]);
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) return null;
+  const primarySecret = (process.env.SESSION_SECRET || '').trim();
+  if (!primarySecret) return null;
+  const previousSecrets = (process.env.SESSION_SECRET_PREVIOUS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const secrets = [primarySecret, ...previousSecrets.filter((value) => value !== primarySecret)];
 
-  try {
-    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
-    const rolesRaw = payload.roles ?? payload.role ?? [];
-    const tenantsRaw = payload.tenants ?? payload.tenant ?? [];
-    const roles = Array.isArray(rolesRaw)
-      ? rolesRaw.map((role) => String(role))
-      : rolesRaw
-        ? [String(rolesRaw)]
-        : [];
-    const tenants = Array.isArray(tenantsRaw)
-      ? tenantsRaw.map((tenant) => String(tenant))
-      : tenantsRaw
-        ? [String(tenantsRaw)]
-        : [];
-    return {
-      uid: String(payload.uid || ''),
-      email: payload.email ? String(payload.email) : null,
-      roles,
-      tenants,
-    };
-  } catch {
-    return null;
+  for (const secret of secrets) {
+    try {
+      const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+      const rolesRaw = payload.roles ?? payload.role ?? [];
+      const tenantsRaw = payload.tenants ?? payload.tenant ?? [];
+      const roles = Array.isArray(rolesRaw)
+        ? rolesRaw.map((role) => String(role))
+        : rolesRaw
+          ? [String(rolesRaw)]
+          : [];
+      const tenants = Array.isArray(tenantsRaw)
+        ? tenantsRaw.map((tenant) => String(tenant))
+        : tenantsRaw
+          ? [String(tenantsRaw)]
+          : [];
+      return {
+        uid: String(payload.uid || ''),
+        email: payload.email ? String(payload.email) : null,
+        roles,
+        tenants,
+      };
+    } catch {
+      // try next secret
+    }
   }
+
+  return null;
 }
 
 function parseAllowlist(value) {
