@@ -29,6 +29,7 @@ export default function Page() {
     { label: 'Inicio', href: '#hero' },
     { label: 'Para quién', href: '#para-quien' },
     { label: 'Dashboard', href: '#dashboard' },
+    { label: 'Qué es Isaak', href: '#que-es-isaak' },
     { label: 'Planes', href: '#planes' },
     { label: 'FAQ', href: '#faq' },
     { label: 'Contacto', href: '/recursos/contacto' },
@@ -378,7 +379,9 @@ export default function Page() {
         <FeaturesSection />
       </section>
       <ThreeSteps />
-      <PideseloAIsaakSection />
+      <div id="que-es-isaak">
+        <PideseloAIsaakSection />
+      </div>
 
       {/* Cumplimiento */}
       <section className="py-12">

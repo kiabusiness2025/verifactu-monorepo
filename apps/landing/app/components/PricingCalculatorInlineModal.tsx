@@ -23,7 +23,7 @@ export default function PricingCalculatorInlineModal({
         >
           <X className="h-4 w-4" />
         </button>
-        <PricingCalculatorInline />
+        <PricingCalculatorInline showBreakdown={false} />
       </div>
     </div>
   );

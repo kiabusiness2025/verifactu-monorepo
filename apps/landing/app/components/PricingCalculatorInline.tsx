@@ -53,7 +53,7 @@ function calcOverageAmount(excess: number) {
   return { amount, breakdown };
 }
 
-export default function PricingCalculatorInline() {
+export default function PricingCalculatorInline({ showBreakdown = true }: { showBreakdown?: boolean }) {
   const [plan, setPlan] = useState<PlanId>("basico");
   const [issuedInvoices, setIssuedInvoices] = useState<number>(10);
   const included = INCLUDED_BY_PLAN[plan];
@@ -166,7 +166,7 @@ export default function PricingCalculatorInline() {
           </div>
         </div>
 
-        {result.breakdown.length > 0 ? (
+        {showBreakdown && result.breakdown.length > 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <h4 className="text-sm font-semibold text-[#011c67]">Desglose por tramos</h4>
             <div className="mt-3 space-y-2 text-sm text-slate-700">
