@@ -409,7 +409,7 @@ export function DashboardMock() {
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-xs font-semibold text-slate-700">Isaak</div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Maria, enero 2026 va bien. Te faltan 2 tickets y un extracto. ??
+            Maria, enero 2026 va bien. Te faltan 2 tickets y un extracto.
           </p>
           <div className="mt-3 flex gap-2">
             <button className="rounded-full bg-[#2361d8] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1f55c0]">
@@ -733,10 +733,10 @@ export function Li({ children }: { children: React.ReactNode }) {
 
 export function Footer() {
   return (
-    <footer className="relative bg-[#2361d8] text-slate-100" role="contentinfo">
+    <footer className="relative bg-[#1f55c0] text-slate-100" role="contentinfo">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-600/10 blur-3xl" />
+        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-900/20 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-800/20 blur-3xl" />
       </div>
 
       <Container className="py-12 relative z-10">
@@ -785,11 +785,13 @@ export function Footer() {
               { label: 'Features', href: '#features' },
               { label: 'FAQ', href: '#faq' },
               { label: 'Planes', href: '#planes' },
+              { label: 'Que es Isaak', href: '/que-es-isaak' },
             ]}
           />
           <FooterCol
-            title="VeriFactu"
+            title="Isaak y VeriFactu"
             links={[
+              { label: 'Que es Isaak', href: '/que-es-isaak' },
               { label: 'Que es', href: '/verifactu/que-es' },
               { label: 'Ver planes', href: '/planes' },
               { label: 'Soporte', href: '/verifactu/soporte' },
@@ -820,6 +822,13 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400">
             <p>(c) {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
             <div className="flex gap-6">
+              <Link
+                href="/que-es-isaak"
+                className="hover:text-blue-300 transition"
+                aria-label="Ir a Que es Isaak"
+              >
+                Que es Isaak
+              </Link>
               <Link
                 href="/verifactu"
                 className="hover:text-blue-300 transition"
@@ -1208,7 +1217,7 @@ export function PideseloAIsaakSection() {
                 href={isaakSignupUrl}
                 className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
               >
-                Hablar con Isaak ??
+                Hablar con Isaak
               </Link>
               <Link
                 href={isaakChatUrl}

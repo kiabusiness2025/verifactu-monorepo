@@ -9,149 +9,127 @@ const FAQ_DATA: {
   answerText: string;
 }[] = [
   {
-    question: "Como se calcula el precio?",
+    question: "Como funciona el acceso gratis para siempre?",
     answer: (
       <>
-        Pagas por uso real: base mensual + tramo de facturas + (opcional) tramo de movimientos. Puedes{" "}
-        <Link href="/#precios" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
-          calcular tu precio
+        Tienes 30 dias para crear y registrar. Despues mantienes acceso en modo lectura y exportacion
+        AEAT (Excel). Si necesitas seguir operando sin limites, puedes elegir un plan en{" "}
+        <Link href="/planes" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
+          planes
+        </Link>
+        .
+      </>
+    ),
+    answerText:
+      "Tienes 30 dias para crear y registrar. Despues mantienes acceso en modo lectura y exportacion AEAT (Excel). Si necesitas seguir operando sin limites, puedes elegir un plan en planes.",
+  },
+  {
+    question: "Como se calcula el exceso de facturas?",
+    answer: (
+      <>
+        Si superas las facturas incluidas, puedes seguir facturando. El exceso se calcula por tramos y
+        se refleja en la siguiente factura mensual junto con tu cuota de plan. Puedes estimarlo en{" "}
+        <Link href="/#planes" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
+          la calculadora de exceso
         </Link>{" "}
-        en la landing y revisar la{" "}
-        <Link
-          href="/politica-de-precios"
-          className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
-        >
-          politica de precios de suscripciones
-        </Link>
         .
       </>
     ),
     answerText:
-      "Pagas por uso real: base mensual + tramo de facturas + (opcional) tramo de movimientos. Puedes calcular tu precio en la landing y revisar la politica de precios de suscripciones.",
+      "Si superas las facturas incluidas, puedes seguir facturando. El exceso se calcula por tramos y se refleja en la siguiente factura mensual junto con tu cuota de plan. Puedes estimarlo en la calculadora de exceso.",
   },
   {
-    question: "Necesito tarjeta para probar?",
+    question: "Isaak es lo mismo que ChatGPT u otra IA general?",
     answer: (
       <>
-        Tienes 1 mes gratis. El cobro se activa solo si confirmas la suscripcion. Puedes{" "}
-        <Link href="/auth/signup" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
-          probar gratis
+        No. Isaak esta especializado en el flujo de facturacion, gastos, plazos y cumplimiento de
+        tu empresa dentro de Verifactu. Una IA general no conoce por defecto tu operativa ni tus
+        reglas internas.
+      </>
+    ),
+    answerText:
+      "No. Isaak esta especializado en el flujo de facturacion, gastos, plazos y cumplimiento de tu empresa dentro de Verifactu. Una IA general no conoce por defecto tu operativa ni tus reglas internas.",
+  },
+  {
+    question: "Que puede hacer Isaak por mi en el dia a dia?",
+    answer: (
+      <>
+        Puede revisar documentos, ordenar gastos, detectar incidencias, recordar plazos y resumirte
+        ventas, gastos y beneficio para que decidas antes del cierre.
+      </>
+    ),
+    answerText:
+      "Puede revisar documentos, ordenar gastos, detectar incidencias, recordar plazos y resumirte ventas, gastos y beneficio para que decidas antes del cierre.",
+  },
+  {
+    question: "Isaak guarda contexto de mi empresa para ayudar mejor?",
+    answer: (
+      <>
+        Si. Puede usar informacion de tu tenant (configuracion, historico y documentos autorizados)
+        para darte respuestas mas utiles y menos genericas.
+      </>
+    ),
+    answerText:
+      "Si. Puede usar informacion de tu tenant (configuracion, historico y documentos autorizados) para darte respuestas mas utiles y menos genericas.",
+  },
+  {
+    question: "Compartis mis datos con humanos sin permiso?",
+    answer: (
+      <>
+        No. Tus datos no se comparten con ningun humano sin tu autorizacion previa, salvo obligaciones
+        legales aplicables.
+      </>
+    ),
+    answerText:
+      "No. Tus datos no se comparten con ningun humano sin tu autorizacion previa, salvo obligaciones legales aplicables.",
+  },
+  {
+    question: "Puedo borrar historial y memoria de Isaak?",
+    answer: (
+      <>
+        Si. Puedes solicitar borrado de historial y reinicio de memoria para tu espacio de trabajo.
+        Tambien puedes gestionar conservacion desde configuracion y soporte.
+      </>
+    ),
+    answerText:
+      "Si. Puedes solicitar borrado de historial y reinicio de memoria para tu espacio de trabajo. Tambien puedes gestionar conservacion desde configuracion y soporte.",
+  },
+  {
+    question: "Existe modo de mensaje temporal?",
+    answer: (
+      <>
+        Si. Estamos preparando mensajes temporales para consultas puntuales que no se incorporen al
+        contexto persistente.
+      </>
+    ),
+    answerText:
+      "Si. Estamos preparando mensajes temporales para consultas puntuales que no se incorporen al contexto persistente.",
+  },
+  {
+    question: "Habra modo voz con Isaak?",
+    answer: (
+      <>
+        Si. La funcion de voz esta en roadmap para dictar consultas y escuchar respuestas sin teclear.
+        Si quieres acceso temprano,{" "}
+        <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
+          apuntate aqui
         </Link>{" "}
-        y ver el precio antes de activar.
-      </>
-    ),
-    answerText:
-      "Tienes 1 mes gratis. El cobro se activa solo si confirmas la suscripcion. Puedes probar gratis y ver el precio antes de activar.",
-  },
-  {
-    question: "Que cuenta como factura?",
-    answer: (
-      <>
-        Factura emitida o generada en el mes. Si se numera, cuenta en el tramo correspondiente. Si necesitas un plan
-        a medida,{" "}
-        <Link href="/presupuesto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
-          solicita presupuesto
-        </Link>
         .
       </>
     ),
     answerText:
-      "Factura emitida o generada en el mes. Si se numera, cuenta en el tramo correspondiente. Si necesitas un plan a medida, solicita presupuesto.",
-  },
-  {
-    question: "Que cuenta como movimiento?",
-    answer: (
-      <>
-        Movimiento procesado para conciliacion, tanto si viene de banco como si lo importas desde Excel. Si no usas
-        conciliacion, ese tramo es 0.
-      </>
-    ),
-    answerText:
-      "Movimiento procesado para conciliacion, tanto si viene de banco como si lo importas desde Excel. Si no usas conciliacion, ese tramo es 0.",
-  },
-  {
-    question: "Cuando se recalcula la cuota?",
-    answer: (
-      <>
-        Durante la prueba medimos el uso y antes del cobro te avisamos del importe final. Puedes consultarlo tambien en
-        la{" "}
-        <Link
-          href="/politica-de-precios"
-          className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
-        >
-          politica de precios
-        </Link>
-        .
-      </>
-    ),
-    answerText:
-      "Durante la prueba medimos el uso y antes del cobro te avisamos del importe final. Puedes consultarlo tambien en la politica de precios.",
+      "Si. La funcion de voz esta en roadmap para dictar consultas y escuchar respuestas sin teclear. Si quieres acceso temprano, apuntate aqui.",
   },
   {
     question: "Isaak sustituye a mi gestor?",
     answer: (
       <>
-        No. Isaak y la plataforma son un apoyo. Te dan visibilidad diaria de ventas, gastos y beneficio para decidir
-        sin esperar al cierre contable.
+        No. Isaak y la plataforma son un apoyo para trabajar mejor con datos diarios. Tu asesor sigue
+        siendo la referencia para cierre y criterio fiscal final.
       </>
     ),
     answerText:
-      "No. Isaak y la plataforma son un apoyo. Te dan visibilidad diaria de ventas, gastos y beneficio para decidir sin esperar al cierre contable.",
-  },
-  {
-    question: "Que puede hacer Isaak por mi?",
-    answer: (
-      <>
-        Interpreta documentos, clasifica gastos, sugiere acciones, avisa de plazos y genera resumenes con ventas,
-        gastos y beneficio. Si tienes dudas,{" "}
-        <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
-          contacta con nosotros
-        </Link>
-        .
-      </>
-    ),
-    answerText:
-      "Interpreta documentos, clasifica gastos, sugiere acciones, avisa de plazos y genera resumenes con ventas, gastos y beneficio. Si tienes dudas, contacta con nosotros.",
-  },
-  {
-    question: "Puedo ver beneficio e impuesto estimado?",
-    answer: (
-      <>
-        Si. Obtienes un beneficio aproximado y un impuesto estimado para comparar con tu asesoría y ajustar decisiones
-        a tiempo.
-      </>
-    ),
-    answerText:
-      "Si. Obtienes un beneficio aproximado y un impuesto estimado para comparar con tu asesoría y ajustar decisiones a tiempo.",
-  },
-  {
-    question: "Puedo exportar y compartir con mi gestoria?",
-    answer: (
-      <>
-        Si. Puedes exportar en PDF o Excel y compartir resultados con tu gestor o asesor cuando lo necesites.{" "}
-        <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
-          Pide ayuda
-        </Link>{" "}
-        si quieres un formato concreto.
-      </>
-    ),
-    answerText:
-      "Si. Puedes exportar en PDF o Excel y compartir resultados con tu gestor o asesor cuando lo necesites. Pide ayuda si quieres un formato concreto.",
-  },
-  {
-    question: "Que pasa si supero un tramo de facturas o movimientos?",
-    answer: (
-      <>
-        El precio se ajusta al tramo correspondiente. Siempre veras el importe antes de renovar. Si superas los limites
-        de la calculadora,{" "}
-        <Link href="/presupuesto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
-          solicita presupuesto
-        </Link>
-        .
-      </>
-    ),
-    answerText:
-      "El precio se ajusta al tramo correspondiente. Siempre veras el importe antes de renovar. Si superas los limites de la calculadora, solicita presupuesto.",
+      "No. Isaak y la plataforma son un apoyo para trabajar mejor con datos diarios. Tu asesor sigue siendo la referencia para cierre y criterio fiscal final.",
   },
   {
     question: "VeriFactu esta incluido?",
@@ -199,13 +177,15 @@ export default function Faq() {
         ))}
       </div>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-slate-600">Quieres ver el precio exacto antes de activar?</div>
+        <div className="text-sm text-slate-600">
+          Quieres ver en detalle todo lo que puede hacer Isaak para tu empresa?
+        </div>
         <div className="flex gap-3">
           <Link
-            href="/#precios"
+            href="/que-es-isaak"
             className="mt-2 inline-block rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
           >
-            Calcula tu precio
+            Que es Isaak
           </Link>
           <Link
             href="/recursos/contacto"
