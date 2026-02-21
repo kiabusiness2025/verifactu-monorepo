@@ -11,6 +11,13 @@ const path = require('path');
 
 const CHECKS = [
   {
+    name: 'Text Encoding (Mojibake)',
+    run: () => {
+      console.log('  → Checking text encoding in apps/app...');
+      execSync('node scripts/check-text-encoding.js apps/app', { stdio: 'inherit' });
+    }
+  },
+  {
     name: 'Prisma Schema Sync',
     run: () => {
       console.log('  → Checking Prisma schema...');

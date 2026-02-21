@@ -1,9 +1,10 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - apps/*
+  - packages/*
 
-# Allow build scripts for native deps required by Next.js
 onlyBuiltDependencies:
   - '@swc/core'
-  - 'esbuild'
-  - 'sharp'
+  - esbuild
+  - sharp
+
+storeDir: /tmp/.pnpm-store

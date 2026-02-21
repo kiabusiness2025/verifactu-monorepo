@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar si el usuario ya existe en PostgreSQL
+    // Buscar si el usuario ya existe en PostgreSQL por uid
     let user = await prisma.user.findUnique({
       where: { id: uid },
     });
@@ -40,14 +40,29 @@ export async function POST(request: NextRequest) {
         created: false,
       });
     } else {
-      // Crear nuevo usuario
-      user = await prisma.user.create({
-        data: {
-          id: uid,
-          email: email,
-          name: displayName || null,
-        },
+      // Si existe un placeholder con el mismo email (invitación), reconciliar ID.
+      const byEmail = await prisma.user.findUnique({
+        where: { email },
       });
+      if (byEmail) {
+        user = await prisma.user.update({
+          where: { id: byEmail.id },
+          data: {
+            id: uid,
+            email,
+            name: displayName || byEmail.name,
+          },
+        });
+      } else {
+        // Crear nuevo usuario
+        user = await prisma.user.create({
+          data: {
+            id: uid,
+            email: email,
+            name: displayName || null,
+          },
+        });
+      }
 
       return NextResponse.json({
         ok: true,
