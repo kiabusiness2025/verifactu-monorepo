@@ -91,7 +91,7 @@ export default function EstadoPage() {
           <div className="text-sm text-slate-600">Quieres calcular tu precio o activar la prueba?</div>
           <div className="flex gap-3">
             <Link
-              href="/#precios"
+              href="/#planes"
               className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
               Calcula tu precio

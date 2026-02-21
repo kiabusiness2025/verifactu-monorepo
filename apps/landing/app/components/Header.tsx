@@ -29,7 +29,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
 
   const defaultNavLinks: NavLink[] = [
     { label: 'VeriFactu', href: '/verifactu/que-es' },
-    { label: 'Calcula tu precio', href: '/#precios' },
+    { label: 'Calcula tu precio', href: '/#planes' },
     { label: 'Recursos', href: '/recursos/guias-y-webinars' },
     { label: 'Soporte', href: '/verifactu/soporte' },
   ];

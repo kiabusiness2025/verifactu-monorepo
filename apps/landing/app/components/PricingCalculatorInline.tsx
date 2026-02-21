@@ -59,6 +59,10 @@ export default function PricingCalculatorInline() {
   const included = INCLUDED_BY_PLAN[plan];
   const excess = Math.max(0, Math.floor(issuedInvoices) - included);
   const result = useMemo(() => calcOverageAmount(excess), [excess]);
+  const planPrice = PLAN_LIST.find((item) => item.id === plan)?.priceEur ?? 0;
+  const subtotal = Math.round((planPrice + result.amount) * 100) / 100;
+  const iva = Math.round(subtotal * 0.21 * 100) / 100;
+  const total = Math.round((subtotal + iva) * 100) / 100;
 
   const fmtCurrency = (value: number) =>
     value.toLocaleString("es-ES", {
@@ -72,9 +76,9 @@ export default function PricingCalculatorInline() {
     <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="space-y-6">
         <div className="text-center">
-          <h3 className="text-2xl font-semibold text-[#011c67]">Calculadora de exceso</h3>
+          <h3 className="text-2xl font-semibold text-[#011c67]">Calcula tu precio</h3>
           <p className="mt-2 text-sm text-slate-600">
-            Estima el importe adicional por facturas emitidas por encima del límite de tu plan.
+            Estima tu cuota mensual final con plan, exceso e IVA.
           </p>
         </div>
 
@@ -111,17 +115,19 @@ export default function PricingCalculatorInline() {
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Incluidas
+              Cuota del plan
             </div>
-            <div className="mt-2 text-2xl font-bold text-[#011c67]">{included}</div>
-            <div className="mt-1 text-xs text-slate-500">Plan {planName}</div>
+            <div className="mt-2 text-2xl font-bold text-[#011c67]">{fmtCurrency(planPrice)} EUR</div>
+            <div className="mt-1 text-xs text-slate-500">{planName}</div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Exceso
+              Incluidas / Exceso
             </div>
-            <div className="mt-2 text-2xl font-bold text-[#011c67]">{excess}</div>
-            <div className="mt-1 text-xs text-slate-500">Facturas extra</div>
+            <div className="mt-2 text-2xl font-bold text-[#011c67]">
+              {included} / {excess}
+            </div>
+            <div className="mt-1 text-xs text-slate-500">Facturas plan / facturas extra</div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-[#2361d8]/10 p-4">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -131,6 +137,32 @@ export default function PricingCalculatorInline() {
               {fmtCurrency(result.amount)} EUR
             </div>
             <div className="mt-1 text-xs text-slate-500">Se factura al mes siguiente</div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <h4 className="text-sm font-semibold text-[#011c67]">Resumen de cuota mensual estimada</h4>
+          <div className="mt-3 space-y-2 text-sm text-slate-700">
+            <div className="flex items-center justify-between">
+              <span>Cuota plan ({planName})</span>
+              <span className="font-semibold">{fmtCurrency(planPrice)} EUR</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Exceso estimado</span>
+              <span className="font-semibold">{fmtCurrency(result.amount)} EUR</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Subtotal sin IVA</span>
+              <span className="font-semibold">{fmtCurrency(subtotal)} EUR</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>IVA (21%)</span>
+              <span className="font-semibold">{fmtCurrency(iva)} EUR</span>
+            </div>
+            <div className="mt-2 flex items-center justify-between rounded-xl bg-[#2361d8]/10 px-3 py-2 text-[#011c67]">
+              <span className="font-semibold">Total mensual estimado</span>
+              <span className="text-lg font-bold">{fmtCurrency(total)} EUR</span>
+            </div>
           </div>
         </div>
 

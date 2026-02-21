@@ -147,7 +147,7 @@ const FAQ_DATA: {
   },
 ];
 
-export default function Faq() {
+export default function Faq({ onOpenCalculator }: { onOpenCalculator?: () => void }) {
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -181,12 +181,22 @@ export default function Faq() {
           Quieres ver en detalle todo lo que puede hacer Isaak para tu empresa?
         </div>
         <div className="flex gap-3">
-          <Link
-            href="/que-es-isaak"
-            className="mt-2 inline-block rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-          >
-            Que es Isaak
-          </Link>
+          {onOpenCalculator ? (
+            <button
+              type="button"
+              onClick={onOpenCalculator}
+              className="mt-2 inline-block rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Calcula tu precio
+            </button>
+          ) : (
+            <Link
+              href="/#planes"
+              className="mt-2 inline-block rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Calcula tu precio
+            </Link>
+          )}
           <Link
             href="/recursos/contacto"
             className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200"

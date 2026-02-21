@@ -6,6 +6,7 @@ import { Briefcase, Building2, Check, ShieldCheck, Sparkles, UserRound } from 'l
 import Header from './components/Header';
 import Faq from './components/Faq';
 import PricingCalculatorInline from './components/PricingCalculatorInline';
+import PricingCalculatorInlineModal from './components/PricingCalculatorInlineModal';
 import { getAppUrl } from './lib/urls';
 import { EXCESS_TEXT_LINES, EXCESS_TEXT_TITLE, PLAN_LIST } from './lib/plans';
 
@@ -35,6 +36,7 @@ export default function Page() {
 
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const appUrl = getAppUrl();
 
   useEffect(() => {
@@ -117,10 +119,10 @@ export default function Page() {
                   Empezar gratis (para siempre)
                 </Link>
                 <Link
-                  href="/planes"
+                  href="/#planes"
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2361d8] bg-white px-6 py-3 font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#2361d8]/10"
                 >
-                  Ver planes
+                  Calcular precio
                 </Link>
               </div>
               <p className="mt-3 text-sm text-slate-600">
@@ -343,10 +345,10 @@ export default function Page() {
 
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
-                href="/planes"
+                href="/#planes"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Ver todos los detalles
+                Calcular precio
               </Link>
               <Link
                 href={appUrl}
@@ -408,7 +410,7 @@ export default function Page() {
               Respuestas rapidas sobre planes, seguridad y funcionalidades.
             </p>
           </div>
-          <Faq />
+          <Faq onOpenCalculator={() => setShowCalculatorModal(true)} />
         </Container>
       </section>
 
@@ -448,6 +450,10 @@ export default function Page() {
 
       <Footer />
       <StickyCtaBar show={showStickyCta} />
+      <PricingCalculatorInlineModal
+        isOpen={showCalculatorModal}
+        onClose={() => setShowCalculatorModal(false)}
+      />
     </div>
   );
 }

@@ -89,7 +89,7 @@ export async function POST(req: Request) {
   successUrl.searchParams.set("checkout", "success");
   successUrl.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
 
-  const cancelUrl = new URL("/#precios", getLandingUrl());
+  const cancelUrl = new URL("/#planes", getLandingUrl());
 
   // Estimacion neta para mostrar/guardar como metadata (sin IVA)
   const estimated = estimateNetEur(input);

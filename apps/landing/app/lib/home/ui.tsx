@@ -85,8 +85,8 @@ export function StickyCtaBar({ show }: { show: boolean }) {
           <Link href={appUrl}>
             <PrimaryButton className="h-10 px-4 text-sm">Empezar gratis (para siempre)</PrimaryButton>
           </Link>
-          <SecondaryButton href="/planes" className="h-10 px-4 text-sm">
-            Ver planes
+          <SecondaryButton href="/#planes" className="h-10 px-4 text-sm">
+            Calcular precio
           </SecondaryButton>
         </div>
       </div>
@@ -784,7 +784,7 @@ export function Footer() {
               { label: 'Dashboard', href: '#dashboard' },
               { label: 'Features', href: '#features' },
               { label: 'FAQ', href: '#faq' },
-              { label: 'Planes', href: '#planes' },
+              { label: 'Calcular precio', href: '/#planes' },
               { label: 'Que es Isaak', href: '/que-es-isaak' },
             ]}
           />
@@ -793,7 +793,7 @@ export function Footer() {
             links={[
               { label: 'Que es Isaak', href: '/que-es-isaak' },
               { label: 'Que es', href: '/verifactu/que-es' },
-              { label: 'Ver planes', href: '/planes' },
+              { label: 'Calcular precio', href: '/#planes' },
               { label: 'Soporte', href: '/verifactu/soporte' },
               { label: 'Estado del servicio', href: '/verifactu/estado' },
             ]}
@@ -822,6 +822,13 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400">
             <p>(c) {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
             <div className="flex gap-6">
+              <Link
+                href="/#planes"
+                className="hover:text-blue-300 transition"
+                aria-label="Calcular precio"
+              >
+                Calcular precio
+              </Link>
               <Link
                 href="/que-es-isaak"
                 className="hover:text-blue-300 transition"

@@ -128,10 +128,10 @@ export default function ProductSummaryPage() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/#precios"
+              href="/#planes"
               className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
             >
-              Ver planes
+              Calcular precio
             </Link>
           </div>
         </div>

@@ -121,7 +121,7 @@ export default function PoliticaDePreciosPage() {
 
         <div className="mt-12 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/#precios"
+            href="/#planes"
             className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
           >
             Calcular precio
