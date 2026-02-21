@@ -1028,96 +1028,53 @@ export function FeaturesSection() {
 export function PideseloAIsaakSection() {
   const isaakSignupUrl = `${getAppUrl()}/auth/signup?next=/dashboard?isaak=1`;
   const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
-  const isaakDialogue = [
-    {
-      q: 'Isaak, ?qu? falta para cerrar 2025?',
-      a: 'Te faltan 2 facturas y un extracto bancario. Te aviso hoy ?',
-    },
-    {
-      q: 'Resumen rápido de enero 2026',
-      a: 'Vamos genial ?? Ventas 12.480 ?, gastos 7.130 ?. Beneficio 5.350 ?.',
-    },
-    {
-      q: '¿Cómo voy de IVA este trimestre?',
-      a: 'Estimación al día: 2.140 ? a ingresar. Te recuerdo fechas clave ??',
-    },
-    {
-      q: '¿Tengo facturas con errores?',
-      a: 'Detectú 1 factura sin NIF del cliente. ¿La corrijo ahora? ??',
-    },
-    {
-      q: 'Sube estos tickets y clasifícalos',
-      a: 'Listo ? Clasificados por proveedor y trimestre. Te marco deducibles.',
-    },
-    {
-      q: '¿Qué plazo tengo esta semana?',
-      a: 'Tienes 3 facturas por revisar y un recordatorio fiscal activo. Te guío.',
-    },
-    {
-      q: '¿Cómo va mi beneficio hoy?',
-      a: 'Beneficio estimado: 5.350 ?. Mejora del +12% vs. mes pasado ??',
-    },
-    {
-      q: 'Quiero un informe para mi gestor',
-      a: 'Preparado ?? Ventas, gastos, IVA y notas clave en un clic.',
-    },
-    {
-      q: '¿Algún riesgo para el cierre?',
-      a: 'Solo faltan 2 documentos. Si los subes hoy, cierre sin estrés ??',
-    },
-    {
-      q: '¿Puedes revisar mis cobros?',
-      a: 'Sí. Hay 3 pendientes y 1 vencido. Te preparo recordatorios ??',
-    },
-    {
-      q: 'Explícame este CIF',
-      a: 'Te dejo el desglose y lo guardo en tu ficha de cliente ??',
-    },
-    {
-      q: '¿Tengo deducibles nuevos?',
-      a: 'Sí, 4 gastos deducibles este mes. Te los resalto ??',
-    },
-    {
-      q: '¿Cómo va mi caja?',
-      a: 'Saldo previsto 18.240 ? en 10 días. Todo en verde ?',
-    },
-    {
-      q: 'Crea un recordatorio de impuestos',
-      a: 'Hecho. Te aviso 7 días antes y el mismo día ?',
-    },
-    {
-      q: '¿Cuánto me queda para mi meta mensual?',
-      a: 'Te faltan 1.920 ? para el objetivo. Vamos bien ??',
-    },
-    {
-      q: '¿Hay facturas verificadas?',
-      a: 'Sí, 9 facturas con trazabilidad en regla. Todo OK ?',
-    },
-    {
-      q: 'Necesito priorizar tareas',
-      a: '1) Subir extracto, 2) Confirmar NIF, 3) Conciliar banco.',
-    },
-    {
-      q: '¿Puedes estimar el trimestre?',
-      a: 'T1 2026 estimado: ventas 38.200 ?, beneficio 16.540 ? ??',
-    },
-    {
-      q: 'Actualiza mis clientes top',
-      a: 'Listo: 3 clientes concentran el 62% de ingresos.',
-    },
-    {
-      q: '¿Puedo ver todo en un panel?',
-      a: 'Sí. KPIs y alertas en tu dashboard en tiempo real ?',
-    },
-  ];
+  const toneOptions = [
+    { key: 'cercano', label: 'Cercano', emoji: '😊' },
+    { key: 'profesional', label: 'Profesional', emoji: '🧑‍💼' },
+    { key: 'minimalista', label: 'Minimalista', emoji: '⚡' },
+  ] as const;
+  type ToneKey = (typeof toneOptions)[number]['key'];
+
+  const isaakDialogueByTone: Record<ToneKey, Array<{ q: string; a: string }>> = {
+    cercano: [
+      { q: 'Isaak, ¿qué falta para cerrar 2025?', a: 'Te faltan 2 facturas y un extracto. Si quieres, te lo dejo hoy cerrado 😊' },
+      { q: 'Resumen rápido de enero 2026', a: 'Vas muy bien: ventas 12.480 EUR, gastos 7.130 EUR, beneficio 5.350 EUR 🚀' },
+      { q: '¿Cómo voy de IVA este trimestre?', a: 'Estimación actual: 2.140 EUR a ingresar. Te recuerdo fechas clave para ir tranquilo 📅' },
+      { q: '¿Tengo facturas con errores?', a: 'Sí, veo 1 factura sin NIF. La corregimos en 1 minuto y listo ✅' },
+      { q: 'Sube estos tickets y clasifícalos', a: 'Perfecto, los clasifico por proveedor y trimestre, y te marco deducibles 📎' },
+      { q: '¿Qué plazo tengo esta semana?', a: 'Tienes 3 tareas fiscales activas. Te ordeno prioridad para que no se te escape nada 👌' },
+    ],
+    profesional: [
+      { q: 'Isaak, ¿qué falta para cerrar 2025?', a: 'Pendientes: 2 facturas y 1 extracto bancario. Estado: cierre parcial.' },
+      { q: 'Resumen rápido de enero 2026', a: 'Ventas: 12.480 EUR. Gastos: 7.130 EUR. Beneficio: 5.350 EUR.' },
+      { q: '¿Cómo voy de IVA este trimestre?', a: 'Estimación de IVA: 2.140 EUR. Próximo hito fiscal programado en calendario.' },
+      { q: '¿Tengo facturas con errores?', a: 'Se detecta 1 incidencia: factura sin NIF del cliente. Recomendación: corregir hoy.' },
+      { q: 'Sube estos tickets y clasifícalos', a: 'Documentos procesados. Clasificación contable completada y validación aplicada.' },
+      { q: '¿Qué plazo tengo esta semana?', a: 'Hay 3 obligaciones activas. Prioridad sugerida: alta, media y seguimiento.' },
+    ],
+    minimalista: [
+      { q: 'Isaak, ¿qué falta para cerrar 2025?', a: 'Faltan 2 facturas + 1 extracto.' },
+      { q: 'Resumen rápido de enero 2026', a: '12.480 EUR ventas | 7.130 EUR gastos | 5.350 EUR beneficio.' },
+      { q: '¿Cómo voy de IVA este trimestre?', a: 'IVA estimado: 2.140 EUR.' },
+      { q: '¿Tengo facturas con errores?', a: 'Sí. 1 factura sin NIF.' },
+      { q: 'Sube estos tickets y clasifícalos', a: 'Hecho. Clasificados y deducibles marcados.' },
+      { q: '¿Qué plazo tengo esta semana?', a: '3 tareas fiscales activas.' },
+    ],
+  };
+  const [tone, setTone] = React.useState<ToneKey>('cercano');
   const [qaIndex, setQaIndex] = React.useState(0);
+  const isaakDialogue = isaakDialogueByTone[tone];
+
+  React.useEffect(() => {
+    setQaIndex(0);
+  }, [tone]);
 
   React.useEffect(() => {
     const intervalId = setInterval(() => {
       setQaIndex((prev) => (prev + 1) % isaakDialogue.length);
     }, 4200);
     return () => clearInterval(intervalId);
-  }, [isaakDialogue.length]);
+  }, [isaakDialogue]);
 
   const visibleQas = [0, 1, 2].map(
     (offset) => isaakDialogue[(qaIndex + offset) % isaakDialogue.length]
@@ -1153,19 +1110,27 @@ export function PideseloAIsaakSection() {
               </span>
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Cambia las preguntas y mira cómo responde Isaak con tono cercano y optimista.
+              Cambia el humor de Isaak y mira cómo adapta su respuesta en tiempo real.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <button className="rounded-full border border-[#2361d8] bg-[#2361d8]/10 px-3 py-1 font-semibold text-[#2361d8]">
-                Cercano ??
-              </button>
-              <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
-                Profesional ??
-              </button>
-              <button className="rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600">
-                Minimalista ?
-              </button>
+              {toneOptions.map((option) => {
+                const active = tone === option.key;
+                return (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setTone(option.key)}
+                    className={`rounded-full border px-3 py-1 font-semibold transition ${
+                      active
+                        ? 'border-[#2361d8] bg-[#2361d8]/10 text-[#2361d8]'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {option.emoji} {option.label}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
