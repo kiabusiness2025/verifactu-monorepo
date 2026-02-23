@@ -1,15 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "builds": [
-    {
-      "src": "index.js",
-      "use": "@vercel/node"
+  "framework": null,
+  "installCommand": "cd ../.. && npx -y pnpm@10.27.0 install --frozen-lockfile",
+  "functions": {
+    "index.js": {
+      "runtime": "nodejs20.x"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "index.js"
+      "source": "/(.*)",
+      "destination": "/index.js"
     }
   ]
 }
