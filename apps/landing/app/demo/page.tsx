@@ -286,7 +286,7 @@ export default function DemoPage() {
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-600">
               Entra, toca botones y revisa el panel. Esta vista previa es segura y usa datos de
-              ejemplo para enero 2026.
+              ejemplo de un mes de operacion.
             </p>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -397,7 +397,7 @@ export default function DemoPage() {
                 <div className="rounded-xl border border-[#2361d8]/20 bg-white p-4">
                   <div className="text-sm font-semibold text-[#2361d8]">Isaak</div>
                   <p className="mt-2 text-xs text-slate-600">
-                    Te ayudo con cierre 2025 y enero 2026. ¿Revisamos?&quot;
+                    Te ayudo con el cierre del periodo y los proximos plazos. ¿Revisamos?
                   </p>
                 </div>
               </div>

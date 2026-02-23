@@ -83,7 +83,7 @@ export function StickyCtaBar({ show }: { show: boolean }) {
         </div>
         <div className="flex gap-2">
           <Link href={appUrl}>
-            <PrimaryButton className="h-10 px-4 text-sm">Empezar gratis (para siempre)</PrimaryButton>
+            <PrimaryButton className="h-10 px-4 text-sm">Empezar prueba de 30 días</PrimaryButton>
           </Link>
           <SecondaryButton href="/#planes" className="h-10 px-4 text-sm">
             Calcular precio
@@ -293,10 +293,12 @@ export function FeatureCard({
   icon,
   title,
   bullets,
+  href,
 }: {
   icon: React.ReactNode;
   title: string;
   bullets: string[];
+  href?: string;
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -314,9 +316,12 @@ export function FeatureCard({
           </li>
         ))}
       </ul>
-      <button className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#2361d8] hover:text-[#2361d8]">
-        Ver mas <ChevronRight className="h-4 w-4" />
-      </button>
+      <Link
+        href={href ?? "/recursos/contacto"}
+        className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#2361d8] hover:text-[#2361d8]"
+      >
+        Ver detalles <ChevronRight className="h-4 w-4" />
+      </Link>
     </div>
   );
 }
@@ -409,7 +414,7 @@ export function DashboardMock() {
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-xs font-semibold text-slate-700">Isaak</div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Maria, enero 2026 va bien. Te faltan 2 tickets y un extracto.
+            Maria, este mes va bien. Te faltan 2 tickets y un extracto.
           </p>
           <div className="mt-3 flex gap-2">
             <button className="rounded-full bg-[#2361d8] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1f55c0]">
@@ -426,11 +431,11 @@ export function DashboardMock() {
           <div className="mt-3 space-y-2">
             <ActivityItem
               icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-              text="Cierre 2025: checklist al 90%"
+              text="Checklist mensual al 90%"
             />
             <ActivityItem
               icon={<CalendarClock className="h-4 w-4 text-amber-500" />}
-              text="T1 2026: plazos en 12 dias"
+              text="Próximo plazo fiscal en 12 días"
             />
             <ActivityItem
               icon={<FileText className="h-4 w-4 text-[#2361d8]" />}
@@ -702,11 +707,13 @@ export function ResourceCard({
   title,
   desc,
   cta,
+  href,
 }: {
   tag: string;
   title: string;
   desc: string;
   cta: string;
+  href: string;
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -715,9 +722,12 @@ export function ResourceCard({
       </div>
       <div className="mt-4 text-sm font-semibold">{title}</div>
       <div className="mt-2 text-sm leading-6 text-slate-600">{desc}</div>
-      <button className="mt-4 inline-flex items-center gap-1 rounded-full bg-[#2361d8] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1f55c0]">
+      <Link
+        href={href}
+        className="mt-4 inline-flex items-center gap-1 rounded-full bg-[#2361d8] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1f55c0]"
+      >
         {cta} <ChevronRight className="h-4 w-4" />
-      </button>
+      </Link>
     </div>
   );
 }
@@ -750,6 +760,7 @@ export function Footer() {
               <a
                 href="/recursos/guias-y-webinars"
                 className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition"
+                aria-label="Ir a guías y webinars"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2s9 5 20 5a9.5 9.5 0 00-9-5.5c4.75 2.25 7-7 7-7" />
@@ -758,6 +769,7 @@ export function Footer() {
               <a
                 href="/recursos/blog"
                 className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition"
+                aria-label="Ir al blog"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="1" />
@@ -768,6 +780,7 @@ export function Footer() {
               <a
                 href="/recursos/contacto"
                 className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 transition"
+                aria-label="Ir al contacto"
               >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />
@@ -939,10 +952,10 @@ export function ComplianceBadge() {
             <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
               <BadgeCheck className="h-3 w-3 text-white" />
             </div>
-            <span className="text-sm font-semibold text-green-700">Cumplimiento Certificado</span>
+            <span className="text-sm font-semibold text-green-700">Alineado con requisitos VeriFactu</span>
           </div>
           <p className="mt-3 text-xs text-slate-500">
-            Sistema homologado según normativa de la Agencia Tributaria
+            Integridad, trazabilidad y evidencias según el marco técnico aplicable.
           </p>
         </div>
       </div>
@@ -1007,6 +1020,7 @@ export function FeaturesSection() {
               'Isaak interpreta y clasifica al instante',
               'Validacion VeriFactu incluida',
             ]}
+            href="/verifactu/que-es"
           />
           <FeatureCard
             icon={<BadgeCheck className="h-5 w-5 text-[#2361d8]" />}
@@ -1016,6 +1030,7 @@ export function FeaturesSection() {
               'Deducible según tu actividad',
               'Recordatorios de cierres y plazos',
             ]}
+            href="/recursos/checklist"
           />
           <FeatureCard
             icon={<Sparkles className="h-5 w-5 text-[#2361d8]" />}
@@ -1025,6 +1040,7 @@ export function FeaturesSection() {
               'Comparativas por mes y trimestre',
               'Alertas cuando algo se desvia',
             ]}
+            href="/producto/resumen"
           />
           <FeatureCard
             icon={<FileText className="h-5 w-5 text-[#2361d8]" />}
@@ -1034,6 +1050,7 @@ export function FeaturesSection() {
               'Plazos fiscales siempre visibles',
               'Checklist de cierre mensual y anual',
             ]}
+            href="/que-es-isaak"
           />
         </div>
       </Container>
@@ -1053,24 +1070,24 @@ export function PideseloAIsaakSection() {
 
   const isaakDialogueByTone: Record<ToneKey, Array<{ q: string; a: string }>> = {
     cercano: [
-      { q: 'Isaak, ¿qué falta para cerrar 2025?', a: 'Te faltan 2 facturas y un extracto. Si quieres, te lo dejo hoy cerrado 😊' },
-      { q: 'Resumen rápido de enero 2026', a: 'Vas muy bien: ventas 12.480 EUR, gastos 7.130 EUR, beneficio 5.350 EUR 🚀' },
+      { q: 'Isaak, ¿qué falta para cerrar este periodo?', a: 'Te faltan 2 facturas y un extracto. Si quieres, te lo dejo hoy cerrado 😊' },
+      { q: 'Resumen rápido del mes', a: 'Vas muy bien: ventas 12.480 EUR, gastos 7.130 EUR, beneficio 5.350 EUR 🚀' },
       { q: '¿Cómo voy de IVA este trimestre?', a: 'Estimación actual: 2.140 EUR a ingresar. Te recuerdo fechas clave para ir tranquilo 📅' },
       { q: '¿Tengo facturas con errores?', a: 'Sí, veo 1 factura sin NIF. La corregimos en 1 minuto y listo ✅' },
       { q: 'Sube estos tickets y clasifícalos', a: 'Perfecto, los clasifico por proveedor y trimestre, y te marco deducibles 📎' },
       { q: '¿Qué plazo tengo esta semana?', a: 'Tienes 3 tareas fiscales activas. Te ordeno prioridad para que no se te escape nada 👌' },
     ],
     profesional: [
-      { q: 'Isaak, ¿qué falta para cerrar 2025?', a: 'Pendientes: 2 facturas y 1 extracto bancario. Estado: cierre parcial.' },
-      { q: 'Resumen rápido de enero 2026', a: 'Ventas: 12.480 EUR. Gastos: 7.130 EUR. Beneficio: 5.350 EUR.' },
+      { q: 'Isaak, ¿qué falta para cerrar este periodo?', a: 'Pendientes: 2 facturas y 1 extracto bancario. Estado: cierre parcial.' },
+      { q: 'Resumen rápido del mes', a: 'Ventas: 12.480 EUR. Gastos: 7.130 EUR. Beneficio: 5.350 EUR.' },
       { q: '¿Cómo voy de IVA este trimestre?', a: 'Estimación de IVA: 2.140 EUR. Próximo hito fiscal programado en calendario.' },
       { q: '¿Tengo facturas con errores?', a: 'Se detecta 1 incidencia: factura sin NIF del cliente. Recomendación: corregir hoy.' },
       { q: 'Sube estos tickets y clasifícalos', a: 'Documentos procesados. Clasificación contable completada y validación aplicada.' },
       { q: '¿Qué plazo tengo esta semana?', a: 'Hay 3 obligaciones activas. Prioridad sugerida: alta, media y seguimiento.' },
     ],
     minimalista: [
-      { q: 'Isaak, ¿qué falta para cerrar 2025?', a: 'Faltan 2 facturas + 1 extracto.' },
-      { q: 'Resumen rápido de enero 2026', a: '12.480 EUR ventas | 7.130 EUR gastos | 5.350 EUR beneficio.' },
+      { q: 'Isaak, ¿qué falta para cerrar este periodo?', a: 'Faltan 2 facturas + 1 extracto.' },
+      { q: 'Resumen rápido del mes', a: '12.480 EUR ventas | 7.130 EUR gastos | 5.350 EUR beneficio.' },
       { q: '¿Cómo voy de IVA este trimestre?', a: 'IVA estimado: 2.140 EUR.' },
       { q: '¿Tengo facturas con errores?', a: 'Sí. 1 factura sin NIF.' },
       { q: 'Sube estos tickets y clasifícalos', a: 'Hecho. Clasificados y deducibles marcados.' },
@@ -1108,7 +1125,7 @@ export function PideseloAIsaakSection() {
             Un amigo experto que habla tu idioma y te cuida los plazos.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Isaak entiende documentos, te acompaña en 2026 y convierte tu día a día en decisiones
+            Isaak entiende documentos, te acompaña cada semana y convierte tu día a día en decisiones
             claras.
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-xs text-slate-500">
@@ -1211,7 +1228,7 @@ export function PideseloAIsaakSection() {
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center gap-2 text-slate-800">
                   <BadgeCheck className="h-4 w-4 text-[#2361d8]" />
-                  <span className="font-semibold">VeriFactu, siempre operativo</span>
+                  <span className="font-semibold">Seguimiento continuo de VeriFactu</span>
                 </div>
                 <p className="mt-1 text-xs">
                   Trazabilidad y control listos para cumplir sin sustos.
@@ -1234,7 +1251,7 @@ export function PideseloAIsaakSection() {
               </Link>
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              Isaak te acompaña en el cierre 2025 y el arranque del primer trimestre de 2026.
+              Isaak te acompaña durante todo el año con alertas y próximos pasos.
             </p>
           </div>
         </div>

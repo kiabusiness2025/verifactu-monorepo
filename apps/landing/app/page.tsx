@@ -82,7 +82,7 @@ export default function Page() {
                 className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15 hover:text-[#2361d8]"
               >
                 <span className="h-2 w-2 rounded-full bg-[#2361d8]" aria-hidden="true" />
-                Estado: Operativo - Cierre 2025 en marcha, T1 2026 abierto
+                Estado del servicio: operativo
               </Link>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-[#011c67] sm:text-6xl">
@@ -117,7 +117,7 @@ export default function Page() {
                   href={appUrl}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
                 >
-                  Empezar gratis (para siempre)
+                  Empezar prueba de 30 días
                 </Link>
                 <Link
                   href="/#planes"
@@ -258,7 +258,7 @@ export default function Page() {
                 href={appUrl}
                 className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
               >
-                Empezar gratis (para siempre)
+                Empezar prueba de 30 días
               </Link>
               <Link
                 href="/recursos/contacto"
@@ -355,7 +355,7 @@ export default function Page() {
                 href={appUrl}
                 className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
               >
-                Empezar gratis (para siempre)
+                Empezar prueba de 30 días
               </Link>
             </div>
 
@@ -431,21 +431,24 @@ export default function Page() {
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
             <ResourceCard
               tag="Guia"
-              title="Manual VeriFactu 2026"
+              title="Manual VeriFactu actualizado"
               desc="Requisitos y checklist práctico para operar con confianza este año."
               cta="Descargar guía"
+              href="/recursos/guias-y-webinars"
             />
             <ResourceCard
               tag="Primeros pasos"
               title="Primeros pasos con Isaak"
               desc="Aprende a emitir, registrar gastos y entender tus metricas."
               cta="Reservar plaza"
+              href="/que-es-isaak"
             />
             <ResourceCard
               tag="Checklist"
               title="Auditoria express"
               desc="Evalua el estado de tu facturacion y detecta riesgos."
               cta="Solicitar checklist"
+              href="/recursos/checklist"
             />
           </div>
         </Container>

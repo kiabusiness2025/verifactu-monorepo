@@ -80,7 +80,7 @@ export function PlanPageTemplate({
                 href={appUrl}
                 className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
               >
-                Empezar gratis (para siempre)
+                Empezar prueba de 30 días
               </Link>
               <Link
                 href="/planes"

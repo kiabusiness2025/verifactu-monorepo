@@ -21,6 +21,7 @@ export default function CookieBanner() {
 
   const handleAccept = (mode: 'essential' | 'all') => {
     localStorage.setItem(COOKIE_CONSENT_KEY, mode);
+    window.dispatchEvent(new Event('verifactu:cookie-consent'));
     setShowBanner(false);
   };
 
@@ -63,9 +64,9 @@ export default function CookieBanner() {
             Aceptar todo
           </button>
           <button
-            onClick={() => setShowBanner(false)}
+            onClick={() => handleAccept('essential')}
             className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-slate-100"
-            aria-label="Cerrar"
+            aria-label="Cerrar y mantener solo cookies esenciales"
           >
             <X className="h-4 w-4 text-slate-500" />
           </button>

@@ -64,7 +64,7 @@ export default function VerifactuPage() {
             </h1>
             <p className="text-lg text-slate-700">
               Mostramos como cuidamos integridad, trazabilidad y conservacion de tus registros. Ideal para el cierre
-              2025 y el arranque del T1 2026.
+              de periodos mensuales, trimestrales y anuales.
             </p>
           </div>
 
@@ -158,4 +158,3 @@ export default function VerifactuPage() {
     </main>
   );
 }
-

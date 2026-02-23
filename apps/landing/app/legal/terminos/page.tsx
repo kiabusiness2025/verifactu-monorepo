@@ -90,9 +90,12 @@ export default function TerminosPage() {
               Precios y facturación
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              La cuota mensual se estima como: cuota del plan + exceso de facturas + IVA (21%). El exceso se aplica por
-              tramos de volumen: 1-25 (0,50 EUR), 26-100 (0,35 EUR), 101-500 (0,20 EUR), 501+ (0,12 EUR). Puedes
-              calcular el total final en la{" "}
+              La cuota mensual se calcula como: cuota base del plan + tramo de uso aplicable + IVA (21%).
+              Los tramos de facturas y movimientos vigentes son los publicados en la{" "}
+              <Link href="/politica-de-precios" className="font-semibold text-[#2361d8] underline underline-offset-4">
+                política de precios
+              </Link>
+              . Puedes estimar el total en la{" "}
               <Link href="/#planes" className="font-semibold text-[#2361d8] underline underline-offset-4">
                 calculadora de precio
               </Link>{" "}
@@ -174,6 +177,5 @@ export default function TerminosPage() {
     </main>
   );
 }
-
 
 

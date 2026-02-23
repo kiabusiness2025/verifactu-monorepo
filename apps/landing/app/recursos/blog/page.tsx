@@ -5,22 +5,22 @@ import { getLandingUrl, getAppUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
   title: "Blog | Verifactu Business",
-  description: "Consejos practicos y novedades sobre facturacion, fiscalidad y gestion en 2026.",
+  description: "Consejos practicos y novedades sobre facturacion, fiscalidad y gestion.",
 };
 
 const posts = [
   {
-    title: "VeriFactu 2026 en 5 minutos",
+    title: "VeriFactu en 5 minutos",
   description: "Resumen claro de la obligación y cómo cumplir sin fricción.",
     meta: "Lectura 5 min",
   },
   {
-    title: "Errores frecuentes en cierre 2025",
+    title: "Errores frecuentes en el cierre",
     description: "Como evitarlos y ahorrar tiempo en correcciones.",
     meta: "Checklist listo",
   },
   {
-    title: "Arranque T1 2026 sin sustos",
+    title: "Arranque trimestral sin sustos",
     description: "Una rutina simple para ventas, gastos y evidencias.",
     meta: "Rutina mensual",
   },
@@ -109,5 +109,4 @@ export default function BlogPage() {
     </main>
   );
 }
-
 

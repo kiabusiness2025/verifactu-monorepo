@@ -9,7 +9,7 @@ const FAQ_DATA: {
   answerText: string;
 }[] = [
   {
-    question: "Como funciona el acceso gratis para siempre?",
+    question: "Como funciona el acceso tras la prueba de 30 dias?",
     answer: (
       <>
         Tienes 30 dias para crear y registrar. Despues mantienes acceso en modo lectura y exportacion

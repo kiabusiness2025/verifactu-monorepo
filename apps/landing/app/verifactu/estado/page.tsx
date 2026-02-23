@@ -39,6 +39,10 @@ const statusList: Status[] = [
 
 export default function EstadoPage() {
   const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
+  const lastUpdated = new Intl.DateTimeFormat("es-ES", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date());
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:py-16">
@@ -54,8 +58,9 @@ export default function EstadoPage() {
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Estado del servicio</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
           Aqui puedes ver incidencias en VeriFactu, AEAT o integraciones. Si algo falla, publicamos actualizaciones y
-          tiempos estimados. Seguimos el cierre 2025 y el arranque del T1 2026 en tiempo real.
+          tiempos estimados.
         </p>
+        <p className="mt-2 text-xs text-slate-500">Ultima actualizacion publicada: {lastUpdated}.</p>
 
         <div className="mt-8 space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           {statusList.map((item) => (

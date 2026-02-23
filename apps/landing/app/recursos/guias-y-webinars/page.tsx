@@ -5,22 +5,22 @@ import { getLandingUrl, getAppUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
   title: "Guías y webinars | Verifactu Business",
-  description: "Recursos claros para cumplir VeriFactu y cerrar 2025 con un arranque 2026 sin sorpresas.",
+  description: "Recursos claros para cumplir VeriFactu y gestionar cierres sin sorpresas.",
 };
 
 const guides = [
   {
-    title: "Guía rápida VeriFactu 2026",
+    title: "Guía rápida VeriFactu",
     description: "Qué exige la AEAT y cómo cumplir sin errores.",
     meta: "PDF + video",
   },
   {
-    title: "Cierre 2025 paso a paso",
+    title: "Cierre fiscal paso a paso",
     description: "Ventas, gastos, evidencias y checklist final.",
     meta: "Checklist",
   },
   {
-    title: "T1 2026 sin nervios",
+    title: "Trimestre sin nervios",
     description: "Plazos, modelos y alertas claras en enero, febrero y marzo.",
     meta: "Calendario",
   },
@@ -109,5 +109,4 @@ export default function GuiasPage() {
     </main>
   );
 }
-
 

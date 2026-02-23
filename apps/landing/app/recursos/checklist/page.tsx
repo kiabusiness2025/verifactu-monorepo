@@ -5,7 +5,7 @@ import { getLandingUrl, getAppUrl } from "../../lib/urls";
 
 export const metadata: Metadata = {
   title: "Checklist | Verifactu Business",
-  description: "Checklist practico para emitir facturas conforme a VeriFactu en 2026.",
+  description: "Checklist practico para emitir facturas conforme a VeriFactu.",
 };
 
 const checklist = [
@@ -16,7 +16,7 @@ const checklist = [
   "Impuestos aplicados según normativa.",
   "Registro y conservacion de facturas.",
   "Trazabilidad para auditorias y verificacion.",
-  "Cierre 2025 revisado y T1 2026 con plazos claros.",
+  "Cierre fiscal revisado y proximo trimestre con plazos claros.",
 ];
 
 export default function ChecklistPage() {
@@ -90,5 +90,4 @@ export default function ChecklistPage() {
     </main>
   );
 }
-
 

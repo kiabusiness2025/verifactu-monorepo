@@ -47,8 +47,8 @@ export default function QueEsVeriFactuPage() {
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Qué es VeriFactu</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
           VeriFactu es el estándar de facturación verificable exigido por la AEAT. Cada factura queda sellada con hash y
-          marca temporal para asegurar integridad y trazabilidad. Así, tu cierre 2025 y el arranque del T1 2026 quedan
-          listos y auditables sin fricción.
+          marca temporal para asegurar integridad y trazabilidad. Asi, tus cierres quedan listos y auditables sin
+          friccion.
         </p>
 
         <div className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:grid-cols-2">
@@ -62,7 +62,7 @@ export default function QueEsVeriFactuPage() {
           <h2 className="text-xl font-semibold text-slate-900">Por qué integrarlo con Isaak</h2>
           <p className="text-sm leading-6 text-slate-700">
             Isaak aplica reglas, valida envíos y te avisa si algo se desvía. Combina cumplimiento con un panel claro de
-            ventas, gastos y beneficio. Te da contexto rápido para enero 2026 y el T1 2026.
+            ventas, gastos y beneficio. Te da contexto rapido para decidir cada semana.
           </p>
           <div className="flex flex-wrap gap-3 text-sm">
             <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-100">

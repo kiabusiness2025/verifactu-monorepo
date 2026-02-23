@@ -1,10 +1,34 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Script from "next/script";
 
 const GTM_ID = "GTM-PHP7QW26";
+const COOKIE_CONSENT_KEY = "verifactu_cookie_consent";
+
+function hasAnalyticsConsent() {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(COOKIE_CONSENT_KEY) === "all";
+}
 
 export function GoogleTagManager() {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const syncConsent = () => setEnabled(hasAnalyticsConsent());
+
+    syncConsent();
+    window.addEventListener("storage", syncConsent);
+    window.addEventListener("verifactu:cookie-consent", syncConsent as EventListener);
+
+    return () => {
+      window.removeEventListener("storage", syncConsent);
+      window.removeEventListener("verifactu:cookie-consent", syncConsent as EventListener);
+    };
+  }, []);
+
+  if (!enabled) return null;
+
   return (
     <>
       {/* Google Tag Manager - Script */}
@@ -26,16 +50,6 @@ export function GoogleTagManager() {
           `,
         }}
       />
-
-      {/* Google Tag Manager - noscript iframe */}
-      <noscript>
-        <iframe
-          src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
-          height="0"
-          width="0"
-          style={{ display: "none", visibility: "hidden" }}
-        />
-      </noscript>
     </>
   );
 }

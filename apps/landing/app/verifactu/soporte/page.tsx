@@ -46,7 +46,7 @@ export default function SoportePage() {
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Estamos para ayudarte</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
           Elige cómo prefieres recibir ayuda: ticket rápido, onboarding guiado o guías paso a paso. Isaak también
-          puede ayudarte con el cierre 2025 y el arranque del T1 2026.
+          puede ayudarte con cierres y plazos fiscales durante todo el año.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
