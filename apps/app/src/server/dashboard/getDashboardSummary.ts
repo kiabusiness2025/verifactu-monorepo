@@ -1,6 +1,7 @@
 import { prisma } from '@verifactu/db';
 import { getSessionPayload, requireUserId } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { demoData } from '@/src/lib/demo/demoData';
 
 type DashboardTenant = {
   id: string;
@@ -255,7 +256,21 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   const hasBankIntegration = false;
   const unprocessedDocsCount = 0;
 
-  if (activeTenantId) {
+  if (demoMode) {
+    metrics = {
+      sales: Number(demoData.kpis.revenueMonth ?? 0),
+      expenses: Number(demoData.kpis.expensesMonth ?? 0),
+      profit: Number(demoData.kpis.profitMonth ?? 0),
+      tax: Number(demoData.kpis.vatEstimated ?? 0),
+    };
+    invoiceCount = Number(demoData.invoices.length ?? 0);
+    expenseCount = Number(demoData.documents.length ?? 0);
+    draftInvoicesCount = 0;
+    unpaidInvoicesCount = Number(
+      demoData.invoices.filter((invoice) => invoice.status !== 'paid').length ?? 0
+    );
+    hasVerifactuIntegration = true;
+  } else if (activeTenantId) {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
