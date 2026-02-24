@@ -18,7 +18,7 @@ import React, { Suspense, useEffect, useState } from 'react';
 
 function OnboardingFlow({ isAdminRoute }: { isAdminRoute: boolean }) {
   const { company } = useIsaakUI();
-  const isDemoCompany = company?.toLowerCase().includes('demo');
+  const isDemoCompany = company?.toLowerCase()?.includes('demo') ?? false;
   const { hasSeenWelcome, markWelcomeSeen, markOnboardingComplete } = useOnboarding();
   const [showTour, setShowTour] = useState(false);
 

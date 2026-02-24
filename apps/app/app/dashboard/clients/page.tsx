@@ -211,8 +211,8 @@ export default function ClientsPage() {
     (client) =>
       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.nif?.toLowerCase().includes(searchQuery.toLowerCase())
+      (client.company?.toLowerCase()?.includes(searchQuery.toLowerCase()) ?? false) ||
+      (client.nif?.toLowerCase()?.includes(searchQuery.toLowerCase()) ?? false)
   );
 
   return (
