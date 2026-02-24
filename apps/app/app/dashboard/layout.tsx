@@ -1,12 +1,10 @@
-import DashboardClientLayout from "./DashboardClientLayout";
-import { getSessionPayload } from "@/lib/session";
-import { resolveActiveTenant } from "@/src/server/tenant/resolveActiveTenant";
+import { getSessionPayload } from '@/lib/session';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import DashboardClientLayout from './DashboardClientLayout';
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const dynamic = 'force-dynamic';
+
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   let supportMode = false;
   let supportTenantName: string | null = null;
 
@@ -22,7 +20,7 @@ export default async function DashboardLayout({
       supportTenantName = resolved.tenant?.legalName || resolved.tenant?.name || null;
     }
   } catch (error) {
-    console.error("[dashboard/layout] failed to resolve support tenant context", {
+    console.error('[dashboard/layout] failed to resolve support tenant context', {
       message: error instanceof Error ? error.message : String(error),
     });
   }
