@@ -51,23 +51,9 @@ export default async function DashboardPage() {
     const exerciseLabel =
       exercises.find((item) => item.id === currentYear)?.label ?? `Ejercicio ${currentYear}`;
 
-    const tenants = data.tenants.length
-      ? data.tenants
-      : [
-          {
-            id: 'demo',
+    const tenants = data.tenants;
 
-            name: 'Empresa Demo SL',
-
-            nif: 'B12345678',
-
-            legalName: null,
-
-            isDemo: true,
-          },
-        ];
-
-    const tenantStatus = demoMode ? 'Demo' : 'Activa';
+    const tenantStatus = demoMode ? 'Demo' : activeTenant ? 'Activa' : 'Sin empresa';
 
     return (
       <div className="space-y-6">
@@ -114,12 +100,40 @@ export default async function DashboardPage() {
         }
       />
 
+      {tenants.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
+          <div className="text-sm font-semibold text-slate-900">No hay empresas todavía</div>
+          <div className="mt-2 text-xs text-slate-500">
+            Empieza con eInforma y activa la prueba de 30 días para desbloquear tu panel.
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link
+              href="/dashboard/onboarding?step=company&next=/dashboard"
+              className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Buscar empresa (eInforma)
+            </Link>
+            <Link
+              href="/dashboard/onboarding?step=billing&next=/dashboard"
+              className="inline-flex h-9 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Activar prueba 30 días
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.4fr] gap-4">
         <div className="shadow-soft rounded-2xl border border-slate-200 bg-white">
           <div className="p-5 space-y-4">
             <div className="text-sm font-semibold text-slate-900">Perfiles</div>
 
             <div className="max-h-[320px] overflow-y-auto pr-1 space-y-2">
+              {tenants.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-500">
+                  Sin perfiles todavía.
+                </div>
+              ) : null}
               {tenants.map((company) => {
                 const active = company.id === activeTenantId;
 
@@ -167,7 +181,7 @@ export default async function DashboardPage() {
 
                 <div>
                   <div className="text-sm font-semibold text-slate-900">
-                    {activeTenant?.name ?? 'Empresa Demo SL'}
+                    {activeTenant?.name ?? 'Sin empresa seleccionada'}
                   </div>
 
                   {activeTenant?.nif ? (

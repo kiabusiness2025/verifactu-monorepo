@@ -75,7 +75,30 @@ function buildActions({
   unprocessedDocsCount,
 }: ActionContext): IsaakAction[] {
   const demoSuffix = demoMode ? ' (demo)' : '';
-  if (demoMode || !tenantId) {
+  if (!tenantId && !demoMode) {
+    return [
+      {
+        id: 'onboarding-company',
+        title: 'Añade tu primera empresa para empezar',
+        action: 'Añadir empresa',
+        href: '/dashboard/onboarding?next=/dashboard',
+      },
+      {
+        id: 'einforma-search',
+        title: 'Busca tu empresa con eInforma y completa datos',
+        action: 'Buscar empresa',
+        href: '/dashboard/onboarding?step=company&next=/dashboard',
+      },
+      {
+        id: 'trial-activate',
+        title: 'Activa tu prueba de 30 días',
+        action: 'Activar prueba',
+        href: '/dashboard/onboarding?step=billing&next=/dashboard',
+      },
+    ];
+  }
+
+  if (demoMode) {
     return [
       {
         id: 'invoice',
