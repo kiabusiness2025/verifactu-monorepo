@@ -89,10 +89,17 @@ export async function middleware(req: NextRequest) {
 
   const session = await getSessionPayload(req);
 
+  if (!session && !isDevelopment && pathname === '/dashboard') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/demo';
+    url.search = '';
+    return NextResponse.redirect(url, { status: 307 });
+  }
+
   if (!session && !isDevelopment && !isAdminRoute) {
     const landingUrl = getLandingUrl();
     const appUrl = getAppUrl();
-    const returnPath = pathname === '/' ? '/dashboard' : pathname;
+    const returnPath = pathname === '/' ? '/demo' : pathname;
     const returnUrl = `${appUrl}${returnPath}`;
     const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(returnUrl)}`;
     return NextResponse.redirect(loginUrl);
@@ -100,7 +107,7 @@ export async function middleware(req: NextRequest) {
 
   if (pathname === '/') {
     const url = req.nextUrl.clone();
-    url.pathname = '/dashboard';
+    url.pathname = '/demo';
     return NextResponse.redirect(url);
   }
 
