@@ -39,14 +39,14 @@ export default async function DashboardPage() {
             <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
               <p className="text-xs font-semibold text-blue-900">¿Quieres usar tus datos reales?</p>
               <p className="mt-1 text-xs text-blue-800">
-                Añade tu empresa con eInforma y activa ahora tu prueba de 30 días.
+                Añade tu empresa con el buscador y activa ahora tu prueba de 30 días.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href="/dashboard/onboarding?step=company&next=/dashboard"
                   className="inline-flex h-8 items-center rounded-full bg-[#0b6cfb] px-3 text-xs font-semibold text-white hover:bg-[#095edb]"
                 >
-                  Buscar empresa (eInforma)
+                  Buscar empresa
                 </Link>
                 <Link
                   href="/dashboard/onboarding?step=billing&next=/dashboard"
@@ -121,7 +121,9 @@ export default async function DashboardPage() {
                 >
                   <div>
                     <div className="text-sm font-semibold text-slate-900">{item.title}</div>
-                    <div className="text-xs text-slate-500">Isaak preparará la acción y el borrador.</div>
+                    <div className="text-xs text-slate-500">
+                      Isaak preparará la acción y el borrador.
+                    </div>
                   </div>
                   <Link
                     href={item.href}

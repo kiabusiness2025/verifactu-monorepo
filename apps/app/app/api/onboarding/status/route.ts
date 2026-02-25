@@ -1,21 +1,20 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { ensureRole } from "@/lib/authz";
-import { Roles } from "@/lib/roles";
-import { getSessionPayload, requireUserId } from "@/lib/session";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getSessionPayload, requireUserId } from '@/lib/session';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const session = await getSessionPayload();
-  const guard = ensureRole({ session, minRole: Roles.default });
-  if (guard) return guard;
+  if (!session?.uid) {
+    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  }
 
   const uid = requireUserId(session);
 
   const memberships = await prisma.membership.findMany({
-    where: { userId: uid, status: "active" },
+    where: { userId: uid, status: 'active' },
     select: { tenantId: true, tenant: { select: { isDemo: true } } },
   });
 
@@ -32,14 +31,12 @@ export async function GET() {
   if (preferredTenantId) {
     const subscription = await prisma.tenantSubscription.findFirst({
       where: { tenantId: preferredTenantId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     if (subscription) {
       trial = {
         status: subscription.status,
-        trialEndsAt: subscription.trialEndsAt
-          ? subscription.trialEndsAt.toISOString()
-          : null,
+        trialEndsAt: subscription.trialEndsAt ? subscription.trialEndsAt.toISOString() : null,
       };
     }
   }

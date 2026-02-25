@@ -73,7 +73,7 @@ export function SuppliersForm({
       const data = await res.json();
       const normalized = data?.normalized;
       if (!res.ok || !normalized) {
-        toast.error('No se pudo completar', data?.error ?? 'Consulta fallida en eInforma.');
+        toast.error('No se pudo completar', data?.error ?? 'Consulta fallida en el buscador.');
         return;
       }
       setFormData((prev) => ({
@@ -93,11 +93,11 @@ export function SuppliersForm({
       });
       toast.success(
         'Datos completados',
-        data?.cached ? 'Se usó snapshot de eInforma.' : 'Datos traídos desde eInforma.'
+        data?.cached ? 'Se usó snapshot del buscador.' : 'Datos traídos desde búsqueda en vivo.'
       );
     } catch (error) {
       console.error('eInforma autocomplete error:', error);
-      toast.error('Error de eInforma', 'No se pudo completar la ficha.');
+      toast.error('Error de búsqueda', 'No se pudo completar la ficha.');
     } finally {
       setEinformaLoading(false);
     }
@@ -167,13 +167,13 @@ export function SuppliersForm({
               disabled={einformaLoading || !normalizedNif || !isValidNif}
               className="px-3 py-2 text-xs font-medium border rounded-lg text-blue-700 border-blue-200 hover:bg-blue-50 disabled:opacity-50"
             >
-              {einformaLoading ? 'Buscando...' : 'Autocompletar con eInforma'}
+              {einformaLoading ? 'Buscando...' : 'Autocompletar empresa'}
             </button>
             {einformaMeta ? (
               <span className="rounded-full border px-2 py-1 text-[10px] text-slate-600">
                 {einformaMeta.cached && einformaMeta.cacheSource === 'tenantProfile'
                   ? 'Snapshot'
-                  : 'eInforma (live)'}
+                  : 'Consulta en vivo'}
               </span>
             ) : null}
           </div>

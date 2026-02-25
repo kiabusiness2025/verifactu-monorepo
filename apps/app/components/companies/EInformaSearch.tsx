@@ -25,6 +25,7 @@ export function EInformaSearch({
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [errorMessage, setErrorMessage] = useState('');
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export function EInformaSearch({
       if (query.trim().length < 3) {
         setResults([]);
         setShowResults(false);
+        setErrorMessage('');
         return;
       }
 
@@ -51,13 +53,20 @@ export function EInformaSearch({
         const res = await fetch(`/api/onboarding/einforma/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
 
-        if (data.ok) {
+        if (data?.ok) {
           setResults(data.results || []);
           setShowResults(true);
+          setErrorMessage('');
+        } else {
+          setResults([]);
+          setShowResults(true);
+          setErrorMessage(data?.error || 'No se pudo completar la búsqueda');
         }
       } catch (error) {
         console.error('Error searching:', error);
         setResults([]);
+        setShowResults(true);
+        setErrorMessage('No se pudo completar la búsqueda');
       } finally {
         setLoading(false);
       }
@@ -145,13 +154,12 @@ export function EInformaSearch({
                         <div className="flex items-center gap-1.5 text-xs text-slate-600">
                           <MapPin className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">
-                            <span className="text-slate-500">Dirección:</span>{" "}
-                            {[company.city, company.province].filter(Boolean).join(", ")}
+                            <span className="text-slate-500">Dirección:</span>{' '}
+                            {[company.city, company.province].filter(Boolean).join(', ')}
                           </span>
                         </div>
                       )}
                     </div>
-
                   </div>
                 </div>
               </button>
@@ -171,8 +179,10 @@ export function EInformaSearch({
         <div className="absolute z-50 mt-2 w-full rounded-lg border border-slate-200 bg-white shadow-lg p-4">
           <div className="text-center text-sm text-slate-600">
             <Building2 className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-            <p className="font-medium">No se encontraron empresas</p>
-            <p className="text-xs mt-1">Intenta con otro nombre o CIF</p>
+            <p className="font-medium">
+              {errorMessage ? 'No se pudo realizar la búsqueda' : 'No se encontraron empresas'}
+            </p>
+            <p className="text-xs mt-1">{errorMessage || 'Intenta con otro nombre o CIF'}</p>
           </div>
         </div>
       )}

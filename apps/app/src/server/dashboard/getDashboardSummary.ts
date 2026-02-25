@@ -1,7 +1,7 @@
-import { prisma } from '@verifactu/db';
 import { getSessionPayload, requireUserId } from '@/lib/session';
-import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { demoData } from '@/src/lib/demo/demoData';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { prisma } from '@verifactu/db';
 
 type DashboardTenant = {
   id: string;
@@ -85,7 +85,7 @@ function buildActions({
       },
       {
         id: 'einforma-search',
-        title: 'Busca tu empresa con eInforma y completa datos',
+        title: 'Busca tu empresa con el buscador y completa datos',
         action: 'Buscar empresa',
         href: '/dashboard/onboarding?step=company&next=/dashboard',
       },

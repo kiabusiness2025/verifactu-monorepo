@@ -600,8 +600,8 @@ function SettingsContent() {
                   />
                   {einformaMeta?.lastSyncAt ? (
                     <div className="mt-2 text-xs text-slate-500">
-                      {einformaMeta.cached ? 'Snapshot (<=30 días)' : 'eInforma (live)'} · Actualizado:{' '}
-                      {einformaMeta.lastSyncAt}
+                      {einformaMeta.cached ? 'Snapshot (<=30 días)' : 'Consulta en vivo'} ·
+                      Actualizado: {einformaMeta.lastSyncAt}
                     </div>
                   ) : null}
 
@@ -863,7 +863,7 @@ function SettingsContent() {
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-4">Otras Integraciones</h3>
                 <div className="space-y-3">
-                  {/* eInforma */}
+                  {/* Buscador de empresas */}
                   <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
                     <div className="flex justify-between items-start">
                       <div className="flex items-start gap-3">
@@ -871,9 +871,9 @@ function SettingsContent() {
                           e
                         </div>
                         <div>
-                          <h4 className="font-semibold text-slate-900">eInforma</h4>
+                          <h4 className="font-semibold text-slate-900">Buscador de empresas</h4>
                           <p className="text-sm text-slate-600 mt-1">
-                            Búsqueda y autocompletado de datos de empresas españolas
+                            Búsqueda y autocompletado de datos de empresas
                           </p>
                         </div>
                       </div>
@@ -990,8 +990,8 @@ function SettingsContent() {
                         {sessionInfo.rememberDevice === null
                           ? '—'
                           : sessionInfo.rememberDevice
-                          ? 'Sí'
-                          : 'No'}
+                            ? 'Sí'
+                            : 'No'}
                       </span>
                     </div>
                   </div>

@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { ensureRole } from '@/lib/authz';
-import { Roles } from '@/lib/roles';
 import { getSessionPayload, requireUserId } from '@/lib/session';
 import { upsertUser } from '@/lib/tenants';
 
@@ -82,8 +80,9 @@ async function resolvePlanId(): Promise<number> {
 
 export async function POST(req: Request) {
   const session = await getSessionPayload();
-  const guard = ensureRole({ session, minRole: Roles.default });
-  if (guard) return guard;
+  if (!session?.uid) {
+    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  }
 
   const uid = requireUserId(session);
   const body = (await req.json().catch(() => null)) as TenantPayload | null;

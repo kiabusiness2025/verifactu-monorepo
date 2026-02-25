@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { EInformaSearch } from "@/components/companies/EInformaSearch";
-import { useToast } from "@/components/notifications/ToastNotifications";
-import { EinformaAutofillButton } from "@/src/components/einforma/EinformaAutofillButton";
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { EInformaSearch } from '@/components/companies/EInformaSearch';
+import { useToast } from '@/components/notifications/ToastNotifications';
+import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 
 type SelectedCompany = {
   einformaId?: string;
@@ -40,16 +40,16 @@ export default function OnboardingPage() {
   const { success, error: showError } = useToast();
 
   const [selected, setSelected] = useState<SelectedCompany | null>(null);
-  const [companyName, setCompanyName] = useState("");
-  const [legalName, setLegalName] = useState("");
-  const [nif, setNif] = useState("");
+  const [companyName, setCompanyName] = useState('');
+  const [legalName, setLegalName] = useState('');
+  const [nif, setNif] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [hasRealTenant, setHasRealTenant] = useState(false);
 
   const nextUrl = useMemo(() => {
-    const next = searchParams?.get("next");
-    return next && next.startsWith("/") ? next : "/dashboard";
+    const next = searchParams?.get('next');
+    return next && next.startsWith('/') ? next : '/demo';
   }, [searchParams]);
 
   const canSubmit = companyName.trim().length > 0 && nif.trim().length > 0;
@@ -58,7 +58,7 @@ export default function OnboardingPage() {
     let mounted = true;
     async function loadStatus() {
       try {
-        const res = await fetch("/api/onboarding/status", { credentials: "include" });
+        const res = await fetch('/api/onboarding/status', { credentials: 'include' });
         const data = await res.json().catch(() => null);
         if (!mounted) return;
         setHasRealTenant(Boolean(data?.hasRealTenant));
@@ -93,9 +93,9 @@ export default function OnboardingPage() {
   }) {
     setSelected((prev) => ({
       ...prev,
-      name: prev?.name || normalized.name || "",
-      legalName: prev?.legalName || normalized.legalName || normalized.name || "",
-      nif: prev?.nif || normalized.nif || "",
+      name: prev?.name || normalized.name || '',
+      legalName: prev?.legalName || normalized.legalName || normalized.name || '',
+      nif: prev?.nif || normalized.nif || '',
       cnae: prev?.cnae || normalized.cnae || null,
       cnaeCode: prev?.cnaeCode || normalized.cnaeCode || null,
       cnaeText: prev?.cnaeText || normalized.cnaeText || null,
@@ -111,16 +111,12 @@ export default function OnboardingPage() {
       country: prev?.country || normalized.country || null,
     }));
 
-    if (!companyName.trim()) setCompanyName(normalized.name || normalized.legalName || "");
-    if (!legalName.trim()) setLegalName(normalized.legalName || normalized.name || "");
-    if (!nif.trim()) setNif(normalized.nif || "");
+    if (!companyName.trim()) setCompanyName(normalized.name || normalized.legalName || '');
+    if (!legalName.trim()) setLegalName(normalized.legalName || normalized.name || '');
+    if (!nif.trim()) setNif(normalized.nif || '');
   }
 
-  async function handleSelect(company: {
-    einformaId: string;
-    name: string;
-    nif: string;
-  }) {
+  async function handleSelect(company: { einformaId: string; name: string; nif: string }) {
     setIsLoadingDetails(true);
     setSelected({
       einformaId: company.einformaId,
@@ -134,9 +130,7 @@ export default function OnboardingPage() {
 
     try {
       const res = await fetch(
-        `/api/onboarding/einforma/company?einformaId=${encodeURIComponent(
-          company.einformaId
-        )}`
+        `/api/onboarding/einforma/company?einformaId=${encodeURIComponent(company.einformaId)}`
       );
       const data = await res.json().catch(() => null);
       if (res.ok && data?.ok) {
@@ -185,24 +179,24 @@ export default function OnboardingPage() {
     if (!canSubmit || isSubmitting) return;
     if (hasRealTenant) {
       showError(
-        "Límite del modo prueba",
-        "Ya tienes una empresa real activa en prueba. Para añadir otra, contrata un plan."
+        'Límite del modo prueba',
+        'Ya tienes una empresa real activa en prueba. Para añadir otra, contrata un plan.'
       );
       return;
     }
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/onboarding/tenant", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/onboarding/tenant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          source: selected?.einformaId ? "einforma" : "manual",
+          source: selected?.einformaId ? 'einforma' : 'manual',
           einformaId: selected?.einformaId,
           name: companyName.trim(),
           legalName: legalName.trim(),
           nif: nif.trim(),
-              extra: selected
+          extra: selected
             ? {
                 cnae: selected.cnae,
                 cnaeCode: selected.cnaeCode,
@@ -232,37 +226,36 @@ export default function OnboardingPage() {
 
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        if (data?.action === "TRIAL_LIMIT_REACHED") {
+        if (data?.action === 'TRIAL_LIMIT_REACHED') {
           const billingUrl =
-            typeof data?.billingUrl === "string" ? data.billingUrl : "/dashboard/settings?tab=billing";
+            typeof data?.billingUrl === 'string'
+              ? data.billingUrl
+              : '/dashboard/settings?tab=billing';
           showError(
-            "Límite del modo prueba",
-            "En modo prueba solo puedes usar una empresa real. Te llevamos a planes."
+            'Límite del modo prueba',
+            'En modo prueba solo puedes usar una empresa real. Te llevamos a planes.'
           );
           router.push(billingUrl);
           return;
         }
-        throw new Error(data?.error || "No se pudo activar la prueba");
+        throw new Error(data?.error || 'No se pudo activar la prueba');
       }
 
-      const trialEndsAt =
-        data?.trial?.trialEndsAt || data?.trialEndsAt || null;
+      const trialEndsAt = data?.trial?.trialEndsAt || data?.trialEndsAt || null;
       const formattedEndsAt = trialEndsAt
-        ? new Intl.DateTimeFormat("es-ES", { dateStyle: "medium" }).format(
-            new Date(trialEndsAt)
-          )
-        : "";
+        ? new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' }).format(new Date(trialEndsAt))
+        : '';
 
-      if (data.action === "REQUEST_ACCESS") {
+      if (data.action === 'REQUEST_ACCESS') {
         showError(
-          "Acceso pendiente",
-          "Tu usuario no tiene acceso a esta empresa. Contacta con soporte."
+          'Acceso pendiente',
+          'Tu usuario no tiene acceso a esta empresa. Contacta con soporte.'
         );
         return;
       }
 
       window.localStorage.setItem(
-        "vf_trial_started",
+        'vf_trial_started',
         JSON.stringify({
           tenantName: companyName.trim(),
           trialEndsAt,
@@ -270,18 +263,14 @@ export default function OnboardingPage() {
       );
 
       success(
-        "Prueba activada",
+        'Prueba activada',
         `Tienes 30 días para probar Verifactu + Isaak con tu empresa. La prueba termina el ${formattedEndsAt}.`
       );
 
-      router.push(
-        `${nextUrl}?trialStarted=1&trialEndsAt=${encodeURIComponent(
-          trialEndsAt || ""
-        )}`
-      );
+      router.push(`${nextUrl}?trialStarted=1&trialEndsAt=${encodeURIComponent(trialEndsAt || '')}`);
     } catch (error) {
       console.error(error);
-      showError("Error al activar la prueba", "Vuelve a intentarlo en unos segundos.");
+      showError('Error al activar la prueba', 'Vuelve a intentarlo en unos segundos.');
     } finally {
       setIsSubmitting(false);
     }
@@ -291,12 +280,10 @@ export default function OnboardingPage() {
     <main className="min-h-screen bg-slate-50 px-4 py-12">
       <div className="mx-auto w-full max-w-2xl space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-semibold text-[#0b214a]">
-            Añadir tu empresa
-          </h1>
+          <h1 className="text-2xl font-semibold text-[#0b214a]">Añadir tu empresa</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Busca tu empresa en eInforma o crea los datos manualmente. Al continuar
-            activarás 30 días de prueba.
+            Busca tu empresa en el buscador o crea los datos manualmente. Al continuar activarás 30
+            días de prueba.
           </p>
 
           <div className="mt-6 space-y-4">
@@ -308,22 +295,21 @@ export default function OnboardingPage() {
                 <EInformaSearch onSelect={handleSelect} />
               </div>
               {isLoadingDetails && (
-                <p className="mt-2 text-xs text-slate-500">
-                  Cargando datos de eInforma...
-                </p>
+                <p className="mt-2 text-xs text-slate-500">Cargando datos de la empresa...</p>
               )}
             </div>
 
             <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">
               <p className="font-semibold">Vas a activar 30 días de prueba</p>
               <p className="mt-1 text-xs text-blue-800">
-                Durante la prueba puedes emitir facturas Verifactu y subir documentación.
-                Antes de cobrar, recibirás un aviso con tu cuota estimada según tu uso.
+                Durante la prueba puedes emitir facturas Verifactu y subir documentación. Antes de
+                cobrar, recibirás un aviso con tu cuota estimada según tu uso.
               </p>
             </div>
             {hasRealTenant ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                Ya tienes una empresa real en modo prueba. Para añadir otra empresa, necesitas contratar un plan.
+                Ya tienes una empresa real en modo prueba. Para añadir otra empresa, necesitas
+                contratar un plan.
               </div>
             ) : null}
           </div>
@@ -374,30 +360,33 @@ export default function OnboardingPage() {
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
-                    <span className="text-slate-500">Nombre:</span> {selected.legalName ?? selected.name ?? "—"}
+                    <span className="text-slate-500">Nombre:</span>{' '}
+                    {selected.legalName ?? selected.name ?? '—'}
                   </div>
                   <div>
-                    <span className="text-slate-500">CIF/NIF:</span> {selected.nif ?? "—"}
+                    <span className="text-slate-500">CIF/NIF:</span> {selected.nif ?? '—'}
                   </div>
                   <div>
-                    <span className="text-slate-500">Dirección:</span> {selected.address ?? "—"}
+                    <span className="text-slate-500">Dirección:</span> {selected.address ?? '—'}
                   </div>
                   <div>
-                    <span className="text-slate-500">Localidad:</span>{" "}
-                    {[selected.postalCode, selected.city, selected.province].filter(Boolean).join(" ") || "—"}
+                    <span className="text-slate-500">Localidad:</span>{' '}
+                    {[selected.postalCode, selected.city, selected.province]
+                      .filter(Boolean)
+                      .join(' ') || '—'}
                   </div>
                 </div>
               </div>
             )}
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-              En modo prueba solo puedes usar una empresa con datos reales. Revisa bien estos datos principales:
-              después de guardar no podrás modificarlos desde este flujo.
+              En modo prueba solo puedes usar una empresa con datos reales. Revisa bien estos datos
+              principales: después de guardar no podrás modificarlos desde este flujo.
             </div>
 
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => router.push("/dashboard")}
+                onClick={() => router.push(nextUrl)}
                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
                 Cancelar
@@ -407,7 +396,7 @@ export default function OnboardingPage() {
                 disabled={!canSubmit || isSubmitting || hasRealTenant}
                 className="w-full rounded-xl bg-[#0b6cfb] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#095edb] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSubmitting ? "Guardando..." : "Guardar"}
+                {isSubmitting ? 'Guardando...' : 'Guardar'}
               </button>
             </div>
           </form>

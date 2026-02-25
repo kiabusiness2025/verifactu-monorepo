@@ -83,7 +83,7 @@ export function EinformaAutofillButton({
       const res = await fetch(buildUrl(withRefresh));
       const data = await res.json();
       if (!res.ok || !data?.normalized) {
-        showError('eInforma', data?.error ?? 'No se pudo completar la empresa');
+        showError('Buscador de empresas', data?.error ?? 'No se pudo completar la empresa');
         return;
       }
 
@@ -101,12 +101,12 @@ export function EinformaAutofillButton({
       setMeta(nextMeta);
       onApply(normalizedCompany, nextMeta);
       success(
-        'eInforma',
-        data.cached ? 'Datos completados desde snapshot' : 'Datos completados desde eInforma'
+        'Buscador de empresas',
+        data.cached ? 'Datos completados desde snapshot' : 'Datos completados desde búsqueda'
       );
     } catch (err) {
       console.error('eInforma autofill error:', err);
-      showError('eInforma', 'No se pudo completar la empresa');
+      showError('Buscador de empresas', 'No se pudo completar la empresa');
     } finally {
       setLoading(false);
     }
@@ -120,7 +120,7 @@ export function EinformaAutofillButton({
           onClick={() => handleClick(false)}
           disabled={!canSearch || loading}
         >
-          {loading ? 'Buscando...' : 'Autocompletar con eInforma'}
+          {loading ? 'Buscando...' : 'Autocompletar empresa'}
         </AccessibleButton>
         {refreshable ? (
           <AccessibleButton
@@ -134,7 +134,7 @@ export function EinformaAutofillButton({
         ) : null}
         {meta ? (
           <span className="rounded-full border px-2 py-1 text-[11px] text-slate-600">
-            {meta.cached ? 'Snapshot (<=30 dias)' : 'eInforma (live)'}
+            {meta.cached ? 'Snapshot (<=30 dias)' : 'Consulta en vivo'}
           </span>
         ) : null}
         {meta?.lastSyncAt ? (

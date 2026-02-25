@@ -8,8 +8,7 @@ import { useIsaakUI } from '@/context/IsaakUIContext';
 import { useLogout } from '@/hooks/useLogout';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreateCompanyModal } from '@/context/CreateCompanyModalContext';
-import { LayoutGrid, Shield, Plus } from 'lucide-react';
-import { DemoLockedButton } from '@/components/demo/DemoLockedButton';
+import { LayoutGrid, Shield, Plus, X, ArrowLeft } from 'lucide-react';
 
 type TopbarProps = {
   onToggleSidebar: () => void;
@@ -50,10 +49,8 @@ export function Topbar({
   const [isSwitching, setIsSwitching] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isDemoFallback, setIsDemoFallback] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const effectiveDemo = isDemo || isDemoFallback;
-  const allowDemoFallback = true;
+  const effectiveDemo = isDemo || (pathname?.startsWith('/demo') ?? false);
   const demoOption = { id: 'demo', name: demoCompanyName };
 
   const loadTenantLogo = useCallback(
@@ -81,7 +78,7 @@ export function Topbar({
     {
       id: 'dashboard',
       name: 'Panel Principal',
-      path: '/dashboard',
+      path: effectiveDemo ? '/demo' : '/dashboard',
       icon: 'dashboard',
       description: 'Gestión de tu empresa',
     },
@@ -122,15 +119,6 @@ export function Topbar({
   }, [firebaseUser, effectiveDemo]);
 
   useEffect(() => {
-    if (effectiveDemo) {
-      const demoTenant = { id: 'demo', name: demoCompanyName };
-      setTenants([demoTenant]);
-      setActiveTenantId(demoTenant.id);
-      setCompany(demoTenant.name);
-      setTenantLogoURL(null);
-      setIsLoadingTenants(false);
-      return;
-    }
     let mounted = true;
     async function loadTenants() {
       setIsLoadingTenants(true);
@@ -149,13 +137,7 @@ export function Topbar({
             setCompany('Empresa');
             setTenantLogoURL(null);
             setIsLoadingTenants(false);
-            setIsDemoFallback(allowDemoFallback);
             setIsAdmin(false);
-          }
-          if (allowDemoFallback && typeof window !== 'undefined') {
-            window.__VF_DEMO_MODE__ = true;
-            window.localStorage.setItem('vf_demo_mode', '1');
-            window.dispatchEvent(new Event('vf-demo-mode'));
           }
           return;
         }
@@ -167,33 +149,27 @@ export function Topbar({
 
         if (mounted) {
           setTenants(items);
-          setActiveTenantId(initialId);
-          setCompany(initialName);
-          // Cargar logo del tenant activo
-          if (initialId) {
-            loadTenantLogo(initialId);
+          if (effectiveDemo) {
+            setActiveTenantId('demo');
+            setCompany(demoCompanyName);
+            setTenantLogoURL(null);
+          } else {
+            setActiveTenantId(initialId);
+            setCompany(initialName);
           }
-          if (typeof window !== 'undefined') {
-            window.localStorage.removeItem('vf_demo_mode');
-            window.__VF_DEMO_MODE__ = false;
-            window.dispatchEvent(new Event('vf-demo-mode'));
+          // Cargar logo del tenant activo
+          if (!effectiveDemo && initialId) {
+            loadTenantLogo(initialId);
           }
         }
       } catch (error) {
         console.error('Failed to load tenants:', error);
         if (mounted) {
-          const demoTenant = { id: 'demo', name: demoCompanyName };
           setTenants([]);
-          setActiveTenantId('');
-          setCompany('Empresa');
+          setActiveTenantId(effectiveDemo ? 'demo' : '');
+          setCompany(effectiveDemo ? demoCompanyName : 'Empresa');
           setTenantLogoURL(null);
-          setIsDemoFallback(allowDemoFallback);
           setIsAdmin(false);
-        }
-        if (allowDemoFallback && typeof window !== 'undefined') {
-          window.__VF_DEMO_MODE__ = true;
-          window.localStorage.setItem('vf_demo_mode', '1');
-          window.dispatchEvent(new Event('vf-demo-mode'));
         }
       } finally {
         if (mounted) setIsLoadingTenants(false);
@@ -203,7 +179,7 @@ export function Topbar({
     return () => {
       mounted = false;
     };
-  }, [demoCompanyName, effectiveDemo, setCompany, allowDemoFallback, loadTenantLogo]);
+  }, [demoCompanyName, effectiveDemo, setCompany, loadTenantLogo]);
 
   async function handleTenantChange(nextId: string) {
     if (nextId === '__add__') {
@@ -211,7 +187,6 @@ export function Topbar({
       return;
     }
     if (nextId === 'demo') {
-      setIsDemoFallback(true);
       setActiveTenantId('demo');
       setCompany(demoCompanyName);
       if (typeof window !== 'undefined') {
@@ -219,9 +194,9 @@ export function Topbar({
         window.localStorage.setItem('vf_demo_mode', '1');
         window.dispatchEvent(new Event('vf-demo-mode'));
       }
+      router.push('/demo');
       return;
     }
-    if (effectiveDemo) return;
     if (!nextId || nextId === activeTenantId) return;
     setIsSwitching(true);
     try {
@@ -246,6 +221,9 @@ export function Topbar({
         window.localStorage.removeItem('vf_demo_mode');
         window.dispatchEvent(new Event('vf-demo-mode'));
       }
+      if (pathname?.startsWith('/demo')) {
+        router.push('/dashboard');
+      }
     } catch (error) {
       console.error('Failed to switch tenant:', error);
     } finally {
@@ -253,7 +231,7 @@ export function Topbar({
     }
   }
 
-  const tenantOptions = effectiveDemo ? [demoOption] : [...tenants, demoOption];
+  const tenantOptions = [...tenants, demoOption];
   const tenantSelectDisabled = isLoadingTenants || isSwitching || tenantOptions.length === 0;
   const handleCreateCompany =
     !effectiveDemo && createCompanyModal?.openModal
@@ -341,14 +319,14 @@ export function Topbar({
                   <option value="__add__">+ Anadir empresa</option>
                 </select>
                 {effectiveDemo ? (
-                  <DemoLockedButton
+                  <Link
+                    href="/dashboard/onboarding?next=/dashboard"
                     className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100"
                     aria-label="Crear empresa"
                     title="Crear empresa"
-                    toastMessage="Disponible en la prueba con tus datos"
                   >
                     <Plus className="h-4 w-4" />
-                  </DemoLockedButton>
+                  </Link>
                 ) : (
                   <>
                     {handleCreateCompany ? (
@@ -417,6 +395,18 @@ export function Topbar({
               {showUserMenu && (
                 <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-slate-200 bg-white shadow-lg">
                   <div className="py-2">
+                    <div className="flex items-center justify-between border-b border-slate-200 px-4 pb-2">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Menú
+                      </div>
+                      <button
+                        onClick={() => setShowUserMenu(false)}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+                        aria-label="Cerrar menú"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
                     {firebaseUser && (
                       <div className="px-4 py-3 border-b border-slate-200">
                         <p className="text-sm font-medium text-slate-900">
@@ -430,6 +420,17 @@ export function Topbar({
                         )}
                       </div>
                     )}
+
+                    <button
+                      onClick={() => {
+                        router.push(effectiveDemo ? '/demo' : '/dashboard');
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center gap-2"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Volver al panel
+                    </button>
 
                     {availablePanels.length > 1 && (
                       <div className="px-4 py-2 border-b border-slate-200">
