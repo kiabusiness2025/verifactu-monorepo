@@ -2,6 +2,7 @@
 
 import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
 import { getIsaakCards } from "@/src/lib/data/client";
+import { DemoIsaakHint } from "@/components/demo/DemoIsaakHint";
 
 export default function DemoIsaakPage() {
   const cards = getIsaakCards("demo");
@@ -26,6 +27,17 @@ export default function DemoIsaakPage() {
         <p className="text-xs text-slate-500">
           Isaak propone tareas y respuestas con datos simulados.
         </p>
+        <DemoIsaakHint
+          title="Asistente proactivo"
+          description="Isaak detecta donde estas y propone respuestas utiles para cada seccion."
+          bullets={[
+            'Resumen financiero contextual',
+            'Alertas fiscales segun actividad',
+            'Consejos de cobro y gasto',
+          ]}
+          ctaLabel="Ver el panel demo"
+          ctaHref="/demo"
+        />
         <div className="grid gap-4 md:grid-cols-2">
           {cards.map((card) => (
             <div

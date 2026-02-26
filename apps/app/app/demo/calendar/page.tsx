@@ -1,6 +1,7 @@
 "use client";
 
 import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
+import { DemoIsaakHint } from "@/components/demo/DemoIsaakHint";
 import { getCalendar } from "@/src/lib/data/client";
 import { formatShortDate } from "@/src/lib/formatters";
 
@@ -27,6 +28,15 @@ export default function DemoCalendarPage() {
         <p className="text-xs text-slate-500">
           Plazos fiscales simulados para que veas como se organiza Isaak.
         </p>
+        <DemoIsaakHint
+          title="Calendario fiscal guiado"
+          description="Isaak resalta tareas urgentes y propone un plan de la semana."
+          bullets={[
+            'Recordatorios de plazos criticos',
+            'Checklist semanal para evitar sanciones',
+            'Sugerencias de preparacion de modelos',
+          ]}
+        />
         <div className="space-y-3">
           {items.map((item) => (
             <div

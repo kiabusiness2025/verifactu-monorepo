@@ -1,6 +1,7 @@
 "use client";
 
 import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
+import { DemoIsaakHint } from "@/components/demo/DemoIsaakHint";
 import { getDocuments } from "@/src/lib/data/client";
 import { formatShortDate } from "@/src/lib/formatters";
 
@@ -27,6 +28,15 @@ export default function DemoDocumentsPage() {
         <p className="text-xs text-slate-500">
           Archivos simulados para mostrar orden y trazabilidad documental.
         </p>
+        <DemoIsaakHint
+          title="Orden documental sin friccion"
+          description="Isaak te recuerda que falta por subir y sugiere clasificacion automatica."
+          bullets={[
+            'Detecta documentos pendientes para cierre',
+            'Marca los validados y los que requieren revision',
+            'Propone checklist para gestor',
+          ]}
+        />
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600">

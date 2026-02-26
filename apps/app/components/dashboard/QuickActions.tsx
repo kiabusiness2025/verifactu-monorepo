@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useRouter } from "next/navigation";
+import React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   FileText,
   Receipt,
@@ -10,9 +10,8 @@ import {
   Building2,
   Users,
   type LucideIcon,
-} from "lucide-react";
-import { useCreateCompanyModal } from "@/context/CreateCompanyModalContext";
-import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
+} from 'lucide-react';
+import { useCreateCompanyModal } from '@/context/CreateCompanyModalContext';
 
 type Action = {
   label: string;
@@ -28,61 +27,62 @@ export function QuickActions({ isDemo = false }: { isDemo?: boolean }) {
   const router = useRouter();
   const createCompanyModal = useCreateCompanyModal();
   const openCreateCompany = createCompanyModal?.openModal;
+  const basePath = isDemo ? '/demo' : '/dashboard';
 
   const actions: Action[] = [
     {
-      label: "Factura",
-      description: "Crea o revisa cobros",
-      href: "/dashboard/invoices",
-      accent: "from-[#0b6cfb] to-[#4cc3ff]",
-      badge: "Ventas",
+      label: 'Factura',
+      description: 'Crea o revisa cobros',
+      href: `${basePath}/invoices`,
+      accent: 'from-[#0b6cfb] to-[#4cc3ff]',
+      badge: 'Ventas',
       icon: FileText,
     },
     {
-      label: "Gasto",
-      description: "Registra proveedores",
-      href: "/dashboard/expenses",
-      accent: "from-[#20c997] to-[#4fe3b3]",
-      badge: "Pagos",
+      label: 'Gasto',
+      description: 'Registra proveedores',
+      href: `${basePath}/expenses`,
+      accent: 'from-[#20c997] to-[#4fe3b3]',
+      badge: 'Pagos',
       icon: Receipt,
     },
     {
-      label: "Documento",
-      description: "Sube y organiza",
-      href: "/dashboard/documents",
-      accent: "from-[#ff8a3d] to-[#ffb570]",
-      badge: "Archivo",
+      label: 'Documento',
+      description: 'Sube y organiza',
+      href: `${basePath}/documents`,
+      accent: 'from-[#ff8a3d] to-[#ffb570]',
+      badge: 'Archivo',
       icon: UploadCloud,
     },
     {
-      label: "Calendario",
-      description: "Mira plazos",
-      href: "/dashboard/calendar",
-      accent: "from-[#ff6b6b] to-[#ffa45c]",
-      badge: "Fiscal",
+      label: 'Calendario',
+      description: 'Mira plazos',
+      href: `${basePath}/calendar`,
+      accent: 'from-[#ff6b6b] to-[#ffa45c]',
+      badge: 'Fiscal',
       icon: CalendarClock,
     },
     {
-      label: "Nueva empresa",
-      description: "Crear o importar",
-      href: "/dashboard/settings?tab=general",
-      accent: "from-[#1f4eff] to-[#66c2ff]",
-      badge: "Empresa",
+      label: 'Nueva empresa',
+      description: 'Crear o importar',
+      href: isDemo ? '/dashboard/onboarding?next=/demo' : '/dashboard/settings?tab=general',
+      accent: 'from-[#1f4eff] to-[#66c2ff]',
+      badge: 'Empresa',
       icon: Building2,
-      onClick: openCreateCompany,
+      onClick: !isDemo ? openCreateCompany : undefined,
     },
     {
-      label: "Clientes",
-      description: "Gestiona contactos",
-      href: "/dashboard/clients",
-      accent: "from-[#6c5ce7] to-[#a29bfe]",
-      badge: "Contactos",
+      label: 'Clientes',
+      description: 'Gestiona contactos',
+      href: `${basePath}/clients`,
+      accent: 'from-[#6c5ce7] to-[#a29bfe]',
+      badge: 'Contactos',
       icon: Users,
     },
   ];
 
   const cardClassName =
-    "group flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md";
+    'group flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md';
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -91,9 +91,7 @@ export function QuickActions({ isDemo = false }: { isDemo?: boolean }) {
           <>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-[#0b214a]">
-                  {action.label}
-                </p>
+                <p className="text-sm font-semibold text-[#0b214a]">{action.label}</p>
                 <p className="text-xs text-slate-500">{action.description}</p>
               </div>
               <span
@@ -106,24 +104,10 @@ export function QuickActions({ isDemo = false }: { isDemo?: boolean }) {
               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
                 {action.badge}
               </span>
-              <span className="text-xs font-semibold text-[#0b6cfb]">
-                Ir
-              </span>
+              <span className="text-xs font-semibold text-[#0b6cfb]">Ir</span>
             </div>
           </>
         );
-
-        if (isDemo) {
-          return (
-            <DemoLockedButton
-              key={action.label}
-              className={cardClassName}
-              toastMessage="Disponible con tu prueba"
-            >
-              {content}
-            </DemoLockedButton>
-          );
-        }
 
         return (
           <button

@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Calculator, CreditCard, FileText, Info, MessageCircle } from "lucide-react";
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Calculator, CreditCard, FileText, Info, MessageCircle } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: "Política de precios | Verifactu Business",
+  title: 'Política de precios | Verifactu Business',
   description:
-    "Cómo se calcula el precio, qué se incluye en la cuota y cómo medimos el uso en Verifactu Business.",
+    'Cómo se calcula el precio, qué se incluye en la cuota y cómo medimos el uso en Verifactu Business.',
 };
 
 export default function PoliticaDePreciosPage() {
@@ -18,8 +18,8 @@ export default function PoliticaDePreciosPage() {
         </div>
         <h1 className="mt-4 text-4xl font-bold text-[#011c67]">Precios y medición de uso</h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-600">
-          Tu cuota mensual se compone de base y tramos de uso (facturas y, si activas conciliación, movimientos
-          bancarios). Los importes mostrados son sin IVA. Isaak te avisa antes de renovar.
+          Tu cuota mensual parte del plan que elijas (Básico, PYME, Empresa o Pro). Si superas
+          facturas incluidas, se aplica exceso por tramos. Los importes son sin IVA.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -30,8 +30,8 @@ export default function PoliticaDePreciosPage() {
             </div>
             <ul className="mt-2 list-disc pl-6 text-sm text-slate-600">
               <li>Incluye hasta 10 facturas emitidas al mes.</li>
-              <li>Conciliación bancaria opcional: 0 movimientos sin coste.</li>
-              <li>Calculadora hasta 1.000 facturas y 2.000 movimientos.</li>
+              <li>Planes fijos: 19 / 39 / 69 / 99 EUR al mes.</li>
+              <li>Calculadora de exceso para facturas adicionales.</li>
             </ul>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -41,8 +41,8 @@ export default function PoliticaDePreciosPage() {
             </div>
             <ul className="mt-2 list-disc pl-6 text-sm text-slate-600">
               <li>Facturas emitidas en el mes.</li>
-              <li>Movimientos importados/sincronizados.</li>
-              <li>Excel cuenta como registros procesados.</li>
+              <li>Facturas incluidas según plan.</li>
+              <li>Exceso por tramos en la siguiente factura.</li>
             </ul>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -51,45 +51,37 @@ export default function PoliticaDePreciosPage() {
               Precio final
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              La calculadora muestra un estimado. Ajustamos por uso real y avisamos antes de cobrar.
+              La calculadora muestra un estimado del exceso. Te avisamos antes de cobrar.
             </p>
           </div>
+        </div>
+
+        <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+          <div className="text-xs font-semibold uppercase text-slate-500">Planes</div>
+          <ul className="mt-2 space-y-1">
+            <li>Básico: 19 EUR/mes (hasta 10 facturas)</li>
+            <li>PYME: 39 EUR/mes (hasta 100 facturas)</li>
+            <li>Empresa: 69 EUR/mes (hasta 300 facturas)</li>
+            <li>Pro: 99 EUR/mes (hasta 1.000 facturas)</li>
+          </ul>
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
             <div className="text-xs font-semibold uppercase text-slate-500">Facturas</div>
             <ul className="mt-2 space-y-1">
-              <li>1-10 incluido</li>
-              <li>11-20 +5 EUR</li>
-              <li>21-30 +10 EUR</li>
-              <li>31-40 +15 EUR</li>
-              <li>41-50 +20 EUR</li>
-              <li>51-100 +25 EUR</li>
-              <li>101-200 +35 EUR</li>
-              <li>201-300 +45 EUR</li>
-              <li>301-400 +55 EUR</li>
-              <li>401-500 +65 EUR</li>
-              <li>501-1000 +85 EUR</li>
-              <li>&gt;1000 presupuesto</li>
+              <li>Exceso 1-25: 0,50 EUR por factura</li>
+              <li>Exceso 26-100: 0,35 EUR por factura</li>
+              <li>Exceso 101-500: 0,20 EUR por factura</li>
+              <li>Exceso 501+: 0,12 EUR por factura</li>
             </ul>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
-            <div className="text-xs font-semibold uppercase text-slate-500">Movimientos</div>
+            <div className="text-xs font-semibold uppercase text-slate-500">Trial</div>
             <ul className="mt-2 space-y-1">
-              <li>0 incluido</li>
-              <li>1-20 +5 EUR</li>
-              <li>21-30 +10 EUR</li>
-              <li>31-40 +15 EUR</li>
-              <li>41-50 +20 EUR</li>
-              <li>51-100 +25 EUR</li>
-              <li>101-200 +35 EUR</li>
-              <li>201-300 +45 EUR</li>
-              <li>301-400 +55 EUR</li>
-              <li>401-500 +65 EUR</li>
-              <li>501-1000 +85 EUR</li>
-              <li>1001-2000 +105 EUR</li>
-              <li>&gt;2000 presupuesto</li>
+              <li>30 días gratis en todos los planes</li>
+              <li>Sin permanencia</li>
+              <li>Aviso previo antes del primer cobro</li>
             </ul>
           </div>
         </div>
@@ -111,10 +103,14 @@ export default function PoliticaDePreciosPage() {
             Limites y presupuestos
           </div>
           <p className="mt-2 text-sm text-slate-600">
-              Si superas los límites de la calculadora, te ofrecemos presupuesto con integraciones y SLA.{" "}
-            <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] underline underline-offset-4">
+            Si superas los límites de la calculadora, te ofrecemos presupuesto con integraciones y
+            SLA.{' '}
+            <Link
+              href="/recursos/contacto"
+              className="font-semibold text-[#2361d8] underline underline-offset-4"
+            >
               Contáctanos
-            </Link>{" "}
+            </Link>{' '}
             para una propuesta personalizada.
           </p>
         </div>
@@ -137,4 +133,3 @@ export default function PoliticaDePreciosPage() {
     </main>
   );
 }
-

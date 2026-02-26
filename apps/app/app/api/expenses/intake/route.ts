@@ -53,6 +53,9 @@ export async function POST(request: NextRequest) {
 
     const noteParts = [
       canonical.notes,
+      `DocType:${body?.docType || 'invoice'}`,
+      `TaxCategory:${matchedCategory.is_deductible ? 'iva_deducible' : 'iva_no_deducible'}`,
+      `AEATConcept:${matchedCategory.name}`,
       `Deducible:${matchedCategory.is_deductible ? 'sí' : 'no'}`,
       `Origen:${canonical.source}`,
       body?.fileUrl ? `Documento:${body.fileUrl}` : null,

@@ -345,6 +345,10 @@ model Tenant {
   suppliers           Supplier[]
   articles            Article[]
   expenses            ExpenseRecord[]
+  integrations        TenantIntegration[]
+  integrationMaps     IntegrationMap[]
+  syncOutboxItems     SyncOutbox[]
+  syncLogs            SyncLog[]
   isaakConversations  IsaakConversation[]
   demoOnboardings     UserOnboarding[]
   supportSessions     SupportSession[]
@@ -671,6 +675,10 @@ model ExpenseRecord {
   taxRate     Decimal  @default(0.21) @map("tax_rate")
   accountCode String?  @map("account_code")
   reference   String?
+  docType     String   @default("invoice") @map("doc_type")
+  taxCategory String   @default("iva_deducible") @map("tax_category")
+  aeatConcept String?  @map("aeat_concept")
+  aeatKey     String?  @map("aeat_key")
   notes       String?
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -683,6 +691,83 @@ model ExpenseRecord {
   @@index([date])
   @@index([category])
   @@map("expense_records")
+}
+
+model TenantIntegration {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  provider   String
+  apiKeyEnc  String?  @map("api_key_enc")
+  status     String   @default("disconnected")
+  lastSyncAt DateTime? @map("last_sync_at") @db.Timestamptz
+  lastError  String?  @map("last_error")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider])
+  @@index([tenantId, provider])
+  @@map("tenant_integrations")
+}
+
+model IntegrationMap {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  provider     String
+  entityType   String    @map("entity_type")
+  localId      String    @map("local_id")
+  remoteId     String    @map("remote_id")
+  hash         String?
+  lastPushedAt DateTime? @map("last_pushed_at") @db.Timestamptz
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider, entityType, localId])
+  @@unique([tenantId, provider, entityType, remoteId])
+  @@index([tenantId, provider, entityType])
+  @@map("integration_maps")
+}
+
+model SyncOutbox {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  provider  String
+  entityType String  @map("entity_type")
+  entityId  String   @map("entity_id")
+  action    String
+  payload   Json
+  status    String   @default("pending")
+  attempts  Int      @default(0)
+  lastError String?  @map("last_error")
+  nextRunAt DateTime @default(now()) @map("next_run_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, provider, status, nextRunAt])
+  @@index([tenantId, provider, createdAt])
+  @@map("sync_outbox")
+}
+
+model SyncLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  provider  String
+  outboxId  String?  @map("outbox_id") @db.Uuid
+  level     String
+  message   String
+  data      Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, provider, createdAt])
+  @@index([outboxId])
+  @@map("sync_logs")
 }
 
 // ==================== ISAAK CONVERSATIONS ====================

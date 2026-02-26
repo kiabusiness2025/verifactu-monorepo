@@ -28,8 +28,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category') || '';
-    const fromDate = searchParams.get('fromDate') || '';
-    const toDate = searchParams.get('toDate') || '';
+    const fromDate = searchParams.get('fromDate') || searchParams.get('from') || '';
+    const toDate = searchParams.get('toDate') || searchParams.get('to') || '';
+    const deducible = searchParams.get('deducible');
 
     const skip = (page - 1) * limit;
 
@@ -51,6 +52,17 @@ export async function GET(request: NextRequest) {
         gte: new Date(fromDate),
         lte: new Date(toDate),
       };
+    } else if (fromDate || toDate) {
+      where.date = {
+        ...(fromDate ? { gte: new Date(fromDate) } : {}),
+        ...(toDate ? { lte: new Date(toDate) } : {}),
+      };
+    }
+
+    if (deducible === 'true') {
+      where.NOT = [{ notes: { contains: 'TaxCategory:iva_no_deducible' } }];
+    } else if (deducible === 'false') {
+      where.notes = { contains: 'TaxCategory:iva_no_deducible' };
     }
 
     const [expenses, total] = await Promise.all([
@@ -148,6 +160,10 @@ export async function POST(request: NextRequest) {
     const isDeductible = categories[0].is_deductible;
     const noteParts = [
       expenseInput.notes,
+      `DocType:${body?.docType || 'invoice'}`,
+      `TaxCategory:${body?.taxCategory || (isDeductible ? 'iva_deducible' : 'iva_no_deducible')}`,
+      `AEATConcept:${body?.aeatConcept || categoryName}`,
+      body?.aeatKey ? `AEATKey:${body.aeatKey}` : null,
       `Deducible:${isDeductible ? 'sí' : 'no'}`,
       `Origen:${expenseInput.source}`,
     ]

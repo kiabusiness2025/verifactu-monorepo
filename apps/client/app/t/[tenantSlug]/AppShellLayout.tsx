@@ -1,9 +1,9 @@
-"use client";
-import * as React from "react";
-import { usePathname, useParams, useSearchParams } from "next/navigation";
-import { AppShell } from "@verifactu/ui";
-import { navClient } from "../../../src/navClient";
-import { useCurrentTenant } from "../../../src/tenant/useCurrentTenant";
+'use client';
+import { AppShell } from '@verifactu/ui';
+import { useParams, usePathname, useSearchParams } from 'next/navigation';
+import * as React from 'react';
+import { navClient } from '../../../src/navClient';
+import { useCurrentTenant } from '../../../src/tenant/useCurrentTenant';
 
 export default function AppShellLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,18 +13,20 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
 
   const tenantId = params.tenantSlug as string | undefined;
   const resolvedNav = React.useMemo(() => {
-    const slug = tenantId ?? "demo";
+    const slug = tenantId ?? 'demo';
     return navClient.map((item) => ({
       ...item,
-      href: item.href.replace(":tenantSlug", slug),
+      href: item.href.replace(':tenantSlug', slug),
     }));
   }, [tenantId]);
 
-  const demoParam = search.get("demo") === "1";
+  const demoParam = search.get('demo') === '1';
   const resolvedDemo = demoMode || demoParam;
+  const resolvedTenantId = currentTenantId ?? tenantId ?? 'demo';
   const isaakExtraContext = {
-    tenantId: currentTenantId ?? tenantId ?? "demo",
+    tenantId: resolvedTenantId,
     demoMode: resolvedDemo,
+    toneApiPath: `/api/preferences?tenantId=${encodeURIComponent(resolvedTenantId)}`,
   };
 
   return (
@@ -36,7 +38,9 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
       showIsaak
       isaakExtraContext={isaakExtraContext}
       headerLeft={<div className="text-sm text-muted-foreground">Panel Cliente</div>}
-      headerRight={resolvedDemo ? <span className="text-xs text-muted-foreground">Modo demo</span> : null}
+      headerRight={
+        resolvedDemo ? <span className="text-xs text-muted-foreground">Modo demo</span> : null
+      }
     >
       {children}
     </AppShell>

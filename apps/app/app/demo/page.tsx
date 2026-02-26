@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { DashboardHome } from '@/components/dashboard/DashboardHome';
+import { DemoIsaakHint } from '@/components/demo/DemoIsaakHint';
 import { getInvoices, getIsaakExamples, getPnl } from '@/src/lib/data/client';
 import { formatCurrency, formatPercent, formatShortDate } from '@/src/lib/formatters';
 
@@ -64,6 +65,16 @@ export default function DemoPage() {
             Enviar a AEAT
           </button>
         </div>
+        <DemoIsaakHint
+          title="Recorrido guiado del panel demo"
+          description="Isaak detecta esta pantalla y te explica cada bloque con acciones recomendadas."
+          bullets={[
+            'Lectura rapida de ventas, gastos y beneficio',
+            'Alertas sobre facturas vencidas y IVA estimado',
+            'Checklist de cierre semanal en 60 segundos',
+          ]}
+          hint="Usa el boton flotante para preguntar en tiempo real."
+        />
       </section>
 
       <section className="space-y-3">

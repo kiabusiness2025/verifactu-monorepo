@@ -5,6 +5,7 @@
 ### Comenzar aqui
 
 - [README.md](../README.md) - Descripcion general del proyecto
+- [../apps/client/README.md](../apps/client/README.md) - Panel cliente y persistencia de Isaak
 - [ARQUITECTURA_UNIFICADA.md](legacy/root/ARQUITECTURA_UNIFICADA.md) - Arquitectura completa (Vercel + Firebase + Prisma)
 
 ### Autenticacion
@@ -70,6 +71,7 @@
 - [engineering/ai/ISAAK_V3_QUICK_START.md](engineering/ai/ISAAK_V3_QUICK_START.md) - Quick start Genkit
 - [engineering/ai/ISAAK_V3_TESTING_GUIDE.md](engineering/ai/ISAAK_V3_TESTING_GUIDE.md) - Testing
 - [engineering/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md](engineering/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md) - Checklist
+- [engineering/ai/ISAAK_UNIFIED_EXPERIENCE_2026.md](engineering/ai/ISAAK_UNIFIED_EXPERIENCE_2026.md) - Isaak proactivo en landing, cliente y admin
 
 ### Estado del proyecto
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { getAppUrl, getLandingUrl } from "@/lib/urls";
 import { IsaakUIProvider } from "@/context/IsaakUIContext";
@@ -9,13 +9,48 @@ import { Topbar } from "@/components/layout/Topbar";
 import { IsaakDrawer } from "@/components/isaak/IsaakDrawer";
 import { IsaakProactiveBubbles } from "@/components/isaak/IsaakProactiveBubbles";
 import { IsaakSmartFloating } from "@/components/isaak/IsaakSmartFloating";
+import { DemoGuidedTour } from "@/components/demo/DemoGuidedTour";
+
+const DEMO_TOUR_DONE_KEY = "vf_demo_tour_done_v1";
 
 export default function DemoLayout({ children }: { children: React.ReactNode }) {
   const enableIsaak = true;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const appUrl = getAppUrl();
   const landingUrl = getLandingUrl();
   const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(`${appUrl}/onboarding`)}`;
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("current-tenant", "Empresa Demo SL");
+
+      const tourDone = localStorage.getItem(DEMO_TOUR_DONE_KEY) === "1";
+      if (!tourDone) {
+        setShowTour(true);
+      }
+    } catch {
+      // Best-effort only
+    }
+  }, []);
+
+  const handleTourComplete = () => {
+    setShowTour(false);
+    try {
+      localStorage.setItem(DEMO_TOUR_DONE_KEY, "1");
+    } catch {
+      // Best-effort only
+    }
+  };
+
+  const handleTourClose = () => {
+    setShowTour(false);
+    try {
+      localStorage.setItem(DEMO_TOUR_DONE_KEY, "1");
+    } catch {
+      // Best-effort only
+    }
+  };
 
   return (
     <IsaakUIProvider>
@@ -38,6 +73,13 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
                     </span>
                   </div>
                   <div>Modo demo (datos simulados). Nada se envia a la AEAT.</div>
+                  <button
+                    type="button"
+                    onClick={() => setShowTour(true)}
+                    className="inline-flex items-center rounded-full border border-amber-300 bg-white px-3 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-50"
+                  >
+                    Iniciar tour guiado (5 pasos)
+                  </button>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <a
@@ -62,15 +104,35 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
 
           <div className="fixed inset-x-0 bottom-4 z-30 px-4">
             <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
-              <div className="text-sm font-semibold text-[#0b214a]">
-                Estás en demo. ¿Listo para usar tu propia empresa?
+              <div>
+                <div className="text-sm font-semibold text-[#0b214a]">
+                  Estás en demo. ¿Listo para usar tu propia empresa?
+                </div>
+                <div className="text-xs text-slate-600">
+                  Isaak puede guiarte en cada paso del onboarding y configuración.
+                </div>
               </div>
-              <a
-                href={loginUrl}
-                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-[#0056D6] hover:to-[#1AA3DB]"
-              >
-                Probar con mis datos (1 mes gratis)
-              </a>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTour(true)}
+                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Tour guiado
+                </button>
+                <a
+                  href="/demo/isaak"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Ver ayuda de Isaak
+                </a>
+                <a
+                  href={loginUrl}
+                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#0060F0] to-[#20B0F0] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-[#0056D6] hover:to-[#1AA3DB]"
+                >
+                  Probar con mis datos (1 mes gratis)
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -84,6 +146,12 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
           <IsaakProactiveBubbles />
         </Suspense>
       ) : null}
+
+      <DemoGuidedTour
+        isOpen={showTour}
+        onClose={handleTourClose}
+        onComplete={handleTourComplete}
+      />
 
     </IsaakUIProvider>
   );

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
+import { DemoIsaakHint } from "@/components/demo/DemoIsaakHint";
 import { getCustomers, getInvoices } from "@/src/lib/data/client";
 import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
 
@@ -45,6 +46,15 @@ export default function DemoClientsPage() {
         <p className="text-xs text-slate-500">
           Clientes simulados para la Empresa Demo SL. Todo es solo lectura.
         </p>
+        <DemoIsaakHint
+          title="Consejos para gestionar clientes"
+          description="Isaak detecta clientes clave y te sugiere seguimiento por actividad."
+          bullets={[
+            'Top clientes por facturacion y recurrencia',
+            'Alertas de clientes sin actividad reciente',
+            'Sugerencias de proximo seguimiento',
+          ]}
+        />
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600">

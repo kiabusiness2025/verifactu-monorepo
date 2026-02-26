@@ -3,18 +3,28 @@
 Landing oficial de **verifactu.business**, desplegada en **Google Cloud Run** (región `europe-west1`) y construida con **Next.js (App Router)**.
 
 La landing es **independiente del resto del monorepo** y está diseñada para:
+
 - Conversión (CTA + pricing dinámico)
 - Captura de leads (email vía Resend)
 - Chat inteligente "Isaak" (Vertex AI / Gemini)
 - Despliegue estable y reproducible en Cloud Run
 
+### Isaak en Landing (2026)
+
+- Mensajes proactivos por sección (`home`, `verifactu`, `producto`, `recursos`, `precios`).
+- Selector de personalidad en primera interacción:
+  - `Amigable`
+  - `Profesional`
+  - `Directo`
+- Persistencia en landing pública: `localStorage` (sin requerir sesión).
+
 ---
 
 ## 🌍 Producción
 
-- **Dominio:** https://verifactu.business  
-- **Servicio Cloud Run:** `verifactu-landing`  
-- **Región:** `europe-west1`  
+- **Dominio:** https://verifactu.business
+- **Servicio Cloud Run:** `verifactu-landing`
+- **Región:** `europe-west1`
 - **Autenticación:** pública (allow unauthenticated)
 
 ---
@@ -150,7 +160,7 @@ Chat con el asistente Isaak (Vertex AI).
 
 **Respuesta:**
 
-- `200` → `{ ok: true, text: "respuesta IA" }`
+- `200` → `{ response: "respuesta IA" }`
 - `400` / `500` → error de configuración o Vertex
 
 ---
@@ -203,7 +213,7 @@ gcloud beta run domain-mappings create \
 Verifica que `next.config.js` contiene:
 
 ```js
-output: "standalone"
+output: 'standalone';
 ```
 
 ---
@@ -234,9 +244,9 @@ gcloud run services logs read verifactu-landing --region europe-west1
 ## 🧠 Filosofía de la landing
 
 - **Independiente del core de la app**
-- Sin auth
-- Sin Stripe
-- Sin base de datos
+- Auth opcional para redirección de sesión
+- Stripe solo para checkout de la landing
+- Sin persistencia de preferencias de Isaak en backend (visitante anónimo)
 - Optimizada para velocidad, SEO y conversión
 - Toda la lógica sensible vive en server routes
 

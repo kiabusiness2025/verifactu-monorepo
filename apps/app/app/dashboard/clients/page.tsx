@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+const CLIENTS_STORAGE_KEY = 'vf_dashboard_clients_v1';
+
 interface Client {
   id: string;
   name: string;
@@ -39,11 +41,42 @@ interface Client {
   createdAt: string;
 }
 
+const DEFAULT_CLIENTS: Client[] = [
+  {
+    id: '1',
+    name: 'María García',
+    email: 'maria@example.com',
+    phone: '+34 600 111 222',
+    company: 'García Consultores SL',
+    nif: 'B12345678',
+    address: 'Calle Mayor 123',
+    city: 'Madrid',
+    postalCode: '28013',
+    country: 'ES',
+    paymentTerms: '30 días',
+    totalInvoices: 15,
+    totalRevenue: 45000,
+    createdAt: '2024-01-15',
+  },
+  {
+    id: '2',
+    name: 'Juan Pérez',
+    email: 'juan@tech.com',
+    phone: '+34 610 333 444',
+    company: 'Tech Solutions SA',
+    nif: 'A87654321',
+    totalInvoices: 8,
+    totalRevenue: 28500,
+    createdAt: '2024-02-20',
+  },
+];
+
 export default function ClientsPage() {
   const { success, error: showError } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [onlyWithInvoices, setOnlyWithInvoices] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState({
@@ -86,46 +119,35 @@ export default function ClientsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const persistClients = (nextClients: Client[]) => {
+    setClients(nextClients);
+    try {
+      localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(nextClients));
+    } catch (storageError) {
+      console.warn('Could not persist clients in localStorage', storageError);
+    }
+  };
+
   const loadClients = async () => {
     try {
       setLoading(true);
-      // TODO: Implementar API real
-      // const res = await fetch('/api/clients');
-      // const data = await res.json();
+      const raw = localStorage.getItem(CLIENTS_STORAGE_KEY);
+      if (!raw) {
+        persistClients(DEFAULT_CLIENTS);
+        return;
+      }
 
-      // Datos de ejemplo
-      setClients([
-        {
-          id: '1',
-          name: 'María García',
-          email: 'maria@example.com',
-          phone: '+34 600 111 222',
-          company: 'García Consultores SL',
-          nif: 'B12345678',
-          address: 'Calle Mayor 123',
-          city: 'Madrid',
-          postalCode: '28013',
-          country: 'ES',
-          paymentTerms: '30 días',
-          totalInvoices: 15,
-          totalRevenue: 45000,
-          createdAt: '2024-01-15',
-        },
-        {
-          id: '2',
-          name: 'Juan Pérez',
-          email: 'juan@tech.com',
-          phone: '+34 610 333 444',
-          company: 'Tech Solutions SA',
-          nif: 'A87654321',
-          totalInvoices: 8,
-          totalRevenue: 28500,
-          createdAt: '2024-02-20',
-        },
-      ]);
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        persistClients(DEFAULT_CLIENTS);
+        return;
+      }
+
+      setClients(parsed as Client[]);
     } catch (error) {
       console.error('Error loading clients:', error);
       showError('Error', 'No se pudieron cargar los clientes');
+      setClients(DEFAULT_CLIENTS);
     } finally {
       setLoading(false);
     }
@@ -134,12 +156,30 @@ export default function ClientsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // TODO: Implementar API real
-      // const res = await fetch('/api/clients', {
-      //   method: editingClient ? 'PUT' : 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(editingClient ? { ...formData, id: editingClient.id } : formData),
-      // });
+      const nowIso = new Date().toISOString();
+      const nextClient: Client = {
+        id: editingClient?.id || globalThis.crypto?.randomUUID?.() || String(Date.now()),
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || undefined,
+        company: formData.company.trim() || undefined,
+        nif: formData.nif.trim() || undefined,
+        address: formData.address.trim() || undefined,
+        city: formData.city.trim() || undefined,
+        postalCode: formData.postalCode.trim() || undefined,
+        country: formData.country.trim() || undefined,
+        paymentTerms: formData.paymentTerms.trim() || undefined,
+        notes: formData.notes.trim() || undefined,
+        totalInvoices: editingClient?.totalInvoices || 0,
+        totalRevenue: editingClient?.totalRevenue || 0,
+        createdAt: editingClient?.createdAt || nowIso,
+      };
+
+      const nextClients = editingClient
+        ? clients.map((client) => (client.id === editingClient.id ? nextClient : client))
+        : [nextClient, ...clients];
+
+      persistClients(nextClients);
 
       success(
         editingClient ? 'Cliente actualizado' : 'Cliente creado',
@@ -151,7 +191,6 @@ export default function ClientsPage() {
       setShowAddModal(false);
       setEditingClient(null);
       resetForm();
-      loadClients();
     } catch (error) {
       console.error('Error saving client:', error);
       showError('Error', 'No se pudo guardar el cliente');
@@ -162,14 +201,44 @@ export default function ClientsPage() {
     if (!confirm('¿Estás seguro de eliminar este cliente?')) return;
 
     try {
-      // TODO: Implementar API real
-      // await fetch(`/api/clients/${clientId}`, { method: 'DELETE' });
+      const nextClients = clients.filter((client) => client.id !== clientId);
+      persistClients(nextClients);
 
       success('Cliente eliminado', 'El cliente se eliminó correctamente');
-      loadClients();
     } catch (error) {
       console.error('Error deleting client:', error);
       showError('Error', 'No se pudo eliminar el cliente');
+    }
+  };
+
+  const handleExport = () => {
+    try {
+      const rows = filteredClients.map((client) => [
+        client.name,
+        client.email,
+        client.phone || '',
+        client.company || '',
+        client.nif || '',
+        String(client.totalInvoices || 0),
+        String(client.totalRevenue || 0),
+      ]);
+
+      const header = ['Nombre', 'Email', 'Telefono', 'Empresa', 'NIF', 'Facturas', 'Ingresos'];
+      const csv = [header, ...rows]
+        .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `clientes-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      success('Exportación lista', 'Se descargó el CSV de clientes');
+    } catch (exportError) {
+      console.error('Error exporting clients:', exportError);
+      showError('Error', 'No se pudo exportar el listado');
     }
   };
 
@@ -209,10 +278,11 @@ export default function ClientsPage() {
 
   const filteredClients = clients.filter(
     (client) =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (client.company?.toLowerCase()?.includes(searchQuery.toLowerCase()) ?? false) ||
-      (client.nif?.toLowerCase()?.includes(searchQuery.toLowerCase()) ?? false)
+      (client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (client.company?.toLowerCase()?.includes(searchQuery.toLowerCase()) ?? false) ||
+        (client.nif?.toLowerCase()?.includes(searchQuery.toLowerCase()) ?? false)) &&
+      (!onlyWithInvoices || (client.totalInvoices || 0) > 0)
   );
 
   return (
@@ -292,11 +362,17 @@ export default function ClientsPage() {
             className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
-        <button className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium flex items-center gap-2">
+        <button
+          onClick={() => setOnlyWithInvoices((prev) => !prev)}
+          className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium flex items-center gap-2"
+        >
           <Filter className="h-4 w-4" />
-          Filtros
+          {onlyWithInvoices ? 'Con facturas' : 'Todos'}
         </button>
-        <button className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium flex items-center gap-2">
+        <button
+          onClick={handleExport}
+          className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium flex items-center gap-2"
+        >
           <Download className="h-4 w-4" />
           Exportar
         </button>

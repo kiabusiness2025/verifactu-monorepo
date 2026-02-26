@@ -1,8 +1,8 @@
-"use client";
-import Image from "next/image";
-import Link from "next/link";
-import React, { useState } from "react";
-import { Dropdown, DropdownItem } from "@verifactu/ui";
+'use client';
+import Image from 'next/image';
+import Link from 'next/link';
+import React, { useState } from 'react';
+import { Dropdown, DropdownItem } from '@verifactu/ui';
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,7 +28,7 @@ export default function NotificationDropdown() {
       >
         <span
           className={`absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400 ${
-            !notifying ? "hidden" : "flex"
+            !notifying ? 'hidden' : 'flex'
           }`}
         >
           <span className="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 animate-ping"></span>
@@ -54,9 +54,7 @@ export default function NotificationDropdown() {
         className="absolute -right-[240px] mt-[17px] flex h-[480px] w-[350px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark sm:w-[361px] lg:right-0"
       >
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-700">
-          <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-            Notification
-          </h5>
+          <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Notification</h5>
           <button
             onClick={toggleDropdown}
             className="text-gray-500 transition dropdown-toggle dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
@@ -97,9 +95,7 @@ export default function NotificationDropdown() {
 
               <span className="block">
                 <span className="mb-1.5 space-x-1 block text-theme-sm text-gray-500 dark:text-gray-400">
-                  <span className="font-medium text-gray-800 dark:text-white/90">
-                    Terry Franci
-                  </span>
+                  <span className="font-medium text-gray-800 dark:text-white/90">Terry Franci</span>
                   <span>requests permission to change</span>
                   <span className="font-medium text-gray-800 dark:text-white/90">
                     Project - Nganter App
@@ -133,9 +129,7 @@ export default function NotificationDropdown() {
 
               <span className="block">
                 <span className="mb-1.5 block space-x-1  text-theme-sm text-gray-500 dark:text-gray-400">
-                  <span className="font-medium text-gray-800 dark:text-white/90">
-                    Alena Franci
-                  </span>
+                  <span className="font-medium text-gray-800 dark:text-white/90">Alena Franci</span>
                   <span> requests permission to change</span>
                   <span className="font-medium text-gray-800 dark:text-white/90">
                     Project - Nganter App
@@ -155,7 +149,7 @@ export default function NotificationDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               className="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
-              href="#"
+              href="/dashboard/settings"
             >
               <span className="relative block w-full h-10 rounded-full z-1 max-w-10">
                 <Image
@@ -192,7 +186,7 @@ export default function NotificationDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               className="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
-              href="#"
+              href="/dashboard/settings"
             >
               <span className="relative block w-full h-10 rounded-full z-1 max-w-10">
                 <Image
@@ -243,9 +237,7 @@ export default function NotificationDropdown() {
 
               <span className="block">
                 <span className="mb-1.5 space-x-1 block text-theme-sm text-gray-500 dark:text-gray-400">
-                  <span className="font-medium text-gray-800 dark:text-white/90">
-                    Terry Franci
-                  </span>
+                  <span className="font-medium text-gray-800 dark:text-white/90">Terry Franci</span>
                   <span>requests permission to change</span>
                   <span className="font-medium text-gray-800 dark:text-white/90">
                     Project - Nganter App
@@ -279,9 +271,7 @@ export default function NotificationDropdown() {
 
               <span className="block">
                 <span className="mb-1.5 space-x-1 block text-theme-sm text-gray-500 dark:text-gray-400">
-                  <span className="font-medium text-gray-800 dark:text-white/90">
-                    Alena Franci
-                  </span>
+                  <span className="font-medium text-gray-800 dark:text-white/90">Alena Franci</span>
                   <span>requests permission to change</span>
                   <span className="font-medium text-gray-800 dark:text-white/90">
                     Project - Nganter App
@@ -337,7 +327,7 @@ export default function NotificationDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               className="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
-              href="#"
+              href="/dashboard/settings"
             >
               <span className="relative block w-full h-10 rounded-full z-1 max-w-10">
                 <Image

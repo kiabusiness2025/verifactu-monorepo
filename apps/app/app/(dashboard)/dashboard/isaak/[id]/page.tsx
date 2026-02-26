@@ -78,8 +78,26 @@ export default function ConversationDetailPage() {
   };
 
   const handleDownloadPDF = () => {
-    // TODO: Implementar descarga PDF
-    alert("Próximamente: descarga PDF de la conversación");
+    if (!conversation) return;
+
+    const lines = [
+      `Conversación: ${conversation.title || 'Sin título'}`,
+      `Resumen: ${conversation.summary || '-'}`,
+      `Última actividad: ${formatShortDate(conversation.lastActivity)}`,
+      '',
+      ...conversation.messages.map((message) => {
+        const role = message.role === 'user' ? 'Tú' : 'Isaak';
+        return `[${role} ${formatTime(message.createdAt)}]\n${message.content}\n`;
+      }),
+    ];
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `isaak-${conversation.id}-${new Date().toISOString().slice(0, 10)}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleEditLastMessage = () => {
@@ -96,9 +114,46 @@ export default function ConversationDetailPage() {
   };
 
   const handleSaveEdit = async () => {
-    // TODO: Implementar edición de mensaje
-    alert("Próximamente: edición de mensajes");
-    setEditingLast(false);
+    try {
+      if (!conversation) return;
+      const normalized = editedContent.trim();
+      if (!normalized) {
+        alert('El mensaje no puede estar vacío');
+        return;
+      }
+
+      const lastMessage = conversation.messages[conversation.messages.length - 1];
+      if (!lastMessage || lastMessage.role !== 'user') {
+        alert('Solo puedes editar tu último mensaje');
+        return;
+      }
+
+      const deleteRes = await fetch(
+        `/api/isaak/conversations/${conversation.id}/messages/${lastMessage.id}`,
+        { method: 'DELETE' }
+      );
+
+      if (!deleteRes.ok) {
+        throw new Error('No se pudo reemplazar el mensaje anterior');
+      }
+
+      const addRes = await fetch(`/api/isaak/conversations/${conversation.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'user', content: normalized }),
+      });
+
+      if (!addRes.ok) {
+        throw new Error('No se pudo guardar el nuevo contenido');
+      }
+
+      await fetchConversation();
+      setEditingLast(false);
+      alert('Mensaje actualizado');
+    } catch (saveError) {
+      console.error('Error updating message:', saveError);
+      alert('No se pudo actualizar el mensaje');
+    }
   };
 
   if (loading) {

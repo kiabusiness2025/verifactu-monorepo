@@ -49,6 +49,19 @@ APIs sugeridas (admin):
 - `/api/admin/support-sessions/stop` (POST parar)
 - `/api/admin/users` (GET busqueda global)
 - `/api/admin/operations/retry` (POST reintentos)
+- `/api/admin/preferences` (GET/PATCH preferencias de Isaak del admin actual)
+
+## Isaak en Admin (2026)
+
+- El `AppShell` de admin monta Isaak flotante con contexto de ruta.
+- Proactividad por modulo: dashboard, empresas, usuarios, soporte, operaciones e integraciones.
+- Selector de personalidad para nuevos usuarios y cambio manual posterior:
+  - `Amigable`
+  - `Profesional`
+  - `Directo`
+- Persistencia de personalidad:
+  - Backend en `user_preferences.isaak_tone` via `/api/admin/preferences`.
+  - Fallback local con `localStorage` cuando no hay usuario resoluble.
 
 ## Variables de entorno (minimo)
 

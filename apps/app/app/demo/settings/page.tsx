@@ -1,6 +1,7 @@
 "use client";
 
 import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
+import { DemoIsaakHint } from "@/components/demo/DemoIsaakHint";
 
 export default function DemoSettingsPage() {
   return (
@@ -15,6 +16,15 @@ export default function DemoSettingsPage() {
         <p className="text-xs text-slate-500">
           Vista de ajustes simulada para que conozcas el panel.
         </p>
+        <DemoIsaakHint
+          title="Configuracion asistida"
+          description="Isaak te indica los pasos minimos para dejar la cuenta lista."
+          bullets={[
+            'Completar datos fiscales y logo',
+            'Invitar al equipo y asignar permisos',
+            'Conectar bancos y correo',
+          ]}
+        />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">

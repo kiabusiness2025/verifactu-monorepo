@@ -24,7 +24,7 @@ export default function SignupPage() {
 
   React.useEffect(() => {
     if (user) {
-      window.location.href = `${appUrl}/dashboard`;
+      window.location.href = `${appUrl}/demo`;
     }
   }, [user, appUrl]);
 
@@ -86,7 +86,7 @@ export default function SignupPage() {
         return;
       }
 
-      window.location.href = `${appUrl}/dashboard`;
+      window.location.href = `${appUrl}/demo`;
     } catch (err) {
       setError("Error al registrarse con Google. Intenta de nuevo.");
     } finally {
@@ -106,7 +106,7 @@ export default function SignupPage() {
         return;
       }
 
-      window.location.href = `${appUrl}/dashboard`;
+      window.location.href = `${appUrl}/demo`;
     } catch (err) {
       setError("Error al registrarse con Microsoft. Intenta de nuevo.");
     } finally {

@@ -27,7 +27,7 @@ export default function VerifyEmailPage() {
       setStep("verified");
       showToast({ type: "success", title: "Verificado", message: "Correo ya verificado" });
       setTimeout(() => {
-        window.location.href = `${appUrl}/dashboard`;
+        window.location.href = `${appUrl}/demo`;
       }, 1000);
     }
   }, [appUrl, showToast]);
@@ -44,7 +44,7 @@ export default function VerifyEmailPage() {
       if (auth.currentUser?.emailVerified) {
         setStep("verified");
         setTimeout(() => {
-          window.location.href = `${appUrl}/dashboard`;
+          window.location.href = `${appUrl}/demo`;
         }, 2000);
         showToast({ type: "success", title: "Verificado", message: "Correo verificado" });
       }

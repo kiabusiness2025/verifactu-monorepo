@@ -63,18 +63,18 @@ export default function LoginPage() {
 
   const nextParam = searchParams?.get("next")?.trim() || "";
   const redirectTarget = (() => {
-    if (!nextParam) return `${appUrl}/dashboard`;
+    if (!nextParam) return `${appUrl}/demo`;
     try {
       const target = new URL(nextParam);
       const appOrigin = new URL(appUrl).origin;
       if (target.origin !== appOrigin) {
         reportInvalidNext("cross-origin", nextParam);
-        return `${appUrl}/dashboard`;
+        return `${appUrl}/demo`;
       }
       return target.toString();
     } catch {
       reportInvalidNext("malformed", nextParam);
-      return `${appUrl}/dashboard`;
+      return `${appUrl}/demo`;
     }
   })();
 

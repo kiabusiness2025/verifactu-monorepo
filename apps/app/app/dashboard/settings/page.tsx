@@ -6,6 +6,8 @@ import { useToast } from '@/components/notifications/ToastNotifications';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
 import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import { formatCurrency, formatDateTime } from '@/src/lib/formatters';
+import { auth } from '@/lib/firebase';
+import { sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { Camera } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
@@ -55,6 +57,14 @@ function SettingsContent() {
     email: session?.user?.email || '',
     phone: '',
   });
+
+  useEffect(() => {
+    setProfileSettings((prev) => ({
+      ...prev,
+      displayName: session?.user?.name || prev.displayName,
+      email: session?.user?.email || prev.email,
+    }));
+  }, [session?.user?.email, session?.user?.name]);
 
   const [generalSettings, setGeneralSettings] = useState({
     companyName: session?.user?.email || '',
@@ -285,10 +295,37 @@ function SettingsContent() {
     e.preventDefault();
     setLoading(true);
     try {
-      console.log('Saving profile settings:', profileSettings);
-      // TODO: Implementar guardado de perfil
+      const nextDisplayName = profileSettings.displayName.trim();
+      if (!nextDisplayName) {
+        showError('Nombre inválido', 'El nombre no puede estar vacío');
+        return;
+      }
+
+      if (!auth.currentUser) {
+        showError('Sesión no disponible', 'Inicia sesión de nuevo para actualizar el perfil');
+        return;
+      }
+
+      await updateProfile(auth.currentUser, { displayName: nextDisplayName });
+
+      await fetch('/api/auth/sync-user', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: auth.currentUser.uid,
+          email: auth.currentUser.email || profileSettings.email,
+          displayName: nextDisplayName,
+          photoURL: auth.currentUser.photoURL || null,
+          emailVerified: auth.currentUser.emailVerified,
+          provider: auth.currentUser.providerData?.[0]?.providerId || 'password',
+        }),
+      }).catch(() => null);
+
+      success('Perfil actualizado', 'Tus datos de perfil se guardaron correctamente');
     } catch (error) {
       console.error('Error saving profile:', error);
+      showError('Error al guardar', 'No se pudieron guardar los datos de perfil');
     } finally {
       setLoading(false);
     }
@@ -419,7 +456,24 @@ function SettingsContent() {
                   </label>
                   <AccessibleButton
                     variant="secondary"
-                    onClick={() => success('Próximamente: funcionalidad de cambiar contraseña')}
+                    onClick={async () => {
+                      try {
+                        const email = profileSettings.email || session?.user?.email;
+                        if (!email) {
+                          showError('Email no disponible', 'No encontramos un email asociado');
+                          return;
+                        }
+
+                        await sendPasswordResetEmail(auth, email);
+                        success('Email enviado', 'Revisa tu correo para cambiar la contraseña');
+                      } catch (resetError) {
+                        console.error('Password reset error:', resetError);
+                        showError(
+                          'No se pudo enviar el email',
+                          'Intenta de nuevo en unos segundos'
+                        );
+                      }
+                    }}
                     ariaLabel="Actualizar contraseña"
                   >
                     Actualizar contraseña

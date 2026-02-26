@@ -145,7 +145,7 @@ export default function IsaakHistoryPage() {
               className="group relative flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
             >
               <button
-                onClick={() => router.push(`/diashboard/isaak/${conv.id}`)}
+                onClick={() => router.push(`/dashboard/isaak/${conv.id}`)}
                 className="flex flex-1 items-start gap-3 text-left"
               >
                 <MessageSquare className="mt-1 h-5 w-5 flex-shrink-0 text-blue-600" />

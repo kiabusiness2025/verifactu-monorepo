@@ -1,6 +1,7 @@
 "use client";
 
 import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
+import { DemoIsaakHint } from "@/components/demo/DemoIsaakHint";
 import { getBankMovements } from "@/src/lib/data/client";
 import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
 
@@ -27,6 +28,15 @@ export default function DemoBanksPage() {
         <p className="text-xs text-slate-500">
           Movimientos simulados para mostrar conciliacion automatica.
         </p>
+        <DemoIsaakHint
+          title="Conciliacion inteligente"
+          description="Isaak detecta movimientos sin conciliar y propone su correspondencia."
+          bullets={[
+            'Movimientos pendientes de conciliar',
+            'Alertas de cargos inusuales',
+            'Sugerencias de reglas bancarias',
+          ]}
+        />
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600">

@@ -10,13 +10,18 @@ export const metadata: Metadata = {
 
 const integrations = [
   {
+    title: "Holded",
+    description: "Conecta API Key por tenant y sincroniza clientes, productos, facturas y gastos.",
+    icon: Database,
+  },
+  {
     title: "Bancos",
-    description: "Conciliación de movimientos y extractos bancarios.",
+    description: "Lectura de movimientos desde Holded para conciliación guiada por Isaak.",
     icon: Building,
   },
   {
     title: "ERP y contabilidad",
-    description: "Exportaciones y formatos estándar para asesorías.",
+    description: "Verifactu manda en operación diaria; Holded mantiene contabilidad formal.",
     icon: Database,
   },
   {
@@ -52,8 +57,8 @@ export default function IntegracionesPage() {
               Integraciones para crecer sin fricción
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Conecta datos financieros, automatiza tareas y centraliza la información en un solo lugar. Isaak te ayuda
-              a validar y ordenar el flujo.
+              Verifactu.business funciona como capa empresarial y Holded como libro contable.
+              Isaak ordena el flujo y te propone acciones sin exponer menús contables complejos.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -105,15 +110,15 @@ export default function IntegracionesPage() {
             <ul className="mt-6 space-y-3 text-slate-700">
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-[#2361d8]" />
-                Conexion segura con datos financieros y facturas.
+                Conexión segura por API Key (solo server-side).
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-[#2361d8]" />
-                Exportaciones listas para tu asesoría.
+                Outbox con reintentos e idempotencia para sincronización robusta.
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-[#2361d8]" />
-                Acompanamiento en la puesta en marcha.
+                Acompañamiento en migración, eInforma y soporte operativo.
               </li>
             </ul>
             <div className="mt-6">
@@ -130,6 +135,5 @@ export default function IntegracionesPage() {
     </main>
   );
 }
-
 
 

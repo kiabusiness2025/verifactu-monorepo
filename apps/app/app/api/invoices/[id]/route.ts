@@ -72,7 +72,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data: {
         ...(data.status && { status: data.status }),
         ...(data.notes && { notes: data.notes }),
-        ...(data.dueDate && { dueDate: new Date(data.dueDate) }),
       },
       include: {
         customer: true,

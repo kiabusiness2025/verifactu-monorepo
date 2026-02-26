@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export type IsaakSuggestion = {
   label: string;
@@ -17,33 +17,38 @@ export type IsaakContext = {
 };
 
 function resolveSection(pathname: string): { key: string; title: string; basePath: string } {
-  const isDemo = pathname.startsWith("/demo");
-  const basePath = isDemo ? "/demo" : "/dashboard";
-  if (pathname.startsWith(`${basePath}/invoices`)) return { key: "invoices", title: "Facturacion", basePath };
-  if (pathname.startsWith(`${basePath}/documents`)) return { key: "documents", title: "Documentos", basePath };
-  if (pathname.startsWith(`${basePath}/banks`)) return { key: "banks", title: "Bancos", basePath };
-  if (pathname.startsWith(`${basePath}/calendar`)) return { key: "calendar", title: "Calendario", basePath };
-  if (pathname.startsWith(`${basePath}/settings`)) return { key: "settings", title: "Configuracion", basePath };
-  if (pathname.startsWith(`${basePath}/clients`)) return { key: "clients", title: "Clientes", basePath };
-  return { key: "dashboard", title: "Resumen general", basePath };
+  const isDemo = pathname.startsWith('/demo');
+  const basePath = isDemo ? '/demo' : '/dashboard';
+  if (pathname.startsWith(`${basePath}/invoices`))
+    return { key: 'invoices', title: 'Facturacion', basePath };
+  if (pathname.startsWith(`${basePath}/documents`))
+    return { key: 'documents', title: 'Documentos', basePath };
+  if (pathname.startsWith(`${basePath}/banks`)) return { key: 'banks', title: 'Bancos', basePath };
+  if (pathname.startsWith(`${basePath}/calendar`))
+    return { key: 'calendar', title: 'Calendario', basePath };
+  if (pathname.startsWith(`${basePath}/settings`))
+    return { key: 'settings', title: 'Configuracion', basePath };
+  if (pathname.startsWith(`${basePath}/clients`))
+    return { key: 'clients', title: 'Clientes', basePath };
+  return { key: 'dashboard', title: 'Resumen general', basePath };
 }
 
 const sabiasQuePool: Record<string, string[]> = {
   invoices: [
-    "Sabias que puedes programar recordatorios de cobro 48h antes del vencimiento?",
-    "Mantener la serie y numeracion trazada evita rechazos en VeriFactu.",
+    'Sabias que puedes programar recordatorios de cobro 48h antes del vencimiento?',
+    'Mantener la serie y numeracion trazada evita rechazos en VeriFactu.',
   ],
   documents: [
-    "Subir el ticket el mismo dia aumenta la deducibilidad y evita olvidos.",
-    "Puedes compartir un enlace seguro con tu asesor sin descargar documentos.",
+    'Subir el ticket el mismo dia aumenta la deducibilidad y evita olvidos.',
+    'Puedes compartir un enlace seguro con tu asesor sin descargar documentos.',
   ],
   dashboard: [
-    "Tu beneficio se actualiza solo: ventas - gastos. No tienes que cruzar hojas.",
-    "Revisa los plazos fiscales cada viernes para evitar cargos extra.",
+    'Tu beneficio se actualiza solo: ventas - gastos. No tienes que cruzar hojas.',
+    'Revisa los plazos fiscales cada viernes para evitar cargos extra.',
   ],
   default: [
-    "Isaak puede preparar un resumen en 3 lineas de tu semana fiscal.",
-    "Las incidencias de VeriFactu se resuelven antes de enviar si revisas borradores.",
+    'Isaak puede preparar un resumen en 3 lineas de tu semana fiscal.',
+    'Las incidencias de VeriFactu se resuelven antes de enviar si revisas borradores.',
   ],
 };
 
@@ -62,13 +67,13 @@ function dayOfYearLocal(date: Date): number {
 }
 
 export function useIsaakContext(userName?: string): IsaakContext {
-  const pathname = usePathname() || "/dashboard";
+  const pathname = usePathname() || '/dashboard';
 
   const { key, title, basePath } = useMemo(() => resolveSection(pathname), [pathname]);
 
   // Important for hydration: the initial render must be deterministic.
   // We compute the "dynamic" parts (time-based greeting / rotating tip) only after mount.
-  const [greetingPrefix, setGreetingPrefix] = useState<string>("Hola");
+  const [greetingPrefix, setGreetingPrefix] = useState<string>('Hola');
   const [sabiasQue, setSabiasQue] = useState<string | undefined>(() => {
     const list = sabiasQuePool[key] ?? sabiasQuePool.default;
     return list[0];
@@ -77,51 +82,51 @@ export function useIsaakContext(userName?: string): IsaakContext {
   useEffect(() => {
     const now = new Date();
     const hour = now.getHours();
-    const prefix = hour < 12 ? "Buenos dias" : hour < 19 ? "Buenas tardes" : "Buenas noches";
+    const prefix = hour < 12 ? 'Buenos dias' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
     setGreetingPrefix(prefix);
 
     const list = sabiasQuePool[key] ?? sabiasQuePool.default;
-    const index = (stableHash(`${pathname}|${userName ?? ""}`) + dayOfYearLocal(now)) % list.length;
+    const index = (stableHash(`${pathname}|${userName ?? ''}`) + dayOfYearLocal(now)) % list.length;
     setSabiasQue(list[index]);
   }, [key, pathname, userName]);
 
   return useMemo(() => {
     const suggestions: IsaakSuggestion[] = (() => {
       switch (key) {
-        case "invoices":
+        case 'invoices':
           return [
-            { label: "Emitir factura VeriFactu", href: `${basePath}/invoices` },
-            { label: "Revisar borradores", href: `${basePath}/invoices` },
+            { label: 'Emitir factura VeriFactu', href: `${basePath}/invoices` },
+            { label: 'Revisar borradores', href: `${basePath}/invoices` },
           ];
-        case "documents":
+        case 'documents':
           return [
-            { label: "Subir documento", href: `${basePath}/documents` },
-            { label: "Compartir con asesor", href: `${basePath}/documents` },
+            { label: 'Subir documento', href: `${basePath}/documents` },
+            { label: 'Compartir con asesor', href: `${basePath}/documents` },
           ];
-        case "banks":
+        case 'banks':
           return [
-            { label: "Conciliar movimientos", href: `${basePath}/banks` },
-            { label: "Ver pendientes", href: `${basePath}/banks` },
+            { label: 'Conciliar movimientos', href: `${basePath}/banks` },
+            { label: 'Ver pendientes', href: `${basePath}/banks` },
           ];
-        case "calendar":
+        case 'calendar':
           return [
-            { label: "Ver plazos fiscales", href: `${basePath}/calendar` },
-            { label: "Crear recordatorio", href: `${basePath}/calendar` },
+            { label: 'Ver plazos fiscales', href: `${basePath}/calendar` },
+            { label: 'Crear recordatorio', href: `${basePath}/calendar` },
           ];
-        case "settings":
+        case 'settings':
           return [
-            { label: "Configurar VeriFactu", href: `${basePath}/settings` },
-            { label: "Anadir usuario", href: `${basePath}/settings` },
+            { label: 'Configurar VeriFactu', href: `${basePath}/settings` },
+            { label: 'Anadir usuario', href: `${basePath}/settings` },
           ];
-        case "clients":
+        case 'clients':
           return [
-            { label: "Anadir cliente", href: `${basePath}/clients` },
-            { label: "Ver fichas", href: `${basePath}/clients` },
+            { label: 'Anadir cliente', href: `${basePath}/clients` },
+            { label: 'Ver fichas', href: `${basePath}/clients` },
           ];
         default:
           return [
-            { label: "Ver resumen", href: `${basePath}` },
-            { label: "Preguntar a Isaak", href: `${basePath}` },
+            { label: 'Ver resumen', href: `${basePath}` },
+            { label: 'Abrir asistente', href: `${basePath}/isaak` },
           ];
       }
     })();

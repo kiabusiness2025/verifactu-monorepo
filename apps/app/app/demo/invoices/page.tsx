@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { InvoiceQR } from "@/components/invoices/InvoiceQR";
 import { DemoLockedButton } from "@/components/demo/DemoLockedButton";
+import { DemoIsaakHint } from "@/components/demo/DemoIsaakHint";
 import { getInvoices } from "@/src/lib/data/client";
 import { formatCurrency, formatShortDate } from "@/src/lib/formatters";
 import type { DemoInvoice } from "@/src/lib/demo/demoData";
@@ -60,6 +61,15 @@ export default function DemoInvoicesPage() {
         <p className="text-xs text-slate-500">
           Esta tabla es una muestra de facturas emitidas para Empresa Demo SL.
         </p>
+        <DemoIsaakHint
+          title="Guia rapida de facturas"
+          description="Isaak revisa estados, vencimientos y QR VeriFactu para ayudarte a priorizar cobros."
+          bullets={[
+            'Detecta facturas vencidas y sugiere recordatorios',
+            'Resume el importe pendiente y el cobro estimado',
+            'Explica el estado VeriFactu y su trazabilidad',
+          ]}
+        />
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-600">

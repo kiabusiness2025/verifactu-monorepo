@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { usePathname } from "next/navigation";
-import { AppShell } from "@verifactu/ui";
-import { navAdmin } from "../../src/navAdmin";
+import { AppShell } from '@verifactu/ui';
+import { usePathname } from 'next/navigation';
+import { navAdmin } from '../../src/navAdmin';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,7 +13,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       nav={navAdmin}
       pathname={pathname}
       showThemeToggle={false}
-      showIsaak={false}
+      showIsaak
+      isaakExtraContext={{ appVariant: 'admin', toneApiPath: '/api/admin/preferences' }}
       headerLeft={<div className="text-sm font-semibold">Verifactu Admin</div>}
     >
       {children}

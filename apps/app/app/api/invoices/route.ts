@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
+import { createSyncOutbox } from '@/lib/integrations/holdedStore';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -22,6 +23,9 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const search = searchParams.get('search') || '';
+    const status = searchParams.get('status') || '';
+    const from = searchParams.get('from') || '';
+    const to = searchParams.get('to') || '';
 
     const skip = (page - 1) * limit;
 
@@ -33,7 +37,15 @@ export async function GET(req: NextRequest) {
           { customer: { name: { contains: search, mode: 'insensitive' } } },
         ],
       }),
+      ...(status && { status }),
     };
+
+    if (from || to) {
+      where.issueDate = {
+        ...(from ? { gte: new Date(from) } : {}),
+        ...(to ? { lte: new Date(to) } : {}),
+      };
+    }
 
     const [invoices, total] = await Promise.all([
       prisma.invoice.findMany({
@@ -178,6 +190,20 @@ export async function POST(req: NextRequest) {
       include: {
         customer: true,
         lines: { include: { article: true } },
+      },
+    });
+
+    await createSyncOutbox({
+      tenantId,
+      entityType: 'invoice',
+      entityId: updated.id,
+      action: 'upsert',
+      payload: {
+        invoiceId: updated.id,
+        number: updated.number,
+        issueDate: updated.issueDate,
+        amountGross: updated.amountGross,
+        status: updated.status,
       },
     });
 
