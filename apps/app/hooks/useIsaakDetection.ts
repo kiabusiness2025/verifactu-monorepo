@@ -11,6 +11,8 @@ export interface IsaakDetection {
   role: UserRole;
   language: string;
   path: string;
+  section: string;
+  basePath: string;
   company?: string;
 }
 
@@ -21,6 +23,8 @@ export function useIsaakDetection(): IsaakDetection {
     role: 'visitor',
     language: 'es',
     path: pathname,
+    section: 'general',
+    basePath: '/dashboard',
   });
 
   useEffect(() => {
@@ -46,7 +50,19 @@ export function useIsaakDetection(): IsaakDetection {
     // Detectar empresa (si está disponible en localStorage o context)
     const company = localStorage.getItem('current-tenant') || undefined;
 
-    setDetection({ context, role, language, path: pathname, company });
+    const basePath = pathname.includes('/demo') ? '/demo' : '/dashboard';
+    const section = (() => {
+      if (pathname.startsWith(`${basePath}/invoices`)) return 'invoices';
+      if (pathname.startsWith(`${basePath}/documents`)) return 'documents';
+      if (pathname.startsWith(`${basePath}/clients`)) return 'clients';
+      if (pathname.startsWith(`${basePath}/banks`)) return 'banks';
+      if (pathname.startsWith(`${basePath}/calendar`)) return 'calendar';
+      if (pathname.startsWith(`${basePath}/settings`)) return 'settings';
+      if (pathname.startsWith(`${basePath}/isaak`)) return 'isaak';
+      return 'dashboard';
+    })();
+
+    setDetection({ context, role, language, path: pathname, section, basePath, company });
   }, [pathname]);
 
   return detection;

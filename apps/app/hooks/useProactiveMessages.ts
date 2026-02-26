@@ -41,14 +41,6 @@ export function useProactiveMessages() {
 
   const sectionHints: Array<{
     match: string;
-    {
-      match: `${basePath}/isaak`,
-      id: "ctx-isaak",
-      title: "Asistente en foco",
-      message: "Aquí puedes pedir a Isaak un plan de acción concreto para facturas, cobros y cierres.",
-      action: "Abrir resumen",
-      href: `${basePath}`,
-    },
     id: string;
     title: string;
     message: string;
@@ -103,11 +95,20 @@ export function useProactiveMessages() {
       action: 'Abrir ajustes',
       href: `${basePath}/settings`,
     },
+    {
+      match: `${basePath}/isaak`,
+      id: 'ctx-isaak',
+      title: 'Asistente en foco',
+      message:
+        'Aquí puedes pedir a Isaak un plan de acción concreto para facturas, cobros y cierres.',
+      action: 'Abrir resumen',
+      href: `${basePath}`,
+    },
   ];
 
   const section = sectionHints.find((hint) => pathname.startsWith(hint.match));
   if (!section) {
-    return messages;
+    return messagesWithDefaults;
   }
 
   return [
