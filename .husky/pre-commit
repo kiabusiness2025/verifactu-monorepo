@@ -6,14 +6,12 @@ set -e
 # Get the list of staged files
 STAGED_FILES=$(git diff --cached --name-only)
 
-# Check if there are any TypeScript/JavaScript files staged
-if echo "$STAGED_FILES" | grep -E '\.(ts|tsx|js|jsx)$' > /dev/null; then
-  echo "🔍 Running ESLint on staged files..."
-  
-  # Run lint-staged
-  pnpm exec lint-staged
-  
-  echo "✅ Pre-commit checks passed!"
-else
-  echo "⏭️  No TypeScript/JavaScript files to lint"
+if [ -z "$STAGED_FILES" ]; then
+  echo "⏭️  No staged files to check"
+  exit 0
 fi
+
+echo "🔍 Running lint-staged on staged files..."
+pnpm exec lint-staged
+
+echo "✅ Pre-commit checks passed!"
