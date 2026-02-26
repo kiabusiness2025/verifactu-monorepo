@@ -11,7 +11,7 @@ if echo "$STAGED_FILES" | grep -E '\.(ts|tsx|js|jsx)$' > /dev/null; then
   echo "🔍 Running ESLint on staged files..."
   
   # Run lint-staged
-  pnpm lint-staged
+  pnpm exec lint-staged
   
   echo "✅ Pre-commit checks passed!"
 else
