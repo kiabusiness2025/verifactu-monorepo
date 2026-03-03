@@ -82,13 +82,16 @@ export async function GET(req: Request) {
         .map(toSearchResult)
         .filter((item) => item.einformaId && item.name);
 
-      return NextResponse.json({
-        ok: true,
-        results,
-        cached: true,
-        cacheSource: 'einformaLookup',
-        lastSyncAt: lookup.updatedAt?.toISOString() ?? null,
-      });
+      return NextResponse.json(
+        {
+          ok: true,
+          results,
+          cached: true,
+          cacheSource: 'einformaLookup',
+          lastSyncAt: lookup.updatedAt?.toISOString() ?? null,
+        },
+        { headers: { 'X-Einforma-Source': 'cache' } }
+      );
     }
 
     const items = await searchCompanies(q);
@@ -120,7 +123,10 @@ export async function GET(req: Request) {
       }))
       .filter((item) => item.einformaId && item.name);
 
-    return NextResponse.json({ ok: true, results });
+    return NextResponse.json(
+      { ok: true, results, cached: false, cacheSource: 'einforma', lastSyncAt: null },
+      { headers: { 'X-Einforma-Source': 'live' } }
+    );
   } catch (error) {
     console.error('eInforma search error:', error);
     return NextResponse.json(

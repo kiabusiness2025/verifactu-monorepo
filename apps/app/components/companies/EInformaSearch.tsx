@@ -11,13 +11,22 @@ export interface EInformaCompany {
   city?: string;
 }
 
+type SearchMeta = {
+  cached?: boolean;
+  cacheSource?: string | null;
+  lastSyncAt?: string | null;
+  error?: string | null;
+};
+
 interface EInformaSearchProps {
   onSelect: (company: EInformaCompany) => void;
+  onMeta?: (meta: SearchMeta) => void;
   placeholder?: string;
 }
 
 export function EInformaSearch({
   onSelect,
+  onMeta,
   placeholder = 'Buscar por nombre o CIF...',
 }: EInformaSearchProps) {
   const [query, setQuery] = useState('');
@@ -57,16 +66,34 @@ export function EInformaSearch({
           setResults(data.results || []);
           setShowResults(true);
           setErrorMessage('');
+          onMeta?.({
+            cached: Boolean(data.cached),
+            cacheSource: data.cacheSource ?? null,
+            lastSyncAt: data.lastSyncAt ?? null,
+            error: null,
+          });
         } else {
           setResults([]);
           setShowResults(true);
           setErrorMessage(data?.error || 'No se pudo completar la búsqueda');
+          onMeta?.({
+            cached: false,
+            cacheSource: null,
+            lastSyncAt: null,
+            error: data?.error || 'No se pudo completar la búsqueda',
+          });
         }
       } catch (error) {
         console.error('Error searching:', error);
         setResults([]);
         setShowResults(true);
         setErrorMessage('No se pudo completar la búsqueda');
+        onMeta?.({
+          cached: false,
+          cacheSource: null,
+          lastSyncAt: null,
+          error: 'No se pudo completar la búsqueda',
+        });
       } finally {
         setLoading(false);
       }

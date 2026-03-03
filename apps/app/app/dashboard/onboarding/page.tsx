@@ -34,6 +34,23 @@ type SelectedCompany = {
   raw?: unknown;
 };
 
+type EinformaPanelMeta = {
+  cached: boolean;
+  cacheSource: string | null;
+  lastSyncAt: string | null;
+  error?: string | null;
+};
+
+function formatDateTime(value: string | null) {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(parsed);
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,6 +66,8 @@ export default function OnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [hasRealTenant, setHasRealTenant] = useState(false);
+  const [searchMeta, setSearchMeta] = useState<EinformaPanelMeta | null>(null);
+  const [detailMeta, setDetailMeta] = useState<EinformaPanelMeta | null>(null);
 
   const nextUrl = useMemo(() => {
     const next = searchParams?.get('next');
@@ -123,6 +142,7 @@ export default function OnboardingPage() {
 
   async function handleSelect(company: { einformaId: string; name: string; nif: string }) {
     setIsLoadingDetails(true);
+    setDetailMeta(null);
     setSelected({
       einformaId: company.einformaId,
       name: company.name,
@@ -175,9 +195,28 @@ export default function OnboardingPage() {
         setCompanyName(info.name || company.name);
         setLegalName(info.legalName || info.name || company.name);
         setNif(info.nif || company.nif);
+        setDetailMeta({
+          cached: Boolean(data.cached),
+          cacheSource: data.cacheSource ?? null,
+          lastSyncAt: data.lastSyncAt ?? null,
+          error: null,
+        });
+      } else {
+        setDetailMeta({
+          cached: false,
+          cacheSource: null,
+          lastSyncAt: null,
+          error: data?.error || 'No se pudo cargar el detalle de empresa',
+        });
       }
     } catch (error) {
       console.error(error);
+      setDetailMeta({
+        cached: false,
+        cacheSource: null,
+        lastSyncAt: null,
+        error: 'No se pudo cargar el detalle de empresa',
+      });
     } finally {
       setIsLoadingDetails(false);
     }
@@ -294,44 +333,91 @@ export default function OnboardingPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-12">
-      <div className="mx-auto w-full max-w-2xl space-y-6">
+      <div className="mx-auto w-full max-w-4xl space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-semibold text-[#0b214a]">Añadir tu empresa</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Busca tu empresa en el buscador o crea los datos manualmente. Al continuar activarás 30
-            días de prueba.
-          </p>
-          <p className="mt-2 text-xs text-slate-500">
-            Aceptamos cualquier tipo de empresa. El régimen fiscal solo se usa para sugerencias y no
-            bloquea tu operativa.
-          </p>
+          <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 via-slate-50 to-white p-5">
+            <h1 className="text-2xl font-semibold text-[#0b214a]">Añadir tu empresa</h1>
+            <p className="mt-2 text-sm text-slate-700">
+              Busca tu empresa con eInforma o completa los datos manualmente. Al continuar activarás
+              30 días de prueba.
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Aceptamos cualquier tipo de empresa. El régimen fiscal solo se usa para sugerencias.
+            </p>
+          </div>
 
-          <div className="mt-6 space-y-4">
-            <div>
+          <div className="mt-5 grid gap-4 lg:grid-cols-[1.3fr,1fr]">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
                 Buscar empresa
               </p>
               <div className="mt-3">
-                <EInformaSearch onSelect={handleSelect} />
+                <EInformaSearch
+                  onSelect={handleSelect}
+                  onMeta={(meta) =>
+                    setSearchMeta({
+                      cached: Boolean(meta.cached),
+                      cacheSource: meta.cacheSource ?? null,
+                      lastSyncAt: meta.lastSyncAt ?? null,
+                      error: meta.error ?? null,
+                    })
+                  }
+                />
               </div>
-              {isLoadingDetails && (
-                <p className="mt-2 text-xs text-slate-500">Cargando datos de la empresa...</p>
-              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span
+                  className={[
+                    'rounded-full px-2 py-1 text-[11px] font-semibold',
+                    searchMeta?.cached
+                      ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
+                      : 'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
+                  ].join(' ')}
+                >
+                  {searchMeta?.cached ? 'Búsqueda desde cache' : 'Búsqueda en vivo'}
+                </span>
+                {searchMeta?.lastSyncAt ? (
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
+                    Actualizado: {formatDateTime(searchMeta.lastSyncAt)}
+                  </span>
+                ) : null}
+              </div>
+              {isLoadingDetails ? (
+                <p className="mt-2 text-xs text-slate-500">Cargando detalle de empresa...</p>
+              ) : null}
+              {detailMeta?.error ? (
+                <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  {detailMeta.error}
+                </p>
+              ) : null}
             </div>
 
-            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">
-              <p className="font-semibold">Vas a activar 30 días de prueba</p>
-              <p className="mt-1 text-xs text-blue-800">
-                Durante la prueba puedes emitir facturas Verifactu y subir documentación. Antes de
-                cobrar, recibirás un aviso con tu cuota estimada según tu uso.
-              </p>
-            </div>
-            {hasRealTenant ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                Ya tienes una empresa real en modo prueba. Para añadir otra empresa, necesitas
-                contratar un plan.
+            <div className="space-y-3">
+              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">
+                <p className="font-semibold">Vas a activar 30 días de prueba</p>
+                <p className="mt-1 text-xs text-blue-800">
+                  Durante la prueba puedes emitir facturas Verifactu y subir documentación.
+                </p>
               </div>
-            ) : null}
+              <div className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600">
+                <p className="font-semibold text-slate-700">Origen de datos detalle</p>
+                <p className="mt-1">
+                  {detailMeta?.cached
+                    ? 'Se usó cache local (sin consumir créditos externos).'
+                    : 'Consulta directa al proveedor si no existe cache local.'}
+                </p>
+                {detailMeta?.lastSyncAt ? (
+                  <p className="mt-1 text-slate-500">
+                    Última sincronización: {formatDateTime(detailMeta.lastSyncAt)}
+                  </p>
+                ) : null}
+              </div>
+              {hasRealTenant ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  Ya tienes una empresa real en modo prueba. Para añadir otra empresa, necesitas
+                  contratar un plan.
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
 
@@ -404,6 +490,23 @@ export default function OnboardingPage() {
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-600 space-y-2">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
                   Resumen básico
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span
+                    className={[
+                      'rounded-full px-2 py-1 text-[11px] font-semibold',
+                      detailMeta?.cached
+                        ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
+                        : 'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
+                    ].join(' ')}
+                  >
+                    {detailMeta?.cached ? 'Detalle en cache' : 'Detalle en vivo'}
+                  </span>
+                  {detailMeta?.cacheSource ? (
+                    <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
+                      Fuente: {detailMeta.cacheSource}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>

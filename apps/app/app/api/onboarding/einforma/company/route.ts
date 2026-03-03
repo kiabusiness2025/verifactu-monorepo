@@ -87,13 +87,16 @@ export async function GET(req: Request) {
       });
 
       if (lookup && lookup.expiresAt > new Date() && isProfileLike(lookup.normalized)) {
-        return NextResponse.json({
-          ok: true,
-          company: toCompanyPayload(taxId, lookup.normalized),
-          cached: true,
-          cacheSource: 'einformaLookup',
-          lastSyncAt: lookup.updatedAt?.toISOString() ?? null,
-        });
+        return NextResponse.json(
+          {
+            ok: true,
+            company: toCompanyPayload(taxId, lookup.normalized),
+            cached: true,
+            cacheSource: 'einformaLookup',
+            lastSyncAt: lookup.updatedAt?.toISOString() ?? null,
+          },
+          { headers: { 'X-Einforma-Source': 'cache' } }
+        );
       }
     }
 
@@ -118,13 +121,16 @@ export async function GET(req: Request) {
       );
     }
 
-    return NextResponse.json({
-      ok: true,
-      company: toCompanyPayload(sourceId, profile),
-      cached: false,
-      cacheSource: 'einforma',
-      lastSyncAt: null,
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        company: toCompanyPayload(sourceId, profile),
+        cached: false,
+        cacheSource: 'einforma',
+        lastSyncAt: null,
+      },
+      { headers: { 'X-Einforma-Source': 'live' } }
+    );
   } catch (error) {
     console.error('eInforma company error:', error);
     return NextResponse.json(
