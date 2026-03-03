@@ -11,6 +11,7 @@ import { resolveActiveTenant } from "@/src/server/tenant/resolveActiveTenant";
 import { query } from "@/lib/db";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
+import { z } from "zod";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -44,6 +45,14 @@ async function verifyTenantAccess(userId: string, tenantId: string): Promise<boo
   return role === "owner" || role === "admin";
 }
 
+const logoBodySchema = z.object({
+  tenantId: z.string().optional(),
+  logoURL: z.string().min(1),
+});
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
 
 /**
  * GET /api/tenant/logo
@@ -99,10 +108,10 @@ export async function GET(req: NextRequest) {
       ok: true,
       logoURL: result[0].logo_url || null
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[GET /api/tenant/logo] Error:", error);
     return NextResponse.json(
-      { ok: false, error: error.message || "Error al obtener logo" },
+      { ok: false, error: getErrorMessage(error, "Error al obtener logo") },
       { status: 500 }
     );
   }
@@ -117,8 +126,8 @@ export async function POST(req: NextRequest) {
 
     const userId: string = session.uid;
 
-    const body = await req.json();
-    const { tenantId: tenantIdRaw, logoURL: logoURLRaw } = body;
+    const bodyUnknown: unknown = await req.json();
+    const { tenantId: tenantIdRaw, logoURL: logoURLRaw } = logoBodySchema.parse(bodyUnknown);
 
     const resolved = await resolveActiveTenant({
       userId,
@@ -229,10 +238,10 @@ export async function POST(req: NextRequest) {
       ok: true,
       logoURL: downloadURL
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[POST /api/tenant/logo] Error:", error);
     return NextResponse.json(
-      { ok: false, error: error.message || "Error al subir logo" },
+      { ok: false, error: getErrorMessage(error, "Error al subir logo") },
       { status: 500 }
     );
   }

@@ -18,6 +18,21 @@ export interface Deadline {
 const DEADLINES_KEY = "isaak_deadlines";
 const NOTIFICATIONS_KEY = "isaak_notifications_shown";
 
+type StoredDeadline = Omit<Deadline, "date"> & { date: string | Date };
+
+function isStoredDeadline(value: unknown): value is StoredDeadline {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.title === "string" &&
+    (typeof candidate.date === "string" || candidate.date instanceof Date) &&
+    typeof candidate.type === "string" &&
+    typeof candidate.context === "string" &&
+    typeof candidate.priority === "string"
+  );
+}
+
 // Spanish financial calendar defaults
 const SPANISH_DEADLINES = [
   { title: "Declaración IVA Q1", month: 4, day: 20, type: "quarterly_vat" as const },
@@ -71,12 +86,19 @@ export function useDeadlineNotifications() {
   const getDeadlines = useCallback((): Deadline[] => {
     if (typeof window === "undefined") return [];
     const stored = localStorage.getItem(DEADLINES_KEY);
-    return stored
-      ? JSON.parse(stored).map((d: any) => ({
+    if (!stored) return [];
+    try {
+      const raw: unknown = JSON.parse(stored);
+      if (!Array.isArray(raw)) return [];
+      return raw
+        .filter(isStoredDeadline)
+        .map((d) => ({
           ...d,
           date: new Date(d.date),
-        }))
-      : [];
+        }));
+    } catch {
+      return [];
+    }
   }, []);
 
   // Get upcoming deadlines (next 30 days)

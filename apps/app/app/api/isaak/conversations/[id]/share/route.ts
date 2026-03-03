@@ -8,9 +8,18 @@ import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { randomBytes } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const shareRequestSchema = z.object({
+  expiresInHours: z.number().int().min(1).max(24 * 30).optional(),
+});
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
 
 export async function POST(
   req: NextRequest,
@@ -26,8 +35,8 @@ export async function POST(
       );
     }
 
-    const body = await req.json();
-    const { expiresInHours = 24 } = body;
+    const bodyUnknown: unknown = await req.json().catch(() => ({}));
+    const { expiresInHours = 24 } = shareRequestSchema.parse(bodyUnknown);
 
     // Verificar que la conversación pertenece al usuario
     const conversation = await prisma.isaakConversation.findFirst({
@@ -72,10 +81,10 @@ export async function POST(
       token: shareToken
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating share:', error);
     return NextResponse.json(
-      { error: 'Error al compartir conversación', details: error.message },
+      { error: 'Error al compartir conversación', details: getErrorMessage(error, 'Unknown error') },
       { status: 500 }
     );
   }
@@ -142,10 +151,10 @@ export async function GET(
       }))
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching shares:', error);
     return NextResponse.json(
-      { error: 'Error al obtener shares', details: error.message },
+      { error: 'Error al obtener shares', details: getErrorMessage(error, 'Unknown error') },
       { status: 500 }
     );
   }
