@@ -14,7 +14,7 @@ type UsersResponse = {
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const { success, error: showError, warning } = useToast();
+  const { success, error: showError, warning, info } = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -77,12 +77,16 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleImpersonate = async (userId: string, email: string, tenants: UserRow['tenants']) => {
-    if (!confirm(`¿Abrir el panel de ${email}?`)) return;
+  const openUserProfile = (userId: string, editMode = false) => {
+    router.push(`/dashboard/admin/users/${userId}${editMode ? '?edit=1' : ''}`);
+  };
+
+  const handleTenantAccess = async (userId: string, email: string, tenants: UserRow['tenants']) => {
+    if (!confirm(`¿Iniciar sesión de soporte para ${email}?`)) return;
 
     const primaryTenantId = tenants?.[0]?.tenantId;
     if (!primaryTenantId) {
-      showError('Sin empresa', 'Este usuario no tiene empresas asignadas todavía');
+      info('Sin empresa', 'Este usuario no tiene empresas asignadas. Puedes editar su ficha.');
       return;
     }
 
@@ -99,7 +103,7 @@ export default function AdminUsersPage() {
         const token = result.handoffToken as string;
         const url = `${appUrl}/support/handoff?token=${encodeURIComponent(token)}`;
         window.open(url, '_blank', 'noopener,noreferrer');
-        success('Acceso iniciado', `Panel abierto para ${email}`);
+        success('Acceso iniciado', `Tenant abierto para ${email}`);
       } else {
         const errorData = await res.json().catch(() => ({}));
         showError(
@@ -119,8 +123,7 @@ export default function AdminUsersPage() {
   };
 
   const handleEditUser = (userId: string) => {
-    // TODO: Implementar modal o página de edición
-    warning('Función en desarrollo', 'La edición de usuarios estará disponible próximamente');
+    openUserProfile(userId, true);
   };
 
   const handleBlockUser = async (userId: string, email: string) => {
@@ -208,7 +211,7 @@ export default function AdminUsersPage() {
                 </div>
                 <div className="mt-4 flex items-center gap-2">
                   <button
-                    onClick={() => router.push(`/dashboard/admin/users/${user.id}`)}
+                    onClick={() => openUserProfile(user.id)}
                     className="flex items-center justify-center gap-1 rounded-lg border border-slate-300 bg-white px-2 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                     title="Ver ficha completa"
                   >
@@ -236,13 +239,23 @@ export default function AdminUsersPage() {
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                   <button
-                    onClick={() => handleImpersonate(user.id, user.email, user.tenants)}
+                    onClick={() => openUserProfile(user.id)}
                     className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#0b6cfb] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0a5be0]"
-                    title="Abrir panel"
+                    title="Abrir ficha"
                   >
-                    <LogIn className="h-3.5 w-3.5" />
-                    Abrir panel
+                    <Eye className="h-3.5 w-3.5" />
+                    Abrir ficha
                   </button>
+                  {user.tenants.length > 0 ? (
+                    <button
+                      onClick={() => handleTenantAccess(user.id, user.email, user.tenants)}
+                      className="flex items-center justify-center gap-1 rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100"
+                      title="Entrar al tenant"
+                    >
+                      <LogIn className="h-3.5 w-3.5" />
+                      Entrar tenant
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -274,7 +287,7 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => router.push(`/dashboard/admin/users/${user.id}`)}
+                          onClick={() => openUserProfile(user.id)}
                           className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                           title="Ver ficha completa"
                         >
@@ -302,13 +315,23 @@ export default function AdminUsersPage() {
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                         <button
-                          onClick={() => handleImpersonate(user.id, user.email, user.tenants)}
+                          onClick={() => openUserProfile(user.id)}
                           className="flex items-center gap-1 rounded-lg bg-[#0b6cfb] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0a5be0]"
-                          title="Abrir panel"
+                          title="Abrir ficha"
                         >
-                          <LogIn className="h-3.5 w-3.5" />
-                          Abrir panel
+                          <Eye className="h-3.5 w-3.5" />
+                          Abrir ficha
                         </button>
+                        {user.tenants.length > 0 ? (
+                          <button
+                            onClick={() => handleTenantAccess(user.id, user.email, user.tenants)}
+                            className="flex items-center gap-1 rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100"
+                            title="Entrar al tenant"
+                          >
+                            <LogIn className="h-3.5 w-3.5" />
+                            Entrar tenant
+                          </button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>

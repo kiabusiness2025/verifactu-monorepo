@@ -14,7 +14,7 @@ import {
     Settings,
     Users,
 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface UserDetails {
@@ -22,6 +22,7 @@ interface UserDetails {
     id: string;
     email: string;
     name: string;
+    role: string;
     created_at: string;
     preferred_tenant_id: string | null;
     isaak_tone: string;
@@ -99,6 +100,7 @@ interface UserDetails {
 
 export default function UserDetailPage() {
   const params = useParams<{ id?: string | string[] }>();
+  const searchParams = useSearchParams();
   const userId = typeof params?.id === 'string'
     ? params.id
     : Array.isArray(params?.id)
@@ -108,6 +110,11 @@ export default function UserDetailPage() {
   const { success, error: showError, warning } = useToast();
   const [data, setData] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [formName, setFormName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formRole, setFormRole] = useState('USER');
   const [isImpersonating, setIsImpersonating] = useState(false);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 
@@ -115,6 +122,11 @@ export default function UserDetailPage() {
     fetchUserDetails();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  useEffect(() => {
+    const edit = searchParams?.get('edit') === '1';
+    setEditMode(edit);
+  }, [searchParams]);
 
   const fetchUserDetails = async () => {
     try {
@@ -124,6 +136,9 @@ export default function UserDetailPage() {
       if (res.ok) {
         const userData = await res.json();
         setData(userData);
+        setFormName(userData?.user?.name || '');
+        setFormEmail(userData?.user?.email || '');
+        setFormRole(userData?.user?.role || 'USER');
       } else {
         showError('Error', 'No se pudo cargar el usuario');
         router.push('/dashboard/admin/users');
@@ -133,6 +148,42 @@ export default function UserDetailPage() {
       showError('Error', 'No se pudo cargar el usuario');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!userId || !data) return;
+    if (!formEmail.trim()) {
+      showError('Email requerido', 'El email no puede estar vacío');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formName.trim() || null,
+          email: formEmail.trim().toLowerCase(),
+          role: formRole,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showError('Error', err.error || 'No se pudo guardar usuario');
+        return;
+      }
+
+      success('Guardado', 'Ficha de usuario actualizada');
+      setEditMode(false);
+      await fetchUserDetails();
+    } catch (error) {
+      console.error('Error saving user:', error);
+      showError('Error', 'No se pudo guardar usuario');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -221,16 +272,27 @@ export default function UserDetailPage() {
 
         <div className="flex gap-2">
           <button
-            onClick={() =>
-              warning(
-                'En desarrollo',
-                'La funcionalidad de edici\u00f3n estar\u00e1 disponible pr\u00f3ximamente'
-              )
-            }
+            onClick={() => setEditMode((prev) => !prev)}
             className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             <Edit2 className="h-4 w-4" />
-            Editar
+            {editMode ? 'Cancelar edición' : 'Editar'}
+          </button>
+          {editMode ? (
+            <button
+              onClick={() => void handleSave()}
+              disabled={saving}
+              className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-emerald-400"
+            >
+              {saving ? 'Guardando...' : 'Guardar'}
+            </button>
+          ) : null}
+          <button
+            onClick={() => warning('Próximamente', 'La edición avanzada por tenant se añadirá en este módulo')}
+            className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <Settings className="h-4 w-4" />
+            Ajustes tenant
           </button>
           <button
             onClick={() => handleImpersonate()}
@@ -245,10 +307,44 @@ export default function UserDetailPage() {
 
       {/* Info Principal */}
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        {editMode ? (
+          <div className="mb-6 grid gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 sm:grid-cols-3">
+            <label className="text-xs font-semibold text-slate-700">
+              Nombre
+              <input
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-sm font-normal"
+              />
+            </label>
+            <label className="text-xs font-semibold text-slate-700">
+              Email
+              <input
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-sm font-normal"
+              />
+            </label>
+            <label className="text-xs font-semibold text-slate-700">
+              Rol global
+              <select
+                value={formRole}
+                onChange={(e) => setFormRole(e.target.value)}
+                className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-sm font-normal"
+              >
+                <option value="USER">USER</option>
+                <option value="SUPPORT">SUPPORT</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </label>
+          </div>
+        ) : null}
+
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">{user.name || 'Sin nombre'}</h1>
             <p className="mt-1 text-slate-600">{user.email}</p>
+            <p className="mt-1 text-xs uppercase text-slate-500">Rol global: {user.role}</p>
             <p className="mt-2 text-sm text-slate-500">
               ID: <code className="rounded bg-slate-100 px-2 py-1 text-xs">{user.id}</code>
             </p>
