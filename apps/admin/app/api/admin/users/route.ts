@@ -5,7 +5,11 @@ import { requireAdmin } from '@/lib/adminAuth';
 export const dynamic = 'force-dynamic';
 
 function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
+  const normalized = email.trim().toLowerCase();
+  if (normalized === 'support@verifactu.business') {
+    return 'soporte@verifactu.business';
+  }
+  return normalized;
 }
 
 function toRoleLabel(role?: string | null): string {
