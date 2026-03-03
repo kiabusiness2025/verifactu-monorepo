@@ -19,7 +19,7 @@ export function buildExportResponse(args: {
 
   if (format === 'xlsx') {
     const file = buildWorkbookBuffer(rows as XlsxCell[][], sheetName);
-    return new NextResponse(file, {
+    return new NextResponse(new Uint8Array(file), {
       status: 200,
       headers: {
         'Content-Type':
