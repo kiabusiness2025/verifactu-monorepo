@@ -6,6 +6,26 @@ import {
   sendPasswordChangedEmail,
   sendTeamInviteEmail
 } from '@/lib/email/emailService';
+import { z } from 'zod';
+
+const emailTypeSchema = z.enum([
+  'verification',
+  'welcome',
+  'password-reset',
+  'password-changed',
+  'team-invite',
+  'all',
+]);
+
+const testEmailsPayloadSchema = z.object({
+  emailType: emailTypeSchema.optional(),
+  testEmail: z.string().email(),
+});
+
+type TestEmailResult = {
+  success: boolean;
+  error?: string;
+};
 
 /**
  * Endpoint de testing para probar todos los flujos de email en local
@@ -22,7 +42,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { emailType, testEmail } = await request.json();
+    const payload: unknown = await request.json();
+    const { emailType, testEmail } = testEmailsPayloadSchema.parse(payload);
 
     if (!testEmail) {
       return NextResponse.json(
@@ -33,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`[📧 TEST] Sending ${emailType || 'all'} email(s) to ${testEmail}`);
 
-    const results: any = {};
+    const results: Record<string, TestEmailResult> = {};
 
     // Si no se especifica tipo, enviar todos
     const emailTypes = emailType ? [emailType] : [
@@ -108,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Resumen
-    const successful = Object.values(results).filter((r: any) => r.success).length;
+    const successful = Object.values(results).filter((r) => r.success).length;
     const total = Object.keys(results).length;
 
     return NextResponse.json({

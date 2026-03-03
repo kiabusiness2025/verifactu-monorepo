@@ -1,8 +1,27 @@
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
-import { createSyncOutbox } from '@/lib/integrations/holdedStore';
+import { createSyncOutbox } from '@/lib/integrations/accountingStore';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { Prisma } from '@verifactu/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const lineItemSchema = z.object({
+  articleId: z.string().min(1),
+  quantity: z.number().positive(),
+  unitPrice: z.number().nonnegative(),
+  taxRate: z.number().min(0).max(1),
+  discount: z.number().min(0).max(100).optional().default(0),
+});
+
+const createInvoiceSchema = z.object({
+  customerId: z.string().optional(),
+  customerName: z.string().optional(),
+  number: z.string().min(1),
+  issueDate: z.string().min(1),
+  notes: z.string().optional(),
+  lineItems: z.array(lineItemSchema).min(1),
+});
 
 export async function GET(req: NextRequest) {
   try {
@@ -29,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    const where: Prisma.InvoiceWhereInput = {
       tenantId,
       ...(search && {
         OR: [
@@ -123,7 +142,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const data = await req.json();
+    const payload: unknown = await req.json();
+    const data = createInvoiceSchema.parse(payload);
 
     // Validate customer exists and belongs to tenant
     if (data.customerId) {
@@ -147,12 +167,12 @@ export async function POST(req: NextRequest) {
         issueDate: new Date(data.issueDate),
         status: 'draft',
         amountNet: data.lineItems.reduce(
-          (sum: number, line: any) =>
+          (sum: number, line) =>
             sum + line.quantity * line.unitPrice * (1 - line.discount / 100),
           0
         ),
         amountTax: data.lineItems.reduce(
-          (sum: number, line: any) =>
+          (sum: number, line) =>
             sum + line.quantity * line.unitPrice * (1 - line.discount / 100) * line.taxRate,
           0
         ),
@@ -160,8 +180,9 @@ export async function POST(req: NextRequest) {
         notes: data.notes || '',
 
         lines: {
-          create: data.lineItems.map((line: any) => ({
+          create: data.lineItems.map((line) => ({
             articleId: line.articleId,
+            tenantId,
             quantity: line.quantity,
             unitPrice: line.unitPrice,
             taxRate: line.taxRate,
@@ -199,6 +220,7 @@ export async function POST(req: NextRequest) {
       entityId: updated.id,
       action: 'upsert',
       payload: {
+        eventType: 'invoice.upsert',
         invoiceId: updated.id,
         number: updated.number,
         issueDate: updated.issueDate,

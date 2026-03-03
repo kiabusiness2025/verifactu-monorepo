@@ -4,6 +4,12 @@ import { uploadToStorage } from '@/lib/storage';
 import prisma from '@/lib/prisma';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
+type StorageCategory = 'invoices' | 'documents' | 'avatars' | 'attachments';
+
+function isStorageCategory(value: string): value is StorageCategory {
+  return ['invoices', 'documents', 'avatars', 'attachments'].includes(value);
+}
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +51,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!category || !['invoices', 'documents', 'avatars', 'attachments'].includes(category)) {
+    if (!category || !isStorageCategory(category)) {
       return NextResponse.json(
         { error: 'Invalid category' },
         { status: 400 }
@@ -64,7 +70,7 @@ export async function POST(req: NextRequest) {
     // Upload a Storage
     const result = await uploadToStorage(
       tenantId,
-      category as any,
+      category,
       file,
       customFileName || undefined
     );

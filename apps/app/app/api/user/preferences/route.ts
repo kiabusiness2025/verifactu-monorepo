@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getFirebaseAuth } from "@/lib/firebase-admin";
 import { query } from "@/lib/db";
+import { z } from 'zod';
+
+const patchPreferencesSchema = z.object({
+  isaak_tone: z.enum(['friendly', 'professional', 'minimal']).optional(),
+  chat_history_enabled: z.boolean().optional(),
+  voice_enabled: z.boolean().optional(),
+  has_seen_welcome: z.boolean().optional(),
+  has_completed_onboarding: z.boolean().optional(),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,20 +75,13 @@ export async function PATCH(request: NextRequest) {
     const decodedToken = await auth.verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    const body = await request.json();
-    const { isaak_tone, chat_history_enabled, voice_enabled, has_seen_welcome, has_completed_onboarding } = body;
-
-    // Validar isaak_tone si se proporciona
-    if (isaak_tone && !["friendly", "professional", "minimal"].includes(isaak_tone)) {
-      return NextResponse.json(
-        { error: "Tono inválido. Debe ser: friendly, professional o minimal" },
-        { status: 400 }
-      );
-    }
+    const bodyUnknown: unknown = await request.json();
+    const { isaak_tone, chat_history_enabled, voice_enabled, has_seen_welcome, has_completed_onboarding } =
+      patchPreferencesSchema.parse(bodyUnknown);
 
     // Construir query de actualización dinámica
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramCount = 1;
 
     if (isaak_tone !== undefined) {

@@ -5,12 +5,15 @@
 
 import { getSessionPayload } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-interface ExportRequest {
-  format: 'csv' | 'json' | 'pdf';
-  filename?: string;
-  includeHeaders?: boolean;
-}
+const exportRequestSchema = z.object({
+  format: z.enum(['csv', 'json', 'pdf']),
+  filename: z.string().min(1).optional(),
+  includeHeaders: z.boolean().optional(),
+});
+
+type DashboardData = Awaited<ReturnType<typeof fetchDashboardData>>;
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +23,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body: ExportRequest = await request.json();
+    const payload: unknown = await request.json();
+    const body = exportRequestSchema.parse(payload);
     const { format, filename = 'export', includeHeaders = true } = body;
 
     // TODO: Fetch actual dashboard data from database
@@ -120,7 +124,7 @@ async function fetchDashboardData(userId: string) {
 /**
  * Generate CSV from data
  */
-function generateCSV(data: any, includeHeaders: boolean): string {
+function generateCSV(data: DashboardData, includeHeaders: boolean): string {
   const lines: string[] = [];
 
   // Add summary section
@@ -140,7 +144,7 @@ function generateCSV(data: any, includeHeaders: boolean): string {
   }
   lines.push('ID,Fecha,Cliente,Importe,Estado');
 
-  data.recentInvoices.forEach((invoice: any) => {
+  data.recentInvoices.forEach((invoice) => {
     lines.push(
       `${invoice.id},${invoice.date},${invoice.client},€${invoice.amount.toFixed(2)},${invoice.status}`
     );
@@ -154,7 +158,7 @@ function generateCSV(data: any, includeHeaders: boolean): string {
   }
   lines.push('Mes,Ingresos');
 
-  data.monthlyRevenue.forEach((month: any) => {
+  data.monthlyRevenue.forEach((month) => {
     lines.push(`${month.month},€${month.revenue.toFixed(2)}`);
   });
 

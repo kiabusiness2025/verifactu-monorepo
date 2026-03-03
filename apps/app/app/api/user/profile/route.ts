@@ -1,6 +1,13 @@
 import { query } from '@/lib/db';
 import { verifySessionTokenFromEnv } from '@verifactu/utils';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const patchProfileSchema = z.object({
+  name: z.string().optional(),
+  phone: z.string().nullable().optional(),
+  photoURL: z.string().nullable().optional(),
+});
 
 export async function GET(req: NextRequest) {
   try {
@@ -56,8 +63,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { name, phone, photoURL } = body;
+    const bodyUnknown: unknown = await req.json();
+    const { name, phone, photoURL } = patchProfileSchema.parse(bodyUnknown);
 
     // Validar datos
     if (name !== undefined && (!name || name.trim().length === 0)) {
@@ -65,7 +72,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     if (name !== undefined) {
