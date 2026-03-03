@@ -1,18 +1,16 @@
 import prisma from '@/lib/prisma';
+import {
+  fromCents,
+  lineItemSchema,
+  normalizeLine,
+  toCents,
+} from '@/lib/billing/invoice-line-normalization';
 import { getSessionPayload } from '@/lib/session';
 import { createSyncOutbox } from '@/lib/integrations/accountingStore';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { Prisma } from '@verifactu/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-
-const lineItemSchema = z.object({
-  articleId: z.string().min(1),
-  quantity: z.number().positive(),
-  unitPrice: z.number().nonnegative(),
-  taxRate: z.number().min(0).max(1),
-  discount: z.number().min(0).max(100).optional().default(0),
-});
 
 const createInvoiceSchema = z.object({
   customerId: z.string().optional(),
@@ -143,7 +141,18 @@ export async function POST(req: NextRequest) {
     });
 
     const payload: unknown = await req.json();
-    const data = createInvoiceSchema.parse(payload);
+    const parsed = createInvoiceSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'VALIDATION_ERROR', issues: parsed.error.issues },
+        { status: 422 }
+      );
+    }
+    const data = parsed.data;
+    const normalizedLines = data.lineItems.map((line) => normalizeLine(line));
+    const amountNetCents = normalizedLines.reduce((sum, line) => sum + toCents(line.netAmount), 0);
+    const amountTaxCents = normalizedLines.reduce((sum, line) => sum + toCents(line.vatAmount), 0);
+    const amountGrossCents = amountNetCents + amountTaxCents;
 
     // Validate customer exists and belongs to tenant
     if (data.customerId) {
@@ -166,47 +175,22 @@ export async function POST(req: NextRequest) {
         number: data.number,
         issueDate: new Date(data.issueDate),
         status: 'draft',
-        amountNet: data.lineItems.reduce(
-          (sum: number, line) =>
-            sum + line.quantity * line.unitPrice * (1 - line.discount / 100),
-          0
-        ),
-        amountTax: data.lineItems.reduce(
-          (sum: number, line) =>
-            sum + line.quantity * line.unitPrice * (1 - line.discount / 100) * line.taxRate,
-          0
-        ),
-        amountGross: 0, // Will be calculated after
+        amountNet: fromCents(amountNetCents),
+        amountTax: fromCents(amountTaxCents),
+        amountGross: fromCents(amountGrossCents),
         notes: data.notes || '',
 
         lines: {
-          create: data.lineItems.map((line) => ({
+          create: normalizedLines.map((line) => ({
             articleId: line.articleId,
             tenantId,
             quantity: line.quantity,
             unitPrice: line.unitPrice,
             taxRate: line.taxRate,
             discount: line.discount || 0,
-            lineTotal: line.quantity * line.unitPrice * (1 - (line.discount || 0) / 100),
+            lineTotal: line.netAmount,
           })),
         },
-      },
-      include: {
-        customer: true,
-        lines: { include: { article: true } },
-      },
-    });
-
-    // Update amountGross
-    const netAmount =
-      typeof invoice.amountNet === 'number' ? invoice.amountNet : invoice.amountNet.toNumber();
-    const taxAmount =
-      typeof invoice.amountTax === 'number' ? invoice.amountTax : invoice.amountTax.toNumber();
-
-    const updated = await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        amountGross: netAmount + taxAmount,
       },
       include: {
         customer: true,
@@ -217,15 +201,15 @@ export async function POST(req: NextRequest) {
     await createSyncOutbox({
       tenantId,
       entityType: 'invoice',
-      entityId: updated.id,
+      entityId: invoice.id,
       action: 'upsert',
       payload: {
         eventType: 'invoice.upsert',
-        invoiceId: updated.id,
-        number: updated.number,
-        issueDate: updated.issueDate,
-        amountGross: updated.amountGross,
-        status: updated.status,
+        invoiceId: invoice.id,
+        number: invoice.number,
+        issueDate: invoice.issueDate,
+        amountGross: invoice.amountGross,
+        status: invoice.status,
       },
     });
 
@@ -253,7 +237,7 @@ export async function POST(req: NextRequest) {
           metadata: {
             action: 'INVOICE.CREATE',
             tenantId,
-            invoiceId: updated.id,
+            invoiceId: invoice.id,
             issuerSnapshot,
             supportMode: resolved.supportMode,
             supportSessionId,
@@ -265,7 +249,7 @@ export async function POST(req: NextRequest) {
       // Audit logging should not block the request.
     }
 
-    return NextResponse.json(updated, { status: 201 });
+    return NextResponse.json(invoice, { status: 201 });
   } catch (error) {
     console.error('Error creating invoice:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
