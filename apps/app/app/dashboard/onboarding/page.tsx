@@ -41,6 +41,13 @@ type EinformaPanelMeta = {
   error?: string | null;
 };
 
+type EinformaUsageCounters = {
+  searchCacheHits: number;
+  searchLiveHits: number;
+  detailCacheHits: number;
+  detailLiveHits: number;
+};
+
 function formatDateTime(value: string | null) {
   if (!value) return '—';
   const parsed = new Date(value);
@@ -68,6 +75,12 @@ export default function OnboardingPage() {
   const [hasRealTenant, setHasRealTenant] = useState(false);
   const [searchMeta, setSearchMeta] = useState<EinformaPanelMeta | null>(null);
   const [detailMeta, setDetailMeta] = useState<EinformaPanelMeta | null>(null);
+  const [usageCounters, setUsageCounters] = useState<EinformaUsageCounters>({
+    searchCacheHits: 0,
+    searchLiveHits: 0,
+    detailCacheHits: 0,
+    detailLiveHits: 0,
+  });
 
   const nextUrl = useMemo(() => {
     const next = searchParams?.get('next');
@@ -201,6 +214,11 @@ export default function OnboardingPage() {
           lastSyncAt: data.lastSyncAt ?? null,
           error: null,
         });
+        setUsageCounters((prev) => ({
+          ...prev,
+          detailCacheHits: prev.detailCacheHits + (data.cached ? 1 : 0),
+          detailLiveHits: prev.detailLiveHits + (data.cached ? 0 : 1),
+        }));
       } else {
         setDetailMeta({
           cached: false,
@@ -354,14 +372,22 @@ export default function OnboardingPage() {
               <div className="mt-3">
                 <EInformaSearch
                   onSelect={handleSelect}
-                  onMeta={(meta) =>
-                    setSearchMeta({
+                  onMeta={(meta) => {
+                    const parsedMeta = {
                       cached: Boolean(meta.cached),
                       cacheSource: meta.cacheSource ?? null,
                       lastSyncAt: meta.lastSyncAt ?? null,
                       error: meta.error ?? null,
-                    })
-                  }
+                    };
+                    setSearchMeta(parsedMeta);
+                    if (!parsedMeta.error) {
+                      setUsageCounters((prev) => ({
+                        ...prev,
+                        searchCacheHits: prev.searchCacheHits + (parsedMeta.cached ? 1 : 0),
+                        searchLiveHits: prev.searchLiveHits + (parsedMeta.cached ? 0 : 1),
+                      }));
+                    }
+                  }}
                 />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -378,6 +404,11 @@ export default function OnboardingPage() {
                 {searchMeta?.lastSyncAt ? (
                   <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
                     Actualizado: {formatDateTime(searchMeta.lastSyncAt)}
+                  </span>
+                ) : null}
+                {searchMeta?.cached ? (
+                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                    Sin consumo externo
                   </span>
                 ) : null}
               </div>
@@ -410,6 +441,27 @@ export default function OnboardingPage() {
                     Última sincronización: {formatDateTime(detailMeta.lastSyncAt)}
                   </p>
                 ) : null}
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600">
+                <p className="font-semibold text-slate-700">Contadores de consumo</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-slate-50 px-2 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500">Búsqueda cache</p>
+                    <p className="text-sm font-semibold text-slate-800">{usageCounters.searchCacheHits}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 px-2 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500">Búsqueda live</p>
+                    <p className="text-sm font-semibold text-slate-800">{usageCounters.searchLiveHits}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 px-2 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500">Detalle cache</p>
+                    <p className="text-sm font-semibold text-slate-800">{usageCounters.detailCacheHits}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 px-2 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500">Detalle live</p>
+                    <p className="text-sm font-semibold text-slate-800">{usageCounters.detailLiveHits}</p>
+                  </div>
+                </div>
               </div>
               {hasRealTenant ? (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
