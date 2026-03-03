@@ -21,6 +21,7 @@ export const navAdmin = [
   { label: 'Integraciones', href: '/integrations', icon: <Plug className="h-4 w-4" /> },
   { label: 'eINFORMA', href: '/integrations/einforma', icon: <Plug className="h-4 w-4" /> },
   { label: 'Operaciones', href: '/operations', icon: <AlertTriangle className="h-4 w-4" /> },
+  { label: 'Integridad U/T', href: '/operations/integrity', icon: <Shield className="h-4 w-4" /> },
   { label: 'Auditoría', href: '/audit-log', icon: <ClipboardList className="h-4 w-4" /> },
   { label: 'Settings', href: '/settings', icon: <Settings className="h-4 w-4" /> },
 ];

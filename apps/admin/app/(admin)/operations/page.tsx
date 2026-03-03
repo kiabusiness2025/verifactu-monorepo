@@ -9,6 +9,7 @@ export default function OperationsPage() {
         { label: "Jobs", href: "/operations/jobs" },
         { label: "Webhooks", href: "/operations/webhooks" },
         { label: "Errores", href: "/operations/errors" },
+        { label: "Integridad U/T", href: "/operations/integrity" },
       ]}
     />
   );
