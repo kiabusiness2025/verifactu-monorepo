@@ -69,7 +69,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 
   const pdf = buildSimplePdf(lines);
 
-  return new NextResponse(pdf, {
+  return new NextResponse(new Uint8Array(pdf), {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
