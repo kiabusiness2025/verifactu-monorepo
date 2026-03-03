@@ -1,251 +1,179 @@
-"use client";
+'use client';
 
-import { DashboardSkeleton } from "@/components/accessibility/LoadingSkeleton";
-import { adminGet, type AccountingData } from "@/lib/adminApi";
-import { formatCurrency, formatDateTime, formatNumber, formatTime } from "@/src/lib/formatters";
+import { DashboardSkeleton } from '@/components/accessibility/LoadingSkeleton';
+import { adminGet } from '@/lib/adminApi';
+import { formatDateTime, formatNumber, formatTime } from '@/src/lib/formatters';
 import {
-    AlertTriangle,
-    ArrowUpRight,
-    Building,
-    DollarSign,
-    FileWarning,
-    ListChecks,
-    RefreshCw,
-    TrendingUp,
-    Users,
-} from "lucide-react";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+  AlertTriangle,
+  Building2,
+  CircleDollarSign,
+  Link2,
+  Mail,
+  RefreshCw,
+  Shield,
+  Users,
+  UserSearch,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-type OverviewTotals = AccountingData["totals"];
+type TenantsResponse = {
+  items: Array<{ id: string; legalName: string; createdAt?: string }>;
+  total: number;
+};
+
+type UsersResponse = {
+  users: Array<{ id: string }>;
+};
+
+type SubscriptionsResponse = {
+  items: Array<{ id: string; status: string }>;
+};
+
+type IntegritySummary = {
+  orphan_memberships: number;
+  invalid_preferences: number;
+  users_without_memberships: number;
+  tenants_without_owners: number;
+};
+
+type IntegrityResponse = {
+  summary: IntegritySummary;
+};
+
+type SupportSessionsResponse = {
+  items: Array<{ id: string; endedAt: string | null }>;
+};
 
 export default function AdminDashboardPage() {
-  const [totals, setTotals] = useState<OverviewTotals | null>(null);
   const [tenantCount, setTenantCount] = useState(0);
   const [userCount, setUserCount] = useState(0);
+  const [subscriptionCount, setSubscriptionCount] = useState(0);
+  const [activeSupportSessions, setActiveSupportSessions] = useState(0);
   const [recentTenants, setRecentTenants] = useState<
     Array<{ id: string; legalName: string; createdAt?: string }>
   >([]);
-  const [sessionInfo, setSessionInfo] = useState<{
-    expires: string | null;
-    user: { email: string | null; name: string | null };
-  } | null>(null);
+  const [integritySummary, setIntegritySummary] = useState<IntegritySummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
+  const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
       try {
-        const [accounting, tenantsResponse, usersResponse, sessionResponse] = await Promise.all([
-          adminGet<AccountingData>("/api/admin/accounting?period=current_month"),
-          adminGet<{
-            items: Array<{ id: string; legalName: string; createdAt?: string }>;
-            total: number;
-          }>("/api/admin/tenants?page=1&pageSize=5"),
-          adminGet<{ users: Array<{ id: string }> }>("/api/admin/users"),
-          adminGet<{ ok: boolean; session: { expires: string | null; user: { email: string | null; name: string | null } } }>(
-            "/api/admin/session"
-          ),
-        ]);
+        const [tenantsResponse, usersResponse, subscriptionsResponse, integrityResponse, supportResponse] =
+          await Promise.all([
+            adminGet<TenantsResponse>('/api/admin/tenants?page=1&pageSize=6'),
+            adminGet<UsersResponse>('/api/admin/users'),
+            adminGet<SubscriptionsResponse>('/api/admin/subscriptions?limit=500'),
+            adminGet<IntegrityResponse>('/api/admin/integrity/user-tenant?limit=5'),
+            adminGet<SupportSessionsResponse>('/api/admin/support-sessions?status=active&limit=200'),
+          ]);
 
         if (mounted) {
-          setTotals(accounting.totals);
           setTenantCount(tenantsResponse.total || 0);
           setUserCount(usersResponse.users?.length || 0);
+          setSubscriptionCount(subscriptionsResponse.items?.length || 0);
+          setActiveSupportSessions(supportResponse.items?.length || 0);
           setRecentTenants(tenantsResponse.items || []);
-          setSessionInfo(sessionResponse?.ok ? sessionResponse.session : null);
-          setStatus("ok");
+          setIntegritySummary(integrityResponse.summary || null);
+          setStatus('ok');
           setLastCheckedAt(formatTime(new Date()));
         }
-      } catch (error) {
-        if (mounted) {
-          setStatus("error");
-        }
+      } catch (_error) {
+        if (mounted) setStatus('error');
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        if (mounted) setLoading(false);
       }
     }
-    load();
+
+    void load();
     return () => {
       mounted = false;
     };
   }, []);
 
-  const incidents = useMemo(
-    () => [
-      {
-        id: "webhooks",
-        title: "Webhooks",
-        description: "Sin incidencias críticas en las últimas 24h.",
-      },
-      {
-        id: "verifactu",
-        title: "Veri*Factu",
-        description: "Sin errores críticos registrados.",
-      },
-      {
-        id: "emails",
-        title: "Emails",
-        description: "Sin rebotes recientes detectados.",
-      },
-    ],
-    []
-  );
+  const integrityTotal = useMemo(() => {
+    if (!integritySummary) return 0;
+    return (
+      integritySummary.orphan_memberships +
+      integritySummary.invalid_preferences +
+      integritySummary.users_without_memberships +
+      integritySummary.tenants_without_owners
+    );
+  }, [integritySummary]);
 
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
+  if (loading) return <DashboardSkeleton />;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-sm text-slate-500">Control Tower</div>
-          <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
+          <div className="text-sm text-slate-500">Admin Hub</div>
+          <h1 className="text-2xl font-semibold text-slate-900">Gestión global</h1>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <RefreshCw className="h-3.5 w-3.5" />
-          {lastCheckedAt ? `Actualizado ${lastCheckedAt}` : "Actualizando..."}
+          {lastCheckedAt ? `Actualizado ${lastCheckedAt}` : 'Actualizando...'}
         </div>
       </div>
 
-      <div>
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">Visión global</h2>
-        <div className="grid gap-4 lg:grid-cols-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-600">Usuarios</p>
-                <p className="text-2xl font-semibold text-slate-900">
-                  {formatNumber(userCount)}
-                </p>
-              </div>
-              <Users className="h-8 w-8 text-blue-500" />
-            </div>
-          </div>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <MetricCard label="Usuarios" value={formatNumber(userCount)} icon={<Users className="h-7 w-7 text-blue-500" />} />
+        <MetricCard
+          label="Empresas"
+          value={formatNumber(tenantCount)}
+          icon={<Building2 className="h-7 w-7 text-indigo-500" />}
+        />
+        <MetricCard
+          label="Suscripciones"
+          value={formatNumber(subscriptionCount)}
+          icon={<CircleDollarSign className="h-7 w-7 text-emerald-500" />}
+        />
+        <MetricCard
+          label="Soporte activo"
+          value={formatNumber(activeSupportSessions)}
+          icon={<Shield className="h-7 w-7 text-violet-500" />}
+        />
+        <MetricCard
+          label="Incidencias U/T"
+          value={formatNumber(integrityTotal)}
+          icon={<UserSearch className="h-7 w-7 text-amber-500" />}
+        />
+      </section>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-600">Tenants activos</p>
-                <p className="text-2xl font-semibold text-slate-900">
-                  {formatNumber(tenantCount)}
-                </p>
-              </div>
-              <Building className="h-8 w-8 text-purple-500" />
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-600">Ingresos mes</p>
-                <p className="text-2xl font-semibold text-slate-900">
-                  {formatCurrency(totals?.revenue || 0)}
-                </p>
-              </div>
-              <DollarSign className="h-8 w-8 text-emerald-500" />
-            </div>
-            <div className="mt-2 text-xs text-slate-500">
-              {formatNumber(totals?.invoices || 0)} facturas emitidas
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-600">Beneficio</p>
-                <p className="text-2xl font-semibold text-slate-900">
-                  {formatCurrency(totals?.profit || 0)}
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-slate-700" />
-            </div>
-            <div className="mt-2 text-xs text-slate-500">
-              Margen{" "}
-              {totals?.revenue
-                ? (((totals.revenue - totals.expenses) / totals.revenue) * 100).toFixed(1)
-                : "0.0"}
-              %
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-600">Sesión actual</p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {sessionInfo?.user?.email || "—"}
-                </p>
-              </div>
-              <ListChecks className="h-8 w-8 text-slate-500" />
-            </div>
-            <div className="mt-2 text-xs text-slate-500">
-              {sessionInfo?.expires
-                ? `Caduca ${formatDateTime(sessionInfo.expires)}`
-                : "Sin datos de caducidad"}
-            </div>
-          </div>
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">Módulos de administración</h2>
+        <p className="mt-1 text-xs text-slate-500">
+          Centro para operar usuarios, empresas, roles, suscripciones e integraciones. La
+          facturación de negocio vive dentro de cada tenant.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <QuickLink href="/users" label="Usuarios" help="Editar usuarios, roles y acceso tenant" />
+          <QuickLink href="/tenants" label="Empresas" help="Crear, suspender, borrar y operar tenants" />
+          <QuickLink href="/subscriptions" label="Suscripciones" help="Planes, trial y ciclo comercial" />
+          <QuickLink href="/integrations" label="Integraciones" help="API contable, correo y conectores" />
+          <QuickLink href="/integrations/resend" label="Correo" help="Eventos, rebotes y entrega" icon={<Mail className="h-4 w-4" />} />
+          <QuickLink href="/operations/integrity" label="Usuarios vs Tenants" help="Detectar y resolver inconsistencias" icon={<Link2 className="h-4 w-4" />} />
+          <QuickLink href="/support-sessions" label="Soporte" help="Entrar a tenant y asistir al cliente" />
+          <QuickLink href="/settings" label="Configuración" help="Preferencias y parámetros globales" />
         </div>
-      </div>
+      </section>
 
-      <div>
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">Acciones rápidas</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Link
-            href="/tenants/new"
-            className="rounded-xl bg-blue-600 px-4 py-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 text-center"
-          >
-            + Crear empresa
-          </Link>
-          <Link
-            href="/users"
-            className="rounded-xl border-2 border-[#0b6cfb] px-4 py-4 text-sm font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/10 text-center"
-          >
-            Ver todos los usuarios
-          </Link>
-          <Link
-            href="/integrations/resend"
-            className="rounded-xl border-2 border-purple-500 px-4 py-4 text-sm font-semibold text-purple-600 hover:bg-purple-50 text-center"
-          >
-            Revisar correos
-          </Link>
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-900">Incidencias</h3>
-            <FileWarning className="h-4 w-4 text-slate-400" />
-          </div>
-          <div className="mt-3 space-y-3">
-            {incidents.map((item) => (
-              <div key={item.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-semibold text-slate-800">{item.title}</div>
-                  <span className="text-[10px] uppercase text-emerald-600">OK</span>
-                </div>
-                <div className="mt-1 text-xs text-slate-500">{item.description}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-900">Actividad reciente</h3>
-            <ListChecks className="h-4 w-4 text-slate-400" />
+            <h3 className="text-sm font-semibold text-slate-900">Empresas recientes</h3>
+            <Link href="/tenants" className="text-xs font-medium text-blue-600 hover:text-blue-700">
+              Ver todas
+            </Link>
           </div>
           <div className="mt-3 space-y-2">
             {recentTenants.length === 0 ? (
-              <div className="text-xs text-slate-500">Sin actividad reciente.</div>
+              <div className="text-xs text-slate-500">Sin altas recientes.</div>
             ) : (
               recentTenants.map((tenant) => (
                 <div
@@ -254,7 +182,7 @@ export default function AdminDashboardPage() {
                 >
                   <div className="truncate text-slate-700">{tenant.legalName}</div>
                   <div className="text-slate-400">
-                    {tenant.createdAt ? formatDateTime(tenant.createdAt) : "--"}
+                    {tenant.createdAt ? formatDateTime(tenant.createdAt) : '—'}
                   </div>
                 </div>
               ))
@@ -262,35 +190,114 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-900">Colas y tareas</h3>
-            <AlertTriangle className="h-4 w-4 text-slate-400" />
-          </div>
-          <div className="mt-3 space-y-2 text-xs text-slate-500">
-            <div className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
-              <span>Jobs fallidos</span>
-              <span className="text-slate-700">0</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
-              <span>Webhooks en cola</span>
-              <span className="text-slate-700">0</span>
-            </div>
+            <h3 className="text-sm font-semibold text-slate-900">Integridad usuarios/tenants</h3>
             <Link
-              href="/operations/errors"
-              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+              href="/operations/integrity"
+              className="text-xs font-medium text-blue-600 hover:text-blue-700"
             >
-              Ver operaciones <ArrowUpRight className="h-3 w-3" />
+              Abrir diagnóstico
             </Link>
           </div>
+          <div className="mt-3 space-y-2 text-xs text-slate-600">
+            <IntegrityLine
+              label="Memberships huérfanas"
+              value={integritySummary?.orphan_memberships ?? 0}
+            />
+            <IntegrityLine
+              label="Preferred tenant inválido"
+              value={integritySummary?.invalid_preferences ?? 0}
+            />
+            <IntegrityLine
+              label="Usuarios sin membership activa"
+              value={integritySummary?.users_without_memberships ?? 0}
+            />
+            <IntegrityLine
+              label="Tenants sin owner activo"
+              value={integritySummary?.tenants_without_owners ?? 0}
+            />
+          </div>
         </div>
-      </div>
+      </section>
 
-      {status === "error" ? (
+      {status === 'error' ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
           No se pudieron cargar algunas métricas. Reintenta en unos segundos.
         </div>
       ) : null}
+
+      {integrityTotal > 0 ? (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
+          <div className="inline-flex items-center gap-2 font-semibold">
+            <AlertTriangle className="h-4 w-4" />
+            Hay incidencias entre usuarios y empresas pendientes de revisión.
+          </div>
+          <div className="mt-1">
+            Revísalas desde{' '}
+            <Link href="/operations/integrity" className="underline">
+              Integridad U/T
+            </Link>
+            .
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function MetricCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+  return (
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-slate-600">{label}</p>
+          <p className="text-2xl font-semibold text-slate-900">{value}</p>
+        </div>
+        {icon}
+      </div>
+    </article>
+  );
+}
+
+function QuickLink({
+  href,
+  label,
+  help,
+  icon,
+}: {
+  href: string;
+  label: string;
+  help: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 hover:border-slate-300 hover:bg-white"
+    >
+      <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+        {icon}
+        {label}
+      </div>
+      <div className="mt-1 text-xs text-slate-500">{help}</div>
+    </Link>
+  );
+}
+
+function IntegrityLine({ label, value }: { label: string; value: number }) {
+  const isOk = value === 0;
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-slate-100 p-2">
+      <span>{label}</span>
+      <span
+        className={[
+          'rounded-full px-2 py-0.5 text-[10px] font-semibold',
+          isOk ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700',
+        ].join(' ')}
+      >
+        {value}
+      </span>
     </div>
   );
 }
