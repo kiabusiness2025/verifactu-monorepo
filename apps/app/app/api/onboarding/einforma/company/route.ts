@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionPayload } from '@/lib/session';
 import { rateLimit } from '@/lib/rateLimit';
-import { getCompanyProfileByNif } from '@/server/einforma';
+import { getCompanyProfileByNif, type EinformaCompanyProfile } from '@/server/einforma';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,17 +26,38 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const einformaId = searchParams.get('einformaId')?.trim();
+  const taxId = searchParams.get('taxId')?.trim().toUpperCase();
 
-  if (!einformaId) {
-    return NextResponse.json({ ok: false, error: 'einformaId required' }, { status: 400 });
+  if (!einformaId && !taxId) {
+    return NextResponse.json({ ok: false, error: 'einformaId o taxId requerido' }, { status: 400 });
   }
 
   try {
-    const profile = await getCompanyProfileByNif(einformaId);
+    const candidates = [taxId, einformaId].filter((value): value is string => Boolean(value));
+    let profile: EinformaCompanyProfile | null = null;
+    let sourceId = candidates[0] ?? '';
+
+    for (const candidate of candidates) {
+      try {
+        profile = await getCompanyProfileByNif(candidate);
+        sourceId = candidate;
+        break;
+      } catch {
+        // Probar siguiente candidato
+      }
+    }
+
+    if (!profile) {
+      return NextResponse.json(
+        { ok: false, error: 'No se pudo resolver la empresa en eInforma' },
+        { status: 502 }
+      );
+    }
+
     return NextResponse.json({
       ok: true,
       company: {
-        einformaId,
+        einformaId: sourceId,
         name: profile.name,
         legalName: profile.legalName ?? profile.name,
         nif: profile.nif ?? '',

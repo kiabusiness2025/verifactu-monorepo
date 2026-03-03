@@ -15,6 +15,33 @@ function addDays(days: number) {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
+function extractCachedItems(normalized: unknown, raw: unknown): unknown[] {
+  if (Array.isArray(normalized)) return normalized;
+  const normalizedItems = asRecord(normalized).items;
+  if (Array.isArray(normalizedItems)) return normalizedItems;
+  const rawItems = asRecord(raw).items;
+  if (Array.isArray(rawItems)) return rawItems;
+  return Array.isArray(raw) ? raw : [];
+}
+
+function toSearchResult(item: unknown) {
+  const row = asRecord(item);
+  const id =
+    (typeof row.id === 'string' ? row.id.trim() : '') ||
+    (typeof row.nif === 'string' ? row.nif.trim().toUpperCase() : '');
+  return {
+    einformaId: id,
+    name: typeof row.name === 'string' ? row.name : '',
+    nif: typeof row.nif === 'string' ? row.nif : '',
+    province: typeof row.province === 'string' ? row.province : '',
+    city: typeof row.city === 'string' ? row.city : '',
+  };
+}
+
 export async function GET(req: Request) {
   const session = await getSessionPayload();
   if (!session?.uid) {
@@ -49,16 +76,11 @@ export async function GET(req: Request) {
     });
 
     if (lookup && lookup.expiresAt > new Date()) {
-      const cachedItems = Array.isArray(lookup.normalized)
-        ? lookup.normalized
-        : ((lookup.normalized as any)?.items ?? (lookup.raw as any)?.items ?? lookup.raw ?? []);
-      const results = cachedItems.slice(0, Math.max(1, Math.min(limit, 25))).map((item: any) => ({
-        einformaId: item.id ?? item.nif ?? item.name,
-        name: item.name,
-        nif: item.nif ?? '',
-        province: item.province ?? '',
-        city: item.city ?? '',
-      }));
+      const cachedItems = extractCachedItems(lookup.normalized, lookup.raw);
+      const results = cachedItems
+        .slice(0, Math.max(1, Math.min(limit, 25)))
+        .map(toSearchResult)
+        .filter((item) => item.einformaId && item.name);
 
       return NextResponse.json({
         ok: true,
@@ -87,13 +109,16 @@ export async function GET(req: Request) {
       },
     });
 
-    const results = items.slice(0, Math.max(1, Math.min(limit, 25))).map((item) => ({
-      einformaId: item.id ?? item.nif ?? item.name,
-      name: item.name,
-      nif: item.nif ?? '',
-      province: item.province ?? '',
-      city: item.city ?? '',
-    }));
+    const results = items
+      .slice(0, Math.max(1, Math.min(limit, 25)))
+      .map((item) => ({
+        einformaId: (item.id?.trim() || item.nif?.trim().toUpperCase() || ''),
+        name: item.name,
+        nif: item.nif ?? '',
+        province: item.province ?? '',
+        city: item.city ?? '',
+      }))
+      .filter((item) => item.einformaId && item.name);
 
     return NextResponse.json({ ok: true, results });
   } catch (error) {

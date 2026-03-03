@@ -43,6 +43,9 @@ export default function OnboardingPage() {
   const [companyName, setCompanyName] = useState('');
   const [legalName, setLegalName] = useState('');
   const [nif, setNif] = useState('');
+  const [country, setCountry] = useState('ES');
+  const [taxRegime, setTaxRegime] = useState('');
+  const [fiscalAddress, setFiscalAddress] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [hasRealTenant, setHasRealTenant] = useState(false);
@@ -114,6 +117,8 @@ export default function OnboardingPage() {
     if (!companyName.trim()) setCompanyName(normalized.name || normalized.legalName || '');
     if (!legalName.trim()) setLegalName(normalized.legalName || normalized.name || '');
     if (!nif.trim()) setNif(normalized.nif || '');
+    if (!country.trim()) setCountry(normalized.country || 'ES');
+    if (!fiscalAddress.trim()) setFiscalAddress(normalized.address || '');
   }
 
   async function handleSelect(company: { einformaId: string; name: string; nif: string }) {
@@ -129,8 +134,12 @@ export default function OnboardingPage() {
     setNif(company.nif);
 
     try {
+      const params = new URLSearchParams({ einformaId: company.einformaId });
+      if (company.nif) {
+        params.set('taxId', company.nif.trim().toUpperCase());
+      }
       const res = await fetch(
-        `/api/onboarding/einforma/company?einformaId=${encodeURIComponent(company.einformaId)}`
+        `/api/onboarding/einforma/company?${params.toString()}`
       );
       const data = await res.json().catch(() => null);
       if (res.ok && data?.ok) {
@@ -195,7 +204,13 @@ export default function OnboardingPage() {
           einformaId: selected?.einformaId,
           name: companyName.trim(),
           legalName: legalName.trim(),
-          nif: nif.trim(),
+          taxId: nif.trim(),
+          tradeName: companyName.trim(),
+          country: country.trim().toUpperCase(),
+          taxRegime: taxRegime.trim() || undefined,
+          fiscalAddress: fiscalAddress.trim()
+            ? { address: fiscalAddress.trim(), country: country.trim().toUpperCase() }
+            : undefined,
           extra: selected
             ? {
                 cnae: selected.cnae,
@@ -210,6 +225,7 @@ export default function OnboardingPage() {
                 postalCode: selected.postalCode,
                 city: selected.city,
                 country: selected.country,
+                taxRegime: taxRegime.trim() || undefined,
                 province: selected.province,
                 representative: selected.representative,
                 email: selected.email,
@@ -285,6 +301,10 @@ export default function OnboardingPage() {
             Busca tu empresa en el buscador o crea los datos manualmente. Al continuar activarás 30
             días de prueba.
           </p>
+          <p className="mt-2 text-xs text-slate-500">
+            Aceptamos cualquier tipo de empresa. El régimen fiscal solo se usa para sugerencias y no
+            bloquea tu operativa.
+          </p>
 
           <div className="mt-6 space-y-4">
             <div>
@@ -347,8 +367,35 @@ export default function OnboardingPage() {
                 value={nif}
                 onChange={(e) => setNif(e.target.value)}
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                placeholder="B12345678"
+                placeholder="NIF/CIF/VAT ID"
                 autoComplete="off"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              País fiscal
+              <input
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                placeholder="ES"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              Régimen fiscal (opcional)
+              <input
+                value={taxRegime}
+                onChange={(e) => setTaxRegime(e.target.value)}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                placeholder="estimacion_directa, modulos, sociedades..."
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              Dirección fiscal
+              <textarea
+                value={fiscalAddress}
+                onChange={(e) => setFiscalAddress(e.target.value)}
+                className="min-h-20 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                placeholder="Calle, número, CP y ciudad"
               />
             </label>
             <EinformaAutofillButton taxIdValue={nif} onApply={applyNormalized} />
@@ -364,7 +411,7 @@ export default function OnboardingPage() {
                     {selected.legalName ?? selected.name ?? '—'}
                   </div>
                   <div>
-                    <span className="text-slate-500">CIF/NIF:</span> {selected.nif ?? '—'}
+                    <span className="text-slate-500">Tax ID:</span> {selected.nif ?? '—'}
                   </div>
                   <div>
                     <span className="text-slate-500">Dirección:</span> {selected.address ?? '—'}

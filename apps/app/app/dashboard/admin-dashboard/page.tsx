@@ -1,161 +1,87 @@
-"use client";
+import Link from 'next/link';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { adminGet, type AccountingData } from "@/lib/adminApi";
-import { formatCurrency, formatNumber, formatTime } from "@/src/lib/formatters";
-import { TrendingUp, TrendingDown, Users, Building, DollarSign } from "lucide-react";
+const adminModules = [
+  {
+    title: 'Tenants',
+    description: 'Alta, estado y configuración fiscal mínima por empresa.',
+    href: '/dashboard/admin-dashboard?tab=tenants',
+    cta: 'Abrir tenants',
+  },
+  {
+    title: 'Usuarios',
+    description: 'Accesos, membresías y roles por tenant.',
+    href: '/dashboard/admin-dashboard?tab=users',
+    cta: 'Abrir usuarios',
+  },
+  {
+    title: 'Estado Verifactu / emisión',
+    description: 'Seguimiento de emisión, errores y reintentos de facturas.',
+    href: '/dashboard/invoices',
+    cta: 'Ver facturas',
+  },
+  {
+    title: 'Integraciones API',
+    description: 'Estado de conexión, último sync y errores por tenant.',
+    href: '/dashboard/integrations',
+    cta: 'Ver integraciones',
+  },
+  {
+    title: 'Outbox y sincronización',
+    description: 'Cola de eventos, reintentos y trazabilidad por entidad.',
+    href: '/dashboard/admin-dashboard?tab=outbox',
+    cta: 'Ver outbox',
+  },
+  {
+    title: 'Auditoría / logs',
+    description: 'Eventos de sistema y actividad administrativa.',
+    href: '/dashboard/admin-dashboard?tab=logs',
+    cta: 'Ver auditoría',
+  },
+];
 
-// Force dynamic rendering for this page
+const operationalChecks = [
+  'Exportación AEAT (Excel) disponible en todos los planes.',
+  'Integración vía API habilitada solo en Empresa y PRO.',
+  'Presupuestos listos para sincronización bidireccional (Empresa/PRO).',
+];
+
 export const dynamic = 'force-dynamic';
 
-type OverviewTotals = AccountingData["totals"];
-
-export default function AdminDashboardPageAlternative() {
-  const [totals, setTotals] = useState<OverviewTotals | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
-  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    async function load() {
-      try {
-        const data = await adminGet<AccountingData>(
-          "/api/admin/accounting?period=current_month"
-        );
-        if (mounted) {
-          setTotals(data.totals);
-          setStatus("ok");
-          setLastCheckedAt(formatTime(new Date()));
-        }
-      } catch (error) {
-        if (mounted) {
-          setStatus("error");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
+export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
-      {/* Quick Stats */}
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-3">
-          Estadísticas Rápidas
-        </h2>
+      <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h1 className="text-2xl font-bold text-slate-900">Admin</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Centro de control para tenants, emisión fiscal, integraciones y observabilidad.
+        </p>
+      </header>
 
-        {loading ? (
-          <div className="grid gap-4 md:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="rounded-xl border border-slate-200 bg-white p-4 animate-pulse"
-              >
-                <div className="h-4 bg-slate-200 rounded w-1/2 mb-2"></div>
-                <div className="h-8 bg-slate-200 rounded"></div>
-              </div>
-            ))}
-          </div>
-        ) : status === "error" ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-            Error cargando estadísticas
-          </div>
-        ) : (
-          totals && (
-            <div className="grid gap-4 md:grid-cols-4">
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-slate-500 mb-1">
-                      Ingresos
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {formatCurrency(totals.revenue || 0)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-blue-50 p-3">
-                    <DollarSign className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-              </div>
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {adminModules.map((module) => (
+          <article key={module.title} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold text-slate-900">{module.title}</h2>
+            <p className="mt-2 text-sm text-slate-600">{module.description}</p>
+            <Link
+              href={module.href}
+              className="mt-4 inline-flex h-9 items-center rounded-full bg-[#0b6cfb]/10 px-4 text-xs font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/20"
+            >
+              {module.cta}
+            </Link>
+          </article>
+        ))}
+      </section>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-slate-500 mb-1">
-                      Gastos
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {formatCurrency(totals.expenses || 0)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-red-50 p-3">
-                    <Building className="h-6 w-6 text-red-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-slate-500 mb-1">
-                      Beneficio
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {formatCurrency(totals.profit || 0)}
-                    </p>
-                    {totals.revenue && (
-                      <p className="text-xs text-slate-500 mt-1">
-                        {(
-                          (((totals.revenue - totals.expenses) /
-                            totals.revenue) *
-                            100) || 0
-                        ).toFixed(1)}
-                        %
-                      </p>
-                    )}
-                  </div>
-                  <div className="rounded-lg bg-green-50 p-3">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-slate-500 mb-1">
-                      Facturas
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {formatNumber(totals.invoices || 0)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-purple-50 p-3">
-                    <Users className="h-6 w-6 text-purple-600" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        )}
-      </div>
-
-      {/* Last Updated */}
-      {lastCheckedAt && (
-        <div className="text-right text-xs text-slate-500">
-          Última actualización: {lastCheckedAt}
-        </div>
-      )}
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-base font-semibold text-slate-900">Checklist operativo</h2>
+        <ul className="mt-3 space-y-2 text-sm text-slate-700">
+          {operationalChecks.map((item) => (
+            <li key={item} className="rounded-lg bg-slate-50 px-3 py-2">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
