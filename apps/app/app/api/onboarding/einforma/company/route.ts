@@ -1,10 +1,47 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { rateLimit } from '@/lib/rateLimit';
 import { getCompanyProfileByNif, type EinformaCompanyProfile } from '@/server/einforma';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
+function isProfileLike(value: unknown): value is EinformaCompanyProfile {
+  return typeof asRecord(value).name === 'string';
+}
+
+function toCompanyPayload(sourceId: string, profile: EinformaCompanyProfile) {
+  return {
+    einformaId: sourceId,
+    name: profile.name,
+    legalName: profile.legalName ?? profile.name,
+    nif: profile.nif ?? '',
+    cnae: profile.cnae ?? '',
+    legalForm: profile.legalForm ?? '',
+    status: profile.status ?? '',
+    website: profile.website ?? '',
+    capitalSocial: profile.capitalSocial ?? null,
+    incorporationDate: profile.constitutionDate ?? null,
+    lastBalanceDate: profile.lastBalanceDate ?? null,
+    email: profile.email ?? '',
+    phone: profile.phone ?? '',
+    employees: profile.employees ?? null,
+    sales: profile.sales ?? null,
+    salesYear: profile.salesYear ?? null,
+    address: profile.address?.street ?? '',
+    city: profile.address?.city ?? '',
+    postalCode: profile.address?.zip ?? '',
+    province: profile.address?.province ?? '',
+    country: profile.address?.country ?? 'ES',
+    representative: profile.representatives?.[0]?.name ?? '',
+    raw: profile.raw ?? null,
+  };
+}
 
 export async function GET(req: Request) {
   const session = await getSessionPayload();
@@ -33,6 +70,33 @@ export async function GET(req: Request) {
   }
 
   try {
+    // Primero consultar cache local para evitar consumo de creditos.
+    if (taxId) {
+      const lookup = await prisma.einformaLookup.findUnique({
+        where: {
+          queryType_queryValue: {
+            queryType: 'TAX_ID',
+            queryValue: taxId,
+          },
+        },
+        select: {
+          normalized: true,
+          updatedAt: true,
+          expiresAt: true,
+        },
+      });
+
+      if (lookup && lookup.expiresAt > new Date() && isProfileLike(lookup.normalized)) {
+        return NextResponse.json({
+          ok: true,
+          company: toCompanyPayload(taxId, lookup.normalized),
+          cached: true,
+          cacheSource: 'einformaLookup',
+          lastSyncAt: lookup.updatedAt?.toISOString() ?? null,
+        });
+      }
+    }
+
     const candidates = [taxId, einformaId].filter((value): value is string => Boolean(value));
     let profile: EinformaCompanyProfile | null = null;
     let sourceId = candidates[0] ?? '';
@@ -56,31 +120,10 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      company: {
-        einformaId: sourceId,
-        name: profile.name,
-        legalName: profile.legalName ?? profile.name,
-        nif: profile.nif ?? '',
-        cnae: profile.cnae ?? '',
-        legalForm: profile.legalForm ?? '',
-        status: profile.status ?? '',
-        website: profile.website ?? '',
-        capitalSocial: profile.capitalSocial ?? null,
-        incorporationDate: profile.constitutionDate ?? null,
-        lastBalanceDate: profile.lastBalanceDate ?? null,
-        email: profile.email ?? '',
-        phone: profile.phone ?? '',
-        employees: profile.employees ?? null,
-        sales: profile.sales ?? null,
-        salesYear: profile.salesYear ?? null,
-        address: profile.address?.street ?? '',
-        city: profile.address?.city ?? '',
-        postalCode: profile.address?.zip ?? '',
-        province: profile.address?.province ?? '',
-        country: profile.address?.country ?? 'ES',
-        representative: profile.representatives?.[0]?.name ?? '',
-        raw: profile.raw ?? null,
-      },
+      company: toCompanyPayload(sourceId, profile),
+      cached: false,
+      cacheSource: 'einforma',
+      lastSyncAt: null,
     });
   } catch (error) {
     console.error('eInforma company error:', error);
