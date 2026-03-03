@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { Prisma } from '@verifactu/db';
+import { z } from 'zod';
+
+const createSupplierSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email().optional().nullable().or(z.literal('')),
+  phone: z.string().optional().nullable(),
+  nif: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  postalCode: z.string().optional().nullable(),
+  country: z.string().optional().nullable(),
+  accountCode: z.string().optional().nullable(),
+  paymentTerms: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
 
 /**
  * GET /api/suppliers
@@ -29,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = { tenantId };
+    const where: Prisma.SupplierWhereInput = { tenantId };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -82,8 +98,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
-    const body = await request.json();
-    const { name, email, phone, nif, address, city, postalCode, country, accountCode, paymentTerms, notes } = body;
+    const payload: unknown = await request.json();
+    const { name, email, phone, nif, address, city, postalCode, country, accountCode, paymentTerms, notes } =
+      createSupplierSchema.parse(payload);
 
     if (!name) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });

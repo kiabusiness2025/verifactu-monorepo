@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@verifactu/db';
+import { Prisma, prisma } from '@verifactu/db';
+import { z } from 'zod';
+
+const aeatWebhookSchema = z
+  .object({
+    id: z.string().optional(),
+    reference: z.string().optional(),
+    type: z.string().optional(),
+  })
+  .passthrough();
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const payload: unknown = await req.json();
+  const body = aeatWebhookSchema.parse(payload);
 
   console.log('AEAT webhook received:', body);
 
@@ -14,7 +24,7 @@ export async function POST(req: NextRequest) {
       provider: 'AEAT',
       externalId: body.id || body.reference,
       eventType: body.type || 'aeat_event',
-      payload: body,
+      payload: body as Prisma.InputJsonValue,
       signatureOk: true, // TODO: Verify when AEAT provides signature
       status: 'RECEIVED'
     }
@@ -45,17 +55,18 @@ export async function POST(req: NextRequest) {
     ]);
 
     console.log('AEAT webhook processed');
-  } catch (error: any) {
-    console.error('AEAT webhook processing failed:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'AEAT webhook processing error';
+    console.error('AEAT webhook processing failed:', message);
     
     await prisma.$transaction([
       prisma.webhookEvent.update({
         where: { id: webhookEvent.id },
-        data: { status: 'FAILED', lastError: error.message }
+        data: { status: 'FAILED', lastError: message }
       }),
       prisma.webhookAttempt.update({
         where: { id: attempt.id },
-        data: { ok: false, error: error.message, finishedAt: new Date() }
+        data: { ok: false, error: message, finishedAt: new Date() }
       })
     ]);
   }
@@ -63,7 +74,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-async function processAEATWebhook(body: any) {
+async function processAEATWebhook(body: unknown) {
   // TODO: Implement AEAT webhook processing logic
   console.log('Processing AEAT webhook:', body);
   

@@ -17,7 +17,7 @@ type IncomingEmail = {
   subject: string;
   text: string;
   html: string;
-  attachments?: any[];
+  attachments?: unknown[];
   headers: Record<string, string>;
 };
 

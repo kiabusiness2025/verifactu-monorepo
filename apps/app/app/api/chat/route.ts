@@ -204,7 +204,7 @@ export async function POST(req: Request) {
 
             if (pending.length > 0) {
               message += ` Tienes ${pending.length} factura(s) pendiente(s) de enviar:\n`;
-              pending.slice(0, 3).forEach((inv: any) => {
+              pending.slice(0, 3).forEach((inv: { number: string; issue_date: string; total: number | string }) => {
                 message += `• ${inv.number} (${inv.issue_date}): ${inv.total}€\n`;
               });
               if (pending.length > 3) message += `...y ${pending.length - 3} más.`;

@@ -1,4 +1,4 @@
-import { prisma } from '@verifactu/db';
+import { Prisma, prisma } from '@verifactu/db';
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
@@ -28,22 +28,23 @@ export async function POST(req: NextRequest) {
   
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-  } catch (err: any) {
-    console.error('Stripe webhook signature verification failed:', err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Invalid Stripe signature';
+    console.error('Stripe webhook signature verification failed:', message);
     
     // Still log the failed webhook
     await prisma.webhookEvent.create({
       data: {
         provider: 'STRIPE',
         eventType: 'unknown',
-        payload: { error: err.message },
+        payload: { error: message },
         signatureOk: false,
         status: 'FAILED',
-        lastError: err.message
+        lastError: message
       }
     });
 
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+    return NextResponse.json({ error: `Webhook Error: ${message}` }, { status: 400 });
   }
 
   // Check for duplicate by externalId (idempotency)
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
       provider: 'STRIPE',
       externalId: event.id,
       eventType: event.type,
-      payload: event as any,
+      payload: event as unknown as Prisma.InputJsonValue,
       signatureOk: true,
       status: 'RECEIVED'
     }
@@ -93,17 +94,18 @@ export async function POST(req: NextRequest) {
     ]);
 
     console.log('Stripe webhook processed:', event.type);
-  } catch (error: any) {
-    console.error('Stripe webhook processing failed:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Stripe webhook processing error';
+    console.error('Stripe webhook processing failed:', message);
     
     await prisma.$transaction([
       prisma.webhookEvent.update({
         where: { id: webhookEvent.id },
-        data: { status: 'FAILED', lastError: error.message }
+        data: { status: 'FAILED', lastError: message }
       }),
       prisma.webhookAttempt.update({
         where: { id: attempt.id },
-        data: { ok: false, error: error.message, finishedAt: new Date() }
+        data: { ok: false, error: message, finishedAt: new Date() }
       })
     ]);
   }

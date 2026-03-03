@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { Prisma } from '@verifactu/db';
+import { z } from 'zod';
+
+const createArticleSchema = z.object({
+  code: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional().nullable(),
+  category: z.string().optional().nullable(),
+  unitPrice: z.union([z.number(), z.string()]).optional(),
+  taxRate: z.union([z.number(), z.string()]).optional(),
+  accountCode: z.string().optional().nullable(),
+  unit: z.string().optional().nullable(),
+  stock: z.union([z.number().int(), z.string()]).optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
 
 /**
  * GET /api/articles
@@ -30,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = { tenantId, isActive: true };
+    const where: Prisma.ArticleWhereInput = { tenantId, isActive: true };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -86,8 +101,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No tenant selected' }, { status: 400 });
     }
 
-    const body = await request.json();
-    const { code, name, description, category, unitPrice, taxRate, accountCode, unit, stock, notes } = body;
+    const payload: unknown = await request.json();
+    const { code, name, description, category, unitPrice, taxRate, accountCode, unit, stock, notes } =
+      createArticleSchema.parse(payload);
 
     if (!code || !name) {
       return NextResponse.json({ error: 'Code and name are required' }, { status: 400 });
@@ -109,11 +125,11 @@ export async function POST(request: NextRequest) {
         name,
         description: description || null,
         category: category || null,
-        unitPrice: parseFloat(unitPrice) || 0,
-        taxRate: parseFloat(taxRate) || 0.21,
+        unitPrice: Number.parseFloat(String(unitPrice ?? '0')) || 0,
+        taxRate: Number.parseFloat(String(taxRate ?? '0.21')) || 0.21,
         accountCode: accountCode || null,
         unit: unit || 'ud',
-        stock: stock ? parseInt(stock) : null,
+        stock: stock !== undefined && stock !== null ? Number.parseInt(String(stock), 10) : null,
         notes: notes || null,
       },
     });

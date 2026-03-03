@@ -1,6 +1,7 @@
 import { query } from '@/lib/db';
-import { prisma } from '@verifactu/db';
+import { Prisma, prisma } from '@verifactu/db';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 /**
  * Webhook de Resend para recibir emails entrantes
@@ -29,11 +30,54 @@ interface ResendEmailPayload {
     headers?: Record<string, string>;
     attachments?: Array<{
       filename: string;
-      content_type: string;
-      size: number;
+      content_type?: string;
+      size?: number;
     }>;
   };
 }
+
+const resendFromSchema = z.object({
+  email: z.string().email(),
+  name: z.string().optional(),
+});
+
+const resendStatusEventSchema = z
+  .object({
+    type: z.string(),
+    created_at: z.string(),
+    data: z
+      .object({
+        message_id: z.string().optional(),
+        id: z.string().optional(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+
+const resendReceivedSchema = z
+  .object({
+    type: z.literal('email.received'),
+    created_at: z.string(),
+    data: z.object({
+      message_id: z.string(),
+      from: resendFromSchema,
+      to: z.array(z.string()).min(1),
+      subject: z.string(),
+      text: z.string().optional(),
+      html: z.string().optional(),
+      headers: z.record(z.string(), z.string()).optional(),
+      attachments: z
+        .array(
+          z.object({
+            filename: z.string(),
+            content_type: z.string().optional(),
+            size: z.number().optional(),
+          })
+        )
+        .optional(),
+    }),
+  })
+  .passthrough();
 
 /**
  * Detecta prioridad del email basándose en contenido y headers
@@ -126,31 +170,33 @@ export async function POST(request: NextRequest) {
 
     console.log('[WEBHOOK] ✓ Signature válida');
 
-    const payload: any = await request.json();
+    const payloadUnknown: unknown = await request.json();
+    const genericPayload = resendStatusEventSchema.parse(payloadUnknown);
     console.log('[WEBHOOK] 📧 Payload recibido:', {
-      type: payload.type,
-      from: payload.data?.from?.email,
-      subject: payload.data?.subject,
+      type: genericPayload.type,
+      from: typeof genericPayload.data?.from === 'object' ? genericPayload.data?.from : undefined,
+      subject: genericPayload.data?.subject,
     });
 
     // Track email status changes (sent, delivered, bounced, etc.)
     if (
-      payload.type &&
+      genericPayload.type &&
       [
         'email.sent',
         'email.delivered',
         'email.bounced',
         'email.complained',
         'email.delivery_delayed',
-      ].includes(payload.type)
+      ].includes(genericPayload.type)
     ) {
-      await trackEmailStatus(payload);
+      await trackEmailStatus(genericPayload);
     }
 
     // Solo procesar emails recibidos para mailbox
-    if (payload.type !== 'email.received') {
+    if (genericPayload.type !== 'email.received') {
       return NextResponse.json({ success: true, message: 'Event tracked' });
     }
+    const payload = resendReceivedSchema.parse(payloadUnknown);
 
     console.log('[WEBHOOK] Email received:', {
       from: payload.data.from.email,
@@ -222,9 +268,10 @@ export async function POST(request: NextRequest) {
 /**
  * Track email status changes from Resend webhooks
  */
-async function trackEmailStatus(payload: any) {
-  const { type, data } = payload;
-  const messageId = data?.id;
+async function trackEmailStatus(payload: unknown) {
+  const parsed = resendStatusEventSchema.parse(payload);
+  const { type, data } = parsed;
+  const messageId = data?.id ?? data?.message_id;
 
   if (!messageId) {
     console.log('[WEBHOOK] No messageId in payload, skipping tracking');
@@ -247,7 +294,7 @@ async function trackEmailStatus(payload: any) {
       provider: 'RESEND',
       externalId: messageId,
       eventType: type,
-      payload: payload,
+      payload: parsed as Prisma.InputJsonValue,
       signatureOk: true,
       status: 'RECEIVED',
     },
@@ -305,17 +352,18 @@ async function trackEmailStatus(payload: any) {
         data: { ok: true, finishedAt: new Date() },
       }),
     ]);
-  } catch (error: any) {
-    console.error('[WEBHOOK] Error tracking email status:', error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error tracking email status';
+    console.error('[WEBHOOK] Error tracking email status:', message);
 
     await prisma.$transaction([
       prisma.webhookEvent.update({
         where: { id: webhookEvent.id },
-        data: { status: 'FAILED', lastError: error.message },
+        data: { status: 'FAILED', lastError: message },
       }),
       prisma.webhookAttempt.update({
         where: { id: attempt.id },
-        data: { ok: false, error: error.message, finishedAt: new Date() },
+        data: { ok: false, error: message, finishedAt: new Date() },
       }),
     ]);
   }

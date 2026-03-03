@@ -3,6 +3,13 @@ import { normalizeRole } from '@/lib/roles';
 import { getSessionPayload } from '@/lib/session';
 import { verifySessionTokenFromEnv } from '@verifactu/utils';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const invitationPayloadSchema = z.object({
+  inviteTenantId: z.string().min(1),
+  inviteEmail: z.string().email(),
+  inviteRole: z.string().optional(),
+});
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,16 +29,19 @@ export async function GET(req: Request) {
     );
   }
 
-  const payload = await verifySessionTokenFromEnv(token);
-  if (!payload) {
+  const payloadUnknown = await verifySessionTokenFromEnv(token);
+  if (!payloadUnknown) {
     return NextResponse.redirect(new URL('/dashboard?invite=invalid-token', url.origin));
   }
 
-  const inviteTenantId = String((payload as any).inviteTenantId ?? '').trim();
-  const inviteEmail = String((payload as any).inviteEmail ?? '')
-    .trim()
-    .toLowerCase();
-  const inviteRole = normalizeRole((payload as any).inviteRole) ?? 'member';
+  const parsedPayload = invitationPayloadSchema.safeParse(payloadUnknown);
+  if (!parsedPayload.success) {
+    return NextResponse.redirect(new URL('/dashboard?invite=invalid-token', url.origin));
+  }
+
+  const inviteTenantId = parsedPayload.data.inviteTenantId.trim();
+  const inviteEmail = parsedPayload.data.inviteEmail.trim().toLowerCase();
+  const inviteRole = normalizeRole(parsedPayload.data.inviteRole) ?? 'member';
 
   if (!inviteTenantId || !inviteEmail) {
     return NextResponse.redirect(new URL('/dashboard?invite=invalid-token', url.origin));

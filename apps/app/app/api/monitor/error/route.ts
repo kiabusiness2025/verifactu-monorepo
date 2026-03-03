@@ -4,7 +4,7 @@ import { rateLimit } from '@/lib/rateLimit';
 
 type ErrorReport = {
   type: 'broken_image' | 'broken_link' | 'empty_button' | 'slow_load' | 'console_error' | 'runtime_error' | 'not_found';
-  details: any;
+  details: unknown;
   url: string;
   timestamp: string;
 };
@@ -13,7 +13,7 @@ type ErrorBatch = {
   errors: ErrorReport[];
   userAgent: string;
   viewport: { width: number; height: number };
-  performance?: any;
+  performance?: unknown;
 };
 
 type IsaakAnalysis = {
@@ -85,6 +85,19 @@ function isAutoFixEnabled() {
     return process.env.ENABLE_ISAAK_AUTO_FIX === 'true';
   }
   return process.env.ENABLE_ISAAK_AUTO_FIX !== 'false';
+}
+
+function toRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function toStringValue(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function toNumberValue(value: unknown, fallback = 0): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
 export async function POST(request: NextRequest) {
@@ -194,25 +207,33 @@ export async function POST(request: NextRequest) {
 }
 
 async function analyzeWithIsaak(error: ErrorReport): Promise<IsaakAnalysis> {
+  const details = toRecord(error.details);
+
   // Análisis automático basado en tipo de error
   switch (error.type) {
     case 'broken_image':
+      {
+      const src = toStringValue(details.src, 'desconocido');
       return {
         severity: 'high',
         fixable: true,
-        suggestedFix: `Imagen rota: ${error.details.src}. Verificar que el archivo existe o usar imagen placeholder.`,
-        affectedFiles: [error.details.src],
+        suggestedFix: `Imagen rota: ${src}. Verificar que el archivo existe o usar imagen placeholder.`,
+        affectedFiles: [src],
         action: 'auto_fix'
       };
+      }
 
     case 'broken_link':
+      {
+      const href = toStringValue(details.href, 'desconocido');
       return {
         severity: 'medium',
         fixable: true,
-        suggestedFix: `Enlace roto: ${error.details.href}. Verificar ruta o remover enlace.`,
+        suggestedFix: `Enlace roto: ${href}. Verificar ruta o remover enlace.`,
         affectedFiles: [],
         action: 'manual_review'
       };
+      }
 
     case 'empty_button':
       return {
@@ -224,31 +245,41 @@ async function analyzeWithIsaak(error: ErrorReport): Promise<IsaakAnalysis> {
       };
 
     case 'slow_load':
+      {
+      const loadTime = toNumberValue(details.loadTime, 0);
       return {
-        severity: error.details.loadTime > 10000 ? 'high' : 'medium',
+        severity: loadTime > 10000 ? 'high' : 'medium',
         fixable: true,
-        suggestedFix: `Carga lenta (${error.details.loadTime}ms). Optimizar recursos o implementar lazy loading.`,
+        suggestedFix: `Carga lenta (${loadTime}ms). Optimizar recursos o implementar lazy loading.`,
         affectedFiles: [],
-        action: error.details.loadTime > 10000 ? 'auto_fix' : 'manual_review'
+        action: loadTime > 10000 ? 'auto_fix' : 'manual_review'
       };
+      }
 
     case 'console_error':
+      {
+      const message = toStringValue(details.message, 'Error sin detalle');
       return {
         severity: 'high',
         fixable: false,
-        suggestedFix: `Error en consola: ${error.details.message}`,
+        suggestedFix: `Error en consola: ${message}`,
         affectedFiles: [],
         action: 'manual_review'
       };
+      }
 
     case 'runtime_error':
+      {
+      const message = toStringValue(details.message, 'Error sin detalle');
+      const stack = toStringValue(details.stack, '');
       return {
         severity: 'critical',
         fixable: true,
-        suggestedFix: `Error en tiempo de ejecución: ${error.details.message}`,
-        affectedFiles: error.details.stack ? extractFilesFromStack(error.details.stack) : [],
+        suggestedFix: `Error en tiempo de ejecución: ${message}`,
+        affectedFiles: stack ? extractFilesFromStack(stack) : [],
         action: 'auto_fix'
       };
+      }
 
     case 'not_found':
       return {

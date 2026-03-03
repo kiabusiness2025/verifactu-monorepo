@@ -25,7 +25,7 @@ export async function adminGet<T>(path: string): Promise<T> {
 /**
  * Generic POST request to admin API
  */
-export async function adminPost<T>(path: string, body: any): Promise<T> {
+export async function adminPost<T, B = unknown>(path: string, body: B): Promise<T> {
   const res = await fetch(path, {
     method: "POST",
     credentials: "include",
@@ -46,7 +46,7 @@ export async function adminPost<T>(path: string, body: any): Promise<T> {
 /**
  * Generic PATCH request to admin API
  */
-export async function adminPatch<T>(path: string, body: any): Promise<T> {
+export async function adminPatch<T, B = unknown>(path: string, body: B): Promise<T> {
   const res = await fetch(path, {
     method: "PATCH",
     credentials: "include",

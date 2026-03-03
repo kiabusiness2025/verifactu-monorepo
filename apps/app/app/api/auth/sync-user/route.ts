@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../../lib/prisma";
+import { z } from 'zod';
+
+const syncUserSchema = z.object({
+  uid: z.string().min(1),
+  email: z.string().email(),
+  displayName: z.string().optional().nullable(),
+  photoURL: z.string().optional().nullable(),
+  emailVerified: z.boolean().optional(),
+  provider: z.string().optional(),
+});
 
 /**
  * API Route para sincronizar usuarios de Firebase Auth con PostgreSQL (Prisma)
@@ -9,8 +19,8 @@ import prisma from "../../../../lib/prisma";
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { uid, email, displayName, photoURL, emailVerified, provider } = body;
+    const bodyUnknown: unknown = await request.json();
+    const { uid, email, displayName } = syncUserSchema.parse(bodyUnknown);
 
     if (!uid || !email) {
       return NextResponse.json(
@@ -71,10 +81,11 @@ export async function POST(request: NextRequest) {
         message: "User created",
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     console.error("Error syncing user with Prisma:", error);
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      { error: "Internal server error", details: message },
       { status: 500 }
     );
   }
@@ -116,10 +127,11 @@ export async function GET(request: NextRequest) {
       ok: true,
       user,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     console.error("Error fetching user from Prisma:", error);
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      { error: "Internal server error", details: message },
       { status: 500 }
     );
   }
