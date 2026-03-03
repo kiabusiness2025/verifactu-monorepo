@@ -21,6 +21,7 @@ export default function AdminUsersPage() {
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
+  const getDisplayedRole = (user: UserRow) => user.tenants[0]?.role || user.role || 'usuario';
 
   useEffect(() => {
     let mounted = true;
@@ -199,7 +200,7 @@ export default function AdminUsersPage() {
                     <div className="text-xs text-slate-500">{user.email}</div>
                   </div>
                   <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase text-slate-600">
-                    {user.tenants[0]?.role || 'Sin rol'}
+                    {getDisplayedRole(user)}
                   </span>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
@@ -269,7 +270,7 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3 text-slate-700">{user.email}</td>
                     <td className="px-4 py-3 text-slate-600">{user.displayName || '-'}</td>
                     <td className="px-4 py-3 text-slate-600">{user.tenants.length}</td>
-                    <td className="px-4 py-3 text-slate-600">{user.tenants[0]?.role || '-'}</td>
+                    <td className="px-4 py-3 text-slate-600">{getDisplayedRole(user)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
