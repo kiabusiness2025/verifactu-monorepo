@@ -101,6 +101,7 @@ export type UserRow = {
   email: string;
   displayName: string | null;
   createdAt: string;
+  role: string;
   tenants: Array<{
     tenantId: string;
     legalName: string;

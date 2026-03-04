@@ -28,6 +28,34 @@ export default async function DashboardPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Operativa diaria
+            </h2>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+              Panel cliente
+            </span>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              { title: 'Ventas', href: '/dashboard/sales', desc: 'Facturas y presupuestos' },
+              { title: 'Gastos (Isaak)', href: '/dashboard/expenses', desc: 'Clasificación y confirmación' },
+              { title: 'Impuestos', href: '/dashboard/taxes', desc: '303/130 y libros AEAT' },
+              { title: 'Integraciones', href: '/dashboard/integrations', desc: 'Programa contable vía API' },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-[#0b6cfb]/30 hover:shadow-md"
+              >
+                <div className="text-sm font-semibold text-slate-900">{item.title}</div>
+                <div className="mt-1 text-xs text-slate-600">{item.desc}</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
               Empresas
             </h2>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">

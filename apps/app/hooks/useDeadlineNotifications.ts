@@ -18,6 +18,48 @@ export interface Deadline {
 const DEADLINES_KEY = "isaak_deadlines";
 const NOTIFICATIONS_KEY = "isaak_notifications_shown";
 
+type StoredDeadline = Omit<Deadline, "date"> & { date: string | Date };
+
+function isStoredDeadline(value: unknown): value is StoredDeadline {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Record<string, unknown>;
+  
+  // Validate literal union types
+  const isValidType = (val: unknown): val is "quarterly_vat" | "annual_tax" | "payment" | "custom" => {
+    return val === "quarterly_vat" || val === "annual_tax" || val === "payment" || val === "custom";
+  };
+  
+  const isValidContext = (val: unknown): val is "dashboard" | "admin" => {
+    return val === "dashboard" || val === "admin";
+  };
+  
+  const isValidPriority = (val: unknown): val is "critical" | "high" | "normal" => {
+    return val === "critical" || val === "high" || val === "normal";
+  };
+  
+  // Validate date is a valid parseable date
+  const isValidDate = (val: unknown): boolean => {
+    if (val instanceof Date) {
+      return !isNaN(val.getTime());
+    }
+    if (typeof val === "string") {
+      const date = new Date(val);
+      return !isNaN(date.getTime());
+    }
+    return false;
+  };
+  
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.title === "string" &&
+    isValidDate(candidate.date) &&
+    isValidType(candidate.type) &&
+    isValidContext(candidate.context) &&
+    isValidPriority(candidate.priority) &&
+    (candidate.notified === undefined || typeof candidate.notified === "boolean")
+  );
+}
+
 // Spanish financial calendar defaults
 const SPANISH_DEADLINES = [
   { title: "Declaración IVA Q1", month: 4, day: 20, type: "quarterly_vat" as const },
@@ -71,12 +113,19 @@ export function useDeadlineNotifications() {
   const getDeadlines = useCallback((): Deadline[] => {
     if (typeof window === "undefined") return [];
     const stored = localStorage.getItem(DEADLINES_KEY);
-    return stored
-      ? JSON.parse(stored).map((d: any) => ({
+    if (!stored) return [];
+    try {
+      const raw: unknown = JSON.parse(stored);
+      if (!Array.isArray(raw)) return [];
+      return raw
+        .filter(isStoredDeadline)
+        .map((d) => ({
           ...d,
           date: new Date(d.date),
-        }))
-      : [];
+        }));
+    } catch {
+      return [];
+    }
   }, []);
 
   // Get upcoming deadlines (next 30 days)

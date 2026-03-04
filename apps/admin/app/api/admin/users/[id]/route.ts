@@ -27,6 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         u.id,
         u.email,
         u.name,
+        u.role,
         u.created_at,
         up.preferred_tenant_id,
         up.isaak_tone,
@@ -254,15 +255,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { id: userId } = await params;
     const body = await request.json();
-    const { name, email } = body;
+    const { name, email, role } = body as { name?: string; email?: string; role?: string };
+
+    const safeRole = typeof role === 'string' ? role.trim().toUpperCase() : null;
+    if (safeRole && !['USER', 'SUPPORT', 'ADMIN'].includes(safeRole)) {
+      return NextResponse.json({ error: 'Rol inválido' }, { status: 422 });
+    }
 
     // Actualizar usuario
     await query(
       `UPDATE users 
        SET name = COALESCE($1, name),
-           email = COALESCE($2, email)
-       WHERE id = $3`,
-      [name, email, userId]
+           email = COALESCE($2, email),
+           role = COALESCE($3, role)
+       WHERE id = $4`,
+      [name, email, safeRole, userId]
     );
 
     return NextResponse.json({ success: true });

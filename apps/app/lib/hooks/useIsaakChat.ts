@@ -102,7 +102,12 @@ export function useIsaakChat(options: UseIsaakChatOptions = {}) {
 
   // Guardar mensaje
   const saveMessage = useCallback(
-    async (role: 'user' | 'assistant', content: string, tokens?: number, metadata?: any) => {
+    async (
+      role: 'user' | 'assistant',
+      content: string,
+      tokens?: number,
+      metadata?: Record<string, unknown>
+    ) => {
       if (!conversation?.id) {
         throw new Error('No conversation selected');
       }

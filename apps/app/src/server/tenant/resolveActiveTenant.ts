@@ -71,13 +71,26 @@ export async function resolveActiveTenant(input: {
       include: { tenant: true },
       orderBy: { createdAt: "desc" },
     });
-    tenants = memberships.map((membership) => ({
-      id: membership.tenant.id,
-      name: membership.tenant.name,
-      legalName: membership.tenant.legalName,
-      nif: membership.tenant.nif,
-      isDemo: membership.tenant.isDemo,
-    }));
+    const orphanMemberships = memberships.filter((membership) => !membership.tenant);
+    if (orphanMemberships.length > 0) {
+      console.warn("[resolveActiveTenant] memberships without tenant relation", {
+        userId: input.userId,
+        orphanMembershipIds: orphanMemberships.map((membership) => membership.id),
+      });
+    }
+
+    tenants = memberships.flatMap((membership) => {
+      if (!membership.tenant) return [];
+      return [
+        {
+          id: membership.tenant.id,
+          name: membership.tenant.name,
+          legalName: membership.tenant.legalName,
+          nif: membership.tenant.nif,
+          isDemo: membership.tenant.isDemo,
+        },
+      ];
+    });
   }
 
   const preference = await prisma.userPreference.findUnique({
