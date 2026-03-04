@@ -23,13 +23,40 @@ type StoredDeadline = Omit<Deadline, "date"> & { date: string | Date };
 function isStoredDeadline(value: unknown): value is StoredDeadline {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const candidate = value as Record<string, unknown>;
+  
+  // Validate literal union types
+  const isValidType = (val: unknown): val is "quarterly_vat" | "annual_tax" | "payment" | "custom" => {
+    return val === "quarterly_vat" || val === "annual_tax" || val === "payment" || val === "custom";
+  };
+  
+  const isValidContext = (val: unknown): val is "dashboard" | "admin" => {
+    return val === "dashboard" || val === "admin";
+  };
+  
+  const isValidPriority = (val: unknown): val is "critical" | "high" | "normal" => {
+    return val === "critical" || val === "high" || val === "normal";
+  };
+  
+  // Validate date is a valid parseable date
+  const isValidDate = (val: unknown): boolean => {
+    if (val instanceof Date) {
+      return !isNaN(val.getTime());
+    }
+    if (typeof val === "string") {
+      const date = new Date(val);
+      return !isNaN(date.getTime());
+    }
+    return false;
+  };
+  
   return (
     typeof candidate.id === "string" &&
     typeof candidate.title === "string" &&
-    (typeof candidate.date === "string" || candidate.date instanceof Date) &&
-    typeof candidate.type === "string" &&
-    typeof candidate.context === "string" &&
-    typeof candidate.priority === "string"
+    isValidDate(candidate.date) &&
+    isValidType(candidate.type) &&
+    isValidContext(candidate.context) &&
+    isValidPriority(candidate.priority) &&
+    (candidate.notified === undefined || typeof candidate.notified === "boolean")
   );
 }
 
