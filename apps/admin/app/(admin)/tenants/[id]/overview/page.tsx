@@ -35,6 +35,14 @@ type TenantData = {
   status?: string;
 };
 
+type TenantCustomer = {
+  id: string;
+  name: string;
+  nif?: string | null;
+  email?: string | null;
+  createdAt?: string | null;
+};
+
 function escapeHtml(value?: string | number | null) {
   const source = value == null ? "" : String(value);
   return source
@@ -110,6 +118,7 @@ export default function TenantOverviewPage() {
   const tenantId = params.id as string;
   const { success, error: showError } = useToast();
   const [tenant, setTenant] = useState<TenantData | null>(null);
+  const [customers, setCustomers] = useState<TenantCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
 
@@ -118,9 +127,13 @@ export default function TenantOverviewPage() {
     async function load() {
       setLoading(true);
       try {
-        const data = await adminGet<{ tenant: TenantData }>(`/api/admin/tenants/${tenantId}`);
+        const [tenantData, customersData] = await Promise.all([
+          adminGet<{ tenant: TenantData }>(`/api/admin/tenants/${tenantId}`),
+          adminGet<{ items: TenantCustomer[] }>(`/api/admin/tenants/${tenantId}/customers`),
+        ]);
         if (mounted) {
-          setTenant(data.tenant);
+          setTenant(tenantData.tenant);
+          setCustomers(customersData.items || []);
         }
       } catch (err) {
         showError(err instanceof Error ? err.message : "No se pudo cargar el tenant");
@@ -182,6 +195,15 @@ export default function TenantOverviewPage() {
     win.document.close();
     win.focus();
     win.print();
+  }
+
+  async function copyCustomerId(id: string) {
+    try {
+      await navigator.clipboard.writeText(id);
+      success("UUID copiado");
+    } catch {
+      showError("No se pudo copiar el UUID");
+    }
   }
 
   if (loading) {
@@ -294,6 +316,53 @@ export default function TenantOverviewPage() {
           <div className="text-xs text-slate-500">Último balance</div>
           <div className="text-sm text-slate-900">{tenant.lastBalanceDate || "--"}</div>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-slate-900">Clientes (UUID para API)</h2>
+          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+            {customers.length}
+          </span>
+        </div>
+        {customers.length === 0 ? (
+          <div className="mt-3 text-sm text-slate-500">Esta empresa no tiene clientes todavía.</div>
+        ) : (
+          <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-3 py-2">Nombre</th>
+                  <th className="px-3 py-2">NIF</th>
+                  <th className="px-3 py-2">UUID</th>
+                  <th className="px-3 py-2 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {customers.map((customer) => (
+                  <tr key={customer.id}>
+                    <td className="px-3 py-2 text-slate-900">{customer.name || "--"}</td>
+                    <td className="px-3 py-2 text-slate-600">{customer.nif || "--"}</td>
+                    <td className="px-3 py-2">
+                      <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-800">
+                        {customer.id}
+                      </code>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <AccessibleButton
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => copyCustomerId(customer.id)}
+                      >
+                        Copiar UUID
+                      </AccessibleButton>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
