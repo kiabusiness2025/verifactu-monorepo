@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
-import { createSyncOutbox } from '@/lib/integrations/holdedStore';
+import { createSyncOutbox } from '@/lib/integrations/accountingStore';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { NextRequest, NextResponse } from 'next/server';
 

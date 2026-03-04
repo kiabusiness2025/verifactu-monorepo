@@ -14,11 +14,13 @@ export interface EInformaCompany {
 interface EInformaSearchProps {
   onSelect: (company: EInformaCompany) => void;
   placeholder?: string;
+  onManualEntryRequested?: () => void;
 }
 
 export function EInformaSearch({
   onSelect,
   placeholder = 'Buscar por nombre o CIF...',
+  onManualEntryRequested,
 }: EInformaSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<EInformaCompany[]>([]);
@@ -26,6 +28,7 @@ export function EInformaSearch({
   const [showResults, setShowResults] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [errorMessage, setErrorMessage] = useState('');
+  const [metaMessage, setMetaMessage] = useState('');
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,44 +42,77 @@ export function EInformaSearch({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const searchCompanies = async () => {
-      if (query.trim().length < 3) {
-        setResults([]);
-        setShowResults(false);
+  async function executeSearch() {
+    if (query.trim().length < 3 || loading) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/onboarding/einforma/search?q=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      });
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data?.ok) {
+        const nextResults = Array.isArray(data.results) ? data.results : [];
+        setResults(nextResults);
+        setShowResults(true);
         setErrorMessage('');
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/onboarding/einforma/search?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-
-        if (data?.ok) {
-          setResults(data.results || []);
-          setShowResults(true);
-          setErrorMessage('');
+        const source = typeof data.cacheSource === 'string' ? data.cacheSource : '';
+        if (source.startsWith('tenantProfile')) {
+          setMetaMessage('Resultados desde datos locales');
+        } else if (source.startsWith('einformaLookup')) {
+          setMetaMessage('Resultados desde caché');
+        } else if (source === 'einforma') {
+          setMetaMessage('Resultados actualizados');
+        } else if (source === 'unavailable') {
+          setMetaMessage('Ahora no hay resultados automáticos. Puedes continuar manualmente.');
         } else {
-          setResults([]);
-          setShowResults(true);
-          setErrorMessage(data?.error || 'No se pudo completar la búsqueda');
+          setMetaMessage('');
         }
-      } catch (error) {
-        console.error('Error searching:', error);
+        if (nextResults.length === 0 && onManualEntryRequested) {
+          onManualEntryRequested();
+        }
+      } else {
         setResults([]);
         setShowResults(true);
-        setErrorMessage('No se pudo completar la búsqueda');
-      } finally {
-        setLoading(false);
+        setMetaMessage('');
+        if (res.status === 401) {
+          setErrorMessage('Tu sesión ha caducado. Recarga la página e inténtalo de nuevo.');
+        } else if (res.status === 429) {
+          setErrorMessage('Demasiadas búsquedas seguidas. Espera unos segundos.');
+        } else {
+          setErrorMessage('No se pudo completar la búsqueda ahora. Puedes continuar manualmente.');
+        }
+        if (onManualEntryRequested) onManualEntryRequested();
       }
-    };
-
-    const debounceTimer = setTimeout(searchCompanies, 300);
-    return () => clearTimeout(debounceTimer);
-  }, [query]);
+    } catch (error) {
+      console.error('Error searching:', error);
+      setResults([]);
+      setShowResults(true);
+      setErrorMessage('No se pudo completar la búsqueda ahora. Puedes continuar manualmente.');
+      setMetaMessage('');
+      if (onManualEntryRequested) onManualEntryRequested();
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (showResults && results.length > 0 && selectedIndex >= 0) {
+        handleSelect(results[selectedIndex]);
+        return;
+      }
+      void executeSearch();
+      return;
+    }
+
     if (!showResults || results.length === 0) return;
 
     if (e.key === 'ArrowDown') {
@@ -85,9 +121,6 @@ export function EInformaSearch({
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
-    } else if (e.key === 'Enter' && selectedIndex >= 0) {
-      e.preventDefault();
-      handleSelect(results[selectedIndex]);
     } else if (e.key === 'Escape') {
       setShowResults(false);
     }
@@ -123,9 +156,35 @@ export function EInformaSearch({
         />
       </div>
 
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => void executeSearch()}
+          disabled={loading || query.trim().length < 3}
+          className="inline-flex h-9 items-center rounded-lg bg-[#0b6cfb] px-3 text-xs font-semibold text-white hover:bg-[#095edb] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? 'Buscando...' : 'Buscar empresa'}
+        </button>
+        <button
+          type="button"
+          onClick={onManualEntryRequested}
+          className="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Introducir manualmente
+        </button>
+      </div>
+      <p className="mt-1 text-xs text-slate-500">
+        Se consulta solo al pulsar el botón (ahorro de créditos).
+      </p>
+
       {/* Results Dropdown */}
       {showResults && results.length > 0 && (
         <div className="absolute z-50 mt-2 w-full max-h-96 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+          {metaMessage ? (
+            <div className="border-b border-slate-100 px-3 py-2 text-xs font-medium text-slate-500">
+              {metaMessage}
+            </div>
+          ) : null}
           <div className="p-2 space-y-1">
             {results.map((company, index) => (
               <button
@@ -182,7 +241,16 @@ export function EInformaSearch({
             <p className="font-medium">
               {errorMessage ? 'No se pudo realizar la búsqueda' : 'No se encontraron empresas'}
             </p>
-            <p className="text-xs mt-1">{errorMessage || 'Intenta con otro nombre o CIF'}</p>
+            <p className="text-xs mt-1">
+              {errorMessage || metaMessage || 'Intenta con otro nombre o CIF'}
+            </p>
+            <button
+              type="button"
+              onClick={onManualEntryRequested}
+              className="mt-3 inline-flex h-8 items-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Introducir datos manualmente
+            </button>
           </div>
         </div>
       )}

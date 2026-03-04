@@ -25,6 +25,7 @@ export async function resolveActiveTenant(input: {
   sessionTenantId?: string | null;
   tenants?: TenantLite[];
   defaultTenantId?: string | null;
+  preferredTenantId?: string | null;
 }): Promise<ActiveTenantResult> {
   const cookieStore = await cookies();
   const supportToken = cookieStore.get(SUPPORT_SESSION_COOKIE)?.value;
@@ -80,9 +81,14 @@ export async function resolveActiveTenant(input: {
     }));
   }
 
-  const preference = await prisma.userPreference.findUnique({
-    where: { userId: input.userId },
-  });
+  const preferredTenantId =
+    input.preferredTenantId ??
+    (await prisma.userPreference
+      .findUnique({
+        where: { userId: input.userId },
+        select: { preferredTenantId: true },
+      })
+      .then((pref) => pref?.preferredTenantId ?? null));
 
   const tenantFromSession =
     input.sessionTenantId && tenants.find((tenant) => tenant.id === input.sessionTenantId)
@@ -90,7 +96,7 @@ export async function resolveActiveTenant(input: {
       : null;
 
   const tenantId =
-    tenantFromSession ?? preference?.preferredTenantId ?? input.defaultTenantId ?? tenants[0]?.id ?? null;
+    tenantFromSession ?? preferredTenantId ?? input.defaultTenantId ?? tenants[0]?.id ?? null;
 
   const tenant = tenants.find((item) => item.id === tenantId) ?? null;
 

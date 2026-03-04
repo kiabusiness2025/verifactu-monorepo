@@ -222,11 +222,20 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   }
   const uid = requireUserId(session);
 
-  const memberships = await prisma.membership.findMany({
-    where: { userId: uid, status: 'active' },
-    include: { tenant: true },
-    orderBy: { createdAt: 'desc' },
-  });
+  const [memberships, preference, onboarding] = await Promise.all([
+    prisma.membership.findMany({
+      where: { userId: uid, status: 'active' },
+      include: { tenant: true },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.userPreference.findUnique({
+      where: { userId: uid },
+    }),
+    prisma.userOnboarding.findUnique({
+      where: { userId: uid },
+      select: { demoTenantId: true },
+    }),
+  ]);
 
   const tenants: DashboardTenant[] = memberships.map((membership) => ({
     id: membership.tenant.id,
@@ -235,14 +244,11 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     nif: membership.tenant.nif,
     isDemo: membership.tenant.isDemo,
   }));
-
-  const preference = await prisma.userPreference.findUnique({
-    where: { userId: uid },
-  });
   const resolved = await resolveActiveTenant({
     userId: uid,
     sessionTenantId: session?.tenantId ?? null,
     tenants,
+    preferredTenantId: preference?.preferredTenantId ?? null,
     defaultTenantId: preference?.preferredTenantId ?? tenants[0]?.id ?? null,
   });
 
@@ -256,11 +262,6 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
         isDemo: resolved.tenant.isDemo ?? false,
       }
     : (tenants.find((tenant) => tenant.id === activeTenantId) ?? null);
-
-  const onboarding = await prisma.userOnboarding.findUnique({
-    where: { userId: uid },
-    select: { demoTenantId: true },
-  });
 
   const demoMode =
     (onboarding?.demoTenantId ?? null) === activeTenantId || (activeTenant?.isDemo ?? false);

@@ -101,6 +101,41 @@ async function searchFromLocalTable(query: string, limit: number) {
   return Array.from(deduped.values());
 }
 
+async function searchFromCachedLookups(query: string, limit: number) {
+  const normalizedQuery = normalizeQuery(query);
+  const lookups = await prisma.einformaLookup.findMany({
+    where: {
+      queryType: 'NAME',
+      queryValue: { contains: normalizedQuery, mode: 'insensitive' },
+      expiresAt: { gt: new Date() },
+    },
+    select: { normalized: true, raw: true, updatedAt: true },
+    orderBy: { updatedAt: 'desc' },
+    take: 5,
+  });
+
+  const deduped = new Map<string, ReturnType<typeof toSearchResult>>();
+  let newestTs = 0;
+
+  for (const lookup of lookups) {
+    const updatedTs = new Date(lookup.updatedAt).getTime();
+    if (Number.isFinite(updatedTs) && updatedTs > newestTs) newestTs = updatedTs;
+    for (const item of extractCachedItems(lookup.normalized, lookup.raw)) {
+      const mapped = toSearchResult(item);
+      if (!mapped.einformaId || !mapped.name) continue;
+      const key = `${mapped.einformaId}|${mapped.name.toLowerCase()}`;
+      if (!deduped.has(key)) deduped.set(key, mapped);
+      if (deduped.size >= Math.max(1, Math.min(limit, 25))) break;
+    }
+    if (deduped.size >= Math.max(1, Math.min(limit, 25))) break;
+  }
+
+  return {
+    results: Array.from(deduped.values()),
+    lastSyncAt: newestTs > 0 ? new Date(newestTs).toISOString() : null,
+  };
+}
+
 export async function GET(req: Request) {
   const session = await getSessionPayload();
   if (!session?.uid) {
@@ -128,17 +163,35 @@ export async function GET(req: Request) {
   }
 
   try {
-    const localResults = await searchFromLocalTable(q, limit);
-    if (localResults.length > 0) {
+    try {
+      const localResults = await searchFromLocalTable(q, limit);
+      if (localResults.length > 0) {
+        return NextResponse.json(
+          {
+            ok: true,
+            results: localResults,
+            cached: true,
+            cacheSource: 'tenantProfile',
+            lastSyncAt: null,
+          },
+          { headers: { 'X-Einforma-Source': 'local-db' } }
+        );
+      }
+    } catch (error) {
+      console.error('Local tenant profile search failed:', error);
+    }
+
+    const fuzzyCached = await searchFromCachedLookups(q, limit);
+    if (fuzzyCached.results.length > 0) {
       return NextResponse.json(
         {
           ok: true,
-          results: localResults,
+          results: fuzzyCached.results,
           cached: true,
-          cacheSource: 'tenantProfile',
-          lastSyncAt: null,
+          cacheSource: 'einformaLookup:fuzzy',
+          lastSyncAt: fuzzyCached.lastSyncAt,
         },
-        { headers: { 'X-Einforma-Source': 'local-db' } }
+        { headers: { 'X-Einforma-Source': 'cache-fuzzy' } }
       );
     }
 

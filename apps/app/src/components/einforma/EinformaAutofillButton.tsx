@@ -83,7 +83,10 @@ export function EinformaAutofillButton({
       const res = await fetch(buildUrl(withRefresh));
       const data = await res.json();
       if (!res.ok || !data?.normalized) {
-        showError('Buscador de empresas', data?.error ?? 'No se pudo completar la empresa');
+        showError(
+          'Autocompletar empresa',
+          'No se pudieron completar los datos automáticamente. Revisa o rellena manualmente.'
+        );
         return;
       }
 
@@ -101,12 +104,15 @@ export function EinformaAutofillButton({
       setMeta(nextMeta);
       onApply(normalizedCompany, nextMeta);
       success(
-        'Buscador de empresas',
+        'Autocompletar empresa',
         data.cached ? 'Datos completados desde snapshot' : 'Datos completados desde búsqueda'
       );
     } catch (err) {
       console.error('eInforma autofill error:', err);
-      showError('Buscador de empresas', 'No se pudo completar la empresa');
+      showError(
+        'Autocompletar empresa',
+        'No se pudieron completar los datos automáticamente. Revisa o rellena manualmente.'
+      );
     } finally {
       setLoading(false);
     }

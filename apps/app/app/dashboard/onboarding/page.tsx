@@ -46,6 +46,7 @@ export default function OnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [hasRealTenant, setHasRealTenant] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
 
   const nextUrl = useMemo(() => {
     const next = searchParams?.get('next');
@@ -117,6 +118,7 @@ export default function OnboardingPage() {
   }
 
   async function handleSelect(company: { einformaId: string; name: string; nif: string }) {
+    setManualMode(true);
     setIsLoadingDetails(true);
     setSelected({
       einformaId: company.einformaId,
@@ -279,11 +281,28 @@ export default function OnboardingPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-12">
       <div className="mx-auto w-full max-w-2xl space-y-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h1 className="text-2xl font-semibold text-[#0b214a]">Añadir tu empresa</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Busca tu empresa en el buscador o crea los datos manualmente. Al continuar activarás 30
-            días de prueba.
+            Completa estos 3 pasos para activar tu espacio de trabajo.
+          </p>
+          <ol className="mt-4 grid gap-2 sm:grid-cols-3">
+            <li className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
+              1. Buscar empresa
+            </li>
+            <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+              2. Confirmar datos
+            </li>
+            <li className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+              3. Guardar y continuar
+            </li>
+          </ol>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-[#0b214a]">Paso 1 · Buscar empresa</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Busca por nombre o NIF. Si no aparece, puedes introducir los datos manualmente.
           </p>
 
           <div className="mt-6 space-y-4">
@@ -292,7 +311,10 @@ export default function OnboardingPage() {
                 Buscar empresa
               </p>
               <div className="mt-3">
-                <EInformaSearch onSelect={handleSelect} />
+                <EInformaSearch
+                  onSelect={handleSelect}
+                  onManualEntryRequested={() => setManualMode(true)}
+                />
               </div>
               {isLoadingDetails && (
                 <p className="mt-2 text-xs text-slate-500">Cargando datos de la empresa...</p>
@@ -300,10 +322,11 @@ export default function OnboardingPage() {
             </div>
 
             <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">
-              <p className="font-semibold">Vas a activar 30 días de prueba</p>
+              <p className="font-semibold">Consejo rápido</p>
               <p className="mt-1 text-xs text-blue-800">
-                Durante la prueba puedes emitir facturas Verifactu y subir documentación. Antes de
-                cobrar, recibirás un aviso con tu cuota estimada según tu uso.
+                Si no encuentras la empresa por nombre, escribe el NIF y pulsa
+                {' '}
+                <span className="font-semibold">Autocompletar empresa</span>.
               </p>
             </div>
             {hasRealTenant ? (
@@ -316,9 +339,24 @@ export default function OnboardingPage() {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-            Confirmar datos
+          <h2 className="text-lg font-semibold text-[#0b214a]">Paso 2 · Confirmar datos</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Revisa la información principal antes de guardar.
           </p>
+          {!manualMode && !selected ? (
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              Empieza buscando tu empresa arriba o abre el formulario manual para continuar.
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setManualMode(true)}
+                  className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  Abrir formulario manual
+                </button>
+              </div>
+            </div>
+          ) : null}
           <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
             <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
               Nombre comercial
@@ -328,6 +366,7 @@ export default function OnboardingPage() {
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 placeholder="Empresa Demo SL"
                 autoComplete="organization"
+                disabled={!manualMode && !selected}
               />
             </label>
 
@@ -338,6 +377,7 @@ export default function OnboardingPage() {
                 onChange={(e) => setLegalName(e.target.value)}
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 placeholder="Empresa Demo SL"
+                disabled={!manualMode && !selected}
               />
             </label>
 
@@ -349,9 +389,20 @@ export default function OnboardingPage() {
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 placeholder="B12345678"
                 autoComplete="off"
+                disabled={!manualMode && !selected}
               />
             </label>
-            <EinformaAutofillButton taxIdValue={nif} onApply={applyNormalized} />
+            <EinformaAutofillButton
+              taxIdValue={nif}
+              onApply={(normalized, meta) => {
+                setManualMode(true);
+                applyNormalized(normalized);
+                if (meta?.cached || meta?.cacheSource) {
+                  setSelected((prev) => prev ?? { name: normalized.name || '', nif: normalized.nif || '' });
+                }
+              }}
+              disabled={!manualMode && !selected}
+            />
 
             {selected && (
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-600 space-y-2">
@@ -379,8 +430,8 @@ export default function OnboardingPage() {
               </div>
             )}
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-              En modo prueba solo puedes usar una empresa con datos reales. Revisa bien estos datos
-              principales: después de guardar no podrás modificarlos desde este flujo.
+              En modo prueba solo puedes usar una empresa con datos reales. Después de guardar no
+              podrás modificar estos datos desde este flujo.
             </div>
 
             <div className="flex items-center gap-3">
@@ -393,10 +444,10 @@ export default function OnboardingPage() {
               </button>
               <button
                 type="submit"
-                disabled={!canSubmit || isSubmitting || hasRealTenant}
+                disabled={!manualMode && !selected ? true : !canSubmit || isSubmitting || hasRealTenant}
                 className="w-full rounded-xl bg-[#0b6cfb] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#095edb] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSubmitting ? 'Guardando...' : 'Guardar'}
+                {isSubmitting ? 'Guardando...' : 'Paso 3 · Guardar y continuar'}
               </button>
             </div>
           </form>
