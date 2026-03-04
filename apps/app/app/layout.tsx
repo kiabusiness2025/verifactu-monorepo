@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Outfit } from 'next/font/google';
 import './globals.css';
 
+import { Analytics } from '@vercel/analytics/next';
 import { FirebaseAnalytics } from '@/components/FirebaseAnalytics';
 import { GoogleTagManager } from '@/components/GoogleTagManager';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
@@ -69,6 +70,7 @@ export default function RootLayout({
             </SidebarProvider>
           </ThemeProvider>
         </ToastProvider>
+        <Analytics />
       </body>
     </html>
   );
