@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { rateLimit } from '@/lib/rateLimit';
+import { query as sqlQuery } from '@/lib/db';
 import { searchCompanies } from '@/server/einforma';
 
 export const runtime = 'nodejs';
@@ -42,6 +43,61 @@ function toSearchResult(item: unknown) {
   };
 }
 
+async function searchFromLocalTable(query: string, limit: number) {
+  const q = query.trim();
+  if (!q) return [];
+
+  const rows = await sqlQuery<{
+    source_id: string | null;
+    tax_id: string | null;
+    legal_name: string | null;
+    trade_name: string | null;
+    city: string | null;
+    province: string | null;
+    tenant_name: string | null;
+  }>(
+    `SELECT
+      tp.source_id,
+      tp.tax_id,
+      tp.legal_name,
+      tp.trade_name,
+      tp.city,
+      tp.province,
+      t.name AS tenant_name
+     FROM tenant_profiles tp
+     JOIN tenants t ON t.id = tp.tenant_id
+     WHERE
+       COALESCE(tp.legal_name, '') ILIKE $1 OR
+       COALESCE(tp.trade_name, '') ILIKE $1 OR
+       COALESCE(tp.tax_id, '') ILIKE $1 OR
+       COALESCE(t.name, '') ILIKE $1 OR
+       COALESCE(t.legal_name, '') ILIKE $1 OR
+       COALESCE(t.nif, '') ILIKE $1
+     ORDER BY tp.updated_at DESC
+     LIMIT $2`,
+    [`%${q}%`, Math.max(1, Math.min(limit, 25))]
+  );
+
+  const deduped = new Map<string, { einformaId: string; name: string; nif: string; province: string; city: string }>();
+  for (const row of rows) {
+    const nif = row.tax_id?.trim().toUpperCase() || '';
+    const einformaId = (row.source_id?.trim() || nif || '').toUpperCase();
+    const name = row.trade_name?.trim() || row.legal_name?.trim() || row.tenant_name?.trim() || '';
+    if (!einformaId || !name) continue;
+    const key = `${einformaId}|${name.toLowerCase()}`;
+    if (deduped.has(key)) continue;
+    deduped.set(key, {
+      einformaId,
+      name,
+      nif,
+      province: row.province?.trim() || '',
+      city: row.city?.trim() || '',
+    });
+  }
+
+  return Array.from(deduped.values());
+}
+
 export async function GET(req: Request) {
   const session = await getSessionPayload();
   if (!session?.uid) {
@@ -69,6 +125,20 @@ export async function GET(req: Request) {
   }
 
   try {
+    const localResults = await searchFromLocalTable(q, limit);
+    if (localResults.length > 0) {
+      return NextResponse.json(
+        {
+          ok: true,
+          results: localResults,
+          cached: true,
+          cacheSource: 'tenantProfile',
+          lastSyncAt: null,
+        },
+        { headers: { 'X-Einforma-Source': 'local-db' } }
+      );
+    }
+
     const normalizedQuery = normalizeQuery(q);
     const lookup = await prisma.einformaLookup.findUnique({
       where: { queryType_queryValue: { queryType: 'NAME', queryValue: normalizedQuery } },
@@ -130,8 +200,15 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error('eInforma search error:', error);
     return NextResponse.json(
-      { ok: false, error: 'No se pudo completar la búsqueda' },
-      { status: 502 }
+      {
+        ok: true,
+        results: [],
+        cached: false,
+        cacheSource: 'unavailable',
+        lastSyncAt: null,
+        error: 'Servicio temporalmente no disponible. Puedes continuar manualmente o usar NIF.',
+      },
+      { status: 200 }
     );
   }
 }

@@ -35,6 +35,7 @@ export function EInformaSearch({
   const [showResults, setShowResults] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [errorMessage, setErrorMessage] = useState('');
+  const [sourceLabel, setSourceLabel] = useState<string>('');
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,7 +66,12 @@ export function EInformaSearch({
         if (data?.ok) {
           setResults(data.results || []);
           setShowResults(true);
-          setErrorMessage('');
+          setErrorMessage(data?.error || '');
+          const source = data?.cacheSource;
+          if (source === 'tenantProfile') setSourceLabel('Fuente: base local');
+          else if (source === 'einformaLookup') setSourceLabel('Fuente: cache eInforma');
+          else if (source === 'einforma') setSourceLabel('Fuente: eInforma');
+          else setSourceLabel('');
           onMeta?.({
             cached: Boolean(data.cached),
             cacheSource: data.cacheSource ?? null,
@@ -149,6 +155,11 @@ export function EInformaSearch({
           className="w-full rounded-lg border border-slate-300 pl-10 pr-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
         />
       </div>
+      {sourceLabel ? (
+        <div className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
+          {sourceLabel}
+        </div>
+      ) : null}
 
       {/* Results Dropdown */}
       {showResults && results.length > 0 && (
@@ -207,7 +218,7 @@ export function EInformaSearch({
           <div className="text-center text-sm text-slate-600">
             <Building2 className="h-8 w-8 mx-auto mb-2 text-slate-400" />
             <p className="font-medium">
-              {errorMessage ? 'No se pudo realizar la búsqueda' : 'No se encontraron empresas'}
+              {errorMessage ? 'Búsqueda no disponible ahora' : 'No se encontraron empresas'}
             </p>
             <p className="text-xs mt-1">{errorMessage || 'Intenta con otro nombre o CIF'}</p>
           </div>
