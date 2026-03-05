@@ -1,8 +1,9 @@
 'use client';
 
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
+import { adminGet, adminPatch } from '@/lib/adminApi';
 import { Check, LayoutGrid, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type AdminQuickView = {
   id: string;
@@ -38,12 +39,40 @@ function createId() {
 
 export default function AdminViewsPage() {
   const [views, setViews] = useState<AdminQuickView[]>(DEFAULT_VIEWS);
+  const [savedSnapshot, setSavedSnapshot] = useState<string>(JSON.stringify(DEFAULT_VIEWS));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [path, setPath] = useState('/dashboard/admin/');
   const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isEditing = useMemo(() => !!editingId, [editingId]);
+  const isDirty = useMemo(() => JSON.stringify(views) !== savedSnapshot, [views, savedSnapshot]);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        setLoading(true);
+        const data = await adminGet<{ ok: boolean; views: AdminQuickView[] }>('/api/admin/views?scope=dashboard');
+        if (!mounted) return;
+        const nextViews = Array.isArray(data.views) && data.views.length > 0 ? data.views : DEFAULT_VIEWS;
+        setViews(nextViews);
+        setSavedSnapshot(JSON.stringify(nextViews));
+      } catch (loadError) {
+        if (!mounted) return;
+        setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar las vistas');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    void load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   function resetForm() {
     setEditingId(null);
@@ -93,6 +122,32 @@ export default function AdminViewsPage() {
     if (editingId === id) resetForm();
   }
 
+  async function saveViews() {
+    try {
+      setSaving(true);
+      setError(null);
+      const data = await adminPatch<{ ok: boolean; views: AdminQuickView[] }>('/api/admin/views', {
+        scope: 'dashboard',
+        views,
+      });
+      const normalized = Array.isArray(data.views) ? data.views : views;
+      setViews(normalized);
+      setSavedSnapshot(JSON.stringify(normalized));
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudieron guardar las vistas');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function restoreDefaults() {
+    setViews(DEFAULT_VIEWS);
+    setEditingId(null);
+    setName('');
+    setPath('/dashboard/admin/');
+    setDescription('');
+  }
+
   return (
     <main className="space-y-6">
       <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -100,6 +155,21 @@ export default function AdminViewsPage() {
         <p className="mt-1 text-sm text-slate-600">
           Crea y edita accesos rápidos para que el equipo cambie de panel sin fricción.
         </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <AccessibleButton onClick={saveViews} disabled={!isDirty || saving}>
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </AccessibleButton>
+          <AccessibleButton variant="secondary" onClick={restoreDefaults}>
+            Restaurar por defecto
+          </AccessibleButton>
+          {loading ? <span className="text-xs text-slate-500">Cargando vistas...</span> : null}
+          {!loading && !isDirty ? <span className="text-xs text-emerald-700">Todo guardado</span> : null}
+        </div>
+        {error ? (
+          <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            {error}
+          </div>
+        ) : null}
       </header>
 
       <section className="grid gap-4 lg:grid-cols-2">
@@ -195,4 +265,3 @@ export default function AdminViewsPage() {
     </main>
   );
 }
-
