@@ -36,7 +36,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const hasTenantLegalName = await columnExists("tenants", "legal_name");
     const hasTenantNif = await columnExists("tenants", "nif");
     const hasTenantTaxId = await columnExists("tenants", "tax_id");
+    const hasTenantCreatedAt = await columnExists("tenants", "created_at");
+    const hasTenantCreatedAtCamel = !hasTenantCreatedAt && (await columnExists("tenants", "createdAt"));
     const taxIdColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
+    const tenantCreatedExpr = hasTenantCreatedAt
+      ? "t.created_at::text"
+      : hasTenantCreatedAtCamel
+      ? 't."createdAt"::text'
+      : "NULL::text";
     const hasTenantProfiles = await tableExists("tenant_profiles");
     const [
       hasProfilePostalCode,
@@ -121,7 +128,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
          t.id,
          ${hasTenantLegalName ? "t.legal_name" : "t.name"} as legal_name,
          ${taxIdColumn ? `t.${taxIdColumn}` : "NULL::text"} as nif,
-         t.created_at,
+         ${tenantCreatedExpr} as created_at,
          ${hasTenantProfiles ? "tp.address" : "NULL::text"} as address,
          ${hasTenantProfiles ? "tp.cnae" : "NULL::text"} as cnae,
          ${hasTenantProfiles && hasProfilePostalCode ? "tp.postal_code" : "NULL::text"} as postal_code,
@@ -195,10 +202,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       },
     });
   } catch (error) {
+    console.error("[admin][tenants/:id] detail query failed", error);
     if (error instanceof Error && error.message.includes("FORBIDDEN")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
-    return NextResponse.json({ error: "Error al obtener empresa" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error al obtener empresa", details: "TENANT_DETAIL_QUERY_FAILED" },
+      { status: 500 }
+    );
   }
 }
 
