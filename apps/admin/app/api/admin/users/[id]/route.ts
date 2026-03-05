@@ -320,7 +320,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const { id: userId } = await params;
     const target = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, name: true, role: true },
     });
 
     if (!target) {
@@ -331,7 +331,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'No puedes eliminar tu propio usuario' }, { status: 400 });
     }
 
-    const protectedEmails = new Set(
+    const protectedEmails = (
       [
         'support@verifactu.business',
         process.env.ADMIN_ALLOWED_EMAIL || '',
@@ -340,15 +340,37 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         .map((value) => value.trim().toLowerCase())
         .filter(Boolean)
     );
+    const allowedDomain = (process.env.ADMIN_ALLOWED_DOMAIN || 'verifactu.business')
+      .trim()
+      .toLowerCase();
 
     const targetEmail = target.email.trim().toLowerCase();
-    if (protectedEmails.has(targetEmail)) {
-      const sameEmailCount = await prisma.user.count({
-        where: { email: { equals: target.email, mode: 'insensitive' } },
+    const isProtectedTarget =
+      protectedEmails.includes(targetEmail) || target.role === 'ADMIN' || target.role === 'SUPPORT';
+
+    if (isProtectedTarget) {
+      const privilegedOr: Array<{
+        role?: { in: Array<'ADMIN' | 'SUPPORT'> };
+        email?: { equals?: string; endsWith?: string; mode?: 'insensitive' };
+      }> = [{ role: { in: ['ADMIN', 'SUPPORT'] } }];
+
+      for (const email of protectedEmails) {
+        privilegedOr.push({ email: { equals: email, mode: 'insensitive' } });
+      }
+      if (allowedDomain) {
+        privilegedOr.push({ email: { endsWith: `@${allowedDomain}`, mode: 'insensitive' } });
+      }
+
+      const remainingPrivilegedUsers = await prisma.user.count({
+        where: {
+          id: { not: userId },
+          OR: privilegedOr,
+        },
       });
-      if (sameEmailCount <= 1) {
+
+      if (remainingPrivilegedUsers === 0) {
         return NextResponse.json(
-          { error: 'No se puede eliminar el único usuario admin de soporte' },
+          { error: 'No se puede eliminar el último usuario con acceso admin/soporte' },
           { status: 400 }
         );
       }
