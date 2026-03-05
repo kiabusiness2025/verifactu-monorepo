@@ -8,21 +8,26 @@ import { useEffect, useMemo, useState } from "react";
 // Force dynamic rendering for admin routes
 export const dynamic = 'force-dynamic';
 
-type NavItem = { label: string; href: string };
+type NavItem = {
+  label: string;
+  href: string;
+  section?: 'core' | 'operations' | 'integrations' | 'custom';
+  hidden?: boolean;
+};
 
 const baseAdminNav: NavItem[] = [
-  { label: "Resumen", href: "/dashboard/admin" },
-  { label: "Usuarios", href: "/dashboard/admin/users" },
-  { label: "Empresas", href: "/dashboard/admin/companies" },
-  { label: "Vistas", href: "/dashboard/admin/views" },
-  { label: "Contabilidad", href: "/dashboard/admin/accounting" },
-  { label: "Integraciones", href: "/dashboard/admin/integrations" },
-  { label: "Stripe", href: "/integrations/stripe" },
-  { label: "Emails", href: "/dashboard/admin/emails" },
-  { label: "Incidencias", href: "/operations" },
-  { label: "Soporte", href: "/support-sessions" },
-  { label: "Isaak", href: "/dashboard/admin/chat" },
-  { label: "Configuración", href: "/settings" },
+  { label: "Resumen", href: "/dashboard/admin", section: 'core', hidden: false },
+  { label: "Usuarios", href: "/dashboard/admin/users", section: 'core', hidden: false },
+  { label: "Empresas", href: "/dashboard/admin/companies", section: 'core', hidden: false },
+  { label: "Vistas", href: "/dashboard/admin/views", section: 'core', hidden: false },
+  { label: "Contabilidad", href: "/dashboard/admin/accounting", section: 'operations', hidden: false },
+  { label: "Integraciones", href: "/dashboard/admin/integrations", section: 'integrations', hidden: false },
+  { label: "Stripe", href: "/integrations/stripe", section: 'integrations', hidden: false },
+  { label: "Emails", href: "/dashboard/admin/emails", section: 'operations', hidden: false },
+  { label: "Incidencias", href: "/operations", section: 'operations', hidden: false },
+  { label: "Soporte", href: "/support-sessions", section: 'operations', hidden: false },
+  { label: "Isaak", href: "/dashboard/admin/chat", section: 'operations', hidden: false },
+  { label: "Configuración", href: "/settings", section: 'core', hidden: false },
 ];
 
 function normalizePath(path: string) {
@@ -55,9 +60,11 @@ export default function AdminLayout({
         const data = await res.json().catch(() => null);
         if (!mounted || !res.ok || !data?.ok || !Array.isArray(data.views)) return;
         const next: NavItem[] = data.views
-          .map((item: { name?: string; path?: string }) => ({
+          .map((item: { name?: string; path?: string; section?: NavItem['section']; hidden?: boolean }) => ({
             label: String(item?.name || "").trim(),
             href: normalizePath(String(item?.path || "")),
+            section: item?.section || 'core',
+            hidden: !!item?.hidden,
           }))
           .filter((item: NavItem) => item.label && item.href && isAdminDashboardPath(item.href));
         setSavedNav(next);
@@ -86,7 +93,7 @@ export default function AdminLayout({
 
     const existing = new Set(baseSorted.map((item) => item.href));
     const extras = savedNav.filter((item) => !existing.has(item.href));
-    return [...baseSorted, ...extras];
+    return [...baseSorted, ...extras].filter((item) => !item.hidden);
   }, [savedNav]);
 
   return (

@@ -7,6 +7,8 @@ type SavedView = {
   name: string;
   path: string;
   description?: string;
+  section?: 'core' | 'operations' | 'integrations' | 'custom';
+  hidden?: boolean;
 };
 
 const DEFAULT_SCOPE = 'dashboard';
@@ -37,6 +39,14 @@ function sanitizeViews(input: unknown): SavedView[] {
     const name = String(record.name || '').trim();
     const path = String(record.path || '').trim();
     const description = String(record.description || '').trim();
+    const sectionRaw = String(record.section || '').trim().toLowerCase();
+    const hidden = Boolean(record.hidden);
+    const section: SavedView['section'] =
+      sectionRaw === 'operations' ||
+      sectionRaw === 'integrations' ||
+      sectionRaw === 'custom'
+        ? (sectionRaw as SavedView['section'])
+        : 'core';
 
     if (!id || !name || !path || seen.has(id)) continue;
     seen.add(id);
@@ -44,6 +54,8 @@ function sanitizeViews(input: unknown): SavedView[] {
       id,
       name,
       path,
+      section,
+      hidden,
       ...(description ? { description } : {}),
     });
   }
@@ -109,4 +121,3 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'No se pudieron guardar las vistas' }, { status: 500 });
   }
 }
-
