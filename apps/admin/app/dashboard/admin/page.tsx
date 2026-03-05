@@ -167,6 +167,30 @@ export default function AdminDashboardPage() {
       </div>
 
       <div>
+        <h2 className="text-sm font-semibold text-slate-900 mb-3">Vistas y paneles</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Link
+            href="/dashboard/admin/views?action=create"
+            className="rounded-xl bg-slate-900 px-4 py-4 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 text-center"
+          >
+            + Añadir vista
+          </Link>
+          <Link
+            href="/dashboard/admin/views?action=edit"
+            className="rounded-xl border-2 border-slate-800 px-4 py-4 text-sm font-semibold text-slate-800 hover:bg-slate-100 text-center"
+          >
+            Modificar vistas
+          </Link>
+          <Link
+            href="/dashboard/admin/views?action=panels"
+            className="rounded-xl border-2 border-slate-400 px-4 py-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 text-center"
+          >
+            Editar paneles
+          </Link>
+        </div>
+      </div>
+
+      <div>
         <h2 className="text-sm font-semibold text-slate-900 mb-3">Acciones rápidas</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link
