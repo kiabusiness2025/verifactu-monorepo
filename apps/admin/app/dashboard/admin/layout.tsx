@@ -72,14 +72,21 @@ export default function AdminLayout({
   }, []);
 
   const adminNav = useMemo(() => {
-    const merged: NavItem[] = [...baseAdminNav];
-    const existing = new Set(baseAdminNav.map((item) => item.href));
-    for (const item of savedNav) {
-      if (existing.has(item.href)) continue;
-      existing.add(item.href);
-      merged.push(item);
-    }
-    return merged;
+    if (savedNav.length === 0) return baseAdminNav;
+
+    const savedOrder = new Map(savedNav.map((item, index) => [item.href, index]));
+    const baseSorted = [...baseAdminNav].sort((a, b) => {
+      const ai = savedOrder.get(a.href);
+      const bi = savedOrder.get(b.href);
+      if (ai == null && bi == null) return 0;
+      if (ai == null) return 1;
+      if (bi == null) return -1;
+      return ai - bi;
+    });
+
+    const existing = new Set(baseSorted.map((item) => item.href));
+    const extras = savedNav.filter((item) => !existing.has(item.href));
+    return [...baseSorted, ...extras];
   }, [savedNav]);
 
   return (

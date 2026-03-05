@@ -2,7 +2,7 @@
 
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 import { adminGet, adminPatch } from '@/lib/adminApi';
-import { Check, LayoutGrid, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, LayoutGrid, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 type AdminQuickView = {
@@ -122,6 +122,19 @@ export default function AdminViewsPage() {
     if (editingId === id) resetForm();
   }
 
+  function moveView(id: string, direction: 'up' | 'down') {
+    setViews((prev) => {
+      const index = prev.findIndex((view) => view.id === id);
+      if (index < 0) return prev;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const next = [...prev];
+      const [item] = next.splice(index, 1);
+      next.splice(targetIndex, 0, item);
+      return next;
+    });
+  }
+
   async function saveViews() {
     try {
       setSaving(true);
@@ -224,8 +237,11 @@ export default function AdminViewsPage() {
             <LayoutGrid className="h-4 w-4 text-slate-500" />
             Vistas disponibles
           </h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Usa las flechas para cambiar el orden del menú.
+          </p>
           <div className="mt-4 space-y-2">
-            {views.map((view) => (
+            {views.map((view, index) => (
               <div
                 key={view.id}
                 className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3"
@@ -239,6 +255,24 @@ export default function AdminViewsPage() {
                     ) : null}
                   </div>
                   <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveView(view.id, 'up')}
+                      className="rounded-md border border-slate-300 bg-white p-2 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                      title="Subir"
+                      disabled={index === 0}
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveView(view.id, 'down')}
+                      className="rounded-md border border-slate-300 bg-white p-2 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                      title="Bajar"
+                      disabled={index === views.length - 1}
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => startEdit(view)}
