@@ -46,6 +46,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       : "NULL::text";
     const hasTenantProfiles = await tableExists("tenant_profiles");
     const [
+      hasProfileAddress,
+      hasProfileCnae,
       hasProfilePostalCode,
       hasProfileCity,
       hasProfileProvince,
@@ -64,6 +66,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       hasProfileLastBalanceDate,
     ] = hasTenantProfiles
       ? await Promise.all([
+          columnExists("tenant_profiles", "address"),
+          columnExists("tenant_profiles", "cnae"),
           columnExists("tenant_profiles", "postal_code"),
           columnExists("tenant_profiles", "city"),
           columnExists("tenant_profiles", "province"),
@@ -82,6 +86,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           columnExists("tenant_profiles", "last_balance_date"),
         ])
       : [
+          false,
+          false,
           false,
           false,
           false,
@@ -129,8 +135,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
          ${hasTenantLegalName ? "t.legal_name" : "t.name"} as legal_name,
          ${taxIdColumn ? `t.${taxIdColumn}` : "NULL::text"} as nif,
          ${tenantCreatedExpr} as created_at,
-         ${hasTenantProfiles ? "tp.address" : "NULL::text"} as address,
-         ${hasTenantProfiles ? "tp.cnae" : "NULL::text"} as cnae,
+         ${hasTenantProfiles && hasProfileAddress ? "tp.address" : "NULL::text"} as address,
+         ${hasTenantProfiles && hasProfileCnae ? "tp.cnae" : "NULL::text"} as cnae,
          ${hasTenantProfiles && hasProfilePostalCode ? "tp.postal_code" : "NULL::text"} as postal_code,
          ${hasTenantProfiles && hasProfileCity ? "tp.city" : "NULL::text"} as city,
          ${hasTenantProfiles && hasProfileProvince ? "tp.province" : "NULL::text"} as province,
