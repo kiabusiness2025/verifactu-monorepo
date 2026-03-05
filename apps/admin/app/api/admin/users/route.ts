@@ -28,6 +28,8 @@ export async function GET() {
         id: true,
         email: true,
         name: true,
+        isBlocked: true,
+        blockedReason: true,
         createdAt: true,
         tenantMemberships: {
           select: {
@@ -52,6 +54,8 @@ export async function GET() {
         id: user.id,
         email: user.email,
         displayName: user.name,
+        isBlocked: user.isBlocked,
+        blockedReason: user.blockedReason,
         createdAt: user.createdAt.toISOString(),
         tenants: user.tenantMemberships.map((membership: MembershipRow) => ({
           tenantId: membership.tenant.id,

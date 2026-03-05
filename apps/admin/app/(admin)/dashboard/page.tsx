@@ -205,7 +205,7 @@ export default function AdminDashboardPage() {
             + Crear empresa
           </Link>
           <Link
-            href="/users"
+            href="/dashboard/admin/users"
             className="rounded-xl border-2 border-[#0b6cfb] px-4 py-4 text-sm font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/10 text-center"
           >
             Ver todos los usuarios

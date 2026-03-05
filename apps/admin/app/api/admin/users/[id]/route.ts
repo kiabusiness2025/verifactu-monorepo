@@ -251,26 +251,58 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAdmin(request);
+    const admin = await requireAdmin(request);
 
     const { id: userId } = await params;
     const body = await request.json();
-    const { name, email } = body;
+    const { name, email, isBlocked, blockedReason } = body as {
+      name?: string | null;
+      email?: string | null;
+      isBlocked?: boolean;
+      blockedReason?: string | null;
+    };
 
-    // Actualizar usuario
-    await query(
-      `UPDATE users 
-       SET name = COALESCE($1, name),
-           email = COALESCE($2, email)
-       WHERE id = $3`,
-      [name, email, userId]
-    );
+    if (admin.userId && admin.userId === userId && isBlocked === true) {
+      return NextResponse.json(
+        { error: 'No puedes bloquear tu propio usuario admin' },
+        { status: 400 }
+      );
+    }
+
+    const data: Record<string, unknown> = {};
+
+    if (name !== undefined) {
+      data.name = name ?? null;
+    }
+    if (email !== undefined) {
+      data.email = email ?? null;
+    }
+    if (typeof isBlocked === 'boolean') {
+      data.isBlocked = isBlocked;
+      if (isBlocked) {
+        data.blockedAt = new Date();
+        data.blockedReason = blockedReason ?? 'blocked_by_admin';
+      } else {
+        data.blockedAt = null;
+        data.blockedReason = null;
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ success: true, message: 'Sin cambios' });
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data,
+    });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating user:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Error al actualizar usuario', details: error.message },
+      { error: 'Error al actualizar usuario', details: message },
       { status: 500 }
     );
   }

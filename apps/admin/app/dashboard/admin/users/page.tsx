@@ -3,7 +3,7 @@
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 import { TableSkeleton } from '@/components/accessibility/LoadingSkeleton';
 import { useToast } from '@/components/notifications/ToastNotifications';
-import { adminDelete, adminGet, type UserRow } from '@/lib/adminApi';
+import { adminDelete, adminGet, adminPatch, type UserRow } from '@/lib/adminApi';
 import { Ban, Download, Edit, Eye, LogIn, Trash2, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -123,9 +123,37 @@ export default function AdminUsersPage() {
   };
 
   const handleBlockUser = async (userId: string, email: string) => {
-    // TODO: Implementar API de bloqueo
-    if (!confirm(`¿Bloquear temporalmente a ${email}?`)) return;
-    warning('Función en desarrollo', 'El bloqueo de usuarios estará disponible próximamente');
+    const current = users.find((item) => item.id === userId);
+    const nextBlocked = !current?.isBlocked;
+    if (!confirm(nextBlocked ? `¿Bloquear temporalmente a ${email}?` : `¿Desbloquear a ${email}?`))
+      return;
+
+    try {
+      await adminPatch<{ success: boolean }>(`/api/admin/users/${userId}`, {
+        isBlocked: nextBlocked,
+        blockedReason: nextBlocked ? 'blocked_by_admin_ui' : null,
+      });
+      setUsers((prev) =>
+        prev.map((item) =>
+          item.id === userId
+            ? {
+                ...item,
+                isBlocked: nextBlocked,
+                blockedReason: nextBlocked ? 'blocked_by_admin_ui' : null,
+              }
+            : item
+        )
+      );
+      success(
+        nextBlocked ? 'Usuario bloqueado' : 'Usuario desbloqueado',
+        `${email} ${nextBlocked ? 'bloqueado' : 'desbloqueado'} correctamente`
+      );
+    } catch (err) {
+      showError(
+        'Error al actualizar estado',
+        err instanceof Error ? err.message : 'No se pudo cambiar el estado'
+      );
+    }
   };
 
   const handleDeleteUser = async (userId: string, email: string) => {
@@ -206,7 +234,7 @@ export default function AdminUsersPage() {
                     <div className="text-xs text-slate-500">{user.email}</div>
                   </div>
                   <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase text-slate-600">
-                    {user.tenants[0]?.role || 'Sin rol'}
+                    {user.isBlocked ? 'Bloqueado' : user.tenants[0]?.role || 'Sin rol'}
                   </span>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
@@ -229,8 +257,12 @@ export default function AdminUsersPage() {
                   </button>
                   <button
                     onClick={() => handleBlockUser(user.id, user.email)}
-                    className="flex items-center justify-center gap-1 rounded-lg border border-orange-300 bg-orange-50 px-2 py-2 text-xs font-semibold text-orange-700 hover:bg-orange-100"
-                    title="Bloquear temporalmente"
+                    className={`flex items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-semibold ${
+                      user.isBlocked
+                        ? 'border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                        : 'border border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100'
+                    }`}
+                    title={user.isBlocked ? 'Desbloquear usuario' : 'Bloquear temporalmente'}
                   >
                     <Ban className="h-3.5 w-3.5" />
                   </button>
@@ -276,7 +308,9 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3 text-slate-700">{user.email}</td>
                     <td className="px-4 py-3 text-slate-600">{user.displayName || '-'}</td>
                     <td className="px-4 py-3 text-slate-600">{user.tenants.length}</td>
-                    <td className="px-4 py-3 text-slate-600">{user.tenants[0]?.role || '-'}</td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {user.isBlocked ? 'blocked' : user.tenants[0]?.role || '-'}
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
@@ -295,8 +329,12 @@ export default function AdminUsersPage() {
                         </button>
                         <button
                           onClick={() => handleBlockUser(user.id, user.email)}
-                          className="flex items-center gap-1 rounded-lg border border-orange-300 bg-orange-50 px-2 py-1.5 text-xs font-semibold text-orange-700 hover:bg-orange-100"
-                          title="Bloquear temporalmente"
+                          className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold ${
+                            user.isBlocked
+                              ? 'border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              : 'border border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100'
+                          }`}
+                          title={user.isBlocked ? 'Desbloquear usuario' : 'Bloquear temporalmente'}
                         >
                           <Ban className="h-3.5 w-3.5" />
                         </button>

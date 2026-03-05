@@ -100,6 +100,8 @@ export type UserRow = {
   id: string;
   email: string;
   displayName: string | null;
+  isBlocked?: boolean;
+  blockedReason?: string | null;
   createdAt: string;
   tenants: Array<{
     tenantId: string;

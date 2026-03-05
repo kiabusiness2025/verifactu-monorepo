@@ -1,10 +1,11 @@
-import UserDetailPage from "../../../dashboard/admin/users/[id]/page";
+import { redirect } from 'next/navigation';
 
-export default async function AdminUserDetailPage({
-	params,
+export default async function LegacyUserDetailRedirectPage({
+  params,
 }: {
-	params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 }) {
-	await params;
-	return <UserDetailPage />;
+  const { id } = await params;
+  redirect(`/dashboard/admin/users/${id}`);
 }
+
