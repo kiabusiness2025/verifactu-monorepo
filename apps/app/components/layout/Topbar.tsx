@@ -30,6 +30,19 @@ type PanelOption = {
   description: string;
 };
 
+function getGreetingByHour() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Buenos días';
+  if (hour < 20) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+function getDisplayUserName(name: string | null | undefined, email: string | null | undefined) {
+  if (name?.trim()) return name.trim().split(' ')[0] || 'Usuario';
+  if (email?.trim()) return email.trim().split('@')[0] || 'Usuario';
+  return 'Usuario';
+}
+
 export function Topbar({
   onToggleSidebar,
   onOpenPreferences,
@@ -98,6 +111,10 @@ export function Topbar({
   const currentPanel = pathname?.startsWith('/dashboard/admin')
     ? availablePanels.find((panel) => panel.id === 'admin')
     : availablePanels.find((panel) => panel.id === 'dashboard');
+  const greetingText = `${getGreetingByHour()}, ${getDisplayUserName(
+    firebaseUser?.displayName,
+    firebaseUser?.email
+  )}`;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -287,8 +304,8 @@ export function Topbar({
         </div>
 
         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#011c67]">
-            <span>Panel de cliente</span>
+          <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#011c67]">
+            <span>{greetingText}</span>
             {currentPanel?.id === 'admin' && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
                 Modo admin

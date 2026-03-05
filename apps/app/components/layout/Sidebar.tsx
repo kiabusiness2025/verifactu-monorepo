@@ -28,10 +28,10 @@ export function Sidebar({ isOpen, onClose, isDemo = false }: SidebarProps) {
         }`}
       >
         <div className="safe-top px-4 pt-5">
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-5 shadow-soft">
-            <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Verifactu</div>
-            <div className="mt-1 text-lg font-semibold text-slate-900">Business</div>
-            <div className="mt-2 text-xs text-slate-500">Panel de cliente</div>
+          <div className="rounded-2xl border border-[#1f7fe8]/30 bg-gradient-to-br from-[#2a5cff] via-[#2f9df8] to-[#22c0a8] px-4 py-5 shadow-soft">
+            <div className="text-[11px] uppercase tracking-[0.3em] text-white/80">Verifactu</div>
+            <div className="mt-1 text-2xl font-semibold text-white">Business</div>
+            <div className="mt-2 text-xs text-white/85">Panel de control rapido</div>
           </div>
           <div className="mt-4 flex items-center justify-between lg:hidden">
             <span className="text-sm font-semibold text-slate-900">Menú</span>
@@ -61,7 +61,7 @@ export function Sidebar({ isOpen, onClose, isDemo = false }: SidebarProps) {
                       className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${
                         active
                           ? 'bg-[#2361d8] text-white shadow-sm'
-                          : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'
+                          : 'bg-slate-100 text-slate-700 group-hover:bg-[#2361d8]/10 group-hover:text-[#2361d8]'
                       }`}
                     >
                       {item.icon ? (

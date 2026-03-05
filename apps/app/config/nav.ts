@@ -5,6 +5,7 @@
   Landmark,
   FolderOpen,
   CalendarDays,
+  Sparkles,
   Settings,
   type LucideIcon,
 } from 'lucide-react';
@@ -22,6 +23,8 @@ export const navItems: NavItem[] = [
   { label: 'Clientes', href: '/dashboard/clients', icon: Users },
   { label: 'Bancos', href: '/dashboard/banks', icon: Landmark },
   { label: 'Documentos', href: '/dashboard/documents', icon: FolderOpen },
+  { label: 'Isaak AI', href: '/dashboard/isaak', icon: Sparkles },
   { label: 'Calendario', href: '/dashboard/calendar', icon: CalendarDays },
   { label: 'Configuración', href: '/dashboard/settings', icon: Settings },
+  { label: 'Admin', href: '/dashboard/admin-dashboard', icon: Settings, roles: ['admin', 'owner'] },
 ];
