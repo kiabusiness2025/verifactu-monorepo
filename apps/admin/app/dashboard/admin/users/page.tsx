@@ -3,7 +3,7 @@
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 import { TableSkeleton } from '@/components/accessibility/LoadingSkeleton';
 import { useToast } from '@/components/notifications/ToastNotifications';
-import { adminGet, type UserRow } from '@/lib/adminApi';
+import { adminDelete, adminGet, type UserRow } from '@/lib/adminApi';
 import { Ban, Download, Edit, Eye, LogIn, Trash2, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -81,7 +81,8 @@ export default function AdminUsersPage() {
 
     const primaryTenantId = tenants?.[0]?.tenantId;
     if (!primaryTenantId) {
-      showError('Sin empresa', 'Este usuario no tiene empresas asignadas todavía');
+      warning('Sin empresa', 'Abriendo ficha del usuario para gestionar acceso y empresas');
+      router.push(`/dashboard/admin/users/${userId}`);
       return;
     }
 
@@ -118,8 +119,7 @@ export default function AdminUsersPage() {
   };
 
   const handleEditUser = (userId: string) => {
-    // TODO: Implementar modal o página de edición
-    warning('Función en desarrollo', 'La edición de usuarios estará disponible próximamente');
+    router.push(`/dashboard/admin/users/${userId}`);
   };
 
   const handleBlockUser = async (userId: string, email: string) => {
@@ -131,8 +131,15 @@ export default function AdminUsersPage() {
   const handleDeleteUser = async (userId: string, email: string) => {
     if (!confirm(`⚠️ ¿ELIMINAR permanentemente a ${email}?\n\nEsta acción no se puede deshacer.`))
       return;
-    // TODO: Implementar API de eliminación
-    warning('Función en desarrollo', 'La eliminación de usuarios estará disponible próximamente');
+    try {
+      const result = await adminDelete<{ success: boolean; message?: string }>(
+        `/api/admin/users/${userId}`
+      );
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      success('Usuario eliminado', result.message || `${email} eliminado correctamente`);
+    } catch (err) {
+      showError('Error al eliminar', err instanceof Error ? err.message : 'No se pudo eliminar');
+    }
   };
 
   return (

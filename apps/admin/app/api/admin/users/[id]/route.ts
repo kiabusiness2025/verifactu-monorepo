@@ -10,6 +10,7 @@
 
 import { requireAdmin } from '@/lib/adminAuth';
 import { query } from '@/lib/db';
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -282,22 +283,99 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAdmin(request);
+    const admin = await requireAdmin(request);
 
     const { id: userId } = await params;
+    const target = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true },
+    });
 
-    // TODO: Implementar lógica de eliminación
-    // Considerar: eliminar de Firebase Auth también
-    // Considerar: soft delete vs hard delete
+    if (!target) {
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+    }
+
+    if (target.id === admin.userId) {
+      return NextResponse.json({ error: 'No puedes eliminar tu propio usuario' }, { status: 400 });
+    }
+
+    const protectedEmails = new Set(
+      [
+        'support@verifactu.business',
+        process.env.ADMIN_ALLOWED_EMAIL || '',
+        ...(process.env.ADMIN_EMAILS || '').split(','),
+      ]
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
+    );
+
+    const targetEmail = target.email.trim().toLowerCase();
+    if (protectedEmails.has(targetEmail)) {
+      const sameEmailCount = await prisma.user.count({
+        where: { email: { equals: target.email, mode: 'insensitive' } },
+      });
+      if (sameEmailCount <= 1) {
+        return NextResponse.json(
+          { error: 'No se puede eliminar el único usuario admin de soporte' },
+          { status: 400 }
+        );
+      }
+    }
+
+    try {
+      await prisma.$transaction([
+        prisma.invoice.updateMany({
+          where: { createdBy: userId },
+          data: { createdBy: admin.userId },
+        }),
+
+        prisma.auditLog.updateMany({
+          where: { actorUserId: userId },
+          data: { actorUserId: admin.userId },
+        }),
+        prisma.auditLog.updateMany({
+          where: { targetUserId: userId },
+          data: { targetUserId: null },
+        }),
+
+        prisma.companyMember.deleteMany({ where: { userId } }),
+        prisma.membership.deleteMany({ where: { userId } }),
+        prisma.subscription.deleteMany({ where: { userId } }),
+        prisma.userPreference.deleteMany({ where: { userId } }),
+        prisma.userOnboarding.deleteMany({ where: { userId } }),
+        prisma.supportSession.deleteMany({
+          where: { OR: [{ userId }, { adminId: userId }] },
+        }),
+
+        prisma.user.delete({ where: { id: userId } }),
+      ]);
+    } catch (hardDeleteError) {
+      const now = Date.now();
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          email: `deleted+${now}.${targetEmail}`,
+          name: target.name ? `${target.name} [eliminado]` : 'Usuario eliminado',
+          isBlocked: true,
+          blockedAt: new Date(),
+          blockedReason: 'deleted_by_admin',
+        },
+      });
+      await prisma.membership.deleteMany({ where: { userId } });
+      await prisma.companyMember.deleteMany({ where: { userId } });
+
+      console.warn('Hard delete failed. Soft delete applied:', hardDeleteError);
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Funcionalidad de eliminación pendiente de implementar',
+      message: 'Usuario eliminado correctamente',
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error deleting user:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Error al eliminar usuario', details: error.message },
+      { error: 'Error al eliminar usuario', details: message },
       { status: 500 }
     );
   }
