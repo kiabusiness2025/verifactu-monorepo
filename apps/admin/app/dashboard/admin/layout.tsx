@@ -3,11 +3,14 @@
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 // Force dynamic rendering for admin routes
 export const dynamic = 'force-dynamic';
 
-const adminNav = [
+type NavItem = { label: string; href: string };
+
+const baseAdminNav: NavItem[] = [
   { label: "Resumen", href: "/dashboard/admin" },
   { label: "Usuarios", href: "/dashboard/admin/users" },
   { label: "Empresas", href: "/dashboard/admin/companies" },
@@ -22,12 +25,62 @@ const adminNav = [
   { label: "Configuración", href: "/settings" },
 ];
 
+function normalizePath(path: string) {
+  const value = path.trim();
+  if (!value) return "";
+  return value.startsWith("/") ? value : `/${value}`;
+}
+
+function isAdminDashboardPath(path: string) {
+  return path.startsWith("/dashboard/admin") || path.startsWith("/operations") || path.startsWith("/support-sessions") || path.startsWith("/settings") || path.startsWith("/integrations/");
+}
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [savedNav, setSavedNav] = useState<NavItem[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadSavedViews() {
+      try {
+        const res = await fetch("/api/admin/views?scope=dashboard", {
+          credentials: "include",
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        });
+        const data = await res.json().catch(() => null);
+        if (!mounted || !res.ok || !data?.ok || !Array.isArray(data.views)) return;
+        const next: NavItem[] = data.views
+          .map((item: { name?: string; path?: string }) => ({
+            label: String(item?.name || "").trim(),
+            href: normalizePath(String(item?.path || "")),
+          }))
+          .filter((item: NavItem) => item.label && item.href && isAdminDashboardPath(item.href));
+        setSavedNav(next);
+      } catch {
+        setSavedNav([]);
+      }
+    }
+    void loadSavedViews();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const adminNav = useMemo(() => {
+    const merged: NavItem[] = [...baseAdminNav];
+    const existing = new Set(baseAdminNav.map((item) => item.href));
+    for (const item of savedNav) {
+      if (existing.has(item.href)) continue;
+      existing.add(item.href);
+      merged.push(item);
+    }
+    return merged;
+  }, [savedNav]);
 
   return (
     <div className="flex gap-6">
