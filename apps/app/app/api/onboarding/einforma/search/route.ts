@@ -44,8 +44,32 @@ function toSearchResult(item: unknown) {
 }
 
 async function searchFromLocalTable(query: string, limit: number) {
-  const q = query.trim();
-  if (!q) return [];
+  const terms = query
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  if (terms.length === 0) return [];
+
+  const normalizedText = `
+    LOWER(
+      CONCAT_WS(
+        ' ',
+        COALESCE(tp.legal_name, ''),
+        COALESCE(tp.trade_name, ''),
+        COALESCE(tp.tax_id, ''),
+        COALESCE(t.name, ''),
+        COALESCE(t.legal_name, ''),
+        COALESCE(t.nif, '')
+      )
+    )
+  `;
+  const termFilters = terms.map((_, index) => `${normalizedText} LIKE $${index + 1}`).join(' AND ');
+  const cappedLimit = Math.max(1, Math.min(limit, 25));
+  const params: unknown[] = terms.map((term) => `%${term}%`);
+  params.push(cappedLimit);
 
   const rows = await sqlQuery<{
     source_id: string | null;
@@ -66,16 +90,10 @@ async function searchFromLocalTable(query: string, limit: number) {
       t.name AS tenant_name
      FROM tenant_profiles tp
      JOIN tenants t ON t.id = tp.tenant_id
-     WHERE
-       COALESCE(tp.legal_name, '') ILIKE $1 OR
-       COALESCE(tp.trade_name, '') ILIKE $1 OR
-       COALESCE(tp.tax_id, '') ILIKE $1 OR
-       COALESCE(t.name, '') ILIKE $1 OR
-       COALESCE(t.legal_name, '') ILIKE $1 OR
-       COALESCE(t.nif, '') ILIKE $1
+     WHERE ${termFilters}
      ORDER BY tp.updated_at DESC
-     LIMIT $2`,
-    [`%${q}%`, Math.max(1, Math.min(limit, 25))]
+     LIMIT $${terms.length + 1}`,
+    params
   );
 
   const deduped = new Map<
@@ -137,32 +155,32 @@ async function searchFromCachedLookups(query: string, limit: number) {
 }
 
 export async function GET(req: Request) {
-  const session = await getSessionPayload();
-  if (!session?.uid) {
-    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-  }
-
-  const limiter = rateLimit(req, {
-    limit: 30,
-    windowMs: 60_000,
-    keyPrefix: 'einforma-onboarding-search',
-  });
-  if (!limiter.ok) {
-    return NextResponse.json(
-      { ok: false, error: 'rate limit exceeded' },
-      { status: 429, headers: { 'Retry-After': String(limiter.retryAfter) } }
-    );
-  }
-
-  const { searchParams } = new URL(req.url);
-  const q = searchParams.get('q')?.trim() ?? '';
-  const limit = Number(searchParams.get('limit') ?? 10);
-
-  if (q.length < 3) {
-    return NextResponse.json({ ok: false, error: 'query too short' }, { status: 400 });
-  }
-
   try {
+    const session = await getSessionPayload();
+    if (!session?.uid) {
+      return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+    }
+
+    const limiter = rateLimit(req, {
+      limit: 30,
+      windowMs: 60_000,
+      keyPrefix: 'einforma-onboarding-search',
+    });
+    if (!limiter.ok) {
+      return NextResponse.json(
+        { ok: false, error: 'rate limit exceeded' },
+        { status: 429, headers: { 'Retry-After': String(limiter.retryAfter) } }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const q = searchParams.get('q')?.trim() ?? '';
+    const limit = Number(searchParams.get('limit') ?? 10);
+
+    if (q.length < 3) {
+      return NextResponse.json({ ok: false, error: 'query too short' }, { status: 400 });
+    }
+
     try {
       const localResults = await searchFromLocalTable(q, limit);
       if (localResults.length > 0) {
