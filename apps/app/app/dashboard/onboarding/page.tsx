@@ -45,7 +45,7 @@ export default function OnboardingPage() {
   const [nif, setNif] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [hasRealTenant, setHasRealTenant] = useState(false);
+  const [hasTrialLimitedRealTenant, setHasTrialLimitedRealTenant] = useState(false);
   const [manualMode, setManualMode] = useState(false);
 
   const nextUrl = useMemo(() => {
@@ -65,10 +65,12 @@ export default function OnboardingPage() {
         const res = await fetch('/api/onboarding/status', { credentials: 'include' });
         const data = await res.json().catch(() => null);
         if (!mounted) return;
-        setHasRealTenant(Boolean(data?.hasRealTenant));
+        setHasTrialLimitedRealTenant(
+          Boolean(data?.hasTrialLimitedRealTenant ?? data?.hasRealTenant)
+        );
       } catch {
         if (!mounted) return;
-        setHasRealTenant(false);
+        setHasTrialLimitedRealTenant(false);
       }
     }
     loadStatus();
@@ -182,7 +184,7 @@ export default function OnboardingPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!canSubmit || isSubmitting) return;
-    if (hasRealTenant) {
+    if (hasTrialLimitedRealTenant) {
       showError(
         'Límite del modo prueba',
         'Ya tienes una empresa real activa en prueba. Para añadir otra, contrata un plan.'
@@ -285,7 +287,7 @@ export default function OnboardingPage() {
     <main className="min-h-screen bg-slate-50 px-4 py-12">
       <div className="mx-auto w-full max-w-2xl space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h1 className="text-2xl font-semibold text-[#0b214a]">Añadir tu empresa</h1>
+          <h1 className="text-2xl font-semibold text-[#0b214a]">Añadir empresa</h1>
           <p className="mt-2 text-sm text-slate-600">
             Completa estos 3 pasos para activar tu espacio de trabajo.
           </p>
@@ -307,6 +309,24 @@ export default function OnboardingPage() {
           <p className="mt-2 text-sm text-slate-600">
             Busca por nombre o NIF. Si no aparece, puedes introducir los datos manualmente.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setManualMode(true)}
+              className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Introducir datos manualmente
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                router.push('/dashboard/isaak?intent=company_onboarding&mode=assisted_upload')
+              }
+              className="inline-flex h-9 items-center rounded-lg bg-[#0b6cfb]/10 px-3 text-xs font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/20"
+            >
+              Alta asistida con Isaak
+            </button>
+          </div>
 
           <div className="mt-6 space-y-4">
             <div>
@@ -332,7 +352,7 @@ export default function OnboardingPage() {
                 <span className="font-semibold">Autocompletar empresa</span>.
               </p>
             </div>
-            {hasRealTenant ? (
+            {hasTrialLimitedRealTenant ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                 Ya tienes una empresa real en modo prueba. Para añadir otra empresa, necesitas
                 contratar un plan.
@@ -447,7 +467,11 @@ export default function OnboardingPage() {
               </button>
               <button
                 type="submit"
-                disabled={!manualMode && !selected ? true : !canSubmit || isSubmitting || hasRealTenant}
+                disabled={
+                  !manualMode && !selected
+                    ? true
+                    : !canSubmit || isSubmitting || hasTrialLimitedRealTenant
+                }
                 className="w-full rounded-xl bg-[#0b6cfb] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#095edb] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? 'Guardando...' : 'Paso 3 · Guardar y continuar'}

@@ -83,9 +83,9 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
       <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-        <h2 className="text-xl font-semibold text-slate-900">Crear empresa</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Añadir empresa</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Crea una nueva empresa para trabajar con datos reales.
+          Añade una nueva empresa para trabajar con datos reales.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">

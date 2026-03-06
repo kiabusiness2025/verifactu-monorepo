@@ -7,7 +7,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useIsaakUI } from '@/context/IsaakUIContext';
 import { useLogout } from '@/hooks/useLogout';
 import { useAuth } from '@/hooks/useAuth';
-import { useCreateCompanyModal } from '@/context/CreateCompanyModalContext';
 import { LayoutGrid, Shield, Plus, X, ArrowLeft } from 'lucide-react';
 
 type TopbarProps = {
@@ -51,7 +50,6 @@ export function Topbar({
 }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const createCompanyModal = useCreateCompanyModal();
   const { setCompany } = useIsaakUI();
   const { user: firebaseUser, signOut: firebaseSignOut } = useAuth();
   const { logout, isLoggingOut } = useLogout();
@@ -250,10 +248,7 @@ export function Topbar({
 
   const tenantOptions = [...tenants, demoOption];
   const tenantSelectDisabled = isLoadingTenants || isSwitching || tenantOptions.length === 0;
-  const handleCreateCompany =
-    !effectiveDemo && createCompanyModal?.openModal
-      ? () => createCompanyModal.openModal()
-      : undefined;
+  const handleCreateCompany = () => router.push('/dashboard/onboarding?next=/dashboard');
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur">
@@ -339,34 +334,21 @@ export function Topbar({
                   <Link
                     href="/dashboard/onboarding?next=/dashboard"
                     className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100"
-                    aria-label="Crear empresa"
-                    title="Crear empresa"
+                    aria-label="Añadir empresa"
+                    title="Añadir empresa"
                   >
                     <Plus className="h-4 w-4" />
                   </Link>
                 ) : (
-                  <>
-                    {handleCreateCompany ? (
-                      <button
-                        type="button"
-                        onClick={handleCreateCompany}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100"
-                        aria-label="Crear empresa"
-                        title="Crear empresa"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    ) : (
-                      <Link
-                        href="/dashboard/settings?tab=general"
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100"
-                        aria-label="Crear empresa"
-                        title="Crear empresa"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Link>
-                    )}
-                  </>
+                  <button
+                    type="button"
+                    onClick={handleCreateCompany}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100"
+                    aria-label="Añadir empresa"
+                    title="Añadir empresa"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
                 )}
               </>
             )}

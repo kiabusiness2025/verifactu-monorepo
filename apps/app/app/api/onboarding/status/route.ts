@@ -15,7 +15,19 @@ export async function GET() {
 
   const memberships = await prisma.membership.findMany({
     where: { userId: uid, status: 'active' },
-    select: { tenantId: true, tenant: { select: { isDemo: true } } },
+    select: {
+      tenantId: true,
+      tenant: {
+        select: {
+          isDemo: true,
+          subscriptions: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { status: true },
+          },
+        },
+      },
+    },
   });
 
   const pref = await prisma.userPreference.findUnique({
@@ -26,6 +38,11 @@ export async function GET() {
   const preferredTenantId = pref?.preferredTenantId ?? null;
   const hasAnyTenant = memberships.length > 0;
   const hasRealTenant = memberships.some((membership) => !membership.tenant?.isDemo);
+  const hasTrialLimitedRealTenant = memberships.some((membership) => {
+    if (membership.tenant?.isDemo) return false;
+    const latestSubscription = membership.tenant?.subscriptions?.[0];
+    return latestSubscription?.status === 'trial';
+  });
 
   let trial: { status: string; trialEndsAt: string | null } | null = null;
   if (preferredTenantId) {
@@ -45,6 +62,7 @@ export async function GET() {
     ok: true,
     hasAnyTenant,
     hasRealTenant,
+    hasTrialLimitedRealTenant,
     preferredTenantId,
     trial,
   });

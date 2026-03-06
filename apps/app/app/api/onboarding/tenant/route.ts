@@ -9,7 +9,13 @@ type TenantPayload = {
   einformaId?: string;
   name: string;
   legalName?: string;
-  nif: string;
+  nif?: string;
+  taxId?: string;
+  tradeName?: string;
+  taxRegime?: string;
+  defaultCurrency?: string;
+  country?: string;
+  fiscalAddress?: Record<string, unknown> | null;
   extra?: {
     cnae?: string;
     cnaeCode?: string;
@@ -24,6 +30,9 @@ type TenantPayload = {
     city?: string;
     province?: string;
     country?: string;
+    taxRegime?: string;
+    defaultCurrency?: string;
+    fiscalAddress?: unknown;
     representative?: string;
     email?: string;
     phone?: string;
@@ -89,12 +98,27 @@ export async function POST(req: Request) {
 
   const name = typeof body?.name === 'string' ? body.name.trim() : '';
   const legalName = typeof body?.legalName === 'string' ? body.legalName.trim() : '';
-  const nif = typeof body?.nif === 'string' ? body.nif.trim() : '';
+  const taxIdRaw =
+    typeof body?.taxId === 'string'
+      ? body.taxId.trim()
+      : typeof body?.nif === 'string'
+      ? body.nif.trim()
+      : '';
+  const tradeName = typeof body?.tradeName === 'string' ? body.tradeName.trim() : '';
+  const taxRegime = typeof body?.taxRegime === 'string' ? body.taxRegime.trim() : '';
+  const defaultCurrency =
+    typeof body?.defaultCurrency === 'string' && body.defaultCurrency.trim()
+      ? body.defaultCurrency.trim().toUpperCase()
+      : 'EUR';
+  const country =
+    typeof body?.country === 'string' && body.country.trim() ? body.country.trim().toUpperCase() : 'ES';
   const source = body?.source === 'einforma' ? 'einforma' : 'manual';
   const einformaId = typeof body?.einformaId === 'string' ? body.einformaId.trim() : undefined;
+  const fiscalAddress =
+    body?.fiscalAddress && typeof body.fiscalAddress === 'object' ? body.fiscalAddress : null;
 
-  if (!name || !nif) {
-    return NextResponse.json({ ok: false, error: 'name and nif required' }, { status: 400 });
+  if (!name || !taxIdRaw) {
+    return NextResponse.json({ ok: false, error: 'name and taxId required' }, { status: 400 });
   }
 
   await upsertUser({
@@ -104,7 +128,7 @@ export async function POST(req: Request) {
   });
 
   const existingTenant = await prisma.tenant.findFirst({
-    where: { nif },
+    where: { nif: taxIdRaw },
   });
 
   if (existingTenant) {
@@ -133,7 +157,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const existingRealMembership = await prisma.membership.findFirst({
+  const existingRealMemberships = await prisma.membership.findMany({
     where: {
       userId: uid,
       status: 'active',
@@ -142,7 +166,20 @@ export async function POST(req: Request) {
     select: { tenantId: true },
   });
 
-  if (existingRealMembership) {
+  const hasTrialLimitedRealTenant = (
+    await Promise.all(
+      existingRealMemberships.map(async (membership) => {
+        const latestSubscription = await prisma.tenantSubscription.findFirst({
+          where: { tenantId: membership.tenantId },
+          orderBy: { createdAt: 'desc' },
+          select: { status: true },
+        });
+        return latestSubscription?.status === 'trial';
+      })
+    )
+  ).some(Boolean);
+
+  if (hasTrialLimitedRealTenant) {
     return NextResponse.json(
       {
         ok: false,
@@ -166,7 +203,7 @@ export async function POST(req: Request) {
       data: {
         name,
         legalName: legalName || undefined,
-        nif,
+        nif: taxIdRaw,
       },
     });
 
@@ -225,63 +262,81 @@ export async function POST(req: Request) {
       },
     });
 
-    if (body?.extra) {
-      const isEinforma = source === 'einforma';
-      const cnaeParts = splitCnae(body.extra.cnae);
-      const cityParts = normalizeCity(body.extra.city);
-      const profileRaw =
-        body.extra.raw && typeof body.extra.raw === 'object' ? body.extra.raw : undefined;
-      await tx.tenantProfile.upsert({
-        where: { tenantId: tenant.id },
-        create: {
-          tenantId: tenant.id,
-          source,
-          sourceId: einformaId,
-          cnae: body.extra.cnae || undefined,
-          cnaeCode: body.extra.cnaeCode || cnaeParts.code,
-          cnaeText: body.extra.cnaeText || cnaeParts.text,
-          legalForm: body.extra.legalForm || undefined,
-          status: body.extra.status || undefined,
-          website: body.extra.website || undefined,
-          capitalSocial: body.extra.capitalSocial ?? undefined,
-          incorporationDate: body.extra.incorporationDate
-            ? new Date(body.extra.incorporationDate)
-            : undefined,
-          address: body.extra.address || undefined,
-          postalCode: body.extra.postalCode || cityParts.postalCode,
-          city: cityParts.city || undefined,
-          province: body.extra.province || undefined,
-          country: body.extra.country || undefined,
-          representative: body.extra.representative || undefined,
-          einformaRaw: profileRaw,
-          einformaLastSyncAt: isEinforma ? new Date() : undefined,
-          einformaTaxIdVerified: isEinforma ? true : undefined,
-        },
-        update: {
-          source,
-          sourceId: einformaId,
-          cnae: body.extra.cnae || undefined,
-          cnaeCode: body.extra.cnaeCode || cnaeParts.code,
-          cnaeText: body.extra.cnaeText || cnaeParts.text,
-          legalForm: body.extra.legalForm || undefined,
-          status: body.extra.status || undefined,
-          website: body.extra.website || undefined,
-          capitalSocial: body.extra.capitalSocial ?? undefined,
-          incorporationDate: body.extra.incorporationDate
-            ? new Date(body.extra.incorporationDate)
-            : undefined,
-          address: body.extra.address || undefined,
-          postalCode: body.extra.postalCode || cityParts.postalCode,
-          city: cityParts.city || undefined,
-          province: body.extra.province || undefined,
-          country: body.extra.country || undefined,
-          representative: body.extra.representative || undefined,
-          einformaRaw: profileRaw,
-          einformaLastSyncAt: isEinforma ? new Date() : undefined,
-          einformaTaxIdVerified: isEinforma ? true : undefined,
-        },
-      });
-    }
+    const extra = body?.extra;
+    const isEinforma = source === 'einforma';
+    const cnaeParts = splitCnae(extra?.cnae);
+    const cityParts = normalizeCity(extra?.city);
+    const profileRaw = extra?.raw && typeof extra.raw === 'object' ? extra.raw : undefined;
+    const effectiveFiscalAddress =
+      fiscalAddress ||
+      (extra?.address || extra?.postalCode || extra?.city || extra?.province || extra?.country
+        ? {
+            address: extra?.address || null,
+            postalCode: extra?.postalCode || cityParts.postalCode || null,
+            city: cityParts.city || null,
+            province: extra?.province || null,
+            country: extra?.country || country,
+          }
+        : null);
+
+    await tx.tenantProfile.upsert({
+      where: { tenantId: tenant.id },
+      create: {
+        tenantId: tenant.id,
+        source,
+        sourceId: einformaId,
+        taxId: taxIdRaw,
+        legalName: legalName || name,
+        tradeName: tradeName || name,
+        fiscalAddress: effectiveFiscalAddress ?? undefined,
+        taxRegime: taxRegime || extra?.taxRegime || undefined,
+        defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
+        cnae: extra?.cnae || undefined,
+        cnaeCode: extra?.cnaeCode || cnaeParts.code,
+        cnaeText: extra?.cnaeText || cnaeParts.text,
+        legalForm: extra?.legalForm || undefined,
+        status: extra?.status || undefined,
+        website: extra?.website || undefined,
+        capitalSocial: extra?.capitalSocial ?? undefined,
+        incorporationDate: extra?.incorporationDate ? new Date(extra.incorporationDate) : undefined,
+        address: extra?.address || undefined,
+        postalCode: extra?.postalCode || cityParts.postalCode,
+        city: cityParts.city || undefined,
+        province: extra?.province || undefined,
+        country: extra?.country || country || undefined,
+        representative: extra?.representative || undefined,
+        einformaRaw: profileRaw,
+        einformaLastSyncAt: isEinforma ? new Date() : undefined,
+        einformaTaxIdVerified: isEinforma ? true : undefined,
+      } as never,
+      update: {
+        source,
+        sourceId: einformaId,
+        taxId: taxIdRaw,
+        legalName: legalName || name,
+        tradeName: tradeName || name,
+        fiscalAddress: effectiveFiscalAddress ?? undefined,
+        taxRegime: taxRegime || extra?.taxRegime || undefined,
+        defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
+        cnae: extra?.cnae || undefined,
+        cnaeCode: extra?.cnaeCode || cnaeParts.code,
+        cnaeText: extra?.cnaeText || cnaeParts.text,
+        legalForm: extra?.legalForm || undefined,
+        status: extra?.status || undefined,
+        website: extra?.website || undefined,
+        capitalSocial: extra?.capitalSocial ?? undefined,
+        incorporationDate: extra?.incorporationDate ? new Date(extra.incorporationDate) : undefined,
+        address: extra?.address || undefined,
+        postalCode: extra?.postalCode || cityParts.postalCode,
+        city: cityParts.city || undefined,
+        province: extra?.province || undefined,
+        country: extra?.country || country || undefined,
+        representative: extra?.representative || undefined,
+        einformaRaw: profileRaw,
+        einformaLastSyncAt: isEinforma ? new Date() : undefined,
+        einformaTaxIdVerified: isEinforma ? true : undefined,
+      } as never,
+    });
 
     return { tenant, subscription };
   });
