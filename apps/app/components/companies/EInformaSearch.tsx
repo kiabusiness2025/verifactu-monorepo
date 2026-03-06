@@ -29,6 +29,8 @@ export function EInformaSearch({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [errorMessage, setErrorMessage] = useState('');
   const [metaMessage, setMetaMessage] = useState('');
+  const [sourceTag, setSourceTag] = useState<'local' | 'cache' | 'live' | 'unknown' | null>(null);
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,16 +65,22 @@ export function EInformaSearch({
         setShowResults(true);
         setErrorMessage('');
         const source = typeof data.cacheSource === 'string' ? data.cacheSource : '';
+        setLastSyncAt(typeof data.lastSyncAt === 'string' ? data.lastSyncAt : null);
         if (source.startsWith('tenantProfile')) {
           setMetaMessage('Resultados desde datos locales');
+          setSourceTag('local');
         } else if (source.startsWith('einformaLookup')) {
           setMetaMessage('Resultados desde caché');
+          setSourceTag('cache');
         } else if (source === 'einforma') {
           setMetaMessage('Resultados actualizados');
+          setSourceTag('live');
         } else if (source === 'unavailable') {
           setMetaMessage('Ahora no hay resultados automáticos. Puedes continuar manualmente.');
+          setSourceTag('unknown');
         } else {
           setMetaMessage('');
+          setSourceTag(null);
         }
         if (nextResults.length === 0 && onManualEntryRequested) {
           onManualEntryRequested();
@@ -81,6 +89,8 @@ export function EInformaSearch({
         setResults([]);
         setShowResults(true);
         setMetaMessage('');
+        setSourceTag(null);
+        setLastSyncAt(null);
         if (res.status === 401) {
           setErrorMessage('Tu sesión ha caducado. Recarga la página e inténtalo de nuevo.');
         } else if (res.status === 429) {
@@ -96,6 +106,8 @@ export function EInformaSearch({
       setShowResults(true);
       setErrorMessage('No se pudo completar la búsqueda ahora. Puedes continuar manualmente.');
       setMetaMessage('');
+      setSourceTag(null);
+      setLastSyncAt(null);
       if (onManualEntryRequested) onManualEntryRequested();
     } finally {
       setLoading(false);
@@ -182,7 +194,35 @@ export function EInformaSearch({
         <div className="absolute z-50 mt-2 w-full max-h-96 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
           {metaMessage ? (
             <div className="border-b border-slate-100 px-3 py-2 text-xs font-medium text-slate-500">
-              {metaMessage}
+              <div className="flex flex-wrap items-center gap-2">
+                {sourceTag ? (
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                      sourceTag === 'local'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : sourceTag === 'cache'
+                          ? 'bg-sky-100 text-sky-700'
+                          : sourceTag === 'live'
+                            ? 'bg-indigo-100 text-indigo-700'
+                            : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {sourceTag === 'local'
+                      ? 'Local'
+                      : sourceTag === 'cache'
+                        ? 'Caché'
+                        : sourceTag === 'live'
+                          ? 'En vivo'
+                          : 'Sin fuente'}
+                  </span>
+                ) : null}
+                <span>{metaMessage}</span>
+                {lastSyncAt ? (
+                  <span className="text-[10px] text-slate-400">
+                    · {new Date(lastSyncAt).toLocaleString('es-ES')}
+                  </span>
+                ) : null}
+              </div>
             </div>
           ) : null}
           <div className="p-2 space-y-1">
