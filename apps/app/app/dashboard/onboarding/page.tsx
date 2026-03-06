@@ -49,8 +49,11 @@ export default function OnboardingPage() {
   const [manualMode, setManualMode] = useState(false);
 
   const nextUrl = useMemo(() => {
-    const next = searchParams?.get('next');
-    return next && next.startsWith('/') ? next : '/demo';
+    const next = searchParams?.get('next')?.trim();
+    if (next && next.startsWith('/dashboard')) {
+      return next;
+    }
+    return '/dashboard';
   }, [searchParams]);
 
   const canSubmit = companyName.trim().length > 0 && nif.trim().length > 0;

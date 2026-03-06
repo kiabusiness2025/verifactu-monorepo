@@ -65,7 +65,7 @@ export function QuickActions({ isDemo = false }: { isDemo?: boolean }) {
     {
       label: 'Nueva empresa',
       description: 'Crear o importar',
-      href: isDemo ? '/dashboard/onboarding?next=/demo' : '/dashboard/settings?tab=general',
+      href: '/dashboard/onboarding?next=/dashboard',
       accent: 'from-[#1f4eff] to-[#66c2ff]',
       badge: 'Empresa',
       icon: Building2,

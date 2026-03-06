@@ -65,9 +65,16 @@ export default function DashboardClientLayout({ children, supportMode, supportTe
   useEffect(() => {
     const readDemoMode = () => {
       if (typeof window === 'undefined') return;
+      const routeIsDemo = pathname?.startsWith('/demo') === true;
+      if (!routeIsDemo) {
+        window.__VF_DEMO_MODE__ = false;
+        window.localStorage.removeItem('vf_demo_mode');
+        setIsDemoMode(false);
+        return;
+      }
       const fromStorage = window.localStorage.getItem('vf_demo_mode') === '1';
       const fromGlobal = window.__VF_DEMO_MODE__ === true;
-      setIsDemoMode(fromStorage || fromGlobal || pathname?.startsWith('/demo') === true);
+      setIsDemoMode(fromStorage || fromGlobal || routeIsDemo);
     };
 
     readDemoMode();
