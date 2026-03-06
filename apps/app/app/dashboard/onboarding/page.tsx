@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { FileText, Trash2, UploadCloud } from 'lucide-react';
 import { EInformaSearch } from '@/components/companies/EInformaSearch';
 import { useToast } from '@/components/notifications/ToastNotifications';
 import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
@@ -34,6 +35,31 @@ type SelectedCompany = {
   raw?: unknown;
 };
 
+type CompanyDocumentType = 'deed' | 'cif_card' | 'tax_return' | 'other';
+
+type UploadedCompanyDocument = {
+  id: string;
+  type: CompanyDocumentType;
+  name: string;
+  url: string;
+  size: number;
+  contentType: string;
+  uploadedAt: string;
+};
+
+const COMPANY_DOCUMENT_TYPE_OPTIONS: Array<{ value: CompanyDocumentType; label: string }> = [
+  { value: 'deed', label: 'Escrituras' },
+  { value: 'cif_card', label: 'Tarjeta CIF/NIF' },
+  { value: 'tax_return', label: 'Declaración fiscal' },
+  { value: 'other', label: 'Otro documento' },
+];
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,6 +73,9 @@ export default function OnboardingPage() {
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [hasTrialLimitedRealTenant, setHasTrialLimitedRealTenant] = useState(false);
   const [manualMode, setManualMode] = useState(false);
+  const [docType, setDocType] = useState<CompanyDocumentType>('deed');
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedCompanyDocument[]>([]);
 
   const nextUrl = useMemo(() => {
     const next = searchParams?.get('next')?.trim();
@@ -181,6 +210,55 @@ export default function OnboardingPage() {
     }
   }
 
+  async function handleUploadCompanyDocument(file: File) {
+    if (!file || isUploadingDoc) return;
+    setIsUploadingDoc(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'documents');
+      formData.append('customFileName', `onboarding-${docType}-${Date.now()}-${file.name}`);
+
+      const res = await fetch('/api/storage/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.success || typeof data?.url !== 'string') {
+        throw new Error(data?.error || 'No se pudo subir el documento');
+      }
+
+      const uploadedAt =
+        typeof data?.file?.uploadedAt === 'string'
+          ? data.file.uploadedAt
+          : new Date().toISOString();
+
+      setUploadedDocs((prev) => [
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          type: docType,
+          name: data?.file?.name || file.name,
+          url: data.url,
+          size: Number(data?.file?.size ?? file.size),
+          contentType: data?.file?.contentType || file.type || 'application/octet-stream',
+          uploadedAt,
+        },
+        ...prev,
+      ]);
+      success('Documento subido', 'Ya puedes continuar el alta asistida.');
+      setManualMode(true);
+    } catch (err) {
+      showError(
+        'No se pudo subir el documento',
+        err instanceof Error ? err.message : 'Inténtalo de nuevo.'
+      );
+    } finally {
+      setIsUploadingDoc(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!canSubmit || isSubmitting) return;
@@ -192,6 +270,12 @@ export default function OnboardingPage() {
       return;
     }
     setIsSubmitting(true);
+
+    const rawPayload = {
+      ...asRecord(selected?.raw),
+      onboardingDocuments: uploadedDocs,
+      intakeSource: uploadedDocs.length > 0 ? 'document_assisted' : 'manual',
+    };
 
     try {
       const res = await fetch('/api/onboarding/tenant', {
@@ -225,9 +309,9 @@ export default function OnboardingPage() {
                 sales: selected.sales,
                 salesYear: selected.salesYear,
                 lastBalanceDate: selected.lastBalanceDate,
-                raw: selected.raw,
+                raw: rawPayload,
               }
-            : undefined,
+            : { raw: rawPayload },
         }),
       });
 
@@ -351,6 +435,78 @@ export default function OnboardingPage() {
                 {' '}
                 <span className="font-semibold">Autocompletar empresa</span>.
               </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                Documentación de empresa
+              </p>
+              <p className="mt-2 text-xs text-slate-600">
+                Puedes subir escrituras, tarjeta CIF/NIF o declaraciones para alta asistida con
+                Isaak.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <select
+                  value={docType}
+                  onChange={(e) => setDocType(e.target.value as CompanyDocumentType)}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+                >
+                  {COMPANY_DOCUMENT_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#0b6cfb] px-3 py-2 text-xs font-semibold text-white hover:bg-[#095edb]">
+                  <UploadCloud className="h-4 w-4" />
+                  {isUploadingDoc ? 'Subiendo...' : 'Subir documento'}
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleUploadCompanyDocument(file);
+                      e.currentTarget.value = '';
+                    }}
+                    disabled={isUploadingDoc}
+                  />
+                </label>
+              </div>
+              {uploadedDocs.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {uploadedDocs.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 font-semibold text-slate-700">
+                          <FileText className="h-3.5 w-3.5" />
+                          <span className="truncate">{doc.name}</span>
+                        </div>
+                        <div className="mt-1 text-slate-500">
+                          {
+                            COMPANY_DOCUMENT_TYPE_OPTIONS.find((option) => option.value === doc.type)
+                              ?.label
+                          }{' '}
+                          · {Math.max(1, Math.round(doc.size / 1024))} KB
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setUploadedDocs((prev) => prev.filter((item) => item.id !== doc.id))
+                        }
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+                        aria-label="Quitar documento"
+                        title="Quitar documento"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
             {hasTrialLimitedRealTenant ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
