@@ -38,6 +38,11 @@ export type DashboardSummary = {
   supportSessionId: string | null;
   demoMode: boolean;
   metrics: DashboardMetrics;
+  metricsByPeriod: {
+    currentMonth: DashboardMetrics;
+    currentYear: DashboardMetrics;
+    previousYear: DashboardMetrics;
+  };
   actions: IsaakAction[];
 };
 
@@ -197,6 +202,7 @@ function buildActions({
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   const session = await getSessionPayload();
   if (!session?.uid) {
+    const zeroMetrics = { sales: 0, expenses: 0, profit: 0, tax: 0 };
     return {
       user: { id: '', name: 'Usuario', email: null },
       tenants: [],
@@ -205,7 +211,12 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       supportMode: false,
       supportSessionId: null,
       demoMode: true,
-      metrics: { sales: 0, expenses: 0, profit: 0, tax: 0 },
+      metrics: zeroMetrics,
+      metricsByPeriod: {
+        currentMonth: zeroMetrics,
+        currentYear: zeroMetrics,
+        previousYear: zeroMetrics,
+      },
       actions: buildActions({
         tenantId: null,
         demoMode: true,
@@ -264,13 +275,20 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     : (tenants.find((tenant) => tenant.id === activeTenantId) ?? null);
 
   const demoMode =
-    (onboarding?.demoTenantId ?? null) === activeTenantId || (activeTenant?.isDemo ?? false);
+    (onboarding?.demoTenantId ?? null) === activeTenantId ||
+    (activeTenant?.isDemo ?? false) ||
+    tenants.filter((tenant) => !tenant.isDemo).length === 0;
 
   let metrics: DashboardMetrics = {
     sales: 0,
     expenses: 0,
     profit: 0,
     tax: 0,
+  };
+  let metricsByPeriod: DashboardSummary['metricsByPeriod'] = {
+    currentMonth: { sales: 0, expenses: 0, profit: 0, tax: 0 },
+    currentYear: { sales: 0, expenses: 0, profit: 0, tax: 0 },
+    previousYear: { sales: 0, expenses: 0, profit: 0, tax: 0 },
   };
   let invoiceCount = 0;
   let expenseCount = 0;
@@ -294,12 +312,49 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       demoData.invoices.filter((invoice) => invoice.status !== 'paid').length ?? 0
     );
     hasVerifactuIntegration = true;
+    metricsByPeriod = {
+      currentMonth: {
+        sales: Number(demoData.kpis.revenueMonth ?? 0),
+        expenses: Number(demoData.kpis.expensesMonth ?? 0),
+        profit: Number(demoData.kpis.profitMonth ?? 0),
+        tax: Number(demoData.kpis.vatEstimated ?? 0),
+      },
+      currentYear: {
+        sales: Number(demoData.kpis.revenueMonth ?? 0) * 10,
+        expenses: Number(demoData.kpis.expensesMonth ?? 0) * 10,
+        profit: Number(demoData.kpis.profitMonth ?? 0) * 10,
+        tax: Number(demoData.kpis.vatEstimated ?? 0) * 10,
+      },
+      previousYear: {
+        sales: Number(demoData.kpis.revenueMonth ?? 0) * 8.5,
+        expenses: Number(demoData.kpis.expensesMonth ?? 0) * 8.7,
+        profit: Number(demoData.kpis.profitMonth ?? 0) * 8.3,
+        tax: Number(demoData.kpis.vatEstimated ?? 0) * 8.5,
+      },
+    };
   } else if (activeTenantId) {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+    const yearEnd = new Date(now.getFullYear() + 1, 0, 1);
+    const prevYearStart = new Date(now.getFullYear() - 1, 0, 1);
+    const prevYearEnd = new Date(now.getFullYear(), 0, 1);
 
-    const [invoiceAgg, expenseAgg, expenseTaxRows, draftCount, unpaidCount, verifactuInvoice] =
+    const [
+      invoiceAgg,
+      expenseAgg,
+      expenseTaxRows,
+      draftCount,
+      unpaidCount,
+      verifactuInvoice,
+      invoiceYearAgg,
+      expenseYearAgg,
+      expenseYearTaxRows,
+      invoicePrevYearAgg,
+      expensePrevYearAgg,
+      expensePrevYearTaxRows,
+    ] =
       await Promise.all([
         prisma.invoice.aggregate({
           where: {
@@ -353,6 +408,60 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
           },
           select: { id: true },
         }),
+        prisma.invoice.aggregate({
+          where: {
+            tenantId: activeTenantId,
+            issueDate: { gte: yearStart, lt: yearEnd },
+            status: { not: 'draft' },
+          },
+          _sum: {
+            amountGross: true,
+            amountTax: true,
+          },
+        }),
+        prisma.expenseRecord.aggregate({
+          where: {
+            tenantId: activeTenantId,
+            date: { gte: yearStart, lt: yearEnd },
+          },
+          _sum: {
+            amount: true,
+          },
+        }),
+        prisma.expenseRecord.findMany({
+          where: {
+            tenantId: activeTenantId,
+            date: { gte: yearStart, lt: yearEnd },
+          },
+          select: { amount: true, taxRate: true },
+        }),
+        prisma.invoice.aggregate({
+          where: {
+            tenantId: activeTenantId,
+            issueDate: { gte: prevYearStart, lt: prevYearEnd },
+            status: { not: 'draft' },
+          },
+          _sum: {
+            amountGross: true,
+            amountTax: true,
+          },
+        }),
+        prisma.expenseRecord.aggregate({
+          where: {
+            tenantId: activeTenantId,
+            date: { gte: prevYearStart, lt: prevYearEnd },
+          },
+          _sum: {
+            amount: true,
+          },
+        }),
+        prisma.expenseRecord.findMany({
+          where: {
+            tenantId: activeTenantId,
+            date: { gte: prevYearStart, lt: prevYearEnd },
+          },
+          select: { amount: true, taxRate: true },
+        }),
       ]);
 
     const sales = toNumber(invoiceAgg._sum.amountGross);
@@ -375,6 +484,38 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       profit: sales - expenses,
       tax: invoiceTax - expenseTax,
     };
+
+    const yearSales = toNumber(invoiceYearAgg._sum.amountGross);
+    const yearExpenses = toNumber(expenseYearAgg._sum.amount);
+    const yearInvoiceTax = toNumber(invoiceYearAgg._sum.amountTax);
+    const yearExpenseTax = expenseYearTaxRows.reduce(
+      (acc, row) => acc + toNumber(row.amount) * toNumber(row.taxRate),
+      0
+    );
+
+    const prevYearSales = toNumber(invoicePrevYearAgg._sum.amountGross);
+    const prevYearExpenses = toNumber(expensePrevYearAgg._sum.amount);
+    const prevYearInvoiceTax = toNumber(invoicePrevYearAgg._sum.amountTax);
+    const prevYearExpenseTax = expensePrevYearTaxRows.reduce(
+      (acc, row) => acc + toNumber(row.amount) * toNumber(row.taxRate),
+      0
+    );
+
+    metricsByPeriod = {
+      currentMonth: metrics,
+      currentYear: {
+        sales: yearSales,
+        expenses: yearExpenses,
+        profit: yearSales - yearExpenses,
+        tax: yearInvoiceTax - yearExpenseTax,
+      },
+      previousYear: {
+        sales: prevYearSales,
+        expenses: prevYearExpenses,
+        profit: prevYearSales - prevYearExpenses,
+        tax: prevYearInvoiceTax - prevYearExpenseTax,
+      },
+    };
   }
 
   const userName =
@@ -393,6 +534,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     supportSessionId: resolved.supportSessionId,
     demoMode,
     metrics,
+    metricsByPeriod,
     actions: buildActions({
       tenantId: activeTenantId,
       demoMode,

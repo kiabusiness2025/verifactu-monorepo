@@ -13,10 +13,33 @@ export default function DemoPage() {
   const pnl = getPnl('demo');
   const isaakExamples = getIsaakExamples('demo');
   const recentInvoices = useMemo(() => invoices.slice(0, 12), [invoices]);
+  const metricsByPeriod = useMemo(() => {
+    const currentMonth = {
+      sales: pnl?.revenue ?? 0,
+      expenses: pnl?.expenses ?? 0,
+      profit: pnl?.profit ?? 0,
+      tax: pnl?.vatEstimated ?? 0,
+    };
+    return {
+      currentMonth,
+      currentYear: {
+        sales: currentMonth.sales * 10,
+        expenses: currentMonth.expenses * 10,
+        profit: currentMonth.profit * 10,
+        tax: currentMonth.tax * 10,
+      },
+      previousYear: {
+        sales: currentMonth.sales * 8.5,
+        expenses: currentMonth.expenses * 8.7,
+        profit: currentMonth.profit * 8.3,
+        tax: currentMonth.tax * 8.5,
+      },
+    };
+  }, [pnl]);
 
   return (
     <div className="space-y-6">
-      <DashboardHome />
+      <DashboardHome metricsByPeriod={metricsByPeriod} demoMode />
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">

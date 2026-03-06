@@ -166,7 +166,7 @@ export default function OnboardingPage() {
 
     try {
       const res = await fetch(
-        `/api/onboarding/einforma/company?einformaId=${encodeURIComponent(company.einformaId)}`
+        `/api/onboarding/einforma/company?einformaId=${encodeURIComponent(company.einformaId)}&taxId=${encodeURIComponent(company.nif || '')}`
       );
       const data = await res.json().catch(() => null);
       if (res.ok && data?.ok) {

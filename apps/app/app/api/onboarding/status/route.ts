@@ -20,11 +20,6 @@ export async function GET() {
       tenant: {
         select: {
           isDemo: true,
-          subscriptions: {
-            orderBy: { createdAt: 'desc' },
-            take: 1,
-            select: { status: true },
-          },
         },
       },
     },
@@ -37,12 +32,22 @@ export async function GET() {
 
   const preferredTenantId = pref?.preferredTenantId ?? null;
   const hasAnyTenant = memberships.length > 0;
-  const hasRealTenant = memberships.some((membership) => !membership.tenant?.isDemo);
-  const hasTrialLimitedRealTenant = memberships.some((membership) => {
-    if (membership.tenant?.isDemo) return false;
-    const latestSubscription = membership.tenant?.subscriptions?.[0];
-    return latestSubscription?.status === 'trial';
-  });
+  const realTenantIds = memberships
+    .filter((membership) => !membership.tenant?.isDemo)
+    .map((membership) => membership.tenantId);
+  const hasRealTenant = realTenantIds.length > 0;
+
+  let hasTrialLimitedRealTenant = false;
+  if (realTenantIds.length > 0) {
+    const trialSubscription = await prisma.tenantSubscription.findFirst({
+      where: {
+        tenantId: { in: realTenantIds },
+        status: 'trial',
+      },
+      select: { id: true },
+    });
+    hasTrialLimitedRealTenant = Boolean(trialSubscription);
+  }
 
   let trial: { status: string; trialEndsAt: string | null } | null = null;
   if (preferredTenantId) {

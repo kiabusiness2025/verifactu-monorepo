@@ -68,8 +68,10 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   ];
 
   const pdf = buildSimplePdf(lines);
+  const pdfBytes = new Uint8Array(pdf);
+  const body = pdfBytes.buffer.slice(pdfBytes.byteOffset, pdfBytes.byteOffset + pdfBytes.byteLength);
 
-  return new NextResponse(new Uint8Array(pdf), {
+  return new NextResponse(body, {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',

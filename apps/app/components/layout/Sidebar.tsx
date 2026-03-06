@@ -48,7 +48,10 @@ export function Sidebar({ isOpen, onClose, isDemo = false }: SidebarProps) {
           <ul className="space-y-1">
             {navItems.map((item) => {
               const targetHref = isDemo ? item.href.replace('/dashboard', '/demo') : item.href;
-              const active = pathname === targetHref || pathname.startsWith(targetHref + '/');
+              const active =
+                targetHref === '/dashboard' || targetHref === '/demo'
+                  ? pathname === targetHref
+                  : pathname === targetHref || pathname.startsWith(targetHref + '/');
               return (
                 <li key={item.href}>
                   <Link

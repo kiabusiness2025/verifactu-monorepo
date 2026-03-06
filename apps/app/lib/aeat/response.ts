@@ -19,7 +19,9 @@ export function buildExportResponse(args: {
 
   if (format === 'xlsx') {
     const file = buildWorkbookBuffer(rows as XlsxCell[][], sheetName);
-    return new NextResponse(new Uint8Array(file), {
+    const bytes = new Uint8Array(file);
+    const body = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+    return new NextResponse(body, {
       status: 200,
       headers: {
         'Content-Type':

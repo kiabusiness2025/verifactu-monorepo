@@ -13,7 +13,7 @@ import { WelcomeModal } from '@/components/onboarding/WelcomeModal';
 import { CreateCompanyModalProvider } from '@/context/CreateCompanyModalContext';
 import { IsaakUIProvider, useIsaakUI } from '@/context/IsaakUIContext';
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import React, { Suspense, useEffect, useState } from 'react';
 
 function OnboardingFlow({ isAdminRoute }: { isAdminRoute: boolean }) {
@@ -54,23 +54,67 @@ type Props = {
 };
 
 export default function DashboardClientLayout({ children, supportMode, supportTenantName }: Props) {
+  const router = useRouter();
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith('/dashboard/admin') ?? false;
   const enableIsaak = false;
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [demoOnlyAccess, setDemoOnlyAccess] = useState(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadOnboardingStatus() {
+      try {
+        const res = await fetch('/api/onboarding/status', { credentials: 'include' });
+        const data = await res.json().catch(() => null);
+        if (!mounted) return;
+        const hasRealTenant = Boolean(data?.hasRealTenant);
+        if (!hasRealTenant) {
+          setDemoOnlyAccess(true);
+          if (typeof window !== 'undefined') {
+            window.__VF_DEMO_MODE__ = true;
+            window.localStorage.setItem('vf_demo_mode', '1');
+            window.dispatchEvent(new Event('vf-demo-mode'));
+          }
+        } else {
+          setDemoOnlyAccess(false);
+        }
+      } catch {
+        if (!mounted) return;
+        setDemoOnlyAccess(false);
+      }
+    }
+    void loadOnboardingStatus();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!demoOnlyAccess) return;
+    if (!pathname?.startsWith('/dashboard')) return;
+    if (pathname === '/dashboard' || pathname.startsWith('/dashboard/onboarding')) return;
+    if (pathname.startsWith('/dashboard/settings')) return;
+    if (pathname.startsWith('/dashboard/integrations')) return;
+    if (pathname.startsWith('/dashboard/admin')) return;
+    router.replace('/demo');
+  }, [demoOnlyAccess, pathname, router]);
 
   useEffect(() => {
     const readDemoMode = () => {
       if (typeof window === 'undefined') return;
       const routeIsDemo = pathname?.startsWith('/demo') === true;
       if (!routeIsDemo) {
-        window.__VF_DEMO_MODE__ = false;
-        window.localStorage.removeItem('vf_demo_mode');
-        setIsDemoMode(false);
-        return;
+        const storedDemo = window.localStorage.getItem('vf_demo_mode') === '1';
+        if (!storedDemo) {
+          window.__VF_DEMO_MODE__ = false;
+          window.localStorage.removeItem('vf_demo_mode');
+          setIsDemoMode(false);
+          return;
+        }
       }
       const fromStorage = window.localStorage.getItem('vf_demo_mode') === '1';
       const fromGlobal = window.__VF_DEMO_MODE__ === true;

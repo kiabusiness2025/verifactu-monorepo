@@ -26,17 +26,19 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const einformaId = searchParams.get('einformaId')?.trim();
+  const taxId = searchParams.get('taxId')?.trim().toUpperCase() ?? '';
 
-  if (!einformaId) {
-    return NextResponse.json({ ok: false, error: 'einformaId required' }, { status: 400 });
+  if (!einformaId && !taxId) {
+    return NextResponse.json({ ok: false, error: 'company identifier required' }, { status: 400 });
   }
 
   try {
-    const profile = await getCompanyProfileByNif(einformaId);
+    const lookupTaxId = taxId || einformaId || '';
+    const profile = await getCompanyProfileByNif(lookupTaxId);
     return NextResponse.json({
       ok: true,
       company: {
-        einformaId,
+        einformaId: einformaId || lookupTaxId,
         name: profile.name,
         legalName: profile.legalName ?? profile.name,
         nif: profile.nif ?? '',

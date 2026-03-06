@@ -46,6 +46,20 @@ En `apps/app`:
    - carpeta `verifactu_business`
 4. Probar desconexión.
 
+## Estado actual (implementado)
+- OAuth endpoints listos en:
+  - `/api/integrations/gdrive/auth`
+  - `/api/integrations/gdrive/callback`
+  - `/api/integrations/gdrive/status`
+  - `/api/integrations/gdrive/disconnect`
+- En callback se crea automáticamente la carpeta `verifactu_business` en el Drive del cliente.
+- Tokens y metadata se guardan cifrados en `tenant_integrations`.
+
+## Pendiente para activar en producción
+- Completar OAuth config en Google Cloud con el mismo proyecto del workspace.
+- Cargar `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` en entorno de Vercel.
+- Verificar `NEXTAUTH_URL` público correcto para callback.
+
 ## Notas de seguridad
 - Drive se usa como integración opcional, no como storage primario.
 - Tokens guardados cifrados en DB.

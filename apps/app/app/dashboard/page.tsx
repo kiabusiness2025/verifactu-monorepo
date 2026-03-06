@@ -23,7 +23,10 @@ export default async function DashboardPage() {
           supportSessionId={data.supportSessionId}
         />
 
-        <DashboardHome />
+        <DashboardHome
+          metricsByPeriod={data.metricsByPeriod}
+          demoMode={data.demoMode}
+        />
 
         <section className="space-y-3">
           <div className="flex items-center justify-between">
