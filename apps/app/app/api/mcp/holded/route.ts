@@ -311,9 +311,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const allowed = await assertMcpAccess(request);
-  if (!allowed) return unauthorized();
-
   const body = (await request.json().catch(() => null)) as JsonRpcRequest | null;
   if (!body?.method) {
     return jsonRpc(body?.id ?? null, undefined, {
@@ -342,6 +339,9 @@ export async function POST(request: NextRequest) {
           tools: TOOLS,
         });
       case 'tools/call': {
+        const allowed = await assertMcpAccess(request);
+        if (!allowed) return unauthorized();
+
         const name = typeof body.params?.name === 'string' ? body.params.name : '';
         const args =
           body.params?.arguments && typeof body.params.arguments === 'object'
