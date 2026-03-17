@@ -214,6 +214,66 @@ export function buildLoginUrl(currentAuthorizeUrl: string) {
   return loginUrl.toString();
 }
 
+async function findDefaultDemoTenant() {
+  const defaultName = process.env.MCP_DEFAULT_TENANT_NAME?.trim() || 'Empresa Demo SL';
+  const defaultNif = process.env.MCP_DEFAULT_TENANT_NIF?.trim() || null;
+
+  return prisma.tenant.findFirst({
+    where: {
+      OR: [
+        { isDemo: true, name: defaultName },
+        ...(defaultNif ? [{ nif: defaultNif }] : []),
+        { isDemo: true },
+      ],
+    },
+    orderBy: [
+      { isDemo: 'desc' },
+      { createdAt: 'asc' },
+    ],
+    select: { id: true },
+  });
+}
+
+async function ensureUserHasDemoTenant(userId: string) {
+  const demoTenant = await findDefaultDemoTenant();
+  if (!demoTenant) {
+    return null;
+  }
+
+  const membership = await prisma.membership.findFirst({
+    where: {
+      userId,
+      tenantId: demoTenant.id,
+      status: 'active',
+    },
+    select: { tenantId: true },
+  });
+
+  if (!membership) {
+    await prisma.membership.create({
+      data: {
+        userId,
+        tenantId: demoTenant.id,
+        role: 'member',
+        status: 'active',
+      },
+    });
+  }
+
+  await prisma.userPreference.upsert({
+    where: { userId },
+    create: {
+      userId,
+      preferredTenantId: demoTenant.id,
+    },
+    update: {
+      preferredTenantId: demoTenant.id,
+    },
+  });
+
+  return demoTenant.id;
+}
+
 export async function resolveTenantForOAuthSession(input: {
   uid: string;
   email?: string | null;
@@ -247,5 +307,14 @@ export async function resolveTenantForOAuthSession(input: {
     sessionTenantId: input.sessionTenantId ?? null,
   });
 
-  return { tenantId: fallback.tenantId, resolvedUserId: user.id };
+  if (fallback.tenantId) {
+    return { tenantId: fallback.tenantId, resolvedUserId: user.id };
+  }
+
+  const demoTenantId = await ensureUserHasDemoTenant(user.id);
+  if (demoTenantId) {
+    return { tenantId: demoTenantId, resolvedUserId: user.id };
+  }
+
+  return { tenantId: null, resolvedUserId: user.id };
 }
