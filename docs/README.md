@@ -6,6 +6,8 @@
 
 - [README.md](../README.md) - Descripcion general del proyecto
 - [../apps/client/README.md](../apps/client/README.md) - Panel cliente y persistencia de Isaak
+- [product/OPERATIVE_CHECKLIST_ACCOUNTING_API_2026.md](product/OPERATIVE_CHECKLIST_ACCOUNTING_API_2026.md) - Checklist operativo unificado (planes, app, backend, datos, QA)
+- [INTEGRITY_REVIEW_2026-03-03.md](INTEGRITY_REVIEW_2026-03-03.md) - Revisión de integridad sin tests (estado actual)
 - [ARQUITECTURA_UNIFICADA.md](legacy/root/ARQUITECTURA_UNIFICADA.md) - Arquitectura completa (Vercel + Firebase + Prisma)
 
 ### Autenticacion
@@ -68,10 +70,12 @@
 
 **engineering/ai/**
 
+- [engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md](engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md) - Setup operativo de Isaak for Holded via MCP + OAuth
 - [engineering/ai/ISAAK_V3_QUICK_START.md](engineering/ai/ISAAK_V3_QUICK_START.md) - Quick start Genkit
 - [engineering/ai/ISAAK_V3_TESTING_GUIDE.md](engineering/ai/ISAAK_V3_TESTING_GUIDE.md) - Testing
 - [engineering/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md](engineering/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md) - Checklist
 - [engineering/ai/ISAAK_UNIFIED_EXPERIENCE_2026.md](engineering/ai/ISAAK_UNIFIED_EXPERIENCE_2026.md) - Isaak proactivo en landing, cliente y admin
+- [engineering/ai/ISAAK_INSTRUCCIONES_OPERATIVAS_2026.md](engineering/ai/ISAAK_INSTRUCCIONES_OPERATIVAS_2026.md) - Auth, endpoints y runbook operativo 2026
 
 ### Estado del proyecto
 
@@ -158,4 +162,4 @@ Deployment: Vercel, Firebase, Google Cloud Run (opcional)
 
 ---
 
-Ultima actualizacion: Febrero 2026
+Ultima actualizacion: Marzo 2026

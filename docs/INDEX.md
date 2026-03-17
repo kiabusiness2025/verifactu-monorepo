@@ -6,6 +6,7 @@ Resumen:
 
 - Producto: docs/product/*
 - Ingenieria: docs/engineering/*
+- Guia MCP Holded: docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md
 - Operaciones: docs/ops/*
 - Runbook identidad admin (usuarios/aliases/roles): docs/ops/runbooks/ADMIN_USER_IDENTITY_RULES.md
 - Runbook Vercel (stale commit + BodyInit): docs/ops/runbooks/VERCEL_STALE_COMMIT_AND_BODYINIT.md
