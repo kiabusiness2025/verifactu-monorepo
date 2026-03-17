@@ -12,6 +12,7 @@ export function InvoicesTable({
   pagination,
   onEdit,
   onDelete,
+  onIssue,
   onPageChange,
 }: any) {
   const { customers } = useCustomers();
@@ -119,6 +120,12 @@ export function InvoicesTable({
                   )}
                 </td>
                 <td className="px-6 py-3 text-right">
+                  <button
+                    onClick={() => onIssue(invoice.id)}
+                    className="text-emerald-600 hover:text-emerald-800 mr-4"
+                  >
+                    {invoice.verifactuStatus === 'error' ? 'Reintentar emisión' : 'Emitir'}
+                  </button>
                   <button
                     onClick={() => onEdit(invoice)}
                     className="text-blue-600 hover:text-blue-800 mr-4"

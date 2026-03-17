@@ -1,5 +1,5 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
-import { listTenantIntegrations } from '@/lib/integrations/holdedStore';
+import { listTenantIntegrations } from '@/lib/integrations/accountingStore';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';

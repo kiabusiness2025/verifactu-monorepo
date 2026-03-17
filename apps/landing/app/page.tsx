@@ -91,7 +91,7 @@ export default function Page() {
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
                 Verifactu.business es tu capa empresarial: ventas, gastos, cobros y beneficio con
-                Isaak. Si trabajas con Holded, lo usamos como libro contable y conciliación.
+                Isaak. Si conectas tu programa de contabilidad vía API, sincronizamos sin fricción.
               </p>
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
                 Verifactu e Isaak no sustituyen a tu gestor habitual. Te dan visibilidad diaria de
@@ -295,8 +295,8 @@ export default function Page() {
               Ventas - Gastos = Beneficio
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-              Beneficio actualizado sin esperar al asesor. Verifactu opera el día a día y Holded
-              mantiene la contabilidad formal cuando activas integración.
+              Beneficio actualizado sin esperar al asesor. Verifactu opera el día a día y se conecta
+              con tu programa contable vía API cuando activas integración.
             </p>
           </div>
 
@@ -314,8 +314,8 @@ export default function Page() {
               Planes claros para cumplir y tener control
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-              Todos incluyen VeriFactu + gastos + export AEAT. En Empresa y Pro puedes conectar
-              Holded para sincronizar documentos y mantener libro contable.
+              Todos incluyen VeriFactu + gastos + exportación de libros oficiales Excel compatibles
+              AEAT. En Empresa y Pro puedes activar integración con tu programa de contabilidad vía API.
             </p>
 
             <div className="mt-10 grid gap-4 text-left lg:grid-cols-4">
@@ -336,8 +336,8 @@ export default function Page() {
                     ))}
                     <li>
                       {plan.hasAccountingIntegration
-                        ? "Integración Holded y sync contable"
-                        : "Sin integración contable (opcional en upgrade)"}
+                        ? "Integración con tu programa de contabilidad vía API"
+                        : "Integración API opcional (disponible en Empresa/PRO)"}
                     </li>
                   </ul>
                 </article>

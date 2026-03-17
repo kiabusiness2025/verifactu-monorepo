@@ -1,4 +1,5 @@
 import { normalizeCanonicalExpense } from '@/lib/expenses/canonical';
+import { Prisma } from '@verifactu/db';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = { tenantId };
+    const where: Prisma.ExpenseRecordWhereInput = { tenantId };
 
     if (search) {
       where.OR = [
@@ -60,9 +61,21 @@ export async function GET(request: NextRequest) {
     }
 
     if (deducible === 'true') {
-      where.NOT = [{ notes: { contains: 'TaxCategory:iva_no_deducible' } }];
+      where.NOT = [
+        {
+          OR: [
+            { taxCategory: 'iva_no_deducible' },
+            { notes: { contains: 'TaxCategory:iva_no_deducible' } },
+          ],
+        },
+      ];
     } else if (deducible === 'false') {
-      where.notes = { contains: 'TaxCategory:iva_no_deducible' };
+      where.AND = [
+        ...(Array.isArray(where.AND) ? where.AND : []),
+        {
+          OR: [{ taxCategory: 'iva_no_deducible' }, { notes: { contains: 'TaxCategory:iva_no_deducible' } }],
+        },
+      ];
     }
 
     const [expenses, total] = await Promise.all([
@@ -160,20 +173,21 @@ export async function POST(request: NextRequest) {
     const isDeductible = categories[0].is_deductible;
     const noteParts = [
       expenseInput.notes,
-      `DocType:${body?.docType || 'invoice'}`,
-      `TaxCategory:${body?.taxCategory || (isDeductible ? 'iva_deducible' : 'iva_no_deducible')}`,
-      `AEATConcept:${body?.aeatConcept || categoryName}`,
+      `DocType:${body?.docType || expenseInput.docType || 'other'}`,
+      `TaxCategory:${body?.taxCategory || expenseInput.taxCategory || (isDeductible ? 'iva_deducible' : 'iva_no_deducible')}`,
+      `AEATConcept:${body?.aeatConcept || expenseInput.canonicalV2.aeatConcept || categoryName}`,
       body?.aeatKey ? `AEATKey:${body.aeatKey}` : null,
+      expenseInput.warnings.length ? `Warnings:${expenseInput.warnings.join(',')}` : null,
       `Deducible:${isDeductible ? 'sí' : 'no'}`,
       `Origen:${expenseInput.source}`,
     ]
       .filter(Boolean)
       .join(' | ');
 
-    const expense = await prisma.expenseRecord.create({
-      data: {
+    const expenseData = {
         tenantId,
         status: 'received',
+        canonicalStatus: 'suggested',
         date: new Date(expenseInput.date),
         description: expenseInput.description,
         category: categoryName,
@@ -182,8 +196,19 @@ export async function POST(request: NextRequest) {
         supplierId: body?.supplierId || null,
         accountCode: body?.accountCode || null,
         reference: expenseInput.reference || null,
+        docType: body?.docType || expenseInput.docType || 'other',
+        taxCategory:
+          body?.taxCategory || expenseInput.taxCategory || (isDeductible ? 'iva_deducible' : 'iva_no_deducible'),
+        aeatConcept: body?.aeatConcept || expenseInput.canonicalV2.aeatConcept || categoryName,
+        aeatKey: body?.aeatKey || null,
+        warningsJson: expenseInput.warnings,
+        confidenceJson: expenseInput.confidence,
+        canonicalV2Json: expenseInput.canonicalV2,
         notes: noteParts || null,
-      },
+      };
+
+    const expense = await prisma.expenseRecord.create({
+      data: expenseData as never,
       include: { supplier: { select: { id: true, name: true } } },
     });
 

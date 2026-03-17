@@ -25,6 +25,9 @@ Configurar en **Project > Settings > Environment Variables**:
 - `GET /api/integrations/einforma/search?q=<texto>`
 - `GET /api/integrations/einforma/company?taxId=<CIF/NIF>`
 - `POST /api/integrations/einforma/enrich-tenant` (usa el tenant activo)
+- `GET /api/onboarding/einforma/search?q=<texto>` (busqueda en onboarding)
+- `GET /api/onboarding/einforma/company?einformaId=<id>&taxId=<CIF/NIF>` (detalle en onboarding)
+- `POST /api/onboarding/tenant` (alta tenant desde onboarding)
 - Admin: `GET /api/admin/einforma/profile?taxId=<CIF/NIF>`
   - Forzar refresh: `...&refresh=1`
 
@@ -33,11 +36,22 @@ Configurar en **Project > Settings > Environment Variables**:
 - **401/403**: credenciales invalidas o expiradas.
 - **429**: rate limit / creditos agotados.
 - **Timeouts**: revisar conectividad y latencia.
+- **Resultados vacios en onboarding**:
+  - `q` debe tener al menos 3 caracteres.
+  - El proveedor debe devolver `id` o `nif`; onboarding filtra items sin identificador.
+  - Verificar respuesta de `GET /api/onboarding/einforma/search`.
+- **Error al seleccionar empresa en onboarding**:
+  - Validar que se envian `einformaId` y `taxId` al endpoint de detalle.
+  - Probar manualmente `GET /api/onboarding/einforma/company?einformaId=<id>&taxId=<CIF/NIF>`.
+- **No crea tenant al guardar**:
+  - Revisar `POST /api/onboarding/tenant` (campos requeridos: `name`, `taxId`).
+  - Verificar limite de trial (accion `TRIAL_LIMIT_REACHED`, HTTP 409).
 
 ## Logs utiles
 
 - Logs de Vercel de `app` y `admin`.
 - Errores en `/api/integrations/einforma/*`.
+- Errores en `/api/onboarding/einforma/*` y `/api/onboarding/tenant`.
 
 ## Cache y consumo
 

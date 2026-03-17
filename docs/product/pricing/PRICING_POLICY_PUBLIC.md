@@ -16,6 +16,8 @@ La cuota base incluye:
 
 - Hasta **10 facturas emitidas al mes**.
 - Conciliación bancaria opcional: **0 movimientos** no tiene coste. Si activas conciliación y procesas movimientos, se aplica un tramo.
+- Todos los planes (**BÁSICO, PYME, Empresa y PRO**): exportación de libros oficiales (Excel) compatibles AEAT.
+- Planes **Empresa** y **PRO**: integración con tu programa de contabilidad vía API.
 
 La calculadora cubre hasta **1.000 facturas/mes** y **2.000 movimientos/mes**. Por encima de esos límites, ofrecemos presupuesto personalizado e integraciones avanzadas.
 

@@ -1,4 +1,5 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
+import { canUseAccountingIntegration } from '@/lib/billing/tenantPlan';
 import {
   appendSyncLog,
   getPendingOutbox,
@@ -6,7 +7,7 @@ import {
   markOutboxError,
   setIntegrationError,
   touchIntegrationSyncOk,
-} from '@/lib/integrations/holdedStore';
+} from '@/lib/integrations/accountingStore';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -15,6 +16,13 @@ export async function POST() {
   const auth = await requireTenantContext();
   if ('error' in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+  const enabled = await canUseAccountingIntegration(auth.tenantId);
+  if (!enabled) {
+    return NextResponse.json(
+      { error: 'La sincronización con programa contable vía API está disponible en Empresa y PRO.' },
+      { status: 403 }
+    );
   }
 
   const runId = `sync_${Date.now()}`;
@@ -25,7 +33,7 @@ export async function POST() {
 
   for (const item of pending) {
     try {
-      // Placeholder push: en Sprint 2 se reemplaza por adapter real Holded.
+      // Placeholder push: en Sprint 2 se reemplaza por adapter real del programa contable API.
       await markOutboxDone(item.id);
       await appendSyncLog({
         tenantId: auth.tenantId,

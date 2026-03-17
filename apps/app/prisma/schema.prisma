@@ -20,6 +20,7 @@ model Tenant {
   subscriptions      Subscription[]
   profile            TenantProfile?
   invoices           Invoice[]
+  quotes             Quote[]
   invoiceLines       InvoiceLine[]
   payments           Payment[]
   customers          Customer[]
@@ -36,6 +37,12 @@ model TenantProfile {
   tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   source            String    @default("manual")
   sourceId          String?   @map("source_id")
+  taxId             String?   @map("tax_id")
+  legalName         String?   @map("legal_name")
+  tradeName         String?   @map("trade_name")
+  fiscalAddress     Json?     @map("fiscal_address")
+  taxRegime         String?   @map("tax_regime")
+  defaultCurrency   String    @default("EUR") @map("default_currency")
   cnae              String?
   incorporationDate DateTime? @map("incorporation_date") @db.Date
   address           String?
@@ -140,6 +147,9 @@ model Invoice {
   verifactuStatus String?  @map("verifactu_status") // 'pending','sent','validated','error'
   verifactuQr     String?  @map("verifactu_qr") // Código QR en base64 o URL
   verifactuHash   String?  @map("verifactu_hash") // Hash/huella digital SHA-256
+  verifactuSubmissionId String? @map("verifactu_submission_id")
+  verifactuLastError String? @map("verifactu_last_error")
+  verifactuPayloadHash String? @map("verifactu_payload_hash")
   createdBy       String   @map("created_by") @db.Uuid
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -153,6 +163,32 @@ model Invoice {
   @@index([tenantId])
   @@index([customerId])
   @@map("invoices")
+}
+
+model Quote {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  number     String
+  status     String    @default("draft")
+  issueDate  DateTime  @map("issue_date") @db.Date
+  validUntil DateTime? @map("valid_until") @db.Date
+  customerId String    @map("customer_id") @db.Uuid
+  currency   String    @default("EUR") @db.Char(3)
+  lines      Json
+  totals     Json
+  notes      String?
+  source     String?   @default("local")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, issueDate])
+  @@index([tenantId, status])
+  @@index([customerId])
+  @@unique([tenantId, number])
+  @@map("quotes")
 }
 
 model Payment {
@@ -194,6 +230,7 @@ model Customer {
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   invoices Invoice[]
+  quotes   Quote[]
 
   @@index([tenantId])
   @@index([nif])
@@ -288,6 +325,9 @@ model ExpenseRecord {
   tenantId    String   @map("tenant_id") @db.Uuid
   supplierId  String?  @map("supplier_id") @db.Uuid // Opcional si es gasto sin proveedor
   status      String   @default("received")
+  canonicalStatus String @default("draft") @map("canonical_status")
+  confirmedAt DateTime? @map("confirmed_at") @db.Timestamptz
+  confirmedByUserId String? @map("confirmed_by_user_id")
   date        DateTime @map("date") @db.Date
   description String
   category    String // "Suministros", "Viajes", "Teléfono", "Servicios", etc
@@ -295,6 +335,14 @@ model ExpenseRecord {
   taxRate     Decimal  @default(0.21) @map("tax_rate")
   accountCode String?  @map("account_code") // Código contable (6xx para gastos)
   reference   String? // Número documento, comprobante, etc
+  docType     String   @default("invoice") @map("doc_type")
+  taxCategory String   @default("iva_deducible") @map("tax_category")
+  aeatConcept String?  @map("aeat_concept")
+  aeatKey     String?  @map("aeat_key")
+  warningsJson Json?   @map("warnings_json")
+  confidenceJson Json? @map("confidence_json")
+  canonicalV2Json Json? @map("canonical_v2_json")
+  lastConfirmedSnapshotJson Json? @map("last_confirmed_snapshot_json")
   notes       String?
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -306,6 +354,7 @@ model ExpenseRecord {
   @@index([supplierId])
   @@index([date])
   @@index([category])
+  @@index([tenantId, canonicalStatus])
   @@map("expense_records")
 }
 
@@ -369,4 +418,3 @@ model IsaakConversationShare {
   @@index([expiresAt])
   @@map("isaak_conversation_shares")
 }
-

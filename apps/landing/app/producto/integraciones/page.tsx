@@ -10,18 +10,18 @@ export const metadata: Metadata = {
 
 const integrations = [
   {
-    title: "Holded",
-    description: "Conecta API Key por tenant y sincroniza clientes, productos, facturas y gastos.",
+    title: "Programa contable vía API",
+    description: "Conecta API Key por tenant y sincroniza clientes, productos, presupuestos, facturas y gastos.",
     icon: Database,
   },
   {
     title: "Bancos",
-    description: "Lectura de movimientos desde Holded para conciliación guiada por Isaak.",
+    description: "Lectura de movimientos desde tu integración contable para conciliación guiada por Isaak.",
     icon: Building,
   },
   {
     title: "ERP y contabilidad",
-    description: "Verifactu manda en operación diaria; Holded mantiene contabilidad formal.",
+    description: "Verifactu manda en operación diaria y se integra con tu stack contable cuando activas API.",
     icon: Database,
   },
   {
@@ -57,8 +57,8 @@ export default function IntegracionesPage() {
               Integraciones para crecer sin fricción
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Verifactu.business funciona como capa empresarial y Holded como libro contable.
-              Isaak ordena el flujo y te propone acciones sin exponer menús contables complejos.
+              Verifactu.business funciona como capa empresarial y se conecta con tu programa de
+              contabilidad vía API. Isaak ordena el flujo y te propone acciones sin exponer menús contables complejos.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -135,5 +135,4 @@ export default function IntegracionesPage() {
     </main>
   );
 }
-
 

@@ -50,6 +50,22 @@ export function InvoicesManager() {
     }
   };
 
+  const handleIssue = async (id: string) => {
+    try {
+      const response = await fetch(`/api/invoices/${id}/issue`, { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        console.error('Error issuing invoice:', data?.error || response.statusText);
+        return;
+      }
+      if (data?.invoice?.id) {
+        setInvoices((prev) => prev.map((inv) => (inv.id === data.invoice.id ? data.invoice : inv)));
+      }
+    } catch (error) {
+      console.error('Error issuing invoice:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -81,6 +97,7 @@ export function InvoicesManager() {
           pagination={pagination}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onIssue={handleIssue}
           onPageChange={(page: number) => setPagination({ ...pagination, page })}
         />
       )}

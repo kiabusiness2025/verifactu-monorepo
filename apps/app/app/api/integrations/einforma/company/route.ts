@@ -42,6 +42,10 @@ function addDays(days: number) {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getSessionPayload();
@@ -119,40 +123,83 @@ export async function GET(req: Request) {
         tenantProfile.einformaTaxIdVerified &&
         withinDays(tenantProfile.einformaLastSyncAt, 30)
       ) {
-        const raw = tenantProfile.einformaRaw as any;
+        const raw = asRecord(tenantProfile.einformaRaw);
+        const rawEmpresa = asRecord(raw.empresa);
         const rawNif = safeString(
-          raw?.empresa?.identificativo ??
-            raw?.empresa?.nif ??
-            raw?.empresa?.cif ??
-            raw?.nif ??
-            raw?.cif
+          (typeof rawEmpresa.identificativo === 'string' ? rawEmpresa.identificativo : undefined) ??
+            (typeof rawEmpresa.nif === 'string' ? rawEmpresa.nif : undefined) ??
+            (typeof rawEmpresa.cif === 'string' ? rawEmpresa.cif : undefined) ??
+            (typeof raw.nif === 'string' ? raw.nif : undefined) ??
+            (typeof raw.cif === 'string' ? raw.cif : undefined)
         );
         const sourceId = safeString(tenantProfile.sourceId);
         if (rawNif === safeString(taxId) || sourceId === safeString(taxId)) {
           const profile = {
-            name: raw?.empresa?.denominacion ?? raw?.denominacion ?? '',
-            legalName: raw?.empresa?.razonSocial ?? raw?.razonSocial,
-            tradeName: raw?.empresa?.nombreComercial ?? raw?.nombreComercial,
+            name:
+              (typeof rawEmpresa.denominacion === 'string' ? rawEmpresa.denominacion : undefined) ??
+              (typeof raw.denominacion === 'string' ? raw.denominacion : undefined) ??
+              '',
+            legalName:
+              (typeof rawEmpresa.razonSocial === 'string' ? rawEmpresa.razonSocial : undefined) ??
+              (typeof raw.razonSocial === 'string' ? raw.razonSocial : undefined),
+            tradeName:
+              (typeof rawEmpresa.nombreComercial === 'string' ? rawEmpresa.nombreComercial : undefined) ??
+              (typeof raw.nombreComercial === 'string' ? raw.nombreComercial : undefined),
             nif: rawNif || taxId,
-            cnae: tenantProfile.cnae ?? raw?.empresa?.cnae ?? raw?.cnae,
-            legalForm: tenantProfile.legalForm ?? raw?.empresa?.formaJuridica ?? raw?.formaJuridica,
-            status: tenantProfile.status ?? raw?.empresa?.situacion ?? raw?.situacion,
-            website: tenantProfile.website ?? raw?.empresa?.web ?? raw?.web,
+            cnae:
+              tenantProfile.cnae ??
+              (typeof rawEmpresa.cnae === 'string' ? rawEmpresa.cnae : undefined) ??
+              (typeof raw.cnae === 'string' ? raw.cnae : undefined),
+            legalForm:
+              tenantProfile.legalForm ??
+              (typeof rawEmpresa.formaJuridica === 'string' ? rawEmpresa.formaJuridica : undefined) ??
+              (typeof raw.formaJuridica === 'string' ? raw.formaJuridica : undefined),
+            status:
+              tenantProfile.status ??
+              (typeof rawEmpresa.situacion === 'string' ? rawEmpresa.situacion : undefined) ??
+              (typeof raw.situacion === 'string' ? raw.situacion : undefined),
+            website:
+              tenantProfile.website ??
+              (typeof rawEmpresa.web === 'string' ? rawEmpresa.web : undefined) ??
+              (typeof raw.web === 'string' ? raw.web : undefined),
             capitalSocial:
-              tenantProfile.capitalSocial ?? raw?.empresa?.capitalSocial ?? raw?.capitalSocial,
+              tenantProfile.capitalSocial ??
+              (typeof rawEmpresa.capitalSocial === 'number' ? rawEmpresa.capitalSocial : undefined) ??
+              (typeof raw.capitalSocial === 'number' ? raw.capitalSocial : undefined),
             constitutionDate: tenantProfile.incorporationDate
               ? tenantProfile.incorporationDate.toISOString().slice(0, 10)
-              : (raw?.empresa?.fechaConstitucion ?? raw?.fechaConstitucion),
+              : ((typeof rawEmpresa.fechaConstitucion === 'string'
+                  ? rawEmpresa.fechaConstitucion
+                  : undefined) ??
+                (typeof raw.fechaConstitucion === 'string' ? raw.fechaConstitucion : undefined)),
             address: {
               street:
-                tenantProfile.address ?? raw?.empresa?.domicilioSocial ?? raw?.domicilioSocial,
-              zip: tenantProfile.postalCode ?? raw?.empresa?.cp ?? raw?.cp,
-              city: tenantProfile.city ?? raw?.empresa?.localidad ?? raw?.localidad,
-              province: tenantProfile.province ?? raw?.empresa?.provincia ?? raw?.provincia,
-              country: tenantProfile.country ?? raw?.empresa?.country ?? raw?.country ?? 'ES',
+                tenantProfile.address ??
+                (typeof rawEmpresa.domicilioSocial === 'string' ? rawEmpresa.domicilioSocial : undefined) ??
+                (typeof raw.domicilioSocial === 'string' ? raw.domicilioSocial : undefined),
+              zip:
+                tenantProfile.postalCode ??
+                (typeof rawEmpresa.cp === 'string' ? rawEmpresa.cp : undefined) ??
+                (typeof raw.cp === 'string' ? raw.cp : undefined),
+              city:
+                tenantProfile.city ??
+                (typeof rawEmpresa.localidad === 'string' ? rawEmpresa.localidad : undefined) ??
+                (typeof raw.localidad === 'string' ? raw.localidad : undefined),
+              province:
+                tenantProfile.province ??
+                (typeof rawEmpresa.provincia === 'string' ? rawEmpresa.provincia : undefined) ??
+                (typeof raw.provincia === 'string' ? raw.provincia : undefined),
+              country:
+                tenantProfile.country ??
+                (typeof rawEmpresa.country === 'string' ? rawEmpresa.country : undefined) ??
+                (typeof raw.country === 'string' ? raw.country : undefined) ??
+                'ES',
             },
             sourceId:
-              tenantProfile.sourceId ?? raw?.empresa?.identificativo ?? raw?.empresa?.id ?? raw?.id,
+              tenantProfile.sourceId ??
+              (typeof rawEmpresa.identificativo === 'string' ? rawEmpresa.identificativo : undefined) ??
+              (typeof rawEmpresa.id === 'string' ? rawEmpresa.id : undefined) ??
+              (typeof raw.id === 'string' ? raw.id : undefined),
             raw,
           };
 

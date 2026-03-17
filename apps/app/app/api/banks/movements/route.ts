@@ -15,10 +15,10 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     items: [],
-    source: 'holded',
+    source: 'accounting_api',
     status,
     from,
     to,
-    note: 'Sprint 3: pull real de movimientos desde Holded Treasury/Payments',
+    note: 'Sprint 3: pull real de movimientos desde integración contable vía API',
   });
 }

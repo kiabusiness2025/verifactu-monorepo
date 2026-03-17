@@ -1,5 +1,6 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
-import { createSyncOutbox } from '@/lib/integrations/holdedStore';
+import { normalizeCanonicalExpense } from '@/lib/expenses/canonical';
+import { createSyncOutbox } from '@/lib/integrations/accountingStore';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -18,29 +19,59 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
   }
 
-  const docType = typeof body?.docType === 'string' ? body.docType : 'invoice';
-  const taxCategory = typeof body?.taxCategory === 'string' ? body.taxCategory : 'iva_deducible';
-  const aeatConcept = typeof body?.aeatConcept === 'string' ? body.aeatConcept : expense.category;
-  const aeatKey = typeof body?.aeatKey === 'string' ? body.aeatKey : '';
+  const docType = typeof body?.docType === 'string' ? body.docType : expense.docType;
+  const taxCategory = typeof body?.taxCategory === 'string' ? body.taxCategory : expense.taxCategory;
+  const aeatConcept = typeof body?.aeatConcept === 'string' ? body.aeatConcept : expense.aeatConcept || expense.category;
+  const aeatKey = typeof body?.aeatKey === 'string' ? body.aeatKey : expense.aeatKey || '';
+  const canonical = normalizeCanonicalExpense({
+    tenantId: auth.tenantId,
+    issueDate: expense.date.toISOString(),
+    description: expense.description,
+    amount: Number(expense.amount),
+    taxRate: Number(expense.taxRate),
+    categoryName: expense.category,
+    reference: expense.reference || undefined,
+    docType,
+    taxCategory,
+    aeatConcept,
+    aeatKey: aeatKey || null,
+    source: 'isaak',
+  });
 
   const notes = [
     expense.notes || null,
-    `DocType:${docType}`,
-    `TaxCategory:${taxCategory}`,
-    `AEATConcept:${aeatConcept}`,
+    `DocType:${canonical.docType}`,
+    `TaxCategory:${canonical.taxCategory}`,
+    `AEATConcept:${canonical.canonicalV2.aeatConcept || aeatConcept}`,
     aeatKey ? `AEATKey:${aeatKey}` : null,
+    canonical.warnings.length ? `Warnings:${canonical.warnings.join(',')}` : null,
     'ConfirmedByUser:true',
   ]
     .filter(Boolean)
     .join(' | ');
 
+  const updateData = {
+    status: 'confirmed',
+    canonicalStatus: 'confirmed',
+    confirmedAt: new Date(),
+    confirmedByUserId: auth.session.uid,
+    docType: canonical.docType,
+    taxCategory: canonical.taxCategory,
+    aeatConcept: canonical.canonicalV2.aeatConcept || aeatConcept,
+    aeatKey: canonical.canonicalV2.aeatKey || null,
+    warningsJson: canonical.warnings,
+    confidenceJson: canonical.confidence,
+    canonicalV2Json: canonical.canonicalV2,
+    lastConfirmedSnapshotJson: canonical.canonicalV2,
+    notes,
+  };
+
   const updated = await prisma.expenseRecord.update({
     where: { id: expense.id },
-    data: {
-      status: 'confirmed',
-      notes,
-    },
+    data: updateData as never,
   });
+
+  const updatedWithMeta = updated as typeof updated & { canonicalStatus?: string | null };
 
   await createSyncOutbox({
     tenantId: auth.tenantId,
@@ -54,11 +85,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       date: updated.date,
       category: updated.category,
       status: updated.status,
-      docType,
-      taxCategory,
-      aeatConcept,
-      aeatKey,
-    },
+      canonicalStatus: updatedWithMeta.canonicalStatus || 'confirmed',
+      docType: canonical.docType,
+      taxCategory: canonical.taxCategory,
+      aeatConcept: canonical.canonicalV2.aeatConcept || aeatConcept,
+      aeatKey: canonical.canonicalV2.aeatKey || null,
+      canonicalV2: canonical.canonicalV2,
+      warnings: canonical.warnings,
+    } as const,
   });
 
   return NextResponse.json({ ok: true, expense: updated });

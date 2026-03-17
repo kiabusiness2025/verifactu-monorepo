@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { normalizeCanonicalExpense } from '@/lib/expenses/canonical';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -69,6 +70,39 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const body = await request.json();
     const { date, description, category, amount, taxRate, supplierId, accountCode, reference, notes } = body;
+    const docType = typeof body?.docType === 'string' ? body.docType : existing.docType;
+    const taxCategory = typeof body?.taxCategory === 'string' ? body.taxCategory : existing.taxCategory;
+    const aeatConcept = typeof body?.aeatConcept === 'string' ? body.aeatConcept : existing.aeatConcept || category || existing.category;
+    const aeatKey = typeof body?.aeatKey === 'string' ? body.aeatKey : existing.aeatKey;
+
+    const willRecalculateCanonical = [
+      date,
+      description,
+      amount,
+      taxRate,
+      reference,
+      body?.docType,
+      body?.taxCategory,
+      body?.aeatConcept,
+      body?.aeatKey,
+    ].some((value) => value !== undefined);
+
+    const canonical = willRecalculateCanonical
+      ? normalizeCanonicalExpense({
+          tenantId,
+          issueDate: date || existing.date.toISOString(),
+          description: description || existing.description,
+          amount: amount !== undefined ? Number(amount) : Number(existing.amount),
+          taxRate: taxRate !== undefined ? Number(taxRate) : Number(existing.taxRate),
+          categoryName: category || existing.category,
+          reference: reference !== undefined ? reference : existing.reference || undefined,
+          docType,
+          taxCategory,
+          aeatConcept,
+          aeatKey,
+          source: 'manual',
+        })
+      : null;
 
     // Verify supplier ownership if provided
     if (supplierId && supplierId !== existing.supplierId) {
@@ -80,19 +114,40 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
+    const existingWithMeta = existing as typeof existing & {
+      canonicalStatus?: string | null;
+      confirmedAt?: Date | null;
+      confirmedByUserId?: string | null;
+    };
+    const existingCanonicalStatus = existingWithMeta.canonicalStatus ?? undefined;
+    const expenseData = {
+      ...(date && { date: new Date(date) }),
+      ...(description && { description }),
+      ...(category && { category }),
+      ...(amount !== undefined && { amount: parseFloat(amount) }),
+      ...(taxRate !== undefined && { taxRate: parseFloat(taxRate) }),
+      ...(supplierId !== undefined && { supplierId }),
+      ...(accountCode !== undefined && { accountCode }),
+      ...(reference !== undefined && { reference }),
+      ...(notes !== undefined && { notes }),
+      ...(body?.docType !== undefined && { docType }),
+      ...(body?.taxCategory !== undefined && { taxCategory }),
+      ...(body?.aeatConcept !== undefined && { aeatConcept }),
+      ...(body?.aeatKey !== undefined && { aeatKey }),
+      ...(canonical && {
+        canonicalStatus: existingCanonicalStatus === 'confirmed' ? 'suggested' : existingCanonicalStatus,
+        confirmedAt: existingCanonicalStatus === 'confirmed' ? null : existingWithMeta.confirmedAt,
+        confirmedByUserId:
+          existingCanonicalStatus === 'confirmed' ? null : existingWithMeta.confirmedByUserId,
+        warningsJson: canonical.warnings,
+        confidenceJson: canonical.confidence,
+        canonicalV2Json: canonical.canonicalV2,
+      }),
+    };
+
     const expense = await prisma.expenseRecord.update({
       where: { id: id },
-      data: {
-        ...(date && { date: new Date(date) }),
-        ...(description && { description }),
-        ...(category && { category }),
-        ...(amount !== undefined && { amount: parseFloat(amount) }),
-        ...(taxRate !== undefined && { taxRate: parseFloat(taxRate) }),
-        ...(supplierId !== undefined && { supplierId }),
-        ...(accountCode !== undefined && { accountCode }),
-        ...(reference !== undefined && { reference }),
-        ...(notes !== undefined && { notes }),
-      },
+      data: expenseData as never,
       include: { supplier: { select: { id: true, name: true } } },
     });
 

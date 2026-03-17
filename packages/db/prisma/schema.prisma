@@ -339,6 +339,7 @@ model Tenant {
   tenantSubscriptions TenantSubscription[]
   profile             TenantProfile?
   invoices            Invoice[]
+  quotes              Quote[]
   invoiceLines        InvoiceLine[]
   payments            Payment[]
   customers           Customer[]
@@ -347,6 +348,7 @@ model Tenant {
   expenses            ExpenseRecord[]
   integrations        TenantIntegration[]
   integrationMaps     IntegrationMap[]
+  syncConflicts       SyncConflict[]
   syncOutboxItems     SyncOutbox[]
   syncLogs            SyncLog[]
   isaakConversations  IsaakConversation[]
@@ -362,6 +364,12 @@ model TenantProfile {
 
   source            String    @default("manual")
   sourceId          String?   @map("source_id")
+  taxId             String?   @map("tax_id")
+  legalName         String?   @map("legal_name")
+  tradeName         String?   @map("trade_name")
+  fiscalAddress     Json?     @map("fiscal_address")
+  taxRegime         String?   @map("tax_regime")
+  defaultCurrency   String    @default("EUR") @map("default_currency")
   einformaLastSyncAt DateTime? @map("einforma_last_sync_at") @db.Timestamptz
   einformaTaxIdVerified Boolean? @map("einforma_tax_id_verified")
   einformaRaw       Json?     @map("einforma_raw")
@@ -530,6 +538,9 @@ model Invoice {
   verifactuStatus String?  @map("verifactu_status")
   verifactuQr     String?  @map("verifactu_qr")
   verifactuHash   String?  @map("verifactu_hash")
+  verifactuSubmissionId String? @map("verifactu_submission_id")
+  verifactuLastError String? @map("verifactu_last_error")
+  verifactuPayloadHash String? @map("verifactu_payload_hash")
   createdBy       String   @map("created_by")
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -543,6 +554,32 @@ model Invoice {
   @@index([tenantId])
   @@index([customerId])
   @@map("invoices")
+}
+
+model Quote {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  number     String
+  status     String    @default("draft")
+  issueDate  DateTime  @map("issue_date") @db.Date
+  validUntil DateTime? @map("valid_until") @db.Date
+  customerId String    @map("customer_id") @db.Uuid
+  currency   String    @default("EUR") @db.Char(3)
+  lines      Json
+  totals     Json
+  notes      String?
+  source     String?   @default("local")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, issueDate])
+  @@index([tenantId, status])
+  @@index([customerId])
+  @@unique([tenantId, number])
+  @@map("quotes")
 }
 
 model Payment {
@@ -582,6 +619,7 @@ model Customer {
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   invoices Invoice[]
+  quotes   Quote[]
 
   @@index([tenantId])
   @@index([nif])
@@ -668,6 +706,9 @@ model ExpenseRecord {
   tenantId    String   @map("tenant_id") @db.Uuid
   supplierId  String?  @map("supplier_id") @db.Uuid
   status      String   @default("received")
+  canonicalStatus String @default("draft") @map("canonical_status")
+  confirmedAt DateTime? @map("confirmed_at") @db.Timestamptz
+  confirmedByUserId String? @map("confirmed_by_user_id")
   date        DateTime @map("date") @db.Date
   description String
   category    String
@@ -679,6 +720,10 @@ model ExpenseRecord {
   taxCategory String   @default("iva_deducible") @map("tax_category")
   aeatConcept String?  @map("aeat_concept")
   aeatKey     String?  @map("aeat_key")
+  warningsJson Json?   @map("warnings_json")
+  confidenceJson Json? @map("confidence_json")
+  canonicalV2Json Json? @map("canonical_v2_json")
+  lastConfirmedSnapshotJson Json? @map("last_confirmed_snapshot_json")
   notes       String?
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -690,6 +735,7 @@ model ExpenseRecord {
   @@index([supplierId])
   @@index([date])
   @@index([category])
+  @@index([tenantId, canonicalStatus])
   @@map("expense_records")
 }
 
@@ -720,6 +766,8 @@ model IntegrationMap {
   remoteId     String    @map("remote_id")
   hash         String?
   lastPushedAt DateTime? @map("last_pushed_at") @db.Timestamptz
+  lastPulledAt DateTime? @map("last_pulled_at") @db.Timestamptz
+  lastRemoteUpdatedAt DateTime? @map("last_remote_updated_at") @db.Timestamptz
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -729,6 +777,29 @@ model IntegrationMap {
   @@unique([tenantId, provider, entityType, remoteId])
   @@index([tenantId, provider, entityType])
   @@map("integration_maps")
+}
+
+model SyncConflict {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  provider   String
+  entityType String   @map("entity_type")
+  localId    String?  @map("local_id")
+  remoteId   String?  @map("remote_id")
+  reason     String
+  localData  Json     @map("local_data")
+  remoteData Json     @map("remote_data")
+  status     String   @default("open")
+  resolvedBy String?  @map("resolved_by")
+  resolution String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, provider, entityType, status])
+  @@index([tenantId, createdAt])
+  @@map("sync_conflicts")
 }
 
 model SyncOutbox {

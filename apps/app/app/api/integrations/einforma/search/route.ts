@@ -14,6 +14,19 @@ function addDays(days: number) {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
+function extractCachedItems(normalized: unknown, raw: unknown): unknown[] {
+  if (Array.isArray(normalized)) return normalized;
+  const normalizedItems = asRecord(normalized).items;
+  if (Array.isArray(normalizedItems)) return normalizedItems;
+  const rawItems = asRecord(raw).items;
+  if (Array.isArray(rawItems)) return rawItems;
+  return Array.isArray(raw) ? raw : [];
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getSessionPayload();
@@ -35,9 +48,7 @@ export async function GET(req: Request) {
     });
 
     if (lookup && lookup.expiresAt > new Date()) {
-      const cachedItems = Array.isArray(lookup.normalized)
-        ? lookup.normalized
-        : ((lookup.normalized as any)?.items ?? (lookup.raw as any)?.items ?? lookup.raw ?? []);
+      const cachedItems = extractCachedItems(lookup.normalized, lookup.raw);
       return NextResponse.json({
         items: cachedItems,
         cached: true,

@@ -1,4 +1,4 @@
-import { getAppUrl, getLandingUrl, signSessionToken, verifySessionTokenFromEnv } from '@verifactu/utils';
+import { getAppUrl, getLandingUrl, signSessionToken, verifySessionToken } from '@verifactu/utils';
 import { createHash } from 'crypto';
 
 export const MCP_RESOURCE_PATH = '/api/mcp/holded';
@@ -125,10 +125,7 @@ export async function mintAuthorizationCode(input: AuthorizationCodePayload) {
 }
 
 export async function verifyAuthorizationCode(code: string) {
-  const payload = await verifySessionTokenFromEnv(code, {
-    SESSION_SECRET: readOAuthSecret(),
-    SESSION_SECRET_PREVIOUS: '',
-  });
+  const payload = await verifySessionToken(code, readOAuthSecret());
 
   if (!payload || payload.type !== 'mcp_auth_code') return null;
   return payload as AuthorizationCodePayload & { exp?: number; iat?: number };
@@ -143,10 +140,7 @@ export async function mintAccessToken(input: AccessTokenPayload) {
 }
 
 export async function verifyAccessToken(token: string) {
-  const payload = await verifySessionTokenFromEnv(token, {
-    SESSION_SECRET: readOAuthSecret(),
-    SESSION_SECRET_PREVIOUS: '',
-  });
+  const payload = await verifySessionToken(token, readOAuthSecret());
 
   if (!payload || payload.type !== 'mcp_access_token') return null;
   return payload as AccessTokenPayload & { exp?: number; iat?: number };

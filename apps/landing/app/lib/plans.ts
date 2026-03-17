@@ -24,7 +24,7 @@ export const PLAN_LIST: PlanInfo[] = [
     priceEur: 19,
     includedInvoices: INCLUDED_BY_PLAN.basico,
     audience: "Autónomos y microempresas",
-    includes: ["Export AEAT (Excel)", "Isaak", "Emisión y registro"],
+    includes: ["Exportación de libros oficiales Excel compatibles AEAT", "Isaak", "Emisión y registro"],
     hasAccountingIntegration: false,
   },
   {
@@ -33,7 +33,11 @@ export const PLAN_LIST: PlanInfo[] = [
     priceEur: 39,
     includedInvoices: INCLUDED_BY_PLAN.pyme,
     audience: "Negocios con más volumen",
-    includes: ["Export AEAT (Excel)", "Control diario", "Emisión y registro"],
+    includes: [
+      "Exportación de libros oficiales Excel compatibles AEAT",
+      "Control diario",
+      "Emisión y registro",
+    ],
     hasAccountingIntegration: false,
   },
   {
@@ -42,7 +46,11 @@ export const PLAN_LIST: PlanInfo[] = [
     priceEur: 69,
     includedInvoices: INCLUDED_BY_PLAN.empresa,
     audience: "Equipos con asesoría y procesos",
-    includes: ["Export AEAT (Excel)", "Control diario", "Emisión y registro"],
+    includes: [
+      "Exportación de libros oficiales Excel compatibles AEAT",
+      "Control diario",
+      "Integración con tu programa de contabilidad vía API",
+    ],
     hasAccountingIntegration: true,
   },
   {
@@ -52,8 +60,9 @@ export const PLAN_LIST: PlanInfo[] = [
     includedInvoices: INCLUDED_BY_PLAN.pro,
     audience: "Operaciones de alto volumen",
     includes: [
-      "Export AEAT (Excel)",
+      "Exportación de libros oficiales Excel compatibles AEAT",
       "Control diario",
+      "Integración con tu programa de contabilidad vía API",
       "Onboarding y soporte prioritario",
     ],
     hasAccountingIntegration: true,

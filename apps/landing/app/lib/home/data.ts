@@ -36,7 +36,7 @@ export const PRICING_PLANS: Plan[] = [
     users: "Autónomos y microempresas",
     features: [
       "Hasta 10 facturas/mes incluidas",
-      "Export AEAT (Excel)",
+      "Exportación de libros oficiales Excel compatibles AEAT",
       "Emisión y registro",
       "Isaak",
     ],
@@ -50,7 +50,7 @@ export const PRICING_PLANS: Plan[] = [
     users: "Negocios con más volumen",
     features: [
       "Hasta 100 facturas/mes incluidas",
-      "Export AEAT (Excel)",
+      "Exportación de libros oficiales Excel compatibles AEAT",
       "Control diario",
       "Emisión y registro",
     ],
@@ -65,9 +65,9 @@ export const PRICING_PLANS: Plan[] = [
     users: "Equipos con asesoría y procesos",
     features: [
       "Hasta 300 facturas/mes incluidas",
-      "Export AEAT (Excel)",
+      "Exportación de libros oficiales Excel compatibles AEAT",
       "Control diario",
-      "Integración contable (si tiene API)",
+      "Integración con tu programa de contabilidad vía API",
     ],
     checkoutMonthly: "/#planes",
     checkoutYearly: "/#planes",
@@ -79,8 +79,9 @@ export const PRICING_PLANS: Plan[] = [
     users: "Operaciones de alto volumen",
     features: [
       "Hasta 1.000 facturas/mes incluidas",
-      "Export AEAT (Excel)",
+      "Exportación de libros oficiales Excel compatibles AEAT",
       "Control diario",
+      "Integración con tu programa de contabilidad vía API",
       "Onboarding y soporte prioritario",
     ],
     checkoutMonthly: "/#planes",

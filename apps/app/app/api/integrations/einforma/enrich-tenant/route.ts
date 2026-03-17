@@ -65,6 +65,19 @@ export async function POST(req: Request) {
         tenantId: resolved.tenantId,
         source: 'einforma',
         sourceId: profile.sourceId ?? taxId,
+        taxId,
+        legalName: profile.legalName || profile.name || undefined,
+        tradeName: profile.name || profile.legalName || undefined,
+        fiscalAddress: profile.address
+          ? {
+              address: profile.address.street ?? null,
+              city: cityParts.city ?? null,
+              postalCode: cityParts.postalCode ?? null,
+              province: profile.address.province ?? null,
+              country: profile.address.country ?? 'ES',
+            }
+          : undefined,
+        defaultCurrency: 'EUR',
         cnae: profile.cnae || undefined,
         cnaeCode: cnaeParts.code,
         cnaeText: cnaeParts.text,
@@ -84,10 +97,23 @@ export async function POST(req: Request) {
         einformaLastSyncAt: new Date(),
         einformaTaxIdVerified: verified,
         einformaRaw: profile.raw ?? undefined,
-      },
+      } as never,
       update: {
         source: 'einforma',
         sourceId: profile.sourceId ?? taxId,
+        taxId,
+        legalName: profile.legalName || profile.name || undefined,
+        tradeName: profile.name || profile.legalName || undefined,
+        fiscalAddress: profile.address
+          ? {
+              address: profile.address.street ?? null,
+              city: cityParts.city ?? null,
+              postalCode: cityParts.postalCode ?? null,
+              province: profile.address.province ?? null,
+              country: profile.address.country ?? 'ES',
+            }
+          : undefined,
+        defaultCurrency: 'EUR',
         cnae: profile.cnae || undefined,
         cnaeCode: cnaeParts.code,
         cnaeText: cnaeParts.text,
@@ -107,7 +133,7 @@ export async function POST(req: Request) {
         einformaLastSyncAt: new Date(),
         einformaTaxIdVerified: verified,
         einformaRaw: profile.raw ?? undefined,
-      },
+      } as never,
     });
 
     const normalized = {

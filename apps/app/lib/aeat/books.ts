@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { Decimal } from '@prisma/client/runtime/library';
+import type { ExpenseCanonicalV2 } from '@verifactu/utils/expenses/canonical';
 
 type SalesRow = {
   fecha: string;
@@ -36,6 +37,31 @@ function toNum(value: Decimal | number | null | undefined): number {
 
 function toIsoDate(value: Date): string {
   return value.toISOString().slice(0, 10);
+}
+
+const EXPENSE_CANONICAL_MIGRATION_CUTOFF = new Date('2026-03-02T00:00:00.000Z');
+
+function parseLegacyMeta(notes: string) {
+  return {
+    docType: /DocType:([^|]+)/i.exec(notes)?.[1]?.trim() || 'invoice',
+    taxCategory: /TaxCategory:([^|]+)/i.exec(notes)?.[1]?.trim() || 'iva_deducible',
+    aeatConcept: /AEATConcept:([^|]+)/i.exec(notes)?.[1]?.trim() || '',
+    aeatKey: /AEATKey:([^|]+)/i.exec(notes)?.[1]?.trim() || '',
+  };
+}
+
+function readCanonicalV2(json: unknown): ExpenseCanonicalV2 | null {
+  if (!json || typeof json !== 'object') return null;
+  const candidate = json as Partial<ExpenseCanonicalV2>;
+  if (
+    typeof candidate.issueDate === 'string' &&
+    typeof candidate.totalAmount === 'number' &&
+    typeof candidate.docType === 'string' &&
+    typeof candidate.taxCategory === 'string'
+  ) {
+    return candidate as ExpenseCanonicalV2;
+  }
+  return null;
 }
 
 export async function getSalesBookRows(tenantId: string, from: Date, to: Date): Promise<SalesRow[]> {
@@ -82,17 +108,40 @@ export async function getPurchasesBookRows(tenantId: string, from: Date, to: Dat
     orderBy: { date: 'asc' },
   });
 
-  return expenses.map((expense) => {
+  return expenses
+    .filter((expense) => {
+      const withMeta = expense as typeof expense & { canonicalStatus?: string | null };
+      const canonicalStatus = withMeta.canonicalStatus ?? undefined;
+      if (!canonicalStatus) {
+        return expense.createdAt < EXPENSE_CANONICAL_MIGRATION_CUTOFF;
+      }
+      return canonicalStatus === 'confirmed';
+    })
+    .map((expense) => {
     const total = toNum(expense.amount);
-    const taxRate = toNum(expense.taxRate);
-    const baseRaw = taxRate > 0 ? total / (1 + taxRate) : total;
-    const taxRaw = total - baseRaw;
+    const legacy = parseLegacyMeta(expense.notes || '');
+    const withMeta = expense as typeof expense & { canonicalV2Json?: unknown };
+    const canonical = readCanonicalV2(withMeta.canonicalV2Json);
 
-    const notes = expense.notes || '';
-    const docType = /DocType:([^|]+)/i.exec(notes)?.[1]?.trim() || 'invoice';
-    const taxCategory = /TaxCategory:([^|]+)/i.exec(notes)?.[1]?.trim() || 'iva_deducible';
-    const aeatConcept = /AEATConcept:([^|]+)/i.exec(notes)?.[1]?.trim() || '';
-    const aeatKey = /AEATKey:([^|]+)/i.exec(notes)?.[1]?.trim() || '';
+    const docType = expense.docType || canonical?.docType || legacy.docType;
+    const taxCategory = expense.taxCategory || canonical?.taxCategory || legacy.taxCategory;
+    const aeatConcept = expense.aeatConcept || canonical?.aeatConcept || legacy.aeatConcept;
+    const aeatKey = expense.aeatKey || canonical?.aeatKey || legacy.aeatKey;
+    const tipoIva =
+      canonical?.vatRate !== undefined && canonical.vatRate !== null
+        ? canonical.vatRate
+        : Number((toNum(expense.taxRate) * 100).toFixed(2));
+
+    const baseRaw =
+      canonical?.netAmount !== undefined && canonical.netAmount !== null
+        ? canonical.netAmount
+        : tipoIva > 0
+          ? total / (1 + tipoIva / 100)
+          : total;
+    const taxRaw =
+      canonical?.vatAmount !== undefined && canonical.vatAmount !== null
+        ? canonical.vatAmount
+        : Number((total - baseRaw).toFixed(2));
 
     const nonDeductible = taxCategory === 'iva_no_deducible';
 
@@ -102,7 +151,7 @@ export async function getPurchasesBookRows(tenantId: string, from: Date, to: Dat
       proveedor: expense.supplier?.name || 'Proveedor no informado',
       nif: expense.supplier?.nif || '',
       base: Number(baseRaw.toFixed(2)),
-      tipoIva: Number((taxRate * 100).toFixed(2)),
+      tipoIva: Number(tipoIva.toFixed(2)),
       cuotaIva: nonDeductible ? 0 : Number(taxRaw.toFixed(2)),
       total: Number(total.toFixed(2)),
       docType,

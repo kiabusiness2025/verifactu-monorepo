@@ -7,14 +7,12 @@ import { useSidebar } from '../context/SidebarContext';
 import { useUserRole } from '../hooks/useUserRole';
 import {
   BoxCubeIcon,
-  CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
   PageIcon,
   PieChartIcon,
-  PlugInIcon,
   TableIcon,
   UserCircleIcon,
 } from '../icons/index';
@@ -36,8 +34,18 @@ const navItems: NavItem[] = [
   },
   {
     icon: <TableIcon />,
+    name: 'Ventas',
+    path: '/dashboard/sales',
+  },
+  {
+    icon: <TableIcon />,
     name: 'Facturas',
     path: '/dashboard/invoices',
+  },
+  {
+    icon: <PageIcon />,
+    name: 'Presupuestos',
+    path: '/dashboard/budgets',
   },
   {
     icon: <ListIcon />,
@@ -45,19 +53,29 @@ const navItems: NavItem[] = [
     path: '/dashboard/expenses',
   },
   {
+    icon: <UserCircleIcon />,
+    name: 'Clientes / Proveedores',
+    path: '/dashboard/contacts',
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: 'Artículos',
+    path: '/dashboard/articles',
+  },
+  {
     icon: <BoxCubeIcon />,
     name: 'Documentos',
     path: '/dashboard/documents',
   },
   {
-    icon: <CalenderIcon />,
-    name: 'Calendario',
-    path: '/dashboard/calendar',
+    icon: <PieChartIcon />,
+    name: 'Impuestos',
+    path: '/dashboard/taxes',
   },
   {
-    icon: <UserCircleIcon />,
-    name: 'Clientes',
-    path: '/dashboard/clients',
+    icon: <PageIcon />,
+    name: 'Integraciones',
+    path: '/dashboard/integrations',
   },
   {
     icon: <TableIcon />,
@@ -66,9 +84,9 @@ const navItems: NavItem[] = [
   },
   {
     icon: <PageIcon />,
-    name: 'Configuración',
-    path: '/dashboard/settings',
-    roles: ['admin', 'owner'], // Solo admin y owner pueden ver Configuración
+    name: 'Admin',
+    path: '/dashboard/admin-dashboard',
+    roles: ['admin', 'owner'],
   },
 ];
 
@@ -307,16 +325,18 @@ const AppSidebar: React.FC = () => {
               {renderMenuItems(navItems, 'main')}
             </div>
 
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start'
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? 'Others' : <HorizontaLDots />}
-              </h2>
-              {renderMenuItems(othersItems, 'others')}
-            </div>
+            {othersItems.length > 0 ? (
+              <div>
+                <h2
+                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                    !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start'
+                  }`}
+                >
+                  {isExpanded || isHovered || isMobileOpen ? 'Others' : <HorizontaLDots />}
+                </h2>
+                {renderMenuItems(othersItems, 'others')}
+              </div>
+            ) : null}
           </div>
         </nav>
         {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}

@@ -32,8 +32,8 @@ export default function PlanesPage() {
               Planes claros para cumplir y tener control
             </h1>
             <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              Todos incluyen VeriFactu + gastos + export Excel. En Empresa y Pro añadimos
-              integración contable (si tu software tiene API).
+              Todos incluyen VeriFactu + gastos + exportación de libros oficiales Excel compatibles
+              AEAT. En Empresa y Pro añadimos integración con tu programa de contabilidad vía API.
             </p>
           </div>
 
@@ -52,8 +52,8 @@ export default function PlanesPage() {
                   ))}
                   <li>
                     {plan.hasAccountingIntegration
-                      ? "Integración contable (si tiene API)"
-                      : "Sin integración contable"}
+                      ? "Integración con tu programa de contabilidad vía API"
+                      : "Integración API opcional (disponible en Empresa/PRO)"}
                   </li>
                 </ul>
                 <Link

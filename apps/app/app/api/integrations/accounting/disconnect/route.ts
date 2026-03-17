@@ -1,5 +1,5 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
-import { disconnectHoldedIntegration } from '@/lib/integrations/holdedStore';
+import { disconnectAccountingIntegration } from '@/lib/integrations/accountingStore';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -10,10 +10,10 @@ export async function POST() {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const updated = await disconnectHoldedIntegration(auth.tenantId);
+  const updated = await disconnectAccountingIntegration(auth.tenantId);
   return NextResponse.json({
     ok: true,
-    provider: 'holded',
+    provider: 'accounting_api',
     status: updated?.status ?? 'disconnected',
   });
 }

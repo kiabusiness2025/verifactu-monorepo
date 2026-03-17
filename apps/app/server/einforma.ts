@@ -1,4 +1,5 @@
 import 'server-only';
+import { Prisma } from '@verifactu/db';
 import { prisma } from '@/lib/prisma';
 
 type TokenCache = { accessToken: string; expiresAt: number };
@@ -178,13 +179,19 @@ async function einformaRequest<T>(path: string, params?: Record<string, string>)
   return res.json() as Promise<T>;
 }
 
-function normalizeSearchResults(data: any): Array<any> {
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
+function normalizeSearchResults(data: unknown): unknown[] {
+  const row = asRecord(data);
+  const resultado = asRecord(row.resultado);
   return (
-    data?.resultado?.empresaResultado ??
-    data?.empresaResultado ??
-    data?.resultado?.empresa ??
-    data?.empresa ??
-    data?.items ??
+    (Array.isArray(resultado.empresaResultado) ? resultado.empresaResultado : undefined) ??
+    (Array.isArray(row.empresaResultado) ? row.empresaResultado : undefined) ??
+    (Array.isArray(resultado.empresa) ? resultado.empresa : undefined) ??
+    (Array.isArray(row.empresa) ? row.empresa : undefined) ??
+    (Array.isArray(row.items) ? row.items : undefined) ??
     []
   );
 }
@@ -222,13 +229,13 @@ async function setCache(
     create: {
       queryType,
       queryValue,
-      raw: raw as any,
-      normalized: normalized as any,
+      raw: raw as Prisma.InputJsonValue,
+      normalized: normalized as Prisma.InputJsonValue,
       expiresAt,
     },
     update: {
-      raw: raw as any,
-      normalized: normalized as any,
+      raw: raw as Prisma.InputJsonValue,
+      normalized: normalized as Prisma.InputJsonValue,
       expiresAt,
     },
   });
@@ -241,15 +248,32 @@ export async function searchCompanies(q: string): Promise<EinformaSearchItem[]> 
   const cached = await getCache<EinformaSearchItem[]>('NAME', queryValue);
   if (cached) return cached;
 
-  const data = await einformaRequest<any>('/companies', { companySearch: q });
+  const data = await einformaRequest<unknown>('/companies', { companySearch: q });
   const items = normalizeSearchResults(data);
-  const normalized = (Array.isArray(items) ? items : []).map((item: any) => ({
-    name: item?.denominacion ?? item?.name ?? item?.denominacionBusqueda ?? '',
-    nif: item?.identificativo ?? item?.nif ?? item?.cif,
-    province: item?.provincia ?? item?.province,
-    city: item?.localidad ?? item?.city,
-    id: item?.id ?? item?.identificativo ?? item?.codigo,
-  }));
+  const normalized = (Array.isArray(items) ? items : []).map((item) => {
+    const row = asRecord(item);
+    return {
+      name:
+        (typeof row.denominacion === 'string' ? row.denominacion : undefined) ??
+        (typeof row.name === 'string' ? row.name : undefined) ??
+        (typeof row.denominacionBusqueda === 'string' ? row.denominacionBusqueda : undefined) ??
+        '',
+      nif:
+        (typeof row.identificativo === 'string' ? row.identificativo : undefined) ??
+        (typeof row.nif === 'string' ? row.nif : undefined) ??
+        (typeof row.cif === 'string' ? row.cif : undefined),
+      province:
+        (typeof row.provincia === 'string' ? row.provincia : undefined) ??
+        (typeof row.province === 'string' ? row.province : undefined),
+      city:
+        (typeof row.localidad === 'string' ? row.localidad : undefined) ??
+        (typeof row.city === 'string' ? row.city : undefined),
+      id:
+        (typeof row.id === 'string' ? row.id : undefined) ??
+        (typeof row.identificativo === 'string' ? row.identificativo : undefined) ??
+        (typeof row.codigo === 'string' ? row.codigo : undefined),
+    };
+  });
 
   await setCache('NAME', queryValue, data, normalized, 7);
   return normalized;
@@ -260,42 +284,78 @@ export async function getCompanyProfileByNif(nifOrId: string): Promise<EinformaC
   const cached = await getCache<EinformaCompanyProfile>('TAX_ID', queryValue);
   if (cached) return cached;
 
-  const data = await einformaRequest<any>(`/companies/${encodeURIComponent(nifOrId)}/report`);
-  const item = data?.empresa ?? data?.company ?? data;
+  const data = await einformaRequest<unknown>(`/companies/${encodeURIComponent(nifOrId)}/report`);
+  const dataObj = asRecord(data);
+  const item = asRecord(dataObj.empresa ?? dataObj.company ?? dataObj);
   const normalized = {
-    name: item?.denominacion ?? item?.name ?? '',
-    tradeName: item?.nombreComercial ?? item?.tradeName,
-    legalName: item?.razonSocial ?? item?.legalName,
-    nif: item?.identificativo ?? item?.nif ?? item?.cif,
-    cnae: item?.cnae ?? item?.codigoCnae,
-    email: item?.email,
-    phone: item?.telefono ?? item?.phone,
-    website: item?.web ?? item?.website,
-    legalForm: item?.formaJuridica ?? item?.legalForm,
-    status: item?.situacion ?? item?.status,
+    name:
+      (typeof item.denominacion === 'string' ? item.denominacion : undefined) ??
+      (typeof item.name === 'string' ? item.name : undefined) ??
+      '',
+    tradeName: typeof item.nombreComercial === 'string' ? item.nombreComercial : (item.tradeName as string | undefined),
+    legalName: typeof item.razonSocial === 'string' ? item.razonSocial : (item.legalName as string | undefined),
+    nif:
+      (typeof item.identificativo === 'string' ? item.identificativo : undefined) ??
+      (typeof item.nif === 'string' ? item.nif : undefined) ??
+      (typeof item.cif === 'string' ? item.cif : undefined),
+    cnae: (typeof item.cnae === 'string' ? item.cnae : undefined) ?? (item.codigoCnae as string | undefined),
+    email: typeof item.email === 'string' ? item.email : undefined,
+    phone: (typeof item.telefono === 'string' ? item.telefono : undefined) ?? (item.phone as string | undefined),
+    website: (typeof item.web === 'string' ? item.web : undefined) ?? (item.website as string | undefined),
+    legalForm: (typeof item.formaJuridica === 'string' ? item.formaJuridica : undefined) ?? (item.legalForm as string | undefined),
+    status: (typeof item.situacion === 'string' ? item.situacion : undefined) ?? (item.status as string | undefined),
     employees:
-      typeof item?.empleados === 'number' ? item.empleados : Number(item?.empleados ?? NaN),
-    sales: typeof item?.ventas === 'number' ? item.ventas : Number(item?.ventas ?? NaN),
+      typeof item.empleados === 'number' ? item.empleados : Number(item.empleados ?? Number.NaN),
+    sales: typeof item.ventas === 'number' ? item.ventas : Number(item.ventas ?? Number.NaN),
     salesYear:
-      typeof item?.anioVentas === 'number' ? item.anioVentas : Number(item?.anioVentas ?? NaN),
+      typeof item.anioVentas === 'number' ? item.anioVentas : Number(item.anioVentas ?? Number.NaN),
     capitalSocial:
-      typeof item?.capitalSocial === 'number'
+      typeof item.capitalSocial === 'number'
         ? item.capitalSocial
-        : Number(item?.capitalSocial ?? NaN),
-    lastBalanceDate: item?.fechaUltimoBalance ?? item?.lastBalanceDate,
-    sourceId: item?.identificativo ?? item?.id ?? item?.codigo,
+        : Number(item.capitalSocial ?? Number.NaN),
+    lastBalanceDate:
+      (typeof item.fechaUltimoBalance === 'string' ? item.fechaUltimoBalance : undefined) ??
+      (item.lastBalanceDate as string | undefined),
+    sourceId:
+      (typeof item.identificativo === 'string' ? item.identificativo : undefined) ??
+      (typeof item.id === 'string' ? item.id : undefined) ??
+      (typeof item.codigo === 'string' ? item.codigo : undefined),
     address: {
-      street: item?.domicilioSocial ?? item?.address?.street,
-      zip: item?.cp ?? item?.address?.zip,
-      city: item?.localidad ?? item?.address?.city,
-      province: item?.provincia ?? item?.address?.province,
-      country: item?.address?.country ?? 'ES',
+      street:
+        (typeof item.domicilioSocial === 'string' ? item.domicilioSocial : undefined) ??
+        (asRecord(item.address).street as string | undefined),
+      zip:
+        (typeof item.cp === 'string' ? item.cp : undefined) ??
+        (asRecord(item.address).zip as string | undefined),
+      city:
+        (typeof item.localidad === 'string' ? item.localidad : undefined) ??
+        (asRecord(item.address).city as string | undefined),
+      province:
+        (typeof item.provincia === 'string' ? item.provincia : undefined) ??
+        (asRecord(item.address).province as string | undefined),
+      country: (asRecord(item.address).country as string | undefined) ?? 'ES',
     },
-    constitutionDate: item?.fechaConstitucion ?? item?.constitutionDate,
-    representatives: (item?.administradores ?? item?.representatives ?? []).map((rep: any) => ({
-      name: rep?.nombre ?? rep?.name,
-      role: rep?.cargo ?? rep?.role,
-    })),
+    constitutionDate:
+      (typeof item.fechaConstitucion === 'string' ? item.fechaConstitucion : undefined) ??
+      (item.constitutionDate as string | undefined),
+    representatives: (
+      Array.isArray(item.administradores)
+        ? item.administradores
+        : Array.isArray(item.representatives)
+          ? item.representatives
+          : []
+    ).map((rep) => {
+      const entry = asRecord(rep);
+      return {
+        name:
+          (typeof entry.nombre === 'string' ? entry.nombre : undefined) ??
+          (typeof entry.name === 'string' ? entry.name : undefined) ??
+          '',
+        role:
+          (typeof entry.cargo === 'string' ? entry.cargo : undefined) ??
+          (typeof entry.role === 'string' ? entry.role : undefined),
+      };
+    }),
     raw: data,
   } satisfies EinformaCompanyProfile;
 

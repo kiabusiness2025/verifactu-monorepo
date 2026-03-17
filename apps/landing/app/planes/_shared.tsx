@@ -61,7 +61,7 @@ export function PlanPageTemplate({
                   <li key={line}>- {line}</li>
                 ))}
                 {plan.hasAccountingIntegration ? (
-                  <li>- Integración contable (si tiene API)</li>
+                  <li>- Integración con tu programa de contabilidad vía API</li>
                 ) : null}
               </ul>
             </div>

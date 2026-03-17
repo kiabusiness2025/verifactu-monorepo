@@ -1,5 +1,5 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
-import { listSyncLogs } from '@/lib/integrations/holdedStore';
+import { listSyncLogs } from '@/lib/integrations/accountingStore';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';

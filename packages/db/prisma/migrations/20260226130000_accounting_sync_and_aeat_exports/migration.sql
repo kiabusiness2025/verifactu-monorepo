@@ -1,4 +1,4 @@
--- Sprint 1: Holded integration backbone + AEAT expense metadata.
+-- Sprint 1: Accounting API integration backbone + AEAT expense metadata.
 
 ALTER TABLE expense_records
   ADD COLUMN IF NOT EXISTS doc_type TEXT NOT NULL DEFAULT 'invoice',

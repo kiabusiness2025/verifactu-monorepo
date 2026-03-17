@@ -1,6 +1,6 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import prisma from '@/lib/prisma';
-import { createSyncOutbox } from '@/lib/integrations/holdedStore';
+import { createSyncOutbox } from '@/lib/integrations/accountingStore';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -28,6 +28,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     entityId: updated.id,
     action: 'upsert',
     payload: {
+      eventType: 'invoice.sent',
       invoiceId: updated.id,
       number: updated.number,
       issueDate: updated.issueDate,

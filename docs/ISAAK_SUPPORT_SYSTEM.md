@@ -2,11 +2,14 @@
 
 Sistema inteligente de soporte por email usando IA para responder automáticamente o escalar a humano.
 
+> Nota 2026: este documento cubre el flujo de **soporte por email**. Para operación de Isaak en producto (`/api/chat`, conversaciones, auth por `__session`), usar `docs/engineering/ai/ISAAK_INSTRUCCIONES_OPERATIVAS_2026.md`.
+
 ---
 
 ## 🎯 Objetivo
 
 **Isaak** recibe emails en `soporte@verifactu.business`, los analiza con GPT-4 y:
+
 1. **Responde automáticamente** si puede resolver la duda
 2. **Escala a humano** (`kiabusiness2025@gmail.com`) si requiere intervención
 
@@ -92,7 +95,7 @@ Copiar **Webhook Secret** para validar firmas.
 
 ```bash
 # .env.local (apps/app)
-RESEND_API_KEY=re_BK6kKjAd_34XYNfwf6qkHC7FrQQb64gKA
+RESEND_API_KEY=<resend-api-key>
 RESEND_WEBHOOK_SECRET=whsec_xxx
 
 # OpenAI para Isaak
@@ -104,6 +107,8 @@ ADMIN_NOTIFICATION_EMAIL=kiabusiness2025@gmail.com
 ADMIN_EMAILS=kiabusiness2025@gmail.com,soporte@verifactu.business
 ```
 
+⚠️ No incluir claves reales en documentación ni commits.
+
 ### 3. Configurar en Vercel
 
 Vercel Dashboard → Settings → Environment Variables
@@ -114,17 +119,17 @@ Añadir todas las variables anteriores.
 
 ## 📝 Matriz de Decisión
 
-| Situación | Auto-Responde | Escala | Prioridad |
-|-----------|---------------|--------|-----------|
-| "¿Cómo crear factura?" | ✅ Tutorial paso a paso | ❌ | Low |
-| "¿Qué es VeriFactu?" | ✅ Explicación normativa | ❌ | Low |
-| "Olvidé mi contraseña" | ✅ Link de reset | ❌ | Medium |
-| "¿Cuánto cuesta el plan Pro?" | ✅ Info de precios | ❌ | Low |
-| "No puedo acceder" | ⚠️ ACK genérico | ✅ | High |
-| "Error al generar factura" | ⚠️ Pide detalles | ✅ | Medium |
-| "Quiero reembolso" | ❌ | ✅ | High |
-| "Mensaje urgente" | ❌ | ✅ | Critical |
-| Spam detectado | 🚫 Filtrado | ❌ | - |
+| Situación                     | Auto-Responde            | Escala | Prioridad |
+| ----------------------------- | ------------------------ | ------ | --------- |
+| "¿Cómo crear factura?"        | ✅ Tutorial paso a paso  | ❌     | Low       |
+| "¿Qué es VeriFactu?"          | ✅ Explicación normativa | ❌     | Low       |
+| "Olvidé mi contraseña"        | ✅ Link de reset         | ❌     | Medium    |
+| "¿Cuánto cuesta el plan Pro?" | ✅ Info de precios       | ❌     | Low       |
+| "No puedo acceder"            | ⚠️ ACK genérico          | ✅     | High      |
+| "Error al generar factura"    | ⚠️ Pide detalles         | ✅     | Medium    |
+| "Quiero reembolso"            | ❌                       | ✅     | High      |
+| "Mensaje urgente"             | ❌                       | ✅     | Critical  |
+| Spam detectado                | 🚫 Filtrado              | ❌     | -         |
 
 ---
 
@@ -133,6 +138,7 @@ Añadir todas las variables anteriores.
 ### Caso 1: Pregunta Simple
 
 **Email entrante**:
+
 ```
 De: juan@empresa.com
 Asunto: ¿Cómo funciona VeriFactu?
@@ -140,6 +146,7 @@ Cuerpo: Hola, soy nuevo y no entiendo qué es VeriFactu.
 ```
 
 **Isaak analiza**:
+
 ```json
 {
   "category": "general",
@@ -151,6 +158,7 @@ Cuerpo: Hola, soy nuevo y no entiendo qué es VeriFactu.
 ```
 
 **Isaak responde automáticamente**:
+
 ```
 Para: juan@empresa.com
 Asunto: Re: ¿Cómo funciona VeriFactu?
@@ -167,6 +175,7 @@ Isaak - Verifactu Business
 ```
 
 **Log al admin** (no urgente):
+
 ```
 Console: [✅ SENT] Auto-respuesta enviada a juan@empresa.com
 ```
@@ -176,14 +185,16 @@ Console: [✅ SENT] Auto-respuesta enviada a juan@empresa.com
 ### Caso 2: Problema Urgente
 
 **Email entrante**:
+
 ```
 De: maria@tienda.com
 Asunto: URGENTE - No puedo generar facturas
-Cuerpo: Llevo 2 horas intentando generar facturas y 
+Cuerpo: Llevo 2 horas intentando generar facturas y
 me sale error. Necesito enviarlas YA a mis clientes.
 ```
 
 **Isaak analiza**:
+
 ```json
 {
   "category": "bug_report",
@@ -197,13 +208,14 @@ me sale error. Necesito enviarlas YA a mis clientes.
 **Isaak NO responde, escala**:
 
 1. **ACK al usuario**:
+
 ```
 Para: maria@tienda.com
 Asunto: Re: URGENTE - No puedo generar facturas
 
 Hola María,
 
-Hemos recibido tu mensaje URGENTE. Nuestro equipo 
+Hemos recibido tu mensaje URGENTE. Nuestro equipo
 técnico lo está revisando ahora.
 
 Tiempo de respuesta: Menos de 2 horas
@@ -213,6 +225,7 @@ Equipo Verifactu
 ```
 
 2. **Notificación al admin**:
+
 ```
 Para: kiabusiness2025@gmail.com
 Asunto: [CRITICAL] Email de Soporte: URGENTE - No puedo generar facturas
@@ -228,7 +241,7 @@ Confianza: 88%
 
 Mensaje:
 ─────────────────────────────
-Llevo 2 horas intentando generar facturas y 
+Llevo 2 horas intentando generar facturas y
 me sale error. Necesito enviarlas YA a mis clientes.
 ─────────────────────────────
 
@@ -240,7 +253,7 @@ me sale error. Necesito enviarlas YA a mis clientes.
 ## 🎯 Prompt de Isaak (GPT-4)
 
 ```
-Eres Isaak, asistente de soporte de Verifactu Business 
+Eres Isaak, asistente de soporte de Verifactu Business
 (SaaS de contabilidad y facturación española con VeriFactu).
 
 RESPONDE AUTOMÁTICAMENTE si:
@@ -365,11 +378,14 @@ Implementar dashboard en `/dashboard/admin/support`:
 ## 🧭 Playbook: Empresa No Aparece o Datos Incompletos (Admin > Empresas)
 
 ### Objetivo
+
 Estandarizar la actuación de Isaak cuando un usuario indica:
+
 - "Mi empresa no aparece en la búsqueda"
 - "Aparece en el listado pero no se completan los datos"
 
 ### Contexto mínimo que Isaak debe recopilar
+
 1. Texto exacto de búsqueda usado por el usuario.
 2. Razón social esperada.
 3. CIF/NIF esperado (si lo conoce).
@@ -377,6 +393,7 @@ Estandarizar la actuación de Isaak cuando un usuario indica:
 5. Fecha/hora aproximada del intento.
 
 ### Flujo de actuación recomendado
+
 1. Pedir al usuario búsqueda con mayor precisión:
    - nombre completo o 2+ palabras.
    - CIF/NIF exacto si está disponible.
@@ -389,6 +406,7 @@ Estandarizar la actuación de Isaak cuando un usuario indica:
    - escalar a soporte humano con todo el contexto estructurado.
 
 ### Plantilla de escalado que Isaak debe generar
+
 ```
 Asunto: Incidencia búsqueda empresa - alta admin
 
@@ -411,11 +429,13 @@ Solicitud:
 ```
 
 ### Criterios de severidad
+
 - `high`: empresa crítica para onboarding y sin alternativa operativa.
 - `medium`: empresa aparece pero no hidrata campos.
 - `low`: resultado incompleto con alternativa manual viable.
 
 ### Mensajes de cara al usuario (guía)
+
 - Evitar lenguaje técnico interno de proveedor.
 - Confirmar pasos concretos y siguientes acciones.
 - Si hay escalado: indicar que soporte continuará con el caso y que no necesita repetir información.
