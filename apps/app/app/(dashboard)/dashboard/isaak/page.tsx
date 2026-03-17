@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MessageSquare, Search, Trash2, Share2, Clock, ChevronRight } from "lucide-react";
 import { formatShortDate } from "@/src/lib/formatters";
@@ -210,6 +211,23 @@ export default function IsaakHistoryPage() {
         <p className="mt-2 text-slate-600">
           Historial completo de tus conversaciones. Busca, comparte o elimina.
         </p>
+      </div>
+
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#eef4ff_55%,#ffffff_100%)] p-5 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Isaak for Holded</div>
+            <p className="mt-1 text-sm text-slate-600">
+              Accede al módulo guiado para consultar Holded desde Verifactu y preparar acciones contables con Isaak.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/integrations/isaak-for-holded"
+            className="inline-flex h-10 items-center justify-center rounded-full bg-[#0b6cfb] px-4 text-sm font-semibold text-white hover:bg-[#095edb]"
+          >
+            Abrir módulo
+          </Link>
+        </div>
       </div>
 
       {/* Búsqueda */}
