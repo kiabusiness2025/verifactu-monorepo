@@ -217,21 +217,55 @@ export function buildLoginUrl(currentAuthorizeUrl: string) {
 async function findDefaultDemoTenant() {
   const defaultName = process.env.MCP_DEFAULT_TENANT_NAME?.trim() || 'Empresa Demo SL';
   const defaultNif = process.env.MCP_DEFAULT_TENANT_NIF?.trim() || null;
+  const normalizedDefaultName = defaultName.toLowerCase();
 
-  return prisma.tenant.findFirst({
+  const exactMatch = await prisma.tenant.findFirst({
     where: {
       OR: [
-        { isDemo: true, name: defaultName },
+        { name: { equals: defaultName, mode: 'insensitive' } },
+        { legalName: { equals: defaultName, mode: 'insensitive' } },
+        ...(defaultNif ? [{ nif: defaultNif }] : []),
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  const looseMatch = await prisma.tenant.findFirst({
+    where: {
+      OR: [
+        { name: { contains: defaultName, mode: 'insensitive' } },
+        { legalName: { contains: defaultName, mode: 'insensitive' } },
+        { name: { contains: 'demo', mode: 'insensitive' } },
+        { legalName: { contains: 'demo', mode: 'insensitive' } },
         ...(defaultNif ? [{ nif: defaultNif }] : []),
         { isDemo: true },
       ],
     },
-    orderBy: [
-      { isDemo: 'desc' },
-      { createdAt: 'asc' },
-    ],
-    select: { id: true },
+    orderBy: [{ isDemo: 'desc' }, { createdAt: 'asc' }],
+    select: { id: true, name: true, legalName: true },
   });
+
+  if (looseMatch) {
+    return { id: looseMatch.id };
+  }
+
+  const normalizedFallback = normalizedDefaultName.replace(/[^a-z0-9]/g, '');
+  const allTenants = await prisma.tenant.findMany({
+    select: { id: true, name: true, legalName: true, isDemo: true },
+    orderBy: [{ isDemo: 'desc' }, { createdAt: 'asc' }],
+    take: 50,
+  });
+
+  const fuzzyMatch = allTenants.find((tenant) => {
+    const name = `${tenant.name ?? ''} ${tenant.legalName ?? ''}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return name.includes(normalizedFallback) || normalizedFallback.includes(name);
+  });
+
+  return fuzzyMatch ? { id: fuzzyMatch.id } : null;
 }
 
 async function ensureUserHasDemoTenant(userId: string) {
