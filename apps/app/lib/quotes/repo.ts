@@ -1,24 +1,26 @@
 import prisma from '@/lib/prisma';
+import type { Prisma } from '@verifactu/db';
 
-type QuoteDelegate = typeof prisma.quote;
-
-type FindManyArgs = Parameters<QuoteDelegate['findMany']>[0];
-type FindFirstArgs = Parameters<QuoteDelegate['findFirst']>[0];
-type CreateArgs = Parameters<QuoteDelegate['create']>[0];
-type UpdateArgs = Parameters<QuoteDelegate['update']>[0];
-
-export async function quoteFindMany(args: FindManyArgs) {
+export async function quoteFindMany<T extends Prisma.QuoteFindManyArgs>(
+  args: Prisma.SelectSubset<T, Prisma.QuoteFindManyArgs>
+): Promise<Prisma.QuoteGetPayload<T>[]> {
   return prisma.quote.findMany(args);
 }
 
-export async function quoteFindFirst(args: FindFirstArgs) {
+export async function quoteFindFirst<T extends Prisma.QuoteFindFirstArgs>(
+  args: Prisma.SelectSubset<T, Prisma.QuoteFindFirstArgs>
+): Promise<Prisma.QuoteGetPayload<T> | null> {
   return prisma.quote.findFirst(args);
 }
 
-export async function quoteCreate(args: CreateArgs) {
+export async function quoteCreate<T extends Prisma.QuoteCreateArgs>(
+  args: Prisma.SelectSubset<T, Prisma.QuoteCreateArgs>
+): Promise<Prisma.QuoteGetPayload<T>> {
   return prisma.quote.create(args);
 }
 
-export async function quoteUpdate(args: UpdateArgs) {
+export async function quoteUpdate<T extends Prisma.QuoteUpdateArgs>(
+  args: Prisma.SelectSubset<T, Prisma.QuoteUpdateArgs>
+): Promise<Prisma.QuoteGetPayload<T>> {
   return prisma.quote.update(args);
 }
