@@ -269,7 +269,22 @@ async function findDefaultDemoTenant() {
 }
 
 async function ensureUserHasDemoTenant(userId: string) {
-  const demoTenant = await findDefaultDemoTenant();
+  let demoTenant = await findDefaultDemoTenant();
+  if (!demoTenant) {
+    const defaultName = process.env.MCP_DEFAULT_TENANT_NAME?.trim() || 'Empresa Demo SL';
+    const defaultNif = process.env.MCP_DEFAULT_TENANT_NIF?.trim() || null;
+
+    demoTenant = await prisma.tenant.create({
+      data: {
+        name: defaultName,
+        legalName: defaultName,
+        nif: defaultNif,
+        isDemo: true,
+      },
+      select: { id: true },
+    });
+  }
+
   if (!demoTenant) {
     return null;
   }
