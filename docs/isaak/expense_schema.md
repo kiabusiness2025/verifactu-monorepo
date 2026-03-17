@@ -3,6 +3,7 @@
 Objetivo: definir una salida canónica única para gastos procesados por Isaak, independiente del plan.
 
 Este esquema alimenta dos motores de salida:
+
 - Motor A: Export AEAT Excel (todos los planes)
 - Motor B: Integración contable vía API (Empresa/PRO)
 
@@ -35,9 +36,7 @@ Este esquema alimenta dos motores de salida:
     "aeatConcept": 0,
     "aeatKey": 0
   },
-  "warnings": [
-    "string"
-  ],
+  "warnings": ["string"],
   "estimated": {
     "base": false,
     "vatAmount": false,
@@ -86,12 +85,14 @@ Este esquema alimenta dos motores de salida:
 ## Output format from Isaak
 
 Isaak debe devolver siempre:
+
 1. JSON canónico validable (Zod)
 2. Resumen humano corto (1-3 líneas) para la UI
 
 ## UI confirmation contract
 
 Antes de persistir como "source of truth", usuario confirma:
+
 - proveedor
 - fecha
 - base / IVA / tipo
