@@ -7,6 +7,7 @@ Entrada principal: [README.md](README.md)
 ### Producto — `docs/product/`
 
 - Features implementadas, planes, presupuestos, gastos, facturas, integraciones
+- Arquitectura de sync Isaak: `docs/product/ISAAK_PLATFORM_SYNC_PLAN.md`
 - Demo: `docs/product/DEMO_FLOW.md`, `docs/product/DEMO_QA_CHECKLIST.md`
 - Precios: `docs/product/pricing/`
 - Onboarding: `docs/product/onboarding/`
