@@ -429,7 +429,9 @@ export async function OPTIONS() {
 
 export async function GET(request: NextRequest) {
   return NextResponse.json({
-    name: 'Isaak for Holded MCP',
+    name: 'Isaak for Holded',
+    description:
+      'ChatGPT connector for Isaak and Holded. It lets authorized users list invoices, contacts, and accounting accounts, and create draft invoices for the connected Verifactu tenant.',
     protocol: 'MCP over JSON-RPC HTTP',
     endpoint: '/api/mcp/holded',
     oauth: {
@@ -458,7 +460,7 @@ export async function POST(request: NextRequest) {
         return jsonRpc(body.id, {
           protocolVersion: '2024-11-05',
           serverInfo: {
-            name: 'isaak-for-holded',
+            name: 'Isaak for Holded',
             version: '0.1.0',
           },
           capabilities: {
