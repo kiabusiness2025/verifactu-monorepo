@@ -1,4 +1,5 @@
 import { getSessionPayload } from '@/lib/session';
+import { resolveTenantForOAuthSession } from '@/lib/oauth/mcp';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 export async function requireTenantContext() {
@@ -7,18 +8,32 @@ export async function requireTenantContext() {
     return { error: 'Unauthorized', status: 401 as const };
   }
 
-  const resolved = await resolveActiveTenant({
+  const direct = await resolveActiveTenant({
     userId: session.uid,
     sessionTenantId: session.tenantId ?? null,
   });
 
-  if (!resolved.tenantId) {
+  const tenantId =
+    direct.tenantId ??
+    (
+      await resolveTenantForOAuthSession({
+        uid: session.uid,
+        email: session.email ?? null,
+        name: session.name ?? null,
+        sessionTenantId: session.tenantId ?? null,
+      })
+    ).tenantId;
+
+  if (!tenantId) {
     return { error: 'No tenant selected', status: 400 as const };
   }
 
   return {
     session,
-    resolved,
-    tenantId: resolved.tenantId,
+    resolved: {
+      ...direct,
+      tenantId,
+    },
+    tenantId,
   };
 }
