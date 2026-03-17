@@ -295,9 +295,6 @@ export async function OPTIONS() {
 }
 
 export async function GET(request: NextRequest) {
-  const allowed = await assertMcpAccess(request);
-  if (!allowed) return unauthorized();
-
   return NextResponse.json({
     name: 'Isaak for Holded MCP',
     protocol: 'MCP over JSON-RPC HTTP',
