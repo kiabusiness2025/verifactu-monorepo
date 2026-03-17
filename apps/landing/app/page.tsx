@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Briefcase, Building2, Check, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import Header from './components/Header';
@@ -302,6 +303,78 @@ export default function Page() {
 
           <div className="mt-12">
             <DashboardMock />
+          </div>
+        </Container>
+      </section>
+
+      <section className="bg-white py-16">
+        <Container>
+          <div className="grid items-center gap-8 overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#eef4ff_52%,#ffffff_100%)] p-6 shadow-sm lg:grid-cols-[1.05fr_0.95fr] lg:p-10">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#2361d8] ring-1 ring-[#2361d8]/15">
+                Isaak en Verifactu
+              </div>
+              <h2 className="mt-5 max-w-2xl text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
+                El contable nativo que traduce Holded y tu operativa en decisiones claras.
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+                Isaak vive dentro de verifactu.business para ayudarte a entender ventas, gastos,
+                cobros, balances y tareas fiscales sin navegar menús contables complejos. Si
+                conectas Holded u otra API de gestión, Isaak trabaja sobre esos datos dentro de tu
+                propio dashboard.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
+                  <div className="text-sm font-semibold text-[#011c67]">Explica lo importante</div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Resume números, detecta desvíos y te explica qué pasa en lenguaje de negocio.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
+                  <div className="text-sm font-semibold text-[#011c67]">Actúa contigo</div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Prepara borradores, revisa datos y te guía paso a paso antes de confirmar.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/que-es-isaak"
+                  className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
+                >
+                  Ver qué es Isaak
+                </Link>
+                <Link
+                  href={appUrl}
+                  className="inline-flex items-center justify-center rounded-full border border-[#2361d8] bg-white px-6 py-3 text-sm font-semibold text-[#2361d8] transition hover:bg-[#2361d8]/10"
+                >
+                  Probar Isaak en el dashboard
+                </Link>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div
+                className="absolute -left-8 -top-8 h-28 w-28 rounded-full bg-[#2361d8]/15 blur-3xl"
+                aria-hidden="true"
+              />
+              <div
+                className="absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-sky-200/40 blur-3xl"
+                aria-hidden="true"
+              />
+              <div className="relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-white p-3 shadow-[0_25px_80px_-30px_rgba(35,97,216,0.45)]">
+                <Image
+                  src="/Isaak/Isaak_principal.png"
+                  alt="Vista principal de Isaak en Verifactu"
+                  width={1400}
+                  height={1200}
+                  className="h-auto w-full rounded-[1.1rem] object-cover"
+                  priority={false}
+                />
+              </div>
+            </div>
           </div>
         </Container>
       </section>
