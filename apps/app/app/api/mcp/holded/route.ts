@@ -3,6 +3,8 @@ import {
   getAuthorizationEndpoint,
   getAuthorizationServerMetadataUrl,
   getMcpResourceUrl,
+  hasRequiredScopes,
+  MCP_TOOL_SCOPES,
   getProtectedResourceMetadataUrl,
   getTokenEndpoint,
   verifyAccessToken,
@@ -150,6 +152,17 @@ async function assertMcpAccess(request: NextRequest) {
   };
 }
 
+function logMcpAccess(event: {
+  method: string;
+  tool?: string;
+  tenantId?: string | null;
+  uid?: string | null;
+  outcome: 'allowed' | 'denied' | 'error';
+  reason?: string;
+}) {
+  console.info('[MCP Holded]', JSON.stringify({ ts: new Date().toISOString(), ...event }));
+}
+
 async function resolveHoldedApiKey(access?: { tenantId: string | null }) {
   if (access?.tenantId) {
     const integration = await prisma.tenantIntegration.findUnique({
@@ -205,7 +218,8 @@ async function resolveHoldedApiKey(access?: { tenantId: string | null }) {
   }
 
   const fallbackKey = process.env.HOLDED_TEST_API_KEY?.trim();
-  if (fallbackKey) {
+  const allowFallback = process.env.NODE_ENV !== 'production';
+  if (fallbackKey && allowFallback) {
     return {
       apiKey: fallbackKey,
       source: 'env_test_key' as const,
@@ -228,10 +242,23 @@ function formatToolResult(data: unknown) {
 }
 
 async function callTool(
-  access: { tenantId: string | null },
+  access: { tenantId: string | null; scope?: string | null; uid?: string | null },
   name: string,
   args: Record<string, unknown> | undefined
 ) {
+  const requiredScopes = MCP_TOOL_SCOPES[name];
+  if (requiredScopes && !hasRequiredScopes(access.scope ?? '', requiredScopes)) {
+    logMcpAccess({
+      method: 'tools/call',
+      tool: name,
+      tenantId: access.tenantId,
+      uid: access.uid ?? null,
+      outcome: 'denied',
+      reason: 'missing_scope',
+    });
+    throw new Error(`Missing required scope for tool ${name}`);
+  }
+
   const { apiKey, source } = await resolveHoldedApiKey(access);
   const input = args || {};
 
@@ -266,6 +293,11 @@ async function callTool(
       return formatToolResult({ source, items: data });
     }
     case 'holded_create_invoice_draft': {
+      const confirm = input.confirm === true;
+      if (!confirm) {
+        throw new Error('confirm=true is required for write operations');
+      }
+
       const docType =
         typeof input.docType === 'string' && input.docType.trim() ? input.docType.trim() : 'invoice';
       const payload =
@@ -276,8 +308,21 @@ async function callTool(
       if (!payload) {
         throw new Error('payload is required');
       }
+      if (typeof payload.contactId !== 'string' || !payload.contactId.trim()) {
+        throw new Error('payload.contactId is required');
+      }
+      if (!Array.isArray(payload.lines) || payload.lines.length === 0) {
+        throw new Error('payload.lines must be a non-empty array');
+      }
 
       const data = await holdedAdapter.createDocument(apiKey, docType, payload);
+      logMcpAccess({
+        method: 'tools/call',
+        tool: name,
+        tenantId: access.tenantId,
+        uid: access.uid ?? null,
+        outcome: 'allowed',
+      });
       return formatToolResult({ source, created: data });
     }
     default:
@@ -340,7 +385,10 @@ export async function POST(request: NextRequest) {
         });
       case 'tools/call': {
         const allowed = await assertMcpAccess(request);
-        if (!allowed) return unauthorized();
+        if (!allowed) {
+          logMcpAccess({ method: 'tools/call', outcome: 'denied', reason: 'unauthorized' });
+          return unauthorized();
+        }
 
         const name = typeof body.params?.name === 'string' ? body.params.name : '';
         const args =
@@ -348,7 +396,15 @@ export async function POST(request: NextRequest) {
             ? (body.params.arguments as Record<string, unknown>)
             : undefined;
 
-        const result = await callTool({ tenantId: allowed.tenantId }, name, args);
+        const result = await callTool(
+          {
+            tenantId: allowed.tenantId,
+            scope: 'scope' in allowed ? allowed.scope : null,
+            uid: 'uid' in allowed ? allowed.uid : null,
+          },
+          name,
+          args
+        );
         return jsonRpc(body.id, result);
       }
       default:

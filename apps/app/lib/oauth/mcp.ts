@@ -1,3 +1,5 @@
+import prisma from '@/lib/prisma';
+import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { getAppUrl, getLandingUrl, signSessionToken, verifySessionToken } from '@verifactu/utils';
 import { createHash } from 'crypto';
 
@@ -38,6 +40,14 @@ type AccessTokenPayload = {
   email: string | null;
   name: string | null;
   tenantId: string;
+};
+
+export const MCP_TOOL_SCOPES: Record<string, string[]> = {
+  holded_list_invoices: ['mcp.read', 'holded.invoices.read'],
+  holded_get_invoice: ['mcp.read', 'holded.invoices.read'],
+  holded_list_contacts: ['mcp.read', 'holded.contacts.read'],
+  holded_list_accounts: ['mcp.read', 'holded.accounts.read'],
+  holded_create_invoice_draft: ['mcp.read', 'holded.invoices.write'],
 };
 
 function readOAuthSecret() {
@@ -177,6 +187,11 @@ export function ensureScopesAllowed(scope: string) {
   return requested.every((item) => supported.has(item));
 }
 
+export function hasRequiredScopes(scope: string, required: string[]) {
+  const granted = new Set(buildScopeList(scope));
+  return required.every((item) => granted.has(item));
+}
+
 export function mapSessionToOAuthUser(input: {
   uid?: string;
   email?: string | null;
@@ -197,4 +212,40 @@ export function buildLoginUrl(currentAuthorizeUrl: string) {
   const loginUrl = new URL('/auth/login', getLandingUrl());
   loginUrl.searchParams.set('next', currentAuthorizeUrl);
   return loginUrl.toString();
+}
+
+export async function resolveTenantForOAuthSession(input: {
+  uid: string;
+  email?: string | null;
+  sessionTenantId?: string | null;
+}) {
+  const direct = await resolveActiveTenant({
+    userId: input.uid,
+    sessionTenantId: input.sessionTenantId ?? null,
+  });
+
+  if (direct.tenantId) {
+    return { tenantId: direct.tenantId, resolvedUserId: input.uid };
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { authSubject: input.uid },
+        ...(input.email ? [{ email: input.email }] : []),
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (!user) {
+    return { tenantId: null, resolvedUserId: null };
+  }
+
+  const fallback = await resolveActiveTenant({
+    userId: user.id,
+    sessionTenantId: input.sessionTenantId ?? null,
+  });
+
+  return { tenantId: fallback.tenantId, resolvedUserId: user.id };
 }

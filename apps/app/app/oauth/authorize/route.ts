@@ -6,9 +6,9 @@ import {
   getMcpResourceUrl,
   mapSessionToOAuthUser,
   mintAuthorizationCode,
+  resolveTenantForOAuthSession,
   validateRedirectUri,
 } from '@/lib/oauth/mcp';
-import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -53,8 +53,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(buildLoginUrl(url.toString()));
   }
 
-  const resolved = await resolveActiveTenant({
-    userId: session.uid,
+  const resolved = await resolveTenantForOAuthSession({
+    uid: session.uid,
+    email: session.email ?? null,
     sessionTenantId: session.tenantId ?? null,
   });
   const user = mapSessionToOAuthUser({
