@@ -274,9 +274,52 @@ async function ensureUserHasDemoTenant(userId: string) {
   return demoTenant.id;
 }
 
+async function getOrCreateInternalUserForOAuth(input: {
+  uid: string;
+  email?: string | null;
+  name?: string | null;
+}) {
+  const existing =
+    (await prisma.user.findFirst({
+      where: {
+        OR: [
+          { authSubject: input.uid },
+          ...(input.email ? [{ email: input.email }] : []),
+        ],
+      },
+      select: { id: true, email: true, name: true },
+    })) ?? null;
+
+  if (existing) {
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        authSubject: input.uid,
+        authProvider: 'FIREBASE',
+        email: input.email ?? existing.email,
+        name: input.name ?? existing.name,
+      },
+    });
+    return existing.id;
+  }
+
+  const created = await prisma.user.create({
+    data: {
+      email: input.email ?? `mcp-${input.uid}@verifactu.local`,
+      name: input.name ?? input.email?.split('@')[0] ?? 'MCP User',
+      authSubject: input.uid,
+      authProvider: 'FIREBASE',
+    },
+    select: { id: true },
+  });
+
+  return created.id;
+}
+
 export async function resolveTenantForOAuthSession(input: {
   uid: string;
   email?: string | null;
+  name?: string | null;
   sessionTenantId?: string | null;
 }) {
   const direct = await resolveActiveTenant({
@@ -298,23 +341,27 @@ export async function resolveTenantForOAuthSession(input: {
     select: { id: true },
   });
 
-  if (!user) {
-    return { tenantId: null, resolvedUserId: null };
-  }
+  const internalUserId =
+    user?.id ??
+    (await getOrCreateInternalUserForOAuth({
+      uid: input.uid,
+      email: input.email ?? null,
+      name: input.name ?? null,
+    }));
 
   const fallback = await resolveActiveTenant({
-    userId: user.id,
+    userId: internalUserId,
     sessionTenantId: input.sessionTenantId ?? null,
   });
 
   if (fallback.tenantId) {
-    return { tenantId: fallback.tenantId, resolvedUserId: user.id };
+    return { tenantId: fallback.tenantId, resolvedUserId: internalUserId };
   }
 
-  const demoTenantId = await ensureUserHasDemoTenant(user.id);
+  const demoTenantId = await ensureUserHasDemoTenant(internalUserId);
   if (demoTenantId) {
-    return { tenantId: demoTenantId, resolvedUserId: user.id };
+    return { tenantId: demoTenantId, resolvedUserId: internalUserId };
   }
 
-  return { tenantId: null, resolvedUserId: user.id };
+  return { tenantId: null, resolvedUserId: internalUserId };
 }

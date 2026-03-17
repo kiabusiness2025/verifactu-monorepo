@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
   const resolved = await resolveTenantForOAuthSession({
     uid: session.uid,
     email: session.email ?? null,
+    name: session.name ?? null,
     sessionTenantId: session.tenantId ?? null,
   });
   const user = mapSessionToOAuthUser({
