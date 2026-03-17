@@ -29,6 +29,12 @@ type ToolDefinition = {
   name: string;
   title: string;
   description: string;
+  annotations?: {
+    readOnlyHint?: boolean;
+    destructiveHint?: boolean;
+    idempotentHint?: boolean;
+    openWorldHint?: boolean;
+  };
   inputSchema: {
     type: 'object';
     properties: Record<string, unknown>;
@@ -40,26 +46,55 @@ type ToolDefinition = {
 const TOOLS: ToolDefinition[] = [
   {
     name: 'holded_list_invoices',
-    title: 'List Holded Invoices',
-    description: 'Lista facturas del tenant conectado en Holded.',
+    title: 'List invoices in Holded',
+    description:
+      'List invoices for the currently authorized Verifactu tenant connected to Holded. Use this to inspect invoice history before asking for a specific invoice.',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number', minimum: 1, default: 1 },
-        limit: { type: 'number', minimum: 1, maximum: 100, default: 25 },
-        status: { type: 'string' },
+        page: {
+          type: 'number',
+          minimum: 1,
+          default: 1,
+          description: 'Results page number to fetch from Holded pagination.',
+        },
+        limit: {
+          type: 'number',
+          minimum: 1,
+          maximum: 100,
+          default: 25,
+          description: 'Maximum number of invoices to return.',
+        },
+        status: {
+          type: 'string',
+          description: 'Optional Holded invoice status filter, if supported by the tenant account.',
+        },
       },
       additionalProperties: false,
     },
   },
   {
     name: 'holded_get_invoice',
-    title: 'Get Holded Invoice',
-    description: 'Obtiene una factura concreta de Holded por id.',
+    title: 'Get one invoice from Holded',
+    description:
+      'Retrieve a single Holded invoice by its Holded invoice id for the currently authorized tenant.',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {
-        invoiceId: { type: 'string' },
+        invoiceId: {
+          type: 'string',
+          description: 'The Holded invoice identifier returned by a previous invoice listing or search.',
+        },
       },
       required: ['invoiceId'],
       additionalProperties: false,
@@ -67,41 +102,94 @@ const TOOLS: ToolDefinition[] = [
   },
   {
     name: 'holded_list_contacts',
-    title: 'List Holded Contacts',
-    description: 'Lista contactos de Holded para preparar facturas o búsquedas.',
+    title: 'List contacts in Holded',
+    description:
+      'List customer or contact records from Holded for the currently authorized tenant. Use this before creating a draft invoice.',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number', minimum: 1, default: 1 },
-        limit: { type: 'number', minimum: 1, maximum: 100, default: 25 },
+        page: {
+          type: 'number',
+          minimum: 1,
+          default: 1,
+          description: 'Results page number to fetch from Holded pagination.',
+        },
+        limit: {
+          type: 'number',
+          minimum: 1,
+          maximum: 100,
+          default: 25,
+          description: 'Maximum number of contacts to return.',
+        },
       },
       additionalProperties: false,
     },
   },
   {
     name: 'holded_list_accounts',
-    title: 'List Holded Accounts',
-    description: 'Lista cuentas contables disponibles en Holded.',
+    title: 'List accounting accounts in Holded',
+    description:
+      'List accounting accounts available in Holded for the currently authorized tenant.',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number', minimum: 1, default: 1 },
-        limit: { type: 'number', minimum: 1, maximum: 100, default: 25 },
+        page: {
+          type: 'number',
+          minimum: 1,
+          default: 1,
+          description: 'Results page number to fetch from Holded pagination.',
+        },
+        limit: {
+          type: 'number',
+          minimum: 1,
+          maximum: 100,
+          default: 25,
+          description: 'Maximum number of accounting accounts to return.',
+        },
       },
       additionalProperties: false,
     },
   },
   {
     name: 'holded_create_invoice_draft',
-    title: 'Create Holded Invoice Draft',
-    description: 'Crea una factura o borrador en Holded mediante Invoice API.',
+    title: 'Create invoice draft in Holded',
+    description:
+      'Create a draft invoice in Holded for the currently authorized tenant. This is a write action and requires explicit confirmation.',
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {
-        docType: { type: 'string', default: 'invoice' },
-        payload: { type: 'object' },
+        confirm: {
+          type: 'boolean',
+          description: 'Must be true to confirm that the user explicitly approved creating the draft invoice.',
+        },
+        docType: {
+          type: 'string',
+          default: 'invoice',
+          description: 'Document type to create in Holded. Use invoice unless there is a documented alternative for this tenant.',
+        },
+        payload: {
+          type: 'object',
+          description:
+            'Draft invoice payload for Holded. It must include at least contactId and a non-empty lines array.',
+        },
       },
-      required: ['payload'],
+      required: ['confirm', 'payload'],
       additionalProperties: false,
     },
   },
