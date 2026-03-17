@@ -22,6 +22,8 @@ type DriveStatus = {
   folderId: string | null;
   folderWebViewLink: string | null;
   email: string | null;
+  oauthReady?: boolean;
+  missingEnv?: string[];
 };
 
 type SyncLog = {
@@ -240,6 +242,18 @@ export default function IntegrationsPage() {
             Último sync: <span className="font-semibold">{drive?.lastSyncAt ?? '—'}</span>
           </p>
         </div>
+        {drive?.oauthReady === false ? (
+          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+            Google Drive no está listo en este entorno. Faltan variables:
+            {' '}
+            <span className="font-semibold">{drive.missingEnv?.join(', ') || '—'}</span>
+          </div>
+        ) : null}
+        {drive?.lastError ? (
+          <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900">
+            {drive.lastError}
+          </div>
+        ) : null}
         {drive?.folderWebViewLink ? (
           <a
             href={drive.folderWebViewLink}
@@ -253,6 +267,7 @@ export default function IntegrationsPage() {
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             onClick={connectGoogleDrive}
+            disabled={loading || drive?.oauthReady === false}
             className="rounded-full bg-[#0b6cfb]/10 px-4 py-2 text-xs font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/20"
           >
             Conectar Google Drive
