@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
   const clientId = url.searchParams.get('client_id')?.trim() || '';
   const redirectUri = url.searchParams.get('redirect_uri')?.trim() || '';
   const state = url.searchParams.get('state');
-  const codeChallenge = url.searchParams.get('code_challenge')?.trim() || '';
-  const codeChallengeMethod = url.searchParams.get('code_challenge_method')?.trim() || 'S256';
+  const codeChallengeRaw = url.searchParams.get('code_challenge')?.trim() || '';
+  const codeChallengeMethodRaw = url.searchParams.get('code_challenge_method')?.trim() || '';
   const requestedScope = url.searchParams.get('scope');
   const normalizedScope = requestedScope?.trim() ? requestedScope.trim() : getDefaultScopes().join(' ');
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
   if (responseType !== 'code') {
     return NextResponse.json({ error: 'unsupported_response_type' }, { status: 400 });
   }
-  if (!clientId || !redirectUri || !codeChallenge) {
+  if (!clientId || !redirectUri) {
     return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
   }
-  if (codeChallengeMethod !== 'S256') {
+  if (codeChallengeRaw && codeChallengeMethodRaw && codeChallengeMethodRaw !== 'S256') {
     return redirectWithError(redirectUri, 'invalid_request', state);
   }
   if (!validateRedirectUri(redirectUri)) {
@@ -73,8 +73,8 @@ export async function GET(request: NextRequest) {
     clientId,
     redirectUri,
     scope: normalizedScope,
-    codeChallenge,
-    codeChallengeMethod: 'S256',
+    codeChallenge: codeChallengeRaw || null,
+    codeChallengeMethod: codeChallengeRaw ? 'S256' : null,
     resource,
     uid: user.uid,
     email: user.email,

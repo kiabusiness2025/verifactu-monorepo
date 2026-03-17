@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
   if (grantType !== 'authorization_code') {
     return NextResponse.json({ error: 'unsupported_grant_type' }, { status: 400 });
   }
-  if (!code || !clientId || !redirectUri || !codeVerifier) {
+  if (!code || !clientId || !redirectUri) {
     return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
   }
 
@@ -44,7 +44,10 @@ export async function POST(request: NextRequest) {
   if (parsed.clientId !== clientId || parsed.redirectUri !== redirectUri) {
     return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
   }
-  if (!verifyPkce(codeVerifier, parsed.codeChallenge)) {
+  if (parsed.codeChallenge && !codeVerifier) {
+    return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
+  }
+  if (parsed.codeChallenge && !verifyPkce(codeVerifier, parsed.codeChallenge)) {
     return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
   }
 

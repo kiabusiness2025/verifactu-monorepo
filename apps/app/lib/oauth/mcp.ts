@@ -20,8 +20,8 @@ type AuthorizationCodePayload = {
   clientId: string;
   redirectUri: string;
   scope: string;
-  codeChallenge: string;
-  codeChallengeMethod: 'S256';
+  codeChallenge?: string | null;
+  codeChallengeMethod?: 'S256' | null;
   resource: string;
   uid: string;
   email: string | null;
