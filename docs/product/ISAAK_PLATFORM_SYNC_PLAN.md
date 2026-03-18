@@ -137,6 +137,27 @@ Igual que Holded, pero con otro ERP/API.
   - `sync_conflicts`
   - `sync_logs`
 
+### Fase 1.5. Expansión funcional de Holded
+
+- ampliar el adapter de Holded más allá de `Invoice` y `Accounting`
+- añadir soporte de lectura para:
+  - `CRM`
+  - `Projects`
+  - `Team`
+- mantener `Team` con tratamiento más sensible por contener datos laborales o de empleados
+
+Orden recomendado de exposición en producto:
+
+1. `CRM`
+2. `Projects`
+3. `Team`
+
+Regla práctica:
+
+- lectura y explicación primero
+- escritura después
+- datos sensibles de empleados solo con permisos más finos
+
 ### Fase 2. Modelo canónico y ownership
 
 - fijar políticas por entidad
@@ -186,6 +207,37 @@ No activar todo a la vez.
 - guiar cierres y plazos
 - reconciliar diferencias entre Verifactu y ERP externo
 - registrar conflictos y recomendar resolución
+
+## Roadmap Holded por dominios
+
+### Invoice API
+
+- facturas
+- contactos
+- grupos de contacto
+- borradores
+
+### Accounting API
+
+- cuentas contables
+- lectura de saldos y estructura contable
+
+### CRM API
+
+- bookings
+- relación comercial y agenda operativa
+
+### Projects API
+
+- proyectos
+- tareas
+- lectura de rentabilidad y seguimiento operativo
+
+### Team API
+
+- empleados
+- partes/tiempos
+- posible sensibilidad reforzada por datos laborales
 
 ## Qué necesitaremos del usuario
 

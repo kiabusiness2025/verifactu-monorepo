@@ -25,6 +25,18 @@ export type HoldedProbeResult = {
     ok: boolean;
     status: number | null;
   };
+  crmApi: {
+    ok: boolean;
+    status: number | null;
+  };
+  projectsApi: {
+    ok: boolean;
+    status: number | null;
+  };
+  teamApi: {
+    ok: boolean;
+    status: number | null;
+  };
   error?: string | null;
 };
 
@@ -131,21 +143,27 @@ async function probeEndpoint(apiKey: string, path: string, query?: HoldedRequest
 export async function probeAccountingApiConnection(apiKey: string): Promise<HoldedProbeResult> {
   const normalizedApiKey = apiKey.trim();
 
-  const [invoiceApi, accountingApi] = await Promise.all([
+  const [invoiceApi, accountingApi, crmApi, projectsApi, teamApi] = await Promise.all([
     probeEndpoint(normalizedApiKey, '/api/invoicing/v1/documents', { limit: 1, page: 1 }),
     probeEndpoint(normalizedApiKey, '/api/accounting/v1/accounts', { limit: 1, page: 1 }),
+    probeEndpoint(normalizedApiKey, '/api/crm/v1/bookings', { limit: 1, page: 1 }),
+    probeEndpoint(normalizedApiKey, '/api/projects/v1/projects', { limit: 1, page: 1 }),
+    probeEndpoint(normalizedApiKey, '/api/team/v1/employees', { limit: 1, page: 1 }),
   ]);
 
-  const ok = invoiceApi.ok || accountingApi.ok;
+  const ok = invoiceApi.ok || accountingApi.ok || crmApi.ok || projectsApi.ok || teamApi.ok;
   const error = ok
     ? null
-    : 'No se pudo validar acceso a Holded Invoice API ni Accounting API con la API key proporcionada';
+    : 'No se pudo validar acceso a ninguna API principal de Holded con la API key proporcionada';
 
   return {
     ok,
     provider: 'holded',
     invoiceApi,
     accountingApi,
+    crmApi,
+    projectsApi,
+    teamApi,
     error,
   };
 }
@@ -173,6 +191,59 @@ export type HoldedAccount = {
   name?: string;
   code?: string;
   balance?: number;
+};
+
+export type HoldedContactGroup = {
+  id?: string;
+  name?: string;
+  description?: string;
+};
+
+export type HoldedBooking = {
+  id?: string;
+  title?: string;
+  description?: string;
+  date?: string;
+  contactId?: string;
+  ownerId?: string;
+  status?: string;
+};
+
+export type HoldedProject = {
+  id?: string;
+  name?: string;
+  code?: string;
+  description?: string;
+  status?: string;
+  customerId?: string;
+};
+
+export type HoldedProjectTask = {
+  id?: string;
+  name?: string;
+  description?: string;
+  status?: string;
+  projectId?: string;
+  assigneeId?: string;
+};
+
+export type HoldedEmployee = {
+  id?: string;
+  name?: string;
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  status?: string;
+};
+
+export type HoldedTimeEntry = {
+  id?: string;
+  employeeId?: string;
+  projectId?: string;
+  taskId?: string;
+  date?: string;
+  hours?: number;
+  description?: string;
 };
 
 export const holdedAdapter = {
@@ -233,6 +304,84 @@ export const holdedAdapter = {
       query: {
         page: args?.page ?? 1,
         limit: args?.limit ?? 25,
+      },
+    });
+  },
+
+  async listContactGroups(apiKey: string, args?: { page?: number; limit?: number }) {
+    return holdedRequest<HoldedContactGroup[]>({
+      apiKey,
+      path: '/api/invoicing/v1/contacts/groups',
+      query: {
+        page: args?.page ?? 1,
+        limit: args?.limit ?? 25,
+      },
+    });
+  },
+
+  async listBookings(apiKey: string, args?: { page?: number; limit?: number }) {
+    return holdedRequest<HoldedBooking[]>({
+      apiKey,
+      path: '/api/crm/v1/bookings',
+      query: {
+        page: args?.page ?? 1,
+        limit: args?.limit ?? 25,
+      },
+    });
+  },
+
+  async listProjects(apiKey: string, args?: { page?: number; limit?: number }) {
+    return holdedRequest<HoldedProject[]>({
+      apiKey,
+      path: '/api/projects/v1/projects',
+      query: {
+        page: args?.page ?? 1,
+        limit: args?.limit ?? 25,
+      },
+    });
+  },
+
+  async getProject(apiKey: string, projectId: string) {
+    return holdedRequest<HoldedProject>({
+      apiKey,
+      path: "/api/projects/v1/projects/" + projectId,
+    });
+  },
+
+  async listProjectTasks(
+    apiKey: string,
+    projectId: string,
+    args?: { page?: number; limit?: number }
+  ) {
+    return holdedRequest<HoldedProjectTask[]>({
+      apiKey,
+      path: "/api/projects/v1/projects/" + projectId + "/tasks",
+      query: {
+        page: args?.page ?? 1,
+        limit: args?.limit ?? 25,
+      },
+    });
+  },
+
+  async listEmployees(apiKey: string, args?: { page?: number; limit?: number }) {
+    return holdedRequest<HoldedEmployee[]>({
+      apiKey,
+      path: '/api/team/v1/employees',
+      query: {
+        page: args?.page ?? 1,
+        limit: args?.limit ?? 25,
+      },
+    });
+  },
+
+  async listTimeEntries(apiKey: string, args?: { page?: number; limit?: number; employeeId?: string }) {
+    return holdedRequest<HoldedTimeEntry[]>({
+      apiKey,
+      path: '/api/team/v1/times',
+      query: {
+        page: args?.page ?? 1,
+        limit: args?.limit ?? 25,
+        employeeId: args?.employeeId,
       },
     });
   },
