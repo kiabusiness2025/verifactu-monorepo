@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
   const normalizedScope = requestedScope?.trim() ? requestedScope.trim() : getDefaultScopes().join(' ');
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
 
+  try {
   if (responseType !== 'code') {
     return NextResponse.json({ error: 'unsupported_response_type' }, { status: 400 });
   }
@@ -55,28 +56,58 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(buildLoginUrl(url.toString()));
   }
 
-  const resolved = await resolveTenantForOAuthSession({
-    uid: session.uid,
-    email: session.email ?? null,
-    name: session.name ?? null,
-    sessionTenantId: session.tenantId ?? null,
-  });
+  let resolved: Awaited<ReturnType<typeof resolveTenantForOAuthSession>> = {
+    tenantId: session.tenantId ?? null,
+    resolvedUserId: null,
+  };
 
-  if (resolved.tenantId && resolved.resolvedUserId) {
-    await upsertChannelIdentity({
-      userId: resolved.resolvedUserId,
-      tenantId: resolved.tenantId,
-      channelType: 'chatgpt',
-      channelSubjectId: clientId + ':' + session.uid,
+  try {
+    resolved = await resolveTenantForOAuthSession({
+      uid: session.uid,
       email: session.email ?? null,
-      displayName: session.name ?? null,
-      metadata: { clientId },
+      name: session.name ?? null,
+      sessionTenantId: session.tenantId ?? null,
+    });
+  } catch (error) {
+    console.error('[oauth/authorize] tenant resolution failed', {
+      clientId,
+      sessionUid: session.uid,
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 
-  const hasHoldedConnection = resolved.tenantId
-    ? await hasSharedHoldedConnectionForTenant(resolved.tenantId)
-    : false;
+  if (resolved.tenantId && resolved.resolvedUserId) {
+    try {
+      await upsertChannelIdentity({
+        userId: resolved.resolvedUserId,
+        tenantId: resolved.tenantId,
+        channelType: 'chatgpt',
+        channelSubjectId: clientId + ':' + session.uid,
+        email: session.email ?? null,
+        displayName: session.name ?? null,
+        metadata: { clientId },
+      });
+    } catch (error) {
+      console.error('[oauth/authorize] channel identity upsert failed', {
+        clientId,
+        tenantId: resolved.tenantId,
+        resolvedUserId: resolved.resolvedUserId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  let hasHoldedConnection = false;
+  if (resolved.tenantId) {
+    try {
+      hasHoldedConnection = await hasSharedHoldedConnectionForTenant(resolved.tenantId);
+    } catch (error) {
+      console.error('[oauth/authorize] holded connection lookup failed', {
+        tenantId: resolved.tenantId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
   if (resolved.tenantId && !hasHoldedConnection) {
     const onboardingUrl = new URL('/onboarding/holded', request.nextUrl.origin);
@@ -114,4 +145,18 @@ export async function GET(request: NextRequest) {
   redirect.searchParams.set('code', code);
   if (state) redirect.searchParams.set('state', state);
   return NextResponse.redirect(redirect);
+  } catch (error) {
+    console.error('[oauth/authorize] unexpected error', {
+      clientId,
+      redirectUri,
+      state,
+      message: error instanceof Error ? error.message : String(error),
+    });
+
+    if (redirectUri && validateRedirectUri(redirectUri)) {
+      return redirectWithError(redirectUri, 'server_error', state);
+    }
+
+    return NextResponse.json({ error: 'server_error' }, { status: 500 });
+  }
 }
