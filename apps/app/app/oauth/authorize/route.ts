@@ -1,5 +1,5 @@
 import { upsertChannelIdentity } from '@/lib/integrations/channelIdentityStore';
-import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { getSessionPayload } from '@/lib/session';
 import {
   buildLoginUrl,
@@ -74,11 +74,11 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const holdedConnection = resolved.tenantId
-    ? await resolveSharedHoldedConnectionForTenant(resolved.tenantId)
-    : null;
+  const hasHoldedConnection = resolved.tenantId
+    ? await hasSharedHoldedConnectionForTenant(resolved.tenantId)
+    : false;
 
-  if (resolved.tenantId && !holdedConnection) {
+  if (resolved.tenantId && !hasHoldedConnection) {
     const onboardingUrl = new URL('/onboarding/holded', request.nextUrl.origin);
     onboardingUrl.searchParams.set('next', url.toString());
     onboardingUrl.searchParams.set('channel', 'chatgpt');

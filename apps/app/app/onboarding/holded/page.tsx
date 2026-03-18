@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { buildLoginUrl, resolveTenantForOAuthSession } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
 import { getAppUrl } from '@verifactu/utils';
@@ -51,8 +51,8 @@ export default async function HoldedOnboardingPage({
     redirect('/dashboard/onboarding');
   }
 
-  const existingConnection = await resolveSharedHoldedConnectionForTenant(resolved.tenantId);
-  if (existingConnection) {
+  const hasHoldedConnection = await hasSharedHoldedConnectionForTenant(resolved.tenantId);
+  if (hasHoldedConnection) {
     redirect(nextUrl);
   }
 

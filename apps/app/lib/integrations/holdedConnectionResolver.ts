@@ -37,6 +37,36 @@ async function hasExternalConnectionsTable() {
   return externalConnectionsTableAvailable;
 }
 
+export async function hasSharedHoldedConnectionForTenant(tenantId: string) {
+  if (await hasExternalConnectionsTable()) {
+    const external = await one<{ exists: boolean }>(
+      [
+        'SELECT EXISTS (',
+        '  SELECT 1 FROM external_connections',
+        "  WHERE tenant_id = $1 AND provider = 'holded' AND api_key_enc IS NOT NULL",
+        ') AS exists',
+      ].join(' '),
+      [tenantId]
+    );
+
+    if (external?.exists) {
+      return true;
+    }
+  }
+
+  const legacy = await one<{ exists: boolean }>(
+    [
+      'SELECT EXISTS (',
+      '  SELECT 1 FROM tenant_integrations',
+      "  WHERE tenant_id = $1 AND provider = 'accounting_api' AND api_key_enc IS NOT NULL",
+      ') AS exists',
+    ].join(' '),
+    [tenantId]
+  );
+
+  return legacy?.exists === true;
+}
+
 export async function resolveSharedHoldedConnectionForTenant(tenantId: string) {
   if (await hasExternalConnectionsTable()) {
     const external = await one<ExternalConnectionRow>(
