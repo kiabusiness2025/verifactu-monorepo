@@ -373,6 +373,154 @@ async function getOrCreateInternalUserForOAuth(input: {
   return created.id;
 }
 
+async function ensureOwnedTenantForUser(input: {
+  userId: string;
+  email?: string | null;
+  name?: string | null;
+}) {
+  const memberships = await prisma.membership.findMany({
+    where: {
+      userId: input.userId,
+      status: 'active',
+      tenant: { isDemo: false },
+    },
+    include: {
+      tenant: {
+        select: { id: true, name: true, legalName: true, isDemo: true },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const preferredTenantId = await prisma.userPreference
+    .findUnique({
+      where: { userId: input.userId },
+      select: { preferredTenantId: true },
+    })
+    .then((pref) => pref?.preferredTenantId ?? null);
+
+  const preferredTenant = memberships.find((membership) => membership.tenantId === preferredTenantId)?.tenant;
+  if (preferredTenant) {
+    return preferredTenant.id;
+  }
+
+  if (memberships[0]?.tenantId) {
+    await prisma.userPreference.upsert({
+      where: { userId: input.userId },
+      create: {
+        userId: input.userId,
+        preferredTenantId: memberships[0].tenantId,
+      },
+      update: {
+        preferredTenantId: memberships[0].tenantId,
+      },
+    });
+    return memberships[0].tenantId;
+  }
+
+  const workspaceBase = input.name?.trim() || input.email?.split('@')[0]?.trim() || 'Isaak';
+  const workspaceName = workspaceBase + ' Workspace';
+
+  const tenant = await prisma.tenant.create({
+    data: {
+      name: workspaceName,
+      legalName: workspaceName,
+      isDemo: false,
+    },
+    select: { id: true },
+  });
+
+  await prisma.membership.create({
+    data: {
+      tenantId: tenant.id,
+      userId: input.userId,
+      role: 'owner',
+      status: 'active',
+    },
+  });
+
+  await prisma.userPreference.upsert({
+    where: { userId: input.userId },
+    create: {
+      userId: input.userId,
+      preferredTenantId: tenant.id,
+    },
+    update: {
+      preferredTenantId: tenant.id,
+    },
+  });
+
+  return tenant.id;
+}
+
+export async function resolveTenantForHoldedFirstSession(input: {
+  uid: string;
+  email?: string | null;
+  name?: string | null;
+  sessionTenantId?: string | null;
+}) {
+  const internalUserId = await getOrCreateInternalUserForOAuth({
+    uid: input.uid,
+    email: input.email ?? null,
+    name: input.name ?? null,
+  });
+
+  const direct = await resolveActiveTenant({
+    userId: input.uid,
+    sessionTenantId: input.sessionTenantId ?? null,
+  });
+
+  if (direct.tenantId) {
+    const directTenant = await prisma.tenant.findUnique({
+      where: { id: direct.tenantId },
+      select: { id: true, isDemo: true },
+    });
+
+    if (directTenant && !directTenant.isDemo) {
+      const membership = await prisma.membership.findFirst({
+        where: {
+          userId: internalUserId,
+          tenantId: directTenant.id,
+          status: 'active',
+        },
+        select: { id: true },
+      });
+
+      if (!membership) {
+        await prisma.membership.create({
+          data: {
+            userId: internalUserId,
+            tenantId: directTenant.id,
+            role: 'member',
+            status: 'active',
+          },
+        });
+      }
+
+      await prisma.userPreference.upsert({
+        where: { userId: internalUserId },
+        create: {
+          userId: internalUserId,
+          preferredTenantId: directTenant.id,
+        },
+        update: {
+          preferredTenantId: directTenant.id,
+        },
+      });
+
+      return { tenantId: directTenant.id, resolvedUserId: internalUserId };
+    }
+  }
+
+  const ownedTenantId = await ensureOwnedTenantForUser({
+    userId: internalUserId,
+    email: input.email ?? null,
+    name: input.name ?? null,
+  });
+
+  return { tenantId: ownedTenantId, resolvedUserId: internalUserId };
+}
+
 export async function resolveTenantForOAuthSession(input: {
   uid: string;
   email?: string | null;

@@ -1,6 +1,7 @@
 import { upsertChannelIdentity } from '@/lib/integrations/channelIdentityStore';
+import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
-import { resolveTenantForOAuthSession } from '@/lib/oauth/mcp';
+import { resolveTenantForHoldedFirstSession, resolveTenantForOAuthSession } from '@/lib/oauth/mcp';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 export async function requireTenantContext(options?: {
@@ -37,20 +38,48 @@ export async function requireTenantContext(options?: {
   };
 
   try {
-    oauthResolved = await resolveTenantForOAuthSession({
-      uid: session.uid,
-      email: session.email ?? null,
-      name: session.name ?? null,
-      sessionTenantId: session.tenantId ?? null,
-    });
+    oauthResolved =
+      options?.channelType === 'chatgpt'
+        ? await resolveTenantForHoldedFirstSession({
+            uid: session.uid,
+            email: session.email ?? null,
+            name: session.name ?? null,
+            sessionTenantId: session.tenantId ?? null,
+          })
+        : await resolveTenantForOAuthSession({
+            uid: session.uid,
+            email: session.email ?? null,
+            name: session.name ?? null,
+            sessionTenantId: session.tenantId ?? null,
+          });
   } catch (error) {
     console.error('[requireTenantContext] oauth tenant resolution failed', {
       sessionUid: session.uid,
+      channelType: options?.channelType ?? 'dashboard',
       message: error instanceof Error ? error.message : String(error),
     });
   }
 
-  const tenantId = direct.tenantId ?? oauthResolved.tenantId ?? session.tenantId ?? null;
+  let tenantId = direct.tenantId ?? oauthResolved.tenantId ?? session.tenantId ?? null;
+
+  if (options?.channelType === 'chatgpt' && tenantId) {
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { isDemo: true },
+      });
+
+      if (tenant?.isDemo && oauthResolved.tenantId && oauthResolved.tenantId !== tenantId) {
+        tenantId = oauthResolved.tenantId;
+      }
+    } catch (error) {
+      console.error('[requireTenantContext] tenant demo check failed', {
+        sessionUid: session.uid,
+        tenantId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
   if (!tenantId) {
     return { error: 'No tenant selected', status: 400 as const };

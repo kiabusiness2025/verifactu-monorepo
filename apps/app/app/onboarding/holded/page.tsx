@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
-import { buildLoginUrl, resolveTenantForOAuthSession } from '@/lib/oauth/mcp';
+import { buildLoginUrl, resolveTenantForHoldedFirstSession } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
 import { getAppUrl } from '@verifactu/utils';
 import { redirect } from 'next/navigation';
@@ -44,7 +44,7 @@ export default async function HoldedOnboardingPage({
   let tenantName = 'tu empresa';
 
   try {
-    const resolved = await resolveTenantForOAuthSession({
+    const resolved = await resolveTenantForHoldedFirstSession({
       uid: session.uid,
       email: session.email ?? null,
       name: session.name ?? null,

@@ -8,7 +8,7 @@ import {
   getMcpResourceUrl,
   mapSessionToOAuthUser,
   mintAuthorizationCode,
-  resolveTenantForOAuthSession,
+  resolveTenantForHoldedFirstSession,
   validateRedirectUri,
 } from '@/lib/oauth/mcp';
 import { NextRequest, NextResponse } from 'next/server';
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
   };
 
   try {
-    resolved = await resolveTenantForOAuthSession({
+    resolved = await resolveTenantForHoldedFirstSession({
       uid: session.uid,
       email: session.email ?? null,
       name: session.name ?? null,
