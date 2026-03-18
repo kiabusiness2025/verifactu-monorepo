@@ -40,28 +40,52 @@ export default async function HoldedOnboardingPage({
     redirect(buildLoginUrl(nextUrl));
   }
 
-  const resolved = await resolveTenantForOAuthSession({
-    uid: session.uid,
-    email: session.email ?? null,
-    name: session.name ?? null,
-    sessionTenantId: session.tenantId ?? null,
-  });
+  let tenantId: string | null = session.tenantId ?? null;
+  let tenantName = 'tu empresa';
 
-  if (!resolved.tenantId) {
-    redirect('/dashboard/onboarding');
+  try {
+    const resolved = await resolveTenantForOAuthSession({
+      uid: session.uid,
+      email: session.email ?? null,
+      name: session.name ?? null,
+      sessionTenantId: session.tenantId ?? null,
+    });
+
+    tenantId = resolved.tenantId;
+
+    if (tenantId) {
+      try {
+        const hasHoldedConnection = await hasSharedHoldedConnectionForTenant(tenantId);
+        if (hasHoldedConnection) {
+          redirect(nextUrl);
+        }
+      } catch (error) {
+        console.error('[onboarding/holded] holded connection lookup failed', {
+          tenantId,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+
+      try {
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: { name: true, legalName: true },
+        });
+
+        tenantName = tenant?.legalName || tenant?.name || tenantName;
+      } catch (error) {
+        console.error('[onboarding/holded] tenant lookup failed', {
+          tenantId,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[onboarding/holded] tenant resolution failed', {
+      sessionUid: session.uid,
+      message: error instanceof Error ? error.message : String(error),
+    });
   }
-
-  const hasHoldedConnection = await hasSharedHoldedConnectionForTenant(resolved.tenantId);
-  if (hasHoldedConnection) {
-    redirect(nextUrl);
-  }
-
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: resolved.tenantId },
-    select: { name: true, legalName: true },
-  });
-
-  const tenantName = tenant?.legalName || tenant?.name || 'tu empresa';
 
   return <HoldedOnboardingClient nextUrl={nextUrl} tenantName={tenantName} />;
 }
