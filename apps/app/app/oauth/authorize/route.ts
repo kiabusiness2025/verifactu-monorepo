@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(buildLoginUrl(url.toString()));
   }
 
-  let resolved: Awaited<ReturnType<typeof resolveTenantForOAuthSession>> = {
+  let resolved: { tenantId: string | null; resolvedUserId: string | null } = {
     tenantId: session.tenantId ?? null,
     resolvedUserId: null,
   };
