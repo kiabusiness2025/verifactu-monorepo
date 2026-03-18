@@ -12,34 +12,69 @@ export async function requireTenantContext(options?: {
     return { error: 'Unauthorized', status: 401 as const };
   }
 
-  const direct = await resolveActiveTenant({
-    userId: session.uid,
-    sessionTenantId: session.tenantId ?? null,
-  });
+  let direct = {
+    tenantId: session.tenantId ?? null,
+    tenant: null,
+    supportMode: false,
+    supportSessionId: null,
+  } as Awaited<ReturnType<typeof resolveActiveTenant>>;
 
-  const oauthResolved = await resolveTenantForOAuthSession({
-    uid: session.uid,
-    email: session.email ?? null,
-    name: session.name ?? null,
-    sessionTenantId: session.tenantId ?? null,
-  });
+  try {
+    direct = await resolveActiveTenant({
+      userId: session.uid,
+      sessionTenantId: session.tenantId ?? null,
+    });
+  } catch (error) {
+    console.error('[requireTenantContext] direct tenant resolution failed', {
+      sessionUid: session.uid,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
 
-  const tenantId = direct.tenantId ?? oauthResolved.tenantId;
+  let oauthResolved: { tenantId: string | null; resolvedUserId: string | null } = {
+    tenantId: session.tenantId ?? null,
+    resolvedUserId: null,
+  };
+
+  try {
+    oauthResolved = await resolveTenantForOAuthSession({
+      uid: session.uid,
+      email: session.email ?? null,
+      name: session.name ?? null,
+      sessionTenantId: session.tenantId ?? null,
+    });
+  } catch (error) {
+    console.error('[requireTenantContext] oauth tenant resolution failed', {
+      sessionUid: session.uid,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const tenantId = direct.tenantId ?? oauthResolved.tenantId ?? session.tenantId ?? null;
 
   if (!tenantId) {
     return { error: 'No tenant selected', status: 400 as const };
   }
 
   if (oauthResolved.resolvedUserId) {
-    await upsertChannelIdentity({
-      userId: oauthResolved.resolvedUserId,
-      tenantId,
-      channelType: options?.channelType ?? 'dashboard',
-      channelSubjectId: session.uid,
-      email: session.email ?? null,
-      displayName: session.name ?? null,
-      metadata: options?.metadata ?? { source: 'requireTenantContext' },
-    });
+    try {
+      await upsertChannelIdentity({
+        userId: oauthResolved.resolvedUserId,
+        tenantId,
+        channelType: options?.channelType ?? 'dashboard',
+        channelSubjectId: session.uid,
+        email: session.email ?? null,
+        displayName: session.name ?? null,
+        metadata: options?.metadata ?? { source: 'requireTenantContext' },
+      });
+    } catch (error) {
+      console.error('[requireTenantContext] channel identity upsert failed', {
+        sessionUid: session.uid,
+        tenantId,
+        resolvedUserId: oauthResolved.resolvedUserId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   return {
