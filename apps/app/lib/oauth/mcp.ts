@@ -384,10 +384,6 @@ export async function resolveTenantForOAuthSession(input: {
     sessionTenantId: input.sessionTenantId ?? null,
   });
 
-  if (direct.tenantId) {
-    return { tenantId: direct.tenantId, resolvedUserId: input.uid };
-  }
-
   const user = await prisma.user.findFirst({
     where: {
       OR: [
@@ -405,6 +401,41 @@ export async function resolveTenantForOAuthSession(input: {
       email: input.email ?? null,
       name: input.name ?? null,
     }));
+
+  if (direct.tenantId) {
+    const membership = await prisma.membership.findFirst({
+      where: {
+        userId: internalUserId,
+        tenantId: direct.tenantId,
+        status: 'active',
+      },
+      select: { id: true },
+    });
+
+    if (!membership) {
+      await prisma.membership.create({
+        data: {
+          userId: internalUserId,
+          tenantId: direct.tenantId,
+          role: 'member',
+          status: 'active',
+        },
+      });
+    }
+
+    await prisma.userPreference.upsert({
+      where: { userId: internalUserId },
+      create: {
+        userId: internalUserId,
+        preferredTenantId: direct.tenantId,
+      },
+      update: {
+        preferredTenantId: direct.tenantId,
+      },
+    });
+
+    return { tenantId: direct.tenantId, resolvedUserId: internalUserId };
+  }
 
   const fallback = await resolveActiveTenant({
     userId: internalUserId,
