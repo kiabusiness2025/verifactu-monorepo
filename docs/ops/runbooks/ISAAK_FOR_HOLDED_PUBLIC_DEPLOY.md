@@ -16,7 +16,7 @@ Runbook breve para desplegar `Isaak for Holded` y dejar el entorno listo para un
 - `SESSION_SECRET`
 - `MCP_OAUTH_SECRET`
 - `MCP_OAUTH_ALLOWED_REDIRECT_ORIGINS`
-- `INTEGRATION_SECRET_KEY`
+- `INTEGRATIONS_SECRET_KEY`
 - `MCP_DEFAULT_TENANT_NAME`
 - `MCP_DEFAULT_TENANT_NIF`
 

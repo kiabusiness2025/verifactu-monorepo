@@ -37,7 +37,7 @@ En `apps/app`:
 - `SESSION_SECRET`
 - `MCP_OAUTH_SECRET`
 - `MCP_OAUTH_ALLOWED_REDIRECT_ORIGINS`
-- `INTEGRATION_SECRET_KEY`
+- `INTEGRATIONS_SECRET_KEY`
 - `HOLDED_TEST_API_KEY`
   - solo para test interno y nunca como fallback en produccion real
 - `MCP_DEFAULT_TENANT_NAME`

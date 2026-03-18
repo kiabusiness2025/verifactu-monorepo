@@ -1,7 +1,9 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
 
 function getEncryptionKey() {
-  const raw = process.env.INTEGRATIONS_SECRET_KEY?.trim();
+  const raw =
+    process.env.INTEGRATIONS_SECRET_KEY?.trim() ||
+    process.env.INTEGRATION_SECRET_KEY?.trim();
   if (!raw) {
     throw new Error('INTEGRATIONS_SECRET_KEY is required');
   }
