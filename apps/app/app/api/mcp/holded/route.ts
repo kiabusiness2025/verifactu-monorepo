@@ -161,6 +161,123 @@ const TOOLS: ToolDefinition[] = [
     },
   },
   {
+    name: 'holded_list_bookings',
+    title: 'List CRM bookings in Holded',
+    description:
+      'List CRM bookings and agenda items from Holded for the currently authorized tenant.',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: {
+          type: 'number',
+          minimum: 1,
+          default: 1,
+          description: 'Results page number to fetch from Holded pagination.',
+        },
+        limit: {
+          type: 'number',
+          minimum: 1,
+          maximum: 100,
+          default: 25,
+          description: 'Maximum number of bookings to return.',
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'holded_list_projects',
+    title: 'List projects in Holded',
+    description:
+      'List projects from Holded for the currently authorized tenant so Isaak can explain workload and profitability context.',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: {
+          type: 'number',
+          minimum: 1,
+          default: 1,
+          description: 'Results page number to fetch from Holded pagination.',
+        },
+        limit: {
+          type: 'number',
+          minimum: 1,
+          maximum: 100,
+          default: 25,
+          description: 'Maximum number of projects to return.',
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'holded_get_project',
+    title: 'Get one project from Holded',
+    description:
+      'Retrieve a single project from Holded by id for the currently authorized tenant.',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: {
+          type: 'string',
+          description: 'The Holded project identifier returned by a previous project listing.',
+        },
+      },
+      required: ['projectId'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'holded_list_project_tasks',
+    title: 'List project tasks in Holded',
+    description:
+      'List tasks for a specific Holded project so Isaak can explain project progress in plain language.',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: {
+          type: 'string',
+          description: 'The Holded project identifier to inspect.',
+        },
+        page: {
+          type: 'number',
+          minimum: 1,
+          default: 1,
+          description: 'Results page number to fetch from Holded pagination.',
+        },
+        limit: {
+          type: 'number',
+          minimum: 1,
+          maximum: 100,
+          default: 25,
+          description: 'Maximum number of tasks to return.',
+        },
+      },
+      required: ['projectId'],
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'holded_create_invoice_draft',
     title: 'Create invoice draft in Holded',
     description:
@@ -380,6 +497,37 @@ async function callTool(
       });
       return formatToolResult({ source, items: data });
     }
+    case 'holded_list_bookings': {
+      const data = await holdedAdapter.listBookings(apiKey, {
+        page: Number(input.page || 1),
+        limit: Number(input.limit || 25),
+      });
+      return formatToolResult({ source, items: data });
+    }
+    case 'holded_list_projects': {
+      const data = await holdedAdapter.listProjects(apiKey, {
+        page: Number(input.page || 1),
+        limit: Number(input.limit || 25),
+      });
+      return formatToolResult({ source, items: data });
+    }
+    case 'holded_get_project': {
+      if (typeof input.projectId !== 'string' || !input.projectId.trim()) {
+        throw new Error('projectId is required');
+      }
+      const data = await holdedAdapter.getProject(apiKey, input.projectId.trim());
+      return formatToolResult({ source, item: data });
+    }
+    case 'holded_list_project_tasks': {
+      if (typeof input.projectId !== 'string' || !input.projectId.trim()) {
+        throw new Error('projectId is required');
+      }
+      const data = await holdedAdapter.listProjectTasks(apiKey, input.projectId.trim(), {
+        page: Number(input.page || 1),
+        limit: Number(input.limit || 25),
+      });
+      return formatToolResult({ source, items: data });
+    }
     case 'holded_create_invoice_draft': {
       const confirm = input.confirm === true;
       if (!confirm) {
@@ -431,7 +579,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     name: 'Isaak for Holded',
     description:
-      'ChatGPT connector for Isaak and Holded. It lets authorized users list invoices, contacts, and accounting accounts, and create draft invoices for the connected Verifactu tenant.',
+      'ChatGPT connector for Isaak and Holded. It lets authorized users inspect invoices, contacts, accounting accounts, CRM bookings, projects, and project tasks, and create draft invoices for the connected Verifactu tenant.',
     protocol: 'MCP over JSON-RPC HTTP',
     endpoint: '/api/mcp/holded',
     oauth: {

@@ -517,6 +517,142 @@ export async function POST(req: Request) {
           },
         }),
 
+        holdedListBookings: tool({
+          description: 'Lista bookings y actividad CRM de Holded del tenant conectado.',
+          inputSchema: zodSchema(
+            z.object({
+              page: z.number().min(1).optional(),
+              limit: z.number().min(1).max(100).optional(),
+            })
+          ),
+          execute: async ({ page, limit }) => {
+            if (!activeTenantId) {
+              return { ok: false, message: 'No hay empresa seleccionada' };
+            }
+
+            const integration = await getHoldedApiKeyForTenant(activeTenantId);
+            if (!integration?.apiKey) {
+              return {
+                ok: false,
+                message: 'El tenant activo no tiene Holded conectado todavía.',
+              };
+            }
+
+            const items = await holdedAdapter.listBookings(integration.apiKey, {
+              page: page ?? 1,
+              limit: limit ?? 25,
+            });
+
+            return {
+              ok: true,
+              source: 'holded',
+              count: Array.isArray(items) ? items.length : 0,
+              items,
+            };
+          },
+        }),
+
+        holdedListProjects: tool({
+          description: 'Lista proyectos de Holded del tenant conectado para que Isaak explique contexto operativo y rentabilidad.',
+          inputSchema: zodSchema(
+            z.object({
+              page: z.number().min(1).optional(),
+              limit: z.number().min(1).max(100).optional(),
+            })
+          ),
+          execute: async ({ page, limit }) => {
+            if (!activeTenantId) {
+              return { ok: false, message: 'No hay empresa seleccionada' };
+            }
+
+            const integration = await getHoldedApiKeyForTenant(activeTenantId);
+            if (!integration?.apiKey) {
+              return {
+                ok: false,
+                message: 'El tenant activo no tiene Holded conectado todavía.',
+              };
+            }
+
+            const items = await holdedAdapter.listProjects(integration.apiKey, {
+              page: page ?? 1,
+              limit: limit ?? 25,
+            });
+
+            return {
+              ok: true,
+              source: 'holded',
+              count: Array.isArray(items) ? items.length : 0,
+              items,
+            };
+          },
+        }),
+
+        holdedGetProject: tool({
+          description: 'Obtiene un proyecto concreto de Holded por id para que Isaak pueda explicarlo o revisar su contexto.',
+          inputSchema: zodSchema(
+            z.object({
+              projectId: z.string().min(1),
+            })
+          ),
+          execute: async ({ projectId }) => {
+            if (!activeTenantId) {
+              return { ok: false, message: 'No hay empresa seleccionada' };
+            }
+
+            const integration = await getHoldedApiKeyForTenant(activeTenantId);
+            if (!integration?.apiKey) {
+              return {
+                ok: false,
+                message: 'El tenant activo no tiene Holded conectado todavía.',
+              };
+            }
+
+            const item = await holdedAdapter.getProject(integration.apiKey, projectId);
+
+            return {
+              ok: true,
+              source: 'holded',
+              item,
+            };
+          },
+        }),
+
+        holdedListProjectTasks: tool({
+          description: 'Lista tareas de un proyecto de Holded para revisar avance operativo desde Isaak.',
+          inputSchema: zodSchema(
+            z.object({
+              projectId: z.string().min(1),
+              page: z.number().min(1).optional(),
+              limit: z.number().min(1).max(100).optional(),
+            })
+          ),
+          execute: async ({ projectId, page, limit }) => {
+            if (!activeTenantId) {
+              return { ok: false, message: 'No hay empresa seleccionada' };
+            }
+
+            const integration = await getHoldedApiKeyForTenant(activeTenantId);
+            if (!integration?.apiKey) {
+              return {
+                ok: false,
+                message: 'El tenant activo no tiene Holded conectado todavía.',
+              };
+            }
+
+            const items = await holdedAdapter.listProjectTasks(integration.apiKey, projectId, {
+              page: page ?? 1,
+              limit: limit ?? 25,
+            });
+
+            return {
+              ok: true,
+              source: 'holded',
+              count: Array.isArray(items) ? items.length : 0,
+              items,
+            };
+          },
+        }),
+
         holdedCreateInvoiceDraft: tool({
           description: 'Crea un borrador de factura en Holded para el tenant conectado, solo cuando el usuario lo confirma explícitamente.',
           inputSchema: zodSchema(

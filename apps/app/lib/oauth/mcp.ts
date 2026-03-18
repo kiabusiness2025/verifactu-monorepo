@@ -47,6 +47,10 @@ export const MCP_TOOL_SCOPES: Record<string, string[]> = {
   holded_get_invoice: ['mcp.read', 'holded.invoices.read'],
   holded_list_contacts: ['mcp.read', 'holded.contacts.read'],
   holded_list_accounts: ['mcp.read', 'holded.accounts.read'],
+  holded_list_bookings: ['mcp.read', 'holded.crm.read'],
+  holded_list_projects: ['mcp.read', 'holded.projects.read'],
+  holded_get_project: ['mcp.read', 'holded.projects.read'],
+  holded_list_project_tasks: ['mcp.read', 'holded.projects.read'],
   holded_create_invoice_draft: ['mcp.read', 'holded.invoices.write'],
 };
 
@@ -167,6 +171,8 @@ export function getSupportedScopes() {
     'holded.invoices.read',
     'holded.contacts.read',
     'holded.accounts.read',
+    'holded.crm.read',
+    'holded.projects.read',
     'holded.invoices.write',
   ];
 }
@@ -177,6 +183,8 @@ export function getDefaultScopes() {
     'holded.invoices.read',
     'holded.contacts.read',
     'holded.accounts.read',
+    'holded.crm.read',
+    'holded.projects.read',
     'holded.invoices.write',
   ];
 }
