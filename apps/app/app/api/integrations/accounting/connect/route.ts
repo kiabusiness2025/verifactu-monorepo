@@ -1,25 +1,35 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
-import { getTenantFeatureFlags } from '@/lib/billing/tenantPlan';
+import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
 import { encryptIntegrationSecret, maskSecret, probeAccountingApiConnection } from '@/lib/integrations/accounting';
 import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+function getEntryChannel(request: NextRequest) {
+  const header = request.headers.get('x-isaak-entry-channel')?.trim().toLowerCase();
+  return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
+}
+
 export async function POST(request: NextRequest) {
-  const auth = await requireTenantContext();
+  const entryChannel = getEntryChannel(request);
+  const auth = await requireTenantContext({
+    channelType: entryChannel,
+    metadata: { source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext' },
+  });
   if ('error' in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const flags = await getTenantFeatureFlags(auth.tenantId);
-  if (!flags.canUseAccountingApiIntegration) {
+  const access = await getAccountingIntegrationAccess({ tenantId: auth.tenantId, entryChannel });
+  if (!access.canConnect) {
     return NextResponse.json(
       {
         error:
           'La integración con tu programa de contabilidad vía API es opcional y está disponible en planes Empresa y PRO.',
-        plan: flags.planCode ?? 'unknown',
+        plan: access.planCode ?? 'unknown',
         allowedPlans: ['empresa', 'pro'],
+        connectionMode: access.connectionMode,
       },
       { status: 403 }
     );
@@ -50,6 +60,7 @@ export async function POST(request: NextRequest) {
     apiKeyEnc: encrypted,
     status,
     lastError: normalizedError,
+    connectedByUserId: auth.session.uid,
   });
 
   return NextResponse.json({

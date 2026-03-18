@@ -1,6 +1,20 @@
 import { one, query } from '@/lib/db';
 
 const PROVIDER = 'accounting_api';
+const SHARED_PROVIDER = 'holded';
+
+let externalConnectionsTableAvailable: boolean | null = null;
+
+async function hasExternalConnectionsTable() {
+  if (externalConnectionsTableAvailable !== null) return externalConnectionsTableAvailable;
+
+  const row = await one<{ exists: boolean }>(
+    "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'external_connections') AS exists"
+  );
+
+  externalConnectionsTableAvailable = row?.exists === true;
+  return externalConnectionsTableAvailable;
+}
 
 export type AccountingIntegrationStatus = {
   id: string;
@@ -42,9 +56,10 @@ export async function upsertAccountingIntegration(args: {
   apiKeyEnc: string;
   status: 'connected' | 'error';
   lastError: string | null;
+  connectedByUserId?: string | null;
 }) {
-  const { tenantId, apiKeyEnc, status, lastError } = args;
-  return one<AccountingIntegrationStatus>(
+  const { tenantId, apiKeyEnc, status, lastError, connectedByUserId } = args;
+  const saved = await one<AccountingIntegrationStatus>(
     `
     INSERT INTO tenant_integrations (tenant_id, provider, api_key_enc, status, last_sync_at, last_error)
     VALUES ($1, $2, $3, $4, CASE WHEN $4 = 'connected' THEN now() ELSE NULL END, $5)
@@ -59,10 +74,53 @@ export async function upsertAccountingIntegration(args: {
     `,
     [tenantId, PROVIDER, apiKeyEnc, status, lastError]
   );
+
+  if (await hasExternalConnectionsTable()) {
+    await query(
+      `
+      INSERT INTO external_connections (
+        tenant_id,
+        provider,
+        credential_type,
+        api_key_enc,
+        scopes_granted,
+        connection_status,
+        connected_by_user_id,
+        connected_at,
+        last_validated_at,
+        last_sync_at
+      )
+      VALUES (
+        $1,
+        $2,
+        'api_key',
+        $3,
+        ARRAY[]::text[],
+        $4,
+        $5,
+        CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
+        CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
+        CASE WHEN $4 = 'connected' THEN now() ELSE NULL END
+      )
+      ON CONFLICT (tenant_id, provider)
+      DO UPDATE SET
+        api_key_enc = EXCLUDED.api_key_enc,
+        connection_status = EXCLUDED.connection_status,
+        connected_by_user_id = COALESCE(EXCLUDED.connected_by_user_id, external_connections.connected_by_user_id),
+        connected_at = COALESCE(EXCLUDED.connected_at, external_connections.connected_at),
+        last_validated_at = EXCLUDED.last_validated_at,
+        last_sync_at = COALESCE(EXCLUDED.last_sync_at, external_connections.last_sync_at),
+        updated_at = now()
+      `,
+      [tenantId, SHARED_PROVIDER, apiKeyEnc, status, connectedByUserId ?? null]
+    );
+  }
+
+  return saved;
 }
 
 export async function disconnectAccountingIntegration(tenantId: string) {
-  return one<AccountingIntegrationStatus>(
+  const saved = await one<AccountingIntegrationStatus>(
     `
     UPDATE tenant_integrations
     SET status = 'disconnected', api_key_enc = NULL, last_error = NULL, updated_at = now()
@@ -71,6 +129,19 @@ export async function disconnectAccountingIntegration(tenantId: string) {
     `,
     [tenantId, PROVIDER]
   );
+
+  if (await hasExternalConnectionsTable()) {
+    await query(
+      `
+      UPDATE external_connections
+      SET connection_status = 'disconnected', api_key_enc = NULL, updated_at = now()
+      WHERE tenant_id = $1 AND provider = $2
+      `,
+      [tenantId, SHARED_PROVIDER]
+    );
+  }
+
+  return saved;
 }
 
 export async function createSyncOutbox(args: {
@@ -188,6 +259,17 @@ export async function touchIntegrationSyncOk(tenantId: string) {
     `,
     [tenantId, PROVIDER]
   );
+
+  if (await hasExternalConnectionsTable()) {
+    await query(
+      `
+      UPDATE external_connections
+      SET connection_status = 'connected', last_sync_at = now(), last_validated_at = now(), updated_at = now()
+      WHERE tenant_id = $1 AND provider = $2
+      `,
+      [tenantId, SHARED_PROVIDER]
+    );
+  }
 }
 
 export async function setIntegrationError(tenantId: string, error: string) {
@@ -199,6 +281,17 @@ export async function setIntegrationError(tenantId: string, error: string) {
     `,
     [tenantId, error.slice(0, 1000), PROVIDER]
   );
+
+  if (await hasExternalConnectionsTable()) {
+    await query(
+      `
+      UPDATE external_connections
+      SET connection_status = 'error', updated_at = now()
+      WHERE tenant_id = $1 AND provider = $2
+      `,
+      [tenantId, SHARED_PROVIDER]
+    );
+  }
 }
 
 export async function listSyncConflicts(tenantId: string, entityType: string) {

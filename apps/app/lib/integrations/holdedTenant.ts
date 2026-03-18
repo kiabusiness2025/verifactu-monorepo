@@ -1,26 +1,16 @@
-import { prisma } from '@/lib/prisma';
-import { decryptIntegrationSecret } from '@/lib/integrations/secretCrypto';
+import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 
 export async function getHoldedApiKeyForTenant(tenantId: string) {
-  const integration = await prisma.tenantIntegration.findUnique({
-    where: {
-      tenantId_provider: {
-        tenantId,
-        provider: 'accounting_api',
-      },
-    },
-    select: {
-      apiKeyEnc: true,
-      status: true,
-    },
-  });
+  const connection = await resolveSharedHoldedConnectionForTenant(tenantId);
 
-  if (!integration?.apiKeyEnc) {
+  if (!connection) {
     return null;
   }
 
   return {
-    apiKey: decryptIntegrationSecret(integration.apiKeyEnc),
-    status: integration.status ?? null,
+    apiKey: connection.apiKey,
+    status: connection.status ?? null,
+    source: connection.source,
+    providerAccountId: connection.providerAccountId ?? null,
   };
 }

@@ -89,6 +89,12 @@ export default function QueEsIsaakPage() {
                     Empezar prueba de 30 días
                   </Link>
                   <Link
+                    href="/producto/integraciones/isaak-for-holded"
+                    className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Ver Isaak for Holded
+                  </Link>
+                  <Link
                     href="/recursos/contacto"
                     className="inline-flex items-center justify-center rounded-full border border-[#2361d8] bg-white px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
                   >

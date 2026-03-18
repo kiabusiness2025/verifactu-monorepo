@@ -9,9 +9,8 @@ import {
   getTokenEndpoint,
   verifyAccessToken,
 } from '@/lib/oauth/mcp';
-import { decryptIntegrationSecret } from '@/lib/integrations/secretCrypto';
+import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { getSessionPayload } from '@/lib/session';
-import prisma from '@/lib/prisma';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -370,23 +369,11 @@ function logMcpAccess(event: {
 
 async function resolveHoldedApiKey(access?: { tenantId: string | null }) {
   if (access?.tenantId) {
-    const integration = await prisma.tenantIntegration.findUnique({
-      where: {
-        tenantId_provider: {
-          tenantId: access.tenantId,
-          provider: 'accounting_api',
-        },
-      },
-      select: {
-        apiKeyEnc: true,
-        status: true,
-      },
-    });
-
-    if (integration?.apiKeyEnc) {
+    const connection = await resolveSharedHoldedConnectionForTenant(access.tenantId);
+    if (connection) {
       return {
-        apiKey: decryptIntegrationSecret(integration.apiKeyEnc),
-        source: 'tenant_integration' as const,
+        apiKey: connection.apiKey,
+        source: connection.source,
       };
     }
   }
@@ -400,23 +387,11 @@ async function resolveHoldedApiKey(access?: { tenantId: string | null }) {
     });
 
     if (resolved.tenantId) {
-      const integration = await prisma.tenantIntegration.findUnique({
-        where: {
-          tenantId_provider: {
-            tenantId: resolved.tenantId,
-            provider: 'accounting_api',
-          },
-        },
-        select: {
-          apiKeyEnc: true,
-          status: true,
-        },
-      });
-
-      if (integration?.apiKeyEnc) {
+      const connection = await resolveSharedHoldedConnectionForTenant(resolved.tenantId);
+      if (connection) {
         return {
-          apiKey: decryptIntegrationSecret(integration.apiKeyEnc),
-          source: 'tenant_integration' as const,
+          apiKey: connection.apiKey,
+          source: connection.source,
         };
       }
     }
@@ -579,7 +554,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     name: 'Isaak for Holded',
     description:
-      'ChatGPT connector for Isaak and Holded. It lets authorized users inspect invoices, contacts, accounting accounts, CRM bookings, projects, and project tasks, and create draft invoices for the connected Verifactu tenant.',
+      'Public-ready MCP connector for Isaak and Holded. It lets authorized Verifactu users inspect invoices, contacts, accounting accounts, CRM bookings, projects, and project tasks, and create draft invoices with explicit confirmation for the connected tenant.',
     protocol: 'MCP over JSON-RPC HTTP',
     endpoint: '/api/mcp/holded',
     oauth: {
@@ -609,7 +584,7 @@ export async function POST(request: NextRequest) {
           protocolVersion: '2024-11-05',
           serverInfo: {
             name: 'Isaak for Holded',
-            version: '0.1.0',
+            version: '0.2.0',
           },
           capabilities: {
             tools: {},

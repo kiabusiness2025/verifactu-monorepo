@@ -8,6 +8,9 @@ Entrada principal: [README.md](README.md)
 
 - Features implementadas, planes, presupuestos, gastos, facturas, integraciones
 - Arquitectura de sync Isaak: `docs/product/ISAAK_PLATFORM_SYNC_PLAN.md`
+- Conexiones compartidas Holded: `docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md`
+- Review publica OpenAI: `docs/product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md`
+- Deploy + QA publica Isaak for Holded: `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
 - Demo: `docs/product/DEMO_FLOW.md`, `docs/product/DEMO_QA_CHECKLIST.md`
 - Precios: `docs/product/pricing/`
 - Onboarding: `docs/product/onboarding/`
@@ -26,6 +29,7 @@ Entrada principal: [README.md](README.md)
 - Email: `docs/ops/email/` (configuración, aliases, mailbox...)
 - Runbooks: `docs/ops/runbooks/`
   - Identidad admin: `docs/ops/runbooks/ADMIN_USER_IDENTITY_RULES.md`
+  - Deploy publico Isaak for Holded: `docs/ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md`
   - Vercel stale commit: `docs/ops/runbooks/VERCEL_STALE_COMMIT_AND_BODYINIT.md`
   - Onboarding empresa: `docs/ops/runbooks/ONBOARDING_ADD_COMPANY_FLOW.md`
 - CI: `docs/ops/CI_CHECKLIST.md`

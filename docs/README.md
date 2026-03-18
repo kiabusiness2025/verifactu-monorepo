@@ -8,6 +8,9 @@
 - [../apps/client/README.md](../apps/client/README.md) - Panel cliente y persistencia de Isaak
 - [product/OPERATIVE_CHECKLIST_ACCOUNTING_API_2026.md](product/OPERATIVE_CHECKLIST_ACCOUNTING_API_2026.md) - Checklist operativo unificado (planes, app, backend, datos, QA)
 - [product/ISAAK_PLATFORM_SYNC_PLAN.md](product/ISAAK_PLATFORM_SYNC_PLAN.md) - Arquitectura objetivo de Isaak, ownership de datos y fases de sync
+- [product/ISAAK_HOLDED_SHARED_CONNECTIONS.md](product/ISAAK_HOLDED_SHARED_CONNECTIONS.md) - Arquitectura de conexion compartida Holded para app interna, app publica y dashboard
+- [product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md](product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md) - Checklist y alcance para preparar la app publica de OpenAI
+- [product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md](product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md) - Checklist operativa para desplegar y probar el flujo publico holded-first
 - [INTEGRITY_REVIEW_2026-03-03.md](INTEGRITY_REVIEW_2026-03-03.md) - Revisión de integridad sin tests (estado actual)
 - [ARQUITECTURA_UNIFICADA.md](legacy/root/ARQUITECTURA_UNIFICADA.md) - Arquitectura completa (Vercel + Firebase + Prisma)
 
@@ -32,6 +35,7 @@
 - [ops/deployment/CLOUD_RUN_QUICK_REFERENCE.md](ops/deployment/CLOUD_RUN_QUICK_REFERENCE.md) - Cloud Run
 - [ops/deployment/GITHUB_CLOUD_BUILD_SETUP.md](ops/deployment/GITHUB_CLOUD_BUILD_SETUP.md) - CI/CD
 - [ops/CI_CHECKLIST.md](ops/CI_CHECKLIST.md) - Checklist mínimo de CI
+- [ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md](ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md) - Runbook breve para desplegar y validar Isaak for Holded
 
 **legacy/root/**
 

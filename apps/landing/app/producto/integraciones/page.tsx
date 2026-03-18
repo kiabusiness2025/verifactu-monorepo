@@ -100,6 +100,31 @@ export default function IntegracionesPage() {
 
       <section className="py-12">
         <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-8 rounded-3xl border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_52%,#eef4ff_100%)] p-8 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-3 py-1 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
+                  Isaak for Holded
+                </div>
+                <h2 className="mt-4 text-2xl font-semibold text-[#011c67] sm:text-3xl">
+                  La primera integracion publica candidata de Isaak
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
+                  Hemos preparado una version publica enfocada en facturas, cuentas, CRM y proyectos,
+                  con OAuth propio, tenant autorizado y escritura controlada por confirmacion.
+                </p>
+              </div>
+              <div>
+                <Link
+                  href="/producto/integraciones/isaak-for-holded"
+                  className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-5 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
+                >
+                  Ver ficha publica
+                </Link>
+              </div>
+            </div>
+          </div>
+
           <div className="rounded-3xl border border-[#2361d8]/15 bg-white p-10">
             <h2 className="text-2xl font-semibold text-[#011c67]">
               Necesitas una integración específica

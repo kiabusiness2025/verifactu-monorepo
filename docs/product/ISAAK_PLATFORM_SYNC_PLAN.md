@@ -158,6 +158,26 @@ Regla práctica:
 - escritura después
 - datos sensibles de empleados solo con permisos más finos
 
+### Fase 1.6. Conexion compartida y canales
+
+- mantener una sola conexion Holded por tenant
+- separar identidad del usuario de la credencial externa
+- preparar dos modos de entrada:
+  - `verifactu_first`
+  - `holded_first`
+- conservar la app interna actual de ChatGPT como entorno de validacion
+- preparar la futura app publica `Isaak for Holded` sobre el mismo core
+
+Entregables tecnicos:
+
+- `docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md`
+- `apps/app/lib/integrations/sharedConnections.ts`
+
+Entregables operativos:
+
+- `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
+- `docs/ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md`
+
 ### Fase 2. Modelo canónico y ownership
 
 - fijar políticas por entidad

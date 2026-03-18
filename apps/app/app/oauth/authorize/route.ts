@@ -1,3 +1,5 @@
+import { upsertChannelIdentity } from '@/lib/integrations/channelIdentityStore';
+import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { getSessionPayload } from '@/lib/session';
 import {
   buildLoginUrl,
@@ -59,6 +61,30 @@ export async function GET(request: NextRequest) {
     name: session.name ?? null,
     sessionTenantId: session.tenantId ?? null,
   });
+
+  if (resolved.tenantId && resolved.resolvedUserId) {
+    await upsertChannelIdentity({
+      userId: resolved.resolvedUserId,
+      tenantId: resolved.tenantId,
+      channelType: 'chatgpt',
+      channelSubjectId: clientId + ':' + session.uid,
+      email: session.email ?? null,
+      displayName: session.name ?? null,
+      metadata: { clientId },
+    });
+  }
+
+  const holdedConnection = resolved.tenantId
+    ? await resolveSharedHoldedConnectionForTenant(resolved.tenantId)
+    : null;
+
+  if (resolved.tenantId && !holdedConnection) {
+    const onboardingUrl = new URL('/onboarding/holded', request.nextUrl.origin);
+    onboardingUrl.searchParams.set('next', url.toString());
+    onboardingUrl.searchParams.set('channel', 'chatgpt');
+    return NextResponse.redirect(onboardingUrl);
+  }
+
   const user = mapSessionToOAuthUser({
     uid: session.uid,
     email: session.email ?? null,

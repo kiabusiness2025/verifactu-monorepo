@@ -1,29 +1,40 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
-import { getTenantFeatureFlags } from '@/lib/billing/tenantPlan';
+import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
+import { NextRequest, NextResponse } from 'next/server';
 import { getAccountingIntegration } from '@/lib/integrations/accountingStore';
-import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
-  const auth = await requireTenantContext();
+function getEntryChannel(request: NextRequest) {
+  const query = request.nextUrl.searchParams.get('channel')?.trim().toLowerCase();
+  const header = request.headers.get('x-isaak-entry-channel')?.trim().toLowerCase();
+  return query === 'chatgpt' || header === 'chatgpt' ? 'chatgpt' : 'dashboard';
+}
+
+export async function GET(request: NextRequest) {
+  const entryChannel = getEntryChannel(request);
+  const auth = await requireTenantContext({
+    channelType: entryChannel,
+    metadata: { source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext' },
+  });
   if ('error' in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   const integration = await getAccountingIntegration(auth.tenantId);
-  const flags = await getTenantFeatureFlags(auth.tenantId);
+  const access = await getAccountingIntegrationAccess({ tenantId: auth.tenantId, entryChannel });
 
   return NextResponse.json({
-    provider: 'accounting_api',
+    provider: 'holded',
     status: integration?.status ?? 'disconnected',
     lastSyncAt: integration?.last_sync_at ?? null,
     lastError: integration?.last_error ?? null,
     connected: integration?.status === 'connected',
-    plan: flags.planCode,
-    canConnect: flags.canUseAccountingApiIntegration,
-    canExportAeatBooks: flags.canExportAeatBooks,
-    canUseAccountingApiIntegration: flags.canUseAccountingApiIntegration,
-    canBidirectionalQuotes: flags.canBidirectionalQuotes,
+    plan: access.planCode,
+    canConnect: access.canConnect,
+    canExportAeatBooks: access.canExportAeatBooks,
+    canUseAccountingApiIntegration: access.canConnect,
+    canBidirectionalQuotes: access.canBidirectionalQuotes,
+    connectionMode: access.connectionMode,
   });
 }

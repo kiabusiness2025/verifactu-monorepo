@@ -7,6 +7,8 @@ export type TenantFeatureFlags = {
   canBidirectionalQuotes: boolean;
 };
 
+export type AccountingIntegrationEntryChannel = 'dashboard' | 'chatgpt';
+
 function normalizePlanCode(code: string | null | undefined) {
   return code?.trim().toLowerCase() || null;
 }
@@ -45,6 +47,20 @@ export async function getTenantFeatureFlags(tenantId: string): Promise<TenantFea
   });
 
   return buildFlags(subscription?.plan.code ?? null);
+}
+
+export async function getAccountingIntegrationAccess(input: {
+  tenantId: string;
+  entryChannel?: AccountingIntegrationEntryChannel;
+}) {
+  const flags = await getTenantFeatureFlags(input.tenantId);
+  const isHoldedFirst = input.entryChannel === 'chatgpt';
+
+  return {
+    ...flags,
+    canConnect: flags.canUseAccountingApiIntegration || isHoldedFirst,
+    connectionMode: isHoldedFirst && !flags.canUseAccountingApiIntegration ? 'holded_first' : 'verifactu_first',
+  } as const;
 }
 
 export async function canUseAccountingIntegration(tenantId: string) {

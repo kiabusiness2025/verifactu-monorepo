@@ -102,6 +102,9 @@ model User {
   supportSessionsAsAdmin SupportSession[] @relation("SupportSessionAdmin")
   webhookEvents    WebhookEvent[]
   emailEvents      EmailEvent[]
+  externalConnectionsConnected ExternalConnection[] @relation("ExternalConnectionConnectedByUser")
+  channelIdentities           ChannelIdentity[]
+  externalConnectionAuditLogs ExternalConnectionAuditLog[]
 
   // Client app relations
   tenantMemberships  Membership[]
@@ -347,10 +350,14 @@ model Tenant {
   articles            Article[]
   expenses            ExpenseRecord[]
   integrations        TenantIntegration[]
+  externalConnections ExternalConnection[]
+  channelIdentities   ChannelIdentity[]
   integrationMaps     IntegrationMap[]
   syncConflicts       SyncConflict[]
   syncOutboxItems     SyncOutbox[]
   syncLogs            SyncLog[]
+  externalConnectionAuditLogs ExternalConnectionAuditLog[]
+  externalSyncRuns    ExternalSyncRun[]
   isaakConversations  IsaakConversation[]
   demoOnboardings     UserOnboarding[]
   supportSessions     SupportSession[]
@@ -755,6 +762,100 @@ model TenantIntegration {
   @@unique([tenantId, provider])
   @@index([tenantId, provider])
   @@map("tenant_integrations")
+}
+
+model ExternalConnection {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  provider          String
+  providerAccountId String?   @map("provider_account_id")
+  credentialType    String    @default("api_key") @map("credential_type")
+  apiKeyEnc         String?   @map("api_key_enc")
+  scopesGranted     String[]  @default([]) @map("scopes_granted")
+  connectionStatus  String    @default("disconnected") @map("connection_status")
+  connectedByUserId String?   @map("connected_by_user_id")
+  connectedAt       DateTime? @map("connected_at") @db.Timestamptz
+  lastValidatedAt   DateTime? @map("last_validated_at") @db.Timestamptz
+  lastSyncAt        DateTime? @map("last_sync_at") @db.Timestamptz
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connectedByUser User?     @relation("ExternalConnectionConnectedByUser", fields: [connectedByUserId], references: [id], onDelete: SetNull)
+  auditLogs       ExternalConnectionAuditLog[]
+  syncRuns        ExternalSyncRun[]
+
+  @@unique([tenantId, provider])
+  @@index([tenantId, provider, connectionStatus])
+  @@index([connectedByUserId])
+  @@map("external_connections")
+}
+
+model ChannelIdentity {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String   @map("user_id")
+  tenantId         String?  @map("tenant_id") @db.Uuid
+  channelType      String   @map("channel_type")
+  channelSubjectId String   @map("channel_subject_id")
+  email            String?
+  displayName      String?  @map("display_name")
+  metadata         Json?
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@unique([channelType, channelSubjectId])
+  @@index([userId, channelType])
+  @@index([tenantId, channelType])
+  @@map("channel_identities")
+}
+
+model ExternalConnectionAuditLog {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  connectionId    String?  @map("connection_id") @db.Uuid
+  userId          String?  @map("user_id")
+  channelType     String   @map("channel_type")
+  action          String
+  resourceType    String   @map("resource_type")
+  resourceId      String?  @map("resource_id")
+  status          String
+  requestPayload  Json?    @map("request_payload")
+  responsePayload Json?    @map("response_payload")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connection ExternalConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  user       User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([connectionId, createdAt])
+  @@index([userId, createdAt])
+  @@map("external_connection_audit_logs")
+}
+
+model ExternalSyncRun {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  connectionId  String    @map("connection_id") @db.Uuid
+  provider      String
+  jobType       String    @map("job_type")
+  status        String    @default("pending")
+  startedAt     DateTime? @map("started_at") @db.Timestamptz
+  finishedAt    DateTime? @map("finished_at") @db.Timestamptz
+  resultSummary String?   @map("result_summary")
+  errorMessage  String?   @map("error_message")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant     Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connection ExternalConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, provider, status])
+  @@index([connectionId, status])
+  @@map("external_sync_runs")
 }
 
 model IntegrationMap {
