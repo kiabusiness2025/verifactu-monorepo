@@ -1,7 +1,17 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, BadgeCheck, Bot, BriefcaseBusiness, Building2, CheckCircle2, FileSpreadsheet, MessageSquareText, Sparkles } from 'lucide-react';
+import {
+  ArrowRight,
+  Bot,
+  BriefcaseBusiness,
+  Building2,
+  CheckCircle2,
+  FileSpreadsheet,
+  MessageSquareText,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import { getAppUrl } from '../lib/urls';
 
 export const metadata: Metadata = {
@@ -40,17 +50,55 @@ const useCases = [
   },
 ];
 
+const faqItems = [
+  {
+    question: '¿Tengo que entrar primero en verifactu.business?',
+    answer:
+      'No. Esta landing está pensada para empezar desde ChatGPT con Isaak for Holded. Si después quieres panel visual, histórico y reglas fiscales, puedes activar verifactu.business.',
+  },
+  {
+    question: '¿Puedo usar mi propia API key de Holded?',
+    answer:
+      'Sí. Isaak trabaja con la API key de la cuenta de Holded que tú elijas conectar. Esa credencial se guarda en backend y no queda expuesta en el cliente.',
+  },
+  {
+    question: '¿Por qué el botón principal abre ChatGPT y no una URL larga de onboarding?',
+    answer:
+      'Porque el flujo OAuth de ChatGPT genera parámetros temporales como state, code_challenge y redirect_uri. Esos enlaces no son estables para una campaña pública. El punto de entrada correcto es la app de ChatGPT.',
+  },
+  {
+    question: '¿Qué gano con la experiencia completa de Verifactu?',
+    answer:
+      'Añades panel visual, histórico, trazabilidad, reglas fiscales, automatizaciones y una capa operativa más profunda para Isaak sobre tus datos.',
+  },
+];
+
 export default function HoldedCampaignPage() {
   const appUrl = getAppUrl();
-  const chatgptAppUrl = process.env.NEXT_PUBLIC_HOLDED_CHATGPT_APP_URL || 'https://chatgpt.com/apps/isaak-for-holded-beta/asdk_app_69b9aa407b008191a102a76216fc4842';
+  const chatgptAppUrl =
+    process.env.NEXT_PUBLIC_HOLDED_CHATGPT_APP_URL ||
+    'https://chatgpt.com/apps/isaak-for-holded-beta/asdk_app_69b9aa407b008191a102a76216fc4842';
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_40%,#ffffff_100%)] text-slate-900">
       <section className="border-b border-slate-200 bg-white/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
           <Link href="/" className="text-sm font-semibold text-slate-600 hover:text-slate-900">
             verifactu.business
           </Link>
+
+          <nav className="flex flex-wrap items-center gap-5 text-sm text-slate-600">
+            <a href="#como-funciona" className="hover:text-slate-900">
+              Cómo funciona
+            </a>
+            <a href="#casos" className="hover:text-slate-900">
+              Casos de uso
+            </a>
+            <a href="#faq" className="hover:text-slate-900">
+              FAQ
+            </a>
+          </nav>
+
           <div className="inline-flex items-center gap-2 rounded-full border border-[#ff5460]/20 bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold text-[#ff5460]">
             <Sparkles className="h-3.5 w-3.5" />
             Holded + ChatGPT
@@ -88,6 +136,10 @@ export default function HoldedCampaignPage() {
               </Link>
             </div>
 
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+              El botón principal abre la app de ChatGPT porque el onboarding OAuth correcto necesita parámetros temporales generados en ese momento. No conviene publicar una URL fija y larga de autorización.
+            </div>
+
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               {campaignPoints.map((point) => (
                 <div key={point} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -123,7 +175,7 @@ export default function HoldedCampaignPage() {
         </div>
       </section>
 
-      <section className="bg-white py-14">
+      <section id="como-funciona" className="bg-white py-14">
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
             <h2 className="text-3xl font-bold tracking-tight text-slate-950">
@@ -148,7 +200,7 @@ export default function HoldedCampaignPage() {
         </div>
       </section>
 
-      <section className="py-14">
+      <section id="casos" className="py-14">
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#081936_0%,#0f2660_100%)] p-8 text-white shadow-sm lg:p-10">
             <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -199,6 +251,45 @@ export default function HoldedCampaignPage() {
           </div>
         </div>
       </section>
+
+      <section id="faq" className="bg-white py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+              <ShieldCheck className="h-3.5 w-3.5 text-[#ff5460]" />
+              Preguntas frecuentes
+            </div>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
+              Todo lo importante antes de probar Isaak for Holded
+            </h2>
+          </div>
+
+          <div className="mt-8 grid gap-4">
+            {faqItems.map((item) => (
+              <article key={item.question} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                <h3 className="text-lg font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">{item.answer}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="font-semibold text-slate-900">Isaak for Holded</div>
+            <div className="mt-1">Entrada conversacional gratuita para usuarios de Holded, impulsada por Verifactu.</div>
+          </div>
+
+          <div className="flex flex-wrap gap-4">
+            <a href="#como-funciona" className="hover:text-slate-900">Cómo funciona</a>
+            <a href="#faq" className="hover:text-slate-900">FAQ</a>
+            <Link href="/que-es-isaak" className="hover:text-slate-900">Qué es Isaak</Link>
+            <Link href="/legal/privacidad" className="hover:text-slate-900">Privacidad</Link>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
