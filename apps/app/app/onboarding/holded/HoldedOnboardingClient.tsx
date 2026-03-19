@@ -31,6 +31,13 @@ const helpSteps = [
   'Vuelve a esta pantalla y pegala para conectar Isaak.',
 ];
 
+const savingMessages = [
+  'Isaak esta verificando tu acceso a facturas y borradores.',
+  'Estamos preparando lectura de contactos y cuentas contables.',
+  'Isaak dejara lista tu conexion para operar desde ChatGPT.',
+  'En cuanto termine, podras pedir resumenes, pendientes y senales clave.',
+];
+
 export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
   const [apiKey, setApiKey] = useState('');
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
@@ -38,12 +45,26 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savingMessageIndex, setSavingMessageIndex] = useState(0);
 
   const statusLabel = useMemo(() => {
     if (status?.connected) return 'Holded ya esta conectado';
     if (loading) return 'Comprobando conexion';
     return 'Pendiente de conexion';
   }, [loading, status?.connected]);
+
+  useEffect(() => {
+    if (!saving) {
+      setSavingMessageIndex(0);
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setSavingMessageIndex((current) => (current + 1) % savingMessages.length);
+    }, 1800);
+
+    return () => window.clearInterval(interval);
+  }, [saving]);
 
   useEffect(() => {
     let cancelled = false;
@@ -233,6 +254,31 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
               </button>
             </div>
           </form>
+
+          {saving ? (
+            <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#fff7f7_0%,#ffffff_48%,#fff4f5_100%)] p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff5460]/10 text-[#ff5460]">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-black">Conectando tu cuenta de Holded</div>
+                  <div className="mt-1 text-sm text-neutral-600">No cierres esta ventana. Estamos validando la API key y preparando Isaak.</div>
+                </div>
+              </div>
+
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-neutral-200">
+                <div className="h-full w-1/2 animate-pulse rounded-full bg-[#ff5460]" />
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-white/80 bg-white/90 px-4 py-4 shadow-sm">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Mientras esperas</div>
+                <p className="mt-3 min-h-[48px] text-sm leading-6 text-neutral-800 transition-all duration-300">
+                  {savingMessages[savingMessageIndex]}
+                </p>
+              </div>
+            </div>
+          ) : null}
 
           {message ? (
             <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
