@@ -56,10 +56,19 @@ export async function getAccountingIntegrationAccess(input: {
   const flags = await getTenantFeatureFlags(input.tenantId);
   const isHoldedFirst = input.entryChannel === 'chatgpt';
 
+  if (isHoldedFirst) {
+    return {
+      ...flags,
+      canUseAccountingApiIntegration: true,
+      canConnect: true,
+      connectionMode: 'holded_first',
+    } as const;
+  }
+
   return {
     ...flags,
-    canConnect: flags.canUseAccountingApiIntegration || isHoldedFirst,
-    connectionMode: isHoldedFirst && !flags.canUseAccountingApiIntegration ? 'holded_first' : 'verifactu_first',
+    canConnect: flags.canUseAccountingApiIntegration,
+    connectionMode: 'verifactu_first',
   } as const;
 }
 
