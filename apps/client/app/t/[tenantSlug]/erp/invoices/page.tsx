@@ -120,7 +120,14 @@ export default async function InvoicesPage({
                 <tbody>
                   {items.map((item) => (
                     <tr key={item.id} className="border-b last:border-0">
-                      <td className="px-3 py-3 font-medium text-foreground">{item.number}</td>
+                      <td className="px-3 py-3 font-medium text-foreground">
+                        <Link
+                          href={`/t/${tenantSlug}/erp/invoices/${item.id}`}
+                          className="hover:underline"
+                        >
+                          {item.number}
+                        </Link>
+                      </td>
                       <td className="px-3 py-3 text-muted-foreground">{item.customerName}</td>
                       <td className="px-3 py-3 text-muted-foreground">{formatDate(item.issueDate)}</td>
                       <td className="px-3 py-3 text-foreground">{formatCurrency(item.amountGross)}</td>

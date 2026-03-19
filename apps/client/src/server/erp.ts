@@ -236,3 +236,40 @@ export async function getNextInvoiceNumber(tenantId: string) {
 
   return `VF-${year}-${newNum}`;
 }
+
+export async function getInvoiceDetail(invoiceId: string, tenantId: string) {
+  const invoice = await prisma.invoice.findFirst({
+    where: { id: invoiceId, tenantId },
+    select: {
+      id: true,
+      number: true,
+      issueDate: true,
+      customerName: true,
+      customerNif: true,
+      amountNet: true,
+      amountTax: true,
+      amountGross: true,
+      status: true,
+      verifactuStatus: true,
+      verifactuQr: true,
+      verifactuHash: true,
+      verifactuLastError: true,
+      notes: true,
+      createdAt: true,
+      customer: {
+        select: { id: true, name: true, email: true, nif: true },
+      },
+    },
+  });
+
+  if (!invoice) return null;
+
+  return {
+    ...invoice,
+    amountNet: toNumber(invoice.amountNet),
+    amountTax: toNumber(invoice.amountTax),
+    amountGross: toNumber(invoice.amountGross),
+    issueDate: invoice.issueDate.toISOString(),
+    createdAt: invoice.createdAt.toISOString(),
+  };
+}
