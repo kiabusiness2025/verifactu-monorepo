@@ -91,12 +91,13 @@ export function getProtectedResourceMetadataUrl() {
 }
 
 export function getAllowedRedirectOrigins() {
+  const defaults = ['https://chatgpt.com', 'https://chat.openai.com'];
   const fromEnv = (process.env.MCP_OAUTH_ALLOWED_REDIRECT_ORIGINS || '')
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
 
-  return fromEnv.length > 0 ? fromEnv : ['https://chatgpt.com', 'https://chat.openai.com'];
+  return Array.from(new Set([...defaults, ...fromEnv]));
 }
 
 export function validateRedirectUri(redirectUri: string) {
