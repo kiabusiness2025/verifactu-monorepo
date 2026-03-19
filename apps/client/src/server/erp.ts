@@ -187,3 +187,52 @@ export async function getCustomersPageData(tenantId: string) {
     },
   };
 }
+
+export async function getCustomersForDropdown(tenantId: string) {
+  const customers = await prisma.customer.findMany({
+    where: { tenantId, isActive: true },
+    select: {
+      id: true,
+      name: true,
+      nif: true,
+      email: true,
+    },
+    orderBy: { name: 'asc' },
+  });
+
+  return customers;
+}
+
+export async function getSuppliersForDropdown(tenantId: string) {
+  const suppliers = await prisma.supplier.findMany({
+    where: { tenantId, isActive: true },
+    select: {
+      id: true,
+      name: true,
+      nif: true,
+    },
+    orderBy: { name: 'asc' },
+  });
+
+  return suppliers;
+}
+
+export async function getNextInvoiceNumber(tenantId: string) {
+  const lastInvoice = await prisma.invoice.findFirst({
+    where: { tenantId },
+    orderBy: { createdAt: 'desc' },
+    select: { number: true },
+  });
+
+  if (!lastInvoice) {
+    return `VF-${new Date().getFullYear()}-001`;
+  }
+
+  // Parse last number: VF-2026-001 -> 001
+  const match = lastInvoice.number.match(/(\d+)$/);
+  const lastNum = match ? parseInt(match[1], 10) : 0;
+  const newNum = (lastNum + 1).toString().padStart(3, '0');
+  const year = new Date().getFullYear();
+
+  return `VF-${year}-${newNum}`;
+}
