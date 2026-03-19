@@ -5,27 +5,99 @@ const SHARED_PROVIDER = 'holded';
 
 let tenantIntegrationsTableAvailable: boolean | null = null;
 let externalConnectionsTableAvailable: boolean | null = null;
+let storageBootstrapAttempted = false;
+
+async function detectTable(tableName: string) {
+  const row = await one<{ exists: boolean }>(
+    "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1) AS exists",
+    [tableName]
+  );
+
+  return row?.exists === true;
+}
+
+async function bootstrapIntegrationStorageTables() {
+  if (storageBootstrapAttempted) return;
+  storageBootstrapAttempted = true;
+
+  try {
+    await query(
+      `
+      CREATE TABLE IF NOT EXISTS tenant_integrations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        provider TEXT NOT NULL,
+        api_key_enc TEXT,
+        status TEXT NOT NULL DEFAULT 'disconnected',
+        last_sync_at TIMESTAMPTZ,
+        last_error TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+      `
+    );
+    await query(
+      'CREATE UNIQUE INDEX IF NOT EXISTS tenant_integrations_tenant_provider_key ON tenant_integrations(tenant_id, provider)'
+    );
+    await query(
+      'CREATE INDEX IF NOT EXISTS tenant_integrations_tenant_provider_idx ON tenant_integrations(tenant_id, provider)'
+    );
+
+    await query(
+      `
+      CREATE TABLE IF NOT EXISTS external_connections (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        provider text NOT NULL,
+        provider_account_id text,
+        credential_type text NOT NULL DEFAULT 'api_key',
+        api_key_enc text,
+        scopes_granted text[] NOT NULL DEFAULT ARRAY[]::text[],
+        connection_status text NOT NULL DEFAULT 'disconnected',
+        connected_by_user_id text REFERENCES users(id) ON DELETE SET NULL,
+        connected_at timestamptz,
+        last_validated_at timestamptz,
+        last_sync_at timestamptz,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now(),
+        UNIQUE (tenant_id, provider)
+      )
+      `
+    );
+    await query(
+      'CREATE INDEX IF NOT EXISTS external_connections_tenant_provider_status_idx ON external_connections (tenant_id, provider, connection_status)'
+    );
+    await query(
+      'CREATE INDEX IF NOT EXISTS external_connections_connected_by_user_idx ON external_connections (connected_by_user_id)'
+    );
+  } catch (error) {
+    console.error('[accountingStore] failed to bootstrap integration storage tables', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+  } finally {
+    tenantIntegrationsTableAvailable = await detectTable('tenant_integrations');
+    externalConnectionsTableAvailable = await detectTable('external_connections');
+  }
+}
 
 async function hasTenantIntegrationsTable() {
   if (tenantIntegrationsTableAvailable !== null) return tenantIntegrationsTableAvailable;
 
-  const row = await one<{ exists: boolean }>(
-    "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'tenant_integrations') AS exists"
-  );
-
-  tenantIntegrationsTableAvailable = row?.exists === true;
-  return tenantIntegrationsTableAvailable;
+  tenantIntegrationsTableAvailable = await detectTable('tenant_integrations');
+  if (!tenantIntegrationsTableAvailable) {
+    await bootstrapIntegrationStorageTables();
+  }
+  return tenantIntegrationsTableAvailable === true;
 }
 
 async function hasExternalConnectionsTable() {
   if (externalConnectionsTableAvailable !== null) return externalConnectionsTableAvailable;
 
-  const row = await one<{ exists: boolean }>(
-    "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'external_connections') AS exists"
-  );
-
-  externalConnectionsTableAvailable = row?.exists === true;
-  return externalConnectionsTableAvailable;
+  externalConnectionsTableAvailable = await detectTable('external_connections');
+  if (!externalConnectionsTableAvailable) {
+    await bootstrapIntegrationStorageTables();
+  }
+  return externalConnectionsTableAvailable === true;
 }
 
 export type AccountingIntegrationStatus = {
