@@ -13,80 +13,92 @@ function getEntryChannel(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const entryChannel = getEntryChannel(request);
-  const auth = await requireTenantContext({
-    channelType: entryChannel,
-    metadata: { source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext' },
-  });
-  if ('error' in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
+  let stage: 'auth' | 'access' | 'body' | 'encrypt' | 'probe' | 'persist' = 'auth';
+  let tenantId: string | null = null;
+  let resolvedUserId: string | null = null;
+  let sessionUid: string | null = null;
 
-  const access = await getAccountingIntegrationAccess({ tenantId: auth.tenantId, entryChannel });
-  if (!access.canConnect) {
-    return NextResponse.json(
-      {
-        error:
-          'La integración con tu programa de contabilidad vía API es opcional y está disponible en planes Empresa y PRO.',
-        plan: access.planCode ?? 'unknown',
-        allowedPlans: ['empresa', 'pro'],
-        connectionMode: access.connectionMode,
-      },
-      { status: 403 }
-    );
-  }
-
-  const body = await request.json().catch(() => ({}));
-  const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
-  if (!apiKey) {
-    return NextResponse.json({ error: 'apiKey es obligatorio' }, { status: 400 });
-  }
-
-  let encrypted: string;
   try {
-    encrypted = encryptIntegrationSecret(apiKey);
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'No se pudo cifrar la API key' },
-      { status: 500 }
-    );
-  }
+    const auth = await requireTenantContext({
+      channelType: entryChannel,
+      metadata: { source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext' },
+    });
+    if ('error' in auth) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
 
-  const probe = await probeAccountingApiConnection(apiKey);
-  const status = probe.ok ? 'connected' : 'error';
-  const normalizedError = probe.ok ? null : probe.error || 'Error de validación de integración Holded';
+    tenantId = auth.tenantId;
+    resolvedUserId = auth.resolvedUserId ?? null;
+    sessionUid = auth.session.uid;
 
-  let saved: Awaited<ReturnType<typeof upsertAccountingIntegration>>;
-  try {
-    saved = await upsertAccountingIntegration({
+    stage = 'access';
+    const access = await getAccountingIntegrationAccess({ tenantId: auth.tenantId, entryChannel });
+    if (!access.canConnect) {
+      return NextResponse.json(
+        {
+          error:
+            'La integración con tu programa de contabilidad vía API es opcional y está disponible en planes Empresa y PRO.',
+          plan: access.planCode ?? 'unknown',
+          allowedPlans: ['empresa', 'pro'],
+          connectionMode: access.connectionMode,
+        },
+        { status: 403 }
+      );
+    }
+
+    stage = 'body';
+    const body = await request.json().catch(() => ({}));
+    const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
+    if (!apiKey) {
+      return NextResponse.json({ error: 'apiKey es obligatorio' }, { status: 400 });
+    }
+
+    stage = 'encrypt';
+    const encrypted = encryptIntegrationSecret(apiKey);
+
+    stage = 'probe';
+    const probe = await probeAccountingApiConnection(apiKey);
+    const status = probe.ok ? 'connected' : 'error';
+    const normalizedError = probe.ok ? null : probe.error || 'Error de validación de integración Holded';
+
+    stage = 'persist';
+    const saved = await upsertAccountingIntegration({
       tenantId: auth.tenantId,
       apiKeyEnc: encrypted,
       status,
       lastError: normalizedError,
       connectedByUserId: auth.resolvedUserId ?? null,
     });
+
+    return NextResponse.json({
+      ok: probe.ok,
+      provider: 'holded',
+      status: saved?.status ?? status,
+      lastSyncAt: saved?.last_sync_at ?? null,
+      lastError: saved?.last_error ?? null,
+      keyMasked: maskSecret(apiKey),
+      probe,
+    });
   } catch (error) {
-    console.error('[api/integrations/accounting/connect] failed to persist integration', {
-      tenantId: auth.tenantId,
-      resolvedUserId: auth.resolvedUserId ?? null,
-      sessionUid: auth.session.uid,
-      message: error instanceof Error ? error.message : String(error),
+    const detail = error instanceof Error ? error.message : 'Unknown Holded connection error';
+    const genericError = stage === 'persist' ? 'No se pudo guardar la conexion de Holded' : 'No se pudo conectar Holded';
+
+    console.error('[api/integrations/accounting/connect] failed', {
+      stage,
+      entryChannel,
+      tenantId,
+      resolvedUserId,
+      sessionUid,
+      detail,
     });
 
-    const detail = error instanceof Error ? error.message : 'Unknown persistence error';
-
     return NextResponse.json(
-      { error: 'No se pudo guardar la conexion de Holded', detail },
+      {
+        error: genericError,
+        detail,
+        stage,
+      },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    ok: probe.ok,
-    provider: 'holded',
-    status: saved?.status ?? status,
-    lastSyncAt: saved?.last_sync_at ?? null,
-    lastError: saved?.last_error ?? null,
-    keyMasked: maskSecret(apiKey),
-    probe,
-  });
 }
