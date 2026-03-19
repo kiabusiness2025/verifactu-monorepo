@@ -1,8 +1,8 @@
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/ui';
 import { getSessionPayload } from '@/lib/session';
 import { getCustomersPageData, resolveTenantFromSession } from '@/src/server/erp';
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/ui';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('es-ES', {
@@ -106,11 +106,17 @@ export default async function CustomersPage({
                   {items.map((item) => (
                     <tr key={item.id} className="border-b last:border-0">
                       <td className="px-3 py-3 font-medium text-foreground">{item.name}</td>
-                      <td className="px-3 py-3 text-muted-foreground">{item.email ?? item.phone ?? 'Sin contacto'}</td>
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {item.email ?? item.phone ?? 'Sin contacto'}
+                      </td>
                       <td className="px-3 py-3 text-muted-foreground">{item.nif ?? 'Sin NIF'}</td>
-                      <td className="px-3 py-3 text-muted-foreground">{item.city ?? 'Sin ciudad'}</td>
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {item.city ?? 'Sin ciudad'}
+                      </td>
                       <td className="px-3 py-3 text-foreground">{item._count.invoices}</td>
-                      <td className="px-3 py-3 text-muted-foreground">{formatDate(item.createdAt)}</td>
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {formatDate(item.createdAt)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

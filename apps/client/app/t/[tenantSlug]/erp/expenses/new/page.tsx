@@ -1,11 +1,14 @@
-import React from 'react';
-import { redirect } from 'next/navigation';
 import { getSessionPayload } from '@/lib/session';
-import { resolveTenantFromSession, getSuppliersForDropdown } from '@/src/server/erp';
 import { NewExpenseForm } from '@/src/components/erp/NewExpenseForm';
-import { SectionTitle, Card, CardContent } from '@/src/ui';
+import { getSuppliersForDropdown, resolveTenantFromSession } from '@/src/server/erp';
+import { Card, CardContent, SectionTitle } from '@/src/ui';
+import { redirect } from 'next/navigation';
 
-export default async function NewExpensePage({ params }: { params: Promise<{ tenantSlug: string }> }) {
+export default async function NewExpensePage({
+  params,
+}: {
+  params: Promise<{ tenantSlug: string }>;
+}) {
   const session = await getSessionPayload();
   if (!session?.uid) redirect('/login');
 

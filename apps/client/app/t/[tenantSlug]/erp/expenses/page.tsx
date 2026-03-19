@@ -1,8 +1,8 @@
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/ui';
 import { getSessionPayload } from '@/lib/session';
 import { getExpensesPageData, resolveTenantFromSession } from '@/src/server/erp';
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/ui';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('es-ES', {
@@ -116,7 +116,9 @@ export default async function ExpensesPage({
                       <td className="px-3 py-3 text-muted-foreground">{formatDate(item.date)}</td>
                       <td className="px-3 py-3 font-medium text-foreground">{item.description}</td>
                       <td className="px-3 py-3 text-muted-foreground">{item.category}</td>
-                      <td className="px-3 py-3 text-muted-foreground">{item.supplier?.name ?? 'Sin proveedor'}</td>
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {item.supplier?.name ?? 'Sin proveedor'}
+                      </td>
                       <td className="px-3 py-3 text-foreground">{formatCurrency(item.amount)}</td>
                       <td className="px-3 py-3 text-muted-foreground">{item.status}</td>
                     </tr>

@@ -1,8 +1,8 @@
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/src/ui';
 import { getSessionPayload } from '@/lib/session';
 import { getInvoicesPageData, resolveTenantFromSession } from '@/src/server/erp';
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/ui';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('es-ES', {

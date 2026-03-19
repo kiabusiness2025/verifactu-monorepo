@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
 import { getSessionPayload } from '@/lib/session';
-import { prisma } from '@verifactu/db';
+import { ensureTenantAccess } from '@/src/server/workspace';
 import type { Decimal } from '@prisma/client/runtime/library';
+import { prisma } from '@verifactu/db';
+import { NextResponse } from 'next/server';
 
 interface CreateExpenseRequest {
   tenantId: string;
@@ -19,23 +20,28 @@ export async function POST(req: Request) {
     const session = await getSessionPayload();
 
     if (!session?.uid) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = (await req.json()) as CreateExpenseRequest;
 
     // Validate required fields
-    if (!body.tenantId || !body.date || !body.description || !body.category || body.amount === undefined) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    if (
+      !body.tenantId ||
+      !body.date ||
+      !body.description ||
+      !body.category ||
+      body.amount === undefined ||
+      !Number.isFinite(body.amount) ||
+      body.amount <= 0
+    ) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const taxRate = body.taxRate ?? 0.21;
+    // Verify the session user has access to the requested tenant (prevents IDOR)
+    await ensureTenantAccess(session.uid, body.tenantId);
+
+    const taxRate = Number.isFinite(body.taxRate) && body.taxRate! >= 0 ? body.taxRate! : 0.21;
 
     // Create expense
     const expense = await prisma.expenseRecord.create({
@@ -61,9 +67,6 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error('Error creating expense:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

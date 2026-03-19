@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import { Plus, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { X, Plus } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface Customer {
   id: string;
   name: string;
-    nif: string | null;
-    email: string | null;
+  nif: string | null;
+  email: string | null;
 }
 
 interface LineItem {
@@ -79,15 +79,9 @@ export function NewInvoiceForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleLineChange = (
-    id: string,
-    field: keyof LineItem,
-    value: string | number
-  ) => {
+  const handleLineChange = (id: string, field: keyof LineItem, value: string | number) => {
     setLineItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      )
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     );
   };
 
@@ -210,9 +204,7 @@ export function NewInvoiceForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
             <input
               type="text"
               name="customerName"
@@ -225,9 +217,7 @@ export function NewInvoiceForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              NIF
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">NIF</label>
             <input
               type="text"
               name="customerNif"
@@ -245,9 +235,7 @@ export function NewInvoiceForm({
         <h3 className="font-semibold text-gray-900">Datos de la factura</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Número *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Número *</label>
             <input
               type="text"
               name="number"
@@ -259,9 +247,7 @@ export function NewInvoiceForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha emisión *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Fecha emisión *</label>
             <input
               type="date"
               name="issueDate"
@@ -382,9 +368,7 @@ export function NewInvoiceForm({
 
       {/* Notas */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Notas
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Notas</label>
         <textarea
           name="notes"
           value={formData.notes}
@@ -397,21 +381,21 @@ export function NewInvoiceForm({
 
       {/* Botones */}
       <div className="flex gap-3 pt-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium"
-          >
-            {loading ? 'Guardando...' : 'Crear factura'}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push(`/t/${tenantSlug}/erp/invoices`)}
-            disabled={loading}
-            className="px-4 py-2 w-32 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
-          >
-            Cancelar
-          </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium"
+        >
+          {loading ? 'Guardando...' : 'Crear factura'}
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push(`/t/${tenantSlug}/erp/invoices`)}
+          disabled={loading}
+          className="px-4 py-2 w-32 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
+        >
+          Cancelar
+        </button>
       </div>
     </form>
   );

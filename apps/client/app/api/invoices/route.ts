@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
 import { getSessionPayload } from '@/lib/session';
-import { prisma } from '@verifactu/db';
+import { ensureTenantAccess } from '@/src/server/workspace';
 import type { Decimal } from '@prisma/client/runtime/library';
+import { prisma } from '@verifactu/db';
+import { NextResponse } from 'next/server';
 
 interface CreateInvoiceRequest {
   tenantId: string;
@@ -25,8 +26,11 @@ function calculateAmounts(items: CreateInvoiceRequest['items']) {
   let amountTax = 0;
 
   items.forEach((item) => {
-    const lineNet = item.quantity * item.unitPrice;
-    const lineTax = lineNet * item.taxRate;
+    const qty = Number.isFinite(item.quantity) && item.quantity > 0 ? item.quantity : 0;
+    const price = Number.isFinite(item.unitPrice) && item.unitPrice >= 0 ? item.unitPrice : 0;
+    const rate = Number.isFinite(item.taxRate) && item.taxRate >= 0 ? item.taxRate : 0;
+    const lineNet = qty * price;
+    const lineTax = lineNet * rate;
 
     amountNet += lineNet;
     amountTax += lineTax;
@@ -44,43 +48,45 @@ export async function POST(req: Request) {
     const session = await getSessionPayload();
 
     if (!session?.uid) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = (await req.json()) as CreateInvoiceRequest;
 
     // Validate required fields
-    if (!body.tenantId || !body.customerName || !body.number || !body.issueDate || !body.items?.length) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    if (
+      !body.tenantId ||
+      !body.customerName ||
+      !body.number ||
+      !body.issueDate ||
+      !body.items?.length
+    ) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    // Verify the session user has access to the requested tenant (prevents IDOR)
+    await ensureTenantAccess(session.uid, body.tenantId);
 
     // Calculate amounts
     const { amountNet, amountTax, amountGross } = calculateAmounts(body.items);
 
-
-      // Create invoice (line items not stored separately in MVP)
-      const invoice = await prisma.invoice.create({
-        data: {
-          tenantId: body.tenantId,
-          customerId: body.customerId,
-          customerName: body.customerName,
-          customerNif: body.customerNif,
-          number: body.number,
-          issueDate: new Date(body.issueDate),
-          amountNet: amountNet as unknown as Decimal,
-          amountTax: amountTax as unknown as Decimal,
-          amountGross: amountGross as unknown as Decimal,
-          status: 'draft',
-          notes: body.notes,
-          createdBy: session.uid,
-        },
-      });
+    // Create invoice (line items not stored separately in MVP)
+    const invoice = await prisma.invoice.create({
+      data: {
+        tenantId: body.tenantId,
+        customerId: body.customerId,
+        customerName: body.customerName,
+        customerNif: body.customerNif,
+        number: body.number,
+        issueDate: new Date(body.issueDate),
+        amountNet: amountNet as unknown as Decimal,
+        amountTax: amountTax as unknown as Decimal,
+        amountGross: amountGross as unknown as Decimal,
+        status: 'draft',
+        notes: body.notes,
+        createdBy: session.uid,
+      },
+    });
     return NextResponse.json(
       {
         ok: true,
@@ -90,9 +96,6 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error('Error creating invoice:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

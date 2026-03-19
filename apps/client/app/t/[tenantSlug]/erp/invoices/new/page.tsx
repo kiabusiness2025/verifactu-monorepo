@@ -1,11 +1,18 @@
-import React from 'react';
-import { redirect } from 'next/navigation';
 import { getSessionPayload } from '@/lib/session';
-import { resolveTenantFromSession, getCustomersForDropdown, getNextInvoiceNumber } from '@/src/server/erp';
 import { NewInvoiceForm } from '@/src/components/erp/NewInvoiceForm';
-import { SectionTitle, Card, CardContent } from '@/src/ui';
+import {
+  getCustomersForDropdown,
+  getNextInvoiceNumber,
+  resolveTenantFromSession,
+} from '@/src/server/erp';
+import { Card, CardContent, SectionTitle } from '@/src/ui';
+import { redirect } from 'next/navigation';
 
-export default async function NewInvoicePage({ params }: { params: Promise<{ tenantSlug: string }> }) {
+export default async function NewInvoicePage({
+  params,
+}: {
+  params: Promise<{ tenantSlug: string }>;
+}) {
   const session = await getSessionPayload();
   if (!session?.uid) redirect('/login');
 

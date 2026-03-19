@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 
 interface Supplier {
   id: string;
   name: string;
-    nif: string | null;
+  nif: string | null;
 }
 
 interface NewExpenseFormProps {
@@ -16,13 +16,7 @@ interface NewExpenseFormProps {
   defaultDate: string;
 }
 
-const EXPENSE_CATEGORIES = [
-  'Suministros',
-  'Transporte',
-  'Alojamiento',
-  'Alimentación',
-  'Otros',
-];
+const EXPENSE_CATEGORIES = ['Suministros', 'Transporte', 'Alojamiento', 'Alimentación', 'Otros'];
 
 const TAX_RATES = ['0%', '4%', '10%', '21%'];
 
@@ -116,9 +110,7 @@ export function NewExpenseForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Fecha *</label>
             <input
               type="date"
               name="date"
@@ -130,9 +122,7 @@ export function NewExpenseForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Categoría *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
             <select
               name="category"
               value={formData.category}
@@ -150,9 +140,7 @@ export function NewExpenseForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Descripción *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Descripción *</label>
           <textarea
             name="description"
             value={formData.description}
@@ -171,9 +159,7 @@ export function NewExpenseForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Importe *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Importe *</label>
             <input
               type="number"
               name="amount"
@@ -188,9 +174,7 @@ export function NewExpenseForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo de IVA *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de IVA *</label>
             <select
               name="taxRate"
               value={formData.taxRate}
@@ -236,9 +220,7 @@ export function NewExpenseForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Referencia
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Referencia</label>
             <input
               type="text"
               name="reference"
@@ -253,21 +235,21 @@ export function NewExpenseForm({
 
       {/* Botones */}
       <div className="flex gap-3 pt-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium"
-          >
-            {loading ? 'Guardando...' : 'Crear gasto'}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push(`/t/${tenantSlug}/erp/expenses`)}
-            disabled={loading}
-            className="px-4 py-2 w-32 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
-          >
-            Cancelar
-          </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium"
+        >
+          {loading ? 'Guardando...' : 'Crear gasto'}
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push(`/t/${tenantSlug}/erp/expenses`)}
+          disabled={loading}
+          className="px-4 py-2 w-32 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
+        >
+          Cancelar
+        </button>
       </div>
     </form>
   );
