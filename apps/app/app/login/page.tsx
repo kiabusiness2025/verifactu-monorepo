@@ -9,7 +9,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     const landingUrl = getLandingUrl();
-    const next = searchParams.get('next')?.trim();
+    const next = searchParams?.get('next')?.trim();
     const loginUrl = new URL('/auth/login', landingUrl);
     if (next) {
       loginUrl.searchParams.set('next', next);
