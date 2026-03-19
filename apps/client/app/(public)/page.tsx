@@ -1,4 +1,6 @@
-// Página pública o landing (opcional)
+import { redirect } from 'next/navigation';
+
+// Safety net: el middleware ya redirige / pero si llega aquí, mandamos a /login
 export default function PublicLanding() {
-  return <div>Bienvenido a Verifactu.business ERP</div>;
+  redirect('/login');
 }

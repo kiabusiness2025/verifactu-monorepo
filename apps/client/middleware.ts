@@ -14,6 +14,12 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const session = req.cookies.get(SESSION_COOKIE)?.value;
 
+  // Redirigir raíz
+  if (pathname === '/') {
+    const target = new URL(session ? '/t/demo/dashboard' : '/login', req.url);
+    return NextResponse.redirect(target);
+  }
+
   // Redirigir rutas legacy a login (no tenemos tenantSlug aquí)
   if (pathname in LEGACY_REDIRECTS) {
     const target = new URL(session ? LEGACY_REDIRECTS[pathname] : '/login', req.url);
