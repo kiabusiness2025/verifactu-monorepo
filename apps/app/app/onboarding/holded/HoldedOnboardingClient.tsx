@@ -225,7 +225,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                disabled={saving || loading}
+                disabled={saving || !apiKey.trim()}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

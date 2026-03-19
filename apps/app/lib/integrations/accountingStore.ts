@@ -76,7 +76,8 @@ export async function upsertAccountingIntegration(args: {
   );
 
   if (await hasExternalConnectionsTable()) {
-    await query(
+    try {
+      await query(
       `
       INSERT INTO external_connections (
         tenant_id,
@@ -113,7 +114,15 @@ export async function upsertAccountingIntegration(args: {
         updated_at = now()
       `,
       [tenantId, SHARED_PROVIDER, apiKeyEnc, status, connectedByUserId ?? null]
-    );
+      );
+    } catch (error) {
+      console.error('[accountingStore] failed to sync external_connections', {
+        tenantId,
+        provider: SHARED_PROVIDER,
+        connectedByUserId: connectedByUserId ?? null,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   return saved;
