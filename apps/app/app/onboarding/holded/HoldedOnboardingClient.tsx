@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertCircle, CheckCircle2, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -14,6 +15,7 @@ type IntegrationStatus = {
   canConnect?: boolean;
   canUseAccountingApiIntegration?: boolean;
   connectionMode?: 'verifactu_first' | 'holded_first';
+  degraded?: boolean;
 };
 
 type Props = {
@@ -104,12 +106,23 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f7faff_0%,#eef4ff_52%,#ffffff_100%)] px-4 py-10 text-slate-900 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#fff7f8_0%,#fff2f4_22%,#f7faff_68%,#ffffff_100%)] px-4 py-10 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="mx-auto max-w-3xl rounded-[32px] border border-slate-200 bg-white/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#0b6cfb]/15 bg-[#0b6cfb]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#0b6cfb]">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Isaak for Holded
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#0b6cfb]/15 bg-[#0b6cfb]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#0b6cfb]">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Isaak for Holded
+            </div>
+            <div className="inline-flex items-center rounded-full border border-[#ff5460]/20 bg-[#ff5460]/8 px-3 py-1">
+              <Image
+                src="/brand/holded/holded-logotype-red-light.svg"
+                alt="Holded"
+                width={92}
+                height={18}
+                className="h-[18px] w-auto"
+              />
+            </div>
           </div>
 
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
@@ -129,6 +142,11 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
               <div className="mt-2 text-sm text-slate-600">
                 Estado actual: <span className="font-semibold text-slate-900">{statusLabel}</span>
               </div>
+              {status?.degraded ? (
+                <div className="mt-3 text-sm text-amber-700">
+                  No hemos podido leer el estado inicial, pero puedes continuar igualmente con la conexion.
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
@@ -153,7 +171,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
                   autoComplete="off"
                   spellCheck={false}
                   placeholder="Pega aqui tu API key de Holded"
-                  className="h-12 w-full rounded-2xl border border-slate-300 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                  className="h-12 w-full rounded-2xl border border-slate-300 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                 />
               </div>
             </label>
@@ -162,7 +180,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
               <button
                 type="submit"
                 disabled={saving || loading}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0b6cfb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#095edb] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#eb4350] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Conectar Holded

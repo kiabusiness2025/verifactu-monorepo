@@ -3,10 +3,20 @@ import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedCon
 import { buildLoginUrl, resolveTenantForHoldedFirstSession } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
 import { getAppUrl } from '@verifactu/utils';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import HoldedOnboardingClient from './HoldedOnboardingClient';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Conectar Holded | Isaak',
+  icons: {
+    icon: '/brand/holded/holded-diamond-red.png',
+    shortcut: '/brand/holded/holded-diamond-red.png',
+    apple: '/brand/holded/holded-diamond-red.png',
+  },
+};
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
