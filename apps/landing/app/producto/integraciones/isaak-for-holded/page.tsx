@@ -100,6 +100,12 @@ export default function IsaakForHoldedPage() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
+                href="https://verifactu.business"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                Probar Verifactu gratis 30 días
+              </Link>
+              <Link
                 href="/recursos/contacto"
                 className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
@@ -145,6 +151,35 @@ export default function IsaakForHoldedPage() {
 
       <section className="bg-white py-14">
         <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-8 rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#081936_0%,#0f2660_100%)] p-8 text-white shadow-sm lg:p-10">
+            <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
+                  Experiencia completa de Isaak
+                </div>
+                <h2 className="mt-4 text-3xl font-bold tracking-tight">
+                  Empieza con Holded en ChatGPT y da el salto a Verifactu cuando quieras
+                </h2>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
+                  Isaak for Holded es la puerta de entrada. Verifactu Business añade panel visual, histórico, trazabilidad, automatizaciones y una capa fiscal completa para operar tu negocio con más contexto.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3 lg:justify-end">
+                <Link
+                  href="https://verifactu.business"
+                  className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#011c67] hover:bg-slate-100"
+                >
+                  Pruébalo gratis 30 días
+                </Link>
+                <Link
+                  href="/que-es-isaak"
+                  className="inline-flex items-center justify-center rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+                >
+                  Ver qué puede hacer Isaak
+                </Link>
+              </div>
+            </div>
+          </div>
           <div className="max-w-3xl">
             <h2 className="text-3xl font-bold tracking-tight text-[#011c67]">
               Alcance recomendado para la primera revision publica

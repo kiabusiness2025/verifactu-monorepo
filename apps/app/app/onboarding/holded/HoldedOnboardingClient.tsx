@@ -1,7 +1,8 @@
 'use client';
 
-import { AlertCircle, CheckCircle2, KeyRound, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle2, KeyRound, Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 type IntegrationStatus = {
@@ -168,6 +169,39 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
             </ol>
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               Usa una API key de la misma cuenta de Holded con la que quieres trabajar en Isaak. No dependemos del correo de ChatGPT para decidir la cuenta: la cuenta la determina la API key que pegues aqui.
+            </div>
+          </div>
+
+          <div className="mt-8 rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_52%,#eef4ff_100%)] p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0b6cfb]/10 text-[#0b6cfb]">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-black">¿Quieres la experiencia completa de Isaak?</div>
+                <p className="mt-2 text-sm leading-6 text-neutral-700">
+                  Activa verifactu.business y prueba gratis durante 30 días la versión completa: panel visual, histórico, trazabilidad, reglas fiscales y gestión avanzada.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Link
+                    href="https://verifactu.business"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
+                  >
+                    Probar Verifactu gratis 30 días
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="https://verifactu.business/que-es-isaak"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+                  >
+                    Ver experiencia completa
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
 

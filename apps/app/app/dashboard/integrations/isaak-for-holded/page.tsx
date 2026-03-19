@@ -258,6 +258,41 @@ export default function IsaakForHoldedPage() {
           </div>
         </article>
       </section>
+
+      <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_45%,#eef4ff_100%)] p-6 shadow-sm">
+        <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#0b6cfb]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#0b6cfb]">
+              <Bot className="h-3.5 w-3.5" />
+              Experiencia completa
+            </div>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
+              Lleva Isaak más allá de Holded
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+              Si quieres usar Isaak con panel visual, histórico, trazabilidad, reglas fiscales y automatizaciones, puedes probar verifactu.business gratis durante 30 días.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 lg:justify-end">
+            <Link
+              href="https://verifactu.business"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center rounded-full bg-[#0b6cfb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#095edb]"
+            >
+              Probar Verifactu gratis 30 días
+            </Link>
+            <Link
+              href="https://verifactu.business/que-es-isaak"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Descubrir a Isaak
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
