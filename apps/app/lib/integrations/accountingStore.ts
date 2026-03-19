@@ -75,54 +75,54 @@ export async function upsertAccountingIntegration(args: {
     [tenantId, PROVIDER, apiKeyEnc, status, lastError]
   );
 
-  if (await hasExternalConnectionsTable()) {
-    try {
+  try {
+    if (await hasExternalConnectionsTable()) {
       await query(
-      `
-      INSERT INTO external_connections (
-        tenant_id,
-        provider,
-        credential_type,
-        api_key_enc,
-        scopes_granted,
-        connection_status,
-        connected_by_user_id,
-        connected_at,
-        last_validated_at,
-        last_sync_at
-      )
-      VALUES (
-        $1,
-        $2,
-        'api_key',
-        $3,
-        ARRAY[]::text[],
-        $4,
-        $5,
-        CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
-        CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
-        CASE WHEN $4 = 'connected' THEN now() ELSE NULL END
-      )
-      ON CONFLICT (tenant_id, provider)
-      DO UPDATE SET
-        api_key_enc = EXCLUDED.api_key_enc,
-        connection_status = EXCLUDED.connection_status,
-        connected_by_user_id = COALESCE(EXCLUDED.connected_by_user_id, external_connections.connected_by_user_id),
-        connected_at = COALESCE(EXCLUDED.connected_at, external_connections.connected_at),
-        last_validated_at = EXCLUDED.last_validated_at,
-        last_sync_at = COALESCE(EXCLUDED.last_sync_at, external_connections.last_sync_at),
-        updated_at = now()
-      `,
-      [tenantId, SHARED_PROVIDER, apiKeyEnc, status, connectedByUserId ?? null]
+        `
+        INSERT INTO external_connections (
+          tenant_id,
+          provider,
+          credential_type,
+          api_key_enc,
+          scopes_granted,
+          connection_status,
+          connected_by_user_id,
+          connected_at,
+          last_validated_at,
+          last_sync_at
+        )
+        VALUES (
+          $1,
+          $2,
+          'api_key',
+          $3,
+          ARRAY[]::text[],
+          $4,
+          $5,
+          CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
+          CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
+          CASE WHEN $4 = 'connected' THEN now() ELSE NULL END
+        )
+        ON CONFLICT (tenant_id, provider)
+        DO UPDATE SET
+          api_key_enc = EXCLUDED.api_key_enc,
+          connection_status = EXCLUDED.connection_status,
+          connected_by_user_id = COALESCE(EXCLUDED.connected_by_user_id, external_connections.connected_by_user_id),
+          connected_at = COALESCE(EXCLUDED.connected_at, external_connections.connected_at),
+          last_validated_at = EXCLUDED.last_validated_at,
+          last_sync_at = COALESCE(EXCLUDED.last_sync_at, external_connections.last_sync_at),
+          updated_at = now()
+        `,
+        [tenantId, SHARED_PROVIDER, apiKeyEnc, status, connectedByUserId ?? null]
       );
-    } catch (error) {
-      console.error('[accountingStore] failed to sync external_connections', {
-        tenantId,
-        provider: SHARED_PROVIDER,
-        connectedByUserId: connectedByUserId ?? null,
-        message: error instanceof Error ? error.message : String(error),
-      });
     }
+  } catch (error) {
+    console.error('[accountingStore] failed to sync external_connections', {
+      tenantId,
+      provider: SHARED_PROVIDER,
+      connectedByUserId: connectedByUserId ?? null,
+      message: error instanceof Error ? error.message : String(error),
+    });
   }
 
   return saved;
