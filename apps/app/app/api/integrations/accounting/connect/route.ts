@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
         error: genericError,
         detail,
         stage,
+        debug: `${genericError} [${stage}] ${detail}`,
       },
       { status: 500 }
     );
