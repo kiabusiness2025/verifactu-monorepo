@@ -72,8 +72,10 @@ export async function POST(request: NextRequest) {
       message: error instanceof Error ? error.message : String(error),
     });
 
+    const detail = error instanceof Error ? error.message : 'Unknown persistence error';
+
     return NextResponse.json(
-      { error: 'No se pudo guardar la conexion de Holded' },
+      { error: 'No se pudo guardar la conexion de Holded', detail },
       { status: 500 }
     );
   }

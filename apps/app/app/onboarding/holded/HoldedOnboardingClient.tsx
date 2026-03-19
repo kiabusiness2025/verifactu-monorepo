@@ -99,7 +99,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
         body: JSON.stringify({ apiKey: apiKey.trim() }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || 'No se pudo conectar Holded');
+      if (!res.ok) throw new Error(data?.detail || data?.error || 'No se pudo conectar Holded');
       if (!data?.ok) {
         throw new Error(data?.probe?.error || data?.lastError || 'La API key de Holded no se pudo validar');
       }
