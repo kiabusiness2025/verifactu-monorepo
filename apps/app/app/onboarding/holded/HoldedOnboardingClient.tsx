@@ -109,24 +109,19 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
     <div className="min-h-screen bg-white px-4 py-10 text-black sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
         <div className="rounded-[28px] border border-neutral-200 bg-white p-6 shadow-[0_16px_48px_rgba(0,0,0,0.06)] sm:p-8">
-          <div className="flex items-center gap-3">
+          <div className="flex justify-center">
             <Image
-              src="/brand/holded/holded-diamond-red.png"
+              src="/brand/holded/holded-diamond-logo.png"
               alt="Holded"
-              width={36}
-              height={36}
-              className="h-9 w-9 rounded-xl"
+              width={120}
+              height={120}
+              className="h-24 w-24 sm:h-28 sm:w-28"
+              priority
             />
-            <div className="min-w-0">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Isaak for Holded</div>
-              <Image
-                src="/brand/holded/holded-logotype-red-light.svg"
-                alt="Holded"
-                width={112}
-                height={22}
-                className="mt-1 h-[22px] w-auto"
-              />
-            </div>
+          </div>
+
+          <div className="mt-6 text-center">
+            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">Isaak for Holded</div>
           </div>
 
           <h1 className="mt-8 text-3xl font-bold tracking-tight text-black sm:text-4xl">
