@@ -9,9 +9,9 @@ Preparar `Isaak for Holded` para envio a revision de OpenAI como app publica bas
 
 ## Fuentes oficiales OpenAI a tener en cuenta
 
-- Apps in ChatGPT: https://help.openai.com/en/articles/11487775-apps-in-chatgpt
+- Apps in ChatGPT: https://help.openai.com/en/articles/12503483-apps-in-chatgpt-and-the-apps-sdk
 - Build with the Apps SDK: https://help.openai.com/en/articles/12515353-build-with-the-apps-sdk
-- Developer mode and MCP apps in ChatGPT: https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt-beta
+- Developer mode, apps and full MCP connectors in ChatGPT: https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta
 - Submitting apps to the ChatGPT app directory: https://help.openai.com/en/articles/20001040-submitting-apps-to-the-chatgpt-app-directory
 
 ## Decision de alcance para la primera submission
@@ -70,7 +70,7 @@ La app publica debe comunicar:
 
 ## Requisitos de presentacion publica
 
-- pagina publica en landing: `/producto/integraciones/isaak-for-holded`
+- landing publica dedicada en `holded.verifactu.business`
 - politica de privacidad publica
 - terminos publicos
 - pagina de contacto/soporte publica
@@ -94,8 +94,14 @@ Completado:
 - onboarding `holded-first` para conectar Holded por API key desde ChatGPT
 - tools de Invoice, Accounting, CRM y Projects expuestas
 - modulo interno `Isaak for Holded` dentro del dashboard
-- pagina publica inicial del producto en landing
+- landing publica inicial en `holded.verifactu.business`
 - conexion compartida preparada para reutilizarse entre ChatGPT y dashboard
+
+Bloqueador actual:
+
+- el onboarding publico `holded-first` ya abre correctamente en produccion
+- la conexion a Holded sigue fallando en el paso de persistencia con el mensaje `No se pudo guardar la conexion de Holded`
+- hasta cerrar ese punto, la app puede seguir avanzando en branding, copy, legal, QA manual y preparacion de submission, pero no conviene enviarla todavia a revision
 
 Pendiente antes de submission:
 
@@ -105,6 +111,33 @@ Pendiente antes de submission:
 - revision de respuestas de error para lenguaje publico
 - politica final de soporte y tiempos de respuesta
 - deploy y smoke test del flujo `holded-first`
+
+## Que ya podemos adelantar para OpenAI aunque Holded siga fallando
+
+- verificar la cuenta de OpenAI Platform que va a presentar la app
+- cerrar nombre final, logo, descripcion corta y notas de version
+- revisar privacidad, terminos y soporte publico enlazables desde la landing
+- dejar lista la landing `holded.verifactu.business`
+- preparar capturas, casos de prueba y expected behavior
+- auditar que las tools publicas devuelven solo datos minimos necesarios
+- confirmar que `Team API` sigue fuera del alcance de la primera submission
+- documentar claramente que la cuenta de Holded se determina por la API key del usuario y que la credencial se guarda server-side
+
+## Ruta recomendada de publicacion con Apps SDK
+
+Segun OpenAI, la ruta recomendada para una app publica es:
+
+1. construir la experiencia con `Apps SDK`
+2. probarla en `Developer Mode`
+3. revisar seguridad, privacidad y comportamiento funcional
+4. enviar la app desde la cuenta verificada de OpenAI Platform
+5. publicar la app desde el dashboard de Platform una vez aprobada
+
+Notas operativas:
+
+- `Apps in ChatGPT` confirma que las apps publicas viven en el directorio de apps y que el Apps SDK es la forma recomendada de empaquetarlas
+- `Build with the Apps SDK` confirma que el SDK se apoya en MCP y que se puede conectar a backend propio
+- `Submitting apps to the ChatGPT app directory` confirma que la submission se hace desde la cuenta verificada de OpenAI Platform y que, tras la aprobacion, la publicacion final se realiza desde el dashboard de Platform
 
 ## Flujo publico actual
 
@@ -121,18 +154,20 @@ Para la version publica objetivo:
 
 Este flujo no sustituye el dashboard. Lo complementa.
 
+## Checklist previo a submission en Platform
+
+1. Cuenta de OpenAI Platform verificada como persona o empresa.
+2. Metadata final de la app cerrada.
+3. Landing publica operativa y enlazada.
+4. Politica de privacidad publica y coherente con los datos que devuelven las tools.
+5. Terminos y soporte publico visibles.
+6. Casos de prueba definidos con expected outputs claros.
+7. QA manual en ChatGPT web y, cuando aplique, en mobile.
+8. Flujo real `Conectar con cuenta -> onboarding -> conectar Holded -> volver a ChatGPT` pasando en produccion.
+9. Release notes claras para la version que se envie.
+
 ## Referencias operativas
 
 - Arquitectura compartida: `docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md`
 - Checklist de deploy y QA: `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
 - Runbook de despliegue: `docs/ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md`
-
-## Checklist de envio
-
-1. Verificar que el flujo `Conectar con cuenta` funciona en produccion.
-2. Verificar que el tenant correcto se resuelve tras OAuth.
-3. Verificar que las tools de lectura funcionan con datos reales.
-4. Verificar que `holded_create_invoice_draft` exige confirmacion.
-5. Verificar privacidad, terminos y soporte visibles desde la pagina publica.
-6. Verificar que `Team API` sigue fuera del alcance publico inicial.
-7. Preparar capturas y copy final para submission.
