@@ -96,12 +96,21 @@ Completado:
 - modulo interno `Isaak for Holded` dentro del dashboard
 - landing publica inicial en `holded.verifactu.business`
 - conexion compartida preparada para reutilizarse entre ChatGPT y dashboard
+- app enviada a revision publica en OpenAI Platform
+- flujo `holded-first` sin login visible para usuario externo
+- landing publica con soporte, privacidad y terminos
+- verificacion de dominio completada
 
-Bloqueador actual:
+Bloqueador ya resuelto:
 
-- el onboarding publico `holded-first` ya abre correctamente en produccion
-- la conexion a Holded sigue fallando en el paso de persistencia con el mensaje `No se pudo guardar la conexion de Holded`
-- hasta cerrar ese punto, la app puede seguir avanzando en branding, copy, legal, QA manual y preparacion de submission, pero no conviene enviarla todavia a revision
+- el fallo `No se pudo guardar la conexion de Holded` quedo aislado finalmente como un problema de conectividad Postgres en `persist`
+- la integracion ya valida la API key y persiste correctamente cuando la conectividad de base de datos esta bien configurada
+
+Pendiente operativo actual:
+
+- smoke tests finales tras el ultimo ajuste de infraestructura
+- seguimiento de la revision de OpenAI
+- cambio de URL beta a URL publica final cuando OpenAI la publique
 
 Pendiente antes de submission:
 
@@ -112,7 +121,7 @@ Pendiente antes de submission:
 - politica final de soporte y tiempos de respuesta
 - deploy y smoke test del flujo `holded-first`
 
-## Que ya podemos adelantar para OpenAI aunque Holded siga fallando
+## Que ya dejamos adelantado para OpenAI
 
 - verificar la cuenta de OpenAI Platform que va a presentar la app
 - cerrar nombre final, logo, descripcion corta y notas de version

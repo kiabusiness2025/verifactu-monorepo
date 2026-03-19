@@ -11,6 +11,7 @@
 - [product/ISAAK_HOLDED_SHARED_CONNECTIONS.md](product/ISAAK_HOLDED_SHARED_CONNECTIONS.md) - Arquitectura de conexion compartida Holded para app interna, app publica y dashboard
 - [product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md](product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md) - Checklist y alcance para preparar la app publica de OpenAI
 - [product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md](product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md) - Checklist operativa para desplegar y probar el flujo publico holded-first
+- [product/ISAAK_FOR_HOLDED_STATUS_2026-03-19.md](product/ISAAK_FOR_HOLDED_STATUS_2026-03-19.md) - Estado operativo, incidente final y decisiones de producto de Isaak for Holded
 - [INTEGRITY_REVIEW_2026-03-03.md](INTEGRITY_REVIEW_2026-03-03.md) - Revisión de integridad sin tests (estado actual)
 - [ARQUITECTURA_UNIFICADA.md](legacy/root/ARQUITECTURA_UNIFICADA.md) - Arquitectura completa (Vercel + Firebase + Prisma)
 
@@ -76,6 +77,7 @@
 **engineering/ai/**
 
 - [engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md](engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md) - Setup operativo de Isaak for Holded via MCP + OAuth
+- [engineering/ai/ISAAK_PERSONA_PLAYBOOK_2026.md](engineering/ai/ISAAK_PERSONA_PLAYBOOK_2026.md) - Plan para que Isaak responda como Isaak y no como un asistente generico
 - [engineering/ai/ISAAK_V3_QUICK_START.md](engineering/ai/ISAAK_V3_QUICK_START.md) - Quick start Genkit
 - [engineering/ai/ISAAK_V3_TESTING_GUIDE.md](engineering/ai/ISAAK_V3_TESTING_GUIDE.md) - Testing
 - [engineering/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md](engineering/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md) - Checklist
