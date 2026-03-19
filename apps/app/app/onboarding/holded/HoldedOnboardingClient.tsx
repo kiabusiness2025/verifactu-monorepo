@@ -2,7 +2,6 @@
 
 import { AlertCircle, CheckCircle2, KeyRound, Loader2 } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 type IntegrationStatus = {
@@ -22,6 +21,14 @@ type Props = {
   nextUrl: string;
   tenantName: string;
 };
+
+const helpSteps = [
+  'Entra en tu cuenta de Holded con tu usuario habitual.',
+  'Abre tu perfil o el area de ajustes de la cuenta.',
+  'Busca la seccion de API o desarrolladores dentro de tu cuenta.',
+  'Crea una nueva API key o copia la que ya tengas activa.',
+  'Vuelve a esta pantalla y pegala para conectar Isaak.',
+];
 
 export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
   const [apiKey, setApiKey] = useState('');
@@ -147,6 +154,23 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
             ) : null}
           </div>
 
+          <div className="mt-8 rounded-3xl border border-neutral-200 bg-white p-5">
+            <div className="text-sm font-semibold text-black">Como encontrar tu API key en Holded</div>
+            <ol className="mt-4 space-y-3 text-sm text-neutral-700">
+              {helpSteps.map((step, index) => (
+                <li key={step} className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white">
+                    {index + 1}
+                  </span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Usa una API key de la misma cuenta de Holded con la que quieres trabajar en Isaak. No dependemos del correo de ChatGPT para decidir la cuenta: la cuenta la determina la API key que pegues aqui.
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-black">API key de Holded</span>
@@ -173,15 +197,6 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Conectar Holded
               </button>
-
-              <Link
-                href="https://www.holded.com/es/help/mi-cuenta/api"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
-              >
-                Donde encontrar mi API key
-              </Link>
             </div>
           </form>
 
