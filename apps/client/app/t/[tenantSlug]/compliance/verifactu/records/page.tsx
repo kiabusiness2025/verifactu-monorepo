@@ -1,3 +1,5 @@
+import { ComingSoon } from '@/components/ComingSoon';
+
 export default function ComplianceRecordsPage() {
-  return <div>Registros de cumplimiento</div>;
+  return <ComingSoon title="Registros VeriFactu" description="Esta sección estará disponible próximamente." />;
 }

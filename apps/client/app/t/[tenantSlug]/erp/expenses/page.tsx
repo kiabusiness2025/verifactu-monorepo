@@ -1,3 +1,5 @@
+import { ComingSoon } from '@/components/ComingSoon';
+
 export default function ExpensesPage() {
-  return <div>Gastos</div>;
+  return <ComingSoon title="Gastos registrados" description="Esta sección estará disponible próximamente." />;
 }

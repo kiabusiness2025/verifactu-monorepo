@@ -1,3 +1,5 @@
+import { ComingSoon } from '@/components/ComingSoon';
+
 export default function ProductsPage() {
-  return <div>Productos</div>;
+  return <ComingSoon title="Productos y servicios" description="Esta sección estará disponible próximamente." />;
 }

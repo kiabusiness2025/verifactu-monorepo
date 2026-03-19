@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
 
-export default async function ErpOverviewPage({
+export default async function SettingsPage({
   params,
 }: {
   params: Promise<{ tenantSlug: string }>;
 }) {
   const { tenantSlug } = await params;
-  redirect(`/t/${tenantSlug}/erp/invoices`);
+  redirect(`/t/${tenantSlug}/settings/company`);
 }

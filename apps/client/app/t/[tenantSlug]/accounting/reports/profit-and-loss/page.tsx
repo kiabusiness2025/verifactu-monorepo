@@ -1,3 +1,5 @@
+import { ComingSoon } from '@/components/ComingSoon';
+
 export default function ProfitAndLossReportPage() {
-  return <div>Pérdidas y ganancias</div>;
+  return <ComingSoon title="Cuenta de resultados" description="Esta sección estará disponible próximamente." />;
 }

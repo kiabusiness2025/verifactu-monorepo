@@ -1,3 +1,5 @@
+import { ComingSoon } from '@/components/ComingSoon';
+
 export default function ChartOfAccountsPage() {
-  return <div>Plan de cuentas</div>;
+  return <ComingSoon title="Plan de cuentas" description="Esta sección estará disponible próximamente." />;
 }

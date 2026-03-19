@@ -1,3 +1,5 @@
+import { ComingSoon } from '@/components/ComingSoon';
+
 export default function ComplianceErrorsPage() {
-  return <div>Errores de cumplimiento</div>;
+  return <ComingSoon title="Errores de comunicación" description="Esta sección estará disponible próximamente." />;
 }

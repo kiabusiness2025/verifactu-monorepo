@@ -1,3 +1,5 @@
+import { ComingSoon } from '@/components/ComingSoon';
+
 export default function JournalPage() {
-  return <div>Diario contable</div>;
+  return <ComingSoon title="Libro diario" description="Esta sección estará disponible próximamente." />;
 }

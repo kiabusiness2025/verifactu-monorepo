@@ -1,3 +1,5 @@
+import { ComingSoon } from '@/components/ComingSoon';
+
 export default function BankRulesPage() {
-  return <div>Reglas bancarias</div>;
+  return <ComingSoon title="Reglas de categorización" description="Esta sección estará disponible próximamente." />;
 }

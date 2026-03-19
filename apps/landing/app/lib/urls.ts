@@ -6,22 +6,22 @@
 export function getAppUrl(): string {
   if (typeof window === 'undefined') {
     // Server-side
-    return process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
+    return process.env.NEXT_PUBLIC_APP_URL || 'https://client.verifactu.business';
   }
 
   // Client-side: detect from hostname
   const hostname = window.location.hostname;
-  
+
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:3000';
+    return 'http://localhost:3001';
   }
 
   if (hostname === 'verifactu.business') {
-    return 'https://app.verifactu.business';
+    return 'https://client.verifactu.business';
   }
 
   // Fallback to env variable or default
-  return process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
+  return process.env.NEXT_PUBLIC_APP_URL || 'https://client.verifactu.business';
 }
 
 /**

@@ -1,3 +1,5 @@
+import { ComingSoon } from '@/components/ComingSoon';
+
 export default function BankTransactionsPage() {
-  return <div>Movimientos bancarios</div>;
+  return <ComingSoon title="Movimientos bancarios" description="Esta sección estará disponible próximamente." />;
 }

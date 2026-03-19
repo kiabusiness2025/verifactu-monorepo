@@ -1,3 +1,5 @@
+import { ComingSoon } from '@/components/ComingSoon';
+
 export default function NewBankConnectionPage() {
-  return <div>Nueva conexión bancaria</div>;
+  return <ComingSoon title="Conectar banco" description="Esta sección estará disponible próximamente." />;
 }
