@@ -1,37 +1,30 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { getLandingUrl } from '@/lib/urls';
 
-/**
- * Login Page (App)
- * 
- * This page redirects to the landing page for authentication.
- * Authentication is handled centrally in the landing app (verifactu.business/auth/login)
- * 
- * Flow:
- * 1. User arrives at app.verifactu.business/login
- * 2. This page redirects to verifactu.business/auth/login
- * 3. User authenticates via Google or Microsoft OAuth
- * 4. Landing creates JWT session and redirects back to app.verifactu.business/dashboard
- * 5. Middleware validates session and allows access
- */
-
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+
   useEffect(() => {
-    // Redirect to landing authentication page
     const landingUrl = getLandingUrl();
-    window.location.href = `${landingUrl}/auth/login`;
-  }, []);
+    const next = searchParams.get('next')?.trim();
+    const loginUrl = new URL('/auth/login', landingUrl);
+    if (next) {
+      loginUrl.searchParams.set('next', next);
+    }
+    window.location.href = loginUrl.toString();
+  }, [searchParams]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-          Redirigiendo al login...
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Te estamos llevando a la página de autenticación.
+    <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_40%,#ffffff_100%)] px-6">
+      <div className="max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Isaak for Holded</div>
+        <h1 className="mt-4 text-2xl font-bold text-slate-950">Redirigiendo al acceso seguro</h1>
+        <p className="mt-3 text-sm leading-7 text-slate-600">
+          Estamos preparando tu acceso para conectar Holded con Isaak. Te llevamos al login central de Verifactu y,
+          al terminar, volverás automáticamente al flujo de autorización.
         </p>
       </div>
     </div>
