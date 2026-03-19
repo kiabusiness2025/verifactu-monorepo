@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     tenantId = auth.tenantId;
     resolvedUserId = auth.resolvedUserId ?? null;
-    sessionUid = auth.session.uid;
+    sessionUid = auth.session.uid ?? null;
 
     stage = 'access';
     const access = await getAccountingIntegrationAccess({ tenantId: auth.tenantId, entryChannel });
