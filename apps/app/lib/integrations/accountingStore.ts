@@ -3,6 +3,25 @@ import { one, query } from '@/lib/db';
 const PROVIDER = 'accounting_api';
 const SHARED_PROVIDER = 'holded';
 
+function describeStorageError(error: unknown) {
+  if (error instanceof Error) {
+    const candidate = error as Error & { code?: string; detail?: string; constraint?: string; table?: string };
+    return [candidate.message, candidate.code, candidate.detail, candidate.constraint, candidate.table]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .join(' | ') || candidate.name || 'Unknown storage error';
+  }
+
+  if (error && typeof error === 'object') {
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return 'Unserializable storage error object';
+    }
+  }
+
+  return String(error || 'Unknown storage error');
+}
+
 let tenantIntegrationsTableAvailable: boolean | null = null;
 let externalConnectionsTableAvailable: boolean | null = null;
 let storageBootstrapAttempted = false;
@@ -21,6 +40,8 @@ async function bootstrapIntegrationStorageTables() {
   storageBootstrapAttempted = true;
 
   try {
+    await query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+
     await query(
       `
       CREATE TABLE IF NOT EXISTS tenant_integrations (
@@ -170,21 +191,25 @@ export async function upsertAccountingIntegration(args: {
   let saved: AccountingIntegrationStatus | null = null;
 
   if (await hasTenantIntegrationsTable()) {
-    saved = await one<AccountingIntegrationStatus>(
-      `
-      INSERT INTO tenant_integrations (tenant_id, provider, api_key_enc, status, last_sync_at, last_error)
-      VALUES ($1, $2, $3, $4, CASE WHEN $4 = 'connected' THEN now() ELSE NULL END, $5)
-      ON CONFLICT (tenant_id, provider)
-      DO UPDATE SET
-        api_key_enc = EXCLUDED.api_key_enc,
-        status = EXCLUDED.status,
-        last_sync_at = CASE WHEN EXCLUDED.status = 'connected' THEN now() ELSE tenant_integrations.last_sync_at END,
-        last_error = EXCLUDED.last_error,
-        updated_at = now()
-      RETURNING id, tenant_id, provider, status, last_sync_at::text, last_error, created_at::text, updated_at::text
-      `,
-      [tenantId, PROVIDER, apiKeyEnc, status, lastError]
-    );
+    try {
+      saved = await one<AccountingIntegrationStatus>(
+        `
+        INSERT INTO tenant_integrations (tenant_id, provider, api_key_enc, status, last_sync_at, last_error)
+        VALUES ($1, $2, $3, $4, CASE WHEN $4 = 'connected' THEN now() ELSE NULL END, $5)
+        ON CONFLICT (tenant_id, provider)
+        DO UPDATE SET
+          api_key_enc = EXCLUDED.api_key_enc,
+          status = EXCLUDED.status,
+          last_sync_at = CASE WHEN EXCLUDED.status = 'connected' THEN now() ELSE tenant_integrations.last_sync_at END,
+          last_error = EXCLUDED.last_error,
+          updated_at = now()
+        RETURNING id, tenant_id, provider, status, last_sync_at::text, last_error, created_at::text, updated_at::text
+        `,
+        [tenantId, PROVIDER, apiKeyEnc, status, lastError]
+      );
+    } catch (error) {
+      throw new Error(`tenant_integrations upsert failed: ${describeStorageError(error)}`);
+    }
   }
 
   try {
@@ -255,7 +280,7 @@ export async function upsertAccountingIntegration(args: {
       tenantId,
       provider: SHARED_PROVIDER,
       connectedByUserId: connectedByUserId ?? null,
-      message: error instanceof Error ? error.message : String(error),
+      message: describeStorageError(error),
     });
   }
 

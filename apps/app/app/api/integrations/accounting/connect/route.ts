@@ -6,6 +6,25 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+function describeConnectError(error: unknown) {
+  if (error instanceof Error) {
+    const candidate = error as Error & { code?: string; detail?: string; constraint?: string; table?: string };
+    return [candidate.message, candidate.code, candidate.detail, candidate.constraint, candidate.table]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .join(' | ') || candidate.name || 'Unknown Holded connection error';
+  }
+
+  if (error && typeof error === 'object') {
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return 'Unserializable Holded connection error object';
+    }
+  }
+
+  return String(error || 'Unknown Holded connection error');
+}
+
 function getEntryChannel(request: NextRequest) {
   const header = request.headers.get('x-isaak-entry-channel')?.trim().toLowerCase();
   return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
@@ -90,7 +109,7 @@ export async function POST(request: NextRequest) {
       probe,
     });
   } catch (error) {
-    const detail = error instanceof Error ? error.message : 'Unknown Holded connection error';
+    const detail = describeConnectError(error);
     const genericError = stage === 'persist' ? 'No se pudo guardar la conexion de Holded' : 'No se pudo conectar Holded';
 
     console.error('[api/integrations/accounting/connect] failed', {
