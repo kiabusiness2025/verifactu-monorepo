@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
-import { getAppUrl } from '../lib/urls';
+import { getClientUrl } from '../lib/urls';
 
 export const metadata: Metadata = {
   title: 'Isaak for Holded | Conecta Holded con ChatGPT gratis',
@@ -74,7 +74,7 @@ const faqItems = [
 ];
 
 export default function HoldedCampaignPage() {
-  const appUrl = getAppUrl();
+  const clientUrl = getClientUrl();
   const chatgptAppUrl =
     process.env.NEXT_PUBLIC_HOLDED_CHATGPT_APP_URL ||
     'https://chatgpt.com/apps/isaak-for-holded-beta/asdk_app_69b9aa407b008191a102a76216fc4842';
@@ -223,10 +223,10 @@ export default function HoldedCampaignPage() {
                   Empezar prueba gratis de 30 días
                 </Link>
                 <Link
-                  href={`${appUrl}/dashboard/integrations/isaak-for-holded`}
+                  href={`${clientUrl}/integrations/isaak-for-holded`}
                   className="inline-flex items-center justify-center rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
                 >
-                  Ver módulo en la app
+                  Ver integración en el nuevo entorno cliente
                 </Link>
               </div>
             </div>

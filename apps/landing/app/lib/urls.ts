@@ -1,7 +1,5 @@
 /**
- * Get the app URL for redirects and links
- * In development: http://localhost:3000
- * In production: https://app.verifactu.business
+ * Get the app URL for backend, onboarding and protected flows.
  */
 export function getAppUrl(): string {
   if (typeof window === 'undefined') {
@@ -9,7 +7,6 @@ export function getAppUrl(): string {
   }
 
   const hostname = window.location.hostname;
-
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:3001';
   }
@@ -18,7 +15,23 @@ export function getAppUrl(): string {
 }
 
 /**
- * Get the landing URL for redirects and links
+ * Get the new client app URL for customer-facing workspace pages.
+ */
+export function getClientUrl(): string {
+  if (typeof window === 'undefined') {
+    return process.env.NEXT_PUBLIC_CLIENT_URL || 'https://client.verifactu.business';
+  }
+
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:3002';
+  }
+
+  return process.env.NEXT_PUBLIC_CLIENT_URL || 'https://client.verifactu.business';
+}
+
+/**
+ * Get the landing URL for redirects and links.
  */
 export function getLandingUrl(): string {
   if (typeof window === 'undefined') {
@@ -26,7 +39,6 @@ export function getLandingUrl(): string {
   }
 
   const hostname = window.location.hostname;
-
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:3001';
   }

@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
-import { getAppUrl } from '../../../lib/urls';
+import { getClientUrl } from '../../../lib/urls';
 
 export const metadata: Metadata = {
   title: 'Isaak for Holded | Verifactu Business',
@@ -57,7 +57,7 @@ const guardrails = [
 ];
 
 export default function IsaakForHoldedPage() {
-  const appUrl = getAppUrl();
+  const clientUrl = getClientUrl();
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#dbeafe_0%,#f8fbff_35%,#ffffff_72%)] text-slate-900">
@@ -93,10 +93,10 @@ export default function IsaakForHoldedPage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href={appUrl + '/dashboard/integrations/isaak-for-holded'}
+                href={clientUrl + '/integrations/isaak-for-holded'}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#1f55c0]"
               >
-                Abrir modulo en Verifactu
+                Abrir integración en el nuevo entorno cliente
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
