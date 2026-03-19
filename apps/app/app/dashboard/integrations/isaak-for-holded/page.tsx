@@ -70,28 +70,6 @@ export default function IsaakForHoldedPage() {
     void load();
   }, []);
 
-  const connectIntegration = async () => {
-    const apiKey = window.prompt('Introduce la API key de Holded para este tenant');
-    if (!apiKey) return;
-
-    setWorking(true);
-    setMessage(null);
-    try {
-      const res = await fetch('/api/integrations/accounting/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || 'No se pudo conectar Holded');
-      setMessage(data?.ok ? 'Holded conectado correctamente.' : 'Holded validado con incidencias.');
-      await load();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'No se pudo conectar Holded');
-    } finally {
-      setWorking(false);
-    }
-  };
 
   const disconnectIntegration = async () => {
     setWorking(true);
@@ -194,14 +172,13 @@ export default function IsaakForHoldedPage() {
             </dl>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              <button
-                onClick={connectIntegration}
-                disabled={working || integration?.canConnect === false}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0b6cfb]/10 px-4 py-2 text-xs font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/20 disabled:cursor-not-allowed disabled:opacity-50"
+              <Link
+                href="/dashboard/integrations/isaak-for-holded/connect"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0b6cfb]/10 px-4 py-2 text-xs font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/20"
               >
                 <Link2 className="h-4 w-4" />
                 Conectar Holded
-              </button>
+              </Link>
               <button
                 onClick={disconnectIntegration}
                 disabled={working || !integration?.connected}

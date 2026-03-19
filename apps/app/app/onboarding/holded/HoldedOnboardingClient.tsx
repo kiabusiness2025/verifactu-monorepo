@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, CheckCircle2, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
+import { AlertCircle, CheckCircle2, KeyRound, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -106,64 +106,57 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#fff7f8_0%,#fff2f4_22%,#f7faff_68%,#ffffff_100%)] px-4 py-10 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="mx-auto max-w-3xl rounded-[32px] border border-slate-200 bg-white/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#0b6cfb]/15 bg-[#0b6cfb]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#0b6cfb]">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Isaak for Holded
-            </div>
-            <div className="inline-flex items-center rounded-full border border-[#ff5460]/20 bg-[#ff5460]/8 px-3 py-1">
+    <div className="min-h-screen bg-white px-4 py-10 text-black sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-3xl">
+        <div className="rounded-[28px] border border-neutral-200 bg-white p-6 shadow-[0_16px_48px_rgba(0,0,0,0.06)] sm:p-8">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/brand/holded/holded-diamond-red.png"
+              alt="Holded"
+              width={36}
+              height={36}
+              className="h-9 w-9 rounded-xl"
+            />
+            <div className="min-w-0">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Isaak for Holded</div>
               <Image
                 src="/brand/holded/holded-logotype-red-light.svg"
                 alt="Holded"
-                width={92}
-                height={18}
-                className="h-[18px] w-auto"
+                width={112}
+                height={22}
+                className="mt-1 h-[22px] w-auto"
               />
             </div>
           </div>
 
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Conecta Holded para que Isaak pueda trabajar con tus datos reales
+          <h1 className="mt-8 text-3xl font-bold tracking-tight text-black sm:text-4xl">
+            Conecta tu cuenta de Holded
           </h1>
 
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-            Ya hemos identificado tu espacio en Isaak. El siguiente paso es guardar la API key de Holded de forma segura en Verifactu para que el asistente pueda leer facturas, contactos, cuentas y preparar borradores desde ChatGPT.
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-neutral-700 sm:text-base">
+            Usa tu API key de Holded para activar Isaak y trabajar con tus datos reales desde ChatGPT. Esta version es externa y gratuita, pensada para usuarios que empiezan desde Isaak for Holded.
           </p>
 
-          <div className="mt-6 grid gap-4 rounded-3xl border border-slate-200 bg-slate-50/80 p-5 sm:grid-cols-[1.2fr_0.8fr]">
-            <div>
-              <div className="text-sm font-semibold text-slate-900">Workspace preparado</div>
-              <div className="mt-2 text-sm text-slate-600">
-                Empresa activa: <span className="font-semibold text-slate-900">{tenantName}</span>
-              </div>
-              <div className="mt-2 text-sm text-slate-600">
-                Estado actual: <span className="font-semibold text-slate-900">{statusLabel}</span>
-              </div>
-              {status?.degraded ? (
-                <div className="mt-3 text-sm text-amber-700">
-                  No hemos podido leer el estado inicial, pero puedes continuar igualmente con la conexion.
-                </div>
-              ) : null}
+          <div className="mt-8 rounded-3xl border border-neutral-200 bg-neutral-50 p-5">
+            <div className="text-sm font-semibold text-black">Workspace preparado</div>
+            <div className="mt-2 text-sm text-neutral-700">
+              Espacio actual: <span className="font-semibold text-black">{tenantName}</span>
             </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-              <div className="font-semibold text-slate-900">Que necesitas ahora</div>
-              <ul className="mt-3 space-y-2">
-                <li>Genera o copia tu API key desde Holded.</li>
-                <li>Pegala aqui una sola vez.</li>
-                <li>Isaak la valida y vuelve automaticamente al flujo de ChatGPT.</li>
-              </ul>
+            <div className="mt-2 text-sm text-neutral-700">
+              Estado actual: <span className="font-semibold text-black">{statusLabel}</span>
             </div>
+            {status?.degraded ? (
+              <div className="mt-3 text-sm text-amber-700">
+                No hemos podido leer el estado inicial, pero puedes continuar igualmente con la conexion.
+              </div>
+            ) : null}
           </div>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-slate-900">API key de Holded</span>
+              <span className="mb-2 block text-sm font-semibold text-black">API key de Holded</span>
               <div className="relative">
-                <KeyRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <KeyRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <input
                   type="password"
                   value={apiKey}
@@ -171,7 +164,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
                   autoComplete="off"
                   spellCheck={false}
                   placeholder="Pega aqui tu API key de Holded"
-                  className="h-12 w-full rounded-2xl border border-slate-300 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                  className="h-12 w-full rounded-2xl border border-neutral-300 bg-white pl-11 pr-4 text-sm text-black outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                 />
               </div>
             </label>
@@ -180,17 +173,19 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
               <button
                 type="submit"
                 disabled={saving || loading}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#eb4350] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Conectar Holded
               </button>
 
               <Link
-                href="/dashboard/integrations/isaak-for-holded"
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                href="https://www.holded.com/es/help/mi-cuenta/api"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
               >
-                Abrir configuracion avanzada
+                Donde encontrar mi API key
               </Link>
             </div>
           </form>
