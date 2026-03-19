@@ -5,23 +5,16 @@
  */
 export function getAppUrl(): string {
   if (typeof window === 'undefined') {
-    // Server-side
-    return process.env.NEXT_PUBLIC_APP_URL || 'https://client.verifactu.business';
+    return process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
   }
 
-  // Client-side: detect from hostname
   const hostname = window.location.hostname;
 
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:3001';
   }
 
-  if (hostname === 'verifactu.business') {
-    return 'https://client.verifactu.business';
-  }
-
-  // Fallback to env variable or default
-  return process.env.NEXT_PUBLIC_APP_URL || 'https://client.verifactu.business';
+  return process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 }
 
 /**
@@ -33,10 +26,10 @@ export function getLandingUrl(): string {
   }
 
   const hostname = window.location.hostname;
-  
+
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:3001';
   }
 
-  return 'https://verifactu.business';
+  return process.env.NEXT_PUBLIC_LANDING_URL || 'https://verifactu.business';
 }
