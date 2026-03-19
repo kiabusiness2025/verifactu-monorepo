@@ -89,6 +89,7 @@
       "outputs": [
         "apps/app/.next/**",
         "apps/admin/.next/**",
+        "apps/client/.next/**",
         "apps/landing/.next/**",
         ".next/**",
         "dist/**"

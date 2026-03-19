@@ -1,22 +1,21 @@
-﻿import { NextResponse } from "next/server";
-import { prisma } from "@verifactu/db";
+﻿import { prisma } from '@verifactu/db';
+import { NextResponse } from 'next/server';
+import { getSessionPayload } from '../../../../lib/session';
+import { resolveSessionUser } from '../../../../src/server/workspace';
 
-async function requireFirebaseUser(_req: Request): Promise<{ userId: string }> {
-  // TODO: integrar vuestra cookie/session Firebase
-  // return { userId: "..." }
-  throw new Error("Implement requireFirebaseUser");
-}
-
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
   try {
-    const fb = await requireFirebaseUser(req);
+    const session = await getSessionPayload();
+    if (!session?.uid) {
+      return NextResponse.json({ ok: false, error: 'Sesión no disponible' }, { status: 401 });
+    }
 
-    const user = await prisma.user.findUnique({ where: { id: fb.userId } });
-    if (!user) throw new Error("User not found in DB");
+    const user = await resolveSessionUser(session);
+    if (!user) throw new Error('User not found in DB');
 
     const existingTenant = await prisma.tenant.findFirst({
       where: {
-        name: "Empresa Demo SL",
+        name: 'Empresa Demo SL',
         users: { some: { userId: user.id } },
       },
       select: { id: true },
@@ -28,15 +27,15 @@ export async function POST(req: Request) {
     const tenantId = await prisma.$transaction(async (tx) => {
       const tenant = await tx.tenant.create({
         data: {
-          name: "Empresa Demo SL",
-          legalName: "Empresa Demo SL",
-          nif: "B12345678",
+          name: 'Empresa Demo SL',
+          legalName: 'Empresa Demo SL',
+          nif: 'B12345678',
           isDemo: true,
         },
       });
 
       await tx.membership.create({
-        data: { tenantId: tenant.id, userId: user.id, role: "OWNER", status: "active" },
+        data: { tenantId: tenant.id, userId: user.id, role: 'OWNER', status: 'active' },
       });
 
       await tx.userPreference.upsert({
@@ -50,6 +49,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, tenantId, already: false });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message ?? "Unknown error" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: e?.message ?? 'Unknown error' }, { status: 400 });
   }
 }

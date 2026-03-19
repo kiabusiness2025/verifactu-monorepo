@@ -39,15 +39,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, isaak_tone: 'friendly', persisted: false });
     }
 
-    const preference = await prisma.userPreference.findUnique({
+    await prisma.userPreference.findUnique({
       where: { userId },
-      select: { isaakTone: true },
+      select: { userId: true },
     });
 
     return NextResponse.json({
       ok: true,
-      isaak_tone: isValidTone(preference?.isaakTone) ? preference.isaakTone : 'friendly',
-      persisted: true,
+      isaak_tone: 'friendly',
+      persisted: false,
     });
   } catch (error) {
     console.error('[client/preferences] GET error', error);
@@ -75,18 +75,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ ok: true, isaak_tone: nextTone, persisted: false });
     }
 
-    await prisma.userPreference.upsert({
-      where: { userId },
-      create: {
-        userId,
-        isaakTone: nextTone,
-      },
-      update: {
-        isaakTone: nextTone,
-      },
-    });
-
-    return NextResponse.json({ ok: true, isaak_tone: nextTone, persisted: true });
+    // Tone persistence was removed from the Prisma UserPreference model.
+    // Keep the endpoint contract stable and let the client handle local tone preference.
+    return NextResponse.json({ ok: true, isaak_tone: nextTone, persisted: false });
   } catch (error) {
     console.error('[client/preferences] PATCH error', error);
     return NextResponse.json(

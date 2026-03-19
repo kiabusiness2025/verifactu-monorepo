@@ -1,8 +1,8 @@
 # ISAAK UNIFICADO - Especificación de Producto
 
-**Fecha:** 2026-01-15  
-**Versión:** 1.0  
-**Estado:** En desarrollo
+**Fecha:** 2026-01-15 · **Actualizado:** Marzo 2026  
+**Versión:** 1.1  
+**Estado:** Fases 1-2 completadas. Fase 3 en progreso.
 
 ---
 
@@ -355,12 +355,13 @@ Escríbeme y lo gestionamos."
 
 ```
 IsaakUnified (componente único)
-├── useIsaakContext() → detecta panel, usuario, estado
-├── useIsaakOnboarding() → gestiona flujo de primeros pasos
-├── useIsaakDeadlines() → calcula plazos fiscales próximos
-├── useIsaakTrial() → estado del trial/plan
-├── useIsaakDocuments() → analiza documentos subidos
-└── IsaakConversation → UI de chat unificada
+├── useIsaakContext()       → detecta panel, usuario, estado
+├── useIsaakDetection()     → detecta ruta activa y estado del tour
+├── useIsaakTone()          → tono activo + persistencia backend/local
+├── useIsaakPreferences()   → 17 opciones en localStorage
+├── useIsaakAnalytics()     → eventos: bubble_view, message_sent, etc.
+├── useIsaakVoice()         → TTS Web Speech API (ES, EN, PT, FR)
+└── IsaakSmartFloating      → UI de chat + burbujas proactivas + drawer
 ```
 
 ### Detección de Contexto
@@ -389,11 +390,17 @@ interface IsaakContext {
     | 'dashboard'
     | 'invoices'
     | 'expenses'
+    | 'quotes'
     | 'documents'
     | 'banks'
     | 'calendar'
+    | 'clients'
+    | 'suppliers'
+    | 'articles'
+    | 'integrations'
     | 'settings'
-    | 'admin';
+    | 'admin'
+    | 'mcp'; // ChatGPT via MCP
 
   // Estado del trial
   trialDaysRemaining: number;
@@ -584,26 +591,38 @@ Puedes exportar o borrar tu historial en cualquier momento.
 
 ## 🚀 Roadmap de Implementación
 
-### Fase 1 (Semana 1-2)
+### Fase 1 (Semana 1-2) ✅ COMPLETADA
 
-- [ ] Unificar componentes (eliminar duplicación)
-- [ ] Implementar detección de contexto
-- [ ] Sistema de onboarding básico
-- [ ] Plazos fiscales 2026
+- [x] Unificar componentes (IsaakSmartFloating + DrawerIsaak coexisten)
+- [x] Implementar detección de contexto (`useIsaakContext`, `useIsaakDetection`)
+- [x] Sistema de onboarding básico (`/api/onboarding/*`)
+- [x] Plazos fiscales 2026 (`IsaakDeadlineNotifications`)
 
-### Fase 2 (Semana 3-4)
+### Fase 2 (Semana 3-4) ✅ COMPLETADA
 
-- [ ] Sistema de recordatorios proactivos
-- [ ] Lógica de trial/plan
-- [ ] Importación de datos (CSV, Excel)
-- [ ] Análisis de documentos del gestor
+- [x] Sistema de recordatorios proactivos (burbujas + acciones contextuales)
+- [x] Lógica de trial/plan (gating por `canExportAeatBooks`, `canUseAccountingApiIntegration`)
+- [x] Importación de datos (CSV, Excel, ingesta de gastos vía `/api/expenses/intake`)
+- [x] Análisis y clasificación de gastos (`classifyExpense`, `normalizeCanonicalExpense`)
+- [x] Integración contable ERP (`/api/integrations/accounting/*`)
+- [x] Historial de conversaciones persistente (`/api/isaak/conversations/*`)
+- [x] Preferencias completas (`useIsaakPreferences`, `IsaakPreferencesModal`)
+- [x] Voz TTS (`useIsaakVoice` con Web Speech API)
+- [x] Analytics de interacción (`useIsaakAnalytics`)
 
-### Fase 3 (Semana 5-6)
+### Fase 3 (en progreso — Marzo 2026)
 
-- [ ] Mejoras de IA (RAG sobre documentos)
-- [ ] Integraciones con ERPs
-- [ ] Multiidioma (inglés)
-- [ ] Analytics y métricas
+- [x] Integraciones Google (Calendar, Drive, Gmail)
+- [x] Integraciones Microsoft (M365, OneDrive)
+- [x] MCP remoto para ChatGPT (`/api/mcp/holded`, OAuth propio)
+- [x] Presupuestos (`/api/quotes/*`) con convert-to-invoice
+- [x] Movimientos bancarios y conciliación (`/api/banks/movements/*`)
+- [x] Libros AEAT y exportación Modelos 303/130 (todos los planes)
+- [x] eInforma para enriquecimiento de empresa en onboarding
+- [ ] RAG sobre documentos propios del tenant
+- [ ] Multiidioma inglés completo
+- [ ] Ampliar tools MCP (CRM, Projects, Teams planned)
+- [ ] Submission a directorio público de ChatGPT
 
 ---
 

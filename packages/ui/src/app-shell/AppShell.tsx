@@ -11,6 +11,7 @@ type Props = {
   variant: 'client' | 'admin';
   nav: NavItem[];
   pathname: string;
+  sidebarBrand?: React.ReactNode;
   headerLeft?: React.ReactNode;
   headerRight?: React.ReactNode;
   children: React.ReactNode;
@@ -23,6 +24,7 @@ export function AppShell({
   variant,
   nav,
   pathname,
+  sidebarBrand,
   headerLeft,
   headerRight,
   children,
@@ -39,17 +41,19 @@ export function AppShell({
           className={`hidden md:flex md:flex-col border-r bg-card ${isAdmin ? 'w-[260px]' : 'w-[280px]'}`}
         >
           <div className="h-14 flex items-center px-4 border-b">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="h-8 w-8 rounded-xl bg-primary/10 border border-primary/15" />
-              <div className="min-w-0">
-                <div className="text-sm font-semibold leading-tight truncate">
-                  {isAdmin ? 'Verifactu Admin' : 'Verifactu Business'}
-                </div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {isAdmin ? 'Backoffice' : 'Panel de cliente'}
+            {sidebarBrand ?? (
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="h-8 w-8 rounded-xl bg-primary/10 border border-primary/15" />
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold leading-tight truncate">
+                    {isAdmin ? 'Verifactu Admin' : 'Verifactu Business'}
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {isAdmin ? 'Backoffice' : 'Panel de cliente'}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           <nav className={`p-2 ${isAdmin ? 'text-sm' : 'text-[15px]'}`}>

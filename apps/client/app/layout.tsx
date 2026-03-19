@@ -1,5 +1,5 @@
-import "./globals.css";
-import { ThemeProvider } from "@verifactu/ui";
+import { ThemeProvider } from '../src/ui';
+import './globals.css';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
