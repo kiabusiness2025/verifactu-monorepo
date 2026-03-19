@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import Link from 'next/link';
+import * as React from 'react';
 import {
   Banknote,
   Building2,
@@ -23,6 +24,19 @@ import {
   ToastCard,
 } from '../../../../src/ui';
 
+type DashboardSummary = {
+  salesMonth: number;
+  expensesMonth: number;
+  profitMonth: number;
+  invoiceCountMonth: number;
+  expenseCountMonth: number;
+  draftInvoicesCount: number;
+  pendingInvoicesCount: number;
+  verifactuPendingCount: number;
+  expenseReviewCount: number;
+  customerCount: number;
+};
+
 function getGreetingLabel() {
   const hour = new Date().getHours();
 
@@ -37,9 +51,107 @@ function getGreetingLabel() {
   return 'Buenas noches';
 }
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function getNextStep(summary: DashboardSummary | null, demoMode: boolean) {
+  if (!summary) {
+    return {
+      title: demoMode ? 'Preparando tu resumen' : 'Cargando actividad reciente',
+      description: 'En cuanto tengamos los datos, priorizamos el siguiente paso mas util para hoy.',
+    };
+  }
+
+  if (summary.pendingInvoicesCount > 0) {
+    return {
+      title: 'Empieza por el cobro pendiente',
+      description: `Tienes ${summary.pendingInvoicesCount} factura${summary.pendingInvoicesCount === 1 ? '' : 's'} emitida${summary.pendingInvoicesCount === 1 ? '' : 's'} que conviene revisar antes que nada.`,
+    };
+  }
+
+  if (summary.expenseReviewCount > 0) {
+    return {
+      title: 'Revisa los gastos sin confirmar',
+      description: `Hay ${summary.expenseReviewCount} gasto${summary.expenseReviewCount === 1 ? '' : 's'} pendiente${summary.expenseReviewCount === 1 ? '' : 's'} de confirmacion o clasificacion.`,
+    };
+  }
+
+  if (summary.verifactuPendingCount > 0) {
+    return {
+      title: 'Comprueba el estado de VeriFactu',
+      description: `Hay ${summary.verifactuPendingCount} factura${summary.verifactuPendingCount === 1 ? '' : 's'} que todavia requieren seguimiento en cumplimiento.`,
+    };
+  }
+
+  return {
+    title: demoMode ? 'Empieza emitiendo una factura de prueba' : 'Panel en orden para hoy',
+    description: demoMode
+      ? 'Puedes probar el flujo principal sin tocar datos reales y entender el panel con calma.'
+      : 'No hay bloqueos inmediatos. Puedes avanzar en facturacion, gastos o clientes segun prioridad.',
+  };
+}
+
 export default function DashboardPage() {
   const { currentTenant, demoMode, displayName, tenantSlug } = useCurrentTenant();
   const basePath = `/t/${tenantSlug}`;
+  const [summary, setSummary] = React.useState<DashboardSummary | null>(null);
+  const [summaryError, setSummaryError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadSummary() {
+      try {
+        setSummaryError(null);
+        const response = await fetch(
+          `/api/dashboard/summary?tenantId=${encodeURIComponent(currentTenant.id)}`,
+          { cache: 'no-store' }
+        );
+        const payload = (await response.json().catch(() => null)) as
+          | { ok: boolean; summary?: DashboardSummary; error?: string }
+          | null;
+
+        if (!response.ok || !payload?.ok || !payload.summary) {
+          throw new Error(payload?.error ?? 'No se pudo cargar el dashboard');
+        }
+
+        if (!cancelled) {
+          setSummary(payload.summary);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSummaryError(error instanceof Error ? error.message : 'No se pudo cargar el dashboard');
+        }
+      }
+    }
+
+    if (currentTenant.id) {
+      loadSummary();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentTenant.id]);
+
+  const resolvedSummary = summary ?? {
+    salesMonth: 0,
+    expensesMonth: 0,
+    profitMonth: 0,
+    invoiceCountMonth: 0,
+    expenseCountMonth: 0,
+    draftInvoicesCount: 0,
+    pendingInvoicesCount: 0,
+    verifactuPendingCount: 0,
+    expenseReviewCount: 0,
+    customerCount: 0,
+  };
+  const nextStep = getNextStep(summary, demoMode);
 
   const quickActions = [
     {
@@ -108,22 +220,26 @@ export default function DashboardPage() {
                   <div className="text-[11px] tracking-widest text-muted-foreground">
                     VENTAS DEL MES
                   </div>
-                  <div className="mt-2 text-lg font-semibold">12.450 EUR</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Facturacion registrada y lista para seguimiento.</div>
+                  <div className="mt-2 text-lg font-semibold">{formatCurrency(resolvedSummary.salesMonth)}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {resolvedSummary.invoiceCountMonth} factura{resolvedSummary.invoiceCountMonth === 1 ? '' : 's'} registradas este mes.
+                  </div>
                 </div>
                 <div className="rounded-2xl border bg-background p-4">
                   <div className="text-[11px] tracking-widest text-muted-foreground">
                     GASTOS DEL MES
                   </div>
-                  <div className="mt-2 text-lg font-semibold">4.980 EUR</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Gastos visibles para entender el margen real.</div>
+                  <div className="mt-2 text-lg font-semibold">{formatCurrency(resolvedSummary.expensesMonth)}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {resolvedSummary.expenseCountMonth} gasto{resolvedSummary.expenseCountMonth === 1 ? '' : 's'} contabilizados este mes.
+                  </div>
                 </div>
                 <div className="rounded-2xl border bg-background p-4">
                   <div className="text-[11px] tracking-widest text-muted-foreground">
                     BENEFICIO ESTIMADO
                   </div>
-                  <div className="mt-2 text-lg font-semibold">7.470 EUR</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Ventas menos gastos, sin cruces manuales.</div>
+                  <div className="mt-2 text-lg font-semibold">{formatCurrency(resolvedSummary.profitMonth)}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">Ventas menos gastos, segun actividad real del mes.</div>
                 </div>
               </div>
             </div>
@@ -131,12 +247,10 @@ export default function DashboardPage() {
             <div className="rounded-2xl border bg-background p-5">
               <div className="text-xs tracking-widest text-muted-foreground">SIGUIENTE PASO</div>
               <div className="mt-3 text-lg font-semibold text-foreground">
-                {demoMode ? 'Empieza por emitir una factura de prueba' : 'Revisa hoy lo pendiente'}
+                {nextStep.title}
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                {demoMode
-                  ? 'Puedes recorrer el flujo principal sin tocar datos reales y entender rapidamente como funciona el panel.'
-                  : 'Tienes a mano las tareas que mas impacto tienen en cobro, control y tranquilidad.'}
+                {nextStep.description}
               </p>
 
               <div className="mt-4 space-y-3 text-sm">
@@ -200,27 +314,27 @@ export default function DashboardPage() {
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Ventas mes"
-          value="12.450 EUR"
-          hint="Cobro en marcha y actividad estable."
-          badge={{ label: 'Sube', tone: 'ok' }}
+          value={formatCurrency(resolvedSummary.salesMonth)}
+          hint={`${resolvedSummary.invoiceCountMonth} factura${resolvedSummary.invoiceCountMonth === 1 ? '' : 's'} con impacto en este mes.`}
+          badge={{ label: resolvedSummary.salesMonth > 0 ? 'Activo' : 'Sin movimiento', tone: resolvedSummary.salesMonth > 0 ? 'ok' : 'info' }}
         />
         <MetricCard
           title="Gastos mes"
-          value="4.980 EUR"
-          hint="Gastos visibles para no perder margen."
-          badge={{ label: 'Revisado', tone: 'info' }}
+          value={formatCurrency(resolvedSummary.expensesMonth)}
+          hint={`${resolvedSummary.expenseCountMonth} gasto${resolvedSummary.expenseCountMonth === 1 ? '' : 's'} registrados este mes.`}
+          badge={{ label: resolvedSummary.expenseReviewCount > 0 ? 'Revisar' : 'Al dia', tone: resolvedSummary.expenseReviewCount > 0 ? 'warn' : 'info' }}
         />
         <MetricCard
           title="Beneficio"
-          value="7.470 EUR"
+          value={formatCurrency(resolvedSummary.profitMonth)}
           hint="Lectura simple: ventas menos gastos."
-          badge={{ label: 'Claro', tone: 'ok' }}
+          badge={{ label: resolvedSummary.profitMonth >= 0 ? 'Positivo' : 'Vigilar', tone: resolvedSummary.profitMonth >= 0 ? 'ok' : 'warn' }}
         />
         <MetricCard
           title="Pendiente de cobro"
-          value="6 facturas"
-          hint="Conviene revisar seguimiento este mismo dia."
-          badge={{ label: 'Atencion', tone: 'warn' }}
+          value={`${resolvedSummary.pendingInvoicesCount} factura${resolvedSummary.pendingInvoicesCount === 1 ? '' : 's'}`}
+          hint="Conviene revisar seguimiento y cobro hoy."
+          badge={{ label: resolvedSummary.pendingInvoicesCount > 0 ? 'Atencion' : 'OK', tone: resolvedSummary.pendingInvoicesCount > 0 ? 'warn' : 'ok' }}
         />
       </div>
 
@@ -228,19 +342,35 @@ export default function DashboardPage() {
       <div className="grid gap-3 md:grid-cols-2">
         <NoticeCard
           label="Cobro"
-          text="Hay facturas pendientes de seguimiento. Si empiezas por ahi, reduces incertidumbre y mejoras caja antes de tocar otras tareas."
+          text={
+            resolvedSummary.pendingInvoicesCount > 0
+              ? `Hay ${resolvedSummary.pendingInvoicesCount} factura${resolvedSummary.pendingInvoicesCount === 1 ? '' : 's'} pendiente${resolvedSummary.pendingInvoicesCount === 1 ? '' : 's'} de cobro o seguimiento. Empezar por ahi reduce incertidumbre de caja.`
+              : 'No hay facturas pendientes de cobro ahora mismo. Puedes dedicar el tiempo a emitir, registrar gastos o revisar clientes.'
+          }
         />
         <NoticeCard
           label="VeriFactu"
-          text="Mantener la comunicacion al dia evita revisiones de ultima hora. Puedes entrar y ver el estado general en un solo paso."
+          text={
+            resolvedSummary.verifactuPendingCount > 0
+              ? `Hay ${resolvedSummary.verifactuPendingCount} factura${resolvedSummary.verifactuPendingCount === 1 ? '' : 's'} con envio o revision pendiente. Tenerlo al dia evita urgencias de ultima hora.`
+              : 'No hay avisos inmediatos de VeriFactu en este tenant. El estado general esta tranquilo.'
+          }
         />
         <NoticeCard
-          label="Banca"
-          text="La conciliacion pendiente suele ser la manera mas rapida de recuperar contexto y limpiar el panel para el resto de la semana."
+          label="Gastos"
+          text={
+            resolvedSummary.expenseReviewCount > 0
+              ? `Hay ${resolvedSummary.expenseReviewCount} gasto${resolvedSummary.expenseReviewCount === 1 ? '' : 's'} sin confirmar. Revisarlos ayuda a que el beneficio refleje la situacion real.`
+              : 'Los gastos no muestran revisiones pendientes ahora mismo. El margen mensual esta mas claro.'
+          }
         />
         <NoticeCard
-          label="Isaak"
-          text="Si no sabes por donde seguir, Isaak puede orientarte dentro del propio panel sin obligarte a aprender reglas complejas."
+          label="Clientes"
+          text={
+            resolvedSummary.customerCount > 0
+              ? `Trabajas con ${resolvedSummary.customerCount} cliente${resolvedSummary.customerCount === 1 ? '' : 's'} activo${resolvedSummary.customerCount === 1 ? '' : 's'}. Tener clara su actividad ayuda a priorizar mejor el cobro y la facturacion.`
+              : 'Todavia no hay clientes activos registrados en este tenant. Ese puede ser un buen siguiente paso si vas a empezar a facturar.'
+          }
         />
       </div>
 
@@ -271,13 +401,15 @@ export default function DashboardPage() {
 
       <div className="flex justify-end">
         <ToastCard
-          title={demoMode ? 'Modo demo activo' : 'Panel listo para trabajar'}
+          title={summaryError ? 'Resumen no disponible' : demoMode ? 'Modo demo activo' : 'Panel listo para trabajar'}
           text={
-            demoMode
+            summaryError
+              ? 'No hemos podido cargar el resumen en tiempo real. El resto del panel sigue disponible.'
+              : demoMode
               ? 'Puedes recorrer el panel completo sin riesgo y entender el flujo antes de usar tus propios datos.'
               : 'Tienes un punto de entrada claro para facturacion, gastos, banca y control diario.'
           }
-          tone="info"
+          tone={summaryError ? 'warn' : 'info'}
         />
       </div>
     </div>

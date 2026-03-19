@@ -21,6 +21,7 @@ type IntegrationStatus = {
 type Props = {
   nextUrl: string;
   tenantName: string;
+  onboardingToken: string | null;
 };
 
 const helpSteps = [
@@ -38,7 +39,7 @@ const savingMessages = [
   'En cuanto termine, podras pedir resumenes, pendientes y senales clave.',
 ];
 
-export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
+export default function HoldedOnboardingClient({ nextUrl, tenantName, onboardingToken }: Props) {
   const [apiKey, setApiKey] = useState('');
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +76,10 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
       try {
         const res = await fetch('/api/integrations/accounting/status?channel=chatgpt', {
           cache: 'no-store',
-          headers: { 'x-isaak-entry-channel': 'chatgpt' },
+          headers: {
+            'x-isaak-entry-channel': 'chatgpt',
+            ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
+          },
         });
         const data = await res.json().catch(() => null);
         if (!res.ok) throw new Error(data?.error || 'No se pudo comprobar la conexion con Holded');
@@ -97,7 +101,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [nextUrl]);
+  }, [nextUrl, onboardingToken]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -116,6 +120,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName }: Props) {
         headers: {
           'Content-Type': 'application/json',
           'x-isaak-entry-channel': 'chatgpt',
+          ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
         },
         body: JSON.stringify({ apiKey: apiKey.trim() }),
       });

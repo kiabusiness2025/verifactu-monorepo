@@ -42,6 +42,13 @@ type AccessTokenPayload = {
   tenantId: string;
 };
 
+type HoldedOnboardingPayload = {
+  type: 'mcp_holded_onboarding';
+  uid: string;
+  email: string | null;
+  name: string | null;
+};
+
 export const MCP_TOOL_SCOPES: Record<string, string[]> = {
   holded_list_invoices: ['mcp.read', 'holded.invoices.read'],
   holded_get_invoice: ['mcp.read', 'holded.invoices.read'],
@@ -159,6 +166,35 @@ export async function verifyAccessToken(token: string) {
 
   if (!payload || payload.type !== 'mcp_access_token') return null;
   return payload as AccessTokenPayload & { exp?: number; iat?: number };
+}
+
+function buildHoldedGuestUid(seed: string) {
+  const digest = createHash('sha256').update(seed).digest('hex').slice(0, 32);
+  return `holded-guest-${digest}`;
+}
+
+export async function mintHoldedOnboardingToken(input: {
+  seed: string;
+  email?: string | null;
+  name?: string | null;
+}) {
+  return signSessionToken({
+    payload: {
+      type: 'mcp_holded_onboarding',
+      uid: buildHoldedGuestUid(input.seed),
+      email: input.email ?? null,
+      name: input.name ?? 'Isaak user',
+    } satisfies HoldedOnboardingPayload,
+    secret: readOAuthSecret(),
+    expiresIn: '2h',
+  });
+}
+
+export async function verifyHoldedOnboardingToken(token: string) {
+  const payload = await verifySessionToken(token, readOAuthSecret());
+
+  if (!payload || payload.type !== 'mcp_holded_onboarding') return null;
+  return payload as HoldedOnboardingPayload & { exp?: number; iat?: number };
 }
 
 export function verifyPkce(codeVerifier: string, expectedChallenge: string) {

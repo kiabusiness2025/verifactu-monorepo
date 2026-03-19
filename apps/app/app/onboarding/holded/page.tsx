@@ -1,8 +1,12 @@
 import prisma from '@/lib/prisma';
 import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
-import { buildLoginUrl, resolveTenantForHoldedFirstSession } from '@/lib/oauth/mcp';
+import {
+  mintHoldedOnboardingToken,
+  resolveTenantForHoldedFirstSession,
+  verifyHoldedOnboardingToken,
+} from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
-import { getAppUrl } from '@verifactu/utils';
+import { getAppUrl, getLandingUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import HoldedOnboardingClient from './HoldedOnboardingClient';
@@ -25,15 +29,30 @@ function firstValue(value: string | string[] | undefined) {
 }
 
 function normalizeNextUrl(nextUrl: string | undefined) {
-  const fallback = new URL('/dashboard/integrations/isaak-for-holded', getAppUrl()).toString();
+  const fallback = new URL('/holded', getLandingUrl()).toString();
   if (!nextUrl) return fallback;
 
   try {
     const parsed = new URL(nextUrl, getAppUrl());
     const appOrigin = new URL(getAppUrl()).origin;
-    return parsed.origin === appOrigin ? parsed.toString() : fallback;
+    const landingOrigin = new URL(getLandingUrl()).origin;
+    return parsed.origin === appOrigin || parsed.origin === landingOrigin ? parsed.toString() : fallback;
   } catch {
     return fallback;
+  }
+}
+
+function attachOnboardingToken(nextUrl: string, onboardingToken: string | null) {
+  if (!onboardingToken) return nextUrl;
+
+  try {
+    const parsed = new URL(nextUrl);
+    if (parsed.origin === new URL(getAppUrl()).origin && parsed.pathname === '/oauth/authorize') {
+      parsed.searchParams.set('onboarding_token', onboardingToken);
+    }
+    return parsed.toString();
+  } catch {
+    return nextUrl;
   }
 }
 
@@ -43,59 +62,77 @@ export default async function HoldedOnboardingPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const nextUrl = normalizeNextUrl(firstValue(params.next));
   const session = await getSessionPayload();
+  const existingToken = firstValue(params.onboarding_token)?.trim() || null;
+  const onboardingToken =
+    existingToken ||
+    (!session?.uid
+      ? await mintHoldedOnboardingToken({
+          seed: `holded-onboarding:${Date.now()}:${Math.random()}`,
+        })
+      : null);
+  const onboardingPayload =
+    !session?.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
+  const nextUrl = attachOnboardingToken(normalizeNextUrl(firstValue(params.next)), onboardingToken);
 
-  if (!session?.uid) {
-    redirect(buildLoginUrl(nextUrl));
-  }
+  const subject = session?.uid
+    ? {
+        uid: session.uid,
+        email: session.email ?? null,
+        name: session.name ?? null,
+        sessionTenantId: session.tenantId ?? null,
+      }
+    : onboardingPayload
+      ? {
+          uid: onboardingPayload.uid,
+          email: onboardingPayload.email ?? null,
+          name: onboardingPayload.name ?? null,
+          sessionTenantId: null,
+        }
+      : null;
 
-  let tenantId: string | null = session.tenantId ?? null;
+  let tenantId: string | null = subject?.sessionTenantId ?? null;
   let tenantName = 'tu empresa';
 
-  try {
-    const resolved = await resolveTenantForHoldedFirstSession({
-      uid: session.uid,
-      email: session.email ?? null,
-      name: session.name ?? null,
-      sessionTenantId: session.tenantId ?? null,
-    });
+  if (subject) {
+    try {
+      const resolved = await resolveTenantForHoldedFirstSession(subject);
+      tenantId = resolved.tenantId;
 
-    tenantId = resolved.tenantId;
-
-    if (tenantId) {
-      try {
-        const hasHoldedConnection = await hasSharedHoldedConnectionForTenant(tenantId);
-        if (hasHoldedConnection) {
-          redirect(nextUrl);
+      if (tenantId) {
+        try {
+          const hasHoldedConnection = await hasSharedHoldedConnectionForTenant(tenantId);
+          if (hasHoldedConnection) {
+            redirect(nextUrl);
+          }
+        } catch (error) {
+          console.error('[onboarding/holded] holded connection lookup failed', {
+            tenantId,
+            message: error instanceof Error ? error.message : String(error),
+          });
         }
-      } catch (error) {
-        console.error('[onboarding/holded] holded connection lookup failed', {
-          tenantId,
-          message: error instanceof Error ? error.message : String(error),
-        });
-      }
 
-      try {
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: { name: true, legalName: true },
-        });
+        try {
+          const tenant = await prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { name: true, legalName: true },
+          });
 
-        tenantName = tenant?.legalName || tenant?.name || tenantName;
-      } catch (error) {
-        console.error('[onboarding/holded] tenant lookup failed', {
-          tenantId,
-          message: error instanceof Error ? error.message : String(error),
-        });
+          tenantName = tenant?.legalName || tenant?.name || tenantName;
+        } catch (error) {
+          console.error('[onboarding/holded] tenant lookup failed', {
+            tenantId,
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
+    } catch (error) {
+      console.error('[onboarding/holded] tenant resolution failed', {
+        sessionUid: subject.uid,
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
-  } catch (error) {
-    console.error('[onboarding/holded] tenant resolution failed', {
-      sessionUid: session.uid,
-      message: error instanceof Error ? error.message : String(error),
-    });
   }
 
-  return <HoldedOnboardingClient nextUrl={nextUrl} tenantName={tenantName} />;
+  return <HoldedOnboardingClient nextUrl={nextUrl} tenantName={tenantName} onboardingToken={onboardingToken} />;
 }

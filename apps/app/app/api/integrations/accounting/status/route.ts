@@ -11,13 +11,23 @@ function getEntryChannel(request: NextRequest) {
   return query === 'chatgpt' || header === 'chatgpt' ? 'chatgpt' : 'dashboard';
 }
 
+function getOnboardingToken(request: NextRequest) {
+  return (
+    request.headers.get('x-isaak-onboarding-token')?.trim() ||
+    request.nextUrl.searchParams.get('onboarding_token')?.trim() ||
+    null
+  );
+}
+
 export async function GET(request: NextRequest) {
   const entryChannel = getEntryChannel(request);
+  const onboardingToken = getOnboardingToken(request);
 
   try {
     const auth = await requireTenantContext({
       channelType: entryChannel,
       metadata: { source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext' },
+      onboardingToken,
     });
     if ('error' in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
