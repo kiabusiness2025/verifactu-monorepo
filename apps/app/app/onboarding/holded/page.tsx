@@ -1,14 +1,10 @@
-import prisma from '@/lib/prisma';
-import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import {
   mintHoldedOnboardingToken,
-  resolveTenantForHoldedFirstSession,
   verifyHoldedOnboardingToken,
 } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
 import { getAppUrl, getLandingUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 import HoldedOnboardingClient from './HoldedOnboardingClient';
 
 export const dynamic = 'force-dynamic';
@@ -56,6 +52,11 @@ function attachOnboardingToken(nextUrl: string, onboardingToken: string | null) 
   }
 }
 
+function buildWorkspaceLabel(input: { name?: string | null; email?: string | null } | null) {
+  const base = input?.name?.trim() || input?.email?.split('@')[0]?.trim() || 'Isaak';
+  return `${base} Workspace`;
+}
+
 export default async function HoldedOnboardingPage({
   searchParams,
 }: {
@@ -75,64 +76,13 @@ export default async function HoldedOnboardingPage({
     !session?.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
   const nextUrl = attachOnboardingToken(normalizeNextUrl(firstValue(params.next)), onboardingToken);
 
-  const subject = session?.uid
-    ? {
-        uid: session.uid,
-        email: session.email ?? null,
-        name: session.name ?? null,
-        sessionTenantId: session.tenantId ?? null,
-      }
-    : onboardingPayload
-      ? {
-          uid: onboardingPayload.uid,
-          email: onboardingPayload.email ?? null,
-          name: onboardingPayload.name ?? null,
-          sessionTenantId: null,
-        }
-      : null;
-
-  let tenantId: string | null = subject?.sessionTenantId ?? null;
-  let tenantName = 'tu empresa';
-
-  if (subject) {
-    try {
-      const resolved = await resolveTenantForHoldedFirstSession(subject);
-      tenantId = resolved.tenantId;
-
-      if (tenantId) {
-        try {
-          const hasHoldedConnection = await hasSharedHoldedConnectionForTenant(tenantId);
-          if (hasHoldedConnection) {
-            redirect(nextUrl);
-          }
-        } catch (error) {
-          console.error('[onboarding/holded] holded connection lookup failed', {
-            tenantId,
-            message: error instanceof Error ? error.message : String(error),
-          });
-        }
-
-        try {
-          const tenant = await prisma.tenant.findUnique({
-            where: { id: tenantId },
-            select: { name: true, legalName: true },
-          });
-
-          tenantName = tenant?.legalName || tenant?.name || tenantName;
-        } catch (error) {
-          console.error('[onboarding/holded] tenant lookup failed', {
-            tenantId,
-            message: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
-    } catch (error) {
-      console.error('[onboarding/holded] tenant resolution failed', {
-        sessionUid: subject.uid,
-        message: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
+  const tenantName = buildWorkspaceLabel(
+    session?.uid
+      ? { name: session.name ?? null, email: session.email ?? null }
+      : onboardingPayload
+        ? { name: onboardingPayload.name ?? null, email: onboardingPayload.email ?? null }
+        : null
+  );
 
   return <HoldedOnboardingClient nextUrl={nextUrl} tenantName={tenantName} onboardingToken={onboardingToken} />;
 }
