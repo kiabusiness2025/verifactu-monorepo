@@ -112,6 +112,7 @@ export async function requireTenantContext(options?: {
       ...direct,
       tenantId,
     },
+    resolvedUserId: oauthResolved.resolvedUserId,
     tenantId,
   };
 }

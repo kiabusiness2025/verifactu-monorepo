@@ -55,13 +55,28 @@ export async function POST(request: NextRequest) {
   const status = probe.ok ? 'connected' : 'error';
   const normalizedError = probe.ok ? null : probe.error || 'Error de validación de integración Holded';
 
-  const saved = await upsertAccountingIntegration({
-    tenantId: auth.tenantId,
-    apiKeyEnc: encrypted,
-    status,
-    lastError: normalizedError,
-    connectedByUserId: auth.session.uid,
-  });
+  let saved: Awaited<ReturnType<typeof upsertAccountingIntegration>>;
+  try {
+    saved = await upsertAccountingIntegration({
+      tenantId: auth.tenantId,
+      apiKeyEnc: encrypted,
+      status,
+      lastError: normalizedError,
+      connectedByUserId: auth.resolvedUserId ?? null,
+    });
+  } catch (error) {
+    console.error('[api/integrations/accounting/connect] failed to persist integration', {
+      tenantId: auth.tenantId,
+      resolvedUserId: auth.resolvedUserId ?? null,
+      sessionUid: auth.session.uid,
+      message: error instanceof Error ? error.message : String(error),
+    });
+
+    return NextResponse.json(
+      { error: 'No se pudo guardar la conexion de Holded' },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     ok: probe.ok,
