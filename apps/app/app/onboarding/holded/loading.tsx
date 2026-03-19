@@ -17,7 +17,7 @@ export default function HoldedOnboardingLoading() {
           <section>
             <div className="inline-flex items-center gap-3 rounded-full border border-neutral-200 bg-white px-4 py-2 shadow-sm">
               <Image
-                src="/brand/holded/holded-diamond-red.png"
+                src="/brand/holded/holded-diamond-logo.png"
                 alt="Holded"
                 width={24}
                 height={24}
@@ -51,11 +51,11 @@ export default function HoldedOnboardingLoading() {
                 <div className="mt-1 text-sm text-neutral-500">Onboarding publico de Isaak for Holded</div>
               </div>
               <Image
-                src="/brand/holded/holded-logotype-red-light.svg"
+                src="/brand/holded/holded-diamond-logo.png"
                 alt="Holded"
-                width={96}
-                height={20}
-                className="h-5 w-auto"
+                width={40}
+                height={40}
+                className="h-10 w-10"
               />
             </div>
 

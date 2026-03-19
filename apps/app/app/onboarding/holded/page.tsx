@@ -12,9 +12,9 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Conectar Holded | Isaak',
   icons: {
-    icon: '/brand/holded/holded-diamond-red.png',
-    shortcut: '/brand/holded/holded-diamond-red.png',
-    apple: '/brand/holded/holded-diamond-red.png',
+    icon: '/brand/holded/holded-diamond-logo.png',
+    shortcut: '/brand/holded/holded-diamond-logo.png',
+    apple: '/brand/holded/holded-diamond-logo.png',
   },
 };
 
