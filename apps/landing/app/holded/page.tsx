@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   title: 'Isaak for Holded | Conecta Holded con ChatGPT gratis',
   description:
     'Conecta Holded con ChatGPT gratis con Isaak. Consulta facturas, contactos, cuentas, CRM y proyectos en lenguaje natural, y da el salto a verifactu.business cuando quieras la experiencia completa.',
+  icons: {
+    icon: [{ url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' }],
+    shortcut: ['/brand/holded/holded-diamond-logo.png'],
+    apple: [{ url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' }],
+  },
 };
 
 const campaignPoints = [
