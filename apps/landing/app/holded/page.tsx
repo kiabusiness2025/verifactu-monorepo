@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
-import { getClientUrl } from '../lib/urls';
+import { getAppUrl, getClientUrl } from '../lib/urls';
 
 export const metadata: Metadata = {
   title: 'Isaak for Holded | Conecta Holded con ChatGPT gratis',
@@ -62,9 +62,9 @@ const faqItems = [
       'Sí. Isaak trabaja con la API key de la cuenta de Holded que tú elijas conectar. Esa credencial se guarda en backend y no queda expuesta en el cliente.',
   },
   {
-    question: '¿Por qué el botón principal abre ChatGPT y no una URL larga de onboarding?',
+    question: '¿Por qué el botón principal no siempre abre una URL fija de ChatGPT?',
     answer:
-      'Porque el flujo OAuth de ChatGPT genera parámetros temporales como state, code_challenge y redirect_uri. Esos enlaces no son estables para una campaña pública. El punto de entrada correcto es la app de ChatGPT.',
+      'La URL pública de la app puede cambiar entre beta, revisión y publicación. Por eso usamos la URL oficial de la app cuando está disponible y, si no, redirigimos al onboarding seguro de Isaak para no romper la experiencia.',
   },
   {
     question: '¿Qué gano con la experiencia completa de Verifactu?',
@@ -75,9 +75,11 @@ const faqItems = [
 
 export default function HoldedCampaignPage() {
   const clientUrl = getClientUrl();
+  const appUrl = getAppUrl();
   const chatgptAppUrl =
     process.env.NEXT_PUBLIC_HOLDED_CHATGPT_APP_URL ||
-    'https://chatgpt.com/apps/isaak-for-holded-beta/asdk_app_69b9aa407b008191a102a76216fc4842';
+    `${appUrl}/onboarding/holded?channel=chatgpt&source=holded_landing`;
+  const opensDirectOnboarding = !process.env.NEXT_PUBLIC_HOLDED_CHATGPT_APP_URL;
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_40%,#ffffff_100%)] text-slate-900">
@@ -125,7 +127,7 @@ export default function HoldedCampaignPage() {
                 href={chatgptAppUrl}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#ef4654]"
               >
-                Abrir Isaak for Holded en ChatGPT
+                {opensDirectOnboarding ? 'Conectar Holded con Isaak' : 'Abrir Isaak for Holded en ChatGPT'}
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
@@ -137,7 +139,9 @@ export default function HoldedCampaignPage() {
             </div>
 
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-              El botón principal abre la app de ChatGPT porque el onboarding OAuth correcto necesita parámetros temporales generados en ese momento. No conviene publicar una URL fija y larga de autorización.
+              {opensDirectOnboarding
+                ? 'Mientras la URL pública definitiva de la app en ChatGPT se estabiliza, este botón te lleva al onboarding seguro de Isaak para conectar Holded directamente.'
+                : 'Este botón abre la app pública de ChatGPT y genera los parámetros temporales de autorización en el momento correcto.'}
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -259,36 +263,35 @@ export default function HoldedCampaignPage() {
               <ShieldCheck className="h-3.5 w-3.5 text-[#ff5460]" />
               Preguntas frecuentes
             </div>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-              Todo lo importante antes de probar Isaak for Holded
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
+              Todo lo importante antes de conectar Holded con Isaak.
             </h2>
           </div>
 
-          <div className="mt-8 grid gap-4">
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
             {faqItems.map((item) => (
               <article key={item.question} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-                <h3 className="text-lg font-semibold text-slate-900">{item.question}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">{item.answer}</p>
+                <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{item.answer}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="font-semibold text-slate-900">Isaak for Holded</div>
-            <div className="mt-1">Entrada conversacional gratuita para usuarios de Holded, impulsada por Verifactu.</div>
-          </div>
-
+      <footer className="border-t border-slate-200 bg-white py-8">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <div>Isaak for Holded vive en Verifactu. ChatGPT es el canal. Holded es la fuente de datos conectada.</div>
           <div className="flex flex-wrap gap-4">
-            <a href="#como-funciona" className="hover:text-slate-900">Cómo funciona</a>
-            <a href="#faq" className="hover:text-slate-900">FAQ</a>
-            <Link href="/que-es-isaak" className="hover:text-slate-900">Qué es Isaak</Link>
-            <Link href="/holded/privacy" className="hover:text-slate-900">Privacidad</Link>
-            <Link href="/holded/terms" className="hover:text-slate-900">Términos</Link>
-            <Link href="/holded/support" className="hover:text-slate-900">Soporte</Link>
+            <Link href="/holded/support" className="hover:text-slate-900">
+              Soporte
+            </Link>
+            <Link href="/holded/privacy" className="hover:text-slate-900">
+              Privacidad
+            </Link>
+            <Link href="/holded/terms" className="hover:text-slate-900">
+              Términos
+            </Link>
           </div>
         </div>
       </footer>
