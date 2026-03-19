@@ -286,7 +286,9 @@ export default function HoldedCampaignPage() {
             <a href="#como-funciona" className="hover:text-slate-900">Cómo funciona</a>
             <a href="#faq" className="hover:text-slate-900">FAQ</a>
             <Link href="/que-es-isaak" className="hover:text-slate-900">Qué es Isaak</Link>
-            <Link href="/legal/privacidad" className="hover:text-slate-900">Privacidad</Link>
+            <Link href="/holded/privacy" className="hover:text-slate-900">Privacidad</Link>
+            <Link href="/holded/terms" className="hover:text-slate-900">Términos</Link>
+            <Link href="/holded/support" className="hover:text-slate-900">Soporte</Link>
           </div>
         </div>
       </footer>
