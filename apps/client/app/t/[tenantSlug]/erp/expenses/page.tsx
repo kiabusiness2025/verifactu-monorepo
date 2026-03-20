@@ -22,8 +22,10 @@ function formatDate(value: string) {
 
 export default async function ExpensesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tenantSlug: string }>;
+  searchParams: Promise<{ status?: string; category?: string }>;
 }) {
   const session = await getSessionPayload();
   if (!session?.uid) {
@@ -31,8 +33,17 @@ export default async function ExpensesPage({
   }
 
   const { tenantSlug } = await params;
+  const query = await searchParams;
   const tenant = await resolveTenantFromSession(session, tenantSlug);
-  const { items, summary } = await getExpensesPageData(tenant.id);
+
+  const selectedStatus =
+    query.status === 'received' || query.status === 'paid' ? query.status : 'all';
+  const selectedCategory = query.category?.trim() ? query.category.trim() : 'all';
+
+  const { items, categories, summary } = await getExpensesPageData(tenant.id, {
+    status: selectedStatus === 'all' ? undefined : selectedStatus,
+    category: selectedCategory === 'all' ? undefined : selectedCategory,
+  });
 
   return (
     <div className="space-y-6">
@@ -93,9 +104,58 @@ export default async function ExpensesPage({
           <CardTitle>Últimos gastos</CardTitle>
         </CardHeader>
         <CardContent>
+          <form
+            className="mb-4 grid gap-3 rounded-xl border border-border p-3 md:grid-cols-4"
+            method="get"
+          >
+            <label className="text-sm">
+              <span className="mb-1 block text-xs text-muted-foreground">Estado</span>
+              <select
+                name="status"
+                defaultValue={selectedStatus}
+                className="w-full rounded-md border border-border bg-background px-3 py-2"
+              >
+                <option value="all">Todos</option>
+                <option value="received">Recibido</option>
+                <option value="paid">Pagado</option>
+              </select>
+            </label>
+
+            <label className="text-sm">
+              <span className="mb-1 block text-xs text-muted-foreground">Categoría</span>
+              <select
+                name="category"
+                defaultValue={selectedCategory}
+                className="w-full rounded-md border border-border bg-background px-3 py-2"
+              >
+                <option value="all">Todas</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="md:col-span-2 flex items-end gap-2">
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium transition hover:bg-muted/40"
+              >
+                Aplicar filtros
+              </button>
+              <Link
+                href={`/t/${tenantSlug}/erp/expenses`}
+                className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 py-2 text-sm text-muted-foreground transition hover:bg-muted/40"
+              >
+                Limpiar
+              </Link>
+            </div>
+          </form>
+
           {items.length === 0 ? (
             <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-              Todavía no hay gastos en esta empresa.
+              No hay gastos para el filtro seleccionado.
             </div>
           ) : (
             <div className="overflow-x-auto">

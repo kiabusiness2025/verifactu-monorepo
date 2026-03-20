@@ -94,12 +94,21 @@ export async function getInvoicesPageData(tenantId: string) {
   };
 }
 
-export async function getExpensesPageData(tenantId: string) {
+export async function getExpensesPageData(
+  tenantId: string,
+  filters?: { status?: string; category?: string }
+) {
   const { start, end } = getCurrentMonthRange();
 
-  const [items, monthAgg, reviewCount] = await Promise.all([
+  const where = {
+    tenantId,
+    ...(filters?.status ? { status: filters.status } : {}),
+    ...(filters?.category ? { category: filters.category } : {}),
+  };
+
+  const [items, monthAgg, reviewCount, categories] = await Promise.all([
     prisma.expenseRecord.findMany({
-      where: { tenantId },
+      where,
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
       take: 12,
       select: {
@@ -130,6 +139,12 @@ export async function getExpensesPageData(tenantId: string) {
         status: 'received',
       },
     }),
+    prisma.expenseRecord.findMany({
+      where: { tenantId },
+      select: { category: true },
+      distinct: ['category'],
+      orderBy: { category: 'asc' },
+    }),
   ]);
 
   return {
@@ -138,6 +153,7 @@ export async function getExpensesPageData(tenantId: string) {
       amount: toNumber(item.amount),
       date: item.date.toISOString(),
     })),
+    categories: categories.map((item) => item.category),
     summary: {
       totalMonth: toNumber(monthAgg._sum.amount),
       countMonth: Number(monthAgg._count._all ?? 0),
