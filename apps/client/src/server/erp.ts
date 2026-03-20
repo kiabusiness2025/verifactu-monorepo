@@ -253,7 +253,6 @@ export async function getInvoiceDetail(invoiceId: string, tenantId: string) {
       verifactuStatus: true,
       verifactuQr: true,
       verifactuHash: true,
-      verifactuLastError: true,
       notes: true,
       createdAt: true,
       customer: {
@@ -271,5 +270,47 @@ export async function getInvoiceDetail(invoiceId: string, tenantId: string) {
     amountGross: toNumber(invoice.amountGross),
     issueDate: invoice.issueDate.toISOString(),
     createdAt: invoice.createdAt.toISOString(),
+    verifactuLastError: null as string | null,
+  };
+}
+
+export async function getExpenseDetail(expenseId: string, tenantId: string) {
+  const expense = await prisma.expenseRecord.findFirst({
+    where: { id: expenseId, tenantId },
+    select: {
+      id: true,
+      date: true,
+      description: true,
+      category: true,
+      amount: true,
+      taxRate: true,
+      status: true,
+      docType: true,
+      taxCategory: true,
+      reference: true,
+      notes: true,
+      createdAt: true,
+      updatedAt: true,
+      supplier: {
+        select: {
+          id: true,
+          name: true,
+          nif: true,
+          email: true,
+          phone: true,
+        },
+      },
+    },
+  });
+
+  if (!expense) return null;
+
+  return {
+    ...expense,
+    amount: toNumber(expense.amount),
+    taxRate: toNumber(expense.taxRate),
+    date: expense.date.toISOString(),
+    createdAt: expense.createdAt.toISOString(),
+    updatedAt: expense.updatedAt.toISOString(),
   };
 }

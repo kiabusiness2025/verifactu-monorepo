@@ -114,7 +114,14 @@ export default async function ExpensesPage({
                   {items.map((item) => (
                     <tr key={item.id} className="border-b last:border-0">
                       <td className="px-3 py-3 text-muted-foreground">{formatDate(item.date)}</td>
-                      <td className="px-3 py-3 font-medium text-foreground">{item.description}</td>
+                      <td className="px-3 py-3 font-medium text-foreground">
+                        <Link
+                          href={`/t/${tenantSlug}/erp/expenses/${item.id}`}
+                          className="hover:underline"
+                        >
+                          {item.description}
+                        </Link>
+                      </td>
                       <td className="px-3 py-3 text-muted-foreground">{item.category}</td>
                       <td className="px-3 py-3 text-muted-foreground">
                         {item.supplier?.name ?? 'Sin proveedor'}
