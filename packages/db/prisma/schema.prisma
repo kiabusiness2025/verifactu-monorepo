@@ -112,6 +112,7 @@ model User {
   onboarding         UserOnboarding?
   invoicesCreatedBy  Invoice[]           @relation("CreatedByUser")
   isaakConversations IsaakConversation[]
+  isaakMemoryFacts   IsaakMemoryFact[]
 
   // NextAuth relations
   accounts Account[]
@@ -359,6 +360,7 @@ model Tenant {
   externalConnectionAuditLogs ExternalConnectionAuditLog[]
   externalSyncRuns    ExternalSyncRun[]
   isaakConversations  IsaakConversation[]
+  isaakMemoryFacts    IsaakMemoryFact[]
   demoOnboardings     UserOnboarding[]
   supportSessions     SupportSession[]
 
@@ -956,10 +958,12 @@ model IsaakConversation {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant   Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user     User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages IsaakConversationMsg[]
-  shares   IsaakConversationShare[]
+  tenant        Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user          User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      IsaakConversationMsg[]
+  shares        IsaakConversationShare[]
+  summaryRecord IsaakConversationSummary?
+  memoryFacts   IsaakMemoryFact[]
 
   @@index([tenantId])
   @@index([userId])
@@ -1001,4 +1005,43 @@ model IsaakConversationShare {
   @@index([conversationId])
   @@index([expiresAt])
   @@map("isaak_conversation_shares")
+}
+
+model IsaakConversationSummary {
+  conversationId      String   @id @map("conversation_id") @db.Uuid
+  summary             String
+  openLoopsJson       Json?    @map("open_loops_json")
+  userPreferencesJson Json?    @map("user_preferences_json")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  conversation IsaakConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("isaak_conversation_summaries")
+}
+
+model IsaakMemoryFact {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  userId          String?   @map("user_id")
+  conversationId  String?   @map("conversation_id") @db.Uuid
+  scope           String
+  category        String
+  factKey         String    @map("fact_key")
+  valueJson       Json      @map("value_json")
+  source          String
+  confidence      Float?
+  lastConfirmedAt DateTime? @map("last_confirmed_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user         User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  conversation IsaakConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, category, createdAt])
+  @@index([tenantId, scope, createdAt])
+  @@index([userId, createdAt])
+  @@index([conversationId, createdAt])
+  @@map("isaak_memory_facts")
 }

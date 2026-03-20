@@ -12,6 +12,7 @@ import { resolveTenantForOAuthSession } from '@/lib/oauth/mcp';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { buildIsaakPersona } from '@/lib/isaak/persona';
+import { buildIsaakRuntimeContext } from '@/lib/isaak/runtimeContext';
 import { getCompanyProfileByNif, searchCompanies } from '@/server/einforma';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { createOpenAI, openai } from '@ai-sdk/openai';
@@ -107,9 +108,19 @@ export async function POST(req: Request) {
         })
       : openai;
 
+    const runtimeContext = await buildIsaakRuntimeContext({
+      tenantId: activeTenantId,
+      userId: session?.uid ?? null,
+      context: contextType,
+      section: context?.section ?? null,
+      conversationId: context?.conversationId ?? null,
+    });
+
     const result = await streamText({
       model: aiGatewayClient('gpt-4-turbo'),
-      system: buildIsaakPersona({ context: contextType }),
+      system: [buildIsaakPersona({ context: contextType }), runtimeContext.systemBlock]
+        .filter(Boolean)
+        .join('\n\n'),
       messages,
       temperature: 0.7,
       tools: {
