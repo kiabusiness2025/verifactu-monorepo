@@ -38,11 +38,11 @@ const CONTEXT_PROMPTS: Record<IsaakPersonaContext, string> = {
 - Mantente claro pero algo mas estructurado.
 - Puedes ser mas tecnico cuando haga falta.
 - Prioriza diagnostico, estado, impacto y siguiente accion segura.`,
-  holded_first: `Contexto actual: el usuario llega desde Isaak for Holded en ChatGPT.
-- Centrate en datos de Holded y valor inmediato.
+  holded_first: `Contexto actual: el usuario llega desde Isaak compatible con Holded.
+- Centrate en valor inmediato, claridad y siguientes pasos.
 - Habla de facturas, contactos, cuentas, CRM y proyectos en lenguaje claro.
-- Evita referencias al dashboard interno salvo que aporten valor directo.
-- Refuerza que Isaak explica y prioriza, no solo lista datos.`,
+- Presenta Holded como fuente de datos compatible, no como marca protagonista.
+- Refuerza que Isaak explica, prioriza y ayuda a decidir, no solo lista datos.`,
 };
 
 const TONE_MODIFIERS: Record<IsaakTone, string> = {
@@ -142,27 +142,27 @@ const DOCK_COPY: Record<
 };
 
 const HOLDed_ONBOARDING_COPY = {
-  eyebrow: 'Isaak for Holded',
-  title: 'Conecta tu cuenta de Holded',
+  eyebrow: 'Compatible con Holded',
+  title: 'Activa Isaak con los datos reales de tu empresa',
   intro:
-    'Usa tu API key de Holded para activar Isaak y trabajar con tus datos reales desde ChatGPT. Esta version es externa y gratuita, pensada para usuarios que empiezan desde Isaak for Holded.',
-  statusReady: 'Workspace preparado',
-  statusLoading: 'Comprobando conexion',
-  statusPending: 'Pendiente de conexion',
+    'Pega tu API key para que Isaak pueda trabajar con datos reales de tu ERP compatible. Empezamos con Holded como canal de entrada y dejamos abierta la puerta a una experiencia mucho más completa dentro de verifactu.business.',
+  statusReady: 'Espacio listo para activar Isaak',
+  statusLoading: 'Preparando acceso a tus datos',
+  statusPending: 'Activacion pendiente',
   degraded:
-    'No hemos podido leer el estado inicial, pero puedes continuar igualmente con la conexion.',
+    'No hemos podido leer el estado inicial, pero puedes activar Isaak igualmente y terminar la configuracion ahora.',
   savingMessages: [
-    'Isaak esta verificando tu acceso a facturas y borradores.',
-    'Estamos preparando lectura de contactos y cuentas contables.',
-    'Isaak dejara lista tu conexion para operar desde ChatGPT.',
-    'En cuanto termine, podras pedir resumenes, pendientes y senales clave.',
+    'Isaak esta validando acceso a tus datos para trabajar con contexto real.',
+    'Estamos dejando listas las capas de facturas, contactos y cuentas para que no empieces desde cero.',
+    'Isaak esta preparando prioridades, alertas y siguientes pasos sobre tu operativa.',
+    'En cuanto terminemos, podras hablar con tu negocio con mucho menos ruido y mas claridad.',
   ],
   loadingMessages: [
-    'Isaak puede leer tus facturas de Holded y resumir actividad pendiente.',
-    'Isaak puede localizar contactos y ayudarte a preparar nuevos borradores.',
-    'Isaak puede traducir cuentas contables a un lenguaje mucho mas claro.',
-    'Isaak puede detectar señales utiles sobre ventas, gastos y beneficio.',
-    'Isaak puede ayudarte a trabajar Holded desde ChatGPT sin perder contexto.',
+    'Isaak convierte datos reales de tu ERP en decisiones y prioridades claras.',
+    'Isaak puede ayudarte a detectar errores, pendientes y riesgos antes de que crezcan.',
+    'Isaak esta pensado para impuestos, Verifactu, control operativo y tranquilidad diaria.',
+    'Compatible con Holded hoy y preparado para sumar nuevas integraciones mañana.',
+    'La idea no es mostrar mas menus: es ayudarte a decidir mejor con menos friccion.',
   ],
 };
 
@@ -229,15 +229,15 @@ export function getIsaakDockCopy(input?: {
       ...active,
       greeting:
         tone === 'minimal'
-          ? 'Puedo traducir tus datos de Holded en prioridades claras.'
-          : 'Puedo traducir tus datos de Holded en prioridades claras y siguientes pasos concretos.',
+          ? 'Puedo traducir tus datos reales en prioridades claras.'
+          : 'Puedo traducir tus datos reales en prioridades claras y siguientes pasos concretos.',
       suggestions: [
-        'Qué facturas revisar primero',
-        'Contactos que requieren seguimiento',
-        'Resumen rápido de actividad',
+        'Qué revisar primero hoy',
+        'Riesgos y pendientes clave',
+        'Resumen operativo de tu actividad',
       ],
       quickResult:
-        'Lo relevante aquí es identificar pendientes, movimientos clave y próximos pasos antes de profundizar en el detalle.',
+        'Lo relevante aqui es convertir tus datos del ERP en foco, control y decisiones utiles, no solo en listados.',
     };
   }
 

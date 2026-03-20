@@ -4,7 +4,8 @@ import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
-const queuedMessages = getIsaakHoldedOnboardingCopy().loadingMessages;
+const copy = getIsaakHoldedOnboardingCopy();
+const queuedMessages = copy.loadingMessages;
 
 export default function HoldedOnboardingLoading() {
   const [index, setIndex] = useState(0);
@@ -24,7 +25,7 @@ export default function HoldedOnboardingLoading() {
           <div className="flex justify-center">
             <Image
               src="/brand/holded/holded-diamond-logo.png"
-              alt="Holded"
+              alt="Compatible con Holded"
               width={120}
               height={120}
               className="h-24 w-24 sm:h-28 sm:w-28"
@@ -33,19 +34,26 @@ export default function HoldedOnboardingLoading() {
           </div>
 
           <div className="mt-6 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
-            {getIsaakHoldedOnboardingCopy().eyebrow}
+            {copy.eyebrow}
           </div>
 
           <h1 className="mt-6 text-3xl font-bold tracking-tight text-black sm:text-4xl">
-            Cargando tu conexión
+            Estamos preparando a Isaak
           </h1>
+
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-neutral-600 sm:text-base">
+            Estamos dejando listo el acceso a tus datos reales para que Isaak empiece con contexto, prioridades y siguientes pasos desde el primer minuto.
+          </p>
 
           <div className="mx-auto mt-8 h-2 w-28 overflow-hidden rounded-full bg-neutral-200">
             <div className="h-full w-1/2 animate-[pulse_1.2s_ease-in-out_infinite] rounded-full bg-[#ff5460]" />
           </div>
 
-          <div className="mt-8 min-h-[84px] rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-5">
-            <p className="text-base leading-8 text-neutral-700 sm:text-lg">
+          <div className="mt-8 min-h-[104px] rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-5">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+              Mientras preparamos tu espacio
+            </div>
+            <p className="mt-3 text-base leading-8 text-neutral-700 sm:text-lg">
               {queuedMessages[index]}
             </p>
           </div>

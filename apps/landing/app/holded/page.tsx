@@ -5,19 +5,18 @@ import {
   ArrowRight,
   Bot,
   BriefcaseBusiness,
-  Building2,
   CheckCircle2,
-  FileSpreadsheet,
-  MessageSquareText,
   ShieldCheck,
   Sparkles,
+  Wallet,
+  Workflow,
 } from 'lucide-react';
-import { getAppUrl, getClientUrl } from '../lib/urls';
+import { getAppUrl } from '../lib/urls';
 
 export const metadata: Metadata = {
-  title: 'Isaak for Holded | Conecta Holded con ChatGPT gratis',
+  title: 'Isaak compatible con Holded | verifactu.business',
   description:
-    'Conecta Holded con ChatGPT gratis con Isaak. Consulta facturas, contactos, cuentas, CRM y proyectos en lenguaje natural, y da el salto a verifactu.business cuando quieras la experiencia completa.',
+    'Activa Isaak con datos reales de tu ERP compatible. Empieza con Holded como puerta de entrada y da el salto a la experiencia completa de verifactu.business cuando quieras más control, automatización y tranquilidad fiscal.',
   icons: {
     icon: [{ url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' }],
     shortcut: ['/brand/holded/holded-diamond-logo.png'],
@@ -25,56 +24,73 @@ export const metadata: Metadata = {
   },
 };
 
-const campaignPoints = [
-  'Gratis para usuarios de Holded en esta fase de lanzamiento.',
-  'Conecta tu API key de Holded en minutos.',
-  'Consulta facturas, contactos, cuentas, CRM y proyectos desde ChatGPT.',
-  'CTA permanente a verifactu.business para la experiencia fiscal y operativa completa.',
+const benefitCards = [
+  {
+    title: 'Control antes que ruido',
+    body: 'Isaak resume lo importante y te ayuda a priorizar facturas, cobros, gastos y plazos sin perderte en pantallas tecnicas.',
+    icon: Wallet,
+  },
+  {
+    title: 'Automatizacion con criterio',
+    body: 'No se limita a responder. Te acompaña con borradores, alertas, revisiones y siguientes pasos sobre datos reales.',
+    icon: Workflow,
+  },
+  {
+    title: 'Menos errores, mas tranquilidad',
+    body: 'Isaak esta pensado para impuestos, Verifactu y operaciones del dia a dia, no para conversaciones genericas sin contexto.',
+    icon: ShieldCheck,
+  },
 ];
 
-const useCases = [
+const compatiblePoints = [
+  'Compatible con Holded hoy como ERP de entrada.',
+  'Preparado para crecer hacia nuevas integraciones sin cambiar la experiencia de Isaak.',
+  'Pensado para empresarios y equipos que quieren claridad, no mas complejidad tecnica.',
+  'Puerta natural a la experiencia completa de verifactu.business.',
+];
+
+const steps = [
   {
-    title: 'Facturas sin menús complejos',
-    body: 'Pregunta por ventas, pendientes, borradores y actividad reciente sin navegar pantallas técnicas.',
-    icon: FileSpreadsheet,
+    step: '1',
+    title: 'Activa Isaak',
+    body: 'Empieza desde ChatGPT o desde el onboarding seguro de verifactu.business.',
   },
   {
-    title: 'CRM con contexto real',
-    body: 'Cruza contactos, bookings y seguimiento comercial con el estado financiero del negocio.',
-    icon: BriefcaseBusiness,
+    step: '2',
+    title: 'Conecta datos reales',
+    body: 'Usa tu API key de Holded para que Isaak trabaje con contexto real desde el primer minuto.',
   },
   {
-    title: 'Proyectos explicados',
-    body: 'Resume proyectos y tareas en lenguaje claro para saber qué se mueve y qué se está desviando.',
-    icon: Building2,
+    step: '3',
+    title: 'Desbloquea la experiencia completa',
+    body: 'Cuando quieras más control, automatización y capa fiscal, das el salto a verifactu.business.',
   },
 ];
 
 const faqItems = [
   {
-    question: '¿Tengo que entrar primero en verifactu.business?',
+    question: '¿Isaak es una solución oficial de Holded?',
     answer:
-      'No. Esta landing está pensada para empezar desde ChatGPT con Isaak for Holded. Si después quieres panel visual, histórico y reglas fiscales, puedes activar verifactu.business.',
+      'No. Holded aparece aquí como ERP compatible y fuente de datos. La experiencia, la lógica fiscal y la capa operativa pertenecen a Isaak dentro del ecosistema de verifactu.business.',
   },
   {
-    question: '¿Puedo usar mi propia API key de Holded?',
+    question: '¿Necesito saber de APIs o configuración técnica?',
     answer:
-      'Sí. Isaak trabaja con la API key de la cuenta de Holded que tú elijas conectar. Esa credencial se guarda en backend y no queda expuesta en el cliente.',
+      'No. El objetivo es justo el contrario: reducir fricción técnica y darte una activación guiada para que Isaak empiece a trabajar con datos reales.',
   },
   {
-    question: '¿Por qué el botón principal no siempre abre una URL fija de ChatGPT?',
+    question: '¿Qué gano cuando paso a verifactu.business?',
     answer:
-      'La URL pública de la app puede cambiar entre beta, revisión y publicación. Por eso usamos la URL oficial de la app cuando está disponible y, si no, redirigimos al onboarding seguro de Isaak para no romper la experiencia.',
+      'Añades panel visual, histórico, trazabilidad, automatización, reglas fiscales y una relación mucho más profunda con Isaak como asistente fiscal inteligente.',
   },
   {
-    question: '¿Qué gano con la experiencia completa de Verifactu?',
+    question: '¿Esto me cierra solo a Holded?',
     answer:
-      'Añades panel visual, histórico, trazabilidad, reglas fiscales, automatizaciones y una capa operativa más profunda para Isaak sobre tus datos.',
+      'No. Holded es una compatibilidad inicial y un buen punto de entrada, pero la arquitectura de Isaak está pensada para abrirse a más fuentes y más flujos con el tiempo.',
   },
 ];
 
 export default function HoldedCampaignPage() {
-  const clientUrl = getClientUrl();
   const appUrl = getAppUrl();
   const chatgptAppUrl =
     process.env.NEXT_PUBLIC_HOLDED_CHATGPT_APP_URL ||
@@ -93,8 +109,8 @@ export default function HoldedCampaignPage() {
             <a href="#como-funciona" className="hover:text-slate-900">
               Cómo funciona
             </a>
-            <a href="#casos" className="hover:text-slate-900">
-              Casos de uso
+            <a href="#que-desbloquea" className="hover:text-slate-900">
+              Qué desbloquea
             </a>
             <a href="#faq" className="hover:text-slate-900">
               FAQ
@@ -103,7 +119,7 @@ export default function HoldedCampaignPage() {
 
           <div className="inline-flex items-center gap-2 rounded-full border border-[#ff5460]/20 bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold text-[#ff5460]">
             <Sparkles className="h-3.5 w-3.5" />
-            Holded + ChatGPT
+            Compatible con Holded
           </div>
         </div>
       </section>
@@ -113,39 +129,39 @@ export default function HoldedCampaignPage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm">
               <Bot className="h-3.5 w-3.5 text-[#ff5460]" />
-              Isaak for Holded
+              Isaak by verifactu.business
             </div>
             <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-6xl">
-              Conecta Holded con ChatGPT gratis y habla con tu negocio en lenguaje natural.
+              Activa Isaak con los datos reales de tu ERP.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Isaak es el asistente fiscal-contable que vive en Verifactu y opera sobre tus datos de Holded. Empieza en ChatGPT en minutos y, si quieres panel visual, reglas fiscales e histórico, da el salto a verifactu.business con prueba gratis de 30 días.
+              Empieza con Holded como canal de entrada y descubre a Isaak como tu asistente fiscal inteligente: menos errores, más control, más automatización y una forma mucho más clara de trabajar con datos reales.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 href={chatgptAppUrl}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#ef4654]"
               >
-                {opensDirectOnboarding ? 'Conectar Holded con Isaak' : 'Abrir Isaak for Holded en ChatGPT'}
+                {opensDirectOnboarding ? 'Activar Isaak ahora' : 'Abrir Isaak en ChatGPT'}
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="https://verifactu.business"
+                href="https://verifactu.business/que-es-isaak"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
               >
-                Probar verifactu.business 30 días
+                Descubrir la experiencia completa
               </Link>
             </div>
 
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
               {opensDirectOnboarding
-                ? 'Mientras la URL pública definitiva de la app en ChatGPT se estabiliza, este botón te lleva al onboarding seguro de Isaak para conectar Holded directamente.'
-                : 'Este botón abre la app pública de ChatGPT y genera los parámetros temporales de autorización en el momento correcto.'}
+                ? 'Mientras la URL pública definitiva de ChatGPT se estabiliza, este botón te lleva al onboarding seguro de Isaak para no romper la experiencia.'
+                : 'Este botón abre la app pública de ChatGPT y activa el flujo correcto de Isaak para trabajar con datos reales.'}
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              {campaignPoints.map((point) => (
+              {compatiblePoints.map((point) => (
                 <div key={point} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-start gap-3 text-sm leading-6 text-slate-600">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
@@ -160,7 +176,7 @@ export default function HoldedCampaignPage() {
             <div className="flex items-center justify-center rounded-[1.5rem] border border-slate-200 bg-[#fff7f7] p-10">
               <Image
                 src="/brand/holded/holded-diamond-logo.png"
-                alt="Holded"
+                alt="Compatible con Holded"
                 width={220}
                 height={220}
                 className="h-28 w-28 sm:h-36 sm:w-36"
@@ -170,28 +186,28 @@ export default function HoldedCampaignPage() {
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="text-sm font-semibold text-slate-900">Lo que ya puede hacer Isaak hoy</div>
               <div className="mt-3 grid gap-3">
-                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">Resume ingresos, pendientes y señales de riesgo.</div>
-                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">Busca contactos y prepara borradores antes de emitir.</div>
-                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">Explica cuentas, CRM y proyectos sin lenguaje contable.</div>
+                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">Explicar ventas, gastos, cobros y señales de riesgo con lenguaje claro.</div>
+                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">Ayudarte a revisar facturas, contactos, proyectos y prioridades operativas.</div>
+                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">Preparar el salto a la experiencia completa de verifactu.business cuando quieras más control.</div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="como-funciona" className="bg-white py-14">
+      <section id="que-desbloquea" className="bg-white py-14">
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
             <h2 className="text-3xl font-bold tracking-tight text-slate-950">
-              Primer paso: ChatGPT. Siguiente paso: experiencia completa de Verifactu.
+              Lo importante no es la conexión. Es lo que Isaak desbloquea después.
             </h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              Diseñamos Isaak for Holded como puerta de entrada: rápido, gratuito y conversacional. Si necesitas más control, verifactu.business añade panel visual, histórico, automatizaciones, trazabilidad y una capa fiscal completa.
+              Hemos diseñado esta entrada compatible con Holded para que empieces rápido, pero el centro del producto es Isaak: un asistente fiscal inteligente pensado para ayudarte a decidir mejor y trabajar con menos fricción.
             </p>
           </div>
 
           <div className="mt-8 grid gap-5 lg:grid-cols-3">
-            {useCases.map((item) => (
+            {benefitCards.map((item) => (
               <article key={item.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ff5460]/10 text-[#ff5460]">
                   <item.icon className="h-6 w-6" />
@@ -204,35 +220,27 @@ export default function HoldedCampaignPage() {
         </div>
       </section>
 
-      <section id="casos" className="py-14">
+      <section id="como-funciona" className="py-14">
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#081936_0%,#0f2660_100%)] p-8 text-white shadow-sm lg:p-10">
-            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
-                  Experiencia completa
-                </div>
-                <h2 className="mt-4 text-3xl font-bold tracking-tight">
-                  ¿Quieres a Isaak también dentro de verifactu.business?
-                </h2>
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
-                  Da el salto a la versión completa con prueba gratis durante 30 días: panel visual, histórico, reglas fiscales, sincronización y apoyo diario para empresarios que no quieren perderse entre números.
-                </p>
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
+                Activacion guiada
               </div>
-              <div className="flex flex-wrap gap-3 lg:justify-end">
-                <Link
-                  href="https://verifactu.business"
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#011c67] hover:bg-slate-100"
-                >
-                  Empezar prueba gratis de 30 días
-                </Link>
-                <Link
-                  href={`${clientUrl}/integrations/isaak-for-holded`}
-                  className="inline-flex items-center justify-center rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
-                >
-                  Ver integración en el nuevo entorno cliente
-                </Link>
-              </div>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight">Un camino simple: activar, entender, escalar.</h2>
+              <p className="mt-4 text-sm leading-7 text-white/80 sm:text-base">
+                La entrada compatible con Holded te permite empezar con datos reales. Después, si quieres un entorno más completo, la plataforma madre sigue siendo verifactu.business.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {steps.map((item) => (
+                <article key={item.step} className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Paso {item.step}</div>
+                  <h3 className="mt-3 text-lg font-semibold text-white">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/75">{item.body}</p>
+                </article>
+              ))}
             </div>
           </div>
         </div>
@@ -242,14 +250,28 @@ export default function HoldedCampaignPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-8 lg:p-10">
             <div className="flex items-start gap-3">
-              <MessageSquareText className="mt-1 h-5 w-5 shrink-0 text-[#ff5460]" />
+              <BriefcaseBusiness className="mt-1 h-5 w-5 shrink-0 text-[#ff5460]" />
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-                  Próximo paso: demo real en vídeo
+                  Cuando quieras más que una activación inicial, entras en verifactu.business.
                 </h2>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-                  Aquí colocaremos el vídeo de Isaak trabajando con datos de muestra de Holded. Mientras tanto, estamos preparando un tenant demo limpio para que la grabación enseñe contactos, facturas, borradores, proyectos y conversaciones reales con Isaak.
+                  Ahí es donde Isaak gana profundidad: panel visual, histórico, trazabilidad, automatización, reglas fiscales y una relación mucho más rica con tus procesos, documentos y decisiones.
                 </p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href="https://verifactu.business"
+                    className="inline-flex items-center justify-center rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white hover:bg-neutral-800"
+                  >
+                    Probar verifactu.business 30 días
+                  </Link>
+                  <Link
+                    href="https://verifactu.business/que-es-isaak"
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                  >
+                    Ver qué es Isaak
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -264,7 +286,7 @@ export default function HoldedCampaignPage() {
               Preguntas frecuentes
             </div>
             <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-              Todo lo importante antes de conectar Holded con Isaak.
+              Lo esencial antes de activar Isaak con Holded como fuente compatible.
             </h2>
           </div>
 
@@ -281,7 +303,7 @@ export default function HoldedCampaignPage() {
 
       <footer className="border-t border-slate-200 bg-white py-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <div>Isaak for Holded vive en Verifactu. ChatGPT es el canal. Holded es la fuente de datos conectada.</div>
+          <div>Isaak es la experiencia principal. Holded aparece aqui como ERP compatible y punto de entrada, no como marca protagonista.</div>
           <div className="flex flex-wrap gap-4">
             <Link href="/holded/support" className="hover:text-slate-900">
               Soporte

@@ -6,14 +6,13 @@ import {
   ArrowRight,
   BadgeCheck,
   Bot,
-  BriefcaseBusiness,
   CheckCircle2,
-  FileSpreadsheet,
-  FolderKanban,
-  MessageSquareText,
   ShieldCheck,
   Sparkles,
   Wallet,
+  Workflow,
+  FileCheck2,
+  Radar,
 } from 'lucide-react';
 
 const navLinks = [
@@ -23,80 +22,63 @@ const navLinks = [
   { label: 'Contacto', href: '/recursos/contacto' },
 ];
 
-const faqs = [
+const valueCards = [
   {
-    q: 'En que se diferencia Isaak de una IA general como ChatGPT?',
-    a: 'Isaak esta entrenado para tu contexto operativo en Verifactu: facturas, gastos, plazos, cierres y trazabilidad. No se limita a responder texto: te ayuda a ejecutar tareas del flujo real.',
+    title: 'Entiende lo importante antes',
+    body: 'Isaak traduce ventas, gastos, cobros, impuestos y operativa en prioridades claras para hoy.',
+    icon: Radar,
   },
   {
-    q: 'Isaak aprende de mi empresa?',
-    a: 'Si, puede usar contexto de tu tenant para mejorar respuestas: configuracion, historico, documentos y patrones de uso autorizados por tu equipo.',
+    title: 'Trabaja con datos reales',
+    body: 'No vive solo en un chat. Se apoya en datos de tu negocio, documentos e integraciones compatibles para ayudarte de verdad.',
+    icon: Workflow,
   },
   {
-    q: 'Se comparten mis datos con personas?',
-    a: 'No. Tus datos no se comparten con ningun humano sin autorizacion previa del usuario, salvo requerimientos legales aplicables.',
-  },
-  {
-    q: 'Puedo borrar historial y memoria?',
-    a: 'Si. Puedes solicitar borrado del historial de chat y reinicio de memoria contextual. Tambien puedes pedir eliminacion completa segun politica de privacidad.',
-  },
-  {
-    q: 'Habra mensajes temporales?',
-    a: 'Si. Esta prevista la opcion de mensajes temporales para consultas que no quieras mantener en memoria persistente.',
-  },
-  {
-    q: 'Habra modo voz?',
-    a: 'Si. Estamos preparando voz para hablar con Isaak sin teclear: dictado de preguntas y respuesta por audio como funcion adicional.',
+    title: 'Reduce errores y friccion',
+    body: 'Te ayuda a detectar pendientes, revisar borradores, anticipar riesgos y llegar con más calma a cierres y plazos.',
+    icon: FileCheck2,
   },
 ];
 
-const operatingCards = [
-  {
-    title: 'Entiende tu negocio',
-    body: 'Explica balances, ventas, gastos e impuestos sin obligarte a pensar como un contable.',
-    icon: Wallet,
-  },
-  {
-    title: 'Opera con tus datos',
-    body: 'Trabaja sobre Holded y futuras integraciones API desde un unico panel controlado por Verifactu.',
-    icon: FileSpreadsheet,
-  },
-  {
-    title: 'Conecta conversacion y accion',
-    body: 'No se queda en el chat: prioriza tareas, resume contexto y te lleva al siguiente paso util.',
-    icon: MessageSquareText,
-  },
-];
-
-const mockSignals = [
-  {
-    label: 'Pendientes detectados',
-    value: '3 facturas por revisar',
-  },
-  {
-    label: 'Margen del mes',
-    value: '18,4% explicado por Isaak',
-  },
-  {
-    label: 'Siguiente accion',
-    value: 'Cobros y gastos prioritarios',
-  },
+const signalCards = [
+  { label: 'Prioridad operativa', value: 'Cobros, gastos y plazos en un mismo criterio' },
+  { label: 'Capa fiscal', value: 'Pensado para Verifactu, trazabilidad y control' },
+  { label: 'Compatibilidad', value: 'Holded hoy y nuevas integraciones mañana' },
 ];
 
 const capabilities = [
-  'Revisar y extraer datos de facturas, tickets y documentos.',
-  'Sugerir acciones para cerrar periodos sin pendientes.',
-  'Detectar errores frecuentes antes de que escalen.',
-  'Recordarte plazos y tareas clave del calendario fiscal.',
-  'Resumirte ventas, gastos y beneficio en lenguaje claro.',
+  'Explicar con claridad facturas, cobros, gastos y señales de riesgo.',
+  'Priorizar que revisar primero para no perder tiempo en menus y detalles dispersos.',
+  'Ayudar a preparar acciones como borradores, revisiones y siguientes pasos.',
+  'Recordar contexto y conversaciones para responder con continuidad operativa.',
+  'Escalar a la experiencia completa de verifactu.business cuando necesitas mas profundidad.',
 ];
 
 const mechanics = [
-  'Se integra en tu espacio de trabajo y usa tu contexto autorizado.',
-  'Adapta tono y profundidad segun el tipo de consulta.',
-  'Prioriza respuestas accionables sobre texto generico.',
-  'Mantiene trazabilidad de decisiones y sugerencias relevantes.',
-  'Te permite escalar a soporte cuando necesitas ayuda humana.',
+  'Isaak vive dentro del ecosistema de verifactu.business y usa contexto autorizado por usuario y tenant.',
+  'Trabaja sobre datos reales del negocio, no solo sobre texto aislado en una ventana de chat.',
+  'Puede empezar con ERPs compatibles como Holded sin que esa compatibilidad defina toda la marca.',
+  'Antes de responder, puede apoyarse en historial, integraciones y señales de negocio relevantes.',
+  'Cuando una accion cambia datos fuera, Isaak pide confirmacion explicita antes de ejecutarla.',
+];
+
+const faqs = [
+  {
+    q: '¿Isaak es solo una integracion con Holded o ChatGPT?',
+    a: 'No. Holded puede ser una compatibilidad y ChatGPT puede ser un canal de entrada, pero la propuesta central es Isaak como asistente fiscal inteligente dentro del ecosistema de verifactu.business.',
+  },
+  {
+    q: '¿En que se diferencia Isaak de una IA generalista?',
+    a: 'Isaak esta pensado para control fiscal, operativa, Verifactu, errores frecuentes, documentos y datos reales del negocio. No responde solo por estilo: responde con contexto, prioridad y siguiente paso.',
+  },
+  {
+    q: '¿Puede trabajar con mas integraciones aparte de Holded?',
+    a: 'Si. Holded es una compatibilidad de entrada, pero la arquitectura se esta preparando para abrirse a mas ERPs, documentos y fuentes de contexto sin cambiar la identidad de Isaak.',
+  },
+  {
+    q: '¿Isaak recuerda conversaciones y contexto?',
+    a: 'Ese es justo el camino actual: una memoria privada propia de Isaak para ayudarte con continuidad real, sin depender de una memoria generica del canal donde entres.',
+  },
 ];
 
 export default function QueEsIsaakPage() {
@@ -112,17 +94,17 @@ export default function QueEsIsaakPage() {
             <div className="grid gap-8 p-6 lg:grid-cols-[0.92fr_1.08fr] lg:p-10">
               <div className="flex flex-col justify-center">
                 <div className="inline-flex w-fit items-center rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
-                  Que es Isaak
+                  Isaak by verifactu.business
                 </div>
                 <h1 className="mt-5 text-3xl font-bold tracking-tight text-[#011c67] sm:text-5xl">
-                  Tu contable nativo dentro de Verifactu
+                  Tu asistente fiscal inteligente para trabajar con datos reales.
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                  Isaak no es un chatbot generico. Es el asistente fiscal y contable de verifactu.business para traducir datos complejos en decisiones claras, contexto operativo y acciones guiadas dentro de tu dashboard.
+                  Isaak no se limita a responder texto. Te ayuda a entender que pasa en tu negocio, a priorizar lo importante y a reducir errores fiscales y operativos usando contexto real de tu empresa.
                 </p>
 
                 <div className="mt-6 grid gap-3">
-                  {operatingCards.map((item) => (
+                  {valueCards.map((item) => (
                     <div key={item.title} className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
                       <div className="flex items-start gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#2361d8]/10 text-[#2361d8]">
@@ -142,13 +124,13 @@ export default function QueEsIsaakPage() {
                     href={appUrl}
                     className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
                   >
-                    Empezar prueba de 30 días
+                    Activar Isaak 30 días
                   </Link>
                   <Link
                     href="/holded"
                     className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    Probar Isaak for Holded
+                    Ver compatibilidad con Holded
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
@@ -178,13 +160,13 @@ export default function QueEsIsaakPage() {
                   <div className="rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#2361d8]">
                       <Bot className="h-3.5 w-3.5" />
-                      Como se vive Isaak
+                      Como trabaja Isaak
                     </div>
                     <p className="mt-4 text-sm leading-6 text-slate-600">
-                      Unifica métricas, tareas, contexto fiscal y decisiones operativas para que el empresario vea qué hacer ahora, no solo qué pasó el mes pasado.
+                      Une contexto fiscal, operativa y decisiones diarias para que el empresario no tenga que traducir solo lo que ve en su ERP o en su dashboard.
                     </p>
                     <div className="mt-4 space-y-3">
-                      {mockSignals.map((item) => (
+                      {signalCards.map((item) => (
                         <div key={item.label} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">{item.label}</div>
                           <div className="mt-1 text-sm font-semibold text-slate-900">{item.value}</div>
@@ -195,45 +177,41 @@ export default function QueEsIsaakPage() {
 
                   <div className="rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(160deg,#ffffff_0%,#eef4ff_100%)] p-5 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-semibold text-[#011c67]">Panel de señales</div>
+                      <div className="text-sm font-semibold text-[#011c67]">Señales de producto</div>
                       <div className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                        En tiempo real
+                        Contexto real
                       </div>
                     </div>
                     <div className="mt-4 space-y-3">
                       <div className="rounded-2xl border border-slate-200 bg-white p-4">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Ventas vs gastos</span>
+                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Decisiones y control</span>
                           <BadgeCheck className="h-4 w-4 text-emerald-600" />
                         </div>
                         <div className="mt-3 h-2 rounded-full bg-slate-100">
                           <div className="h-2 w-[72%] rounded-full bg-[#2361d8]" />
                         </div>
-                        <div className="mt-2 text-sm text-slate-600">Isaak detecta desviaciones y te las explica con contexto.</div>
+                        <div className="mt-2 text-sm text-slate-600">Isaak está pensado para ayudarte a decidir mejor, no para mostrarte más ruido.</div>
                       </div>
                       <div className="rounded-2xl border border-slate-200 bg-white p-4">
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                          <FolderKanban className="h-4 w-4 text-[#2361d8]" />
-                          Integraciones operativas
+                          <Sparkles className="h-4 w-4 text-[#2361d8]" />
+                          Compatibilidades e integraciones
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Holded</span>
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Excel AEAT</span>
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">CRM y proyectos</span>
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Compatible con Holded</span>
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Documentos</span>
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Futuras integraciones</span>
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-[#ff5460]/20 bg-[#fff7f7] p-4">
+                      <div className="rounded-2xl border border-[#2361d8]/20 bg-[#f5f9ff] p-4">
                         <div className="flex items-start gap-3">
-                          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
+                          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#2361d8]" />
                           <div>
-                            <div className="text-sm font-semibold text-slate-900">Prueba externa con Holded</div>
+                            <div className="text-sm font-semibold text-slate-900">Menos foco en la técnica. Más foco en el resultado.</div>
                             <div className="mt-1 text-sm leading-6 text-slate-600">
-                              Si quieres probar a Isaak desde ChatGPT con tu cuenta de Holded, ya tienes una landing específica para hacerlo por tu cuenta.
+                              La conexión es solo el comienzo. El objetivo de Isaak es darte claridad fiscal y operativa sostenida, no una simple integración para marcar en una checklist.
                             </div>
-                            <Link href="/holded" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]">
-                              Ir a la experiencia Holded
-                              <ArrowRight className="h-4 w-4" />
-                            </Link>
                           </div>
                         </div>
                       </div>
@@ -271,7 +249,7 @@ export default function QueEsIsaakPage() {
           </div>
 
           <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-[#011c67]">Isaak vs IA generalista</h2>
+            <h2 className="text-lg font-semibold text-[#011c67]">Isaak frente a una IA generalista</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="min-w-full border-separate border-spacing-y-2 text-sm">
                 <thead>
@@ -283,24 +261,24 @@ export default function QueEsIsaakPage() {
                 </thead>
                 <tbody className="text-slate-700">
                   <tr>
-                    <td className="rounded-l-xl bg-slate-50 px-3 py-2">Contexto de tu empresa</td>
-                    <td className="bg-emerald-50 px-3 py-2">Si, en tu tenant y con permisos</td>
+                    <td className="rounded-l-xl bg-slate-50 px-3 py-2">Contexto de negocio</td>
+                    <td className="bg-emerald-50 px-3 py-2">Si, con tenant, memoria y permisos</td>
                     <td className="rounded-r-xl bg-slate-50 px-3 py-2">No por defecto</td>
                   </tr>
                   <tr>
-                    <td className="rounded-l-xl bg-slate-50 px-3 py-2">Flujo operativo VeriFactu</td>
+                    <td className="rounded-l-xl bg-slate-50 px-3 py-2">Foco fiscal y operativo</td>
                     <td className="bg-emerald-50 px-3 py-2">Especializado</td>
                     <td className="rounded-r-xl bg-slate-50 px-3 py-2">Generico</td>
                   </tr>
                   <tr>
-                    <td className="rounded-l-xl bg-slate-50 px-3 py-2">Sugerencias con accion inmediata</td>
-                    <td className="bg-emerald-50 px-3 py-2">Si</td>
+                    <td className="rounded-l-xl bg-slate-50 px-3 py-2">Siguiente paso util</td>
+                    <td className="bg-emerald-50 px-3 py-2">Si, orientado a accion</td>
                     <td className="rounded-r-xl bg-slate-50 px-3 py-2">Depende del prompt</td>
                   </tr>
                   <tr>
-                    <td className="rounded-l-xl bg-slate-50 px-3 py-2">Control de historial/memoria</td>
-                    <td className="bg-emerald-50 px-3 py-2">Configurable y eliminable</td>
-                    <td className="rounded-r-xl bg-slate-50 px-3 py-2">Variable segun proveedor</td>
+                    <td className="rounded-l-xl bg-slate-50 px-3 py-2">Puerta a automatizacion y control</td>
+                    <td className="bg-emerald-50 px-3 py-2">Si, dentro de verifactu.business</td>
+                    <td className="rounded-r-xl bg-slate-50 px-3 py-2">No integrada por defecto</td>
                   </tr>
                 </tbody>
               </table>
@@ -308,9 +286,9 @@ export default function QueEsIsaakPage() {
           </div>
 
           <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-[#011c67]">Privacidad y control de datos</h2>
+            <h2 className="text-lg font-semibold text-[#011c67]">Privacidad y control</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Isaak trabaja con controles de acceso por cuenta y tenant. Los datos no se comparten con ningun humano sin autorizacion previa. Puedes solicitar borrado de historial, limpieza de memoria y gestion de retencion. Para detalles legales completos, revisa la{' '}
+              Isaak trabaja con controles por usuario y tenant. La memoria, el historial y los documentos deben responder a una idea muy clara: ayudarte mejor sin perder control ni trazabilidad. Para detalles legales completos, revisa la{' '}
               <Link href="/legal/privacidad" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
                 politica de privacidad
               </Link>
@@ -335,13 +313,13 @@ export default function QueEsIsaakPage() {
               href={appUrl}
               className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
             >
-              Empezar prueba de 30 días
+              Activar Isaak 30 días
             </Link>
             <Link
               href="/holded"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Probar integracion Holded + ChatGPT
+              Ver compatibilidad con Holded
             </Link>
             <Link
               href="/recursos/contacto"

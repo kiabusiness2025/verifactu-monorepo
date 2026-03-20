@@ -10,7 +10,9 @@ import HoldedOnboardingClient from './HoldedOnboardingClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Conectar Holded | Isaak',
+  title: 'Activa Isaak | Compatible con Holded',
+  description:
+    'Activa Isaak con datos reales de tu ERP compatible y desbloquea una experiencia fiscal y operativa mucho más clara dentro de verifactu.business.',
   icons: {
     icon: '/brand/holded/holded-diamond-logo.png',
     shortcut: '/brand/holded/holded-diamond-logo.png',

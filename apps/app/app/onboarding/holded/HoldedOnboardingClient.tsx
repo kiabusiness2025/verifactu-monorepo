@@ -30,7 +30,7 @@ const helpSteps = [
   'Abre tu perfil o el area de ajustes de la cuenta.',
   'Busca la seccion de API o desarrolladores dentro de tu cuenta.',
   'Crea una nueva API key o copia la que ya tengas activa.',
-  'Vuelve a esta pantalla y pegala para conectar Isaak.',
+  'Vuelve a esta pantalla y pegala para activar Isaak con datos reales.',
 ];
 
 const onboardingCopy = getIsaakHoldedOnboardingCopy();
@@ -46,7 +46,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
 
   const statusLabel = useMemo(() => {
-    if (status?.connected) return 'Holded ya esta conectado';
+    if (status?.connected) return 'Isaak ya esta activado';
     if (loading) return onboardingCopy.statusLoading;
     return onboardingCopy.statusPending;
   }, [loading, status?.connected]);
@@ -79,7 +79,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
           },
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'No se pudo comprobar la conexion con Holded');
+        if (!res.ok) throw new Error(data?.error || 'No se pudo preparar la activacion de Isaak');
         if (cancelled) return;
         setStatus(data as IntegrationStatus);
         if (data?.connected && nextUrl) {
@@ -87,7 +87,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'No se pudo comprobar la conexion con Holded');
+          setError(loadError instanceof Error ? loadError.message : 'No se pudo preparar la activacion de Isaak');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -103,7 +103,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!apiKey.trim()) {
-      setError('Necesitamos la API key de Holded para activar Isaak for Holded.');
+      setError('Necesitamos tu API key para activar Isaak con datos reales.');
       return;
     }
 
@@ -122,15 +122,15 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
         body: JSON.stringify({ apiKey: apiKey.trim() }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.debug || data?.detail || data?.error || `Error HTTP ${res.status} al conectar Holded`);
+      if (!res.ok) throw new Error(data?.debug || data?.detail || data?.error || `Error HTTP ${res.status} al activar Isaak`);
       if (!data?.ok) {
-        throw new Error(data?.probe?.error || data?.lastError || 'La API key de Holded no se pudo validar');
+        throw new Error(data?.probe?.error || data?.lastError || 'No hemos podido validar tu acceso con el ERP compatible');
       }
 
-      setMessage('Holded conectado correctamente. Estamos volviendo a Isaak para terminar la autorizacion.');
+      setMessage('Isaak ya esta listo. Estamos terminando la activacion para devolverte a tu flujo.');
       window.location.replace(nextUrl);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'No se pudo conectar Holded');
+      setError(submitError instanceof Error ? submitError.message : 'No se pudo activar Isaak');
     } finally {
       setSaving(false);
     }
@@ -143,7 +143,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
           <div className="flex justify-center">
             <Image
               src="/brand/holded/holded-diamond-logo.png"
-              alt="Holded"
+              alt="Compatible con Holded"
               width={120}
               height={120}
               className="h-24 w-24 sm:h-28 sm:w-28"
@@ -163,23 +163,30 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
             {onboardingCopy.intro}
           </p>
 
-          <div className="mt-8 rounded-3xl border border-neutral-200 bg-neutral-50 p-5">
-            <div className="text-sm font-semibold text-black">{onboardingCopy.statusReady}</div>
-            <div className="mt-2 text-sm text-neutral-700">
-              Espacio actual: <span className="font-semibold text-black">{tenantName}</span>
-            </div>
-            <div className="mt-2 text-sm text-neutral-700">
-              Estado actual: <span className="font-semibold text-black">{statusLabel}</span>
-            </div>
-            {status?.degraded ? (
-              <div className="mt-3 text-sm text-amber-700">
-                {onboardingCopy.degraded}
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-3xl border border-neutral-200 bg-neutral-50 p-5">
+              <div className="text-sm font-semibold text-black">{onboardingCopy.statusReady}</div>
+              <div className="mt-2 text-sm text-neutral-700">
+                Espacio actual: <span className="font-semibold text-black">{tenantName}</span>
               </div>
-            ) : null}
+              <div className="mt-2 text-sm text-neutral-700">
+                Estado actual: <span className="font-semibold text-black">{statusLabel}</span>
+              </div>
+              {status?.degraded ? <div className="mt-3 text-sm text-amber-700">{onboardingCopy.degraded}</div> : null}
+            </div>
+
+            <div className="rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_52%,#eef4ff_100%)] p-5">
+              <div className="text-sm font-semibold text-black">Lo que desbloqueas al activar Isaak</div>
+              <ul className="mt-3 space-y-2 text-sm leading-6 text-neutral-700">
+                <li>Prioridades claras sobre ventas, gastos, cobros y plazos.</li>
+                <li>Menos friccion para entender datos contables y operativos.</li>
+                <li>Puerta abierta a una experiencia completa dentro de verifactu.business.</li>
+              </ul>
+            </div>
           </div>
 
           <div className="mt-8 rounded-3xl border border-neutral-200 bg-white p-5">
-            <div className="text-sm font-semibold text-black">Como encontrar tu API key en Holded</div>
+            <div className="text-sm font-semibold text-black">Como conseguir tu API key en Holded</div>
             <ol className="mt-4 space-y-3 text-sm text-neutral-700">
               {helpSteps.map((step, index) => (
                 <li key={step} className="flex gap-3">
@@ -191,7 +198,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
               ))}
             </ol>
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Usa una API key de la misma cuenta de Holded con la que quieres trabajar en Isaak. No dependemos del correo de ChatGPT para decidir la cuenta: la cuenta la determina la API key que pegues aqui.
+              Holded actua aqui como ERP compatible y fuente de datos. La cuenta con la que trabajara Isaak viene determinada por la API key que pegues en este paso.
             </div>
           </div>
 
@@ -201,9 +208,9 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-sm font-semibold text-black">¿Quieres la experiencia completa de Isaak?</div>
+                <div className="text-sm font-semibold text-black">Desbloquea la experiencia completa</div>
                 <p className="mt-2 text-sm leading-6 text-neutral-700">
-                  Activa verifactu.business y prueba gratis durante 30 días la versión completa: panel visual, histórico, trazabilidad, reglas fiscales y gestión avanzada.
+                  Cuando quieras ir mas alla del acceso inicial, verifactu.business te da panel visual, automatizacion, historial, trazabilidad y una capa fiscal mucho mas profunda para Isaak.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Link
@@ -212,7 +219,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
                     rel="noreferrer"
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
                   >
-                    Probar Verifactu gratis 30 días
+                    Activar verifactu.business 30 dias
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
@@ -221,7 +228,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
                     rel="noreferrer"
                     className="inline-flex items-center justify-center rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
                   >
-                    Ver experiencia completa
+                    Descubrir la experiencia completa
                   </Link>
                 </div>
               </div>
@@ -239,7 +246,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
                   onChange={(event) => setApiKey(event.target.value)}
                   autoComplete="off"
                   spellCheck={false}
-                  placeholder="Pega aqui tu API key de Holded"
+                  placeholder="Pega aqui tu API key para activar Isaak"
                   className="h-12 w-full rounded-2xl border border-neutral-300 bg-white pl-11 pr-4 text-sm text-black outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                 />
               </div>
@@ -252,7 +259,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Conectar Holded
+                Activar Isaak
               </button>
             </div>
           </form>
@@ -264,8 +271,8 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
                   <Loader2 className="h-5 w-5 animate-spin" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-black">Conectando tu cuenta de Holded</div>
-                  <div className="mt-1 text-sm text-neutral-600">No cierres esta ventana. Estamos validando la API key y preparando Isaak.</div>
+                  <div className="text-sm font-semibold text-black">Estamos activando a Isaak</div>
+                  <div className="mt-1 text-sm text-neutral-600">No cierres esta ventana. Estamos validando tu acceso y preparando el contexto inicial.</div>
                 </div>
               </div>
 
@@ -274,7 +281,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
               </div>
 
               <div className="mt-5 rounded-2xl border border-white/80 bg-white/90 px-4 py-4 shadow-sm">
-                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Mientras esperas</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Mientras lo dejamos listo</div>
                 <p className="mt-3 min-h-[48px] text-sm leading-6 text-neutral-800 transition-all duration-300">
                   {savingMessages[savingMessageIndex]}
                 </p>
