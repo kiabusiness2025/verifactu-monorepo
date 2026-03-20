@@ -11,10 +11,12 @@ export default function IssueInvoiceButton({ invoiceId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function handleIssue() {
     setLoading(true);
     setError(null);
+    setSuccess(null);
     try {
       const res = await fetch(`/api/invoices/${invoiceId}/issue`, { method: 'POST' });
       const data = (await res.json().catch(() => ({}))) as { error?: string; details?: string };
@@ -22,6 +24,8 @@ export default function IssueInvoiceButton({ invoiceId }: Props) {
         setError(data.error ?? data.details ?? 'No se pudo emitir la factura.');
         return;
       }
+
+      setSuccess('Factura emitida correctamente. Actualizando estado...');
       router.refresh();
     } catch {
       setError('Error de red. Por favor, inténtalo de nuevo.');
@@ -40,6 +44,7 @@ export default function IssueInvoiceButton({ invoiceId }: Props) {
         {loading ? 'Emitiendo…' : 'Emitir factura'}
       </button>
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {success && <p className="text-sm text-green-700">{success}</p>}
     </div>
   );
 }
