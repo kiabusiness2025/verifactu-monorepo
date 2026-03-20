@@ -30,6 +30,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   const defaultNavLinks: NavLink[] = [
     { label: 'Inicio', href: '/' },
     { label: 'Qué es Isaak', href: '/que-es-isaak' },
+    { label: 'Integraciones', href: '/producto/integraciones' },
     { label: 'Precios', href: '/precios' },
     { label: 'Contacto', href: '/recursos/contacto' },
   ];

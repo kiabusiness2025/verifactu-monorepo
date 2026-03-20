@@ -796,6 +796,7 @@ export function Footer() {
               { label: 'Resumen', href: '#hero' },
               { label: 'Dashboard', href: '#dashboard' },
               { label: 'Features', href: '#features' },
+              { label: 'Integraciones', href: '/producto/integraciones' },
               { label: 'FAQ', href: '#faq' },
               { label: 'Ver precios', href: '/#planes' },
               { label: 'Que es Isaak', href: '/que-es-isaak' },
@@ -805,6 +806,7 @@ export function Footer() {
             title="Isaak y VeriFactu"
             links={[
               { label: 'Que es Isaak', href: '/que-es-isaak' },
+              { label: 'Integraciones compatibles', href: '/producto/integraciones' },
               { label: 'Que es', href: '/verifactu/que-es' },
               { label: 'Ver precios', href: '/#planes' },
               { label: 'Soporte', href: '/verifactu/soporte' },
@@ -848,6 +850,13 @@ export function Footer() {
                 aria-label="Ir a Que es Isaak"
               >
                 Que es Isaak
+              </Link>
+              <Link
+                href="/producto/integraciones"
+                className="hover:text-blue-300 transition"
+                aria-label="Ir a integraciones"
+              >
+                Integraciones
               </Link>
               <Link
                 href="/verifactu"

@@ -1,28 +1,27 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { Mail, MessageCircle, Receipt, Sparkles } from "lucide-react";
-import { getLandingUrl } from "../../lib/urls";
-import ContactForms from "./ContactForms";
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { ArrowRight, Mail, MessageCircle, Receipt, Sparkles } from 'lucide-react';
+import Header from '../../components/Header';
+import { Footer } from '../../lib/home/ui';
+import ContactForms from './ContactForms';
 
 export const metadata: Metadata = {
-  title: "Contacto | Verifactu Business",
-  description:
-    "Contacta con nuestro equipo para soporte, ventas o consultas.",
+  title: 'Contacto | Verifactu Business',
+  description: 'Contacta con nuestro equipo para soporte, ventas o consultas.',
 };
 
 export default function ContactoPage() {
+  const navLinks = [
+    { label: 'Inicio', href: '/' },
+    { label: 'Qué es Isaak', href: '/que-es-isaak' },
+    { label: 'Integraciones', href: '/producto/integraciones' },
+    { label: 'Precios', href: '/precios' },
+    { label: 'Contacto', href: '/recursos/contacto' },
+  ];
+
   return (
-    <main className="min-h-screen bg-[#2361d8]/5">
-      <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-5xl px-4 py-4">
-          <Link
-            href={getLandingUrl()}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#2361d8] hover:text-[#2361d8]"
-          >
-            Volver al inicio
-          </Link>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#2361d8]/5">
+      <Header navLinks={navLinks} />
 
       <section className="mx-auto max-w-5xl px-4 py-16">
         <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/20">
@@ -34,6 +33,32 @@ export default function ContactoPage() {
           Estamos aquí para ayudarte. Respondemos en 24-48h laborables. Isaak puede guiarte en minutos.
         </p>
 
+        <div className="mt-8 rounded-3xl border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_55%,#fff9f9_100%)] p-6 shadow-sm">
+          <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+            <div>
+              <div className="text-sm font-semibold text-[#011c67]">¿Buscas una integración o conector concreto?</div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Holded es la primera compatibilidad pública, pero estamos construyendo una capa más amplia de integraciones para que Isaak trabaje con datos reales sin perder coherencia de producto.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
+              <Link
+                href="/producto/integraciones"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
+              >
+                Ver integraciones
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/holded"
+                className="inline-flex items-center justify-center rounded-xl border border-[#ff5460] px-5 py-3 text-sm font-semibold text-[#ff5460] hover:bg-[#ff5460]/10"
+              >
+                Ver Holded
+              </Link>
+            </div>
+          </div>
+        </div>
+
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
@@ -41,7 +66,7 @@ export default function ContactoPage() {
               Email directo
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Escríbenos a{" "}
+              Escríbenos a{' '}
               <a
                 href="mailto:info@verifactu.business"
                 className="font-semibold text-[#2361d8] underline underline-offset-4"
@@ -57,7 +82,7 @@ export default function ContactoPage() {
               Presupuesto
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Si necesitas una propuesta personalizada, visita{" "}
+              Si necesitas una propuesta personalizada, visita{' '}
               <Link
                 href="/presupuesto"
                 className="font-semibold text-[#2361d8] underline underline-offset-4"
@@ -101,7 +126,7 @@ export default function ContactoPage() {
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/#planes"
+            href="/precios"
             className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
           >
             Calcular precio
@@ -114,10 +139,8 @@ export default function ContactoPage() {
           </Link>
         </div>
       </section>
-    </main>
+
+      <Footer />
+    </div>
   );
 }
-
-
-
-

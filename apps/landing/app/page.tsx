@@ -29,6 +29,7 @@ export default function Page() {
   const navLinks = [
     { label: 'Inicio', href: '/' },
     { label: 'Qué es Isaak', href: '/que-es-isaak' },
+    { label: 'Integraciones', href: '/producto/integraciones' },
     { label: 'Precios', href: '/precios' },
     { label: 'Contacto', href: '/recursos/contacto' },
   ];
@@ -376,6 +377,64 @@ export default function Page() {
         </Container>
       </section>
 
+      <section className="bg-white py-10">
+        <Container>
+          <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#fff8f8_42%,#eef4ff_100%)] p-6 shadow-sm lg:p-8">
+            <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#ff5460] ring-1 ring-[#ff5460]/15">
+                  Integraciones compatibles
+                </div>
+                <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
+                  Isaak no depende de un solo ERP. Holded es solo el primer punto de entrada.
+                </h2>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+                  Estamos construyendo un ecosistema de compatibilidades para que Isaak pueda trabajar con datos reales de distintas herramientas sin perder una identidad clara: asistente fiscal inteligente dentro de verifactu.business.
+                </p>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href="/producto/integraciones"
+                    className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
+                  >
+                    Ver integraciones compatibles
+                  </Link>
+                  <Link
+                    href="/holded"
+                    className="inline-flex items-center justify-center rounded-full border border-[#ff5460] bg-white px-6 py-3 text-sm font-semibold text-[#ff5460] transition hover:bg-[#ff5460]/10"
+                  >
+                    Explorar Holded
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Hoy</div>
+                  <div className="mt-2 text-lg font-semibold text-slate-900">Holded</div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Compatible y listo para activar.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Próximamente</div>
+                  <div className="mt-2 text-lg font-semibold text-slate-900">Nuevos ERPs</div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Más conectores para facturas, gastos y operativa.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Objetivo</div>
+                  <div className="mt-2 text-lg font-semibold text-slate-900">Un solo Isaak</div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Misma experiencia, más fuentes de datos reales.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
       {/* Planes */}
       <section id="planes" className="py-16">
         <Container>
@@ -514,11 +573,11 @@ export default function Page() {
               href="/que-es-isaak"
             />
             <ResourceCard
-              tag="Checklist"
-              title="Auditoria express"
-              desc="Evalua el estado de tu facturacion y detecta riesgos."
-              cta="Solicitar checklist"
-              href="/recursos/checklist"
+              tag="Integraciones"
+              title="ERPs y conectores compatibles"
+              desc="Descubre Holded y la futura capa de integraciones de Isaak dentro de verifactu.business."
+              cta="Ver integraciones"
+              href="/producto/integraciones"
             />
           </div>
         </Container>
