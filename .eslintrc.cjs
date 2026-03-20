@@ -2,11 +2,16 @@ module.exports = {
   root: true,
   ignorePatterns: ["**/node_modules/**", "**/.next/**", "**/dist/**", "**/build/**", "**/.turbo/**"],
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint", "react-hooks"],
-  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:react-hooks/recommended"],
+  plugins: ["@typescript-eslint"],
+  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   env: {
     node: true,
     es2022: true,
+  },
+  settings: {
+    next: {
+      rootDir: ["apps/app", "apps/admin", "apps/client", "apps/landing"],
+    },
   },
   globals: {
     TextEncoder: "readonly",
