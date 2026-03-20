@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       pathname={pathname}
       showThemeToggle={false}
       showIsaak
-      isaakExtraContext={{ appVariant: 'admin', toneApiPath: '/api/admin/preferences' }}
+      isaakExtraContext={{ personaContext: 'admin', appVariant: 'admin', toneApiPath: '/api/admin/preferences' }}
       headerLeft={<div className="text-sm font-semibold">Verifactu Admin</div>}
     >
       {children}

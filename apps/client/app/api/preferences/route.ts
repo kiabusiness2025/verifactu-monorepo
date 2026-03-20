@@ -1,14 +1,8 @@
 import { prisma } from '@verifactu/db';
+import { isValidIsaakTone, normalizeIsaakTone, type IsaakTone } from '@verifactu/utils/isaak/persona';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
-
-const VALID_TONES = ['friendly', 'professional', 'minimal'] as const;
-type IsaakTone = (typeof VALID_TONES)[number];
-
-function isValidTone(value: unknown): value is IsaakTone {
-  return typeof value === 'string' && VALID_TONES.includes(value as IsaakTone);
-}
 
 async function resolveUserId(request: NextRequest): Promise<string | null> {
   const directUserId =
@@ -36,7 +30,7 @@ export async function GET(request: NextRequest) {
     const userId = await resolveUserId(request);
 
     if (!userId) {
-      return NextResponse.json({ ok: true, isaak_tone: 'friendly', persisted: false });
+      return NextResponse.json({ ok: true, isaak_tone: normalizeIsaakTone(), persisted: false });
     }
 
     await prisma.userPreference.findUnique({
@@ -46,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      isaak_tone: 'friendly',
+      isaak_tone: normalizeIsaakTone(),
       persisted: false,
     });
   } catch (error) {
@@ -63,7 +57,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const nextTone = body?.isaak_tone;
 
-    if (!isValidTone(nextTone)) {
+    if (typeof nextTone !== 'string' || !isValidIsaakTone(nextTone)) {
       return NextResponse.json(
         { ok: false, error: 'isaak_tone debe ser friendly | professional | minimal' },
         { status: 400 }

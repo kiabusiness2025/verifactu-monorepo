@@ -44,6 +44,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
   const isaakExtraContext = {
     tenantId: resolvedTenantId,
     demoMode: resolvedDemo,
+    personaContext: 'dashboard',
     toneApiPath: `/api/preferences?tenantId=${encodeURIComponent(resolvedTenantId)}`,
   };
 
