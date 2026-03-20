@@ -45,6 +45,31 @@ const CONTEXT_PROMPTS: Record<IsaakPersonaContext, string> = {
 - Refuerza que Isaak explica y prioriza, no solo lista datos.`,
 };
 
+
+const HOLDed_ONBOARDING_COPY = {
+  eyebrow: 'Isaak for Holded',
+  title: 'Conecta tu cuenta de Holded',
+  intro:
+    'Usa tu API key de Holded para activar Isaak y trabajar con tus datos reales desde ChatGPT. Esta version es externa y gratuita, pensada para usuarios que empiezan desde Isaak for Holded.',
+  statusReady: 'Workspace preparado',
+  statusLoading: 'Comprobando conexion',
+  statusPending: 'Pendiente de conexion',
+  degraded: 'No hemos podido leer el estado inicial, pero puedes continuar igualmente con la conexion.',
+  savingMessages: [
+    'Isaak esta verificando tu acceso a facturas y borradores.',
+    'Estamos preparando lectura de contactos y cuentas contables.',
+    'Isaak dejara lista tu conexion para operar desde ChatGPT.',
+    'En cuanto termine, podras pedir resumenes, pendientes y senales clave.',
+  ],
+  loadingMessages: [
+    'Isaak puede leer tus facturas de Holded y resumir actividad pendiente.',
+    'Isaak puede localizar contactos y ayudarte a preparar nuevos borradores.',
+    'Isaak puede traducir cuentas contables a un lenguaje mucho mas claro.',
+    'Isaak puede detectar señales utiles sobre ventas, gastos y beneficio.',
+    'Isaak puede ayudarte a trabajar Holded desde ChatGPT sin perder contexto.',
+  ],
+};
+
 const TONE_MODIFIERS: Record<IsaakTone, string> = {
   friendly: 'Tono: cercano, calmado y tranquilizador. Puedes sonar humano y proximo, sin caer en relleno.',
   professional: 'Tono: claro, ejecutivo y formal, pero nunca frio ni burocratico.',
@@ -74,4 +99,9 @@ export function buildIsaakPersona(input?: { context?: string | null; tone?: stri
     CONTEXT_PROMPTS[context],
     TONE_MODIFIERS[tone],
   ].join('\n\n');
+}
+
+
+export function getIsaakHoldedOnboardingCopy() {
+  return HOLDed_ONBOARDING_COPY;
 }

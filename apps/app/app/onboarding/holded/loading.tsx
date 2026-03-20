@@ -1,15 +1,10 @@
 'use client';
 
+import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
-const queuedMessages = [
-  'Isaak puede leer tus facturas de Holded y resumir actividad pendiente.',
-  'Isaak puede localizar contactos y ayudarte a preparar nuevos borradores.',
-  'Isaak puede traducir cuentas contables a un lenguaje mucho mas claro.',
-  'Isaak puede detectar señales utiles sobre ventas, gastos y beneficio.',
-  'Isaak puede ayudarte a trabajar Holded desde ChatGPT sin perder contexto.',
-];
+const queuedMessages = getIsaakHoldedOnboardingCopy().loadingMessages;
 
 export default function HoldedOnboardingLoading() {
   const [index, setIndex] = useState(0);
@@ -38,7 +33,7 @@ export default function HoldedOnboardingLoading() {
           </div>
 
           <div className="mt-6 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
-            Isaak for Holded
+            {getIsaakHoldedOnboardingCopy().eyebrow}
           </div>
 
           <h1 className="mt-6 text-3xl font-bold tracking-tight text-black sm:text-4xl">

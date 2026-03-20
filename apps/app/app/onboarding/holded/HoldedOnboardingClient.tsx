@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertCircle, ArrowRight, CheckCircle2, KeyRound, Loader2, Sparkles } from 'lucide-react';
+import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -32,12 +33,8 @@ const helpSteps = [
   'Vuelve a esta pantalla y pegala para conectar Isaak.',
 ];
 
-const savingMessages = [
-  'Isaak esta verificando tu acceso a facturas y borradores.',
-  'Estamos preparando lectura de contactos y cuentas contables.',
-  'Isaak dejara lista tu conexion para operar desde ChatGPT.',
-  'En cuanto termine, podras pedir resumenes, pendientes y senales clave.',
-];
+const onboardingCopy = getIsaakHoldedOnboardingCopy();
+const savingMessages = onboardingCopy.savingMessages;
 
 export default function HoldedOnboardingClient({ nextUrl, tenantName, onboardingToken }: Props) {
   const [apiKey, setApiKey] = useState('');
@@ -50,8 +47,8 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
 
   const statusLabel = useMemo(() => {
     if (status?.connected) return 'Holded ya esta conectado';
-    if (loading) return 'Comprobando conexion';
-    return 'Pendiente de conexion';
+    if (loading) return onboardingCopy.statusLoading;
+    return onboardingCopy.statusPending;
   }, [loading, status?.connected]);
 
   useEffect(() => {
@@ -155,19 +152,19 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
           </div>
 
           <div className="mt-6 text-center">
-            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">Isaak for Holded</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">{onboardingCopy.eyebrow}</div>
           </div>
 
           <h1 className="mt-8 text-3xl font-bold tracking-tight text-black sm:text-4xl">
-            Conecta tu cuenta de Holded
+            {onboardingCopy.title}
           </h1>
 
           <p className="mt-4 max-w-2xl text-sm leading-7 text-neutral-700 sm:text-base">
-            Usa tu API key de Holded para activar Isaak y trabajar con tus datos reales desde ChatGPT. Esta version es externa y gratuita, pensada para usuarios que empiezan desde Isaak for Holded.
+            {onboardingCopy.intro}
           </p>
 
           <div className="mt-8 rounded-3xl border border-neutral-200 bg-neutral-50 p-5">
-            <div className="text-sm font-semibold text-black">Workspace preparado</div>
+            <div className="text-sm font-semibold text-black">{onboardingCopy.statusReady}</div>
             <div className="mt-2 text-sm text-neutral-700">
               Espacio actual: <span className="font-semibold text-black">{tenantName}</span>
             </div>
@@ -176,7 +173,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
             </div>
             {status?.degraded ? (
               <div className="mt-3 text-sm text-amber-700">
-                No hemos podido leer el estado inicial, pero puedes continuar igualmente con la conexion.
+                {onboardingCopy.degraded}
               </div>
             ) : null}
           </div>
