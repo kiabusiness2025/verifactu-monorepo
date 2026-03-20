@@ -17,9 +17,9 @@ export default function IssueInvoiceButton({ invoiceId }: Props) {
     setError(null);
     try {
       const res = await fetch(`/api/invoices/${invoiceId}/issue`, { method: 'POST' });
-      const data = await res.json();
+      const data = (await res.json().catch(() => ({}))) as { error?: string; details?: string };
       if (!res.ok) {
-        setError(data.error ?? 'No se pudo emitir la factura.');
+        setError(data.error ?? data.details ?? 'No se pudo emitir la factura.');
         return;
       }
       router.refresh();
@@ -39,9 +39,7 @@ export default function IssueInvoiceButton({ invoiceId }: Props) {
       >
         {loading ? 'Emitiendo…' : 'Emitir factura'}
       </button>
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }
