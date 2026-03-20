@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -40,9 +41,12 @@ export default function ClientProfileMenu({ tenantSlug }: Props) {
   };
 
   const avatarNode = userProfile?.photoUrl ? (
-    <img
+    <Image
       src={userProfile.photoUrl}
       alt={displayName}
+      width={36}
+      height={36}
+      unoptimized
       className="h-9 w-9 rounded-full object-cover border border-border"
     />
   ) : (
@@ -52,9 +56,12 @@ export default function ClientProfileMenu({ tenantSlug }: Props) {
   );
 
   const companyLogo = currentTenant.logoUrl ? (
-    <img
+    <Image
       src={currentTenant.logoUrl}
       alt={currentTenant.name}
+      width={44}
+      height={44}
+      unoptimized
       className="h-11 w-11 rounded-2xl object-cover border border-border"
     />
   ) : (
@@ -137,9 +144,12 @@ export default function ClientProfileMenu({ tenantSlug }: Props) {
                       {tenants.map((tenant) => {
                         const active = tenant.id === currentTenant.id;
                         const tenantLogo = tenant.logoUrl ? (
-                          <img
+                          <Image
                             src={tenant.logoUrl}
                             alt={tenant.name}
+                            width={40}
+                            height={40}
+                            unoptimized
                             className="h-10 w-10 rounded-2xl object-cover border border-border"
                           />
                         ) : (

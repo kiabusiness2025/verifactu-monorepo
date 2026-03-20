@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { useCurrentTenant } from '../../../../../src/tenant/useCurrentTenant';
@@ -137,9 +138,12 @@ export default function CompanySettingsPage() {
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
             {currentTenant.logoUrl ? (
-              <img
+              <Image
                 src={currentTenant.logoUrl}
                 alt={currentTenant.name}
+                width={64}
+                height={64}
+                unoptimized
                 className="h-16 w-16 rounded-2xl object-cover border border-border"
               />
             ) : (

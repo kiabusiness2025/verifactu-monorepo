@@ -170,7 +170,7 @@ function getTenantIntegrations(tenantId: string) {
   return allIntegrations[tenantId] ?? DEFAULT_INTEGRATIONS;
 }
 
-function persistCurrentSession(profile: ClientUserProfile | null) {
+function persistCurrentSession(email: string | null | undefined) {
   const sessionId = getCurrentSessionId();
   const now = new Date().toISOString();
   const storedSessions = readJson<ClientSessionEntry[]>(SESSIONS_STORAGE_KEY) ?? [];
@@ -186,7 +186,7 @@ function persistCurrentSession(profile: ClientUserProfile | null) {
     current: true,
     createdAt: storedSessions.find((session) => session.id === sessionId)?.createdAt ?? now,
     lastSeenAt: now,
-    email: profile?.email ?? null,
+    email: email ?? null,
   };
 
   writeJson(SESSIONS_STORAGE_KEY, [currentSession, ...nextSessions]);
@@ -202,7 +202,7 @@ export function useClientWorkspace(userProfile: ClientUserProfile | null, tenant
     getTenantIntegrations(tenantId)
   );
   const [sessions, setSessions] = React.useState<ClientSessionEntry[]>(() =>
-    persistCurrentSession(userProfile)
+    persistCurrentSession(userProfile?.email)
   );
 
   React.useEffect(() => {
@@ -212,12 +212,12 @@ export function useClientWorkspace(userProfile: ClientUserProfile | null, tenant
   }, [tenantId]);
 
   React.useEffect(() => {
-    setSessions(persistCurrentSession(userProfile));
-  }, [userProfile?.email, userProfile?.name]);
+    setSessions(persistCurrentSession(userProfile?.email));
+  }, [userProfile?.email]);
 
   const updateProfile = (updates: Partial<ClientUserProfile>) => {
     const nextProfile = saveClientUserProfile(updates);
-    setSessions(persistCurrentSession(nextProfile));
+    setSessions(persistCurrentSession(nextProfile?.email));
     return nextProfile;
   };
 

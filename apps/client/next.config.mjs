@@ -8,6 +8,12 @@ const isVercel = process.env.VERCEL === "1";
 
 const nextConfig = {
   outputFileTracingRoot: path.resolve(__dirname, "..", ".."),
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
+    ],
+  },
   outputFileTracingExcludes: {
     "*": [
       "**/node_modules/@opentelemetry/api/**",

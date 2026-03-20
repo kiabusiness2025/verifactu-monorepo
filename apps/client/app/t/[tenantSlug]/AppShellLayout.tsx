@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
 import ClientProfileMenu from '../../../components/ClientProfileMenu';
@@ -44,16 +45,18 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
   const isaakExtraContext = {
     tenantId: resolvedTenantId,
     demoMode: resolvedDemo,
-    personaContext: 'dashboard',
     toneApiPath: `/api/preferences?tenantId=${encodeURIComponent(resolvedTenantId)}`,
   };
 
   const sidebarBrand = (
     <div className="flex items-center gap-3 min-w-0">
       {currentTenant.logoUrl ? (
-        <img
+        <Image
           src={currentTenant.logoUrl}
           alt={currentTenant.name}
+          width={36}
+          height={36}
+          unoptimized
           className="h-9 w-9 rounded-xl object-cover border border-border"
         />
       ) : (
