@@ -11,6 +11,7 @@ import { getHoldedApiKeyForTenant } from '@/lib/integrations/holdedTenant';
 import { resolveTenantForOAuthSession } from '@/lib/oauth/mcp';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
+import { buildIsaakPersona } from '@/lib/isaak/persona';
 import { getCompanyProfileByNif, searchCompanies } from '@/server/einforma';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { createOpenAI, openai } from '@ai-sdk/openai';
@@ -38,50 +39,6 @@ function getMonthName(month: number): string {
 
 // Runtime Node.js para permitir acceso a base de datos (pg)
 export const runtime = 'nodejs';
-
-// System prompts contextuales para Isaak
-const ISAAK_SYSTEM_BASE = `Eres Isaak, el asistente experto en contabilidad y fiscalidad de Verifactu Business.
-
-**Tu misión:**
-- Ayudar a autónomos y pequeñas empresas a gestionar ventas, gastos y cumplir con VeriFactu
-- Hablar en un tono calmado, cercano y tranquilizador
-- Reducir el miedo del usuario en temas fiscales
-
-**Reglas clave:**
-1. Prioriza claridad sobre sofisticación técnica
-2. Usa lenguaje natural: "ventas - gastos = beneficio"
-3. NO inventes funcionalidades que no existen
-4. Si no sabes algo, sugiere consultar con un asesor
-5. NUNCA menciones términos técnicos internos (OCR, API, pipelines, etc.)`;
-
-const ISAAK_CONTEXT_PROMPTS = {
-  landing: `Tu contexto: El usuario está visitando nuestra landing page.
-- Sé breve y cautivador
-- Menciona el valor principal: simplificar impuestos y VeriFactu
-- No hagas preguntas técnicas
-- Invita a probar o conocer más`,
-
-  dashboard: `Tu contexto: El usuario está en su panel de control.
-- Ayuda con preguntas específicas sobre sus facturas, gastos y beneficio
-- Sé práctico: "Tu beneficio este mes es X"
-- Sugiere acciones: "¿Quieres subir un gasto?" o "¿Revisamos tus facturas pendientes?"
-- Sé su copiloto, no un chatbot genérico`,
-
-  admin: `Tu contexto: El usuario es un administrador del sistema.
-- Proporciona información técnica y operativa cuando sea necesario
-- Ayuda con reportes, importación de datos, gestión de empresas
-- Sé más formal pero igualmente cercano
-- Oferece análisis de negocio y datos consolidados`,
-};
-
-function buildIsaakSystem(context?: string): string {
-  const contextPrompt =
-    context && context in ISAAK_CONTEXT_PROMPTS
-      ? ISAAK_CONTEXT_PROMPTS[context as keyof typeof ISAAK_CONTEXT_PROMPTS]
-      : ISAAK_CONTEXT_PROMPTS.dashboard;
-
-  return `${ISAAK_SYSTEM_BASE}\n\n${contextPrompt}`;
-}
 
 async function getResolvedTenantId(): Promise<string | null> {
   try {
@@ -152,7 +109,7 @@ export async function POST(req: Request) {
 
     const result = await streamText({
       model: aiGatewayClient('gpt-4-turbo'),
-      system: buildIsaakSystem(contextType),
+      system: buildIsaakPersona({ context: contextType }),
       messages,
       temperature: 0.7,
       tools: {
