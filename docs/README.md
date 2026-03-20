@@ -78,6 +78,7 @@
 
 - [engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md](engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md) - Setup operativo de Isaak for Holded via MCP + OAuth
 - [engineering/ai/ISAAK_PERSONA_PLAYBOOK_2026.md](engineering/ai/ISAAK_PERSONA_PLAYBOOK_2026.md) - Plan para que Isaak responda como Isaak y no como un asistente generico
+- [engineering/ai/ISAAK_MEMORY_ARCHITECTURE_2026.md](engineering/ai/ISAAK_MEMORY_ARCHITECTURE_2026.md) - Arquitectura de memoria privada de Isaak: conversaciones, facts, documentos y retrieval
 - [engineering/ai/ISAAK_V3_QUICK_START.md](engineering/ai/ISAAK_V3_QUICK_START.md) - Quick start Genkit
 - [engineering/ai/ISAAK_V3_TESTING_GUIDE.md](engineering/ai/ISAAK_V3_TESTING_GUIDE.md) - Testing
 - [engineering/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md](engineering/ai/ISAAK_V3_IMPLEMENTATION_CHECKLIST.md) - Checklist
