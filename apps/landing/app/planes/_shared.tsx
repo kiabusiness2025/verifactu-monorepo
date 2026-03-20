@@ -9,11 +9,9 @@ import {
 import { getAppUrl } from "../lib/urls";
 
 const navLinks = [
-  { label: "Inicio", href: "/#hero" },
-  { label: "Para quién", href: "/#para-quien" },
-  { label: "Dashboard", href: "/#dashboard" },
-  { label: "Planes", href: "/planes" },
-  { label: "FAQ", href: "/#faq" },
+  { label: "Inicio", href: "/" },
+  { label: "Qué es Isaak", href: "/que-es-isaak" },
+  { label: "Precios", href: "/precios" },
   { label: "Contacto", href: "/recursos/contacto" },
 ];
 
@@ -83,7 +81,7 @@ export function PlanPageTemplate({
                 Empezar prueba de 30 días
               </Link>
               <Link
-                href="/planes"
+                href="/precios"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
                 Ver todos los planes

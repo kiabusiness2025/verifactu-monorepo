@@ -27,12 +27,9 @@ import {
 
 export default function Page() {
   const navLinks = [
-    { label: 'Inicio', href: '#hero' },
-    { label: 'Para quién', href: '#para-quien' },
-    { label: 'Dashboard', href: '#dashboard' },
-    { label: 'Qué es Isaak', href: '#que-es-isaak' },
-    { label: 'Planes', href: '#planes' },
-    { label: 'FAQ', href: '#faq' },
+    { label: 'Inicio', href: '/' },
+    { label: 'Qué es Isaak', href: '/que-es-isaak' },
+    { label: 'Precios', href: '/precios' },
     { label: 'Contacto', href: '/recursos/contacto' },
   ];
 

@@ -28,10 +28,10 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   }
 
   const defaultNavLinks: NavLink[] = [
-    { label: 'VeriFactu', href: '/verifactu/que-es' },
-    { label: 'Calcula tu precio', href: '/#planes' },
-    { label: 'Recursos', href: '/recursos/guias-y-webinars' },
-    { label: 'Soporte', href: '/verifactu/soporte' },
+    { label: 'Inicio', href: '/' },
+    { label: 'Qué es Isaak', href: '/que-es-isaak' },
+    { label: 'Precios', href: '/precios' },
+    { label: 'Contacto', href: '/recursos/contacto' },
   ];
 
   const links = navLinks ?? defaultNavLinks;

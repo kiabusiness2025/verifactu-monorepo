@@ -85,8 +85,8 @@ export function StickyCtaBar({ show }: { show: boolean }) {
           <Link href={appUrl}>
             <PrimaryButton className="h-10 px-4 text-sm">Empezar prueba de 30 días</PrimaryButton>
           </Link>
-          <SecondaryButton href="/#planes" className="h-10 px-4 text-sm">
-            Calcular precio
+          <SecondaryButton href="/precios" className="h-10 px-4 text-sm">
+            Ver precios
           </SecondaryButton>
         </div>
       </div>
@@ -797,7 +797,7 @@ export function Footer() {
               { label: 'Dashboard', href: '#dashboard' },
               { label: 'Features', href: '#features' },
               { label: 'FAQ', href: '#faq' },
-              { label: 'Calcular precio', href: '/#planes' },
+              { label: 'Ver precios', href: '/#planes' },
               { label: 'Que es Isaak', href: '/que-es-isaak' },
             ]}
           />
@@ -806,7 +806,7 @@ export function Footer() {
             links={[
               { label: 'Que es Isaak', href: '/que-es-isaak' },
               { label: 'Que es', href: '/verifactu/que-es' },
-              { label: 'Calcular precio', href: '/#planes' },
+              { label: 'Ver precios', href: '/#planes' },
               { label: 'Soporte', href: '/verifactu/soporte' },
               { label: 'Estado del servicio', href: '/verifactu/estado' },
             ]}
@@ -836,11 +836,11 @@ export function Footer() {
             <p>(c) {new Date().getFullYear()} Verifactu Business. Todos los derechos reservados.</p>
             <div className="flex gap-6">
               <Link
-                href="/#planes"
+                href="/precios"
                 className="hover:text-blue-300 transition"
-                aria-label="Calcular precio"
+                aria-label="Ver precios"
               >
-                Calcular precio
+                Ver precios
               </Link>
               <Link
                 href="/que-es-isaak"

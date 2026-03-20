@@ -17,11 +17,9 @@ import {
 } from 'lucide-react';
 
 const navLinks = [
-  { label: 'Inicio', href: '/#hero' },
-  { label: 'Para quien', href: '/#para-quien' },
-  { label: 'Dashboard', href: '/#dashboard' },
-  { label: 'Planes', href: '/planes' },
-  { label: 'Que es Isaak', href: '/que-es-isaak' },
+  { label: 'Inicio', href: '/' },
+  { label: 'Qué es Isaak', href: '/que-es-isaak' },
+  { label: 'Precios', href: '/precios' },
   { label: 'Contacto', href: '/recursos/contacto' },
 ];
 
