@@ -7,7 +7,7 @@ const PROTECTED_PREFIXES = ['/t/', '/dashboard'];
 
 // Rutas legacy que redirigimos al nuevo path (sin tenantSlug → login primero)
 const LEGACY_REDIRECTS: Record<string, string> = {
-  '/dashboard': '/t/demo/dashboard',
+  '/dashboard': '/workspace',
 };
 
 export function middleware(req: NextRequest) {
@@ -16,7 +16,7 @@ export function middleware(req: NextRequest) {
 
   // Redirigir raíz
   if (pathname === '/') {
-    const target = new URL(session ? '/t/demo/dashboard' : '/login', req.url);
+    const target = new URL(session ? '/workspace' : '/login', req.url);
     return NextResponse.redirect(target);
   }
 
