@@ -1,6 +1,6 @@
 import { getSessionPayload } from '@/lib/session';
-import { getInvoiceDetail, resolveTenantFromSession } from '@/src/server/erp';
 import IssueInvoiceButton from '@/src/components/erp/IssueInvoiceButton';
+import { getInvoiceDetail, resolveTenantFromSession } from '@/src/server/erp';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/ui';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -46,7 +46,11 @@ function VerifactuBadge({ status }: { status: string | null }) {
     return <span className="text-sm text-muted-foreground">Pendiente de registro</span>;
   }
   if (status === 'validated') {
-    return <span className="inline-flex items-center gap-1 text-sm text-green-700">✓ Registrada en AEAT</span>;
+    return (
+      <span className="inline-flex items-center gap-1 text-sm text-green-700">
+        ✓ Registrada en AEAT
+      </span>
+    );
   }
   return <span className="text-sm text-red-600">{status}</span>;
 }
@@ -156,9 +160,7 @@ export default async function InvoiceDetailPage({
             </div>
           )}
           {invoice.verifactuLastError && (
-            <p className="text-sm text-red-600">
-              Error: {invoice.verifactuLastError}
-            </p>
+            <p className="text-sm text-red-600">Error: {invoice.verifactuLastError}</p>
           )}
         </CardContent>
       </Card>

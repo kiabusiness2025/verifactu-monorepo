@@ -103,7 +103,19 @@ export async function resolveSessionUser(session: SessionPayload) {
   const uid = session.uid;
   const email = session.email;
 
-  if (!uid || !email) {
+  if (!uid) {
+    throw new Error('La sesión no contiene identidad suficiente');
+  }
+
+  if (!email) {
+    const byAuthSubject = await prisma.user.findFirst({
+      where: { authSubject: uid },
+    });
+
+    if (byAuthSubject) {
+      return byAuthSubject;
+    }
+
     throw new Error('La sesión no contiene identidad suficiente');
   }
 

@@ -1,6 +1,7 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
 import { ArrowRight, Mail, MessageCircle, Receipt, Sparkles } from 'lucide-react';
+import type { Metadata } from 'next';
+import Image from 'next/image';
+import Link from 'next/link';
 import Header from '../../components/Header';
 import { Footer } from '../../lib/home/ui';
 import ContactForms from './ContactForms';
@@ -14,6 +15,8 @@ export default function ContactoPage() {
   const navLinks = [
     { label: 'Inicio', href: '/' },
     { label: 'Qué es Isaak', href: '/que-es-isaak' },
+    { label: 'Holded', href: '/holded' },
+    { label: 'Planes', href: '/planes' },
     { label: 'Integraciones', href: '/producto/integraciones' },
     { label: 'Precios', href: '/precios' },
     { label: 'Contacto', href: '/recursos/contacto' },
@@ -28,17 +31,43 @@ export default function ContactoPage() {
           <MessageCircle className="h-4 w-4" />
           Soporte y ventas
         </div>
-        <h1 className="mt-4 text-4xl font-bold text-[#011c67]">Contacto</h1>
+        <h1 className="mt-4 text-4xl font-bold text-[#011c67]">Habla con el equipo de Isaak</h1>
         <p className="mt-4 text-lg text-slate-600">
-          Estamos aquí para ayudarte. Respondemos en 24-48h laborables. Isaak puede guiarte en minutos.
+          Estamos aquí para ayudarte. Respondemos en 24-48h laborables. Isaak puede guiarte en
+          minutos.
         </p>
+
+        <div className="mt-8 grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+          <div className="flex justify-center lg:justify-start">
+            <Image
+              src="/Isaak/isaak-avatar.png"
+              alt="Isaak"
+              width={260}
+              height={260}
+              className="h-auto w-full max-w-[9rem]"
+            />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-[#011c67]">
+              Si vienes por una integracion concreta, el criterio sigue siendo el mismo
+            </div>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Holded es una puerta de entrada util, pero la experiencia que acompana al usuario,
+              ordena la informacion y reduce friccion es siempre Isaak.
+            </p>
+          </div>
+        </div>
 
         <div className="mt-8 rounded-3xl border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_55%,#fff9f9_100%)] p-6 shadow-sm">
           <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <div>
-              <div className="text-sm font-semibold text-[#011c67]">¿Buscas una integración o conector concreto?</div>
+              <div className="text-sm font-semibold text-[#011c67]">
+                ¿Buscas una integración o una activación concreta?
+              </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">
-                Holded es la primera compatibilidad pública, pero estamos construyendo una capa más amplia de integraciones para que Isaak trabaje con datos reales sin perder coherencia de producto.
+                Holded es la primera compatibilidad pública visible, pero estamos construyendo una
+                capa más amplia para que Isaak trabaje con datos reales sin dejar que una
+                integracion se coma la identidad del producto.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
@@ -53,7 +82,7 @@ export default function ContactoPage() {
                 href="/holded"
                 className="inline-flex items-center justify-center rounded-xl border border-[#ff5460] px-5 py-3 text-sm font-semibold text-[#ff5460] hover:bg-[#ff5460]/10"
               >
-                Ver Holded
+                Ver como entra Holded en Isaak
               </Link>
             </div>
           </div>

@@ -1,15 +1,15 @@
 'use client';
 
 // v1.0.3 - Updated with blue shield favicon
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { logout } from '../lib/auth';
-import { useToast } from './Toast';
 import BrandLogo from './BrandLogo';
 import { DashboardLink } from './DashboardLink';
+import { useToast } from './Toast';
 
 type NavLink = { label: string; href: string };
 
@@ -30,7 +30,9 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   const defaultNavLinks: NavLink[] = [
     { label: 'Inicio', href: '/' },
     { label: 'Qué es Isaak', href: '/que-es-isaak' },
+    { label: 'Holded', href: '/holded' },
     { label: 'Integraciones', href: '/producto/integraciones' },
+    { label: 'Planes', href: '/planes' },
     { label: 'Precios', href: '/precios' },
     { label: 'Contacto', href: '/recursos/contacto' },
   ];

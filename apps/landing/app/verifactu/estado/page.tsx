@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { getAppUrl } from "../../lib/urls";
+import Link from 'next/link';
+import { getAppUrl } from '../../lib/urls';
 
-const title = "Estado del servicio | Verifactu Business";
-const description = "Estado operativo de VeriFactu, AEAT e integraciones.";
+const title = 'Estado del servicio | verifactu.business';
+const description = 'Estado operativo de VeriFactu, AEAT e integraciones.';
 
 export const metadata = {
   title,
@@ -10,57 +10,61 @@ export const metadata = {
   openGraph: {
     title,
     description,
-    url: "/verifactu/estado",
-    type: "article",
+    url: '/verifactu/estado',
+    type: 'article',
     images: [
       {
-        url: "/brand/social/og-1200x630.png",
+        url: '/brand/social/og-1200x630.png',
         width: 1200,
         height: 630,
-        alt: "Verifactu Business",
+        alt: 'Verifactu Business',
       },
     ],
   },
   twitter: {
-    card: "summary",
+    card: 'summary',
     title,
     description,
-    images: ["/brand/social/og-1200x630.png"],
+    images: ['/brand/social/og-1200x630.png'],
   },
 };
 
-type Status = { name: string; state: "operativo" | "incidencia" | "mantenimiento"; note?: string };
+type Status = { name: string; state: 'operativo' | 'incidencia' | 'mantenimiento'; note?: string };
 
 const statusList: Status[] = [
-  { name: "Verifactu Business", state: "operativo", note: "Sin incidencias" },
-  { name: "AEAT VeriFactu", state: "operativo", note: "Validaciones OK" },
-  { name: "Conexion bancaria", state: "operativo", note: "Sin retrasos reportados" },
+  { name: 'verifactu.business', state: 'operativo', note: 'Sin incidencias' },
+  { name: 'AEAT VeriFactu', state: 'operativo', note: 'Validaciones OK' },
+  { name: 'Conexion bancaria', state: 'operativo', note: 'Sin retrasos reportados' },
 ];
 
 export default function EstadoPage() {
   const isaakChatUrl = `${getAppUrl()}/dashboard?isaak=1`;
-  const lastUpdated = new Intl.DateTimeFormat("es-ES", {
-    dateStyle: "medium",
-    timeStyle: "short",
+  const lastUpdated = new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
   }).format(new Date());
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:py-16">
         <Breadcrumbs
           items={[
-            { label: "Inicio", href: "/" },
-            { label: "VeriFactu", href: "/verifactu/que-es" },
-            { label: "Estado del servicio" },
+            { label: 'Inicio', href: '/' },
+            { label: 'VeriFactu', href: '/verifactu/que-es' },
+            { label: 'Estado del servicio' },
           ]}
         />
 
-        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Estado</p>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">
+          Estado
+        </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Estado del servicio</h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          Aqui puedes ver incidencias en VeriFactu, AEAT o integraciones. Si algo falla, publicamos actualizaciones y
-          tiempos estimados.
+          Aqui puedes ver incidencias en VeriFactu, AEAT o integraciones. Si algo falla, publicamos
+          actualizaciones y tiempos estimados.
         </p>
-        <p className="mt-2 text-xs text-slate-500">Ultima actualizacion publicada: {lastUpdated}.</p>
+        <p className="mt-2 text-xs text-slate-500">
+          Ultima actualizacion publicada: {lastUpdated}.
+        </p>
 
         <div className="mt-8 space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           {statusList.map((item) => (
@@ -71,7 +75,8 @@ export default function EstadoPage() {
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Ves algo raro?</h2>
           <p className="mt-2 text-sm text-slate-700">
-            Envia detalles (capturas, hora aproximada, factura afectada). Priorizamos incidencias VeriFactu/AEAT.
+            Envia detalles (capturas, hora aproximada, factura afectada). Priorizamos incidencias
+            VeriFactu/AEAT.
           </p>
           <div className="mt-4 flex flex-wrap gap-3 text-sm">
             <a
@@ -93,13 +98,15 @@ export default function EstadoPage() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">Quieres calcular tu precio o activar la prueba?</div>
+          <div className="text-sm text-slate-600">
+            Quieres calcular tu precio o activar la prueba?
+          </div>
           <div className="flex gap-3">
             <Link
-              href="/#planes"
+              href="/precios"
               className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
-              Calcula tu precio
+              Ver precios y planes
             </Link>
             <Link
               href={isaakChatUrl}
@@ -116,19 +123,23 @@ export default function EstadoPage() {
 
 function StatusRow({ name, state, note }: Status) {
   const color =
-    state === "operativo"
-      ? "bg-emerald-500"
-      : state === "mantenimiento"
-      ? "bg-amber-500"
-      : "bg-red-500";
+    state === 'operativo'
+      ? 'bg-emerald-500'
+      : state === 'mantenimiento'
+        ? 'bg-amber-500'
+        : 'bg-red-500';
   const label =
-    state === "operativo" ? "Operativo" : state === "mantenimiento" ? "Mantenimiento" : "Incidencia";
+    state === 'operativo'
+      ? 'Operativo'
+      : state === 'mantenimiento'
+        ? 'Mantenimiento'
+        : 'Incidencia';
 
   return (
     <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
       <div>
         <div className="text-sm font-semibold text-slate-900">{name}</div>
-        <div className="text-xs text-slate-600">{note || "Sin notas adicionales"}</div>
+        <div className="text-xs text-slate-600">{note || 'Sin notas adicionales'}</div>
       </div>
       <div className="inline-flex items-center gap-2">
         <span className={`h-2.5 w-2.5 rounded-full ${color}`} aria-hidden="true" />

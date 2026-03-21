@@ -1,8 +1,8 @@
-import { PLAN_LIST } from "../../lib/plans";
-import { PlanPageTemplate } from "../_shared";
+import { PLAN_LIST } from '../../lib/plans';
+import { PlanPageTemplate } from '../_shared';
 
 export default function PlanBasicoPage() {
-  const plan = PLAN_LIST.find((item) => item.id === "basico");
+  const plan = PLAN_LIST.find((item) => item.id === 'basico');
   if (!plan) return null;
 
   return (

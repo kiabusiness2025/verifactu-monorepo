@@ -1,22 +1,22 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { CheckCircle2, ListChecks, ArrowRight } from "lucide-react";
-import { getLandingUrl, getAppUrl } from "../../lib/urls";
+import { ArrowRight, CheckCircle2, ListChecks } from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getAppUrl, getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: "Checklist | Verifactu Business",
-  description: "Checklist practico para emitir facturas conforme a VeriFactu.",
+  title: 'Checklist | verifactu.business',
+  description: 'Checklist practico para emitir facturas conforme a VeriFactu.',
 };
 
 const checklist = [
-  "Datos fiscales completos del emisor y receptor.",
-  "Numeracion correlativa sin saltos.",
-  "Fecha de emision correcta y sin duplicados.",
-  "Concepto claro y descripcion suficiente.",
-  "Impuestos aplicados según normativa.",
-  "Registro y conservacion de facturas.",
-  "Trazabilidad para auditorias y verificacion.",
-  "Cierre fiscal revisado y proximo trimestre con plazos claros.",
+  'Datos fiscales completos del emisor y receptor.',
+  'Numeracion correlativa sin saltos.',
+  'Fecha de emision correcta y sin duplicados.',
+  'Concepto claro y descripcion suficiente.',
+  'Impuestos aplicados según normativa.',
+  'Registro y conservacion de facturas.',
+  'Trazabilidad para auditorias y verificacion.',
+  'Cierre fiscal revisado y proximo trimestre con plazos claros.',
 ];
 
 export default function ChecklistPage() {
@@ -41,7 +41,8 @@ export default function ChecklistPage() {
         </div>
         <h1 className="mt-4 text-4xl font-bold text-[#011c67]">Checklist VeriFactu</h1>
         <p className="mt-4 text-lg text-slate-600">
-          Un resumen rapido de lo que necesitas revisar antes de emitir. Isaak te avisa si falta algo.
+          Un resumen rapido de lo que necesitas revisar antes de emitir. Isaak te avisa si falta
+          algo.
         </p>
 
         <div className="mt-8 grid gap-3">
@@ -74,20 +75,19 @@ export default function ChecklistPage() {
 
         <div className="mt-12 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/#planes"
+            href="/planes"
             className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
           >
-            Calcular precio
+            Ver detalle por plan
           </Link>
           <Link
-            href={isaakChatUrl}
+            href="/auth/signup"
             className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
           >
-            Hablar con Isaak
+            Crear cuenta y entrar en Demo SL
           </Link>
         </div>
       </section>
     </main>
   );
 }
-

@@ -1,23 +1,25 @@
-import Link from 'next/link';
-import Header from '../components/Header';
-import { Container, Footer } from '../lib/home/ui';
-import { getAppUrl } from '../lib/urls';
 import {
   ArrowRight,
   BadgeCheck,
   Bot,
   CheckCircle2,
-  ShieldCheck,
-  Sparkles,
-  Wallet,
-  Workflow,
   FileCheck2,
   Radar,
+  ShieldCheck,
+  Sparkles,
+  Workflow,
 } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import Header from '../components/Header';
+import { Container, Footer } from '../lib/home/ui';
+import { getAppUrl } from '../lib/urls';
 
 const navLinks = [
   { label: 'Inicio', href: '/' },
   { label: 'Qué es Isaak', href: '/que-es-isaak' },
+  { label: 'Holded', href: '/holded' },
+  { label: 'Planes', href: '/planes' },
   { label: 'Precios', href: '/precios' },
   { label: 'Contacto', href: '/recursos/contacto' },
 ];
@@ -43,7 +45,7 @@ const valueCards = [
 const signalCards = [
   { label: 'Prioridad operativa', value: 'Cobros, gastos y plazos en un mismo criterio' },
   { label: 'Capa fiscal', value: 'Pensado para Verifactu, trazabilidad y control' },
-  { label: 'Compatibilidad', value: 'Holded hoy y nuevas integraciones mañana' },
+  { label: 'Compatibilidad', value: 'Holded es una entrada; Isaak mantiene la voz y el criterio' },
 ];
 
 const capabilities = [
@@ -100,12 +102,17 @@ export default function QueEsIsaakPage() {
                   Tu asistente fiscal inteligente para trabajar con datos reales.
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                  Isaak no se limita a responder texto. Te ayuda a entender que pasa en tu negocio, a priorizar lo importante y a reducir errores fiscales y operativos usando contexto real de tu empresa.
+                  Isaak no se limita a responder texto. Te ayuda a entender que pasa en tu negocio,
+                  a priorizar lo importante y a reducir errores fiscales y operativos usando
+                  contexto real de tu empresa.
                 </p>
 
                 <div className="mt-6 grid gap-3">
                   {valueCards.map((item) => (
-                    <div key={item.title} className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
+                    <div
+                      key={item.title}
+                      className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm"
+                    >
                       <div className="flex items-start gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#2361d8]/10 text-[#2361d8]">
                           <item.icon className="h-5 w-5" />
@@ -130,7 +137,7 @@ export default function QueEsIsaakPage() {
                     href="/holded"
                     className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    Ver compatibilidad con Holded
+                    Ver una compatibilidad activa
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
@@ -156,6 +163,30 @@ export default function QueEsIsaakPage() {
                   />
                 </div>
 
+                <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+                  <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4 shadow-sm">
+                    <Image
+                      src="/Isaak/isaak-avatar-2.png"
+                      alt="Isaak"
+                      width={420}
+                      height={420}
+                      className="mx-auto h-auto w-full max-w-[12rem]"
+                    />
+                  </div>
+                  <div className="rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(160deg,#ffffff_0%,#f5f9ff_100%)] p-5 shadow-sm">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
+                      Identidad de producto
+                    </div>
+                    <div className="mt-3 text-base font-semibold text-[#011c67]">
+                      Isaak no cambia de personalidad por la integracion que uses.
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                      Puede entrar por Holded hoy y por otras fuentes manana, pero la experiencia
+                      que acompana, explica y ordena siempre es Isaak.
+                    </p>
+                  </div>
+                </div>
+
                 <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
                   <div className="rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#2361d8]">
@@ -163,13 +194,21 @@ export default function QueEsIsaakPage() {
                       Como trabaja Isaak
                     </div>
                     <p className="mt-4 text-sm leading-6 text-slate-600">
-                      Une contexto fiscal, operativa y decisiones diarias para que el empresario no tenga que traducir solo lo que ve en su ERP o en su dashboard.
+                      Une contexto fiscal, operativa y decisiones diarias para que el empresario no
+                      tenga que traducir solo lo que ve en su ERP o en su dashboard.
                     </p>
                     <div className="mt-4 space-y-3">
                       {signalCards.map((item) => (
-                        <div key={item.label} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">{item.label}</div>
-                          <div className="mt-1 text-sm font-semibold text-slate-900">{item.value}</div>
+                        <div
+                          key={item.label}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                        >
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            {item.label}
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-slate-900">
+                            {item.value}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -177,7 +216,9 @@ export default function QueEsIsaakPage() {
 
                   <div className="rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(160deg,#ffffff_0%,#eef4ff_100%)] p-5 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-semibold text-[#011c67]">Señales de producto</div>
+                      <div className="text-sm font-semibold text-[#011c67]">
+                        Señales de producto
+                      </div>
                       <div className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
                         Contexto real
                       </div>
@@ -185,13 +226,18 @@ export default function QueEsIsaakPage() {
                     <div className="mt-4 space-y-3">
                       <div className="rounded-2xl border border-slate-200 bg-white p-4">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Decisiones y control</span>
+                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            Decisiones y control
+                          </span>
                           <BadgeCheck className="h-4 w-4 text-emerald-600" />
                         </div>
                         <div className="mt-3 h-2 rounded-full bg-slate-100">
                           <div className="h-2 w-[72%] rounded-full bg-[#2361d8]" />
                         </div>
-                        <div className="mt-2 text-sm text-slate-600">Isaak está pensado para ayudarte a decidir mejor, no para mostrarte más ruido.</div>
+                        <div className="mt-2 text-sm text-slate-600">
+                          Isaak está pensado para ayudarte a decidir mejor, no para mostrarte más
+                          ruido.
+                        </div>
                       </div>
                       <div className="rounded-2xl border border-slate-200 bg-white p-4">
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -199,18 +245,28 @@ export default function QueEsIsaakPage() {
                           Compatibilidades e integraciones
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Compatible con Holded</span>
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Documentos</span>
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">Futuras integraciones</span>
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+                            Holded como entrada
+                          </span>
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+                            Documentos
+                          </span>
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+                            Futuras integraciones
+                          </span>
                         </div>
                       </div>
                       <div className="rounded-2xl border border-[#2361d8]/20 bg-[#f5f9ff] p-4">
                         <div className="flex items-start gap-3">
                           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#2361d8]" />
                           <div>
-                            <div className="text-sm font-semibold text-slate-900">Menos foco en la técnica. Más foco en el resultado.</div>
+                            <div className="text-sm font-semibold text-slate-900">
+                              Menos foco en la técnica. Más foco en el resultado.
+                            </div>
                             <div className="mt-1 text-sm leading-6 text-slate-600">
-                              La conexión es solo el comienzo. El objetivo de Isaak es darte claridad fiscal y operativa sostenida, no una simple integración para marcar en una checklist.
+                              La conexión es solo el comienzo. El objetivo de Isaak es darte
+                              claridad fiscal y operativa sostenida, no una simple integración para
+                              marcar en una checklist.
                             </div>
                           </div>
                         </div>
@@ -249,7 +305,9 @@ export default function QueEsIsaakPage() {
           </div>
 
           <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-[#011c67]">Isaak frente a una IA generalista</h2>
+            <h2 className="text-lg font-semibold text-[#011c67]">
+              Isaak frente a una IA generalista
+            </h2>
             <div className="mt-4 overflow-x-auto">
               <table className="min-w-full border-separate border-spacing-y-2 text-sm">
                 <thead>
@@ -276,7 +334,9 @@ export default function QueEsIsaakPage() {
                     <td className="rounded-r-xl bg-slate-50 px-3 py-2">Depende del prompt</td>
                   </tr>
                   <tr>
-                    <td className="rounded-l-xl bg-slate-50 px-3 py-2">Puerta a automatizacion y control</td>
+                    <td className="rounded-l-xl bg-slate-50 px-3 py-2">
+                      Puerta a automatizacion y control
+                    </td>
                     <td className="bg-emerald-50 px-3 py-2">Si, dentro de verifactu.business</td>
                     <td className="rounded-r-xl bg-slate-50 px-3 py-2">No integrada por defecto</td>
                   </tr>
@@ -288,8 +348,13 @@ export default function QueEsIsaakPage() {
           <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-[#011c67]">Privacidad y control</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Isaak trabaja con controles por usuario y tenant. La memoria, el historial y los documentos deben responder a una idea muy clara: ayudarte mejor sin perder control ni trazabilidad. Para detalles legales completos, revisa la{' '}
-              <Link href="/legal/privacidad" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
+              Isaak trabaja con controles por usuario y tenant. La memoria, el historial y los
+              documentos deben responder a una idea muy clara: ayudarte mejor sin perder control ni
+              trazabilidad. Para detalles legales completos, revisa la{' '}
+              <Link
+                href="/legal/privacidad"
+                className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
+              >
                 politica de privacidad
               </Link>
               .
@@ -297,10 +362,15 @@ export default function QueEsIsaakPage() {
           </div>
 
           <div className="mx-auto mt-10 max-w-5xl">
-            <h2 className="text-2xl font-semibold tracking-tight text-[#011c67]">Preguntas frecuentes sobre Isaak</h2>
+            <h2 className="text-2xl font-semibold tracking-tight text-[#011c67]">
+              Preguntas frecuentes sobre Isaak
+            </h2>
             <div className="mt-5 space-y-3">
               {faqs.map((item) => (
-                <article key={item.q} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <article
+                  key={item.q}
+                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                >
                   <h3 className="text-base font-semibold text-slate-900">{item.q}</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-600">{item.a}</p>
                 </article>

@@ -1,6 +1,3 @@
-import React from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BadgeCheck,
@@ -9,16 +6,18 @@ import {
   ChevronRight,
   FileText,
   LayoutDashboard,
-  Percent,
   Sparkles,
   TrendingUp,
   UploadCloud,
   Wallet,
 } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import React from 'react';
 import BrandLogo from '../../components/BrandLogo';
-import type { IsaakMsg } from './types';
-import { getAppUrl } from '../urls';
 import { Button } from '../../components/ui';
+import { getAppUrl } from '../urls';
+import type { IsaakMsg } from './types';
 
 export function Container({
   className = '',
@@ -317,7 +316,7 @@ export function FeatureCard({
         ))}
       </ul>
       <Link
-        href={href ?? "/recursos/contacto"}
+        href={href ?? '/recursos/contacto'}
         className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#2361d8] hover:text-[#2361d8]"
       >
         Ver detalles <ChevronRight className="h-4 w-4" />
@@ -451,47 +450,47 @@ export function DashboardMock() {
 export function HeroTripleMock() {
   const slides = [
     {
-      id: "overview",
-      title: "Resumen demo",
-      caption: "KPIs, empresa activa y tareas del día.",
-      src: "/assets/hero/demo-overview.png",
-      mini: "Inicio",
+      id: 'isaak',
+      title: 'Isaak al mando',
+      caption: 'Isaak resume, prioriza y guía el siguiente paso con contexto real.',
+      src: '/Isaak/isaak-vs-holded.png',
+      mini: 'Isaak',
     },
     {
-      id: "invoices",
-      title: "Facturas en demo",
-      caption: "Estados, importes y validación VeriFactu.",
-      src: "/assets/hero/demo-invoices.png",
-      mini: "Facturas",
+      id: 'overview',
+      title: 'Resumen demo',
+      caption: 'KPIs, empresa activa y tareas del día.',
+      src: '/assets/hero/demo-overview.png',
+      mini: 'Inicio',
     },
     {
-      id: "isaak",
-      title: "Asistente flotante",
-      caption: "Mensajes proactivos según la sección activa.",
-      src: "/assets/hero/demo-isaak.png",
-      mini: "Isaak",
+      id: 'invoices',
+      title: 'Facturas en demo',
+      caption: 'Estados, importes y validación VeriFactu.',
+      src: '/assets/hero/demo-invoices.png',
+      mini: 'Facturas',
     },
   ] as const;
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [sampleIndex, setSampleIndex] = React.useState(0);
-  const [viewMode, setViewMode] = React.useState<"video" | "slides">("video");
+  const [viewMode, setViewMode] = React.useState<'video' | 'slides'>('video');
   const [videoAvailable, setVideoAvailable] = React.useState(true);
 
-  const isaakSamplesBySlide: Record<(typeof slides)[number]["id"], string[]> = {
+  const isaakSamplesBySlide: Record<(typeof slides)[number]['id'], string[]> = {
     overview: [
-      "Inicio: \"Tu beneficio hoy es 2.876,40 EUR\"",
-      "Clientes: \"Te faltan 2 seguimientos de cobro\"",
-      "Bancos: \"Revisa el saldo previsto para esta semana\"",
+      'Inicio: "Tu beneficio hoy es 2.876,40 EUR"',
+      'Clientes: "Te faltan 2 seguimientos de cobro"',
+      'Bancos: "Revisa el saldo previsto para esta semana"',
     ],
     invoices: [
-      "Facturas: \"1 factura pendiente de cobro\"",
-      "Documentos: \"Sube el ticket y lo clasifico\"",
-      "Calendario: \"Modelo IVA en 12 dias\"",
+      'Facturas: "1 factura pendiente de cobro"',
+      'Documentos: "Sube el ticket y lo clasifico"',
+      'Calendario: "Modelo IVA en 12 dias"',
     ],
     isaak: [
-      "Configuracion: \"Conecta eInforma en 1 paso\"",
-      "Facturas: \"Preparo borrador VeriFactu\"",
-      "Inicio: \"Quieres resumen semanal?\"",
+      'Isaak: "Hoy mandan cobros, gastos y 1 factura pendiente"',
+      'Isaak: "Si quieres, te dejo preparado el siguiente cierre"',
+      'Isaak: "Holded aporta datos. Yo te doy criterio y orden"',
     ],
   };
 
@@ -526,22 +525,22 @@ export function HeroTripleMock() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setViewMode("video")}
+            onClick={() => setViewMode('video')}
             className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-              viewMode === "video"
-                ? "bg-[#2361d8] text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              viewMode === 'video'
+                ? 'bg-[#2361d8] text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             Video
           </button>
           <button
             type="button"
-            onClick={() => setViewMode("slides")}
+            onClick={() => setViewMode('slides')}
             className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-              viewMode === "slides"
-                ? "bg-[#2361d8] text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              viewMode === 'slides'
+                ? 'bg-[#2361d8] text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             Mockups
@@ -550,7 +549,7 @@ export function HeroTripleMock() {
       </div>
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-inner">
         <div className="relative aspect-[16/10] w-full">
-          {viewMode === "video" && videoAvailable ? (
+          {viewMode === 'video' && videoAvailable ? (
             <video
               className="h-full w-full object-cover"
               autoPlay
@@ -560,7 +559,7 @@ export function HeroTripleMock() {
               poster={slides[activeIndex].src}
               onError={() => {
                 setVideoAvailable(false);
-                setViewMode("slides");
+                setViewMode('slides');
               }}
             >
               <source src="/assets/hero/generated/demo-hero.mp4" type="video/mp4" />
@@ -574,14 +573,20 @@ export function HeroTripleMock() {
                 type="button"
                 onClick={() => setActiveIndex(idx)}
                 className={`absolute inset-0 transition-opacity duration-500 ${
-                  (viewMode === "slides" || !videoAvailable) && isActive
-                    ? "opacity-100"
-                    : "pointer-events-none opacity-0"
+                  (viewMode === 'slides' || !videoAvailable) && isActive
+                    ? 'opacity-100'
+                    : 'pointer-events-none opacity-0'
                 }`}
                 aria-label={`Ver mockup ${slide.title}`}
                 aria-pressed={isActive}
               >
-                <Image src={slide.src} alt={slide.title} fill className="object-cover" priority={idx === 0} />
+                <Image
+                  src={slide.src}
+                  alt={slide.title}
+                  fill
+                  className="object-cover"
+                  priority={idx === 0}
+                />
               </button>
             );
           })}
@@ -591,9 +596,11 @@ export function HeroTripleMock() {
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2361d8]">
-            Demo Verifactu
+            Demo Isaak
           </div>
-          <div className="mt-1 text-lg font-semibold text-slate-900">{slides[activeIndex].title}</div>
+          <div className="mt-1 text-lg font-semibold text-slate-900">
+            {slides[activeIndex].title}
+          </div>
           <p className="mt-1 text-sm text-slate-600">{slides[activeIndex].caption}</p>
         </div>
         <div className="mt-1 flex gap-1.5">
@@ -602,7 +609,7 @@ export function HeroTripleMock() {
               key={slide.id}
               type="button"
               onClick={() => setActiveIndex(idx)}
-              className={`h-2.5 w-2.5 rounded-full transition ${idx === activeIndex ? "bg-[#2361d8]" : "bg-slate-300 hover:bg-slate-400"}`}
+              className={`h-2.5 w-2.5 rounded-full transition ${idx === activeIndex ? 'bg-[#2361d8]' : 'bg-slate-300 hover:bg-slate-400'}`}
               aria-label={`Ir a ${slide.title}`}
               aria-pressed={idx === activeIndex}
             />
@@ -624,12 +631,17 @@ export function HeroTripleMock() {
             onClick={() => setActiveIndex(idx)}
             className={`overflow-hidden rounded-xl border text-left transition ${
               idx === activeIndex
-                ? "border-[#2361d8] bg-[#2361d8]/5 shadow-sm"
-                : "border-slate-200 bg-white hover:border-slate-300"
+                ? 'border-[#2361d8] bg-[#2361d8]/5 shadow-sm'
+                : 'border-slate-200 bg-white hover:border-slate-300'
             }`}
           >
             <div className="relative h-14 w-full">
-              <Image src={slide.src} alt={`${slide.title} miniatura`} fill className="object-cover" />
+              <Image
+                src={slide.src}
+                alt={`${slide.title} miniatura`}
+                fill
+                className="object-cover"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 to-transparent" />
             </div>
             <div className="px-2 py-1.5 text-[11px] font-semibold text-slate-700">{slide.mini}</div>
@@ -647,9 +659,23 @@ export function HeroTripleMock() {
             {isaakSamplesBySlide[slides[activeIndex].id].map((sample, idx) => (
               <span
                 key={sample}
-                className={`h-1.5 w-1.5 rounded-full ${idx === sampleIndex ? "bg-[#2361d8]" : "bg-blue-200"}`}
+                className={`h-1.5 w-1.5 rounded-full ${idx === sampleIndex ? 'bg-[#2361d8]' : 'bg-blue-200'}`}
               />
             ))}
+          </div>
+        </div>
+      </div>
+      <div className="pointer-events-none absolute left-4 top-4 hidden w-[150px] overflow-hidden rounded-2xl border border-slate-200 bg-white/95 shadow-md md:block">
+        <div className="relative h-36 w-full bg-[#eef4ff]">
+          <Image src="/Isaak/isaak-medio-cuerpo.png" alt="Isaak" fill className="object-cover" />
+        </div>
+        <div className="px-3 py-2">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#2361d8]">
+            Protagonista
+          </div>
+          <div className="mt-1 text-xs font-semibold text-slate-900">Isaak</div>
+          <div className="mt-1 text-[11px] leading-5 text-slate-600">
+            El criterio vive aquí. Las integraciones solo le dan contexto.
           </div>
         </div>
       </div>
@@ -798,7 +824,7 @@ export function Footer() {
               { label: 'Features', href: '#features' },
               { label: 'Integraciones', href: '/producto/integraciones' },
               { label: 'FAQ', href: '#faq' },
-              { label: 'Ver precios', href: '/#planes' },
+              { label: 'Ver precios', href: '/precios' },
               { label: 'Que es Isaak', href: '/que-es-isaak' },
             ]}
           />
@@ -808,7 +834,7 @@ export function Footer() {
               { label: 'Que es Isaak', href: '/que-es-isaak' },
               { label: 'Integraciones compatibles', href: '/producto/integraciones' },
               { label: 'Que es', href: '/verifactu/que-es' },
-              { label: 'Ver precios', href: '/#planes' },
+              { label: 'Ver precios', href: '/precios' },
               { label: 'Soporte', href: '/verifactu/soporte' },
               { label: 'Estado del servicio', href: '/verifactu/estado' },
             ]}
@@ -961,7 +987,9 @@ export function ComplianceBadge() {
             <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
               <BadgeCheck className="h-3 w-3 text-white" />
             </div>
-            <span className="text-sm font-semibold text-green-700">Alineado con requisitos VeriFactu</span>
+            <span className="text-sm font-semibold text-green-700">
+              Alineado con requisitos VeriFactu
+            </span>
           </div>
           <p className="mt-3 text-xs text-slate-500">
             Integridad, trazabilidad y evidencias según el marco técnico aplicable.
@@ -1079,24 +1107,63 @@ export function PideseloAIsaakSection() {
 
   const isaakDialogueByTone: Record<ToneKey, Array<{ q: string; a: string }>> = {
     cercano: [
-      { q: 'Isaak, ¿qué falta para cerrar este periodo?', a: 'Te faltan 2 facturas y un extracto. Si quieres, te lo dejo hoy cerrado 😊' },
-      { q: 'Resumen rápido del mes', a: 'Vas muy bien: ventas 12.480 EUR, gastos 7.130 EUR, beneficio 5.350 EUR 🚀' },
-      { q: '¿Cómo voy de IVA este trimestre?', a: 'Estimación actual: 2.140 EUR a ingresar. Te recuerdo fechas clave para ir tranquilo 📅' },
-      { q: '¿Tengo facturas con errores?', a: 'Sí, veo 1 factura sin NIF. La corregimos en 1 minuto y listo ✅' },
-      { q: 'Sube estos tickets y clasifícalos', a: 'Perfecto, los clasifico por proveedor y trimestre, y te marco deducibles 📎' },
-      { q: '¿Qué plazo tengo esta semana?', a: 'Tienes 3 tareas fiscales activas. Te ordeno prioridad para que no se te escape nada 👌' },
+      {
+        q: 'Isaak, ¿qué falta para cerrar este periodo?',
+        a: 'Te faltan 2 facturas y un extracto. Si quieres, te lo dejo hoy cerrado 😊',
+      },
+      {
+        q: 'Resumen rápido del mes',
+        a: 'Vas muy bien: ventas 12.480 EUR, gastos 7.130 EUR, beneficio 5.350 EUR 🚀',
+      },
+      {
+        q: '¿Cómo voy de IVA este trimestre?',
+        a: 'Estimación actual: 2.140 EUR a ingresar. Te recuerdo fechas clave para ir tranquilo 📅',
+      },
+      {
+        q: '¿Tengo facturas con errores?',
+        a: 'Sí, veo 1 factura sin NIF. La corregimos en 1 minuto y listo ✅',
+      },
+      {
+        q: 'Sube estos tickets y clasifícalos',
+        a: 'Perfecto, los clasifico por proveedor y trimestre, y te marco deducibles 📎',
+      },
+      {
+        q: '¿Qué plazo tengo esta semana?',
+        a: 'Tienes 3 tareas fiscales activas. Te ordeno prioridad para que no se te escape nada 👌',
+      },
     ],
     profesional: [
-      { q: 'Isaak, ¿qué falta para cerrar este periodo?', a: 'Pendientes: 2 facturas y 1 extracto bancario. Estado: cierre parcial.' },
-      { q: 'Resumen rápido del mes', a: 'Ventas: 12.480 EUR. Gastos: 7.130 EUR. Beneficio: 5.350 EUR.' },
-      { q: '¿Cómo voy de IVA este trimestre?', a: 'Estimación de IVA: 2.140 EUR. Próximo hito fiscal programado en calendario.' },
-      { q: '¿Tengo facturas con errores?', a: 'Se detecta 1 incidencia: factura sin NIF del cliente. Recomendación: corregir hoy.' },
-      { q: 'Sube estos tickets y clasifícalos', a: 'Documentos procesados. Clasificación contable completada y validación aplicada.' },
-      { q: '¿Qué plazo tengo esta semana?', a: 'Hay 3 obligaciones activas. Prioridad sugerida: alta, media y seguimiento.' },
+      {
+        q: 'Isaak, ¿qué falta para cerrar este periodo?',
+        a: 'Pendientes: 2 facturas y 1 extracto bancario. Estado: cierre parcial.',
+      },
+      {
+        q: 'Resumen rápido del mes',
+        a: 'Ventas: 12.480 EUR. Gastos: 7.130 EUR. Beneficio: 5.350 EUR.',
+      },
+      {
+        q: '¿Cómo voy de IVA este trimestre?',
+        a: 'Estimación de IVA: 2.140 EUR. Próximo hito fiscal programado en calendario.',
+      },
+      {
+        q: '¿Tengo facturas con errores?',
+        a: 'Se detecta 1 incidencia: factura sin NIF del cliente. Recomendación: corregir hoy.',
+      },
+      {
+        q: 'Sube estos tickets y clasifícalos',
+        a: 'Documentos procesados. Clasificación contable completada y validación aplicada.',
+      },
+      {
+        q: '¿Qué plazo tengo esta semana?',
+        a: 'Hay 3 obligaciones activas. Prioridad sugerida: alta, media y seguimiento.',
+      },
     ],
     minimalista: [
       { q: 'Isaak, ¿qué falta para cerrar este periodo?', a: 'Faltan 2 facturas + 1 extracto.' },
-      { q: 'Resumen rápido del mes', a: '12.480 EUR ventas | 7.130 EUR gastos | 5.350 EUR beneficio.' },
+      {
+        q: 'Resumen rápido del mes',
+        a: '12.480 EUR ventas | 7.130 EUR gastos | 5.350 EUR beneficio.',
+      },
       { q: '¿Cómo voy de IVA este trimestre?', a: 'IVA estimado: 2.140 EUR.' },
       { q: '¿Tengo facturas con errores?', a: 'Sí. 1 factura sin NIF.' },
       { q: 'Sube estos tickets y clasifícalos', a: 'Hecho. Clasificados y deducibles marcados.' },
@@ -1134,8 +1201,8 @@ export function PideseloAIsaakSection() {
             Un amigo experto que habla tu idioma y te cuida los plazos.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Isaak entiende documentos, te acompaña cada semana y convierte tu día a día en decisiones
-            claras.
+            Isaak entiende documentos, te acompaña cada semana y convierte tu día a día en
+            decisiones claras.
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-xs text-slate-500">
             Isaak no sustituye a tu asesor. Te ofrece visibilidad diaria de ventas, gastos y

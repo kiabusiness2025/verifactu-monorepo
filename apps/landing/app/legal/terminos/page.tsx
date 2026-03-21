@@ -1,20 +1,19 @@
-import type { Metadata } from "next";
-import Link from "next/link";
 import {
   BadgeCheck,
+  ExternalLink,
   FileText,
+  Mail,
   Scale,
   ShieldCheck,
   UserCheck,
-  Mail,
-  ExternalLink,
-} from "lucide-react";
-import { getLandingUrl } from "../../lib/urls";
+} from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: "Términos y condiciones | Verifactu Business",
-  description:
-    "Términos y condiciones de uso de Verifactu Business.",
+  title: 'Términos y condiciones | Verifactu Business',
+  description: 'Términos y condiciones de uso de Verifactu Business.',
 };
 
 export default function TerminosPage() {
@@ -40,7 +39,8 @@ export default function TerminosPage() {
             </div>
             <h1 className="text-4xl font-bold text-[#011c67]">Términos y condiciones</h1>
             <p className="text-lg text-slate-600">
-              Estas condiciones regulan el acceso y uso de Verifactu Business. Al usar el servicio aceptas este acuerdo.
+              Estas condiciones regulan el acceso y uso de Verifactu Business. Al usar el servicio
+              aceptas este acuerdo.
             </p>
             <p className="text-sm text-slate-500">Última actualización: 23 de enero de 2026.</p>
           </div>
@@ -62,8 +62,8 @@ export default function TerminosPage() {
               Servicio
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Verifactu Business ofrece facturación, registro y control básico para PYMEs y autónomos. El servicio
-              evoluciona con mejoras continuas.
+              Verifactu Business ofrece facturación, registro y control básico para PYMEs y
+              autónomos. El servicio evoluciona con mejoras continuas.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -81,7 +81,8 @@ export default function TerminosPage() {
               Responsabilidad
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              El servicio se ofrece tal cual. Trabajamos para mantener disponibilidad y datos actualizados, sin garantía absoluta.
+              El servicio se ofrece tal cual. Trabajamos para mantener disponibilidad y datos
+              actualizados, sin garantía absoluta.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -90,24 +91,36 @@ export default function TerminosPage() {
               Precios y facturación
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              La cuota mensual se calcula como: cuota base del plan + tramo de uso aplicable + IVA (21%).
-              Los tramos de facturas y movimientos vigentes son los publicados en la{" "}
-              <Link href="/politica-de-precios" className="font-semibold text-[#2361d8] underline underline-offset-4">
+              La cuota mensual se calcula como: cuota base del plan + tramo de uso aplicable + IVA
+              (21%). Los tramos de facturas y movimientos vigentes son los publicados en la{' '}
+              <Link
+                href="/politica-de-precios"
+                className="font-semibold text-[#2361d8] underline underline-offset-4"
+              >
                 política de precios
               </Link>
-              . Puedes estimar el total en la{" "}
-              <Link href="/#planes" className="font-semibold text-[#2361d8] underline underline-offset-4">
+              . Puedes estimar el total en la{' '}
+              <Link
+                href="/precios"
+                className="font-semibold text-[#2361d8] underline underline-offset-4"
+              >
                 calculadora de precio
-              </Link>{" "}
+              </Link>{' '}
               y contactar con soporte para casos especiales.
             </p>
             <p className="mt-2 text-sm text-slate-600">
-              Para detalle legal adicional, consulta la{" "}
-              <Link href="/politica-de-precios" className="font-semibold text-[#2361d8] underline underline-offset-4">
+              Para detalle legal adicional, consulta la{' '}
+              <Link
+                href="/politica-de-precios"
+                className="font-semibold text-[#2361d8] underline underline-offset-4"
+              >
                 política de precios
-              </Link>{" "}
-              y nuestro{" "}
-              <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] underline underline-offset-4">
+              </Link>{' '}
+              y nuestro{' '}
+              <Link
+                href="/recursos/contacto"
+                className="font-semibold text-[#2361d8] underline underline-offset-4"
+              >
                 contacto
               </Link>
               .
@@ -152,8 +165,8 @@ export default function TerminosPage() {
               Cancelacion
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Puedes cancelar tu suscripcion en cualquier momento. La cancelacion aplica al siguiente periodo de
-              facturacion.
+              Puedes cancelar tu suscripcion en cualquier momento. La cancelacion aplica al
+              siguiente periodo de facturacion.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -162,7 +175,7 @@ export default function TerminosPage() {
               Contacto
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Dudas legales o soporte:{" "}
+              Dudas legales o soporte:{' '}
               <a
                 href="mailto:info@verifactu.business"
                 className="font-semibold text-[#2361d8] underline underline-offset-4"
@@ -177,5 +190,3 @@ export default function TerminosPage() {
     </main>
   );
 }
-
-

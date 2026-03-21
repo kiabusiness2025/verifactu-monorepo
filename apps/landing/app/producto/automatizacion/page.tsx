@@ -1,27 +1,27 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { getLandingUrl, getAppUrl } from "../../lib/urls";
-import { ArrowRight, Bot, RefreshCcw, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Bot, CheckCircle2, RefreshCcw, ShieldCheck } from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getAppUrl, getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: "Automatización | Verifactu Business",
-  description: "Flujos automáticos para facturar, cumplir VeriFactu y reducir errores.",
+  title: 'Automatización | verifactu.business',
+  description: 'Flujos automáticos para facturar, cumplir VeriFactu y reducir errores.',
 };
 
 const flows = [
   {
-    title: "Factura -> Validación",
-    description: "Genera, valida y registra sin pasos manuales.",
+    title: 'Factura -> Validación',
+    description: 'Genera, valida y registra sin pasos manuales.',
     icon: RefreshCcw,
   },
   {
-    title: "Alertas inteligentes",
-    description: "Isaak detecta incoherencias y propone correcciones.",
+    title: 'Alertas inteligentes',
+    description: 'Isaak detecta incoherencias y propone correcciones.',
     icon: Bot,
   },
   {
-    title: "Cumplimiento continuo",
-    description: "Trazabilidad y conservación siempre activas.",
+    title: 'Cumplimiento continuo',
+    description: 'Trazabilidad y conservación siempre activas.',
     icon: ShieldCheck,
   },
 ];
@@ -52,22 +52,22 @@ export default function AutomatizacionPage() {
               Automatización sin fricción
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Menos tareas repetitivas, menos errores y más tiempo para tu negocio. Isaak se encarga de vigilar cada
-              paso.
+              Menos tareas repetitivas, menos errores y más tiempo para tu negocio. Isaak se encarga
+              de vigilar cada paso.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/auth/signup"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
               >
-                Empezar 1 mes gratis
+                Crear cuenta y entrar en Demo SL
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href={isaakChatUrl}
+                href="/demo"
                 className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Hablar con Isaak
+                Ver demo guiada
               </Link>
             </div>
           </div>
@@ -98,7 +98,8 @@ export default function AutomatizacionPage() {
           <div className="rounded-3xl border border-[#2361d8]/15 bg-white p-10">
             <h2 className="text-2xl font-semibold text-[#011c67]">Isaak como copiloto</h2>
             <p className="mt-4 text-slate-600">
-              Isaak revisa tus datos y te avisa antes de que haya errores o incoherencias. Tu cierre llega limpio.
+              Isaak revisa tus datos y te avisa antes de que haya errores o incoherencias. Tu cierre
+              llega limpio.
             </p>
             <ul className="mt-6 space-y-3 text-slate-700">
               <li className="flex items-start gap-3">
@@ -114,12 +115,23 @@ export default function AutomatizacionPage() {
                 Calendario fiscal ordenado y sin sustos.
               </li>
             </ul>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/precios"
+                className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
+              >
+                Ver precios
+              </Link>
+              <Link
+                href={isaakChatUrl}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Hablar con Isaak
+              </Link>
+            </div>
           </div>
         </div>
       </section>
     </main>
   );
 }
-
-
-

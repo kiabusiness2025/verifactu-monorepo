@@ -1,28 +1,28 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { BookOpen, ArrowRight, Calendar, Sparkles } from "lucide-react";
-import { getLandingUrl, getAppUrl } from "../../lib/urls";
+import { ArrowRight, BookOpen, Calendar, Sparkles } from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getAppUrl, getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: "Blog | Verifactu Business",
-  description: "Consejos practicos y novedades sobre facturacion, fiscalidad y gestion.",
+  title: 'Blog | verifactu.business',
+  description: 'Consejos practicos y novedades sobre facturacion, fiscalidad y gestion.',
 };
 
 const posts = [
   {
-    title: "VeriFactu en 5 minutos",
-  description: "Resumen claro de la obligación y cómo cumplir sin fricción.",
-    meta: "Lectura 5 min",
+    title: 'VeriFactu en 5 minutos',
+    description: 'Resumen claro de la obligación y cómo cumplir sin fricción.',
+    meta: 'Lectura 5 min',
   },
   {
-    title: "Errores frecuentes en el cierre",
-    description: "Como evitarlos y ahorrar tiempo en correcciones.",
-    meta: "Checklist listo",
+    title: 'Errores frecuentes en el cierre',
+    description: 'Como evitarlos y ahorrar tiempo en correcciones.',
+    meta: 'Checklist listo',
   },
   {
-    title: "Arranque trimestral sin sustos",
-    description: "Una rutina simple para ventas, gastos y evidencias.",
-    meta: "Rutina mensual",
+    title: 'Arranque trimestral sin sustos',
+    description: 'Una rutina simple para ventas, gastos y evidencias.',
+    meta: 'Rutina mensual',
   },
 ];
 
@@ -93,20 +93,19 @@ export default function BlogPage() {
 
         <div className="mt-12 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/#planes"
+            href="/precios"
             className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
           >
-            Calcular precio
+            Ver precios y comparativa
           </Link>
           <Link
-            href={isaakChatUrl}
+            href="/auth/signup"
             className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
           >
-            Hablar con Isaak
+            Crear cuenta y entrar en Demo SL
           </Link>
         </div>
       </section>
     </main>
   );
 }
-

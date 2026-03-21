@@ -31,7 +31,10 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     file = formData.get('file') as File | null;
   } catch {
-    return NextResponse.json({ error: 'El cuerpo debe ser multipart/form-data con un campo "file"' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'El cuerpo debe ser multipart/form-data con un campo "file"' },
+      { status: 400 }
+    );
   }
 
   if (!file) {
@@ -154,7 +157,10 @@ export async function POST(request: NextRequest) {
       });
       imported++;
     } catch (e) {
-      errors.push({ row: rowNum, message: e instanceof Error ? e.message : 'Error al guardar el gasto' });
+      errors.push({
+        row: rowNum,
+        message: e instanceof Error ? e.message : 'Error al guardar el gasto',
+      });
     }
   }
 

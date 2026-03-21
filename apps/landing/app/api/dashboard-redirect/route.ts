@@ -9,10 +9,10 @@ export const dynamic = 'force-dynamic'; // Prevent static optimization for route
  * API Route: /api/dashboard-redirect
  *
  * Purpose: Ensures session cookie is properly set with correct domain
- * before redirecting to app.verifactu.business
+ * before redirecting to client.verifactu.business
  *
  * Query params:
- * - target: Optional path within app to redirect to (default: /dashboard)
+ * - target: Optional path within app to redirect to (default: /workspace)
  *
  * This solves the cross-subdomain cookie issue by:
  * 1. Reading the existing session cookie
@@ -33,11 +33,19 @@ export async function GET(req: Request) {
 
     console.log('[🔄 Dashboard Redirect] Session cookie found, re-setting with proper domain');
 
-    // Get app URL and target path
+    // Get client URL and target path
     const url = new URL(req.url);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
-    const targetPath = url.searchParams.get('target') || '/dashboard';
-    const dashboardUrl = `${appUrl}${targetPath}`;
+    const clientUrl = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://client.verifactu.business';
+    const rawTarget = url.searchParams.get('target') || '/workspace';
+
+    // Prevenir open redirect: el target debe ser una ruta relativa (empieza con /)
+    // y no puede contener esquemas ni saltos de host (//)
+    const targetPath =
+      rawTarget.startsWith('/') && !rawTarget.startsWith('//') && !rawTarget.includes('://')
+        ? rawTarget
+        : '/workspace';
+
+    const dashboardUrl = `${clientUrl}${targetPath}`;
 
     console.log('[🔄 Dashboard Redirect] Target URL:', dashboardUrl);
 

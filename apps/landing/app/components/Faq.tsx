@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
+import Link from 'next/link';
+import React from 'react';
 
 const FAQ_DATA: {
   question: string;
@@ -9,11 +9,13 @@ const FAQ_DATA: {
   answerText: string;
 }[] = [
   {
-    question: "Como funciona el acceso tras la prueba de 30 dias?",
+    question: 'Como funciona el acceso tras la prueba de 30 dias?',
     answer: (
       <>
-        Tienes 30 dias para crear y registrar. Despues mantienes acceso en modo lectura y exportacion
-        AEAT (Excel). Si necesitas seguir operando sin limites, puedes elegir un plan en{" "}
+        Al registrarte entras automaticamente en Empresa Demo SL, ya integrada con Holded, y ese
+        acceso demo no caduca. Cuando quieras trabajar con tus datos, puedes activar una prueba de
+        30 dias para crear 1 empresa real. Si quieres seguir despues, eliges el plan que mejor te
+        encaje en{' '}
         <Link href="/planes" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
           planes
         </Link>
@@ -21,37 +23,37 @@ const FAQ_DATA: {
       </>
     ),
     answerText:
-      "Tienes 30 dias para crear y registrar. Despues mantienes acceso en modo lectura y exportacion AEAT (Excel). Si necesitas seguir operando sin limites, puedes elegir un plan en planes.",
+      'Al registrarte entras automaticamente en Empresa Demo SL, ya integrada con Holded, y ese acceso demo no caduca. Cuando quieras trabajar con tus datos, puedes activar una prueba de 30 dias para crear 1 empresa real. Si quieres seguir despues, eliges el plan que mejor te encaje en planes.',
   },
   {
-    question: "Como se calcula el exceso de facturas?",
+    question: 'Como se calcula el exceso de facturas?',
     answer: (
       <>
-        Si superas las facturas incluidas, puedes seguir facturando. El exceso se calcula por tramos y
-        se refleja en la siguiente factura mensual junto con tu cuota de plan. Puedes estimarlo en{" "}
-        <Link href="/#planes" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
+        Si superas las facturas incluidas, puedes seguir facturando. El exceso se calcula por tramos
+        y se refleja en la siguiente factura mensual junto con tu cuota de plan. Puedes estimarlo en{' '}
+        <Link href="/precios" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
           la calculadora de exceso
-        </Link>{" "}
+        </Link>{' '}
         .
       </>
     ),
     answerText:
-      "Si superas las facturas incluidas, puedes seguir facturando. El exceso se calcula por tramos y se refleja en la siguiente factura mensual junto con tu cuota de plan. Puedes estimarlo en la calculadora de exceso.",
+      'Si superas las facturas incluidas, puedes seguir facturando. El exceso se calcula por tramos y se refleja en la siguiente factura mensual junto con tu cuota de plan. Puedes estimarlo en la calculadora de exceso.',
   },
   {
-    question: "Isaak es lo mismo que ChatGPT u otra IA general?",
+    question: 'Isaak es lo mismo que ChatGPT u otra IA general?',
     answer: (
       <>
-        No. Isaak esta especializado en el flujo de facturacion, gastos, plazos y cumplimiento de
-        tu empresa dentro de Verifactu. Una IA general no conoce por defecto tu operativa ni tus
-        reglas internas.
+        No. Isaak esta especializado en el flujo de facturacion, gastos, plazos y cumplimiento de tu
+        empresa dentro de Verifactu. Una IA general no conoce por defecto tu operativa ni tus reglas
+        internas.
       </>
     ),
     answerText:
-      "No. Isaak esta especializado en el flujo de facturacion, gastos, plazos y cumplimiento de tu empresa dentro de Verifactu. Una IA general no conoce por defecto tu operativa ni tus reglas internas.",
+      'No. Isaak esta especializado en el flujo de facturacion, gastos, plazos y cumplimiento de tu empresa dentro de Verifactu. Una IA general no conoce por defecto tu operativa ni tus reglas internas.',
   },
   {
-    question: "Que puede hacer Isaak por mi en el dia a dia?",
+    question: 'Que puede hacer Isaak por mi en el dia a dia?',
     answer: (
       <>
         Puede revisar documentos, ordenar gastos, detectar incidencias, recordar plazos y resumirte
@@ -59,10 +61,10 @@ const FAQ_DATA: {
       </>
     ),
     answerText:
-      "Puede revisar documentos, ordenar gastos, detectar incidencias, recordar plazos y resumirte ventas, gastos y beneficio para que decidas antes del cierre.",
+      'Puede revisar documentos, ordenar gastos, detectar incidencias, recordar plazos y resumirte ventas, gastos y beneficio para que decidas antes del cierre.',
   },
   {
-    question: "Isaak guarda contexto de mi empresa para ayudar mejor?",
+    question: 'Isaak guarda contexto de mi empresa para ayudar mejor?',
     answer: (
       <>
         Si. Puede usar informacion de tu tenant (configuracion, historico y documentos autorizados)
@@ -70,21 +72,21 @@ const FAQ_DATA: {
       </>
     ),
     answerText:
-      "Si. Puede usar informacion de tu tenant (configuracion, historico y documentos autorizados) para darte respuestas mas utiles y menos genericas.",
+      'Si. Puede usar informacion de tu tenant (configuracion, historico y documentos autorizados) para darte respuestas mas utiles y menos genericas.',
   },
   {
-    question: "Compartis mis datos con humanos sin permiso?",
+    question: 'Compartis mis datos con humanos sin permiso?',
     answer: (
       <>
-        No. Tus datos no se comparten con ningun humano sin tu autorizacion previa, salvo obligaciones
-        legales aplicables.
+        No. Tus datos no se comparten con ningun humano sin tu autorizacion previa, salvo
+        obligaciones legales aplicables.
       </>
     ),
     answerText:
-      "No. Tus datos no se comparten con ningun humano sin tu autorizacion previa, salvo obligaciones legales aplicables.",
+      'No. Tus datos no se comparten con ningun humano sin tu autorizacion previa, salvo obligaciones legales aplicables.',
   },
   {
-    question: "Puedo borrar historial y memoria de Isaak?",
+    question: 'Puedo borrar historial y memoria de Isaak?',
     answer: (
       <>
         Si. Puedes solicitar borrado de historial y reinicio de memoria para tu espacio de trabajo.
@@ -92,10 +94,10 @@ const FAQ_DATA: {
       </>
     ),
     answerText:
-      "Si. Puedes solicitar borrado de historial y reinicio de memoria para tu espacio de trabajo. Tambien puedes gestionar conservacion desde configuracion y soporte.",
+      'Si. Puedes solicitar borrado de historial y reinicio de memoria para tu espacio de trabajo. Tambien puedes gestionar conservacion desde configuracion y soporte.',
   },
   {
-    question: "Existe modo de mensaje temporal?",
+    question: 'Existe modo de mensaje temporal?',
     answer: (
       <>
         Si. Estamos preparando mensajes temporales para consultas puntuales que no se incorporen al
@@ -103,59 +105,66 @@ const FAQ_DATA: {
       </>
     ),
     answerText:
-      "Si. Estamos preparando mensajes temporales para consultas puntuales que no se incorporen al contexto persistente.",
+      'Si. Estamos preparando mensajes temporales para consultas puntuales que no se incorporen al contexto persistente.',
   },
   {
-    question: "Habra modo voz con Isaak?",
+    question: 'Habra modo voz con Isaak?',
     answer: (
       <>
-        Si. La funcion de voz esta en roadmap para dictar consultas y escuchar respuestas sin teclear.
-        Si quieres acceso temprano,{" "}
-        <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
+        Si. La funcion de voz esta en roadmap para dictar consultas y escuchar respuestas sin
+        teclear. Si quieres acceso temprano,{' '}
+        <Link
+          href="/recursos/contacto"
+          className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
+        >
           apuntate aqui
-        </Link>{" "}
+        </Link>{' '}
         .
       </>
     ),
     answerText:
-      "Si. La funcion de voz esta en roadmap para dictar consultas y escuchar respuestas sin teclear. Si quieres acceso temprano, apuntate aqui.",
+      'Si. La funcion de voz esta en roadmap para dictar consultas y escuchar respuestas sin teclear. Si quieres acceso temprano, apuntate aqui.',
   },
   {
-    question: "Isaak sustituye a mi gestor?",
+    question: 'Isaak sustituye a mi gestor?',
     answer: (
       <>
-        No. Isaak y la plataforma son un apoyo para trabajar mejor con datos diarios. Tu asesor sigue
-        siendo la referencia para cierre y criterio fiscal final.
+        No. Isaak y la plataforma son un apoyo para trabajar mejor con datos diarios. Tu asesor
+        sigue siendo la referencia para cierre y criterio fiscal final.
       </>
     ),
     answerText:
-      "No. Isaak y la plataforma son un apoyo para trabajar mejor con datos diarios. Tu asesor sigue siendo la referencia para cierre y criterio fiscal final.",
+      'No. Isaak y la plataforma son un apoyo para trabajar mejor con datos diarios. Tu asesor sigue siendo la referencia para cierre y criterio fiscal final.',
   },
   {
-    question: "VeriFactu esta incluido?",
+    question: 'VeriFactu esta incluido?',
     answer: (
       <>
-        Si. Incluye sellado, trazabilidad y evidencias exportables para auditoria. Puedes ver el estado en{" "}
-        <Link href="/verifactu/estado" className="font-semibold text-[#2361d8] hover:text-[#2361d8]">
+        Si. Incluye sellado, trazabilidad y evidencias exportables para auditoria. Puedes ver el
+        estado en{' '}
+        <Link
+          href="/verifactu/estado"
+          className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
+        >
           estado del servicio
         </Link>
         .
       </>
     ),
     answerText:
-      "Si. Incluye sellado, trazabilidad y evidencias exportables para auditoria. Puedes ver el estado en estado del servicio.",
+      'Si. Incluye sellado, trazabilidad y evidencias exportables para auditoria. Puedes ver el estado en estado del servicio.',
   },
 ];
 
 export default function Faq({ onOpenCalculator }: { onOpenCalculator?: () => void }) {
   const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
     mainEntity: FAQ_DATA.map((item) => ({
-      "@type": "Question",
+      '@type': 'Question',
       name: item.question,
       acceptedAnswer: {
-        "@type": "Answer",
+        '@type': 'Answer',
         text: item.answerText,
       },
     })),
@@ -191,7 +200,7 @@ export default function Faq({ onOpenCalculator }: { onOpenCalculator?: () => voi
             </button>
           ) : (
             <Link
-              href="/#planes"
+              href="/precios"
               className="mt-2 inline-block rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Calcula tu precio
@@ -212,5 +221,3 @@ export default function Faq({ onOpenCalculator }: { onOpenCalculator?: () => voi
     </div>
   );
 }
-
-

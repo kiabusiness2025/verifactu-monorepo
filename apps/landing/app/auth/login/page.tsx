@@ -1,44 +1,45 @@
-"use client";
+'use client';
 
-import type { User } from "firebase/auth";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { useRef, useState } from "react";
-import { AuthLayout, FormInput, PasswordInput } from "../../components/AuthComponents";
-import { useToast } from "../../components/Toast";
-import { useAuth } from "../../context/AuthContext";
+import type { User } from 'firebase/auth';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useRef, useState } from 'react';
+import { AuthLayout, FormInput, PasswordInput } from '../../components/AuthComponents';
+import { useToast } from '../../components/Toast';
+import { useAuth } from '../../context/AuthContext';
 import {
-    signInWithEmail,
-    signInWithGoogle,
-    signInWithMicrosoft,
-    signUpWithEmail,
-} from "../../lib/auth";
-import { mintSessionCookie } from "../../lib/serverSession";
-import { getAppUrl } from "../../lib/urls";
+  signInWithEmail,
+  signInWithGoogle,
+  signInWithMicrosoft,
+  signUpWithEmail,
+} from '../../lib/auth';
+import { mintSessionCookie } from '../../lib/serverSession';
+import { getAppUrl, getClientUrl } from '../../lib/urls';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { showToast } = useToast();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [mode, setMode] = useState<"login" | "signup">("login");
-  const [passwordError, setPasswordError] = useState("");
+  const [error, setError] = useState('');
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [passwordError, setPasswordError] = useState('');
   const [rememberDevice, setRememberDevice] = useState(() => {
-    if (typeof window === "undefined") return true;
-    const stored = window.localStorage.getItem("vf_remember_device");
+    if (typeof window === 'undefined') return true;
+    const stored = window.localStorage.getItem('vf_remember_device');
     if (stored === null) return true;
-    return stored === "true";
+    return stored === 'true';
   });
   const hasRedirected = useRef(false);
 
   const appUrl = getAppUrl();
+  const clientUrl = getClientUrl();
   const reportInvalidNext = (reason: string, value: string) => {
     try {
       const payload = JSON.stringify({
@@ -47,13 +48,13 @@ export default function LoginPage() {
         appUrl,
         ts: new Date().toISOString(),
       });
-      if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
-        navigator.sendBeacon("/api/auth/log-next", payload);
+      if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+        navigator.sendBeacon('/api/auth/log-next', payload);
         return;
       }
-      fetch("/api/auth/log-next", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      fetch('/api/auth/log-next', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: payload,
       }).catch(() => {});
     } catch {
@@ -61,20 +62,22 @@ export default function LoginPage() {
     }
   };
 
-  const nextParam = searchParams?.get("next")?.trim() || "";
+  const nextParam = searchParams?.get('next')?.trim() || '';
   const redirectTarget = (() => {
-    if (!nextParam) return `${appUrl}/t/demo/dashboard`;
+    if (!nextParam) return `${clientUrl}/workspace`;
     try {
       const target = new URL(nextParam);
       const appOrigin = new URL(appUrl).origin;
-      if (target.origin !== appOrigin) {
-        reportInvalidNext("cross-origin", nextParam);
-        return `${appUrl}/t/demo/dashboard`;
+      const clientOrigin = new URL(clientUrl).origin;
+      const allowedOrigins = new Set([appOrigin, clientOrigin]);
+      if (!allowedOrigins.has(target.origin)) {
+        reportInvalidNext('cross-origin', nextParam);
+        return `${clientUrl}/workspace`;
       }
       return target.toString();
     } catch {
-      reportInvalidNext("malformed", nextParam);
-      return `${appUrl}/t/demo/dashboard`;
+      reportInvalidNext('malformed', nextParam);
+      return `${clientUrl}/workspace`;
     }
   })();
 
@@ -96,8 +99,8 @@ export default function LoginPage() {
   }, [user, authLoading, redirectToDashboard, rememberDevice]);
 
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("vf_remember_device", String(rememberDevice));
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('vf_remember_device', String(rememberDevice));
   }, [rememberDevice]);
 
   if (authLoading) {
@@ -125,22 +128,22 @@ export default function LoginPage() {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
       const result = await signInWithEmail(email, password, { rememberDevice });
 
       if (result.error) {
         setError(result.error.userMessage);
-        showToast({ type: "error", title: "Error", message: result.error.userMessage });
+        showToast({ type: 'error', title: 'Error', message: result.error.userMessage });
         return;
       }
 
-      showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesion correcto" });
+      showToast({ type: 'success', title: 'Bienvenido', message: 'Inicio de sesion correcto' });
       redirectToDashboard();
     } catch (err) {
-      setError("Error al iniciar sesion. Intenta de nuevo.");
-      showToast({ type: "error", title: "Error", message: "Error al iniciar sesion" });
+      setError('Error al iniciar sesion. Intenta de nuevo.');
+      showToast({ type: 'error', title: 'Error', message: 'Error al iniciar sesion' });
     } finally {
       setIsLoading(false);
     }
@@ -148,22 +151,22 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
       const result = await signInWithGoogle({ rememberDevice });
 
       if (result.error) {
         setError(result.error.userMessage);
-        showToast({ type: "error", title: "Error", message: result.error.userMessage });
+        showToast({ type: 'error', title: 'Error', message: result.error.userMessage });
         return;
       }
 
-      showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesion con Google" });
+      showToast({ type: 'success', title: 'Bienvenido', message: 'Inicio de sesion con Google' });
       redirectToDashboard();
     } catch (err) {
-      setError("Error al iniciar sesion con Google. Intenta de nuevo.");
-      showToast({ type: "error", title: "Error", message: "Error al iniciar sesion con Google" });
+      setError('Error al iniciar sesion con Google. Intenta de nuevo.');
+      showToast({ type: 'error', title: 'Error', message: 'Error al iniciar sesion con Google' });
     } finally {
       setIsLoading(false);
     }
@@ -171,41 +174,45 @@ export default function LoginPage() {
 
   const handleMicrosoftLogin = async () => {
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
       const result = await signInWithMicrosoft({ rememberDevice });
 
       if (result.error) {
         setError(result.error.userMessage);
-        showToast({ type: "error", title: "Error", message: result.error.userMessage });
+        showToast({ type: 'error', title: 'Error', message: result.error.userMessage });
         return;
       }
 
-      showToast({ type: "success", title: "Bienvenido", message: "Inicio de sesion con Microsoft" });
+      showToast({
+        type: 'success',
+        title: 'Bienvenido',
+        message: 'Inicio de sesion con Microsoft',
+      });
       redirectToDashboard();
     } catch (err) {
-      setError("Error al iniciar sesion con Microsoft. Intenta de nuevo.");
-      showToast({ type: "error", title: "Error", message: "Error al iniciar sesion" });
+      setError('Error al iniciar sesion con Microsoft. Intenta de nuevo.');
+      showToast({ type: 'error', title: 'Error', message: 'Error al iniciar sesion' });
     } finally {
       setIsLoading(false);
     }
   };
 
   const validateSignup = () => {
-    setError("");
-    setPasswordError("");
+    setError('');
+    setPasswordError('');
     if (password.length < 8) {
-      setPasswordError("La contraseña debe tener al menos 8 caracteres");
+      setPasswordError('La contraseña debe tener al menos 8 caracteres');
       return false;
     }
     if (password !== confirmPassword) {
-      setPasswordError("Las contraseñas no coinciden");
+      setPasswordError('Las contraseñas no coinciden');
       return false;
     }
 
     if (!agreeTerms) {
-      setError("Debes aceptar los terminos y condiciones");
+      setError('Debes aceptar los terminos y condiciones');
       return false;
     }
     return true;
@@ -215,16 +222,16 @@ export default function LoginPage() {
     e.preventDefault();
     if (!validateSignup()) return;
     setIsLoading(true);
-    setError("");
+    setError('');
     try {
       const result = await signUpWithEmail(email, password);
       if (result.error) {
         setError(result.error.userMessage);
         return;
       }
-      router.push("/auth/verify-email");
+      router.push('/auth/verify-email');
     } catch (err) {
-      setError("Error al registrarse. Intenta de nuevo.");
+      setError('Error al registrarse. Intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -232,34 +239,34 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title={mode === "login" ? "Inicia sesion" : "Crea tu cuenta"}
-      subtitle={mode === "login" ? "Accede a tu cuenta de Verifactu" : "Unete a Verifactu hoy"}
-      footerText={mode === "login" ? "No tienes cuenta?" : "Ya tienes cuenta?"}
+      title={mode === 'login' ? 'Inicia sesion' : 'Crea tu cuenta'}
+      subtitle={mode === 'login' ? 'Accede a tu cuenta de Verifactu' : 'Unete a Verifactu hoy'}
+      footerText={mode === 'login' ? 'No tienes cuenta?' : 'Ya tienes cuenta?'}
       footerLink={
-        mode === "login"
-          ? { href: "/auth/signup", label: "Registrate aqui" }
-          : { href: "/auth/login", label: "Inicia sesion aqui" }
+        mode === 'login'
+          ? { href: '/auth/signup', label: 'Registrate aqui' }
+          : { href: '/auth/login', label: 'Inicia sesion aqui' }
       }
     >
       <div className="mb-2 flex gap-2">
         <button
           type="button"
-          onClick={() => setMode("login")}
+          onClick={() => setMode('login')}
           className={`flex-1 rounded-lg border py-2 ${
-            mode === "login"
-              ? "border-[#2361d8] bg-[#2361d8] text-white"
-              : "border-gray-300 bg-white text-gray-700"
+            mode === 'login'
+              ? 'border-[#2361d8] bg-[#2361d8] text-white'
+              : 'border-gray-300 bg-white text-gray-700'
           }`}
         >
           Iniciar sesion
         </button>
         <button
           type="button"
-          onClick={() => setMode("signup")}
+          onClick={() => setMode('signup')}
           className={`flex-1 rounded-lg border py-2 ${
-            mode === "signup"
-              ? "border-[#2361d8] bg-[#2361d8] text-white"
-              : "border-gray-300 bg-white text-gray-700"
+            mode === 'signup'
+              ? 'border-[#2361d8] bg-[#2361d8] text-white'
+              : 'border-gray-300 bg-white text-gray-700'
           }`}
         >
           Crear cuenta
@@ -267,7 +274,7 @@ export default function LoginPage() {
       </div>
 
       <motion.form
-        onSubmit={mode === "login" ? handleEmailLogin : handleEmailSignup}
+        onSubmit={mode === 'login' ? handleEmailLogin : handleEmailSignup}
         className="space-y-4"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -291,7 +298,7 @@ export default function LoginPage() {
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-            {mode === "login" && (
+            {mode === 'login' && (
               <Link
                 href="/auth/forgot-password"
                 className="text-sm font-medium text-[#2361d8] hover:text-[#2361d8]"
@@ -304,16 +311,16 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
-              setPasswordError("");
+              setPasswordError('');
             }}
             required
           />
-          {mode === "signup" && passwordError && (
+          {mode === 'signup' && passwordError && (
             <p className="mt-1 text-sm text-red-500">{passwordError}</p>
           )}
         </div>
 
-        {mode === "login" && (
+        {mode === 'login' && (
           <label className="flex items-center gap-2 text-sm text-gray-600">
             <input
               type="checkbox"
@@ -325,7 +332,7 @@ export default function LoginPage() {
           </label>
         )}
 
-        {mode === "signup" && (
+        {mode === 'signup' && (
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Confirmar contraseña <span className="text-red-500">*</span>
@@ -334,7 +341,7 @@ export default function LoginPage() {
               value={confirmPassword}
               onChange={(e) => {
                 setConfirmPassword(e.target.value);
-                setPasswordError("");
+                setPasswordError('');
               }}
               placeholder="Repite tu contraseña"
               required
@@ -342,27 +349,27 @@ export default function LoginPage() {
           </div>
         )}
 
-        {mode === "signup" && (
+        {mode === 'signup' && (
           <label className="flex items-start gap-3 text-sm">
             <input
               type="checkbox"
               checked={agreeTerms}
               onChange={(e) => {
                 setAgreeTerms(e.target.checked);
-                setError("");
+                setError('');
               }}
               className="mt-1 h-4 w-4 rounded border-gray-300 text-[#2361d8] focus:ring-[#2361d8]"
             />
             <span className="text-gray-600">
-              Acepto los{" "}
+              Acepto los{' '}
               <Link
                 href="/legal/terminos"
                 className="font-medium text-[#2361d8] hover:text-[#2361d8]"
                 aria-label="Leer terminos y condiciones"
               >
                 terminos y condiciones
-              </Link>{" "}
-              y la{" "}
+              </Link>{' '}
+              y la{' '}
               <Link
                 href="/legal/privacidad"
                 className="font-medium text-[#2361d8] hover:text-[#2361d8]"
@@ -380,12 +387,12 @@ export default function LoginPage() {
           className="w-full rounded-full bg-[#2361d8] py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading
-            ? mode === "login"
-              ? "Iniciando sesion..."
-              : "Creando cuenta..."
-            : mode === "login"
-            ? "Iniciar sesion"
-            : "Crear cuenta"}
+            ? mode === 'login'
+              ? 'Iniciando sesion...'
+              : 'Creando cuenta...'
+            : mode === 'login'
+              ? 'Iniciar sesion'
+              : 'Crear cuenta'}
         </button>
       </motion.form>
 
@@ -423,10 +430,10 @@ export default function LoginPage() {
           />
         </svg>
         {isLoading
-          ? mode === "login"
-            ? "Iniciando sesion..."
-            : "Registrandose..."
-          : "Continuar con Google"}
+          ? mode === 'login'
+            ? 'Iniciando sesion...'
+            : 'Registrandose...'
+          : 'Continuar con Google'}
       </button>
 
       <button
@@ -441,10 +448,8 @@ export default function LoginPage() {
           <path fill="#00A4EF" d="M2 13h9v9H2z" />
           <path fill="#FFB900" d="M13 13h9v9h-9z" />
         </svg>
-        {isLoading ? "Iniciando sesion..." : "Continuar con Microsoft"}
+        {isLoading ? 'Iniciando sesion...' : 'Continuar con Microsoft'}
       </button>
     </AuthLayout>
   );
 }
-
-

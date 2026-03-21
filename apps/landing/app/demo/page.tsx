@@ -252,6 +252,8 @@ export default function DemoPage() {
 
   const demoNavLinks = [
     { label: 'Home', href: '/' },
+    { label: 'Holded', href: '/holded' },
+    { label: 'Planes', href: '/planes' },
     { label: 'Calculadora', href: '#calculadora' },
     { label: 'Solicitar demo personalizada', href: '#solicitar-demo' },
   ];

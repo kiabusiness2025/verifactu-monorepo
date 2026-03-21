@@ -1,6 +1,3 @@
-import type { Metadata } from 'next';
-import Image from 'next/image';
-import Link from 'next/link';
 import {
   ArrowRight,
   Bot,
@@ -11,16 +8,19 @@ import {
   Wallet,
   Workflow,
 } from 'lucide-react';
+import type { Metadata } from 'next';
+import Image from 'next/image';
+import Link from 'next/link';
 import { getAppUrl } from '../lib/urls';
 
 export const metadata: Metadata = {
-  title: 'Isaak compatible con Holded | verifactu.business',
+  title: 'Isaak con Holded como entrada compatible | verifactu.business',
   description:
-    'Activa Isaak con datos reales de tu ERP compatible. Empieza con Holded como puerta de entrada y da el salto a la experiencia completa de verifactu.business cuando quieras más control, automatización y tranquilidad fiscal.',
+    'Activa Isaak con datos reales y usa Holded como fuente compatible de entrada. La experiencia principal sigue siendo Isaak dentro de verifactu.business.',
   icons: {
-    icon: [{ url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' }],
-    shortcut: ['/brand/holded/holded-diamond-logo.png'],
-    apple: [{ url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' }],
+    icon: [{ url: '/Isaak/isaak-avatar.png', type: 'image/png' }],
+    shortcut: ['/Isaak/isaak-avatar.png'],
+    apple: [{ url: '/Isaak/isaak-avatar.png', type: 'image/png' }],
   },
 };
 
@@ -43,10 +43,10 @@ const benefitCards = [
 ];
 
 const compatiblePoints = [
-  'Compatible con Holded hoy como ERP de entrada.',
-  'Preparado para crecer hacia nuevas integraciones sin cambiar la experiencia de Isaak.',
+  'Holded entra como fuente compatible. Isaak sigue marcando la experiencia.',
+  'Preparado para sumar nuevas integraciones sin cambiar la voz ni el criterio de Isaak.',
   'Pensado para empresarios y equipos que quieren claridad, no mas complejidad tecnica.',
-  'Puerta natural a la experiencia completa de verifactu.business.',
+  'Puerta natural a la experiencia completa de verifactu.business cuando quieras mas profundidad.',
 ];
 
 const steps = [
@@ -132,10 +132,12 @@ export default function HoldedCampaignPage() {
               Isaak by verifactu.business
             </div>
             <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-6xl">
-              Activa Isaak con los datos reales de tu ERP.
+              Isaak toma el mando aunque empieces con Holded.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Empieza con Holded como canal de entrada y descubre a Isaak como tu asistente fiscal inteligente: menos errores, más control, más automatización y una forma mucho más clara de trabajar con datos reales.
+              Holded solo aporta contexto inicial. Quien resume, prioriza, explica y te acompaña en
+              decisiones fiscales y operativas es Isaak, dentro del ecosistema de
+              verifactu.business.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -162,7 +164,10 @@ export default function HoldedCampaignPage() {
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               {compatiblePoints.map((point) => (
-                <div key={point} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div
+                  key={point}
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
                   <div className="flex items-start gap-3 text-sm leading-6 text-slate-600">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                     <span>{point}</span>
@@ -173,22 +178,54 @@ export default function HoldedCampaignPage() {
           </div>
 
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_30px_80px_-40px_rgba(255,84,96,0.35)]">
-            <div className="flex items-center justify-center rounded-[1.5rem] border border-slate-200 bg-[#fff7f7] p-10">
-              <Image
-                src="/brand/holded/holded-diamond-logo.png"
-                alt="Compatible con Holded"
-                width={220}
-                height={220}
-                className="h-28 w-28 sm:h-36 sm:w-36"
-                priority
-              />
+            <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(145deg,#fff7f7_0%,#f8fbff_100%)] p-6 sm:p-8">
+              <div className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">
+                <Image
+                  src="/brand/holded/holded-diamond-logo.png"
+                  alt="Holded"
+                  width={18}
+                  height={18}
+                  className="h-4 w-4"
+                />
+                Fuente compatible
+              </div>
+              <div className="grid gap-4 sm:grid-cols-[0.95fr_1.05fr] sm:items-center">
+                <div className="rounded-[1.25rem] border border-white/80 bg-white/80 p-4 shadow-sm">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#ff5460]">
+                    Isaak al frente
+                  </div>
+                  <div className="mt-2 text-sm leading-6 text-slate-600">
+                    Holded trae datos. Isaak los convierte en prioridades, lenguaje claro y
+                    siguiente paso.
+                  </div>
+                </div>
+                <div className="flex justify-center">
+                  <Image
+                    src="/Isaak/isaak-vs-holded.png"
+                    alt="Isaak como protagonista con Holded como compatibilidad"
+                    width={560}
+                    height={560}
+                    className="h-auto w-full max-w-[20rem]"
+                    priority
+                  />
+                </div>
+              </div>
             </div>
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-sm font-semibold text-slate-900">Lo que ya puede hacer Isaak hoy</div>
+              <div className="text-sm font-semibold text-slate-900">
+                Lo que ya hace Isaak cuando Holded solo aporta el contexto
+              </div>
               <div className="mt-3 grid gap-3">
-                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">Explicar ventas, gastos, cobros y señales de riesgo con lenguaje claro.</div>
-                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">Ayudarte a revisar facturas, contactos, proyectos y prioridades operativas.</div>
-                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">Preparar el salto a la experiencia completa de verifactu.business cuando quieras más control.</div>
+                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
+                  Explicar ventas, gastos, cobros y señales de riesgo con lenguaje claro.
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
+                  Ayudarte a revisar facturas, contactos, proyectos y prioridades operativas.
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
+                  Preparar el salto a la experiencia completa de verifactu.business cuando quieras
+                  más control.
+                </div>
               </div>
             </div>
           </div>
@@ -202,13 +239,18 @@ export default function HoldedCampaignPage() {
               Lo importante no es la conexión. Es lo que Isaak desbloquea después.
             </h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              Hemos diseñado esta entrada compatible con Holded para que empieces rápido, pero el centro del producto es Isaak: un asistente fiscal inteligente pensado para ayudarte a decidir mejor y trabajar con menos fricción.
+              Hemos diseñado esta entrada compatible con Holded para que empieces rápido, pero el
+              centro del producto es Isaak: un asistente fiscal inteligente pensado para ayudarte a
+              decidir mejor y trabajar con menos fricción.
             </p>
           </div>
 
           <div className="mt-8 grid gap-5 lg:grid-cols-3">
             {benefitCards.map((item) => (
-              <article key={item.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <article
+                key={item.title}
+                className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+              >
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ff5460]/10 text-[#ff5460]">
                   <item.icon className="h-6 w-6" />
                 </div>
@@ -216,6 +258,20 @@ export default function HoldedCampaignPage() {
                 <p className="mt-3 text-sm leading-6 text-slate-600">{item.body}</p>
               </article>
             ))}
+          </div>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/demo"
+              className="inline-flex items-center justify-center rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#ef4654]"
+            >
+              Ver demo guiada de Isaak
+            </Link>
+            <Link
+              href="/planes"
+              className="inline-flex items-center justify-center rounded-xl border border-[#ff5460] px-6 py-3 text-sm font-semibold text-[#ff5460] hover:bg-[#ff5460]/10"
+            >
+              Comparar planes
+            </Link>
           </div>
         </div>
       </section>
@@ -227,20 +283,43 @@ export default function HoldedCampaignPage() {
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
                 Activacion guiada
               </div>
-              <h2 className="mt-4 text-3xl font-bold tracking-tight">Un camino simple: activar, entender, escalar.</h2>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight">
+                Un camino simple: activar, entender, escalar.
+              </h2>
               <p className="mt-4 text-sm leading-7 text-white/80 sm:text-base">
-                La entrada compatible con Holded te permite empezar con datos reales. Después, si quieres un entorno más completo, la plataforma madre sigue siendo verifactu.business.
+                La entrada compatible con Holded te permite empezar con datos reales. Después, si
+                quieres un entorno más completo, sigues profundizando en la misma entidad: Isaak
+                dentro de verifactu.business.
               </p>
             </div>
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {steps.map((item) => (
-                <article key={item.step} className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Paso {item.step}</div>
+                <article
+                  key={item.step}
+                  className="rounded-3xl border border-white/10 bg-white/5 p-5"
+                >
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+                    Paso {item.step}
+                  </div>
                   <h3 className="mt-3 text-lg font-semibold text-white">{item.title}</h3>
                   <p className="mt-2 text-sm leading-6 text-white/75">{item.body}</p>
                 </article>
               ))}
+            </div>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={chatgptAppUrl}
+                className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#0f2660] hover:bg-slate-100"
+              >
+                Activar flujo con Holded
+              </Link>
+              <Link
+                href="/producto/integraciones"
+                className="inline-flex items-center justify-center rounded-xl border border-white/40 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+              >
+                Ver otras integraciones
+              </Link>
             </div>
           </div>
         </div>
@@ -256,20 +335,22 @@ export default function HoldedCampaignPage() {
                   Cuando quieras más que una activación inicial, entras en verifactu.business.
                 </h2>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-                  Ahí es donde Isaak gana profundidad: panel visual, histórico, trazabilidad, automatización, reglas fiscales y una relación mucho más rica con tus procesos, documentos y decisiones.
+                  Ahí es donde Isaak gana profundidad: panel visual, histórico, trazabilidad,
+                  automatización, reglas fiscales y una relación mucho más rica con tus procesos,
+                  documentos y decisiones.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link
                     href="https://verifactu.business"
                     className="inline-flex items-center justify-center rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white hover:bg-neutral-800"
                   >
-                    Probar verifactu.business 30 días
+                    Empezar prueba con datos reales
                   </Link>
                   <Link
-                    href="https://verifactu.business/que-es-isaak"
+                    href="/recursos/contacto"
                     className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
                   >
-                    Ver qué es Isaak
+                    Hablar con soporte de activación
                   </Link>
                 </div>
               </div>
@@ -292,7 +373,10 @@ export default function HoldedCampaignPage() {
 
           <div className="mt-8 grid gap-4 lg:grid-cols-2">
             {faqItems.map((item) => (
-              <article key={item.question} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <article
+                key={item.question}
+                className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+              >
                 <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{item.answer}</p>
               </article>
@@ -303,7 +387,10 @@ export default function HoldedCampaignPage() {
 
       <footer className="border-t border-slate-200 bg-white py-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <div>Isaak es la experiencia principal. Holded aparece aqui como ERP compatible y punto de entrada, no como marca protagonista.</div>
+          <div>
+            Isaak es la experiencia principal. Holded aparece aqui como ERP compatible y punto de
+            entrada, no como marca protagonista.
+          </div>
           <div className="flex flex-wrap gap-4">
             <Link href="/holded/support" className="hover:text-slate-900">
               Soporte

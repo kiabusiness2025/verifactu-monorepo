@@ -1,36 +1,39 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Briefcase, Building2, Check, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
-import Header from './components/Header';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import Faq from './components/Faq';
+import Header from './components/Header';
 import PricingCalculatorInline from './components/PricingCalculatorInline';
 import PricingCalculatorInlineModal from './components/PricingCalculatorInlineModal';
+import { EXCESS_TEXT_LINES, EXCESS_TEXT_TITLE, getPlanCheckoutHref, PLAN_LIST } from './lib/plans';
 import { getAppUrl } from './lib/urls';
-import { EXCESS_TEXT_LINES, EXCESS_TEXT_TITLE, PLAN_LIST } from './lib/plans';
 
 import {
-  ComplianceBadge,
-  Container,
-  DashboardMock,
-  HeroTripleMock,
-  FeaturesSection,
-  Footer,
-  PideseloAIsaakSection,
-  ResourceCard,
-  StickyCtaBar,
-  ThreeSteps,
-  TrustBadge,
+    ComplianceBadge,
+    Container,
+    DashboardMock,
+    FeaturesSection,
+    Footer,
+    HeroTripleMock,
+    PideseloAIsaakSection,
+    ResourceCard,
+    StickyCtaBar,
+    ThreeSteps,
+    TrustBadge,
 } from './lib/home/ui';
 
 export default function Page() {
   const navLinks = [
-    { label: 'Inicio', href: '/' },
-    { label: 'Qué es Isaak', href: '/que-es-isaak' },
-    { label: 'Integraciones', href: '/producto/integraciones' },
-    { label: 'Precios', href: '/precios' },
+    { label: 'Inicio', href: '#hero' },
+    { label: 'Holded', href: '/holded' },
+    { label: 'Planes', href: '/planes' },
+    { label: 'Para quién', href: '#para-quien' },
+    { label: 'Dashboard', href: '#dashboard' },
+    { label: 'Qué es Isaak', href: '#que-es-isaak' },
+    { label: 'FAQ', href: '#faq' },
     { label: 'Contacto', href: '/recursos/contacto' },
   ];
 
@@ -85,17 +88,18 @@ export default function Page() {
               </Link>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-[#011c67] sm:text-6xl">
-                Cumple VeriFactu y controla tus ventas - gastos = beneficio.
+                Isaak pone orden en tu negocio para que VeriFactu deje de imponer el ritmo.
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
-                Verifactu.business es tu capa empresarial: ventas, gastos, cobros y beneficio con
-                Isaak. Si conectas tu programa de contabilidad vía API, sincronizamos sin fricción.
+                Isaak te acompaña cada día con una sola verdad visible: ventas, gastos y beneficio.
+                Facturas, gastos, libros e informes quedan ordenados para que entiendas qué pasa y
+                decidas antes.
               </p>
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
-                Verifactu e Isaak no sustituyen a tu gestor habitual. Te dan visibilidad diaria de
-                ventas, gastos y beneficio, con impuesto estimado, para decidir en tiempo real y
-                comparar o compartir resultados con tu asesoría.
+                Isaak no sustituye a tu gestor habitual. Te da visibilidad diaria de ventas,
+                gastos y beneficio, con impuesto estimado, para decidir con calma y compartir con
+                tu asesoría cuando lo necesites.
               </div>
 
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
@@ -116,18 +120,19 @@ export default function Page() {
                   href={appUrl}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
                 >
-                  Empezar prueba de 30 días
+                  Crear cuenta y entrar en Demo SL
                 </Link>
                 <Link
                   href="/#planes"
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2361d8] bg-white px-6 py-3 font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#2361d8]/10"
                 >
-                  Calcular precio
+                  Ver planes y precios
                 </Link>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                30 días para crear y registrar. Después, acceso en modo lectura y exportación AEAT
-                (Excel).
+                Al registrarte entras en Empresa Demo SL (ya conectada con Holded) sin límite de
+                tiempo. Cuando quieras trabajar con tus datos, puedes iniciar una prueba de 30 días
+                para crear 1 empresa real.
               </p>
 
               <div className="mt-7 flex flex-wrap gap-2">
@@ -143,6 +148,27 @@ export default function Page() {
                   icon={<Check className="h-4 w-4 text-emerald-600" />}
                   text="Datos bajo control"
                 />
+              </div>
+
+              <div className="mt-7 flex items-center gap-4 rounded-[1.75rem] border border-slate-200 bg-white/95 p-4 shadow-sm max-w-xl">
+                <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-[#eef4ff] ring-1 ring-slate-200">
+                  <Image
+                    src="/Isaak/isaak-avatar.png"
+                    alt="Isaak"
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                  />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
+                    Isaak al frente
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    La plataforma existe para que Isaak pueda ayudarte mejor: menos ruido, más
+                    claridad y una relación continua con tu negocio real.
+                  </p>
+                </div>
               </div>
             </motion.div>
 
@@ -171,7 +197,8 @@ export default function Page() {
               Para quién quiere control diario, sin volverse contable
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-              Verifactu te ayuda a cumplir con VeriFactu. Isaak te ayuda a entender tu negocio.
+              Isaak es quien te acompaña. Verifactu es la capa que sostiene el cumplimiento y el
+              orden detrás.
             </p>
           </div>
 
@@ -201,7 +228,9 @@ export default function Page() {
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#2361d8]/10 text-[#2361d8]">
                   <Building2 className="h-5 w-5" />
                 </span>
-                <h3 className="text-sm font-semibold text-[#011c67]">PYMES que necesitan visibilidad real</h3>
+                <h3 className="text-sm font-semibold text-[#011c67]">
+                  PYMES que necesitan visibilidad real
+                </h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
                 Control diario, sin volverse contable. Detecta desvíos antes del cierre de mes.
@@ -221,13 +250,14 @@ export default function Page() {
                 </h3>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                Contrasta y comparte con asesoría usando libros e informes en Excel con trazabilidad.
+                Contrasta y comparte con asesoría usando libros e informes en Excel con
+                trazabilidad.
               </p>
             </div>
           </div>
 
           <div className="mt-12 rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-              <div className="text-sm font-semibold text-[#2361d8]">Lo que cambia cuando lo usas</div>
+            <div className="text-sm font-semibold text-[#2361d8]">Lo que cambia cuando lo usas</div>
             <ul className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
@@ -254,16 +284,16 @@ export default function Page() {
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
-                href={appUrl}
+                href="/demo"
                 className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
               >
-                Empezar prueba de 30 días
+                Ver demo guiada
               </Link>
               <Link
-                href="/recursos/contacto"
+                href="/holded"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Solicitar información
+                Ver entrada con Holded
               </Link>
             </div>
           </div>
@@ -280,10 +310,7 @@ export default function Page() {
       </section>
 
       {/* Dashboard preview */}
-      <section
-        id="dashboard"
-        className="py-16 bg-[#2361d8]/5"
-      >
+      <section id="dashboard" className="py-16 bg-[#2361d8]/5">
         <Container>
           <div className="text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-sm font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
@@ -294,143 +321,13 @@ export default function Page() {
               Ventas - Gastos = Beneficio
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-              Beneficio actualizado sin esperar al asesor. Verifactu opera el día a día y se conecta
-              con tu programa contable vía API cuando activas integración.
+              Beneficio actualizado sin esperar al asesor. Compara con tu contabilidad real cuando
+              quieras y comparte resultados con tu gestoria en un clic.
             </p>
           </div>
 
           <div className="mt-12">
             <DashboardMock />
-          </div>
-        </Container>
-      </section>
-
-      <section className="bg-white py-16">
-        <Container>
-          <div className="grid items-center gap-8 overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#eef4ff_52%,#ffffff_100%)] p-6 shadow-sm lg:grid-cols-[1.05fr_0.95fr] lg:p-10">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#2361d8] ring-1 ring-[#2361d8]/15">
-                Isaak en Verifactu
-              </div>
-              <h2 className="mt-5 max-w-2xl text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
-                El contable nativo que traduce Holded y tu operativa en decisiones claras.
-              </h2>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Isaak vive dentro de verifactu.business para ayudarte a entender ventas, gastos,
-                cobros, balances y tareas fiscales sin navegar menús contables complejos. Si
-                conectas Holded u otra API de gestión, Isaak trabaja sobre esos datos dentro de tu
-                propio dashboard.
-              </p>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
-                  <div className="text-sm font-semibold text-[#011c67]">Explica lo importante</div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Resume números, detecta desvíos y te explica qué pasa en lenguaje de negocio.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
-                  <div className="text-sm font-semibold text-[#011c67]">Actúa contigo</div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Prepara borradores, revisa datos y te guía paso a paso antes de confirmar.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/que-es-isaak"
-                  className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
-                >
-                  Ver qué es Isaak
-                </Link>
-                <Link
-                  href={appUrl}
-                  className="inline-flex items-center justify-center rounded-full border border-[#2361d8] bg-white px-6 py-3 text-sm font-semibold text-[#2361d8] transition hover:bg-[#2361d8]/10"
-                >
-                  Probar Isaak en el dashboard
-                </Link>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div
-                className="absolute -left-8 -top-8 h-28 w-28 rounded-full bg-[#2361d8]/15 blur-3xl"
-                aria-hidden="true"
-              />
-              <div
-                className="absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-sky-200/40 blur-3xl"
-                aria-hidden="true"
-              />
-              <div className="relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-white p-3 shadow-[0_25px_80px_-30px_rgba(35,97,216,0.45)]">
-                <Image
-                  src="/Isaak/Isaak_principal.png"
-                  alt="Vista principal de Isaak en Verifactu"
-                  width={1400}
-                  height={1200}
-                  className="h-auto w-full rounded-[1.1rem] object-cover"
-                  priority={false}
-                />
-              </div>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      <section className="bg-white py-10">
-        <Container>
-          <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#fff8f8_42%,#eef4ff_100%)] p-6 shadow-sm lg:p-8">
-            <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#ff5460] ring-1 ring-[#ff5460]/15">
-                  Integraciones compatibles
-                </div>
-                <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
-                  Isaak no depende de un solo ERP. Holded es solo el primer punto de entrada.
-                </h2>
-                <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                  Estamos construyendo un ecosistema de compatibilidades para que Isaak pueda trabajar con datos reales de distintas herramientas sin perder una identidad clara: asistente fiscal inteligente dentro de verifactu.business.
-                </p>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href="/producto/integraciones"
-                    className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
-                  >
-                    Ver integraciones compatibles
-                  </Link>
-                  <Link
-                    href="/holded"
-                    className="inline-flex items-center justify-center rounded-full border border-[#ff5460] bg-white px-6 py-3 text-sm font-semibold text-[#ff5460] transition hover:bg-[#ff5460]/10"
-                  >
-                    Explorar Holded
-                  </Link>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Hoy</div>
-                  <div className="mt-2 text-lg font-semibold text-slate-900">Holded</div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Compatible y listo para activar.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Próximamente</div>
-                  <div className="mt-2 text-lg font-semibold text-slate-900">Nuevos ERPs</div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Más conectores para facturas, gastos y operativa.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Objetivo</div>
-                  <div className="mt-2 text-lg font-semibold text-slate-900">Un solo Isaak</div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Misma experiencia, más fuentes de datos reales.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </Container>
       </section>
@@ -443,8 +340,8 @@ export default function Page() {
               Planes claros para cumplir y tener control
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-              Todos incluyen VeriFactu + gastos + exportación de libros oficiales Excel compatibles
-              AEAT. En Empresa y Pro puedes activar integración con tu programa de contabilidad vía API.
+              Todos incluyen VeriFactu + gastos + export Excel. En Empresa y Pro añadimos
+              integración contable (si tu software tiene API).
             </p>
 
             <div className="mt-10 grid gap-4 text-left lg:grid-cols-4">
@@ -465,10 +362,16 @@ export default function Page() {
                     ))}
                     <li>
                       {plan.hasAccountingIntegration
-                        ? "Integración con tu programa de contabilidad vía API"
-                        : "Integración API opcional (disponible en Empresa/PRO)"}
+                        ? 'Integración contable (si tiene API)'
+                        : 'Sin integración contable'}
                     </li>
                   </ul>
+                  <Link
+                    href={getPlanCheckoutHref(plan)}
+                    className="mt-5 inline-flex rounded-full border border-[#2361d8] px-4 py-2 text-xs font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
+                  >
+                    Probar gratis
+                  </Link>
                 </article>
               ))}
             </div>
@@ -528,6 +431,20 @@ export default function Page() {
             </div>
             <ComplianceBadge />
           </div>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
+            <Link
+              href="/que-es-isaak"
+              className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
+            >
+              Entender cómo trabaja Isaak
+            </Link>
+            <Link
+              href="/recursos/contacto"
+              className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
+            >
+              Hablar con el equipo
+            </Link>
+          </div>
         </Container>
       </section>
 
@@ -573,11 +490,11 @@ export default function Page() {
               href="/que-es-isaak"
             />
             <ResourceCard
-              tag="Integraciones"
-              title="ERPs y conectores compatibles"
-              desc="Descubre Holded y la futura capa de integraciones de Isaak dentro de verifactu.business."
-              cta="Ver integraciones"
-              href="/producto/integraciones"
+              tag="Checklist"
+              title="Auditoria express"
+              desc="Evalua el estado de tu facturacion y detecta riesgos."
+              cta="Solicitar checklist"
+              href="/recursos/checklist"
             />
           </div>
         </Container>
@@ -592,7 +509,3 @@ export default function Page() {
     </div>
   );
 }
-
-
-
-

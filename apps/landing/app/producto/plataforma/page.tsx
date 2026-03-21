@@ -1,27 +1,27 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { getLandingUrl, getAppUrl } from "../../lib/urls";
-import { ArrowRight, ShieldCheck, FileCheck2, LayoutDashboard, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, FileCheck2, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getAppUrl, getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: "Plataforma | Verifactu Business",
-  description: "Una plataforma clara para facturar, cumplir VeriFactu y entender tu negocio.",
+  title: 'Plataforma | verifactu.business',
+  description: 'Una plataforma clara para facturar, cumplir VeriFactu y entender tu negocio.',
 };
 
 const modules = [
   {
-    title: "Panel unificado",
-    description: "Ventas, gastos y beneficio en un solo lugar.",
+    title: 'Panel unificado',
+    description: 'Ventas, gastos y beneficio en un solo lugar.',
     icon: LayoutDashboard,
   },
   {
-    title: "Cumplimiento VeriFactu",
-    description: "Emisión y trazabilidad conforme a la normativa.",
+    title: 'Cumplimiento VeriFactu',
+    description: 'Emisión y trazabilidad conforme a la normativa.',
     icon: FileCheck2,
   },
   {
-    title: "Seguridad y acceso",
-    description: "Acceso seguro, roles y datos protegidos.",
+    title: 'Seguridad y acceso',
+    description: 'Acceso seguro, roles y datos protegidos.',
     icon: ShieldCheck,
   },
 ];
@@ -52,22 +52,22 @@ export default function PlataformaPage() {
               La plataforma que simplifica tu gestión diaria
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Todo lo esencial para emitir, controlar y cumplir, sin pantallas innecesarias. Isaak te acompaña en cada
-              paso para mantener el orden.
+              Todo lo esencial para emitir, controlar y cumplir, sin pantallas innecesarias. Isaak
+              te acompaña en cada paso para mantener el orden.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/auth/signup"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
               >
-                Empezar 1 mes gratis
+                Crear cuenta y entrar en Demo SL
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href={isaakChatUrl}
+                href="/precios"
                 className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Hablar con Isaak
+                Ver precios y comparativa
               </Link>
             </div>
           </div>
@@ -96,7 +96,9 @@ export default function PlataformaPage() {
       <section className="py-12">
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-3xl border border-[#2361d8]/15 bg-white p-10">
-            <h2 className="text-2xl font-semibold text-[#011c67]">Diseñada para equipos pequeños</h2>
+            <h2 className="text-2xl font-semibold text-[#011c67]">
+              Diseñada para equipos pequeños
+            </h2>
             <p className="mt-4 text-slate-600">
               Pensada para PYMEs que quieren facturar y cumplir sin herramientas complejas.
             </p>
@@ -116,10 +118,10 @@ export default function PlataformaPage() {
             </ul>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/#planes"
+                href="/planes"
                 className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Calcular precio
+                Ver detalle por plan
               </Link>
               <Link
                 href="/presupuesto"
@@ -134,6 +136,3 @@ export default function PlataformaPage() {
     </main>
   );
 }
-
-
-

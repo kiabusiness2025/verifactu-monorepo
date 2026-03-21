@@ -8,29 +8,32 @@ const PROTECTED_PREFIXES = ['/t/', '/dashboard'];
 // Rutas legacy que redirigimos al nuevo path (sin tenantSlug → login primero)
 const LEGACY_REDIRECTS: Record<string, string> = {
   '/dashboard': '/workspace',
+  '/workspace/dashboard': '/workspace',
 };
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const normalizedPath =
+    pathname !== '/' && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
   const session = req.cookies.get(SESSION_COOKIE)?.value;
 
   // Redirigir raíz
-  if (pathname === '/') {
+  if (normalizedPath === '/') {
     const target = new URL(session ? '/workspace' : '/login', req.url);
     return NextResponse.redirect(target);
   }
 
   // Redirigir rutas legacy a login (no tenemos tenantSlug aquí)
-  if (pathname in LEGACY_REDIRECTS) {
-    const target = new URL(session ? LEGACY_REDIRECTS[pathname] : '/login', req.url);
+  if (normalizedPath in LEGACY_REDIRECTS) {
+    const target = new URL(session ? LEGACY_REDIRECTS[normalizedPath] : '/login', req.url);
     return NextResponse.redirect(target);
   }
 
   // Proteger rutas autenticadas
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  const isProtected = PROTECTED_PREFIXES.some((p) => normalizedPath.startsWith(p));
   if (isProtected && !session) {
     const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('next', pathname);
+    loginUrl.searchParams.set('next', normalizedPath);
     return NextResponse.redirect(loginUrl);
   }
 

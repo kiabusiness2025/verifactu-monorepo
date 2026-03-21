@@ -1,11 +1,11 @@
+import { Calculator, CreditCard, FileText, Info, MessageCircle } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, CreditCard, FileText, Info, MessageCircle } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Política de precios | Verifactu Business',
+  title: 'Política de precios | verifactu.business',
   description:
-    'Cómo se calcula el precio, qué se incluye en la cuota y cómo medimos el uso en Verifactu Business.',
+    'Cómo se calcula el precio, qué se incluye en la cuota y cómo medimos el uso en verifactu.business.',
 };
 
 export default function PoliticaDePreciosPage() {
@@ -79,8 +79,8 @@ export default function PoliticaDePreciosPage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
             <div className="text-xs font-semibold uppercase text-slate-500">Trial</div>
             <ul className="mt-2 space-y-1">
-              <li>30 días gratis en todos los planes</li>
-              <li>Sin permanencia</li>
+              <li>Acceso automático a Empresa Demo SL sin caducidad</li>
+              <li>Prueba real de 30 días para crear 1 empresa con tus datos</li>
               <li>Aviso previo antes del primer cobro</li>
             </ul>
           </div>
@@ -117,16 +117,16 @@ export default function PoliticaDePreciosPage() {
 
         <div className="mt-12 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/#planes"
+            href="/precios"
             className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
           >
-            Calcular precio
+            Ver planes y comparativa
           </Link>
           <Link
             href="/auth/signup"
             className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
           >
-            Probar con Isaak
+            Crear cuenta y entrar en Demo SL
           </Link>
         </div>
       </section>

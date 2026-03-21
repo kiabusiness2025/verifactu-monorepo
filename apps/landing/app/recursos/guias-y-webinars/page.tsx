@@ -1,28 +1,28 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { BookOpen, Video, ArrowRight, Calendar } from "lucide-react";
-import { getLandingUrl, getAppUrl } from "../../lib/urls";
+import { ArrowRight, BookOpen, Calendar, Video } from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getAppUrl, getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: "Guías y webinars | Verifactu Business",
-  description: "Recursos claros para cumplir VeriFactu y gestionar cierres sin sorpresas.",
+  title: 'Guías y webinars | verifactu.business',
+  description: 'Recursos claros para cumplir VeriFactu y gestionar cierres sin sorpresas.',
 };
 
 const guides = [
   {
-    title: "Guía rápida VeriFactu",
-    description: "Qué exige la AEAT y cómo cumplir sin errores.",
-    meta: "PDF + video",
+    title: 'Guía rápida VeriFactu',
+    description: 'Qué exige la AEAT y cómo cumplir sin errores.',
+    meta: 'PDF + video',
   },
   {
-    title: "Cierre fiscal paso a paso",
-    description: "Ventas, gastos, evidencias y checklist final.",
-    meta: "Checklist",
+    title: 'Cierre fiscal paso a paso',
+    description: 'Ventas, gastos, evidencias y checklist final.',
+    meta: 'Checklist',
   },
   {
-    title: "Trimestre sin nervios",
-    description: "Plazos, modelos y alertas claras en enero, febrero y marzo.",
-    meta: "Calendario",
+    title: 'Trimestre sin nervios',
+    description: 'Plazos, modelos y alertas claras en enero, febrero y marzo.',
+    meta: 'Calendario',
   },
 ];
 
@@ -49,7 +49,8 @@ export default function GuiasPage() {
           </div>
           <h1 className="mt-4 text-4xl font-bold text-[#011c67]">Guías y webinars</h1>
           <p className="mt-4 text-lg text-slate-600">
-            Recursos claros, en lenguaje llano, para que cumplas VeriFactu y tengas control real de tu negocio.
+            Recursos claros, en lenguaje llano, para que cumplas VeriFactu y tengas control real de
+            tu negocio.
           </p>
         </div>
 
@@ -93,20 +94,19 @@ export default function GuiasPage() {
 
         <div className="mt-12 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/#planes"
+            href="/precios"
             className="inline-flex items-center justify-center rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
           >
-            Calcular precio
+            Ver precios y planes
           </Link>
           <Link
-            href={isaakChatUrl}
+            href="/auth/signup"
             className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
           >
-            Hablar con Isaak
+            Crear cuenta y entrar en Demo SL
           </Link>
         </div>
       </section>
     </main>
   );
 }
-

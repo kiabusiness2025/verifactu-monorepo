@@ -1,4 +1,5 @@
 import { getSessionPayload } from '@/lib/session';
+import MarkExpensePaidButton from '@/src/components/erp/MarkExpensePaidButton';
 import { getExpenseDetail, resolveTenantFromSession } from '@/src/server/erp';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/ui';
 import Link from 'next/link';
@@ -53,8 +54,11 @@ export default async function ExpenseDetailPage({
           <h1 className="mt-2 text-2xl font-semibold">{expense.description}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Fecha: {formatDate(expense.date)}</p>
         </div>
-        <div className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-          {getStatusLabel(expense.status)}
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <div className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+            {getStatusLabel(expense.status)}
+          </div>
+          {expense.status !== 'paid' && <MarkExpensePaidButton expenseId={expense.id} />}
         </div>
       </div>
 

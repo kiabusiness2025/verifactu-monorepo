@@ -1,27 +1,27 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { getLandingUrl, getAppUrl } from "../../lib/urls";
-import { CheckCircle2, ArrowRight, TrendingUp, FileText, Calculator } from "lucide-react";
+import { ArrowRight, Calculator, CheckCircle2, FileText, TrendingUp } from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getAppUrl, getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: "Resumen del producto | Verifactu Business",
-  description: "Ventas, gastos y beneficio en una sola pantalla con cumplimiento VeriFactu.",
+  title: 'Resumen del producto | verifactu.business',
+  description: 'Ventas, gastos y beneficio en una sola pantalla con cumplimiento VeriFactu.',
 };
 
 const highlights = [
   {
-    title: "Dashboard de beneficio",
-    description: "Ves ventas, gastos y beneficio real en segundos.",
+    title: 'Dashboard de beneficio',
+    description: 'Ves ventas, gastos y beneficio real en segundos.',
     icon: TrendingUp,
   },
   {
-    title: "Registro de ventas",
-    description: "Emite facturas claras y conformes con VeriFactu.",
+    title: 'Registro de ventas',
+    description: 'Emite facturas claras y conformes con VeriFactu.',
     icon: FileText,
   },
   {
-    title: "Control de gastos",
-    description: "Clasifica gastos y controla IVA sin hojas de cálculo.",
+    title: 'Control de gastos',
+    description: 'Clasifica gastos y controla IVA sin hojas de cálculo.',
     icon: Calculator,
   },
 ];
@@ -52,22 +52,23 @@ export default function ProductSummaryPage() {
               Tu negocio bajo control, sin complicaciones
             </h1>
             <p className="mt-4 text-xl text-slate-600">
-              Verifactu Business unifica ventas, gastos y cumplimiento VeriFactu en una sola pantalla. Isaak te ayuda a
-              interpretar los datos y tomar decisiones seguras cada semana.
+              Verifactu Business unifica ventas, gastos y cumplimiento VeriFactu en una sola
+              pantalla. Isaak te ayuda a interpretar los datos y tomar decisiones seguras cada
+              semana.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/auth/signup"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
               >
-                Empezar 1 mes gratis
+                Crear cuenta y entrar en Demo SL
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href={isaakChatUrl}
+                href="/planes"
                 className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Hablar con Isaak
+                Ver detalle de planes
               </Link>
             </div>
           </div>
@@ -118,20 +119,22 @@ export default function ProductSummaryPage() {
       <section className="py-16">
         <div className="mx-auto max-w-4xl px-4 text-center">
           <h2 className="text-3xl font-bold text-[#011c67]">Empieza hoy y recupera el control</h2>
-          <p className="mt-4 text-lg text-slate-600">1 mes gratis, sin tarjeta y sin fricción.</p>
+          <p className="mt-4 text-lg text-slate-600">
+            Acceso inmediato a Demo SL y salto a datos reales cuando quieras.
+          </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/auth/signup"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
             >
-              Empezar 1 mes gratis
+              Crear cuenta y entrar en Demo SL
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/#planes"
+              href="/precios"
               className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
             >
-              Calcular precio
+              Ver precios y exceso
             </Link>
           </div>
         </div>
@@ -139,6 +142,3 @@ export default function ProductSummaryPage() {
     </main>
   );
 }
-
-
-
