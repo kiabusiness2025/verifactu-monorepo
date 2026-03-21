@@ -1,12 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { VertexAI } from "@google-cloud/vertexai";
+import { VertexAI } from '@google-cloud/vertexai';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { checkRateLimit, getRequestIp } from '../../lib/security/rate-limit';
 
 const chatSchema = z.object({
-  message: z.string().min(1, "El mensaje no puede estar vacío").max(1000, "Mensaje demasiado largo"),
+  message: z
+    .string()
+    .min(1, 'El mensaje no puede estar vacío')
+    .max(1000, 'Mensaje demasiado largo'),
 });
 
 export async function POST(request: NextRequest) {
+  const ip = getRequestIp(request);
+  const rate = await checkRateLimit({
+    key: `vertex-chat:${ip}`,
+    limit: 20,
+    windowSeconds: 60,
+  });
+
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas solicitudes. Inténtalo de nuevo en un momento.' },
+      { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const body = await request.json();
 
@@ -14,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0];
       return NextResponse.json(
-        { error: firstError?.message || "Datos inválidos" },
+        { error: firstError?.message || 'Datos inválidos' },
         { status: 400 }
       );
     }
@@ -25,18 +43,15 @@ export async function POST(request: NextRequest) {
       process.env.VERTEX_PROJECT_ID ||
       process.env.GCP_PROJECT_ID ||
       process.env.GOOGLE_CLOUD_PROJECT;
-    const location = process.env.VERTEX_LOCATION || process.env.GCP_LOCATION || "us-central1";
+    const location = process.env.VERTEX_LOCATION || process.env.GCP_LOCATION || 'us-central1';
 
     if (!projectId) {
-      console.error("VERTEX_PROJECT_ID (or GCP_PROJECT_ID) not configured");
-      if (process.env.NODE_ENV === "development") {
+      console.error('VERTEX_PROJECT_ID (or GCP_PROJECT_ID) not configured');
+      if (process.env.NODE_ENV === 'development') {
         const mockResponse = generateMockResponse(message);
         return NextResponse.json({ response: mockResponse });
       }
-      return NextResponse.json(
-        { error: "Servicio de chat no configurado" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Servicio de chat no configurado' }, { status: 500 });
     }
 
     const vertexAI = new VertexAI({
@@ -45,33 +60,42 @@ export async function POST(request: NextRequest) {
     });
 
     const model = vertexAI.getGenerativeModel({
-      model: process.env.VERTEX_MODEL_ID || "gemini-1.5-pro",
+      model: process.env.VERTEX_MODEL_ID || 'gemini-1.5-pro',
     });
 
-    const systemPrompt = `Eres un asistente experto en Verifactu y facturación digital en España. 
-Tu objetivo es ayudar a los usuarios a entender cómo funciona Verifactu, responder preguntas sobre 
-la plataforma y guiarlos en el proceso de cumplimiento con el SII (Suministro Inmediato de Información).
+    const systemPrompt = `Eres Isaak, el asistente fiscal y operativo de verifactu.business.
 
-Información clave sobre Verifactu:
-- Es una plataforma de facturación digital certificada
-- Automatiza el envío de libros de facturas al SII
-- Integra puntos de venta físicos y digitales
-- Ofrece validación automática y alertas en tiempo real
-- Disponibilidad del 99.9%
-- Onboarding promedio de 48 horas
-- Base desde 19 €/mes + IVA, con tramos por uso
+  Objetivo:
+  - Ayudar a la persona usuaria a entender prioridades de negocio con una narrativa simple: ventas, gastos y beneficio.
+  - Guiar sobre cumplimiento VeriFactu y operativa diaria sin tecnicismos innecesarios.
+  - Mantener tono claro, accionable y cercano.
 
-Responde de forma amigable, profesional y concisa en español.`;
+  Flujo canonico que debes respetar:
+  - Al crear cuenta, el usuario entra en Empresa Demo SL.
+  - Demo SL no caduca.
+  - Cuando quiera operar con datos reales, activa una prueba real de 30 dias.
+  - La prueba real permite crear 1 empresa real.
+
+  Identidad:
+  - No eres un chatbot generico de facturacion.
+  - Eres Isaak by verifactu.business.
+  - Si preguntan por Holded, explica que es una compatibilidad de entrada, pero la experiencia y criterio los aporta Isaak.
+
+  Estilo de respuesta:
+  - Espanol, breve, practico y orientado a siguiente paso.
+  - Evita texto legal extenso.
+  - Si falta contexto, pide solo lo minimo para avanzar.
+  `;
 
     const chat = model.startChat({
       history: [
         {
-          role: "user",
+          role: 'user',
           parts: [{ text: systemPrompt }],
         },
         {
-          role: "model",
-          parts: [{ text: "Entendido. Estoy listo para ayudar con preguntas sobre Verifactu." }],
+          role: 'model',
+          parts: [{ text: 'Entendido. Soy Isaak y estoy listo para ayudarte.' }],
         },
       ],
     });
@@ -80,15 +104,15 @@ Responde de forma amigable, profesional y concisa en español.`;
     const response = result.response;
     const text =
       response.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "Lo siento, no pude generar una respuesta.";
+      'Lo siento, no pude generar una respuesta.';
 
     return NextResponse.json({ response: text });
   } catch (error) {
-    console.error("Error in vertex-chat:", error);
+    console.error('Error in vertex-chat:', error);
 
     const fallbackResponse =
-      "Lo siento, hubo un problema al procesar tu mensaje. " +
-      "Por favor, contacta con nuestro equipo en hola@verifactu.business o prueba de nuevo más tarde.";
+      'Lo siento, hubo un problema al procesar tu mensaje. ' +
+      'Por favor, contacta con nuestro equipo en hola@verifactu.business o prueba de nuevo más tarde.';
 
     return NextResponse.json({ response: fallbackResponse });
   }
@@ -97,48 +121,49 @@ Responde de forma amigable, profesional y concisa en español.`;
 function generateMockResponse(message: string): string {
   const lowerMessage = message.toLowerCase();
 
-  if (lowerMessage.includes("precio") || lowerMessage.includes("costo") || lowerMessage.includes("cuánto")) {
+  if (
+    lowerMessage.includes('precio') ||
+    lowerMessage.includes('costo') ||
+    lowerMessage.includes('cuánto')
+  ) {
     return (
-      "La base es 19 €/mes + IVA e incluye hasta 10 facturas/mes. " +
-      "El precio se ajusta según tu volumen de facturación y movimientos si activas conciliación. " +
-      "Puedes ver más detalles en la sección de precios o solicitar una demo personalizada."
+      'Te recomiendo empezar por el flujo real: entras en Demo SL sin caducidad y validas proceso. ' +
+      'Cuando quieras operar en real, activas la prueba real de 30 días con 1 empresa. ' +
+      'Si quieres, te ayudo a elegir plan según volumen y equipo.'
     );
   }
 
-  if (lowerMessage.includes("funciona") || lowerMessage.includes("cómo")) {
+  if (lowerMessage.includes('funciona') || lowerMessage.includes('cómo')) {
     return (
-      "Verifactu funciona en 3 pasos simples: 1) Conectas tus fuentes (ERPs, e-commerce, POS), " +
-      "2) Automatizamos el flujo de facturación con validaciones, y 3) Enviamos automáticamente " +
-      "los libros al SII con alertas en tiempo real."
+      'En simple: 1) entras en Demo SL, 2) ordenas flujo con ayuda de Isaak, 3) pasas a real cuando te convenga. ' +
+      'Isaak te va marcando el siguiente paso para cumplir VeriFactu sin fricción.'
     );
   }
 
-  if (lowerMessage.includes("integración") || lowerMessage.includes("erp")) {
+  if (lowerMessage.includes('integración') || lowerMessage.includes('erp')) {
     return (
-      "Ofrecemos integraciones listas para los principales ERPs del mercado. " +
-      "También podemos crear integraciones personalizadas según tus necesidades. " +
-      "El proceso de onboarding promedio es de solo 48 horas."
+      'Holded es una compatibilidad de entrada, pero la capa de criterio y acompañamiento es Isaak. ' +
+      'La idea es que no dependas de una integración concreta para tener claridad operativa y fiscal.'
     );
   }
 
-  if (lowerMessage.includes("sii") || lowerMessage.includes("suministro")) {
+  if (lowerMessage.includes('sii') || lowerMessage.includes('suministro')) {
     return (
-      "El SII (Suministro Inmediato de Información) es el sistema de la Agencia Tributaria " +
-      "para el control de facturas. Verifactu automatiza completamente el envío de libros de " +
-      "facturas al SII, asegurando el cumplimiento normativo sin errores."
+      'El SII (Suministro Inmediato de Información) es el sistema de la Agencia Tributaria ' +
+      'para el control de facturas. Verifactu automatiza completamente el envío de libros de ' +
+      'facturas al SII, asegurando el cumplimiento normativo sin errores.'
     );
   }
 
-  if (lowerMessage.includes("demo") || lowerMessage.includes("prueba")) {
+  if (lowerMessage.includes('demo') || lowerMessage.includes('prueba')) {
     return (
-      "¡Perfecto! Puedes solicitar una demo haciendo clic en \"Solicitar demo\" en nuestra página. " +
-      "Nuestro equipo se pondrá en contacto contigo para programar una sesión personalizada."
+      'Perfecto. Empieza entrando en Demo SL y prueba flujo completo sin caducidad. ' +
+      'Cuando quieras trabajar con datos reales, activas la prueba real de 30 días con 1 empresa.'
     );
   }
 
   return (
-    "¡Hola! Estoy aquí para ayudarte con cualquier pregunta sobre Verifactu. " +
-    "Puedo contarte sobre nuestros precios, funcionalidades, integraciones, o el cumplimiento con el SII. " +
-    "¿En qué te puedo ayudar?"
+    'Soy Isaak. Te ayudo a priorizar ventas, gastos y beneficio y a mantener VeriFactu bajo control. ' +
+    'Si quieres, empezamos por tu caso y te digo el siguiente paso más útil hoy.'
   );
 }

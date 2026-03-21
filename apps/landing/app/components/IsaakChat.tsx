@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { MessageCircle, Send, UserRoundCog, X } from 'lucide-react';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Send, X, MessageCircle, UserRoundCog } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { getAppUrl } from '../lib/urls';
 
 type Message = {
   id: string;
@@ -33,10 +35,26 @@ const toneLabels: Record<IsaakTone, { label: string; promptStyle: string }> = {
 };
 
 const sectionSuggestions: Record<string, string[]> = {
-  home: ['¿Cuál plan me conviene según mi volumen?', '¿Qué necesito para empezar hoy?', 'Explícame Verifactu en simple'],
-  verifactu: ['¿Cómo me ayudas con VeriFactu?', 'Checklist mínimo para cumplir', 'Riesgos comunes al implantar'],
-  producto: ['¿Qué automatiza realmente?', '¿Qué integración activar primero?', '¿Cómo reducir errores de facturación?'],
-  recursos: ['Dame una guía para arrancar', 'Resumen de buenas prácticas', 'Qué revisar cada semana'],
+  home: [
+    '¿Cuál plan me conviene según mi volumen?',
+    '¿Qué necesito para empezar hoy?',
+    'Explícame Verifactu en simple',
+  ],
+  verifactu: [
+    '¿Cómo me ayudas con VeriFactu?',
+    'Checklist mínimo para cumplir',
+    'Riesgos comunes al implantar',
+  ],
+  producto: [
+    '¿Qué automatiza realmente?',
+    '¿Qué integración activar primero?',
+    '¿Cómo reducir errores de facturación?',
+  ],
+  recursos: [
+    'Dame una guía para arrancar',
+    'Resumen de buenas prácticas',
+    'Qué revisar cada semana',
+  ],
   precios: ['Compárame planes en 1 minuto', 'Cuándo subir de plan', 'Cómo estimar coste mensual'],
 };
 
@@ -52,6 +70,8 @@ export default function IsaakChat() {
   const pathname = usePathname() ?? '/';
   const section = getLandingSection(pathname);
   const proactiveSuggestions = sectionSuggestions[section] ?? sectionSuggestions.home;
+  const isaakSignupUrl = `${getAppUrl()}/auth/signup?next=/dashboard?isaak=1`;
+  const isaakDashboardUrl = `${getAppUrl()}/dashboard?isaak=1`;
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [tone, setTone] = useState<IsaakTone>('friendly');
@@ -61,7 +81,7 @@ export default function IsaakChat() {
       id: '1',
       role: 'assistant',
       content:
-        'Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perderás acceso a tus datos.\nYo me encargo de cuidarlos.',
+        'Soy Isaak. Te ayudo a priorizar ventas, gastos y beneficio con claridad.\nEmpiezas en Demo SL sin caducidad y, cuando quieras operar en real, activas tu prueba real de 30 días con 1 empresa.',
       timestamp: new Date(),
     },
   ]);
@@ -155,6 +175,12 @@ export default function IsaakChat() {
         <div className="fixed bottom-24 right-6 z-20 hidden max-w-[280px] rounded-xl border border-slate-200 bg-white p-3 shadow-lg sm:block">
           <div className="text-xs font-semibold text-[#2361d8]">Sugerencia de Isaak</div>
           <p className="mt-1 text-xs text-slate-600">{proactiveSuggestions[0]}</p>
+          <a
+            href={isaakSignupUrl}
+            className="mt-2 inline-flex text-xs font-semibold text-[#2361d8] hover:text-[#1f55c0]"
+          >
+            Entrar en Demo SL
+          </a>
         </div>
       )}
 
@@ -165,10 +191,20 @@ export default function IsaakChat() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#2361d8] text-white shadow-lg transition hover:shadow-xl"
+        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#2361d8] text-white shadow-lg transition hover:shadow-xl"
         aria-label="Abrir chat con Isaak"
       >
-        <MessageCircle className="h-6 w-6" />
+        <Image
+          src="/Isaak/isaak-avatar-2.png"
+          alt="Isaak"
+          fill
+          className="object-cover"
+          sizes="56px"
+          priority={false}
+        />
+        <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-[#2361d8] p-1">
+          <MessageCircle className="h-3.5 w-3.5" />
+        </span>
       </motion.button>
 
       {/* Chat Window */}
@@ -183,9 +219,22 @@ export default function IsaakChat() {
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-200 bg-[#2361d8] px-4 py-3 text-white">
-              <div>
-                <div className="font-semibold">Isaak</div>
-                <div className="text-xs opacity-90">Aquí para ayudarte · {toneLabels[tone].label}</div>
+              <div className="flex items-center gap-2">
+                <div className="relative h-9 w-9 overflow-hidden rounded-full border border-white/40">
+                  <Image
+                    src="/Isaak/isaak-avatar-2.png"
+                    alt="Isaak"
+                    fill
+                    className="object-cover"
+                    sizes="36px"
+                  />
+                </div>
+                <div>
+                  <div className="font-semibold leading-tight">Isaak</div>
+                  <div className="text-xs opacity-90">
+                    by verifactu.business · {toneLabels[tone].label}
+                  </div>
+                </div>
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -208,7 +257,9 @@ export default function IsaakChat() {
 
             {showTonePicker && (
               <div className="border-b border-slate-200 bg-slate-50 p-3">
-                <div className="mb-2 text-xs font-semibold text-slate-700">Elige la personalidad de Isaak</div>
+                <div className="mb-2 text-xs font-semibold text-slate-700">
+                  Elige la personalidad de Isaak
+                </div>
                 <div className="grid grid-cols-1 gap-2">
                   {(['friendly', 'professional', 'minimal'] as IsaakTone[]).map((option) => (
                     <button
@@ -237,7 +288,9 @@ export default function IsaakChat() {
             )}
 
             <div className="border-b border-slate-200 bg-slate-50 p-3">
-              <div className="mb-2 text-xs font-semibold text-slate-700">Preguntas recomendadas</div>
+              <div className="mb-2 text-xs font-semibold text-slate-700">
+                Preguntas recomendadas
+              </div>
               <div className="flex flex-wrap gap-2">
                 {proactiveSuggestions.map((suggestion) => (
                   <button
@@ -248,6 +301,20 @@ export default function IsaakChat() {
                     {suggestion}
                   </button>
                 ))}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a
+                  href={isaakSignupUrl}
+                  className="rounded-full border border-[#2361d8] bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] hover:bg-blue-50"
+                >
+                  Entrar en Demo SL
+                </a>
+                <a
+                  href={isaakDashboardUrl}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  Abrir Isaak en app
+                </a>
               </div>
             </div>
 
