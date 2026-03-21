@@ -30,6 +30,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [passwordError, setPasswordError] = useState('');
+  const [mintError, setMintError] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(() => {
     if (typeof window === 'undefined') return true;
     const stored = window.localStorage.getItem('vf_remember_device');
@@ -94,6 +95,7 @@ export default function LoginPage() {
         })
         .catch(() => {
           hasRedirected.current = false;
+          setMintError(true);
         });
     }
   }, [user, authLoading, redirectToDashboard, rememberDevice]);
@@ -118,8 +120,22 @@ export default function LoginPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#2361d8]/5">
         <div className="text-center">
-          <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-[#2361d8]"></div>
-          <p className="mt-4 text-gray-600">Redirigiendo...</p>
+          {mintError ? (
+            <>
+              <p className="mt-4 text-red-600">Error al iniciar sesión. Por favor, recarga e inténtalo de nuevo.</p>
+              <button
+                className="mt-4 text-[#2361d8] underline text-sm"
+                onClick={() => { setMintError(false); hasRedirected.current = false; mintSessionCookie(user as User, { rememberDevice }).then(() => { hasRedirected.current = true; redirectToDashboard(); }).catch(() => setMintError(true)); }}
+              >
+                Reintentar
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-[#2361d8]"></div>
+              <p className="mt-4 text-gray-600">Redirigiendo...</p>
+            </>
+          )}
         </div>
       </div>
     );
