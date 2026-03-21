@@ -216,7 +216,7 @@ export async function getPreview303(tenantId: string, from: Date, to: Date, peri
     getPurchasesBookRows(tenantId, from, to),
   ]);
 
-  const baseVentas = sales.reduce((sum, row) => sum + row.base, 0);
+  const baseVentas = sales.reduce((sum, row) => sum + row.baseImponible, 0);
   const cuotaVentas = sales.reduce((sum, row) => sum + row.cuotaIvaRepercutida, 0);
   const baseGastosDeducibles = purchases
     .filter((row) => row.taxCategory !== 'iva_no_deducible')
@@ -250,7 +250,7 @@ export async function getPreview130(tenantId: string, from: Date, to: Date, peri
     getPurchasesBookRows(tenantId, from, to),
   ]);
 
-  const ingresos = sales.reduce((sum, row) => sum + row.base, 0);
+  const ingresos = sales.reduce((sum, row) => sum + row.baseImponible, 0);
   const gastos = purchases.reduce((sum, row) => sum + row.totalFactura, 0);
   const rendimientoNeto = ingresos - gastos;
   const porcentajeAplicado = 0.2;
