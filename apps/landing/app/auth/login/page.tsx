@@ -156,7 +156,6 @@ export default function LoginPage() {
       }
 
       showToast({ type: 'success', title: 'Bienvenido', message: 'Inicio de sesion correcto' });
-      redirectToDashboard();
     } catch (err) {
       setError('Error al iniciar sesion. Intenta de nuevo.');
       showToast({ type: 'error', title: 'Error', message: 'Error al iniciar sesion' });
@@ -179,7 +178,6 @@ export default function LoginPage() {
       }
 
       showToast({ type: 'success', title: 'Bienvenido', message: 'Inicio de sesion con Google' });
-      redirectToDashboard();
     } catch (err) {
       setError('Error al iniciar sesion con Google. Intenta de nuevo.');
       showToast({ type: 'error', title: 'Error', message: 'Error al iniciar sesion con Google' });
@@ -206,7 +204,6 @@ export default function LoginPage() {
         title: 'Bienvenido',
         message: 'Inicio de sesion con Microsoft',
       });
-      redirectToDashboard();
     } catch (err) {
       setError('Error al iniciar sesion con Microsoft. Intenta de nuevo.');
       showToast({ type: 'error', title: 'Error', message: 'Error al iniciar sesion' });
