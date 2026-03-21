@@ -3,31 +3,53 @@ import { Decimal } from '@prisma/client/runtime/library';
 import type { ExpenseCanonicalV2 } from '@verifactu/utils/expenses/canonical';
 
 type SalesRow = {
-  fecha: string;
+  fechaExpedicion: string;
   numeroFactura: string;
-  cliente: string;
-  nif: string;
-  base: number;
+  destinatario: string;
+  nifDestinatario: string;
+  baseImponible: number;
   tipoIva: number;
-  cuotaIva: number;
-  total: number;
+  cuotaIvaRepercutida: number;
+  retencionIrpf: number;
+  totalFactura: number;
   claveOperacion: string;
-  pais: string;
+  periodoLiquidacion: string;
+  observaciones: string;
 };
 
 type PurchasesRow = {
-  fecha: string;
-  numeroJustificante: string;
+  fechaFactura: string;
+  fechaRegistro: string;
+  numeroFacturaProveedor: string;
   proveedor: string;
-  nif: string;
-  base: number;
+  nifProveedor: string;
+  baseImponible: number;
   tipoIva: number;
-  cuotaIva: number;
-  total: number;
+  cuotaIvaSoportado: number;
+  ivaDeducible: 'SI' | 'NO';
+  totalFactura: number;
+  claveGasto: string;
+  observaciones: string;
+  // Campos internos para cálculo de modelos fiscales.
   docType: string;
   taxCategory: string;
   aeatConcept: string;
   aeatKey: string;
+};
+
+type InvestmentRow = {
+  descripcionBien: string;
+  fechaAdquisicion: string;
+  valorAdquisicion: number;
+  valorSuelo: number;
+  valorConstruccion: number;
+  baseAmortizable: number;
+  porcentajeAmortizacion: number;
+  amortizacionAnual: number;
+  amortizacionAcumulada: number;
+  valorPendiente: number;
+  ejercicio: number;
+  observaciones: string;
 };
 
 function toNum(value: Decimal | number | null | undefined): number {
@@ -37,6 +59,11 @@ function toNum(value: Decimal | number | null | undefined): number {
 
 function toIsoDate(value: Date): string {
   return value.toISOString().slice(0, 10);
+}
+
+function toPeriodLabel(value: Date): string {
+  const month = String(value.getUTCMonth() + 1).padStart(2, '0');
+  return `${value.getUTCFullYear()}-${month}`;
 }
 
 const EXPENSE_CANONICAL_MIGRATION_CUTOFF = new Date('2026-03-02T00:00:00.000Z');
@@ -80,16 +107,18 @@ export async function getSalesBookRows(tenantId: string, from: Date, to: Date): 
     const tipoIva = base > 0 ? Number(((tax / base) * 100).toFixed(2)) : 0;
 
     return {
-      fecha: toIsoDate(invoice.issueDate),
+      fechaExpedicion: toIsoDate(invoice.issueDate),
       numeroFactura: invoice.number,
-      cliente: invoice.customerName,
-      nif: invoice.customerNif || '',
-      base,
+      destinatario: invoice.customerName,
+      nifDestinatario: invoice.customerNif || '',
+      baseImponible: base,
       tipoIva,
-      cuotaIva: tax,
-      total: gross,
+      cuotaIvaRepercutida: tax,
+      retencionIrpf: 0,
+      totalFactura: gross,
       claveOperacion: 'F1',
-      pais: 'ES',
+      periodoLiquidacion: toPeriodLabel(invoice.issueDate),
+      observaciones: '',
     };
   });
 }
@@ -146,20 +175,30 @@ export async function getPurchasesBookRows(tenantId: string, from: Date, to: Dat
     const nonDeductible = taxCategory === 'iva_no_deducible';
 
     return {
-      fecha: toIsoDate(expense.date),
-      numeroJustificante: expense.reference || expense.id,
+      fechaFactura: toIsoDate(expense.date),
+      fechaRegistro: toIsoDate(expense.createdAt),
+      numeroFacturaProveedor: expense.reference || expense.id,
       proveedor: expense.supplier?.name || 'Proveedor no informado',
-      nif: expense.supplier?.nif || '',
-      base: Number(baseRaw.toFixed(2)),
+      nifProveedor: expense.supplier?.nif || '',
+      baseImponible: Number(baseRaw.toFixed(2)),
       tipoIva: Number(tipoIva.toFixed(2)),
-      cuotaIva: nonDeductible ? 0 : Number(taxRaw.toFixed(2)),
-      total: Number(total.toFixed(2)),
+      cuotaIvaSoportado: nonDeductible ? 0 : Number(taxRaw.toFixed(2)),
+      ivaDeducible: nonDeductible ? 'NO' : 'SI',
+      totalFactura: Number(total.toFixed(2)),
+      claveGasto: aeatKey || expense.category || '',
+      observaciones: expense.notes || '',
       docType,
       taxCategory,
       aeatConcept,
       aeatKey,
     };
   });
+}
+
+export async function getInvestmentBookRows(_tenantId: string, _from: Date, _to: Date): Promise<InvestmentRow[]> {
+  // Aun no existe una tabla de activos fijos + cuadro de amortizaciones en el modelo de datos.
+  // Devolvemos una colección vacía para que la exportación produzca la plantilla AEAT con cabeceras.
+  return [];
 }
 
 export type Preview303 = {
@@ -178,13 +217,13 @@ export async function getPreview303(tenantId: string, from: Date, to: Date, peri
   ]);
 
   const baseVentas = sales.reduce((sum, row) => sum + row.base, 0);
-  const cuotaVentas = sales.reduce((sum, row) => sum + row.cuotaIva, 0);
+  const cuotaVentas = sales.reduce((sum, row) => sum + row.cuotaIvaRepercutida, 0);
   const baseGastosDeducibles = purchases
     .filter((row) => row.taxCategory !== 'iva_no_deducible')
-    .reduce((sum, row) => sum + row.base, 0);
+    .reduce((sum, row) => sum + row.baseImponible, 0);
   const cuotaGastosDeducibles = purchases
     .filter((row) => row.taxCategory !== 'iva_no_deducible')
-    .reduce((sum, row) => sum + row.cuotaIva, 0);
+    .reduce((sum, row) => sum + row.cuotaIvaSoportado, 0);
 
   return {
     period,
@@ -212,7 +251,7 @@ export async function getPreview130(tenantId: string, from: Date, to: Date, peri
   ]);
 
   const ingresos = sales.reduce((sum, row) => sum + row.base, 0);
-  const gastos = purchases.reduce((sum, row) => sum + row.total, 0);
+  const gastos = purchases.reduce((sum, row) => sum + row.totalFactura, 0);
   const rendimientoNeto = ingresos - gastos;
   const porcentajeAplicado = 0.2;
   const pagoFraccionadoEstimado = Math.max(0, rendimientoNeto * porcentajeAplicado);

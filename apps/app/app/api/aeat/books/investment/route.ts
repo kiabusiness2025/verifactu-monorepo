@@ -1,4 +1,4 @@
-import { getSalesBookRows } from '@/lib/aeat/books';
+import { getInvestmentBookRows } from '@/lib/aeat/books';
 import { parseFromTo } from '@/lib/aeat/period';
 import { buildExportResponse, parseExportFormat } from '@/lib/aeat/response';
 import { requireTenantContext } from '@/lib/api/tenantAuth';
@@ -18,48 +18,48 @@ export async function GET(request: NextRequest) {
     const format = parseExportFormat(request.nextUrl.searchParams.get('format'));
     const range = parseFromTo(from, to);
 
-    const rows = await getSalesBookRows(auth.tenantId, range.from, range.to);
+    const rows = await getInvestmentBookRows(auth.tenantId, range.from, range.to);
 
     const sheetRows = [
       [
-        'Fecha expedición',
-        'Número factura',
-        'Destinatario',
-        'NIF destinatario',
-        'Base imponible',
-        'Tipo IVA',
-        'Cuota IVA repercutida',
-        'Retención IRPF',
-        'Total factura',
-        'Clave operación',
-        'Periodo liquidación',
+        'Descripción del bien',
+        'Fecha adquisición',
+        'Valor adquisición',
+        'Valor suelo',
+        'Valor construcción',
+        'Base amortizable',
+        'Porcentaje amortización',
+        'Amortización anual',
+        'Amortización acumulada',
+        'Valor pendiente',
+        'Ejercicio',
         'Observaciones',
       ],
       ...rows.map((row) => [
-        row.fechaExpedicion,
-        row.numeroFactura,
-        row.destinatario,
-        row.nifDestinatario,
-        row.baseImponible,
-        row.tipoIva,
-        row.cuotaIvaRepercutida,
-        row.retencionIrpf,
-        row.totalFactura,
-        row.claveOperacion,
-        row.periodoLiquidacion,
+        row.descripcionBien,
+        row.fechaAdquisicion,
+        row.valorAdquisicion,
+        row.valorSuelo,
+        row.valorConstruccion,
+        row.baseAmortizable,
+        row.porcentajeAmortizacion,
+        row.amortizacionAnual,
+        row.amortizacionAcumulada,
+        row.valorPendiente,
+        row.ejercicio,
         row.observaciones,
       ]),
     ];
 
     return buildExportResponse({
-      filenameBase: `aeat-sales-${range.label}`,
+      filenameBase: `aeat-investment-${range.label}`,
       format,
       rows: sheetRows,
-      sheetName: 'Libro facturas emitidas',
+      sheetName: 'Libro bienes de inversión',
     });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Error al exportar libro de ventas' },
+      { error: error instanceof Error ? error.message : 'Error al exportar libro de inversión' },
       { status: 400 }
     );
   }
