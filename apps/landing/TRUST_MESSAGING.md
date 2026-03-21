@@ -1,71 +1,73 @@
-# Trust & Data Protection Messaging
+# Trust messaging - landing 2026
 
-## Mensaje Clave
+## Mensaje marco
 
-**"El plan cambia. Tu contabilidad no."**
+Mensaje principal:
 
-Esta es la promesa central de verifactu.business. Comunica confianza, ética y orientación a largo plazo.
+`El plan cambia. Tu contabilidad no.`
 
-## Dónde aparece en la landing
+Este mensaje no es solo branding. Es una pieza de conversion y de seguridad percibida.
 
-### 1. **Sección de Pricing** (debajo de las cards)
-- Caja destacada con fondo gradiente (emerald → blue)
-- Lock icon + headline + descripción
-- Línea clara: "Acceso permanente a tus datos. Sin bloqueos. Sin borrados."
-- Reduce fricción en la decisión de compra
+## Relacion con el onboarding canonico
 
-### 2. **En cada Plan Card**
-- Pequeña línea debajo del botón CTA
-- "✓ Acceso permanente a tus datos"
-- Refuerza confianza a nivel individual
+Para mantener coherencia con toda la web:
 
-### 3. **Sección "Trust Anchor"** (justo antes del Final CTA)
-- Headline grande: "El plan cambia. Tu contabilidad no."
-- 3 garantías visuales: sin borrados, sin bloqueos, descargas ilimitadas
-- Posición estratégica: justo antes de que el usuario se registre
+1. El alta da acceso a Empresa Demo SL
+2. Demo SL no caduca
+3. La prueba real de 30 dias se activa cuando el usuario quiere operar con datos reales
+4. En prueba real se permite 1 empresa real
 
-### 4. **IsaakChat** (primer mensaje)
-- Mensaje de bienvenida emocional
-- "Tu contabilidad es siempre tuya"
-- "Yo me encargo de cuidarlos"
-- Genera confianza desde el primer contacto
+Trust y onboarding deben sonar como una sola historia, no como mensajes aislados.
 
-## Lenguaje usado (y evitado)
+## Donde reforzar confianza
 
-### ✅ Correcto (usado en landing)
-- "Tu contabilidad nunca se pierde"
-- "Acceso siempre a tus datos"
-- "Sin bloqueos. Sin borrados."
-- "Datos intactos"
-- "Tus datos son tuyos"
+1. Bloques de precios y planes
+   : Mensajes sobre continuidad y control de datos
+2. FAQ y cierre de pagina
+   : Respuestas directas a miedo de bloqueo o perdida
+3. CTAs finales
+   : Activacion con lenguaje de control y acompanamiento
+4. Chat de Isaak
+   : Tono de calma, claridad y accion guiada
 
-### ❌ Incorrecto (evitar)
-- "Tus datos se conservan X meses"
-- "Acceso limitado a históricos"
-- "Exporta antes de que..."
-- "Después de 30 días..."
+## Lenguaje recomendado
 
-## Por qué es importante
+1. `Tus datos son tuyos`
+2. `Sin bloqueos. Sin borrados`
+3. `Acceso permanente a tu informacion`
+4. `Empieza en Demo SL y activa real cuando lo necesites`
+5. `Control total sobre tu contabilidad`
 
-1. **Reduce ansiedad fiscal**: Usuarios con contabilidad tienen miedo a perder datos
-2. **Aumenta registros**: Confianza = conversión
-3. **Reduce churn**: Usuarios no temen "quedarse atrapados"
-4. **Posicionamiento ético**: Te diferencia de SaaS genéricos
+## Lenguaje a evitar
 
-## Cómo el modelo de negocio se alinea
+1. `Pierdes acceso si no pagas`
+2. `Exporta antes de vencer`
+3. `Solo disponible por tiempo limitado` (si aplica a datos)
+4. `1 mes gratis` sin explicar Demo SL + prueba real
 
-- **Plan Starter (Gratis)**: Acceso completo a histórico, pero funciones limitadas
-- **Planes de pago**: Todo desbloqueado + acceso permanente
-- **Cancelación**: Usuario puede ver, descargar y exportar todo (siempre)
+## Criterios de revision editorial
 
-**Isaak propone upgrade cuando hace falta, no antes.**
+1. Si una frase aumenta ansiedad, se reescribe
+2. Si un CTA contradice el flujo canonico, se corrige
+3. Si una pagina usa promesa distinta al resto, se normaliza
+4. Si hay ambiguedad de trial/demo, se especifica
 
-## Líneas de anclaje para marketing
+## Plantillas cortas para bloques
 
-Usa estas en comunicaciones futuras:
+Inicio de bloque:
 
-1. "Tu contabilidad no caduca."
-2. "Tus datos no dependen del plan."
-3. "El plan cambia. Tu contabilidad no."
-4. "Cambiar no significa perder."
-5. "Acceso garantizado. Siempre."
+- `Empieza hoy en Demo SL. Sin riesgo y sin caducidad.`
+
+Mitad de bloque:
+
+- `Compara planes y decide cuando te conviene pasar a real.`
+
+Final de bloque:
+
+- `Activa tu prueba real de 30 dias y crea tu primera empresa real.`
+
+## Nota operativa
+
+Para estructura completa de rutas, CTA y reglas de coherencia, usar:
+
+- `LANDING_VERIFACTU_BUSINESS_2026.md`

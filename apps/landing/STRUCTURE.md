@@ -1,154 +1,103 @@
-# Landing - Estructura & Componentes
+# Landing - estructura y coherencia 2026
 
-## 📁 Estructura de carpetas
+## Objetivo
+
+Este archivo describe la estructura funcional de la landing publica y su marco de coherencia actual.
+
+Referencia principal:
+
+- `LANDING_VERIFACTU_BUSINESS_2026.md`
+
+## Estructura de alto nivel
 
 ```
 apps/landing/
 ├── app/
 │   ├── api/
-│   │   └── chat/
-│   │       └── route.ts          # Endpoint para chat de Isaak
+│   │   ├── send-lead/route.ts
+│   │   ├── vertex-chat/route.ts
+│   │   ├── stripe/webhook/route.ts
+│   │   └── ...
 │   ├── components/
-│   │   ├── CookieBanner.tsx      # Banner de cookies (Tailwind + framer-motion)
-│   │   ├── IsaakChat.tsx         # Chat flotante de Isaak (componente principal)
-│   │   ├── PricingCalculator.tsx # Grid de planes (usado opcionalmente)
-│   │   └── Faq.tsx               # FAQ (componente reutilizable)
-│   ├── globals.css               # Tailwind directives
-│   ├── layout.tsx                # Root layout (importa CookieBanner e IsaakChat)
-│   ├── page.tsx                  # Landing page principal (942 líneas)
-│   ├── next-auth.d.ts            # Tipos de NextAuth
-│   └── tsconfig.json
+│   │   ├── Header.tsx
+│   │   ├── Faq.tsx
+│   │   └── ...
+│   ├── lib/
+│   │   └── home/ui.tsx
+│   ├── page.tsx
+│   ├── holded/page.tsx
+│   ├── precios/page.tsx
+│   ├── planes/
+│   │   ├── page.tsx
+│   │   └── _shared.tsx
+│   ├── producto/
+│   ├── recursos/
+│   ├── legal/
+│   ├── politica-de-precios/
+│   └── verifactu/
 ├── public/
-│   └── images/                   # Assets de la landing
-├── .gitignore
-├── .next/                        # Build output
-├── ANIMATIONS.md                 # Especificación de animaciones (referencia)
-├── next.config.js                # Next.js config
-├── package.json
-├── package-lock.json
-├── postcss.config.cjs            # PostCSS + Tailwind
-├── tailwind.config.cjs           # Tailwind config
-└── tsconfig.json
+├── middleware.ts
+├── next.config.js
+└── README.md
 ```
 
-## 🎯 Componentes principales
+## Paginas de conversion clave
 
-### 1. **CookieBanner.tsx**
-- **Ubicación**: `app/components/CookieBanner.tsx`
-- **Responsabilidad**: Mostrar banner de cookies al usuario
-- **Características**:
-  - Animación de entrada con framer-motion
-  - LocalStorage para recordar consentimiento
-  - Botón "Entendido" y cerrar con X
-  - Tailwind CSS (shadow-sm, rounded-2xl, backdrop-blur)
-- **Integración**: Auto-incluido en `layout.tsx`
+1. `/` (home)
+2. `/holded`
+3. `/precios`
+4. `/planes`
 
-### 2. **IsaakChat.tsx**
-- **Ubicación**: `app/components/IsaakChat.tsx`
-- **Responsabilidad**: Chat flotante para interactuar con Isaak IA
-- **Características**:
-  - Botón flotante (fixed bottom-right) con icono MessageCircle
-  - Modal chat con header, mensajes, input
-  - Llamadas a `/api/chat` para procesar preguntas
-  - Animaciones suaves (AnimatePresence, motion.div)
-  - Indicador de carga (3 puntos animados)
-- **Integración**: Auto-incluido en `layout.tsx`
+## Paginas de soporte de decision
 
-### 3. **PricingCalculator.tsx**
-- **Ubicación**: `app/components/PricingCalculator.tsx`
-- **Responsabilidad**: Mostrar grid de planes de precios
-- **Características**:
-  - 4 planes: Gratis, Profesional, Business, Enterprise
-  - Plan destacado con anillo azul ("Más popular")
-  - Animación de entrada escalonada (motion.div con `whileInView`)
-  - Botones contextuales por plan
-- **Integración**: Importar manualmente si se necesita en page.tsx
-- **Nota**: La landing actual tiene su propia sección Pricing inline, este componente es reutilizable
+1. `/producto/*`
+2. `/recursos/*`
+3. `/politica-de-precios`
+4. `/legal/*`
+5. `/verifactu/estado`
 
-### 4. **Faq.tsx**
-- **Ubicación**: `app/components/Faq.tsx`
-- **Responsabilidad**: Componente acordeón para preguntas frecuentes
-- **Características**:
-  - Array de Q&A hardcoded
-  - Toggle de expansión/colapso
-  - Animations suaves
-- **Integración**: Importar manualmente si se necesita
+## Componentes compartidos criticos
 
-## 🎨 Estilos & Configuración
+1. `app/components/Header.tsx`
+   : Coherencia de navegacion y accesos principales
+2. `app/components/Faq.tsx`
+   : Cierre de objeciones y rutas a conversion
+3. `app/lib/home/ui.tsx`
+   : Bloques comunes y footer con links comerciales
+4. `app/planes/_shared.tsx`
+   : Plantilla base de planes y CTA por etapa
 
-### Tailwind CSS
-- **Config**: `tailwind.config.cjs` → targets `app/**` y `components/**`
-- **PostCSS**: `postcss.config.cjs` → plugins: tailwindcss, autoprefixer
-- **Globals**: `app/globals.css` → directives (@tailwind base/components/utilities)
+## Contratos de coherencia
 
-### Clases principales usadas
-- Sombras: `shadow-sm`, `shadow-md`, `shadow-lg`
-- Bordes: `ring-1 ring-slate-200`, `border border-slate-200`
-- Espaciado: `px-4`, `py-3`, `gap-2`, `gap-4`, `gap-6`
-- Colores: `text-slate-600`, `bg-blue-600`, `text-emerald-600`
-- Efectos: `backdrop-blur`, `hover:bg-slate-50`, `transition`
+### 1) Flujo de onboarding visible en copy
 
-### Animaciones (framer-motion)
-- **Entrada**: `initial={{ opacity: 0 }}` + `animate={{ opacity: 1 }}`
-- **Salida**: `exit={{ opacity: 0 }}`
-- **Hover**: `whileHover={{ scale: 1.05 }}`
-- **Tap**: `whileTap={{ scale: 0.95 }}`
-- **InView**: `whileInView={{ opacity: 1 }}` (detecta visibilidad)
+1. Crear cuenta
+2. Entrar en Empresa Demo SL
+3. Demo SL sin caducidad
+4. Activar prueba real de 30 dias (1 empresa real) cuando se quiera operar en real
 
-## 📄 Page.tsx (Landing principal)
+### 2) CTA por tramo de lectura
 
-**Ubicación**: `app/page.tsx` (942 líneas)
+1. Inicio de bloque: descubrimiento
+2. Mitad: comparacion
+3. Final: activacion o contacto
 
-### Secciones:
-1. **Hero** - Titular + subtítulo + CTAs + mockup de Isaak
-2. **Stats bar** - 3 KPIs
-3. **Features** - 4 tarjetas (Emisión, Gastos, Dashboard, Bajo demanda)
-4. **Pídeselo a Isaak** - 6 ejemplos de comandos
-5. **3 Steps** - Flujo de 3 pasos
-6. **Dashboard** - Mockup del panel principal
-7. **Compliance** - Sección VeriFactu
-8. **Pricing** - 4 planes de precios
-9. **Resources** - 3 recursos/guías
-10. **Final CTA** - Llamada a acción final
-11. **Footer** - Pie de página
+### 3) Routing comercial canonico
 
-### Estado (useState)
-- `msgIndex` - Índice del mensaje visible en el mockup
-- `pricingModel` - Modelo de precios seleccionado (fija/porcentaje/híbrido)
-- `benefitTarget` - Contador animado de beneficio (0 → 12.450)
+1. Comparativa y decision: `/precios`
+2. Profundidad de oferta: `/planes`
 
-### Hooks
-- `useEffect` - Rotación de mensajes (5.2s), contador de beneficio animado
-- `useMemo` - Cálculo de mensajes visibles, lista de isaakMessages
+No usar anchors legacy `/#planes` en paginas internas.
 
-## 🚀 Build & Deploy
+## Endpoints principales usados en landing
 
-### Build local
-```bash
-cd apps/landing
-npm run build
-npm run dev  # Puerto 3000
-```
+1. `POST /api/send-lead`
+2. `POST /api/vertex-chat`
+3. `POST /api/stripe/webhook`
 
-### Validación
-- Size: 47.4 kB (route) | 134 kB (First Load JS)
-- No errors en TypeScript
-- Componentes compilados correctamente
+## QA minima al tocar estructura o copy
 
-## 📝 Notas de desarrollo
-
-- **API Chat**: Integrado en `/api/chat/route.ts` (backend)
-- **Componentes reutilizables**: CookieBanner, IsaakChat, PricingCalculator, Faq
-- **Sin tecnicismos**: Copy limpio, enfoque "sin miedo" para usuarios no técnicos
-- **Responsive**: Grid adaptativo (sm/md/lg breakpoints)
-- **Accessibility**: aria-labels, keyboard navigation, semantic HTML
-
-## 🔄 Próximas mejoras
-
-1. [ ] Integrar PricingCalculator en página principal (opcional)
-2. [ ] Añadir FAQ section en landing
-3. [ ] Conectar IsaakChat con backend real
-4. [ ] Implementar selector de modelo de precios (fija/porcentaje/híbrido)
-5. [ ] A/B testing de headlines
-6. [ ] Analytics (si se necesita)
-7. [ ] Testimonios de usuarios
+1. Revisar que no reaparecen enlaces legacy
+2. Revisar que no se rompe el flujo Demo SL -> prueba real
+3. Verificar CTA distintos por inicio/mitad/final
+4. Ejecutar build o typecheck de landing antes de merge

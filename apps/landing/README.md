@@ -18,6 +18,11 @@ La landing es **independiente del resto del monorepo** y está diseñada para:
   - `Directo`
 - Persistencia en landing pública: `localStorage` (sin requerir sesión).
 
+## Documentación funcional 2026
+
+- Guía integral de coherencia de web y conversión:
+  - `LANDING_VERIFACTU_BUSINESS_2026.md`
+
 ---
 
 ## 🌍 Producción
