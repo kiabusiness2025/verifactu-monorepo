@@ -736,16 +736,22 @@ function StandaloneHoldedPage({ chatgptAppUrl }: { chatgptAppUrl: string }) {
             href="https://www.holded.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center"
+            className="group flex items-center gap-3"
           >
-            <Image
-              src="/brand/holded-logotype-dark.png"
-              alt="Holded"
-              width={110}
-              height={30}
-              className="h-7 w-auto object-contain"
-              priority
-            />
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition group-hover:shadow-md">
+              <Image
+                src="/holded/icon.png"
+                alt="Isaak para Holded"
+                width={22}
+                height={22}
+                className="h-[22px] w-[22px] object-contain"
+                priority
+              />
+            </div>
+            <div className="leading-tight">
+              <div className="text-[1.18rem] font-semibold text-slate-900">Isaak para Holded</div>
+              <div className="text-sm font-medium text-slate-600">Conecta Holded con ChatGPT</div>
+            </div>
           </Link>
 
           <nav className="flex flex-wrap items-center gap-5 text-sm text-slate-600">
