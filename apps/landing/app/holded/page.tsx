@@ -8,11 +8,10 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import Header from '../components/Header';
 import { Container, Footer } from '../lib/home/ui';
-import { getAppUrl } from '../lib/urls';
 import HoldedHeroVisual from './components/HoldedHeroVisual';
 
 export const metadata: Metadata = {
@@ -20,9 +19,9 @@ export const metadata: Metadata = {
   description:
     'Conecta Holded con Isaak para activar control fiscal continuo, deteccion de riesgos y trazabilidad operativa sobre datos reales.',
   icons: {
-    icon: [{ url: '/Isaak/isaak-avatar.png', type: 'image/png' }],
-    shortcut: ['/Isaak/isaak-avatar.png'],
-    apple: [{ url: '/Isaak/isaak-avatar.png', type: 'image/png' }],
+    icon: [{ url: '/holded/icon.png', type: 'image/png' }],
+    shortcut: ['/holded/icon.png'],
+    apple: [{ url: '/holded/icon.png', type: 'image/png' }],
   },
 };
 
@@ -148,6 +147,39 @@ const faqItems = [
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
+const HOLDED_ONBOARDING_BASE_URL = 'https://app.verifactu.business';
+
+function normalizeHoldedOnboardingUrl(rawUrl: string | undefined) {
+  const fallback = `${HOLDED_ONBOARDING_BASE_URL}/onboarding/holded?channel=chatgpt&source=holded_landing`;
+  if (!rawUrl) return fallback;
+
+  try {
+    const parsed = new URL(rawUrl);
+    const normalized = new URL(fallback);
+
+    if (parsed.hostname === 'client.verifactu.business') {
+      normalized.search = parsed.search;
+      normalized.searchParams.set('channel', 'chatgpt');
+      normalized.searchParams.set('source', 'holded_landing');
+      return normalized.toString();
+    }
+
+    if (parsed.pathname === '/workspace/onboarding/holded') {
+      parsed.pathname = '/onboarding/holded';
+    }
+
+    if (parsed.pathname !== '/onboarding/holded') {
+      return fallback;
+    }
+
+    parsed.searchParams.set('channel', 'chatgpt');
+    parsed.searchParams.set('source', 'holded_landing');
+    return parsed.toString();
+  } catch {
+    return fallback;
+  }
+}
+
 function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
   return (
     <>
@@ -186,17 +218,23 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                    <span>«¿Tengo tesorería suficiente para pagar nóminas en los próximos 30 días?»</span>
+                    <span>
+                      «¿Tengo tesorería suficiente para pagar nóminas en los próximos 30 días?»
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                    <span>«¿Qué gastos del último mes se pueden deducir y no he categorizado?»</span>
+                    <span>
+                      «¿Qué gastos del último mes se pueden deducir y no he categorizado?»
+                    </span>
                   </li>
                 </ul>
               </div>
 
               <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-5">
-                <div className="text-sm font-semibold text-amber-900">Requisitos para usar esta integración</div>
+                <div className="text-sm font-semibold text-amber-900">
+                  Requisitos para usar esta integración
+                </div>
                 <ul className="mt-3 grid gap-2 text-sm text-amber-800">
                   <li className="flex items-start gap-2">
                     <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
@@ -263,8 +301,8 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
               Lo que Isaak puede hacer con tus datos de Holded
             </h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              La API de Holded expone contabilidad, facturación, tesorería, contactos y más.
-              Isaak convierte esa información en respuestas, alertas y decisiones concretas.
+              La API de Holded expone contabilidad, facturación, tesorería, contactos y más. Isaak
+              convierte esa información en respuestas, alertas y decisiones concretas.
             </p>
           </div>
 
@@ -292,9 +330,12 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
                 Proceso de conexión
               </div>
-              <h2 className="mt-4 text-3xl font-bold tracking-tight">De API key a asistente fiscal en 3 pasos</h2>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight">
+                De API key a asistente fiscal en 3 pasos
+              </h2>
               <p className="mt-4 text-sm leading-7 text-white/80 sm:text-base">
-                No hay integración técnica que preparar. Solo tu API key de Holded y el onboarding guiado.
+                No hay integración técnica que preparar. Solo tu API key de Holded y el onboarding
+                guiado.
               </p>
             </div>
 
@@ -655,7 +696,12 @@ function StandaloneHoldedPage({ chatgptAppUrl }: { chatgptAppUrl: string }) {
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f6f9ff_44%,#ffffff_100%)] text-slate-900">
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <Link href="https://www.holded.com" target="_blank" rel="noopener noreferrer" className="flex items-center">
+          <Link
+            href="https://www.holded.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center"
+          >
             <Image
               src="/brand/holded-logotype-dark.png"
               alt="Holded"
@@ -727,10 +773,7 @@ export default async function HoldedCampaignPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const appUrl = getAppUrl();
-  const chatgptAppUrl =
-    process.env.NEXT_PUBLIC_HOLDED_CHATGPT_APP_URL ||
-    `${appUrl}/onboarding/holded?channel=chatgpt&source=holded_landing`;
+  const chatgptAppUrl = normalizeHoldedOnboardingUrl(process.env.NEXT_PUBLIC_HOLDED_CHATGPT_APP_URL);
   const params = await searchParams;
   const variant = Array.isArray(params?.variant) ? params?.variant[0] : params?.variant;
 
