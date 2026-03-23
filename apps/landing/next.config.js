@@ -78,6 +78,22 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(), payment=(self)',
           },
+          // Default COOP for all routes
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
+          },
+        ],
+      },
+      // Auth routes need same-origin-allow-popups so Firebase signInWithPopup can
+      // communicate through the Google OAuth popup window.
+      {
+        source: '/auth/:path*',
+        headers: [
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin-allow-popups',
+          },
         ],
       },
       // Cache static assets

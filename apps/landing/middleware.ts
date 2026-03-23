@@ -15,7 +15,7 @@ function buildCsp(nonce: string) {
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https:",
     "connect-src 'self' https://verifactu.business https://*.verifactu.business https://www.google-analytics.com https://analytics.google.com https://firebaseinstallations.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://apis.google.com https://accounts.google.com https://oauth2.googleapis.com",
-    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com",
+    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://verifactu-business.firebaseapp.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -23,7 +23,7 @@ function buildCsp(nonce: string) {
   ].join('; ');
 }
 
-function applySecurityHeaders(response: NextResponse, nonce: string) {
+function applySecurityHeaders(response: NextResponse, nonce: string, isAuthRoute = false) {
   response.headers.set('x-nonce', nonce);
   response.headers.set('Content-Security-Policy', buildCsp(nonce));
   response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
@@ -32,6 +32,12 @@ function applySecurityHeaders(response: NextResponse, nonce: string) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Auth routes need same-origin-allow-popups so Firebase signInWithPopup can
+  // communicate through the OAuth popup window without COOP blocking it.
+  response.headers.set(
+    'Cross-Origin-Opener-Policy',
+    isAuthRoute ? 'same-origin-allow-popups' : 'same-origin'
+  );
   response.headers.set(
     'Permissions-Policy',
     'camera=(), microphone=(), geolocation=(), payment=(self)'
@@ -83,12 +89,13 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
+  const isAuthRoute = pathname.startsWith('/auth/');
   const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   });
-  applySecurityHeaders(response, nonce);
+  applySecurityHeaders(response, nonce, isAuthRoute);
   return response;
 }
 
