@@ -15,9 +15,9 @@ import { Container, Footer } from '../lib/home/ui';
 import HoldedHeroVisual from './components/HoldedHeroVisual';
 
 export const metadata: Metadata = {
-  title: 'Integracion Holded + Isaak | verifactu.business',
+  title: 'Isaak | Tu asistente de contabilidad entrenado en Holded',
   description:
-    'Conecta Holded con Isaak para activar control fiscal continuo, deteccion de riesgos y trazabilidad operativa sobre datos reales.',
+    'Isaak es un agente IA que interpreta tus datos de Holded. Pregunta sobre ventas, gastos, tesorería y más sin abrir Holded nunca más.',
   icons: {
     icon: [{ url: '/holded/icon.png', type: 'image/png' }],
     shortcut: ['/holded/icon.png'],
@@ -50,20 +50,20 @@ const navLinks = [
 
 const keyBenefits = [
   {
-    title: 'Facturas, gastos y cobros leídos al instante',
-    body: 'Isaak accede a tus datos reales de Holded via API y los convierte en respuestas, alertas y prioridades diarias.',
+    title: '💬 Preguntas en lenguaje tuyo',
+    body: 'No tienes que aprender a usar Holded ni entender reportes técnicos. Pregunta como hablarías con un colega: "¿Cómo voy de ventas en julio?" y Isaak te mostrará tus números.',
   },
   {
-    title: 'Sin exportar, sin copiar, sin pegar',
-    body: 'La conexión API es directa. No necesitas preparar ningún fichero. Holded habla con ChatGPT y Isaak interpreta.',
+    title: '⚡ Respuestas al instante',
+    body: 'Tu información está en Holded. Isaak la lee en tiempo real. Desde que preguntas hasta que tienes respuesta: menos de 2 segundos.',
   },
   {
-    title: 'Datos técnicos en lenguaje humano',
-    body: 'Isaak actúa de traductor: convierte el lenguaje del ERP en respuestas claras adaptadas a cómo piensa tu negocio.',
+    title: '🎯 Información sin filtros ni tecnicismos',
+    body: 'Olvídate de exportar a Excel, copiar números o descifrar columnas. Isaak te dice qué significa tu información de verdad.',
   },
   {
-    title: 'Alertas y riesgos antes del cierre',
-    body: 'Detecta liquidez baja, facturas pendientes críticas, gastos anómalos o inconsistencias antes de que sean un problema.',
+    title: '🚨 Alertas de lo que importa',
+    body: 'Antes de que sea un problema, Isaak te avisa: facturas que no cobras, pagos que no hiciste, o gastos raros.',
   },
 ];
 
@@ -189,44 +189,41 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm">
                 <Link2 className="h-3.5 w-3.5 text-[#ff5460]" />
-                Holded × ChatGPT — Isaak como intérprete
+                Conoce a Isaak
               </div>
 
               <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.45rem] sm:leading-[1.04]">
-                Tus datos de Holded, explicados en lenguaje humano.
+                Tu asistente de contabilidad que entiende tu negocio sin tecnicismos.
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                Conecta tu cuenta de Holded via API y accede a un asistente que entiende tu
-                contabilidad, facturación y tesorería como si fuera tuya. Isaak hace de intérprete:
-                convierte el lenguaje técnico del ERP en respuestas claras, prioridades y alertas
-                para que puedas tomar decisiones sin abrir ni una pantalla de Holded.
+                Isaak es un agente IA entrenado para interpretar tus datos de contabilidad que viven en Holded. Se conecta a tu empresa, aprende cómo funciona y responde a cualquier duda sobre tu situación fiscal, ventas, gastos, tesorería y más.
               </p>
 
-              <div className="mt-7 rounded-3xl border border-[#ff5460]/20 bg-[#ff5460]/5 p-5 shadow-sm">
+              <p className="mt-3 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg font-semibold">
+                No necesitas saber leer balances. Solo pregunta.
+              </p>
+
+              <div className="mt-7 rounded-3xl border border-[#ff5460]/20 bg-[#ff5460]/5 p-6 shadow-sm">
                 <div className="text-sm font-semibold text-slate-900">
-                  Qué puedes preguntarle cuando está conectado
+                  Ejemplos de lo que puedes preguntarle 👇
                 </div>
-                <ul className="mt-4 grid gap-2 text-sm text-slate-700">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                    <span>«¿Cuánto IVA tengo pendiente de liquidar este trimestre?»</span>
+                <ul className="mt-5 space-y-4 text-sm text-slate-700">
+                  <li className="rounded-2xl bg-white p-4 border border-slate-200">
+                    <div className="font-semibold text-slate-900">💬 Isaak, ¿cómo voy de ventas en julio?</div>
+                    <div className="mt-2 text-[#ff5460]">📊 Has facturado 12.450€ en julio. Un 8% más que en junio. Los clientes principales fueron Empresa X y Empresa Y.</div>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                    <span>«¿Qué facturas de clientes llevan más de 60 días sin cobrar?»</span>
+                  <li className="rounded-2xl bg-white p-4 border border-slate-200">
+                    <div className="font-semibold text-slate-900">💬 ¿Me falta algún pago importante?</div>
+                    <div className="mt-2 text-[#ff5460]">⚠️ Sí, hay 5 facturas sin pagar. La más antigua es de hace 47 días (Cliente B, 3.200€). Te recomiendo contactar primero.</div>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                    <span>
-                      «¿Tengo tesorería suficiente para pagar nóminas en los próximos 30 días?»
-                    </span>
+                  <li className="rounded-2xl bg-white p-4 border border-slate-200">
+                    <div className="font-semibold text-slate-900">💬 ¿Cuánto dinero tengo para pagar a proveedores?</div>
+                    <div className="mt-2 text-[#ff5460]">💰 Hoy tendrías 8.750€ libres si cobras lo que te debe Empresa X. Sin eso, tienes 3.100€.</div>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                    <span>
-                      «¿Qué gastos del último mes se pueden deducir y no he categorizado?»
-                    </span>
+                  <li className="rounded-2xl bg-white p-4 border border-slate-200">
+                    <div className="font-semibold text-slate-900">💬 ¿Gastos que puedo deducir la próxima declaración?</div>
+                    <div className="mt-2 text-[#ff5460]">🧾 Hay 850€ en gastos sin clasificar. Incluyen dietas, suministros y software. Puedes deducirlos todos.</div>
                   </li>
                 </ul>
               </div>
@@ -298,11 +295,10 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
         <Container>
           <div className="max-w-3xl">
             <h2 className="text-3xl font-bold tracking-tight text-slate-950">
-              Lo que Isaak puede hacer con tus datos de Holded
+              Esto cambia cuando Isaak llega
             </h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              La API de Holded expone contabilidad, facturación, tesorería, contactos y más. Isaak
-              convierte esa información en respuestas, alertas y decisiones concretas.
+              Normalmente, trabajar con números de tu empresa es lento y cansa. Vamos a mostrarte cómo Isaak lo hace diferente.
             </p>
           </div>
 
@@ -328,30 +324,38 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
           <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#081936_0%,#0f2660_100%)] p-8 text-white lg:p-10">
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
-                Proceso de conexión
+                ✨ Inicio rápido
               </div>
               <h2 className="mt-4 text-3xl font-bold tracking-tight">
-                De API key a asistente fiscal en 3 pasos
+                Empieza en 3 minutos. Oh, y es gratis.
               </h2>
               <p className="mt-4 text-sm leading-7 text-white/80 sm:text-base">
-                No hay integración técnica que preparar. Solo tu API key de Holded y el onboarding
-                guiado.
+                Solo necesitas tu Holded y ganas tener a Isaak interpreando tus números en tiempo real.
               </p>
             </div>
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {activationSteps.map((item) => (
-                <article
-                  key={item.step}
-                  className="rounded-3xl border border-white/10 bg-white/5 p-5"
-                >
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
-                    Paso {item.step}
-                  </div>
-                  <h3 className="mt-3 text-lg font-semibold text-white">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-white/75">{item.body}</p>
-                </article>
-              ))}
+              <article className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+                  Paso 1
+                </div>
+                <h3 className="mt-3 text-lg font-semibold text-white">🔑 Copia tu API key</h3>
+                <p className="mt-2 text-sm leading-6 text-white/75">Entra en Holded → Configuración → API. Copia tu clave. Tardaras 30 segundos.</p>
+              </article>
+              <article className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+                  Paso 2
+                </div>
+                <h3 className="mt-3 text-lg font-semibold text-white">🔗 Conecta tu empresa</h3>
+                <p className="mt-2 text-sm leading-6 text-white/75">Pega la clave aquí y Isaak carga tus datos. La magia sucede automaticamente en menos un minuto.</p>
+              </article>
+              <article className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+                  Paso 3
+                </div>
+                <h3 className="mt-3 text-lg font-semibold text-white">💬 Pregunta lo que necesites</h3>
+                <p className="mt-2 text-sm leading-6 text-white/75">A partir de aquí, tu asistente fiscal es una pregunta. "Isaak, ¿cómo voy?" y listo.</p>
+              </article>
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -360,12 +364,6 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
                 className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#0f2660] transition-all hover:bg-slate-100 hover:shadow-lg"
               >
                 Conectar Holded ahora
-              </Link>
-              <Link
-                href="/holded/demo-recording"
-                className="inline-flex items-center justify-center rounded-xl border border-white/40 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                Ver video (2 minutos)
               </Link>
             </div>
           </div>
@@ -378,25 +376,50 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                 <ShieldCheck className="h-3.5 w-3.5 text-[#ff5460]" />
-                Confianza operativa
+                ¿Puedo confiar?
               </div>
               <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-                Seguridad, alcance y posicionamiento claro
+                La respuesta corta: sí. Y te lo explicamos.
               </h2>
             </div>
 
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              {trustPoints.map((point) => (
-                <div
-                  key={point}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-                >
-                  <div className="flex items-start gap-3 text-sm leading-6 text-slate-700">
-                    <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                    <span>{point}</span>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">🔐</span>
+                  <div>
+                    <div className="font-semibold text-slate-900">Isaak es nuestro software</div>
+                    <div className="mt-1 text-sm text-slate-600">No es un plugin de Holded ni afecta porque Holded seguirá funcionando igual que siempre.</div>
                   </div>
                 </div>
-              ))}
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">🔌</span>
+                  <div>
+                    <div className="font-semibold text-slate-900">API key, no contraseña</div>
+                    <div className="mt-1 text-sm text-slate-600">Si cambias de opinión, desconectas en un click. El acceso termina al instante.</div>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">📊</span>
+                  <div>
+                    <div className="font-semibold text-slate-900">Tus datos son tuyos</div>
+                    <div className="mt-1 text-sm text-slate-600">Isaak los lee para interpretarlos. No los guarda en otro lado ni los vende ni los comparte.</div>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">✅</span>
+                  <div>
+                    <div className="font-semibold text-slate-900">Gratis siempre para probar</div>
+                    <div className="mt-1 text-sm text-slate-600">Conecta hoy, prueba un mes sin límite, cancela sin penalización. Sin sorpresas.</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </Container>
@@ -406,23 +429,38 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
         <Container>
           <div className="max-w-3xl">
             <h2 className="text-3xl font-bold tracking-tight text-slate-950">
-              Preguntas frecuentes
+              Las dudas que suelen surgir
             </h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              Respuestas directas para equipos que quieren activar esta integracion con seguridad.
+              Si algo no está claro, aquí probablemente encuentres la respuesta.
             </p>
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-2">
-            {faqItems.map((item) => (
-              <article
-                key={item.question}
-                className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
-              >
-                <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{item.answer}</p>
-              </article>
-            ))}
+            <article className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-base font-semibold text-slate-900">¿Pero si no entiendo Holded?</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Perfecto, eso es exactamente el punto. Isaak está entrenado para explicar lo que Holded hace de forma que lo entiendas sin ser contador.</p>
+            </article>
+            <article className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-base font-semibold text-slate-900">¿Cuánto cuesta?</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Primero es gratis un mes completo. Sin sorpresas después. Solo pagas si lo vales para ti.</p>
+            </article>
+            <article className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-base font-semibold text-slate-900">¿Y si desconecto Holded?</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Unclick. Isaak pierde acceso al instante. Holded sigue igual. No pasa nada raro.</p>
+            </article>
+            <article className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-base font-semibold text-slate-900">¿Funciona en móvil?</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Claro. Pregunta a Isaak desde donde quieras. App mobile, web, donde estés. Los datos te siguen.</p>
+            </article>
+            <article className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-base font-semibold text-slate-900">¿Otros contables pueden usarlo?</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">Sí. Es para tu equipo. Invita a quien necesite (socios, contador, empleado de finanzas). Los datos son compartidos.</p>
+            </article>
+            <article className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-base font-semibold text-slate-900">¿Reemplaza a mi contador?</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">No. Tu contador sigue siendo necesario para cumplimiento legal. Isaak es tu asistente diario de información. Se complementan.</p>
+            </article>
           </div>
         </Container>
       </section>
@@ -433,15 +471,13 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#ff5460]">
                 <TriangleAlert className="h-3.5 w-3.5" />
-                Siguiente paso recomendado
+                La primera pregunta es gratis
               </div>
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-                Activa hoy. Cierra este mes sin sorpresas. Escala cuando quieras.
+                Prueba a Isaak hoy. Sin obligación a futuro.
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                No necesitas ser perfeccionista para empezar. Isaak te da valor inmediato: revision,
-                riesgos priorizados y trazabilidad continua. Aunque el producto siga mejorando, los
-                equipos que lo usan hoy ya ahorra horas y cierran mejor.
+                Conecta tu Holded, hazle tu primera pregunta y descubre la diferencia. No es magia, es información interpretada para que la entiendas. Luego decides si te vale.
               </p>
             </div>
 
@@ -450,14 +486,14 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
                 href={chatgptAppUrl}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-[#ef4654] hover:shadow-xl"
               >
-                Conectar tu Holded ahora
+                Conectar mi Holded
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/que-es-isaak"
+                href="/"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
               >
-                Mas sobre Isaak
+                Vuelvo al inicio
               </Link>
             </div>
           </div>
@@ -773,7 +809,9 @@ export default async function HoldedCampaignPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const chatgptAppUrl = normalizeHoldedOnboardingUrl(process.env.NEXT_PUBLIC_HOLDED_CHATGPT_APP_URL);
+  const chatgptAppUrl = normalizeHoldedOnboardingUrl(
+    process.env.NEXT_PUBLIC_HOLDED_CHATGPT_APP_URL
+  );
   const params = await searchParams;
   const variant = Array.isArray(params?.variant) ? params?.variant[0] : params?.variant;
 
