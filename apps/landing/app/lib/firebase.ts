@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   getAuth,
   connectAuthEmulator,
@@ -6,8 +6,7 @@ import {
   browserLocalPersistence,
 } from "firebase/auth";
 
-// Firebase configuration
-const firebaseConfig = {
+const defaultFirebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -15,6 +14,35 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
+
+const holdedFirebaseConfig = {
+  apiKey:
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY ||
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain:
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN ||
+    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId:
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID ||
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket:
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET ||
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId:
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID ||
+    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId:
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID ||
+    process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+function isHoldedAuthRoute() {
+  if (typeof window === "undefined") return false;
+  return window.location.pathname.startsWith("/auth/holded");
+}
+
+const useHoldedFirebase = isHoldedAuthRoute();
+const firebaseConfig = useHoldedFirebase ? holdedFirebaseConfig : defaultFirebaseConfig;
 
 const isConfigComplete = Object.values(firebaseConfig).every(Boolean);
 let isFirebaseReady = false;
@@ -25,7 +53,13 @@ let auth: any;
 
 if (typeof window !== "undefined" && isConfigComplete) {
   try {
-    app = initializeApp(firebaseConfig);
+    if (useHoldedFirebase) {
+      app = getApps().some((existingApp) => existingApp.name === "holded-auth")
+        ? getApp("holded-auth")
+        : initializeApp(firebaseConfig, "holded-auth");
+    } else {
+      app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    }
     auth = getAuth(app);
     isFirebaseReady = true;
 
