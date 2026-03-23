@@ -15,7 +15,8 @@ function buildCsp(nonce: string) {
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https:",
     "connect-src 'self' https://verifactu.business https://*.verifactu.business https://www.google-analytics.com https://analytics.google.com https://firebaseinstallations.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://apis.google.com https://accounts.google.com https://oauth2.googleapis.com",
-    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://verifactu-business.firebaseapp.com",
+    // Both Firebase projects: default and Holded-branded
+    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://verifactu-business.firebaseapp.com https://verifactu-business-48021-352e0.firebaseapp.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -99,8 +100,10 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  // Temporary holded-only auth entrypoint to avoid loops on the generic login panel.
-  if (pathname === '/auth/login') {
+  // Redirect /auth/login → /auth/holded only when the request originates from a
+  // Holded host or carries a Holded-flow context (source/next).  Regular
+  // Verifactu users must reach the standard login page unaffected.
+  if (pathname === '/auth/login' && (isHoldedHost(host) || isHoldedAuthFlow)) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/holded';
     const response = NextResponse.redirect(url, { status: 307 });
