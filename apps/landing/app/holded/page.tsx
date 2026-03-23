@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '../components/Header';
 import { Container, Footer } from '../lib/home/ui';
 import { getAppUrl } from '../lib/urls';
@@ -50,20 +51,20 @@ const navLinks = [
 
 const keyBenefits = [
   {
-    title: '10h/mes de trabajo fiscal ahorradas',
-    body: 'Isaak automatiza revision, priorizacion y deteccion de riesgos que hoy haces manual.',
+    title: 'Facturas, gastos y cobros leídos al instante',
+    body: 'Isaak accede a tus datos reales de Holded via API y los convierte en respuestas, alertas y prioridades diarias.',
   },
   {
-    title: 'Cero sorpresas fiscales',
-    body: 'Detecta liquidos incorrectos, deducciones olvidadas y riesgos antes del cierre.',
+    title: 'Sin exportar, sin copiar, sin pegar',
+    body: 'La conexión API es directa. No necesitas preparar ningún fichero. Holded habla con ChatGPT y Isaak interpreta.',
   },
   {
-    title: '98% menos errores operativos',
-    body: 'Control continuo sobre datos reales reduce inconsistencias y acelera auditorias internas.',
+    title: 'Datos técnicos en lenguaje humano',
+    body: 'Isaak actúa de traductor: convierte el lenguaje del ERP en respuestas claras adaptadas a cómo piensa tu negocio.',
   },
   {
-    title: 'Base solida para escalar',
-    body: 'Empieza en Holded hoy. Pisa firme en verifactu.business sin necesidad de migrar datos.',
+    title: 'Alertas y riesgos antes del cierre',
+    body: 'Detecta liquidez baja, facturas pendientes críticas, gastos anómalos o inconsistencias antes de que sean un problema.',
   },
 ];
 
@@ -100,18 +101,18 @@ const integratedFlow = [
 const activationSteps = [
   {
     step: '01',
-    title: 'Conecta tu API key de Holded',
-    body: 'Validamos acceso y activamos un entorno de trabajo asociado a tus datos reales.',
+    title: 'Obtén tu API key de Holded',
+    body: 'Entra en tu cuenta Holded → Configuración → API. Copia la clave. Es el único requisito técnico.',
   },
   {
     step: '02',
-    title: 'Isaak prepara tu contexto',
-    body: 'Se organiza la informacion fiscal para priorizar revision, riesgos y siguientes acciones.',
+    title: 'Pégala en el onboarding guiado',
+    body: 'ChatGPT se conecta a Holded en tiempo real. Isaak carga tu contexto fiscal en menos de un minuto.',
   },
   {
     step: '03',
-    title: 'Empieza a operar con criterio',
-    body: 'Trabajas con una capa de control que reduce friccion y mejora consistencia operativa.',
+    title: 'Pregunta en lenguaje natural',
+    body: '«¿Tengo tesorería para aguantar el trimestre?», «¿Qué facturas están en riesgo?». Isaak te responde con tus datos.',
   },
 ];
 
@@ -156,42 +157,73 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm">
                 <Link2 className="h-3.5 w-3.5 text-[#ff5460]" />
-                Integracion Holded + Isaak
+                Holded × ChatGPT — Isaak como intérprete
               </div>
 
               <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.45rem] sm:leading-[1.04]">
-                Controla tu fiscal Holded en tiempo real. Evita errores y multas antes de que pasen.
+                Tus datos de Holded, explicados en lenguaje humano.
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                Activa Isaak hoy y empieza a operar con criterio sobre datos reales. Anticipate a
-                riesgos, revisa desviaciones en directo y cierra meses sin sorpresas fiscales.
+                Conecta tu cuenta de Holded via API y accede a un asistente que entiende tu
+                contabilidad, facturación y tesorería como si fuera tuya. Isaak hace de intérprete:
+                convierte el lenguaje técnico del ERP en respuestas claras, prioridades y alertas
+                para que puedas tomar decisiones sin abrir ni una pantalla de Holded.
               </p>
 
               <div className="mt-7 rounded-3xl border border-[#ff5460]/20 bg-[#ff5460]/5 p-5 shadow-sm">
                 <div className="text-sm font-semibold text-slate-900">
-                  Valor inmediato que ves en esta semana
+                  Qué puedes preguntarle cuando está conectado
                 </div>
                 <ul className="mt-4 grid gap-2 text-sm text-slate-700">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                    <span>
-                      <strong>Lectura fiscal en tiempo real</strong>: IVA, sueldos y otros
-                      indicadores actualizados cada dia.
-                    </span>
+                    <span>«¿Cuánto IVA tengo pendiente de liquidar este trimestre?»</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                    <span>
-                      <strong>Riesgos priorizados</strong>: Isaak te avisa de lo importante antes de
-                      que se convierta en problema.
-                    </span>
+                    <span>«¿Qué facturas de clientes llevan más de 60 días sin cobrar?»</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
+                    <span>«¿Tengo tesorería suficiente para pagar nóminas en los próximos 30 días?»</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
+                    <span>«¿Qué gastos del último mes se pueden deducir y no he categorizado?»</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-5">
+                <div className="text-sm font-semibold text-amber-900">Requisitos para usar esta integración</div>
+                <ul className="mt-3 grid gap-2 text-sm text-amber-800">
+                  <li className="flex items-start gap-2">
+                    <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                     <span>
-                      <strong>Auditorias internas mas rapidas</strong>: Todo queda registrado,
-                      validado y listo para revisar.
+                      Licencia activa de Holded —{' '}
+                      <a
+                        href="https://www.holded.com/es/precios"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold underline underline-offset-2 hover:text-amber-900"
+                      >
+                        ver planes de Holded
+                      </a>
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                    <span>
+                      API key de tu cuenta Holded —{' '}
+                      <a
+                        href="https://developers.holded.com/reference/introduction"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold underline underline-offset-2 hover:text-amber-900"
+                      >
+                        cómo obtener tu API key
+                      </a>
                     </span>
                   </li>
                 </ul>
@@ -202,20 +234,20 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
                   href={chatgptAppUrl}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-[#ef4654] hover:shadow-xl"
                 >
-                  Conectar Holded y activar Isaak
+                  Conectar Holded via API
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href={chatgptAppUrl}
                   className="inline-flex items-center justify-center rounded-xl border border-[#ff5460]/40 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
                 >
-                  Ver como funciona (5 minutos)
+                  Ver cómo funciona
                 </Link>
               </div>
 
               <p className="mt-5 text-xs text-slate-500">
-                <strong>Tiempo de activacion:</strong> 3 minutos. <strong>Valor visible:</strong>{' '}
-                desde el primer acceso. <strong>Sin tarjeta:</strong> solo tu API key de Holded.
+                <strong>Necesitas:</strong> licencia Holded activa + tu API key.{' '}
+                <strong>Tiempo de conexión:</strong> menos de 3 minutos.
               </p>
             </div>
 
@@ -228,11 +260,11 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
         <Container>
           <div className="max-w-3xl">
             <h2 className="text-3xl font-bold tracking-tight text-slate-950">
-              Resultados cuantificables desde la primera semana
+              Lo que Isaak puede hacer con tus datos de Holded
             </h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              Equipos que usan Isaak + Holded reportan menos errores, mas velocidad en auditorias y
-              cero sorpresas fiscales en la presentacion.
+              La API de Holded expone contabilidad, facturación, tesorería, contactos y más.
+              Isaak convierte esa información en respuestas, alertas y decisiones concretas.
             </p>
           </div>
 
@@ -258,12 +290,11 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
           <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#081936_0%,#0f2660_100%)] p-8 text-white lg:p-10">
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
-                Proceso guiado
+                Proceso de conexión
               </div>
-              <h2 className="mt-4 text-3xl font-bold tracking-tight">Activacion en tres pasos</h2>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight">De API key a asistente fiscal en 3 pasos</h2>
               <p className="mt-4 text-sm leading-7 text-white/80 sm:text-base">
-                Sin friccion tecnica innecesaria. Conecta, valida y empieza a trabajar con
-                informacion accionable.
+                No hay integración técnica que preparar. Solo tu API key de Holded y el onboarding guiado.
               </p>
             </div>
 
@@ -287,7 +318,7 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
                 href={chatgptAppUrl}
                 className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#0f2660] transition-all hover:bg-slate-100 hover:shadow-lg"
               >
-                Conectar ahora (gratis)
+                Conectar Holded ahora
               </Link>
               <Link
                 href="/holded/demo-recording"
@@ -624,8 +655,15 @@ function StandaloneHoldedPage({ chatgptAppUrl }: { chatgptAppUrl: string }) {
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f6f9ff_44%,#ffffff_100%)] text-slate-900">
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <Link href="/" className="text-sm font-semibold text-slate-800 hover:text-slate-950">
-            holded.verifactu.business
+          <Link href="https://www.holded.com" target="_blank" rel="noopener noreferrer" className="flex items-center">
+            <Image
+              src="/brand/holded-logotype-dark.png"
+              alt="Holded"
+              width={110}
+              height={30}
+              className="h-7 w-auto object-contain"
+              priority
+            />
           </Link>
 
           <nav className="flex flex-wrap items-center gap-5 text-sm text-slate-600">
@@ -668,7 +706,15 @@ function StandaloneHoldedPage({ chatgptAppUrl }: { chatgptAppUrl: string }) {
           </div>
 
           <div className="mt-5 border-t border-slate-200 pt-4 text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-            Powered by verifactu.business
+            Powered by{' '}
+            <a
+              href="https://verifactu.business"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-slate-800"
+            >
+              verifactu.business
+            </a>
           </div>
         </div>
       </footer>
