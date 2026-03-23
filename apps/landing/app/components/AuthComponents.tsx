@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
@@ -120,6 +121,9 @@ interface AuthLayoutProps {
   children: React.ReactNode;
   footerText?: string;
   footerLink?: { href: string; label: string };
+  brandMode?: "default" | "holded";
+  backHref?: string;
+  backLabel?: string;
 }
 
 export function AuthLayout({
@@ -128,25 +132,56 @@ export function AuthLayout({
   children,
   footerText,
   footerLink,
+  brandMode = "default",
+  backHref,
+  backLabel,
 }: AuthLayoutProps) {
   const landingUrl = getLandingUrl();
+  const isHolded = brandMode === "holded";
+  const resolvedBackHref = backHref || landingUrl;
+  const resolvedBackLabel = backLabel || "Volver al inicio";
+
   return (
-    <div className="min-h-screen bg-[#2361d8]/5 px-4 py-10">
+    <div
+      className={`min-h-screen px-4 py-10 ${
+        isHolded ? "bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_42%,#ffffff_100%)]" : "bg-[#2361d8]/5"
+      }`}
+    >
       <div className="mx-auto w-full max-w-md">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-lg">
+        <div className={`rounded-2xl border bg-white p-8 shadow-lg ${isHolded ? "border-[#ff5460]/15" : "border-slate-200"}`}>
           <div className="mb-8 text-center">
             <div className="mb-4 flex justify-center">
-              <BrandLogo variant="auth" />
+              {isHolded ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+                    <Image
+                      src="/brand/holded/holded-diamond-logo.png"
+                      alt="Isaak para Holded"
+                      width={52}
+                      height={52}
+                      className="h-[52px] w-[52px] object-contain"
+                      priority
+                    />
+                  </div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#ff5460]">
+                    Isaak para Holded
+                  </div>
+                </div>
+              ) : (
+                <BrandLogo variant="auth" />
+              )}
             </div>
             <div className="mb-4">
               <a
-                href={landingUrl}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[#2361d8] hover:text-[#2361d8]"
+                href={resolvedBackHref}
+                className={`inline-flex items-center gap-2 text-sm font-semibold ${
+                  isHolded ? "text-[#ff5460] hover:text-[#ef4654]" : "text-[#2361d8] hover:text-[#2361d8]"
+                }`}
               >
-                <span aria-hidden="true">&larr;</span> Volver al inicio
+                <span aria-hidden="true">&larr;</span> {resolvedBackLabel}
               </a>
             </div>
-            <h1 className="mb-2 text-2xl font-bold text-[#011c67]">{title}</h1>
+            <h1 className={`mb-2 text-2xl font-bold ${isHolded ? "text-slate-950" : "text-[#011c67]"}`}>{title}</h1>
             {subtitle && <p className="text-gray-600">{subtitle}</p>}
           </div>
 
@@ -160,7 +195,9 @@ export function AuthLayout({
                   {" "}
                   <a
                     href={footerLink.href}
-                    className="font-medium text-[#2361d8] hover:text-[#2361d8]"
+                    className={`font-medium ${
+                      isHolded ? "text-[#ff5460] hover:text-[#ef4654]" : "text-[#2361d8] hover:text-[#2361d8]"
+                    }`}
                   >
                     {footerLink.label}
                   </a>
@@ -168,16 +205,16 @@ export function AuthLayout({
               )}
               <div className="mt-4 flex flex-col items-center gap-1 text-xs text-gray-500">
                 <Link
-                  href={landingUrl}
-                  className="underline hover:text-[#2361d8]"
+                  href={resolvedBackHref}
+                  className={`underline ${isHolded ? "hover:text-[#ff5460]" : "hover:text-[#2361d8]"}`}
                   aria-label="Volver al inicio"
                 >
-                  Volver al inicio
+                  {resolvedBackLabel}
                 </Link>
                 <div className="flex gap-2">
                   <Link
                     href="/legal/privacidad"
-                    className="underline hover:text-[#2361d8]"
+                    className={`underline ${isHolded ? "hover:text-[#ff5460]" : "hover:text-[#2361d8]"}`}
                     aria-label="Leer politica de privacidad"
                   >
                     Política de privacidad
@@ -185,7 +222,7 @@ export function AuthLayout({
                   <span>|</span>
                   <Link
                     href="/legal/terminos"
-                    className="underline hover:text-[#2361d8]"
+                    className={`underline ${isHolded ? "hover:text-[#ff5460]" : "hover:text-[#2361d8]"}`}
                     aria-label="Leer terminos y condiciones"
                   >
                     Términos y condiciones
@@ -196,7 +233,7 @@ export function AuthLayout({
           )}
         </div>
 
-        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4 text-center text-xs text-gray-600">
+        <div className={`mt-6 rounded-lg border bg-white p-4 text-center text-xs text-gray-600 ${isHolded ? "border-[#ff5460]/15" : "border-slate-200"}`}>
           <p>
             <strong>Tu información siempre está segura.</strong> Guardamos tus datos con cifrado y control de acceso.
           </p>

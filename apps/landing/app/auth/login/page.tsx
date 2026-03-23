@@ -63,7 +63,20 @@ export default function LoginPage() {
     }
   };
 
+  const source = searchParams?.get('source')?.trim() || '';
   const nextParam = searchParams?.get('next')?.trim() || '';
+  const holdedSiteUrl = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+  const holdedMode =
+    source.startsWith('holded') ||
+    nextParam.includes('/onboarding/holded') ||
+    nextParam.includes('holded.verifactu.business');
+  const buildAuthHref = (pathname: string) => {
+    const params = new URLSearchParams();
+    if (nextParam) params.set('next', nextParam);
+    if (source) params.set('source', source);
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  };
   const redirectTarget = (() => {
     if (!nextParam) return `${clientUrl}/workspace`;
     try {
@@ -263,14 +276,33 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title={mode === 'login' ? 'Inicia sesion' : 'Crea tu cuenta'}
-      subtitle={mode === 'login' ? 'Accede a tu cuenta de Verifactu' : 'Unete a Verifactu hoy'}
+      title={
+        holdedMode
+          ? mode === 'login'
+            ? 'Inicia sesion para conectar Holded'
+            : 'Crea tu cuenta para continuar con Holded'
+          : mode === 'login'
+            ? 'Inicia sesion'
+            : 'Crea tu cuenta'
+      }
+      subtitle={
+        holdedMode
+          ? mode === 'login'
+            ? 'Primero accedes a tu cuenta y despues retomamos la conexion de Holded con Isaak.'
+            : 'Crea tu cuenta y te devolveremos automaticamente al flujo de conexion de Holded.'
+          : mode === 'login'
+            ? 'Accede a tu cuenta de Verifactu'
+            : 'Unete a Verifactu hoy'
+      }
       footerText={mode === 'login' ? 'No tienes cuenta?' : 'Ya tienes cuenta?'}
       footerLink={
         mode === 'login'
-          ? { href: '/auth/signup', label: 'Registrate aqui' }
-          : { href: '/auth/login', label: 'Inicia sesion aqui' }
+          ? { href: buildAuthHref('/auth/signup'), label: 'Registrate aqui' }
+          : { href: buildAuthHref('/auth/login'), label: 'Inicia sesion aqui' }
       }
+      brandMode={holdedMode ? 'holded' : 'default'}
+      backHref={holdedMode ? holdedSiteUrl : undefined}
+      backLabel={holdedMode ? 'Volver a Holded' : undefined}
     >
       <div className="mb-2 flex gap-2">
         <button
@@ -324,7 +356,7 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700">Contraseña</label>
             {mode === 'login' && (
               <Link
-                href="/auth/forgot-password"
+                href={buildAuthHref('/auth/forgot-password')}
                 className="text-sm font-medium text-[#2361d8] hover:text-[#2361d8]"
               >
                 La olvidaste?

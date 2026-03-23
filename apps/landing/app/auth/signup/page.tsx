@@ -1,18 +1,49 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { AuthLayout, FormInput, PasswordInput } from "../../components/AuthComponents";
 import { useAuth } from "../../context/AuthContext";
 import { signUpWithEmail, signInWithGoogle, signInWithMicrosoft } from "../../lib/auth";
-import { getAppUrl } from "../../lib/urls";
+import { getAppUrl, getClientUrl } from "../../lib/urls";
 import Link from "next/link";
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const appUrl = getAppUrl();
+  const clientUrl = getClientUrl();
+  const source = searchParams?.get("source")?.trim() || "";
+  const nextParam = searchParams?.get("next")?.trim() || "";
+  const holdedSiteUrl = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || "https://holded.verifactu.business";
+  const holdedMode =
+    source.startsWith("holded") ||
+    nextParam.includes("/onboarding/holded") ||
+    nextParam.includes("holded.verifactu.business");
+  const buildAuthHref = (pathname: string) => {
+    const params = new URLSearchParams();
+    if (nextParam) params.set("next", nextParam);
+    if (source) params.set("source", source);
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  };
+  const redirectTarget = (() => {
+    if (!nextParam) return `${appUrl}/demo`;
+    try {
+      const target = new URL(nextParam);
+      const appOrigin = new URL(appUrl).origin;
+      const clientOrigin = new URL(clientUrl).origin;
+      const allowedOrigins = new Set([appOrigin, clientOrigin]);
+      if (!allowedOrigins.has(target.origin)) {
+        return `${appUrl}/demo`;
+      }
+      return target.toString();
+    } catch {
+      return `${appUrl}/demo`;
+    }
+  })();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,9 +55,9 @@ export default function SignupPage() {
 
   React.useEffect(() => {
     if (user) {
-      window.location.href = `${appUrl}/demo`;
+      window.location.href = redirectTarget;
     }
-  }, [user, appUrl]);
+  }, [user, redirectTarget]);
 
   const validateForm = () => {
     setError("");
@@ -66,7 +97,7 @@ export default function SignupPage() {
         return;
       }
 
-      router.push("/auth/verify-email");
+      router.push(buildAuthHref("/auth/verify-email"));
     } catch (err) {
       setError("Error al registrarse. Intenta de nuevo.");
     } finally {
@@ -86,7 +117,7 @@ export default function SignupPage() {
         return;
       }
 
-      window.location.href = `${appUrl}/demo`;
+      window.location.href = redirectTarget;
     } catch (err) {
       setError("Error al registrarse con Google. Intenta de nuevo.");
     } finally {
@@ -106,7 +137,7 @@ export default function SignupPage() {
         return;
       }
 
-      window.location.href = `${appUrl}/demo`;
+      window.location.href = redirectTarget;
     } catch (err) {
       setError("Error al registrarse con Microsoft. Intenta de nuevo.");
     } finally {
@@ -116,10 +147,17 @@ export default function SignupPage() {
 
   return (
     <AuthLayout
-      title="Crea tu cuenta"
-      subtitle="Unete a Verifactu hoy"
+      title={holdedMode ? "Crea tu cuenta para conectar Holded" : "Crea tu cuenta"}
+      subtitle={
+        holdedMode
+          ? "Te devolveremos automaticamente al flujo de Holded para terminar la conexion con Isaak."
+          : "Unete a Verifactu hoy"
+      }
       footerText="Ya tienes cuenta?"
-      footerLink={{ href: "/auth/login", label: "Inicia sesion aqui" }}
+      footerLink={{ href: buildAuthHref("/auth/login"), label: "Inicia sesion aqui" }}
+      brandMode={holdedMode ? "holded" : "default"}
+      backHref={holdedMode ? holdedSiteUrl : undefined}
+      backLabel={holdedMode ? "Volver a Holded" : undefined}
     >
       <motion.form
         onSubmit={handleEmailSignup}
