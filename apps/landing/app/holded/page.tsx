@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   description:
     'Isaak es un agente IA que interpreta tus datos de Holded. Pregunta sobre ventas, gastos, tesorería y más sin abrir Holded nunca más.',
   icons: {
-    icon: [{ url: '/holded/icon.png', type: 'image/png' }],
-    shortcut: ['/holded/icon.png'],
-    apple: [{ url: '/holded/icon.png', type: 'image/png' }],
+    icon: [{ url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' }],
+    shortcut: ['/brand/holded/holded-diamond-logo.png'],
+    apple: [{ url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' }],
   },
 };
 
@@ -488,12 +488,6 @@ function HoldedContent({ chatgptAppUrl }: { chatgptAppUrl: string }) {
               >
                 Conectar mi Holded
                 <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                Vuelvo al inicio
               </Link>
             </div>
           </div>

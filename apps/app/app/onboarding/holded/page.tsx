@@ -24,7 +24,7 @@ function firstValue(value: string | string[] | undefined) {
 }
 
 function normalizeNextUrl(nextUrl: string | undefined) {
-  const fallback = new URL('/holded', getLandingUrl()).toString();
+  const fallback = getAppUrl();
   if (!nextUrl) return fallback;
 
   try {
