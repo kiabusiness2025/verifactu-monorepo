@@ -3,6 +3,7 @@
 import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import styles from './loading.module.css';
 
 const copy = getIsaakHoldedOnboardingCopy();
 const queuedMessages = copy.loadingMessages;
@@ -23,17 +24,42 @@ export default function HoldedOnboardingLoading() {
       <div className="mx-auto flex min-h-[70vh] max-w-3xl items-center justify-center">
         <div className="w-full rounded-[28px] border border-neutral-200 bg-white p-8 text-center shadow-[0_16px_48px_rgba(0,0,0,0.06)] sm:p-10">
           <div className="flex justify-center">
-            <Image
-              src="/brand/holded/holded-diamond-logo.png"
-              alt="Compatible con Holded"
-              width={120}
-              height={120}
-              className="h-24 w-24 sm:h-28 sm:w-28"
-              priority
-            />
+            <div className={styles.mergeStage} aria-hidden="true">
+              <div className={styles.glow} />
+
+              <div className={`${styles.iconOrbit} ${styles.leftOrbit}`}>
+                <div className={styles.chatgptBadge}>GPT</div>
+              </div>
+
+              <div className={`${styles.iconOrbit} ${styles.rightOrbit}`}>
+                <Image
+                  src="/brand/holded/holded-logo-red.png"
+                  alt="Holded"
+                  width={30}
+                  height={30}
+                  className="h-7 w-7 object-contain"
+                  priority
+                />
+              </div>
+
+              <div className={styles.centerPulse}>
+                <Image
+                  src="/brand/holded/holded-diamond-logo.png"
+                  alt="Holded conectado con ChatGPT"
+                  width={40}
+                  height={40}
+                  className="h-9 w-9 object-contain"
+                  priority
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="mt-6 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
+          <div className="mt-4 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
+            ChatGPT + Holded sincronizando contexto
+          </div>
+
+          <div className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
             {copy.eyebrow}
           </div>
 

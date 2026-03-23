@@ -1,0 +1,120 @@
+.mergeStage {
+  position: relative;
+  width: 180px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.glow {
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 84, 96, 0.16) 0%, rgba(11, 108, 251, 0.08) 42%, rgba(255, 255, 255, 0) 72%);
+  animation: glowPulse 2.4s ease-in-out infinite;
+}
+
+.iconOrbit {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+}
+
+.leftOrbit {
+  left: 8px;
+  animation: mergeLeft 2.2s ease-in-out infinite;
+}
+
+.rightOrbit {
+  right: 8px;
+  animation: mergeRight 2.2s ease-in-out infinite;
+}
+
+.chatgptBadge {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #111111;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.centerPulse {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 84, 96, 0.18);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 26px rgba(255, 84, 96, 0.12);
+  animation: centerBeat 1.8s ease-in-out infinite;
+}
+
+@keyframes mergeLeft {
+  0%,
+  100% {
+    transform: translateY(-50%) translateX(0) scale(0.95);
+    opacity: 0.9;
+  }
+  45%,
+  55% {
+    transform: translateY(-50%) translateX(20px) scale(1.02);
+    opacity: 1;
+  }
+}
+
+@keyframes mergeRight {
+  0%,
+  100% {
+    transform: translateY(-50%) translateX(0) scale(0.95);
+    opacity: 0.9;
+  }
+  45%,
+  55% {
+    transform: translateY(-50%) translateX(-20px) scale(1.02);
+    opacity: 1;
+  }
+}
+
+@keyframes centerBeat {
+  0%,
+  100% {
+    transform: scale(0.98);
+    box-shadow: 0 12px 26px rgba(255, 84, 96, 0.12);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 16px 32px rgba(255, 84, 96, 0.2);
+  }
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    transform: scale(0.95);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
