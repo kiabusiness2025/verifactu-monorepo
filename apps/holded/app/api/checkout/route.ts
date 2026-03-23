@@ -93,12 +93,16 @@ function getCancelUrl() {
 
 function getOnboardingUrl() {
   const appUrl = getAppUrl();
+  const landingUrl = (process.env.NEXT_PUBLIC_LANDING_URL || 'https://verifactu.business').replace(
+    /\/$/,
+    ''
+  );
   const chatUrl = new URL('/dashboard/isaak', appUrl).toString();
   const onboardingUrl = new URL('/onboarding/holded', appUrl);
   onboardingUrl.searchParams.set('channel', 'chatgpt');
   onboardingUrl.searchParams.set('source', 'holded_planes');
   onboardingUrl.searchParams.set('next', chatUrl);
-  const loginUrl = new URL('/login', appUrl);
+  const loginUrl = new URL('/auth/holded', landingUrl);
   loginUrl.searchParams.set('source', 'holded_checkout');
   loginUrl.searchParams.set('next', onboardingUrl.toString());
   return loginUrl.toString();

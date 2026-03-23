@@ -89,6 +89,15 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
+  // Temporary holded-only auth entrypoint to avoid loops on the generic login panel.
+  if (pathname === '/auth/login') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/auth/holded';
+    const response = NextResponse.redirect(url, { status: 307 });
+    applySecurityHeaders(response, nonce, true);
+    return response;
+  }
+
   const isAuthRoute = pathname.startsWith('/auth/');
   const response = NextResponse.next({
     request: {
