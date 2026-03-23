@@ -150,8 +150,8 @@ export default function SignupPage() {
       title={holdedMode ? "Crea tu cuenta para conectar Holded" : "Crea tu cuenta"}
       subtitle={
         holdedMode
-          ? "Te devolveremos automaticamente al flujo de Holded para terminar la conexion con Isaak."
-          : "Unete a Verifactu hoy"
+          ? "Crea tu cuenta y conectamos Holded en el siguiente paso."
+          : "Crea tu cuenta en menos de un minuto."
       }
       footerText="Ya tienes cuenta?"
       footerLink={{ href: buildAuthHref("/auth/login"), label: "Inicia sesion aqui" }}
@@ -192,7 +192,7 @@ export default function SignupPage() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          {isLoading ? "Abriendo Google..." : "Continuar con Google"}
+          {isLoading ? "Abriendo Google..." : "Continuar con Google (recomendado)"}
         </button>
 
         <button
@@ -207,7 +207,7 @@ export default function SignupPage() {
             <path fill="#00A4EF" d="M2 13h9v9H2z" />
             <path fill="#FFB900" d="M13 13h9v9h-9z" />
           </svg>
-          {isLoading ? "Abriendo Microsoft..." : "Continuar con Microsoft"}
+          {isLoading ? "Abriendo Microsoft..." : "Continuar con Microsoft 365"}
         </button>
       </div>
 
@@ -216,7 +216,7 @@ export default function SignupPage() {
           <div className="w-full border-t border-gray-300"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-white px-2 text-gray-500">O regístrate con email y contraseña</span>
+          <span className="bg-white px-2 text-gray-500">O crea cuenta con email y contraseña</span>
         </div>
       </div>
 
