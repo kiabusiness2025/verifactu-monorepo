@@ -3,16 +3,13 @@
 import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
 import {
   AlertCircle,
-  ArrowRight,
+  ArrowLeft,
   CheckCircle2,
-  Gauge,
   KeyRound,
   Loader2,
   ShieldCheck,
-  Sparkles,
-  TriangleAlert,
+  X,
 } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -36,33 +33,14 @@ type Props = {
 };
 
 const helpSteps = [
-  'Entra en Holded con tu usuario habitual.',
-  'Abre ajustes de cuenta o el area de API.',
-  'Copia una API key activa o crea una nueva si hace falta.',
-  'Vuelve aqui y pegala para conectar tu entorno.',
-  'Isaak empezara a trabajar sobre la cuenta asociada a esa API key.',
-];
-
-const valueCards = [
-  {
-    title: 'Revisar antes de presentar',
-    body: 'Isaak usa tus datos reales para ayudarte a detectar errores y tareas pendientes.',
-    icon: TriangleAlert,
-  },
-  {
-    title: 'Anticipar impuestos',
-    body: 'Te orienta con informacion fiscal y prioridades para decidir con mas margen.',
-    icon: Gauge,
-  },
-  {
-    title: 'Activar un entorno real',
-    body: 'La conexion te mete de lleno en el ecosistema de verifactu.business con contexto real.',
-    icon: ShieldCheck,
-  },
+  'Entra en Holded y abre el area de API.',
+  'Copia una API key activa de tu empresa.',
+  'Pegala aqui para activar tu espacio y entrar al chat de Isaak.',
 ];
 
 const onboardingCopy = getIsaakHoldedOnboardingCopy();
 const savingMessages = onboardingCopy.savingMessages;
+const HOLDED_COMPAT_URL = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 
 export default function HoldedOnboardingClient({ nextUrl, tenantName, onboardingToken }: Props) {
   const [apiKey, setApiKey] = useState('');
@@ -174,137 +152,72 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_48%,#ffffff_100%)] px-4 py-10 text-black sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-3xl">
-        <div className="rounded-[32px] border border-neutral-200 bg-white p-6 shadow-[0_16px_48px_rgba(0,0,0,0.06)] sm:p-8">
-          <div className="relative overflow-hidden rounded-[28px] border border-neutral-200 bg-[linear-gradient(145deg,#ffffff_0%,#f8fbff_55%,#fff5f6_100%)] p-6 sm:p-8">
-            <div className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white/90 px-3 py-1 text-[11px] font-semibold text-neutral-600 shadow-sm">
-              <Image
-                src="/brand/holded/holded-diamond-logo.png"
-                alt="Compatible con Holded"
-                width={16}
-                height={16}
-                className="h-4 w-4"
-                priority
-              />
-              Compatible con Holded
-            </div>
-
-            <div className="max-w-2xl">
-              <div className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
-                {onboardingCopy.eyebrow}
-              </div>
-
-              <h1 className="mt-5 text-3xl font-bold tracking-tight text-black sm:text-4xl">
-                {onboardingCopy.title}
-              </h1>
-
-              <p className="mt-4 text-sm leading-7 text-neutral-700 sm:text-base">
-                {onboardingCopy.intro}
-              </p>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                {valueCards.map((item) => (
-                  <div
-                    key={item.title}
-                    className="rounded-2xl border border-white/80 bg-white/85 p-4 shadow-sm"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#0b6cfb]/10 text-[#0b6cfb]">
-                      <item.icon className="h-5 w-5" />
-                    </div>
-                    <div className="mt-3 text-sm font-semibold text-black">{item.title}</div>
-                    <p className="mt-2 text-xs leading-6 text-neutral-600">{item.body}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+    <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_45%,#ffffff_100%)] px-4 py-10 text-black sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-2xl">
+        <div className="rounded-[30px] border border-neutral-200 bg-white shadow-[0_18px_46px_rgba(15,23,42,0.09)]">
+          <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
+            <Link
+              href={HOLDED_COMPAT_URL}
+              className="inline-flex items-center gap-2 rounded-full border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Volver
+            </Link>
+            <Link
+              href={HOLDED_COMPAT_URL}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 hover:bg-neutral-50"
+              aria-label="Cerrar"
+            >
+              <X className="h-4 w-4" />
+            </Link>
           </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-3xl border border-neutral-200 bg-neutral-50 p-5">
+          <div className="p-6 sm:p-8">
+            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+              {onboardingCopy.eyebrow}
+            </div>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-black sm:text-[2rem]">
+              Activa tu conexion con Holded
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-neutral-700 sm:text-base">
+              {onboardingCopy.intro}
+            </p>
+
+            <div className="mt-5 rounded-2xl border border-[#0b6cfb]/20 bg-[#f3f8ff] px-4 py-3 text-sm text-[#0b214a]">
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#0b6cfb]" />
+                <span>
+                  Por seguridad, el chat de Isaak solo se habilita con sesion iniciada y cuenta
+                  conectada.
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
               <div className="text-sm font-semibold text-black">{onboardingCopy.statusReady}</div>
               <div className="mt-2 text-sm text-neutral-700">
                 Espacio preparado: <span className="font-semibold text-black">{tenantName}</span>
               </div>
-              <div className="mt-2 text-sm text-neutral-700">
-                Estado actual: <span className="font-semibold text-black">{statusLabel}</span>
+              <div className="mt-1 text-sm text-neutral-700">
+                Estado: <span className="font-semibold text-black">{statusLabel}</span>
               </div>
-              <p className="mt-3 text-sm text-neutral-600">
-                Solo falta conectar tu ERP para empezar a trabajar con Isaak.
-              </p>
               {status?.degraded ? (
-                <div className="mt-3 text-sm text-amber-700">{onboardingCopy.degraded}</div>
+                <div className="mt-2 text-sm text-amber-700">{onboardingCopy.degraded}</div>
               ) : null}
             </div>
 
-            <div className="rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_52%,#eef4ff_100%)] p-5">
-              <div className="text-sm font-semibold text-black">Lo que activas en este paso</div>
-              <ul className="mt-3 space-y-2 text-sm leading-6 text-neutral-700">
-                <li>Revision de informacion fiscal con datos reales.</li>
-                <li>Mayor claridad para anticipar impuestos y detectar errores.</li>
-                <li>Siguiente paso natural hacia la experiencia completa de verifactu.business.</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-8 rounded-3xl border border-neutral-200 bg-white p-5">
-            <div className="text-sm font-semibold text-black">Como conectar tu cuenta</div>
-            <p className="mt-2 text-sm leading-6 text-neutral-600">
-              Es un paso sencillo. Necesitamos la clave para que Isaak pueda trabajar sobre tu
-              cuenta real de Holded.
-            </p>
-            <ol className="mt-4 space-y-3 text-sm text-neutral-700">
+            <ol className="mt-5 space-y-2 text-sm text-neutral-700">
               {helpSteps.map((step, index) => (
                 <li key={step} className="flex gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-white">
                     {index + 1}
                   </span>
                   <span>{step}</span>
                 </li>
               ))}
             </ol>
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Isaak trabajara sobre la cuenta asociada a la API key que introduzcas.
-            </div>
-          </div>
 
-          <div className="mt-8 rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_52%,#eef4ff_100%)] p-5">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0b6cfb]/10 text-[#0b6cfb]">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-black">
-                  Desbloquea la experiencia completa de Isaak
-                </div>
-                <p className="mt-2 text-sm leading-6 text-neutral-700">
-                  Activa verifactu.business y accede a panel fiscal, trazabilidad, historico, reglas
-                  automaticas y mayor control sobre tus procesos.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <Link
-                    href="https://verifactu.business"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
-                  >
-                    Probar version completa 30 dias
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href="https://verifactu.business/que-es-isaak"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
-                  >
-                    Ver todo lo que incluye
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-black">
                 Clave API de tu ERP (Holded)
@@ -337,12 +250,12 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
                 Conectar y activar Isaak
               </button>
             </div>
-          </form>
+            </form>
 
-          {saving ? (
-            <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#fff7f7_0%,#ffffff_48%,#fff4f5_100%)] p-5">
+            {saving ? (
+              <div className="mt-5 overflow-hidden rounded-2xl border border-neutral-200 bg-[linear-gradient(135deg,#fff8f8_0%,#ffffff_55%,#fff6f6_100%)] p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff5460]/10 text-[#ff5460]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#ff5460]/10 text-[#ff5460]">
                   <Loader2 className="h-5 w-5 animate-spin" />
                 </div>
                 <div>
@@ -360,7 +273,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
                 <div className="h-full w-1/2 animate-pulse rounded-full bg-[#ff5460]" />
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/80 bg-white/90 px-4 py-4 shadow-sm">
+              <div className="mt-4 rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm">
                 <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
                   Mientras lo dejamos listo
                 </div>
@@ -368,22 +281,23 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
                   {savingMessages[savingMessageIndex]}
                 </p>
               </div>
-            </div>
-          ) : null}
+              </div>
+            ) : null}
 
-          {message ? (
-            <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            {message ? (
+              <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{message}</span>
-            </div>
-          ) : null}
+              </div>
+            ) : null}
 
-          {error ? (
-            <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+            {error ? (
+              <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
-            </div>
-          ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

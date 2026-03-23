@@ -8,17 +8,9 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import HoldedHeroVisual from './components/HoldedHeroVisual';
-
-const HOLDED_APP_URL = 'https://app.verifactu.business';
-const HOLDED_CHAT_URL = `${HOLDED_APP_URL}/dashboard/isaak`;
-
-const buildOnboardingUrl = (source: string) => {
-  const onboardingUrl = `${HOLDED_APP_URL}/onboarding/holded?channel=chatgpt&source=${source}&next=${encodeURIComponent(HOLDED_CHAT_URL)}`;
-  return `${HOLDED_APP_URL}/login?source=holded_landing&next=${encodeURIComponent(onboardingUrl)}`;
-};
+import { buildOnboardingUrl } from './lib/holded-navigation';
 
 export const metadata: Metadata = {
   title: 'Isaak para Holded | Control claro de tu negocio',
@@ -81,46 +73,6 @@ const faqItems = [
 export default function HoldedHomePage() {
   return (
     <main className="min-h-screen text-slate-900">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <Link href="/" className="group flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition group-hover:shadow-md">
-              <Image
-                src="/brand/holded/holded-diamond-logo.png"
-                alt="Isaak para Holded"
-                width={22}
-                height={22}
-                className="h-[22px] w-[22px] object-contain"
-                priority
-              />
-            </div>
-            <div className="leading-tight">
-              <div className="text-[1.18rem] font-semibold text-slate-900">Isaak para Holded</div>
-              <div className="text-sm font-medium text-slate-600">Asistente contable</div>
-            </div>
-          </Link>
-
-          <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 md:flex">
-            <Link href="#beneficios" className="hover:text-slate-900">
-              Beneficios
-            </Link>
-            <Link href="/planes" className="hover:text-slate-900">
-              Planes
-            </Link>
-            <Link href="/support" className="hover:text-slate-900">
-              Soporte
-            </Link>
-          </nav>
-
-          <Link
-            href={buildOnboardingUrl('holded_home_nav')}
-            className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ef4654]"
-          >
-            Conectar cuenta
-          </Link>
-        </div>
-      </header>
-
       <section id="solucion" className="py-14 sm:py-18">
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
@@ -345,17 +297,6 @@ export default function HoldedHomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
-        Powered by{' '}
-        <a
-          href="https://verifactu.business"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold hover:text-slate-800"
-        >
-          verifactu.business
-        </a>
-      </footer>
     </main>
   );
 }

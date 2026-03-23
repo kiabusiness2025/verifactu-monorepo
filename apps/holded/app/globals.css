@@ -23,6 +23,8 @@ button {
 
 a:focus-visible,
 button:focus-visible {
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px rgba(255, 84, 96, 0.55);
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 0 4px rgba(255, 84, 96, 0.55);
   border-radius: 12px;
 }

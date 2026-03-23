@@ -1,18 +1,11 @@
 'use client';
 
 import { ArrowRight, CheckCircle2, Sparkles, Zap } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { buildOnboardingUrl } from '../lib/holded-navigation';
 
 type BillingCycle = 'monthly' | 'yearly';
-const HOLDED_APP_URL = 'https://app.verifactu.business';
-const HOLDED_CHAT_URL = `${HOLDED_APP_URL}/dashboard/isaak`;
-
-const buildOnboardingUrl = (source: string) => {
-  const onboardingUrl = `${HOLDED_APP_URL}/onboarding/holded?channel=chatgpt&source=${source}&next=${encodeURIComponent(HOLDED_CHAT_URL)}`;
-  return `${HOLDED_APP_URL}/login?source=holded_planes&next=${encodeURIComponent(onboardingUrl)}`;
-};
 
 const plans = [
   {
@@ -189,35 +182,6 @@ export default function HoldedPlanesPage() {
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f6f9ff_40%,#ffffff_100%)] text-slate-900">
-      {/* Header mínimo */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <Link href="/" className="group flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition group-hover:shadow-md">
-              <Image
-                src="/brand/holded/holded-diamond-logo.png"
-                alt="Isaak para Holded"
-                width={22}
-                height={22}
-                className="h-[22px] w-[22px] object-contain"
-                priority
-              />
-            </div>
-            <div className="leading-tight">
-              <div className="text-[1.18rem] font-semibold text-slate-900">Isaak para Holded</div>
-              <div className="text-sm font-medium text-slate-600">Planes</div>
-            </div>
-          </Link>
-
-          <Link
-            href={buildOnboardingUrl('holded_planes_nav')}
-            className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ef4654]"
-          >
-            Empezar gratis
-          </Link>
-        </div>
-      </header>
-
       {/* Hero */}
       <section className="px-4 py-16 text-center sm:py-20">
         <div className="mx-auto max-w-2xl">
@@ -325,18 +289,6 @@ export default function HoldedPlanesPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
-        Powered by{' '}
-        <a
-          href="https://verifactu.business"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold hover:text-slate-800"
-        >
-          verifactu.business
-        </a>
-      </footer>
     </main>
   );
 }

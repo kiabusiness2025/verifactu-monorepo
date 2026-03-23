@@ -20,20 +20,20 @@ export default function HoldedOnboardingLoading() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_48%,#ffffff_100%)] px-4 py-10 text-black sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[70vh] max-w-3xl items-center justify-center">
-        <div className="w-full rounded-[28px] border border-neutral-200 bg-white p-8 text-center shadow-[0_16px_48px_rgba(0,0,0,0.06)] sm:p-10">
+    <div className="min-h-screen bg-white px-4 py-10 text-black sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[70vh] max-w-2xl items-center justify-center">
+        <div className="w-full rounded-[30px] border border-neutral-200 bg-white p-8 text-center shadow-[0_16px_40px_rgba(15,23,42,0.08)] sm:p-10">
           <div className="flex justify-center">
             <div className={styles.mergeStage} aria-hidden="true">
               <div className={styles.glow} />
 
               <div className={`${styles.iconOrbit} ${styles.leftOrbit}`}>
-                <div className={styles.chatgptBadge}>GPT</div>
+                <div className={styles.chatgptBadge}>ChatGPT</div>
               </div>
 
               <div className={`${styles.iconOrbit} ${styles.rightOrbit}`}>
                 <Image
-                  src="/brand/holded/holded-logo-red.png"
+                  src="/brand/holded/holded-diamond-logo.png"
                   alt="Holded"
                   width={30}
                   height={30}
@@ -56,7 +56,7 @@ export default function HoldedOnboardingLoading() {
           </div>
 
           <div className="mt-4 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
-            ChatGPT + Holded sincronizando contexto
+            Conexion segura en progreso
           </div>
 
           <div className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
@@ -72,7 +72,7 @@ export default function HoldedOnboardingLoading() {
           </p>
 
           <div className="mx-auto mt-8 h-2 w-28 overflow-hidden rounded-full bg-neutral-200">
-            <div className="h-full w-1/2 animate-[pulse_1.2s_ease-in-out_infinite] rounded-full bg-[#ff5460]" />
+            <div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-neutral-700" />
           </div>
 
           <div className="mt-8 min-h-[104px] rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-5">

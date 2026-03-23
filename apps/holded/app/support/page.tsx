@@ -33,23 +33,6 @@ const supportOptions = [
 export default function HoldedSupportPage() {
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_45%,#ffffff_100%)] text-slate-900">
-      <div className="border-b border-slate-200 bg-white/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <Link
-            href="/"
-            className="text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
-          >
-            Volver a compatibilidad Holded
-          </Link>
-          <Link
-            href="/planes"
-            className="text-sm font-semibold text-slate-600 hover:text-slate-900"
-          >
-            Ver planes
-          </Link>
-        </div>
-      </div>
-
       <section className="mx-auto max-w-5xl px-4 py-16">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
