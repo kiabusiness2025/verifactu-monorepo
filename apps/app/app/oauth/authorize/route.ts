@@ -64,11 +64,7 @@ export async function GET(request: NextRequest) {
       const authorizeUrl = new URL(url.toString());
       authorizeUrl.searchParams.set('onboarding_token', guestToken);
 
-      const onboardingUrl = new URL('/onboarding/holded', request.nextUrl.origin);
-      onboardingUrl.searchParams.set('next', authorizeUrl.toString());
-      onboardingUrl.searchParams.set('channel', 'chatgpt');
-      onboardingUrl.searchParams.set('onboarding_token', guestToken);
-      return NextResponse.redirect(onboardingUrl);
+      return NextResponse.redirect(buildLoginUrl(authorizeUrl.toString(), 'holded_oauth'));
     }
 
     const subject = session?.uid

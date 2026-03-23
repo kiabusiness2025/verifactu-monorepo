@@ -98,7 +98,10 @@ function getOnboardingUrl() {
   onboardingUrl.searchParams.set('channel', 'chatgpt');
   onboardingUrl.searchParams.set('source', 'holded_planes');
   onboardingUrl.searchParams.set('next', chatUrl);
-  return onboardingUrl.toString();
+  const loginUrl = new URL('/login', appUrl);
+  loginUrl.searchParams.set('source', 'holded_checkout');
+  loginUrl.searchParams.set('next', onboardingUrl.toString());
+  return loginUrl.toString();
 }
 
 async function createPlanCheckoutSessionUrl(

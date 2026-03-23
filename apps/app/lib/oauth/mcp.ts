@@ -253,9 +253,12 @@ export function mapSessionToOAuthUser(input: {
   };
 }
 
-export function buildLoginUrl(currentAuthorizeUrl: string) {
+export function buildLoginUrl(currentAuthorizeUrl: string, source?: string) {
   const loginUrl = new URL('/login', getAppUrl());
   loginUrl.searchParams.set('next', currentAuthorizeUrl);
+  if (source?.trim()) {
+    loginUrl.searchParams.set('source', source.trim());
+  }
   return loginUrl.toString();
 }
 

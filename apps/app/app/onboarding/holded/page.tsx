@@ -2,6 +2,7 @@ import { mintHoldedOnboardingToken, verifyHoldedOnboardingToken } from '@/lib/oa
 import { getSessionPayload } from '@/lib/session';
 import { getAppUrl, getLandingUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import HoldedOnboardingClient from './HoldedOnboardingClient';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ function firstValue(value: string | string[] | undefined) {
 }
 
 function normalizeNextUrl(nextUrl: string | undefined) {
-  const fallback = getAppUrl();
+  const fallback = new URL('/dashboard/isaak', getAppUrl()).toString();
   if (!nextUrl) return fallback;
 
   try {
@@ -65,20 +66,37 @@ export default async function HoldedOnboardingPage({
 }) {
   const params = await searchParams;
   const session = await getSessionPayload();
+
+  if (!session?.uid) {
+    const loginUrl = new URL('/login', getAppUrl());
+    loginUrl.searchParams.set('source', 'holded_onboarding');
+    const current = new URL('/onboarding/holded', getAppUrl());
+    const nextParam = firstValue(params.next)?.trim();
+    const channel = firstValue(params.channel)?.trim();
+    const source = firstValue(params.source)?.trim();
+    const onboardingToken = firstValue(params.onboarding_token)?.trim();
+    if (nextParam) current.searchParams.set('next', nextParam);
+    if (channel) current.searchParams.set('channel', channel);
+    if (source) current.searchParams.set('source', source);
+    if (onboardingToken) current.searchParams.set('onboarding_token', onboardingToken);
+    loginUrl.searchParams.set('next', current.toString());
+    redirect(loginUrl.toString());
+  }
+
   const existingToken = firstValue(params.onboarding_token)?.trim() || null;
   const onboardingToken =
     existingToken ||
-    (!session?.uid
+    (!session.uid
       ? await mintHoldedOnboardingToken({
           seed: `holded-onboarding:${Date.now()}:${Math.random()}`,
         })
       : null);
   const onboardingPayload =
-    !session?.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
+    !session.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
   const nextUrl = attachOnboardingToken(normalizeNextUrl(firstValue(params.next)), onboardingToken);
 
   const tenantName = buildWorkspaceLabel(
-    session?.uid
+    session.uid
       ? { name: session.name ?? null, email: session.email ?? null }
       : onboardingPayload
         ? { name: onboardingPayload.name ?? null, email: onboardingPayload.email ?? null }
