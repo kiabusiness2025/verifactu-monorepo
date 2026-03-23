@@ -33,19 +33,31 @@ export async function GET(req: Request) {
 
     console.log('[🔄 Dashboard Redirect] Session cookie found, re-setting with proper domain');
 
-    // Get client URL and target path
+    // Get allowed base URLs and target path
     const url = new URL(req.url);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
     const clientUrl = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://client.verifactu.business';
     const rawTarget = url.searchParams.get('target') || '/workspace';
 
-    // Prevenir open redirect: el target debe ser una ruta relativa (empieza con /)
-    // y no puede contener esquemas ni saltos de host (//)
-    const targetPath =
-      rawTarget.startsWith('/') && !rawTarget.startsWith('//') && !rawTarget.includes('://')
-        ? rawTarget
-        : '/workspace';
+    const appOrigin = new URL(appUrl).origin;
+    const clientOrigin = new URL(clientUrl).origin;
+    let dashboardUrl = `${appUrl}/workspace`;
 
-    const dashboardUrl = `${clientUrl}${targetPath}`;
+    // Safe redirect policy:
+    // 1) Relative targets are resolved against app origin.
+    // 2) Absolute targets are accepted only for app/client origins.
+    if (rawTarget.startsWith('/') && !rawTarget.startsWith('//') && !rawTarget.includes('://')) {
+      dashboardUrl = `${appUrl}${rawTarget}`;
+    } else {
+      try {
+        const parsedTarget = new URL(rawTarget);
+        if (parsedTarget.origin === appOrigin || parsedTarget.origin === clientOrigin) {
+          dashboardUrl = parsedTarget.toString();
+        }
+      } catch {
+        dashboardUrl = `${appUrl}/workspace`;
+      }
+    }
 
     console.log('[🔄 Dashboard Redirect] Target URL:', dashboardUrl);
 
