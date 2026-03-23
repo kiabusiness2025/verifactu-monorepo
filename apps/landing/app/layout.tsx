@@ -75,7 +75,9 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const nonce = (await headers()).get('x-nonce') || undefined;
+  const requestHeaders = await headers();
+  const nonce = requestHeaders.get('x-nonce') || undefined;
+  const hideIsaakChat = requestHeaders.get('x-hide-isaak-chat') === '1';
 
   return (
     <html lang="es">
@@ -103,7 +105,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </main>
             {process.env.NODE_ENV !== 'production' && <DevStatusBanner />}
             <CookieBanner />
-            <IsaakChatClient />
+            {!hideIsaakChat ? <IsaakChatClient /> : null}
             <PWAInstallPrompt />
             <Analytics />
           </ToastProvider>

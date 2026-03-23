@@ -14,7 +14,7 @@ const supportOptions = [
     title: 'Soporte por email',
     body: 'Escríbenos para incidencias de conexión, errores de tools o dudas sobre la activación de tu cuenta.',
     actionLabel: 'info@verifactu.business',
-    actionHref: 'mailto:info@verifactu.business?subject=Soporte%20Isaak%20for%20Holded',
+    actionHref: 'mailto:info@verifactu.business?subject=Soporte%20compatibilidad%20Holded',
   },
   {
     title: 'Ayuda de onboarding',
@@ -39,7 +39,7 @@ export default function HoldedSupportPage() {
             href="/holded"
             className="text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
           >
-            Volver a Isaak con Holded
+            Volver a compatibilidad Holded
           </Link>
           <Link
             href="https://verifactu.business"
@@ -70,7 +70,7 @@ export default function HoldedSupportPage() {
               <ul className="mt-3 space-y-1">
                 <li>- el email con el que has iniciado sesión en Isaak o Verifactu</li>
                 <li>- una captura del error visible</li>
-                <li>- si el fallo ocurre en ChatGPT, onboarding o dashboard</li>
+                <li>- si el fallo ocurre en activación, onboarding o dashboard</li>
               </ul>
             </div>
           </div>

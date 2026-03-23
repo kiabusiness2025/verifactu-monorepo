@@ -19,7 +19,7 @@ export default function HoldedOnboardingLoading() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white px-4 py-10 text-black sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_48%,#ffffff_100%)] px-4 py-10 text-black sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[70vh] max-w-3xl items-center justify-center">
         <div className="w-full rounded-[28px] border border-neutral-200 bg-white p-8 text-center shadow-[0_16px_48px_rgba(0,0,0,0.06)] sm:p-10">
           <div className="flex justify-center">
@@ -38,11 +38,11 @@ export default function HoldedOnboardingLoading() {
           </div>
 
           <h1 className="mt-6 text-3xl font-bold tracking-tight text-black sm:text-4xl">
-            Estamos preparando a Isaak
+            {copy.statusLoading}
           </h1>
 
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-neutral-600 sm:text-base">
-            Estamos dejando listo el acceso a tus datos reales para que Isaak empiece con contexto, prioridades y siguientes pasos desde el primer minuto.
+            {copy.intro}
           </p>
 
           <div className="mx-auto mt-8 h-2 w-28 overflow-hidden rounded-full bg-neutral-200">
@@ -51,7 +51,7 @@ export default function HoldedOnboardingLoading() {
 
           <div className="mt-8 min-h-[104px] rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-5">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
-              Mientras preparamos tu espacio
+              Mientras preparamos tu entorno
             </div>
             <p className="mt-3 text-base leading-8 text-neutral-700 sm:text-lg">
               {queuedMessages[index]}

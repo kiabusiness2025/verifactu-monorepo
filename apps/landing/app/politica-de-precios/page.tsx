@@ -79,7 +79,7 @@ export default function PoliticaDePreciosPage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
             <div className="text-xs font-semibold uppercase text-slate-500">Trial</div>
             <ul className="mt-2 space-y-1">
-              <li>Acceso automático a Empresa Demo SL sin caducidad</li>
+              <li>Acceso automático a Empresa Demo SL con datos de ejemplo y sin caducidad</li>
               <li>Prueba real de 30 días para crear 1 empresa con tus datos</li>
               <li>Aviso previo antes del primer cobro</li>
             </ul>
@@ -126,7 +126,7 @@ export default function PoliticaDePreciosPage() {
             href="/auth/signup"
             className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
           >
-            Crear cuenta y entrar en Demo SL
+            Crear cuenta y entrar en la demo
           </Link>
         </div>
       </section>

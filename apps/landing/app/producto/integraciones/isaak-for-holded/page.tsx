@@ -1,6 +1,3 @@
-import type { Metadata } from 'next';
-import Image from 'next/image';
-import Link from 'next/link';
 import {
   ArrowRight,
   BadgeCheck,
@@ -11,12 +8,15 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
+import type { Metadata } from 'next';
+import Image from 'next/image';
+import Link from 'next/link';
 import { getClientUrl } from '../../../lib/urls';
 
 export const metadata: Metadata = {
-  title: 'Isaak for Holded | Verifactu Business',
+  title: 'Compatibilidad Holded para Isaak | verifactu.business',
   description:
-    'Asistente fiscal y contable para usuarios de Holded dentro de Verifactu Business. Consulta facturas, contactos, cuentas, CRM y proyectos con ayuda guiada por Isaak.',
+    'Activa Isaak con tus datos de Holded dentro de verifactu.business. Consulta facturas, contactos, cuentas, CRM y proyectos con una experiencia guiada y segura.',
 };
 
 const capabilities = [
@@ -43,17 +43,17 @@ const capabilities = [
 ];
 
 const publicScope = [
-  'Invoice API: listar facturas, obtener factura y crear borradores con confirmacion.',
-  'Accounting API: listar cuentas contables para lectura y explicacion.',
-  'CRM API: listar contactos y bookings para contexto comercial.',
-  'Projects API: listar proyectos, consultar un proyecto y listar sus tareas.',
+  'Consultar facturas, revisar detalle y crear borradores con confirmacion explicita.',
+  'Consultar cuentas contables con contexto explicado para el negocio.',
+  'Consultar contactos y bookings para entender actividad comercial.',
+  'Consultar proyectos y tareas desde el mismo flujo de trabajo.',
 ];
 
 const guardrails = [
-  'OAuth propio de Verifactu para identificar al usuario y resolver su tenant autorizado.',
-  'La API key de Holded nunca sale al cliente; permanece cifrada y solo se usa server-side.',
+  'Acceso identificado con la cuenta del usuario dentro de verifactu.business.',
+  'La API key de Holded permanece cifrada y solo se usa en servidor.',
   'Las acciones de escritura requieren confirmacion explicita.',
-  'El alcance inicial publico deja Team API fuera para reducir exposicion de datos sensibles.',
+  'El alcance inicial prioriza lectura y borradores para mantener control y trazabilidad.',
 ];
 
 export default function IsaakForHoldedPage() {
@@ -80,15 +80,16 @@ export default function IsaakForHoldedPage() {
         <div className="mx-auto grid max-w-6xl gap-10 px-4 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
-              Isaak for Holded
+              Compatibilidad Holded
             </div>
             <h1 className="mt-5 text-4xl font-bold tracking-tight text-[#011c67] sm:text-5xl">
-              El contable nativo de Verifactu para usuarios de Holded
+              Activa Isaak con tus datos de Holded
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              Isaak convierte Holded en una capa de decision mas clara: explica ventas, gastos,
-              beneficio, facturas, CRM y proyectos desde Verifactu Business, sin exigir al
-              empresario que piense como un contable.
+              Holded entra aqui como fuente compatible. La experiencia principal sigue siendo Isaak
+              dentro de verifactu.business: una capa de criterio fiscal y operativo que te ayuda a
+              entender ventas, gastos, beneficio, facturas, CRM y proyectos sin hablar en lenguaje
+              tecnico.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -96,14 +97,14 @@ export default function IsaakForHoldedPage() {
                 href={clientUrl + '/integrations/isaak-for-holded'}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#1f55c0]"
               >
-                Abrir integración en el nuevo entorno cliente
+                Activar compatibilidad Holded
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="https://verifactu.business"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
               >
-                Probar Verifactu gratis 30 días
+                Probar verifactu.business 30 días
               </Link>
               <Link
                 href="/recursos/contacto"
@@ -115,7 +116,10 @@ export default function IsaakForHoldedPage() {
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               {guardrails.map((item) => (
-                <div key={item} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div
+                  key={item}
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
                   <div className="flex items-start gap-3">
                     <ShieldCheck className="mt-0.5 h-5 w-5 text-[#2361d8]" />
                     <p className="text-sm leading-6 text-slate-600">{item}</p>
@@ -127,7 +131,7 @@ export default function IsaakForHoldedPage() {
 
           <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_80px_-40px_rgba(1,28,103,0.45)]">
             <div className="border-b border-slate-200 bg-[#081936] px-5 py-3 text-sm font-semibold text-white">
-              Isaak opera sobre Holded desde Verifactu
+              Isaak trabaja sobre tus datos de Holded
             </div>
             <div className="p-4">
               <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50">
@@ -141,8 +145,8 @@ export default function IsaakForHoldedPage() {
                 />
               </div>
               <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                Public v1: facturas, cuentas, contactos, CRM y proyectos. Team API queda fuera de
-                la primera publicacion para mantener el alcance y la revision de seguridad bajo control.
+                Compatibilidad inicial: facturas, cuentas, contactos, CRM y proyectos. Empezamos con
+                un alcance controlado para activar valor real sin perder visibilidad ni seguridad.
               </div>
             </div>
           </div>
@@ -158,10 +162,12 @@ export default function IsaakForHoldedPage() {
                   Experiencia completa de Isaak
                 </div>
                 <h2 className="mt-4 text-3xl font-bold tracking-tight">
-                  Empieza con Holded en ChatGPT y da el salto a Verifactu cuando quieras
+                  Empieza con Holded y amplía tu operación cuando quieras
                 </h2>
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
-                  Isaak for Holded es la puerta de entrada. Verifactu Business añade panel visual, histórico, trazabilidad, automatizaciones y una capa fiscal completa para operar tu negocio con más contexto.
+                  Esta compatibilidad es una puerta de entrada. verifactu.business añade panel
+                  visual, trazabilidad, automatizaciones y una capa fiscal completa para operar tu
+                  negocio con mas contexto.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 lg:justify-end">
@@ -182,17 +188,17 @@ export default function IsaakForHoldedPage() {
           </div>
           <div className="max-w-3xl">
             <h2 className="text-3xl font-bold tracking-tight text-[#011c67]">
-              Alcance recomendado para la primera revision publica
+              Que incluye esta compatibilidad hoy
             </h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              Vamos a publicar una version contenida y facil de revisar: lectura primero, escritura
-              controlada despues y cero acceso a datos laborales en esta primera fase.
+              Empezamos con una activacion contenida y facil de operar: lectura primero, borradores
+              controlados despues y foco total en claridad para el usuario.
             </p>
           </div>
 
           <div className="mt-8 grid gap-5 lg:grid-cols-2">
             <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-              <h3 className="text-lg font-semibold text-[#011c67]">Incluido en public v1</h3>
+              <h3 className="text-lg font-semibold text-[#011c67]">Disponible hoy</h3>
               <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                 {publicScope.map((item) => (
                   <li key={item} className="flex items-start gap-3">
@@ -211,8 +217,8 @@ export default function IsaakForHoldedPage() {
                 claridad y ejecucion guiada.
               </p>
               <div className="mt-5 rounded-2xl border border-[#2361d8]/15 bg-[#2361d8]/5 p-4 text-sm leading-6 text-slate-700">
-                Este enfoque es el mas solido para una revision publica: reduce riesgo, mejora
-                legibilidad de la app y hace mas facil justificar el valor de negocio frente a OpenAI.
+                Este enfoque reduce riesgo, mejora la legibilidad de la experiencia y deja claro el
+                valor de negocio desde el primer uso.
               </div>
             </div>
           </div>
@@ -223,7 +229,10 @@ export default function IsaakForHoldedPage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-4">
             {capabilities.map((item) => (
-              <article key={item.title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <article
+                key={item.title}
+                className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+              >
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2361d8]/10 text-[#2361d8]">
                   <item.icon className="h-6 w-6" />
                 </div>
@@ -252,17 +261,26 @@ export default function IsaakForHoldedPage() {
               <div className="rounded-3xl border border-slate-200 bg-white p-6">
                 <ul className="space-y-3 text-sm leading-6 text-slate-600">
                   <li>
-                    <Link href="/legal/privacidad" className="font-semibold text-[#2361d8] hover:text-[#1f55c0]">
+                    <Link
+                      href="/legal/privacidad"
+                      className="font-semibold text-[#2361d8] hover:text-[#1f55c0]"
+                    >
                       Politica de privacidad
                     </Link>
                   </li>
                   <li>
-                    <Link href="/legal/terminos" className="font-semibold text-[#2361d8] hover:text-[#1f55c0]">
+                    <Link
+                      href="/legal/terminos"
+                      className="font-semibold text-[#2361d8] hover:text-[#1f55c0]"
+                    >
                       Terminos y condiciones
                     </Link>
                   </li>
                   <li>
-                    <Link href="/recursos/contacto" className="font-semibold text-[#2361d8] hover:text-[#1f55c0]">
+                    <Link
+                      href="/recursos/contacto"
+                      className="font-semibold text-[#2361d8] hover:text-[#1f55c0]"
+                    >
                       Soporte y contacto
                     </Link>
                   </li>

@@ -1,11 +1,11 @@
+import { Database, Lock, Mail, ServerCog, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ShieldCheck, Database, Lock, Mail, ServerCog } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Isaak for Holded',
+  title: 'Privacy Policy | Isaak with Holded compatibility',
   description:
-    'Privacy policy for Isaak for Holded, the ChatGPT and Verifactu experience for connecting Holded server-side.',
+    'Privacy policy for Isaak when Holded is connected as a compatible source inside verifactu.business.',
 };
 
 export default function HoldedPrivacyPage() {
@@ -13,8 +13,11 @@ export default function HoldedPrivacyPage() {
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_45%,#ffffff_100%)] text-slate-900">
       <div className="border-b border-slate-200 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-4 py-4">
-          <Link href="/holded" className="text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]">
-            Volver a Isaak for Holded
+          <Link
+            href="/holded"
+            className="text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
+          >
+            Volver a compatibilidad Holded
           </Link>
         </div>
       </div>
@@ -26,10 +29,13 @@ export default function HoldedPrivacyPage() {
               <ShieldCheck className="h-4 w-4" />
               Privacy policy
             </div>
-            <h1 className="text-4xl font-bold tracking-tight text-slate-950">Privacy Policy for Isaak for Holded</h1>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-950">
+              Privacy Policy for Isaak with Holded compatibility
+            </h1>
             <p className="max-w-3xl text-lg leading-8 text-slate-600">
-              Isaak for Holded is operated by Verifactu. This page explains what data we process, how Holded credentials
-              are handled, and what rights users have when connecting Holded with ChatGPT and Verifactu.
+              Isaak is operated by Verifactu. This page explains what data we process, how Holded
+              credentials are handled, and what rights users have when connecting Holded as a
+              compatible source inside verifactu.business.
             </p>
             <p className="text-sm text-slate-500">Last updated: March 19, 2026.</p>
           </div>
@@ -39,7 +45,8 @@ export default function HoldedPrivacyPage() {
               Key principle
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Holded API keys are processed server-side and are not exposed to the client interface presented to the user.
+              Holded API keys are processed server-side and are not exposed to the client interface
+              presented to the user.
             </p>
           </div>
         </div>
@@ -53,7 +60,10 @@ export default function HoldedPrivacyPage() {
             <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-600">
               <li>- Account data needed to identify the user inside Verifactu and Isaak.</li>
               <li>- Holded connection data provided by the user, including the API key.</li>
-              <li>- Business data requested through the app, such as invoices, contacts, accounts, CRM items and projects.</li>
+              <li>
+                - Business data requested through the app, such as invoices, contacts, accounts, CRM
+                items and projects.
+              </li>
               <li>- Operational logs required for security, support and troubleshooting.</li>
             </ul>
           </article>
@@ -65,7 +75,9 @@ export default function HoldedPrivacyPage() {
             </div>
             <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-600">
               <li>- To connect the user account with Holded.</li>
-              <li>- To let Isaak retrieve and explain business information requested by the user.</li>
+              <li>
+                - To let Isaak retrieve and explain business information requested by the user.
+              </li>
               <li>- To improve reliability, traceability and support for the service.</li>
               <li>- To comply with legal and security obligations applicable to Verifactu.</li>
             </ul>
@@ -78,8 +90,9 @@ export default function HoldedPrivacyPage() {
             Holded credentials
           </div>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            The user chooses which Holded account to connect by providing an API key. That key is encrypted and stored in
-            backend infrastructure controlled by Verifactu. It is not intended to be displayed back to the user after submission.
+            The user chooses which Holded account to connect by providing an API key. That key is
+            encrypted and stored in backend infrastructure controlled by Verifactu. It is not
+            intended to be displayed back to the user after submission.
           </p>
         </div>
 
@@ -90,7 +103,10 @@ export default function HoldedPrivacyPage() {
           </div>
           <p className="mt-3 text-sm leading-7 text-slate-600">
             For privacy requests, support or deletion requests, contact{' '}
-            <a href="mailto:info@verifactu.business" className="font-semibold text-[#ff5460] underline underline-offset-4">
+            <a
+              href="mailto:info@verifactu.business"
+              className="font-semibold text-[#ff5460] underline underline-offset-4"
+            >
               info@verifactu.business
             </a>
             .

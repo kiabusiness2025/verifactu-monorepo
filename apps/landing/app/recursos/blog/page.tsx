@@ -102,7 +102,7 @@ export default function BlogPage() {
             href="/auth/signup"
             className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
           >
-            Crear cuenta y entrar en Demo SL
+            Crear cuenta y entrar en la demo
           </Link>
         </div>
       </section>

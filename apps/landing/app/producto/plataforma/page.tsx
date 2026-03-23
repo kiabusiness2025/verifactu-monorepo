@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getAppUrl, getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: 'Plataforma | verifactu.business',
+  title: 'Plataforma | Verifactu Business',
   description: 'Una plataforma clara para facturar, cumplir VeriFactu y entender tu negocio.',
 };
 
@@ -60,14 +60,14 @@ export default function PlataformaPage() {
                 href="/auth/signup"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
               >
-                Crear cuenta y entrar en Demo SL
+                Empezar 1 mes gratis
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/precios"
+                href={isaakChatUrl}
                 className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Ver precios y comparativa
+                Probar Isaak
               </Link>
             </div>
           </div>
@@ -118,10 +118,10 @@ export default function PlataformaPage() {
             </ul>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/planes"
+                href="/precios"
                 className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Ver detalle por plan
+                Ver planes
               </Link>
               <Link
                 href="/presupuesto"

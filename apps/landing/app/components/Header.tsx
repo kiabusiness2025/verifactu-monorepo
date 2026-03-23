@@ -28,13 +28,11 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   }
 
   const defaultNavLinks: NavLink[] = [
-    { label: 'Inicio', href: '/' },
-    { label: 'Qué es Isaak', href: '/que-es-isaak' },
-    { label: 'Holded', href: '/holded' },
-    { label: 'Integraciones', href: '/producto/integraciones' },
-    { label: 'Planes', href: '/planes' },
-    { label: 'Precios', href: '/precios' },
-    { label: 'Contacto', href: '/recursos/contacto' },
+    { label: 'VeriFactu', href: '/verifactu/que-es' },
+    { label: 'Calcula tu precio', href: '/precios' },
+    { label: 'Que es Isaak', href: '/que-es-isaak' },
+    { label: 'Recursos', href: '/recursos/guias-y-webinars' },
+    { label: 'Soporte', href: '/verifactu/soporte' },
   ];
 
   const links = navLinks ?? defaultNavLinks;

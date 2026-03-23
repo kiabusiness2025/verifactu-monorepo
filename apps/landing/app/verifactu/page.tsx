@@ -1,42 +1,44 @@
-import Link from "next/link";
-import { getLandingUrl, getAppUrl } from "../lib/urls";
-import type { Metadata } from "next";
-import { CheckCircle2, ShieldCheck, FileText, Hash, ExternalLink } from "lucide-react";
+import { CheckCircle2, ExternalLink, FileText, Hash, ShieldCheck } from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getAppUrl, getLandingUrl } from '../lib/urls';
 
 export const metadata: Metadata = {
-  title: "Cumplimiento VeriFactu | Verifactu Business",
-  description: "Cómo Verifactu Business cumple el RD 1007/2023: integridad, trazabilidad y evidencias.",
+  title: 'Cumplimiento VeriFactu | Verifactu Business',
+  description:
+    'Cómo Verifactu Business cumple el RD 1007/2023: integridad, trazabilidad y evidencias.',
 };
 
 const evidencias = [
   {
-    title: "Registro encadenado por documento",
+    title: 'Registro encadenado por documento',
     detail:
-      "Cada documento queda enlazado con el anterior, de forma que cualquier cambio deja rastro.",
+      'Cada documento queda enlazado con el anterior, de forma que cualquier cambio deja rastro.',
     icon: <Hash className="h-5 w-5 text-[#2361d8]" />,
   },
   {
-    title: "Fecha y trazabilidad",
-    detail: "Guardamos fecha de alta y cambios relevantes (estado, envios y anulaciones permitidas).",
+    title: 'Fecha y trazabilidad',
+    detail:
+      'Guardamos fecha de alta y cambios relevantes (estado, envios y anulaciones permitidas).',
     icon: <ShieldCheck className="h-5 w-5 text-[#2361d8]" />,
   },
   {
-    title: "Historial de eventos",
-    detail: "Eventos criticos (creacion, validacion, envio y modificaciones) quedan registrados.",
+    title: 'Historial de eventos',
+    detail: 'Eventos criticos (creacion, validacion, envio y modificaciones) quedan registrados.',
     icon: <FileText className="h-5 w-5 text-[#2361d8]" />,
   },
   {
-    title: "Evidencias del documento",
-    detail: "Conservamos evidencias para identificar la version exacta enviada o descargada.",
+    title: 'Evidencias del documento',
+    detail: 'Conservamos evidencias para identificar la version exacta enviada o descargada.',
     icon: <CheckCircle2 className="h-5 w-5 text-[#2361d8]" />,
   },
 ];
 
 const cumplimos = [
-  "Integridad y secuencialidad: evitamos cambios posteriores sin rastro.",
-  "Trazabilidad completa: historial de eventos con fecha.",
-  "Conservación: custodia de evidencias durante los plazos legales.",
-  "Disponibilidad: exportación de libros y evidencias bajo demanda para auditoría.",
+  'Integridad y secuencialidad: evitamos cambios posteriores sin rastro.',
+  'Trazabilidad completa: historial de eventos con fecha.',
+  'Conservación: custodia de evidencias durante los plazos legales.',
+  'Disponibilidad: exportación de libros y evidencias bajo demanda para auditoría.',
 ];
 
 export default function VerifactuPage() {
@@ -63,8 +65,8 @@ export default function VerifactuPage() {
               Cómo cumplimos VeriFactu
             </h1>
             <p className="text-lg text-slate-700">
-              Mostramos como cuidamos integridad, trazabilidad y conservacion de tus registros. Ideal para el cierre
-              de periodos mensuales, trimestrales y anuales.
+              Mostramos como cuidamos integridad, trazabilidad y conservacion de tus registros.
+              Ideal para el cierre de periodos mensuales, trimestrales y anuales.
             </p>
           </div>
 
@@ -104,7 +106,9 @@ export default function VerifactuPage() {
             <ul className="mt-3 space-y-2 text-sm text-slate-700">
               <li>Libro de facturas emitidas/recibidas con evidencias de integridad y fechas.</li>
               <li>Evidencias de documentos y referencia a versiones enviadas/descargadas.</li>
-              <li>Historial de eventos consultable (creacion, validacion, envios y anulaciones).</li>
+              <li>
+                Historial de eventos consultable (creacion, validacion, envios y anulaciones).
+              </li>
               <li>Informe de consistencia bajo demanda.</li>
             </ul>
           </div>
@@ -118,7 +122,7 @@ export default function VerifactuPage() {
               <a
                 href="https://www.agenciatributaria.es/"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/20 bg-[#2361d8]/5 px-4 py-2 text-sm font-semibold text-[#2361d8]"
               >
                 Agencia Tributaria
@@ -127,7 +131,7 @@ export default function VerifactuPage() {
               <a
                 href="https://sede.agenciatributaria.gob.es/Sede/"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/20 bg-[#2361d8]/5 px-4 py-2 text-sm font-semibold text-[#2361d8]"
               >
                 Sede electrónica
@@ -149,7 +153,7 @@ export default function VerifactuPage() {
                 href={isaakChatUrl}
                 className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200"
               >
-                Abrir chat
+                Abrir Isaak
               </Link>
             </div>
           </div>

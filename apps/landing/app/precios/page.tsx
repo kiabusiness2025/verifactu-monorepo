@@ -7,7 +7,7 @@ import { EXCESS_TEXT_LINES, EXCESS_TEXT_TITLE, getPlanCheckoutHref, PLAN_LIST } 
 const navLinks = [
   { label: 'Inicio', href: '/' },
   { label: 'Qué es Isaak', href: '/que-es-isaak' },
-  { label: 'Holded', href: '/holded' },
+  { label: 'Compatibilidad', href: '/holded' },
   { label: 'Planes', href: '/planes' },
   { label: 'Precios', href: '/precios' },
   { label: 'Contacto', href: '/recursos/contacto' },
@@ -61,7 +61,7 @@ const featureBlocks = [
     title: 'Integraciones y escalado',
     lines: [
       'Conexión API con tu programa contable en Empresa y Pro.',
-      'Base preparada para integraciones verticales como Holded.',
+      'Base preparada para compatibilidades ERP como Holded y futuras integraciones.',
       'Soporte creciente según complejidad operativa y volumen.',
     ],
   },
@@ -96,7 +96,7 @@ export default function PreciosPage() {
                 href="/demo"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Probar la demo primero
+                Ver recorrido guiado
               </Link>
             </div>
           </div>
@@ -152,8 +152,8 @@ export default function PreciosPage() {
                   1. Registro
                 </div>
                 <p className="mt-2">
-                  Todos los usuarios registrados entran con acceso automático a Empresa Demo SL, ya
-                  integrada con Holded, sin límite de tiempo.
+                  Todos los usuarios registrados entran con acceso automático a Empresa Demo SL, con
+                  datos de ejemplo ya preparados, sin límite de tiempo.
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -180,7 +180,7 @@ export default function PreciosPage() {
                 href="/auth/signup"
                 className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#1f55c0]"
               >
-                Crear cuenta y entrar en Demo SL
+                Crear cuenta y entrar en la demo
               </Link>
               <Link
                 href="/holded"

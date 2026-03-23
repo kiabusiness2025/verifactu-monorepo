@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { getAppUrl } from "../../lib/urls";
+import Link from 'next/link';
+import { getAppUrl } from '../../lib/urls';
 
-const title = "Soporte | Verifactu Business";
-const description = "Abre ticket, agenda onboarding o consulta el centro de ayuda.";
+const title = 'Soporte | Verifactu Business';
+const description = 'Abre ticket, agenda onboarding o consulta el centro de ayuda.';
 
 export const metadata = {
   title,
@@ -10,22 +10,22 @@ export const metadata = {
   openGraph: {
     title,
     description,
-    url: "/verifactu/soporte",
-    type: "article",
+    url: '/verifactu/soporte',
+    type: 'article',
     images: [
       {
-        url: "/brand/social/og-1200x630.png",
+        url: '/brand/social/og-1200x630.png',
         width: 1200,
         height: 630,
-        alt: "Verifactu Business",
+        alt: 'Verifactu Business',
       },
     ],
   },
   twitter: {
-    card: "summary",
+    card: 'summary',
     title,
     description,
-    images: ["/brand/social/og-1200x630.png"],
+    images: ['/brand/social/og-1200x630.png'],
   },
 };
 
@@ -36,39 +36,46 @@ export default function SoportePage() {
       <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:py-16">
         <Breadcrumbs
           items={[
-            { label: "Inicio", href: "/" },
-            { label: "VeriFactu", href: "/verifactu/que-es" },
-            { label: "Soporte" },
+            { label: 'Inicio', href: '/' },
+            { label: 'VeriFactu', href: '/verifactu/que-es' },
+            { label: 'Soporte' },
           ]}
         />
 
-        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">Soporte</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Estamos para ayudarte</h1>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-blue-600">
+          Soporte
+        </p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+          Estamos para ayudarte
+        </h1>
         <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg">
-          Elige cómo prefieres recibir ayuda: ticket rápido, onboarding guiado o guías paso a paso. Isaak también
-          puede ayudarte con cierres y plazos fiscales durante todo el año.
+          Elige cómo prefieres recibir ayuda: ticket rápido, onboarding guiado o guías paso a paso.
+          Isaak también puede ayudarte con cierres y plazos fiscales durante todo el año.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <SupportCard
             title="Ticket rápido"
             desc="Cuéntanos el problema y adjunta capturas. Respondemos en horario laboral."
-            action={{ label: "Abrir ticket", href: "mailto:info@verifactu.business" }}
+            action={{ label: 'Abrir ticket', href: 'mailto:info@verifactu.business' }}
           />
           <SupportCard
             title="Onboarding guiado"
             desc="Configura VeriFactu, bancos y permisos con un especialista."
-            action={{ label: "Agendar sesión", href: "mailto:info@verifactu.business?subject=Onboarding" }}
+            action={{
+              label: 'Agendar sesión',
+              href: 'mailto:info@verifactu.business?subject=Onboarding',
+            }}
           />
           <SupportCard
             title="Centro de ayuda"
             desc="Preguntas frecuentes sobre facturación, VeriFactu y conciliación."
-            action={{ label: "Ver guías", href: "/recursos/guias-y-webinars" }}
+            action={{ label: 'Ver guías', href: '/recursos/guias-y-webinars' }}
           />
           <SupportCard
             title="Estado del servicio"
             desc="Comprueba incidencias en VeriFactu, AEAT o bancos."
-            action={{ label: "Ver estado", href: "/verifactu/estado" }}
+            action={{ label: 'Ver estado', href: '/verifactu/estado' }}
           />
         </div>
 
@@ -76,7 +83,9 @@ export default function SoportePage() {
           <h2 className="text-lg font-semibold text-slate-900">Consejos para soporte rápido</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
             <li>- Adjunta capturas o números de factura afectados.</li>
-            <li>- Indica si el fallo es en app.verifactu.business o en sincronización con bancos/AEAT.</li>
+            <li>
+              - Indica si el fallo es en app.verifactu.business o en sincronización con bancos/AEAT.
+            </li>
             <li>- Dinos si has probado refrescar sesión o reconectar integraciones.</li>
           </ul>
         </div>
@@ -91,7 +100,9 @@ export default function SoportePage() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-slate-600">¿Quieres activar la prueba y hablar con Isaak?</div>
+          <div className="text-sm text-slate-600">
+            ¿Quieres activar la prueba o entrar en Isaak?
+          </div>
           <div className="flex gap-3">
             <Link
               href="/auth/signup"
@@ -103,7 +114,7 @@ export default function SoportePage() {
               href={isaakChatUrl}
               className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-200"
             >
-              Hablar con Isaak
+              Probar Isaak
             </Link>
           </div>
         </div>
@@ -130,7 +141,7 @@ function SupportCard({
         className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
       >
         {action.label}
-        <span aria-hidden>{"->"}</span>
+        <span aria-hidden>{'->'}</span>
       </Link>
     </div>
   );

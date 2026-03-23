@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getAppUrl, getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: 'Automatización | verifactu.business',
+  title: 'Automatización | Verifactu Business',
   description: 'Flujos automáticos para facturar, cumplir VeriFactu y reducir errores.',
 };
 
@@ -60,14 +60,14 @@ export default function AutomatizacionPage() {
                 href="/auth/signup"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
               >
-                Crear cuenta y entrar en Demo SL
+                Empezar 1 mes gratis
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/demo"
+                href={isaakChatUrl}
                 className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Ver demo guiada
+                Probar Isaak
               </Link>
             </div>
           </div>
@@ -115,20 +115,6 @@ export default function AutomatizacionPage() {
                 Calendario fiscal ordenado y sin sustos.
               </li>
             </ul>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/precios"
-                className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
-              >
-                Ver precios
-              </Link>
-              <Link
-                href={isaakChatUrl}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Hablar con Isaak
-              </Link>
-            </div>
           </div>
         </div>
       </section>

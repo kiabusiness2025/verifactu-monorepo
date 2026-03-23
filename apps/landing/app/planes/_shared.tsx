@@ -11,7 +11,7 @@ import {
 const navLinks = [
   { label: 'Inicio', href: '/' },
   { label: 'Qué es Isaak', href: '/que-es-isaak' },
-  { label: 'Holded', href: '/holded' },
+  { label: 'Compatibilidad', href: '/holded' },
   { label: 'Planes', href: '/planes' },
   { label: 'Precios', href: '/precios' },
   { label: 'Contacto', href: '/recursos/contacto' },
@@ -78,7 +78,7 @@ export function PlanPageTemplate({
                 href="/demo"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Ver demo guiada antes
+                Ver recorrido guiado
               </Link>
             </div>
 
@@ -117,7 +117,9 @@ export function PlanPageTemplate({
             </div>
 
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
-              <h2 className="text-sm font-semibold text-[#011c67]">Cómo funciona este plan en la práctica</h2>
+              <h2 className="text-sm font-semibold text-[#011c67]">
+                Cómo funciona este plan en la práctica
+              </h2>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
                 {detailPoints.map((line) => (
                   <li key={line}>- {line}</li>
@@ -140,11 +142,22 @@ export function PlanPageTemplate({
             </div>
 
             <div className="mt-6 rounded-2xl border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f8fbff_100%)] p-5">
-              <h2 className="text-sm font-semibold text-[#011c67]">Acceso inicial para nuevos usuarios</h2>
+              <h2 className="text-sm font-semibold text-[#011c67]">
+                Acceso inicial para nuevos usuarios
+              </h2>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-                <li>- Al registrarte se crea acceso automático a Empresa Demo SL, ya integrada con Holded, sin caducidad.</li>
-                <li>- Desde dashboard e Isaak te iremos proponiendo pasar a datos reales cuando estés listo.</li>
-                <li>- La prueba de 30 días permite crear 1 empresa con tus datos para validar tu operativa real antes de contratar.</li>
+                <li>
+                  - Al registrarte se crea acceso automático a Empresa Demo SL, con datos de ejemplo
+                  y sin caducidad.
+                </li>
+                <li>
+                  - Desde dashboard e Isaak te iremos proponiendo pasar a datos reales cuando estés
+                  listo.
+                </li>
+                <li>
+                  - La prueba de 30 días permite crear 1 empresa con tus datos para validar tu
+                  operativa real antes de contratar.
+                </li>
               </ul>
             </div>
 
@@ -159,7 +172,7 @@ export function PlanPageTemplate({
                 href="/auth/signup"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Crear cuenta y entrar en Demo SL
+                Crear cuenta y entrar en la demo
               </Link>
             </div>
           </div>

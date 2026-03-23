@@ -1,11 +1,11 @@
+import { BadgeCheck, FileText, Mail, Scale } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BadgeCheck, FileText, Scale, Mail } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | Isaak for Holded',
+  title: 'Terms of Service | Isaak with Holded compatibility',
   description:
-    'Terms of service for Isaak for Holded, the public ChatGPT app operated by Verifactu.',
+    'Terms of service for Isaak when Holded is connected as a compatible source operated by Verifactu.',
 };
 
 export default function HoldedTermsPage() {
@@ -13,8 +13,11 @@ export default function HoldedTermsPage() {
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_45%,#ffffff_100%)] text-slate-900">
       <div className="border-b border-slate-200 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-4 py-4">
-          <Link href="/holded" className="text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]">
-            Volver a Isaak for Holded
+          <Link
+            href="/holded"
+            className="text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
+          >
+            Volver a compatibilidad Holded
           </Link>
         </div>
       </div>
@@ -26,9 +29,12 @@ export default function HoldedTermsPage() {
               <FileText className="h-4 w-4" />
               Terms of service
             </div>
-            <h1 className="text-4xl font-bold tracking-tight text-slate-950">Terms of Service for Isaak for Holded</h1>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-950">
+              Terms of Service for Isaak with Holded compatibility
+            </h1>
             <p className="max-w-3xl text-lg leading-8 text-slate-600">
-              These terms govern access to and use of Isaak for Holded as a public app experience operated by Verifactu.
+              These terms govern access to and use of Isaak when Holded is connected as a compatible
+              source operated by Verifactu.
             </p>
             <p className="text-sm text-slate-500">Last updated: March 19, 2026.</p>
           </div>
@@ -38,8 +44,8 @@ export default function HoldedTermsPage() {
               Important notice
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Isaak provides guidance and operational assistance. It does not replace a licensed accountant, tax advisor,
-              or legal professional.
+              Isaak provides guidance and operational assistance. It does not replace a licensed
+              accountant, tax advisor, or legal professional.
             </p>
           </div>
         </div>
@@ -51,8 +57,8 @@ export default function HoldedTermsPage() {
               Service scope
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Isaak for Holded allows eligible users to connect Holded server-side and interact with selected data and tools
-              from ChatGPT and Verifactu-managed experiences.
+              Isaak allows eligible users to connect Holded server-side and interact with selected
+              data and tools from verifactu.business managed experiences.
             </p>
           </article>
 
@@ -62,8 +68,8 @@ export default function HoldedTermsPage() {
               User responsibility
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Users are responsible for the accuracy of the Holded account they connect, the API key they provide, and the
-              review of any sensitive actions before confirmation.
+              Users are responsible for the accuracy of the Holded account they connect, the API key
+              they provide, and the review of any sensitive actions before confirmation.
             </p>
           </article>
 
@@ -73,8 +79,8 @@ export default function HoldedTermsPage() {
               Availability and changes
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              The app is provided as an evolving service. Features, limits and supported tools may change as the product
-              matures and as OpenAI or Holded platform requirements evolve.
+              The app is provided as an evolving service. Features, limits and supported tools may
+              change as the product matures and as OpenAI or Holded platform requirements evolve.
             </p>
           </article>
 
@@ -85,7 +91,10 @@ export default function HoldedTermsPage() {
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
               For legal or service questions, contact{' '}
-              <a href="mailto:info@verifactu.business" className="font-semibold text-[#ff5460] underline underline-offset-4">
+              <a
+                href="mailto:info@verifactu.business"
+                className="font-semibold text-[#ff5460] underline underline-offset-4"
+              >
                 info@verifactu.business
               </a>
               .

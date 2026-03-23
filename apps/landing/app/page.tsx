@@ -12,28 +12,28 @@ import { EXCESS_TEXT_LINES, EXCESS_TEXT_TITLE, getPlanCheckoutHref, PLAN_LIST } 
 import { getAppUrl } from './lib/urls';
 
 import {
-    ComplianceBadge,
-    Container,
-    DashboardMock,
-    FeaturesSection,
-    Footer,
-    HeroTripleMock,
-    PideseloAIsaakSection,
-    ResourceCard,
-    StickyCtaBar,
-    ThreeSteps,
-    TrustBadge,
+  ComplianceBadge,
+  Container,
+  DashboardMock,
+  FeaturesSection,
+  Footer,
+  HeroTripleMock,
+  PideseloAIsaakSection,
+  ResourceCard,
+  StickyCtaBar,
+  ThreeSteps,
+  TrustBadge,
 } from './lib/home/ui';
 
 export default function Page() {
   const navLinks = [
-    { label: 'Inicio', href: '#hero' },
-    { label: 'Holded', href: '/holded' },
-    { label: 'Planes', href: '/planes' },
-    { label: 'Para quién', href: '#para-quien' },
-    { label: 'Dashboard', href: '#dashboard' },
-    { label: 'Qué es Isaak', href: '#que-es-isaak' },
-    { label: 'FAQ', href: '#faq' },
+    { label: 'Inicio', href: '/' },
+    { label: 'Qué es Isaak', href: '/que-es-isaak' },
+    { label: 'Plataforma', href: '/producto/plataforma' },
+    { label: 'Integraciones', href: '/producto/integraciones' },
+    { label: 'Precios', href: '/precios' },
+    { label: 'VeriFactu', href: '/verifactu/que-es' },
+    { label: 'Recursos', href: '/recursos/guias-y-webinars' },
     { label: 'Contacto', href: '/recursos/contacto' },
   ];
 
@@ -88,18 +88,43 @@ export default function Page() {
               </Link>
 
               <h1 className="mt-5 text-[2.75rem] font-bold leading-[1.1] tracking-tight text-[#011c67] sm:text-6xl">
-                Isaak pone orden en tu negocio para que VeriFactu deje de imponer el ritmo.
+                Isaak es tu asistente fiscal inteligente
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-lightbg-600 sm:text-lg">
-                Isaak te acompaña cada día con una sola verdad visible: ventas, gastos y beneficio.
-                Facturas, gastos, libros e informes quedan ordenados para que entiendas qué pasa y
-                decidas antes.
+                Te ayuda a entender tus datos, anticipar impuestos, detectar errores y actuar con
+                seguridad sobre tu ERP.
               </p>
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
-                Isaak no sustituye a tu gestor habitual. Te da visibilidad diaria de ventas,
-                gastos y beneficio, con impuesto estimado, para decidir con calma y compartir con
-                tu asesoría cuando lo necesites.
+
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2361d8]">
+                  Tu asistente fiscal inteligente
+                </div>
+                <ul className="mt-3 grid gap-2 text-sm text-slate-700">
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
+                    Calcula IVA estimado y otros indicadores en tiempo real.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
+                    Detecta errores y anomalías antes de presentar.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
+                    Te guía paso a paso en tareas fiscales.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
+                    Trabaja con datos reales conectados desde tu ERP.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
+                    Te prepara para Verifactu con trazabilidad y control.
+                  </li>
+                </ul>
+                <p className="mt-3 text-xs text-slate-500">
+                  Compatible con Holded y preparado para ampliar compatibilidad con otros ERPs.
+                </p>
               </div>
 
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
@@ -108,7 +133,7 @@ export default function Page() {
                   href="https://www.agenciatributaria.es/AEAT.internet/Inicio/La_Agencia_Tributaria/Tramites_y_servicios/VeriFactu.shtml"
                   className="font-semibold text-[#2361d8] hover:text-[#2361d8]"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                 >
                   Agencia Tributaria (AEAT)
                 </a>{' '}
@@ -120,19 +145,18 @@ export default function Page() {
                   href={appUrl}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
                 >
-                  Crear cuenta y entrar en Demo SL
+                  Probar Isaak
                 </Link>
                 <Link
-                  href="/#planes"
+                  href="/que-es-isaak"
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2361d8] bg-white px-6 py-3 font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#2361d8]/10"
                 >
-                  Ver planes y precios
+                  Ver cómo funciona
                 </Link>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                Al registrarte entras en Empresa Demo SL (ya conectada con Holded) sin límite de
-                tiempo. Cuando quieras trabajar con tus datos, puedes iniciar una prueba de 30 días
-                para crear 1 empresa real.
+                Isaak forma parte de verifactu.business para que puedas calcular, revisar y actuar
+                sobre datos reales de negocio desde el primer día.
               </p>
 
               <div className="mt-7 flex flex-wrap gap-2">
@@ -150,14 +174,14 @@ export default function Page() {
                 />
               </div>
 
-              <div className="mt-7 flex items-center gap-4 rounded-[1.75rem] border border-slate-200 bg-white/95 p-4 shadow-sm max-w-xl">
-                <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-[#eef4ff] ring-1 ring-slate-200">
+              <div className="mt-7 flex max-w-xl items-start gap-3 rounded-[1.75rem] border border-slate-200 bg-white/95 p-4 shadow-sm sm:items-center sm:gap-4">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[#eef4ff] ring-1 ring-slate-200 sm:h-20 sm:w-20">
                   <Image
                     src="/Isaak/isaak-avatar.png"
                     alt="Isaak"
                     fill
                     className="object-cover"
-                    sizes="80px"
+                    sizes="(max-width: 640px) 64px, 80px"
                   />
                 </div>
                 <div>
@@ -287,13 +311,13 @@ export default function Page() {
                 href="/demo"
                 className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
               >
-                Ver demo guiada
+                Ver recorrido guiado
               </Link>
               <Link
                 href="/holded"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Ver entrada con Holded
+                Ver compatibilidad Holded
               </Link>
             </div>
           </div>
@@ -370,7 +394,7 @@ export default function Page() {
                     href={getPlanCheckoutHref(plan)}
                     className="mt-5 inline-flex rounded-full border border-[#2361d8] px-4 py-2 text-xs font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
                   >
-                    Probar gratis
+                    Probar gratis 30 días
                   </Link>
                 </article>
               ))}
@@ -378,7 +402,7 @@ export default function Page() {
 
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
-                href="/#planes"
+                href="/precios"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
                 Calcular precio
@@ -456,7 +480,7 @@ export default function Page() {
               Preguntas frecuentes
             </h3>
             <p className="mt-3 text-sm leading-6 text-lightbg-600 sm:text-base">
-              Respuestas rapidas sobre planes, seguridad y funcionalidades.
+              Respuestas claras sobre activacion, seguridad, planes y uso real de Isaak.
             </p>
           </div>
           <Faq onOpenCalculator={() => setShowCalculatorModal(true)} />

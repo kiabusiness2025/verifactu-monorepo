@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getAppUrl, getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: 'Resumen del producto | verifactu.business',
+  title: 'Resumen del producto | Verifactu Business',
   description: 'Ventas, gastos y beneficio en una sola pantalla con cumplimiento VeriFactu.',
 };
 
@@ -61,14 +61,14 @@ export default function ProductSummaryPage() {
                 href="/auth/signup"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
               >
-                Crear cuenta y entrar en Demo SL
+                Empezar 1 mes gratis
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/planes"
+                href={isaakChatUrl}
                 className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Ver detalle de planes
+                Probar Isaak
               </Link>
             </div>
           </div>
@@ -119,22 +119,20 @@ export default function ProductSummaryPage() {
       <section className="py-16">
         <div className="mx-auto max-w-4xl px-4 text-center">
           <h2 className="text-3xl font-bold text-[#011c67]">Empieza hoy y recupera el control</h2>
-          <p className="mt-4 text-lg text-slate-600">
-            Acceso inmediato a Demo SL y salto a datos reales cuando quieras.
-          </p>
+          <p className="mt-4 text-lg text-slate-600">1 mes gratis, sin tarjeta y sin fricción.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/auth/signup"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
             >
-              Crear cuenta y entrar en Demo SL
+              Empezar 1 mes gratis
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/precios"
               className="inline-flex items-center justify-center rounded-xl border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
             >
-              Ver precios y exceso
+              Ver planes
             </Link>
           </div>
         </div>

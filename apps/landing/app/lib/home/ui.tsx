@@ -74,17 +74,24 @@ export function StickyCtaBar({ show }: { show: boolean }) {
   return (
     <div
       className={`fixed inset-x-0 bottom-4 z-30 px-4 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-      aria-hidden={!show}
     >
-      <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
         <div className="text-sm font-semibold text-[#2361d8]">
-          Empieza gratis y mantén acceso de lectura y exportación.
+          Empieza gratis y manten control fiscal desde el primer dia.
         </div>
-        <div className="flex gap-2">
-          <Link href={appUrl}>
-            <PrimaryButton className="h-10 px-4 text-sm">Empezar prueba de 30 días</PrimaryButton>
+        <div className="mt-2 text-xs text-slate-600">
+          Activa Isaak, revisa tus datos reales y decide con contexto.
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+          <Link href={appUrl} className="col-span-2 w-full sm:w-auto">
+            <PrimaryButton className="h-10 w-full px-4 text-sm sm:w-auto">
+              Empezar prueba de 30 dias
+            </PrimaryButton>
           </Link>
-          <SecondaryButton href="/precios" className="h-10 px-4 text-sm">
+          <SecondaryButton href="/que-es-isaak" className="h-10 w-full px-4 text-sm sm:w-auto">
+            Que es Isaak
+          </SecondaryButton>
+          <SecondaryButton href="/precios" className="h-10 w-full px-4 text-sm sm:w-auto">
             Ver precios
           </SecondaryButton>
         </div>
@@ -450,23 +457,16 @@ export function DashboardMock() {
 export function HeroTripleMock() {
   const slides = [
     {
-      id: 'isaak',
-      title: 'Isaak al mando',
-      caption: 'Isaak resume, prioriza y guía el siguiente paso con contexto real.',
-      src: '/Isaak/isaak-vs-holded.png',
-      mini: 'Isaak',
-    },
-    {
       id: 'overview',
-      title: 'Resumen demo',
-      caption: 'KPIs, empresa activa y tareas del día.',
+      title: 'Control fiscal en una vista',
+      caption: 'Indicadores clave y prioridades para decidir antes de presentar.',
       src: '/assets/hero/demo-overview.png',
-      mini: 'Inicio',
+      mini: 'Control',
     },
     {
       id: 'invoices',
-      title: 'Facturas en demo',
-      caption: 'Estados, importes y validación VeriFactu.',
+      title: 'Facturación con trazabilidad',
+      caption: 'Estados, importes y revisión previa para evitar errores.',
       src: '/assets/hero/demo-invoices.png',
       mini: 'Facturas',
     },
@@ -478,19 +478,14 @@ export function HeroTripleMock() {
 
   const isaakSamplesBySlide: Record<(typeof slides)[number]['id'], string[]> = {
     overview: [
-      'Inicio: "Tu beneficio hoy es 2.876,40 EUR"',
-      'Clientes: "Te faltan 2 seguimientos de cobro"',
-      'Bancos: "Revisa el saldo previsto para esta semana"',
+      'Indicadores: "Tu beneficio estimado hoy es 2.876,40 EUR"',
+      'Riesgos: "Hay 2 operaciones que revisar antes de cierre"',
+      'Prioridades: "Accion sugerida: validar gastos pendientes"',
     ],
     invoices: [
       'Facturas: "1 factura pendiente de cobro"',
-      'Documentos: "Sube el ticket y lo clasifico"',
+      'Documentos: "Gastos clasificados y listos para revision"',
       'Calendario: "Modelo IVA en 12 dias"',
-    ],
-    isaak: [
-      'Isaak: "Hoy mandan cobros, gastos y 1 factura pendiente"',
-      'Isaak: "Si quieres, te dejo preparado el siguiente cierre"',
-      'Isaak: "Holded aporta datos. Yo te doy criterio y orden"',
     ],
   };
 
@@ -513,7 +508,7 @@ export function HeroTripleMock() {
     return () => clearInterval(interval);
   }, [activeIndex]);
 
-  const progress = `${((activeIndex + 1) / slides.length) * 100}%`;
+  const progress = (activeIndex + 1) / slides.length;
 
   return (
     <div className="relative rounded-[28px] border border-slate-200/90 bg-gradient-to-b from-white to-slate-50 p-4 shadow-[0_18px_60px_-24px_rgba(15,23,42,0.35)] backdrop-blur sm:p-5">
@@ -578,7 +573,6 @@ export function HeroTripleMock() {
                     : 'pointer-events-none opacity-0'
                 }`}
                 aria-label={`Ver mockup ${slide.title}`}
-                aria-pressed={isActive}
               >
                 <Image
                   src={slide.src}
@@ -596,7 +590,7 @@ export function HeroTripleMock() {
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2361d8]">
-            Demo Isaak
+            Isaak en verifactu.business
           </div>
           <div className="mt-1 text-lg font-semibold text-slate-900">
             {slides[activeIndex].title}
@@ -611,15 +605,16 @@ export function HeroTripleMock() {
               onClick={() => setActiveIndex(idx)}
               className={`h-2.5 w-2.5 rounded-full transition ${idx === activeIndex ? 'bg-[#2361d8]' : 'bg-slate-300 hover:bg-slate-400'}`}
               aria-label={`Ir a ${slide.title}`}
-              aria-pressed={idx === activeIndex}
             />
           ))}
         </div>
       </div>
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-[#2361d8] to-[#20B0F0] transition-all duration-500"
-          style={{ width: progress }}
+        <motion.div
+          className="h-full origin-left rounded-full bg-gradient-to-r from-[#2361d8] to-[#20B0F0] transition-all duration-500"
+          animate={{ scaleX: progress }}
+          initial={false}
+          transition={{ duration: 0.5, ease: 'easeInOut' }}
         />
       </div>
 
@@ -819,11 +814,11 @@ export function Footer() {
           <FooterCol
             title="Producto"
             links={[
-              { label: 'Resumen', href: '#hero' },
-              { label: 'Dashboard', href: '#dashboard' },
-              { label: 'Features', href: '#features' },
+              { label: 'Plataforma', href: '/producto/plataforma' },
+              { label: 'Automatizacion', href: '/producto/automatizacion' },
+              { label: 'Resumen', href: '/producto/resumen' },
               { label: 'Integraciones', href: '/producto/integraciones' },
-              { label: 'FAQ', href: '#faq' },
+              { label: 'Preguntas frecuentes', href: '/recursos/guias-y-webinars' },
               { label: 'Ver precios', href: '/precios' },
               { label: 'Que es Isaak', href: '/que-es-isaak' },
             ]}
@@ -913,6 +908,10 @@ export function Footer() {
                 Cookies
               </Link>
             </div>
+          </div>
+
+          <div className="mt-4 border-t border-white/10 pt-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+            Powered by verifactu.business
           </div>
         </div>
       </Container>
@@ -1195,31 +1194,33 @@ export function PideseloAIsaakSection() {
         <div className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-sm font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
             <Sparkles className="h-4 w-4 text-[#2361d8]" />
-            Pídeselo a Isaak
+            Asistente fiscal inteligente
           </div>
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
-            Un amigo experto que habla tu idioma y te cuida los plazos.
+            Isaak te ayuda a calcular, revisar y actuar
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-lightbg-600 sm:text-lg">
-            Isaak entiende documentos, te acompaña cada semana y convierte tu día a día en
-            decisiones claras.
+            Trabaja con datos reales de tu ERP para anticipar impuestos, detectar errores y darte
+            próximos pasos claros antes de presentar.
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-xs text-slate-500">
-            Isaak no sustituye a tu asesor. Te ofrece visibilidad diaria de ventas, gastos y
-            beneficio para decidir en tiempo real y llegar al cierre con todo ordenado.
+            Isaak es el asistente fiscal de verifactu.business. Holded aparece como compatibilidad
+            soportada, no como eje principal de la experiencia.
           </p>
         </div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-semibold text-[#2361d8]">Isaak en vivo</div>
+              <div className="text-sm font-semibold text-[#2361d8]">
+                Panel de decisiones con Isaak
+              </div>
               <span className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
-                Demo interactiva
+                Flujo de trabajo
               </span>
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Cambia el humor de Isaak y mira cómo adapta su respuesta en tiempo real.
+              Ejemplos de consultas reales para controlar fiscalidad y cumplimiento sin friccion.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
@@ -1244,7 +1245,7 @@ export function PideseloAIsaakSection() {
 
             <div className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-                <div className="text-sm font-semibold text-slate-700">Chat con Isaak</div>
+                <div className="text-sm font-semibold text-slate-700">Asistente fiscal Isaak</div>
                 <div className="flex items-center gap-1">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
                   <span className="h-2 w-2 rounded-full bg-amber-400" />
@@ -1317,13 +1318,13 @@ export function PideseloAIsaakSection() {
                 href={isaakSignupUrl}
                 className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
               >
-                Hablar con Isaak
+                Activar experiencia completa
               </Link>
               <Link
                 href={isaakChatUrl}
                 className="inline-flex items-center justify-center rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Ya tengo cuenta, abrir chat
+                Probar Isaak
               </Link>
             </div>
             <p className="mt-3 text-xs text-slate-500">

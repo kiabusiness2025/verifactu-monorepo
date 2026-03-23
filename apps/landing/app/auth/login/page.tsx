@@ -122,10 +122,21 @@ export default function LoginPage() {
         <div className="text-center">
           {mintError ? (
             <>
-              <p className="mt-4 text-red-600">Error al iniciar sesión. Por favor, recarga e inténtalo de nuevo.</p>
+              <p className="mt-4 text-red-600">
+                Error al iniciar sesión. Por favor, recarga e inténtalo de nuevo.
+              </p>
               <button
                 className="mt-4 text-[#2361d8] underline text-sm"
-                onClick={() => { setMintError(false); hasRedirected.current = false; mintSessionCookie(user as User, { rememberDevice }).then(() => { hasRedirected.current = true; redirectToDashboard(); }).catch(() => setMintError(true)); }}
+                onClick={() => {
+                  setMintError(false);
+                  hasRedirected.current = false;
+                  mintSessionCookie(user as User, { rememberDevice })
+                    .then(() => {
+                      hasRedirected.current = true;
+                      redirectToDashboard();
+                    })
+                    .catch(() => setMintError(true));
+                }}
               >
                 Reintentar
               </button>

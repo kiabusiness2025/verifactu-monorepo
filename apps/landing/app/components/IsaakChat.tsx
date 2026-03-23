@@ -1,11 +1,9 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { MessageCircle, Send, UserRoundCog, X } from 'lucide-react';
+import { MessageCircle, Send, X } from 'lucide-react';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
-import { getAppUrl } from '../lib/urls';
 
 type Message = {
   id: string;
@@ -14,74 +12,15 @@ type Message = {
   timestamp: Date;
 };
 
-type IsaakTone = 'friendly' | 'professional' | 'minimal';
-
-const TONE_KEY = 'vf_isaak_personality_v1';
-const TONE_SEEN_KEY = 'vf_isaak_personality_seen_v1';
-
-const toneLabels: Record<IsaakTone, { label: string; promptStyle: string }> = {
-  friendly: {
-    label: 'Amigable',
-    promptStyle: 'Tono cercano, didáctico y motivador.',
-  },
-  professional: {
-    label: 'Profesional',
-    promptStyle: 'Tono formal y claro, orientado a negocio.',
-  },
-  minimal: {
-    label: 'Directo',
-    promptStyle: 'Tono breve y directo, sin relleno.',
-  },
-};
-
-const sectionSuggestions: Record<string, string[]> = {
-  home: [
-    '¿Cuál plan me conviene según mi volumen?',
-    '¿Qué necesito para empezar hoy?',
-    'Explícame Verifactu en simple',
-  ],
-  verifactu: [
-    '¿Cómo me ayudas con VeriFactu?',
-    'Checklist mínimo para cumplir',
-    'Riesgos comunes al implantar',
-  ],
-  producto: [
-    '¿Qué automatiza realmente?',
-    '¿Qué integración activar primero?',
-    '¿Cómo reducir errores de facturación?',
-  ],
-  recursos: [
-    'Dame una guía para arrancar',
-    'Resumen de buenas prácticas',
-    'Qué revisar cada semana',
-  ],
-  precios: ['Compárame planes en 1 minuto', 'Cuándo subir de plan', 'Cómo estimar coste mensual'],
-};
-
-function getLandingSection(pathname: string) {
-  if (pathname.includes('/verifactu')) return 'verifactu';
-  if (pathname.includes('/producto')) return 'producto';
-  if (pathname.includes('/recursos')) return 'recursos';
-  if (pathname.includes('/politica-de-precios') || pathname.includes('/planes')) return 'precios';
-  return 'home';
-}
-
 export default function IsaakChat() {
-  const pathname = usePathname() ?? '/';
-  const section = getLandingSection(pathname);
-  const proactiveSuggestions = sectionSuggestions[section] ?? sectionSuggestions.home;
-  const isaakSignupUrl = `${getAppUrl()}/auth/signup?next=/dashboard?isaak=1`;
-  const isaakDashboardUrl = `${getAppUrl()}/dashboard?isaak=1`;
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [tone, setTone] = useState<IsaakTone>('friendly');
-  const [showTonePicker, setShowTonePicker] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
       content:
-        'Soy Isaak. Te ayudo a priorizar ventas, gastos y beneficio con claridad.\nEmpiezas en Demo SL sin caducidad y, cuando quieras operar en real, activas tu prueba real de 30 días con 1 empresa.',
+        'Antes de empezar: quiero que sepas algo importante.\nTu contabilidad es siempre tuya.\nAunque cambies de plan, nunca perderas acceso a tus datos.\nYo me encargo de cuidarlos.',
       timestamp: new Date(),
     },
   ]);
@@ -96,19 +35,6 @@ export default function IsaakChat() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (!mounted || typeof window === 'undefined') return;
-    const storedTone = localStorage.getItem(TONE_KEY) as IsaakTone | null;
-    if (storedTone === 'friendly' || storedTone === 'professional' || storedTone === 'minimal') {
-      setTone(storedTone);
-    }
-    const hasSeenPicker = localStorage.getItem(TONE_SEEN_KEY) === '1';
-    if (!hasSeenPicker) {
-      setShowTonePicker(true);
-      setIsOpen(true);
-    }
-  }, [mounted]);
 
   useEffect(() => {
     scrollToBottom();
@@ -136,12 +62,10 @@ export default function IsaakChat() {
 
     try {
       // Call the chat API
-      const response = await fetch('/api/vertex-chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `${input}\n\n[Contexto: sección=${section}; personalidad=${toneLabels[tone].label}. ${toneLabels[tone].promptStyle}]`,
-        }),
+        body: JSON.stringify({ message: input }),
       });
 
       if (!response.ok) throw new Error('Failed to get response');
@@ -171,19 +95,6 @@ export default function IsaakChat() {
 
   return (
     <>
-      {!isOpen && (
-        <div className="fixed bottom-24 right-6 z-20 hidden max-w-[280px] rounded-xl border border-slate-200 bg-white p-3 shadow-lg sm:block">
-          <div className="text-xs font-semibold text-[#2361d8]">Sugerencia de Isaak</div>
-          <p className="mt-1 text-xs text-slate-600">{proactiveSuggestions[0]}</p>
-          <a
-            href={isaakSignupUrl}
-            className="mt-2 inline-flex text-xs font-semibold text-[#2361d8] hover:text-[#1f55c0]"
-          >
-            Entrar en Demo SL
-          </a>
-        </div>
-      )}
-
       {/* Chat Button */}
       <motion.button
         initial={{ scale: 0 }}
@@ -191,19 +102,20 @@ export default function IsaakChat() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#2361d8] text-white shadow-lg transition hover:shadow-xl"
-        aria-label="Abrir chat con Isaak"
+        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#2361d8] text-white shadow-lg transition hover:shadow-xl"
+        aria-label="Abrir Isaak"
       >
-        <Image
-          src="/Isaak/isaak-avatar-2.png"
-          alt="Isaak"
-          fill
-          className="object-cover"
-          sizes="56px"
-          priority={false}
-        />
-        <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-[#2361d8] p-1">
-          <MessageCircle className="h-3.5 w-3.5" />
+        <div className="relative h-10 w-10 overflow-hidden rounded-full ring-2 ring-white/80">
+          <Image
+            src="/Isaak/isaak-avatar.png"
+            alt="Isaak"
+            fill
+            sizes="40px"
+            className="object-cover"
+          />
+        </div>
+        <span className="absolute bottom-1 right-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[#2361d8]">
+          <MessageCircle className="h-2.5 w-2.5" />
         </span>
       </motion.button>
 
@@ -219,103 +131,17 @@ export default function IsaakChat() {
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-200 bg-[#2361d8] px-4 py-3 text-white">
-              <div className="flex items-center gap-2">
-                <div className="relative h-9 w-9 overflow-hidden rounded-full border border-white/40">
-                  <Image
-                    src="/Isaak/isaak-avatar-2.png"
-                    alt="Isaak"
-                    fill
-                    className="object-cover"
-                    sizes="36px"
-                  />
-                </div>
-                <div>
-                  <div className="font-semibold leading-tight">Isaak</div>
-                  <div className="text-xs opacity-90">
-                    by verifactu.business · {toneLabels[tone].label}
-                  </div>
-                </div>
+              <div>
+                <div className="font-semibold">Isaak</div>
+                <div className="text-xs opacity-90">Aquí para ayudarte</div>
               </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setShowTonePicker((prev) => !prev)}
-                  className="rounded-lg p-1 transition hover:bg-white/20"
-                  aria-label="Cambiar personalidad"
-                  title="Cambiar personalidad"
-                >
-                  <UserRoundCog className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="rounded-lg p-1 transition hover:bg-white/20"
-                  aria-label="Cerrar chat"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            {showTonePicker && (
-              <div className="border-b border-slate-200 bg-slate-50 p-3">
-                <div className="mb-2 text-xs font-semibold text-slate-700">
-                  Elige la personalidad de Isaak
-                </div>
-                <div className="grid grid-cols-1 gap-2">
-                  {(['friendly', 'professional', 'minimal'] as IsaakTone[]).map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => {
-                        setTone(option);
-                        if (typeof window !== 'undefined') {
-                          localStorage.setItem(TONE_KEY, option);
-                          localStorage.setItem(TONE_SEEN_KEY, '1');
-                        }
-                        setShowTonePicker(false);
-                      }}
-                      className={[
-                        'rounded-lg border px-3 py-2 text-left text-xs transition',
-                        tone === option
-                          ? 'border-[#2361d8] bg-blue-50 text-slate-900'
-                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
-                      ].join(' ')}
-                    >
-                      <div className="font-medium text-slate-900">{toneLabels[option].label}</div>
-                      <div>{toneLabels[option].promptStyle}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="border-b border-slate-200 bg-slate-50 p-3">
-              <div className="mb-2 text-xs font-semibold text-slate-700">
-                Preguntas recomendadas
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {proactiveSuggestions.map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    onClick={() => setInput(suggestion)}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 hover:bg-slate-100"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <a
-                  href={isaakSignupUrl}
-                  className="rounded-full border border-[#2361d8] bg-white px-3 py-1 text-xs font-semibold text-[#2361d8] hover:bg-blue-50"
-                >
-                  Entrar en Demo SL
-                </a>
-                <a
-                  href={isaakDashboardUrl}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  Abrir Isaak en app
-                </a>
-              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="rounded-lg p-1 transition hover:bg-white/20"
+                aria-label="Cerrar chat"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             {/* Messages */}
@@ -351,14 +177,8 @@ export default function IsaakChat() {
                 >
                   <div className="flex gap-1 rounded-lg bg-slate-100 px-4 py-2">
                     <div className="h-2 w-2 rounded-full bg-slate-400 animate-pulse" />
-                    <div
-                      className="h-2 w-2 rounded-full bg-slate-400 animate-pulse"
-                      style={{ animationDelay: '0.2s' }}
-                    />
-                    <div
-                      className="h-2 w-2 rounded-full bg-slate-400 animate-pulse"
-                      style={{ animationDelay: '0.4s' }}
-                    />
+                    <div className="h-2 w-2 rounded-full bg-slate-400 animate-pulse [animation-delay:200ms]" />
+                    <div className="h-2 w-2 rounded-full bg-slate-400 animate-pulse [animation-delay:400ms]" />
                   </div>
                 </motion.div>
               )}

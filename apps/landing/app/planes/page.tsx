@@ -7,7 +7,7 @@ import { EXCESS_TEXT_LINES, EXCESS_TEXT_TITLE, getPlanCheckoutHref, PLAN_LIST } 
 const navLinks = [
   { label: 'Inicio', href: '/' },
   { label: 'Qué es Isaak', href: '/que-es-isaak' },
-  { label: 'Holded', href: '/holded' },
+  { label: 'Compatibilidad', href: '/holded' },
   { label: 'Planes', href: '/planes' },
   { label: 'Precios', href: '/precios' },
   { label: 'Contacto', href: '/recursos/contacto' },
@@ -25,7 +25,7 @@ export default function PlanesPage() {
               Planes claros para cumplir y tener control
             </h1>
             <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              Todos incluyen VeriFactu + gastos + export Excel. En Empresa y Pro añadimos
+              Todos incluyen VeriFactu + gastos + exportación Excel. En Empresa y Pro añadimos
               integración contable (si tu software tiene API).
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -39,7 +39,7 @@ export default function PlanesPage() {
                 href="/demo"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Probar demo antes de elegir
+                Ver recorrido guiado
               </Link>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function PlanesPage() {
                   href={getPlanCheckoutHref(plan)}
                   className="mt-2 inline-flex rounded-full bg-[#2361d8] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1f55c0]"
                 >
-                  Probar gratis
+                  Probar gratis 30 días
                 </Link>
               </article>
             ))}
@@ -97,7 +97,7 @@ export default function PlanesPage() {
             </h2>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
               <li>
-                - Registro con acceso automático a Empresa Demo SL, integrada con Holded y sin fecha
+                - Registro con acceso automático a Empresa Demo SL con datos de ejemplo, sin fecha
                 de caducidad.
               </li>
               <li>
@@ -114,13 +114,13 @@ export default function PlanesPage() {
                 href="/auth/signup"
                 className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#1f55c0]"
               >
-                Crear cuenta y entrar en Demo SL
+                Crear cuenta y entrar en la demo
               </Link>
               <Link
                 href="/holded"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
-                Ver flujo con Holded
+                Ver compatibilidad Holded
               </Link>
             </div>
           </div>

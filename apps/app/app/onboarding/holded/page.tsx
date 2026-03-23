@@ -1,7 +1,4 @@
-import {
-  mintHoldedOnboardingToken,
-  verifyHoldedOnboardingToken,
-} from '@/lib/oauth/mcp';
+import { mintHoldedOnboardingToken, verifyHoldedOnboardingToken } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
 import { getAppUrl, getLandingUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
@@ -10,9 +7,9 @@ import HoldedOnboardingClient from './HoldedOnboardingClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Activa Isaak | Compatible con Holded',
+  title: 'Activa Isaak con tus datos reales | Compatible con Holded',
   description:
-    'Activa Isaak con datos reales de tu ERP compatible y desbloquea una experiencia fiscal y operativa mucho más clara dentro de verifactu.business.',
+    'Estas a un paso de activar tu asistente fiscal. Conecta Holded como ERP compatible y entra en el ecosistema de verifactu.business con datos reales.',
   icons: {
     icon: '/brand/holded/holded-diamond-logo.png',
     shortcut: '/brand/holded/holded-diamond-logo.png',
@@ -34,7 +31,9 @@ function normalizeNextUrl(nextUrl: string | undefined) {
     const parsed = new URL(nextUrl, getAppUrl());
     const appOrigin = new URL(getAppUrl()).origin;
     const landingOrigin = new URL(getLandingUrl()).origin;
-    return parsed.origin === appOrigin || parsed.origin === landingOrigin ? parsed.toString() : fallback;
+    return parsed.origin === appOrigin || parsed.origin === landingOrigin
+      ? parsed.toString()
+      : fallback;
   } catch {
     return fallback;
   }
@@ -86,5 +85,11 @@ export default async function HoldedOnboardingPage({
         : null
   );
 
-  return <HoldedOnboardingClient nextUrl={nextUrl} tenantName={tenantName} onboardingToken={onboardingToken} />;
+  return (
+    <HoldedOnboardingClient
+      nextUrl={nextUrl}
+      tenantName={tenantName}
+      onboardingToken={onboardingToken}
+    />
+  );
 }

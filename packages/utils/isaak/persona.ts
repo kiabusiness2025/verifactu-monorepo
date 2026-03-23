@@ -58,112 +58,123 @@ const TONE_META: Record<IsaakTone, { label: string; preview: string }> = {
   minimal: { label: 'Directo', preview: 'Breve, al punto y sin relleno.' },
 };
 
-const DOCK_COPY: Record<
-  string,
-  { greeting: string; suggestions: string[]; quickResult: string }
-> = {
-  dashboard: {
-    greeting: 'Puedo resumirte ahora mismo qué revisar primero para evitar sorpresas.',
-    suggestions: [
-      'Qué revisar primero hoy',
-      'Riesgos de esta semana',
-      'Resumen ejecutivo en 3 puntos',
-    ],
-    quickResult:
-      'Prioriza cobros vencidos, valida gastos sin clasificar y revisa próximos plazos fiscales.',
-  },
-  invoices: {
-    greeting: 'En facturación te ayudo a reducir impagos y priorizar seguimiento.',
-    suggestions: ['Facturas críticas', 'Cobros en riesgo', 'Plan de seguimiento de clientes'],
-    quickResult:
-      'Empieza por facturas vencidas + alto importe, luego clientes reincidentes en demora.',
-  },
-  customers: {
-    greeting: 'Aquí detecto clientes con riesgo o caída de actividad para que actúes antes.',
-    suggestions: [
-      'Clientes a reactivar',
-      'Top clientes por riesgo',
-      'Siguiente seguimiento recomendado',
-    ],
-    quickResult:
-      'Segmenta clientes por facturación reciente y antigüedad de cobro para priorizar llamadas.',
-  },
-  banking: {
-    greeting: 'En bancos te ayudo a conciliar más rápido y detectar movimientos anómalos.',
-    suggestions: ['Movimientos no conciliados', 'Gastos atípicos', 'Revisión rápida bancaria'],
-    quickResult:
-      'Conciliar primero movimientos de mayor importe acelera el cierre y reduce errores.',
-  },
-  settings: {
-    greeting: 'Te guío con un checklist de configuración para dejar la cuenta lista hoy.',
-    suggestions: [
-      'Checklist de configuración',
-      'Siguiente ajuste recomendado',
-      'Configurar alertas útiles',
-    ],
-    quickResult:
-      'Completa perfil fiscal, revisa notificaciones y activa la integración prioritaria de tu flujo.',
-  },
-  tenants: {
-    greeting: 'En empresas puedo ayudarte a detectar cuentas con mayor fricción operativa.',
-    suggestions: ['Empresas con incidencias', 'Prioridad de soporte', 'Riesgos por tenant'],
-    quickResult:
-      'Prioriza empresas con errores de onboarding y actividad baja para soporte preventivo.',
-  },
-  users: {
-    greeting: 'En usuarios te propongo una revisión rápida de adopción y riesgo de churn.',
-    suggestions: ['Usuarios inactivos', 'Usuarios con riesgo', 'Plan de activación'],
-    quickResult:
-      'Revisa usuarios sin actividad reciente y dispara mensajes de reactivación segmentados.',
-  },
-  support: {
-    greeting: 'En soporte puedo ordenar tickets por impacto y urgencia operativa.',
-    suggestions: ['Tickets críticos', 'SLA en riesgo', 'Backlog priorizado'],
-    quickResult:
-      'Ataca primero tickets bloqueantes de facturación y luego incidencias repetitivas.',
-  },
-  operations: {
-    greeting: 'En operaciones te ayudo con checklist de estabilidad y prevención.',
-    suggestions: ['Chequeos operativos', 'Alertas de hoy', 'Acciones preventivas'],
-    quickResult:
-      'Valida jobs críticos, estado de integraciones y errores nuevos en las últimas 24h.',
-  },
-  integrations: {
-    greeting: 'En integraciones te propongo el orden más seguro para activar y validar conectores.',
-    suggestions: ['Orden de integración', 'Checklist post-integración', 'Riesgos de conexión'],
-    quickResult: 'Activa una integración cada vez y valida datos con una muestra antes de escalar.',
-  },
-  isaak: {
-    greeting: 'Estoy listo para ayudarte con un plan concreto en este módulo.',
-    suggestions: ['Plan de acción de hoy', 'Próximo paso recomendado', 'Resumen en modo ejecutivo'],
-    quickResult:
-      'Define objetivo del día, ejecuta 1 acción crítica y valida impacto antes del cierre.',
-  },
-};
+const DOCK_COPY: Record<string, { greeting: string; suggestions: string[]; quickResult: string }> =
+  {
+    dashboard: {
+      greeting: 'Puedo resumirte ahora mismo qué revisar primero para evitar sorpresas.',
+      suggestions: [
+        'Qué revisar primero hoy',
+        'Riesgos de esta semana',
+        'Resumen ejecutivo en 3 puntos',
+      ],
+      quickResult:
+        'Prioriza cobros vencidos, valida gastos sin clasificar y revisa próximos plazos fiscales.',
+    },
+    invoices: {
+      greeting: 'En facturación te ayudo a reducir impagos y priorizar seguimiento.',
+      suggestions: ['Facturas críticas', 'Cobros en riesgo', 'Plan de seguimiento de clientes'],
+      quickResult:
+        'Empieza por facturas vencidas + alto importe, luego clientes reincidentes en demora.',
+    },
+    customers: {
+      greeting: 'Aquí detecto clientes con riesgo o caída de actividad para que actúes antes.',
+      suggestions: [
+        'Clientes a reactivar',
+        'Top clientes por riesgo',
+        'Siguiente seguimiento recomendado',
+      ],
+      quickResult:
+        'Segmenta clientes por facturación reciente y antigüedad de cobro para priorizar llamadas.',
+    },
+    banking: {
+      greeting: 'En bancos te ayudo a conciliar más rápido y detectar movimientos anómalos.',
+      suggestions: ['Movimientos no conciliados', 'Gastos atípicos', 'Revisión rápida bancaria'],
+      quickResult:
+        'Conciliar primero movimientos de mayor importe acelera el cierre y reduce errores.',
+    },
+    settings: {
+      greeting: 'Te guío con un checklist de configuración para dejar la cuenta lista hoy.',
+      suggestions: [
+        'Checklist de configuración',
+        'Siguiente ajuste recomendado',
+        'Configurar alertas útiles',
+      ],
+      quickResult:
+        'Completa perfil fiscal, revisa notificaciones y activa la integración prioritaria de tu flujo.',
+    },
+    tenants: {
+      greeting: 'En empresas puedo ayudarte a detectar cuentas con mayor fricción operativa.',
+      suggestions: ['Empresas con incidencias', 'Prioridad de soporte', 'Riesgos por tenant'],
+      quickResult:
+        'Prioriza empresas con errores de onboarding y actividad baja para soporte preventivo.',
+    },
+    users: {
+      greeting: 'En usuarios te propongo una revisión rápida de adopción y riesgo de churn.',
+      suggestions: ['Usuarios inactivos', 'Usuarios con riesgo', 'Plan de activación'],
+      quickResult:
+        'Revisa usuarios sin actividad reciente y dispara mensajes de reactivación segmentados.',
+    },
+    support: {
+      greeting: 'En soporte puedo ordenar tickets por impacto y urgencia operativa.',
+      suggestions: ['Tickets críticos', 'SLA en riesgo', 'Backlog priorizado'],
+      quickResult:
+        'Ataca primero tickets bloqueantes de facturación y luego incidencias repetitivas.',
+    },
+    operations: {
+      greeting: 'En operaciones te ayudo con checklist de estabilidad y prevención.',
+      suggestions: ['Chequeos operativos', 'Alertas de hoy', 'Acciones preventivas'],
+      quickResult:
+        'Valida jobs críticos, estado de integraciones y errores nuevos en las últimas 24h.',
+    },
+    integrations: {
+      greeting:
+        'En integraciones te propongo el orden más seguro para activar y validar conectores.',
+      suggestions: ['Orden de integración', 'Checklist post-integración', 'Riesgos de conexión'],
+      quickResult:
+        'Activa una integración cada vez y valida datos con una muestra antes de escalar.',
+    },
+    isaak: {
+      greeting: 'Estoy listo para ayudarte con un plan concreto en este módulo.',
+      suggestions: [
+        'Plan de acción de hoy',
+        'Próximo paso recomendado',
+        'Resumen en modo ejecutivo',
+      ],
+      quickResult:
+        'Define objetivo del día, ejecuta 1 acción crítica y valida impacto antes del cierre.',
+    },
+  };
 
 const HOLDed_ONBOARDING_COPY = {
   eyebrow: 'Compatible con Holded',
-  title: 'Activa Isaak con los datos reales de tu empresa',
+  title: 'Estas a un paso de activar tu asistente fiscal',
   intro:
-    'Pega tu API key para que Isaak pueda trabajar con datos reales de tu ERP compatible. Empezamos con Holded como canal de entrada y dejamos abierta la puerta a una experiencia mucho más completa dentro de verifactu.business.',
-  statusReady: 'Espacio listo para activar Isaak',
-  statusLoading: 'Preparando acceso a tus datos',
-  statusPending: 'Activacion pendiente',
+    'Isaak utilizara tus datos de Holded para ayudarte a revisar informacion fiscal, anticipar impuestos y detectar errores. Esta conexion activa tu entorno real dentro del ecosistema de verifactu.business.',
+  statusReady: 'Tu entorno esta listo',
+  statusLoading: 'Preparando tu entorno de activacion',
+  statusPending: 'Falta conectar tu ERP para activar Isaak',
   degraded:
-    'No hemos podido leer el estado inicial, pero puedes activar Isaak igualmente y terminar la configuracion ahora.',
+    'No hemos podido leer el estado inicial, pero puedes continuar y activar Isaak igualmente.',
   savingMessages: [
-    'Isaak esta validando acceso a tus datos para trabajar con contexto real.',
-    'Estamos dejando listas las capas de facturas, contactos y cuentas para que no empieces desde cero.',
-    'Isaak esta preparando prioridades, alertas y siguientes pasos sobre tu operativa.',
-    'En cuanto terminemos, podras hablar con tu negocio con mucho menos ruido y mas claridad.',
+    'Estamos validando la conexion para que Isaak trabaje con datos reales desde el primer minuto.',
+    'Estamos preparando tu entorno para revisar informacion fiscal, detectar errores y priorizar tareas.',
+    'Isaak esta organizando el contexto inicial para que entres con claridad y siguiente paso.',
+    'En unos segundos tendras lista tu activacion dentro de verifactu.business.',
   ],
   loadingMessages: [
-    'Isaak convierte datos reales de tu ERP en decisiones y prioridades claras.',
-    'Isaak puede ayudarte a detectar errores, pendientes y riesgos antes de que crezcan.',
-    'Isaak esta pensado para impuestos, Verifactu, control operativo y tranquilidad diaria.',
-    'Compatible con Holded hoy y preparado para sumar nuevas integraciones mañana.',
-    'La idea no es mostrar mas menus: es ayudarte a decidir mejor con menos friccion.',
+    'Isaak convierte datos reales de tu ERP en control fiscal y decisiones mas claras.',
+    'La conexion sirve para revisar, anticipar y actuar antes de presentar.',
+    'Tu activacion entra en el ecosistema de verifactu.business, no en una herramienta tecnica aislada.',
+    'Compatible con Holded hoy y preparado para ampliar compatibilidad con otros ERPs.',
+    'La idea es activar una solucion util, no pedirte una configuracion compleja.',
   ],
+  errorApiKeyEmpty:
+    'Necesitamos tu API key para validar la conexion y activar Isaak con tus datos reales.',
+  errorLoadFailed: 'No se pudo preparar la activacion de Isaak',
+  successConnected:
+    'Tu entorno ya esta activado. Estamos terminando el acceso para llevarte al siguiente paso.',
+  errorConnectFailed:
+    'No hemos podido validar la conexion. Revisa tu API key e intentalo de nuevo.',
 };
 
 export function normalizeIsaakContext(value?: string | null): IsaakPersonaContext {

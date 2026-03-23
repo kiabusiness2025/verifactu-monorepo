@@ -18,7 +18,7 @@ import { getAppUrl } from '../lib/urls';
 const navLinks = [
   { label: 'Inicio', href: '/' },
   { label: 'Qué es Isaak', href: '/que-es-isaak' },
-  { label: 'Holded', href: '/holded' },
+  { label: 'Compatibilidad', href: '/holded' },
   { label: 'Planes', href: '/planes' },
   { label: 'Precios', href: '/precios' },
   { label: 'Contacto', href: '/recursos/contacto' },
@@ -66,8 +66,8 @@ const mechanics = [
 
 const faqs = [
   {
-    q: '¿Isaak es solo una integracion con Holded o ChatGPT?',
-    a: 'No. Holded puede ser una compatibilidad y ChatGPT puede ser un canal de entrada, pero la propuesta central es Isaak como asistente fiscal inteligente dentro del ecosistema de verifactu.business.',
+    q: '¿Isaak es solo una compatibilidad puntual o un producto completo?',
+    a: 'No. Holded puede ser una compatibilidad de entrada, pero la propuesta central es Isaak como asistente fiscal inteligente dentro del ecosistema de verifactu.business.',
   },
   {
     q: '¿En que se diferencia Isaak de una IA generalista?',

@@ -48,11 +48,22 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const host = request.headers.get('host');
   const nonce = buildNonce();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  if (isHoldedHost(host)) {
+    requestHeaders.set('x-holded-host', '1');
+    requestHeaders.set('x-hide-isaak-chat', '1');
+  }
 
   if (isHoldedHost(host) && pathname === '/') {
     const url = request.nextUrl.clone();
     url.pathname = '/holded';
-    const response = NextResponse.rewrite(url);
+    url.searchParams.set('variant', 'standalone');
+    const response = NextResponse.rewrite(url, {
+      request: {
+        headers: requestHeaders,
+      },
+    });
     applySecurityHeaders(response, nonce);
     return response;
   }
@@ -71,9 +82,6 @@ export function middleware(request: NextRequest) {
     applySecurityHeaders(response, nonce);
     return response;
   }
-
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
 
   const response = NextResponse.next({
     request: {

@@ -15,7 +15,7 @@ export default function ContactoPage() {
   const navLinks = [
     { label: 'Inicio', href: '/' },
     { label: 'Qué es Isaak', href: '/que-es-isaak' },
-    { label: 'Holded', href: '/holded' },
+    { label: 'Compatibilidad', href: '/holded' },
     { label: 'Planes', href: '/planes' },
     { label: 'Integraciones', href: '/producto/integraciones' },
     { label: 'Precios', href: '/precios' },
@@ -33,7 +33,7 @@ export default function ContactoPage() {
         </div>
         <h1 className="mt-4 text-4xl font-bold text-[#011c67]">Habla con el equipo de Isaak</h1>
         <p className="mt-4 text-lg text-slate-600">
-          Estamos aquí para ayudarte. Respondemos en 24-48h laborables. Isaak puede guiarte en
+          Estamos aquí para ayudarte. Respondemos en 24-48 h laborables. Isaak puede guiarte en
           minutos.
         </p>
 
@@ -49,11 +49,11 @@ export default function ContactoPage() {
           </div>
           <div>
             <div className="text-sm font-semibold text-[#011c67]">
-              Si vienes por una integracion concreta, el criterio sigue siendo el mismo
+              Si vienes por una integración concreta, el criterio sigue siendo el mismo
             </div>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Holded es una puerta de entrada util, pero la experiencia que acompana al usuario,
-              ordena la informacion y reduce friccion es siempre Isaak.
+              Holded es una puerta de entrada útil, pero la experiencia que acompaña al usuario,
+              ordena la información y reduce fricción es siempre Isaak.
             </p>
           </div>
         </div>
@@ -66,8 +66,8 @@ export default function ContactoPage() {
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">
                 Holded es la primera compatibilidad pública visible, pero estamos construyendo una
-                capa más amplia para que Isaak trabaje con datos reales sin dejar que una
-                integracion se coma la identidad del producto.
+                capa más amplia para que Isaak trabaje con datos reales sin que una integración
+                eclipse la identidad del producto.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
@@ -82,7 +82,7 @@ export default function ContactoPage() {
                 href="/holded"
                 className="inline-flex items-center justify-center rounded-xl border border-[#ff5460] px-5 py-3 text-sm font-semibold text-[#ff5460] hover:bg-[#ff5460]/10"
               >
-                Ver como entra Holded en Isaak
+                Ver compatibilidad Holded
               </Link>
             </div>
           </div>
@@ -144,7 +144,7 @@ export default function ContactoPage() {
               Tiempo de respuesta
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Respondemos en 24-48h laborables con la mejor solución posible.
+              Respondemos en 24-48 h laborables con la mejor solución posible.
             </p>
           </div>
         </div>
