@@ -1,4 +1,12 @@
-import { ArrowRight, CheckCircle2, KeyRound, ShieldCheck } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  KeyRound,
+  Link2,
+  ShieldCheck,
+  Sparkles,
+  TriangleAlert,
+} from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -16,10 +24,55 @@ export const metadata: Metadata = {
 };
 
 const benefits = [
-  'Respuestas claras sobre ventas, gastos y beneficio.',
-  'Lectura continua de la actividad para detectar riesgos.',
-  'Siguientes pasos concretos sin rodeos.',
-  'Inicio en minutos con tu API key de Holded.',
+  {
+    title: '💬 Preguntas en lenguaje tuyo',
+    body: 'No tienes que aprender a usar Holded ni entender reportes técnicos. Pregunta como hablarías con un colega: "¿Cómo voy de ventas en julio?" y Isaak te mostrará tus números.',
+  },
+  {
+    title: '⚡ Respuestas al instante',
+    body: 'Tu información está en Holded. Isaak la lee en tiempo real. Desde que preguntas hasta que tienes respuesta: menos de 2 segundos.',
+  },
+  {
+    title: '🎯 Información sin filtros ni tecnicismos',
+    body: 'Olvídate de exportar a Excel, copiar números o descifrar columnas. Isaak te dice qué significa tu información de verdad.',
+  },
+  {
+    title: '🚨 Alertas de lo que importa',
+    body: 'Antes de que sea un problema, Isaak te avisa: facturas que no cobras, pagos que no hiciste, o gastos raros.',
+  },
+];
+
+const faqItems = [
+  {
+    question: '¿Pero si no entiendo Holded?',
+    answer:
+      'Perfecto, ese es exactamente el punto. Isaak está entrenado para explicar lo que Holded hace de forma que lo entiendas sin ser contable.',
+  },
+  {
+    question: '¿Cuánto cuesta?',
+    answer:
+      'Empiezas con plan gratis y puedes subir cuando te compense. Sin sorpresas ni permanencias forzosas.',
+  },
+  {
+    question: '¿Y si desconecto Holded?',
+    answer:
+      'Puedes desconectar cuando quieras. Isaak pierde acceso y tu cuenta Holded sigue igual que siempre.',
+  },
+  {
+    question: '¿Funciona en móvil?',
+    answer:
+      'Sí. Puedes preguntar desde web y móvil y mantener el mismo contexto de tu negocio.',
+  },
+  {
+    question: '¿Puedo usarlo con mi equipo?',
+    answer:
+      'Sí. Dependiendo del plan puedes trabajar con más usuarios y compartir contexto operativo.',
+  },
+  {
+    question: '¿Reemplaza a mi contable?',
+    answer:
+      'No. Isaak te ayuda a entender y actuar antes, pero no sustituye asesoramiento profesional acreditado.',
+  },
 ];
 
 export default function HoldedHomePage() {
@@ -65,64 +118,226 @@ export default function HoldedHomePage() {
         </div>
       </header>
 
-      <section id="solucion" className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm">
-            <ShieldCheck className="h-3.5 w-3.5 text-[#ff5460]" />
-            Claridad diaria
+      <section id="solucion" className="py-14 sm:py-18">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm">
+                <Link2 className="h-3.5 w-3.5 text-[#ff5460]" />
+                Conoce a Isaak
+              </div>
+
+              <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.45rem] sm:leading-[1.04]">
+                Tu asistente de contabilidad que entiende tu negocio sin tecnicismos.
+              </h1>
+
+              <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+                Isaak interpreta tus datos de Holded para responder cualquier duda sobre ventas,
+                gastos, tesorería y beneficio de forma clara y directa.
+              </p>
+
+              <p className="mt-3 max-w-2xl text-base font-semibold leading-8 text-slate-600 sm:text-lg">
+                No necesitas saber leer balances. Solo pregunta.
+              </p>
+
+              <div className="mt-7 rounded-3xl border border-[#ff5460]/20 bg-[#ff5460]/5 p-6 shadow-sm">
+                <div className="text-sm font-semibold text-slate-900">
+                  Ejemplos de lo que puedes preguntarle
+                </div>
+                <ul className="mt-5 space-y-4 text-sm text-slate-700">
+                  <li className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="font-semibold text-slate-900">💬 Isaak, ¿cómo voy de ventas en julio?</div>
+                    <div className="mt-2 text-[#ff5460]">
+                      📊 Has facturado 12.450€ en julio. Un 8% más que en junio. Los clientes
+                      principales fueron Empresa X y Empresa Y.
+                    </div>
+                  </li>
+                  <li className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="font-semibold text-slate-900">💬 ¿Me falta algún pago importante?</div>
+                    <div className="mt-2 text-[#ff5460]">
+                      ⚠️ Sí, hay 5 facturas sin pagar. La más antigua es de hace 47 días
+                      (Cliente B, 3.200€).
+                    </div>
+                  </li>
+                  <li className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div className="font-semibold text-slate-900">💬 ¿Cuánto dinero tengo para proveedores?</div>
+                    <div className="mt-2 text-[#ff5460]">
+                      💰 Hoy tendrías 8.750€ libres si cobras lo pendiente de Empresa X.
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-5">
+                <div className="text-sm font-semibold text-amber-900">Qué necesitas para conectar</div>
+                <div className="mt-3 flex items-start gap-2 text-sm text-amber-800">
+                  <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                  Una cuenta activa de Holded y tu API key.
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href={buildOnboardingUrl('holded_home_hero')}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-[#ef4654] hover:shadow-xl"
+                >
+                  Conectar Holded via API
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/planes"
+                  className="inline-flex items-center justify-center rounded-xl border border-[#ff5460]/40 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                >
+                  Ver planes
+                </Link>
+              </div>
+            </div>
+
+            <HoldedHeroVisual />
+          </div>
+        </div>
+      </section>
+
+      <section id="beneficios" className="bg-white py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="max-w-3xl">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-950">
+              Esto cambia cuando Isaak llega
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-600">
+              Trabajar con números deja de ser lento y confuso. Isaak te da contexto y siguiente
+              acción en el momento.
+            </p>
           </div>
 
-          <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">
-            Habla con tus números.
-            <br />
-            Decide con calma.
-          </h1>
-
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-            Isaak convierte tus datos de Holded en respuestas directas para que tengas control real de
-            tu negocio: qué vendes, qué gastas y cuánto beneficio te queda.
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href={buildOnboardingUrl('holded_home_hero')}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-[#ef4654]"
-            >
-              Empezar ahora
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/planes"
-              className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
-            >
-              Ver planes
-            </Link>
+          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {benefits.map((item) => (
+              <article key={item.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#ff5460]/10 text-[#ff5460]">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{item.body}</p>
+              </article>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <div className="mt-7 rounded-3xl border border-amber-200 bg-amber-50 p-5">
-            <div className="text-sm font-semibold text-amber-900">Qué necesitas para conectar</div>
-            <div className="mt-3 flex items-start gap-2 text-sm text-amber-800">
-              <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-              Una cuenta activa de Holded y tu API key.
+      <section className="py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#081936_0%,#0f2660_100%)] p-8 text-white lg:p-10">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
+                Inicio rápido
+              </div>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight">Empieza en 3 minutos</h2>
+              <p className="mt-4 text-sm leading-7 text-white/80 sm:text-base">
+                Conecta tu Holded y empieza a preguntar con contexto real desde el primer momento.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              <article className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Paso 1</div>
+                <h3 className="mt-3 text-lg font-semibold text-white">Copia tu API key</h3>
+                <p className="mt-2 text-sm leading-6 text-white/75">Entra en Holded, abre configuración y copia tu clave.</p>
+              </article>
+              <article className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Paso 2</div>
+                <h3 className="mt-3 text-lg font-semibold text-white">Conecta tu empresa</h3>
+                <p className="mt-2 text-sm leading-6 text-white/75">Pega la clave en el onboarding y activa el contexto automáticamente.</p>
+              </article>
+              <article className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Paso 3</div>
+                <h3 className="mt-3 text-lg font-semibold text-white">Pregunta lo que necesites</h3>
+                <p className="mt-2 text-sm leading-6 text-white/75">Desde ese momento tu asistente contable es una conversación.</p>
+              </article>
             </div>
           </div>
         </div>
-
-        <HoldedHeroVisual />
       </section>
 
-      <section id="beneficios" className="border-y border-slate-200 bg-white py-14">
+      <section id="seguridad" className="bg-white py-14">
         <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-950">Lo que cambia desde el primer día</h2>
-          <div className="mt-7 grid gap-4 md:grid-cols-2">
-            {benefits.map((item) => (
-              <article key={item} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-                <div className="flex items-start gap-3 text-sm leading-7 text-slate-700">
-                  <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
-                  <span>{item}</span>
-                </div>
+          <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-8 lg:p-10">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                <ShieldCheck className="h-3.5 w-3.5 text-[#ff5460]" />
+                ¿Puedo confiar?
+              </div>
+              <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
+                Sí. Y de forma transparente.
+              </h2>
+            </div>
+
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="font-semibold text-slate-900">API key, no contraseña</div>
+                <div className="mt-1 text-sm text-slate-600">Puedes desconectar el acceso cuando quieras.</div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="font-semibold text-slate-900">Tus datos siguen siendo tuyos</div>
+                <div className="mt-1 text-sm text-slate-600">Isaak interpreta información para ayudarte a decidir mejor.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="bg-white py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="max-w-3xl">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-950">
+              Preguntas frecuentes
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-600">
+              Respuestas rápidas para decidir con seguridad.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+            {faqItems.map((item) => (
+              <article key={item.question} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{item.answer}</p>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm lg:p-10">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#ff5460]">
+                <TriangleAlert className="h-3.5 w-3.5" />
+                Empieza sin riesgo
+              </div>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
+                Haz tu primera pregunta hoy
+              </h2>
+              <p className="mt-4 text-base leading-7 text-slate-600">
+                Conecta Holded, valida tu contexto y decide después si escalar a más capacidad.
+              </p>
+            </div>
+
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={buildOnboardingUrl('holded_home_final_cta')}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-[#ef4654] hover:shadow-xl"
+              >
+                Conectar mi Holded
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/planes"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                Ver planes
+              </Link>
+            </div>
           </div>
         </div>
       </section>
