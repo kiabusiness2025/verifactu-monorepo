@@ -51,6 +51,20 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
   const [error, setError] = useState<string | null>(null);
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
 
+  const loadStatus = async (signal?: AbortSignal) => {
+    const res = await fetch('/api/integrations/accounting/status?channel=chatgpt', {
+      cache: 'no-store',
+      signal,
+      headers: {
+        'x-isaak-entry-channel': 'chatgpt',
+        ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
+      },
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error || onboardingCopy.errorLoadFailed);
+    return data as IntegrationStatus;
+  };
+
   const statusLabel = useMemo(() => {
     if (status?.connected) return 'Isaak ya esta activado';
     if (loading) return onboardingCopy.statusLoading;
@@ -72,30 +86,33 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 12000);
 
     const load = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/integrations/accounting/status?channel=chatgpt', {
-          cache: 'no-store',
-          headers: {
-            'x-isaak-entry-channel': 'chatgpt',
-            ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
-          },
-        });
-        const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || onboardingCopy.errorLoadFailed);
+        const data = await loadStatus(controller.signal);
         if (cancelled) return;
-        setStatus(data as IntegrationStatus);
+        setStatus(data);
         if (data?.connected && nextUrl) {
           window.location.replace(nextUrl);
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : onboardingCopy.errorLoadFailed);
+          const isAbortError =
+            loadError instanceof DOMException && loadError.name === 'AbortError';
+          setError(
+            isAbortError
+              ? 'La conexion tarda mas de lo normal. Pulsa Reintentar para continuar.'
+              : loadError instanceof Error
+                ? loadError.message
+                : onboardingCopy.errorLoadFailed
+          );
         }
       } finally {
+        window.clearTimeout(timer);
         if (!cancelled) setLoading(false);
       }
     };
@@ -103,8 +120,26 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
     void load();
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
+      controller.abort();
     };
   }, [nextUrl, onboardingToken]);
+
+  const handleRetryStatus = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await loadStatus();
+      setStatus(data);
+      if (data?.connected && nextUrl) {
+        window.location.replace(nextUrl);
+      }
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : onboardingCopy.errorLoadFailed);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -152,9 +187,9 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_45%,#ffffff_100%)] px-4 py-10 text-black sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-2xl">
-        <div className="rounded-[30px] border border-neutral-200 bg-white shadow-[0_18px_46px_rgba(15,23,42,0.09)]">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_45%,#ffffff_100%)] px-4 py-6 text-black sm:px-6 sm:py-10 lg:px-8">
+      <div className="mx-auto max-w-lg">
+        <div className="rounded-[28px] border border-neutral-200 bg-white shadow-[0_18px_46px_rgba(15,23,42,0.09)]">
           <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
             <Link
               href={HOLDED_COMPAT_URL}
@@ -172,14 +207,14 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
             </Link>
           </div>
 
-          <div className="p-6 sm:p-8">
+          <div className="p-5 sm:p-6">
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
               {onboardingCopy.eyebrow}
             </div>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-black sm:text-[2rem]">
+            <h1 className="mt-3 text-2xl font-bold tracking-tight text-black sm:text-[1.8rem]">
               Activa tu conexion con Holded
             </h1>
-            <p className="mt-3 text-sm leading-7 text-neutral-700 sm:text-base">
+            <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">
               {onboardingCopy.intro}
             </p>
 
@@ -193,7 +228,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
               </div>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+            <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
               <div className="text-sm font-semibold text-black">{onboardingCopy.statusReady}</div>
               <div className="mt-2 text-sm text-neutral-700">
                 Espacio preparado: <span className="font-semibold text-black">{tenantName}</span>
@@ -206,7 +241,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
               ) : null}
             </div>
 
-            <ol className="mt-5 space-y-2 text-sm text-neutral-700">
+            <ol className="mt-4 space-y-2 text-sm text-neutral-700">
               {helpSteps.map((step, index) => (
                 <li key={step} className="flex gap-3">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-white">
@@ -217,7 +252,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
               ))}
             </ol>
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-black">
                 Clave API de tu ERP (Holded)
@@ -294,7 +329,18 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
             {error ? (
               <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{error}</span>
+              <div className="space-y-2">
+                <span className="block">{error}</span>
+                {!saving ? (
+                  <button
+                    type="button"
+                    onClick={handleRetryStatus}
+                    className="rounded-full border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                  >
+                    Reintentar
+                  </button>
+                ) : null}
+              </div>
               </div>
             ) : null}
           </div>

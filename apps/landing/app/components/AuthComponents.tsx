@@ -124,6 +124,8 @@ interface AuthLayoutProps {
   brandMode?: "default" | "holded";
   backHref?: string;
   backLabel?: string;
+  compact?: boolean;
+  showSecurityCard?: boolean;
 }
 
 export function AuthLayout({
@@ -135,6 +137,8 @@ export function AuthLayout({
   brandMode = "default",
   backHref,
   backLabel,
+  compact = false,
+  showSecurityCard = true,
 }: AuthLayoutProps) {
   const landingUrl = getLandingUrl();
   const isHolded = brandMode === "holded";
@@ -147,10 +151,14 @@ export function AuthLayout({
         isHolded ? "bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_42%,#ffffff_100%)]" : "bg-[#2361d8]/5"
       }`}
     >
-      <div className="mx-auto w-full max-w-md">
-        <div className={`rounded-2xl border bg-white p-8 shadow-lg ${isHolded ? "border-[#ff5460]/15" : "border-slate-200"}`}>
-          <div className="mb-8 text-center">
-            <div className="mb-4 flex justify-center">
+      <div className={`mx-auto w-full ${compact ? 'max-w-sm' : 'max-w-md'}`}>
+        <div
+          className={`rounded-2xl border bg-white shadow-lg ${isHolded ? "border-[#ff5460]/15" : "border-slate-200"} ${
+            compact ? 'p-5 sm:p-6' : 'p-8'
+          }`}
+        >
+          <div className={`${compact ? 'mb-5' : 'mb-8'} text-center`}>
+            <div className={`${compact ? 'mb-3' : 'mb-4'} flex justify-center`}>
               {isHolded ? (
                 <div className="flex flex-col items-center gap-3">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
@@ -171,7 +179,7 @@ export function AuthLayout({
                 <BrandLogo variant="auth" />
               )}
             </div>
-            <div className="mb-4">
+            <div className={`${compact ? 'mb-3' : 'mb-4'}`}>
               <a
                 href={resolvedBackHref}
                 className={`inline-flex items-center gap-2 text-sm font-semibold ${
@@ -181,7 +189,7 @@ export function AuthLayout({
                 <span aria-hidden="true">&larr;</span> {resolvedBackLabel}
               </a>
             </div>
-            <h1 className={`mb-2 text-2xl font-bold ${isHolded ? "text-slate-950" : "text-[#011c67]"}`}>{title}</h1>
+            <h1 className={`mb-2 font-bold ${compact ? 'text-xl' : 'text-2xl'} ${isHolded ? "text-slate-950" : "text-[#011c67]"}`}>{title}</h1>
             {subtitle && <p className="text-gray-600">{subtitle}</p>}
           </div>
 
@@ -233,11 +241,13 @@ export function AuthLayout({
           )}
         </div>
 
-        <div className={`mt-6 rounded-lg border bg-white p-4 text-center text-xs text-gray-600 ${isHolded ? "border-[#ff5460]/15" : "border-slate-200"}`}>
-          <p>
-            <strong>Tu información siempre está segura.</strong> Guardamos tus datos con cifrado y control de acceso.
-          </p>
-        </div>
+        {showSecurityCard ? (
+          <div className={`mt-6 rounded-lg border bg-white p-4 text-center text-xs text-gray-600 ${isHolded ? "border-[#ff5460]/15" : "border-slate-200"}`}>
+            <p>
+              <strong>Tu información siempre está segura.</strong> Guardamos tus datos con cifrado y control de acceso.
+            </p>
+          </div>
+        ) : null}
       </div>
     </div>
   );
