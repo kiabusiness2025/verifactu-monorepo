@@ -304,14 +304,16 @@ export default function LoginPage() {
       backHref={holdedMode ? holdedSiteUrl : undefined}
       backLabel={holdedMode ? 'Volver a Holded' : undefined}
     >
-      <div className="mb-2 flex gap-2">
+      <div className="mb-2 flex gap-1 rounded-xl bg-gray-100 p-1">
         <button
           type="button"
           onClick={() => setMode('login')}
-          className={`flex-1 rounded-lg border py-2 ${
+          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
             mode === 'login'
-              ? 'border-[#2361d8] bg-[#2361d8] text-white'
-              : 'border-gray-300 bg-white text-gray-700'
+              ? holdedMode
+                ? 'bg-white text-[#ff5460] shadow-sm'
+                : 'bg-white text-[#2361d8] shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           Iniciar sesion
@@ -319,10 +321,12 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={() => setMode('signup')}
-          className={`flex-1 rounded-lg border py-2 ${
+          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
             mode === 'signup'
-              ? 'border-[#2361d8] bg-[#2361d8] text-white'
-              : 'border-gray-300 bg-white text-gray-700'
+              ? holdedMode
+                ? 'bg-white text-[#ff5460] shadow-sm'
+                : 'bg-white text-[#2361d8] shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           Crear cuenta
@@ -357,7 +361,9 @@ export default function LoginPage() {
             {mode === 'login' && (
               <Link
                 href={buildAuthHref('/auth/forgot-password')}
-                className="text-sm font-medium text-[#2361d8] hover:text-[#2361d8]"
+                className={`text-sm font-medium ${
+                  holdedMode ? 'text-[#ff5460] hover:text-[#ef4654]' : 'text-[#2361d8] hover:text-[#1f55c0]'
+                }`}
               >
                 La olvidaste?
               </Link>
@@ -440,7 +446,11 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-full bg-[#2361d8] py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
+          className={`w-full rounded-full py-3 font-semibold text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-50 ${
+            holdedMode
+              ? 'bg-[#ff5460] hover:bg-[#ef4654]'
+              : 'bg-[#2361d8] hover:bg-[#1f55c0]'
+          }`}
         >
           {isLoading
             ? mode === 'login'
@@ -465,7 +475,7 @@ export default function LoginPage() {
         type="button"
         onClick={handleGoogleLogin}
         disabled={isLoading}
-        className="flex w-full items-center justify-center gap-3 rounded-full bg-[#2361d8] px-4 py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-3 rounded-full border border-gray-300 bg-white px-4 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
