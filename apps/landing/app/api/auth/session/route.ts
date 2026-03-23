@@ -10,6 +10,9 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+const DEFAULT_ADMIN_APP_NAME = '[DEFAULT]';
+const HOLDED_ADMIN_APP_NAME = 'holded-admin';
+
 function requireEnv(name: string) {
   const v = process.env[name];
   if (!v) {
@@ -19,16 +22,66 @@ function requireEnv(name: string) {
   return v;
 }
 
-function initFirebaseAdmin() {
-  if (admin.apps.length) return;
+function envOrNull(name: string) {
+  const value = process.env[name]?.trim();
+  return value ? value : null;
+}
 
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: requireEnv('FIREBASE_ADMIN_PROJECT_ID'),
-      clientEmail: requireEnv('FIREBASE_ADMIN_CLIENT_EMAIL'),
-      privateKey: requireEnv('FIREBASE_ADMIN_PRIVATE_KEY').replace(/\\n/g, '\n'),
-    }),
-  });
+function ensureAdminApp(appName: string, envPrefix: string, required: boolean) {
+  const existing = admin.apps.find((app) => app.name === appName);
+  if (existing) return existing;
+
+  const projectId = envOrNull(`${envPrefix}PROJECT_ID`);
+  const clientEmail = envOrNull(`${envPrefix}CLIENT_EMAIL`);
+  const privateKeyRaw = envOrNull(`${envPrefix}PRIVATE_KEY`);
+
+  if (!projectId || !clientEmail || !privateKeyRaw) {
+    if (required) {
+      if (!projectId) requireEnv(`${envPrefix}PROJECT_ID`);
+      if (!clientEmail) requireEnv(`${envPrefix}CLIENT_EMAIL`);
+      if (!privateKeyRaw) requireEnv(`${envPrefix}PRIVATE_KEY`);
+    }
+    return null;
+  }
+
+  const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
+  return admin.initializeApp(
+    {
+      credential: admin.credential.cert({
+        projectId,
+        clientEmail,
+        privateKey,
+      }),
+    },
+    appName
+  );
+}
+
+function initFirebaseAdminApps() {
+  const apps: admin.app.App[] = [];
+  const defaultApp = ensureAdminApp(DEFAULT_ADMIN_APP_NAME, 'FIREBASE_ADMIN_', true);
+  if (defaultApp) apps.push(defaultApp);
+
+  const holdedApp = ensureAdminApp(HOLDED_ADMIN_APP_NAME, 'HOLDED_FIREBASE_ADMIN_', false);
+  if (holdedApp) apps.push(holdedApp);
+
+  return apps;
+}
+
+async function verifyIdTokenAcrossProjects(idToken: string) {
+  const apps = initFirebaseAdminApps();
+  let lastError: unknown = null;
+
+  for (const app of apps) {
+    try {
+      const decoded = await app.auth().verifyIdToken(idToken);
+      return { decoded, app };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error('Unable to verify Firebase ID token');
 }
 
 async function getTenantForUser(uid: string, email: string, displayName?: string) {
@@ -76,17 +129,17 @@ async function getTenantForUser(uid: string, email: string, displayName?: string
 
 export async function POST(req: Request) {
   try {
-    initFirebaseAdmin();
+    initFirebaseAdminApps();
 
     const { idToken, rememberDevice } = await req.json().catch(() => ({}));
     if (!idToken) {
       return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
     }
 
-    const decoded = await admin.auth().verifyIdToken(idToken);
+    const { decoded, app } = await verifyIdTokenAcrossProjects(idToken);
 
     // Obtener información del usuario de Firebase
-    const userRecord = await admin.auth().getUser(decoded.uid);
+    const userRecord = await app.auth().getUser(decoded.uid);
     const displayName = userRecord.displayName || decoded.name || undefined;
 
     if (!decoded.email) {
