@@ -100,8 +100,9 @@ export async function middleware(req: NextRequest) {
     const landingUrl = getLandingUrl();
     const appUrl = getAppUrl();
     const returnPath = pathname === '/' ? '/demo' : pathname;
+    const returnQuery = req.nextUrl.search || '';
     const returnUrl = `${appUrl}${returnPath}`;
-    const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(returnUrl)}`;
+    const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(`${returnUrl}${returnQuery}`)}`;
     return NextResponse.redirect(loginUrl);
   }
 

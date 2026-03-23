@@ -141,6 +141,60 @@ export default function LoginPage() {
   }, [authLoading]);
 
   if (authLoading) {
+    if (holdedMode) {
+      return (
+        <div className="min-h-screen bg-white px-4 py-10 text-black sm:px-6 lg:px-8">
+          <div className="mx-auto flex min-h-[70vh] max-w-xl items-center justify-center">
+            <div className="w-full rounded-[30px] border border-neutral-200 bg-white p-8 text-center shadow-[0_16px_40px_rgba(15,23,42,0.08)] sm:p-10">
+              <div className="flex justify-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+                  <img
+                    src="/brand/holded/holded-diamond-logo.png"
+                    alt="Isaak for Holded"
+                    className="h-[52px] w-[52px] object-contain"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                Isaak for Holded
+              </div>
+
+              <h1 className="mt-5 text-2xl font-bold tracking-tight text-black sm:text-3xl">
+                Preparando tu conexión
+              </h1>
+
+              {!authLoadingTimedOut ? (
+                <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-neutral-600 sm:text-base">
+                  Estamos validando tu acceso para continuar con la conexión de Holded.
+                </p>
+              ) : (
+                <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-amber-700 sm:text-base">
+                  Está tardando más de lo normal. Puedes recargar para reintentar.
+                </p>
+              )}
+
+              <div className="mx-auto mt-8 h-2 w-28 overflow-hidden rounded-full bg-neutral-200">
+                <div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-neutral-700" />
+              </div>
+
+              {authLoadingTimedOut ? (
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-5 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Recargar
+                </button>
+              ) : (
+                <p className="mt-4 text-xs text-neutral-500">Cargando...</p>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#2361d8]/5">
         <div className="max-w-sm rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
@@ -168,6 +222,44 @@ export default function LoginPage() {
   }
 
   if (user) {
+    if (holdedMode && !mintError) {
+      return (
+        <div className="min-h-screen bg-white px-4 py-10 text-black sm:px-6 lg:px-8">
+          <div className="mx-auto flex min-h-[70vh] max-w-xl items-center justify-center">
+            <div className="w-full rounded-[30px] border border-neutral-200 bg-white p-8 text-center shadow-[0_16px_40px_rgba(15,23,42,0.08)] sm:p-10">
+              <div className="flex justify-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+                  <img
+                    src="/brand/holded/holded-diamond-logo.png"
+                    alt="Isaak for Holded"
+                    className="h-[52px] w-[52px] object-contain"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                Isaak for Holded
+              </div>
+
+              <h1 className="mt-5 text-2xl font-bold tracking-tight text-black sm:text-3xl">
+                Conectando tu espacio
+              </h1>
+
+              <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-neutral-600 sm:text-base">
+                Todo listo. En unos segundos entrarás al paso de conexión con Holded.
+              </p>
+
+              <div className="mx-auto mt-8 h-2 w-28 overflow-hidden rounded-full bg-neutral-200">
+                <div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-neutral-700" />
+              </div>
+
+              <p className="mt-4 text-xs text-neutral-500">Redirigiendo...</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#2361d8]/5">
         <div className="text-center">
