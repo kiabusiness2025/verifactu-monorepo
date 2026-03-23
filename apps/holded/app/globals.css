@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface: #ffffff;
+  --surface-soft: #f8fbff;
+  --ink: #0f172a;
+  --brand: #ff5460;
+  --brand-dark: #ef4654;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #fff7f7 45%, #ffffff 100%);
+  color: var(--ink);
+}
+
+a,
+button {
+  outline: none;
+}
+
+a:focus-visible,
+button:focus-visible {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px rgba(255, 84, 96, 0.55);
+  border-radius: 12px;
+}
