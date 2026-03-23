@@ -9,6 +9,7 @@ const PROTECTED_PREFIXES = ['/t/', '/dashboard'];
 const LEGACY_REDIRECTS: Record<string, string> = {
   '/dashboard': '/workspace',
   '/workspace/dashboard': '/workspace',
+  '/workspace/workspace': '/workspace',
 };
 
 export function middleware(req: NextRequest) {

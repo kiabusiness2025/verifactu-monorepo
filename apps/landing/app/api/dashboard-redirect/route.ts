@@ -41,13 +41,14 @@ export async function GET(req: Request) {
 
     const appOrigin = new URL(appUrl).origin;
     const clientOrigin = new URL(clientUrl).origin;
-    let dashboardUrl = `${appUrl}/workspace`;
+    let dashboardUrl = `${clientOrigin}/workspace`;
 
     // Safe redirect policy:
     // 1) Relative targets are resolved against app origin.
     // 2) Absolute targets are accepted only for app/client origins.
     if (rawTarget.startsWith('/') && !rawTarget.startsWith('//') && !rawTarget.includes('://')) {
-      dashboardUrl = `${appUrl}${rawTarget}`;
+      const baseOrigin = rawTarget.startsWith('/onboarding/') ? appOrigin : clientOrigin;
+      dashboardUrl = `${baseOrigin}${rawTarget}`;
     } else {
       try {
         const parsedTarget = new URL(rawTarget);
@@ -55,7 +56,7 @@ export async function GET(req: Request) {
           dashboardUrl = parsedTarget.toString();
         }
       } catch {
-        dashboardUrl = `${appUrl}/workspace`;
+        dashboardUrl = `${clientOrigin}/workspace`;
       }
     }
 

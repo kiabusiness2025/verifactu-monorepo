@@ -99,8 +99,9 @@ export default function LoginPage() {
   const redirectToDashboard = React.useCallback(() => {
     try {
       const targetUrl = new URL(redirectTarget);
-      const pathWithQuery = `${targetUrl.pathname}${targetUrl.search}`;
-      const redirectUrl = `/api/dashboard-redirect?target=${encodeURIComponent(pathWithQuery)}`;
+      const redirectUrl = `/api/dashboard-redirect?target=${encodeURIComponent(
+        targetUrl.toString()
+      )}`;
       window.location.href = redirectUrl;
     } catch {
       window.location.href = '/api/dashboard-redirect?target=%2Fworkspace';
