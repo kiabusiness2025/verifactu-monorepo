@@ -55,10 +55,20 @@ export function middleware(request: NextRequest) {
   const host = request.headers.get('host');
   const nonce = buildNonce();
   const requestHeaders = new Headers(request.headers);
+  const source = request.nextUrl.searchParams.get('source')?.toLowerCase() || '';
+  const nextParam = request.nextUrl.searchParams.get('next')?.toLowerCase() || '';
+  const isHoldedAuthFlow =
+    pathname.startsWith('/auth/holded') ||
+    source.startsWith('holded') ||
+    nextParam.includes('/onboarding/holded') ||
+    nextParam.includes('holded.verifactu.business');
   requestHeaders.set('x-nonce', nonce);
   if (isHoldedHost(host)) {
     requestHeaders.set('x-holded-host', '1');
     requestHeaders.set('x-hide-isaak-chat', '1');
+  }
+  if (isHoldedAuthFlow) {
+    requestHeaders.set('x-holded-flow', '1');
   }
 
   if (isHoldedHost(host) && pathname === '/') {

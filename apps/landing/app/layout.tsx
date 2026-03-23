@@ -78,11 +78,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const requestHeaders = await headers();
   const nonce = requestHeaders.get('x-nonce') || undefined;
   const hideIsaakChat = requestHeaders.get('x-hide-isaak-chat') === '1';
+  const holdedFlow =
+    requestHeaders.get('x-holded-host') === '1' || requestHeaders.get('x-holded-flow') === '1';
 
   return (
     <html lang="es">
       <head>
         <GoogleTagManager nonce={nonce} />
+        {holdedFlow ? (
+          <>
+            <link rel="icon" href="/brand/holded/holded-diamond-logo.png" sizes="32x32" />
+            <link rel="shortcut icon" href="/brand/holded/holded-diamond-logo.png" />
+          </>
+        ) : null}
         {/* Preconnect a servicios externos para mejorar performance */}
         <link rel="preconnect" href="https://firebaseauth.googleapis.com" />
         <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />

@@ -21,6 +21,7 @@ async function getSessionPayload(req: NextRequest): Promise<SessionPayload | nul
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const source = req.nextUrl.searchParams.get('source')?.toLowerCase() || '';
 
   // Backward compatibility for cached clients still probing legacy admin status.
   if (pathname === '/api/admin/check') {
@@ -114,6 +115,17 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = '/demo';
     return NextResponse.redirect(url);
+  }
+
+  const holdedFlow =
+    pathname.startsWith('/onboarding/holded') ||
+    pathname.startsWith('/dashboard/isaak') ||
+    source.startsWith('holded');
+
+  if (holdedFlow) {
+    const headers = new Headers(req.headers);
+    headers.set('x-holded-flow', '1');
+    return NextResponse.next({ request: { headers } });
   }
 
   return NextResponse.next();
