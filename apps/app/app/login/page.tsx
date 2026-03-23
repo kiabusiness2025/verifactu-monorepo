@@ -16,7 +16,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     const landingUrl = getLandingUrl();
-    const loginUrl = new URL('/auth/login', landingUrl);
+    const loginPath = holdedMode ? '/auth/holded' : '/auth/login';
+    const loginUrl = new URL(loginPath, landingUrl);
     if (next) {
       loginUrl.searchParams.set('next', next);
     }

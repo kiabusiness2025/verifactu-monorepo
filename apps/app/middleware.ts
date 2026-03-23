@@ -102,7 +102,11 @@ export async function middleware(req: NextRequest) {
     const returnPath = pathname === '/' ? '/demo' : pathname;
     const returnQuery = req.nextUrl.search || '';
     const returnUrl = `${appUrl}${returnPath}`;
-    const loginUrl = `${landingUrl}/auth/login?next=${encodeURIComponent(`${returnUrl}${returnQuery}`)}`;
+    const isHoldedFlow =
+      returnPath.startsWith('/onboarding/holded') ||
+      req.nextUrl.searchParams.get('source')?.startsWith('holded') === true;
+    const loginPath = isHoldedFlow ? '/auth/holded' : '/auth/login';
+    const loginUrl = `${landingUrl}${loginPath}?next=${encodeURIComponent(`${returnUrl}${returnQuery}`)}`;
     return NextResponse.redirect(loginUrl);
   }
 
