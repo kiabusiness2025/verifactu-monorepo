@@ -59,12 +59,12 @@ export default function HoldedSiteChrome({ children }: Props) {
           <div className="text-xs sm:text-sm">
             Powered by{' '}
             <a
-              href="https://verifactu.business"
+              href="https://holded.verifactu.business"
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-slate-800 hover:text-[#ff5460]"
             >
-              verifactu.business
+              holded.verifactu.business
             </a>
           </div>
 

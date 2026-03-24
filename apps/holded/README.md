@@ -18,10 +18,8 @@ Aplicacion publica dedicada a la compatibilidad de Isaak con Holded.
 
 1. El usuario entra en la landing de Holded.
 2. Los CTA usan `buildOnboardingUrl()` en [app/lib/holded-navigation.ts](./app/lib/holded-navigation.ts).
-3. El flujo redirige primero a `https://app.verifactu.business/login`.
-4. Tras iniciar sesion, el usuario entra en `/onboarding/holded` dentro de la app principal.
-5. En onboarding pega su API key de Holded.
-6. Si la conexion es valida, se redirige a `https://app.verifactu.business/dashboard/isaak`.
+3. El flujo redirige dentro del subdominio `https://holded.verifactu.business`.
+4. El usuario completa la conexion y vuelve al flujo de planes/chat en Holded.
 
 Nota: el chat de Isaak requiere sesion iniciada y cuenta conectada. No debe ofrecerse como experiencia anonima.
 

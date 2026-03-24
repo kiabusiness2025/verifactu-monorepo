@@ -5,12 +5,12 @@ import Stripe from 'stripe';
 const SESSION_COOKIE_NAME = '__session';
 
 function getAppUrl(env = process.env.NEXT_PUBLIC_APP_URL) {
-  const fallback = 'https://app.verifactu.business';
+  const fallback = 'https://holded.verifactu.business';
   const candidate = (env || fallback).trim();
 
   try {
     const parsed = new URL(candidate);
-    if (parsed.hostname === 'client.verifactu.business') {
+    if (parsed.hostname !== 'holded.verifactu.business') {
       return fallback;
     }
     return parsed.origin;
@@ -107,14 +107,10 @@ function getOnboardingUrl() {
   const holdedPublicUrl = (
     process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business'
   ).replace(/\/$/, '');
-  const chatUrl = new URL('/dashboard/isaak', appUrl).toString();
-  const onboardingUrl = new URL('/onboarding/holded', appUrl);
-  onboardingUrl.searchParams.set('channel', 'chatgpt');
-  onboardingUrl.searchParams.set('source', 'holded_planes');
-  onboardingUrl.searchParams.set('next', chatUrl);
+  const chatUrl = new URL('/planes', appUrl).toString();
   const loginUrl = new URL('/auth/holded', holdedPublicUrl);
   loginUrl.searchParams.set('source', 'holded_checkout');
-  loginUrl.searchParams.set('next', onboardingUrl.toString());
+  loginUrl.searchParams.set('next', chatUrl);
   return loginUrl.toString();
 }
 
@@ -130,7 +126,7 @@ async function createPlanCheckoutSessionUrl(
     throw new Error(`Missing env var ${envCandidates.join(' or ')}`);
   }
 
-  const successUrl = new URL('/dashboard/isaak', getAppUrl());
+  const successUrl = new URL('/planes', getAppUrl());
   successUrl.searchParams.set('checkout', 'success');
   successUrl.searchParams.set('session_id', '{CHECKOUT_SESSION_ID}');
 
