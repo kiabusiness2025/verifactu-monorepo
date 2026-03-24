@@ -37,6 +37,32 @@ const benefits = [
   },
 ];
 
+const capabilityPillars = [
+  {
+    title: 'Facturacion y clientes',
+    body: 'Isaak puede revisar facturas, clientes y borradores para que entiendas cobros pendientes y priorices seguimiento comercial.',
+  },
+  {
+    title: 'Contabilidad operativa',
+    body: 'Puedes consultar cuentas contables y actividad para convertir datos sueltos en decisiones claras del dia a dia.',
+  },
+  {
+    title: 'Proyectos y tareas',
+    body: 'Isaak resume proyectos, tareas y carga pendiente para ayudarte a detectar bloqueos antes de que afecten a caja y entregas.',
+  },
+  {
+    title: 'Agenda y equipo',
+    body: 'Tambien puede leer agenda operativa, equipo y partes de tiempo para dar contexto real de ejecucion.',
+  },
+];
+
+const advancedQuestions = [
+  'Que clientes concentran mas riesgo de cobro esta semana y que haria primero?',
+  'Resumeme en 5 lineas los proyectos con mayor retraso y su impacto operativo.',
+  'Que tareas deberia cerrar hoy para proteger margen y entregas?',
+  'Dame una priorizacion de trabajo para hoy combinando facturas, agenda y proyectos.',
+];
+
 const faqItems = [
   {
     question: '¿Pero si no entiendo Holded?',
@@ -55,8 +81,7 @@ const faqItems = [
   },
   {
     question: '¿Funciona en móvil?',
-    answer:
-      'Sí. Puedes preguntar desde web y móvil y mantener el mismo contexto de tu negocio.',
+    answer: 'Sí. Puedes preguntar desde web y móvil y mantener el mismo contexto de tu negocio.',
   },
   {
     question: '¿Puedo usarlo con mi equipo?',
@@ -101,21 +126,27 @@ export default function HoldedHomePage() {
                 </div>
                 <ul className="mt-5 space-y-4 text-sm text-slate-700">
                   <li className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <div className="font-semibold text-slate-900">💬 Isaak, ¿cómo voy de ventas en julio?</div>
+                    <div className="font-semibold text-slate-900">
+                      💬 Isaak, ¿cómo voy de ventas en julio?
+                    </div>
                     <div className="mt-2 text-[#ff5460]">
                       📊 Has facturado 12.450€ en julio. Un 8% más que en junio. Los clientes
                       principales fueron Empresa X y Empresa Y.
                     </div>
                   </li>
                   <li className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <div className="font-semibold text-slate-900">💬 ¿Me falta algún pago importante?</div>
+                    <div className="font-semibold text-slate-900">
+                      💬 ¿Me falta algún pago importante?
+                    </div>
                     <div className="mt-2 text-[#ff5460]">
-                      ⚠️ Sí, hay 5 facturas sin pagar. La más antigua es de hace 47 días
-                      (Cliente B, 3.200€).
+                      ⚠️ Sí, hay 5 facturas sin pagar. La más antigua es de hace 47 días (Cliente B,
+                      3.200€).
                     </div>
                   </li>
                   <li className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <div className="font-semibold text-slate-900">💬 ¿Cuánto dinero tengo para proveedores?</div>
+                    <div className="font-semibold text-slate-900">
+                      💬 ¿Cuánto dinero tengo para proveedores?
+                    </div>
                     <div className="mt-2 text-[#ff5460]">
                       💰 Hoy tendrías 8.750€ libres si cobras lo pendiente de Empresa X.
                     </div>
@@ -124,7 +155,9 @@ export default function HoldedHomePage() {
               </div>
 
               <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-5">
-                <div className="text-sm font-semibold text-amber-900">Qué necesitas para conectar</div>
+                <div className="text-sm font-semibold text-amber-900">
+                  Qué necesitas para conectar
+                </div>
                 <div className="mt-3 flex items-start gap-2 text-sm text-amber-800">
                   <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
                   Una cuenta activa de Holded y tu API key.
@@ -167,7 +200,10 @@ export default function HoldedHomePage() {
 
           <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             {benefits.map((item) => (
-              <article key={item.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <article
+                key={item.title}
+                className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+              >
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#ff5460]/10 text-[#ff5460]">
                   <Sparkles className="h-5 w-5" />
                 </div>
@@ -175,6 +211,61 @@ export default function HoldedHomePage() {
                 <p className="mt-3 text-sm leading-6 text-slate-600">{item.body}</p>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="capacidades" className="py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="max-w-3xl">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-950">
+              Lo que Isaak puede hacer hoy con tu Holded
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-600">
+              Esta vista resume capacidad real ya disponible para operar con contexto. Sin humo, sin
+              promesas vagas.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
+            {capabilityPillars.map((item) => (
+              <article
+                key={item.title}
+                className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+              >
+                <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{item.body}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-8 rounded-3xl border border-[#ff5460]/20 bg-[#ff5460]/5 p-6">
+            <div className="text-sm font-semibold text-slate-900">
+              Prompts recomendados para sacar todo el valor
+            </div>
+            <ul className="mt-4 space-y-3 text-sm text-slate-700">
+              {advancedQuestions.map((item) => (
+                <li key={item} className="rounded-2xl border border-slate-200 bg-white p-4">
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/capacidades"
+                className="inline-flex items-center justify-center rounded-xl border border-[#ff5460]/35 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                Ver detalle completo de capacidades
+              </Link>
+              <Link
+                href={buildOnboardingUrl('holded_home_capabilities')}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-[#ef4654] hover:shadow-xl"
+              >
+                Probar con mis datos reales
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -194,19 +285,31 @@ export default function HoldedHomePage() {
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               <article className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Paso 1</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+                  Paso 1
+                </div>
                 <h3 className="mt-3 text-lg font-semibold text-white">Copia tu API key</h3>
-                <p className="mt-2 text-sm leading-6 text-white/75">Entra en Holded, abre configuración y copia tu clave.</p>
+                <p className="mt-2 text-sm leading-6 text-white/75">
+                  Entra en Holded, abre configuración y copia tu clave.
+                </p>
               </article>
               <article className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Paso 2</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+                  Paso 2
+                </div>
                 <h3 className="mt-3 text-lg font-semibold text-white">Conecta tu empresa</h3>
-                <p className="mt-2 text-sm leading-6 text-white/75">Pega la clave en el onboarding y activa el contexto automáticamente.</p>
+                <p className="mt-2 text-sm leading-6 text-white/75">
+                  Pega la clave en el onboarding y activa el contexto automáticamente.
+                </p>
               </article>
               <article className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Paso 3</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+                  Paso 3
+                </div>
                 <h3 className="mt-3 text-lg font-semibold text-white">Pregunta lo que necesites</h3>
-                <p className="mt-2 text-sm leading-6 text-white/75">Desde ese momento tu asistente contable es una conversación.</p>
+                <p className="mt-2 text-sm leading-6 text-white/75">
+                  Desde ese momento tu asistente contable es una conversación.
+                </p>
               </article>
             </div>
           </div>
@@ -229,11 +332,15 @@ export default function HoldedHomePage() {
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="font-semibold text-slate-900">API key, no contraseña</div>
-                <div className="mt-1 text-sm text-slate-600">Puedes desconectar el acceso cuando quieras.</div>
+                <div className="mt-1 text-sm text-slate-600">
+                  Puedes desconectar el acceso cuando quieras.
+                </div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="font-semibold text-slate-900">Tus datos siguen siendo tuyos</div>
-                <div className="mt-1 text-sm text-slate-600">Isaak interpreta información para ayudarte a decidir mejor.</div>
+                <div className="mt-1 text-sm text-slate-600">
+                  Isaak interpreta información para ayudarte a decidir mejor.
+                </div>
               </div>
             </div>
           </div>
@@ -253,7 +360,10 @@ export default function HoldedHomePage() {
 
           <div className="mt-8 grid gap-4 lg:grid-cols-2">
             {faqItems.map((item) => (
-              <article key={item.question} className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+              <article
+                key={item.question}
+                className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+              >
                 <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{item.answer}</p>
               </article>
@@ -296,7 +406,6 @@ export default function HoldedHomePage() {
           </div>
         </div>
       </section>
-
     </main>
   );
 }

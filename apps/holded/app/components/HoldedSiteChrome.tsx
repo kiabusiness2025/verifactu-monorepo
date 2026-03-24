@@ -44,6 +44,9 @@ export default function HoldedSiteChrome({ children }: Props) {
             <Link href="/" className="hover:text-slate-900">
               Inicio
             </Link>
+            <Link href="/capacidades" className="hover:text-slate-900">
+              Capacidades
+            </Link>
             <a href={ISAAK_SITE_URL} className="hover:text-slate-900">
               Qué es Isaak
             </a>
@@ -89,6 +92,9 @@ export default function HoldedSiteChrome({ children }: Props) {
             </Link>
             <Link href="/terms" className="hover:text-slate-900">
               Terms
+            </Link>
+            <Link href="/capacidades" className="hover:text-slate-900">
+              Capacidades
             </Link>
             <Link href="/support" className="hover:text-slate-900">
               Soporte

@@ -1,30 +1,29 @@
 import { jwtVerify } from 'jose';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { readSessionSecret } from '@/app/lib/session';
 
 const SESSION_COOKIE_NAME = '__session';
 
 function getAppUrl(env = process.env.NEXT_PUBLIC_APP_URL) {
-  const fallback = 'https://holded.verifactu.business';
+  const fallback = 'https://app.verifactu.business';
   const candidate = (env || fallback).trim();
 
   try {
     const parsed = new URL(candidate);
-    if (parsed.hostname !== 'holded.verifactu.business') {
+    const allowedHosts = new Set([
+      'app.verifactu.business',
+      'client.verifactu.business',
+      'localhost',
+      '127.0.0.1',
+    ]);
+    if (!allowedHosts.has(parsed.hostname)) {
       return fallback;
     }
     return parsed.origin;
   } catch {
     return fallback;
   }
-}
-
-function readSessionSecret(value = process.env.SESSION_SECRET): string {
-  const secret = value?.trim();
-  if (!secret) {
-    throw new Error('SESSION_SECRET is required');
-  }
-  return secret;
 }
 
 async function verifySessionToken(token: string, secret: string) {

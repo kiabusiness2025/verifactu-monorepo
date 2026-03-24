@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   title: 'Isaak | Asistente fiscal inteligente',
   description:
     'Isaak te ayuda a entender ventas, gastos, cobros y prioridades fiscales usando contexto real de tu negocio.',
+  icons: {
+    icon: [{ url: '/Personalidad/Isaak%20Avatar.png', type: 'image/png' }],
+    shortcut: ['/Personalidad/Isaak%20Avatar.png'],
+    apple: [{ url: '/Personalidad/Isaak%20Avatar.png', type: 'image/png' }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

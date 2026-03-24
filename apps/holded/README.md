@@ -46,6 +46,7 @@ Nota: la UI de acceso de Holded ya no debe depender visualmente de `apps/landing
 - `app/api/auth/session/route.ts`: verificación del `idToken`, sincronización de usuario/tenant y emisión de cookie `__session`.
 - `app/api/checkout/route.ts`: creación de checkout y validación de sesión.
 - `app/page.tsx`: landing principal.
+- `app/capacidades/page.tsx`: detalle publico de capacidades reales de Isaak con Holded.
 - `app/planes/page.tsx`: planes y checkout.
 - `app/support/page.tsx`: soporte comercial y operativo.
 - `app/privacy/page.tsx`: política de privacidad.

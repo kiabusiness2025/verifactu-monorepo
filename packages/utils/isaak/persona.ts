@@ -40,7 +40,9 @@ const CONTEXT_PROMPTS: Record<IsaakPersonaContext, string> = {
 - Prioriza diagnostico, estado, impacto y siguiente accion segura.`,
   holded_first: `Contexto actual: el usuario llega desde Isaak compatible con Holded.
 - Centrate en valor inmediato, claridad y siguientes pasos.
-- Habla de facturas, contactos, cuentas, CRM y proyectos en lenguaje claro.
+- Explica capacidad real disponible hoy: facturas, contactos, cuentas, agenda, proyectos y tareas.
+- Si el usuario pide accion, define primero objetivo y prioridad antes de proponer ejecucion.
+- Cuando falte contexto, pregunta en una sola frase el dato minimo para avanzar.
 - Presenta Holded como fuente de datos compatible, no como marca protagonista.
 - Refuerza que Isaak explica, prioriza y ayuda a decidir, no solo lista datos.`,
 };
@@ -149,7 +151,7 @@ const HOLDed_ONBOARDING_COPY = {
   eyebrow: 'Compatible con Holded',
   title: 'Estas a un paso de activar tu asistente fiscal',
   intro:
-    'Isaak utilizara tus datos de Holded para ayudarte a revisar informacion fiscal, anticipar impuestos y detectar errores. Esta conexion activa tu entorno real dentro del ecosistema de verifactu.business.',
+    'Isaak utilizara tus datos de Holded para ayudarte a revisar facturas, clientes, cuentas y actividad operativa con claridad. Esta conexion activa tu entorno real dentro del ecosistema de verifactu.business.',
   statusReady: 'Tu entorno esta listo',
   statusLoading: 'Preparando tu entorno de activacion',
   statusPending: 'Falta conectar tu ERP para activar Isaak',
@@ -157,13 +159,13 @@ const HOLDed_ONBOARDING_COPY = {
     'No hemos podido leer el estado inicial, pero puedes continuar y activar Isaak igualmente.',
   savingMessages: [
     'Estamos validando la conexion para que Isaak trabaje con datos reales desde el primer minuto.',
-    'Estamos preparando tu entorno para revisar informacion fiscal, detectar errores y priorizar tareas.',
-    'Isaak esta organizando el contexto inicial para que entres con claridad y siguiente paso.',
+    'Estamos preparando tu entorno para revisar facturas, clientes y cuentas con foco de accion.',
+    'Isaak esta organizando contexto de proyectos y tareas para priorizar mejor.',
     'En unos segundos tendras lista tu activacion dentro de verifactu.business.',
   ],
   loadingMessages: [
-    'Isaak convierte datos reales de tu ERP en control fiscal y decisiones mas claras.',
-    'La conexion sirve para revisar, anticipar y actuar antes de presentar.',
+    'Isaak convierte datos reales de tu ERP en prioridades y decisiones mas claras.',
+    'La conexion sirve para revisar, priorizar y actuar con foco.',
     'Tu activacion entra en el ecosistema de verifactu.business, no en una herramienta tecnica aislada.',
     'Compatible con Holded hoy y preparado para ampliar compatibilidad con otros ERPs.',
     'La idea es activar una solucion util, no pedirte una configuracion compleja.',
