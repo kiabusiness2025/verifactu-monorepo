@@ -2,9 +2,20 @@
 
 ## Indice rapido
 
+## Proyectos publicos
+
+- Proyecto publico 1: `verifactu.business` -> `apps/landing`
+- Proyecto publico 2: `holded.verifactu.business` -> `apps/holded`
+- Proyecto publico 3: `isaak.verifactu.business` -> `apps/isaak`
+
+Todos comparten backend y piezas de plataforma, pero la documentacion debe tratarlos como experiencias publicas distintas.
+
 ### Comenzar aqui
 
 - [README.md](../README.md) - Descripcion general del proyecto
+- [../apps/landing/README.md](../apps/landing/README.md) - Proyecto publico verifactu.business
+- [../apps/holded/README.md](../apps/holded/README.md) - Proyecto publico Holded
+- [../apps/isaak/README.md](../apps/isaak/README.md) - Proyecto publico Isaak
 - [../apps/client/README.md](../apps/client/README.md) - Panel cliente y persistencia de Isaak
 - [product/OPERATIVE_CHECKLIST_ACCOUNTING_API_2026.md](product/OPERATIVE_CHECKLIST_ACCOUNTING_API_2026.md) - Checklist operativo unificado (planes, app, backend, datos, QA)
 - [product/ISAAK_PLATFORM_SYNC_PLAN.md](product/ISAAK_PLATFORM_SYNC_PLAN.md) - Arquitectura objetivo de Isaak, ownership de datos y fases de sync
@@ -126,7 +137,9 @@ verifactu-monorepo/
     app/        # App cliente (dashboard principal) -> /app
     client/     # App cliente alternativa o legacy (si aplica)
     admin/      # Backoffice / control tower -> /admin
-    landing/    # Marketing + login
+    landing/    # Proyecto publico 1 -> verifactu.business
+    holded/     # Proyecto publico 2 -> holded.verifactu.business
+    isaak/      # Proyecto publico 3 -> isaak.verifactu.business
     api/        # API backend (si aplica, no tocar)
     mobile/     # Flutter
   packages/
@@ -149,16 +162,21 @@ verifactu-monorepo/
 
 ```bash
 pnpm install
-pnpm dev:app        # http://localhost:3000
-pnpm dev:landing    # http://localhost:3001
-pnpm dev:admin      # http://localhost:3003
+pnpm --filter verifactu-app dev
+pnpm --filter verifactu-landing dev
+pnpm --filter verifactu-holded dev
+pnpm --filter verifactu-isaak dev
+pnpm --filter verifactu-admin dev
+```
 
 ## Rutas y paneles
 
+- Proyecto publico 1: https://verifactu.business
+- Proyecto publico 2: https://holded.verifactu.business
+- Proyecto publico 3: https://isaak.verifactu.business
 - Panel de Cliente: https://app.verifactu.business
 - Panel de Admin: https://admin.verifactu.business
 - /dashboard/admin en apps/app redirige al admin nuevo.
-```
 
 ---
 

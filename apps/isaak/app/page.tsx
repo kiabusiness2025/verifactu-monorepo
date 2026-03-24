@@ -41,11 +41,11 @@ const capabilities = [
   'Priorizar qué revisar primero para no perder tiempo en menús y detalles dispersos.',
   'Ayudar a preparar acciones como borradores, revisiones y siguientes pasos.',
   'Recordar contexto y conversaciones para responder con continuidad operativa.',
-  'Escalar a la experiencia completa de verifactu.business cuando necesitas más profundidad.',
+  'Escalar a flujos más profundos de Isaak cuando necesitas más contexto y control.',
 ];
 
 const mechanics = [
-  'Isaak vive dentro del ecosistema de verifactu.business y usa contexto autorizado por usuario y tenant.',
+  'Isaak opera con su propia identidad y usa contexto autorizado por usuario y tenant.',
   'Trabaja sobre datos reales del negocio, no solo sobre texto aislado en una ventana de chat.',
   'Puede empezar con ERPs compatibles como Holded sin que esa compatibilidad defina toda la marca.',
   'Antes de responder, puede apoyarse en historial, integraciones y señales de negocio relevantes.',
@@ -55,7 +55,7 @@ const mechanics = [
 const faqs = [
   {
     q: '¿Isaak es solo una compatibilidad puntual o un producto completo?',
-    a: 'No. Holded puede ser una compatibilidad de entrada, pero la propuesta central es Isaak como asistente fiscal inteligente dentro del ecosistema de verifactu.business.',
+    a: 'No. Holded puede ser una compatibilidad de entrada, pero la propuesta central es Isaak como producto propio con identidad, criterio y experiencia independientes.',
   },
   {
     q: '¿En qué se diferencia Isaak de una IA generalista?',
@@ -79,7 +79,7 @@ export default function IsaakHomePage() {
           <div className="grid gap-8 p-6 lg:grid-cols-[0.92fr_1.08fr] lg:p-10">
             <div className="flex flex-col justify-center">
               <div className="inline-flex w-fit items-center rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
-                Isaak by verifactu.business
+                Isaak
               </div>
               <h1 className="mt-5 text-3xl font-bold tracking-tight text-[#011c67] sm:text-5xl">
                 Tu asistente fiscal inteligente para trabajar con datos reales.
@@ -322,7 +322,9 @@ export default function IsaakHomePage() {
                   <td className="rounded-l-xl bg-slate-50 px-3 py-2">
                     Puerta a automatización y control
                   </td>
-                  <td className="bg-emerald-50 px-3 py-2">Sí, dentro de verifactu.business</td>
+                  <td className="bg-emerald-50 px-3 py-2">
+                    Sí, dentro de la experiencia propia de Isaak
+                  </td>
                   <td className="rounded-r-xl bg-slate-50 px-3 py-2">No integrada por defecto</td>
                 </tr>
               </tbody>

@@ -49,16 +49,8 @@ export default function IsaakSiteChrome({ children }: Props) {
 
       <footer className="border-t border-slate-200 bg-white/95">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-xs sm:text-sm">
-            Powered by{' '}
-            <a
-              href="https://verifactu.business"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-slate-800 hover:text-[#2361d8]"
-            >
-              verifactu.business
-            </a>
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2361d8] sm:text-sm">
+            Isaak
           </div>
 
           <div className="flex flex-wrap gap-4 text-xs font-semibold sm:text-sm">

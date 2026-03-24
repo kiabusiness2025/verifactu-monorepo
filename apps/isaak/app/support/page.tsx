@@ -1,6 +1,9 @@
 import { LifeBuoy, Mail, ShieldCheck } from 'lucide-react';
+import { SUPPORT_EMAIL } from '../lib/isaak-navigation';
 
 export default function IsaakSupportPage() {
+  const supportHref = `mailto:${SUPPORT_EMAIL}?subject=Soporte%20Isaak`;
+
   return (
     <main className="min-h-screen px-4 py-16 text-slate-900">
       <div className="mx-auto max-w-5xl">
@@ -23,10 +26,10 @@ export default function IsaakSupportPage() {
             <p className="mt-3 text-sm leading-7 text-slate-600">
               Escríbenos a{' '}
               <a
-                href="mailto:info@verifactu.business?subject=Soporte%20Isaak"
+                href={supportHref}
                 className="font-semibold text-[#2361d8] underline underline-offset-4"
               >
-                info@verifactu.business
+                {SUPPORT_EMAIL}
               </a>
               .
             </p>

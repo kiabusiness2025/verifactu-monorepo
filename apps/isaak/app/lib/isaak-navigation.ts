@@ -12,14 +12,15 @@ export const ISAAK_PUBLIC_URL = getOrigin(
   'https://isaak.verifactu.business'
 );
 
-export const APP_URL = getOrigin(process.env.NEXT_PUBLIC_APP_URL, 'https://app.verifactu.business');
+export const APP_URL = getOrigin(process.env.NEXT_PUBLIC_APP_URL, ISAAK_PUBLIC_URL);
 
 export const HOLDed_URL = getOrigin(
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL,
   'https://holded.verifactu.business'
 );
 
-export const CONTACT_URL = `${getOrigin(
-  process.env.NEXT_PUBLIC_SITE_URL,
-  'https://verifactu.business'
-)}/recursos/contacto`;
+export const CONTACT_URL = `${ISAAK_PUBLIC_URL}/support`;
+
+export const SUPPORT_EMAIL = (
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@isaak.verifactu.business'
+).trim();

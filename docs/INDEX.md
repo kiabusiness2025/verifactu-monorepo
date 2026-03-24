@@ -2,6 +2,14 @@
 
 Entrada principal: [README.md](README.md)
 
+## Proyectos publicos
+
+- Proyecto publico 1: `verifactu.business` -> `apps/landing`
+- Proyecto publico 2: `holded.verifactu.business` -> `apps/holded`
+- Proyecto publico 3: `isaak.verifactu.business` -> `apps/isaak`
+
+Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs públicas, variables públicas y documentación operativa.
+
 ## Estructura
 
 ### Producto — `docs/product/`

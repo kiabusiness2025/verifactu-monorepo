@@ -1,12 +1,47 @@
 # Verifactu Business - Monorepo
 
-Plataforma SaaS para facturacion y cumplimiento VeriFactu. Monorepo con apps web, landing y panel de administracion.
+Plataforma SaaS para facturacion y cumplimiento VeriFactu. Este monorepo contiene varios productos publicos y apps internas que comparten backend, autenticacion y datos, pero no deben confundirse como una sola experiencia publica.
+
+## Mapa de productos
+
+### Proyecto 1: verifactu.business
+
+- Dominio publico principal: `https://verifactu.business`
+- App: `apps/landing`
+- Rol: web corporativa, marketing, captacion, pricing y acceso general
+
+### Proyecto 2: Holded
+
+- Dominio publico: `https://holded.verifactu.business`
+- App: `apps/holded`
+- Rol: experiencia publica dedicada a la compatibilidad y onboarding Holded-first
+- Regla: Holded tiene identidad publica propia, aunque comparta backend con el resto
+
+### Proyecto 3: Isaak
+
+- Dominio publico: `https://isaak.verifactu.business`
+- App: `apps/isaak`
+- Rol: experiencia publica propia de Isaak como producto independiente
+- Regla: Isaak no debe presentarse como una seccion de `verifactu.business` ni como una subpantalla de Holded
+
+## Apps internas y compartidas
+
+- `apps/app`: app principal de cliente -> `https://app.verifactu.business`
+- `apps/admin`: panel de administracion -> `https://admin.verifactu.business`
+- `packages/*`: UI, utils, db, auth, integrations
+
+Regla operativa:
+
+- Los tres proyectos publicos comparten backend, autenticacion, tenancy y datos cuando corresponde.
+- La marca, la UX publica, la documentacion operativa y las variables publicas deben mantenerse separadas.
 
 ## Apps
 
 - apps/app: App principal (clientes) -> /app
 - apps/client: App cliente alternativa o legacy (si aplica)
-- apps/landing: Marketing + login
+- apps/landing: Proyecto publico 1 -> verifactu.business
+- apps/holded: Proyecto publico 2 -> holded.verifactu.business
+- apps/isaak: Proyecto publico 3 -> isaak.verifactu.business
 - apps/admin: Panel de administracion -> /admin
 - packages/\*: UI, utils, db, auth, integrations
 
@@ -48,6 +83,9 @@ La documentacion detallada de variables esta en:
 ## Documentacion
 
 - docs/INDEX.md (indice general)
+- apps/landing/README.md (proyecto publico verifactu.business)
+- apps/holded/README.md (proyecto publico Holded)
+- apps/isaak/README.md (proyecto publico Isaak)
 - docs/engineering/ai/ISAAK_UNIFIED_EXPERIENCE_2026.md (flujo unificado de Isaak)
 - apps/client/README.md (panel cliente)
 
@@ -76,6 +114,9 @@ La documentacion detallada de variables esta en:
 
 ## Rutas y paneles
 
+- Proyecto publico 1: https://verifactu.business
+- Proyecto publico 2: https://holded.verifactu.business
+- Proyecto publico 3: https://isaak.verifactu.business
 - Panel de Cliente: https://app.verifactu.business
 - Panel de Admin: https://admin.verifactu.business
 - /dashboard/admin en apps/app redirige al admin nuevo.

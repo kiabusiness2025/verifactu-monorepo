@@ -2,6 +2,16 @@
 
 Landing oficial de **verifactu.business**, desplegada en **Google Cloud Run** (región `europe-west1`) y construida con **Next.js (App Router)**.
 
+## Posicion dentro del monorepo
+
+Este proyecto es solo el proyecto publico 1 de 3:
+
+- `verifactu.business` -> `apps/landing`
+- `holded.verifactu.business` -> `apps/holded`
+- `isaak.verifactu.business` -> `apps/isaak`
+
+Comparten backend y datos cuando corresponde, pero son experiencias publicas separadas y no deben mezclarse en branding, URLs ni documentacion operativa.
+
 La landing es **independiente del resto del monorepo** y está diseñada para:
 
 - Conversión (CTA + pricing dinámico)
@@ -28,6 +38,7 @@ La landing es **independiente del resto del monorepo** y está diseñada para:
 ## 🌍 Producción
 
 - **Dominio:** https://verifactu.business
+- **Tipo de proyecto:** Proyecto publico 1 de 3
 - **Servicio Cloud Run:** `verifactu-landing`
 - **Región:** `europe-west1`
 - **Autenticación:** pública (allow unauthenticated)
