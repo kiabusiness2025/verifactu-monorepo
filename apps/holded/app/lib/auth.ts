@@ -1,8 +1,10 @@
 import type { User } from 'firebase/auth';
 import {
+  createUserWithEmailAndPassword,
   type AuthError,
   GoogleAuthProvider,
   OAuthProvider,
+  signOut,
   signInWithEmailAndPassword,
   signInWithPopup,
 } from 'firebase/auth';
@@ -75,6 +77,14 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
       message: 'Too many requests',
       userMessage: 'Has hecho demasiados intentos. Espera un momento y vuelve a probar.',
     },
+    'auth/email-already-in-use': {
+      message: 'Email already in use',
+      userMessage: 'Ese correo ya tiene una cuenta. Inicia sesión para continuar.',
+    },
+    'auth/weak-password': {
+      message: 'Weak password',
+      userMessage: 'La contraseña debe tener al menos 6 caracteres.',
+    },
   };
 
   const mapped = errorMap[error.code] || {
@@ -131,6 +141,45 @@ export async function signInWithGoogle(options: SignInOptions = {}): Promise<Aut
       rememberDevice: options.rememberDevice,
     });
 
+    return { user: userCredential.user, error: null };
+  } catch (error) {
+    return { user: null, error: getErrorMessage(error as AuthError) };
+  }
+}
+
+export async function registerWithEmail(
+  email: string,
+  password: string,
+  source = 'holded_signup'
+): Promise<AuthResult> {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const idToken = await userCredential.user.getIdToken(true);
+
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken, source }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      await signOut(auth);
+
+      return {
+        user: null,
+        error: {
+          code: 'auth/register-email-failed',
+          message: payload?.error || 'Register email failed',
+          userMessage:
+            'Hemos creado tu cuenta, pero no hemos podido enviarte el correo de verificación. Escríbenos y te ayudamos a activarla.',
+        },
+      };
+    }
+
+    await signOut(auth);
     return { user: userCredential.user, error: null };
   } catch (error) {
     return { user: null, error: getErrorMessage(error as AuthError) };

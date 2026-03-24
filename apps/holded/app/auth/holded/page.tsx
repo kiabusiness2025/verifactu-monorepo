@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { signInWithEmail, signInWithGoogle } from '@/app/lib/auth';
+import { registerWithEmail, signInWithEmail, signInWithGoogle } from '@/app/lib/auth';
 import { auth } from '@/app/lib/firebase';
 import { mintSessionCookie } from '@/app/lib/serverSession';
 
@@ -52,14 +52,17 @@ function HoldedAuthContent() {
     () => resolveRedirectTarget(nextParam, source),
     [nextParam, source]
   );
+  const isRegisterMode = (searchParams?.get('mode') || '').toLowerCase() === 'register';
 
   const redirectedRef = useRef(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberDevice, setRememberDevice] = useState(true);
   const [existingUserChecking, setExistingUserChecking] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     const stored = window.localStorage.getItem('vf_remember_device');
@@ -104,6 +107,28 @@ function HoldedAuthContent() {
     event.preventDefault();
     setIsLoading(true);
     setError('');
+    setSuccess('');
+
+    if (isRegisterMode) {
+      if (password !== confirmPassword) {
+        setIsLoading(false);
+        setError('Las contraseñas no coinciden. Revísalas e inténtalo de nuevo.');
+        return;
+      }
+
+      const registerResult = await registerWithEmail(email, password, source);
+      if (registerResult.error) {
+        setIsLoading(false);
+        setError(registerResult.error.userMessage);
+        return;
+      }
+
+      setIsLoading(false);
+      setSuccess('Cuenta creada. Revisa tu correo y confirma tu acceso antes de iniciar sesión.');
+      setPassword('');
+      setConfirmPassword('');
+      return;
+    }
 
     try {
       const result = await signInWithEmail(email, password, { rememberDevice });
@@ -198,6 +223,12 @@ function HoldedAuthContent() {
               </div>
             ) : null}
 
+            {success ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                {success}
+              </div>
+            ) : null}
+
             <div className="space-y-3">
               <button
                 type="button"
@@ -269,6 +300,24 @@ function HoldedAuthContent() {
                 />
               </div>
 
+              {isRegisterMode ? (
+                <div className="space-y-1.5">
+                  <label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-800">
+                    Confirmar contraseña
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    placeholder="Repite tu contraseña"
+                    autoComplete="new-password"
+                    required
+                    className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                  />
+                </div>
+              ) : null}
+
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 <input
                   type="checkbox"
@@ -284,8 +333,32 @@ function HoldedAuthContent() {
                 disabled={isLoading || existingUserChecking}
                 className="inline-flex w-full items-center justify-center rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isLoading ? 'Entrando...' : 'Entrar y continuar'}
+                {isLoading
+                  ? isRegisterMode
+                    ? 'Creando cuenta...'
+                    : 'Entrando...'
+                  : isRegisterMode
+                    ? 'Crear cuenta y verificar correo'
+                    : 'Entrar y continuar'}
               </button>
+
+              <div className="text-center text-sm text-slate-600">
+                {isRegisterMode ? (
+                  <Link
+                    href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}`}
+                    className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                  >
+                    ¿Ya tienes cuenta? Inicia sesión aquí
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}&mode=register`}
+                    className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                  >
+                    ¿No tienes cuenta? Regístrate con correo y contraseña
+                  </Link>
+                )}
+              </div>
             </form>
 
             <p className="text-center text-xs leading-5 text-slate-500">

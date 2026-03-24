@@ -10,6 +10,8 @@ import {
   Workflow,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+import IsaakPublicChat from './components/IsaakPublicChat';
 import { APP_URL, CONTACT_URL, HOLDed_URL } from './lib/isaak-navigation';
 
 const valueCards = [
@@ -110,6 +112,12 @@ export default function IsaakHomePage() {
               </div>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link
+                  href="/chat"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Probar chat abierto
+                </Link>
                 <a
                   href={APP_URL}
                   className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
@@ -118,14 +126,14 @@ export default function IsaakHomePage() {
                 </a>
                 <a
                   href={HOLDed_URL}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2361d8] bg-white px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
                 >
                   Ver una compatibilidad activa
                   <ArrowRight className="h-4 w-4" />
                 </a>
                 <a
                   href={CONTACT_URL}
-                  className="inline-flex items-center justify-center rounded-full border border-[#2361d8] bg-white px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   Hablar con el equipo
                 </a>
@@ -198,11 +206,15 @@ export default function IsaakHomePage() {
                   </div>
                   <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
                     <div className="flex items-start gap-3">
-                      <img
-                        src="/Personalidad/Isaak%20Avatar.png"
-                        alt="Avatar de Isaak"
-                        className="h-12 w-12 rounded-full border border-slate-200 object-cover"
-                      />
+                      <div className="relative h-12 w-12 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                        <Image
+                          src="/Personalidad/Isaak avatar 2.png"
+                          alt="Avatar de Isaak"
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      </div>
                       <div className="flex-1">
                         <div className="rounded-2xl bg-[#f5f9ff] px-3 py-2 text-sm text-slate-700">
                           Veo tres prioridades hoy: cobros vencidos, gastos sin clasificar y cierre
@@ -250,6 +262,19 @@ export default function IsaakHomePage() {
               ))}
             </ul>
           </article>
+        </div>
+
+        <div className="mx-auto mt-10 max-w-6xl">
+          <div className="mb-5 max-w-3xl">
+            <h2 className="text-2xl font-semibold tracking-tight text-[#011c67] sm:text-3xl">
+              Prueba el chat abierto de Isaak
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+              Si quieres sentir su tono y su criterio antes de activar el producto completo, aquí
+              puedes hablar con Isaak sin autenticación.
+            </p>
+          </div>
+          <IsaakPublicChat />
         </div>
 
         <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -358,6 +383,12 @@ export default function IsaakHomePage() {
         </div>
 
         <div className="mx-auto mt-10 flex max-w-4xl flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:flex-row sm:justify-center sm:flex-wrap">
+          <Link
+            href="/chat"
+            className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Hablar con Isaak ahora
+          </Link>
           <a
             href={APP_URL}
             className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"

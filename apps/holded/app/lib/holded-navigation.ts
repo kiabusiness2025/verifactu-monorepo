@@ -17,6 +17,15 @@ export const APP_ONBOARDING_URL = `${getOrigin(
   'https://app.verifactu.business'
 )}/onboarding/holded`;
 
+export const buildLeadCaptureUrl = (source?: string) => {
+  const base = `${HOLDED_PUBLIC_URL}/`;
+  if (!source) {
+    return `${base}#acceso-libre`;
+  }
+
+  return `${base}?source=${encodeURIComponent(source)}#acceso-libre`;
+};
+
 export const buildOnboardingUrl = (source: string) => {
   const onboardingTarget = `${APP_ONBOARDING_URL}?channel=chatgpt&source=${encodeURIComponent(source)}`;
   return `${HOLDED_PUBLIC_URL}/auth/holded?source=${source}&next=${encodeURIComponent(onboardingTarget)}`;

@@ -80,4 +80,10 @@ if (typeof window !== 'undefined' && isConfigComplete) {
   );
 }
 
-export { app, auth, isConfigComplete as isFirebaseConfigComplete, isFirebaseReady };
+export {
+  app,
+  auth,
+  isConfigComplete as isFirebaseConfigComplete,
+  isFirebaseReady,
+  missingConfigFields,
+};

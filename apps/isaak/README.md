@@ -59,6 +59,9 @@ Variables mínimas relevantes:
 - `NEXT_PUBLIC_LANDING_URL`
 - `NEXT_PUBLIC_HOLDED_SITE_URL`
 - `NEXT_PUBLIC_SUPPORT_EMAIL`
+- `VERTEX_PROJECT_ID` (recomendado para respuestas reales en el chat publico)
+- `VERTEX_LOCATION` (opcional, por defecto `us-central1`)
+- `VERTEX_MODEL_ID` (opcional, por defecto `gemini-1.5-pro`)
 
 Recomendación actual para separación completa:
 
@@ -77,6 +80,7 @@ Recomendación actual para separación completa:
 - Asignar el dominio `isaak.verifactu.business`
 - Lanzar deploy de producción
 - Revisar `/`, `/support`, `/privacy` y `/terms`
+- Revisar `/chat` y confirmar que responde sin autenticacion
 
 ### Incidencia detectada en el primer despliegue
 
@@ -118,3 +122,9 @@ pnpm --filter verifactu-isaak dev
 ```bash
 pnpm --filter verifactu-isaak build
 ```
+
+## Chat publico
+
+- La ruta `/chat` queda abierta sin autenticacion.
+- Si `VERTEX_PROJECT_ID` esta configurado, Isaak responde directamente desde su propio proyecto.
+- Si falta esa configuracion en desarrollo, el chat devuelve respuestas de fallback para no bloquear pruebas locales.

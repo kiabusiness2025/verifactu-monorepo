@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { buildOnboardingUrl } from '../lib/holded-navigation';
+import { buildLeadCaptureUrl } from '../lib/holded-navigation';
 
 const ISAAK_SITE_URL = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
 
@@ -62,7 +62,7 @@ export default function HoldedSiteChrome({ children }: Props) {
           </nav>
 
           <Link
-            href={buildOnboardingUrl('holded_nav_global')}
+            href={buildLeadCaptureUrl('holded_nav_global')}
             className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ef4654]"
           >
             Iniciar y conectar
