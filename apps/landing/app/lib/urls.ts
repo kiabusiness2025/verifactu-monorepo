@@ -75,3 +75,21 @@ export function getLandingUrl(): string {
 
   return process.env.NEXT_PUBLIC_LANDING_URL || 'https://verifactu.business';
 }
+
+/**
+ * Get the standalone Isaak site URL.
+ */
+export function getIsaakUrl(): string {
+  const fallback = 'https://isaak.verifactu.business';
+
+  if (typeof window === 'undefined') {
+    return normalizeBaseUrl(process.env.NEXT_PUBLIC_ISAAK_SITE_URL, fallback);
+  }
+
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:3012';
+  }
+
+  return normalizeBaseUrl(process.env.NEXT_PUBLIC_ISAAK_SITE_URL, fallback);
+}

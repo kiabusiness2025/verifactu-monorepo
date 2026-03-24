@@ -16,7 +16,7 @@ import Link from 'next/link';
 import React from 'react';
 import BrandLogo from '../../components/BrandLogo';
 import { Button } from '../../components/ui';
-import { getAppUrl } from '../urls';
+import { getAppUrl, getIsaakUrl } from '../urls';
 import type { IsaakMsg } from './types';
 
 export function Container({
@@ -71,6 +71,7 @@ export function SecondaryButton({
 
 export function StickyCtaBar({ show }: { show: boolean }) {
   const appUrl = getAppUrl();
+  const isaakUrl = getIsaakUrl();
   return (
     <div
       className={`fixed inset-x-0 bottom-4 z-30 px-4 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
@@ -88,7 +89,7 @@ export function StickyCtaBar({ show }: { show: boolean }) {
               Empezar prueba de 30 dias
             </PrimaryButton>
           </Link>
-          <SecondaryButton href="/que-es-isaak" className="h-10 w-full px-4 text-sm sm:w-auto">
+          <SecondaryButton href={isaakUrl} className="h-10 w-full px-4 text-sm sm:w-auto">
             Que es Isaak
           </SecondaryButton>
           <SecondaryButton href="/precios" className="h-10 w-full px-4 text-sm sm:w-auto">
@@ -454,61 +455,62 @@ export function DashboardMock() {
   );
 }
 
+const HERO_TRIPLE_SLIDES = [
+  {
+    id: 'overview',
+    title: 'Control fiscal en una vista',
+    caption: 'Indicadores clave y prioridades para decidir antes de presentar.',
+    src: '/assets/hero/demo-overview.png',
+    mini: 'Control',
+  },
+  {
+    id: 'invoices',
+    title: 'Facturación con trazabilidad',
+    caption: 'Estados, importes y revisión previa para evitar errores.',
+    src: '/assets/hero/demo-invoices.png',
+    mini: 'Facturas',
+  },
+] as const;
+
+const ISAAK_SAMPLES_BY_SLIDE: Record<(typeof HERO_TRIPLE_SLIDES)[number]['id'], string[]> = {
+  overview: [
+    'Indicadores: "Tu beneficio estimado hoy es 2.876,40 EUR"',
+    'Riesgos: "Hay 2 operaciones que revisar antes de cierre"',
+    'Prioridades: "Accion sugerida: validar gastos pendientes"',
+  ],
+  invoices: [
+    'Facturas: "1 factura pendiente de cobro"',
+    'Documentos: "Gastos clasificados y listos para revision"',
+    'Calendario: "Modelo IVA en 12 dias"',
+  ],
+};
+
 export function HeroTripleMock() {
-  const slides = [
-    {
-      id: 'overview',
-      title: 'Control fiscal en una vista',
-      caption: 'Indicadores clave y prioridades para decidir antes de presentar.',
-      src: '/assets/hero/demo-overview.png',
-      mini: 'Control',
-    },
-    {
-      id: 'invoices',
-      title: 'Facturación con trazabilidad',
-      caption: 'Estados, importes y revisión previa para evitar errores.',
-      src: '/assets/hero/demo-invoices.png',
-      mini: 'Facturas',
-    },
-  ] as const;
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [sampleIndex, setSampleIndex] = React.useState(0);
   const [viewMode, setViewMode] = React.useState<'video' | 'slides'>('video');
   const [videoAvailable, setVideoAvailable] = React.useState(true);
 
-  const isaakSamplesBySlide: Record<(typeof slides)[number]['id'], string[]> = {
-    overview: [
-      'Indicadores: "Tu beneficio estimado hoy es 2.876,40 EUR"',
-      'Riesgos: "Hay 2 operaciones que revisar antes de cierre"',
-      'Prioridades: "Accion sugerida: validar gastos pendientes"',
-    ],
-    invoices: [
-      'Facturas: "1 factura pendiente de cobro"',
-      'Documentos: "Gastos clasificados y listos para revision"',
-      'Calendario: "Modelo IVA en 12 dias"',
-    ],
-  };
-
   React.useEffect(() => {
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % slides.length);
+      setActiveIndex((prev) => (prev + 1) % HERO_TRIPLE_SLIDES.length);
     }, 4500);
     return () => clearInterval(interval);
-  }, [slides.length]);
+  }, []);
 
   React.useEffect(() => {
     setSampleIndex(0);
   }, [activeIndex]);
 
   React.useEffect(() => {
-    const totalSamples = isaakSamplesBySlide[slides[activeIndex].id].length;
+    const totalSamples = ISAAK_SAMPLES_BY_SLIDE[HERO_TRIPLE_SLIDES[activeIndex].id].length;
     const interval = setInterval(() => {
       setSampleIndex((prev) => (prev + 1) % totalSamples);
     }, 2800);
     return () => clearInterval(interval);
   }, [activeIndex]);
 
-  const progress = (activeIndex + 1) / slides.length;
+  const progress = (activeIndex + 1) / HERO_TRIPLE_SLIDES.length;
 
   return (
     <div className="relative rounded-[28px] border border-slate-200/90 bg-gradient-to-b from-white to-slate-50 p-4 shadow-[0_18px_60px_-24px_rgba(15,23,42,0.35)] backdrop-blur sm:p-5">
@@ -551,7 +553,7 @@ export function HeroTripleMock() {
               loop
               muted
               playsInline
-              poster={slides[activeIndex].src}
+              poster={HERO_TRIPLE_SLIDES[activeIndex].src}
               onError={() => {
                 setVideoAvailable(false);
                 setViewMode('slides');
@@ -560,7 +562,7 @@ export function HeroTripleMock() {
               <source src="/assets/hero/generated/demo-hero.mp4" type="video/mp4" />
             </video>
           ) : null}
-          {slides.map((slide, idx) => {
+          {HERO_TRIPLE_SLIDES.map((slide, idx) => {
             const isActive = idx === activeIndex;
             return (
               <button
@@ -593,12 +595,12 @@ export function HeroTripleMock() {
             Isaak en verifactu.business
           </div>
           <div className="mt-1 text-lg font-semibold text-slate-900">
-            {slides[activeIndex].title}
+            {HERO_TRIPLE_SLIDES[activeIndex].title}
           </div>
-          <p className="mt-1 text-sm text-slate-600">{slides[activeIndex].caption}</p>
+          <p className="mt-1 text-sm text-slate-600">{HERO_TRIPLE_SLIDES[activeIndex].caption}</p>
         </div>
         <div className="mt-1 flex gap-1.5">
-          {slides.map((slide, idx) => (
+          {HERO_TRIPLE_SLIDES.map((slide, idx) => (
             <button
               key={slide.id}
               type="button"
@@ -619,7 +621,7 @@ export function HeroTripleMock() {
       </div>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        {slides.map((slide, idx) => (
+        {HERO_TRIPLE_SLIDES.map((slide, idx) => (
           <button
             key={slide.id}
             type="button"
@@ -648,10 +650,10 @@ export function HeroTripleMock() {
         <div className="font-semibold text-[#2361d8]">Isaak sugiere</div>
         <div className="mt-2 text-slate-700">
           <div className="rounded-lg bg-blue-50 px-2 py-1.5 transition-all duration-500">
-            {isaakSamplesBySlide[slides[activeIndex].id][sampleIndex]}
+            {ISAAK_SAMPLES_BY_SLIDE[HERO_TRIPLE_SLIDES[activeIndex].id][sampleIndex]}
           </div>
           <div className="mt-2 flex gap-1">
-            {isaakSamplesBySlide[slides[activeIndex].id].map((sample, idx) => (
+            {ISAAK_SAMPLES_BY_SLIDE[HERO_TRIPLE_SLIDES[activeIndex].id].map((sample, idx) => (
               <span
                 key={sample}
                 className={`h-1.5 w-1.5 rounded-full ${idx === sampleIndex ? 'bg-[#2361d8]' : 'bg-blue-200'}`}
@@ -763,6 +765,7 @@ export function Li({ children }: { children: React.ReactNode }) {
 }
 
 export function Footer() {
+  const isaakUrl = getIsaakUrl();
   return (
     <footer className="relative bg-[#1f55c0] text-slate-100" role="contentinfo">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -820,13 +823,13 @@ export function Footer() {
               { label: 'Integraciones', href: '/producto/integraciones' },
               { label: 'Preguntas frecuentes', href: '/recursos/guias-y-webinars' },
               { label: 'Ver precios', href: '/precios' },
-              { label: 'Que es Isaak', href: '/que-es-isaak' },
+              { label: 'Que es Isaak', href: isaakUrl },
             ]}
           />
           <FooterCol
             title="Isaak y VeriFactu"
             links={[
-              { label: 'Que es Isaak', href: '/que-es-isaak' },
+              { label: 'Que es Isaak', href: isaakUrl },
               { label: 'Integraciones compatibles', href: '/producto/integraciones' },
               { label: 'Que es', href: '/verifactu/que-es' },
               { label: 'Ver precios', href: '/precios' },
@@ -866,7 +869,7 @@ export function Footer() {
                 Ver precios
               </Link>
               <Link
-                href="/que-es-isaak"
+                href={isaakUrl}
                 className="hover:text-blue-300 transition"
                 aria-label="Ir a Que es Isaak"
               >
@@ -1036,6 +1039,7 @@ export function ThreeSteps() {
 }
 
 export function FeaturesSection() {
+  const isaakUrl = getIsaakUrl();
   return (
     <section className="py-16">
       <Container>
@@ -1086,7 +1090,7 @@ export function FeaturesSection() {
               'Plazos fiscales siempre visibles',
               'Checklist de cierre mensual y anual',
             ]}
-            href="/que-es-isaak"
+            href={isaakUrl}
           />
         </div>
       </Container>

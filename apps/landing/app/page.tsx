@@ -9,7 +9,7 @@ import Header from './components/Header';
 import PricingCalculatorInline from './components/PricingCalculatorInline';
 import PricingCalculatorInlineModal from './components/PricingCalculatorInlineModal';
 import { EXCESS_TEXT_LINES, EXCESS_TEXT_TITLE, getPlanCheckoutHref, PLAN_LIST } from './lib/plans';
-import { getAppUrl } from './lib/urls';
+import { getAppUrl, getIsaakUrl } from './lib/urls';
 
 import {
   ComplianceBadge,
@@ -41,6 +41,7 @@ export default function Page() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const appUrl = getAppUrl();
+  const isaakUrl = getIsaakUrl();
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -148,7 +149,7 @@ export default function Page() {
                   Probar Isaak
                 </Link>
                 <Link
-                  href="/que-es-isaak"
+                  href={isaakUrl}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2361d8] bg-white px-6 py-3 font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#2361d8]/10"
                 >
                   Ver cómo funciona
@@ -314,7 +315,7 @@ export default function Page() {
                 Ver recorrido guiado
               </Link>
               <Link
-                href="/holded"
+                href="https://holded.verifactu.business"
                 className="inline-flex items-center justify-center rounded-full border border-[#2361d8] px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
               >
                 Ver compatibilidad Holded
@@ -457,7 +458,7 @@ export default function Page() {
           </div>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
             <Link
-              href="/que-es-isaak"
+              href={isaakUrl}
               className="inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
             >
               Entender cómo trabaja Isaak
@@ -511,7 +512,7 @@ export default function Page() {
               title="Primeros pasos con Isaak"
               desc="Aprende a emitir, registrar gastos y entender tus metricas."
               cta="Reservar plaza"
-              href="/que-es-isaak"
+              href={isaakUrl}
             />
             <ResourceCard
               tag="Checklist"

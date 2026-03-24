@@ -1,19 +1,21 @@
 /**
  * Sistema Híbrido de IA para Isaak
- * 
+ *
  * Soporta múltiples modelos según la tarea:
  * - Gemini Flash: rápido, gratuito, consultas generales
  * - GPT-4: más potente, consultas complejas
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
 
 // Habilitar telemetría de Firebase solo en runtime (no en build)
 if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
   try {
-    const { enableFirebaseTelemetry } = require('@genkit-ai/firebase');
-    enableFirebaseTelemetry({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    void import('@genkit-ai/firebase').then(({ enableFirebaseTelemetry }) => {
+      enableFirebaseTelemetry({
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      });
     });
   } catch (error) {
     // Silently fail - telemetry es opcional
@@ -47,7 +49,7 @@ async function chatWithGemini(userMessage: string): Promise<string> {
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const prompt = buildIsaakPrompt(userMessage);
-  
+
   const result = await model.generateContent({
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: {
@@ -61,34 +63,21 @@ async function chatWithGemini(userMessage: string): Promise<string> {
 
 // Función para chat con GPT-4
 async function chatWithGPT4(userMessage: string): Promise<string> {
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.ISAAK_API_KEY;
-  
+  const OPENAI_API_KEY = resolveOpenAIKey(process.env);
+
   if (!OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY no configurado');
   }
 
   const prompt = buildIsaakPrompt(userMessage);
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4-turbo',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 500,
-    }),
+  return callOpenAIResponses({
+    apiKey: OPENAI_API_KEY,
+    model: process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini',
+    inputText: prompt,
+    temperature: 0.7,
+    maxOutputTokens: 500,
   });
-
-  if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || 'No pude procesar tu solicitud.';
 }
 
 // Prompt base para Isaak (compartido entre modelos)
@@ -109,21 +98,35 @@ Responde de forma clara, directa y tranquilizadora. Si no conoces la respuesta e
 // Detectar complejidad de la consulta para selección automática
 function detectComplexity(message: string): 'simple' | 'complex' {
   const complexKeywords = [
-    'cálculo', 'calcular', 'impuesto', 'iva', 'irpf', 'retención',
-    'tributación', 'modelo', 'declaración', 'deducción', 'amortización',
-    'normativa', 'legal', 'obligación', 'sanción', 'plazo', 'porcentaje'
+    'cálculo',
+    'calcular',
+    'impuesto',
+    'iva',
+    'irpf',
+    'retención',
+    'tributación',
+    'modelo',
+    'declaración',
+    'deducción',
+    'amortización',
+    'normativa',
+    'legal',
+    'obligación',
+    'sanción',
+    'plazo',
+    'porcentaje',
   ];
 
   const lowerMessage = message.toLowerCase();
-  const hasComplexKeywords = complexKeywords.some(keyword => lowerMessage.includes(keyword));
+  const hasComplexKeywords = complexKeywords.some((keyword) => lowerMessage.includes(keyword));
   const isLong = message.length > 150;
 
-  return (hasComplexKeywords || isLong) ? 'complex' : 'simple';
+  return hasComplexKeywords || isLong ? 'complex' : 'simple';
 }
 
 /**
  * Chat con Isaak usando el modelo apropiado
- * 
+ *
  * @param userMessage - Mensaje del usuario
  * @param modelPreference - Modelo preferido o 'auto' para selección automática
  * @returns Respuesta de Isaak con metadata del modelo usado
@@ -153,18 +156,18 @@ export async function isaakChat(
     }
 
     console.log(`[Isaak] Respuesta generada con ${MODELS[selectedModel].name}`);
-    
+
     return { text, model: selectedModel };
   } catch (error) {
     console.error('Error en isaakChat:', error);
-    
+
     // Fallback: si falla el modelo seleccionado, intentar con el otro
     if (modelPreference === 'gpt-4') {
       console.log('[Isaak] Fallback a Gemini');
       const text = await chatWithGemini(userMessage);
       return { text, model: 'gemini-flash' };
     }
-    
+
     throw error;
   }
 }

@@ -1,9 +1,11 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
+import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/adminAuth';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_API_KEY = resolveOpenAIKey(process.env);
 const USE_ISAAK = process.env.USE_ISAAK_FOR_ADMIN === 'true';
+const OPENAI_MODEL = process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini';
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,7 +35,7 @@ ${systemContext}
 
     let response: string;
 
-    if (USE_ISAAK && process.env.ISAAK_API_KEY) {
+    if (USE_ISAAK && OPENAI_API_KEY) {
       response = await callIsaakAPI(systemPrompt, messages);
     } else if (OPENAI_API_KEY) {
       response = await callOpenAI(systemPrompt, messages);
@@ -73,43 +75,44 @@ async function buildSystemContext(): Promise<string> {
 }
 
 async function callOpenAI(systemPrompt: string, messages: any[]): Promise<string> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4',
-      messages: [{ role: 'system', content: systemPrompt }, ...messages],
-      temperature: 0.7,
-      max_tokens: 1000,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error('OpenAI API error');
+  if (!OPENAI_API_KEY) {
+    throw new Error('OPENAI API key not configured');
   }
 
-  const data = await response.json();
-  return data.choices[0].message.content;
+  return callOpenAIResponses({
+    apiKey: OPENAI_API_KEY,
+    model: OPENAI_MODEL,
+    instructions: systemPrompt,
+    messages: normalizeMessages(messages),
+    temperature: 0.7,
+    maxOutputTokens: 1000,
+  });
 }
 
 async function callIsaakAPI(systemPrompt: string, messages: any[]): Promise<string> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.ISAAK_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: process.env.ISAAK_ASSISTANT_ID,
-      messages: [{ role: 'system', content: systemPrompt }, ...messages],
-    }),
-  });
+  if (!OPENAI_API_KEY) {
+    throw new Error('Isaak API key not configured');
+  }
 
-  const data = await response.json();
-  return data.choices[0].message.content;
+  return callOpenAIResponses({
+    apiKey: OPENAI_API_KEY,
+    model: OPENAI_MODEL,
+    instructions: systemPrompt,
+    messages: normalizeMessages(messages),
+    temperature: 0.4,
+    maxOutputTokens: 1000,
+  });
+}
+
+function normalizeMessages(messages: any[]) {
+  return messages
+    .filter(
+      (message) =>
+        message &&
+        (message.role === 'user' || message.role === 'assistant') &&
+        typeof message.content === 'string'
+    )
+    .map((message) => ({ role: message.role, content: message.content }));
 }
 
 function generateSimpleResponse(userMessage: string, context: string): string {

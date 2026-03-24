@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { getIsaakUrl } from '../lib/urls';
 import React from 'react';
 
 const FAQ_DATA: {
@@ -139,6 +140,7 @@ const FAQ_DATA: {
 ];
 
 export default function Faq({ onOpenCalculator }: { onOpenCalculator?: () => void }) {
+  const isaakUrl = getIsaakUrl();
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -189,7 +191,7 @@ export default function Faq({ onOpenCalculator }: { onOpenCalculator?: () => voi
             </Link>
           )}
           <Link
-            href="/que-es-isaak"
+            href={isaakUrl}
             className="mt-2 inline-block rounded-full border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
           >
             Que es Isaak

@@ -45,6 +45,8 @@ const base = parseEnv(fs.readFileSync(basePath, 'utf8'));
 
 const commonPublic = [
   'NEXT_PUBLIC_APP_URL',
+  'NEXT_PUBLIC_HOLDED_SITE_URL',
+  'NEXT_PUBLIC_ISAAK_SITE_URL',
   'NEXT_PUBLIC_SITE_URL',
   'NEXT_PUBLIC_LANDING_URL',
   'NEXT_PUBLIC_API_URL',
@@ -56,7 +58,6 @@ const commonPublic = [
   'NEXT_PUBLIC_FIREBASE_APP_ID',
   'NEXT_PUBLIC_FIREBASE_DATABASE_URL',
   'NEXT_PUBLIC_USE_AUTH_EMULATOR',
-  'NEXT_PUBLIC_ISAAK_API_KEY',
   'NEXT_PUBLIC_ISAAK_ASSISTANT_ID',
   'NEXT_PUBLIC_SUPPORT_EMAIL',
 ];
@@ -136,7 +137,16 @@ const stripe = [
   'STRIPE_PRICE_MOV_1001_2000_MONTHLY',
 ];
 
-const ai = ['CLAVE_API_AI_VERCEL', 'ISAAK_API_KEY', 'ISAAK_ASSISTANT_ID', 'OPENAI_API_KEY'];
+const ai = [
+  'CLAVE_API_AI_VERCEL',
+  'CLAVE_API_DE_PROYECTO_EXPERTO',
+  'ISAAK_NEW_OPENAI_API_KEY',
+  'ISAAK_OPENAI_SERVICE_ACCAUNT',
+  'ISAAK_OPENAI_SERVICE_ACCOUNT',
+  'ISAAK_API_KEY',
+  'ISAAK_ASSISTANT_ID',
+  'OPENAI_API_KEY',
+];
 
 const adminOnly = [
   'ADMIN_EMAILS',
@@ -184,6 +194,7 @@ const apiKeys = [...sharedDb, ...einforma, ...aeat, ...resend, ...stripe, ...org
 const outputs = [
   { file: path.join(root, 'apps', 'app', '.env.local'), keys: appKeys },
   { file: path.join(root, 'apps', 'admin', '.env.local'), keys: adminKeys },
+  { file: path.join(root, 'apps', 'isaak', '.env.local'), keys: landingKeys },
   { file: path.join(root, 'apps', 'landing', '.env.local'), keys: landingKeys },
   { file: path.join(root, 'apps', 'api', '.env.local'), keys: apiKeys },
 ];

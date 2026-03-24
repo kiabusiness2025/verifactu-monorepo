@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { logout } from '../lib/auth';
+import { getIsaakUrl } from '../lib/urls';
 import BrandLogo from './BrandLogo';
 import { DashboardLink } from './DashboardLink';
 import { useToast } from './Toast';
@@ -36,6 +37,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
   ];
 
   const links = navLinks ?? defaultNavLinks;
+  const isaakUrl = getIsaakUrl();
 
   return (
     <header
@@ -51,7 +53,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
           {links.map((link) => (
             <Link
               key={link.href}
-              href={link.href}
+              href={link.href === '/que-es-isaak' ? isaakUrl : link.href}
               className="text-lightbg-600 text-sm font-medium transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:rounded"
             >
               {link.label}
@@ -96,8 +98,6 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
             onClick={() => setIsOpen(!isOpen)}
             className="rounded-lg p-2 transition-colors hover:bg-gray-100"
             aria-label={isOpen ? 'Cerrar menu de navegacion' : 'Abrir menu de navegacion'}
-            aria-expanded={isOpen}
-            aria-controls="mobile-menu"
           >
             {isOpen ? (
               <X className="h-6 w-6 text-gray-900" />
@@ -156,7 +156,7 @@ export default function Header({ navLinks }: { navLinks?: NavLink[] }) {
               {links.map((link) => (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  href={link.href === '/que-es-isaak' ? isaakUrl : link.href}
                   onClick={() => setIsOpen(false)}
                   className="rounded-lg px-3 py-2 font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-[#2361d8]"
                 >

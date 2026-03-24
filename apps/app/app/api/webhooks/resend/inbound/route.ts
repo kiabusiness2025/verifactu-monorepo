@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
 
 /**
  * Webhook de Resend para emails entrantes
@@ -6,7 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
  * Isaak analiza y responde automáticamente o escala a humano
  */
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_API_KEY = resolveOpenAIKey(process.env);
+const OPENAI_MODEL = process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'kiabusiness2025@gmail.com';
 const ISAAK_SUPPORT_ENABLED = process.env.ISAAK_SUPPORT_ENABLED === 'true';
@@ -22,7 +24,14 @@ type IncomingEmail = {
 };
 
 type EmailClassification = {
-  category: 'technical' | 'billing' | 'feature_request' | 'bug_report' | 'general' | 'urgent' | 'spam';
+  category:
+    | 'technical'
+    | 'billing'
+    | 'feature_request'
+    | 'bug_report'
+    | 'general'
+    | 'urgent'
+    | 'spam';
   confidence: number;
   needsHuman: boolean;
   suggestedResponse?: string;
@@ -34,13 +43,13 @@ export async function POST(request: NextRequest) {
     // Verificar webhook signature (Resend)
     const signature = request.headers.get('resend-signature');
     // TODO: Validar signature con webhook secret
-    
+
     const email: IncomingEmail = await request.json();
-    
+
     console.log('[📨 INCOMING EMAIL]', {
       from: email.from,
       subject: email.subject,
-      to: email.to
+      to: email.to,
     });
 
     // Filtrar spam básico
@@ -59,42 +68,38 @@ export async function POST(request: NextRequest) {
       // Escalar a humano
       await notifyAdmin(email, classification);
       await sendAutoReplyHumanNeeded(email);
-      
+
       return NextResponse.json({
         success: true,
         action: 'escalated_to_human',
-        classification
+        classification,
       });
     } else if (ISAAK_SUPPORT_ENABLED && classification.suggestedResponse) {
       // Isaak responde automáticamente
       await sendIsaakResponse(email, classification.suggestedResponse);
-      
+
       // Notificar al admin (solo log)
       await logToAdmin(email, classification, 'auto_responded');
-      
+
       return NextResponse.json({
         success: true,
         action: 'auto_responded',
-        classification
+        classification,
       });
     } else {
       // Respuesta genérica de "recibido"
       await sendAckResponse(email);
       await notifyAdmin(email, classification);
-      
+
       return NextResponse.json({
         success: true,
         action: 'acknowledged',
-        classification
+        classification,
       });
     }
-
   } catch (error) {
     console.error('[❌ ERROR] Processing incoming email:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to process email' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to process email' }, { status: 500 });
   }
 }
 
@@ -107,23 +112,15 @@ async function classifyEmailWithIsaak(email: IncomingEmail): Promise<EmailClassi
       category: 'general',
       confidence: 0,
       needsHuman: true,
-      priority: 'medium'
+      priority: 'medium',
     };
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: `Eres Isaak, asistente de soporte de Verifactu Business (SaaS de contabilidad y facturación).
+    const content = await callOpenAIResponses({
+      apiKey: OPENAI_API_KEY,
+      model: OPENAI_MODEL,
+      instructions: `Eres Isaak, asistente de soporte de Verifactu Business (SaaS de contabilidad y facturación).
 
 Analiza el email y clasifícalo:
 - category: technical | billing | feature_request | bug_report | general | urgent | spam
@@ -146,46 +143,34 @@ Escala a humano si:
 - Datos sensibles involucrados
 - Tono urgente o frustrado
 
-Responde SOLO con JSON válido.`
-          },
-          {
-            role: 'user',
-            content: `De: ${email.from}
+Responde SOLO con JSON válido.`,
+      inputText: `De: ${email.from}
 Asunto: ${email.subject}
 
 ${email.text}
 
-Clasifica este email y sugiere una respuesta si procede.`
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 1000,
-        response_format: { type: "json_object" }
-      })
+Clasifica este email y sugiere una respuesta si procede.`,
+      temperature: 0.3,
+      maxOutputTokens: 1000,
+      responseFormat: 'json_object',
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const result = JSON.parse(data.choices[0].message.content);
+    const result = JSON.parse(content);
 
     return {
       category: result.category || 'general',
       confidence: result.confidence || 0.5,
       needsHuman: result.needsHuman || false,
       suggestedResponse: result.suggestedResponse,
-      priority: result.priority || 'medium'
+      priority: result.priority || 'medium',
     };
-
   } catch (error) {
     console.error('[ISAAK] Error clasificando email:', error);
     return {
       category: 'general',
       confidence: 0,
       needsHuman: true,
-      priority: 'medium'
+      priority: 'medium',
     };
   }
 }
@@ -195,12 +180,19 @@ Clasifica este email y sugiere una respuesta si procede.`
  */
 function isLikelySpam(email: IncomingEmail): boolean {
   const spamKeywords = [
-    'viagra', 'casino', 'lottery', 'prince', 'inheritance',
-    'click here now', 'act now', 'limited time', 'congratulations you won'
+    'viagra',
+    'casino',
+    'lottery',
+    'prince',
+    'inheritance',
+    'click here now',
+    'act now',
+    'limited time',
+    'congratulations you won',
   ];
-  
+
   const content = `${email.subject} ${email.text}`.toLowerCase();
-  return spamKeywords.some(keyword => content.includes(keyword));
+  return spamKeywords.some((keyword) => content.includes(keyword));
 }
 
 /**
@@ -239,16 +231,16 @@ async function sendIsaakResponse(email: IncomingEmail, response: string) {
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       from: 'Isaak - Verifactu <soporte@verifactu.business>',
       to: email.from,
       subject: `Re: ${email.subject}`,
       html,
-      reply_to: 'soporte@verifactu.business'
-    })
+      reply_to: 'soporte@verifactu.business',
+    }),
   });
 
   console.log('[✅ SENT] Auto-respuesta de Isaak a:', email.from);
@@ -285,15 +277,15 @@ async function sendAutoReplyHumanNeeded(email: IncomingEmail) {
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       from: 'Verifactu Business <soporte@verifactu.business>',
       to: email.from,
       subject: `Re: ${email.subject}`,
-      html
-    })
+      html,
+    }),
   });
 }
 
@@ -315,7 +307,7 @@ async function notifyAdmin(email: IncomingEmail, classification: EmailClassifica
     low: '🔵',
     medium: '🟡',
     high: '🟠',
-    critical: '🔴'
+    critical: '🔴',
   };
 
   const html = `
@@ -365,15 +357,15 @@ async function notifyAdmin(email: IncomingEmail, classification: EmailClassifica
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       from: 'Isaak Alerts <soporte@verifactu.business>',
       to: ADMIN_EMAIL,
       subject: `[${classification.priority.toUpperCase()}] Email de Soporte: ${email.subject}`,
-      html
-    })
+      html,
+    }),
   });
 
   console.log('[📧 ADMIN] Notificación enviada a:', ADMIN_EMAIL);
@@ -382,7 +374,11 @@ async function notifyAdmin(email: IncomingEmail, classification: EmailClassifica
 /**
  * Log al admin (informativo, no urgente)
  */
-async function logToAdmin(email: IncomingEmail, classification: EmailClassification, action: string) {
+async function logToAdmin(
+  email: IncomingEmail,
+  classification: EmailClassification,
+  action: string
+) {
   // Solo enviar un resumen diario o cuando se acumulen varios
   // Por ahora, solo logging
   console.log('[📊 LOG]', {
@@ -390,6 +386,6 @@ async function logToAdmin(email: IncomingEmail, classification: EmailClassificat
     subject: email.subject,
     action,
     classification: classification.category,
-    priority: classification.priority
+    priority: classification.priority,
   });
 }

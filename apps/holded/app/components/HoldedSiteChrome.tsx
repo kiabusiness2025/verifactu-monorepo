@@ -1,12 +1,24 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { buildOnboardingUrl } from '../lib/holded-navigation';
+
+const ISAAK_SITE_URL = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
 
 type Props = {
   children: React.ReactNode;
 };
 
 export default function HoldedSiteChrome({ children }: Props) {
+  const pathname = usePathname();
+  const isAuthRoute = pathname?.startsWith('/auth/') ?? false;
+
+  if (isAuthRoute) {
+    return <>{children}</>;
+  }
+
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
@@ -32,6 +44,9 @@ export default function HoldedSiteChrome({ children }: Props) {
             <Link href="/" className="hover:text-slate-900">
               Inicio
             </Link>
+            <a href={ISAAK_SITE_URL} className="hover:text-slate-900">
+              Qué es Isaak
+            </a>
             <Link href="/planes" className="hover:text-slate-900">
               Planes
             </Link>
@@ -59,12 +74,12 @@ export default function HoldedSiteChrome({ children }: Props) {
           <div className="text-xs sm:text-sm">
             Powered by{' '}
             <a
-              href="https://holded.verifactu.business"
+              href="https://verifactu.business"
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-slate-800 hover:text-[#ff5460]"
             >
-              holded.verifactu.business
+              verifactu.business
             </a>
           </div>
 
@@ -78,6 +93,9 @@ export default function HoldedSiteChrome({ children }: Props) {
             <Link href="/support" className="hover:text-slate-900">
               Soporte
             </Link>
+            <a href={ISAAK_SITE_URL} className="hover:text-slate-900">
+              Isaak
+            </a>
             <Link href="/planes" className="hover:text-slate-900">
               Planes
             </Link>

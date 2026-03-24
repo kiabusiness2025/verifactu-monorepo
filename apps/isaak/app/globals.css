@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface: #ffffff;
+  --surface-soft: #f6f9ff;
+  --ink: #0f172a;
+  --brand: #2361d8;
+  --brand-dark: #1f55c0;
+  --brand-navy: #011c67;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, #dbeafe 0%, #f8fbff 34%, #ffffff 70%),
+    linear-gradient(180deg, #ffffff 0%, #f6f9ff 44%, #ffffff 100%);
+  color: var(--ink);
+}
+
+a,
+button {
+  outline: none;
+}
+
+a:focus-visible,
+button:focus-visible {
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 0 4px rgba(35, 97, 216, 0.35);
+  border-radius: 12px;
+}

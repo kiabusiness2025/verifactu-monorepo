@@ -2,7 +2,17 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Bot, CheckCircle2, Database, FileText, Link2, RefreshCcw, ShieldCheck, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  Bot,
+  CheckCircle2,
+  Database,
+  FileText,
+  Link2,
+  RefreshCcw,
+  ShieldCheck,
+  Users,
+} from 'lucide-react';
 
 type IntegrationStatus = {
   provider: string;
@@ -25,22 +35,26 @@ const suggestedPrompts = [
 const capabilityCards = [
   {
     title: 'Lectura de facturas',
-    description: 'Isaak puede consultar facturas del tenant conectado en Holded para resumir actividad e identificar pendientes.',
+    description:
+      'Isaak puede consultar facturas del tenant conectado en Holded para resumir actividad e identificar pendientes.',
     icon: FileText,
   },
   {
     title: 'Clientes y contactos',
-    description: 'Puede localizar contactos para preparar facturas o validar información antes de crear un borrador.',
+    description:
+      'Puede localizar contactos para preparar facturas o validar información antes de crear un borrador.',
     icon: Users,
   },
   {
     title: 'Cuentas contables',
-    description: 'Puede leer cuentas contables y traducirlas a lenguaje operativo para empresarios no expertos.',
+    description:
+      'Puede leer cuentas contables y traducirlas a lenguaje operativo para empresarios no expertos.',
     icon: Database,
   },
   {
     title: 'Borradores guiados',
-    description: 'Puede preparar borradores de factura en Holded, siempre con confirmación explícita antes de escribir.',
+    description:
+      'Puede preparar borradores de factura en Holded, siempre con confirmación explícita antes de escribir.',
     icon: ShieldCheck,
   },
 ];
@@ -69,7 +83,6 @@ export default function IsaakForHoldedPage() {
   useEffect(() => {
     void load();
   }, []);
-
 
   const disconnectIntegration = async () => {
     setWorking(true);
@@ -120,8 +133,8 @@ export default function IsaakForHoldedPage() {
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
               Isaak usa la conexión activa de Holded para leer facturas, contactos y cuentas
-              contables desde Verifactu. El objetivo no es replicar Holded: es traducir su complejidad
-              a un flujo más claro para empresarios y equipos no contables.
+              contables desde Verifactu. El objetivo no es replicar Holded: es traducir su
+              complejidad a un flujo más claro para empresarios y equipos no contables.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -145,7 +158,9 @@ export default function IsaakForHoldedPage() {
           <div className="rounded-2xl border border-white/70 bg-white/90 p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-slate-900">Conexión actual</div>
-              <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${connectionTone}`}>
+              <div
+                className={`rounded-full border px-3 py-1 text-xs font-semibold ${connectionTone}`}
+              >
                 {integration?.connected ? 'Conectado' : 'No conectado'}
               </div>
             </div>
@@ -153,7 +168,9 @@ export default function IsaakForHoldedPage() {
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-slate-500">Proveedor</dt>
-                <dd className="font-semibold text-slate-900">{integration?.provider || 'holded'}</dd>
+                <dd className="font-semibold text-slate-900">
+                  {integration?.provider || 'holded'}
+                </dd>
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-slate-500">Plan</dt>
@@ -190,8 +207,8 @@ export default function IsaakForHoldedPage() {
 
             {integration?.canConnect === false ? (
               <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-                Este tenant no tiene activa la integración API en su plan actual. Para usar Holded desde Isaak,
-                necesitas plan Empresa o PRO.
+                Este tenant no tiene activa la integración API en su plan actual. Para usar Holded
+                desde Isaak, necesitas plan Empresa o PRO.
               </div>
             ) : null}
 
@@ -208,7 +225,10 @@ export default function IsaakForHoldedPage() {
         {capabilityCards.map((item) => {
           const Icon = item.icon;
           return (
-            <article key={item.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <article
+              key={item.title}
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0b6cfb]/10 text-[#0b6cfb]">
                 <Icon className="h-5 w-5" />
               </div>
@@ -270,7 +290,8 @@ export default function IsaakForHoldedPage() {
               Lleva Isaak más allá de Holded
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-              Si quieres usar Isaak con panel visual, histórico, trazabilidad, reglas fiscales y automatizaciones, puedes probar verifactu.business gratis durante 30 días.
+              Si quieres usar Isaak con panel visual, histórico, trazabilidad, reglas fiscales y
+              automatizaciones, puedes probar verifactu.business gratis durante 30 días.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 lg:justify-end">
@@ -283,7 +304,7 @@ export default function IsaakForHoldedPage() {
               Probar Verifactu gratis 30 días
             </Link>
             <Link
-              href="https://verifactu.business/que-es-isaak"
+              href="https://isaak.verifactu.business"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
