@@ -79,7 +79,7 @@ export default function LoginPage() {
     return query ? `${pathname}?${query}` : pathname;
   };
   const redirectTarget = (() => {
-    if (!nextParam) return `${clientUrl}/workspace`;
+    if (!nextParam) return `${appUrl}/dashboard/isaak`;
     try {
       const target = new URL(nextParam);
       const appOrigin = new URL(appUrl).origin;
@@ -87,12 +87,12 @@ export default function LoginPage() {
       const allowedOrigins = new Set([appOrigin, clientOrigin]);
       if (!allowedOrigins.has(target.origin)) {
         reportInvalidNext('cross-origin', nextParam);
-        return `${clientUrl}/workspace`;
+        return `${appUrl}/dashboard/isaak`;
       }
       return target.toString();
     } catch {
       reportInvalidNext('malformed', nextParam);
-      return `${clientUrl}/workspace`;
+      return `${appUrl}/dashboard/isaak`;
     }
   })();
 
@@ -104,7 +104,7 @@ export default function LoginPage() {
       )}`;
       window.location.href = redirectUrl;
     } catch {
-      window.location.href = '/api/dashboard-redirect?target=%2Fworkspace';
+      window.location.href = '/api/dashboard-redirect?target=%2Fdashboard%2Fisaak';
     }
   }, [redirectTarget]);
 

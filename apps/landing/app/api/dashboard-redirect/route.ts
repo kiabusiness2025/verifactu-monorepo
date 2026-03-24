@@ -9,10 +9,10 @@ export const dynamic = 'force-dynamic'; // Prevent static optimization for route
  * API Route: /api/dashboard-redirect
  *
  * Purpose: Ensures session cookie is properly set with correct domain
- * before redirecting to client.verifactu.business
+ * before redirecting to the authenticated app destination
  *
  * Query params:
- * - target: Optional path within app to redirect to (default: /workspace)
+ * - target: Optional path within app to redirect to (default: /dashboard/isaak)
  *
  * This solves the cross-subdomain cookie issue by:
  * 1. Reading the existing session cookie
@@ -36,27 +36,40 @@ export async function GET(req: Request) {
     // Get allowed base URLs and target path
     const url = new URL(req.url);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
-    const clientUrl = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://client.verifactu.business';
-    const rawTarget = url.searchParams.get('target') || '/workspace';
+    const clientUrl =
+      process.env.NEXT_PUBLIC_CLIENT_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
+    const rawTarget = url.searchParams.get('target') || '/dashboard/isaak';
 
     const appOrigin = new URL(appUrl).origin;
     const clientOrigin = new URL(clientUrl).origin;
-    let dashboardUrl = `${clientOrigin}/workspace`;
+    let dashboardUrl = `${appOrigin}/dashboard/isaak`;
 
     // Safe redirect policy:
     // 1) Relative targets are resolved against app origin.
     // 2) Absolute targets are accepted only for app/client origins.
     if (rawTarget.startsWith('/') && !rawTarget.startsWith('//') && !rawTarget.includes('://')) {
-      const baseOrigin = rawTarget.startsWith('/onboarding/') ? appOrigin : clientOrigin;
-      dashboardUrl = `${baseOrigin}${rawTarget}`;
+      // Normalize legacy workspace paths into current app dashboard path.
+      if (rawTarget === '/workspace' || rawTarget.startsWith('/workspace/')) {
+        dashboardUrl = `${appOrigin}/dashboard/isaak`;
+      } else {
+        const baseOrigin = rawTarget.startsWith('/onboarding/') ? appOrigin : clientOrigin;
+        dashboardUrl = `${baseOrigin}${rawTarget}`;
+      }
     } else {
       try {
         const parsedTarget = new URL(rawTarget);
         if (parsedTarget.origin === appOrigin || parsedTarget.origin === clientOrigin) {
+          if (
+            parsedTarget.pathname === '/workspace' ||
+            parsedTarget.pathname.startsWith('/workspace/')
+          ) {
+            dashboardUrl = `${appOrigin}/dashboard/isaak`;
+          } else {
           dashboardUrl = parsedTarget.toString();
+          }
         }
       } catch {
-        dashboardUrl = `${clientOrigin}/workspace`;
+        dashboardUrl = `${appOrigin}/dashboard/isaak`;
       }
     }
 

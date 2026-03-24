@@ -19,7 +19,8 @@ export function getAppUrl(): string {
  */
 export function getClientUrl(): string {
   if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_CLIENT_URL || 'https://client.verifactu.business';
+    // Legacy compatibility: if NEXT_PUBLIC_CLIENT_URL is not set, route to app.
+    return process.env.NEXT_PUBLIC_CLIENT_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
   }
 
   const hostname = window.location.hostname;
@@ -27,7 +28,7 @@ export function getClientUrl(): string {
     return 'http://localhost:3002';
   }
 
-  return process.env.NEXT_PUBLIC_CLIENT_URL || 'https://client.verifactu.business';
+  return process.env.NEXT_PUBLIC_CLIENT_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 }
 
 /**

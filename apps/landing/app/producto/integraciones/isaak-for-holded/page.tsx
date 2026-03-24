@@ -11,7 +11,7 @@ import {
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getClientUrl } from '../../../lib/urls';
+import { getAppUrl } from '../../../lib/urls';
 
 export const metadata: Metadata = {
   title: 'Compatibilidad Holded para Isaak | verifactu.business',
@@ -57,7 +57,8 @@ const guardrails = [
 ];
 
 export default function IsaakForHoldedPage() {
-  const clientUrl = getClientUrl();
+  const appUrl = getAppUrl();
+  const onboardingUrl = `${appUrl}/onboarding/holded?channel=chatgpt&source=holded_landing`;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#dbeafe_0%,#f8fbff_35%,#ffffff_72%)] text-slate-900">
@@ -94,7 +95,7 @@ export default function IsaakForHoldedPage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href={clientUrl + '/integrations/isaak-for-holded'}
+                href={`/auth/holded?source=holded_landing&next=${encodeURIComponent(onboardingUrl)}`}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-[#1f55c0]"
               >
                 Activar compatibilidad Holded

@@ -14,7 +14,7 @@ interface DashboardLinkProps {
  * DashboardLink Component
  *
  * Intelligently routes users:
- * - If authenticated: Links to client.verifactu.business/workspace with session sync
+ * - If authenticated: Links to app.verifactu.business/dashboard/isaak with session sync
  * - If not authenticated: Links to landing /auth/login
  *
  * Uses a special route that ensures session cookie is properly set
@@ -39,7 +39,11 @@ export function DashboardLink({
   // If user is authenticated, use session-sync route to ensure cookie is set
   if (user) {
     return (
-      <a href="/api/dashboard-redirect" className={className} aria-label={ariaLabel}>
+      <a
+        href="/api/dashboard-redirect?target=%2Fdashboard%2Fisaak"
+        className={className}
+        aria-label={ariaLabel}
+      >
         {children}
       </a>
     );
