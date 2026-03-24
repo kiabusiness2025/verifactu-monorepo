@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { signInWithEmail, signInWithGoogle, signInWithMicrosoft } from '@/app/lib/auth';
+import { signInWithEmail, signInWithGoogle } from '@/app/lib/auth';
 import { auth } from '@/app/lib/firebase';
 import { mintSessionCookie } from '@/app/lib/serverSession';
 
@@ -139,25 +139,6 @@ function HoldedAuthContent() {
     }
   };
 
-  const handleMicrosoft = async () => {
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const result = await signInWithMicrosoft({ rememberDevice });
-      if (result.error) {
-        setError(result.error.userMessage);
-        return;
-      }
-
-      window.location.href = redirectTarget;
-    } catch {
-      setError('No hemos podido continuar con Microsoft. Intenta de nuevo.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_48%,#ffffff_100%)] px-4 py-8 text-slate-900 sm:py-10">
       <div className="mx-auto w-full max-w-sm">
@@ -243,21 +224,6 @@ function HoldedAuthContent() {
                   />
                 </svg>
                 {isLoading ? 'Abriendo Google...' : 'Continuar con Google'}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleMicrosoft}
-                disabled={isLoading || existingUserChecking}
-                className="flex w-full items-center justify-center gap-3 rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="#F25022" d="M2 2h9v9H2z" />
-                  <path fill="#7FBA00" d="M13 2h9v9h-9z" />
-                  <path fill="#00A4EF" d="M2 13h9v9H2z" />
-                  <path fill="#FFB900" d="M13 13h9v9h-9z" />
-                </svg>
-                {isLoading ? 'Abriendo Microsoft...' : 'Continuar con Microsoft 365'}
               </button>
             </div>
 

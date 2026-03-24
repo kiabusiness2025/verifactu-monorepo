@@ -10,6 +10,7 @@ import {
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import HoldedHeroVisual from './components/HoldedHeroVisual';
+import HoldedLeadForm from './components/HoldedLeadForm';
 import { buildOnboardingUrl } from './lib/holded-navigation';
 
 export const metadata: Metadata = {
@@ -166,10 +167,10 @@ export default function HoldedHomePage() {
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href={buildOnboardingUrl('holded_home_hero')}
+                  href="#acceso-libre"
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-[#ef4654] hover:shadow-xl"
                 >
-                  Conectar Holded via API
+                  Empezar gratis sin registro
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
@@ -182,6 +183,50 @@ export default function HoldedHomePage() {
             </div>
 
             <HoldedHeroVisual />
+          </div>
+        </div>
+      </section>
+
+      <section id="acceso-libre" className="bg-white py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-start">
+            <article className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_100%)] p-6 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#ff5460]">
+                Plan gratuito
+              </div>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
+                Conecta Holded sin login obligatorio
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
+                Mientras resolvemos el acceso con Google, puedes empezar igual. Déjanos tus datos y
+                te enviamos bienvenida + guía de onboarding al momento.
+              </p>
+              <ul className="mt-5 space-y-3 text-sm text-slate-700">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  Captura de contacto y empresa para seguimiento comercial.
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  Email de bienvenida y pasos de conexión con branding Holded.
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  Aviso interno automático para que el equipo pueda acompañar.
+                </li>
+              </ul>
+            </article>
+
+            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-slate-900">Activa tu onboarding ahora</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Te contactamos con el siguiente paso y dejamos trazabilidad de tu proceso de
+                conexión.
+              </p>
+              <div className="mt-5">
+                <HoldedLeadForm />
+              </div>
+            </article>
           </div>
         </div>
       </section>

@@ -6,12 +6,13 @@ import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import { AuthLayout, FormInput, PasswordInput } from '../../components/AuthComponents';
 import { useToast } from '../../components/Toast';
-import { signInWithEmail, signInWithGoogle, signInWithMicrosoft } from '../../lib/auth';
+import { signInWithEmail, signInWithGoogle } from '../../lib/auth';
 import { auth } from '../../lib/firebase';
 import { mintSessionCookie } from '../../lib/serverSession';
 import { getAppUrl, getClientUrl } from '../../lib/urls';
 
-const HOLDED_SITE_URL = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+const HOLDED_SITE_URL =
+  process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 
 export default function HoldedAuthPage() {
   const searchParams = useSearchParams();
@@ -96,7 +97,9 @@ export default function HoldedAuthPage() {
         redirectedRef.current = false;
         if (!cancelled) {
           setExistingUserChecking(false);
-          setError('Hemos detectado tu sesión, pero no hemos podido activarla. Reintenta para continuar.');
+          setError(
+            'Hemos detectado tu sesión, pero no hemos podido activarla. Reintenta para continuar.'
+          );
         }
       }
     };
@@ -145,24 +148,6 @@ export default function HoldedAuthPage() {
     }
   };
 
-  const handleMicrosoft = async () => {
-    setIsLoading(true);
-    setError('');
-    try {
-      const result = await signInWithMicrosoft({ rememberDevice });
-      if (result.error) {
-        setError(result.error.userMessage);
-        showToast({ type: 'error', title: 'Error', message: result.error.userMessage });
-        return;
-      }
-      redirectWithSession();
-    } catch {
-      setError('Error al iniciar sesión con Microsoft. Intenta de nuevo.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (existingUserChecking) {
     return (
       <AuthLayout
@@ -195,7 +180,9 @@ export default function HoldedAuthPage() {
       footerLink={{ href: buildAuthHref('/auth/signup'), label: 'Regístrate aquí' }}
     >
       {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
       ) : null}
 
       <div className="space-y-3">
@@ -224,21 +211,6 @@ export default function HoldedAuthPage() {
             />
           </svg>
           {isLoading ? 'Abriendo Google...' : 'Continuar con Google'}
-        </button>
-
-        <button
-          type="button"
-          onClick={handleMicrosoft}
-          disabled={isLoading}
-          className="flex w-full items-center justify-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <svg className="h-5 w-5" viewBox="0 0 24 24">
-            <path fill="#F25022" d="M2 2h9v9H2z" />
-            <path fill="#7FBA00" d="M13 2h9v9h-9z" />
-            <path fill="#00A4EF" d="M2 13h9v9H2z" />
-            <path fill="#FFB900" d="M13 13h9v9h-9z" />
-          </svg>
-          {isLoading ? 'Abriendo Microsoft...' : 'Continuar con Microsoft 365'}
         </button>
       </div>
 
