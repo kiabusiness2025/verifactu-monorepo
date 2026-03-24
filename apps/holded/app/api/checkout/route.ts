@@ -5,7 +5,18 @@ import Stripe from 'stripe';
 const SESSION_COOKIE_NAME = '__session';
 
 function getAppUrl(env = process.env.NEXT_PUBLIC_APP_URL) {
-  return (env || 'https://app.verifactu.business').replace(/\/$/, '');
+  const fallback = 'https://app.verifactu.business';
+  const candidate = (env || fallback).trim();
+
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.hostname === 'client.verifactu.business') {
+      return fallback;
+    }
+    return parsed.origin;
+  } catch {
+    return fallback;
+  }
 }
 
 function readSessionSecret(value = process.env.SESSION_SECRET): string {
@@ -93,10 +104,9 @@ function getCancelUrl() {
 
 function getOnboardingUrl() {
   const appUrl = getAppUrl();
-  const holdedPublicUrl = (process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business').replace(
-    /\/$/,
-    ''
-  );
+  const holdedPublicUrl = (
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business'
+  ).replace(/\/$/, '');
   const chatUrl = new URL('/dashboard/isaak', appUrl).toString();
   const onboardingUrl = new URL('/onboarding/holded', appUrl);
   onboardingUrl.searchParams.set('channel', 'chatgpt');
