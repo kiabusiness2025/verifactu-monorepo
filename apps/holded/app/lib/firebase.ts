@@ -6,6 +6,15 @@ import {
   setPersistence,
 } from 'firebase/auth';
 
+const REQUIRED_CONFIG_FIELDS = [
+  'apiKey',
+  'authDomain',
+  'projectId',
+  'storageBucket',
+  'messagingSenderId',
+  'appId',
+] as const;
+
 function cleanEnv(value: string | undefined): string | undefined {
   if (!value) return undefined;
   return value.replace(/[\r\n]/g, '').trim();
@@ -37,6 +46,7 @@ const firebaseConfig = {
 };
 
 const isConfigComplete = Object.values(firebaseConfig).every(Boolean);
+const missingConfigFields = REQUIRED_CONFIG_FIELDS.filter((field) => !firebaseConfig[field]);
 let isFirebaseReady = false;
 
 let app: ReturnType<typeof initializeApp> | undefined;
@@ -65,7 +75,9 @@ if (typeof window !== 'undefined' && isConfigComplete) {
     isFirebaseReady = false;
   }
 } else if (typeof window !== 'undefined' && !isConfigComplete) {
-  console.warn('Firebase config incomplete: set NEXT_PUBLIC_FIREBASE_* env vars to enable auth.');
+  console.warn(
+    `Firebase config incomplete for Holded auth. Missing: ${missingConfigFields.join(', ')}. Set NEXT_PUBLIC_HOLDED_FIREBASE_* or NEXT_PUBLIC_FIREBASE_* env vars in the deployed project.`
+  );
 }
 
 export { app, auth, isConfigComplete as isFirebaseConfigComplete, isFirebaseReady };
