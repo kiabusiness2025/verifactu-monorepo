@@ -1,9 +1,9 @@
 import { prisma } from '@verifactu/db';
 import {
-    buildSessionCookieOptions,
-    readSessionSecret,
-    signSessionToken,
-    type SessionPayload,
+  buildSessionCookieOptions,
+  readSessionSecret,
+  signSessionToken,
+  type SessionPayload,
 } from '@verifactu/utils';
 import admin from 'firebase-admin';
 import { NextResponse } from 'next/server';
@@ -28,7 +28,9 @@ function envOrNull(name: string) {
 }
 
 function ensureAdminApp(appName: string, envPrefix: string, required: boolean) {
-  const existing = admin.apps.find((app) => app.name === appName);
+  const existing = admin.apps.find(
+    (app): app is admin.app.App => Boolean(app) && app.name === appName
+  );
   if (existing) return existing;
 
   const projectId = envOrNull(`${envPrefix}PROJECT_ID`);
