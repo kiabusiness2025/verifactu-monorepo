@@ -52,6 +52,25 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
       message: 'Account exists with different credential',
       userMessage: 'Esta cuenta ya existe con otro método de acceso.',
     },
+    'auth/unauthorized-domain': {
+      message: 'Unauthorized domain',
+      userMessage:
+        'El dominio actual no está autorizado en Firebase Authentication. Añádelo en Authorized domains.',
+    },
+    'auth/operation-not-allowed': {
+      message: 'Operation not allowed',
+      userMessage:
+        'El proveedor Google no está activado en Firebase Authentication para este proyecto.',
+    },
+    'auth/popup-blocked': {
+      message: 'Popup blocked',
+      userMessage:
+        'El navegador bloqueó la ventana de Google. Permite popups e inténtalo de nuevo.',
+    },
+    'auth/cancelled-popup-request': {
+      message: 'Cancelled popup request',
+      userMessage: 'Se canceló el intento de acceso. Reintenta con Google.',
+    },
     'auth/too-many-requests': {
       message: 'Too many requests',
       userMessage: 'Has hecho demasiados intentos. Espera un momento y vuelve a probar.',

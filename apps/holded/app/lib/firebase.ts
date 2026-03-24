@@ -11,13 +11,29 @@ function cleanEnv(value: string | undefined): string | undefined {
   return value.replace(/[\r\n]/g, '').trim();
 }
 
+function readEnv(primary: string, fallback?: string): string | undefined {
+  const first = cleanEnv(process.env[primary]);
+  if (first) return first;
+  if (!fallback) return undefined;
+  return cleanEnv(process.env[fallback]);
+}
+
 const firebaseConfig = {
-  apiKey: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_API_KEY),
-  authDomain: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN),
-  projectId: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
-  storageBucket: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET),
-  messagingSenderId: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID),
-  appId: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_APP_ID),
+  apiKey: readEnv('NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY', 'NEXT_PUBLIC_FIREBASE_API_KEY'),
+  authDomain: readEnv(
+    'NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN',
+    'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'
+  ),
+  projectId: readEnv('NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID', 'NEXT_PUBLIC_FIREBASE_PROJECT_ID'),
+  storageBucket: readEnv(
+    'NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET',
+    'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'
+  ),
+  messagingSenderId: readEnv(
+    'NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID',
+    'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'
+  ),
+  appId: readEnv('NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID', 'NEXT_PUBLIC_FIREBASE_APP_ID'),
 };
 
 const isConfigComplete = Object.values(firebaseConfig).every(Boolean);
