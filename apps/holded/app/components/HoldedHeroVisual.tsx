@@ -5,23 +5,23 @@ import Image from 'next/image';
 
 const featureBadges = [
   {
-    label: 'Revision fiscal continua',
+    label: 'Preguntas y listo',
     className: 'left-0 top-10 sm:-left-6',
   },
   {
-    label: 'Riesgos detectados a tiempo',
+    label: 'Sin menus complicados',
     className: 'right-0 top-24 sm:-right-8',
   },
   {
-    label: 'Indicadores en tiempo real',
+    label: 'Facturas en segundos',
     className: 'left-4 bottom-24 sm:-left-4',
   },
   {
-    label: 'Prioridades accionables',
+    label: 'Numeros mas claros',
     className: 'right-2 bottom-10 sm:-right-6',
   },
   {
-    label: 'Contexto listo para decidir',
+    label: 'Tu negocio en lenguaje normal',
     className: 'left-1/2 top-0 -translate-x-1/2',
   },
 ];
@@ -38,7 +38,7 @@ export default function HoldedHeroVisual() {
             height={10}
             className="h-2.5 w-2.5"
           />
-          Holded compatible
+          Solution Partner autorizado de Holded
         </div>
 
         <div className="relative mx-auto max-w-[20rem] pt-3 sm:max-w-[22rem]">

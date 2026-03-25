@@ -1,20 +1,44 @@
-import { ArrowRight, CheckCircle2, KeyRound, ShieldCheck, Sparkles } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  KeyRound,
+  MessageCircleMore,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import HoldedHeroVisual from './components/HoldedHeroVisual';
 import { buildAuthUrl, buildRegisterUrl } from './lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Isaak para Holded | Onboarding gratuito',
+  title: 'Isaak para Holded | Gestiona tu negocio sin complicaciones',
   description:
-    'Conecta Holded gratis, valida tu API key al momento y entra directamente al dashboard con Isaak.',
+    'Gestiona tu negocio en Holded sin complicaciones. Pregunta, entiende tus números y conecta tu cuenta gratis en minutos.',
 };
 
-const benefits = [
-  'Alta rápida con correo y confirmación.',
-  'Onboarding guiado sin pasos técnicos raros.',
-  'Validación inmediata de la API key de Holded.',
-  'Dashboard y primer chat en el mismo producto.',
+const problemPoints = [
+  'No sabes dónde mirar.',
+  'No entiendes bien los números.',
+  'Te cuesta encontrar información.',
+  'Dependes de tu asesor para casi todo.',
+];
+
+const everydayGoals = ['Saber cuánto ganas.', 'Saber qué debes.', 'Hacer facturas rápido.'];
+
+const solutionExamples = [
+  '¿Cuánto he vendido este mes?',
+  '¿Qué gastos tengo pendientes?',
+  'Hazme una factura para este cliente.',
+  '¿Esto es deducible?',
+];
+
+const whatItDoes = [
+  'Consultar ingresos y gastos.',
+  'Crear facturas y presupuestos.',
+  'Encontrar información en segundos.',
+  'Entender mejor tu situación financiera.',
+  'Resolver dudas fiscales básicas.',
 ];
 
 const faqItems = [
@@ -24,15 +48,16 @@ const faqItems = [
   },
   {
     question: '¿Tengo que pagar ahora?',
-    answer: 'No. Este flujo es para la versión gratuita y no muestra planes de pago.',
+    answer: 'No. Esta primera versión es gratuita y no muestra planes de pago.',
   },
   {
     question: '¿Qué pasa si la API key falla?',
     answer: 'Te lo decimos al momento y puedes pegar otra sin salir del onboarding.',
   },
   {
-    question: '¿Después dónde entro?',
-    answer: 'Directamente a tu dashboard de Holded con el primer chat listo.',
+    question: '¿Qué puedo consultar?',
+    answer:
+      'Ingresos, gastos, facturas, clientes, resultados y movimientos registrados en tu cuenta.',
   },
 ];
 
@@ -45,16 +70,16 @@ export default function HoldedHomePage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm">
                 <Sparkles className="h-3.5 w-3.5 text-[#ff5460]" />
-                Flujo gratuito
+                Isaak para Holded
               </div>
 
-              <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.35rem] sm:leading-[1.04]">
-                Conecta Holded y empieza a usar Isaak sin fricción.
+              <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.4rem] sm:leading-[1.02]">
+                Gestiona tu negocio en Holded sin complicaciones
               </h1>
 
-              <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                El recorrido ahora es simple: alta, verificación, onboarding, API key, validación y
-                dashboard. Todo dentro de `holded.verifactu.business`.
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+                Holded es potente, pero no siempre está hecho para pensar como tú. No necesitas
+                aprender contabilidad ni navegar por menús. Solo tienes que preguntar.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -75,7 +100,7 @@ export default function HoldedHomePage() {
 
               <div className="mt-8 rounded-3xl border border-[#ff5460]/20 bg-[#ff5460]/5 p-6 shadow-sm">
                 <div className="text-sm font-semibold text-slate-900">Qué vas a necesitar</div>
-                <div className="mt-4 flex items-start gap-2 text-sm text-slate-700">
+                <div className="mt-4 flex items-start gap-2 text-sm leading-6 text-slate-700">
                   <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
                   Una API key activa de Holded. La validamos al momento y te damos feedback claro si
                   algo no cuadra.
@@ -93,36 +118,68 @@ export default function HoldedHomePage() {
           <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
             <article className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_100%)] p-6 shadow-sm">
               <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#ff5460]">
-                Versión gratuita
+                El problema
               </div>
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-                Un onboarding pensado para llegar al dashboard cuanto antes
+                Usar Holded no siempre es tan fácil como debería
               </h2>
               <ul className="mt-6 space-y-3 text-sm text-slate-700">
-                {benefits.map((item) => (
+                {problemPoints.map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
                     {item}
                   </li>
                 ))}
               </ul>
+
+              <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
+                <div className="text-sm font-semibold text-slate-900">
+                  Y al final solo quieres algo simple
+                </div>
+                <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                  {everydayGoals.map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </article>
 
             <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-slate-900">Cómo funciona</h3>
-              <ol className="mt-5 space-y-3 text-sm leading-6 text-slate-600">
-                <li>1. Creas tu acceso.</li>
-                <li>2. Confirmas tu correo.</li>
-                <li>3. Pegas tu API key de Holded.</li>
-                <li>4. La validamos y te llevamos al dashboard.</li>
-                <li>5. Arrancas tu primer chat con Isaak.</li>
-              </ol>
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                La solución
+              </div>
+              <h3 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
+                Ahora puedes gestionar todo hablando como siempre
+              </h3>
+              <p className="mt-4 text-base leading-7 text-slate-600">
+                Sin menús. Sin complicaciones. Sin conocimientos técnicos.
+              </p>
+              <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <MessageCircleMore className="h-4 w-4 text-[#ff5460]" />
+                  Preguntas y listo
+                </div>
+                <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
+                  {solutionExamples.map((item) => (
+                    <li
+                      key={item}
+                      className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               <div className="mt-6 flex flex-col gap-3">
                 <Link
                   href={buildRegisterUrl('holded_home_card_register')}
                   className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  Crear acceso gratis
+                  Empezar gratis
                 </Link>
                 <Link
                   href={buildAuthUrl('holded_home_card_login')}
@@ -138,20 +195,45 @@ export default function HoldedHomePage() {
 
       <section id="beneficios" className="py-14">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-8 lg:p-10">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+          <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
+            <article className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                 <ShieldCheck className="h-3.5 w-3.5 text-[#ff5460]" />
-                Claro y simple
+                Todo conectado con tu cuenta de Holded
               </div>
               <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-                Sin planes visibles y sin ruido
+                Accede a tu información en segundos y entiende mejor tu negocio
+              </h2>
+              <ul className="mt-6 space-y-3 text-sm text-slate-700">
+                {whatItDoes.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="rounded-[2rem] border border-[#ff5460]/15 bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_100%)] p-8 shadow-[0_32px_90px_-48px_rgba(255,84,96,0.35)]">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#ff5460]">
+                Tu asistente inteligente
+              </div>
+              <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
+                Todo esto lo hace Isaak
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                La experiencia pública de Holded queda centrada en la versión gratuita. Lo premium
-                se deja fuera del flujo principal por ahora.
+                Isaak entiende cómo funciona tu negocio y te responde en lenguaje normal.
               </p>
-            </div>
+              <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
+                <div className="text-sm font-semibold text-slate-900">
+                  No sustituye a tu asesor, pero te ayuda en el día a día
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  Te da respuestas inmediatas para revisar ventas, gastos, clientes, facturas y
+                  prioridades sin depender de menús ni de tareas repetitivas.
+                </p>
+              </div>
+            </article>
           </div>
         </div>
       </section>
