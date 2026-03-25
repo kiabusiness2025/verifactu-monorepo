@@ -1,4 +1,4 @@
-import { JWTPayload, SignJWT } from 'jose';
+import { JWTPayload, jwtVerify, SignJWT } from 'jose';
 
 export const SESSION_COOKIE_NAME = '__session';
 
@@ -34,6 +34,11 @@ export async function signSessionToken(params: {
     .setIssuedAt()
     .setExpirationTime(expiresIn)
     .sign(new TextEncoder().encode(secret));
+}
+
+export async function verifySessionToken(token: string, secret: string): Promise<SessionPayload> {
+  const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+  return payload as SessionPayload;
 }
 
 export type SessionCookieInput = {

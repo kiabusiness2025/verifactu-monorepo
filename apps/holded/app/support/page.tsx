@@ -1,32 +1,30 @@
 import { ExternalLink, LifeBuoy, MessageSquareText, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Soporte | Isaak con Holded como compatibilidad',
-  description:
-    'Canales de soporte de Isaak para usuarios que conectan Holded como fuente compatible.',
+  title: 'Soporte | Isaak para Holded',
+  description: 'Canales de soporte para usuarios que estan activando o usando Isaak con Holded.',
 };
 
 const supportOptions = [
   {
     title: 'Soporte por email',
-    body: 'Escríbenos para incidencias de conexión, errores de tools o dudas sobre la activación de tu cuenta.',
-    actionLabel: 'Abrir contacto de soporte',
-    actionHref: '/support#contacto',
+    body: 'Escribenos si ves un error al iniciar sesion, validar la API key o entrar al dashboard.',
+    actionLabel: 'Escribir a soporte',
+    actionHref: 'mailto:info@verifactu.business',
   },
   {
-    title: 'Ayuda de onboarding',
-    body: 'Te ayudamos a localizar tu API key de Holded, validar permisos y completar la primera conexión.',
-    actionLabel: 'Guía de activación',
-    actionHref: '/#solucion',
+    title: 'Ayuda con tu API key',
+    body: 'Te ayudamos a localizar tu API key de Holded y comprobar si tiene acceso valido.',
+    actionLabel: 'Volver al onboarding',
+    actionHref: '/onboarding/holded',
   },
   {
-    title: 'Planes de Isaak',
-    body: 'Si necesitas más capacidad, revisa los planes y activa la opción que mejor encaje con tu operación.',
-    actionLabel: 'Ver planes',
-    actionHref: '/planes',
+    title: 'Acceso gratuito',
+    body: 'Si aun no has terminado el alta, vuelve al flujo gratuito y continua donde lo dejaste.',
+    actionLabel: 'Ir a la landing',
+    actionHref: '/',
   },
 ];
 
@@ -41,19 +39,18 @@ export default function HoldedSupportPage() {
               Soporte oficial
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-slate-950">
-              Soporte de Isaak con Holded como fuente compatible
+              Soporte para el onboarding de Holded
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-slate-600">
-              Si estás conectando Holded y necesitas ayuda, este es el punto de soporte oficial de
-              Isaak. Atendemos dudas de onboarding, errores de conexión y preguntas sobre la
-              experiencia completa de Isaak.
+              Si te atascas al crear tu acceso, verificar el correo, conectar Holded o entrar al
+              dashboard, este es el punto de ayuda.
             </p>
             <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm leading-7 text-slate-600 shadow-sm">
-              Para ayudarte más rápido, incluye en tu mensaje:
+              Para ayudarte mas rapido, incluye en tu mensaje:
               <ul className="mt-3 space-y-1">
-                <li>- el email con el que has iniciado sesión en Isaak</li>
+                <li>- el email con el que has iniciado sesion</li>
                 <li>- una captura del error visible</li>
-                <li>- si el fallo ocurre en activación, onboarding o dashboard</li>
+                <li>- si el fallo ocurre en verificacion, onboarding o dashboard</li>
               </ul>
             </div>
           </div>
@@ -70,12 +67,11 @@ export default function HoldedSupportPage() {
             </div>
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
-              Horario de soporte
+              Respuesta en horario laboral
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Respondemos en horario laboral. Si la incidencia afecta a onboarding o a la conexión
-              de Holded, priorizamos la revisión para que Isaak pueda empezar a trabajar cuanto
-              antes.
+              Si la incidencia bloquea la conexion con Holded o el acceso al dashboard, priorizamos
+              la revision para que puedas completar el alta.
             </p>
           </div>
         </div>
@@ -105,18 +101,8 @@ export default function HoldedSupportPage() {
             Contacto directo
           </div>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            Si ya tienes sesión iniciada, abre el onboarding y usa el canal de ayuda para que
-            podamos ubicar tu tenant de forma más rápida.
-          </p>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            También puedes revisar tus opciones en{' '}
-            <Link
-              href="/planes"
-              className="font-semibold text-[#ff5460] underline underline-offset-4"
-            >
-              planes de Isaak
-            </Link>
-            .
+            Si ya tienes sesion iniciada, entra al onboarding o al dashboard antes de escribirnos.
+            Asi podremos ubicar tu tenant y revisar el caso con mas contexto.
           </p>
         </div>
       </section>

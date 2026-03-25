@@ -76,6 +76,23 @@ function buildVerificationEmail(input: { email: string; verificationUrl: string 
   };
 }
 
+function buildWelcomeEmail(input: { email: string; accessUrl: string; dashboardUrl: string }) {
+  return {
+    subject: 'Bienvenido a Isaak para Holded',
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff;">
+        <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:#ffecef;color:#b4233c;font-size:12px;font-weight:700;letter-spacing:0.04em;">Isaak para Holded</div>
+        <h1 style="font-size:28px;line-height:1.2;margin:16px 0 8px;">Tu acceso ya está preparado</h1>
+        <p style="margin:0 0 14px;">Gracias por empezar con <strong>${escapeHtml(input.email)}</strong>.</p>
+        <p style="margin:0 0 18px;">Siguientes pasos: confirma tu correo, entra en tu acceso y pega tu API key de Holded para activar el onboarding gratuito.</p>
+        <a href="${escapeHtml(input.accessUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir acceso</a>
+        <p style="margin:18px 0 0;color:#64748b;font-size:13px;">Dashboard previsto tras la conexión: ${escapeHtml(input.dashboardUrl)}</p>
+      </div>
+    `.trim(),
+    text: `Bienvenido a Isaak para Holded.\n\n1) Confirma tu correo.\n2) Entra en tu acceso.\n3) Conecta tu API key de Holded.\n4) Accede al dashboard.\n\nAcceso: ${input.accessUrl}\nDashboard: ${input.dashboardUrl}`,
+  };
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -96,28 +113,54 @@ export async function POST(req: Request) {
       'NEXT_PUBLIC_HOLDED_SITE_URL',
       'https://holded.verifactu.business'
     );
-    const url = new URL(`${holdedSite}/auth/holded`);
-    url.searchParams.set('source', source);
-    url.searchParams.set('registered', '1');
+    const accessUrl = new URL(`${holdedSite}/auth/holded`);
+    accessUrl.searchParams.set('source', source);
+    const dashboardUrl = new URL(`${holdedSite}/dashboard`);
+    dashboardUrl.searchParams.set('source', source);
+    const continueUrl = new URL(`${holdedSite}/verificar`);
+    continueUrl.searchParams.set('source', source);
+    continueUrl.searchParams.set('step', 'verified');
+    continueUrl.searchParams.set('email', decoded.email);
 
     const verificationUrl = await app.auth().generateEmailVerificationLink(decoded.email, {
-      url: url.toString(),
+      url: continueUrl.toString(),
       handleCodeInApp: false,
     });
 
     const resend = new Resend(requireEnv('RESEND_API_KEY'));
     const from = readOptionalEnv('RESEND_FROM', 'Isaak for Holded <holded@verifactu.business>');
+    const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@holded.verifactu.business');
     const template = buildVerificationEmail({ email: decoded.email, verificationUrl });
-
-    const sendResult = await resend.emails.send({
-      from,
-      to: [decoded.email],
-      subject: template.subject,
-      html: template.html,
-      text: template.text,
+    const welcome = buildWelcomeEmail({
+      email: decoded.email,
+      accessUrl: accessUrl.toString(),
+      dashboardUrl: dashboardUrl.toString(),
     });
 
-    return NextResponse.json({ ok: true, emailId: sendResult.data?.id ?? null });
+    const [verificationResult, welcomeResult] = await Promise.all([
+      resend.emails.send({
+        from,
+        to: [decoded.email],
+        subject: template.subject,
+        html: template.html,
+        text: template.text,
+        replyTo,
+      }),
+      resend.emails.send({
+        from,
+        to: [decoded.email],
+        subject: welcome.subject,
+        html: welcome.html,
+        text: welcome.text,
+        replyTo,
+      }),
+    ]);
+
+    return NextResponse.json({
+      ok: true,
+      verificationEmailId: verificationResult.data?.id ?? null,
+      welcomeEmailId: welcomeResult.data?.id ?? null,
+    });
   } catch (error) {
     console.error('[holded auth register] failed', error);
     return NextResponse.json(

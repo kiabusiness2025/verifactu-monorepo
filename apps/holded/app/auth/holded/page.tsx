@@ -4,30 +4,26 @@ import type { User } from 'firebase/auth';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { registerWithEmail, signInWithEmail, signInWithGoogle } from '@/app/lib/auth';
 import { auth } from '@/app/lib/firebase';
+import { buildOnboardingUrl } from '@/app/lib/holded-navigation';
 import { mintSessionCookie } from '@/app/lib/serverSession';
 
 const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 
 function buildFallbackTarget(source: string) {
-  return `${APP_URL}/onboarding/holded?channel=chatgpt&source=${encodeURIComponent(source)}`;
+  return buildOnboardingUrl(source);
 }
 
 function resolveRedirectTarget(nextParam: string, source: string) {
   if (!nextParam) return buildFallbackTarget(source);
 
   try {
-    const parsed = new URL(nextParam);
-    const allowedOrigins = new Set([
-      new URL(HOLDED_SITE_URL).origin,
-      'https://app.verifactu.business',
-      'https://client.verifactu.business',
-    ]);
+    const parsed = new URL(nextParam, HOLDED_SITE_URL);
+    const allowedOrigins = new Set([new URL(HOLDED_SITE_URL).origin]);
 
     if (!allowedOrigins.has(parsed.origin)) {
       return buildFallbackTarget(source);
@@ -45,6 +41,7 @@ async function activateSessionAndRedirect(user: User, rememberDevice: boolean, t
 }
 
 function HoldedAuthContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const source = searchParams?.get('source')?.trim() || 'holded_login';
   const nextParam = searchParams?.get('next')?.trim() || '';
@@ -62,7 +59,6 @@ function HoldedAuthContent() {
   const [existingUserChecking, setExistingUserChecking] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     const stored = window.localStorage.getItem('vf_remember_device');
@@ -90,7 +86,7 @@ function HoldedAuthContent() {
         if (!cancelled) {
           setExistingUserChecking(false);
           setError(
-            'Hemos detectado tu acceso, pero no hemos podido activarlo. Reintenta para continuar.'
+            'Hemos detectado tu acceso, pero no hemos podido activarlo. Intentalo de nuevo.'
           );
         }
       }
@@ -107,12 +103,11 @@ function HoldedAuthContent() {
     event.preventDefault();
     setIsLoading(true);
     setError('');
-    setSuccess('');
 
     if (isRegisterMode) {
       if (password !== confirmPassword) {
         setIsLoading(false);
-        setError('Las contraseñas no coinciden. Revísalas e inténtalo de nuevo.');
+        setError('Las contrasenas no coinciden. Revisalas e intentalo de nuevo.');
         return;
       }
 
@@ -124,9 +119,9 @@ function HoldedAuthContent() {
       }
 
       setIsLoading(false);
-      setSuccess('Cuenta creada. Revisa tu correo y confirma tu acceso antes de iniciar sesión.');
-      setPassword('');
-      setConfirmPassword('');
+      router.push(
+        `/gracias?step=check-email&email=${encodeURIComponent(email)}&source=${encodeURIComponent(source)}`
+      );
       return;
     }
 
@@ -199,10 +194,10 @@ function HoldedAuthContent() {
               Isaak para Holded
             </div>
             <h1 className="mt-4 text-[1.65rem] font-bold tracking-tight text-slate-950">
-              Accede para conectar tu cuenta
+              Entra y termina tu alta
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Entras ahora y en el siguiente paso terminas la conexión con tu entorno de trabajo.
+              Accedes ahora y en el siguiente paso conectas tu API key de Holded.
             </p>
           </div>
 
@@ -212,7 +207,7 @@ function HoldedAuthContent() {
                 <Loader2 className="mx-auto h-5 w-5 animate-spin text-[#ff5460]" />
                 <p className="mt-3 text-sm font-semibold text-slate-900">Preparando tu acceso</p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Estamos recuperando tu sesión para continuar.
+                  Estamos recuperando tu sesion para continuar.
                 </p>
               </div>
             ) : null}
@@ -220,12 +215,6 @@ function HoldedAuthContent() {
             {error ? (
               <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
                 {error}
-              </div>
-            ) : null}
-
-            {success ? (
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                {success}
               </div>
             ) : null}
 
@@ -270,7 +259,7 @@ function HoldedAuthContent() {
             <form onSubmit={handleEmailLogin} className="space-y-4">
               <div className="space-y-1.5">
                 <label htmlFor="email" className="text-sm font-semibold text-slate-800">
-                  Correo electrónico
+                  Correo electronico
                 </label>
                 <input
                   id="email"
@@ -286,15 +275,15 @@ function HoldedAuthContent() {
 
               <div className="space-y-1.5">
                 <label htmlFor="password" className="text-sm font-semibold text-slate-800">
-                  Contraseña
+                  Contrasena
                 </label>
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Tu contraseña"
-                  autoComplete="current-password"
+                  placeholder="Tu contrasena"
+                  autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
                   required
                   className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                 />
@@ -303,14 +292,14 @@ function HoldedAuthContent() {
               {isRegisterMode ? (
                 <div className="space-y-1.5">
                   <label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-800">
-                    Confirmar contraseña
+                    Repite la contrasena
                   </label>
                   <input
                     id="confirmPassword"
                     type="password"
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
-                    placeholder="Repite tu contraseña"
+                    placeholder="Repite tu contrasena"
                     autoComplete="new-password"
                     required
                     className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
@@ -335,10 +324,10 @@ function HoldedAuthContent() {
               >
                 {isLoading
                   ? isRegisterMode
-                    ? 'Creando cuenta...'
+                    ? 'Creando acceso...'
                     : 'Entrando...'
                   : isRegisterMode
-                    ? 'Crear cuenta y verificar correo'
+                    ? 'Crear acceso y verificar correo'
                     : 'Entrar y continuar'}
               </button>
 
@@ -348,22 +337,22 @@ function HoldedAuthContent() {
                     href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}`}
                     className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
                   >
-                    ¿Ya tienes cuenta? Inicia sesión aquí
+                    Ya tienes cuenta? Inicia sesion aqui
                   </Link>
                 ) : (
                   <Link
                     href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}&mode=register`}
                     className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
                   >
-                    ¿No tienes cuenta? Regístrate con correo y contraseña
+                    No tienes cuenta? Registrate con correo y contrasena
                   </Link>
                 )}
               </div>
             </form>
 
             <p className="text-center text-xs leading-5 text-slate-500">
-              Si ya tienes tu cuenta, aquí solo la activamos para continuar con Holded. Si necesitas
-              ayuda, escríbenos a{' '}
+              Si ya tienes acceso, aqui solo retomamos tu flujo para entrar al onboarding. Si
+              necesitas ayuda, escribenos a{' '}
               <a
                 href="mailto:info@verifactu.business"
                 className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
@@ -383,7 +372,7 @@ export default function HoldedAuthPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_48%,#ffffff_100%)] flex items-center justify-center">
+        <main className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_48%,#ffffff_100%)]">
           <Loader2 className="h-6 w-6 animate-spin text-[#ff5460]" />
         </main>
       }

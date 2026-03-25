@@ -27,13 +27,26 @@ function readOptionalEnv(name: string, fallback: string) {
   return cleanEnv(process.env[name]) || fallback;
 }
 
+function resolveLeadSender() {
+  const holdedFallback = 'Holded for Isaak <no-reply@holded.verifactu.business>';
+  const configured =
+    cleanEnv(process.env.RESEND_FROM_HOLDED) || cleanEnv(process.env.RESEND_FROM) || holdedFallback;
+
+  if (!configured.toLowerCase().includes('@holded.verifactu.business')) {
+    return holdedFallback;
+  }
+
+  return configured;
+}
+
 export async function sendHoldedLeadCommunication(input: LeadPayload) {
   const resend = new Resend(readRequiredEnv('RESEND_API_KEY'));
-  const from = readOptionalEnv(
-    'RESEND_FROM',
-    'Holded for Isaak <no-reply@holded.verifactu.business>'
+  const from = resolveLeadSender();
+  const internalRecipient = readOptionalEnv(
+    'HOLDED_LEAD_EMAIL',
+    'soporte@holded.verifactu.business'
   );
-  const internalRecipient = readOptionalEnv('HOLDED_LEAD_EMAIL', 'soporte@verifactu.business');
+  const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@holded.verifactu.business');
 
   const welcome = buildHoldedWelcomeEmail(input);
   const guide = buildHoldedOnboardingGuideEmail(input);
@@ -46,6 +59,7 @@ export async function sendHoldedLeadCommunication(input: LeadPayload) {
       subject: welcome.subject,
       html: welcome.html,
       text: welcome.text,
+      replyTo,
     }),
     resend.emails.send({
       from,
@@ -53,6 +67,7 @@ export async function sendHoldedLeadCommunication(input: LeadPayload) {
       subject: guide.subject,
       html: guide.html,
       text: guide.text,
+      replyTo,
     }),
     resend.emails.send({
       from,

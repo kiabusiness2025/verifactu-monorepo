@@ -12,10 +12,8 @@ export const HOLDED_APP_URL = getOrigin(
   'https://holded.verifactu.business'
 );
 export const HOLDED_PUBLIC_URL = HOLDED_APP_URL;
-export const APP_ONBOARDING_URL = `${getOrigin(
-  process.env.NEXT_PUBLIC_APP_URL,
-  'https://app.verifactu.business'
-)}/onboarding/holded`;
+export const HOLDED_DASHBOARD_URL = `${HOLDED_PUBLIC_URL}/dashboard`;
+export const HOLDED_ONBOARDING_URL = `${HOLDED_PUBLIC_URL}/onboarding`;
 
 export const buildLeadCaptureUrl = (source?: string) => {
   const base = `${HOLDED_PUBLIC_URL}/`;
@@ -26,7 +24,14 @@ export const buildLeadCaptureUrl = (source?: string) => {
   return `${base}?source=${encodeURIComponent(source)}#acceso-libre`;
 };
 
-export const buildOnboardingUrl = (source: string) => {
-  const onboardingTarget = `${APP_ONBOARDING_URL}?channel=chatgpt&source=${encodeURIComponent(source)}`;
-  return `${HOLDED_PUBLIC_URL}/auth/holded?source=${source}&next=${encodeURIComponent(onboardingTarget)}`;
-};
+export const buildDashboardUrl = (source = 'holded_dashboard') =>
+  `${HOLDED_DASHBOARD_URL}?source=${encodeURIComponent(source)}`;
+
+export const buildOnboardingUrl = (source = 'holded_onboarding') =>
+  `${HOLDED_ONBOARDING_URL}?source=${encodeURIComponent(source)}`;
+
+export const buildAuthUrl = (source: string, next = buildOnboardingUrl(source)) =>
+  `${HOLDED_PUBLIC_URL}/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(next)}`;
+
+export const buildRegisterUrl = (source: string, next = buildOnboardingUrl(source)) =>
+  `${HOLDED_PUBLIC_URL}/auth/holded?mode=register&source=${encodeURIComponent(source)}&next=${encodeURIComponent(next)}`;

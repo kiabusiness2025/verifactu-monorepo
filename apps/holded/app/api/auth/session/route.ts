@@ -117,7 +117,41 @@ async function getTenantForUser(uid: string, email: string, displayName?: string
     select: { tenantId: true },
   });
 
-  return membership?.tenantId ?? null;
+  if (membership?.tenantId) {
+    return membership.tenantId;
+  }
+
+  const created = await prisma.$transaction(async (tx) => {
+    const tenant = await tx.tenant.create({
+      data: {
+        name: `${userName} - Holded`,
+        legalName: `${userName} - Holded`,
+      },
+      select: { id: true },
+    });
+
+    await tx.membership.create({
+      data: {
+        tenantId: tenant.id,
+        userId: user.id,
+        role: 'owner',
+        status: 'active',
+      },
+    });
+
+    await tx.userPreference.upsert({
+      where: { userId: user.id },
+      update: { preferredTenantId: tenant.id },
+      create: {
+        userId: user.id,
+        preferredTenantId: tenant.id,
+      },
+    });
+
+    return tenant.id;
+  });
+
+  return created;
 }
 
 export async function POST(req: Request) {

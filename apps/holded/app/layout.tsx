@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Manrope } from 'next/font/google';
-import HoldedFloatingIsaakChatButton from './components/HoldedFloatingIsaakChatButton';
 import HoldedSiteChrome from './components/HoldedSiteChrome';
 import './globals.css';
 
@@ -22,7 +21,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <body className={manrope.className}>
         <HoldedSiteChrome>{children}</HoldedSiteChrome>
-        <HoldedFloatingIsaakChatButton />
       </body>
     </html>
   );

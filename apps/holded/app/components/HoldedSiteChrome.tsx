@@ -3,9 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { buildLeadCaptureUrl } from '../lib/holded-navigation';
-
-const ISAAK_SITE_URL = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
+import { buildAuthUrl, buildDashboardUrl, buildRegisterUrl } from '../lib/holded-navigation';
 
 type Props = {
   children: React.ReactNode;
@@ -41,32 +39,37 @@ export default function HoldedSiteChrome({ children }: Props) {
           </Link>
 
           <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 md:flex">
-            <Link href="/" className="hover:text-slate-900">
+            <a href="#solucion" className="hover:text-slate-900">
               Inicio
-            </Link>
-            <Link href="/capacidades" className="hover:text-slate-900">
-              Capacidades
-            </Link>
-            <a href={ISAAK_SITE_URL} className="hover:text-slate-900">
-              Qué es Isaak
             </a>
-            <Link href="/planes" className="hover:text-slate-900">
-              Planes
-            </Link>
-            <Link href="/support" className="hover:text-slate-900">
-              Soporte
-            </Link>
-            <Link href="/demo-recording" className="hover:text-slate-900">
-              Demo
+            <a href="#acceso-libre" className="hover:text-slate-900">
+              Acceso
+            </a>
+            <a href="#beneficios" className="hover:text-slate-900">
+              Beneficios
+            </a>
+            <a href="#faq" className="hover:text-slate-900">
+              FAQ
+            </a>
+            <Link href={buildDashboardUrl('holded_nav_dashboard')} className="hover:text-slate-900">
+              Dashboard
             </Link>
           </nav>
 
-          <Link
-            href={buildLeadCaptureUrl('holded_nav_global')}
-            className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ef4654]"
-          >
-            Iniciar y conectar
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={buildRegisterUrl('holded_nav_register')}
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Crear acceso
+            </Link>
+            <Link
+              href={buildAuthUrl('holded_nav_global')}
+              className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ef4654]"
+            >
+              Iniciar y conectar
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -87,24 +90,18 @@ export default function HoldedSiteChrome({ children }: Props) {
           </div>
 
           <div className="flex flex-wrap gap-4 text-xs font-semibold sm:text-sm">
-            <Link href="/privacy" className="hover:text-slate-900">
-              Privacy
+            <Link
+              href={buildDashboardUrl('holded_footer_dashboard')}
+              className="hover:text-slate-900"
+            >
+              Dashboard
             </Link>
-            <Link href="/terms" className="hover:text-slate-900">
-              Terms
+            <Link href={buildAuthUrl('holded_footer_login')} className="hover:text-slate-900">
+              Acceso
             </Link>
-            <Link href="/capacidades" className="hover:text-slate-900">
-              Capacidades
-            </Link>
-            <Link href="/support" className="hover:text-slate-900">
-              Soporte
-            </Link>
-            <a href={ISAAK_SITE_URL} className="hover:text-slate-900">
-              Isaak
+            <a href="#acceso-libre" className="hover:text-slate-900">
+              Conectar Holded
             </a>
-            <Link href="/planes" className="hover:text-slate-900">
-              Planes
-            </Link>
           </div>
         </div>
       </footer>
