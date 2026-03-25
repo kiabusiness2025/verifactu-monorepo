@@ -7,6 +7,8 @@ import {
   getSimpleMemoryContext,
   storeSimpleMemoryFact,
 } from '@/app/lib/holded-chat';
+import { writeHoldedActivity } from '@/app/lib/holded-activity';
+import { prisma } from '@/app/lib/prisma';
 
 export const runtime = 'nodejs';
 
@@ -148,6 +150,13 @@ export async function POST(request: NextRequest) {
   const message = typeof body?.message === 'string' ? body.message.trim() : '';
   const requestedConversationId =
     typeof body?.conversationId === 'string' ? body.conversationId.trim() : '';
+  const hadChatsBefore = await prisma.isaakConversation.count({
+    where: {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      context: 'holded_free_dashboard',
+    },
+  });
 
   if (!message) {
     return NextResponse.json({ error: 'Escribe una pregunta para continuar.' }, { status: 400 });
@@ -228,6 +237,19 @@ export async function POST(request: NextRequest) {
       confidence: 0.85,
     }),
   ]);
+
+  if (hadChatsBefore === 0) {
+    await writeHoldedActivity({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      action: 'first_chat_created',
+      resourceType: 'conversation',
+      resourceId: conversation.id,
+      responsePayload: {
+        title: conversation.title,
+      },
+    });
+  }
 
   return NextResponse.json({
     ok: true,

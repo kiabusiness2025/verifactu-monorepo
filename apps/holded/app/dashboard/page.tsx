@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import HoldedDashboardClient from './HoldedDashboardClient';
 import { getHoldedSession } from '@/app/lib/holded-session';
+import { writeHoldedActivity } from '@/app/lib/holded-activity';
 import { isHoldedAdminEmail } from '@/app/lib/holded-admin';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
 
@@ -36,6 +37,15 @@ export default async function HoldedDashboardPage({ searchParams }: PageProps) {
     const connection = await getHoldedConnection(tenantId);
     if (!connection) {
       redirect('/onboarding/holded');
+    }
+
+    if (session.userId) {
+      await writeHoldedActivity({
+        tenantId,
+        userId: session.userId,
+        action: 'dashboard_accessed',
+        resourceType: 'dashboard',
+      });
     }
 
     return (

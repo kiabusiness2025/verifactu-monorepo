@@ -1,6 +1,7 @@
 import admin from 'firebase-admin';
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { prisma } from '@/app/lib/prisma';
 
 export const runtime = 'nodejs';
 
@@ -131,6 +132,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing email in token' }, { status: 400 });
     }
 
+    await prisma.user.upsert({
+      where: { email: decoded.email },
+      update: {
+        name: decoded.name || decoded.email.split('@')[0],
+        authProvider: 'FIREBASE',
+        authSubject: decoded.uid,
+      },
+      create: {
+        email: decoded.email,
+        name: decoded.name || decoded.email.split('@')[0],
+        authProvider: 'FIREBASE',
+        authSubject: decoded.uid,
+      },
+    });
+
     const holdedSite = readOptionalEnv(
       'NEXT_PUBLIC_HOLDED_SITE_URL',
       'https://holded.verifactu.business'
@@ -139,6 +155,7 @@ export async function POST(req: Request) {
     accessUrl.searchParams.set('source', source);
     const dashboardUrl = new URL(`${holdedSite}/dashboard`);
     dashboardUrl.searchParams.set('source', source);
+    const adminUrl = new URL(`${holdedSite}/admin`);
     const continueUrl = new URL(`${holdedSite}/verificar`);
     continueUrl.searchParams.set('source', source);
     continueUrl.searchParams.set('step', 'verified');
@@ -167,9 +184,25 @@ export async function POST(req: Request) {
     const adminNotification = buildAdminNotificationEmail({
       email: decoded.email,
       source,
-      accessUrl: accessUrl.toString(),
+      accessUrl: adminUrl.toString(),
       createdAt: new Date().toISOString(),
     });
+    const [newUsersCount, connectedCount, disconnectedCount] = await Promise.all([
+      prisma.user.count({
+        where: {
+          authProvider: 'FIREBASE',
+          createdAt: {
+            gte: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+          },
+        },
+      }),
+      prisma.externalConnection.count({
+        where: { provider: 'holded', connectionStatus: 'connected' },
+      }),
+      prisma.externalConnection.count({
+        where: { provider: 'holded', connectionStatus: 'disconnected' },
+      }),
+    ]);
 
     const [verificationResult, welcomeResult] = await Promise.all([
       resend.emails.send({
@@ -196,8 +229,14 @@ export async function POST(req: Request) {
           from,
           to: adminRecipients,
           subject: adminNotification.subject,
-          html: adminNotification.html,
-          text: adminNotification.text,
+          html: `${adminNotification.html}
+            <p style="margin:16px 0 0;color:#475569;font-size:13px;">
+              Resumen rapido: nuevos usuarios (7 dias): ${newUsersCount} · conexiones activas: ${connectedCount} · conexiones desconectadas: ${disconnectedCount}
+            </p>
+            <p style="margin:16px 0 0;">
+              <a href="${adminUrl.toString()}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;font-weight:700;">Abrir panel admin</a>
+            </p>`,
+          text: `${adminNotification.text}\n\nResumen rapido: nuevos usuarios (7 dias): ${newUsersCount} · conexiones activas: ${connectedCount} · conexiones desconectadas: ${disconnectedCount}\n\nPanel admin: ${adminUrl.toString()}`,
           replyTo,
         })
         .catch((notificationError) => {

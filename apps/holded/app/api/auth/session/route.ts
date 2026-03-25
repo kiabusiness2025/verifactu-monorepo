@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 import { NextResponse } from 'next/server';
+import { writeHoldedActivity } from '@/app/lib/holded-activity';
 import { prisma } from '@/app/lib/prisma';
 import {
   buildSessionCookieOptions,
@@ -124,7 +125,7 @@ async function getTenantForUser(uid: string, email: string, displayName?: string
   });
 
   if (membership?.tenantId) {
-    return membership.tenantId;
+    return { tenantId: membership.tenantId, user };
   }
 
   const created = await prisma.$transaction(async (tx) => {
@@ -154,7 +155,7 @@ async function getTenantForUser(uid: string, email: string, displayName?: string
       },
     });
 
-    return tenant.id;
+    return { tenantId: tenant.id, user };
   });
 
   return created;
@@ -175,7 +176,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing email' }, { status: 400 });
     }
 
-    const tenantId = await getTenantForUser(decoded.uid, decoded.email, displayName);
+    const tenantResult = await getTenantForUser(decoded.uid, decoded.email, displayName);
+    const tenantId = tenantResult.tenantId;
+    const user = tenantResult.user;
+    const emailVerifiedAt =
+      userRecord.emailVerified && !user.emailVerified ? new Date() : user.emailVerified;
+
+    if (emailVerifiedAt !== user.emailVerified) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: emailVerifiedAt },
+      });
+      await writeHoldedActivity({
+        tenantId,
+        userId: user.id,
+        action: 'email_verified',
+        resourceType: 'auth',
+        responsePayload: {
+          email: decoded.email,
+        },
+      });
+    }
     const rolesRaw =
       (decoded as { roles?: unknown; role?: unknown }).roles ??
       (decoded as { roles?: unknown; role?: unknown }).role ??
@@ -227,6 +248,16 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({ ok: true });
     response.cookies.set(cookieOpts);
+    await writeHoldedActivity({
+      tenantId,
+      userId: user.id,
+      action: 'login_completed',
+      resourceType: 'auth',
+      responsePayload: {
+        email: decoded.email,
+        rememberDevice: remember,
+      },
+    });
     return response;
   } catch (error) {
     if (error instanceof Error && error.name === 'HoldedBlockedUserError') {

@@ -5,6 +5,7 @@ import {
   probeHoldedConnection,
   saveHoldedConnection,
 } from '@/app/lib/holded-integration';
+import { writeHoldedActivity } from '@/app/lib/holded-activity';
 
 export const runtime = 'nodejs';
 
@@ -28,6 +29,18 @@ export async function POST(request: NextRequest) {
   const probe = await probeHoldedConnection(apiKey);
 
   if (!probe.ok) {
+    await writeHoldedActivity({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      action: 'connection_error',
+      status: 'failed',
+      resourceType: 'holded_connection',
+      responsePayload: {
+        provider: 'holded',
+        error: probe.error,
+      },
+    });
+
     return NextResponse.json(
       {
         ok: false,
