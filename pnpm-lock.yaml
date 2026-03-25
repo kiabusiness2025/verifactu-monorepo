@@ -637,6 +637,9 @@ importers:
 
   apps/isaak:
     dependencies:
+      '@google-cloud/vertexai':
+        specifier: ^1.10.0
+        version: 1.10.0
       lucide-react:
         specifier: ^0.562.0
         version: 0.562.0(react@18.2.0)
