@@ -90,6 +90,18 @@ export default function HoldedSiteChrome({ children }: Props) {
           </div>
 
           <div className="flex flex-wrap gap-4 text-xs font-semibold sm:text-sm">
+            <Link href="/legal" className="hover:text-slate-900">
+              Aviso legal
+            </Link>
+            <Link href="/privacy" className="hover:text-slate-900">
+              Privacidad
+            </Link>
+            <Link href="/terms" className="hover:text-slate-900">
+              Terminos
+            </Link>
+            <Link href="/cookies" className="hover:text-slate-900">
+              Cookies
+            </Link>
             <Link
               href={buildDashboardUrl('holded_footer_dashboard')}
               className="hover:text-slate-900"
