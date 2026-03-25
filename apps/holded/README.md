@@ -12,6 +12,13 @@ Este proyecto es el proyecto publico 2 de 3:
 
 Comparte backend, sesión y datos con el resto, pero su identidad pública es propia.
 
+## Regla de aislamiento (obligatoria)
+
+- `apps/holded` solo sirve `holded.verifactu.business`.
+- No usar este proyecto para resolver rutas de `verifactu.business` ni `isaak.verifactu.business`.
+- En este proyecto, los remitentes de Resend deben usar dominio `@holded.verifactu.business`.
+- No reutilizar variables `NEXT_PUBLIC_*` ni remitentes de landing en Holded.
+
 ## Objetivo
 
 - Presentar una experiencia separada de la marca principal.
@@ -44,6 +51,8 @@ Nota: la UI de acceso de Holded ya no debe depender visualmente de `apps/landing
 - `app/lib/serverSession.ts`: creación de la cookie de sesión compartida desde Holded.
 - `app/auth/holded/page.tsx`: pantalla de login compacta con marca Holded.
 - `app/api/auth/session/route.ts`: verificación del `idToken`, sincronización de usuario/tenant y emisión de cookie `__session`.
+- `app/api/auth/google/diagnostics/route.ts`: diagnóstico de configuración OAuth/Firebase en servidor.
+- `app/api/auth/register/route.ts`: envío de correo de verificación para altas por email/password.
 - `app/api/checkout/route.ts`: creación de checkout y validación de sesión.
 - `app/page.tsx`: landing principal.
 - `app/capacidades/page.tsx`: detalle publico de capacidades reales de Isaak con Holded.
@@ -83,6 +92,9 @@ Variables mínimas relevantes:
 - `SESSION_COOKIE_DOMAIN`
 - `SESSION_COOKIE_SECURE`
 - `SESSION_COOKIE_SAMESITE`
+- `RESEND_API_KEY`
+- `RESEND_FROM` (recomendado: `Holded for Isaak <no-reply@holded.verifactu.business>`)
+- `RESEND_REPLY_TO` (opcional)
 - `STRIPE_SECRET_KEY`
 - `STRIPE_PRICE_HOLDED_FISCAL_MONTHLY`
 - `STRIPE_PRICE_HOLDED_FISCAL_YEARLY`
@@ -125,3 +137,65 @@ Comprobaciones funcionales recomendadas:
 - verificar login con Google/Microsoft o email
 - confirmar redirección a onboarding Holded tras crear la cookie de sesión
 - probar `/planes` y el inicio de checkout con sesión válida
+
+## Diagnóstico OAuth y registro
+
+Endpoint técnico para revisar estado de entorno en el despliegue activo:
+
+- `GET /api/auth/google/diagnostics`
+
+Regla operativa importante para Google OAuth en Holded:
+
+- El popup se abre desde `holded.verifactu.business`.
+- En Firebase Authentication -> `Authorized domains` debe existir `holded.verifactu.business`.
+- Mantén también `localhost` para desarrollo y `verifactu-business.firebaseapp.com` para el handler interno de Firebase.
+- El callback crítico de Firebase Web no es `/auth/holded`, sino `https://verifactu-business.firebaseapp.com/__/auth/handler`.
+- Si copias la configuración histórica de `landing` y solo autorizas `verifactu.business` o `www.verifactu.business`, el acceso con Google en Holded fallará por dominio no autorizado.
+
+Campos clave del JSON:
+
+- `ok`: indica si la configuración mínima verificable desde servidor está completa.
+- `checks.firebaseClientConfigComplete`: valida que estén las variables públicas de Firebase cliente.
+- `checks.firebaseAdminConfigured`: valida credenciales admin para verificar tokens en backend.
+- `checks.sessionSecretConfigured`: valida que la firma de sesión esté configurada.
+- `checks.holdedSiteUrlConfigured`: valida la URL pública de Holded.
+- `checks.holdedAuthorizedDomainExpected`: indica el dominio que debes autorizar manualmente en Firebase.
+- `missing.firebaseClient`: lista de variables públicas faltantes (si aplica).
+- `warnings`: avisos operativos sobre dominios autorizados y callback de Firebase.
+
+Validación rápida local:
+
+```bash
+curl -s http://localhost:3011/api/auth/google/diagnostics
+```
+
+Checklist mínimo de consola para OAuth:
+
+1. Firebase Authentication -> Sign-in method -> Google -> Enabled.
+2. Firebase Authentication -> Settings -> Authorized domains:
+   - `holded.verifactu.business`
+   - `localhost`
+   - `verifactu-business.firebaseapp.com`
+3. Google Cloud Console -> OAuth client:
+   - redirect URI `https://verifactu-business.firebaseapp.com/__/auth/handler`
+
+## Registro por email con verificación
+
+Flujo funcional esperado:
+
+1. Usuario entra en `/auth/holded?mode=register`.
+2. Crea cuenta con email/password.
+3. Backend valida token y envía correo de verificación mediante Resend.
+4. Usuario verifica email desde el enlace recibido.
+5. Vuelve a `/auth/holded` e inicia sesión normalmente.
+
+Comprobaciones recomendadas del flujo positivo:
+
+- Crear cuenta nueva y confirmar mensaje de registro completado.
+- Verificar recepción de correo desde `RESEND_FROM`.
+- Abrir el enlace de verificación y confirmar estado verificado en Firebase Auth.
+- Iniciar sesión y confirmar continuidad al onboarding Holded.
+
+Comprobación del flujo negativo (backend protegido):
+
+- `POST /api/auth/register` con token inválido debe fallar con error controlado.

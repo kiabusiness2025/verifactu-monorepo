@@ -100,6 +100,14 @@ verifactu.business     (producción)
 www.verifactu.business (producción)
 ```
 
+Si el login se abre desde un subdominio dedicado, añade ese host exacto también. Ejemplo:
+
+```
+holded.verifactu.business
+```
+
+Firebase valida el dominio real que abre el popup. Autorizar solo `verifactu.business` o `www.verifactu.business` no autoriza `holded.verifactu.business`.
+
 ---
 
 ## 5️⃣ Configurar Google OAuth (Recomendado)
@@ -122,12 +130,14 @@ Para que Google Sign-in funcione en producción:
    ```
 7. Authorized redirect URIs:
    ```
-   http://localhost:3000/auth/login
-   http://localhost:3001/auth/login
-   https://verifactu.business/auth/login
-   https://www.verifactu.business/auth/login
+   https://verifactu-business.firebaseapp.com/__/auth/handler
    ```
 8. Copiar Client ID
+
+Nota para Firebase Auth Web:
+
+- El redirect URI crítico es el handler de Firebase (`/__/auth/handler`), no la ruta visual de login de tu app.
+- Si usas `holded.verifactu.business`, debes autorizar ese dominio en Firebase Authentication aunque el handler siga viviendo en `verifactu-business.firebaseapp.com`.
 
 ### B. Usar en Firebase
 

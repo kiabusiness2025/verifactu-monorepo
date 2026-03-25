@@ -3,7 +3,13 @@
 ## 1. Firebase - Dominios Autorizados
 
 [ ] Accede a: https://console.firebase.google.com/project/verifactu-business/authentication/settings
-[ ] En "Authorized domains" verifica que esten: - [ ] `www.verifactu.business` - [ ] `verifactu.business` - [ ] `localhost` (para desarrollo local) - [ ] `app.verifactu.business` (si OAuth se usa en app)
+[ ] En "Authorized domains" verifica que esten:
+[ ] `www.verifactu.business`
+[ ] `verifactu.business`
+[ ] `holded.verifactu.business` si el login OAuth se abre desde Holded
+[ ] `localhost` (para desarrollo local)
+[ ] `app.verifactu.business` solo si OAuth se abre directamente en app
+[ ] `verifactu-business.firebaseapp.com` para el handler interno de Firebase
 [ ] Guarda cambios si falta alguno
 
 ## 2. Vercel - Landing Project (verifactu-landing)
@@ -48,6 +54,8 @@ Verifica que tenga:
 [ ] Verifica que redirige a login de Firebase
 [ ] Tras login, deberia redirigir a https://app.verifactu.business/dashboard
 [ ] Verifica que la sesion persiste en app.verifactu.business
+[ ] Si pruebas Holded, accede a https://holded.verifactu.business/auth/holded
+[ ] Si Holded devuelve `auth/unauthorized-domain`, falta `holded.verifactu.business` en Firebase Authorized domains
 
 ## 5. Cookies y CORS
 
@@ -57,4 +65,4 @@ Verifica que tenga:
 
 - Si el error persiste, limpia cookies del navegador
 - Si OAuth no funciona, verifica que Firebase redirige estan configuradas en la consola
-- El dominio landing DEBE ser www.verifactu.business para OAuth (sin www no funciona correctamente)
+- El dominio que debe autorizarse es el host real que abre el popup. Para Holded, ese host es `holded.verifactu.business`
