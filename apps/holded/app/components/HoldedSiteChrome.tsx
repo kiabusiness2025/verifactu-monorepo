@@ -34,7 +34,9 @@ export default function HoldedSiteChrome({ children }: Props) {
             </div>
             <div className="leading-tight">
               <div className="text-base font-semibold text-slate-900">Isaak para Holded</div>
-              <div className="text-xs font-medium text-slate-600">Compatibilidad oficial</div>
+              <div className="text-xs font-medium text-slate-600">
+                Solution Partner autorizado de Holded
+              </div>
             </div>
           </Link>
 

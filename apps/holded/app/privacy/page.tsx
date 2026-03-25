@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Isaak with Holded compatibility',
-  description: 'Privacy policy for Isaak when Holded is connected as a compatible source.',
+  title: 'Politica de privacidad | Isaak para Holded',
+  description:
+    'Politica de privacidad de holded.verifactu.business y del acceso a Holded mediante API key.',
 };
 
 export default function HoldedPrivacyPage() {
@@ -15,25 +16,25 @@ export default function HoldedPrivacyPage() {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#ff5460]/20 bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold text-[#ff5460]">
               <ShieldCheck className="h-4 w-4" />
-              Privacy policy
+              Politica de privacidad
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-slate-950">
-              Privacy Policy for Isaak with Holded compatibility
+              Politica de privacidad de Isaak para Holded
             </h1>
             <p className="max-w-3xl text-lg leading-8 text-slate-600">
-              This page explains what data we process, how Holded credentials are handled, and what
-              rights users have when connecting Holded as a compatible source in Isaak.
+              Esta pagina resume que datos tratamos, como gestionamos la conexion con Holded y que
+              puedes pedirnos como usuario de holded.verifactu.business.
             </p>
-            <p className="text-sm text-slate-500">Last updated: March 19, 2026.</p>
+            <p className="text-sm text-slate-500">Ultima actualizacion: 25 de marzo de 2026.</p>
           </div>
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:w-[24rem]">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <Lock className="h-4 w-4 text-emerald-600" />
-              Key principle
+              Principio clave
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Holded API keys are processed server-side and are not exposed to the client interface
-              presented to the user.
+              La API key de Holded se procesa en el backend, se almacena protegida y no se muestra
+              de nuevo en la interfaz despues de enviarla.
             </p>
           </div>
         </div>
@@ -42,31 +43,33 @@ export default function HoldedPrivacyPage() {
           <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <Database className="h-4 w-4 text-[#ff5460]" />
-              Data we process
+              Datos que tratamos
             </div>
             <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-600">
-              <li>- Account data needed to identify the user inside Isaak.</li>
-              <li>- Holded connection data provided by the user, including the API key.</li>
               <li>
-                - Business data requested through the app, such as invoices, contacts, accounts, CRM
-                items and projects.
+                - Datos de cuenta necesarios para identificar al usuario y mantener su acceso.
               </li>
-              <li>- Operational logs required for security, support and troubleshooting.</li>
+              <li>
+                - Datos de conexion con Holded facilitados por el usuario, incluida la API key.
+              </li>
+              <li>
+                - Datos de negocio consultados a traves de la app, como facturas, contactos,
+                movimientos o informacion relacionada con la cuenta conectada.
+              </li>
+              <li>- Registros operativos necesarios para seguridad, soporte y trazabilidad.</li>
             </ul>
           </article>
 
           <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <ServerCog className="h-4 w-4 text-[#ff5460]" />
-              Why we process it
+              Para que los usamos
             </div>
             <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-600">
-              <li>- To connect the user account with Holded.</li>
-              <li>
-                - To let Isaak retrieve and explain business information requested by the user.
-              </li>
-              <li>- To improve reliability, traceability and support for the service.</li>
-              <li>- To comply with legal and security obligations applicable to the service.</li>
+              <li>- Para conectar tu cuenta con Holded y validar que la API key funciona.</li>
+              <li>- Para mostrarte informacion y respuestas relacionadas con tu negocio.</li>
+              <li>- Para operar el servicio con seguridad, soporte y trazabilidad minima.</li>
+              <li>- Para cumplir obligaciones legales y tecnicas aplicables al servicio.</li>
             </ul>
           </article>
         </div>
@@ -74,29 +77,44 @@ export default function HoldedPrivacyPage() {
         <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
             <Lock className="h-4 w-4 text-[#ff5460]" />
-            Holded credentials
+            Conexion con Holded
           </div>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            The user chooses which Holded account to connect by providing an API key. That key is
-            encrypted and stored in backend infrastructure controlled by Isaak. It is not intended
-            to be displayed back to the user after submission.
+            El usuario decide que cuenta de Holded conecta mediante una API key. Esa clave se
+            almacena protegida y se utiliza para acceder a los datos de la cuenta conectada y
+            ofrecer la funcionalidad solicitada dentro de Isaak para Holded.
+          </p>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            Puedes reconectar o desconectar la integracion desde el producto cuando esa opcion este
+            disponible en tu panel.
           </p>
         </div>
 
         <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
             <Mail className="h-4 w-4 text-[#ff5460]" />
-            Contact and rights
+            Derechos y contacto
           </div>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            For privacy requests, support or deletion requests, contact us through{' '}
+            Para solicitudes sobre privacidad, soporte o eliminacion de datos, puedes escribir a{' '}
+            <a
+              href="mailto:info@verifactu.business"
+              className="font-semibold text-[#ff5460] underline underline-offset-4"
+            >
+              info@verifactu.business
+            </a>{' '}
+            o usar{' '}
             <Link
               href="/support"
               className="font-semibold text-[#ff5460] underline underline-offset-4"
             >
-              Holded support
+              soporte Holded
             </Link>
-            .
+            . Esta experiencia esta operada por la entidad responsable de verifactu.business.
+          </p>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            Si activas la casilla opcional de comunicaciones, podremos enviarte novedades y mejoras
+            del producto. Ese consentimiento es independiente del acceso al servicio.
           </p>
         </div>
       </section>

@@ -256,7 +256,7 @@ export default function OnboardingHoldedClient() {
               <Link href="/privacy" className="font-semibold text-[#ff5460] hover:text-[#ef4654]">
                 Politica de Privacidad
               </Link>
-              .
+              . La clave se guarda protegida y no se muestra de nuevo en pantalla.
             </div>
 
             <div className="mt-5">

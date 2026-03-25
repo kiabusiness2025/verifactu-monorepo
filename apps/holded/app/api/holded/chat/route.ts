@@ -10,6 +10,69 @@ import {
 
 export const runtime = 'nodejs';
 
+function extractNumber(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const normalized = value.replace(/[^\d,.-]/g, '').replace(',', '.');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function readInvoiceAmount(invoice: Record<string, unknown>) {
+  const candidates = [
+    invoice.amountGross,
+    invoice.total,
+    invoice.totalWithTax,
+    invoice.amount,
+    invoice.totalAmount,
+    invoice.totalFormatted,
+  ];
+
+  for (const candidate of candidates) {
+    const value = extractNumber(candidate);
+    if (value > 0) return value;
+  }
+
+  return 0;
+}
+
+function readInvoiceStatus(invoice: Record<string, unknown>) {
+  const candidates = [invoice.status, invoice.docStatus, invoice.paymentStatus];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim().toLowerCase();
+    }
+  }
+
+  return '';
+}
+
+function buildSnapshotSummary(snapshot: Awaited<ReturnType<typeof fetchHoldedSnapshot>>) {
+  const sales = snapshot.invoices.reduce((sum, invoice) => {
+    if (!invoice || typeof invoice !== 'object') return sum;
+    return sum + readInvoiceAmount(invoice);
+  }, 0);
+
+  const pendingInvoices = snapshot.invoices.filter((invoice) => {
+    if (!invoice || typeof invoice !== 'object') return false;
+    const status = readInvoiceStatus(invoice);
+    return ['pending', 'open', 'unpaid', 'overdue', 'draft'].some((keyword) =>
+      status.includes(keyword)
+    );
+  }).length;
+
+  return {
+    sales,
+    pendingInvoices,
+    invoices: snapshot.invoices.length,
+    contacts: snapshot.contacts.length,
+    accounts: snapshot.accounts.length,
+  };
+}
+
 function buildReply(input: {
   message: string;
   snapshot: Awaited<ReturnType<typeof fetchHoldedSnapshot>>;
@@ -20,6 +83,7 @@ function buildReply(input: {
   const invoiceCount = input.snapshot.invoices.length;
   const contactCount = input.snapshot.contacts.length;
   const accountCount = input.snapshot.accounts.length;
+  const summary = buildSnapshotSummary(input.snapshot);
   const recentFacts = input.memoryContext.recentFacts
     .map((fact) => `${fact.category}:${fact.factKey}`)
     .slice(0, 3);
@@ -28,6 +92,24 @@ function buildReply(input: {
       ? ` Ya tengo en cuenta este contexto reciente: ${recentFacts.join(', ')}.`
       : '';
   const tenantLabel = input.tenantName?.trim() || 'tu cuenta';
+
+  if (
+    text.includes('resumen') ||
+    text.includes('este mes') ||
+    text.includes('resumen rapido') ||
+    text.includes('ver resumen')
+  ) {
+    return [
+      `Este es tu resumen rapido de ${tenantLabel}:`,
+      '',
+      `• Ventas aproximadas en la muestra: ${summary.sales.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`,
+      `• Facturas revisadas: ${summary.invoices}`,
+      `• Facturas pendientes detectadas: ${summary.pendingInvoices}`,
+      `• Contactos visibles: ${summary.contacts}`,
+      '',
+      '¿Quieres que revise algo en detalle?',
+    ].join('\n');
+  }
 
   if (text.includes('factura') || text.includes('venta') || text.includes('cobro')) {
     return `Tu cuenta de Holded ya esta conectada. En ${tenantLabel} he podido ver ${invoiceCount} facturas recientes en la muestra inicial.${memoryHint} Si quieres, el siguiente paso es pedirme un resumen simple de ventas o cobros pendientes.`;

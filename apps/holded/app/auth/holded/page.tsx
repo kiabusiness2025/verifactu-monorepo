@@ -410,12 +410,21 @@ function HoldedAuthContent() {
               Si ya tienes acceso, aqui solo retomamos tu flujo para entrar al onboarding. Si
               necesitas ayuda, escribenos a{' '}
               <a
-                href="mailto:info@verifactu.business"
+                href="mailto:soporte@holded.verifactu.business"
                 className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
               >
-                info@verifactu.business
+                soporte@holded.verifactu.business
               </a>
               . Powered by verifactu.business.
+              <span className="block pt-2">
+                <Link href="/legal" className="font-semibold text-slate-700 hover:text-slate-900">
+                  Aviso legal
+                </Link>{' '}
+                ·{' '}
+                <Link href="/cookies" className="font-semibold text-slate-700 hover:text-slate-900">
+                  Cookies
+                </Link>
+              </span>
             </p>
           </div>
         </section>

@@ -40,10 +40,17 @@ type ConversationSummary = {
   lastActivity: string;
 };
 
+type SuggestionAction = {
+  id: string;
+  label: string;
+  prompt: string;
+};
+
 const STARTER_PROMPTS = [
-  'Resume mis facturas recientes.',
-  'Que deberia revisar hoy en Holded.',
-  'Dame un primer resumen de clientes y ventas.',
+  '¿Cuánto he facturado este mes?',
+  '¿Tengo facturas pendientes de cobro?',
+  'Hazme una factura para un cliente.',
+  'Explícame mis gastos de este mes.',
 ];
 
 const QUICK_HELP = [
@@ -81,10 +88,33 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
   const [editingTitle, setEditingTitle] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 'welcome',
+      id: 'welcome-1',
+      role: 'assistant',
+      content: 'Ya tienes tu cuenta de Holded conectada ✅',
+    },
+    {
+      id: 'welcome-2',
       role: 'assistant',
       content:
-        'Tu cuenta de Holded ya esta conectada. Empieza hablando con Isaak para revisar ventas, cobros o actividad reciente.',
+        'Puedes preguntarme lo que quieras sobre tu negocio o pedirme que haga cosas por ti.',
+    },
+    {
+      id: 'welcome-3',
+      role: 'assistant',
+      content:
+        'Para empezar, prueba con algo como: ¿Cuánto he facturado este mes?, ¿Tengo facturas pendientes de cobro?, Hazme una factura para un cliente o Explícame mis gastos de este mes.',
+    },
+  ]);
+  const [suggestionActions, setSuggestionActions] = useState<SuggestionAction[]>([
+    {
+      id: 'summary-yes',
+      label: 'Sí, ver resumen',
+      prompt: 'Quiero ver un resumen de este mes',
+    },
+    {
+      id: 'summary-no',
+      label: 'No, gracias',
+      prompt: '',
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -164,6 +194,7 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
               })
             )
           );
+          setSuggestionActions([]);
         }
       } catch {
         if (!cancelled) {
@@ -197,6 +228,7 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
     setInput('');
     setLoading(true);
     setChatError(null);
+    setSuggestionActions([]);
 
     try {
       const res = await fetch('/api/holded/chat', {
@@ -232,6 +264,28 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
           content: data.reply,
         },
       ]);
+
+      if (
+        trimmed.toLowerCase().includes('resumen') ||
+        trimmed.toLowerCase().includes('este mes') ||
+        trimmed.toLowerCase().includes('ver resumen')
+      ) {
+        setMessages((current) => [
+          ...current,
+          {
+            id: `assistant-followup-${Date.now()}`,
+            role: 'assistant',
+            content:
+              'Tambien puedo ayudarte con cosas como crear facturas y contactos, analizar tus ingresos y gastos, resolver dudas sobre impuestos o explicarte como usar Holded. Solo tienes que pedirmelo.',
+          },
+          {
+            id: `assistant-retention-${Date.now()}`,
+            role: 'assistant',
+            content:
+              'Puedo avisarte si detecto cosas importantes en tu negocio, como facturas sin cobrar, gastos raros o cambios en tus resultados. Esto estara disponible muy pronto.',
+          },
+        ]);
+      }
     } catch (error) {
       setChatError(
         error instanceof Error ? error.message : 'No hemos podido responder ahora mismo.'
@@ -245,10 +299,33 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
     setConversationId(null);
     setMessages([
       {
-        id: 'welcome-new-chat',
+        id: 'welcome-new-chat-1',
+        role: 'assistant',
+        content: 'Ya tienes tu cuenta de Holded conectada ✅',
+      },
+      {
+        id: 'welcome-new-chat-2',
         role: 'assistant',
         content:
-          'Nuevo chat listo. Empieza hablando con Isaak y guardaremos este hilo en tu espacio.',
+          'Puedes preguntarme lo que quieras sobre tu negocio o pedirme que haga cosas por ti.',
+      },
+      {
+        id: 'welcome-new-chat-3',
+        role: 'assistant',
+        content:
+          'Si quieres, puedo darte un resumen rapido de tu negocio ahora mismo. ¿Quieres ver un resumen de este mes?',
+      },
+    ]);
+    setSuggestionActions([
+      {
+        id: 'summary-yes-reset',
+        label: 'Sí, ver resumen',
+        prompt: 'Quiero ver un resumen de este mes',
+      },
+      {
+        id: 'summary-no-reset',
+        label: 'No, gracias',
+        prompt: '',
       },
     ]);
     setChatError(null);
@@ -276,6 +353,7 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
             )
           : []
       );
+      setSuggestionActions([]);
       setChatError(null);
       openIsaak();
     } catch (error) {
@@ -691,6 +769,38 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
                   </button>
                 ))}
               </div>
+              {suggestionActions.length > 0 ? (
+                <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="text-sm font-semibold text-slate-900">
+                    Si quieres, puedo darte un resumen rápido de tu negocio ahora mismo.
+                  </div>
+                  <div className="mt-2 text-sm text-slate-600">
+                    ¿Quieres ver un resumen de este mes?
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {suggestionActions.map((action) => (
+                      <button
+                        key={action.id}
+                        type="button"
+                        onClick={() => {
+                          if (!action.prompt) {
+                            setSuggestionActions([]);
+                            return;
+                          }
+                          void sendMessage(action.prompt);
+                        }}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                          action.prompt
+                            ? 'bg-[#ff5460] text-white hover:bg-[#ef4654]'
+                            : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </article>
 
             <article
@@ -741,7 +851,7 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
                 <textarea
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
-                  placeholder="Escribe tu primera pregunta sobre Holded..."
+                  placeholder="Preguntame sobre tu negocio... Ej: ¿Cuanto he facturado este mes?"
                   rows={3}
                   className="min-h-[88px] flex-1 resize-none rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                 />
