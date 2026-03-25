@@ -1,12 +1,11 @@
 import { CheckCircle2, Mail, ShieldCheck, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { buildAuthUrl, buildDashboardUrl } from '@/app/lib/holded-navigation';
+import { buildAuthUrl, buildOnboardingUrl } from '@/app/lib/holded-navigation';
 
 export const metadata: Metadata = {
   title: 'Gracias | Isaak para Holded',
-  description:
-    'Revisa tu correo, confirma tu acceso y termina la activación de tu dashboard de Holded.',
+  description: 'Revisa tu correo, confirma tu acceso y termina la activacion de Holded.',
 };
 
 type PageProps = {
@@ -34,12 +33,12 @@ export default async function HoldedRegistrationThanksPage({ searchParams }: Pag
               {verified ? 'Correo confirmado' : 'Registro creado'}
             </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              {verified ? 'Tu acceso ya está activado' : 'Revisa tu correo para continuar'}
+              {verified ? 'Tu acceso ya esta activado' : 'Revisa tu correo para continuar'}
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
               {verified
-                ? 'Ya puedes entrar en tu dashboard de Holded y continuar la conexión de tu cuenta con contexto propio.'
-                : 'Te hemos enviado un correo de confirmación y otro con la bienvenida y los siguientes pasos para conectar Holded sin perderte.'}
+                ? 'Ya puedes entrar y seguir con la conexion de Holded y tu dashboard.'
+                : 'Te hemos enviado un correo de confirmacion y otro con los siguientes pasos para conectar Holded sin perderte.'}
             </p>
             {email ? (
               <p className="mt-3 text-sm font-semibold text-slate-900">
@@ -52,17 +51,17 @@ export default async function HoldedRegistrationThanksPage({ searchParams }: Pag
             <article className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <Mail className="h-4 w-4 text-[#ff5460]" />
-                Qué hacer ahora
+                Que hacer ahora
               </div>
               <ol className="mt-4 space-y-4 text-sm leading-6 text-slate-700">
                 <li className="rounded-2xl border border-slate-200 bg-white p-4">
-                  1. Abre el correo de verificación y pulsa en confirmar.
+                  1. Abre el correo de verificacion y pulsa en confirmar.
                 </li>
                 <li className="rounded-2xl border border-slate-200 bg-white p-4">
-                  2. Vuelve a Holded e inicia sesión con el mismo email.
+                  2. Vuelve a Holded e inicia sesion con el mismo email.
                 </li>
                 <li className="rounded-2xl border border-slate-200 bg-white p-4">
-                  3. Entra en tu dashboard y pega tu API key de Holded para activar el contexto.
+                  3. Pega tu API key de Holded y entra al dashboard.
                 </li>
               </ol>
             </article>
@@ -73,33 +72,31 @@ export default async function HoldedRegistrationThanksPage({ searchParams }: Pag
                 Tu siguiente paso
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-700">
-                Todo el flujo se queda ya dentro de `holded.verifactu.business`: registro,
-                confirmación, acceso y dashboard propio.
+                Todo el flujo se queda dentro de holded.verifactu.business: registro, confirmacion,
+                acceso y dashboard.
               </p>
               <div className="mt-5 flex flex-col gap-3">
                 <Link
-                  href={
-                    verified ? buildDashboardUrl('holded_signup_verified') : buildAuthUrl(source)
-                  }
+                  href={buildAuthUrl(source, buildOnboardingUrl(source))}
                   className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  {verified ? 'Abrir dashboard' : 'Ir al acceso'}
+                  {verified ? 'Entrar y continuar' : 'Ir al acceso'}
                 </Link>
                 <Link
-                  href={buildAuthUrl('holded_signup_return')}
+                  href="/support"
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
-                  Volver al login
+                  Necesito ayuda
                 </Link>
               </div>
               <div className="mt-5 rounded-2xl border border-white/70 bg-white/80 p-4 text-sm text-slate-600">
                 <div className="flex items-center gap-2 font-semibold text-slate-900">
                   <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                  Correo y activación
+                  Si no ves el correo
                 </div>
                 <p className="mt-2">
-                  Si no ves el correo en 2 minutos, revisa spam o promociones. Si sigue sin llegar,
-                  escríbenos y reactivamos el acceso.
+                  Revisa spam o promociones. Si sigue sin llegar, escribenos y te ayudamos a
+                  reactivar el acceso.
                 </p>
               </div>
             </article>

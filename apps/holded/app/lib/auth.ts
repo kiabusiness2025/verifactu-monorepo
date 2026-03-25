@@ -4,9 +4,9 @@ import {
   type AuthError,
   GoogleAuthProvider,
   OAuthProvider,
-  signOut,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signOut,
 } from 'firebase/auth';
 import { auth, isFirebaseConfigComplete, isFirebaseReady } from './firebase';
 import { mintSessionCookie } from './serverSession';
@@ -28,7 +28,7 @@ const authUnavailable = (): AuthResult => ({
   error: {
     code: 'auth/config-unavailable',
     message: 'Auth not initialized',
-    userMessage: 'El acceso no está disponible ahora mismo. Revisa la configuración del proyecto.',
+    userMessage: 'El acceso no esta disponible ahora mismo. Revisa la configuracion del proyecto.',
   },
 });
 
@@ -36,7 +36,7 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
   const errorMap: Record<string, { message: string; userMessage: string }> = {
     'auth/invalid-email': {
       message: 'Invalid email format',
-      userMessage: 'El correo no es válido. Revísalo e inténtalo de nuevo.',
+      userMessage: 'El correo no es valido. Revisalo e intentalo de nuevo.',
     },
     'auth/user-not-found': {
       message: 'User not found',
@@ -44,7 +44,7 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
     },
     'auth/wrong-password': {
       message: 'Wrong password',
-      userMessage: 'La contraseña no coincide. Inténtalo de nuevo.',
+      userMessage: 'La contrasena no coincide. Intentalo de nuevo.',
     },
     'auth/popup-closed-by-user': {
       message: 'Popup closed',
@@ -52,26 +52,26 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
     },
     'auth/account-exists-with-different-credential': {
       message: 'Account exists with different credential',
-      userMessage: 'Esta cuenta ya existe con otro método de acceso.',
+      userMessage: 'Esta cuenta ya existe con otro metodo de acceso.',
     },
     'auth/unauthorized-domain': {
       message: 'Unauthorized domain',
       userMessage:
-        'El dominio actual no está autorizado en Firebase Authentication. Añádelo en Authorized domains.',
+        'El dominio actual no esta autorizado en Firebase Authentication. Anadelo en Authorized domains.',
     },
     'auth/operation-not-allowed': {
       message: 'Operation not allowed',
       userMessage:
-        'El proveedor Google no está activado en Firebase Authentication para este proyecto.',
+        'El proveedor Google no esta activado en Firebase Authentication para este proyecto.',
     },
     'auth/popup-blocked': {
       message: 'Popup blocked',
       userMessage:
-        'El navegador bloqueó la ventana de Google. Permite popups e inténtalo de nuevo.',
+        'El navegador bloqueo la ventana de Google. Permite popups e intentalo de nuevo.',
     },
     'auth/cancelled-popup-request': {
       message: 'Cancelled popup request',
-      userMessage: 'Se canceló el intento de acceso. Reintenta con Google.',
+      userMessage: 'Se cancelo el intento de acceso. Reintenta con Google.',
     },
     'auth/too-many-requests': {
       message: 'Too many requests',
@@ -79,11 +79,11 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
     },
     'auth/email-already-in-use': {
       message: 'Email already in use',
-      userMessage: 'Ese correo ya tiene una cuenta. Inicia sesión para continuar.',
+      userMessage: 'Ese correo ya tiene una cuenta. Inicia sesion para continuar.',
     },
     'auth/weak-password': {
       message: 'Weak password',
-      userMessage: 'La contraseña debe tener al menos 6 caracteres.',
+      userMessage: 'La contrasena debe tener al menos 6 caracteres.',
     },
   };
 
@@ -174,7 +174,7 @@ export async function registerWithEmail(
           code: 'auth/register-email-failed',
           message: payload?.error || 'Register email failed',
           userMessage:
-            'Hemos creado tu cuenta, pero no hemos podido enviarte el correo de verificación. Escríbenos y te ayudamos a activarla.',
+            'Hemos creado tu cuenta, pero no hemos podido enviarte el correo de verificacion. Escribenos y te ayudamos a activarla.',
         },
       };
     }

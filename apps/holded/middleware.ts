@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server';
 const REDIRECT_TARGETS: Record<string, string> = {
   '/capacidades': '/#beneficios',
   '/planes': '/#acceso-libre',
-  '/support': '/#acceso-libre',
   '/demo-recording': '/#beneficios',
 };
 

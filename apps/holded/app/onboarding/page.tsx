@@ -7,8 +7,7 @@ import { getHoldedConnection } from '@/app/lib/holded-integration';
 
 export const metadata: Metadata = {
   title: 'Onboarding | Isaak para Holded',
-  description:
-    'Onboarding gratuito de Holded: acceso, validación de API key y entrada al dashboard.',
+  description: 'Onboarding gratuito de Holded: acceso, API key y entrada al dashboard.',
 };
 
 type PageProps = {
@@ -43,33 +42,33 @@ export default async function HoldedOnboardingPage({ searchParams }: PageProps) 
             Onboarding gratuito
           </div>
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-            Vamos a dejar tu Holded listo en dos pasos
+            Vamos a dejar tu Holded listo en menos de un minuto
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">
-            Ya tienes acceso. Ahora solo falta validar la API key y llevarte al dashboard para tu
+            Ya tienes acceso. Ahora solo falta validar tu API key y llevarte al dashboard para tu
             primer chat con Isaak.
           </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             <article className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <MailCheck className="h-5 w-5 text-[#ff5460]" />
-              <div className="mt-4 text-sm font-semibold text-slate-900">1. Acceso activado</div>
+              <div className="mt-4 text-sm font-semibold text-slate-900">1. Acceso listo</div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Tu cuenta ya está lista para continuar dentro de Holded.
+                Tu cuenta ya esta preparada para continuar dentro de Holded.
               </p>
             </article>
             <article className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <KeyRound className="h-5 w-5 text-[#ff5460]" />
-              <div className="mt-4 text-sm font-semibold text-slate-900">2. API key de Holded</div>
+              <div className="mt-4 text-sm font-semibold text-slate-900">2. Pega tu API key</div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Pégala una vez y la comprobamos al instante.
+                La pegas una vez y la comprobamos al instante.
               </p>
             </article>
             <article className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <CheckCircle2 className="h-5 w-5 text-[#ff5460]" />
-              <div className="mt-4 text-sm font-semibold text-slate-900">3. Dashboard</div>
+              <div className="mt-4 text-sm font-semibold text-slate-900">3. Entra al dashboard</div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Entras directamente al chat y ya puedes empezar a preguntar.
+                Llegas directo al chat y ya puedes empezar a preguntar.
               </p>
             </article>
           </div>

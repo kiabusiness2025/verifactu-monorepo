@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
 
 type ValidationResponse = {
@@ -35,6 +35,7 @@ export default function OnboardingHoldedClient() {
 
   const statusLine = useMemo(() => {
     if (!validation?.probe) return null;
+
     const checks = [
       validation.probe.invoiceApi.ok ? 'Facturas' : null,
       validation.probe.accountingApi.ok ? 'Contabilidad' : null,
@@ -44,10 +45,10 @@ export default function OnboardingHoldedClient() {
     ].filter(Boolean);
 
     if (checks.length === 0) {
-      return 'No hemos podido validar ningún módulo principal de Holded.';
+      return 'No hemos podido validar ningun modulo principal de Holded.';
     }
 
-    return `Validación correcta en: ${checks.join(', ')}.`;
+    return `Validacion correcta en: ${checks.join(', ')}.`;
   }, [validation]);
 
   const runValidation = async (value = apiKey) => {
@@ -62,11 +63,15 @@ export default function OnboardingHoldedClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey: value.trim() }),
       });
+
       const data = (await res.json().catch(() => null)) as ValidationResponse | null;
+
       if (!res.ok) {
         throw new Error(data?.error || 'No hemos podido validar la API key.');
       }
+
       setValidation(data);
+
       if (!data?.ok) {
         setError(data?.error || 'No hemos podido validar la API key.');
       }
@@ -105,7 +110,9 @@ export default function OnboardingHoldedClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey: apiKey.trim() }),
       });
+
       const data = await res.json().catch(() => null);
+
       if (!res.ok || !data?.ok) {
         throw new Error(data?.error || 'No hemos podido conectar Holded.');
       }
@@ -147,13 +154,13 @@ export default function OnboardingHoldedClient() {
             <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <KeyRound className="h-4 w-4 text-[#ff5460]" />
-                Cómo encontrarla
+                Como encontrarla
               </div>
               <ol className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
                 <li>1. Entra en Holded.</li>
-                <li>2. Abre Configuración y busca el área de API.</li>
+                <li>2. Abre Configuracion y busca el area de API.</li>
                 <li>3. Copia una API key activa de tu empresa.</li>
-                <li>4. Pégala aquí. Nosotros la comprobamos al instante.</li>
+                <li>4. Pegala aqui. Nosotros la comprobamos al instante.</li>
               </ol>
             </div>
           </section>
@@ -166,7 +173,7 @@ export default function OnboardingHoldedClient() {
               <textarea
                 value={apiKey}
                 onChange={(event) => setApiKey(event.target.value)}
-                placeholder="Pega aquí tu API key"
+                placeholder="Pega aqui tu API key"
                 rows={5}
                 className="w-full resize-none rounded-3xl border border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
               />
@@ -198,7 +205,7 @@ export default function OnboardingHoldedClient() {
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
                   <div>
-                    <div className="font-semibold">API key válida</div>
+                    <div className="font-semibold">API key valida</div>
                     <div className="mt-1">{statusLine}</div>
                   </div>
                 </div>
@@ -237,11 +244,11 @@ export default function OnboardingHoldedClient() {
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
               <div className="flex items-center gap-2 font-semibold text-slate-900">
                 <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                Lo que ocurre después
+                Lo que ocurre despues
               </div>
               <p className="mt-2">
-                Si la clave funciona, guardamos la conexión y te llevamos al dashboard. No necesitas
-                pasar por más pantallas técnicas.
+                Si la clave funciona, guardamos la conexion y te llevamos al dashboard. No necesitas
+                pasar por mas pantallas tecnicas.
               </p>
             </div>
 

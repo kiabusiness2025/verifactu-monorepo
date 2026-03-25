@@ -42,11 +42,8 @@ function resolveLeadSender() {
 export async function sendHoldedLeadCommunication(input: LeadPayload) {
   const resend = new Resend(readRequiredEnv('RESEND_API_KEY'));
   const from = resolveLeadSender();
-  const internalRecipient = readOptionalEnv(
-    'HOLDED_LEAD_EMAIL',
-    'soporte@holded.verifactu.business'
-  );
-  const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@holded.verifactu.business');
+  const internalRecipient = readOptionalEnv('HOLDED_LEAD_EMAIL', 'soporte@verifactu.business');
+  const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business');
 
   const welcome = buildHoldedWelcomeEmail(input);
   const guide = buildHoldedOnboardingGuideEmail(input);

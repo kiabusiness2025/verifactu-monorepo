@@ -40,6 +40,7 @@ function legalFooter() {
 
 export function buildHoldedWelcomeEmail(input: LeadInput): EmailTemplate {
   const hello = greeting(input.name);
+
   return {
     subject: 'Bienvenido a Isaak para Holded',
     html: `
@@ -51,11 +52,11 @@ export function buildHoldedWelcomeEmail(input: LeadInput): EmailTemplate {
         <p style="margin:0 0 18px;">Si quieres, responde a este correo y te ayudamos paso a paso en menos de 24h.</p>
         <a href="https://holded.verifactu.business" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Continuar onboarding</a>
         <hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;" />
-        <p style="font-size:13px;color:#475569;margin:0;">Soporte: <a href="mailto:soporte@holded.verifactu.business" style="color:#b4233c;">soporte@holded.verifactu.business</a></p>
+        <p style="font-size:13px;color:#475569;margin:0;">Soporte: <a href="mailto:soporte@verifactu.business" style="color:#b4233c;">soporte@verifactu.business</a></p>
         ${legalFooter()}
       </div>
     `.trim(),
-    text: `${hello}\n\nGracias por empezar con Isaak para Holded. Tu acceso gratuito para ${input.companyName} ya esta preparado.\n\nContinua aqui: https://holded.verifactu.business\n\nSi necesitas ayuda, responde a este correo o escribe a soporte@holded.verifactu.business.`,
+    text: `${hello}\n\nGracias por empezar con Isaak para Holded. Tu acceso gratuito para ${input.companyName} ya esta preparado.\n\nContinua aqui: https://holded.verifactu.business\n\nSi necesitas ayuda, responde a este correo o escribe a soporte@verifactu.business.`,
   };
 }
 
@@ -82,6 +83,7 @@ export function buildHoldedOnboardingGuideEmail(input: LeadInput): EmailTemplate
 
 export function buildHoldedInternalLeadEmail(input: LeadInput): EmailTemplate {
   const source = input.source?.trim() || 'holded_web';
+
   return {
     subject: `Nuevo lead Holded: ${input.name}`,
     html: `

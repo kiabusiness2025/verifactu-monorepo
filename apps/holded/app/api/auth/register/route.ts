@@ -168,7 +168,7 @@ export async function POST(req: Request) {
 
     const resend = new Resend(requireEnv('RESEND_API_KEY'));
     const from = readOptionalEnv('RESEND_FROM', 'Isaak for Holded <holded@verifactu.business>');
-    const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@holded.verifactu.business');
+    const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business');
     const adminRecipients = (
       process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS?.trim() || 'soporte@verifactu.business'
     )

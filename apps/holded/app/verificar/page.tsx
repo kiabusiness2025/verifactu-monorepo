@@ -5,8 +5,7 @@ import { buildAuthUrl, buildOnboardingUrl } from '@/app/lib/holded-navigation';
 
 export const metadata: Metadata = {
   title: 'Verifica tu acceso | Isaak para Holded',
-  description:
-    'Confirma tu correo y continúa el onboarding gratuito de Holded dentro del mismo producto.',
+  description: 'Confirma tu correo y continua el onboarding gratuito de Holded.',
 };
 
 type PageProps = {
@@ -33,15 +32,15 @@ export default async function HoldedVerifyPage({ searchParams }: PageProps) {
             ) : (
               <MailCheck className="h-3.5 w-3.5" />
             )}
-            {verified ? 'Correo confirmado' : 'Verificación pendiente'}
+            {verified ? 'Correo confirmado' : 'Verificacion pendiente'}
           </div>
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-            {verified ? 'Tu correo ya está verificado' : 'Te estamos esperando en tu correo'}
+            {verified ? 'Tu correo ya esta verificado' : 'Revisa tu correo para continuar'}
           </h1>
           <p className="mt-4 text-base leading-8 text-slate-600">
             {verified
-              ? 'Perfecto. Ya puedes iniciar sesión y pasar directamente al onboarding de Holded.'
-              : 'Revisa tu bandeja de entrada y confirma el enlace. Sin ese paso no podremos activar tu acceso gratuito.'}
+              ? 'Perfecto. Ya puedes iniciar sesion y seguir directamente con la conexion de Holded.'
+              : 'Abre el correo de confirmacion y pulsa en el enlace. Sin ese paso no podremos activar tu acceso.'}
           </p>
           {email ? (
             <p className="mt-3 text-sm font-semibold text-slate-900">
@@ -54,24 +53,24 @@ export default async function HoldedVerifyPage({ searchParams }: PageProps) {
               href={buildAuthUrl(source, buildOnboardingUrl(source))}
               className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
             >
-              {verified ? 'Entrar y continuar' : 'Ir al acceso'}
+              {verified ? 'Entrar y continuar' : 'Ya he confirmado, continuar'}
             </Link>
             <Link
               href="/gracias"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              Ver pasos del onboarding
+              Ver pasos otra vez
             </Link>
           </div>
 
           <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
             <div className="flex items-center gap-2 font-semibold text-slate-900">
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
-              Qué pasa después
+              Lo siguiente
             </div>
             <p className="mt-2">
-              Tras iniciar sesión te pediremos solo una cosa: tu API key de Holded. La validamos al
-              momento y, si todo encaja, te llevamos al dashboard.
+              Tras iniciar sesion te pediremos solo una cosa: tu API key de Holded. La validamos al
+              momento y te llevamos al dashboard.
             </p>
           </div>
         </section>

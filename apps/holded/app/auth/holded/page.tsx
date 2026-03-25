@@ -13,6 +13,7 @@ import { mintSessionCookie } from '@/app/lib/serverSession';
 
 const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
 
 function buildFallbackTarget(source: string) {
   return buildOnboardingUrl(source);
@@ -396,10 +397,10 @@ function HoldedAuthContent() {
               Si ya tienes acceso, aqui solo retomamos tu flujo para entrar al onboarding. Si
               necesitas ayuda, escribenos a{' '}
               <a
-                href="mailto:soporte@holded.verifactu.business"
+                href={`mailto:${SUPPORT_EMAIL}`}
                 className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
               >
-                soporte@holded.verifactu.business
+                {SUPPORT_EMAIL}
               </a>
               . Powered by verifactu.business.
               <span className="block pt-2">

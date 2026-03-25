@@ -6,9 +6,8 @@ import { getHoldedConnection } from '@/app/lib/holded-integration';
 import { getHoldedSession } from '@/app/lib/holded-session';
 
 export const metadata: Metadata = {
-  title: 'Conexión lista | Isaak para Holded',
-  description:
-    'Conexión validada correctamente. Ya puedes entrar al dashboard y empezar tu primer chat.',
+  title: 'Conexion lista | Isaak para Holded',
+  description: 'Conexion validada correctamente. Ya puedes entrar al dashboard y empezar.',
 };
 
 export default async function HoldedOnboardingSuccessPage() {
@@ -29,10 +28,10 @@ export default async function HoldedOnboardingSuccessPage() {
         <section className="rounded-[2rem] border border-[#ff5460]/15 bg-white p-8 shadow-[0_32px_90px_-48px_rgba(255,84,96,0.35)]">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            Conexión lista
+            Conexion lista
           </div>
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-            Holded ya está conectado
+            Holded ya esta conectado
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
             La API key funciona y ya hemos preparado tu acceso al dashboard gratuito.
@@ -43,14 +42,14 @@ export default async function HoldedOnboardingSuccessPage() {
               <Sparkles className="h-5 w-5 text-[#ff5460]" />
               <div className="mt-4 text-sm font-semibold text-slate-900">Lo siguiente</div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Entrar al dashboard y lanzar tu primera pregunta a Isaak con la conexión ya activa.
+                Entrar al dashboard y lanzar tu primera pregunta a Isaak con la conexion ya activa.
               </p>
             </article>
             <article className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <MessageCircleMore className="h-5 w-5 text-[#ff5460]" />
               <div className="mt-4 text-sm font-semibold text-slate-900">Primer chat</div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                El dashboard ya te sugerirá preguntas sobre ventas, clientes, cobros y gastos.
+                El dashboard ya te sugerira preguntas sobre ventas, clientes, cobros y gastos.
               </p>
             </article>
           </div>
@@ -66,7 +65,7 @@ export default async function HoldedOnboardingSuccessPage() {
               href="/onboarding/holded"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              Revisar conexión
+              Revisar conexion
             </Link>
           </div>
         </section>
