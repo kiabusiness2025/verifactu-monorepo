@@ -178,3 +178,56 @@ Desconecta y limpia la credencial guardada.
 - el fingerprint no sustituye a un identificador remoto nativo de Holded
 - aun no existe UI publica de desconexion, solo endpoint backend
 - no hay sync historico ni refresh jobs, solo conexion inicial y chat
+
+## Chat y memoria MVP
+
+El MVP de `apps/holded` reutiliza modelos canonicos ya existentes:
+
+- `IsaakConversation`
+- `IsaakConversationMsg`
+- `IsaakMemoryFact`
+
+### Reglas de pertenencia
+
+- cada chat pertenece a un `tenantId`
+- cada chat pertenece a un `userId`
+- `context = "holded_free_dashboard"` delimita este flujo
+- la memoria simple se guarda con `scope = "user_private"`
+
+Esto garantiza que:
+
+- cada usuario tiene sus propios chats
+- cada chat pertenece a una organizacion concreta
+- la memoria no se mezcla entre usuarios del mismo tenant
+- cada consulta usa la conexion Holded del `tenantId` activo
+
+### Memoria MVP
+
+Mientras no exista memoria avanzada completa, se guarda solo:
+
+- `chat_preference:last_user_topic`
+- `holded_snapshot:latest_snapshot_counts`
+
+Caracteristicas:
+
+- persistente
+- acotada por `tenantId + userId`
+- sin documentos
+- sin embeddings
+- sin resumen automatico avanzado
+
+### Endpoints MVP
+
+- `POST /api/holded/chat`
+- `GET /api/holded/conversations`
+- `POST /api/holded/conversations`
+- `GET /api/holded/conversations/[id]`
+
+### Marcadores de evolucion
+
+La estructura ya permite ampliar despues a:
+
+- memoria avanzada por categorias y confirmacion
+- documentos por tenant y por chat
+- nuevas integraciones por `ExternalConnection.provider`
+- multiusuario real con memoria compartida por organizacion o por workspace

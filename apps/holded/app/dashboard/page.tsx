@@ -49,7 +49,14 @@ export default async function HoldedDashboardPage({ searchParams }: PageProps) {
         session={{
           email: typeof session.email === 'string' ? session.email : null,
           tenantId,
+          tenantName: connection.tenantName,
+          legalName: connection.legalName,
+          taxId: connection.taxId,
           keyMasked: connection.keyMasked,
+          connectedAt: connection.connectedAt,
+          lastValidatedAt: connection.lastValidatedAt,
+          supportedModules: connection.supportedModules,
+          validationSummary: connection.validationSummary,
         }}
       />
     );

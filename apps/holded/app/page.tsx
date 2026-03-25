@@ -136,7 +136,7 @@ export default function HoldedHomePage() {
         </div>
       </section>
 
-      <section id="seguridad" className="py-14">
+      <section id="beneficios" className="py-14">
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-8 lg:p-10">
             <div className="max-w-3xl">
