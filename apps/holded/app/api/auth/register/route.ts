@@ -93,6 +93,28 @@ function buildWelcomeEmail(input: { email: string; accessUrl: string; dashboardU
   };
 }
 
+function buildAdminNotificationEmail(input: {
+  email: string;
+  source: string;
+  accessUrl: string;
+  createdAt: string;
+}) {
+  return {
+    subject: `Nuevo usuario Holded: ${input.email}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff;">
+        <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:#eef4ff;color:#1f55c0;font-size:12px;font-weight:700;letter-spacing:0.04em;">Admin Holded</div>
+        <h1 style="font-size:24px;line-height:1.2;margin:16px 0 8px;">Nuevo usuario registrado</h1>
+        <p style="margin:0 0 10px;"><strong>Email:</strong> ${escapeHtml(input.email)}</p>
+        <p style="margin:0 0 10px;"><strong>Origen:</strong> ${escapeHtml(input.source)}</p>
+        <p style="margin:0 0 10px;"><strong>Fecha:</strong> ${escapeHtml(input.createdAt)}</p>
+        <a href="${escapeHtml(input.accessUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir producto</a>
+      </div>
+    `.trim(),
+    text: `Nuevo usuario registrado en Holded\n\nEmail: ${input.email}\nOrigen: ${input.source}\nFecha: ${input.createdAt}\n\nProducto: ${input.accessUrl}`,
+  };
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -130,11 +152,23 @@ export async function POST(req: Request) {
     const resend = new Resend(requireEnv('RESEND_API_KEY'));
     const from = readOptionalEnv('RESEND_FROM', 'Isaak for Holded <holded@verifactu.business>');
     const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@holded.verifactu.business');
+    const adminRecipients = (
+      process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS?.trim() || 'soporte@verifactu.business'
+    )
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
     const template = buildVerificationEmail({ email: decoded.email, verificationUrl });
     const welcome = buildWelcomeEmail({
       email: decoded.email,
       accessUrl: accessUrl.toString(),
       dashboardUrl: dashboardUrl.toString(),
+    });
+    const adminNotification = buildAdminNotificationEmail({
+      email: decoded.email,
+      source,
+      accessUrl: accessUrl.toString(),
+      createdAt: new Date().toISOString(),
     });
 
     const [verificationResult, welcomeResult] = await Promise.all([
@@ -155,6 +189,26 @@ export async function POST(req: Request) {
         replyTo,
       }),
     ]);
+
+    if (adminRecipients.length > 0) {
+      resend.emails
+        .send({
+          from,
+          to: adminRecipients,
+          subject: adminNotification.subject,
+          html: adminNotification.html,
+          text: adminNotification.text,
+          replyTo,
+        })
+        .catch((notificationError) => {
+          console.error('[holded auth register] admin notification failed', {
+            error:
+              notificationError instanceof Error
+                ? notificationError.message
+                : String(notificationError),
+          });
+        });
+    }
 
     return NextResponse.json({
       ok: true,

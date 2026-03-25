@@ -6,21 +6,27 @@ const REDIRECT_TARGETS: Record<string, string> = {
   '/planes': '/#acceso-libre',
   '/support': '/#acceso-libre',
   '/demo-recording': '/#beneficios',
-  '/privacy': '/#acceso-libre',
-  '/terms': '/#acceso-libre',
 };
 
 export function middleware(request: NextRequest) {
   const isAuthRoute = request.nextUrl.pathname.startsWith('/auth/');
   const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard');
   const isOnboardingRoute = request.nextUrl.pathname.startsWith('/onboarding');
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
   const target = REDIRECT_TARGETS[request.nextUrl.pathname];
 
-  if ((isDashboardRoute || isOnboardingRoute) && !request.cookies.get('__session')?.value) {
+  if (
+    (isDashboardRoute || isOnboardingRoute || isAdminRoute) &&
+    !request.cookies.get('__session')?.value
+  ) {
     const loginUrl = new URL('/auth/holded', request.url);
     loginUrl.searchParams.set(
       'source',
-      isOnboardingRoute ? 'holded_onboarding_guard' : 'holded_dashboard_guard'
+      isOnboardingRoute
+        ? 'holded_onboarding_guard'
+        : isAdminRoute
+          ? 'holded_admin_guard'
+          : 'holded_dashboard_guard'
     );
     loginUrl.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search || ''}`);
     const response = NextResponse.redirect(loginUrl, 307);
@@ -52,8 +58,7 @@ export const config = {
     '/planes',
     '/support',
     '/demo-recording',
-    '/privacy',
-    '/terms',
+    '/admin/:path*',
     '/dashboard/:path*',
     '/onboarding/:path*',
   ],

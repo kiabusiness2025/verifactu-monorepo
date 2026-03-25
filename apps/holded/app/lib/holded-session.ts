@@ -12,8 +12,10 @@ export async function getHoldedSession() {
 
   const user = await prisma.user.findFirst({
     where: { authSubject: payload.uid },
-    select: { id: true, email: true, name: true },
+    select: { id: true, email: true, name: true, isBlocked: true },
   });
+
+  if (user?.isBlocked) return null;
 
   return {
     payload,

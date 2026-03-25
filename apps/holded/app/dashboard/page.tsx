@@ -1,9 +1,9 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import HoldedDashboardClient from './HoldedDashboardClient';
+import { getHoldedSession } from '@/app/lib/holded-session';
+import { isHoldedAdminEmail } from '@/app/lib/holded-admin';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
-import { readSessionSecret, SESSION_COOKIE_NAME, verifySessionToken } from '@/app/lib/session';
 
 export const metadata: Metadata = {
   title: 'Dashboard | Isaak para Holded',
@@ -22,21 +22,15 @@ function readSource(value: string | string[] | undefined) {
 export default async function HoldedDashboardPage({ searchParams }: PageProps) {
   const resolved = (await searchParams) || {};
   const source = readSource(resolved.source) || 'holded_dashboard';
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   const nextTarget = `/dashboard?source=${encodeURIComponent(source)}`;
-
-  if (!token) {
-    redirect(
-      `/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextTarget)}`
-    );
-  }
+  const session = await getHoldedSession();
 
   try {
-    const session = await verifySessionToken(token, readSessionSecret());
-    const tenantId = typeof session?.tenantId === 'string' ? session.tenantId : null;
-    if (!tenantId) {
-      redirect('/onboarding');
+    const tenantId = session?.tenantId || null;
+    if (!tenantId || !session) {
+      redirect(
+        `/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextTarget)}`
+      );
     }
 
     const connection = await getHoldedConnection(tenantId);
@@ -47,7 +41,7 @@ export default async function HoldedDashboardPage({ searchParams }: PageProps) {
     return (
       <HoldedDashboardClient
         session={{
-          email: typeof session.email === 'string' ? session.email : null,
+          email: session.email,
           tenantId,
           tenantName: connection.tenantName,
           legalName: connection.legalName,
@@ -57,6 +51,7 @@ export default async function HoldedDashboardPage({ searchParams }: PageProps) {
           lastValidatedAt: connection.lastValidatedAt,
           supportedModules: connection.supportedModules,
           validationSummary: connection.validationSummary,
+          isAdmin: isHoldedAdminEmail(session.email),
         }}
       />
     );

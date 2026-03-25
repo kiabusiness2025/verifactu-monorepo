@@ -58,19 +58,10 @@ function HoldedAuthContent() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptLegal, setAcceptLegal] = useState(false);
   const [acceptMarketing, setAcceptMarketing] = useState(false);
-  const [rememberDevice, setRememberDevice] = useState(true);
   const [existingUserChecking, setExistingUserChecking] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem('vf_remember_device');
-    setRememberDevice(stored === null ? true : stored === 'true');
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem('vf_remember_device', String(rememberDevice));
-  }, [rememberDevice]);
+  const rememberDevice = true;
 
   useEffect(() => {
     let cancelled = false;
@@ -100,7 +91,7 @@ function HoldedAuthContent() {
     return () => {
       cancelled = true;
     };
-  }, [redirectTarget, rememberDevice]);
+  }, [redirectTarget]);
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -320,16 +311,6 @@ function HoldedAuthContent() {
                 </div>
               ) : null}
 
-              <label className="flex items-center gap-2 text-sm text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={rememberDevice}
-                  onChange={(event) => setRememberDevice(event.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
-                />
-                Recordar este dispositivo
-              </label>
-
               {isRegisterMode ? (
                 <label className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-700">
                   <input
@@ -405,6 +386,11 @@ function HoldedAuthContent() {
                 )}
               </div>
             </form>
+
+            <p className="text-center text-xs leading-5 text-slate-500">
+              Recordamos este dispositivo por defecto para que no tengas que iniciar sesion cada
+              vez.
+            </p>
 
             <p className="text-center text-xs leading-5 text-slate-500">
               Si ya tienes acceso, aqui solo retomamos tu flujo para entrar al onboarding. Si

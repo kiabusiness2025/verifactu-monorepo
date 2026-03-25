@@ -112,6 +112,12 @@ async function getTenantForUser(uid: string, email: string, displayName?: string
     });
   }
 
+  if (user.isBlocked) {
+    const error = new Error('Tu acceso esta bloqueado temporalmente. Contacta con soporte.');
+    error.name = 'HoldedBlockedUserError';
+    throw error;
+  }
+
   const membership = await prisma.membership.findFirst({
     where: { userId: user.id, status: 'active' },
     select: { tenantId: true },
@@ -223,6 +229,9 @@ export async function POST(req: Request) {
     response.cookies.set(cookieOpts);
     return response;
   } catch (error) {
+    if (error instanceof Error && error.name === 'HoldedBlockedUserError') {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     console.error('[holded] Error in POST /api/auth/session:', {
       error: error instanceof Error ? error.message : String(error),
     });
