@@ -245,13 +245,32 @@ export default function OnboardingHoldedClient() {
               </p>
             </div>
 
-            <div className="mt-5">
-              <Link
-                href="/support"
-                className="text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
-              >
-                No encuentro mi API key
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+              Al conectar tu cuenta, autorizas a la plataforma a utilizar la API key facilitada para
+              acceder a los datos de tu cuenta de Holded y ofrecerte la funcionalidad solicitada, de
+              acuerdo con nuestros{' '}
+              <Link href="/terms" className="font-semibold text-[#ff5460] hover:text-[#ef4654]">
+                Terminos
+              </Link>{' '}
+              y{' '}
+              <Link href="/privacy" className="font-semibold text-[#ff5460] hover:text-[#ef4654]">
+                Politica de Privacidad
               </Link>
+              .
+            </div>
+
+            <div className="mt-5">
+              <div className="flex flex-wrap gap-4 text-sm">
+                <Link href="/support" className="font-semibold text-[#ff5460] hover:text-[#ef4654]">
+                  No encuentro mi API key
+                </Link>
+                <Link href="/legal" className="font-semibold text-slate-700 hover:text-slate-900">
+                  Aviso legal
+                </Link>
+                <Link href="/cookies" className="font-semibold text-slate-700 hover:text-slate-900">
+                  Cookies
+                </Link>
+              </div>
             </div>
           </section>
         </div>

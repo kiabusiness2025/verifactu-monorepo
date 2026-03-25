@@ -57,6 +57,7 @@ function HoldedAuthContent() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptLegal, setAcceptLegal] = useState(false);
+  const [acceptMarketing, setAcceptMarketing] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [existingUserChecking, setExistingUserChecking] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -357,6 +358,21 @@ function HoldedAuthContent() {
                 </label>
               ) : null}
 
+              {isRegisterMode ? (
+                <label className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={acceptMarketing}
+                    onChange={(event) => setAcceptMarketing(event.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
+                  />
+                  <span>
+                    Acepto recibir comunicaciones sobre novedades, mejoras y funcionalidades de la
+                    integracion.
+                  </span>
+                </label>
+              ) : null}
+
               <button
                 type="submit"
                 disabled={isLoading || existingUserChecking}
@@ -399,7 +415,7 @@ function HoldedAuthContent() {
               >
                 info@verifactu.business
               </a>
-              . Desarrollado por verifactu.business.
+              . Powered by verifactu.business.
             </p>
           </div>
         </section>

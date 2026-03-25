@@ -26,6 +26,17 @@ function greeting(name: string) {
   return trimmed ? `Hola ${trimmed},` : 'Hola,';
 }
 
+function legalFooter() {
+  return `
+    <p style="margin:18px 0 0;color:#64748b;font-size:12px;">
+      Powered by <a href="https://verifactu.business" style="color:#b4233c;">verifactu.business</a> ·
+      <a href="https://holded.verifactu.business/legal" style="color:#b4233c;">Aviso legal</a> ·
+      <a href="https://holded.verifactu.business/privacy" style="color:#b4233c;">Privacidad</a> ·
+      <a href="https://holded.verifactu.business/terms" style="color:#b4233c;">Terminos</a>
+    </p>
+  `.trim();
+}
+
 export function buildHoldedWelcomeEmail(input: LeadInput): EmailTemplate {
   const hello = greeting(input.name);
   return {
@@ -40,6 +51,7 @@ export function buildHoldedWelcomeEmail(input: LeadInput): EmailTemplate {
         <a href="https://holded.verifactu.business" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Continuar onboarding</a>
         <hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;" />
         <p style="font-size:13px;color:#475569;margin:0;">Soporte: <a href="mailto:soporte@holded.verifactu.business" style="color:#b4233c;">soporte@holded.verifactu.business</a></p>
+        ${legalFooter()}
       </div>
     `.trim(),
     text: `${hello}\n\nGracias por empezar con Isaak para Holded. Tu acceso gratuito para ${input.companyName} ya está preparado.\n\nContinúa aquí: https://holded.verifactu.business\n\nSi necesitas ayuda, responde a este correo o escribe a soporte@holded.verifactu.business.`,
@@ -60,6 +72,7 @@ export function buildHoldedOnboardingGuideEmail(input: LeadInput): EmailTemplate
         </ol>
         <p style="margin:0 0 16px;">En cuanto valides la clave, tendrás contexto real para ventas, gastos, cobros y prioridades.</p>
         <a href="https://holded.verifactu.business" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Ir al onboarding</a>
+        ${legalFooter()}
       </div>
     `.trim(),
     text: `Tus 3 pasos para conectar Holded con Isaak:\n1) Abre Holded y entra en API.\n2) Copia una API key activa.\n3) Pégala en el onboarding de Isaak.\n\nEmpieza aquí: https://holded.verifactu.business`,
