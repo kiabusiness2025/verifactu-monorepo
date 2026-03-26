@@ -26,11 +26,31 @@ function cleanEnv(value: string | undefined): string | undefined {
   return unquoted;
 }
 
+// Next.js only exposes NEXT_PUBLIC_* vars to the client when they are
+// referenced statically. Do not read them via process.env[name] here.
+const PUBLIC_ENV = {
+  NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY,
+  NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN,
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID,
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET:
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET,
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID:
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID,
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID,
+  NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  NEXT_PUBLIC_USE_AUTH_EMULATOR: process.env.NEXT_PUBLIC_USE_AUTH_EMULATOR,
+} as const;
+
 function readEnv(primary: string, fallback?: string): string | undefined {
-  const first = cleanEnv(process.env[primary]);
+  const first = cleanEnv(PUBLIC_ENV[primary as keyof typeof PUBLIC_ENV]);
   if (first) return first;
   if (!fallback) return undefined;
-  return cleanEnv(process.env[fallback]);
+  return cleanEnv(PUBLIC_ENV[fallback as keyof typeof PUBLIC_ENV]);
 }
 
 function normalizeAuthDomain(value: string | undefined): string | undefined {
@@ -77,7 +97,7 @@ if (typeof window !== 'undefined' && isConfigComplete) {
       console.error('Error setting persistence:', error);
     });
 
-    if (process.env.NEXT_PUBLIC_USE_AUTH_EMULATOR === 'true') {
+    if (PUBLIC_ENV.NEXT_PUBLIC_USE_AUTH_EMULATOR === 'true') {
       const authWithEmulatorFlag = auth as typeof auth & { emulatorConfig?: unknown };
       if (!authWithEmulatorFlag.emulatorConfig) {
         connectAuthEmulator(auth, 'http://localhost:9099');
