@@ -187,22 +187,32 @@ export async function POST(req: Request) {
       accessUrl: adminUrl.toString(),
       createdAt: new Date().toISOString(),
     });
-    const [newUsersCount, connectedCount, disconnectedCount] = await Promise.all([
-      prisma.user.count({
-        where: {
-          authProvider: 'FIREBASE',
-          createdAt: {
-            gte: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+    let newUsersCount = 0;
+    let connectedCount = 0;
+    let disconnectedCount = 0;
+
+    try {
+      [newUsersCount, connectedCount, disconnectedCount] = await Promise.all([
+        prisma.user.count({
+          where: {
+            authProvider: 'FIREBASE',
+            createdAt: {
+              gte: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+            },
           },
-        },
-      }),
-      prisma.externalConnection.count({
-        where: { provider: 'holded', connectionStatus: 'connected' },
-      }),
-      prisma.externalConnection.count({
-        where: { provider: 'holded', connectionStatus: 'disconnected' },
-      }),
-    ]);
+        }),
+        prisma.externalConnection.count({
+          where: { provider: 'holded', connectionStatus: 'connected' },
+        }),
+        prisma.externalConnection.count({
+          where: { provider: 'holded', connectionStatus: 'disconnected' },
+        }),
+      ]);
+    } catch (summaryError) {
+      console.warn('[holded auth register] admin summary unavailable', {
+        error: summaryError instanceof Error ? summaryError.message : String(summaryError),
+      });
+    }
 
     const [verificationResult, welcomeResult] = await Promise.all([
       resend.emails.send({
