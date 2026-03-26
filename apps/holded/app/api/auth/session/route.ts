@@ -1,5 +1,10 @@
 import admin from 'firebase-admin';
 import { NextResponse } from 'next/server';
+import { Resend } from 'resend';
+import {
+  buildHoldedAccessReadyEmail,
+  buildHoldedOnboardingGuideEmail,
+} from '@/app/lib/communications/holded-email-templates';
 import { writeHoldedActivity } from '@/app/lib/holded-activity';
 import { prisma } from '@/app/lib/prisma';
 import {
@@ -24,6 +29,63 @@ function requireEnv(name: string) {
 function envOrNull(name: string) {
   const value = process.env[name]?.trim();
   return value ? value : null;
+}
+
+function cleanEnv(value: string | undefined) {
+  return value?.replace(/[\r\n]/g, '').trim();
+}
+
+function readOptionalEnv(name: string, fallback: string) {
+  return cleanEnv(process.env[name]) || fallback;
+}
+
+async function sendVerifiedAccessEmails(input: { email: string; source: string }) {
+  const resendApiKey = cleanEnv(process.env.RESEND_API_KEY);
+  if (!resendApiKey) return;
+
+  const holdedSite = readOptionalEnv(
+    'NEXT_PUBLIC_HOLDED_SITE_URL',
+    'https://holded.verifactu.business'
+  );
+  const accessUrl = new URL(`${holdedSite}/auth/holded`);
+  accessUrl.searchParams.set('source', input.source);
+  const dashboardUrl = new URL(`${holdedSite}/dashboard`);
+  dashboardUrl.searchParams.set('source', input.source);
+
+  const resend = new Resend(resendApiKey);
+  const from = readOptionalEnv('RESEND_FROM', 'Holded for Isaak <no-reply@holded.verifactu.business>');
+  const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business');
+
+  const accessReady = buildHoldedAccessReadyEmail({
+    email: input.email,
+    accessUrl: accessUrl.toString(),
+    dashboardUrl: dashboardUrl.toString(),
+  });
+  const guide = buildHoldedOnboardingGuideEmail({
+    name: input.email.split('@')[0] || '',
+    email: input.email,
+    companyName: 'tu empresa',
+    source: input.source,
+  });
+
+  await Promise.all([
+    resend.emails.send({
+      from,
+      to: [input.email],
+      subject: accessReady.subject,
+      html: accessReady.html,
+      text: accessReady.text,
+      replyTo,
+    }),
+    resend.emails.send({
+      from,
+      to: [input.email],
+      subject: guide.subject,
+      html: guide.html,
+      text: guide.text,
+      replyTo,
+    }),
+  ]);
 }
 
 function ensureAdminApp(appName: string, envPrefix: string, required: boolean) {
@@ -171,6 +233,7 @@ export async function POST(req: Request) {
     const { decoded, app } = await verifyIdToken(idToken);
     const userRecord = await app.auth().getUser(decoded.uid);
     const displayName = userRecord.displayName || decoded.name || undefined;
+    const source = new URL(req.url).searchParams.get('source')?.trim() || 'holded_login';
 
     if (!decoded.email) {
       return NextResponse.json({ error: 'Missing email' }, { status: 400 });
@@ -187,6 +250,16 @@ export async function POST(req: Request) {
         where: { id: user.id },
         data: { emailVerified: emailVerifiedAt },
       });
+      try {
+        await sendVerifiedAccessEmails({
+          email: decoded.email,
+          source,
+        });
+      } catch (emailError) {
+        console.error('[holded] verified welcome emails failed', {
+          error: emailError instanceof Error ? emailError.message : String(emailError),
+        });
+      }
       await writeHoldedActivity({
         tenantId,
         userId: user.id,

@@ -1,6 +1,7 @@
 import admin from 'firebase-admin';
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { buildHoldedVerificationEmail } from '@/app/lib/communications/holded-email-templates';
 import { prisma } from '@/app/lib/prisma';
 
 export const runtime = 'nodejs';
@@ -60,40 +61,6 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#039;');
 }
 
-function buildVerificationEmail(input: { email: string; verificationUrl: string }) {
-  return {
-    subject: 'Confirma tu correo para activar Isaak para Holded',
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff;">
-        <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:#ffecef;color:#b4233c;font-size:12px;font-weight:700;letter-spacing:0.04em;">Isaak para Holded</div>
-        <h1 style="font-size:28px;line-height:1.2;margin:16px 0 8px;">Un paso mas para empezar</h1>
-        <p style="margin:0 0 14px;">Hemos creado tu acceso con <strong>${escapeHtml(input.email)}</strong>.</p>
-        <p style="margin:0 0 18px;">Confirma tu correo y despues podras iniciar sesion para conectar Holded.</p>
-        <a href="${escapeHtml(input.verificationUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Confirmar correo</a>
-        <p style="margin:18px 0 0;color:#64748b;font-size:13px;">Si no solicitaste este acceso, puedes ignorar este mensaje.</p>
-      </div>
-    `.trim(),
-    text: `Confirma tu correo para activar Isaak para Holded.\n\nEmail: ${input.email}\n\nVerificar: ${input.verificationUrl}`,
-  };
-}
-
-function buildWelcomeEmail(input: { email: string; accessUrl: string; dashboardUrl: string }) {
-  return {
-    subject: 'Bienvenido a Isaak para Holded',
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff;">
-        <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:#ffecef;color:#b4233c;font-size:12px;font-weight:700;letter-spacing:0.04em;">Isaak para Holded</div>
-        <h1 style="font-size:28px;line-height:1.2;margin:16px 0 8px;">Tu acceso ya esta preparado</h1>
-        <p style="margin:0 0 14px;">Gracias por empezar con <strong>${escapeHtml(input.email)}</strong>.</p>
-        <p style="margin:0 0 18px;">Siguientes pasos: confirma tu correo, entra en tu acceso y pega tu API key de Holded para activar el onboarding gratuito.</p>
-        <a href="${escapeHtml(input.accessUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir acceso</a>
-        <p style="margin:18px 0 0;color:#64748b;font-size:13px;">Dashboard previsto tras la conexion: ${escapeHtml(input.dashboardUrl)}</p>
-      </div>
-    `.trim(),
-    text: `Bienvenido a Isaak para Holded.\n\n1) Confirma tu correo.\n2) Entra en tu acceso.\n3) Conecta tu API key de Holded.\n4) Accede al dashboard.\n\nAcceso: ${input.accessUrl}\nDashboard: ${input.dashboardUrl}`,
-  };
-}
-
 function buildAdminNotificationEmail(input: {
   email: string;
   source: string;
@@ -151,10 +118,6 @@ export async function POST(req: Request) {
       'NEXT_PUBLIC_HOLDED_SITE_URL',
       'https://holded.verifactu.business'
     );
-    const accessUrl = new URL(`${holdedSite}/auth/holded`);
-    accessUrl.searchParams.set('source', source);
-    const dashboardUrl = new URL(`${holdedSite}/dashboard`);
-    dashboardUrl.searchParams.set('source', source);
     const adminUrl = new URL(`${holdedSite}/admin`);
     const continueUrl = new URL(`${holdedSite}/verificar`);
     continueUrl.searchParams.set('source', source);
@@ -175,12 +138,7 @@ export async function POST(req: Request) {
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean);
-    const template = buildVerificationEmail({ email: decoded.email, verificationUrl });
-    const welcome = buildWelcomeEmail({
-      email: decoded.email,
-      accessUrl: accessUrl.toString(),
-      dashboardUrl: dashboardUrl.toString(),
-    });
+    const template = buildHoldedVerificationEmail({ email: decoded.email, verificationUrl });
     const adminNotification = buildAdminNotificationEmail({
       email: decoded.email,
       source,
@@ -214,24 +172,14 @@ export async function POST(req: Request) {
       });
     }
 
-    const [verificationResult, welcomeResult] = await Promise.all([
-      resend.emails.send({
-        from,
-        to: [decoded.email],
-        subject: template.subject,
-        html: template.html,
-        text: template.text,
-        replyTo,
-      }),
-      resend.emails.send({
-        from,
-        to: [decoded.email],
-        subject: welcome.subject,
-        html: welcome.html,
-        text: welcome.text,
-        replyTo,
-      }),
-    ]);
+    const verificationResult = await resend.emails.send({
+      from,
+      to: [decoded.email],
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+      replyTo,
+    });
 
     if (adminRecipients.length > 0) {
       resend.emails
@@ -262,7 +210,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       verificationEmailId: verificationResult.data?.id ?? null,
-      welcomeEmailId: welcomeResult.data?.id ?? null,
+      welcomeEmailId: null,
     });
   } catch (error) {
     console.error('[holded auth register] failed', error);
