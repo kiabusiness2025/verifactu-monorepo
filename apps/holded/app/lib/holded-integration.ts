@@ -725,25 +725,33 @@ export async function getHoldedConnection(
         tenantId,
         error: error instanceof Error ? error.message : String(error),
       });
-      const integration = await getTenantIntegrationFallback(tenantId);
-      if (!integration?.apiKeyEnc) return null;
+      try {
+        const integration = await getTenantIntegrationFallback(tenantId);
+        if (!integration?.apiKeyEnc) return null;
 
-      const apiKey = decryptHoldedSecret(integration.apiKeyEnc);
-      return {
-        provider: 'holded',
-        status: integration.status,
-        connectedAt: null,
-        lastValidatedAt: null,
-        lastSyncAt: integration.lastSyncAt?.toISOString() || null,
-        providerAccountId: null,
-        keyMasked: maskSecret(apiKey),
-        supportedModules: [],
-        validationSummary: 'Conexion guardada en modo compatible',
-        tenantName: integration.tenant.profile?.tradeName || integration.tenant.name || null,
-        legalName: integration.tenant.profile?.legalName || integration.tenant.legalName || null,
-        taxId: integration.tenant.profile?.taxId || integration.tenant.nif || null,
-        apiKey,
-      };
+        const apiKey = decryptHoldedSecret(integration.apiKeyEnc);
+        return {
+          provider: 'holded',
+          status: integration.status,
+          connectedAt: null,
+          lastValidatedAt: null,
+          lastSyncAt: integration.lastSyncAt?.toISOString() || null,
+          providerAccountId: null,
+          keyMasked: maskSecret(apiKey),
+          supportedModules: [],
+          validationSummary: 'Conexion guardada en modo compatible',
+          tenantName: integration.tenant.profile?.tradeName || integration.tenant.name || null,
+          legalName: integration.tenant.profile?.legalName || integration.tenant.legalName || null,
+          taxId: integration.tenant.profile?.taxId || integration.tenant.nif || null,
+          apiKey,
+        };
+      } catch (fallbackError) {
+        console.warn('[holded integration] fallback connection read failed', {
+          tenantId,
+          error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+        });
+        return null;
+      }
     }
 
     console.warn('[holded integration] failed to read connection', {
@@ -757,7 +765,16 @@ export async function getHoldedConnection(
     return null;
   }
 
-  const apiKey = decryptHoldedSecret(connection.apiKeyEnc);
+  let apiKey: string;
+  try {
+    apiKey = decryptHoldedSecret(connection.apiKeyEnc);
+  } catch (error) {
+    console.warn('[holded integration] failed to decrypt stored api key', {
+      tenantId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
   const supportedModules = connection.scopesGranted || [];
 
   return {
