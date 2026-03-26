@@ -49,10 +49,10 @@ type SuggestionAction = {
 };
 
 const STARTER_PROMPTS = [
-  '¿Cuánto he facturado este mes?',
+  '¿Cuanto he facturado este mes?',
   '¿Tengo facturas pendientes de cobro?',
   'Hazme una factura para un cliente.',
-  'Explícame mis gastos de este mes.',
+  'Explicame mis gastos de este mes.',
 ];
 
 const QUICK_HELP = [
@@ -92,7 +92,7 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
     {
       id: 'welcome-1',
       role: 'assistant',
-      content: 'Ya tienes tu cuenta de Holded conectada ✅',
+      content: 'Ya tienes tu cuenta de Holded conectada.',
     },
     {
       id: 'welcome-2',
@@ -104,13 +104,13 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
       id: 'welcome-3',
       role: 'assistant',
       content:
-        'Para empezar, prueba con algo como: ¿Cuánto he facturado este mes?, ¿Tengo facturas pendientes de cobro?, Hazme una factura para un cliente o Explícame mis gastos de este mes.',
+        'Para empezar, prueba con algo como: ¿Cuanto he facturado este mes?, ¿Tengo facturas pendientes de cobro?, Hazme una factura para un cliente o Explicame mis gastos de este mes.',
     },
   ]);
   const [suggestionActions, setSuggestionActions] = useState<SuggestionAction[]>([
     {
       id: 'summary-yes',
-      label: 'Sí, ver resumen',
+      label: 'Si, ver resumen',
       prompt: 'Quiero ver un resumen de este mes',
     },
     {
@@ -303,7 +303,7 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
       {
         id: 'welcome-new-chat-1',
         role: 'assistant',
-        content: 'Ya tienes tu cuenta de Holded conectada ✅',
+        content: 'Ya tienes tu cuenta de Holded conectada.',
       },
       {
         id: 'welcome-new-chat-2',
@@ -321,7 +321,7 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
     setSuggestionActions([
       {
         id: 'summary-yes-reset',
-        label: 'Sí, ver resumen',
+        label: 'Si, ver resumen',
         prompt: 'Quiero ver un resumen de este mes',
       },
       {
@@ -782,7 +782,7 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
               {suggestionActions.length > 0 ? (
                 <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
                   <div className="text-sm font-semibold text-slate-900">
-                    Si quieres, puedo darte un resumen rápido de tu negocio ahora mismo.
+                    Si quieres, puedo darte un resumen rapido de tu negocio ahora mismo.
                   </div>
                   <div className="mt-2 text-sm text-slate-600">
                     ¿Quieres ver un resumen de este mes?

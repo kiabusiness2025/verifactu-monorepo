@@ -12,7 +12,7 @@ import HoldedHeroVisual from './components/HoldedHeroVisual';
 import { buildAuthUrl, buildRegisterUrl } from './lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Isaak para Holded | Gestiona tu negocio sin complicaciones',
+  title: 'Isaak para Holded | Usa Holded de una forma mucho mas simple',
   description:
     'Gestiona tu negocio en Holded sin complicaciones. Pregunta, entiende tus numeros y conecta tu cuenta gratis en minutos.',
 };
@@ -74,12 +74,13 @@ export default function HoldedHomePage() {
               </div>
 
               <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.4rem] sm:leading-[1.02]">
-                Gestiona tu negocio en Holded sin complicaciones
+                Usa Holded de una forma mucho mas simple
               </h1>
 
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Holded es potente, pero no siempre esta hecho para pensar como tu. No necesitas
-                aprender contabilidad ni navegar por menus. Solo tienes que preguntar.
+                Holded es potente, pero no siempre esta hecho para pensar como tu. Si solo quieres
+                saber que vendes, que debes, que gastos tienes o crear una factura rapido, aqui
+                puedes hacerlo hablando normal.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -102,8 +103,8 @@ export default function HoldedHomePage() {
                 <div className="text-sm font-semibold text-slate-900">Que vas a necesitar</div>
                 <div className="mt-4 flex items-start gap-2 text-sm leading-6 text-slate-700">
                   <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                  Una API key activa de Holded. La validamos al momento y te damos feedback claro si
-                  algo no cuadra.
+                  Tu correo y una API key activa de Holded. La comprobamos al momento y te decimos
+                  si algo no cuadra.
                 </div>
               </div>
             </div>
@@ -152,10 +153,10 @@ export default function HoldedHomePage() {
                 La solucion
               </div>
               <h3 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-                Ahora puedes gestionar todo hablando como siempre
+                Ahora puedes gestionar tu negocio hablando como siempre
               </h3>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                Sin menus. Sin complicaciones. Sin conocimientos tecnicos.
+                Sin menus. Sin complicaciones. Sin volverte tecnico.
               </p>
               <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -216,13 +217,13 @@ export default function HoldedHomePage() {
 
             <article className="rounded-[2rem] border border-[#ff5460]/15 bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_100%)] p-8 shadow-[0_32px_90px_-48px_rgba(255,84,96,0.35)]">
               <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#ff5460]">
-                Tu asistente inteligente
+                El asistente
               </div>
               <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
                 Todo esto lo hace Isaak
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                Isaak entiende como funciona tu negocio y te responde en lenguaje normal.
+                Isaak es el asistente que entiende tu negocio y te responde en lenguaje normal.
               </p>
               <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
                 <div className="text-sm font-semibold text-slate-900">
