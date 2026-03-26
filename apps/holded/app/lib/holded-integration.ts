@@ -5,6 +5,17 @@ import { prisma } from './prisma';
 const HOLDED_API_BASE_URL = process.env.HOLDED_API_BASE_URL?.trim() || 'https://api.holded.com';
 const HOLDED_TIMEOUT_MS = Number(process.env.HOLDED_TIMEOUT_MS || '10000');
 
+function isMissingRelationError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return (
+    message.includes('does not exist in the current database') ||
+    message.includes('The table public.external_connections does not exist') ||
+    message.includes('The table public.external_connection_audit_logs does not exist') ||
+    message.includes('The table public.user_onboarding does not exist')
+  );
+}
+
 function getEncryptionKey() {
   const raw =
     process.env.INTEGRATIONS_SECRET_KEY?.trim() ||
@@ -203,35 +214,50 @@ async function writeConnectionAuditLog(input: {
   requestPayload?: Record<string, unknown> | null;
   responsePayload?: Record<string, unknown> | null;
 }) {
-  await prisma.externalConnectionAuditLog.create({
-    data: {
-      tenantId: input.tenantId,
-      connectionId: input.connectionId ?? null,
-      userId: input.userId ?? null,
-      channelType: 'holded_public',
+  try {
+    await prisma.externalConnectionAuditLog.create({
+      data: {
+        tenantId: input.tenantId,
+        connectionId: input.connectionId ?? null,
+        userId: input.userId ?? null,
+        channelType: 'holded_public',
+        action: input.action,
+        resourceType: 'external_connection',
+        resourceId: input.connectionId ?? null,
+        status: input.status,
+        requestPayload: (input.requestPayload ?? undefined) as Prisma.InputJsonValue | undefined,
+        responsePayload: (input.responsePayload ?? undefined) as Prisma.InputJsonValue | undefined,
+      },
+    });
+  } catch (error) {
+    console.warn('[holded integration] audit log skipped', {
       action: input.action,
-      resourceType: 'external_connection',
-      resourceId: input.connectionId ?? null,
-      status: input.status,
-      requestPayload: (input.requestPayload ?? undefined) as Prisma.InputJsonValue | undefined,
-      responsePayload: (input.responsePayload ?? undefined) as Prisma.InputJsonValue | undefined,
-    },
-  });
+      tenantId: input.tenantId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 async function markOnboardingCompleted(userId: string | null | undefined) {
   if (!userId) return;
 
-  await prisma.userOnboarding.upsert({
-    where: { userId },
-    create: {
+  try {
+    await prisma.userOnboarding.upsert({
+      where: { userId },
+      create: {
+        userId,
+        completedAt: new Date(),
+      },
+      update: {
+        completedAt: new Date(),
+      },
+    });
+  } catch (error) {
+    console.warn('[holded integration] onboarding completion skipped', {
       userId,
-      completedAt: new Date(),
-    },
-    update: {
-      completedAt: new Date(),
-    },
-  });
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 export type HoldedProbeResult = {
@@ -526,21 +552,34 @@ export async function disconnectHoldedConnection(input: {
 export async function getHoldedConnection(
   tenantId: string
 ): Promise<HoldedConnectionRecord | null> {
-  const connection = await prisma.externalConnection.findUnique({
-    where: {
-      tenantId_provider: {
-        tenantId,
-        provider: 'holded',
-      },
-    },
-    include: {
-      tenant: {
-        include: {
-          profile: true,
+  let connection;
+  try {
+    connection = await prisma.externalConnection.findUnique({
+      where: {
+        tenantId_provider: {
+          tenantId,
+          provider: 'holded',
         },
       },
-    },
-  });
+      include: {
+        tenant: {
+          include: {
+            profile: true,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    if (isMissingRelationError(error)) {
+      console.warn('[holded integration] external connection storage unavailable', {
+        tenantId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+
+    throw error;
+  }
 
   if (!connection?.apiKeyEnc) {
     return null;
