@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getHoldedConnection } from '@/app/lib/holded-integration';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import OnboardingHoldedClient from './OnboardingHoldedClient';
 
@@ -27,11 +26,6 @@ export default async function HoldedOnboardingConnectionPage({ searchParams }: P
     redirect(
       `/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(`/onboarding/holded?source=${source}`)}`
     );
-  }
-
-  const connection = await getHoldedConnection(session.tenantId);
-  if (connection) {
-    redirect('/dashboard');
   }
 
   return <OnboardingHoldedClient />;

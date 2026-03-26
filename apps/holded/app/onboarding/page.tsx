@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, KeyRound, MailCheck } from 'lucide-react';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { getHoldedConnection } from '@/app/lib/holded-integration';
 
 export const metadata: Metadata = {
   title: 'Onboarding | Isaak para Holded',
@@ -27,11 +26,6 @@ export default async function HoldedOnboardingPage({ searchParams }: PageProps) 
     redirect(
       `/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(`/onboarding?source=${source}`)}`
     );
-  }
-
-  const connection = await getHoldedConnection(session.tenantId);
-  if (connection) {
-    redirect('/dashboard');
   }
 
   return (
