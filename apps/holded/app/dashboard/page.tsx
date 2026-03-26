@@ -25,49 +25,47 @@ export default async function HoldedDashboardPage({ searchParams }: PageProps) {
   const source = readSource(resolved.source) || 'holded_dashboard';
   const nextTarget = `/dashboard?source=${encodeURIComponent(source)}`;
   const session = await getHoldedSession();
-
-  try {
-    const tenantId = session?.tenantId || null;
-    if (!tenantId || !session) {
-      redirect(
-        `/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextTarget)}`
-      );
-    }
-
-    const connection = await getHoldedConnection(tenantId);
-    if (!connection) {
-      redirect('/onboarding/holded');
-    }
-
-    if (session.userId) {
-      await writeHoldedActivity({
-        tenantId,
-        userId: session.userId,
-        action: 'dashboard_accessed',
-        resourceType: 'dashboard',
-      });
-    }
-
-    return (
-      <HoldedDashboardClient
-        session={{
-          email: session.email,
-          tenantId,
-          tenantName: connection.tenantName,
-          legalName: connection.legalName,
-          taxId: connection.taxId,
-          keyMasked: connection.keyMasked,
-          connectedAt: connection.connectedAt,
-          lastValidatedAt: connection.lastValidatedAt,
-          supportedModules: connection.supportedModules,
-          validationSummary: connection.validationSummary,
-          isAdmin: isHoldedAdminEmail(session.email),
-        }}
-      />
-    );
-  } catch {
+  const tenantId = session?.tenantId || null;
+  if (!tenantId || !session) {
     redirect(
       `/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextTarget)}`
     );
   }
+
+  const connection = await getHoldedConnection(tenantId);
+  if (!connection) {
+    redirect('/onboarding/holded');
+  }
+
+  if (session.userId) {
+    await writeHoldedActivity({
+      tenantId,
+      userId: session.userId,
+      action: 'dashboard_accessed',
+      resourceType: 'dashboard',
+    }).catch((error) => {
+      console.warn('[holded dashboard] activity log skipped', {
+        tenantId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }
+
+  return (
+    <HoldedDashboardClient
+      session={{
+        email: session.email,
+        tenantId,
+        tenantName: connection.tenantName,
+        legalName: connection.legalName,
+        taxId: connection.taxId,
+        keyMasked: connection.keyMasked,
+        connectedAt: connection.connectedAt,
+        lastValidatedAt: connection.lastValidatedAt,
+        supportedModules: connection.supportedModules,
+        validationSummary: connection.validationSummary,
+        isAdmin: isHoldedAdminEmail(session.email),
+      }}
+    />
+  );
 }
