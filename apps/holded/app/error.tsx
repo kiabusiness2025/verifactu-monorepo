@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect } from 'react';
-import { LifeBuoy, RefreshCcw, Sparkles } from 'lucide-react';
+import { LifeBuoy, MessageSquareText, RefreshCcw, Sparkles } from 'lucide-react';
 
 type Props = {
   error: Error & { digest?: string };
@@ -53,6 +53,13 @@ export default function HoldedErrorPage({ error, reset }: Props) {
                 >
                   Revisar conexion
                 </Link>
+                <Link
+                  href={`/support?source=holded_error${error.digest ? `&digest=${encodeURIComponent(error.digest)}` : ''}`}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  <MessageSquareText className="h-4 w-4" />
+                  Abrir soporte guiado
+                </Link>
               </div>
             </div>
 
@@ -64,12 +71,15 @@ export default function HoldedErrorPage({ error, reset }: Props) {
                 </div>
                 <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                   <li>1. Pulsa reintentar. Muchas incidencias se resuelven en segundos.</li>
-                  <li>2. Si estabas conectando Holded, vuelve a onboarding y repite el ultimo paso.</li>
+                  <li>
+                    2. Si estabas conectando Holded, vuelve a onboarding y repite el ultimo paso.
+                  </li>
                   <li>3. Si el problema persiste, escribenos a soporte@verifactu.business.</li>
                 </ul>
                 {error.digest ? (
                   <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-                    Codigo de referencia: <span className="font-mono text-slate-700">{error.digest}</span>
+                    Codigo de referencia:{' '}
+                    <span className="font-mono text-slate-700">{error.digest}</span>
                   </div>
                 ) : null}
               </div>

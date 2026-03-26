@@ -2,6 +2,7 @@ import { ExternalLink, LifeBuoy, Mail, MessageSquareText, ShieldCheck } from 'lu
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import SupportAssistantClient from '../components/SupportAssistantClient';
 
 const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
 const supportMailto = `mailto:${supportEmail}?subject=Ayuda%20con%20mi%20acceso%20a%20Holded`;
@@ -32,7 +33,19 @@ const supportOptions = [
   },
 ];
 
-export default function HoldedSupportPage() {
+type PageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function readValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] || '' : value || '';
+}
+
+export default async function HoldedSupportPage({ searchParams }: PageProps) {
+  const resolved = (await searchParams) || {};
+  const source = readValue(resolved.source);
+  const digest = readValue(resolved.digest);
+
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_45%,#ffffff_100%)] text-slate-900">
       <section className="mx-auto max-w-5xl px-4 py-16">
@@ -118,6 +131,14 @@ export default function HoldedSupportPage() {
               ubicar tu tenant y revisar el caso con mas contexto.
             </p>
           </div>
+        </div>
+
+        <div className="mt-10">
+          <SupportAssistantClient
+            source={source || 'holded_support'}
+            digest={digest || undefined}
+            title="Soy Isaak y puedo ayudarte a salir del bloqueo sin iniciar sesion."
+          />
         </div>
 
         <div className="mt-8 text-center">

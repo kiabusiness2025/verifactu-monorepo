@@ -3,7 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  KeyRound,
+  Loader2,
+  ShieldCheck,
+} from 'lucide-react';
 
 type ValidationResponse = {
   ok: boolean;
@@ -172,25 +179,31 @@ export default function OnboardingHoldedClient() {
                 Ejemplo de formato:{' '}
                 <span className="font-mono text-slate-900">db07a48f4f980be6f86d54ab104220d4</span>
               </div>
-              <div className="mt-5 grid gap-4">
-                {helpScreens.map((screen) => (
-                  <figure
-                    key={screen.src}
-                    className="overflow-hidden rounded-3xl border border-slate-200 bg-white"
-                  >
-                    <div className="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">
-                      {screen.title}
-                    </div>
-                    <Image
-                      src={screen.src}
-                      alt={screen.title}
-                      width={1200}
-                      height={760}
-                      className="h-auto w-full"
-                    />
-                  </figure>
-                ))}
-              </div>
+              <details className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white group">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-semibold text-slate-900">
+                  <span>Ver capturas de ayuda paso a paso</span>
+                  <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+                </summary>
+                <div className="grid gap-4 border-t border-slate-200 p-4">
+                  {helpScreens.map((screen) => (
+                    <figure
+                      key={screen.src}
+                      className="overflow-hidden rounded-3xl border border-slate-200 bg-white"
+                    >
+                      <div className="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">
+                        {screen.title}
+                      </div>
+                      <Image
+                        src={screen.src}
+                        alt={screen.title}
+                        width={1200}
+                        height={760}
+                        className="h-auto w-full"
+                      />
+                    </figure>
+                  ))}
+                </div>
+              </details>
               <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
                 <div className="font-semibold">Si no ves el menu Desarrolladores</div>
                 <p className="mt-1">

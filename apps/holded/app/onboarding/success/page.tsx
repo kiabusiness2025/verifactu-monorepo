@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getHoldedConnection } from '@/app/lib/holded-integration';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import HoldedFusionSuccess from './HoldedFusionSuccess';
 
@@ -14,11 +13,6 @@ export default async function HoldedOnboardingSuccessPage() {
 
   if (!session?.tenantId) {
     redirect('/auth/holded?source=holded_onboarding_success&next=/onboarding');
-  }
-
-  const connection = await getHoldedConnection(session.tenantId);
-  if (!connection) {
-    redirect('/onboarding/holded');
   }
 
   return <HoldedFusionSuccess />;
