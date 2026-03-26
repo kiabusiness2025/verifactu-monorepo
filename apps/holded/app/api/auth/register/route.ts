@@ -29,6 +29,18 @@ function readOptionalEnv(name: string, fallback: string) {
   return cleanEnv(process.env[name]) || fallback;
 }
 
+function normalizeName(value: unknown) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().replace(/\s+/g, ' ');
+  return trimmed.length >= 3 ? trimmed : null;
+}
+
+function normalizePhone(value: unknown) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().replace(/\s+/g, ' ');
+  return trimmed.length >= 6 ? trimmed : null;
+}
+
 function ensureAdminApp() {
   const existing = admin.apps.find((app) => app?.name === DEFAULT_ADMIN_APP_NAME);
   if (existing) return existing;
@@ -62,6 +74,7 @@ function escapeHtml(value: string): string {
 }
 
 function buildAdminNotificationEmail(input: {
+  name: string;
   email: string;
   source: string;
   accessUrl: string;
@@ -73,13 +86,14 @@ function buildAdminNotificationEmail(input: {
       <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff;">
         <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:#eef4ff;color:#1f55c0;font-size:12px;font-weight:700;letter-spacing:0.04em;">Admin Holded</div>
         <h1 style="font-size:24px;line-height:1.2;margin:16px 0 8px;">Nuevo usuario registrado</h1>
+        <p style="margin:0 0 10px;"><strong>Nombre:</strong> ${escapeHtml(input.name)}</p>
         <p style="margin:0 0 10px;"><strong>Email:</strong> ${escapeHtml(input.email)}</p>
         <p style="margin:0 0 10px;"><strong>Origen:</strong> ${escapeHtml(input.source)}</p>
         <p style="margin:0 0 10px;"><strong>Fecha:</strong> ${escapeHtml(input.createdAt)}</p>
         <a href="${escapeHtml(input.accessUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir producto</a>
       </div>
     `.trim(),
-    text: `Nuevo usuario registrado en Holded\n\nEmail: ${input.email}\nOrigen: ${input.source}\nFecha: ${input.createdAt}\n\nProducto: ${input.accessUrl}`,
+    text: `Nuevo usuario registrado en Holded\n\nNombre: ${input.name}\nEmail: ${input.email}\nOrigen: ${input.source}\nFecha: ${input.createdAt}\n\nProducto: ${input.accessUrl}`,
   };
 }
 
@@ -88,6 +102,8 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const idToken = typeof body?.idToken === 'string' ? body.idToken : '';
     const source = typeof body?.source === 'string' ? body.source : 'holded_signup';
+    const fullName = normalizeName(body?.fullName);
+    const phone = normalizePhone(body?.phone);
 
     if (!idToken) {
       return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
@@ -99,20 +115,83 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing email in token' }, { status: 400 });
     }
 
-    await prisma.user.upsert({
+    const userName = fullName || decoded.name || decoded.email.split('@')[0];
+
+    const user = await prisma.user.upsert({
       where: { email: decoded.email },
       update: {
-        name: decoded.name || decoded.email.split('@')[0],
+        name: userName,
         authProvider: 'FIREBASE',
         authSubject: decoded.uid,
       },
       create: {
         email: decoded.email,
-        name: decoded.name || decoded.email.split('@')[0],
+        name: userName,
         authProvider: 'FIREBASE',
         authSubject: decoded.uid,
       },
     });
+
+    const existingMembership = await prisma.membership.findFirst({
+      where: {
+        userId: user.id,
+        status: 'active',
+      },
+      select: { tenantId: true },
+    });
+
+    if (!existingMembership) {
+      await prisma.$transaction(async (tx) => {
+        const created = await tx.tenant.create({
+          data: {
+            name: `${userName} - Holded`,
+            profile: {
+              create: {
+                source: 'manual',
+                representative: userName,
+                email: decoded.email,
+                phone: phone || undefined,
+              },
+            },
+          },
+          select: { id: true },
+        });
+
+        await tx.membership.create({
+          data: {
+            tenantId: created.id,
+            userId: user.id,
+            role: 'owner',
+            status: 'active',
+          },
+        });
+
+        await tx.userPreference.upsert({
+          where: { userId: user.id },
+          update: { preferredTenantId: created.id },
+          create: {
+            userId: user.id,
+            preferredTenantId: created.id,
+          },
+        });
+      });
+    } else {
+      await prisma.tenantProfile.upsert({
+        where: { tenantId: existingMembership.tenantId },
+        update: {
+          representative: userName,
+          email: decoded.email,
+          phone: phone || undefined,
+        },
+        create: {
+          tenantId: existingMembership.tenantId,
+          source: 'manual',
+          representative: userName,
+          email: decoded.email,
+          phone: phone || undefined,
+        },
+      });
+    }
 
     const holdedSite = readOptionalEnv(
       'NEXT_PUBLIC_HOLDED_SITE_URL',
@@ -140,6 +219,7 @@ export async function POST(req: Request) {
       .filter(Boolean);
     const template = buildHoldedVerificationEmail({ email: decoded.email, verificationUrl });
     const adminNotification = buildAdminNotificationEmail({
+      name: userName,
       email: decoded.email,
       source,
       accessUrl: adminUrl.toString(),

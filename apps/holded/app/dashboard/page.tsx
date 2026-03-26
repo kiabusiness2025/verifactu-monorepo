@@ -49,6 +49,7 @@ export default async function HoldedDashboardPage({ searchParams }: PageProps) {
     <HoldedDashboardClient
       session={{
         email: session.email,
+        name: session.name,
         tenantId,
         tenantName: null,
         legalName: null,

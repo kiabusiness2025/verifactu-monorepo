@@ -53,7 +53,10 @@ async function sendVerifiedAccessEmails(input: { email: string; source: string }
   dashboardUrl.searchParams.set('source', input.source);
 
   const resend = new Resend(resendApiKey);
-  const from = readOptionalEnv('RESEND_FROM', 'Holded for Isaak <no-reply@holded.verifactu.business>');
+  const from = readOptionalEnv(
+    'RESEND_FROM',
+    'Holded for Isaak <no-reply@holded.verifactu.business>'
+  );
   const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business');
 
   const accessReady = buildHoldedAccessReadyEmail({

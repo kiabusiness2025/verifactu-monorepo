@@ -40,6 +40,7 @@ Regla minima:
 
 - un usuario autenticado debe tener una membresia activa
 - si no existe, `app/api/auth/session/route.ts` crea tenant + membership + preference
+- en el alta por email, `app/api/auth/register/route.ts` ya intenta dejar creado ese tenant inicial para que el acceso posterior sea mas estable
 
 ### ExternalConnection
 
@@ -89,6 +90,15 @@ Campos usados:
 - `tradeName`
 - `legalName`
 - `taxId`
+- `representative`
+- `email`
+- `phone`
+
+Regla actual:
+
+- en el registro guardamos nombre completo y telefono si el usuario los facilita
+- el nombre de empresa no se pide manualmente
+- la empresa visible para el producto debe venir de Holded cuando se conecta la API key
 
 ### ExternalConnectionAuditLog
 
@@ -119,6 +129,13 @@ No se guarda nunca la API key en claro.
    - escribe audit log seguro
 6. `GET /api/holded/status` devuelve el estado reutilizable para dashboard y futuras UIs.
 7. `DELETE /api/holded/connect` deja preparada la desconexion futura.
+
+## UX operativa actual
+
+- el login avisa de que el correo debe coincidir con el registrado en Holded para futuros flujos OAuth
+- el dashboard usa una experiencia chat-first minimalista
+- si el nombre del usuario parece autogenerado desde el email, se pide completar perfil antes de abrir el chat
+- el saludo principal usa la hora de `Europe/Madrid`
 
 ## Cifrado y proteccion
 

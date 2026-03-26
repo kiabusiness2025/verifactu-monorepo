@@ -160,21 +160,43 @@ export default function OnboardingHoldedClient() {
                 Como encontrarla
               </div>
               <a
-                href="https://app.holded.com/account/setup#settings:/api"
+                href="https://app.holded.com/login?url_after_login=%2Faccount%2Fsetup#settings:/api"
                 target="_blank"
                 rel="noreferrer"
                 className="mt-4 inline-flex items-center justify-center rounded-full border border-[#ff5460]/20 bg-white px-4 py-2 text-sm font-semibold text-[#ff5460] transition hover:bg-[#fff4f5]"
               >
                 Abrir Holded en Desarrolladores
               </a>
-              <ol className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
-                <li>1. Entra en Holded.</li>
-                <li>2. Ve a Configuracion, luego Mas y despues Desarrolladores.</li>
-                <li>3. Pulsa el boton + Nueva API Key.</li>
-                <li>4. Ponle como nombre recomendado: ISAAK_HOLDED_API_KEY.</li>
-                <li>5. Copia la clave generada por Holded.</li>
-                <li>6. Pegala aqui. Nosotros la comprobamos al instante.</li>
-              </ol>
+              <div className="mt-4 grid gap-3">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
+                  <span className="font-semibold text-slate-900">1.</span> Entra en Holded.
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
+                  <span className="font-semibold text-slate-900">2.</span> Ve a Configuracion, luego
+                  Mas y despues{' '}
+                  <a
+                    href="https://app.holded.com/login?url_after_login=%2Faccount%2Fsetup#settings:/api"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                  >
+                    Desarrolladores
+                  </a>
+                  .
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
+                  <span className="font-semibold text-slate-900">3.</span> Pulsa{' '}
+                  <span className="font-semibold text-slate-900">+ Nueva API Key</span>.
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
+                  <span className="font-semibold text-slate-900">4.</span> Ponle como nombre{' '}
+                  <span className="font-mono text-slate-900">ISAAK_HOLDED_API_KEY</span>.
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
+                  <span className="font-semibold text-slate-900">5.</span> Copia la clave generada y
+                  pegala aqui. Nosotros la comprobamos al instante.
+                </div>
+              </div>
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs leading-6 text-slate-600">
                 Ejemplo de formato:{' '}
                 <span className="font-mono text-slate-900">db07a48f4f980be6f86d54ab104220d4</span>

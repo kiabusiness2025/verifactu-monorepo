@@ -38,6 +38,49 @@ Comparte base de datos, sesion y modelos con el resto, pero su experiencia publi
 8. Dashboard en `/dashboard`
 9. Primer chat via `/api/holded/chat`
 
+## Alta y acceso
+
+### Registro actual
+
+En `/auth/holded?mode=register` pedimos:
+
+- nombre completo
+- correo electronico
+- telefono opcional
+- contrasena
+
+Reglas UX actuales:
+
+- el correo debe coincidir con el que el usuario tiene en Holded para facilitar OAuth y unificacion futura
+- el nombre de empresa no se pide en el alta
+- la empresa se detecta despues al conectar la API key de Holded
+
+### Perfil minimo antes del chat
+
+El dashboard intenta saludar al usuario por su nombre real.
+
+Si el nombre guardado parece un valor automatico derivado del email:
+
+- se muestra un paso corto para completar perfil antes de abrir el chat
+- al guardar el nombre, el saludo pasa a usarlo directamente
+
+## Dashboard y chat
+
+Direccion UX actual:
+
+- layout minimalista tipo chat-first
+- sidebar pequena con historial
+- estado de conexion Holded discreto
+- gestion de conexion plegada
+- chat centrado como pantalla principal
+- saludo segun hora de `Europe/Madrid`
+
+Reglas de contenido:
+
+- no mostrar mensajes contradictorios de “conectado” si no hay API key activa
+- la empresa visible en la experiencia principal debe venir de Holded
+- datos como telefono o preferencias deben vivir en configuracion de perfil, no en el lienzo principal del chat
+
 ## Persistencia e integracion Holded
 
 El diseño persistente actual reutiliza modelos existentes del monorepo:
@@ -63,6 +106,7 @@ Tambien se actualiza:
 
 - `tenants.name`, `tenants.legal_name`, `tenants.nif` si se pueden inferir
 - `tenant_profiles` con `source=holded`
+- `tenant_profiles.representative`, `tenant_profiles.email`, `tenant_profiles.phone` desde el alta cuando el usuario los facilita
 - `user_onboarding.completed_at` cuando la conexion se guarda correctamente
 - `external_connection_audit_logs` con acciones `connect` y `disconnect` sin exponer secretos
 

@@ -7,6 +7,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updateProfile,
 } from 'firebase/auth';
 import {
   auth,
@@ -160,18 +161,32 @@ export async function signInWithGoogle(options: SignInOptions = {}): Promise<Aut
 export async function registerWithEmail(
   email: string,
   password: string,
+  profile: { fullName: string; phone?: string },
   source = 'holded_signup'
 ): Promise<AuthResult> {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const trimmedFullName = profile.fullName.trim();
+
+    if (trimmedFullName) {
+      await updateProfile(userCredential.user, {
+        displayName: trimmedFullName,
+      });
+    }
+
     const idToken = await userCredential.user.getIdToken(true);
 
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken, source }),
+      body: JSON.stringify({
+        idToken,
+        source,
+        fullName: trimmedFullName,
+        phone: profile.phone?.trim() || '',
+      }),
     });
 
     if (!response.ok) {

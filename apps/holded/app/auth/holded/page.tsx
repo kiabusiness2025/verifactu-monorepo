@@ -55,6 +55,8 @@ function HoldedAuthContent() {
 
   const redirectedRef = useRef(false);
   const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptLegal, setAcceptLegal] = useState(false);
@@ -112,7 +114,22 @@ function HoldedAuthContent() {
         return;
       }
 
-      const registerResult = await registerWithEmail(email, password, source);
+      const normalizedFullName = fullName.trim().replace(/\s+/g, ' ');
+      if (normalizedFullName.length < 3) {
+        setIsLoading(false);
+        setError('Escribe tu nombre completo para continuar.');
+        return;
+      }
+
+      const registerResult = await registerWithEmail(
+        email,
+        password,
+        {
+          fullName: normalizedFullName,
+          phone,
+        },
+        source
+      );
       if (registerResult.error) {
         setIsLoading(false);
         setError(registerResult.error.userMessage);
@@ -262,6 +279,24 @@ function HoldedAuthContent() {
             </div>
 
             <form onSubmit={handleEmailLogin} className="space-y-4">
+              {isRegisterMode ? (
+                <div className="space-y-1.5">
+                  <label htmlFor="fullName" className="text-sm font-semibold text-slate-800">
+                    Nombre completo
+                  </label>
+                  <input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(event) => setFullName(event.target.value)}
+                    placeholder="Nombre y apellidos"
+                    autoComplete="name"
+                    required
+                    className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                  />
+                </div>
+              ) : null}
+
               <div className="space-y-1.5">
                 <label htmlFor="email" className="text-sm font-semibold text-slate-800">
                   Correo electronico
@@ -277,6 +312,31 @@ function HoldedAuthContent() {
                   className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                 />
               </div>
+
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                Usa el mismo correo que tienes registrado en Holded. Lo necesitaremos para futuros
+                accesos con OAuth y para unificar tu cuenta.
+              </div>
+
+              {isRegisterMode ? (
+                <div className="space-y-1.5">
+                  <label htmlFor="phone" className="text-sm font-semibold text-slate-800">
+                    Telefono
+                  </label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    placeholder="+34 600 000 000"
+                    autoComplete="tel"
+                    className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                  />
+                  <p className="text-xs leading-5 text-slate-500">
+                    Lo dejamos preparado para soporte por WhatsApp y avisos de Isaak mas adelante.
+                  </p>
+                </div>
+              ) : null}
 
               <div className="space-y-1.5">
                 <label htmlFor="password" className="text-sm font-semibold text-slate-800">
@@ -392,6 +452,13 @@ function HoldedAuthContent() {
               Recordamos este dispositivo por defecto para que no tengas que iniciar sesion cada
               vez.
             </p>
+
+            {isRegisterMode ? (
+              <p className="text-center text-xs leading-5 text-slate-500">
+                El nombre de empresa no hace falta ponerlo ahora: lo sincronizaremos automaticamente
+                desde Holded cuando conectes la API key.
+              </p>
+            ) : null}
 
             <p className="text-center text-xs leading-5 text-slate-500">
               Si ya tienes acceso, aqui solo retomamos tu flujo para entrar al onboarding. Si

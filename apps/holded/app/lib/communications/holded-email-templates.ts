@@ -60,12 +60,7 @@ function brandHeader(label: string) {
   `.trim();
 }
 
-function cardLayout(input: {
-  label: string;
-  title: string;
-  body: string;
-  footer?: string;
-}) {
+function cardLayout(input: { label: string; title: string; body: string; footer?: string }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
       <div style="background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,0.08);">
