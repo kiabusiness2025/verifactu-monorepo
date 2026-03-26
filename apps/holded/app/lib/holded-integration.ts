@@ -746,7 +746,11 @@ export async function getHoldedConnection(
       };
     }
 
-    throw error;
+    console.warn('[holded integration] failed to read connection', {
+      tenantId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
   }
 
   if (!connection?.apiKeyEnc) {
