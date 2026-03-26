@@ -8,7 +8,13 @@ import {
   signInWithPopup,
   signOut,
 } from 'firebase/auth';
-import { auth, isFirebaseConfigComplete, isFirebaseReady } from './firebase';
+import {
+  auth,
+  firebaseInitError,
+  isFirebaseConfigComplete,
+  isFirebaseReady,
+  missingConfigFields,
+} from './firebase';
 import { mintSessionCookie } from './serverSession';
 
 type SignInOptions = {
@@ -28,7 +34,11 @@ const authUnavailable = (): AuthResult => ({
   error: {
     code: 'auth/config-unavailable',
     message: 'Auth not initialized',
-    userMessage: 'El acceso no esta disponible ahora mismo. Revisa la configuracion del proyecto.',
+    userMessage: !isFirebaseConfigComplete
+      ? `Faltan variables publicas de Firebase: ${missingConfigFields.join(', ')}.`
+      : firebaseInitError
+        ? `Firebase no ha podido iniciarse en este navegador. Detalle: ${firebaseInitError}`
+        : 'El acceso no esta disponible ahora mismo. Revisa la configuracion publica de Firebase en este proyecto.',
   },
 });
 

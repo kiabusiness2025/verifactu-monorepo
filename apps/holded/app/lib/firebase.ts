@@ -61,6 +61,7 @@ const firebaseConfig = {
 const isConfigComplete = Object.values(firebaseConfig).every(Boolean);
 const missingConfigFields = REQUIRED_CONFIG_FIELDS.filter((field) => !firebaseConfig[field]);
 let isFirebaseReady = false;
+let firebaseInitError: string | null = null;
 
 let app: ReturnType<typeof initializeApp> | undefined;
 let auth: ReturnType<typeof getAuth> | undefined;
@@ -70,6 +71,7 @@ if (typeof window !== 'undefined' && isConfigComplete) {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
     isFirebaseReady = true;
+    firebaseInitError = null;
 
     setPersistence(auth, browserLocalPersistence).catch((error) => {
       console.error('Error setting persistence:', error);
@@ -86,11 +88,13 @@ if (typeof window !== 'undefined' && isConfigComplete) {
     app = undefined;
     auth = undefined;
     isFirebaseReady = false;
+    firebaseInitError = error instanceof Error ? error.message : 'Unknown Firebase init error';
   }
 } else if (typeof window !== 'undefined' && !isConfigComplete) {
   console.warn(
     `Firebase config incomplete for Holded auth. Missing: ${missingConfigFields.join(', ')}. Set NEXT_PUBLIC_HOLDED_FIREBASE_* or NEXT_PUBLIC_FIREBASE_* env vars in the deployed project.`
   );
+  firebaseInitError = `Missing public Firebase config: ${missingConfigFields.join(', ')}`;
 }
 
 export {
@@ -98,5 +102,6 @@ export {
   auth,
   isConfigComplete as isFirebaseConfigComplete,
   isFirebaseReady,
+  firebaseInitError,
   missingConfigFields,
 };
