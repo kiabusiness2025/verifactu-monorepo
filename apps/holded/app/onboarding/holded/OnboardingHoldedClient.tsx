@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -32,6 +33,16 @@ export default function OnboardingHoldedClient() {
 
   const canValidate = apiKey.trim().length >= 12;
   const canConnect = validation?.ok === true && !isConnecting;
+  const helpScreens = [
+    {
+      title: 'Paso 1: abrir Desarrolladores',
+      src: '/help/Configurar%20HOLDED_ISAAK_API_KEY/Paso%201.png',
+    },
+    {
+      title: 'Paso 2: crear la nueva API key',
+      src: '/help/Configurar%20HOLDED_ISAAK_API_KEY/Paso%202.png',
+    },
+  ];
 
   const statusLine = useMemo(() => {
     if (!validation?.probe) return null;
@@ -156,12 +167,53 @@ export default function OnboardingHoldedClient() {
                 <KeyRound className="h-4 w-4 text-[#ff5460]" />
                 Como encontrarla
               </div>
+              <a
+                href="https://app.holded.com/account/setup#settings:/api"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex items-center justify-center rounded-full border border-[#ff5460]/20 bg-white px-4 py-2 text-sm font-semibold text-[#ff5460] transition hover:bg-[#fff4f5]"
+              >
+                Abrir Holded en Desarrolladores
+              </a>
               <ol className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
                 <li>1. Entra en Holded.</li>
-                <li>2. Abre Configuracion y busca el area de API.</li>
-                <li>3. Copia una API key activa de tu empresa.</li>
-                <li>4. Pegala aqui. Nosotros la comprobamos al instante.</li>
+                <li>2. Ve a Configuracion, luego Mas y despues Desarrolladores.</li>
+                <li>3. Pulsa el boton + Nueva API Key.</li>
+                <li>4. Ponle como nombre recomendado: ISAAK_HOLDED_API_KEY.</li>
+                <li>5. Copia la clave generada por Holded.</li>
+                <li>6. Pegala aqui. Nosotros la comprobamos al instante.</li>
               </ol>
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs leading-6 text-slate-600">
+                Ejemplo de formato:{' '}
+                <span className="font-mono text-slate-900">db07a48f4f980be6f86d54ab104220d4</span>
+              </div>
+              <div className="mt-5 grid gap-4">
+                {helpScreens.map((screen) => (
+                  <figure
+                    key={screen.src}
+                    className="overflow-hidden rounded-3xl border border-slate-200 bg-white"
+                  >
+                    <div className="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">
+                      {screen.title}
+                    </div>
+                    <Image
+                      src={screen.src}
+                      alt={screen.title}
+                      width={1200}
+                      height={760}
+                      className="h-auto w-full"
+                    />
+                  </figure>
+                ))}
+              </div>
+              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+                <div className="font-semibold">Si no ves el menu Desarrolladores</div>
+                <p className="mt-1">
+                  Normalmente significa que tu usuario de Holded no tiene permisos suficientes o que
+                  estas en una cuenta distinta. Prueba con el usuario administrador principal de la
+                  empresa o pide acceso a esa seccion.
+                </p>
+              </div>
             </div>
           </section>
 
@@ -173,7 +225,7 @@ export default function OnboardingHoldedClient() {
               <textarea
                 value={apiKey}
                 onChange={(event) => setApiKey(event.target.value)}
-                placeholder="Pega aqui tu API key"
+                placeholder="Pega aqui la API key generada en Holded"
                 rows={5}
                 className="w-full resize-none rounded-3xl border border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
               />

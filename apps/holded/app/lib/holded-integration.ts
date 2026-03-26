@@ -153,6 +153,74 @@ function buildConnectionSummary(probe: HoldedProbeResult) {
   };
 }
 
+async function saveTenantMetadata(input: {
+  tenantId: string;
+  fingerprint: string;
+  metadata: {
+    companyName: string | null;
+    legalName: string | null;
+    taxId: string | null;
+  };
+}) {
+  try {
+    await prisma.tenant.update({
+      where: { id: input.tenantId },
+      data: {
+        name: input.metadata.companyName || undefined,
+        legalName: input.metadata.legalName || undefined,
+        nif: input.metadata.taxId || undefined,
+        profile: {
+          upsert: {
+            create: {
+              source: 'holded',
+              sourceId: input.fingerprint,
+              legalName: input.metadata.legalName || input.metadata.companyName || undefined,
+              tradeName: input.metadata.companyName || undefined,
+              taxId: input.metadata.taxId || undefined,
+            },
+            update: {
+              source: 'holded',
+              sourceId: input.fingerprint,
+              legalName: input.metadata.legalName || input.metadata.companyName || undefined,
+              tradeName: input.metadata.companyName || undefined,
+              taxId: input.metadata.taxId || undefined,
+            },
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.warn('[holded integration] tenant metadata skipped', {
+      tenantId: input.tenantId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+async function getTenantIntegrationFallback(tenantId: string) {
+  const integration = await prisma.tenantIntegration.findUnique({
+    where: {
+      tenantId_provider: {
+        tenantId,
+        provider: 'accounting_api',
+      },
+    },
+    include: {
+      tenant: {
+        include: {
+          profile: true,
+        },
+      },
+    },
+  });
+
+  if (!integration?.apiKeyEnc) {
+    return null;
+  }
+
+  return integration;
+}
+
 async function fetchHoldedTenantMetadata(apiKey: string, probe: HoldedProbeResult) {
   const supportedModules = pickSupportedModules(probe);
 
@@ -343,9 +411,103 @@ export async function saveHoldedConnection(input: {
     },
   }));
   const summary = buildConnectionSummary(input.probe);
+  let connectionId: string | null = null;
 
-  const [, connection] = await prisma.$transaction([
-    prisma.tenantIntegration.upsert({
+  try {
+    const [, connection] = await prisma.$transaction([
+      prisma.tenantIntegration.upsert({
+        where: {
+          tenantId_provider: {
+            tenantId: input.tenantId,
+            provider: 'accounting_api',
+          },
+        },
+        update: {
+          apiKeyEnc: encrypted,
+          status: 'connected',
+          lastError: null,
+          lastSyncAt: now,
+        },
+        create: {
+          tenantId: input.tenantId,
+          provider: 'accounting_api',
+          apiKeyEnc: encrypted,
+          status: 'connected',
+          lastError: null,
+          lastSyncAt: now,
+        },
+      }),
+      prisma.externalConnection.upsert({
+        where: {
+          tenantId_provider: {
+            tenantId: input.tenantId,
+            provider: 'holded',
+          },
+        },
+        update: {
+          providerAccountId: fingerprint,
+          credentialType: 'api_key',
+          apiKeyEnc: encrypted,
+          scopesGranted: summary.supportedModules,
+          connectionStatus: 'connected',
+          connectedByUserId: input.userId ?? undefined,
+          connectedAt: now,
+          lastValidatedAt: now,
+          lastSyncAt: now,
+        },
+        create: {
+          tenantId: input.tenantId,
+          provider: 'holded',
+          providerAccountId: fingerprint,
+          credentialType: 'api_key',
+          apiKeyEnc: encrypted,
+          scopesGranted: summary.supportedModules,
+          connectionStatus: 'connected',
+          connectedByUserId: input.userId ?? undefined,
+          connectedAt: now,
+          lastValidatedAt: now,
+          lastSyncAt: now,
+        },
+      }),
+      prisma.tenant.update({
+        where: { id: input.tenantId },
+        data: {
+          name: metadata.companyName || undefined,
+          legalName: metadata.legalName || undefined,
+          nif: metadata.taxId || undefined,
+          profile: {
+            upsert: {
+              create: {
+                source: 'holded',
+                sourceId: fingerprint,
+                legalName: metadata.legalName || metadata.companyName || undefined,
+                tradeName: metadata.companyName || undefined,
+                taxId: metadata.taxId || undefined,
+              },
+              update: {
+                source: 'holded',
+                sourceId: fingerprint,
+                legalName: metadata.legalName || metadata.companyName || undefined,
+                tradeName: metadata.companyName || undefined,
+                taxId: metadata.taxId || undefined,
+              },
+            },
+          },
+        },
+      }),
+    ]);
+    connectionId = connection.id;
+  } catch (error) {
+    if (!isMissingRelationError(error)) {
+      throw error;
+    }
+
+    console.warn('[holded integration] using tenant integration fallback', {
+      tenantId: input.tenantId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    await prisma.tenantIntegration.upsert({
       where: {
         tenantId_provider: {
           tenantId: input.tenantId,
@@ -366,72 +528,24 @@ export async function saveHoldedConnection(input: {
         lastError: null,
         lastSyncAt: now,
       },
-    }),
-    prisma.externalConnection.upsert({
-      where: {
-        tenantId_provider: {
-          tenantId: input.tenantId,
-          provider: 'holded',
-        },
+    });
+
+    await saveTenantMetadata({
+      tenantId: input.tenantId,
+      fingerprint,
+      metadata: {
+        companyName: metadata.companyName,
+        legalName: metadata.legalName,
+        taxId: metadata.taxId,
       },
-      update: {
-        providerAccountId: fingerprint,
-        credentialType: 'api_key',
-        apiKeyEnc: encrypted,
-        scopesGranted: summary.supportedModules,
-        connectionStatus: 'connected',
-        connectedByUserId: input.userId ?? undefined,
-        connectedAt: now,
-        lastValidatedAt: now,
-        lastSyncAt: now,
-      },
-      create: {
-        tenantId: input.tenantId,
-        provider: 'holded',
-        providerAccountId: fingerprint,
-        credentialType: 'api_key',
-        apiKeyEnc: encrypted,
-        scopesGranted: summary.supportedModules,
-        connectionStatus: 'connected',
-        connectedByUserId: input.userId ?? undefined,
-        connectedAt: now,
-        lastValidatedAt: now,
-        lastSyncAt: now,
-      },
-    }),
-    prisma.tenant.update({
-      where: { id: input.tenantId },
-      data: {
-        name: metadata.companyName || undefined,
-        legalName: metadata.legalName || undefined,
-        nif: metadata.taxId || undefined,
-        profile: {
-          upsert: {
-            create: {
-              source: 'holded',
-              sourceId: fingerprint,
-              legalName: metadata.legalName || metadata.companyName || undefined,
-              tradeName: metadata.companyName || undefined,
-              taxId: metadata.taxId || undefined,
-            },
-            update: {
-              source: 'holded',
-              sourceId: fingerprint,
-              legalName: metadata.legalName || metadata.companyName || undefined,
-              tradeName: metadata.companyName || undefined,
-              taxId: metadata.taxId || undefined,
-            },
-          },
-        },
-      },
-    }),
-  ]);
+    });
+  }
 
   await markOnboardingCompleted(input.userId);
 
   await writeConnectionAuditLog({
     tenantId: input.tenantId,
-    connectionId: connection.id,
+    connectionId,
     userId: input.userId ?? null,
     action: 'connect',
     status: 'success',
@@ -468,18 +582,80 @@ export async function disconnectHoldedConnection(input: {
   userId?: string | null;
 }) {
   const now = new Date();
+  let existing: { id: string } | null = null;
 
-  const existing = await prisma.externalConnection.findUnique({
-    where: {
-      tenantId_provider: {
-        tenantId: input.tenantId,
-        provider: 'holded',
+  try {
+    existing = await prisma.externalConnection.findUnique({
+      where: {
+        tenantId_provider: {
+          tenantId: input.tenantId,
+          provider: 'holded',
+        },
       },
-    },
-  });
+      select: { id: true },
+    });
 
-  await prisma.$transaction([
-    prisma.tenantIntegration.upsert({
+    await prisma.$transaction([
+      prisma.tenantIntegration.upsert({
+        where: {
+          tenantId_provider: {
+            tenantId: input.tenantId,
+            provider: 'accounting_api',
+          },
+        },
+        update: {
+          apiKeyEnc: null,
+          status: 'disconnected',
+          lastError: null,
+          lastSyncAt: now,
+        },
+        create: {
+          tenantId: input.tenantId,
+          provider: 'accounting_api',
+          apiKeyEnc: null,
+          status: 'disconnected',
+          lastError: null,
+          lastSyncAt: now,
+        },
+      }),
+      prisma.externalConnection.upsert({
+        where: {
+          tenantId_provider: {
+            tenantId: input.tenantId,
+            provider: 'holded',
+          },
+        },
+        update: {
+          apiKeyEnc: null,
+          scopesGranted: [],
+          connectionStatus: 'disconnected',
+          lastValidatedAt: now,
+          lastSyncAt: now,
+        },
+        create: {
+          tenantId: input.tenantId,
+          provider: 'holded',
+          credentialType: 'api_key',
+          apiKeyEnc: null,
+          scopesGranted: [],
+          connectionStatus: 'disconnected',
+          connectedByUserId: input.userId ?? undefined,
+          lastValidatedAt: now,
+          lastSyncAt: now,
+        },
+      }),
+    ]);
+  } catch (error) {
+    if (!isMissingRelationError(error)) {
+      throw error;
+    }
+
+    console.warn('[holded integration] disconnect fallback', {
+      tenantId: input.tenantId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    await prisma.tenantIntegration.upsert({
       where: {
         tenantId_provider: {
           tenantId: input.tenantId,
@@ -500,34 +676,8 @@ export async function disconnectHoldedConnection(input: {
         lastError: null,
         lastSyncAt: now,
       },
-    }),
-    prisma.externalConnection.upsert({
-      where: {
-        tenantId_provider: {
-          tenantId: input.tenantId,
-          provider: 'holded',
-        },
-      },
-      update: {
-        apiKeyEnc: null,
-        scopesGranted: [],
-        connectionStatus: 'disconnected',
-        lastValidatedAt: now,
-        lastSyncAt: now,
-      },
-      create: {
-        tenantId: input.tenantId,
-        provider: 'holded',
-        credentialType: 'api_key',
-        apiKeyEnc: null,
-        scopesGranted: [],
-        connectionStatus: 'disconnected',
-        connectedByUserId: input.userId ?? undefined,
-        lastValidatedAt: now,
-        lastSyncAt: now,
-      },
-    }),
-  ]);
+    });
+  }
 
   await writeConnectionAuditLog({
     tenantId: input.tenantId,
@@ -575,7 +725,25 @@ export async function getHoldedConnection(
         tenantId,
         error: error instanceof Error ? error.message : String(error),
       });
-      return null;
+      const integration = await getTenantIntegrationFallback(tenantId);
+      if (!integration?.apiKeyEnc) return null;
+
+      const apiKey = decryptHoldedSecret(integration.apiKeyEnc);
+      return {
+        provider: 'holded',
+        status: integration.status,
+        connectedAt: null,
+        lastValidatedAt: null,
+        lastSyncAt: integration.lastSyncAt?.toISOString() || null,
+        providerAccountId: null,
+        keyMasked: maskSecret(apiKey),
+        supportedModules: [],
+        validationSummary: 'Conexion guardada en modo compatible',
+        tenantName: integration.tenant.profile?.tradeName || integration.tenant.name || null,
+        legalName: integration.tenant.profile?.legalName || integration.tenant.legalName || null,
+        taxId: integration.tenant.profile?.taxId || integration.tenant.nif || null,
+        apiKey,
+      };
     }
 
     throw error;

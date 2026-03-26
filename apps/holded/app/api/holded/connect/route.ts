@@ -10,59 +10,73 @@ import { writeHoldedActivity } from '@/app/lib/holded-activity';
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  const session = await getHoldedSession();
+  try {
+    const session = await getHoldedSession();
 
-  if (!session?.tenantId) {
-    return NextResponse.json(
-      { error: 'Necesitas iniciar sesion para conectar Holded.' },
-      { status: 401 }
-    );
-  }
+    if (!session?.tenantId) {
+      return NextResponse.json(
+        { error: 'Necesitas iniciar sesion para conectar Holded.' },
+        { status: 401 }
+      );
+    }
 
-  const body = await request.json().catch(() => ({}));
-  const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
+    const body = await request.json().catch(() => ({}));
+    const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
 
-  if (!apiKey) {
-    return NextResponse.json({ error: 'Pega una API key valida de Holded.' }, { status: 400 });
-  }
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Pega una API key valida de Holded.' }, { status: 400 });
+    }
 
-  const probe = await probeHoldedConnection(apiKey);
+    const probe = await probeHoldedConnection(apiKey);
 
-  if (!probe.ok) {
-    await writeHoldedActivity({
+    if (!probe.ok) {
+      await writeHoldedActivity({
+        tenantId: session.tenantId,
+        userId: session.userId,
+        action: 'connection_error',
+        status: 'failed',
+        resourceType: 'holded_connection',
+        responsePayload: {
+          provider: 'holded',
+          error: probe.error,
+        },
+      });
+
+      return NextResponse.json(
+        {
+          ok: false,
+          error: probe.error || 'No hemos podido validar la API key.',
+          probe,
+        },
+        { status: 400 }
+      );
+    }
+
+    const saved = await saveHoldedConnection({
       tenantId: session.tenantId,
+      apiKey,
       userId: session.userId,
-      action: 'connection_error',
-      status: 'failed',
-      resourceType: 'holded_connection',
-      responsePayload: {
-        provider: 'holded',
-        error: probe.error,
-      },
+      probe,
     });
 
+    return NextResponse.json({
+      ok: true,
+      probe,
+      connection: saved,
+    });
+  } catch (error) {
+    console.error('[holded connect] failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       {
         ok: false,
-        error: probe.error || 'No hemos podido validar la API key.',
-        probe,
+        error:
+          'La API key es valida, pero no hemos podido terminar de guardarla. Intenta de nuevo en unos segundos o escribe a soporte.',
       },
-      { status: 400 }
+      { status: 500 }
     );
   }
-
-  const saved = await saveHoldedConnection({
-    tenantId: session.tenantId,
-    apiKey,
-    userId: session.userId,
-    probe,
-  });
-
-  return NextResponse.json({
-    ok: true,
-    probe,
-    connection: saved,
-  });
 }
 
 export async function DELETE() {
