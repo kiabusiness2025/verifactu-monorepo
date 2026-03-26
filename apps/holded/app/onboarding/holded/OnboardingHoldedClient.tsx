@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
 
@@ -19,17 +18,11 @@ type ValidationResponse = {
 };
 
 export default function OnboardingHoldedClient() {
-  const router = useRouter();
   const [apiKey, setApiKey] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [validation, setValidation] = useState<ValidationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [connectedSummary, setConnectedSummary] = useState<{
-    tenantName?: string | null;
-    taxId?: string | null;
-    supportedModules?: string[];
-  } | null>(null);
 
   const canValidate = apiKey.trim().length >= 12;
   const canConnect = validation?.ok === true && !isConnecting;
@@ -128,15 +121,7 @@ export default function OnboardingHoldedClient() {
         throw new Error(data?.error || 'No hemos podido conectar Holded.');
       }
 
-      setConnectedSummary({
-        tenantName: data?.connection?.tenantName || null,
-        taxId: data?.connection?.taxId || null,
-        supportedModules: Array.isArray(data?.connection?.supportedModules)
-          ? data.connection.supportedModules
-          : [],
-      });
-
-      router.push('/onboarding/success');
+      window.location.assign('/onboarding/success');
     } catch (connectError) {
       setError(
         connectError instanceof Error ? connectError.message : 'No hemos podido conectar Holded.'
@@ -264,23 +249,6 @@ export default function OnboardingHoldedClient() {
               </div>
             ) : null}
 
-            {connectedSummary ? (
-              <div className="mt-5 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-                <div className="font-semibold">Conexion lista para guardar</div>
-                <div className="mt-1">
-                  {connectedSummary.tenantName
-                    ? `Empresa detectada: ${connectedSummary.tenantName}. `
-                    : ''}
-                  {connectedSummary.taxId
-                    ? `NIF o codigo detectado: ${connectedSummary.taxId}. `
-                    : ''}
-                  {connectedSummary.supportedModules?.length
-                    ? `Modulos validados: ${connectedSummary.supportedModules.join(', ')}.`
-                    : ''}
-                </div>
-              </div>
-            ) : null}
-
             {error ? (
               <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
                 <div className="flex items-start gap-2">
@@ -316,20 +284,6 @@ export default function OnboardingHoldedClient() {
                 Politica de Privacidad
               </Link>
               . La clave se guarda protegida y no se muestra de nuevo en pantalla.
-            </div>
-
-            <div className="mt-5">
-              <div className="flex flex-wrap gap-4 text-sm">
-                <Link href="/support" className="font-semibold text-[#ff5460] hover:text-[#ef4654]">
-                  No encuentro mi API key
-                </Link>
-                <Link href="/legal" className="font-semibold text-slate-700 hover:text-slate-900">
-                  Aviso legal
-                </Link>
-                <Link href="/cookies" className="font-semibold text-slate-700 hover:text-slate-900">
-                  Cookies
-                </Link>
-              </div>
             </div>
           </section>
         </div>
