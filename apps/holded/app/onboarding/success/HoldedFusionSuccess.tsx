@@ -8,17 +8,20 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 const DASHBOARD_URL = '/dashboard?source=holded_connection_complete';
 
 export default function HoldedFusionSuccess() {
+  const [showFusion, setShowFusion] = useState(false);
   const [showIsaak, setShowIsaak] = useState(false);
   const [showReady, setShowReady] = useState(false);
 
   useEffect(() => {
-    const isaakTimer = window.setTimeout(() => setShowIsaak(true), 1000);
-    const readyTimer = window.setTimeout(() => setShowReady(true), 1800);
+    const fusionTimer = window.setTimeout(() => setShowFusion(true), 900);
+    const isaakTimer = window.setTimeout(() => setShowIsaak(true), 1250);
+    const readyTimer = window.setTimeout(() => setShowReady(true), 1700);
     const redirectTimer = window.setTimeout(() => {
       window.location.assign(DASHBOARD_URL);
-    }, 3200);
+    }, 2800);
 
     return () => {
+      window.clearTimeout(fusionTimer);
       window.clearTimeout(isaakTimer);
       window.clearTimeout(readyTimer);
       window.clearTimeout(redirectTimer);
@@ -48,7 +51,11 @@ export default function HoldedFusionSuccess() {
             <div className="relative mt-12 h-[21rem] sm:h-[24rem]">
               <div className="holded-fusion-rail absolute left-1/2 top-[6.2rem] hidden h-1 w-[18rem] -translate-x-1/2 rounded-full bg-[linear-gradient(90deg,rgba(16,185,129,0.22),rgba(255,84,96,0.28))] sm:block" />
 
-              <div className="holded-fusion-chip holded-fusion-chip-left absolute left-1/2 top-0 flex h-28 w-28 -translate-x-[9.75rem] items-center justify-center rounded-[2rem] border border-emerald-200 bg-white shadow-[0_18px_50px_-35px_rgba(16,185,129,0.55)] sm:h-32 sm:w-32 sm:-translate-x-[13rem]">
+              <div
+                className={`holded-fusion-chip holded-fusion-chip-left absolute left-1/2 top-0 flex h-28 w-28 -translate-x-[9.75rem] items-center justify-center rounded-[2rem] border border-emerald-200 bg-white shadow-[0_18px_50px_-35px_rgba(16,185,129,0.55)] transition-all duration-300 sm:h-32 sm:w-32 sm:-translate-x-[13rem] ${
+                  showFusion ? 'scale-75 opacity-0' : 'opacity-100'
+                }`}
+              >
                 <Image
                   src="/brand/ChatGPT%20logo.png"
                   alt="ChatGPT"
@@ -58,11 +65,19 @@ export default function HoldedFusionSuccess() {
                   priority
                 />
               </div>
-              <div className="absolute left-1/2 top-[7.8rem] -translate-x-[9.75rem] text-sm font-semibold text-slate-600 sm:-translate-x-[13rem]">
+              <div
+                className={`absolute left-1/2 top-[7.8rem] -translate-x-[9.75rem] text-sm font-semibold text-slate-600 transition-all duration-300 sm:-translate-x-[13rem] ${
+                  showFusion ? 'opacity-0' : 'opacity-100'
+                }`}
+              >
                 ChatGPT
               </div>
 
-              <div className="holded-fusion-chip holded-fusion-chip-right absolute left-1/2 top-0 flex h-28 w-28 translate-x-[2.75rem] items-center justify-center rounded-[2rem] border border-[#ff5460]/15 bg-white shadow-[0_18px_50px_-35px_rgba(255,84,96,0.45)] sm:h-32 sm:w-32 sm:translate-x-[8.8rem]">
+              <div
+                className={`holded-fusion-chip holded-fusion-chip-right absolute left-1/2 top-0 flex h-28 w-28 translate-x-[2.75rem] items-center justify-center rounded-[2rem] border border-[#ff5460]/15 bg-white shadow-[0_18px_50px_-35px_rgba(255,84,96,0.45)] transition-all duration-300 sm:h-32 sm:w-32 sm:translate-x-[8.8rem] ${
+                  showFusion ? 'scale-75 opacity-0' : 'opacity-100'
+                }`}
+              >
                 <Image
                   src="/brand/holded/holded-diamond-logo.png"
                   alt="Holded"
@@ -72,9 +87,24 @@ export default function HoldedFusionSuccess() {
                   priority
                 />
               </div>
-              <div className="absolute left-1/2 top-[7.8rem] translate-x-[2.75rem] text-sm font-semibold text-slate-600 sm:translate-x-[8.8rem]">
+              <div
+                className={`absolute left-1/2 top-[7.8rem] translate-x-[2.75rem] text-sm font-semibold text-slate-600 transition-all duration-300 sm:translate-x-[8.8rem] ${
+                  showFusion ? 'opacity-0' : 'opacity-100'
+                }`}
+              >
                 Holded
               </div>
+
+              <div
+                className={`absolute left-1/2 top-[4.4rem] h-28 w-28 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,84,96,0.48),rgba(255,84,96,0.18)_45%,rgba(255,255,255,0)_72%)] blur-md transition-all duration-500 sm:h-36 sm:w-36 ${
+                  showFusion ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
+                }`}
+              />
+              <div
+                className={`absolute left-1/2 top-[5.1rem] h-10 w-10 -translate-x-1/2 rounded-full bg-white shadow-[0_0_60px_rgba(255,84,96,0.55)] transition-all duration-500 ${
+                  showFusion ? 'holded-fusion-burst scale-100 opacity-100' : 'scale-50 opacity-0'
+                }`}
+              />
 
               <div
                 className={`holded-fusion-isaak absolute left-1/2 top-[5.2rem] w-full max-w-[20rem] -translate-x-1/2 transition-all duration-700 ${

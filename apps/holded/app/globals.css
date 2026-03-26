@@ -50,6 +50,21 @@ body {
   }
 }
 
+@keyframes holded-fusion-burst {
+  0% {
+    transform: translateX(-50%) scale(0.45);
+    opacity: 0;
+  }
+  35% {
+    transform: translateX(-50%) scale(1.35);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) scale(2.1);
+    opacity: 0;
+  }
+}
+
 .holded-fusion-rail {
   animation: holded-fusion-rail-pulse 1.8s ease-in-out infinite;
 }
@@ -60,6 +75,10 @@ body {
 
 .holded-fusion-chip-right {
   animation: holded-fusion-right 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.holded-fusion-burst {
+  animation: holded-fusion-burst 0.55s ease-out forwards;
 }
 
 @media (min-width: 640px) {
