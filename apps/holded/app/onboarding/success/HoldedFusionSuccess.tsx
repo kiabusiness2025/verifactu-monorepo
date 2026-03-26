@@ -49,10 +49,14 @@ export default function HoldedFusionSuccess() {
               <div className="holded-fusion-rail absolute left-1/2 top-[6.2rem] hidden h-1 w-[18rem] -translate-x-1/2 rounded-full bg-[linear-gradient(90deg,rgba(16,185,129,0.22),rgba(255,84,96,0.28))] sm:block" />
 
               <div className="holded-fusion-chip holded-fusion-chip-left absolute left-1/2 top-0 flex h-28 w-28 -translate-x-[9.75rem] items-center justify-center rounded-[2rem] border border-emerald-200 bg-white shadow-[0_18px_50px_-35px_rgba(16,185,129,0.55)] sm:h-32 sm:w-32 sm:-translate-x-[13rem]">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 text-lg font-extrabold uppercase tracking-[0.14em] text-white shadow-sm">
-                  AI
-                </div>
-                <span className="sr-only">ChatGPT</span>
+                <Image
+                  src="/brand/ChatGPT%20logo.png"
+                  alt="ChatGPT"
+                  width={56}
+                  height={56}
+                  className="h-12 w-12 object-contain sm:h-14 sm:w-14"
+                  priority
+                />
               </div>
               <div className="absolute left-1/2 top-[7.8rem] -translate-x-[9.75rem] text-sm font-semibold text-slate-600 sm:-translate-x-[13rem]">
                 ChatGPT

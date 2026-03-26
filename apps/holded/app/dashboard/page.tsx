@@ -4,7 +4,6 @@ import HoldedDashboardClient from './HoldedDashboardClient';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { writeHoldedActivity } from '@/app/lib/holded-activity';
 import { isHoldedAdminEmail } from '@/app/lib/holded-admin';
-import { getHoldedConnection } from '@/app/lib/holded-integration';
 
 export const metadata: Metadata = {
   title: 'Dashboard | Isaak para Holded',
@@ -32,11 +31,6 @@ export default async function HoldedDashboardPage({ searchParams }: PageProps) {
     );
   }
 
-  const connection = await getHoldedConnection(tenantId);
-  if (!connection) {
-    redirect('/onboarding/holded');
-  }
-
   if (session.userId) {
     await writeHoldedActivity({
       tenantId,
@@ -56,14 +50,14 @@ export default async function HoldedDashboardPage({ searchParams }: PageProps) {
       session={{
         email: session.email,
         tenantId,
-        tenantName: connection.tenantName,
-        legalName: connection.legalName,
-        taxId: connection.taxId,
-        keyMasked: connection.keyMasked,
-        connectedAt: connection.connectedAt,
-        lastValidatedAt: connection.lastValidatedAt,
-        supportedModules: connection.supportedModules,
-        validationSummary: connection.validationSummary,
+        tenantName: null,
+        legalName: null,
+        taxId: null,
+        keyMasked: null,
+        connectedAt: null,
+        lastValidatedAt: null,
+        supportedModules: [],
+        validationSummary: null,
         isAdmin: isHoldedAdminEmail(session.email),
       }}
     />

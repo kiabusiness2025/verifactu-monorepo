@@ -140,12 +140,44 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
       return `Conexion activa en ${connectionState.supportedModules.join(', ')}`;
     }
 
-    return 'Conexion activa';
-  }, [connectionState.supportedModules]);
+    return connectionState.keyMasked ? 'Conexion activa' : 'Conexion pendiente';
+  }, [connectionState.keyMasked, connectionState.supportedModules]);
 
   const openIsaak = () => {
     chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadConnectionState = async () => {
+      try {
+        const res = await fetch('/api/holded/status', { cache: 'no-store' });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || cancelled) return;
+
+        setConnectionState((current) => ({
+          ...current,
+          tenantName: data.tenantName ?? current.tenantName,
+          legalName: data.legalName ?? current.legalName,
+          taxId: data.taxId ?? current.taxId,
+          keyMasked: data.keyMasked ?? null,
+          connectedAt: data.connectedAt ?? null,
+          lastValidatedAt: data.lastValidatedAt ?? null,
+          supportedModules: Array.isArray(data.supportedModules) ? data.supportedModules : [],
+          validationSummary: data.validationSummary ?? null,
+        }));
+      } catch {
+        // Do not block dashboard rendering if status hydration fails.
+      }
+    };
+
+    void loadConnectionState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -610,6 +642,14 @@ export default function HoldedDashboardClient({ session }: { session: SessionInf
               ) : null}
 
               <div className="flex flex-col gap-3 sm:flex-row">
+                {!connectionState.keyMasked ? (
+                  <Link
+                    href="/onboarding/holded"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
+                  >
+                    Conectar Holded ahora
+                  </Link>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setShowReconnect((current) => !current)}
