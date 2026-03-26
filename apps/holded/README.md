@@ -52,6 +52,8 @@ En `/auth/holded?mode=register` pedimos:
 Reglas UX actuales:
 
 - el correo debe coincidir con el que el usuario tiene en Holded para facilitar OAuth y unificacion futura
+- el aviso visible en login se mantiene corto: `Usa el mismo correo que tienes registrado en Holded`
+- el usuario puede decidir si quiere recordar la sesion en este dispositivo
 - el nombre de empresa no se pide en el alta
 - la empresa se detecta despues al conectar la API key de Holded
 
@@ -74,6 +76,11 @@ Direccion UX actual:
 - gestion de conexion plegada
 - chat centrado como pantalla principal
 - saludo segun hora de `Europe/Madrid`
+
+Regla de acceso actual:
+
+- si el login llega sin parametro `next`, la entrada por defecto va a `/dashboard`
+- onboarding solo se abre cuando el flujo lo pide explicitamente
 
 Reglas de contenido:
 

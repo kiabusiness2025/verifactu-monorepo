@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { registerWithEmail, signInWithEmail, signInWithGoogle } from '@/app/lib/auth';
 import { auth } from '@/app/lib/firebase';
-import { buildOnboardingUrl } from '@/app/lib/holded-navigation';
+import { buildDashboardUrl, buildOnboardingUrl } from '@/app/lib/holded-navigation';
 import { mintSessionCookie } from '@/app/lib/serverSession';
 
 const HOLDED_SITE_URL =
@@ -16,7 +16,7 @@ const HOLDED_SITE_URL =
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
 
 function buildFallbackTarget(source: string) {
-  return buildOnboardingUrl(source);
+  return buildDashboardUrl(source);
 }
 
 function resolveRedirectTarget(nextParam: string, source: string) {
@@ -64,7 +64,7 @@ function HoldedAuthContent() {
   const [existingUserChecking, setExistingUserChecking] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const rememberDevice = true;
+  const [rememberDevice, setRememberDevice] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,7 +94,7 @@ function HoldedAuthContent() {
     return () => {
       cancelled = true;
     };
-  }, [redirectTarget]);
+  }, [redirectTarget, rememberDevice]);
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -314,8 +314,7 @@ function HoldedAuthContent() {
               </div>
 
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-                Usa el mismo correo que tienes registrado en Holded. Lo necesitaremos para futuros
-                accesos con OAuth y para unificar tu cuenta.
+                Usa el mismo correo que tienes registrado en Holded.
               </div>
 
               {isRegisterMode ? (
@@ -415,6 +414,16 @@ function HoldedAuthContent() {
                 </label>
               ) : null}
 
+              <label className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={rememberDevice}
+                  onChange={(event) => setRememberDevice(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
+                />
+                <span>Recordar sesion en este dispositivo</span>
+              </label>
+
               <button
                 type="submit"
                 disabled={isLoading || existingUserChecking}
@@ -449,8 +458,7 @@ function HoldedAuthContent() {
             </form>
 
             <p className="text-center text-xs leading-5 text-slate-500">
-              Recordamos este dispositivo por defecto para que no tengas que iniciar sesion cada
-              vez.
+              Si desmarcas la opcion, la sesion durara menos y tendras que volver a entrar antes.
             </p>
 
             {isRegisterMode ? (

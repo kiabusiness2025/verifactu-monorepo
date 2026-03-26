@@ -133,6 +133,9 @@ No se guarda nunca la API key en claro.
 ## UX operativa actual
 
 - el login avisa de que el correo debe coincidir con el registrado en Holded para futuros flujos OAuth
+- el aviso visible se mantiene corto para no cargar el formulario
+- el usuario puede marcar si quiere recordar sesion en ese dispositivo
+- si no llega un `next` explicito, el login entra por defecto al dashboard
 - el dashboard usa una experiencia chat-first minimalista
 - si el nombre del usuario parece autogenerado desde el email, se pide completar perfil antes de abrir el chat
 - el saludo principal usa la hora de `Europe/Madrid`
