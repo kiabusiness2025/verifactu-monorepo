@@ -91,6 +91,7 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
   const resolved = (await searchParams) || {};
   const source = readSource(resolved.source) || 'isaak_chat';
   const handoff = readHandoff(resolved.handoff);
+  const isFreshHoldedHandoff = Boolean(handoff?.profile);
   const session = await getHoldedSession();
 
   if (!session?.tenantId || !session.userId) {
@@ -111,7 +112,7 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
     }),
   ]);
 
-  if (!connection?.keyMasked) {
+  if (!connection?.keyMasked && !isFreshHoldedHandoff) {
     redirect(
       buildHoldedProfileOnboardingUrl(
         'isaak_chat_requires_holded',
@@ -157,8 +158,10 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
         email: session.email,
         name: session.name,
         tenantId: session.tenantId,
-        tenantName: connection?.tenantName ?? profile?.tradeName ?? null,
-        legalName: connection?.legalName ?? profile?.legalName ?? null,
+        tenantName:
+          connection?.tenantName ?? profile?.tradeName ?? handoff?.profile?.companyName ?? null,
+        legalName:
+          connection?.legalName ?? profile?.legalName ?? handoff?.profile?.companyName ?? null,
         taxId: connection?.taxId ?? null,
         keyMasked: connection?.keyMasked ?? null,
         connectedAt: connection?.connectedAt ?? null,
@@ -171,6 +174,7 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
       }}
       onboardingProfile={effectiveProfile}
       instructionProfile={effectiveInstructions}
+      connectionPending={isFreshHoldedHandoff && !connection?.keyMasked}
       quickPrompts={
         effectiveProfile.mainGoals.length > 0
           ? buildSuggestedPrompts(effectiveProfile.mainGoals)

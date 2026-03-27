@@ -185,11 +185,13 @@ export default function IsaakWorkspaceClient({
   session,
   onboardingProfile,
   instructionProfile,
+  connectionPending = false,
   quickPrompts,
 }: {
   session: SessionInfo;
   onboardingProfile?: IsaakOnboardingProfile | null;
   instructionProfile?: IsaakInstructionProfile | null;
+  connectionPending?: boolean;
   quickPrompts?: string[];
 }) {
   const [connectionState, setConnectionState] = useState(session);
@@ -227,7 +229,8 @@ export default function IsaakWorkspaceClient({
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const chatRef = useRef<HTMLDivElement | null>(null);
 
-  const isConnected = Boolean(connectionState.keyMasked);
+  const hasLiveConnection = Boolean(connectionState.keyMasked);
+  const isConnected = hasLiveConnection || connectionPending;
   const greeting = getSpanishGreeting();
   const defaultName = useMemo(() => deriveName(connectionState), [connectionState]);
   const alternateNames = useMemo(() => deriveAlternateNames(connectionState), [connectionState]);
@@ -429,7 +432,7 @@ export default function IsaakWorkspaceClient({
 
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || loading || !isConnected || !answers) return;
+    if (!trimmed || loading || !hasLiveConnection || !answers) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -491,12 +494,12 @@ export default function IsaakWorkspaceClient({
   const effectiveQuickPrompts = quickPrompts?.length ? quickPrompts : QUICK_START_PROMPTS;
   const hasConversationHistory = recentConversations.length > 0;
   const hasFewBusinessData =
-    isConnected &&
+    hasLiveConnection &&
     (!companyLabel ||
       !connectionState.validationSummary ||
       connectionState.supportedModules.length < 2);
   const canShowSummaryCTA =
-    isConnected &&
+    hasLiveConnection &&
     (connectionState.supportedModules.length > 0 ||
       Boolean(connectionState.validationSummary) ||
       Boolean(connectionState.lastValidatedAt));
@@ -506,7 +509,10 @@ export default function IsaakWorkspaceClient({
     const role = formatRoleLabel(answers?.roleInCompany);
     const company = companyLabel || 'tu empresa';
 
-    if (!isConnected) {
+    if (!hasLiveConnection) {
+      if (connectionPending) {
+        return `${greeting}, ${person}. Estoy terminando de enlazar tu espacio de ${company}. En unos segundos deberia quedar listo para trabajar con tus datos reales.`;
+      }
       return `Hola, ${person}. En cuanto conectemos Holded podre ayudarte con datos reales de ${company}.`;
     }
 
@@ -532,7 +538,10 @@ export default function IsaakWorkspaceClient({
     selectedName,
   ]);
   const assistantSupportMessage = useMemo(() => {
-    if (!isConnected) {
+    if (!hasLiveConnection) {
+      if (connectionPending) {
+        return 'Ya tengo tu contexto inicial y estoy esperando la confirmacion final de Holded para activar respuestas con datos reales.';
+      }
       return 'Conecta Holded y entrare con tus facturas, gastos y validaciones disponibles.';
     }
 
@@ -550,7 +559,13 @@ export default function IsaakWorkspaceClient({
     }
 
     return 'Puedo ayudarte a entender tus numeros, revisar tus pendientes y convertir dudas contables en respuestas claras y accionables.';
-  }, [connectionState.supportedModules, hasFewBusinessData, isConnected]);
+  }, [
+    connectionPending,
+    connectionState.supportedModules,
+    greeting,
+    hasFewBusinessData,
+    hasLiveConnection,
+  ]);
 
   const handleNameChoice = (value: string) => {
     setSelectedName(value === 'Lo decidire despues' ? defaultName : value);
@@ -602,7 +617,22 @@ export default function IsaakWorkspaceClient({
       );
     }
 
-    if (!isConnected) {
+    if (!hasLiveConnection) {
+      if (connectionPending) {
+        return (
+          <div className="rounded-[2rem] border border-sky-200 bg-sky-50 p-6 text-left shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-sky-900">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Estoy terminando de preparar la conexion de Holded
+            </div>
+            <p className="mt-3 text-sm leading-7 text-sky-950">
+              Ya he recibido tu configuracion inicial. En cuanto termine la verificacion final,
+              activare el chat con tus datos reales sin devolverte al onboarding.
+            </p>
+          </div>
+        );
+      }
+
       return (
         <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-left shadow-sm">
           <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
@@ -626,8 +656,11 @@ export default function IsaakWorkspaceClient({
     if (messages.length > 0) return null;
 
     const roleLabel = formatRoleLabel(answers?.roleInCompany);
-    const holdedStatusLabel =
-      connectionState.supportedModules.length > 0 ? 'Datos listos' : 'Conexion inicial';
+    const holdedStatusLabel = hasLiveConnection
+      ? connectionState.supportedModules.length > 0
+        ? 'Datos listos'
+        : 'Conexion inicial'
+      : 'Verificacion final en curso';
     const validationHint = connectionState.validationSummary || assistantSupportMessage;
 
     return (
@@ -1000,7 +1033,7 @@ export default function IsaakWorkspaceClient({
                   />
                   <button
                     type="submit"
-                    disabled={loading || !input.trim() || !isConnected || !onboardingDone}
+                    disabled={loading || !input.trim() || !hasLiveConnection || !onboardingDone}
                     className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-950 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                     aria-label="Enviar mensaje"
                   >
@@ -1015,9 +1048,11 @@ export default function IsaakWorkspaceClient({
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
                 <div>
-                  {isConnected
+                  {hasLiveConnection
                     ? `Holded conectado - Ultima validacion ${formatDate(connectionState.lastValidatedAt)}`
-                    : 'Conecta Holded para usar datos reales'}
+                    : connectionPending
+                      ? 'Holded se esta terminando de preparar'
+                      : 'Conecta Holded para usar datos reales'}
                 </div>
                 <div className="flex items-center gap-3">
                   <span>Integraciones disponibles</span>
