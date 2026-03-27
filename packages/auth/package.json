@@ -9,6 +9,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@verifactu/utils": "file:../utils",
     "next": "^15.5.14",
     "next-auth": "^4.24.13",
     "jose": "^5.2.0"

@@ -25,6 +25,7 @@ Comparte base de datos, sesion y modelos con el resto, pero su experiencia publi
 - centrar la experiencia en la version gratuita
 - conectar Holded por API key, no por OAuth
 - dejar la persistencia preparada para premium y futuras integraciones
+- terminar siempre con handoff a `isaak.verifactu.business` como producto principal
 
 ## Flujo funcional actual
 
@@ -35,8 +36,8 @@ Comparte base de datos, sesion y modelos con el resto, pero su experiencia publi
 5. Onboarding en `/onboarding`
 6. Conexion Holded en `/onboarding/holded`
 7. Exito en `/onboarding/success`
-8. Dashboard en `/dashboard`
-9. Primer chat via `/api/holded/chat`
+8. Handoff a Isaak en `/dashboard`
+9. Chat principal en `isaak.verifactu.business/chat`
 
 ## Alta y acceso
 
@@ -66,16 +67,13 @@ Si el nombre guardado parece un valor automatico derivado del email:
 - se muestra un paso corto para completar perfil antes de abrir el chat
 - al guardar el nombre, el saludo pasa a usarlo directamente
 
-## Dashboard y chat
+## Dashboard y handoff
 
 Direccion UX actual:
 
-- layout minimalista tipo chat-first
-- sidebar pequena con historial
-- estado de conexion Holded discreto
-- gestion de conexion plegada
-- chat centrado como pantalla principal
-- saludo segun hora de `Europe/Madrid`
+- `apps/holded` ya no debe comportarse como dashboard final
+- `/dashboard` existe como paso de continuidad y redireccion segura hacia Isaak
+- el producto final visible vive en `apps/isaak`
 
 Regla de acceso actual:
 
@@ -130,7 +128,7 @@ Documentacion tecnica detallada:
 - `app/onboarding/page.tsx`: entrada al onboarding
 - `app/onboarding/holded/page.tsx`: pantalla de pegar API key
 - `app/onboarding/success/page.tsx`: exito y acceso al dashboard
-- `app/dashboard/page.tsx`: dashboard privado
+- `app/dashboard/page.tsx`: handoff privado hacia Isaak
 - `app/api/auth/session/route.ts`: sincronizacion de usuario, tenant y cookie
 - `app/api/auth/register/route.ts`: alta y correo de verificacion
 - `app/api/holded/validate/route.ts`: validacion de API key

@@ -2,13 +2,16 @@ export {
   SESSION_COOKIE_NAME,
   buildSessionCookieOptions,
   readSessionSecret,
+  readSessionSecrets,
   signSessionToken,
   verifySessionToken,
-} from '../../../holded/app/lib/session';
+  verifySessionTokenFromEnv,
+  verifySessionTokenWithFallback,
+} from '@verifactu/auth';
 
 export type {
   SessionCookieInput,
   SessionCookieOptions,
   SessionPayload,
   SessionSameSite,
-} from '../../../holded/app/lib/session';
+} from '@verifactu/auth';

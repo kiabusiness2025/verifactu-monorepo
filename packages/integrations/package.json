@@ -9,6 +9,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@prisma/client": "5.22.0",
     "stripe": "^14.0.0"
   },
   "devDependencies": {

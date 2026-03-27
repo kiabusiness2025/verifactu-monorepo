@@ -27,6 +27,8 @@ type SessionInfo = {
   lastValidatedAt: string | null;
   supportedModules: string[];
   validationSummary: string | null;
+  phone?: string | null;
+  representative?: string | null;
   isAdmin?: boolean;
 };
 
@@ -45,8 +47,15 @@ type ConversationSummary = {
 type OnboardingAnswers = {
   preferredName: string;
   companyName: string;
+  roleInCompany: string;
+  phone: string;
+  businessSector: string;
+  websiteState: string;
+  employeeRange: string;
   goals: string[];
 };
+
+const STORAGE_VERSION = 'v2';
 
 const GOAL_OPTIONS = [
   'Entender mi contabilidad',
@@ -62,6 +71,24 @@ const QUICK_START_PROMPTS = [
   'Que gastos tengo pendientes?',
   'Hazme una factura',
 ];
+
+const ROLE_OPTIONS = [
+  'Autonoma o fundador',
+  'Direccion',
+  'Finanzas o administracion',
+  'Asesoria interna',
+];
+const SECTOR_OPTIONS = [
+  'Servicios',
+  'Comercio',
+  'Tecnologia',
+  'Construccion',
+  'Hosteleria',
+  'Salud',
+  'Otro',
+];
+const WEBSITE_OPTIONS = ['Ya tenemos web', 'Aun no tenemos web'];
+const EMPLOYEE_OPTIONS = ['Solo yo', '2-5 empleados', '6-20 empleados', 'Mas de 20'];
 
 function formatDate(value: string | null) {
   if (!value) return 'No disponible';
@@ -92,7 +119,11 @@ function getSpanishGreeting() {
 }
 
 function deriveName(session: SessionInfo) {
-  const raw = session.name?.trim() || session.email?.split('@')[0] || 'hola';
+  const raw =
+    session.name?.trim() ||
+    session.representative?.trim() ||
+    session.email?.split('@')[0] ||
+    'hola';
   return (
     raw
       .split(' ')[0]
@@ -104,19 +135,21 @@ function deriveName(session: SessionInfo) {
 function deriveAlternateNames(session: SessionInfo) {
   const suggestions = new Set<string>();
   const fullName = session.name?.trim();
+  const representative = session.representative?.trim();
   const emailPrefix = session.email
     ?.split('@')[0]
     ?.replace(/[._-]+/g, ' ')
     .trim();
 
   if (fullName && fullName !== deriveName(session)) suggestions.add(fullName);
+  if (representative && representative !== deriveName(session)) suggestions.add(representative);
   if (emailPrefix && emailPrefix !== deriveName(session)) suggestions.add(emailPrefix);
   suggestions.add('Lo decidire despues');
   return Array.from(suggestions).slice(0, 2);
 }
 
 function storageKey(tenantId: string | null) {
-  return `isaak-chat-onboarding:${tenantId || 'anonymous'}`;
+  return `isaak-chat-onboarding:${tenantId || 'anonymous'}:${STORAGE_VERSION}`;
 }
 
 function buildWelcomeContext(isConnected: boolean, companyName: string | null) {
@@ -146,6 +179,11 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
   const [step, setStep] = useState(0);
   const [selectedName, setSelectedName] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedPhone, setSelectedPhone] = useState(session.phone || '');
+  const [selectedSector, setSelectedSector] = useState('');
+  const [selectedWebsite, setSelectedWebsite] = useState('');
+  const [selectedEmployees, setSelectedEmployees] = useState('');
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const chatRef = useRef<HTMLDivElement | null>(null);
 
@@ -170,10 +208,23 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
       const raw = window.localStorage.getItem(storageKey(session.tenantId));
       if (!raw) return;
       const parsed = JSON.parse(raw) as OnboardingAnswers;
-      if (parsed?.preferredName && parsed?.companyName && Array.isArray(parsed?.goals)) {
+      if (
+        parsed?.preferredName &&
+        parsed?.companyName &&
+        parsed?.roleInCompany &&
+        parsed?.businessSector &&
+        parsed?.websiteState &&
+        parsed?.employeeRange &&
+        Array.isArray(parsed?.goals)
+      ) {
         setAnswers(parsed);
         setSelectedName(parsed.preferredName);
         setSelectedCompany(parsed.companyName);
+        setSelectedRole(parsed.roleInCompany);
+        setSelectedPhone(parsed.phone || '');
+        setSelectedSector(parsed.businessSector);
+        setSelectedWebsite(parsed.websiteState);
+        setSelectedEmployees(parsed.employeeRange);
         setSelectedGoals(parsed.goals);
         setStep(4);
       }
@@ -284,6 +335,22 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
     window.localStorage.setItem(storageKey(session.tenantId), JSON.stringify(nextAnswers));
   };
 
+  const saveProfile = async (nextAnswers: OnboardingAnswers) => {
+    try {
+      await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: nextAnswers.preferredName,
+          companyName: nextAnswers.companyName,
+          phone: nextAnswers.phone,
+        }),
+      });
+    } catch {
+      // keep local onboarding state even if persistence fails
+    }
+  };
+
   const startNewChat = () => {
     setConversationId(null);
     setMessages([]);
@@ -379,7 +446,7 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
 
   const onboardingDone = Boolean(answers);
   const selectedGoalCount = selectedGoals.length;
-  const companyLabel = companyOptions[0] || null;
+  const companyLabel = answers?.companyName || companyOptions[0] || null;
 
   const handleNameChoice = (value: string) => {
     setSelectedName(value === 'Lo decidire despues' ? defaultName : value);
@@ -389,6 +456,11 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
   const handleCompanyChoice = (value: string) => {
     setSelectedCompany(value);
     setStep(2);
+  };
+
+  const handleRoleChoice = (value: string) => {
+    setSelectedRole(value);
+    setStep(3);
   };
 
   const toggleGoal = (goal: string) => {
@@ -405,9 +477,15 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
     const nextAnswers = {
       preferredName: selectedName || defaultName,
       companyName: selectedCompany || companyLabel || 'tu empresa',
+      roleInCompany: selectedRole || ROLE_OPTIONS[0],
+      phone: selectedPhone.trim(),
+      businessSector: selectedSector || SECTOR_OPTIONS[0],
+      websiteState: selectedWebsite || WEBSITE_OPTIONS[0],
+      employeeRange: selectedEmployees || EMPLOYEE_OPTIONS[0],
       goals: selectedGoals.length > 0 ? selectedGoals : [GOAL_OPTIONS[0]],
     };
     persistOnboarding(nextAnswers);
+    void saveProfile(nextAnswers);
     setStep(4);
   };
 
@@ -552,12 +630,115 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
                 {step === 2 ? (
                   <>
                     <div className="text-sm font-semibold text-slate-900">
-                      En que quieres que te ayude principalmente?
+                      Cual es tu papel dentro de la empresa?
                     </div>
                     <p className="mt-2 text-sm leading-7 text-slate-600">
-                      Puedes elegir hasta 3 opciones. Esto me ayudara a priorizar tu experiencia.
+                      Asi adapto mejor el tono y el tipo de ayuda que te voy a dar.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-3">
+                      {ROLE_OPTIONS.map((role) => (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => handleRoleChoice(role)}
+                          className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+                            selectedRole === role
+                              ? 'border-[#ff5460]/30 bg-[#fff1f2] text-[#b42332]'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                          }`}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : null}
+
+                {step === 3 ? (
+                  <>
+                    <div className="text-sm font-semibold text-slate-900">
+                      Cuentame un poco mas de tu empresa
+                    </div>
+                    <p className="mt-2 text-sm leading-7 text-slate-600">
+                      Con esto preparo mejor tu contexto inicial. Solo necesito lo minimo.
+                    </p>
+
+                    <div className="mt-4">
+                      <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Telefono de contacto
+                      </label>
+                      <input
+                        value={selectedPhone}
+                        onChange={(event) => setSelectedPhone(event.target.value)}
+                        placeholder="Ej. 600 123 123"
+                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                      />
+                    </div>
+
+                    <div className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      Sector
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      {SECTOR_OPTIONS.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setSelectedSector(option)}
+                          className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+                            selectedSector === option
+                              ? 'border-[#ff5460]/30 bg-[#fff1f2] text-[#b42332]'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      Pagina web
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      {WEBSITE_OPTIONS.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setSelectedWebsite(option)}
+                          className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+                            selectedWebsite === option
+                              ? 'border-[#ff5460]/30 bg-[#fff1f2] text-[#b42332]'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      Equipo
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      {EMPLOYEE_OPTIONS.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setSelectedEmployees(option)}
+                          className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+                            selectedEmployees === option
+                              ? 'border-[#ff5460]/30 bg-[#fff1f2] text-[#b42332]'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      En que quieres que te ayude principalmente
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-3">
                       {GOAL_OPTIONS.map((goal) => {
                         const selected = selectedGoals.includes(goal);
                         return (
@@ -612,6 +793,12 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
                   <p className="mt-3 text-sm leading-7 text-emerald-950">
                     Puedes empezar preguntandome lo que necesites.
                   </p>
+                  <div className="mt-4 grid gap-2 text-sm text-emerald-950 sm:grid-cols-2">
+                    <div>Empresa: {answers?.companyName}</div>
+                    <div>Rol: {answers?.roleInCompany}</div>
+                    <div>Sector: {answers?.businessSector}</div>
+                    <div>Equipo: {answers?.employeeRange}</div>
+                  </div>
                 </div>
 
                 <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">

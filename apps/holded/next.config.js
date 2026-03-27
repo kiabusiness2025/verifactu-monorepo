@@ -7,6 +7,7 @@ const __dirname = path.dirname(__filename);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: path.join(__dirname, '..', '..'),
+  transpilePackages: ['@verifactu/auth', '@verifactu/integrations', '@verifactu/utils'],
   eslint: { ignoreDuringBuilds: true },
   poweredByHeader: false,
   compress: true,

@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@prisma/client": "5.22.0",
+    "@verifactu/auth": "file:../../packages/auth",
+    "@verifactu/integrations": "file:../../packages/integrations",
     "firebase": "^12.7.0",
     "firebase-admin": "^13.6.0",
     "framer-motion": "^12.23.26",

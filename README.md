@@ -26,8 +26,9 @@ Plataforma SaaS para facturacion y cumplimiento VeriFactu. Este monorepo contien
 
 ## Apps internas y compartidas
 
-- `apps/app`: app principal de cliente -> `https://app.verifactu.business`
+- `apps/app`: core canonico de negocio + panel avanzado -> `https://app.verifactu.business`
 - `apps/admin`: panel de administracion -> `https://admin.verifactu.business`
+- `apps/client`: legacy congelado, sin nuevas features
 - `packages/*`: UI, utils, db, auth, integrations
 
 Regla operativa:
@@ -56,8 +57,8 @@ Normas de no mezcla:
 
 ## Apps
 
-- apps/app: App principal (clientes) -> /app
-- apps/client: App cliente alternativa o legacy (si aplica)
+- apps/app: core compartido y panel avanzado
+- apps/client: legacy congelado
 - apps/landing: Proyecto publico 1 -> verifactu.business
 - apps/holded: Proyecto publico 2 -> holded.verifactu.business
 - apps/isaak: Proyecto publico 3 -> isaak.verifactu.business
@@ -103,6 +104,7 @@ La documentacion detallada de variables esta en:
 
 - docs/INDEX.md (indice general)
 - docs/product/ISAAK_PRODUCT_REORDER_PLAN_2026.md (reordenacion del producto: Isaak como producto principal, Holded como entrada y app como core)
+- apps/app/README.md (core canónico del negocio y fuente de verdad operativa)
 - apps/landing/README.md (proyecto publico verifactu.business)
 - apps/holded/README.md (proyecto publico Holded)
 - apps/isaak/README.md (proyecto publico Isaak)

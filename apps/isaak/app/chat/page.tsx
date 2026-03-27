@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getHoldedSession } from '@/app/lib/holded-session';
+import { getHoldedConnection } from '@/app/lib/holded-integration';
+import { prisma } from '@/app/lib/prisma';
 import IsaakWorkspaceClient from './IsaakWorkspaceClient';
 
 export const metadata: Metadata = {
@@ -25,20 +27,35 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
     redirect(`/onboarding/holded?source=${encodeURIComponent(source)}`);
   }
 
+  const [connection, profile] = await Promise.all([
+    getHoldedConnection(session.tenantId),
+    prisma.tenantProfile.findUnique({
+      where: { tenantId: session.tenantId },
+      select: {
+        representative: true,
+        phone: true,
+        tradeName: true,
+        legalName: true,
+      },
+    }),
+  ]);
+
   return (
     <IsaakWorkspaceClient
       session={{
         email: session.email,
         name: session.name,
         tenantId: session.tenantId,
-        tenantName: null,
-        legalName: null,
-        taxId: null,
-        keyMasked: null,
-        connectedAt: null,
-        lastValidatedAt: null,
-        supportedModules: [],
-        validationSummary: null,
+        tenantName: connection?.tenantName ?? profile?.tradeName ?? null,
+        legalName: connection?.legalName ?? profile?.legalName ?? null,
+        taxId: connection?.taxId ?? null,
+        keyMasked: connection?.keyMasked ?? null,
+        connectedAt: connection?.connectedAt ?? null,
+        lastValidatedAt: connection?.lastValidatedAt ?? null,
+        supportedModules: connection?.supportedModules ?? [],
+        validationSummary: connection?.validationSummary ?? null,
+        phone: profile?.phone ?? null,
+        representative: profile?.representative ?? null,
         isAdmin: false,
       }}
     />
