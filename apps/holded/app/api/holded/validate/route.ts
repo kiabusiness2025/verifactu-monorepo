@@ -4,6 +4,10 @@ import { probeHoldedConnection } from '@/app/lib/holded-integration';
 
 export const runtime = 'nodejs';
 
+function isLikelyHoldedApiKey(value: string) {
+  return /^[a-f0-9]{32}$/i.test(value.trim());
+}
+
 export async function POST(request: NextRequest) {
   const session = await getHoldedSession();
 
@@ -19,6 +23,13 @@ export async function POST(request: NextRequest) {
 
   if (!apiKey) {
     return NextResponse.json({ error: 'Pega una API key valida de Holded.' }, { status: 400 });
+  }
+
+  if (!isLikelyHoldedApiKey(apiKey)) {
+    return NextResponse.json(
+      { error: 'La API key no tiene un formato valido de Holded.' },
+      { status: 400 }
+    );
   }
 
   const probe = await probeHoldedConnection(apiKey);
