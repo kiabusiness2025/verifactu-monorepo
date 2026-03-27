@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
-const ISAAK_SITE_URL = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
-const CHAT_URL = `${ISAAK_SITE_URL}/chat?source=holded_connection_complete`;
+const HOLDed_SITE_URL =
+  process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+const PROFILE_ONBOARDING_URL = `${HOLDed_SITE_URL}/onboarding/profile?source=holded_connection_complete`;
 
 export default function HoldedFusionSuccess() {
   const [showFusion, setShowFusion] = useState(false);
@@ -18,7 +19,7 @@ export default function HoldedFusionSuccess() {
     const isaakTimer = window.setTimeout(() => setShowIsaak(true), 1250);
     const readyTimer = window.setTimeout(() => setShowReady(true), 1700);
     const redirectTimer = window.setTimeout(() => {
-      window.location.assign(CHAT_URL);
+      window.location.assign(PROFILE_ONBOARDING_URL);
     }, 2800);
 
     return () => {
@@ -45,8 +46,8 @@ export default function HoldedFusionSuccess() {
               Holded y Isaak ya estan hablando entre si
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Hemos unido tu espacio de Holded con el chat de Isaak. En unos segundos entraras al
-              dashboard para empezar con tu primera pregunta.
+              Hemos unido tu espacio de Holded con Isaak. En unos segundos terminaremos una breve
+              preparacion para que el chat te reciba ya adaptado a tu empresa.
             </p>
 
             <div className="relative mt-12 h-[21rem] sm:h-[24rem]">
@@ -143,10 +144,10 @@ export default function HoldedFusionSuccess() {
               </div>
               <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href={CHAT_URL}
+                  href={PROFILE_ONBOARDING_URL}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  Entrar a Isaak
+                  Continuar con Isaak
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link

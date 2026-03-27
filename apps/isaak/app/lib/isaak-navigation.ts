@@ -23,6 +23,7 @@ export const CONTACT_URL = `${ISAAK_PUBLIC_URL}/support`;
 
 export const HOLDed_ONBOARDING_URL = `${ISAAK_PUBLIC_URL}/onboarding/holded`;
 export const HOLDed_AUTH_URL = `${HOLDed_URL}/auth/holded`;
+export const HOLDed_PROFILE_ONBOARDING_URL = `${HOLDed_URL}/onboarding/profile`;
 
 export const SUPPORT_EMAIL = (
   process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@isaak.verifactu.business'
@@ -31,4 +32,9 @@ export const SUPPORT_EMAIL = (
 export const buildHoldedAuthUrl = (source: string, next?: string) => {
   const target = next || `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`;
   return `${HOLDed_AUTH_URL}?source=${encodeURIComponent(source)}&next=${encodeURIComponent(target)}`;
+};
+
+export const buildHoldedProfileOnboardingUrl = (source: string, next?: string) => {
+  const target = next || `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`;
+  return `${HOLDed_PROFILE_ONBOARDING_URL}?source=${encodeURIComponent(source)}&next=${encodeURIComponent(target)}`;
 };

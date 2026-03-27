@@ -35,6 +35,12 @@ export const buildDashboardUrl = (source = 'holded_dashboard') =>
 export const buildOnboardingUrl = (source = 'holded_onboarding') =>
   `${HOLDED_ONBOARDING_URL}?source=${encodeURIComponent(source)}`;
 
+export const buildProfileOnboardingUrl = (
+  source = 'holded_profile_onboarding',
+  next = buildDashboardUrl(source)
+) =>
+  `${HOLDED_PUBLIC_URL}/onboarding/profile?source=${encodeURIComponent(source)}&next=${encodeURIComponent(next)}`;
+
 export const buildAuthUrl = (source: string, next = buildOnboardingUrl(source)) =>
   `${HOLDED_PUBLIC_URL}/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(next)}`;
 

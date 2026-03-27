@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { IsaakInstructionProfile, IsaakOnboardingProfile } from '@verifactu/integrations';
 import {
   AlertCircle,
   Bot,
@@ -59,11 +60,11 @@ const STORAGE_VERSION = 'v2';
 
 const GOAL_OPTIONS = [
   'Entender mi contabilidad',
-  'Saber que impuestos pagar',
-  'Emitir facturas facilmente',
   'Resolver dudas fiscales',
+  'Emitir facturas facilmente',
   'Controlar ingresos y gastos',
-  'Llevar la gestion completa',
+  'Entender balances y resultados',
+  'Llevar mejor la gestion diaria',
 ];
 
 const QUICK_START_PROMPTS = [
@@ -164,7 +165,17 @@ function buildWelcomeContext(isConnected: boolean, companyName: string | null) {
   return 'Ya tengo acceso a tu cuenta de Holded. Puedo ayudarte a entender tus numeros, crear facturas o resolver dudas en segundos.';
 }
 
-export default function IsaakWorkspaceClient({ session }: { session: SessionInfo }) {
+export default function IsaakWorkspaceClient({
+  session,
+  onboardingProfile,
+  instructionProfile,
+  quickPrompts,
+}: {
+  session: SessionInfo;
+  onboardingProfile?: IsaakOnboardingProfile | null;
+  instructionProfile?: IsaakInstructionProfile | null;
+  quickPrompts?: string[];
+}) {
   const [connectionState, setConnectionState] = useState(session);
   const [recentConversations, setRecentConversations] = useState<ConversationSummary[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -175,7 +186,20 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
   const [chatError, setChatError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [introReady, setIntroReady] = useState(false);
-  const [answers, setAnswers] = useState<OnboardingAnswers | null>(null);
+  const [answers, setAnswers] = useState<OnboardingAnswers | null>(
+    onboardingProfile
+      ? {
+          preferredName: onboardingProfile.preferredName,
+          companyName: onboardingProfile.companyName,
+          roleInCompany: onboardingProfile.roleInCompanyOther || onboardingProfile.roleInCompany,
+          phone: onboardingProfile.phone || '',
+          businessSector: onboardingProfile.businessSector,
+          websiteState: onboardingProfile.website || '',
+          employeeRange: onboardingProfile.teamSize || '',
+          goals: onboardingProfile.mainGoals,
+        }
+      : null
+  );
   const [step, setStep] = useState(0);
   const [selectedName, setSelectedName] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
@@ -204,6 +228,7 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
   }, []);
 
   useEffect(() => {
+    if (onboardingProfile) return;
     try {
       const raw = window.localStorage.getItem(storageKey(session.tenantId));
       if (!raw) return;
@@ -231,7 +256,7 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
     } catch {
       // ignore bad local onboarding state
     }
-  }, [session.tenantId]);
+  }, [onboardingProfile, session.tenantId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -447,6 +472,7 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
   const onboardingDone = Boolean(answers);
   const selectedGoalCount = selectedGoals.length;
   const companyLabel = answers?.companyName || companyOptions[0] || null;
+  const effectiveQuickPrompts = quickPrompts?.length ? quickPrompts : QUICK_START_PROMPTS;
 
   const handleNameChoice = (value: string) => {
     setSelectedName(value === 'Lo decidire despues' ? defaultName : value);
@@ -793,6 +819,11 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
                   <p className="mt-3 text-sm leading-7 text-emerald-950">
                     Puedes empezar preguntandome lo que necesites.
                   </p>
+                  {instructionProfile?.businessContextSummary ? (
+                    <p className="mt-3 text-sm leading-7 text-emerald-950">
+                      {instructionProfile.businessContextSummary}
+                    </p>
+                  ) : null}
                   <div className="mt-4 grid gap-2 text-sm text-emerald-950 sm:grid-cols-2">
                     <div>Empresa: {answers?.companyName}</div>
                     <div>Rol: {answers?.roleInCompany}</div>
@@ -804,7 +835,7 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
                 <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="text-sm font-semibold text-slate-900">Por ejemplo</div>
                   <div className="mt-4 flex flex-wrap gap-3">
-                    {QUICK_START_PROMPTS.map((prompt) => (
+                    {effectiveQuickPrompts.slice(0, 3).map((prompt) => (
                       <button
                         key={prompt}
                         type="button"
@@ -994,7 +1025,7 @@ export default function IsaakWorkspaceClient({ session }: { session: SessionInfo
 
               {messages.length > 0 && isConnected ? (
                 <div className="mb-4 flex flex-wrap gap-3">
-                  {QUICK_START_PROMPTS.map((prompt) => (
+                  {effectiveQuickPrompts.slice(0, 3).map((prompt) => (
                     <button
                       key={prompt}
                       type="button"

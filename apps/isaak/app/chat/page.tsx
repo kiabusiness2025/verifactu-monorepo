@@ -1,8 +1,13 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
+import { buildSuggestedPrompts, getIsaakOnboardingState } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
-import { buildHoldedAuthUrl, ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
+import {
+  buildHoldedAuthUrl,
+  buildHoldedProfileOnboardingUrl,
+  ISAAK_PUBLIC_URL,
+} from '@/app/lib/isaak-navigation';
 import { prisma } from '@/app/lib/prisma';
 import IsaakWorkspaceClient from './IsaakWorkspaceClient';
 
@@ -24,7 +29,7 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
   const source = readSource(resolved.source) || 'isaak_chat';
   const session = await getHoldedSession();
 
-  if (!session?.tenantId) {
+  if (!session?.tenantId || !session.userId) {
     const chatReturnUrl = `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`;
     redirect(buildHoldedAuthUrl('isaak_chat_requires_session', chatReturnUrl));
   }
@@ -41,6 +46,30 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
       },
     }),
   ]);
+
+  if (!connection?.keyMasked) {
+    redirect(
+      buildHoldedProfileOnboardingUrl(
+        'isaak_chat_requires_holded',
+        `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`
+      )
+    );
+  }
+
+  const onboardingState = await getIsaakOnboardingState({
+    prisma,
+    tenantId: session.tenantId,
+    userId: session.userId,
+  });
+
+  if (!onboardingState.completed || !onboardingState.profile) {
+    redirect(
+      buildHoldedProfileOnboardingUrl(
+        'isaak_chat_requires_profile',
+        `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`
+      )
+    );
+  }
 
   return (
     <IsaakWorkspaceClient
@@ -60,6 +89,9 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
         representative: profile?.representative ?? null,
         isAdmin: false,
       }}
+      onboardingProfile={onboardingState.profile}
+      instructionProfile={onboardingState.instructions}
+      quickPrompts={buildSuggestedPrompts(onboardingState.profile.mainGoals)}
     />
   );
 }
