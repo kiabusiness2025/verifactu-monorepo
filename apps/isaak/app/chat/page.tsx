@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
+import type { IsaakInstructionProfile, IsaakOnboardingProfile } from '@verifactu/integrations';
 import { buildSuggestedPrompts, getIsaakOnboardingState } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
@@ -24,9 +25,72 @@ function readSource(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] || '' : value || '';
 }
 
+function readHandoff(
+  value: string | string[] | undefined
+): { profile: IsaakOnboardingProfile; instructions: IsaakInstructionProfile | null } | null {
+  const raw = readSource(value);
+  if (!raw) return null;
+
+  try {
+    const normalized = raw.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    const json = Buffer.from(padded, 'base64').toString('utf8');
+    const parsed = JSON.parse(json) as {
+      profile?: IsaakOnboardingProfile | null;
+      instructions?: IsaakInstructionProfile | null;
+    };
+
+    if (!parsed?.profile) return null;
+    return {
+      profile: parsed.profile,
+      instructions: parsed.instructions ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function buildFallbackProfile(input: {
+  session: { name: string | null; email: string | null };
+  connection: {
+    tenantName: string | null;
+    legalName: string | null;
+  };
+  tenantProfile: {
+    representative: string | null;
+    tradeName: string | null;
+    legalName: string | null;
+  } | null;
+}): IsaakOnboardingProfile {
+  return {
+    preferredName:
+      input.session.name ||
+      input.tenantProfile?.representative ||
+      input.session.email?.split('@')[0] ||
+      'Hola',
+    companyName:
+      input.connection.tenantName ||
+      input.tenantProfile?.tradeName ||
+      input.connection.legalName ||
+      input.tenantProfile?.legalName ||
+      'tu empresa',
+    roleInCompany: 'otro',
+    roleInCompanyOther: null,
+    businessSector: 'Actividad general',
+    teamSize: null,
+    website: null,
+    phone: null,
+    mainGoals: [],
+    communicationStyle: 'spanish_clear_non_technical',
+    likelyKnowledgeLevel: 'starter',
+    onboardingCompletedAt: new Date().toISOString(),
+  };
+}
+
 export default async function IsaakChatWorkspacePage({ searchParams }: PageProps) {
   const resolved = (await searchParams) || {};
   const source = readSource(resolved.source) || 'isaak_chat';
+  const handoff = readHandoff(resolved.handoff);
   const session = await getHoldedSession();
 
   if (!session?.tenantId || !session.userId) {
@@ -62,7 +126,23 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
     userId: session.userId,
   });
 
-  if (!onboardingState.completed || !onboardingState.profile) {
+  const effectiveCompleted = onboardingState.completed || Boolean(handoff?.profile);
+  const effectiveProfile =
+    onboardingState.profile ||
+    handoff?.profile ||
+    (effectiveCompleted
+      ? buildFallbackProfile({
+          session: { name: session.name, email: session.email },
+          connection: {
+            tenantName: connection?.tenantName ?? profile?.tradeName ?? null,
+            legalName: connection?.legalName ?? profile?.legalName ?? null,
+          },
+          tenantProfile: profile,
+        })
+      : null);
+  const effectiveInstructions = onboardingState.instructions || handoff?.instructions || null;
+
+  if (!effectiveCompleted || !effectiveProfile) {
     redirect(
       buildHoldedProfileOnboardingUrl(
         'isaak_chat_requires_profile',
@@ -89,9 +169,13 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
         representative: profile?.representative ?? null,
         isAdmin: false,
       }}
-      onboardingProfile={onboardingState.profile}
-      instructionProfile={onboardingState.instructions}
-      quickPrompts={buildSuggestedPrompts(onboardingState.profile.mainGoals)}
+      onboardingProfile={effectiveProfile}
+      instructionProfile={effectiveInstructions}
+      quickPrompts={
+        effectiveProfile.mainGoals.length > 0
+          ? buildSuggestedPrompts(effectiveProfile.mainGoals)
+          : undefined
+      }
     />
   );
 }

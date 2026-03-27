@@ -73,7 +73,9 @@ function isMissingOnboardingStorageError(error: unknown) {
   return (
     message.includes('does not exist in the current database') ||
     message.includes('The table public.isaak_memory_facts does not exist') ||
-    message.includes('relation "isaak_memory_facts" does not exist')
+    message.includes('relation "isaak_memory_facts" does not exist') ||
+    message.includes('The table public.user_onboarding does not exist') ||
+    message.includes('relation "user_onboarding" does not exist')
   );
 }
 
@@ -218,10 +220,14 @@ export async function getIsaakOnboardingState(input: {
   userId: string;
 }): Promise<IsaakOnboardingState> {
   try {
-    const [profileFact, draftFact, instructionFact] = await Promise.all([
+    const [profileFact, draftFact, instructionFact, userOnboarding] = await Promise.all([
       readFact(input.prisma, input.tenantId, input.userId, ISAAK_ONBOARDING_PROFILE_FACT_KEY),
       readFact(input.prisma, input.tenantId, input.userId, ISAAK_ONBOARDING_DRAFT_FACT_KEY),
       readFact(input.prisma, input.tenantId, input.userId, ISAAK_INSTRUCTION_PROFILE_FACT_KEY),
+      input.prisma.userOnboarding.findUnique({
+        where: { userId: input.userId },
+        select: { completedAt: true },
+      }),
     ]);
 
     const profile = parseJsonValue<IsaakOnboardingProfile>(profileFact?.valueJson ?? null);
@@ -233,13 +239,29 @@ export async function getIsaakOnboardingState(input: {
     );
 
     return {
-      completed: Boolean(profile?.onboardingCompletedAt),
+      completed: Boolean(profile?.onboardingCompletedAt || userOnboarding?.completedAt),
       profile,
       draft,
       instructions,
     };
   } catch (error) {
     if (isMissingOnboardingStorageError(error)) {
+      try {
+        const userOnboarding = await input.prisma.userOnboarding.findUnique({
+          where: { userId: input.userId },
+          select: { completedAt: true },
+        });
+
+        return {
+          completed: Boolean(userOnboarding?.completedAt),
+          profile: null,
+          draft: null,
+          instructions: null,
+        };
+      } catch {
+        // fall through to empty state below
+      }
+
       return {
         completed: false,
         profile: null,
@@ -321,7 +343,7 @@ export async function completeIsaakOnboarding(input: {
 
   const instructions = buildInstructionProfile(normalizedProfile, input.holdedContext);
 
-  await input.prisma.$transaction([
+  const canonicalWrites = [
     input.prisma.user.update({
       where: { id: input.userId },
       data: { name: normalizedProfile.preferredName },
@@ -343,45 +365,67 @@ export async function completeIsaakOnboarding(input: {
         representative: normalizedProfile.preferredName || undefined,
       },
     }),
-    input.prisma.isaakMemoryFact.deleteMany({
-      where: {
-        tenantId: input.tenantId,
+    input.prisma.userOnboarding.upsert({
+      where: { userId: input.userId },
+      update: {
+        completedAt: now,
+      },
+      create: {
         userId: input.userId,
-        category: ISAAK_ONBOARDING_CATEGORY,
-        factKey: {
-          in: [
-            ISAAK_ONBOARDING_PROFILE_FACT_KEY,
-            ISAAK_INSTRUCTION_PROFILE_FACT_KEY,
-            ISAAK_ONBOARDING_DRAFT_FACT_KEY,
-          ],
+        completedAt: now,
+      },
+    }),
+  ];
+
+  try {
+    await input.prisma.$transaction([
+      ...canonicalWrites,
+      input.prisma.isaakMemoryFact.deleteMany({
+        where: {
+          tenantId: input.tenantId,
+          userId: input.userId,
+          category: ISAAK_ONBOARDING_CATEGORY,
+          factKey: {
+            in: [
+              ISAAK_ONBOARDING_PROFILE_FACT_KEY,
+              ISAAK_INSTRUCTION_PROFILE_FACT_KEY,
+              ISAAK_ONBOARDING_DRAFT_FACT_KEY,
+            ],
+          },
         },
-      },
-    }),
-    input.prisma.isaakMemoryFact.create({
-      data: {
-        tenantId: input.tenantId,
-        userId: input.userId,
-        scope: ISAAK_ONBOARDING_SCOPE,
-        category: ISAAK_ONBOARDING_CATEGORY,
-        factKey: ISAAK_ONBOARDING_PROFILE_FACT_KEY,
-        valueJson: normalizedProfile as Prisma.InputJsonValue,
-        source: 'holded_onboarding',
-        lastConfirmedAt: now,
-      },
-    }),
-    input.prisma.isaakMemoryFact.create({
-      data: {
-        tenantId: input.tenantId,
-        userId: input.userId,
-        scope: ISAAK_ONBOARDING_SCOPE,
-        category: ISAAK_ONBOARDING_CATEGORY,
-        factKey: ISAAK_INSTRUCTION_PROFILE_FACT_KEY,
-        valueJson: instructions as Prisma.InputJsonValue,
-        source: 'holded_onboarding',
-        lastConfirmedAt: now,
-      },
-    }),
-  ]);
+      }),
+      input.prisma.isaakMemoryFact.create({
+        data: {
+          tenantId: input.tenantId,
+          userId: input.userId,
+          scope: ISAAK_ONBOARDING_SCOPE,
+          category: ISAAK_ONBOARDING_CATEGORY,
+          factKey: ISAAK_ONBOARDING_PROFILE_FACT_KEY,
+          valueJson: normalizedProfile as Prisma.InputJsonValue,
+          source: 'holded_onboarding',
+          lastConfirmedAt: now,
+        },
+      }),
+      input.prisma.isaakMemoryFact.create({
+        data: {
+          tenantId: input.tenantId,
+          userId: input.userId,
+          scope: ISAAK_ONBOARDING_SCOPE,
+          category: ISAAK_ONBOARDING_CATEGORY,
+          factKey: ISAAK_INSTRUCTION_PROFILE_FACT_KEY,
+          valueJson: instructions as Prisma.InputJsonValue,
+          source: 'holded_onboarding',
+          lastConfirmedAt: now,
+        },
+      }),
+    ]);
+  } catch (error) {
+    if (!isMissingOnboardingStorageError(error)) {
+      throw error;
+    }
+
+    await input.prisma.$transaction(canonicalWrites);
+  }
 
   return {
     profile: normalizedProfile,

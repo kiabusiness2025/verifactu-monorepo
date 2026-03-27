@@ -71,6 +71,17 @@ function normalizeName(value: string) {
   return value.trim().replace(/\s+/g, ' ');
 }
 
+function encodeHandoffPayload(value: unknown) {
+  const json = JSON.stringify(value);
+  const bytes = new TextEncoder().encode(json);
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
 export default function HoldedConversationalOnboardingClient({
   nextUrl,
   initialData,
@@ -135,7 +146,21 @@ export default function HoldedConversationalOnboardingClient({
 
       setDone(true);
       window.setTimeout(() => {
-        window.location.assign(nextUrl);
+        const target = new URL(nextUrl);
+        if (data?.profile) {
+          target.searchParams.set(
+            'handoff',
+            encodeHandoffPayload({
+              profile: {
+                ...data.profile,
+                website: null,
+                phone: null,
+              },
+              instructions: data?.instructions ?? null,
+            })
+          );
+        }
+        window.location.assign(target.toString());
       }, 900);
     } catch (err) {
       setError(
