@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
-const DASHBOARD_URL = '/dashboard?source=holded_connection_complete';
+const ISAAK_SITE_URL = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
+const CHAT_URL = `${ISAAK_SITE_URL}/chat?source=holded_connection_complete`;
 
 export default function HoldedFusionSuccess() {
   const [showFusion, setShowFusion] = useState(false);
@@ -17,7 +18,7 @@ export default function HoldedFusionSuccess() {
     const isaakTimer = window.setTimeout(() => setShowIsaak(true), 1250);
     const readyTimer = window.setTimeout(() => setShowReady(true), 1700);
     const redirectTimer = window.setTimeout(() => {
-      window.location.assign(DASHBOARD_URL);
+      window.location.assign(CHAT_URL);
     }, 2800);
 
     return () => {
@@ -138,14 +139,14 @@ export default function HoldedFusionSuccess() {
             >
               <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white/80 px-5 py-4 text-sm leading-6 text-slate-600 shadow-sm backdrop-blur">
                 Si prefieres no esperar, puedes entrar ya. Si no haces nada, te llevamos
-                automaticamente al dashboard.
+                automaticamente al chat de Isaak.
               </div>
               <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href={DASHBOARD_URL}
+                  href={CHAT_URL}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  Entrar al dashboard
+                  Entrar a Isaak
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link

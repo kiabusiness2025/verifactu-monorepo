@@ -113,10 +113,10 @@ export default function IsaakHomePage() {
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
-                  href="/chat"
+                  href="/demo"
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  Probar chat abierto
+                  Ver demo
                 </Link>
                 <a
                   href={APP_URL}
@@ -267,7 +267,7 @@ export default function IsaakHomePage() {
         <div className="mx-auto mt-10 max-w-6xl">
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-semibold tracking-tight text-[#011c67] sm:text-3xl">
-              Prueba el chat abierto de Isaak
+              Prueba la demo abierta de Isaak
             </h2>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
               Si quieres sentir su tono y su criterio antes de activar el producto completo, aquí
@@ -387,7 +387,7 @@ export default function IsaakHomePage() {
             href="/chat"
             className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
-            Hablar con Isaak ahora
+            Abrir Isaak
           </Link>
           <a
             href={APP_URL}

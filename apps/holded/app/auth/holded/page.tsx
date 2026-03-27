@@ -13,6 +13,7 @@ import { mintSessionCookie } from '@/app/lib/serverSession';
 
 const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+const ISAAK_SITE_URL = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
 
 function buildFallbackTarget(source: string) {
@@ -24,7 +25,10 @@ function resolveRedirectTarget(nextParam: string, source: string) {
 
   try {
     const parsed = new URL(nextParam, HOLDED_SITE_URL);
-    const allowedOrigins = new Set([new URL(HOLDED_SITE_URL).origin]);
+    const allowedOrigins = new Set([
+      new URL(HOLDED_SITE_URL).origin,
+      new URL(ISAAK_SITE_URL).origin,
+    ]);
 
     if (!allowedOrigins.has(parsed.origin)) {
       return buildFallbackTarget(source);

@@ -1,15 +1,23 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
-import { APP_URL, CONTACT_URL, HOLDed_ONBOARDING_URL } from '../lib/isaak-navigation';
+import { CONTACT_URL, HOLDed_ONBOARDING_URL } from '../lib/isaak-navigation';
 
 type Props = {
   children: React.ReactNode;
 };
 
 export default function IsaakSiteChrome({ children }: Props) {
+  const pathname = usePathname();
+  const isWorkspaceRoute = pathname?.startsWith('/chat');
+
+  if (isWorkspaceRoute) {
+    return <>{children}</>;
+  }
+
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-sm">
@@ -33,10 +41,13 @@ export default function IsaakSiteChrome({ children }: Props) {
 
           <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 md:flex">
             <Link href="/" className="hover:text-slate-900">
-              Qué es Isaak
+              Que es Isaak
+            </Link>
+            <Link href="/demo" className="hover:text-slate-900">
+              Demo abierta
             </Link>
             <Link href="/chat" className="hover:text-slate-900">
-              Hablar con Isaak
+              Abrir Isaak
             </Link>
             <a href={HOLDed_ONBOARDING_URL} className="hover:text-slate-900">
               Compatibilidad Holded
@@ -48,18 +59,18 @@ export default function IsaakSiteChrome({ children }: Props) {
 
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              href="/chat"
+              href="/demo"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              Probar Isaak
+              Ver demo
             </Link>
-            <a
-              href={APP_URL}
+            <Link
+              href="/chat"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f55c0]"
             >
               <Sparkles className="h-4 w-4" />
-              Activar Isaak
-            </a>
+              Abrir Isaak
+            </Link>
           </div>
         </div>
       </header>
@@ -82,13 +93,16 @@ export default function IsaakSiteChrome({ children }: Props) {
 
           <div className="flex flex-wrap gap-4 text-xs font-semibold sm:text-sm">
             <Link href="/chat" className="hover:text-slate-900">
-              Hablar con Isaak
+              Abrir Isaak
+            </Link>
+            <Link href="/demo" className="hover:text-slate-900">
+              Demo
             </Link>
             <Link href="/privacy" className="hover:text-slate-900">
               Privacidad
             </Link>
             <Link href="/terms" className="hover:text-slate-900">
-              Términos
+              Terminos
             </Link>
             <Link href="/support" className="hover:text-slate-900">
               Soporte
