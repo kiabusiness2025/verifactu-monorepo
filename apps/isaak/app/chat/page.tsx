@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
-import HoldedDashboardClient from '../../../holded/app/dashboard/HoldedDashboardClient';
 import { getHoldedSession } from '@/app/lib/holded-session';
+import IsaakWorkspaceClient from './IsaakWorkspaceClient';
 
 export const metadata: Metadata = {
   title: 'Chat | Isaak',
@@ -26,7 +26,7 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
   }
 
   return (
-    <HoldedDashboardClient
+    <IsaakWorkspaceClient
       session={{
         email: session.email,
         name: session.name,

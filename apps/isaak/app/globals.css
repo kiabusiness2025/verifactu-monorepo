@@ -31,3 +31,65 @@ button:focus-visible {
     0 0 0 4px rgba(35, 97, 216, 0.35);
   border-radius: 12px;
 }
+
+.isaak-avatar-float {
+  animation: isaakFloat 5s ease-in-out infinite;
+}
+
+.isaak-fade-up {
+  animation: isaakFadeUp 0.45s ease-out both;
+}
+
+.isaak-typing-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #94a3b8;
+  display: inline-block;
+  animation: isaakTyping 1s infinite ease-in-out;
+}
+
+.isaak-typing-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.isaak-typing-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes isaakFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes isaakFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes isaakTyping {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
