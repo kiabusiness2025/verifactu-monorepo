@@ -67,6 +67,16 @@ function normalizeText(value: string | null | undefined) {
   return value?.trim().replace(/\s+/g, ' ') || null;
 }
 
+function isMissingOnboardingStorageError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return (
+    message.includes('does not exist in the current database') ||
+    message.includes('The table public.isaak_memory_facts does not exist') ||
+    message.includes('relation "isaak_memory_facts" does not exist')
+  );
+}
+
 function normalizeGoals(goals: string[] | null | undefined): IsaakMainGoal[] {
   const allowed = new Set<IsaakMainGoal>([
     'Entender mi contabilidad',
@@ -207,22 +217,39 @@ export async function getIsaakOnboardingState(input: {
   tenantId: string;
   userId: string;
 }): Promise<IsaakOnboardingState> {
-  const [profileFact, draftFact, instructionFact] = await Promise.all([
-    readFact(input.prisma, input.tenantId, input.userId, ISAAK_ONBOARDING_PROFILE_FACT_KEY),
-    readFact(input.prisma, input.tenantId, input.userId, ISAAK_ONBOARDING_DRAFT_FACT_KEY),
-    readFact(input.prisma, input.tenantId, input.userId, ISAAK_INSTRUCTION_PROFILE_FACT_KEY),
-  ]);
+  try {
+    const [profileFact, draftFact, instructionFact] = await Promise.all([
+      readFact(input.prisma, input.tenantId, input.userId, ISAAK_ONBOARDING_PROFILE_FACT_KEY),
+      readFact(input.prisma, input.tenantId, input.userId, ISAAK_ONBOARDING_DRAFT_FACT_KEY),
+      readFact(input.prisma, input.tenantId, input.userId, ISAAK_INSTRUCTION_PROFILE_FACT_KEY),
+    ]);
 
-  const profile = parseJsonValue<IsaakOnboardingProfile>(profileFact?.valueJson ?? null);
-  const draft = parseJsonValue<Partial<IsaakOnboardingProfileInput>>(draftFact?.valueJson ?? null);
-  const instructions = parseJsonValue<IsaakInstructionProfile>(instructionFact?.valueJson ?? null);
+    const profile = parseJsonValue<IsaakOnboardingProfile>(profileFact?.valueJson ?? null);
+    const draft = parseJsonValue<Partial<IsaakOnboardingProfileInput>>(
+      draftFact?.valueJson ?? null
+    );
+    const instructions = parseJsonValue<IsaakInstructionProfile>(
+      instructionFact?.valueJson ?? null
+    );
 
-  return {
-    completed: Boolean(profile?.onboardingCompletedAt),
-    profile,
-    draft,
-    instructions,
-  };
+    return {
+      completed: Boolean(profile?.onboardingCompletedAt),
+      profile,
+      draft,
+      instructions,
+    };
+  } catch (error) {
+    if (isMissingOnboardingStorageError(error)) {
+      return {
+        completed: false,
+        profile: null,
+        draft: null,
+        instructions: null,
+      };
+    }
+
+    throw error;
+  }
 }
 
 export async function saveIsaakOnboardingDraft(input: {
@@ -233,28 +260,36 @@ export async function saveIsaakOnboardingDraft(input: {
 }) {
   const now = new Date();
 
-  await input.prisma.$transaction([
-    input.prisma.isaakMemoryFact.deleteMany({
-      where: {
-        tenantId: input.tenantId,
-        userId: input.userId,
-        category: ISAAK_ONBOARDING_CATEGORY,
-        factKey: ISAAK_ONBOARDING_DRAFT_FACT_KEY,
-      },
-    }),
-    input.prisma.isaakMemoryFact.create({
-      data: {
-        tenantId: input.tenantId,
-        userId: input.userId,
-        scope: ISAAK_ONBOARDING_SCOPE,
-        category: ISAAK_ONBOARDING_CATEGORY,
-        factKey: ISAAK_ONBOARDING_DRAFT_FACT_KEY,
-        valueJson: input.draft as Prisma.InputJsonValue,
-        source: 'holded_onboarding',
-        lastConfirmedAt: now,
-      },
-    }),
-  ]);
+  try {
+    await input.prisma.$transaction([
+      input.prisma.isaakMemoryFact.deleteMany({
+        where: {
+          tenantId: input.tenantId,
+          userId: input.userId,
+          category: ISAAK_ONBOARDING_CATEGORY,
+          factKey: ISAAK_ONBOARDING_DRAFT_FACT_KEY,
+        },
+      }),
+      input.prisma.isaakMemoryFact.create({
+        data: {
+          tenantId: input.tenantId,
+          userId: input.userId,
+          scope: ISAAK_ONBOARDING_SCOPE,
+          category: ISAAK_ONBOARDING_CATEGORY,
+          factKey: ISAAK_ONBOARDING_DRAFT_FACT_KEY,
+          valueJson: input.draft as Prisma.InputJsonValue,
+          source: 'holded_onboarding',
+          lastConfirmedAt: now,
+        },
+      }),
+    ]);
+  } catch (error) {
+    if (isMissingOnboardingStorageError(error)) {
+      return;
+    }
+
+    throw error;
+  }
 }
 
 export async function completeIsaakOnboarding(input: {

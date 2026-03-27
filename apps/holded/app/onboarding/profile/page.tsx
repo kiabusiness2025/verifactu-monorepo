@@ -51,7 +51,7 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
     );
   }
 
-  const [connection, tenantProfile, onboardingState] = await Promise.all([
+  const [connection, tenantProfile] = await Promise.all([
     getHoldedConnection(session.tenantId),
     prisma.tenantProfile.findUnique({
       where: { tenantId: session.tenantId },
@@ -63,12 +63,21 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
         website: true,
       },
     }),
-    getIsaakOnboardingState({
-      prisma,
-      tenantId: session.tenantId,
-      userId: session.userId,
-    }),
   ]);
+
+  const onboardingState = await getIsaakOnboardingState({
+    prisma,
+    tenantId: session.tenantId,
+    userId: session.userId,
+  }).catch((error) => {
+    console.error('holded profile onboarding state failed', error);
+    return {
+      completed: false,
+      profile: null,
+      draft: null,
+      instructions: null,
+    };
+  });
 
   if (!connection?.keyMasked) {
     redirect(`/onboarding/holded?source=${encodeURIComponent(source)}`);

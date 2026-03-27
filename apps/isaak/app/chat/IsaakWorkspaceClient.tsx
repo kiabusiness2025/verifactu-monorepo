@@ -165,6 +165,22 @@ function buildWelcomeContext(isConnected: boolean, companyName: string | null) {
   return 'Ya tengo acceso a tu cuenta de Holded. Puedo ayudarte a entender tus numeros, crear facturas o resolver dudas en segundos.';
 }
 
+function formatRoleLabel(value: string | null | undefined) {
+  if (!value) return 'responsable del negocio';
+  switch (value) {
+    case 'autonomo':
+      return 'autonomo';
+    case 'administrador':
+      return 'administrador';
+    case 'gerente':
+      return 'gerente';
+    case 'financiero':
+      return 'responsable financiero';
+    default:
+      return value;
+  }
+}
+
 export default function IsaakWorkspaceClient({
   session,
   onboardingProfile,
@@ -473,6 +489,68 @@ export default function IsaakWorkspaceClient({
   const selectedGoalCount = selectedGoals.length;
   const companyLabel = answers?.companyName || companyOptions[0] || null;
   const effectiveQuickPrompts = quickPrompts?.length ? quickPrompts : QUICK_START_PROMPTS;
+  const hasConversationHistory = recentConversations.length > 0;
+  const hasFewBusinessData =
+    isConnected &&
+    (!companyLabel ||
+      !connectionState.validationSummary ||
+      connectionState.supportedModules.length < 2);
+  const canShowSummaryCTA =
+    isConnected &&
+    (connectionState.supportedModules.length > 0 ||
+      Boolean(connectionState.validationSummary) ||
+      Boolean(connectionState.lastValidatedAt));
+  const welcomeGoals = answers?.goals?.slice(0, 2).join(' y ');
+  const assistantLeadMessage = useMemo(() => {
+    const person = answers?.preferredName || selectedName || defaultName;
+    const role = formatRoleLabel(answers?.roleInCompany);
+    const company = companyLabel || 'tu empresa';
+
+    if (!isConnected) {
+      return `Hola, ${person}. En cuanto conectemos Holded podre ayudarte con datos reales de ${company}.`;
+    }
+
+    if (hasConversationHistory) {
+      return `${greeting}, ${person}. Ya tengo a mano tu contexto de ${company} y podemos seguir donde lo dejaste o ir directos a una tarea concreta.`;
+    }
+
+    if (hasFewBusinessData) {
+      return `${greeting}, ${person}. Ya estoy conectado a ${company}. De momento tengo un contexto inicial y puedo empezar a ayudarte como ${role} mientras sigo tirando de Holded para darte cada vez mas precision.`;
+    }
+
+    return `${greeting}, ${person}. Ya he preparado Isaak para ${company}. Teniendo en cuenta que eres ${role}, voy a priorizar ayudarte con ${welcomeGoals || 'la gestion diaria de tu negocio'}.`;
+  }, [
+    answers?.goals,
+    answers?.preferredName,
+    answers?.roleInCompany,
+    companyLabel,
+    defaultName,
+    greeting,
+    hasConversationHistory,
+    hasFewBusinessData,
+    isConnected,
+    selectedName,
+  ]);
+  const assistantSupportMessage = useMemo(() => {
+    if (!isConnected) {
+      return 'Conecta Holded y entrare con tus facturas, gastos y validaciones disponibles.';
+    }
+
+    if (hasFewBusinessData) {
+      return 'Ahora mismo puedo ayudarte con una lectura clara de tu negocio, resolver dudas fiscales y preparar tus primeras acciones sin usar lenguaje tecnico.';
+    }
+
+    const modules =
+      connectionState.supportedModules.length > 0
+        ? connectionState.supportedModules.slice(0, 4).join(', ')
+        : null;
+
+    if (modules) {
+      return `Ya veo informacion util de Holded en ${modules}. Si quieres, puedo empezar por un resumen o por una pregunta concreta.`;
+    }
+
+    return 'Puedo ayudarte a entender tus numeros, revisar tus pendientes y convertir dudas contables en respuestas claras y accionables.';
+  }, [connectionState.supportedModules, hasFewBusinessData, isConnected]);
 
   const handleNameChoice = (value: string) => {
     setSelectedName(value === 'Lo decidire despues' ? defaultName : value);
@@ -547,6 +625,11 @@ export default function IsaakWorkspaceClient({
 
     if (messages.length > 0) return null;
 
+    const roleLabel = formatRoleLabel(answers?.roleInCompany);
+    const holdedStatusLabel =
+      connectionState.supportedModules.length > 0 ? 'Datos listos' : 'Conexion inicial';
+    const validationHint = connectionState.validationSummary || assistantSupportMessage;
+
     return (
       <div className="mx-auto w-full max-w-3xl">
         <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
@@ -598,244 +681,91 @@ export default function IsaakWorkspaceClient({
               </div>
             ) : null}
 
-            {introReady && isConnected && !onboardingDone ? (
+            {introReady && !onboardingDone ? (
               <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_26px_70px_-48px_rgba(15,23,42,0.4)]">
-                {step === 0 ? (
-                  <>
-                    <div className="text-sm font-semibold text-slate-900">
-                      Como prefieres que te llame?
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleNameChoice(defaultName)}
-                        className="rounded-full border border-slate-200 bg-[#fff7f7] px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-[#ff5460]/30"
-                      >
-                        {defaultName}
-                      </button>
-                      {alternateNames.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => handleNameChoice(option)}
-                          className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
-                        >
-                          {option === 'Lo decidire despues' ? 'Otro nombre' : option}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                ) : null}
-
-                {step === 1 ? (
-                  <>
-                    <div className="text-sm font-semibold text-slate-900">
-                      Nombre de tu empresa?
-                    </div>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">
-                      He detectado estos nombres desde Holded. Elige el que quieras usar dentro de
-                      Isaak.
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      {(companyOptions.length > 0 ? companyOptions : ['Tu empresa']).map(
-                        (option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => handleCompanyChoice(option)}
-                            className="rounded-full border border-slate-200 bg-[#fff7f7] px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-[#ff5460]/30"
-                          >
-                            {option}
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </>
-                ) : null}
-
-                {step === 2 ? (
-                  <>
-                    <div className="text-sm font-semibold text-slate-900">
-                      Cual es tu papel dentro de la empresa?
-                    </div>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">
-                      Asi adapto mejor el tono y el tipo de ayuda que te voy a dar.
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      {ROLE_OPTIONS.map((role) => (
-                        <button
-                          key={role}
-                          type="button"
-                          onClick={() => handleRoleChoice(role)}
-                          className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
-                            selectedRole === role
-                              ? 'border-[#ff5460]/30 bg-[#fff1f2] text-[#b42332]'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                          }`}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                ) : null}
-
-                {step === 3 ? (
-                  <>
-                    <div className="text-sm font-semibold text-slate-900">
-                      Cuentame un poco mas de tu empresa
-                    </div>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">
-                      Con esto preparo mejor tu contexto inicial. Solo necesito lo minimo.
-                    </p>
-
-                    <div className="mt-4">
-                      <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                        Telefono de contacto
-                      </label>
-                      <input
-                        value={selectedPhone}
-                        onChange={(event) => setSelectedPhone(event.target.value)}
-                        placeholder="Ej. 600 123 123"
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                      />
-                    </div>
-
-                    <div className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      Sector
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-3">
-                      {SECTOR_OPTIONS.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => setSelectedSector(option)}
-                          className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
-                            selectedSector === option
-                              ? 'border-[#ff5460]/30 bg-[#fff1f2] text-[#b42332]'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      Pagina web
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-3">
-                      {WEBSITE_OPTIONS.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => setSelectedWebsite(option)}
-                          className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
-                            selectedWebsite === option
-                              ? 'border-[#ff5460]/30 bg-[#fff1f2] text-[#b42332]'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      Equipo
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-3">
-                      {EMPLOYEE_OPTIONS.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => setSelectedEmployees(option)}
-                          className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
-                            selectedEmployees === option
-                              ? 'border-[#ff5460]/30 bg-[#fff1f2] text-[#b42332]'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      En que quieres que te ayude principalmente
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-3">
-                      {GOAL_OPTIONS.map((goal) => {
-                        const selected = selectedGoals.includes(goal);
-                        return (
-                          <button
-                            key={goal}
-                            type="button"
-                            onClick={() => toggleGoal(goal)}
-                            className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
-                              selected
-                                ? 'border-[#ff5460]/30 bg-[#fff1f2] text-[#b42332]'
-                                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                            }`}
-                          >
-                            {goal}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div className="mt-5 flex items-center justify-between gap-4">
-                      <div className="text-xs font-medium text-slate-500">
-                        {selectedGoalCount}/3 seleccionadas
-                      </div>
-                      <button
-                        type="button"
-                        onClick={finishOnboarding}
-                        disabled={selectedGoalCount === 0}
-                        className="rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-                      >
-                        Continuar
-                      </button>
-                    </div>
-                  </>
-                ) : null}
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#2361d8]" />
+                  Estoy terminando de preparar tu espacio
+                </div>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  En cuanto termine el arranque inicial te llevare directamente al chat con todo
+                  listo.
+                </p>
               </div>
             ) : null}
 
-            {onboardingDone ? (
+            {introReady && onboardingDone ? (
               <div className="space-y-4">
-                <div className="isaak-fade-up rounded-[2rem] border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-900">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Perfecto, lo tengo
+                <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 bg-[#fff4f5]">
+                      <Image
+                        src="/Personalidad/Isaak avatar 2.png"
+                        alt="Isaak"
+                        fill
+                        sizes="44px"
+                        className="object-cover"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-950">Isaak</div>
+                      <div className="text-xs text-slate-500">
+                        {hasConversationHistory
+                          ? 'Listo para retomar contigo'
+                          : 'Listo para empezar contigo'}
+                      </div>
+                    </div>
                   </div>
-                  <p className="mt-3 text-sm leading-7 text-emerald-950">
-                    A partir de ahora voy a centrarme en ayudarte con:
-                  </p>
-                  <ul className="mt-3 space-y-1 text-sm text-emerald-950">
-                    {answers?.goals.slice(0, 3).map((goal) => (
-                      <li key={goal}>- {goal}</li>
-                    ))}
-                  </ul>
-                  <p className="mt-3 text-sm leading-7 text-emerald-950">
-                    Puedes empezar preguntandome lo que necesites.
-                  </p>
-                  {instructionProfile?.businessContextSummary ? (
-                    <p className="mt-3 text-sm leading-7 text-emerald-950">
-                      {instructionProfile.businessContextSummary}
-                    </p>
-                  ) : null}
-                  <div className="mt-4 grid gap-2 text-sm text-emerald-950 sm:grid-cols-2">
-                    <div>Empresa: {answers?.companyName}</div>
-                    <div>Rol: {answers?.roleInCompany}</div>
-                    <div>Sector: {answers?.businessSector}</div>
-                    <div>Equipo: {answers?.employeeRange}</div>
+
+                  <div className="mt-4 rounded-[1.6rem] border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-7 text-slate-700">
+                    <p>{assistantLeadMessage}</p>
+                    <p className="mt-3">{assistantSupportMessage}</p>
+                    {instructionProfile?.businessContextSummary ? (
+                      <p className="mt-3 text-slate-600">
+                        {instructionProfile.businessContextSummary}
+                      </p>
+                    ) : null}
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+                      {validationHint}
+                    </div>
+                    {hasFewBusinessData ? (
+                      <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        Tengo pocos datos todavia, pero ya puedo ayudarte con contexto inicial
+                      </div>
+                    ) : (
+                      <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-900">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Holded ya esta listo para responder con contexto real
+                      </div>
+                    )}
+                    <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                      <div>Empresa: {answers?.companyName || companyLabel || 'Tu empresa'}</div>
+                      <div>Rol: {roleLabel}</div>
+                      <div>Sector: {answers?.businessSector || 'Pendiente'}</div>
+                      <div>Holded: {holdedStatusLabel}</div>
+                    </div>
+                    {connectionState.lastValidatedAt ? (
+                      <div className="mt-3 text-xs text-slate-500">
+                        Ultima actualizacion: {formatDate(connectionState.lastValidatedAt)}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
                 <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="text-sm font-semibold text-slate-900">Por ejemplo</div>
+                  <div className="text-sm font-semibold text-slate-900">
+                    {hasConversationHistory
+                      ? 'Puedes retomar con algo como esto'
+                      : 'Puedes empezar por aqui'}
+                  </div>
+                  <div className="mt-2 text-sm leading-7 text-slate-600">
+                    {hasConversationHistory
+                      ? 'He recuperado tu contexto. Si quieres, seguimos con una pregunta concreta o vamos a un resumen rapido.'
+                      : 'Ya te entiendo mejor por tu empresa, tu rol y lo que quieres conseguir con Isaak.'}
+                  </div>
                   <div className="mt-4 flex flex-wrap gap-3">
-                    {effectiveQuickPrompts.slice(0, 3).map((prompt) => (
+                    {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
                       <button
                         key={prompt}
                         type="button"
@@ -846,14 +776,16 @@ export default function IsaakWorkspaceClient({
                       </button>
                     ))}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void sendMessage('Quiero ver un resumen de este mes')}
-                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f55c0]"
-                  >
-                    Ver resumen
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+                  {canShowSummaryCTA ? (
+                    <button
+                      type="button"
+                      onClick={() => void sendMessage('Quiero ver un resumen del negocio')}
+                      className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f55c0]"
+                    >
+                      Ver resumen del negocio
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ) : null}
@@ -1025,7 +957,7 @@ export default function IsaakWorkspaceClient({
 
               {messages.length > 0 && isConnected ? (
                 <div className="mb-4 flex flex-wrap gap-3">
-                  {effectiveQuickPrompts.slice(0, 3).map((prompt) => (
+                  {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
                     <button
                       key={prompt}
                       type="button"
@@ -1035,13 +967,15 @@ export default function IsaakWorkspaceClient({
                       {prompt}
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => void sendMessage('Quiero ver un resumen de este mes')}
-                    className="rounded-full border border-[#2361d8]/20 bg-[#eef4ff] px-4 py-2.5 text-sm font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#dfeaff]"
-                  >
-                    Ver resumen
-                  </button>
+                  {canShowSummaryCTA ? (
+                    <button
+                      type="button"
+                      onClick={() => void sendMessage('Quiero ver un resumen del negocio')}
+                      className="rounded-full border border-[#2361d8]/20 bg-[#eef4ff] px-4 py-2.5 text-sm font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#dfeaff]"
+                    >
+                      Ver resumen del negocio
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
 
