@@ -1,18 +1,18 @@
 import {
-    AuthError,
-    confirmPasswordReset,
-    createUserWithEmailAndPassword,
-    GoogleAuthProvider,
-    OAuthProvider,
-    sendEmailVerification,
-    sendPasswordResetEmail,
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    signOut,
-    User,
-} from "firebase/auth";
-import { auth, isFirebaseConfigComplete, isFirebaseReady } from "./firebase";
-import { clearSessionCookie, mintSessionCookie } from "./serverSession";
+  AuthError,
+  confirmPasswordReset,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  OAuthProvider,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  User,
+} from 'firebase/auth';
+import { auth, isFirebaseConfigComplete, isFirebaseReady } from './firebase';
+import { clearSessionCookie, mintSessionCookie } from './serverSession';
 
 type SignInOptions = {
   rememberDevice?: boolean;
@@ -21,9 +21,9 @@ type SignInOptions = {
 const authUnavailable = () => ({
   user: null as any,
   error: {
-    code: "auth/config-unavailable",
-    message: "Auth not initialized",
-    userMessage: "Autenticación no disponible. Revisa la configuración de Firebase (entorno).",
+    code: 'auth/config-unavailable',
+    message: 'Auth not initialized',
+    userMessage: 'Autenticación no disponible. Revisa la configuración de Firebase (entorno).',
   },
 });
 
@@ -37,43 +37,62 @@ export interface AuthErrorMessage {
 // Map Firebase error codes to user-friendly messages
 const getErrorMessage = (error: AuthError): AuthErrorMessage => {
   const errorMap: Record<string, { message: string; userMessage: string }> = {
-    "auth/email-already-in-use": {
-      message: "Email already registered",
-      userMessage: "Este correo ya está registrado. ¿Intentaste con otro?",
+    'auth/email-already-in-use': {
+      message: 'Email already registered',
+      userMessage: 'Este correo ya está registrado. ¿Intentaste con otro?',
     },
-    "auth/invalid-email": {
-      message: "Invalid email format",
-      userMessage: "El correo no es válido. Verifica que esté bien escrito.",
+    'auth/invalid-email': {
+      message: 'Invalid email format',
+      userMessage: 'El correo no es válido. Verifica que esté bien escrito.',
     },
-    "auth/weak-password": {
-      message: "Password too weak",
-      userMessage: "La contraseña es muy débil. Usa al menos 8 caracteres.",
+    'auth/weak-password': {
+      message: 'Password too weak',
+      userMessage: 'La contraseña es muy débil. Usa al menos 8 caracteres.',
     },
-    "auth/user-not-found": {
-      message: "User not found",
-      userMessage: "No encontramos una cuenta con este correo.",
+    'auth/user-not-found': {
+      message: 'User not found',
+      userMessage: 'No encontramos una cuenta con este correo.',
     },
-    "auth/wrong-password": {
-      message: "Wrong password",
-      userMessage: "Contraseña incorrecta. Intenta de nuevo.",
+    'auth/wrong-password': {
+      message: 'Wrong password',
+      userMessage: 'Contraseña incorrecta. Intenta de nuevo.',
     },
-    "auth/too-many-requests": {
-      message: "Too many login attempts",
-      userMessage: "Has intentado demasiadas veces. Espera un momento e intenta después.",
+    'auth/too-many-requests': {
+      message: 'Too many login attempts',
+      userMessage: 'Has intentado demasiadas veces. Espera un momento e intenta después.',
     },
-    "auth/popup-closed-by-user": {
-      message: "Popup closed",
-      userMessage: "Cancelaste el acceso con Google.",
+    'auth/popup-closed-by-user': {
+      message: 'Popup closed',
+      userMessage: 'Cancelaste el acceso con Google.',
     },
-    "auth/account-exists-with-different-credential": {
-      message: "Account exists with different credential",
-      userMessage: "Esta cuenta ya existe con otro método de inicio de sesión.",
+    'auth/account-exists-with-different-credential': {
+      message: 'Account exists with different credential',
+      userMessage: 'Esta cuenta ya existe con otro método de inicio de sesión.',
+    },
+    'auth/unauthorized-domain': {
+      message: 'Unauthorized domain',
+      userMessage:
+        'Este dominio no está autorizado para acceso con Google. Añádelo en Firebase Authentication > Authorized domains.',
+    },
+    'auth/operation-not-allowed': {
+      message: 'Operation not allowed',
+      userMessage:
+        'El acceso con Google no está activado en Firebase Authentication para este proyecto.',
+    },
+    'auth/popup-blocked': {
+      message: 'Popup blocked',
+      userMessage:
+        'El navegador bloqueó la ventana de Google. Permite popups e inténtalo de nuevo.',
+    },
+    'auth/cancelled-popup-request': {
+      message: 'Cancelled popup request',
+      userMessage: 'Se canceló el intento de acceso. Reintenta con Google.',
     },
   };
 
   const mapped = errorMap[error.code] || {
     message: error.message,
-    userMessage: "Hubo un error. Intenta de nuevo más tarde.",
+    userMessage: 'Hubo un error. Intenta de nuevo más tarde.',
   };
 
   return {
@@ -92,17 +111,13 @@ export const signUpWithEmail = async (
 ): Promise<{ user: User; error: null } | { user: null; error: AuthErrorMessage }> => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
     // Send verification email
     try {
       await sendEmailVerification(userCredential.user);
     } catch (verifyError) {
-      console.warn("Could not send verification email:", verifyError);
+      console.warn('Could not send verification email:', verifyError);
     }
 
     return { user: userCredential.user, error: null };
@@ -131,9 +146,10 @@ export const signInWithEmail = async (
       return {
         user: null,
         error: {
-          code: "auth/email-not-verified",
-          message: "Email not verified",
-          userMessage: "Por favor verifica tu correo antes de continuar. Revisa tu bandeja de entrada.",
+          code: 'auth/email-not-verified',
+          message: 'Email not verified',
+          userMessage:
+            'Por favor verifica tu correo antes de continuar. Revisa tu bandeja de entrada.',
         },
       };
     }
@@ -144,20 +160,20 @@ export const signInWithEmail = async (
         rememberDevice: options.rememberDevice,
       });
     } catch (cookieError) {
-      console.error("Failed to mint session cookie after email login:", cookieError);
+      console.error('Failed to mint session cookie after email login:', cookieError);
       return {
         user: null,
         error: {
-          code: "auth/session-mint-failed",
-          message: "Session mint failed",
-          userMessage: "Error al crear tu sesión. Por favor, intenta de nuevo o contacta soporte.",
+          code: 'auth/session-mint-failed',
+          message: 'Session mint failed',
+          userMessage: 'Error al crear tu sesión. Por favor, intenta de nuevo o contacta soporte.',
         },
       };
     }
 
     return { user: userCredential.user, error: null };
   } catch (error) {
-    console.error("Email sign-in error:", error);
+    console.error('Email sign-in error:', error);
     return {
       user: null,
       error: getErrorMessage(error as AuthError),
@@ -168,9 +184,9 @@ export const signInWithEmail = async (
 /**
  * Sign in with Google
  */
-export const signInWithGoogle = async (options: SignInOptions = {}): Promise<
-  { user: User; error: null } | { user: null; error: AuthErrorMessage }
-> => {
+export const signInWithGoogle = async (
+  options: SignInOptions = {}
+): Promise<{ user: User; error: null } | { user: null; error: AuthErrorMessage }> => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
     const provider = new GoogleAuthProvider();
@@ -181,20 +197,20 @@ export const signInWithGoogle = async (options: SignInOptions = {}): Promise<
         rememberDevice: options.rememberDevice,
       });
     } catch (cookieError) {
-      console.error("Failed to mint session cookie after Google login:", cookieError);
+      console.error('Failed to mint session cookie after Google login:', cookieError);
       return {
         user: null,
         error: {
-          code: "auth/session-mint-failed",
-          message: "Session mint failed",
-          userMessage: "Error al crear tu sesión. Por favor, intenta de nuevo o contacta soporte.",
+          code: 'auth/session-mint-failed',
+          message: 'Session mint failed',
+          userMessage: 'Error al crear tu sesión. Por favor, intenta de nuevo o contacta soporte.',
         },
       };
     }
 
     return { user: userCredential.user, error: null };
   } catch (error) {
-    console.error("Google sign-in error:", error);
+    console.error('Google sign-in error:', error);
     return {
       user: null,
       error: getErrorMessage(error as AuthError),
@@ -205,12 +221,12 @@ export const signInWithGoogle = async (options: SignInOptions = {}): Promise<
 /**
  * Sign in with Microsoft
  */
-export const signInWithMicrosoft = async (options: SignInOptions = {}): Promise<
-  { user: User; error: null } | { user: null; error: AuthErrorMessage }
-> => {
+export const signInWithMicrosoft = async (
+  options: SignInOptions = {}
+): Promise<{ user: User; error: null } | { user: null; error: AuthErrorMessage }> => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
-    const provider = new OAuthProvider("microsoft.com");
+    const provider = new OAuthProvider('microsoft.com');
     const userCredential = await signInWithPopup(auth, provider);
 
     try {
@@ -218,20 +234,20 @@ export const signInWithMicrosoft = async (options: SignInOptions = {}): Promise<
         rememberDevice: options.rememberDevice,
       });
     } catch (cookieError) {
-      console.error("Failed to mint session cookie after Microsoft login:", cookieError);
+      console.error('Failed to mint session cookie after Microsoft login:', cookieError);
       return {
         user: null,
         error: {
-          code: "auth/session-mint-failed",
-          message: "Session mint failed",
-          userMessage: "Error al crear tu sesiИn. Por favor, intenta de nuevo o contacta soporte.",
+          code: 'auth/session-mint-failed',
+          message: 'Session mint failed',
+          userMessage: 'Error al crear tu sesiИn. Por favor, intenta de nuevo o contacta soporte.',
         },
       };
     }
 
     return { user: userCredential.user, error: null };
   } catch (error) {
-    console.error("Microsoft sign-in error:", error);
+    console.error('Microsoft sign-in error:', error);
     return {
       user: null,
       error: getErrorMessage(error as AuthError),
@@ -306,7 +322,7 @@ export const logout = async (): Promise<void> => {
     await clearSessionCookie();
     await signOut(auth);
   } catch (error) {
-    console.error("Error signing out:", error);
+    console.error('Error signing out:', error);
   }
 };
 

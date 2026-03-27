@@ -17,7 +17,13 @@ const REQUIRED_CONFIG_FIELDS = [
 
 function cleanEnv(value: string | undefined): string | undefined {
   if (!value) return undefined;
-  return value.replace(/[\r\n]/g, '').trim();
+  const trimmed = value.replace(/[\r\n]/g, '').trim();
+  const unquoted =
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      ? trimmed.slice(1, -1).trim()
+      : trimmed;
+  return unquoted;
 }
 
 function readEnv(primary: string, fallback?: string): string | undefined {
@@ -27,9 +33,17 @@ function readEnv(primary: string, fallback?: string): string | undefined {
   return cleanEnv(process.env[fallback]);
 }
 
+function normalizeAuthDomain(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+
+  const withoutProtocol = value.replace(/^https?:\/\//i, '');
+  const withoutPath = withoutProtocol.split('/')[0]?.trim();
+  return withoutPath || undefined;
+}
+
 const defaultFirebaseConfig = {
   apiKey: readEnv('NEXT_PUBLIC_FIREBASE_API_KEY'),
-  authDomain: readEnv('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'),
+  authDomain: normalizeAuthDomain(readEnv('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN')),
   projectId: readEnv('NEXT_PUBLIC_FIREBASE_PROJECT_ID'),
   storageBucket: readEnv('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'),
   messagingSenderId: readEnv('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
@@ -38,9 +52,8 @@ const defaultFirebaseConfig = {
 
 const holdedFirebaseConfig = {
   apiKey: readEnv('NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY', 'NEXT_PUBLIC_FIREBASE_API_KEY'),
-  authDomain: readEnv(
-    'NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN',
-    'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'
+  authDomain: normalizeAuthDomain(
+    readEnv('NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN', 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN')
   ),
   projectId: readEnv('NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID', 'NEXT_PUBLIC_FIREBASE_PROJECT_ID'),
   storageBucket: readEnv(

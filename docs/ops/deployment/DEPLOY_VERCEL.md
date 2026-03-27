@@ -58,6 +58,21 @@ Este repo tiene **dos proyectos separados** en Vercel:
 - **Landing**: `verifactu.business` (proyecto Vercel apuntando a `apps/landing`)
 - **App (dashboard)**: `app.verifactu.business` (proyecto Vercel apuntando a `apps/app`)
 
+## Regla estricta: NO MEZCLAR PROYECTOS
+
+En produccion, cada dominio debe estar asignado solo a su proyecto:
+
+- `verifactu.business` -> proyecto landing (`apps/landing`)
+- `holded.verifactu.business` -> proyecto holded (`apps/holded`)
+- `isaak.verifactu.business` -> proyecto isaak (`apps/isaak`)
+- `app.verifactu.business` -> proyecto app (`apps/app`)
+
+Reglas de correo (Resend):
+
+- Landing usa remitentes `@verifactu.business`.
+- Holded usa remitentes `@holded.verifactu.business`.
+- No compartir remitentes entre landing y holded.
+
 > Nota: en Vercel pueden aparecer también dominios `.vercel.app` (automáticos). No hace falta tocarlos.
 
 ---

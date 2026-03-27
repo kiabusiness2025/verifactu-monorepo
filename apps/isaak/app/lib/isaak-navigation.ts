@@ -21,6 +21,8 @@ export const HOLDed_URL = getOrigin(
 
 export const CONTACT_URL = `${ISAAK_PUBLIC_URL}/support`;
 
+export const HOLDed_ONBOARDING_URL = `${ISAAK_PUBLIC_URL}/onboarding/holded`;
+
 export const SUPPORT_EMAIL = (
   process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@isaak.verifactu.business'
 ).trim();

@@ -12,6 +12,14 @@ Este proyecto es solo el proyecto publico 1 de 3:
 
 Comparten backend y datos cuando corresponde, pero son experiencias publicas separadas y no deben mezclarse en branding, URLs ni documentacion operativa.
 
+## Regla de aislamiento (obligatoria)
+
+- `apps/landing` solo sirve `verifactu.business`.
+- El dominio `holded.verifactu.business` pertenece solo a `apps/holded`.
+- El dominio `isaak.verifactu.business` pertenece solo a `apps/isaak`.
+- En este proyecto, el remitente de Resend debe ser solo `@verifactu.business`.
+- No reutilizar en landing variables de dominio/correo propias de Holded o Isaak.
+
 La landing es **independiente del resto del monorepo** y está diseñada para:
 
 - Conversión (CTA + pricing dinámico)

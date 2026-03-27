@@ -35,6 +35,25 @@ Regla operativa:
 - Los tres proyectos publicos comparten backend, autenticacion, tenancy y datos cuando corresponde.
 - La marca, la UX publica, la documentacion operativa y las variables publicas deben mantenerse separadas.
 
+## Aislamiento obligatorio entre proyectos
+
+Esta regla es obligatoria para evitar incidencias de dominio, certificados y correos.
+
+| Proyecto    | Dominio publico             | Carpeta        | Proyecto Vercel | Dominio de envio email                  |
+| ----------- | --------------------------- | -------------- | --------------- | --------------------------------------- |
+| Landing     | `verifactu.business`        | `apps/landing` | landing         | `@verifactu.business`                   |
+| Holded      | `holded.verifactu.business` | `apps/holded`  | holded          | `@holded.verifactu.business`            |
+| Isaak       | `isaak.verifactu.business`  | `apps/isaak`   | isaak           | `@isaak.verifactu.business` (si aplica) |
+| App cliente | `app.verifactu.business`    | `apps/app`     | app             | no aplica publico                       |
+| Admin       | `admin.verifactu.business`  | `apps/admin`   | admin           | no aplica publico                       |
+
+Normas de no mezcla:
+
+- Cada dominio debe estar asignado solo a su proyecto Vercel correspondiente.
+- No reutilizar variables `NEXT_PUBLIC_*` de un proyecto en otro.
+- No mezclar remitentes de Resend entre landing y holded.
+- Si se mueve un dominio entre proyectos, revalidar DNS y certificado en Vercel antes de darlo por bueno.
+
 ## Apps
 
 - apps/app: App principal (clientes) -> /app

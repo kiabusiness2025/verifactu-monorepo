@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Sparkles } from 'lucide-react';
-import { APP_URL, CONTACT_URL, HOLDed_URL } from '../lib/isaak-navigation';
+import { APP_URL, CONTACT_URL, HOLDed_ONBOARDING_URL } from '../lib/isaak-navigation';
 
 type Props = {
   children: React.ReactNode;
@@ -38,15 +38,9 @@ export default function IsaakSiteChrome({ children }: Props) {
             <Link href="/chat" className="hover:text-slate-900">
               Hablar con Isaak
             </Link>
-            <a href={HOLDed_URL} className="hover:text-slate-900">
+            <a href={HOLDed_ONBOARDING_URL} className="hover:text-slate-900">
               Compatibilidad Holded
             </a>
-            <Link href="/privacy" className="hover:text-slate-900">
-              Privacidad
-            </Link>
-            <Link href="/terms" className="hover:text-slate-900">
-              Términos
-            </Link>
             <a href={CONTACT_URL} className="hover:text-slate-900">
               Contacto
             </a>
@@ -99,7 +93,7 @@ export default function IsaakSiteChrome({ children }: Props) {
             <Link href="/support" className="hover:text-slate-900">
               Soporte
             </Link>
-            <a href={HOLDed_URL} className="hover:text-slate-900">
+            <a href={HOLDed_ONBOARDING_URL} className="hover:text-slate-900">
               Holded
             </a>
           </div>

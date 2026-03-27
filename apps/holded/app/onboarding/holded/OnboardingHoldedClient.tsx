@@ -1,16 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronDown,
-  KeyRound,
-  Loader2,
-  ShieldCheck,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
 
 type ValidationResponse = {
   ok: boolean;
@@ -33,16 +25,6 @@ export default function OnboardingHoldedClient() {
 
   const canValidate = apiKey.trim().length >= 12;
   const canConnect = validation?.ok === true && !isConnecting;
-  const helpScreens = [
-    {
-      title: 'Paso 1: abrir Desarrolladores',
-      src: '/help/Configurar%20HOLDED_ISAAK_API_KEY/Paso%201.png',
-    },
-    {
-      title: 'Paso 2: crear la nueva API key',
-      src: '/help/Configurar%20HOLDED_ISAAK_API_KEY/Paso%202.png',
-    },
-  ];
 
   const statusLine = useMemo(() => {
     if (!validation?.probe) return null;
@@ -157,32 +139,32 @@ export default function OnboardingHoldedClient() {
             <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <KeyRound className="h-4 w-4 text-[#ff5460]" />
-                Como encontrarla
+                Como crearla
               </div>
-              <a
-                href="https://app.holded.com/login?url_after_login=%2Faccount%2Fsetup#settings:/api"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 inline-flex items-center justify-center rounded-full border border-[#ff5460]/20 bg-white px-4 py-2 text-sm font-semibold text-[#ff5460] transition hover:bg-[#fff4f5]"
-              >
-                Abrir Holded en Desarrolladores
-              </a>
               <div className="mt-4 grid gap-3">
                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                  <span className="font-semibold text-slate-900">1.</span> Entra en Holded.
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                  <span className="font-semibold text-slate-900">2.</span> Ve a Configuracion, luego
-                  Mas y despues{' '}
+                  <span className="font-semibold text-slate-900">1.</span>{' '}
                   <a
-                    href="https://app.holded.com/login?url_after_login=%2Faccount%2Fsetup#settings:/api"
+                    href="https://app.holded.com/login"
                     target="_blank"
                     rel="noreferrer"
                     className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
                   >
-                    Desarrolladores
+                    Entra en Holded
                   </a>
                   .
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
+                  <span className="font-semibold text-slate-900">2.</span> Ve a{' '}
+                  <a
+                    href="https://app.holded.com/home#settings:/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                  >
+                    Configuracion
+                  </a>
+                  , luego Mas y despues Desarrolladores.
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
                   <span className="font-semibold text-slate-900">3.</span> Pulsa{' '}
@@ -197,35 +179,16 @@ export default function OnboardingHoldedClient() {
                   pegala aqui. Nosotros la comprobamos al instante.
                 </div>
               </div>
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs leading-6 text-slate-600">
-                Ejemplo de formato:{' '}
-                <span className="font-mono text-slate-900">db07a48f4f980be6f86d54ab104220d4</span>
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+                Si quieres la guia completa con enlaces directos y capturas paso a paso, abre la{' '}
+                <Link
+                  href="/onboarding/holded/help"
+                  className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                >
+                  ayuda paso a paso
+                </Link>
+                .
               </div>
-              <details className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white group">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-semibold text-slate-900">
-                  <span>Ver capturas de ayuda paso a paso</span>
-                  <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
-                </summary>
-                <div className="grid gap-4 border-t border-slate-200 p-4">
-                  {helpScreens.map((screen) => (
-                    <figure
-                      key={screen.src}
-                      className="overflow-hidden rounded-3xl border border-slate-200 bg-white"
-                    >
-                      <div className="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">
-                        {screen.title}
-                      </div>
-                      <Image
-                        src={screen.src}
-                        alt={screen.title}
-                        width={1200}
-                        height={760}
-                        className="h-auto w-full"
-                      />
-                    </figure>
-                  ))}
-                </div>
-              </details>
               <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
                 <div className="font-semibold">Si no ves el menu Desarrolladores</div>
                 <p className="mt-1">

@@ -10,18 +10,54 @@ type Message = {
   content: string;
 };
 
+type QuickReply = {
+  id: string;
+  label: string;
+  prompt?: string;
+  href?: string;
+};
+
+const HOLDED_CONNECT_URL = '/onboarding/holded';
+
+const QUICK_REPLIES: QuickReply[] = [
+  {
+    id: 'connect-holded',
+    label: '🚀 Activar experiencia completa conectando Holded',
+    href: HOLDED_CONNECT_URL,
+  },
+  {
+    id: 'modelo-303',
+    label: '🧾 Ayúdame con el modelo 303',
+    prompt: 'Ayúdame con una guía simple para preparar el modelo 303 sin agobio.',
+  },
+  {
+    id: 'calendario',
+    label: '📅 Qué trámites tengo este mes',
+    prompt: 'Explícame qué trámites fiscales debería revisar este mes y en qué orden.',
+  },
+  {
+    id: 'autonomo-iva-irpf',
+    label: '🤝 Dudas de IVA e IRPF para autónomo',
+    prompt: 'Tengo dudas de IVA e IRPF como autónomo. ¿Qué debería vigilar primero?',
+  },
+  {
+    id: 'consejos-cierre',
+    label: '✅ Consejos útiles para cerrar el trimestre',
+    prompt: 'Dame consejos útiles y prácticos para cerrar el trimestre con menos errores.',
+  },
+];
+
 const INITIAL_MESSAGES: Message[] = [
   {
     id: 'welcome-1',
     role: 'assistant',
-    content:
-      'Soy Isaak. Si quieres, empezamos por lo importante: ventas, gastos, cobros o dudas fiscales.',
+    content: '👋 Soy Isaak. Aquí te ayudo con trámites, impuestos y dudas fiscales en claro.',
   },
   {
     id: 'welcome-2',
     role: 'assistant',
     content:
-      'Puedes preguntarme sin registrarte. Si luego quieres trabajar con más contexto y seguimiento, ya pasamos al espacio completo.',
+      '🧭 Este chat abierto no usa tus datos del ERP. Si quieres contexto real, activa la experiencia completa conectando Holded.',
   },
 ];
 
@@ -35,10 +71,8 @@ export default function IsaakPublicChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const message = input.trim();
-    if (!message || isLoading) return;
+  const sendMessage = async (message: string) => {
+    if (!message.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -89,6 +123,18 @@ export default function IsaakPublicChat() {
     }
   };
 
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const message = input.trim();
+    if (!message || isLoading) return;
+    await sendMessage(message);
+  };
+
+  const handleQuickReply = async (prompt: string) => {
+    if (!prompt || isLoading) return;
+    await sendMessage(prompt);
+  };
+
   return (
     <section className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr]">
       <article className="rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#eef4ff_100%)] p-6 shadow-sm">
@@ -120,13 +166,13 @@ export default function IsaakPublicChat() {
             <div>
               <div className="text-sm font-semibold text-slate-900">Isaak abierto</div>
               <div className="text-sm text-slate-600">
-                Respuesta breve, clara y sin tecnicismos.
+                Respuesta breve, clara y útil, con foco fiscal.
               </div>
             </div>
           </div>
           <div className="mt-4 space-y-3">
             <div className="rounded-2xl bg-[#f5f9ff] px-4 py-3 text-sm leading-6 text-slate-700">
-              Pide ayuda para entender una duda, ordenar prioridades o aterrizar el siguiente paso.
+              Pide ayuda para trámites, impuestos y decisiones del día a día sin tecnicismos.
             </div>
             <div className="flex items-start gap-2 text-sm text-slate-600">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
@@ -138,9 +184,9 @@ export default function IsaakPublicChat() {
         <div className="mt-6 space-y-2 text-sm text-slate-600">
           <div className="font-semibold text-slate-900">Ejemplos útiles para empezar</div>
           <ul className="space-y-2 leading-6">
-            <li>Que debería revisar primero si este mes he vendido bien pero voy justo de caja.</li>
-            <li>Explícame en simple qué cambia con VeriFactu para una pyme.</li>
-            <li>Cómo ordenar gastos y cobros sin perderme en el ERP.</li>
+            <li>🧾 Qué debo preparar para presentar impuestos sin ir con prisas.</li>
+            <li>📌 Explícame en simple qué cambia con VeriFactu para una pyme.</li>
+            <li>✅ Qué checklist me recomiendas para evitar errores en el trimestre.</li>
           </ul>
         </div>
       </article>
@@ -159,7 +205,7 @@ export default function IsaakPublicChat() {
             </div>
             <div>
               <div className="text-sm font-semibold">Isaak</div>
-              <div className="text-xs text-white/80">Asistente fiscal abierto</div>
+              <div className="text-xs text-white/80">Asistente fiscal abierto 🧾</div>
             </div>
           </div>
         </div>
@@ -197,6 +243,29 @@ export default function IsaakPublicChat() {
           </div>
 
           <form onSubmit={handleSubmit} className="border-t border-slate-200 bg-white p-4">
+            <div className="mb-3 flex flex-wrap gap-2">
+              {QUICK_REPLIES.map((reply) =>
+                reply.href ? (
+                  <a
+                    key={reply.id}
+                    href={reply.href}
+                    className="inline-flex items-center rounded-full border border-[#2361d8]/35 bg-[#eef4ff] px-3 py-1.5 text-xs font-semibold text-[#1f55c0] transition hover:bg-[#e3edff]"
+                  >
+                    {reply.label}
+                  </a>
+                ) : (
+                  <button
+                    key={reply.id}
+                    type="button"
+                    onClick={() => handleQuickReply(reply.prompt || '')}
+                    disabled={isLoading}
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-[#2361d8]/40 hover:bg-[#f5f9ff] hover:text-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {reply.label}
+                  </button>
+                )
+              )}
+            </div>
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-2">
               <div className="flex gap-2">
                 <textarea

@@ -12,7 +12,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import IsaakPublicChat from './components/IsaakPublicChat';
-import { APP_URL, CONTACT_URL, HOLDed_URL } from './lib/isaak-navigation';
+import { APP_URL, CONTACT_URL, HOLDed_ONBOARDING_URL } from './lib/isaak-navigation';
 
 const valueCards = [
   {
@@ -125,7 +125,7 @@ export default function IsaakHomePage() {
                   Activar Isaak 30 días
                 </a>
                 <a
-                  href={HOLDed_URL}
+                  href={HOLDed_ONBOARDING_URL}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-[#2361d8] bg-white px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"
                 >
                   Ver una compatibilidad activa
@@ -357,10 +357,10 @@ export default function IsaakHomePage() {
           </ul>
           <div className="mt-5">
             <a
-              href="https://holded.verifactu.business/capacidades"
+              href={HOLDed_ONBOARDING_URL}
               className="inline-flex items-center justify-center rounded-full border border-[#ff5460]/35 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
             >
-              Ver detalle completo de capacidades
+              Conectar Holded desde Isaak
             </a>
           </div>
         </div>
@@ -396,7 +396,7 @@ export default function IsaakHomePage() {
             Activar Isaak 30 días
           </a>
           <a
-            href={HOLDed_URL}
+            href={HOLDed_ONBOARDING_URL}
             className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             Ver compatibilidad con Holded
