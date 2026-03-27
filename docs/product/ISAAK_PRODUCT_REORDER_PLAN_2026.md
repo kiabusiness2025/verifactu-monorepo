@@ -429,6 +429,254 @@ Criterio de done:
 
 - no se construyen features nuevas en apps legacy
 
+## Backlog operativo por fases
+
+Esta seccion convierte el plan en trabajo ejecutable.
+
+Convenciones:
+
+- `P1`, `P2`, `P3`... = fase
+- `T1.1`, `T1.2`... = tarea dentro de la fase
+- `bloquea` = no deberia empezar la siguiente tarea sin cerrar esta
+- `puede ir en paralelo` = trabajo desacoplado
+
+### Fase 1. Isaak como experiencia principal
+
+Objetivo operativo:
+
+- que la experiencia principal del usuario viva en `apps/isaak`
+- que `apps/holded` solo conduzca a esa experiencia
+
+#### Tareas
+
+| ID   | Tarea                                                                              | Archivos/modulos a tocar                                                                                                                                                                            | Resultado esperado                                          | Dependencia |
+| ---- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------- |
+| T1.1 | Terminar la shell conversacional de `isaak /chat`                                  | `apps/isaak/app/chat/page.tsx`, `apps/isaak/app/chat/IsaakWorkspaceClient.tsx`, `apps/isaak/app/globals.css`                                                                                        | Chat principal estable, onboarding ligero y saludo final    | ninguna     |
+| T1.2 | Mantener el historial y el arranque del chat dentro de `isaak`                     | `apps/isaak/app/api/holded/chat/route.ts`, `apps/isaak/app/api/holded/conversations/route.ts`, `apps/isaak/app/api/holded/conversations/[id]/route.ts`, `apps/isaak/app/api/holded/status/route.ts` | `isaak` funciona como workspace real, no como wrapper vacio | T1.1        |
+| T1.3 | Reducir `holded` a handoff y onboarding                                            | `apps/holded/app/dashboard/page.tsx`, `apps/holded/app/lib/holded-navigation.ts`, `apps/holded/app/onboarding/**`, `apps/holded/app/auth/holded/page.tsx`                                           | `holded` deja de actuar como dashboard final                | T1.1        |
+| T1.4 | Limpiar lenguaje y CTA para que el usuario entienda que Isaak es el producto final | `apps/holded/app/**/*`, `apps/isaak/app/**/*`                                                                                                                                                       | No hay copy contradictorio entre Holded e Isaak             | T1.3        |
+
+#### Dependencias de fase
+
+- T1.1 bloquea T1.2 y T1.3
+- T1.4 depende de que T1.3 haya dejado claro el handoff
+
+#### Done de fase
+
+- `holded` registra, conecta y transfiere
+- `isaak` conversa, recuerda y muestra valor
+- no hay ningun CTA principal en `holded` que prometa un dashboard propio
+
+### Fase 2. Desacoplar `isaak` de `holded`
+
+Objetivo operativo:
+
+- que `apps/isaak` deje de importar helpers internos desde `apps/holded`
+
+#### Tareas
+
+| ID   | Tarea                                     | Archivos origen                                                                                                                                                                                                                     | Destino recomendado                                                      | Dependencia               |
+| ---- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------- |
+| T2.1 | Extraer helper de sesion compartida       | `apps/holded/app/lib/session.ts`, `apps/holded/app/lib/serverSession.ts`, `apps/holded/app/lib/holded-session.ts`, `apps/isaak/app/lib/session.ts`, `apps/isaak/app/lib/holded-session.ts`, `apps/landing/app/lib/serverSession.ts` | `packages/auth/session-cookie.ts` o `packages/utils/session.ts` ampliado | T1 completa               |
+| T2.2 | Extraer helper de navegacion cross-domain | `apps/holded/app/lib/holded-navigation.ts`                                                                                                                                                                                          | `packages/utils/navigation.ts` o `packages/auth/navigation.ts`           | T2.1 puede ir en paralelo |
+| T2.3 | Extraer lectura de conexion Holded        | `apps/holded/app/lib/holded-integration.ts`, `apps/isaak/app/api/holded/status/route.ts`, `apps/isaak/app/api/holded/connect/route.ts`                                                                                              | `packages/integrations/holded/connection.ts`                             | T2.1                      |
+| T2.4 | Extraer tipos de sesion y conexion        | `apps/holded/app/lib/session.ts`, `apps/holded/app/lib/holded-integration.ts`, `apps/isaak/app/chat/IsaakWorkspaceClient.tsx`                                                                                                       | `packages/auth/types.ts`, `packages/integrations/holded/types.ts`        | T2.1                      |
+| T2.5 | Sustituir imports cruzados en `isaak`     | `apps/isaak/app/lib/holded-session.ts`, `apps/isaak/app/lib/session.ts`, `apps/isaak/app/api/holded/**`, `apps/isaak/app/chat/page.tsx`                                                                                             | imports solo desde `packages/*` o `apps/app`                             | T2.1, T2.3, T2.4          |
+
+#### Dependencias de fase
+
+- T2.1 es la base
+- T2.3 y T2.4 dependen del shape de sesion de T2.1
+- T2.5 no debe hacerse antes de cerrar T2.1 a T2.4
+
+#### Done de fase
+
+- `rg "from '../../../holded|from '@/app/lib/holded-session'" apps/isaak` no devuelve dependencias ilegales
+- `isaak` puede compilarse sin necesitar codigo interno de `holded`
+
+### Fase 3. Declarar el core canonico
+
+Objetivo operativo:
+
+- fijar donde viven los datos y las reglas canonicas
+
+#### Tareas
+
+| ID   | Tarea                                                                          | Archivos/modulos a revisar                                                                                                    | Resultado esperado                                                  | Dependencia |
+| ---- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ----------- |
+| T3.1 | Declarar `apps/app/prisma/schema.prisma` como schema canonico                  | `apps/app/prisma/schema.prisma`, `README.md`, `docs/README.md`, `docs/product/*`                                              | Un solo schema de referencia                                        | T2 completa |
+| T3.2 | Revisar modelo actual de conversaciones Isaak                                  | `apps/app/app/api/isaak/conversations/**`, `apps/app/prisma/schema.prisma`, `apps/isaak/app/api/holded/conversations/**`      | Decidir si `isaak` debe consumir directamente el core de `apps/app` | T3.1        |
+| T3.3 | Revisar modelo de conexion Holded                                              | `apps/holded/app/lib/holded-integration.ts`, `apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md`, `apps/app/prisma/schema.prisma` | Elegir entidad canonica para la conexion                            | T3.1        |
+| T3.4 | Revisar si el snapshot/memory de Isaak vive en core o en modulo de integracion | `apps/holded/app/lib/holded-chat.ts`, `apps/isaak/app/api/holded/chat/route.ts`, `apps/app/app/api/mcp/holded/route.ts`       | Ownership claro de memoria y retrieval                              | T3.2, T3.3  |
+
+#### Dependencias de fase
+
+- T3.1 bloquea el resto
+- T3.2 y T3.3 pueden ejecutarse en paralelo
+- T3.4 depende de resolver T3.2 y T3.3
+
+#### Done de fase
+
+- existe una sola fuente de verdad para schema y ownership de datos
+- conversaciones, conexiones y memoria no tienen ownership ambiguo
+
+### Fase 4. Unificar sesion e identidad
+
+Objetivo operativo:
+
+- reducir fragmentacion entre auth custom y NextAuth
+
+#### Tareas
+
+| ID   | Tarea                                        | Archivos/modulos a revisar                                                                                                                                                  | Resultado esperado                                  | Dependencia |
+| ---- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ----------- |
+| T4.1 | Inventario real de auth y sesion             | `apps/holded/app/lib/auth.ts`, `apps/landing/app/lib/auth.ts`, `apps/admin/lib/auth-options.ts`, `packages/auth/**`, `packages/utils/session.ts`, `apps/app/lib/session.ts` | Documento de flujos reales                          | T3 completa |
+| T4.2 | Definir payload comun de sesion              | `packages/utils/session.ts`, `apps/holded/app/lib/session.ts`, `apps/app/lib/session.ts`                                                                                    | Contrato unico de sesion                            | T4.1        |
+| T4.3 | Centralizar sign/verify de cookie compartida | `packages/utils/session.ts`, `packages/auth/**`, `apps/holded/app/lib/serverSession.ts`, `apps/landing/app/lib/serverSession.ts`                                            | Una implementacion comun de cookie                  | T4.2        |
+| T4.4 | Diseñar la transicion de `admin`             | `apps/admin/lib/auth-options.ts`, `packages/auth/**`, `docs/ops/setup/*`                                                                                                    | Estrategia concreta para que admin no quede aislado | T4.1        |
+
+#### Dependencias de fase
+
+- T4.1 es obligatoria
+- T4.2 bloquea T4.3
+- T4.4 puede arrancar tras T4.1
+
+#### Done de fase
+
+- hay un payload comun de sesion documentado
+- la cookie compartida no depende de implementaciones duplicadas
+- existe una estrategia aprobada para admin
+
+### Fase 5. Reubicar complejidad y settings
+
+Objetivo operativo:
+
+- que cada superficie tenga solo el nivel correcto de complejidad
+
+#### Tareas
+
+| ID   | Tarea                                                          | Archivos/modulos a revisar                                                                 | Resultado esperado                         | Dependencia               |
+| ---- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------ | ------------------------- |
+| T5.1 | Definir settings ligeros de Isaak                              | `apps/isaak/app/chat/IsaakWorkspaceClient.tsx`, futuras rutas `apps/isaak/app/settings/**` | Perfil, conexiones, plan y soporte basicos | T4 completa               |
+| T5.2 | Confirmar settings avanzados en `app`                          | `apps/app/app/dashboard/settings/page.tsx`, `apps/app/app/dashboard/onboarding/page.tsx`   | `app` queda como panel avanzado            | T5.1 puede ir en paralelo |
+| T5.3 | Limpiar `holded` de settings y paneles residuales              | `apps/holded/app/dashboard/**`, `apps/holded/app/onboarding/**`                            | Holded sin complejidad extra               | T5.1                      |
+| T5.4 | Revisar rutas publicas de `landing` para no competir con Isaak | `apps/landing/app/**`, `apps/landing/README.md`                                            | Marketing general sin invadir producto     | T5.2                      |
+
+#### Dependencias de fase
+
+- T5.1 y T5.2 abren la fase
+- T5.3 depende de tener claro T5.1
+- T5.4 depende del mapa final de superficies
+
+#### Done de fase
+
+- `isaak` solo expone settings ligeros
+- `app` es claramente el panel avanzado
+- `holded` no contiene configuraciones complejas
+
+### Fase 6. Congelar legacy
+
+Objetivo operativo:
+
+- evitar que crezcan superficies redundantes
+
+#### Tareas
+
+| ID   | Tarea                                                     | Archivos/modulos a revisar                             | Resultado esperado                         | Dependencia               |
+| ---- | --------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------ | ------------------------- |
+| T6.1 | Marcar `apps/client` como legacy en docs                  | `apps/client/README.md`, `README.md`, `docs/README.md` | Nadie construye features nuevas ahi        | T5 completa               |
+| T6.2 | Inventariar dependencias reales de `apps/client`          | `apps/client/**`, pipelines de deploy, envs, dominios  | Saber si puede archivarse o reducirse      | T6.1                      |
+| T6.3 | Congelar `apps/mobile` para roadmap posterior             | `apps/mobile/README.md`, `docs/README.md`              | Scope protegido                            | T6.1                      |
+| T6.4 | Revisar si `apps/api` queda estable como backend satelite | `apps/api/**`, `docs/ops/deployment/*`                 | Confirmar que no es superficie de producto | T6.2 puede ir en paralelo |
+
+#### Dependencias de fase
+
+- T6.1 debe hacerse primero
+- T6.2 define si el archivo de `client` es viable
+- T6.4 puede ir en paralelo con T6.2
+
+#### Done de fase
+
+- `client` y `mobile` quedan explicitamente fuera del roadmap inmediato
+- no entran nuevas features en superficies legacy
+
+## Archivos y modulos a mover
+
+Esta tabla resume el movimiento recomendado de ownership, no necesariamente un movimiento fisico inmediato.
+
+| Modulo actual                        | Ubicacion actual                                                                                                  | Destino recomendado                                               | Motivo                                             |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------- |
+| Sesion cookie compartida             | `apps/holded/app/lib/session.ts`, `apps/holded/app/lib/serverSession.ts`, `apps/landing/app/lib/serverSession.ts` | `packages/auth` o `packages/utils/session.ts`                     | Evitar duplicacion y acoplamiento                  |
+| Resolucion de sesion Holded          | `apps/holded/app/lib/holded-session.ts`                                                                           | `packages/auth/tenant-session.ts`                                 | `isaak` no debe depender de `holded`               |
+| Navegacion cross-domain              | `apps/holded/app/lib/holded-navigation.ts`                                                                        | `packages/utils/navigation.ts`                                    | Compartir handoff y redirects                      |
+| Conexion Holded                      | `apps/holded/app/lib/holded-integration.ts`                                                                       | `packages/integrations/holded/connection.ts`                      | Reutilizacion desde `holded`, `isaak` y `app`      |
+| Chat Holded MVP                      | `apps/holded/app/lib/holded-chat.ts`                                                                              | dividir entre `packages/integrations/holded` y core de `apps/app` | Separar integracion de persistencia conversacional |
+| API conversacional principal         | `apps/isaak/app/api/holded/chat/route.ts`                                                                         | mantenerse en `apps/isaak`, pero consumiendo core compartido      | `isaak` es el producto                             |
+| Persistencia de conversaciones Isaak | `apps/app/app/api/isaak/conversations/**` y schema Prisma                                                         | `apps/app` como core canonico                                     | Ya existe ahi el modelo estructural correcto       |
+| Auth admin                           | `apps/admin/lib/auth-options.ts`                                                                                  | mantener temporalmente, convergiendo luego a `packages/auth`      | Transicion controlada                              |
+
+## Dependencias entre tareas
+
+### Grafo simplificado
+
+- Fase 1 debe quedar estable antes de extraer capas compartidas.
+- Fase 2 es prerequisito tecnico de Fase 3 para evitar consolidar imports cruzados.
+- Fase 3 define ownership de datos antes de tocar auth en serio.
+- Fase 4 define la base de identidad comun.
+- Fase 5 solo deberia completarse cuando ya exista una capa comun fiable.
+- Fase 6 cierra el perimetro y evita deuda nueva.
+
+### Dependencias criticas
+
+| Tarea | Bloquea          | Motivo                                                           |
+| ----- | ---------------- | ---------------------------------------------------------------- |
+| T1.1  | T1.2, T1.3       | Sin experiencia principal estable no tiene sentido extraer capas |
+| T2.1  | T2.3, T2.4, T2.5 | El contrato de sesion es la base                                 |
+| T2.5  | T3 completa      | No se debe definir ownership final con imports cruzados vivos    |
+| T3.1  | T3.2, T3.3, T3.4 | Hace falta una fuente de verdad declarada                        |
+| T3.4  | T4               | La identidad comun debe saber que recursos protege               |
+| T4.2  | T4.3             | No se centraliza cookie sin payload comun                        |
+| T5.1  | T5.3             | No se limpia Holded hasta saber que queda en Isaak               |
+| T6.1  | T6.2, T6.3       | Primero se congela, luego se racionaliza                         |
+
+## Criterios de done por fase
+
+### Done Fase 1
+
+- el usuario sale de `holded` hacia `isaak` como flujo normal
+- `isaak /chat` ya soporta saludo, historial y primer valor
+- `holded` no comunica un dashboard final propio
+
+### Done Fase 2
+
+- no hay imports de `apps/isaak` hacia internals de `apps/holded`
+- la sesion y navegacion compartidas viven en capa comun
+- la conexion Holded puede leerse sin pasar por helpers privados de `holded`
+
+### Done Fase 3
+
+- el schema canonico esta declarado y documentado
+- conversaciones, memoria y conexiones tienen ownership claro
+- no hay modelos duplicados que compitan conceptualmente
+
+### Done Fase 4
+
+- existe un contrato de sesion comun
+- la cookie compartida se firma y verifica desde una unica implementacion o una capa coordinada
+- admin tiene plan de convergencia aprobado
+
+### Done Fase 5
+
+- `isaak` muestra solo settings ligeros
+- `app` absorbe la complejidad avanzada
+- `holded` queda enfocado en adquisicion y onboarding
+
+### Done Fase 6
+
+- `apps/client` queda oficialmente congelado
+- `apps/mobile` sale del roadmap inmediato
+- la deuda de superficies redundantes deja de crecer
+
 ## Backlog priorizado
 
 ### Sprint 1
