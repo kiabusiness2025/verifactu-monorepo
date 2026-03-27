@@ -20,6 +20,10 @@ function readString(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] || '' : value || '';
 }
 
+function readBooleanFlag(value: string | string[] | undefined) {
+  return readString(value) === '1';
+}
+
 function sanitizeNext(value: string | undefined) {
   const fallback = buildDashboardUrl('holded_profile_complete');
   if (!value) return fallback;
@@ -61,11 +65,12 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
   const session = await getHoldedSession();
   const resolved = (await searchParams) || {};
   const source = readString(resolved.source) || 'holded_profile_onboarding';
+  const fresh = readBooleanFlag(resolved.fresh);
   const next = sanitizeNext(readString(resolved.next) || undefined);
 
   if (!session?.tenantId || !session.userId) {
     redirect(
-      `/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(`/onboarding/profile?source=${source}&next=${encodeURIComponent(next)}`)}`
+      `/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(`/onboarding/profile?source=${source}&fresh=${fresh ? '1' : '0'}&next=${encodeURIComponent(next)}`)}`
     );
   }
 
@@ -88,7 +93,7 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
     };
   });
 
-  if (!connection?.keyMasked) {
+  if (!connection?.keyMasked && !fresh) {
     redirect(`/onboarding/holded?source=${encodeURIComponent(source)}`);
   }
 
@@ -110,7 +115,7 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
         companyName:
           onboardingState.draft?.companyName ||
           onboardingState.profile?.companyName ||
-          connection.tenantName ||
+          connection?.tenantName ||
           tenantProfile?.tradeName ||
           tenantProfile?.legalName ||
           '',
@@ -137,7 +142,7 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
       }}
       detectedContext={{
         companyName:
-          connection.tenantName || tenantProfile?.tradeName || tenantProfile?.legalName || '',
+          connection?.tenantName || tenantProfile?.tradeName || tenantProfile?.legalName || '',
         website: tenantProfile?.website || '',
         phone: tenantProfile?.phone || '',
       }}

@@ -7,7 +7,7 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 
 const HOLDed_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
-const PROFILE_ONBOARDING_URL = `${HOLDed_SITE_URL}/onboarding/profile?source=holded_connection_complete`;
+const PROFILE_ONBOARDING_URL = `${HOLDed_SITE_URL}/onboarding/profile?source=holded_connection_complete&fresh=1`;
 
 export default function HoldedFusionSuccess() {
   const [showFusion, setShowFusion] = useState(false);
