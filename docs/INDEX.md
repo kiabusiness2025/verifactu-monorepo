@@ -15,6 +15,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 ### Producto — `docs/product/`
 
 - Features implementadas, planes, presupuestos, gastos, facturas, integraciones
+- Reordenacion de producto y ownership: `docs/product/ISAAK_PRODUCT_REORDER_PLAN_2026.md`
 - Arquitectura de sync Isaak: `docs/product/ISAAK_PLATFORM_SYNC_PLAN.md`
 - Conexiones compartidas Holded: `docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md`
 - Review publica OpenAI: `docs/product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md`

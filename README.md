@@ -102,6 +102,7 @@ La documentacion detallada de variables esta en:
 ## Documentacion
 
 - docs/INDEX.md (indice general)
+- docs/product/ISAAK_PRODUCT_REORDER_PLAN_2026.md (reordenacion del producto: Isaak como producto principal, Holded como entrada y app como core)
 - apps/landing/README.md (proyecto publico verifactu.business)
 - apps/holded/README.md (proyecto publico Holded)
 - apps/isaak/README.md (proyecto publico Isaak)
