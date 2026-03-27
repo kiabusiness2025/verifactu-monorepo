@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
+import { buildHoldedAuthUrl, ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 import { prisma } from '@/app/lib/prisma';
 import IsaakWorkspaceClient from './IsaakWorkspaceClient';
 
@@ -24,7 +25,8 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
   const session = await getHoldedSession();
 
   if (!session?.tenantId) {
-    redirect(`/onboarding/holded?source=${encodeURIComponent(source)}`);
+    const chatReturnUrl = `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`;
+    redirect(buildHoldedAuthUrl('isaak_chat_requires_session', chatReturnUrl));
   }
 
   const [connection, profile] = await Promise.all([

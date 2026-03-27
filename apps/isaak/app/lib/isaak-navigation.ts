@@ -22,7 +22,13 @@ export const HOLDed_URL = getOrigin(
 export const CONTACT_URL = `${ISAAK_PUBLIC_URL}/support`;
 
 export const HOLDed_ONBOARDING_URL = `${ISAAK_PUBLIC_URL}/onboarding/holded`;
+export const HOLDed_AUTH_URL = `${HOLDed_URL}/auth/holded`;
 
 export const SUPPORT_EMAIL = (
   process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@isaak.verifactu.business'
 ).trim();
+
+export const buildHoldedAuthUrl = (source: string, next?: string) => {
+  const target = next || `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`;
+  return `${HOLDed_AUTH_URL}?source=${encodeURIComponent(source)}&next=${encodeURIComponent(target)}`;
+};
