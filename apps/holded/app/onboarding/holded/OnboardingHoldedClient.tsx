@@ -129,17 +129,16 @@ export default function OnboardingHoldedClient() {
               Paso 2
             </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-              Pega tu API key de Holded
+              Conecta tu cuenta de Holded
             </h1>
             <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
-              Solo necesitas una API key activa. La validamos al momento y, si funciona, te llevamos
-              directamente al dashboard.
+              Asi podre ayudarte con tus ventas, gastos y facturas desde el primer momento.
             </p>
 
             <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <KeyRound className="h-4 w-4 text-[#ff5460]" />
-                Como crearla
+                Como obtener tu API
               </div>
               <div className="mt-4 grid gap-3">
                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
@@ -214,6 +213,17 @@ export default function OnboardingHoldedClient() {
               />
             </label>
 
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                <div>
+                  <div>Solo se usara para leer datos de tu cuenta.</div>
+                  <div>No haremos ningun cambio en tu cuenta.</div>
+                  <div>Puedes desconectarlo en cualquier momento.</div>
+                </div>
+              </div>
+            </div>
+
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 type="button"
@@ -231,7 +241,7 @@ export default function OnboardingHoldedClient() {
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Conectar y continuar
+                Conectar Holded
               </button>
             </div>
 
@@ -262,11 +272,11 @@ export default function OnboardingHoldedClient() {
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
               <div className="flex items-center gap-2 font-semibold text-slate-900">
                 <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                Lo que ocurre despues
+                Lo siguiente
               </div>
               <p className="mt-2">
-                Si la clave funciona, guardamos la conexion y te llevamos al dashboard. No necesitas
-                pasar por mas pantallas tecnicas.
+                Si la clave es correcta, terminare de preparar tu espacio y te llevare con Isaak
+                para empezar sin mas pasos tecnicos.
               </p>
             </div>
 

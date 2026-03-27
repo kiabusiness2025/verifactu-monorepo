@@ -12,9 +12,9 @@ import HoldedHeroVisual from './components/HoldedHeroVisual';
 import { buildAuthUrl, buildRegisterUrl } from './lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Isaak para Holded | Usa Holded de una forma mucho mas simple',
+  title: 'Isaak para Holded | Gestiona tu negocio en Holded sin complicarte',
   description:
-    'Gestiona tu negocio en Holded sin complicaciones. Pregunta, entiende tus numeros y conecta tu cuenta gratis en minutos.',
+    'Habla con un asistente que entiende tus datos de Holded y te ayuda con ventas, gastos, facturas y dudas fiscales.',
 };
 
 const problemPoints = [
@@ -70,17 +70,16 @@ export default function HoldedHomePage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm">
                 <Sparkles className="h-3.5 w-3.5 text-[#ff5460]" />
-                Isaak para Holded
+                Para usuarios de Holded
               </div>
 
               <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.4rem] sm:leading-[1.02]">
-                Usa Holded de una forma mucho mas simple
+                Gestiona tu negocio en Holded sin complicarte
               </h1>
 
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Holded es potente, pero no siempre esta hecho para pensar como tu. Si solo quieres
-                saber que vendes, que debes, que gastos tienes o crear una factura rapido, aqui
-                puedes hacerlo hablando normal.
+                Habla con un asistente que entiende tus datos y te ayuda con ventas, gastos,
+                facturas y dudas fiscales sin obligarte a pelearte con menus ni tecnicismos.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -88,7 +87,7 @@ export default function HoldedHomePage() {
                   href={buildRegisterUrl('holded_home_primary')}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-[#ef4654] hover:shadow-xl"
                 >
-                  Conecta tu Holded gratis
+                  Conectar Holded en 1 minuto
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
@@ -100,11 +99,11 @@ export default function HoldedHomePage() {
               </div>
 
               <div className="mt-8 rounded-3xl border border-[#ff5460]/20 bg-[#ff5460]/5 p-6 shadow-sm">
-                <div className="text-sm font-semibold text-slate-900">Que vas a necesitar</div>
+                <div className="text-sm font-semibold text-slate-900">Empieza en un minuto</div>
                 <div className="mt-4 flex items-start gap-2 text-sm leading-6 text-slate-700">
                   <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                  Tu correo y una API key activa de Holded. La comprobamos al momento y te decimos
-                  si algo no cuadra.
+                  Solo te hara falta tu correo y una API key activa de Holded. La comprobamos al
+                  momento y te decimos si algo no cuadra.
                 </div>
               </div>
             </div>
@@ -180,7 +179,7 @@ export default function HoldedHomePage() {
                   href={buildRegisterUrl('holded_home_card_register')}
                   className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  Conecta tu Holded gratis
+                  Conectar Holded en 1 minuto
                 </Link>
                 <Link
                   href={buildAuthUrl('holded_home_card_login')}

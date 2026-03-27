@@ -628,22 +628,27 @@ export default function HoldedConversationalOnboardingClient({
                                     <div>
                                       <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                                         <Sparkles className="h-4 w-4 text-[#2361d8]" />
-                                        Ya casi esta
+                                        Ya esta todo listo
                                       </div>
                                       <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                                        Perfecto, {preferredName}
+                                        Perfecto
                                       </h1>
                                       <p className="mt-4 text-sm leading-7 text-slate-600">
-                                        Ya tengo lo necesario para ayudarte mejor con tu empresa.
+                                        Voy a centrarme en ayudarte con:
                                       </p>
                                       <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-700">
-                                        <div>Empresa: {form.companyName}</div>
                                         <div>
-                                          Rol: {form.roleInCompanyOther || form.roleInCompany}
+                                          - {form.mainGoals[0] || 'entender mejor tu negocio'}
                                         </div>
-                                        <div>Actividad: {form.businessSector}</div>
-                                        <div>Prioridades: {form.mainGoals.join(', ')}</div>
+                                        <div>
+                                          -{' '}
+                                          {form.mainGoals[1] ||
+                                            'tomar decisiones mas claras en el dia a dia'}
+                                        </div>
                                       </div>
+                                      <p className="mt-4 text-sm leading-7 text-slate-600">
+                                        Vamos a empezar.
+                                      </p>
                                       <button
                                         type="button"
                                         onClick={() => void complete()}

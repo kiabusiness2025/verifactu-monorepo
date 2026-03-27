@@ -521,10 +521,10 @@ export default function IsaakWorkspaceClient({
     }
 
     if (hasFewBusinessData) {
-      return `${greeting}, ${person}. Ya estoy conectado a ${company}. De momento tengo un contexto inicial y puedo empezar a ayudarte como ${role} mientras sigo tirando de Holded para darte cada vez mas precision.`;
+      return `${greeting}, ${person}. Ya tengo acceso a tu cuenta de Holded y he preparado todo para ayudarte con tu negocio en ${company}.`;
     }
 
-    return `${greeting}, ${person}. Ya he preparado Isaak para ${company}. Teniendo en cuenta que eres ${role}, voy a priorizar ayudarte con ${welcomeGoals || 'la gestion diaria de tu negocio'}.`;
+    return `${greeting}, ${person}. Ya tengo acceso a tu cuenta de Holded y he preparado todo para ayudarte con tu negocio en ${company}.`;
   }, [
     answers?.goals,
     answers?.preferredName,
@@ -546,7 +546,7 @@ export default function IsaakWorkspaceClient({
     }
 
     if (hasFewBusinessData) {
-      return 'Ahora mismo puedo ayudarte con una lectura clara de tu negocio, resolver dudas fiscales y preparar tus primeras acciones sin usar lenguaje tecnico.';
+      return `Puedo empezar a ayudarte como ${formatRoleLabel(answers?.roleInCompany)} con una lectura clara de tu negocio y seguir afinando el contexto a medida que trabajamos.`;
     }
 
     const modules =
@@ -555,11 +555,12 @@ export default function IsaakWorkspaceClient({
         : null;
 
     if (modules) {
-      return `Ya veo informacion util de Holded en ${modules}. Si quieres, puedo empezar por un resumen o por una pregunta concreta.`;
+      return `Puedo ayudarte a entender tus numeros, resolver dudas o hacer tareas en segundos. Ya veo informacion util de Holded en ${modules}.`;
     }
 
     return 'Puedo ayudarte a entender tus numeros, revisar tus pendientes y convertir dudas contables en respuestas claras y accionables.';
   }, [
+    answers?.roleInCompany,
     connectionPending,
     connectionState.supportedModules,
     greeting,
@@ -753,6 +754,10 @@ export default function IsaakWorkspaceClient({
                   <div className="mt-4 rounded-[1.6rem] border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-7 text-slate-700">
                     <p>{assistantLeadMessage}</p>
                     <p className="mt-3">{assistantSupportMessage}</p>
+                    <p className="mt-3 text-slate-600">
+                      Puedes preguntarme lo que necesites. Yo me adapto a como quieres gestionar tu
+                      negocio.
+                    </p>
                     {instructionProfile?.businessContextSummary ? (
                       <p className="mt-3 text-slate-600">
                         {instructionProfile.businessContextSummary}
@@ -788,26 +793,38 @@ export default function IsaakWorkspaceClient({
 
                 <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="text-sm font-semibold text-slate-900">
-                    {hasConversationHistory
-                      ? 'Puedes retomar con algo como esto'
-                      : 'Puedes empezar por aqui'}
+                    {hasConversationHistory ? 'Puedes retomar con algo como esto' : 'Por ejemplo'}
                   </div>
                   <div className="mt-2 text-sm leading-7 text-slate-600">
                     {hasConversationHistory
                       ? 'He recuperado tu contexto. Si quieres, seguimos con una pregunta concreta o vamos a un resumen rapido.'
-                      : 'Ya te entiendo mejor por tu empresa, tu rol y lo que quieres conseguir con Isaak.'}
+                      : `Voy a centrarme en ayudarte con ${welcomeGoals || 'la gestion diaria de tu negocio'}. Puedes empezar cuando quieras.`}
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
-                      <button
-                        key={prompt}
-                        type="button"
-                        onClick={() => void sendMessage(prompt)}
-                        className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7]"
-                      >
-                        {prompt}
-                      </button>
-                    ))}
+                  <div className="mt-4 space-y-3">
+                    <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
+                      {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
+                        <button
+                          key={prompt}
+                          type="button"
+                          onClick={() => void sendMessage(prompt)}
+                          className="block text-left font-medium transition hover:text-[#b42332]"
+                        >
+                          - {prompt}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
+                        <button
+                          key={`${prompt}-chip`}
+                          type="button"
+                          onClick={() => void sendMessage(prompt)}
+                          className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7]"
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   {canShowSummaryCTA ? (
                     <button

@@ -74,6 +74,26 @@ function buildSnapshotSummary(snapshot: Awaited<ReturnType<typeof fetchHoldedSna
   };
 }
 
+function buildAutomaticInsight(summary: ReturnType<typeof buildSnapshotSummary>) {
+  if (summary.pendingInvoices >= 3) {
+    return 'Tienes varias facturas pendientes de cobro y conviene revisarlas cuanto antes.';
+  }
+
+  if (summary.sales > 0 && summary.pendingInvoices > 0) {
+    return 'Ya hay ventas registradas y la prioridad ahora mismo es vigilar mejor los cobros pendientes.';
+  }
+
+  if (summary.invoices >= 5) {
+    return 'Ya veo bastante movimiento en tu cuenta y un resumen periodico te puede ahorrar mucho tiempo.';
+  }
+
+  if (summary.contacts >= 10) {
+    return 'Tienes varios contactos activos y puede merecer la pena ordenar mejor clientes y seguimiento.';
+  }
+
+  return 'Todavia estoy montando una primera lectura de tu negocio, pero ya puedo ayudarte con preguntas concretas.';
+}
+
 function buildReply(input: {
   message: string;
   snapshot: Awaited<ReturnType<typeof fetchHoldedSnapshot>>;
@@ -85,6 +105,7 @@ function buildReply(input: {
   const contactCount = input.snapshot.contacts.length;
   const accountCount = input.snapshot.accounts.length;
   const summary = buildSnapshotSummary(input.snapshot);
+  const insight = buildAutomaticInsight(summary);
   const recentFacts = input.memoryContext.recentFacts
     .map((fact) => `${fact.category}:${fact.factKey}`)
     .slice(0, 3);
@@ -100,15 +121,30 @@ function buildReply(input: {
     text.includes('resumen rapido') ||
     text.includes('ver resumen')
   ) {
+    const hasEnoughSummaryData =
+      summary.invoices > 0 || summary.contacts > 0 || summary.accounts > 0 || summary.sales > 0;
+
+    if (!hasEnoughSummaryData) {
+      return [
+        `Todavia no tengo suficientes datos para darte un resumen completo de ${tenantLabel}.`,
+        '',
+        'Aun asi, ya puedo ayudarte a revisar facturas, cobros, clientes o cualquier duda puntual que tengas.',
+        '',
+        `Insight inicial: ${insight}`,
+      ].join('\n');
+    }
+
     return [
       `Este es tu resumen rapido de ${tenantLabel}:`,
       '',
-      `• Ventas aproximadas en la muestra: ${summary.sales.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`,
-      `• Facturas revisadas: ${summary.invoices}`,
-      `• Facturas pendientes detectadas: ${summary.pendingInvoices}`,
-      `• Contactos visibles: ${summary.contacts}`,
+      `- Ventas aproximadas en la muestra: ${summary.sales.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} EUR`,
+      `- Facturas revisadas: ${summary.invoices}`,
+      `- Facturas pendientes detectadas: ${summary.pendingInvoices}`,
+      `- Contactos visibles: ${summary.contacts}`,
       '',
-      '¿Quieres que revise algo en detalle?',
+      `Insight: ${insight}`,
+      '',
+      'Si quieres, el siguiente paso es revisar cobros pendientes, ventas o una factura concreta.',
     ].join('\n');
   }
 
