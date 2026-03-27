@@ -39,6 +39,24 @@ function sanitizeNext(value: string | undefined) {
   return fallback;
 }
 
+async function readTenantProfileSafe(tenantId: string) {
+  try {
+    return await prisma.tenantProfile.findUnique({
+      where: { tenantId },
+      select: {
+        tradeName: true,
+        legalName: true,
+        representative: true,
+        phone: true,
+        website: true,
+      },
+    });
+  } catch (error) {
+    console.error('holded tenant profile read failed', error);
+    return null;
+  }
+}
+
 export default async function HoldedProfileOnboardingPage({ searchParams }: PageProps) {
   const session = await getHoldedSession();
   const resolved = (await searchParams) || {};
@@ -53,16 +71,7 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
 
   const [connection, tenantProfile] = await Promise.all([
     getHoldedConnection(session.tenantId),
-    prisma.tenantProfile.findUnique({
-      where: { tenantId: session.tenantId },
-      select: {
-        tradeName: true,
-        legalName: true,
-        representative: true,
-        phone: true,
-        website: true,
-      },
-    }),
+    readTenantProfileSafe(session.tenantId),
   ]);
 
   const onboardingState = await getIsaakOnboardingState({
