@@ -106,14 +106,7 @@ function buildReply(input: {
   const accountCount = input.snapshot.accounts.length;
   const summary = buildSnapshotSummary(input.snapshot);
   const insight = buildAutomaticInsight(summary);
-  const recentFacts = input.memoryContext.recentFacts
-    .map((fact) => `${fact.category}:${fact.factKey}`)
-    .slice(0, 3);
-  const memoryHint =
-    recentFacts.length > 0
-      ? ` Ya tengo en cuenta este contexto reciente: ${recentFacts.join(', ')}.`
-      : '';
-  const tenantLabel = input.tenantName?.trim() || 'tu cuenta';
+  const tenantLabel = input.tenantName?.trim() || 'tu empresa';
 
   if (
     text.includes('resumen') ||
@@ -144,23 +137,27 @@ function buildReply(input: {
       '',
       `Insight: ${insight}`,
       '',
-      'Si quieres, el siguiente paso es revisar cobros pendientes, ventas o una factura concreta.',
+      'Si quieres, puedo seguir con cobros pendientes, ventas o una factura concreta.',
     ].join('\n');
   }
 
   if (text.includes('factura') || text.includes('venta') || text.includes('cobro')) {
-    return `Tu cuenta de Holded ya esta conectada. En ${tenantLabel} he podido ver ${invoiceCount} facturas recientes en la muestra inicial.${memoryHint} Si quieres, el siguiente paso es pedirme un resumen simple de ventas o cobros pendientes.`;
+    if (invoiceCount === 0) {
+      return `Tu cuenta de Holded ya esta conectada, pero en la muestra inicial de ${tenantLabel} no veo facturas recientes todavia. Puedo ayudarte a revisar si faltan datos por sincronizar o ir directamente a cobros, clientes y configuracion.`;
+    }
+
+    return `Tu cuenta de Holded ya esta conectada. En ${tenantLabel} he detectado ${invoiceCount} facturas recientes en la muestra inicial. Si quieres, puedo resumirte ventas, cobros pendientes o revisar una factura concreta.`;
   }
 
   if (text.includes('cliente') || text.includes('contacto')) {
-    return `La conexion esta activa. En la primera lectura de ${tenantLabel} he encontrado ${contactCount} contactos en la muestra rapida.${memoryHint} Ya podemos revisar clientes y actividad sin salir de Isaak.`;
+    return `La conexion esta activa. En la primera lectura de ${tenantLabel} he encontrado ${contactCount} contactos en la muestra rapida. Ya podemos revisar clientes y actividad sin salir de Isaak.`;
   }
 
   if (text.includes('cuenta') || text.includes('contabilidad') || text.includes('gasto')) {
-    return `Con la conexion actual he podido validar ${accountCount} cuentas contables en la muestra basica de ${tenantLabel}.${memoryHint} A partir de aqui podemos convertir esos datos en respuestas mas claras para negocio.`;
+    return `Con la conexion actual he podido validar ${accountCount} cuentas contables en la muestra basica de ${tenantLabel}. A partir de aqui puedo convertir esos datos en respuestas mas claras para negocio.`;
   }
 
-  return `La conexion con Holded esta activa y Isaak ya puede trabajar sobre una primera muestra de ${invoiceCount} facturas, ${contactCount} contactos y ${accountCount} cuentas en ${tenantLabel}.${memoryHint} Preguntame por ventas, cobros, gastos o clientes y empezamos.`;
+  return `La conexion con Holded esta activa y ya puedo trabajar sobre una primera muestra de ${invoiceCount} facturas, ${contactCount} contactos y ${accountCount} cuentas en ${tenantLabel}. Preguntame por ventas, cobros, gastos o clientes y empezamos.`;
 }
 
 export async function POST(request: NextRequest) {

@@ -927,16 +927,46 @@ export default function IsaakWorkspaceClient({
                       key={message.id}
                       className={
                         message.role === 'assistant'
-                          ? 'mr-8 rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]'
-                          : 'ml-8 rounded-[1.75rem] bg-slate-950 px-5 py-4 text-sm leading-7 text-white shadow-[0_20px_48px_-40px_rgba(15,23,42,0.5)]'
+                          ? 'mr-8 flex items-start gap-3'
+                          : 'ml-8 flex justify-end'
                       }
                     >
-                      {message.content}
+                      {message.role === 'assistant' ? (
+                        <div className="relative mt-1 h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                          <Image
+                            src="/Personalidad/isaak-avatar-verifactu.png"
+                            alt="Isaak"
+                            fill
+                            sizes="36px"
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : null}
+                      <div
+                        className={
+                          message.role === 'assistant'
+                            ? 'rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]'
+                            : 'max-w-[85%] rounded-[1.75rem] border border-[#2361d8]/10 bg-[#2361d8] px-5 py-4 text-sm leading-7 text-white shadow-[0_20px_48px_-40px_rgba(35,97,216,0.45)]'
+                        }
+                      >
+                        {message.content}
+                      </div>
                     </div>
                   ))}
                   {loading ? (
-                    <div className="mr-8 rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
-                      Isaak esta preparando una respuesta...
+                    <div className="mr-8 flex items-start gap-3">
+                      <div className="relative mt-1 h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                        <Image
+                          src="/Personalidad/isaak-avatar-verifactu.png"
+                          alt="Isaak"
+                          fill
+                          sizes="36px"
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
+                        Isaak esta preparando una respuesta...
+                      </div>
                     </div>
                   ) : null}
                 </div>
