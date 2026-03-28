@@ -25,6 +25,10 @@ function readSource(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] || '' : value || '';
 }
 
+function readBooleanFlag(value: string | string[] | undefined) {
+  return readSource(value) === '1';
+}
+
 function readHandoff(
   value: string | string[] | undefined
 ): { profile: IsaakOnboardingProfile; instructions: IsaakInstructionProfile | null } | null {
@@ -91,7 +95,8 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
   const resolved = (await searchParams) || {};
   const source = readSource(resolved.source) || 'isaak_chat';
   const handoff = readHandoff(resolved.handoff);
-  const isFreshHoldedHandoff = Boolean(handoff?.profile);
+  const freshConnection = readBooleanFlag(resolved.freshConnection);
+  const isFreshHoldedHandoff = Boolean(handoff?.profile) || freshConnection;
   const session = await getHoldedSession();
 
   if (!session?.tenantId || !session.userId) {

@@ -24,6 +24,17 @@ function readBooleanFlag(value: string | string[] | undefined) {
   return readString(value) === '1';
 }
 
+function appendQueryFlag(target: string, key: string, value: string) {
+  try {
+    const url = new URL(target);
+    url.searchParams.set(key, value);
+    return url.toString();
+  } catch {
+    const separator = target.includes('?') ? '&' : '?';
+    return `${target}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+  }
+}
+
 function sanitizeNext(value: string | undefined) {
   const fallback = buildDashboardUrl('holded_profile_complete');
   if (!value) return fallback;
@@ -66,6 +77,7 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
   const resolved = (await searchParams) || {};
   const source = readString(resolved.source) || 'holded_profile_onboarding';
   const fresh = readBooleanFlag(resolved.fresh);
+  const justConnected = fresh || source === 'holded_connection_complete';
   const next = sanitizeNext(readString(resolved.next) || undefined);
 
   if (!session?.tenantId || !session.userId) {
@@ -93,11 +105,14 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
     };
   });
 
-  if (!connection?.keyMasked && !fresh) {
+  if (!connection?.keyMasked && !justConnected) {
     redirect(`/onboarding/holded?source=${encodeURIComponent(source)}`);
   }
 
   if (onboardingState.completed) {
+    if (!connection?.keyMasked && justConnected) {
+      redirect(appendQueryFlag(next, 'freshConnection', '1'));
+    }
     redirect(next);
   }
 
