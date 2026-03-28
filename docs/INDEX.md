@@ -18,6 +18,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 - Reordenacion de producto y ownership: `docs/product/ISAAK_PRODUCT_REORDER_PLAN_2026.md`
 - Arquitectura de sync Isaak: `docs/product/ISAAK_PLATFORM_SYNC_PLAN.md`
 - Conexiones compartidas Holded: `docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md`
+- Alcance de APIs Holded para facturacion y contabilidad: `docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md`
 - Review publica OpenAI: `docs/product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md`
 - Deploy + QA publica Isaak for Holded: `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
 - Demo: `docs/product/DEMO_FLOW.md`, `docs/product/DEMO_QA_CHECKLIST.md`

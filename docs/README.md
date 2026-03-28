@@ -21,6 +21,7 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 - [product/ISAAK_PRODUCT_REORDER_PLAN_2026.md](product/ISAAK_PRODUCT_REORDER_PLAN_2026.md) - Reordenacion del monorepo: Isaak como producto principal, Holded como entrada y app como core
 - [product/ISAAK_PLATFORM_SYNC_PLAN.md](product/ISAAK_PLATFORM_SYNC_PLAN.md) - Arquitectura objetivo de Isaak, ownership de datos y fases de sync
 - [product/ISAAK_HOLDED_SHARED_CONNECTIONS.md](product/ISAAK_HOLDED_SHARED_CONNECTIONS.md) - Arquitectura de conexion compartida Holded para app interna, app publica y dashboard
+- [product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md](product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md) - Alcance oficial de APIs Holded a implementar para facturacion, contabilidad y acciones operativas desde Isaak
 - [product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md](product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md) - Checklist y alcance para preparar la app publica de OpenAI
 - [product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md](product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md) - Checklist operativa para desplegar y probar el flujo publico holded-first
 - [product/ISAAK_FOR_HOLDED_STATUS_2026-03-19.md](product/ISAAK_FOR_HOLDED_STATUS_2026-03-19.md) - Estado operativo, incidente final y decisiones de producto de Isaak for Holded
