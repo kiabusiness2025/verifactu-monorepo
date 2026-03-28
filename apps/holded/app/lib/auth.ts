@@ -6,7 +6,6 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   reload,
-  sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -197,13 +196,6 @@ export async function registerWithEmail(
       });
     }
 
-    const holdedSite =
-      process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() || 'https://holded.verifactu.business';
-    const continueUrl = new URL(`${holdedSite}/verificar`);
-    continueUrl.searchParams.set('source', source);
-    continueUrl.searchParams.set('step', 'verified');
-    continueUrl.searchParams.set('email', email);
-
     const idToken = await userCredential.user.getIdToken(true);
 
     const response = await fetch('/api/auth/register', {
@@ -219,27 +211,17 @@ export async function registerWithEmail(
 
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
-      console.warn('[holded auth] register bootstrap failed, continuing with client verification', {
+      console.warn('[holded auth] register bootstrap failed', {
         error: payload?.error || 'register bootstrap failed',
       });
       warning =
         'Hemos creado tu cuenta. Si no ves el correo de verificacion, revisa spam o vuelve a intentarlo en unos minutos.';
-    }
-
-    try {
-      await sendEmailVerification(userCredential.user, {
-        url: continueUrl.toString(),
-        handleCodeInApp: false,
-      });
-    } catch (verificationError) {
-      console.error('[holded auth] client verification email failed', {
-        error:
-          verificationError instanceof Error
-            ? verificationError.message
-            : String(verificationError),
-      });
-      warning =
-        'Hemos creado tu cuenta. Si no ves el correo de verificacion, revisa spam o vuelve a intentarlo en unos minutos.';
+    } else {
+      const payload = await response.json().catch(() => ({}));
+      if (!payload?.verificationEmailSent) {
+        warning =
+          'Hemos creado tu cuenta. Si no ves el correo de verificacion de Holded, revisa spam o vuelve a intentarlo en unos minutos.';
+      }
     }
 
     await signOut(auth);
