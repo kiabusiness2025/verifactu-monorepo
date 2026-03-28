@@ -90,11 +90,25 @@ function HoldedAuthContent() {
 
   useEffect(() => {
     let cancelled = false;
+    const stopCheckingTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        setExistingUserChecking(false);
+      }
+    }, 2500);
 
     const hydrateExistingUser = async () => {
       if (isRegisterMode) {
         await resetHoldedAuthState();
         if (!cancelled) setExistingUserChecking(false);
+        return;
+      }
+
+      if (source === 'isaak_chat_requires_session') {
+        await resetHoldedAuthState();
+        redirectedRef.current = false;
+        if (!cancelled) {
+          setExistingUserChecking(false);
+        }
         return;
       }
 
@@ -140,8 +154,9 @@ function HoldedAuthContent() {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(stopCheckingTimer);
     };
-  }, [isRegisterMode, postLoginTarget, rememberDevice]);
+  }, [isRegisterMode, postLoginTarget, rememberDevice, source]);
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

@@ -159,13 +159,13 @@ export function buildHoldedAccessReadyEmail(input: AccessEmailInput): EmailTempl
       title: 'Ya puedes entrar y conectar Holded',
       body: `
         <p style="margin:0 0 14px;">Tu correo <strong>${escapeHtml(input.email)}</strong> ya esta verificado.</p>
-        <p style="margin:0 0 18px;">Entra ahora en tu acceso, conecta tu API key de Holded y te llevamos directo al dashboard para empezar con ventas, gastos y facturas.</p>
+        <p style="margin:0 0 18px;">Entra ahora en tu acceso, conecta tu API key de Holded y te llevamos directo a Isaak para empezar con ventas, gastos y facturas.</p>
         <a href="${escapeHtml(input.accessUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Entrar ahora</a>
-        <p style="margin:18px 0 0;color:#64748b;font-size:13px;">Dashboard previsto tras la conexion: ${escapeHtml(input.dashboardUrl)}</p>
+        <p style="margin:18px 0 0;color:#64748b;font-size:13px;">Despues de conectar Holded, entraras directamente en tu espacio principal de Isaak.</p>
       `,
       footer: legalFooter(),
     }),
-    text: `Tu acceso a Isaak para Holded ya esta activo.\n\nEmail: ${input.email}\n\nEntrar: ${input.accessUrl}\nDashboard: ${input.dashboardUrl}`,
+    text: `Tu acceso a Isaak para Holded ya esta activo.\n\nEmail: ${input.email}\n\nEntrar: ${input.accessUrl}\n\nDespues de conectar Holded, entraras directamente en tu espacio principal de Isaak.`,
   };
 }
 

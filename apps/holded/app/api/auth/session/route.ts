@@ -53,8 +53,9 @@ async function sendVerifiedAccessEmails(input: { email: string; source: string }
   );
   const accessUrl = new URL(`${holdedSite}/auth/holded`);
   accessUrl.searchParams.set('source', input.source);
-  const dashboardUrl = new URL(`${holdedSite}/dashboard`);
-  dashboardUrl.searchParams.set('source', input.source);
+  const onboardingUrl = new URL(`${holdedSite}/onboarding/holded`);
+  onboardingUrl.searchParams.set('source', input.source);
+  accessUrl.searchParams.set('next', onboardingUrl.toString());
 
   const resend = new Resend(resendApiKey);
   const from = readOptionalEnv(
@@ -66,7 +67,7 @@ async function sendVerifiedAccessEmails(input: { email: string; source: string }
   const accessReady = buildHoldedAccessReadyEmail({
     email: input.email,
     accessUrl: accessUrl.toString(),
-    dashboardUrl: dashboardUrl.toString(),
+    dashboardUrl: onboardingUrl.toString(),
   });
   const guide = buildHoldedOnboardingGuideEmail({
     name: input.email.split('@')[0] || '',
