@@ -537,6 +537,10 @@ export default function IsaakWorkspaceClient({
     }
   };
 
+  const applyPromptToInput = (prompt: string) => {
+    setInput(prompt);
+  };
+
   const selectedGoalCount = selectedGoals.length;
   const companyLabel = answers?.companyName || companyOptions[0] || null;
   const effectiveQuickPrompts = quickPrompts?.length ? quickPrompts : QUICK_START_PROMPTS;
@@ -870,33 +874,18 @@ export default function IsaakWorkspaceClient({
                       ? 'He recuperado tu contexto. Si quieres, seguimos con una pregunta concreta o vamos a un resumen rapido.'
                       : `Voy a centrarme en ayudarte con ${welcomeGoals || 'la gestion diaria de tu negocio'}. Puedes empezar cuando quieras.`}
                   </div>
-                  <div className="mt-4 space-y-3">
-                    <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
-                      {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
-                        <button
-                          key={prompt}
-                          type="button"
-                          onClick={() => void sendMessage(prompt)}
-                          disabled={!hasLiveConnection}
-                          className="block text-left font-medium transition hover:text-[#b42332] disabled:cursor-not-allowed disabled:text-slate-400"
-                        >
-                          - {prompt}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                      {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
-                        <button
-                          key={`${prompt}-chip`}
-                          type="button"
-                          onClick={() => void sendMessage(prompt)}
-                          disabled={!hasLiveConnection}
-                          className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
-                        >
-                          {prompt}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
+                      <button
+                        key={`${prompt}-chip`}
+                        type="button"
+                        onClick={() => applyPromptToInput(prompt)}
+                        disabled={!hasLiveConnection}
+                        className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
                   </div>
                   {canShowSummaryCTA ? (
                     <button
@@ -1098,7 +1087,7 @@ export default function IsaakWorkspaceClient({
                     <button
                       key={prompt}
                       type="button"
-                      onClick={() => void sendMessage(prompt)}
+                      onClick={() => applyPromptToInput(prompt)}
                       className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7]"
                     >
                       {prompt}
