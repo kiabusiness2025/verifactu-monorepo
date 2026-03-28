@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS external_connections (
   api_key_enc text,
   scopes_granted text[] NOT NULL DEFAULT ARRAY[]::text[],
   connection_status text NOT NULL DEFAULT 'disconnected',
-  connected_by_user_id text REFERENCES users(id) ON DELETE SET NULL,
+  connected_by_user_id text REFERENCES "User"(id) ON DELETE SET NULL,
   connected_at timestamptz,
   last_validated_at timestamptz,
   last_sync_at timestamptz,
@@ -24,7 +24,7 @@ CREATE INDEX IF NOT EXISTS external_connections_connected_by_user_idx
 
 CREATE TABLE IF NOT EXISTS channel_identities (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id text NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
   tenant_id uuid REFERENCES tenants(id) ON DELETE SET NULL,
   channel_type text NOT NULL,
   channel_subject_id text NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS external_connection_audit_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   connection_id uuid REFERENCES external_connections(id) ON DELETE SET NULL,
-  user_id text REFERENCES users(id) ON DELETE SET NULL,
+  user_id text REFERENCES "User"(id) ON DELETE SET NULL,
   channel_type text NOT NULL,
   action text NOT NULL,
   resource_type text NOT NULL,

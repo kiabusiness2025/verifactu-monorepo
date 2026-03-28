@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS "isaak_memory_facts" (
     ON UPDATE CASCADE,
   CONSTRAINT "isaak_memory_facts_user_id_fkey"
     FOREIGN KEY ("user_id")
-    REFERENCES "users"("id")
+    REFERENCES "User"("id")
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT "isaak_memory_facts_conversation_id_fkey"
