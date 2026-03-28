@@ -16,6 +16,10 @@ import {
 
 export const runtime = 'nodejs';
 
+const DEFAULT_SHARED_COOKIE_DOMAIN = '.verifactu.business';
+const DEFAULT_SHARED_COOKIE_SAMESITE = 'none';
+const DEFAULT_SHARED_COOKIE_SECURE = 'true';
+
 const DEFAULT_ADMIN_APP_NAME = '[DEFAULT]';
 
 function requireEnv(name: string) {
@@ -335,9 +339,9 @@ export async function POST(req: Request) {
     const cookieOpts = buildSessionCookieOptions({
       url: url.toString(),
       host,
-      domainEnv: process.env.SESSION_COOKIE_DOMAIN,
-      secureEnv: process.env.SESSION_COOKIE_SECURE,
-      sameSiteEnv: process.env.SESSION_COOKIE_SAMESITE,
+      domainEnv: process.env.SESSION_COOKIE_DOMAIN || DEFAULT_SHARED_COOKIE_DOMAIN,
+      secureEnv: process.env.SESSION_COOKIE_SECURE || DEFAULT_SHARED_COOKIE_SECURE,
+      sameSiteEnv: process.env.SESSION_COOKIE_SAMESITE || DEFAULT_SHARED_COOKIE_SAMESITE,
       value: token,
       maxAgeSeconds: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24,
     });
