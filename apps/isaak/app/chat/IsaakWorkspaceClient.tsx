@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { IsaakInstructionProfile, IsaakOnboardingProfile } from '@verifactu/integrations';
 import {
   AlertCircle,
-  Bot,
   CheckCircle2,
   ChevronRight,
   CreditCard,
@@ -15,7 +14,6 @@ import {
   MessageSquarePlus,
   Paperclip,
   SendHorizonal,
-  Sparkles,
 } from 'lucide-react';
 
 type SessionInfo = {
@@ -135,36 +133,14 @@ function deriveName(session: SessionInfo) {
   );
 }
 
-function deriveAlternateNames(session: SessionInfo) {
-  const suggestions = new Set<string>();
-  const fullName = session.name?.trim();
-  const representative = session.representative?.trim();
-  const emailPrefix = session.email
-    ?.split('@')[0]
-    ?.replace(/[._-]+/g, ' ')
-    .trim();
-
-  if (fullName && fullName !== deriveName(session)) suggestions.add(fullName);
-  if (representative && representative !== deriveName(session)) suggestions.add(representative);
-  if (emailPrefix && emailPrefix !== deriveName(session)) suggestions.add(emailPrefix);
-  suggestions.add('Lo decidire despues');
-  return Array.from(suggestions).slice(0, 2);
+function takeFirstName(value: string | null | undefined) {
+  const normalized = (value || '').trim();
+  if (!normalized) return '';
+  return normalized.split(' ')[0]?.trim() || normalized;
 }
 
 function storageKey(tenantId: string | null) {
   return `isaak-chat-onboarding:${tenantId || 'anonymous'}:${STORAGE_VERSION}`;
-}
-
-function buildWelcomeContext(isConnected: boolean, companyName: string | null) {
-  if (!isConnected) {
-    return 'Antes de empezar, necesito que conectes Holded para trabajar con tus datos reales.';
-  }
-
-  if (companyName) {
-    return `Ya tengo acceso a ${companyName} en Holded. Puedo ayudarte a entender tus numeros, crear facturas o resolver dudas en segundos.`;
-  }
-
-  return 'Ya tengo acceso a tu cuenta de Holded. Puedo ayudarte a entender tus numeros, crear facturas o resolver dudas en segundos.';
 }
 
 function formatRoleLabel(value: string | null | undefined) {
@@ -189,12 +165,14 @@ export default function IsaakWorkspaceClient({
   instructionProfile,
   connectionPending = false,
   quickPrompts,
+  connectionSettingsUrl,
 }: {
   session: SessionInfo;
   onboardingProfile?: IsaakOnboardingProfile | null;
   instructionProfile?: IsaakInstructionProfile | null;
   connectionPending?: boolean;
   quickPrompts?: string[];
+  connectionSettingsUrl: string;
 }) {
   const [connectionState, setConnectionState] = useState(session);
   const [recentConversations, setRecentConversations] = useState<ConversationSummary[]>([]);
@@ -243,7 +221,6 @@ export default function IsaakWorkspaceClient({
     showConnectionWarmup && !isCheckingConnection && connectionCheckAttempts >= 8;
   const greeting = getSpanishGreeting();
   const defaultName = useMemo(() => deriveName(connectionState), [connectionState]);
-  const alternateNames = useMemo(() => deriveAlternateNames(connectionState), [connectionState]);
   const companyOptions = useMemo(() => {
     const values = [connectionState.tenantName, connectionState.legalName]
       .map((value) => value?.trim())
@@ -561,11 +538,9 @@ export default function IsaakWorkspaceClient({
       Boolean(connectionState.validationSummary) ||
       Boolean(connectionState.lastValidatedAt));
   const welcomeGoals = answers?.goals?.slice(0, 2).join(' y ');
-  const userInitial =
-    (answers?.preferredName || defaultName || session.email || 'I')
-      .trim()
-      .charAt(0)
-      .toUpperCase() || 'I';
+  const displayName =
+    takeFirstName(answers?.preferredName || selectedName || defaultName) || 'Hola';
+  const userInitial = (displayName || session.email || 'I').trim().charAt(0).toUpperCase() || 'I';
   const assistantLeadMessage = useMemo(() => {
     const role = formatRoleLabel(answers?.roleInCompany);
     const company = companyLabel || 'tu empresa';
@@ -694,7 +669,7 @@ export default function IsaakWorkspaceClient({
             Para que Isaak trabaje con tus datos reales, primero necesitamos tu conexion con Holded.
           </p>
           <Link
-            href="/onboarding/holded"
+            href={connectionSettingsUrl}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Conectar Holded
@@ -706,14 +681,6 @@ export default function IsaakWorkspaceClient({
 
     if (messages.length > 0) return null;
 
-    const roleLabel = formatRoleLabel(answers?.roleInCompany);
-    const holdedStatusLabel = hasLiveConnection
-      ? connectionState.supportedModules.length > 0
-        ? 'Datos listos'
-        : 'Conexion inicial'
-      : connectionVerificationStalled
-        ? 'Revision manual recomendada'
-        : 'Verificacion final en curso';
     const validationHint = hasLiveConnection
       ? connectionState.validationSummary || assistantSupportMessage
       : connectionVerificationStalled
@@ -721,113 +688,53 @@ export default function IsaakWorkspaceClient({
         : 'Ya tengo tu configuracion inicial y estoy terminando la comprobacion final de Holded.';
 
     return (
-      <div className="mx-auto w-full max-w-4xl">
-        <div className="space-y-5">
-          {introReady ? (
-            <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white/92 p-5 shadow-[0_26px_70px_-48px_rgba(15,23,42,0.4)]">
-              <div className="flex items-center gap-3">
-                <div className="relative h-12 w-12 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
-                  <Image
-                    src="/Personalidad/isaak-avatar-verifactu.png"
-                    alt="Isaak"
-                    fill
-                    sizes="48px"
-                    className="object-cover"
-                    priority
-                  />
-                </div>
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                    Tu asistente fiscal y contable
-                  </div>
-                  <div className="text-sm font-semibold text-slate-950">Isaak</div>
-                </div>
-              </div>
-              {!introReady ? (
-                <div className="isaak-typing-dots mt-4 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-3">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-              ) : (
-                <>
-                  <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                    {greeting}, {answers?.preferredName || selectedName || defaultName}
-                  </h1>
-                  <p className="mt-3 text-base leading-8 text-slate-600">
-                    Soy Isaak. Voy a ayudarte a gestionar tu empresa de forma mas simple.
-                  </p>
-                  <p className="mt-3 text-base leading-8 text-slate-600">{assistantLeadMessage}</p>
-                  <p className="mt-3 text-base leading-8 text-slate-600">
-                    Puedes preguntarme lo que necesites. Yo me adapto a como quieres gestionar tu
-                    negocio.
-                  </p>
-                </>
-              )}
-            </div>
-          ) : null}
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center py-10">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+            {greeting}, {displayName}
+          </h1>
+        </div>
 
-          {introReady ? (
-            <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white/92 p-5 shadow-[0_26px_70px_-48px_rgba(15,23,42,0.4)]">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Bot className="h-4 w-4 text-[#2361d8]" />
-                Contexto inmediato
-              </div>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {showConnectionWarmup
-                  ? `Ya tengo tu contexto inicial para ${companyLabel || 'tu empresa'}. Estoy terminando la ultima verificacion con Holded para activar respuestas con datos reales.`
-                  : buildWelcomeContext(isConnected, companyLabel)}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{assistantSupportMessage}</p>
-              {instructionProfile?.businessContextSummary ? (
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {instructionProfile.businessContextSummary}
-                </p>
-              ) : null}
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                {validationHint}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
-                  Empresa: {answers?.companyName || companyLabel || 'Tu empresa'}
-                </span>
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
-                  Rol: {roleLabel}
-                </span>
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
-                  Sector: {answers?.businessSector || 'Pendiente'}
-                </span>
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
-                  Holded: {holdedStatusLabel}
-                </span>
-              </div>
+        {!introReady ? (
+          <div className="mr-8 inline-flex max-w-[240px] items-center gap-3 rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
+            <div className="isaak-typing-dots inline-flex items-center gap-1">
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="mr-8 rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
+              {assistantLeadMessage}
+            </div>
+
+            <div className="mr-8 rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
+              {validationHint}
               {showConnectionWarmup ? (
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-900">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   {isCheckingConnection
-                    ? 'Comprobando la conexion en tiempo real'
-                    : 'La comprobacion esta tardando mas de lo normal'}
+                    ? 'Comprobando la conexion con Holded'
+                    : 'La verificacion esta tardando mas de lo normal'}
                 </div>
-              ) : hasFewBusinessData ? (
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+              ) : null}
+              {hasFewBusinessData ? (
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
                   <AlertCircle className="h-3.5 w-3.5" />
-                  Tengo pocos datos todavia, pero ya puedo ayudarte con contexto inicial
+                  Todavia estoy afinando contexto, pero ya puedo ayudarte
                 </div>
-              ) : (
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+              ) : null}
+              {hasLiveConnection ? (
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-900">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Holded ya esta listo para responder con contexto real
-                </div>
-              )}
-              {connectionState.lastValidatedAt ? (
-                <div className="mt-3 text-xs text-slate-500">
-                  Ultima actualizacion: {formatDate(connectionState.lastValidatedAt)}
+                  Holded conectado
                 </div>
               ) : null}
               {connectionVerificationStalled ? (
                 <div className="mt-4">
                   <Link
-                    href="/onboarding/holded"
+                    href={connectionSettingsUrl}
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
                   >
                     Revisar conexion Holded
@@ -836,57 +743,16 @@ export default function IsaakWorkspaceClient({
                 </div>
               ) : null}
             </div>
-          ) : null}
 
-          {introReady && !onboardingDone ? (
-            <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_26px_70px_-48px_rgba(15,23,42,0.4)]">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Loader2 className="h-4 w-4 animate-spin text-[#2361d8]" />
-                Estoy terminando de preparar tu espacio
-              </div>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                En cuanto termine el arranque inicial te llevare directamente al chat con todo
-                listo.
-              </p>
-            </div>
-          ) : null}
-
-          {introReady && onboardingDone ? (
-            <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-sm font-semibold text-slate-900">
-                {hasConversationHistory ? 'Puedes retomar con algo como esto' : 'Por ejemplo'}
-              </div>
-              <div className="mt-2 text-sm leading-7 text-slate-600">
+            {onboardingDone ? (
+              <div className="mr-8 rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
                 {hasConversationHistory
-                  ? 'He recuperado tu contexto. Si quieres, seguimos con una pregunta concreta o vamos a un resumen rapido.'
-                  : `Voy a centrarme en ayudarte con ${welcomeGoals || 'la gestion diaria de tu negocio'}. Puedes empezar cuando quieras.`}
+                  ? 'He recuperado tu contexto. Si quieres, seguimos con una pregunta concreta.'
+                  : `Voy a centrarme en ayudarte con ${welcomeGoals || 'la gestion diaria de tu negocio'}. Puedes preguntarme lo que necesites.`}
               </div>
-              <div className="mt-4 flex flex-wrap gap-3">
-                {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
-                  <button
-                    key={`${prompt}-chip`}
-                    type="button"
-                    onClick={() => applyPromptToInput(prompt)}
-                    disabled={!hasLiveConnection}
-                    className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-              {canShowSummaryCTA ? (
-                <button
-                  type="button"
-                  onClick={() => applyPromptToInput('Quiero ver un resumen del negocio')}
-                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f55c0]"
-                >
-                  Ver resumen del negocio
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+            ) : null}
+          </div>
+        )}
       </div>
     );
   };
@@ -907,10 +773,7 @@ export default function IsaakWorkspaceClient({
               />
             </div>
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                Tu asistente fiscal y contable
-              </div>
-              <div className="mt-1 text-base font-semibold text-slate-950">Isaak</div>
+              <div className="text-base font-semibold text-slate-950">Isaak</div>
             </div>
           </div>
           <button
@@ -967,10 +830,10 @@ export default function IsaakWorkspaceClient({
                 </div>
               </div>
               <Link
-                href="/onboarding/holded"
+                href={connectionSettingsUrl}
                 className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                {isConnected ? 'Revisar' : 'Conectar'}
+                {isConnected ? 'Configurar' : 'Conectar'}
               </Link>
             </div>
           </div>
@@ -1029,13 +892,13 @@ export default function IsaakWorkspaceClient({
                 </div>
               </div>
               <div className="mt-4 grid gap-2">
-                <button
-                  type="button"
+                <Link
+                  href={connectionSettingsUrl}
                   className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-white"
                 >
-                  Perfil y suscripcion
+                  Perfil y empresa
                   <CreditCard className="h-4 w-4" />
-                </button>
+                </Link>
                 <Link
                   href="/support"
                   className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-white"
@@ -1049,19 +912,8 @@ export default function IsaakWorkspaceClient({
         </aside>
 
         <section className="relative flex min-h-screen flex-col px-4 py-5 sm:px-8 lg:px-12">
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                Producto principal
-              </div>
-              <div className="mt-1 text-sm text-slate-600">
-                {companyLabel ? `Conectado a ${companyLabel}` : 'Asistente conectado a Holded'}
-              </div>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-              <Sparkles className="h-3.5 w-3.5 text-[#2361d8]" />
-              Plan gratuito - Actualizar
-            </div>
+          <div className="flex items-center justify-end gap-4">
+            <div className="text-sm font-semibold tracking-[0.18em] text-slate-400">isaak.chat</div>
           </div>
 
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col" ref={chatRef}>
@@ -1098,14 +950,15 @@ export default function IsaakWorkspaceClient({
                 </div>
               ) : null}
 
-              {messages.length > 0 && isConnected ? (
+              {onboardingDone ? (
                 <div className="mb-4 flex flex-wrap gap-3">
                   {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
                     <button
                       key={prompt}
                       type="button"
                       onClick={() => applyPromptToInput(prompt)}
-                      className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7]"
+                      disabled={!hasLiveConnection}
+                      className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
                     >
                       {prompt}
                     </button>
@@ -1113,8 +966,9 @@ export default function IsaakWorkspaceClient({
                   {canShowSummaryCTA ? (
                     <button
                       type="button"
-                      onClick={() => void sendMessage('Quiero ver un resumen del negocio')}
-                      className="rounded-full border border-[#2361d8]/20 bg-[#eef4ff] px-4 py-2.5 text-sm font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#dfeaff]"
+                      onClick={() => applyPromptToInput('Quiero ver un resumen del negocio')}
+                      disabled={!hasLiveConnection}
+                      className="rounded-full border border-[#2361d8]/20 bg-[#eef4ff] px-4 py-2.5 text-sm font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#dfeaff] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
                     >
                       Ver resumen del negocio
                     </button>
@@ -1140,7 +994,7 @@ export default function IsaakWorkspaceClient({
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <span>Aplicaciones</span>
                     <Link
-                      href="/onboarding/holded"
+                      href={connectionSettingsUrl}
                       className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 transition hover:bg-slate-50"
                     >
                       <div className="relative h-4 w-4 overflow-hidden rounded-full">

@@ -254,6 +254,7 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
           ? buildSuggestedPrompts(effectiveProfile.mainGoals)
           : undefined
       }
+      connectionSettingsUrl={buildHoldedProfileOnboardingUrl('isaak_chat_settings', chatReturnUrl)}
     />
   );
 }
