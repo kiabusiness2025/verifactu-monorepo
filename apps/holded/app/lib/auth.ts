@@ -31,7 +31,9 @@ export interface AuthErrorMessage {
   userMessage: string;
 }
 
-type AuthResult = { user: User; error: null } | { user: null; error: AuthErrorMessage };
+type AuthResult =
+  | { user: User; error: null; warning?: string | null }
+  | { user: null; error: AuthErrorMessage; warning?: null };
 
 const authUnavailable = (): AuthResult => ({
   user: null,
@@ -44,6 +46,7 @@ const authUnavailable = (): AuthResult => ({
         ? `Firebase no ha podido iniciarse en este navegador. Detalle: ${firebaseInitError}`
         : 'El acceso no esta disponible ahora mismo. Revisa la configuracion publica de Firebase en este proyecto.',
   },
+  warning: null,
 });
 
 function getErrorMessage(error: AuthError): AuthErrorMessage {
@@ -144,6 +147,7 @@ export async function signInWithEmail(
           message: 'Email not verified',
           userMessage: 'Necesitas verificar tu correo antes de continuar.',
         },
+        warning: null,
       };
     }
 
@@ -151,9 +155,9 @@ export async function signInWithEmail(
       rememberDevice: options.rememberDevice,
     });
 
-    return { user: userCredential.user, error: null };
+    return { user: userCredential.user, error: null, warning: null };
   } catch (error) {
-    return { user: null, error: getErrorMessage(error as AuthError) };
+    return { user: null, error: getErrorMessage(error as AuthError), warning: null };
   }
 }
 
@@ -168,9 +172,9 @@ export async function signInWithGoogle(options: SignInOptions = {}): Promise<Aut
       rememberDevice: options.rememberDevice,
     });
 
-    return { user: userCredential.user, error: null };
+    return { user: userCredential.user, error: null, warning: null };
   } catch (error) {
-    return { user: null, error: getErrorMessage(error as AuthError) };
+    return { user: null, error: getErrorMessage(error as AuthError), warning: null };
   }
 }
 
@@ -185,6 +189,7 @@ export async function registerWithEmail(
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const trimmedFullName = profile.fullName.trim();
+    let warning: string | null = null;
 
     if (trimmedFullName) {
       await updateProfile(userCredential.user, {
@@ -214,17 +219,11 @@ export async function registerWithEmail(
 
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
-      await signOut(auth);
-
-      return {
-        user: null,
-        error: {
-          code: 'auth/register-email-failed',
-          message: payload?.error || 'Register email failed',
-          userMessage:
-            'Hemos creado tu cuenta, pero no hemos podido enviarte el correo de verificacion. Escribenos y te ayudamos a activarla.',
-        },
-      };
+      console.warn('[holded auth] register bootstrap failed, continuing with client verification', {
+        error: payload?.error || 'register bootstrap failed',
+      });
+      warning =
+        'Hemos creado tu cuenta. Si no ves el correo de verificacion, revisa spam o vuelve a intentarlo en unos minutos.';
     }
 
     try {
@@ -239,12 +238,14 @@ export async function registerWithEmail(
             ? verificationError.message
             : String(verificationError),
       });
+      warning =
+        'Hemos creado tu cuenta. Si no ves el correo de verificacion, revisa spam o vuelve a intentarlo en unos minutos.';
     }
 
     await signOut(auth);
-    return { user: userCredential.user, error: null };
+    return { user: userCredential.user, error: null, warning };
   } catch (error) {
-    return { user: null, error: getErrorMessage(error as AuthError) };
+    return { user: null, error: getErrorMessage(error as AuthError), warning: null };
   }
 }
 
@@ -259,9 +260,9 @@ export async function signInWithMicrosoft(options: SignInOptions = {}): Promise<
       rememberDevice: options.rememberDevice,
     });
 
-    return { user: userCredential.user, error: null };
+    return { user: userCredential.user, error: null, warning: null };
   } catch (error) {
-    return { user: null, error: getErrorMessage(error as AuthError) };
+    return { user: null, error: getErrorMessage(error as AuthError), warning: null };
   }
 }
 

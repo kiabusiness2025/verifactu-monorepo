@@ -21,6 +21,7 @@ export default async function HoldedRegistrationThanksPage({ searchParams }: Pag
   const email = readValue(resolved.email);
   const step = readValue(resolved.step) || 'check-email';
   const source = readValue(resolved.source) || 'holded_signup';
+  const notice = readValue(resolved.notice);
   const verified = step === 'verified';
 
   return (
@@ -44,6 +45,12 @@ export default async function HoldedRegistrationThanksPage({ searchParams }: Pag
               <p className="mt-3 text-sm font-semibold text-slate-900">
                 Correo asociado: <span className="text-[#ff5460]">{email}</span>
               </p>
+            ) : null}
+            {notice === 'verification-email-may-be-delayed' ? (
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                Hemos creado tu cuenta. Si el correo tarda en llegar, revisa spam o promociones y
+                vuelve a intentarlo en unos minutos.
+              </div>
             ) : null}
           </section>
 

@@ -184,9 +184,14 @@ function HoldedAuthContent() {
       }
 
       setIsLoading(false);
-      router.push(
-        `/gracias?step=check-email&email=${encodeURIComponent(email)}&source=${encodeURIComponent(source)}`
-      );
+      const thanksUrl = new URL('/gracias', window.location.origin);
+      thanksUrl.searchParams.set('step', 'check-email');
+      thanksUrl.searchParams.set('email', email);
+      thanksUrl.searchParams.set('source', source);
+      if (registerResult.warning) {
+        thanksUrl.searchParams.set('notice', 'verification-email-may-be-delayed');
+      }
+      router.push(`${thanksUrl.pathname}${thanksUrl.search}`);
       return;
     }
 
