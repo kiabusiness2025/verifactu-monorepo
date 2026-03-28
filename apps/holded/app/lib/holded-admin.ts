@@ -2,9 +2,12 @@ import { redirect } from 'next/navigation';
 import { getHoldedSession } from './holded-session';
 
 function readAdminEmails() {
-  const raw = process.env.HOLDED_ADMIN_EMAILS?.trim() || 'soporte@verifactu.business';
+  const raw =
+    process.env.HOLDED_ADMIN_EMAILS?.trim() ||
+    process.env.ADMIN_EMAILS?.trim() ||
+    'soporte@verifactu.business';
   return raw
-    .split(',')
+    .split(/[,\n;]+/)
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
 }

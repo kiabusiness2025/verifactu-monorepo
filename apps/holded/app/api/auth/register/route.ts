@@ -29,6 +29,18 @@ function readOptionalEnv(name: string, fallback: string) {
   return cleanEnv(process.env[name]) || fallback;
 }
 
+function readEmailList(...values: Array<string | undefined | null>) {
+  const merged = values
+    .map((value) => cleanEnv(value || undefined))
+    .filter(Boolean)
+    .join(',');
+
+  return merged
+    .split(/[,\n;]+/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 function normalizeName(value: unknown) {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim().replace(/\s+/g, ' ');
@@ -200,12 +212,12 @@ export async function POST(req: Request) {
     const adminUrl = new URL(`${holdedSite}/admin`);
     const from = readOptionalEnv('RESEND_FROM', 'Isaak for Holded <holded@verifactu.business>');
     const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business');
-    const adminRecipients = (
-      process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS?.trim() || 'soporte@verifactu.business'
-    )
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean);
+    const adminRecipients = readEmailList(
+      process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS,
+      process.env.HOLDED_ADMIN_EMAILS,
+      process.env.ADMIN_EMAILS,
+      'soporte@verifactu.business'
+    );
     const adminNotification = buildAdminNotificationEmail({
       name: userName,
       email: decoded.email,
