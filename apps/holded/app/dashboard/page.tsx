@@ -16,10 +16,32 @@ function readSource(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] || '' : value || '';
 }
 
+function sanitizeNext(value: string | string[] | undefined, source: string) {
+  const fallback = buildDashboardUrl(source);
+  const candidate = readSource(value);
+  if (!candidate) return fallback;
+
+  try {
+    const parsed = new URL(candidate);
+    if (
+      parsed.origin === 'https://isaak.verifactu.business' ||
+      parsed.origin === 'https://holded.verifactu.business'
+    ) {
+      return parsed.toString();
+    }
+  } catch {
+    if (candidate.startsWith('/')) {
+      return `https://holded.verifactu.business${candidate}`;
+    }
+  }
+
+  return fallback;
+}
+
 export default async function HoldedDashboardPage({ searchParams }: PageProps) {
   const resolved = (await searchParams) || {};
   const source = readSource(resolved.source) || 'holded_dashboard';
-  const nextTarget = buildDashboardUrl(source);
+  const nextTarget = sanitizeNext(resolved.next, source);
   const session = await getHoldedSession();
 
   if (!session?.tenantId) {

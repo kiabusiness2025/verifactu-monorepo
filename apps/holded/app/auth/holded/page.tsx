@@ -20,6 +20,13 @@ function buildFallbackTarget(source: string) {
   return buildDashboardUrl(source);
 }
 
+function buildLocalHandoffTarget(source: string, target: string) {
+  const url = new URL('/dashboard', HOLDED_SITE_URL);
+  url.searchParams.set('source', source);
+  url.searchParams.set('next', target);
+  return url.toString();
+}
+
 function resolveRedirectTarget(nextParam: string, source: string) {
   if (!nextParam) return buildFallbackTarget(source);
 
@@ -42,7 +49,7 @@ function resolveRedirectTarget(nextParam: string, source: string) {
 
 async function activateSessionAndRedirect(user: User, rememberDevice: boolean, target: string) {
   await mintSessionCookie(user, { rememberDevice });
-  window.location.href = target;
+  window.location.replace(target);
 }
 
 function HoldedAuthContent() {
@@ -53,6 +60,10 @@ function HoldedAuthContent() {
   const redirectTarget = useMemo(
     () => resolveRedirectTarget(nextParam, source),
     [nextParam, source]
+  );
+  const postLoginTarget = useMemo(
+    () => buildLocalHandoffTarget(source, redirectTarget),
+    [redirectTarget, source]
   );
   const isRegisterMode = (searchParams?.get('mode') || '').toLowerCase() === 'register';
   const allowGoogleLogin = process.env.NEXT_PUBLIC_HOLDED_ENABLE_GOOGLE_LOGIN === 'true';
@@ -81,7 +92,7 @@ function HoldedAuthContent() {
 
       try {
         redirectedRef.current = true;
-        await activateSessionAndRedirect(auth.currentUser as User, rememberDevice, redirectTarget);
+        await activateSessionAndRedirect(auth.currentUser as User, rememberDevice, postLoginTarget);
       } catch {
         redirectedRef.current = false;
         if (!cancelled) {
@@ -98,7 +109,7 @@ function HoldedAuthContent() {
     return () => {
       cancelled = true;
     };
-  }, [redirectTarget, rememberDevice]);
+  }, [postLoginTarget, rememberDevice]);
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -154,7 +165,7 @@ function HoldedAuthContent() {
         return;
       }
 
-      window.location.href = redirectTarget;
+      await activateSessionAndRedirect(result.user, rememberDevice, postLoginTarget);
     } catch {
       setError('No hemos podido iniciar tu acceso. Intenta de nuevo.');
     } finally {
@@ -173,7 +184,7 @@ function HoldedAuthContent() {
         return;
       }
 
-      window.location.href = redirectTarget;
+      await activateSessionAndRedirect(result.user, rememberDevice, postLoginTarget);
     } catch {
       setError('No hemos podido continuar con Google. Intenta de nuevo.');
     } finally {
