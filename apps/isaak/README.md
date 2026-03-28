@@ -5,11 +5,11 @@ Producto principal visible de la plataforma.
 ## Rol dentro del monorepo
 
 - `apps/isaak`: producto principal conversacional
-- `apps/holded`: captación, login, conexión Holded y handoff
+- `apps/holded`: captacion, login, conexion Holded y handoff
 - `apps/app`: core compartido y panel avanzado
 - `apps/admin`: backoffice
 
-## Qué debe vivir aquí
+## Que debe vivir aqui
 
 - chat
 - historial
@@ -18,18 +18,18 @@ Producto principal visible de la plataforma.
 - ajustes ligeros
 - soporte guiado
 
-## Qué no debe vivir aquí
+## Que no debe vivir aqui
 
-- landing específica Holded
-- configuración fiscal o contable compleja
+- landing especifica Holded
+- configuracion fiscal o contable compleja
 - backoffice
-- lógica compartida importada desde `apps/holded`
+- logica compartida importada desde `apps/holded`
 
 ## Estado del sprint actual
 
 - `/chat` ya es el workspace principal de producto
-- la sesión y la lectura de conexión Holded se resuelven sin importar código desde `apps/holded`
-- el chat core sigue reutilizando temporalmente `holded-chat` mientras se prepara su extracción propia
+- la sesion y la lectura de conexion Holded se resuelven sin importar codigo desde `apps/holded`
+- el chat core ya se resuelve desde capa compartida en `packages/integrations`
 
 ## Desarrollo local
 

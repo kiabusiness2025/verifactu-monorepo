@@ -134,12 +134,9 @@ Documentacion tecnica detallada:
 - `app/api/holded/validate/route.ts`: validacion de API key
 - `app/api/holded/connect/route.ts`: conectar, reconectar y desconectar
 - `app/api/holded/status/route.ts`: estado actual de la conexion
-- `app/api/holded/chat/route.ts`: primer chat sobre datos Holded
-- `app/api/holded/conversations/route.ts`: listado y creacion de chats del usuario
-- `app/api/holded/conversations/[id]/route.ts`: detalle de un chat concreto del usuario
 - `app/lib/holded-integration.ts`: cifrado, validacion, persistencia y auditoria
-- `app/lib/holded-chat.ts`: conversaciones, mensajes y memoria MVP
 - `app/lib/holded-session.ts`: resolucion de sesion Holded
+- `app/admin/*`: puente temporal hacia `apps/admin`
 - `middleware.ts`: guard de onboarding y dashboard
 
 ## Variables de entorno clave

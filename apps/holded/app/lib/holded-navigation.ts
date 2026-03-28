@@ -19,6 +19,10 @@ export const ISAAK_PUBLIC_URL = getOrigin(
   'https://isaak.verifactu.business'
 );
 export const ISAAK_CHAT_URL = `${ISAAK_PUBLIC_URL}/chat`;
+export const ADMIN_PUBLIC_URL = getOrigin(
+  process.env.NEXT_PUBLIC_ADMIN_SITE_URL,
+  'https://admin.verifactu.business'
+);
 
 export const buildLeadCaptureUrl = (source?: string) => {
   const base = `${HOLDED_PUBLIC_URL}/`;
@@ -46,3 +50,8 @@ export const buildAuthUrl = (source: string, next = buildOnboardingUrl(source)) 
 
 export const buildRegisterUrl = (source: string, next = buildOnboardingUrl(source)) =>
   `${HOLDED_PUBLIC_URL}/auth/holded?mode=register&source=${encodeURIComponent(source)}&next=${encodeURIComponent(next)}`;
+
+export const buildAdminRedirectUrl = (path = '/dashboard/admin') => {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  return `${ADMIN_PUBLIC_URL}${normalized}`;
+};

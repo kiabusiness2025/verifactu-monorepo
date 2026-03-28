@@ -1,5 +1,4 @@
-import type { Prisma } from '@prisma/client';
-import { prisma } from './prisma';
+import type { Prisma, PrismaClient } from '@prisma/client';
 
 const DEFAULT_CONTEXT = 'holded_free_dashboard';
 const DEFAULT_TITLE = 'Chat con Isaak';
@@ -24,10 +23,15 @@ export type HoldedChatConversation = {
   }>;
 };
 
-type SessionScope = {
+export type IsaakChatSessionScope = {
   tenantId: string;
   userId: string;
 };
+
+export type IsaakChatPrismaClient = Pick<
+  PrismaClient,
+  '$transaction' | 'isaakConversation' | 'isaakConversationMsg' | 'isaakMemoryFact'
+>;
 
 function normalizeTitleFromMessage(message: string) {
   const normalized = message.replace(/\s+/g, ' ').trim();
@@ -69,7 +73,10 @@ function serializeConversation(conversation: {
   };
 }
 
-export async function listHoldedConversations(scope: SessionScope) {
+export async function listTenantConversations(
+  prisma: IsaakChatPrismaClient,
+  scope: IsaakChatSessionScope
+) {
   const conversations = await prisma.isaakConversation.findMany({
     where: {
       tenantId: scope.tenantId,
@@ -83,7 +90,11 @@ export async function listHoldedConversations(scope: SessionScope) {
   return conversations.map(serializeConversation);
 }
 
-export async function getHoldedConversation(scope: SessionScope, conversationId: string) {
+export async function getTenantConversation(
+  prisma: IsaakChatPrismaClient,
+  scope: IsaakChatSessionScope,
+  conversationId: string
+) {
   const conversation = await prisma.isaakConversation.findFirst({
     where: {
       id: conversationId,
@@ -101,8 +112,9 @@ export async function getHoldedConversation(scope: SessionScope, conversationId:
   return conversation ? serializeConversation(conversation) : null;
 }
 
-export async function ensureHoldedConversation(
-  scope: SessionScope,
+export async function ensureTenantConversation(
+  prisma: IsaakChatPrismaClient,
+  scope: IsaakChatSessionScope,
   input?: { conversationId?: string | null; titleSeed?: string | null }
 ) {
   const conversationId = input?.conversationId?.trim() || null;
@@ -133,12 +145,15 @@ export async function ensureHoldedConversation(
   });
 }
 
-export async function appendConversationMessage(input: {
-  conversationId: string;
-  role: 'user' | 'assistant';
-  content: string;
-  metadata?: Prisma.InputJsonValue;
-}) {
+export async function appendTenantConversationMessage(
+  prisma: IsaakChatPrismaClient,
+  input: {
+    conversationId: string;
+    role: 'user' | 'assistant';
+    content: string;
+    metadata?: Prisma.InputJsonValue;
+  }
+) {
   const trimmed = input.content.trim();
   if (!trimmed) {
     throw new Error('Message content is required');
@@ -174,15 +189,18 @@ export async function appendConversationMessage(input: {
   };
 }
 
-export async function storeSimpleMemoryFact(input: {
-  tenantId: string;
-  userId: string;
-  conversationId: string;
-  category: string;
-  factKey: string;
-  value: Prisma.InputJsonValue;
-  confidence?: number;
-}) {
+export async function storeTenantMemoryFact(
+  prisma: IsaakChatPrismaClient,
+  input: {
+    tenantId: string;
+    userId: string;
+    conversationId: string;
+    category: string;
+    factKey: string;
+    value: Prisma.InputJsonValue;
+    confidence?: number;
+  }
+) {
   const existing = await prisma.isaakMemoryFact.findFirst({
     where: {
       tenantId: input.tenantId,
@@ -224,7 +242,11 @@ export async function storeSimpleMemoryFact(input: {
   });
 }
 
-export async function getSimpleMemoryContext(scope: SessionScope, conversationId: string) {
+export async function getTenantMemoryContext(
+  prisma: IsaakChatPrismaClient,
+  scope: IsaakChatSessionScope,
+  conversationId: string
+) {
   const [recentMessages, recentFacts] = await Promise.all([
     prisma.isaakConversationMsg.findMany({
       where: { conversationId },

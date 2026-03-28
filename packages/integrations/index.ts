@@ -38,3 +38,16 @@ export type {
   IsaakOnboardingState,
   IsaakRoleInCompany,
 } from './isaak/onboarding';
+export {
+  appendTenantConversationMessage,
+  ensureTenantConversation,
+  getTenantConversation,
+  getTenantMemoryContext,
+  listTenantConversations,
+  storeTenantMemoryFact,
+} from './isaak/chat';
+export type {
+  HoldedChatConversation,
+  IsaakChatPrismaClient,
+  IsaakChatSessionScope,
+} from './isaak/chat';
