@@ -4,8 +4,12 @@ import { probeHoldedConnection } from '@/app/lib/holded-integration';
 
 export const runtime = 'nodejs';
 
-function isLikelyHoldedApiKey(value: string) {
-  return /^[a-f0-9]{32}$/i.test(value.trim());
+function normalizeApiKey(value: string) {
+  return value.replace(/\s+/g, '').trim();
+}
+
+function hasBasicApiKeyShape(value: string) {
+  return value.length >= 16 && value.length <= 128;
 }
 
 export async function POST(request: NextRequest) {
@@ -19,15 +23,15 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
+  const apiKey = typeof body?.apiKey === 'string' ? normalizeApiKey(body.apiKey) : '';
 
   if (!apiKey) {
     return NextResponse.json({ error: 'Pega una API key valida de Holded.' }, { status: 400 });
   }
 
-  if (!isLikelyHoldedApiKey(apiKey)) {
+  if (!hasBasicApiKeyShape(apiKey)) {
     return NextResponse.json(
-      { error: 'La API key no tiene un formato valido de Holded.' },
+      { error: 'La API key parece incompleta. Revísala y vuelve a pegarla.' },
       { status: 400 }
     );
   }
