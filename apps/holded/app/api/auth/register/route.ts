@@ -198,17 +198,6 @@ export async function POST(req: Request) {
       'https://holded.verifactu.business'
     );
     const adminUrl = new URL(`${holdedSite}/admin`);
-    const continueUrl = new URL(`${holdedSite}/verificar`);
-    continueUrl.searchParams.set('source', source);
-    continueUrl.searchParams.set('step', 'verified');
-    continueUrl.searchParams.set('email', decoded.email);
-
-    const verificationUrl = await app.auth().generateEmailVerificationLink(decoded.email, {
-      url: continueUrl.toString(),
-      handleCodeInApp: false,
-    });
-
-    const resend = new Resend(requireEnv('RESEND_API_KEY'));
     const from = readOptionalEnv('RESEND_FROM', 'Isaak for Holded <holded@verifactu.business>');
     const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business');
     const adminRecipients = (
@@ -217,7 +206,6 @@ export async function POST(req: Request) {
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean);
-    const template = buildHoldedVerificationEmail({ email: decoded.email, verificationUrl });
     const adminNotification = buildAdminNotificationEmail({
       name: userName,
       email: decoded.email,
@@ -252,16 +240,48 @@ export async function POST(req: Request) {
       });
     }
 
-    const verificationResult = await resend.emails.send({
-      from,
-      to: [decoded.email],
-      subject: template.subject,
-      html: template.html,
-      text: template.text,
-      replyTo,
-    });
+    const resendApiKey = cleanEnv(process.env.RESEND_API_KEY);
+    let resend: Resend | null = null;
+    let verificationEmailId: string | null = null;
+    let verificationEmailSent = false;
 
-    if (adminRecipients.length > 0) {
+    if (resendApiKey) {
+      resend = new Resend(resendApiKey);
+
+      try {
+        const continueUrl = new URL(`${holdedSite}/verificar`);
+        continueUrl.searchParams.set('source', source);
+        continueUrl.searchParams.set('step', 'verified');
+        continueUrl.searchParams.set('email', decoded.email);
+
+        const verificationUrl = await app.auth().generateEmailVerificationLink(decoded.email, {
+          url: continueUrl.toString(),
+          handleCodeInApp: false,
+        });
+
+        const template = buildHoldedVerificationEmail({ email: decoded.email, verificationUrl });
+        const verificationResult = await resend.emails.send({
+          from,
+          to: [decoded.email],
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+          replyTo,
+        });
+
+        verificationEmailId = verificationResult.data?.id ?? null;
+        verificationEmailSent = true;
+      } catch (verificationError) {
+        console.error('[holded auth register] verification email failed', {
+          error:
+            verificationError instanceof Error
+              ? verificationError.message
+              : String(verificationError),
+        });
+      }
+    }
+
+    if (adminRecipients.length > 0 && resend) {
       resend.emails
         .send({
           from,
@@ -289,7 +309,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      verificationEmailId: verificationResult.data?.id ?? null,
+      verificationEmailId,
+      verificationEmailSent,
       welcomeEmailId: null,
     });
   } catch (error) {

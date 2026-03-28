@@ -4,6 +4,7 @@ import {
   type AuthError,
   GoogleAuthProvider,
   OAuthProvider,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -176,6 +177,13 @@ export async function registerWithEmail(
       });
     }
 
+    const holdedSite =
+      process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() || 'https://holded.verifactu.business';
+    const continueUrl = new URL(`${holdedSite}/verificar`);
+    continueUrl.searchParams.set('source', source);
+    continueUrl.searchParams.set('step', 'verified');
+    continueUrl.searchParams.set('email', email);
+
     const idToken = await userCredential.user.getIdToken(true);
 
     const response = await fetch('/api/auth/register', {
@@ -202,6 +210,20 @@ export async function registerWithEmail(
             'Hemos creado tu cuenta, pero no hemos podido enviarte el correo de verificacion. Escribenos y te ayudamos a activarla.',
         },
       };
+    }
+
+    try {
+      await sendEmailVerification(userCredential.user, {
+        url: continueUrl.toString(),
+        handleCodeInApp: false,
+      });
+    } catch (verificationError) {
+      console.error('[holded auth] client verification email failed', {
+        error:
+          verificationError instanceof Error
+            ? verificationError.message
+            : String(verificationError),
+      });
     }
 
     await signOut(auth);
