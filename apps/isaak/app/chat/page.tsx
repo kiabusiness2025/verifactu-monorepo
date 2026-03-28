@@ -10,6 +10,7 @@ import {
   ISAAK_PUBLIC_URL,
 } from '@/app/lib/isaak-navigation';
 import { prisma } from '@/app/lib/prisma';
+import IsaakChatRecovery from './IsaakChatRecovery';
 import IsaakWorkspaceClient from './IsaakWorkspaceClient';
 
 export const metadata: Metadata = {
@@ -97,39 +98,67 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
   const handoff = readHandoff(resolved.handoff);
   const freshConnection = readBooleanFlag(resolved.freshConnection);
   const isFreshHoldedHandoff = Boolean(handoff?.profile) || freshConnection;
-  const session = await getHoldedSession();
+  const chatReturnUrl = `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`;
+
+  let session: Awaited<ReturnType<typeof getHoldedSession>> | null = null;
+  try {
+    session = await getHoldedSession();
+  } catch (error) {
+    console.error('[isaak/chat] session resolution failed', error);
+    return (
+      <IsaakChatRecovery
+        title="No he podido recuperar tu acceso a Isaak"
+        description="Tu cuenta puede estar entre dos pasos de autenticacion o con una sesion compartida a medias. Repite el acceso y deberias poder continuar."
+        primaryHref={buildHoldedAuthUrl('isaak_chat_requires_session', chatReturnUrl)}
+        primaryLabel="Volver a acceder"
+        secondaryHref={buildHoldedProfileOnboardingUrl('isaak_chat_recovery', chatReturnUrl)}
+        secondaryLabel="Revisar conexion y perfil"
+        supportHref="/support?source=isaak_chat_recovery"
+      />
+    );
+  }
 
   if (!session?.tenantId || !session.userId) {
-    const chatReturnUrl = `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`;
     redirect(buildHoldedAuthUrl('isaak_chat_requires_session', chatReturnUrl));
   }
 
   const [connection, profile] = await Promise.all([
-    getHoldedConnection(session.tenantId),
-    prisma.tenantProfile.findUnique({
-      where: { tenantId: session.tenantId },
-      select: {
-        representative: true,
-        phone: true,
-        tradeName: true,
-        legalName: true,
-      },
+    getHoldedConnection(session.tenantId).catch((error) => {
+      console.error('[isaak/chat] holded connection read failed', error);
+      return null;
     }),
+    prisma.tenantProfile
+      .findUnique({
+        where: { tenantId: session.tenantId },
+        select: {
+          representative: true,
+          phone: true,
+          tradeName: true,
+          legalName: true,
+        },
+      })
+      .catch((error) => {
+        console.error('[isaak/chat] tenant profile read failed', error);
+        return null;
+      }),
   ]);
 
   if (!connection?.keyMasked && !isFreshHoldedHandoff) {
-    redirect(
-      buildHoldedProfileOnboardingUrl(
-        'isaak_chat_requires_holded',
-        `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`
-      )
-    );
+    redirect(buildHoldedProfileOnboardingUrl('isaak_chat_requires_holded', chatReturnUrl));
   }
 
   const onboardingState = await getIsaakOnboardingState({
     prisma,
     tenantId: session.tenantId,
     userId: session.userId,
+  }).catch((error) => {
+    console.error('[isaak/chat] onboarding state read failed', error);
+    return {
+      completed: false,
+      profile: null,
+      draft: null,
+      instructions: null,
+    };
   });
 
   const effectiveCompleted = onboardingState.completed || Boolean(handoff?.profile);
@@ -149,12 +178,7 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
   const effectiveInstructions = onboardingState.instructions || handoff?.instructions || null;
 
   if (!effectiveCompleted || !effectiveProfile) {
-    redirect(
-      buildHoldedProfileOnboardingUrl(
-        'isaak_chat_requires_profile',
-        `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`
-      )
-    );
+    redirect(buildHoldedProfileOnboardingUrl('isaak_chat_requires_profile', chatReturnUrl));
   }
 
   return (
