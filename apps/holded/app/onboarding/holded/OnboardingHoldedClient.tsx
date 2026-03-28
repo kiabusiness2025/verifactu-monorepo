@@ -17,6 +17,9 @@ type ValidationResponse = {
 };
 
 export default function OnboardingHoldedClient() {
+  const holdedApiGuideUrl =
+    'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
+
   const [apiKey, setApiKey] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -179,7 +182,16 @@ export default function OnboardingHoldedClient() {
                 </div>
               </div>
               <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
-                Si quieres la guia completa con enlaces directos y capturas paso a paso, abre la{' '}
+                Si prefieres la guia oficial de Holded, abre{' '}
+                <a
+                  href={holdedApiGuideUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                >
+                  este articulo oficial
+                </a>
+                . Si quieres una version mas corta con capturas y vuelta rapida a Isaak, abre la{' '}
                 <Link
                   href="/onboarding/holded/help"
                   className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
@@ -194,6 +206,10 @@ export default function OnboardingHoldedClient() {
                   Normalmente significa que tu usuario de Holded no tiene permisos suficientes o que
                   estas en una cuenta distinta. Prueba con el usuario administrador principal de la
                   empresa o pide acceso a esa seccion.
+                </p>
+                <p className="mt-2">
+                  Segun Holded, la API no esta disponible en el plan Free y la clave la debe generar
+                  un usuario Owner o Administrador.
                 </p>
               </div>
             </div>

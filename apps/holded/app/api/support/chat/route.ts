@@ -12,7 +12,7 @@ function buildReply(input: { message: string; source?: string | null; digest?: s
     .join(' ');
 
   if (text.includes('api') || text.includes('holded') || text.includes('desarrollador')) {
-    return `Vamos por la API key. Entra en Holded > Configuracion > Mas > Desarrolladores, pulsa "+ Nueva API Key", pon como nombre ISAAK_HOLDED_API_KEY y pega la clave aqui. Si no ves "Desarrolladores", tu usuario probablemente no tiene permisos suficientes. ${context}`.trim();
+    return `Vamos por la API key. Entra en Holded > Configuracion > Mas > Desarrolladores, pulsa "+ Nueva API Key", pon como nombre ISAAK_HOLDED_API_KEY y pega la clave aqui. Si no ves "Desarrolladores", tu usuario probablemente no tiene permisos suficientes o tu plan es Free. Guia oficial de Holded: https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded ${context}`.trim();
   }
 
   if (text.includes('correo') || text.includes('verificacion') || text.includes('email')) {

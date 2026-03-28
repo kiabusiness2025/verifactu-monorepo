@@ -22,6 +22,9 @@ const screenshots = [
 ];
 
 export default function HoldedApiHelpPage() {
+  const holdedApiGuideUrl =
+    'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
+
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_40%,#f8fafc_100%)] px-4 py-8 text-slate-900">
       <div className="mx-auto max-w-5xl">
@@ -99,6 +102,18 @@ export default function HoldedApiHelpPage() {
                 vuelve a Isaak y pegala en el campo de conexion.
               </li>
             </ol>
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
+              Si quieres contrastarlo con la documentacion oficial de Holded, abre{' '}
+              <a
+                href={holdedApiGuideUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+              >
+                este articulo oficial sobre la API
+              </a>
+              .
+            </div>
           </div>
 
           <div className="mt-8 space-y-6">
@@ -132,6 +147,10 @@ export default function HoldedApiHelpPage() {
               Normalmente significa que tu usuario de Holded no tiene permisos suficientes o que has
               entrado en otra empresa. Prueba con el administrador principal o pide acceso a esa
               seccion.
+            </p>
+            <p className="mt-2">
+              Holded indica ademas que la API no esta disponible en el plan Free y que la API key
+              debe generarla un usuario Owner o Administrador.
             </p>
           </div>
         </div>
