@@ -30,9 +30,21 @@ function readBooleanFlag(value: string | string[] | undefined) {
   return readSource(value) === '1';
 }
 
-function readHandoff(
-  value: string | string[] | undefined
-): { profile: IsaakOnboardingProfile; instructions: IsaakInstructionProfile | null } | null {
+function readHandoff(value: string | string[] | undefined): {
+  profile: IsaakOnboardingProfile;
+  instructions: IsaakInstructionProfile | null;
+  connection: {
+    status: string | null;
+    keyMasked: string | null;
+    connectedAt: string | null;
+    lastValidatedAt: string | null;
+    supportedModules: string[];
+    validationSummary: string | null;
+    tenantName: string | null;
+    legalName: string | null;
+    taxId: string | null;
+  } | null;
+} | null {
   const raw = readSource(value);
   if (!raw) return null;
 
@@ -43,12 +55,38 @@ function readHandoff(
     const parsed = JSON.parse(json) as {
       profile?: IsaakOnboardingProfile | null;
       instructions?: IsaakInstructionProfile | null;
+      connection?: {
+        status?: string | null;
+        keyMasked?: string | null;
+        connectedAt?: string | null;
+        lastValidatedAt?: string | null;
+        supportedModules?: string[];
+        validationSummary?: string | null;
+        tenantName?: string | null;
+        legalName?: string | null;
+        taxId?: string | null;
+      } | null;
     };
 
     if (!parsed?.profile) return null;
     return {
       profile: parsed.profile,
       instructions: parsed.instructions ?? null,
+      connection: parsed.connection
+        ? {
+            status: parsed.connection.status ?? null,
+            keyMasked: parsed.connection.keyMasked ?? null,
+            connectedAt: parsed.connection.connectedAt ?? null,
+            lastValidatedAt: parsed.connection.lastValidatedAt ?? null,
+            supportedModules: Array.isArray(parsed.connection.supportedModules)
+              ? parsed.connection.supportedModules
+              : [],
+            validationSummary: parsed.connection.validationSummary ?? null,
+            tenantName: parsed.connection.tenantName ?? null,
+            legalName: parsed.connection.legalName ?? null,
+            taxId: parsed.connection.taxId ?? null,
+          }
+        : null,
     };
   } catch {
     return null;
@@ -132,7 +170,6 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
         where: { tenantId: session.tenantId },
         select: {
           representative: true,
-          phone: true,
           tradeName: true,
           legalName: true,
         },
@@ -143,7 +180,9 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
       }),
   ]);
 
-  if (!connection?.keyMasked && !isFreshHoldedHandoff) {
+  const effectiveConnection = connection || handoff?.connection || null;
+
+  if (!effectiveConnection?.keyMasked && !isFreshHoldedHandoff) {
     redirect(buildHoldedProfileOnboardingUrl('isaak_chat_requires_holded', chatReturnUrl));
   }
 
@@ -188,22 +227,28 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
         name: session.name,
         tenantId: session.tenantId,
         tenantName:
-          connection?.tenantName ?? profile?.tradeName ?? handoff?.profile?.companyName ?? null,
+          effectiveConnection?.tenantName ??
+          profile?.tradeName ??
+          handoff?.profile?.companyName ??
+          null,
         legalName:
-          connection?.legalName ?? profile?.legalName ?? handoff?.profile?.companyName ?? null,
-        taxId: connection?.taxId ?? null,
-        keyMasked: connection?.keyMasked ?? null,
-        connectedAt: connection?.connectedAt ?? null,
-        lastValidatedAt: connection?.lastValidatedAt ?? null,
-        supportedModules: connection?.supportedModules ?? [],
-        validationSummary: connection?.validationSummary ?? null,
-        phone: profile?.phone ?? null,
+          effectiveConnection?.legalName ??
+          profile?.legalName ??
+          handoff?.profile?.companyName ??
+          null,
+        taxId: effectiveConnection?.taxId ?? null,
+        keyMasked: effectiveConnection?.keyMasked ?? null,
+        connectedAt: effectiveConnection?.connectedAt ?? null,
+        lastValidatedAt: effectiveConnection?.lastValidatedAt ?? null,
+        supportedModules: effectiveConnection?.supportedModules ?? [],
+        validationSummary: effectiveConnection?.validationSummary ?? null,
+        phone: effectiveProfile?.phone ?? null,
         representative: profile?.representative ?? null,
         isAdmin: false,
       }}
       onboardingProfile={effectiveProfile}
       instructionProfile={effectiveInstructions}
-      connectionPending={isFreshHoldedHandoff && !connection?.keyMasked}
+      connectionPending={isFreshHoldedHandoff && !effectiveConnection?.keyMasked}
       quickPrompts={
         effectiveProfile.mainGoals.length > 0
           ? buildSuggestedPrompts(effectiveProfile.mainGoals)

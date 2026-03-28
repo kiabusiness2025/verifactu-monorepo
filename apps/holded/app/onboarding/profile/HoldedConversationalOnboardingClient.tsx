@@ -157,6 +157,7 @@ export default function HoldedConversationalOnboardingClient({
                 phone: null,
               },
               instructions: data?.instructions ?? null,
+              connection: data?.connection ?? null,
             })
           );
         }

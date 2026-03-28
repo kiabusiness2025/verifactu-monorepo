@@ -306,9 +306,10 @@ export default function IsaakWorkspaceClient({
           keyMasked: data.keyMasked ?? current.keyMasked,
           connectedAt: data.connectedAt ?? current.connectedAt,
           lastValidatedAt: data.lastValidatedAt ?? current.lastValidatedAt,
-          supportedModules: Array.isArray(data.supportedModules)
-            ? data.supportedModules
-            : current.supportedModules,
+          supportedModules:
+            hasResolvedConnection && Array.isArray(data.supportedModules)
+              ? data.supportedModules
+              : current.supportedModules,
           validationSummary: data.validationSummary ?? current.validationSummary,
         }));
 
@@ -552,38 +553,26 @@ export default function IsaakWorkspaceClient({
       Boolean(connectionState.lastValidatedAt));
   const welcomeGoals = answers?.goals?.slice(0, 2).join(' y ');
   const assistantLeadMessage = useMemo(() => {
-    const person = answers?.preferredName || selectedName || defaultName;
     const role = formatRoleLabel(answers?.roleInCompany);
     const company = companyLabel || 'tu empresa';
 
     if (!hasLiveConnection) {
       if (connectionPending) {
-        return `${greeting}, ${person}. Estoy terminando de enlazar tu espacio de ${company}. En unos segundos deberia quedar listo para trabajar con tus datos reales.`;
+        return `Estoy terminando de enlazar tu espacio de ${company}. En unos segundos deberia quedar listo para trabajar con tus datos reales.`;
       }
-      return `Hola, ${person}. En cuanto conectemos Holded podre ayudarte con datos reales de ${company}.`;
+      return `En cuanto conectemos Holded podre ayudarte con datos reales de ${company}.`;
     }
 
     if (hasConversationHistory) {
-      return `${greeting}, ${person}. Ya tengo a mano tu contexto de ${company} y podemos seguir donde lo dejaste o ir directos a una tarea concreta.`;
+      return `Ya tengo a mano tu contexto de ${company} y podemos seguir donde lo dejaste o ir directos a una tarea concreta.`;
     }
 
     if (hasFewBusinessData) {
-      return `${greeting}, ${person}. Ya tengo acceso a tu cuenta de Holded y he preparado todo para ayudarte con tu negocio en ${company}.`;
+      return `Ya tengo acceso a tu cuenta de Holded y he preparado todo para ayudarte con tu negocio en ${company}.`;
     }
 
-    return `${greeting}, ${person}. Ya tengo acceso a tu cuenta de Holded y he preparado todo para ayudarte con tu negocio en ${company}.`;
-  }, [
-    answers?.goals,
-    answers?.preferredName,
-    answers?.roleInCompany,
-    companyLabel,
-    defaultName,
-    greeting,
-    hasConversationHistory,
-    hasFewBusinessData,
-    isConnected,
-    selectedName,
-  ]);
+    return `Ya tengo acceso a tu cuenta de Holded y he preparado todo para ayudarte con tu negocio en ${company}.`;
+  }, [answers?.roleInCompany, companyLabel, hasConversationHistory, hasFewBusinessData]);
   const assistantSupportMessage = useMemo(() => {
     if (!hasLiveConnection) {
       if (connectionPending) {

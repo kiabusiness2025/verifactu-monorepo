@@ -67,6 +67,22 @@ function buildHoldedContext(
   };
 }
 
+function buildConnectionHandoff(connection: Awaited<ReturnType<typeof getHoldedConnection>>) {
+  if (!connection?.keyMasked) return null;
+
+  return {
+    status: connection.status,
+    keyMasked: connection.keyMasked,
+    connectedAt: connection.connectedAt,
+    lastValidatedAt: connection.lastValidatedAt,
+    supportedModules: connection.supportedModules,
+    validationSummary: connection.validationSummary,
+    tenantName: connection.tenantName,
+    legalName: connection.legalName,
+    taxId: connection.taxId,
+  };
+}
+
 function buildDraft(body: Record<string, unknown>) {
   return {
     preferredName: cleanOptional(body.preferredName) ?? undefined,
@@ -153,5 +169,6 @@ export async function POST(req: Request) {
     ok: true,
     profile: result.profile,
     instructions: result.instructions,
+    connection: buildConnectionHandoff(connection),
   });
 }
