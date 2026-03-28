@@ -204,6 +204,10 @@ export default function IsaakWorkspaceClient({
   const [chatError, setChatError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [introReady, setIntroReady] = useState(false);
+  const [isCheckingConnection, setIsCheckingConnection] = useState(
+    connectionPending && !session.keyMasked
+  );
+  const [connectionCheckAttempts, setConnectionCheckAttempts] = useState(0);
   const [answers, setAnswers] = useState<OnboardingAnswers | null>(
     onboardingProfile
       ? {
@@ -230,7 +234,11 @@ export default function IsaakWorkspaceClient({
   const chatRef = useRef<HTMLDivElement | null>(null);
 
   const hasLiveConnection = Boolean(connectionState.keyMasked);
-  const isConnected = hasLiveConnection || connectionPending;
+  const onboardingDone = Boolean(answers);
+  const isConnected = hasLiveConnection || (connectionPending && onboardingDone);
+  const showConnectionWarmup = connectionPending && !hasLiveConnection;
+  const connectionVerificationStalled =
+    showConnectionWarmup && !isCheckingConnection && connectionCheckAttempts >= 8;
   const greeting = getSpanishGreeting();
   const defaultName = useMemo(() => deriveName(connectionState), [connectionState]);
   const alternateNames = useMemo(() => deriveAlternateNames(connectionState), [connectionState]);
@@ -279,12 +287,16 @@ export default function IsaakWorkspaceClient({
 
   useEffect(() => {
     let cancelled = false;
+    let timeoutId: number | undefined;
+    let attempts = 0;
 
-    const loadConnectionState = async () => {
+    const syncConnectionState = async () => {
       try {
         const res = await fetch('/api/holded/status', { cache: 'no-store' });
         const data = await res.json().catch(() => null);
-        if (!res.ok || !data || cancelled) return;
+        if (!res.ok || !data || cancelled) return false;
+
+        const hasResolvedConnection = Boolean(data.keyMasked);
 
         setConnectionState((current) => ({
           ...current,
@@ -299,16 +311,52 @@ export default function IsaakWorkspaceClient({
             : current.supportedModules,
           validationSummary: data.validationSummary ?? current.validationSummary,
         }));
+
+        return hasResolvedConnection;
       } catch {
-        // keep session state
+        return false;
       }
     };
 
-    void loadConnectionState();
+    const pollConnection = async () => {
+      const resolved = await syncConnectionState();
+      if (cancelled) return;
+
+      if (resolved) {
+        setIsCheckingConnection(false);
+        setConnectionCheckAttempts(0);
+        return;
+      }
+
+      if (!connectionPending) {
+        setIsCheckingConnection(false);
+        return;
+      }
+
+      attempts += 1;
+      setConnectionCheckAttempts(attempts);
+
+      if (attempts >= 8) {
+        setIsCheckingConnection(false);
+        return;
+      }
+
+      setIsCheckingConnection(true);
+      timeoutId = window.setTimeout(() => {
+        void pollConnection();
+      }, 2200);
+    };
+
+    setIsCheckingConnection(connectionPending && !hasLiveConnection);
+    void pollConnection();
+
     return () => {
       cancelled = true;
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
     };
-  }, []);
+  }, [connectionPending, hasLiveConnection]);
 
   useEffect(() => {
     let cancelled = false;
@@ -488,7 +536,6 @@ export default function IsaakWorkspaceClient({
     }
   };
 
-  const onboardingDone = Boolean(answers);
   const selectedGoalCount = selectedGoals.length;
   const companyLabel = answers?.companyName || companyOptions[0] || null;
   const effectiveQuickPrompts = quickPrompts?.length ? quickPrompts : QUICK_START_PROMPTS;
@@ -618,8 +665,8 @@ export default function IsaakWorkspaceClient({
       );
     }
 
-    if (!hasLiveConnection) {
-      if (connectionPending) {
+    if (!hasLiveConnection && !onboardingDone) {
+      if (showConnectionWarmup) {
         return (
           <div className="rounded-[2rem] border border-sky-200 bg-sky-50 p-6 text-left shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-sky-900">
@@ -661,8 +708,14 @@ export default function IsaakWorkspaceClient({
       ? connectionState.supportedModules.length > 0
         ? 'Datos listos'
         : 'Conexion inicial'
-      : 'Verificacion final en curso';
-    const validationHint = connectionState.validationSummary || assistantSupportMessage;
+      : connectionVerificationStalled
+        ? 'Revision manual recomendada'
+        : 'Verificacion final en curso';
+    const validationHint = hasLiveConnection
+      ? connectionState.validationSummary || assistantSupportMessage
+      : connectionVerificationStalled
+        ? 'Todavia no he podido confirmar la conexion real de Holded. Puedes revisar la integracion sin perder tu contexto.'
+        : 'Ya tengo tu configuracion inicial y estoy terminando la comprobacion final de Holded.';
 
     return (
       <div className="mx-auto w-full max-w-3xl">
@@ -710,8 +763,18 @@ export default function IsaakWorkspaceClient({
                   Contexto inmediato
                 </div>
                 <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {buildWelcomeContext(isConnected, companyLabel)}
+                  {showConnectionWarmup
+                    ? `Ya tengo tu contexto inicial para ${companyLabel || 'tu empresa'}. Estoy terminando la ultima verificacion con Holded para activar respuestas con datos reales.`
+                    : buildWelcomeContext(isConnected, companyLabel)}
                 </p>
+                {showConnectionWarmup ? (
+                  <div className="mt-4 flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {isCheckingConnection
+                      ? 'Comprobando la conexion en tiempo real'
+                      : 'La comprobacion esta tardando mas de lo normal'}
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
@@ -766,7 +829,14 @@ export default function IsaakWorkspaceClient({
                     <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
                       {validationHint}
                     </div>
-                    {hasFewBusinessData ? (
+                    {showConnectionWarmup ? (
+                      <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-900">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        {isCheckingConnection
+                          ? 'Estoy activando Holded con tus datos reales'
+                          : 'La activacion sigue pendiente; puedes revisar la integracion'}
+                      </div>
+                    ) : hasFewBusinessData ? (
                       <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
                         <AlertCircle className="h-3.5 w-3.5" />
                         Tengo pocos datos todavia, pero ya puedo ayudarte con contexto inicial
@@ -788,6 +858,17 @@ export default function IsaakWorkspaceClient({
                         Ultima actualizacion: {formatDate(connectionState.lastValidatedAt)}
                       </div>
                     ) : null}
+                    {connectionVerificationStalled ? (
+                      <div className="mt-4">
+                        <Link
+                          href="/onboarding/holded"
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                        >
+                          Revisar conexion Holded
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
@@ -807,7 +888,8 @@ export default function IsaakWorkspaceClient({
                           key={prompt}
                           type="button"
                           onClick={() => void sendMessage(prompt)}
-                          className="block text-left font-medium transition hover:text-[#b42332]"
+                          disabled={!hasLiveConnection}
+                          className="block text-left font-medium transition hover:text-[#b42332] disabled:cursor-not-allowed disabled:text-slate-400"
                         >
                           - {prompt}
                         </button>
@@ -819,7 +901,8 @@ export default function IsaakWorkspaceClient({
                           key={`${prompt}-chip`}
                           type="button"
                           onClick={() => void sendMessage(prompt)}
-                          className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7]"
+                          disabled={!hasLiveConnection}
+                          className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
                         >
                           {prompt}
                         </button>
@@ -899,10 +982,25 @@ export default function IsaakWorkspaceClient({
               Integraciones
             </div>
             <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-              <div>
-                <div className="text-sm font-semibold text-slate-950">Holded</div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {isConnected ? 'Conectado' : 'Pendiente de conexion'}
+              <div className="flex items-center gap-3">
+                <div className="relative h-10 w-10 overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-sm">
+                  <Image
+                    src="/brand/holded/holded-diamond-logo.png"
+                    alt="Holded"
+                    fill
+                    sizes="40px"
+                    className="object-contain p-2"
+                  />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-950">Holded</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {hasLiveConnection
+                      ? 'Conectado'
+                      : showConnectionWarmup
+                        ? 'Verificando'
+                        : 'Pendiente de conexion'}
+                  </div>
                 </div>
               </div>
               <Link
@@ -1041,9 +1139,11 @@ export default function IsaakWorkspaceClient({
                     value={input}
                     onChange={(event) => setInput(event.target.value)}
                     placeholder={
-                      isConnected && onboardingDone
+                      hasLiveConnection && onboardingDone
                         ? 'Preguntame por ventas, gastos, cobros o facturas'
-                        : 'Termina el arranque de Isaak para activar el chat'
+                        : showConnectionWarmup && onboardingDone
+                          ? 'Estoy activando Holded con tus datos reales...'
+                          : 'Termina el arranque de Isaak para activar el chat'
                     }
                     rows={3}
                     className="min-h-[92px] flex-1 resize-none rounded-[1.5rem] border-0 bg-transparent px-3 py-3 text-[15px] leading-7 text-slate-900 outline-none placeholder:text-slate-400"
@@ -1067,14 +1167,24 @@ export default function IsaakWorkspaceClient({
                 <div>
                   {hasLiveConnection
                     ? `Holded conectado - Ultima validacion ${formatDate(connectionState.lastValidatedAt)}`
-                    : connectionPending
-                      ? 'Holded se esta terminando de preparar'
+                    : showConnectionWarmup
+                      ? isCheckingConnection
+                        ? 'Verificando la conexion final de Holded'
+                        : 'La verificacion de Holded sigue pendiente'
                       : 'Conecta Holded para usar datos reales'}
                 </div>
                 <div className="flex items-center gap-3">
                   <span>Integraciones disponibles</span>
                   <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                    <div className="relative h-4 w-4 overflow-hidden rounded-full">
+                      <Image
+                        src="/brand/holded/holded-diamond-logo.png"
+                        alt="Holded"
+                        fill
+                        sizes="16px"
+                        className="object-contain"
+                      />
+                    </div>
                     Holded
                   </div>
                 </div>
