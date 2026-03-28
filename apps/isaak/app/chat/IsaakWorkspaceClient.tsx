@@ -9,10 +9,12 @@ import {
   Bot,
   CheckCircle2,
   ChevronRight,
+  CreditCard,
+  LifeBuoy,
   Loader2,
   MessageSquarePlus,
+  Paperclip,
   SendHorizonal,
-  Settings2,
   Sparkles,
 } from 'lucide-react';
 
@@ -202,7 +204,6 @@ export default function IsaakWorkspaceClient({
   const [loading, setLoading] = useState(false);
   const [loadingConversation, setLoadingConversation] = useState(true);
   const [chatError, setChatError] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
   const [introReady, setIntroReady] = useState(false);
   const [isCheckingConnection, setIsCheckingConnection] = useState(
     connectionPending && !session.keyMasked
@@ -232,6 +233,7 @@ export default function IsaakWorkspaceClient({
   const [selectedEmployees, setSelectedEmployees] = useState('');
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const chatRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const hasLiveConnection = Boolean(connectionState.keyMasked);
   const onboardingDone = Boolean(answers);
@@ -539,6 +541,9 @@ export default function IsaakWorkspaceClient({
 
   const applyPromptToInput = (prompt: string) => {
     setInput(prompt);
+    window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
   };
 
   const selectedGoalCount = selectedGoals.length;
@@ -556,6 +561,11 @@ export default function IsaakWorkspaceClient({
       Boolean(connectionState.validationSummary) ||
       Boolean(connectionState.lastValidatedAt));
   const welcomeGoals = answers?.goals?.slice(0, 2).join(' y ');
+  const userInitial =
+    (answers?.preferredName || defaultName || session.email || 'I')
+      .trim()
+      .charAt(0)
+      .toUpperCase() || 'I';
   const assistantLeadMessage = useMemo(() => {
     const role = formatRoleLabel(answers?.roleInCompany);
     const company = companyLabel || 'tu empresa';
@@ -711,25 +721,27 @@ export default function IsaakWorkspaceClient({
         : 'Ya tengo tu configuracion inicial y estoy terminando la comprobacion final de Holded.';
 
     return (
-      <div className="mx-auto w-full max-w-3xl">
-        <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
-          <div className="flex justify-center lg:justify-start">
-            <div className="isaak-avatar-float relative h-[300px] w-[240px] sm:h-[360px] sm:w-[280px]">
-              <Image
-                src="/Personalidad/isaak-medio-cuerpo-verifactu.png"
-                alt="Isaak"
-                fill
-                sizes="(max-width: 1024px) 280px, 320px"
-                className="object-contain"
-                priority
-              />
-            </div>
-          </div>
-
-          <div className="space-y-5">
+      <div className="mx-auto w-full max-w-4xl">
+        <div className="space-y-5">
+          {introReady ? (
             <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white/92 p-5 shadow-[0_26px_70px_-48px_rgba(15,23,42,0.4)]">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                Tu asistente fiscal y contable
+              <div className="flex items-center gap-3">
+                <div className="relative h-12 w-12 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                  <Image
+                    src="/Personalidad/isaak-avatar-verifactu.png"
+                    alt="Isaak"
+                    fill
+                    sizes="48px"
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    Tu asistente fiscal y contable
+                  </div>
+                  <div className="text-sm font-semibold text-slate-950">Isaak</div>
+                </div>
               </div>
               {!introReady ? (
                 <div className="isaak-typing-dots mt-4 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-3">
@@ -745,162 +757,135 @@ export default function IsaakWorkspaceClient({
                   <p className="mt-3 text-base leading-8 text-slate-600">
                     Soy Isaak. Voy a ayudarte a gestionar tu empresa de forma mas simple.
                   </p>
+                  <p className="mt-3 text-base leading-8 text-slate-600">{assistantLeadMessage}</p>
+                  <p className="mt-3 text-base leading-8 text-slate-600">
+                    Puedes preguntarme lo que necesites. Yo me adapto a como quieres gestionar tu
+                    negocio.
+                  </p>
                 </>
               )}
             </div>
+          ) : null}
 
-            {introReady ? (
-              <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white/92 p-5 shadow-[0_26px_70px_-48px_rgba(15,23,42,0.4)]">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <Bot className="h-4 w-4 text-[#2361d8]" />
-                  Contexto inmediato
-                </div>
+          {introReady ? (
+            <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white/92 p-5 shadow-[0_26px_70px_-48px_rgba(15,23,42,0.4)]">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <Bot className="h-4 w-4 text-[#2361d8]" />
+                Contexto inmediato
+              </div>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                {showConnectionWarmup
+                  ? `Ya tengo tu contexto inicial para ${companyLabel || 'tu empresa'}. Estoy terminando la ultima verificacion con Holded para activar respuestas con datos reales.`
+                  : buildWelcomeContext(isConnected, companyLabel)}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{assistantSupportMessage}</p>
+              {instructionProfile?.businessContextSummary ? (
                 <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {showConnectionWarmup
-                    ? `Ya tengo tu contexto inicial para ${companyLabel || 'tu empresa'}. Estoy terminando la ultima verificacion con Holded para activar respuestas con datos reales.`
-                    : buildWelcomeContext(isConnected, companyLabel)}
+                  {instructionProfile.businessContextSummary}
                 </p>
-                {showConnectionWarmup ? (
-                  <div className="mt-4 flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    {isCheckingConnection
-                      ? 'Comprobando la conexion en tiempo real'
-                      : 'La comprobacion esta tardando mas de lo normal'}
-                  </div>
-                ) : null}
+              ) : null}
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                {validationHint}
               </div>
-            ) : null}
-
-            {introReady && !onboardingDone ? (
-              <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_26px_70px_-48px_rgba(15,23,42,0.4)]">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#2361d8]" />
-                  Estoy terminando de preparar tu espacio
-                </div>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  En cuanto termine el arranque inicial te llevare directamente al chat con todo
-                  listo.
-                </p>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+                  Empresa: {answers?.companyName || companyLabel || 'Tu empresa'}
+                </span>
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+                  Rol: {roleLabel}
+                </span>
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+                  Sector: {answers?.businessSector || 'Pendiente'}
+                </span>
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+                  Holded: {holdedStatusLabel}
+                </span>
               </div>
-            ) : null}
-
-            {introReady && onboardingDone ? (
-              <div className="space-y-4">
-                <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 bg-[#fff4f5]">
-                      <Image
-                        src="/Personalidad/isaak-avatar-verifactu.png"
-                        alt="Isaak"
-                        fill
-                        sizes="44px"
-                        className="object-cover"
-                      />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-950">Isaak</div>
-                      <div className="text-xs text-slate-500">
-                        {hasConversationHistory
-                          ? 'Listo para retomar contigo'
-                          : 'Listo para empezar contigo'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded-[1.6rem] border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-7 text-slate-700">
-                    <p>{assistantLeadMessage}</p>
-                    <p className="mt-3">{assistantSupportMessage}</p>
-                    <p className="mt-3 text-slate-600">
-                      Puedes preguntarme lo que necesites. Yo me adapto a como quieres gestionar tu
-                      negocio.
-                    </p>
-                    {instructionProfile?.businessContextSummary ? (
-                      <p className="mt-3 text-slate-600">
-                        {instructionProfile.businessContextSummary}
-                      </p>
-                    ) : null}
-                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
-                      {validationHint}
-                    </div>
-                    {showConnectionWarmup ? (
-                      <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-900">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        {isCheckingConnection
-                          ? 'Estoy activando Holded con tus datos reales'
-                          : 'La activacion sigue pendiente; puedes revisar la integracion'}
-                      </div>
-                    ) : hasFewBusinessData ? (
-                      <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        Tengo pocos datos todavia, pero ya puedo ayudarte con contexto inicial
-                      </div>
-                    ) : (
-                      <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-900">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Holded ya esta listo para responder con contexto real
-                      </div>
-                    )}
-                    <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-                      <div>Empresa: {answers?.companyName || companyLabel || 'Tu empresa'}</div>
-                      <div>Rol: {roleLabel}</div>
-                      <div>Sector: {answers?.businessSector || 'Pendiente'}</div>
-                      <div>Holded: {holdedStatusLabel}</div>
-                    </div>
-                    {connectionState.lastValidatedAt ? (
-                      <div className="mt-3 text-xs text-slate-500">
-                        Ultima actualizacion: {formatDate(connectionState.lastValidatedAt)}
-                      </div>
-                    ) : null}
-                    {connectionVerificationStalled ? (
-                      <div className="mt-4">
-                        <Link
-                          href="/onboarding/holded"
-                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-                        >
-                          Revisar conexion Holded
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
-                      </div>
-                    ) : null}
-                  </div>
+              {showConnectionWarmup ? (
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  {isCheckingConnection
+                    ? 'Comprobando la conexion en tiempo real'
+                    : 'La comprobacion esta tardando mas de lo normal'}
                 </div>
-
-                <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="text-sm font-semibold text-slate-900">
-                    {hasConversationHistory ? 'Puedes retomar con algo como esto' : 'Por ejemplo'}
-                  </div>
-                  <div className="mt-2 text-sm leading-7 text-slate-600">
-                    {hasConversationHistory
-                      ? 'He recuperado tu contexto. Si quieres, seguimos con una pregunta concreta o vamos a un resumen rapido.'
-                      : `Voy a centrarme en ayudarte con ${welcomeGoals || 'la gestion diaria de tu negocio'}. Puedes empezar cuando quieras.`}
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
-                      <button
-                        key={`${prompt}-chip`}
-                        type="button"
-                        onClick={() => applyPromptToInput(prompt)}
-                        disabled={!hasLiveConnection}
-                        className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
-                      >
-                        {prompt}
-                      </button>
-                    ))}
-                  </div>
-                  {canShowSummaryCTA ? (
-                    <button
-                      type="button"
-                      onClick={() => void sendMessage('Quiero ver un resumen del negocio')}
-                      className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f55c0]"
-                    >
-                      Ver resumen del negocio
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  ) : null}
+              ) : hasFewBusinessData ? (
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Tengo pocos datos todavia, pero ya puedo ayudarte con contexto inicial
                 </div>
+              ) : (
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Holded ya esta listo para responder con contexto real
+                </div>
+              )}
+              {connectionState.lastValidatedAt ? (
+                <div className="mt-3 text-xs text-slate-500">
+                  Ultima actualizacion: {formatDate(connectionState.lastValidatedAt)}
+                </div>
+              ) : null}
+              {connectionVerificationStalled ? (
+                <div className="mt-4">
+                  <Link
+                    href="/onboarding/holded"
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    Revisar conexion Holded
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {introReady && !onboardingDone ? (
+            <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_26px_70px_-48px_rgba(15,23,42,0.4)]">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <Loader2 className="h-4 w-4 animate-spin text-[#2361d8]" />
+                Estoy terminando de preparar tu espacio
               </div>
-            ) : null}
-          </div>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                En cuanto termine el arranque inicial te llevare directamente al chat con todo
+                listo.
+              </p>
+            </div>
+          ) : null}
+
+          {introReady && onboardingDone ? (
+            <div className="isaak-fade-up rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm font-semibold text-slate-900">
+                {hasConversationHistory ? 'Puedes retomar con algo como esto' : 'Por ejemplo'}
+              </div>
+              <div className="mt-2 text-sm leading-7 text-slate-600">
+                {hasConversationHistory
+                  ? 'He recuperado tu contexto. Si quieres, seguimos con una pregunta concreta o vamos a un resumen rapido.'
+                  : `Voy a centrarme en ayudarte con ${welcomeGoals || 'la gestion diaria de tu negocio'}. Puedes empezar cuando quieras.`}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
+                  <button
+                    key={`${prompt}-chip`}
+                    type="button"
+                    onClick={() => applyPromptToInput(prompt)}
+                    disabled={!hasLiveConnection}
+                    className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+              {canShowSummaryCTA ? (
+                <button
+                  type="button"
+                  onClick={() => applyPromptToInput('Quiero ver un resumen del negocio')}
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f55c0]"
+                >
+                  Ver resumen del negocio
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -909,7 +894,7 @@ export default function IsaakWorkspaceClient({
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#fff8f3_0%,#fffdf8_38%,#ffffff_72%)] text-slate-900">
       <div className="grid min-h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="border-b border-slate-200/80 bg-white/85 px-4 py-5 backdrop-blur lg:border-b-0 lg:border-r lg:px-5">
+        <aside className="flex min-h-screen flex-col border-b border-slate-200/80 bg-white/85 px-4 py-5 backdrop-blur lg:border-b-0 lg:border-r lg:px-5">
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
               <Image
@@ -1029,6 +1014,38 @@ export default function IsaakWorkspaceClient({
               ))}
             </div>
           </div>
+
+          <div className="mt-auto pt-6">
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white">
+                  {userInitial}
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-slate-950">
+                    {answers?.preferredName || session.name || defaultName}
+                  </div>
+                  <div className="text-xs text-slate-500">Plan gratuito</div>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-2">
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-white"
+                >
+                  Perfil y suscripcion
+                  <CreditCard className="h-4 w-4" />
+                </button>
+                <Link
+                  href="/support"
+                  className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-white"
+                >
+                  Soporte
+                  <LifeBuoy className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
         </aside>
 
         <section className="relative flex min-h-screen flex-col px-4 py-5 sm:px-8 lg:px-12">
@@ -1112,8 +1129,36 @@ export default function IsaakWorkspaceClient({
                   void sendMessage(input);
                 }}
               >
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-2">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                    Añadir documentos
+                  </button>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span>Aplicaciones</span>
+                    <Link
+                      href="/onboarding/holded"
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 transition hover:bg-slate-50"
+                    >
+                      <div className="relative h-4 w-4 overflow-hidden rounded-full">
+                        <Image
+                          src="/brand/holded/holded-diamond-logo.png"
+                          alt="Holded"
+                          fill
+                          sizes="16px"
+                          className="object-contain"
+                        />
+                      </div>
+                      Holded
+                    </Link>
+                  </div>
+                </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <textarea
+                    ref={inputRef}
                     value={input}
                     onChange={(event) => setInput(event.target.value)}
                     placeholder={
@@ -1167,43 +1212,6 @@ export default function IsaakWorkspaceClient({
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="fixed bottom-5 right-5 z-40">
-            <div className="relative">
-              {showSettings ? (
-                <div className="absolute bottom-14 right-0 w-64 rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_28px_80px_-48px_rgba(15,23,42,0.45)]">
-                  <div className="px-2 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                    Ajustes rapidos
-                  </div>
-                  <Link
-                    href="/onboarding/holded"
-                    className="flex items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Revisar conexion Holded
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href="/support"
-                    className="flex items-center justify-between rounded-2xl px-3 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Abrir soporte
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                  <div className="rounded-2xl px-3 py-3 text-sm text-slate-500">
-                    Perfil y facturacion iran aqui en la siguiente iteracion.
-                  </div>
-                </div>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => setShowSettings((current) => !current)}
-                className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_24px_70px_-38px_rgba(15,23,42,0.5)] transition hover:bg-slate-50"
-                aria-label="Abrir ajustes"
-              >
-                <Settings2 className="h-5 w-5" />
-              </button>
             </div>
           </div>
         </section>
