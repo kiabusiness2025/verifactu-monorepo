@@ -217,7 +217,7 @@ export default function HoldedConversationalOnboardingClient({
           <div className="flex justify-center lg:justify-start">
             <div className="relative h-[320px] w-[250px] sm:h-[390px] sm:w-[310px]">
               <Image
-                src="/Isaak/isaak-medio-cuerpo.png"
+                src="/Isaak/isaak-medio-cuerpo-holded.png"
                 alt="Isaak"
                 fill
                 className="object-contain"

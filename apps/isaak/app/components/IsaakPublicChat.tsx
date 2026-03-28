@@ -155,7 +155,7 @@ export default function IsaakPublicChat() {
           <div className="flex items-center gap-3">
             <div className="relative h-14 w-14 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
               <Image
-                src="/Personalidad/Isaak avatar 2.png"
+                src="/Personalidad/isaak-avatar-verifactu.png"
                 alt="Avatar oficial de Isaak"
                 fill
                 sizes="56px"
@@ -196,7 +196,7 @@ export default function IsaakPublicChat() {
           <div className="flex items-center gap-3">
             <div className="relative h-11 w-11 overflow-hidden rounded-full border border-white/35 bg-white/10">
               <Image
-                src="/Personalidad/Isaak avatar 2.png"
+                src="/Personalidad/isaak-avatar-verifactu.png"
                 alt="Isaak"
                 fill
                 sizes="44px"

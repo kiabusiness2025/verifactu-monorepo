@@ -208,7 +208,7 @@ export default function IsaakHomePage() {
                     <div className="flex items-start gap-3">
                       <div className="relative h-12 w-12 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
                         <Image
-                          src="/Personalidad/Isaak avatar 2.png"
+                          src="/Personalidad/isaak-avatar-verifactu.png"
                           alt="Avatar de Isaak"
                           fill
                           sizes="48px"

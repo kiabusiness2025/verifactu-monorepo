@@ -107,7 +107,7 @@ export default function IsaakChat() {
       >
         <div className="relative h-10 w-10 overflow-hidden rounded-full ring-2 ring-white/80">
           <Image
-            src="/Isaak/isaak-avatar.png"
+            src="/Isaak/isaak-avatar-verifactu.png"
             alt="Isaak"
             fill
             sizes="40px"

@@ -6,7 +6,7 @@ import './globals.css';
 
 const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] });
 const siteUrl = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
-const avatarPath = '/Personalidad/Isaak avatar 2.png';
+const avatarPath = '/Personalidad/isaak-avatar-verifactu.png';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

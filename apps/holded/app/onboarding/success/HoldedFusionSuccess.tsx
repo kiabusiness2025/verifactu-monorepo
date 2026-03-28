@@ -116,7 +116,7 @@ export default function HoldedFusionSuccess() {
                 <div className="mx-auto w-full rounded-[2rem] border border-slate-200 bg-white/95 p-4 shadow-[0_28px_80px_-42px_rgba(15,23,42,0.35)] backdrop-blur">
                   <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[#fff4f5] ring-8 ring-white">
                     <Image
-                      src="/Isaak/isaak-avatar.png"
+                      src="/Isaak/isaak-avatar-holded.png"
                       alt="Isaak"
                       width={120}
                       height={120}

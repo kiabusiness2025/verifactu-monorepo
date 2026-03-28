@@ -39,7 +39,7 @@ function holdedSiteUrl() {
 function brandHeader(label: string) {
   const siteUrl = holdedSiteUrl();
   const holdedLogo = `${siteUrl}/brand/holded/holded-diamond-logo.png`;
-  const isaakAvatar = `${siteUrl}/Isaak/isaak-avatar.png`;
+  const isaakAvatar = `${siteUrl}/Isaak/isaak-avatar-holded.png`;
 
   return `
     <div style="padding:28px 28px 18px;background:linear-gradient(135deg,#fff7ed 0%,#fff1f2 55%,#eef4ff 100%);border-radius:24px 24px 0 0;border:1px solid #fde7ea;border-bottom:none;">

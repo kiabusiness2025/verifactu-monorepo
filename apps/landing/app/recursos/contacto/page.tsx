@@ -40,7 +40,7 @@ export default function ContactoPage() {
         <div className="mt-8 grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
           <div className="flex justify-center lg:justify-start">
             <Image
-              src="/Isaak/isaak-avatar.png"
+              src="/Isaak/isaak-avatar-verifactu.png"
               alt="Isaak"
               width={260}
               height={260}

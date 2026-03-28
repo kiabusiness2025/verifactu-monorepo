@@ -24,7 +24,7 @@ export default function IsaakSupportPage() {
             <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,#eef4ff_0%,#ffffff_100%)] p-5">
               <div className="relative mx-auto h-44 w-44 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
                 <Image
-                  src="/Personalidad/Isaak avatar 2.png"
+                  src="/Personalidad/isaak-avatar-verifactu.png"
                   alt="Avatar de Isaak"
                   fill
                   sizes="176px"

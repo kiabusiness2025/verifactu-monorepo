@@ -25,7 +25,7 @@ export default function IsaakSiteChrome({ children }: Props) {
           <Link href="/" className="group flex items-center gap-3">
             <div className="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm transition group-hover:shadow-md">
               <Image
-                src="/Personalidad/Isaak avatar 2.png"
+                src="/Personalidad/isaak-avatar-verifactu.png"
                 alt="Isaak"
                 fill
                 sizes="44px"

@@ -137,7 +137,7 @@ export default function IsaakForHoldedPage() {
             <div className="p-4">
               <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50">
                 <Image
-                  src="/Isaak/Isaak_principal.png"
+                  src="/Isaak/Isaak_principal-holded.png"
                   alt="Isaak dentro de Verifactu Business"
                   width={1280}
                   height={960}

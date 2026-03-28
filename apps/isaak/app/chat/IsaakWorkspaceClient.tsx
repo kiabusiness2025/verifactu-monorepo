@@ -670,7 +670,7 @@ export default function IsaakWorkspaceClient({
           <div className="flex justify-center lg:justify-start">
             <div className="isaak-avatar-float relative h-[300px] w-[240px] sm:h-[360px] sm:w-[280px]">
               <Image
-                src="/Personalidad/Isaak%20medio%20cuerpo.png"
+                src="/Personalidad/isaak-medio-cuerpo-verifactu.png"
                 alt="Isaak"
                 fill
                 sizes="(max-width: 1024px) 280px, 320px"
@@ -734,7 +734,7 @@ export default function IsaakWorkspaceClient({
                   <div className="flex items-center gap-3">
                     <div className="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 bg-[#fff4f5]">
                       <Image
-                        src="/Personalidad/Isaak avatar 2.png"
+                        src="/Personalidad/isaak-avatar-verifactu.png"
                         alt="Isaak"
                         fill
                         sizes="44px"
@@ -852,7 +852,7 @@ export default function IsaakWorkspaceClient({
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
               <Image
-                src="/Personalidad/Isaak%20avatar%202.png"
+                src="/Personalidad/isaak-avatar-verifactu.png"
                 alt="Isaak"
                 fill
                 sizes="48px"

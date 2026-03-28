@@ -664,7 +664,12 @@ export function HeroTripleMock() {
       </div>
       <div className="pointer-events-none absolute left-4 top-4 hidden w-[150px] overflow-hidden rounded-2xl border border-slate-200 bg-white/95 shadow-md md:block">
         <div className="relative h-36 w-full bg-[#eef4ff]">
-          <Image src="/Isaak/isaak-medio-cuerpo.png" alt="Isaak" fill className="object-cover" />
+          <Image
+            src="/Isaak/isaak-medio-cuerpo-verifactu.png"
+            alt="Isaak"
+            fill
+            className="object-cover"
+          />
         </div>
         <div className="px-3 py-2">
           <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#2361d8]">

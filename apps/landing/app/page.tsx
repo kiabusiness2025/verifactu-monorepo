@@ -178,7 +178,7 @@ export default function Page() {
               <div className="mt-7 flex max-w-xl items-start gap-3 rounded-[1.75rem] border border-slate-200 bg-white/95 p-4 shadow-sm sm:items-center sm:gap-4">
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[#eef4ff] ring-1 ring-slate-200 sm:h-20 sm:w-20">
                   <Image
-                    src="/Isaak/isaak-avatar.png"
+                    src="/Isaak/isaak-avatar-verifactu.png"
                     alt="Isaak"
                     fill
                     className="object-cover"

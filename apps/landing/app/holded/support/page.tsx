@@ -78,7 +78,7 @@ export default function HoldedSupportPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:w-[25rem]">
             <div className="mb-5 flex justify-center rounded-3xl bg-[linear-gradient(180deg,#fff7f7_0%,#f8fbff_100%)] p-4">
               <Image
-                src="/Isaak/isaak-avatar.png"
+                src="/Isaak/isaak-avatar-holded.png"
                 alt="Isaak"
                 width={220}
                 height={220}
