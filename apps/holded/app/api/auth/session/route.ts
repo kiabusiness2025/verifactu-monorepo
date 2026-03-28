@@ -234,7 +234,27 @@ export async function POST(req: Request) {
     }
 
     const { decoded, app } = await verifyIdToken(idToken);
-    const userRecord = await app.auth().getUser(decoded.uid);
+    let userRecord: admin.auth.UserRecord;
+    try {
+      userRecord = await app.auth().getUser(decoded.uid);
+    } catch (firebaseUserError) {
+      const code =
+        firebaseUserError && typeof firebaseUserError === 'object' && 'code' in firebaseUserError
+          ? String((firebaseUserError as { code?: unknown }).code || '')
+          : '';
+
+      if (code.includes('user-not-found')) {
+        return NextResponse.json(
+          {
+            error:
+              'Tu acceso anterior ya no existe en Firebase. Vuelve a registrarte o inicia sesion otra vez.',
+          },
+          { status: 401 }
+        );
+      }
+
+      throw firebaseUserError;
+    }
     const displayName = userRecord.displayName || decoded.name || undefined;
     const source = new URL(req.url).searchParams.get('source')?.trim() || 'holded_login';
 

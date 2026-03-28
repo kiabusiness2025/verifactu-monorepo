@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@prisma/client": "5.22.0",
+    "@prisma/extension-accelerate": "^3.0.1",
     "@google-cloud/vertexai": "^1.10.0",
     "@verifactu/auth": "file:../../packages/auth",
     "@verifactu/integrations": "file:../../packages/integrations",

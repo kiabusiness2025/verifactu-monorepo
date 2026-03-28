@@ -9,6 +9,10 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
+type HoldedAdminSummary = Awaited<ReturnType<typeof getHoldedAdminSummary>>;
+type HoldedRecentUser = HoldedAdminSummary['recentUsers'][number];
+type HoldedRecentActivity = HoldedAdminSummary['recentActivity'][number];
+
 export default async function HoldedAdminPage() {
   const summary = await getHoldedAdminSummary();
 
@@ -53,7 +57,7 @@ export default async function HoldedAdminPage() {
               </Link>
             </div>
             <div className="mt-4 space-y-3">
-              {summary.recentUsers.map((user) => (
+              {summary.recentUsers.map((user: HoldedRecentUser) => (
                 <div
                   key={user.id}
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
@@ -76,7 +80,7 @@ export default async function HoldedAdminPage() {
               </Link>
             </div>
             <div className="mt-4 space-y-3">
-              {summary.recentActivity.map((item) => (
+              {summary.recentActivity.map((item: HoldedRecentActivity) => (
                 <div
                   key={item.id}
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"

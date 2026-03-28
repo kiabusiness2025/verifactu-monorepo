@@ -6,7 +6,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { registerWithEmail, signInWithEmail, signInWithGoogle } from '@/app/lib/auth';
+import {
+  clearStaleFirebaseSession,
+  resetHoldedAuthState,
+  ensureCurrentFirebaseUserStillExists,
+  registerWithEmail,
+  signInWithEmail,
+  signInWithGoogle,
+} from '@/app/lib/auth';
 import { auth } from '@/app/lib/firebase';
 import { buildDashboardUrl, buildOnboardingUrl } from '@/app/lib/holded-navigation';
 import { mintSessionCookie } from '@/app/lib/serverSession';
@@ -85,15 +92,40 @@ function HoldedAuthContent() {
     let cancelled = false;
 
     const hydrateExistingUser = async () => {
+      if (isRegisterMode) {
+        await resetHoldedAuthState();
+        if (!cancelled) setExistingUserChecking(false);
+        return;
+      }
+
       if (!auth?.currentUser || redirectedRef.current) {
         if (!cancelled) setExistingUserChecking(false);
         return;
       }
 
       try {
+        const existingState = await ensureCurrentFirebaseUserStillExists();
+        if (!existingState.ok) {
+          redirectedRef.current = false;
+          if (!cancelled) {
+            setExistingUserChecking(false);
+            if (existingState.reason === 'network') {
+              setError(
+                'No hemos podido comprobar tu acceso por un problema de red. Intentalo de nuevo.'
+              );
+            }
+          }
+          return;
+        }
+
         redirectedRef.current = true;
-        await activateSessionAndRedirect(auth.currentUser as User, rememberDevice, postLoginTarget);
+        await activateSessionAndRedirect(
+          existingState.user as User,
+          rememberDevice,
+          postLoginTarget
+        );
       } catch {
+        await clearStaleFirebaseSession();
         redirectedRef.current = false;
         if (!cancelled) {
           setExistingUserChecking(false);
@@ -109,7 +141,7 @@ function HoldedAuthContent() {
     return () => {
       cancelled = true;
     };
-  }, [postLoginTarget, rememberDevice]);
+  }, [isRegisterMode, postLoginTarget, rememberDevice]);
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

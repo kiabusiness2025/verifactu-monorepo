@@ -10,6 +10,8 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
+type HoldedAdminConnection = Awaited<ReturnType<typeof getHoldedAdminConnections>>[number];
+
 type PageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -68,7 +70,7 @@ export default async function HoldedAdminConnectionsPage({ searchParams }: PageP
                 </tr>
               </thead>
               <tbody>
-                {connections.map((connection) => {
+                {connections.map((connection: HoldedAdminConnection) => {
                   const lastError = connection.auditLogs[0] || null;
                   return (
                     <tr key={connection.id} className="border-t border-slate-100 align-top">

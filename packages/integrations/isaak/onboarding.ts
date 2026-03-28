@@ -61,7 +61,10 @@ export type IsaakOnboardingState = {
   instructions: IsaakInstructionProfile | null;
 };
 
-type IsaakOnboardingPrismaClient = PrismaClient;
+type IsaakOnboardingPrismaClient = Pick<
+  PrismaClient,
+  '$transaction' | 'user' | 'tenantProfile' | 'userOnboarding' | 'isaakMemoryFact'
+>;
 
 function normalizeText(value: string | null | undefined) {
   return value?.trim().replace(/\s+/g, ' ') || null;

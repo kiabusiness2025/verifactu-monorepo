@@ -11,6 +11,10 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
+type HoldedAdminUserDetail = NonNullable<Awaited<ReturnType<typeof getHoldedAdminUserDetail>>>;
+type HoldedAuditEvent = HoldedAdminUserDetail['externalConnectionAuditLogs'][number];
+type HoldedConversation = HoldedAdminUserDetail['isaakConversations'][number];
+
 type PageProps = {
   params: Promise<{ id: string }>;
 };
@@ -96,7 +100,7 @@ export default async function HoldedAdminUserDetailPage({ params }: PageProps) {
           <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-950">Eventos recientes</h2>
             <div className="mt-4 space-y-3">
-              {user.externalConnectionAuditLogs.map((event) => (
+              {user.externalConnectionAuditLogs.map((event: HoldedAuditEvent) => (
                 <div
                   key={event.id}
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
@@ -113,7 +117,7 @@ export default async function HoldedAdminUserDetailPage({ params }: PageProps) {
           <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-950">Chats creados</h2>
             <div className="mt-4 space-y-3">
-              {user.isaakConversations.map((conversation) => (
+              {user.isaakConversations.map((conversation: HoldedConversation) => (
                 <div
                   key={conversation.id}
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"

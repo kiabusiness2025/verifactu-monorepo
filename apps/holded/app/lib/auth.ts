@@ -2,8 +2,10 @@ import type { User } from 'firebase/auth';
 import {
   createUserWithEmailAndPassword,
   type AuthError,
+  fetchSignInMethodsForEmail,
   GoogleAuthProvider,
   OAuthProvider,
+  reload,
   sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -57,6 +59,19 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
     'auth/wrong-password': {
       message: 'Wrong password',
       userMessage: 'La contrasena no coincide. Intentalo de nuevo.',
+    },
+    'auth/invalid-credential': {
+      message: 'Invalid credential',
+      userMessage: 'No hemos podido validar ese acceso. Revisa los datos e intentalo de nuevo.',
+    },
+    'auth/user-disabled': {
+      message: 'User disabled',
+      userMessage:
+        'Esta cuenta no esta disponible ahora mismo. Contacta con soporte si lo necesitas.',
+    },
+    'auth/user-token-expired': {
+      message: 'User token expired',
+      userMessage: 'Tu sesion anterior ya no es valida. Vuelve a entrar para continuar.',
     },
     'auth/popup-closed-by-user': {
       message: 'Popup closed',
@@ -247,5 +262,77 @@ export async function signInWithMicrosoft(options: SignInOptions = {}): Promise<
     return { user: userCredential.user, error: null };
   } catch (error) {
     return { user: null, error: getErrorMessage(error as AuthError) };
+  }
+}
+
+export async function clearStaleFirebaseSession() {
+  if (!isFirebaseReady || !auth) return;
+
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.warn('[holded auth] failed to clear stale Firebase session', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+export async function clearHoldedServerSession() {
+  try {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.warn('[holded auth] failed to clear holded server session', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+export async function resetHoldedAuthState() {
+  await Promise.all([clearStaleFirebaseSession(), clearHoldedServerSession()]);
+}
+
+export async function ensureCurrentFirebaseUserStillExists() {
+  if (!isFirebaseReady || !auth?.currentUser) {
+    return { ok: false as const, reason: 'missing' as const };
+  }
+
+  try {
+    await reload(auth.currentUser);
+    return { ok: true as const, user: auth.currentUser };
+  } catch (error) {
+    const authError = error as AuthError;
+    const staleCodes = new Set([
+      'auth/user-not-found',
+      'auth/user-disabled',
+      'auth/user-token-expired',
+      'auth/invalid-user-token',
+      'auth/network-request-failed',
+    ]);
+
+    if (staleCodes.has(authError.code)) {
+      await clearStaleFirebaseSession();
+      return {
+        ok: false as const,
+        reason: authError.code === 'auth/network-request-failed' ? 'network' : 'stale',
+      };
+    }
+
+    throw error;
+  }
+}
+
+export async function findSignInMethodsForEmail(email: string) {
+  if (!isFirebaseReady || !auth) return [];
+
+  try {
+    return await fetchSignInMethodsForEmail(auth, email);
+  } catch (error) {
+    console.warn('[holded auth] failed to fetch sign-in methods', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return [];
   }
 }
