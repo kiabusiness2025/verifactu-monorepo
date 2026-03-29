@@ -125,6 +125,124 @@ Tools MCP actuales:
 - `holded_list_project_tasks`
 - `holded_create_invoice_draft`
 
+## Anotaciones MCP y justificacion
+
+Importante para OpenAI:
+
+- si una herramienta no declara correctamente sus anotaciones MCP, el sistema puede asumir por defecto:
+  - `readOnlyHint = false`
+  - `openWorldHint = true`
+  - `destructiveHint = true`
+- en este conector eso seria incorrecto para casi todas las tools
+- por eso el servidor MCP ya las expone explicitamente en [route.ts](c:\dev\verifactu-monorepo\apps\app\app\api\mcp\holded\route.ts)
+
+### `holded_list_invoices`
+
+- `readOnlyHint = true`
+  - solo lista facturas del tenant ya autorizado
+  - no crea, edita ni borra datos en Holded
+- `openWorldHint = false`
+  - solo accede a la cuenta Holded conectada del tenant autenticado en Verifactu
+  - no navega internet ni usa fuentes externas abiertas
+- `destructiveHint = false`
+  - no altera ni elimina informacion
+
+### `holded_get_invoice`
+
+- `readOnlyHint = true`
+  - recupera una factura concreta por id
+  - no modifica el documento
+- `openWorldHint = false`
+  - solo consulta la factura dentro de la cuenta Holded conectada del tenant
+- `destructiveHint = false`
+  - la operacion es de consulta, no de escritura
+
+### `holded_list_contacts`
+
+- `readOnlyHint = true`
+  - lista contactos existentes para el tenant autorizado
+  - no crea ni modifica contactos
+- `openWorldHint = false`
+  - se limita a la conexion Holded ya autorizada
+- `destructiveHint = false`
+  - no cambia datos ni ejecuta acciones irreversibles
+
+### `holded_list_accounts`
+
+- `readOnlyHint = true`
+  - lista cuentas contables disponibles en Holded
+  - no actualiza el plan contable
+- `openWorldHint = false`
+  - solo lee datos internos de la cuenta Holded conectada
+- `destructiveHint = false`
+  - no hay ninguna mutacion
+
+### `holded_list_bookings`
+
+- `readOnlyHint = true`
+  - lista reservas o elementos CRM/agendas disponibles
+  - no crea ni cambia bookings
+- `openWorldHint = false`
+  - no consume datos abiertos; trabaja sobre la cuenta Holded autorizada
+- `destructiveHint = false`
+  - no altera registros
+
+### `holded_list_projects`
+
+- `readOnlyHint = true`
+  - lista proyectos existentes para dar contexto operativo
+  - no modifica proyectos
+- `openWorldHint = false`
+  - solo accede a proyectos del tenant conectado
+- `destructiveHint = false`
+  - no hay impacto de escritura
+
+### `holded_get_project`
+
+- `readOnlyHint = true`
+  - obtiene un proyecto concreto por id
+  - no cambia su estado ni sus datos
+- `openWorldHint = false`
+  - la lectura queda acotada al tenant autenticado y a su integracion Holded
+- `destructiveHint = false`
+  - no produce cambios persistentes
+
+### `holded_list_project_tasks`
+
+- `readOnlyHint = true`
+  - lista tareas de un proyecto existente
+  - no crea ni cierra tareas
+- `openWorldHint = false`
+  - opera solo dentro del proyecto y tenant autorizados
+- `destructiveHint = false`
+  - es una consulta pura
+
+### `holded_create_invoice_draft`
+
+- `readOnlyHint = false`
+  - crea un borrador de factura en Holded
+  - es una accion de escritura real
+- `openWorldHint = false`
+  - sigue acotada a la cuenta Holded conectada del tenant autenticado
+  - no accede a recursos abiertos de terceros
+- `destructiveHint = false`
+  - crea un borrador, no elimina ni sobrescribe informacion existente por defecto
+  - ademas requiere `confirm = true` para ejecutar la accion
+
+## Mapeo de nombres para el formulario de OpenAI
+
+Si el formulario de OpenAI muestra nombres traducidos automaticamente, este es el mapeo correcto:
+
+- `facturas_lista_retenidas` -> `holded_list_invoices`
+- `retenido_obtener_factura` -> `holded_get_invoice`
+- `lista_de_contactos_retenida` -> `holded_list_contacts`
+- `cuentas_de_lista_mantenidas` -> `holded_list_accounts`
+- `reservas_lista_retenidas` -> `holded_list_bookings`
+- `proyectos_lista_sostenidos` -> `holded_list_projects`
+- `holded_get_project` -> `holded_get_project`
+- `tareas_del_proyecto_de_lista_retenida` -> `holded_list_project_tasks`
+- `retenido_crear_borrador_de_factura` -> `holded_create_invoice_draft`
+
 ## Checklist previo al alta en ChatGPT
 
 ### Infraestructura

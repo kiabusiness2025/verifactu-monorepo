@@ -50,6 +50,7 @@ const TOOLS: ToolDefinition[] = [
       'List invoices for the currently authorized Verifactu tenant connected to Holded. Use this to inspect invoice history before asking for a specific invoice.',
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
       idempotentHint: true,
       openWorldHint: false,
     },
@@ -84,6 +85,7 @@ const TOOLS: ToolDefinition[] = [
       'Retrieve a single Holded invoice by its Holded invoice id for the currently authorized tenant.',
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
       idempotentHint: true,
       openWorldHint: false,
     },
@@ -106,6 +108,7 @@ const TOOLS: ToolDefinition[] = [
       'List customer or contact records from Holded for the currently authorized tenant. Use this before creating a draft invoice.',
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
       idempotentHint: true,
       openWorldHint: false,
     },
@@ -136,6 +139,7 @@ const TOOLS: ToolDefinition[] = [
       'List accounting accounts available in Holded for the currently authorized tenant.',
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
       idempotentHint: true,
       openWorldHint: false,
     },
@@ -166,6 +170,7 @@ const TOOLS: ToolDefinition[] = [
       'List CRM bookings and agenda items from Holded for the currently authorized tenant.',
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
       idempotentHint: true,
       openWorldHint: false,
     },
@@ -196,6 +201,7 @@ const TOOLS: ToolDefinition[] = [
       'List projects from Holded for the currently authorized tenant so Isaak can explain workload and profitability context.',
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
       idempotentHint: true,
       openWorldHint: false,
     },
@@ -226,6 +232,7 @@ const TOOLS: ToolDefinition[] = [
       'Retrieve a single project from Holded by id for the currently authorized tenant.',
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
       idempotentHint: true,
       openWorldHint: false,
     },
@@ -248,6 +255,7 @@ const TOOLS: ToolDefinition[] = [
       'List tasks for a specific Holded project so Isaak can explain project progress in plain language.',
     annotations: {
       readOnlyHint: true,
+      destructiveHint: false,
       idempotentHint: true,
       openWorldHint: false,
     },
