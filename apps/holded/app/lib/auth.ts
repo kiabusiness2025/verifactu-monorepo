@@ -55,6 +55,53 @@ const authUnavailable = (): AuthResult => ({
   warning: null,
 });
 
+function mapUnknownAccessError(error: unknown): AuthErrorMessage {
+  if (error && typeof error === 'object') {
+    const maybeError = error as { message?: unknown; code?: unknown };
+    const message = typeof maybeError.message === 'string' ? maybeError.message : '';
+    const code = typeof maybeError.code === 'string' ? maybeError.code : 'auth/internal-access-error';
+
+    if (message.includes('Session mint failed')) {
+      const jsonStart = message.indexOf('{');
+      if (jsonStart >= 0) {
+        try {
+          const payload = JSON.parse(message.slice(jsonStart)) as { error?: string };
+          if (payload?.error) {
+            return {
+              code: 'auth/session-mint-failed',
+              message,
+              userMessage: payload.error,
+            };
+          }
+        } catch {
+          // ignore JSON parse errors and fall through
+        }
+      }
+
+      return {
+        code: 'auth/session-mint-failed',
+        message,
+        userMessage:
+          'Hemos validado tu acceso, pero no hemos podido activar la sesion compartida. Intentalo de nuevo.',
+      };
+    }
+
+    if (message) {
+      return {
+        code,
+        message,
+        userMessage: message,
+      };
+    }
+  }
+
+  return {
+    code: 'auth/internal-access-error',
+    message: typeof error === 'string' ? error : 'Unknown access error',
+    userMessage: 'No hemos podido completar el acceso. Intenta de nuevo dentro de unos minutos.',
+  };
+}
+
 function getErrorMessage(error: AuthError): AuthErrorMessage {
   const errorMap: Record<string, { message: string; userMessage: string }> = {
     'auth/invalid-email': {
@@ -215,7 +262,12 @@ export async function signInWithEmail(
 
     return { user: userCredential.user, error: null, warning: null };
   } catch (error) {
-    return { user: null, error: getErrorMessage(error as AuthError), warning: null };
+    const authError = error as AuthError;
+    const mapped =
+      typeof authError?.code === 'string' && authError.code.startsWith('auth/')
+        ? getErrorMessage(authError)
+        : mapUnknownAccessError(error);
+    return { user: null, error: mapped, warning: null };
   }
 }
 
@@ -233,7 +285,12 @@ export async function signInWithGoogle(options: SignInOptions = {}): Promise<Aut
 
     return { user: userCredential.user, error: null, warning: null };
   } catch (error) {
-    return { user: null, error: getErrorMessage(error as AuthError), warning: null };
+    const authError = error as AuthError;
+    const mapped =
+      typeof authError?.code === 'string' && authError.code.startsWith('auth/')
+        ? getErrorMessage(authError)
+        : mapUnknownAccessError(error);
+    return { user: null, error: mapped, warning: null };
   }
 }
 
@@ -252,9 +309,13 @@ export async function startGoogleRedirectSignIn(): Promise<RedirectSignInResult>
     await signInWithRedirect(auth, provider);
     return { redirecting: true, error: null };
   } catch (error) {
+    const authError = error as AuthError;
     return {
       redirecting: false,
-      error: getErrorMessage(error as AuthError),
+      error:
+        typeof authError?.code === 'string' && authError.code.startsWith('auth/')
+          ? getErrorMessage(authError)
+          : mapUnknownAccessError(error),
     };
   }
 }
@@ -282,7 +343,12 @@ export async function consumeGoogleRedirectResult(options: SignInOptions = {}): 
 
     return { user: result.user, error: null, warning: null };
   } catch (error) {
-    return { user: null, error: getErrorMessage(error as AuthError), warning: null };
+    const authError = error as AuthError;
+    const mapped =
+      typeof authError?.code === 'string' && authError.code.startsWith('auth/')
+        ? getErrorMessage(authError)
+        : mapUnknownAccessError(error);
+    return { user: null, error: mapped, warning: null };
   }
 }
 
