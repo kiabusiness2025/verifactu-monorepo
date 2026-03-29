@@ -3,12 +3,14 @@ import {
   createUserWithEmailAndPassword,
   type AuthError,
   fetchSignInMethodsForEmail,
+  getRedirectResult,
   GoogleAuthProvider,
   OAuthProvider,
   reload,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   updateProfile,
 } from 'firebase/auth';
@@ -34,6 +36,10 @@ export interface AuthErrorMessage {
 type AuthResult =
   | { user: User; error: null; warning?: string | null }
   | { user: null; error: AuthErrorMessage; warning?: null };
+
+type RedirectSignInResult =
+  | { redirecting: true; error: null }
+  | { redirecting: false; error: AuthErrorMessage };
 
 const authUnavailable = (): AuthResult => ({
   user: null,
@@ -67,6 +73,11 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
       message: 'Invalid credential',
       userMessage: 'No hemos podido validar ese acceso. Revisa los datos e intentalo de nuevo.',
     },
+    'auth/invalid-login-credentials': {
+      message: 'Invalid login credentials',
+      userMessage:
+        'No hemos podido validar ese acceso. Revisa el correo y la contrasena e intentalo de nuevo.',
+    },
     'auth/user-disabled': {
       message: 'User disabled',
       userMessage:
@@ -94,6 +105,21 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
       userMessage:
         'El proveedor Google no esta activado en Firebase Authentication para este proyecto.',
     },
+    'auth/configuration-not-found': {
+      message: 'Configuration not found',
+      userMessage:
+        'Google no esta bien configurado en Firebase Authentication para este proyecto.',
+    },
+    'auth/operation-not-supported-in-this-environment': {
+      message: 'Operation not supported in this environment',
+      userMessage:
+        'Este navegador no permite completar el acceso con ventana emergente. Vamos a usar redireccion.',
+    },
+    'auth/web-storage-unsupported': {
+      message: 'Web storage unsupported',
+      userMessage:
+        'Este navegador no permite guardar la sesion necesaria para completar el acceso.',
+    },
     'auth/popup-blocked': {
       message: 'Popup blocked',
       userMessage:
@@ -107,6 +133,36 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
       message: 'Too many requests',
       userMessage: 'Has hecho demasiados intentos. Espera un momento y vuelve a probar.',
     },
+    'auth/network-request-failed': {
+      message: 'Network request failed',
+      userMessage:
+        'No hemos podido hablar con Firebase por un problema de red. Intentalo de nuevo.',
+    },
+    'auth/app-not-authorized': {
+      message: 'App not authorized',
+      userMessage:
+        'La configuracion OAuth de Google no autoriza este acceso todavia. Revisa Firebase y Google Cloud.',
+    },
+    'auth/domain-config-required': {
+      message: 'Domain config required',
+      userMessage:
+        'Falta autorizar este dominio en Firebase Authentication para completar el acceso.',
+    },
+    'auth/invalid-app-credential': {
+      message: 'Invalid app credential',
+      userMessage:
+        'La credencial web de Firebase no es valida para este proyecto. Revisa la configuracion publica.',
+    },
+    'auth/internal-error': {
+      message: 'Internal error',
+      userMessage:
+        'Firebase ha devuelto un error interno al validar el acceso. Intentalo otra vez en unos minutos.',
+    },
+    'auth/invalid-api-key': {
+      message: 'Invalid API key',
+      userMessage:
+        'La API key publica de Firebase no es valida para este despliegue de Holded.',
+    },
     'auth/email-already-in-use': {
       message: 'Email already in use',
       userMessage: 'Ese correo ya tiene una cuenta. Inicia sesion para continuar.',
@@ -119,7 +175,9 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
 
   const mapped = errorMap[error.code] || {
     message: error.message,
-    userMessage: 'No hemos podido completar el acceso. Intenta de nuevo dentro de unos minutos.',
+    userMessage: error.code
+      ? `No hemos podido completar el acceso. Codigo: ${error.code}.`
+      : 'No hemos podido completar el acceso. Intenta de nuevo dentro de unos minutos.',
   };
 
   return {
@@ -166,6 +224,7 @@ export async function signInWithGoogle(options: SignInOptions = {}): Promise<Aut
 
   try {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
     const userCredential = await signInWithPopup(auth, provider);
 
     await mintSessionCookie(userCredential.user, {
@@ -173,6 +232,55 @@ export async function signInWithGoogle(options: SignInOptions = {}): Promise<Aut
     });
 
     return { user: userCredential.user, error: null, warning: null };
+  } catch (error) {
+    return { user: null, error: getErrorMessage(error as AuthError), warning: null };
+  }
+}
+
+export async function startGoogleRedirectSignIn(): Promise<RedirectSignInResult> {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) {
+    const unavailable = authUnavailable();
+    return {
+      redirecting: false,
+      error: unavailable.error!,
+    };
+  }
+
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    await signInWithRedirect(auth, provider);
+    return { redirecting: true, error: null };
+  } catch (error) {
+    return {
+      redirecting: false,
+      error: getErrorMessage(error as AuthError),
+    };
+  }
+}
+
+export async function consumeGoogleRedirectResult(options: SignInOptions = {}): Promise<AuthResult> {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
+
+  try {
+    const result = await getRedirectResult(auth);
+    if (!result?.user) {
+      return {
+        user: null,
+        error: {
+          code: 'auth/no-redirect-result',
+          message: 'No redirect result',
+          userMessage: 'No se ha encontrado un acceso pendiente para completar con Google.',
+        },
+        warning: null,
+      };
+    }
+
+    await mintSessionCookie(result.user, {
+      rememberDevice: options.rememberDevice,
+    });
+
+    return { user: result.user, error: null, warning: null };
   } catch (error) {
     return { user: null, error: getErrorMessage(error as AuthError), warning: null };
   }

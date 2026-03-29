@@ -8,12 +8,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   clearStaleFirebaseSession,
+  consumeGoogleRedirectResult,
   ensureCurrentFirebaseUserStillExists,
   registerWithEmail,
   requestPasswordReset,
   resetHoldedAuthState,
   signInWithEmail,
   signInWithGoogle,
+  startGoogleRedirectSignIn,
 } from '@/app/lib/auth';
 import { auth } from '@/app/lib/firebase';
 import { buildDashboardUrl } from '@/app/lib/holded-navigation';
@@ -23,6 +25,7 @@ const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 const ISAAK_SITE_URL = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
+const GOOGLE_REDIRECT_PENDING_KEY = 'holded_google_redirect_pending';
 
 function buildFallbackTarget(source: string) {
   return buildDashboardUrl(source);
@@ -153,6 +156,26 @@ function HoldedAuthContent() {
     }, 2500);
 
     const hydrateExistingUser = async () => {
+      const pendingGoogleRedirect = window.sessionStorage.getItem(GOOGLE_REDIRECT_PENDING_KEY);
+      if (pendingGoogleRedirect === '1') {
+        window.sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
+        const redirectResult = await consumeGoogleRedirectResult({ rememberDevice });
+
+        if (redirectResult.error) {
+          if (!cancelled) {
+            setExistingUserChecking(false);
+            setError(redirectResult.error.userMessage);
+          }
+          return;
+        }
+
+        if (redirectResult.user) {
+          redirectedRef.current = true;
+          redirectToTarget(postLoginTarget);
+          return;
+        }
+      }
+
       if (isRegisterMode) {
         await resetHoldedAuthState();
         if (!cancelled) setExistingUserChecking(false);
@@ -293,6 +316,19 @@ function HoldedAuthContent() {
     try {
       const result = await signInWithGoogle({ rememberDevice });
       if (result.error) {
+        if (
+          result.error.code === 'auth/popup-blocked' ||
+          result.error.code === 'auth/operation-not-supported-in-this-environment' ||
+          result.error.code === 'auth/web-storage-unsupported'
+        ) {
+          window.sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, '1');
+          const redirectFallback = await startGoogleRedirectSignIn();
+          if (!redirectFallback.redirecting && redirectFallback.error) {
+            setError(redirectFallback.error.userMessage);
+          }
+          return;
+        }
+
         setError(result.error.userMessage);
         return;
       }
