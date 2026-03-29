@@ -14,6 +14,7 @@ Runtime real del conector:
 - MCP server: [apps/app/app/api/mcp/holded/route.ts](c:\dev\verifactu-monorepo\apps\app\app\api\mcp\holded\route.ts)
 - OAuth authorize: [apps/app/app/oauth/authorize/route.ts](c:\dev\verifactu-monorepo\apps\app\app\oauth\authorize\route.ts)
 - OAuth token: [apps/app/app/oauth/token/route.ts](c:\dev\verifactu-monorepo\apps\app\app\oauth\token\route.ts)
+- OAuth register: [apps/app/app/oauth/register/route.ts](c:\dev\verifactu-monorepo\apps\app\app\oauth\register\route.ts)
 - OAuth userinfo: [apps/app/app/oauth/userinfo/route.ts](c:\dev\verifactu-monorepo\apps\app\app\oauth\userinfo\route.ts)
 - Metadata OAuth: [apps/app/app/.well-known/oauth-authorization-server/route.ts](c:\dev\verifactu-monorepo\apps\app\app.well-known\oauth-authorization-server\route.ts)
 - Protected resource metadata: [apps/app/app/.well-known/oauth-protected-resource/route.ts](c:\dev\verifactu-monorepo\apps\app\app.well-known\oauth-protected-resource\route.ts)
@@ -31,8 +32,10 @@ Runtime real del conector:
 - Tipo: `OAuth 2.0`
 - Authorization endpoint: `https://app.verifactu.business/oauth/authorize`
 - Token endpoint: `https://app.verifactu.business/oauth/token`
+- Registration endpoint: `https://app.verifactu.business/oauth/register`
 - Userinfo endpoint: `https://app.verifactu.business/oauth/userinfo`
 - Metodo de autenticacion del token endpoint: `none`
+- Client ID: se obtiene via registro dinamico en `POST /oauth/register`
 - Client secret: vacio
 - Grant type soportado: `authorization_code`
 - Response type soportado: `code`
@@ -44,6 +47,21 @@ Runtime real del conector:
 - Authorization server metadata: `https://app.verifactu.business/.well-known/oauth-authorization-server`
 - Protected resource metadata: `https://app.verifactu.business/.well-known/oauth-protected-resource`
 - Recurso protegido: `https://app.verifactu.business/api/mcp/holded`
+
+### 3.1 Registro dinamico de cliente
+
+El servidor OAuth de Verifactu expone registro dinamico de cliente para OpenAI:
+
+- `POST https://app.verifactu.business/oauth/register`
+
+Comportamiento:
+
+- cliente publico
+- sin `client_secret`
+- `token_endpoint_auth_method = none`
+- `grant_types = [authorization_code]`
+- `response_types = [code]`
+- `redirect_uris` validadas contra origenes permitidos
 
 ### 4. URL base del desafio
 
@@ -120,6 +138,7 @@ Tools MCP actuales:
    - `/.well-known/oauth-authorization-server`
    - `/.well-known/oauth-protected-resource`
    - `/.well-known/openai-apps-challenge`
+   - `/oauth/register`
    - `/api/mcp/holded`
 
 ### Datos
@@ -165,6 +184,7 @@ Esperado:
 - no hay refresh token
 - no hay OIDC completo
 - el token endpoint usa `none` como metodo de autenticacion del cliente
+- el registro dinamico devuelve un cliente publico sin secreto
 - el conector depende de que el usuario ya tenga Holded conectado en Verifactu
 
 ## Errores tipicos

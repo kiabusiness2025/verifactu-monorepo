@@ -7,6 +7,7 @@ export const MCP_RESOURCE_PATH = '/api/mcp/holded';
 export const MCP_AUTHORIZATION_PATH = '/oauth/authorize';
 export const MCP_TOKEN_PATH = '/oauth/token';
 export const MCP_USERINFO_PATH = '/oauth/userinfo';
+export const MCP_REGISTRATION_PATH = '/oauth/register';
 export const MCP_AUTH_SERVER_METADATA_PATH = '/.well-known/oauth-authorization-server';
 export const MCP_PROTECTED_RESOURCE_METADATA_PATH = '/.well-known/oauth-protected-resource';
 
@@ -87,6 +88,10 @@ export function getTokenEndpoint() {
 
 export function getUserInfoEndpoint() {
   return `${getAppUrl()}${MCP_USERINFO_PATH}`;
+}
+
+export function getRegistrationEndpoint() {
+  return `${getAppUrl()}${MCP_REGISTRATION_PATH}`;
 }
 
 export function getAuthorizationServerMetadataUrl() {
