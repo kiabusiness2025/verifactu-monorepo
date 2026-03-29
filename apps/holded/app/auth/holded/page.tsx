@@ -527,7 +527,7 @@ function HoldedAuthContent() {
                       placeholder="Nombre y apellidos"
                       autoComplete="name"
                       required
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#7c8ef5] focus:ring-4 focus:ring-[#7c8ef5]/10"
+                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                     />
                   </div>
                 ) : null}
@@ -546,7 +546,7 @@ function HoldedAuthContent() {
                       placeholder="Correo electronico"
                       autoComplete="email"
                       required
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#7c8ef5] focus:ring-4 focus:ring-[#7c8ef5]/10"
+                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                     />
                   </div>
                 </div>
@@ -563,7 +563,7 @@ function HoldedAuthContent() {
                       onChange={(event) => setPhone(event.target.value)}
                       placeholder="+34 600 000 000"
                       autoComplete="tel"
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#7c8ef5] focus:ring-4 focus:ring-[#7c8ef5]/10"
+                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                     />
                   </div>
                 ) : null}
@@ -581,7 +581,7 @@ function HoldedAuthContent() {
                       placeholder="Contrasena"
                       autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
                       required
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#7c8ef5] focus:ring-4 focus:ring-[#7c8ef5]/10"
+                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                     />
                     <button
                       type="button"
@@ -611,7 +611,7 @@ function HoldedAuthContent() {
                         placeholder="Repite tu contrasena"
                         autoComplete="new-password"
                         required
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#7c8ef5] focus:ring-4 focus:ring-[#7c8ef5]/10"
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                       />
                       <button
                         type="button"
@@ -638,7 +638,7 @@ function HoldedAuthContent() {
                         type="checkbox"
                         checked={rememberDevice}
                         onChange={(event) => setRememberDevice(event.target.checked)}
-                        className="h-4 w-4 rounded border-slate-300 text-[#7c8ef5] focus:ring-[#7c8ef5]"
+                        className="h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
                       />
                       Mantener sesion
                     </label>
@@ -658,7 +658,7 @@ function HoldedAuthContent() {
                       type="checkbox"
                       checked={acceptLegal}
                       onChange={(event) => setAcceptLegal(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#7c8ef5] focus:ring-[#7c8ef5]"
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
                     />
                     <span>
                       Acepto los{' '}
@@ -680,7 +680,7 @@ function HoldedAuthContent() {
                       type="checkbox"
                       checked={acceptMarketing}
                       onChange={(event) => setAcceptMarketing(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#7c8ef5] focus:ring-[#7c8ef5]"
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
                     />
                     <span>Quiero recibir novedades y mejoras sobre Isaak y la integracion.</span>
                   </label>
@@ -692,7 +692,7 @@ function HoldedAuthContent() {
                       type="checkbox"
                       checked={rememberDevice}
                       onChange={(event) => setRememberDevice(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#7c8ef5] focus:ring-[#7c8ef5]"
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
                     />
                     <span>Recordar sesion en este dispositivo despues de verificar el correo.</span>
                   </label>
@@ -701,7 +701,7 @@ function HoldedAuthContent() {
                 <button
                   type="submit"
                   disabled={isLoading || existingUserChecking}
-                  className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#7c8ef5] px-5 text-sm font-semibold text-white shadow-[0_18px_38px_-22px_rgba(124,142,245,0.85)] transition hover:bg-[#6d80ef] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#ff5460] px-5 text-sm font-semibold text-white shadow-[0_18px_38px_-22px_rgba(255,84,96,0.85)] transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isLoading
                     ? isRegisterMode
