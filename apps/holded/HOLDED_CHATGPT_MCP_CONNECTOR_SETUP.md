@@ -228,6 +228,147 @@ These are the exact values and explanations to paste when OpenAI asks for tool a
 - `Why Destructive is false`
   - `It creates a draft and does not delete or irreversibly destroy existing data. It also requires explicit confirmation via confirm = true.`
 
+## Ready-to-paste English block for OpenAI
+
+Use this section as a direct copy/paste block when completing the OpenAI connector registration form.
+
+```text
+MCP Server
+Remote MCP Server
+
+MCP Server URL
+https://app.verifactu.business/api/mcp/holded
+
+Authentication
+OAuth 2.0
+
+Authorization URL
+https://app.verifactu.business/oauth/authorize
+
+Token URL
+https://app.verifactu.business/oauth/token
+
+Registration URL
+https://app.verifactu.business/oauth/register
+
+Authorization Server Base
+https://app.verifactu.business/.well-known/oauth-authorization-server
+
+Resource
+https://app.verifactu.business/api/mcp/holded
+
+Userinfo URL
+https://app.verifactu.business/oauth/userinfo
+
+Protected Resource Metadata
+https://app.verifactu.business/.well-known/oauth-protected-resource
+
+OAuth Client ID
+Use dynamic client registration. For the current ChatGPT redirect URI https://chatgpt.com/connector/oauth/Py3iPxF981UJ, the derived client_id is:
+openai-chatgpt-dc3910724e2c913016182543
+
+OAuth Client Secret
+Leave blank. This connector uses a public OAuth client with PKCE and token_endpoint_auth_method = none.
+
+Supported Scopes
+mcp.read holded.invoices.read holded.contacts.read holded.accounts.read holded.crm.read holded.projects.read holded.invoices.write
+
+Default Scopes
+mcp.read holded.invoices.read holded.contacts.read holded.accounts.read holded.crm.read holded.projects.read holded.invoices.write
+
+Grant Type
+authorization_code
+
+Response Type
+code
+
+PKCE
+S256
+
+Token Endpoint Auth Method
+none
+
+Challenge Base URL
+https://app.verifactu.business
+
+Challenge Endpoint
+https://app.verifactu.business/.well-known/openai-apps-challenge
+
+Tool Justification
+
+holded_list_invoices
+Read Only: Yes
+Why Read Only is True: This tool only lists invoices for the authenticated tenant's connected Holded account. It does not create, update, send, or delete invoices.
+Open World: No
+Why Open World is False: This tool is restricted to the tenant-scoped Holded connection already authorized in Verifactu. It does not browse the web or access arbitrary third-party resources.
+Destructive: No
+Why Destructive is False: This tool is a pure read operation and does not modify or remove data.
+
+holded_get_invoice
+Read Only: Yes
+Why Read Only is True: This tool retrieves one existing invoice by Holded invoice ID. It does not edit or change the invoice.
+Open World: No
+Why Open World is False: It only reads data from the authenticated tenant's connected Holded account.
+Destructive: No
+Why Destructive is False: It does not alter, overwrite, or delete any data.
+
+holded_list_contacts
+Read Only: Yes
+Why Read Only is True: This tool lists existing contacts or customers in Holded. It does not create or update contacts.
+Open World: No
+Why Open World is False: It only accesses the tenant's connected Holded account and does not reach external open resources.
+Destructive: No
+Why Destructive is False: It is read-only and has no side effects.
+
+holded_list_accounts
+Read Only: Yes
+Why Read Only is True: This tool lists accounting accounts available in Holded. It does not modify the chart of accounts.
+Open World: No
+Why Open World is False: It is limited to the tenant's authorized Holded integration.
+Destructive: No
+Why Destructive is False: It performs no write or delete action.
+
+holded_list_bookings
+Read Only: Yes
+Why Read Only is True: This tool lists CRM bookings or agenda items already stored in Holded. It does not create or edit bookings.
+Open World: No
+Why Open World is False: It only reads data from the authenticated tenant's connected Holded environment.
+Destructive: No
+Why Destructive is False: It has no destructive or mutating effect.
+
+holded_list_projects
+Read Only: Yes
+Why Read Only is True: This tool lists existing projects for the tenant. It does not create or modify projects.
+Open World: No
+Why Open World is False: It is scoped to the connected Holded account for the authorized tenant only.
+Destructive: No
+Why Destructive is False: It does not change any project data.
+
+holded_get_project
+Read Only: Yes
+Why Read Only is True: This tool retrieves one existing project by ID. It does not update project fields or status.
+Open World: No
+Why Open World is False: It only accesses the tenant's connected Holded account and does not access arbitrary external sources.
+Destructive: No
+Why Destructive is False: It is a read-only lookup with no side effects.
+
+holded_list_project_tasks
+Read Only: Yes
+Why Read Only is True: This tool lists tasks for an existing project. It does not create, reassign, complete, or delete tasks.
+Open World: No
+Why Open World is False: It is limited to project and task data within the authenticated tenant's Holded connection.
+Destructive: No
+Why Destructive is False: It only reads existing task data.
+
+holded_create_invoice_draft
+Read Only: No
+Why Read Only is False: This tool creates a new invoice draft in Holded, so it is a real write operation.
+Open World: No
+Why Open World is False: Even though it writes data, it is still scoped to the authenticated tenant's connected Holded account and does not operate on arbitrary open-world resources.
+Destructive: No
+Why Destructive is False: It creates a draft and does not delete or irreversibly destroy existing data. It also requires explicit confirmation via confirm = true.
+```
+
 ## Resumen ejecutivo
 
 Punto critico:
