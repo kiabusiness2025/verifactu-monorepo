@@ -1,7 +1,11 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { IsaakInstructionProfile, IsaakOnboardingProfile } from '@verifactu/integrations';
-import { buildSuggestedPrompts, getIsaakOnboardingState } from '@verifactu/integrations';
+import {
+  buildSuggestedPrompts,
+  getIsaakOnboardingState,
+  recordUsageEvent,
+} from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
 import {
@@ -220,6 +224,22 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
     redirect(buildHoldedProfileOnboardingUrl('isaak_chat_requires_profile', chatReturnUrl));
   }
 
+  await recordUsageEvent({
+    prisma,
+    tenantId: session.tenantId,
+    userId: session.userId,
+    type: 'ISAAK_CHAT_OPENED',
+    source: source || 'isaak_chat',
+    path: '/chat',
+    metadataJson: {
+      freshConnection: isFreshHoldedHandoff,
+      hasConnection: Boolean(effectiveConnection?.keyMasked),
+      onboardingCompleted: effectiveCompleted,
+    },
+  }).catch((error) => {
+    console.error('[isaak/chat] usage event write failed', error);
+  });
+
   return (
     <IsaakWorkspaceClient
       session={{
@@ -254,7 +274,8 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
           ? buildSuggestedPrompts(effectiveProfile.mainGoals)
           : undefined
       }
-      connectionSettingsUrl={buildHoldedProfileOnboardingUrl('isaak_chat_settings', chatReturnUrl)}
+      connectionSettingsUrl="/settings?section=connections"
+      settingsUrl="/settings"
     />
   );
 }

@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import type { IsaakInstructionProfile, IsaakOnboardingProfile } from '@verifactu/integrations';
 import {
   AlertCircle,
@@ -11,9 +11,13 @@ import {
   CreditCard,
   LifeBuoy,
   Loader2,
+  LogOut,
+  Menu,
   MessageSquarePlus,
   Paperclip,
   SendHorizonal,
+  Settings2,
+  X,
 } from 'lucide-react';
 
 type SessionInfo = {
@@ -33,63 +37,16 @@ type SessionInfo = {
   isAdmin?: boolean;
 };
 
-type Message = {
-  id: string;
-  role: 'assistant' | 'user';
-  content: string;
-};
-
-type ConversationSummary = {
-  id: string;
-  title: string | null;
-  lastActivity: string;
-};
-
-type OnboardingAnswers = {
-  preferredName: string;
-  companyName: string;
-  roleInCompany: string;
-  phone: string;
-  businessSector: string;
-  websiteState: string;
-  employeeRange: string;
-  goals: string[];
-};
-
-const STORAGE_VERSION = 'v2';
-
-const GOAL_OPTIONS = [
-  'Entender mi contabilidad',
-  'Resolver dudas fiscales',
-  'Emitir facturas facilmente',
-  'Controlar ingresos y gastos',
-  'Entender balances y resultados',
-  'Llevar mejor la gestion diaria',
-];
+type Message = { id: string; role: 'assistant' | 'user'; content: string };
+type ConversationSummary = { id: string; title: string | null; lastActivity: string };
+type AttachedFile = { id: string; name: string; sizeLabel: string };
 
 const QUICK_START_PROMPTS = [
+  'Quiero ver un resumen del negocio',
   'Cuanto he vendido este mes?',
-  'Que gastos tengo pendientes?',
-  'Hazme una factura',
+  'Que facturas tengo pendientes?',
+  'Explicame mis gastos recientes',
 ];
-
-const ROLE_OPTIONS = [
-  'Autonoma o fundador',
-  'Direccion',
-  'Finanzas o administracion',
-  'Asesoria interna',
-];
-const SECTOR_OPTIONS = [
-  'Servicios',
-  'Comercio',
-  'Tecnologia',
-  'Construccion',
-  'Hosteleria',
-  'Salud',
-  'Otro',
-];
-const WEBSITE_OPTIONS = ['Ya tenemos web', 'Aun no tenemos web'];
-const EMPLOYEE_OPTIONS = ['Solo yo', '2-5 empleados', '6-20 empleados', 'Mas de 20'];
 
 function formatDate(value: string | null) {
   if (!value) return 'No disponible';
@@ -111,26 +68,11 @@ function getSpanishGreeting() {
       timeZone: 'Europe/Madrid',
     }).format(new Date())
   );
-
   if (Number.isNaN(hour)) return 'Hola';
   if (hour < 6) return 'Buenas noches';
   if (hour < 12) return 'Buenos dias';
   if (hour < 20) return 'Buenas tardes';
   return 'Buenas noches';
-}
-
-function deriveName(session: SessionInfo) {
-  const raw =
-    session.name?.trim() ||
-    session.representative?.trim() ||
-    session.email?.split('@')[0] ||
-    'hola';
-  return (
-    raw
-      .split(' ')[0]
-      ?.replace(/[._-]+/g, ' ')
-      .trim() || 'hola'
-  );
 }
 
 function takeFirstName(value: string | null | undefined) {
@@ -139,8 +81,10 @@ function takeFirstName(value: string | null | undefined) {
   return normalized.split(' ')[0]?.trim() || normalized;
 }
 
-function storageKey(tenantId: string | null) {
-  return `isaak-chat-onboarding:${tenantId || 'anonymous'}:${STORAGE_VERSION}`;
+function deriveName(session: SessionInfo) {
+  return (
+    takeFirstName(session.name || session.representative || session.email?.split('@')[0]) || 'Hola'
+  );
 }
 
 function formatRoleLabel(value: string | null | undefined) {
@@ -159,6 +103,38 @@ function formatRoleLabel(value: string | null | undefined) {
   }
 }
 
+function formatFileSize(size: number) {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function AssistantAvatar() {
+  return (
+    <div className="relative mt-1 h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+      <Image
+        src="/Personalidad/isaak-avatar-verifactu.png"
+        alt="Isaak"
+        fill
+        sizes="36px"
+        className="object-cover"
+      />
+    </div>
+  );
+}
+
+function AssistantMessage({ children, extra }: { children: ReactNode; extra?: ReactNode }) {
+  return (
+    <div className="flex items-start gap-3">
+      <AssistantAvatar />
+      <div className="max-w-[min(100%,42rem)] rounded-[1.6rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.28)]">
+        <div>{children}</div>
+        {extra}
+      </div>
+    </div>
+  );
+}
+
 export default function IsaakWorkspaceClient({
   session,
   onboardingProfile,
@@ -166,6 +142,7 @@ export default function IsaakWorkspaceClient({
   connectionPending = false,
   quickPrompts,
   connectionSettingsUrl,
+  settingsUrl,
 }: {
   session: SessionInfo;
   onboardingProfile?: IsaakOnboardingProfile | null;
@@ -173,6 +150,7 @@ export default function IsaakWorkspaceClient({
   connectionPending?: boolean;
   quickPrompts?: string[];
   connectionSettingsUrl: string;
+  settingsUrl: string;
 }) {
   const [connectionState, setConnectionState] = useState(session);
   const [recentConversations, setRecentConversations] = useState<ConversationSummary[]>([]);
@@ -182,87 +160,83 @@ export default function IsaakWorkspaceClient({
   const [loading, setLoading] = useState(false);
   const [loadingConversation, setLoadingConversation] = useState(true);
   const [chatError, setChatError] = useState<string | null>(null);
-  const [introReady, setIntroReady] = useState(false);
   const [isCheckingConnection, setIsCheckingConnection] = useState(
     connectionPending && !session.keyMasked
   );
   const [connectionCheckAttempts, setConnectionCheckAttempts] = useState(0);
-  const [answers, setAnswers] = useState<OnboardingAnswers | null>(
-    onboardingProfile
-      ? {
-          preferredName: onboardingProfile.preferredName,
-          companyName: onboardingProfile.companyName,
-          roleInCompany: onboardingProfile.roleInCompanyOther || onboardingProfile.roleInCompany,
-          phone: onboardingProfile.phone || '',
-          businessSector: onboardingProfile.businessSector,
-          websiteState: onboardingProfile.website || '',
-          employeeRange: onboardingProfile.teamSize || '',
-          goals: onboardingProfile.mainGoals,
-        }
-      : null
-  );
-  const [step, setStep] = useState(0);
-  const [selectedName, setSelectedName] = useState('');
-  const [selectedCompany, setSelectedCompany] = useState('');
-  const [selectedRole, setSelectedRole] = useState('');
-  const [selectedPhone, setSelectedPhone] = useState(session.phone || '');
-  const [selectedSector, setSelectedSector] = useState('');
-  const [selectedWebsite, setSelectedWebsite] = useState('');
-  const [selectedEmployees, setSelectedEmployees] = useState('');
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
-  const chatRef = useRef<HTMLDivElement | null>(null);
+  const [typedGreetingCount, setTypedGreetingCount] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const answers = onboardingProfile
+    ? {
+        preferredName: onboardingProfile.preferredName,
+        companyName: onboardingProfile.companyName,
+        roleInCompany: onboardingProfile.roleInCompanyOther || onboardingProfile.roleInCompany,
+        goals: onboardingProfile.mainGoals,
+      }
+    : null;
 
   const hasLiveConnection = Boolean(connectionState.keyMasked);
-  const onboardingDone = Boolean(answers);
-  const isConnected = hasLiveConnection || (connectionPending && onboardingDone);
   const showConnectionWarmup = connectionPending && !hasLiveConnection;
   const connectionVerificationStalled =
     showConnectionWarmup && !isCheckingConnection && connectionCheckAttempts >= 8;
   const greeting = getSpanishGreeting();
-  const defaultName = useMemo(() => deriveName(connectionState), [connectionState]);
-  const companyOptions = useMemo(() => {
-    const values = [connectionState.tenantName, connectionState.legalName]
-      .map((value) => value?.trim())
-      .filter(Boolean) as string[];
-    return Array.from(new Set(values));
-  }, [connectionState.legalName, connectionState.tenantName]);
+  const displayName =
+    takeFirstName(answers?.preferredName || deriveName(connectionState)) || 'Hola';
+  const companyLabel =
+    answers?.companyName || connectionState.tenantName || connectionState.legalName;
+  const quickStartPrompts = quickPrompts?.length ? quickPrompts : QUICK_START_PROMPTS;
+  const onboardingGoalSummary =
+    answers?.goals?.slice(0, 2).join(' y ') ||
+    instructionProfile?.mainSupportGoals?.slice(0, 2).join(' y ') ||
+    '';
+  const greetingLine = `${greeting}, ${displayName}`;
+  const userInitial = displayName.trim().charAt(0).toUpperCase() || 'I';
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setIntroReady(true), 1500);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (onboardingProfile) return;
-    try {
-      const raw = window.localStorage.getItem(storageKey(session.tenantId));
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as OnboardingAnswers;
-      if (
-        parsed?.preferredName &&
-        parsed?.companyName &&
-        parsed?.roleInCompany &&
-        parsed?.businessSector &&
-        parsed?.websiteState &&
-        parsed?.employeeRange &&
-        Array.isArray(parsed?.goals)
-      ) {
-        setAnswers(parsed);
-        setSelectedName(parsed.preferredName);
-        setSelectedCompany(parsed.companyName);
-        setSelectedRole(parsed.roleInCompany);
-        setSelectedPhone(parsed.phone || '');
-        setSelectedSector(parsed.businessSector);
-        setSelectedWebsite(parsed.websiteState);
-        setSelectedEmployees(parsed.employeeRange);
-        setSelectedGoals(parsed.goals);
-        setStep(4);
-      }
-    } catch {
-      // ignore bad local onboarding state
+  const assistantLeadMessage = useMemo(() => {
+    if (showConnectionWarmup) {
+      return `Ya tengo tu contexto inicial y estoy terminando de confirmar la conexion con Holded para trabajar con ${companyLabel || 'tu empresa'}.`;
     }
-  }, [onboardingProfile, session.tenantId]);
+    if (!hasLiveConnection) {
+      return `En cuanto confirmemos Holded, podre ayudarte con datos reales de ${companyLabel || 'tu empresa'}.`;
+    }
+    return `Ya tengo acceso a tu cuenta de Holded${companyLabel ? ` y a ${companyLabel}` : ''}. Puedes preguntarme lo que necesites y me adapto a como quieres gestionar tu negocio.`;
+  }, [companyLabel, hasLiveConnection, showConnectionWarmup]);
+
+  const assistantSupportMessage = useMemo(() => {
+    if (showConnectionWarmup) {
+      return 'La comprobacion final esta en marcha. En cuanto termine, activare respuestas con tus datos reales sin sacarte del chat.';
+    }
+    if (!hasLiveConnection) {
+      return 'Todavia no he podido confirmar la conexion real de Holded. Puedes revisar la integracion sin perder tu contexto.';
+    }
+    if (onboardingGoalSummary) {
+      return `Voy a centrarme en ayudarte con ${onboardingGoalSummary}. Si quieres, empezamos con un resumen simple o con una tarea concreta.`;
+    }
+    return 'Puedo ayudarte a entender tus numeros, resolver dudas contables y preparar acciones concretas desde este mismo chat.';
+  }, [hasLiveConnection, onboardingGoalSummary, showConnectionWarmup]);
+
+  useEffect(() => {
+    if (messages.length > 0) return;
+    setTypedGreetingCount(0);
+    let current = 0;
+    const timeout = window.setTimeout(() => {
+      const interval = window.setInterval(() => {
+        current += 1;
+        setTypedGreetingCount(current);
+        if (current >= greetingLine.length) {
+          window.clearInterval(interval);
+        }
+      }, 26);
+    }, 240);
+    return () => window.clearTimeout(timeout);
+  }, [greetingLine, messages.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -274,9 +248,7 @@ export default function IsaakWorkspaceClient({
         const res = await fetch('/api/holded/status', { cache: 'no-store' });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data || cancelled) return false;
-
-        const hasResolvedConnection = Boolean(data.keyMasked);
-
+        const resolved = Boolean(data.keyMasked);
         setConnectionState((current) => ({
           ...current,
           tenantName: data.tenantName ?? current.tenantName,
@@ -286,87 +258,59 @@ export default function IsaakWorkspaceClient({
           connectedAt: data.connectedAt ?? current.connectedAt,
           lastValidatedAt: data.lastValidatedAt ?? current.lastValidatedAt,
           supportedModules:
-            hasResolvedConnection && Array.isArray(data.supportedModules)
+            resolved && Array.isArray(data.supportedModules)
               ? data.supportedModules
               : current.supportedModules,
           validationSummary: data.validationSummary ?? current.validationSummary,
         }));
-
-        return hasResolvedConnection;
+        return resolved;
       } catch {
         return false;
       }
     };
 
-    const pollConnection = async () => {
+    const poll = async () => {
       const resolved = await syncConnectionState();
       if (cancelled) return;
-
-      if (resolved) {
+      if (resolved || !connectionPending) {
         setIsCheckingConnection(false);
-        setConnectionCheckAttempts(0);
+        if (resolved) setConnectionCheckAttempts(0);
         return;
       }
-
-      if (!connectionPending) {
-        setIsCheckingConnection(false);
-        return;
-      }
-
       attempts += 1;
       setConnectionCheckAttempts(attempts);
-
       if (attempts >= 8) {
         setIsCheckingConnection(false);
         return;
       }
-
       setIsCheckingConnection(true);
-      timeoutId = window.setTimeout(() => {
-        void pollConnection();
-      }, 2200);
+      timeoutId = window.setTimeout(() => void poll(), 2200);
     };
 
     setIsCheckingConnection(connectionPending && !hasLiveConnection);
-    void pollConnection();
-
+    void poll();
     return () => {
       cancelled = true;
-      if (timeoutId) {
-        window.clearTimeout(timeoutId);
-      }
+      if (timeoutId) window.clearTimeout(timeoutId);
     };
   }, [connectionPending, hasLiveConnection]);
 
   useEffect(() => {
     let cancelled = false;
-
     const loadLatestConversation = async () => {
       setLoadingConversation(true);
-
       try {
         const listRes = await fetch('/api/holded/conversations');
         const listData = await listRes.json().catch(() => null);
-        if (!listRes.ok || !listData?.ok) {
-          throw new Error('No hemos podido cargar tus chats.');
-        }
-
+        if (!listRes.ok || !listData?.ok) throw new Error();
         const conversations = Array.isArray(listData.conversations) ? listData.conversations : [];
-        if (!cancelled) {
-          setRecentConversations(conversations);
-        }
-
+        if (!cancelled) setRecentConversations(conversations);
         const latestId = conversations[0]?.id;
         if (!latestId) return;
-
         const detailRes = await fetch(`/api/holded/conversations/${latestId}`);
         const detailData = await detailRes.json().catch(() => null);
-        if (!detailRes.ok || !detailData?.ok || !detailData?.conversation) {
-          throw new Error('No hemos podido recuperar el chat mas reciente.');
-        }
-
+        if (!detailRes.ok || !detailData?.ok || !detailData?.conversation) throw new Error();
         if (cancelled) return;
-
         setConversationId(detailData.conversation.id);
         setMessages(
           Array.isArray(detailData.conversation.messages)
@@ -385,59 +329,37 @@ export default function IsaakWorkspaceClient({
           setMessages([]);
         }
       } finally {
-        if (!cancelled) {
-          setLoadingConversation(false);
-        }
+        if (!cancelled) setLoadingConversation(false);
       }
     };
-
     void loadLatestConversation();
-
     return () => {
       cancelled = true;
     };
   }, []);
 
   useEffect(() => {
-    chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages, introReady, step]);
-
-  const persistOnboarding = (nextAnswers: OnboardingAnswers) => {
-    setAnswers(nextAnswers);
-    window.localStorage.setItem(storageKey(session.tenantId), JSON.stringify(nextAnswers));
-  };
-
-  const saveProfile = async (nextAnswers: OnboardingAnswers) => {
-    try {
-      await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: nextAnswers.preferredName,
-          companyName: nextAnswers.companyName,
-          phone: nextAnswers.phone,
-        }),
-      });
-    } catch {
-      // keep local onboarding state even if persistence fails
-    }
-  };
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, loading, typedGreetingCount, chatError]);
 
   const startNewChat = () => {
     setConversationId(null);
     setMessages([]);
+    setInput('');
     setChatError(null);
+    setAttachedFiles([]);
+    setSidebarOpen(false);
+    setUserMenuOpen(false);
   };
 
   const openConversation = async (id: string) => {
     setLoadingConversation(true);
+    setSidebarOpen(false);
+    setUserMenuOpen(false);
     try {
       const res = await fetch(`/api/holded/conversations/${id}`);
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok || !data?.conversation) {
-        throw new Error('No hemos podido abrir ese chat.');
-      }
-
+      if (!res.ok || !data?.ok || !data?.conversation) throw new Error();
       setConversationId(data.conversation.id);
       setMessages(
         Array.isArray(data.conversation.messages)
@@ -451,8 +373,8 @@ export default function IsaakWorkspaceClient({
           : []
       );
       setChatError(null);
-    } catch (error) {
-      setChatError(error instanceof Error ? error.message : 'No hemos podido abrir ese chat.');
+    } catch {
+      setChatError('No hemos podido abrir ese chat.');
     } finally {
       setLoadingConversation(false);
     }
@@ -461,18 +383,14 @@ export default function IsaakWorkspaceClient({
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading || !hasLiveConnection || !answers) return;
-
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: trimmed,
-    };
-
-    setMessages((current) => [...current, userMessage]);
+    setMessages((current) => [
+      ...current,
+      { id: `user-${Date.now()}`, role: 'user', content: trimmed },
+    ]);
     setInput('');
     setLoading(true);
     setChatError(null);
-
+    setAttachedFiles([]);
     try {
       const res = await fetch('/api/holded/chat', {
         method: 'POST',
@@ -480,37 +398,26 @@ export default function IsaakWorkspaceClient({
         body: JSON.stringify({ message: trimmed, conversationId }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.reply) {
-        throw new Error(data?.error || 'No hemos podido responder ahora mismo.');
-      }
-
+      if (!res.ok || !data?.reply) throw new Error(data?.error || 'No hemos podido responder.');
       if (data?.conversation?.id) {
         setConversationId(data.conversation.id);
-        setRecentConversations((current) => {
-          const next = [
+        setRecentConversations((current) =>
+          [
             {
               id: data.conversation.id,
-              title: data.conversation.title || 'Chat con Isaak',
+              title: data.conversation.title || 'Nueva conversación',
               lastActivity: new Date().toISOString(),
             },
             ...current.filter((item) => item.id !== data.conversation.id),
-          ];
-          return next.slice(0, 16);
-        });
+          ].slice(0, 16)
+        );
       }
-
       setMessages((current) => [
         ...current,
-        {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: data.reply,
-        },
+        { id: `assistant-${Date.now()}`, role: 'assistant', content: data.reply },
       ]);
     } catch (error) {
-      setChatError(
-        error instanceof Error ? error.message : 'No hemos podido responder ahora mismo.'
-      );
+      setChatError(error instanceof Error ? error.message : 'No hemos podido responder.');
     } finally {
       setLoading(false);
     }
@@ -518,333 +425,147 @@ export default function IsaakWorkspaceClient({
 
   const applyPromptToInput = (prompt: string) => {
     setInput(prompt);
-    window.requestAnimationFrame(() => {
-      inputRef.current?.focus();
-    });
+    requestAnimationFrame(() => inputRef.current?.focus());
   };
 
-  const selectedGoalCount = selectedGoals.length;
-  const companyLabel = answers?.companyName || companyOptions[0] || null;
-  const effectiveQuickPrompts = quickPrompts?.length ? quickPrompts : QUICK_START_PROMPTS;
-  const hasConversationHistory = recentConversations.length > 0;
-  const hasFewBusinessData =
-    hasLiveConnection &&
-    (!companyLabel ||
-      !connectionState.validationSummary ||
-      connectionState.supportedModules.length < 2);
-  const canShowSummaryCTA =
-    hasLiveConnection &&
-    (connectionState.supportedModules.length > 0 ||
-      Boolean(connectionState.validationSummary) ||
-      Boolean(connectionState.lastValidatedAt));
-  const welcomeGoals = answers?.goals?.slice(0, 2).join(' y ');
-  const displayName =
-    takeFirstName(answers?.preferredName || selectedName || defaultName) || 'Hola';
-  const userInitial = (displayName || session.email || 'I').trim().charAt(0).toUpperCase() || 'I';
-  const assistantLeadMessage = useMemo(() => {
-    const role = formatRoleLabel(answers?.roleInCompany);
-    const company = companyLabel || 'tu empresa';
-
-    if (!hasLiveConnection) {
-      if (connectionPending) {
-        return `Estoy terminando de enlazar tu espacio de ${company}. En unos segundos deberia quedar listo para trabajar con tus datos reales.`;
-      }
-      return `En cuanto conectemos Holded podre ayudarte con datos reales de ${company}.`;
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // noop
+    } finally {
+      window.location.href = 'https://holded.verifactu.business/auth/holded?source=isaak_logout';
     }
-
-    if (hasConversationHistory) {
-      return `Ya tengo a mano tu contexto de ${company} y podemos seguir donde lo dejaste o ir directos a una tarea concreta.`;
-    }
-
-    if (hasFewBusinessData) {
-      return `Ya tengo acceso a tu cuenta de Holded y he preparado todo para ayudarte con tu negocio en ${company}.`;
-    }
-
-    return `Ya tengo acceso a tu cuenta de Holded y he preparado todo para ayudarte con tu negocio en ${company}.`;
-  }, [answers?.roleInCompany, companyLabel, hasConversationHistory, hasFewBusinessData]);
-  const assistantSupportMessage = useMemo(() => {
-    if (!hasLiveConnection) {
-      if (connectionPending) {
-        return 'Ya tengo tu contexto inicial y estoy esperando la confirmacion final de Holded para activar respuestas con datos reales.';
-      }
-      return 'Conecta Holded y entrare con tus facturas, gastos y validaciones disponibles.';
-    }
-
-    if (hasFewBusinessData) {
-      return `Puedo empezar a ayudarte como ${formatRoleLabel(answers?.roleInCompany)} con una lectura clara de tu negocio y seguir afinando el contexto a medida que trabajamos.`;
-    }
-
-    const modules =
-      connectionState.supportedModules.length > 0
-        ? connectionState.supportedModules.slice(0, 4).join(', ')
-        : null;
-
-    if (modules) {
-      return `Puedo ayudarte a entender tus numeros, resolver dudas o hacer tareas en segundos. Ya veo informacion util de Holded en ${modules}.`;
-    }
-
-    return 'Puedo ayudarte a entender tus numeros, revisar tus pendientes y convertir dudas contables en respuestas claras y accionables.';
-  }, [
-    answers?.roleInCompany,
-    connectionPending,
-    connectionState.supportedModules,
-    greeting,
-    hasFewBusinessData,
-    hasLiveConnection,
-  ]);
-
-  const handleNameChoice = (value: string) => {
-    setSelectedName(value === 'Lo decidire despues' ? defaultName : value);
-    setStep(1);
   };
 
-  const handleCompanyChoice = (value: string) => {
-    setSelectedCompany(value);
-    setStep(2);
-  };
-
-  const handleRoleChoice = (value: string) => {
-    setSelectedRole(value);
-    setStep(3);
-  };
-
-  const toggleGoal = (goal: string) => {
-    setSelectedGoals((current) => {
-      if (current.includes(goal)) {
-        return current.filter((item) => item !== goal);
-      }
-      if (current.length >= 3) return current;
-      return [...current, goal];
-    });
-  };
-
-  const finishOnboarding = () => {
-    const nextAnswers = {
-      preferredName: selectedName || defaultName,
-      companyName: selectedCompany || companyLabel || 'tu empresa',
-      roleInCompany: selectedRole || ROLE_OPTIONS[0],
-      phone: selectedPhone.trim(),
-      businessSector: selectedSector || SECTOR_OPTIONS[0],
-      websiteState: selectedWebsite || WEBSITE_OPTIONS[0],
-      employeeRange: selectedEmployees || EMPLOYEE_OPTIONS[0],
-      goals: selectedGoals.length > 0 ? selectedGoals : [GOAL_OPTIONS[0]],
-    };
-    persistOnboarding(nextAnswers);
-    void saveProfile(nextAnswers);
-    setStep(4);
-  };
-
-  const renderWelcome = () => {
-    if (loadingConversation) {
-      return (
-        <div className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 text-sm text-slate-600 shadow-sm">
-          Cargando tu espacio...
-        </div>
-      );
-    }
-
-    if (!hasLiveConnection && !onboardingDone) {
-      if (showConnectionWarmup) {
-        return (
-          <div className="rounded-[2rem] border border-sky-200 bg-sky-50 p-6 text-left shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-semibold text-sky-900">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Estoy terminando de preparar la conexion de Holded
-            </div>
-            <p className="mt-3 text-sm leading-7 text-sky-950">
-              Ya he recibido tu configuracion inicial. En cuanto termine la verificacion final,
-              activare el chat con tus datos reales sin devolverte al onboarding.
-            </p>
-          </div>
-        );
-      }
-
-      return (
-        <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-left shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
-            <AlertCircle className="h-4 w-4" />
-            Falta conectar Holded
-          </div>
-          <p className="mt-3 text-sm leading-7 text-amber-950">
-            Para que Isaak trabaje con tus datos reales, primero necesitamos tu conexion con Holded.
-          </p>
-          <Link
-            href={connectionSettingsUrl}
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            Conectar Holded
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </div>
-      );
-    }
-
-    if (messages.length > 0) return null;
-
-    const validationHint = hasLiveConnection
-      ? connectionState.validationSummary || assistantSupportMessage
-      : connectionVerificationStalled
-        ? 'Todavia no he podido confirmar la conexion real de Holded. Puedes revisar la integracion sin perder tu contexto.'
-        : 'Ya tengo tu configuracion inicial y estoy terminando la comprobacion final de Holded.';
-
-    return (
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center py-10">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-            {greeting}, {displayName}
-          </h1>
-        </div>
-
-        {!introReady ? (
-          <div className="mr-8 inline-flex max-w-[240px] items-center gap-3 rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
-            <div className="isaak-typing-dots inline-flex items-center gap-1">
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="mr-8 rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
-              {assistantLeadMessage}
-            </div>
-
-            <div className="mr-8 rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
-              {validationHint}
-              {showConnectionWarmup ? (
-                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-900">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  {isCheckingConnection
-                    ? 'Comprobando la conexion con Holded'
-                    : 'La verificacion esta tardando mas de lo normal'}
-                </div>
-              ) : null}
-              {hasFewBusinessData ? (
-                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  Todavia estoy afinando contexto, pero ya puedo ayudarte
-                </div>
-              ) : null}
-              {hasLiveConnection ? (
-                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-900">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Holded conectado
-                </div>
-              ) : null}
-              {connectionVerificationStalled ? (
-                <div className="mt-4">
-                  <Link
-                    href={connectionSettingsUrl}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-                  >
-                    Revisar conexion Holded
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              ) : null}
-            </div>
-
-            {onboardingDone ? (
-              <div className="mr-8 rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
-                {hasConversationHistory
-                  ? 'He recuperado tu contexto. Si quieres, seguimos con una pregunta concreta.'
-                  : `Voy a centrarme en ayudarte con ${welcomeGoals || 'la gestion diaria de tu negocio'}. Puedes preguntarme lo que necesites.`}
-              </div>
-            ) : null}
-          </div>
-        )}
-      </div>
+  const handleFilesSelected = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    setAttachedFiles(
+      files.map((file) => ({
+        id: `${file.name}-${file.lastModified}-${file.size}`,
+        name: file.name,
+        sizeLabel: formatFileSize(file.size),
+      }))
     );
+    event.target.value = '';
   };
+
+  const connectionPill = (
+    <span
+      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${
+        hasLiveConnection
+          ? 'border border-emerald-200 bg-emerald-50 text-emerald-900'
+          : showConnectionWarmup
+            ? 'border border-sky-200 bg-sky-50 text-sky-900'
+            : 'border border-amber-200 bg-amber-50 text-amber-900'
+      }`}
+    >
+      {showConnectionWarmup ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : hasLiveConnection ? (
+        <CheckCircle2 className="h-3.5 w-3.5" />
+      ) : (
+        <AlertCircle className="h-3.5 w-3.5" />
+      )}
+      {hasLiveConnection
+        ? 'Holded conectado'
+        : showConnectionWarmup
+          ? isCheckingConnection
+            ? 'Comprobando conexion'
+            : 'Revision manual recomendada'
+          : 'Holded pendiente'}
+    </span>
+  );
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#fff8f3_0%,#fffdf8_38%,#ffffff_72%)] text-slate-900">
-      <div className="grid min-h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="flex min-h-screen flex-col border-b border-slate-200/80 bg-white/85 px-4 py-5 backdrop-blur lg:border-b-0 lg:border-r lg:px-5">
-          <div className="flex items-center gap-3">
-            <div className="relative h-12 w-12 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
-              <Image
-                src="/Personalidad/isaak-avatar-verifactu.png"
-                alt="Isaak"
-                fill
-                sizes="48px"
-                className="object-cover"
-                priority
-              />
+    <main className="min-h-dvh bg-[radial-gradient(circle_at_top,#f5f8ff_0%,#f8fafc_38%,#f8fafc_100%)] text-slate-900">
+      <div className="mx-auto flex min-h-dvh max-w-[1600px] flex-col lg:flex-row">
+        <div
+          className={`fixed inset-0 z-40 bg-slate-950/40 transition lg:hidden ${sidebarOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+          onClick={() => setSidebarOpen(false)}
+        />
+
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-[320px] flex-col border-r border-slate-200 bg-white px-4 py-4 shadow-2xl transition-transform lg:sticky lg:top-0 lg:h-dvh lg:w-[296px] lg:max-w-none lg:translate-x-0 lg:overflow-y-auto lg:shadow-none ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        >
+          <div className="flex items-center justify-between gap-3 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="relative h-11 w-11 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
+                <Image
+                  src="/Personalidad/isaak-avatar-verifactu.png"
+                  alt="Isaak"
+                  fill
+                  sizes="44px"
+                  className="object-cover"
+                  priority
+                />
+              </div>
+              <div>
+                <div className="text-base font-semibold text-slate-950">Isaak</div>
+                <div className="text-xs text-slate-500">Tu asistente contable</div>
+              </div>
             </div>
-            <div>
-              <div className="text-base font-semibold text-slate-950">Isaak</div>
-            </div>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 lg:hidden"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
+
           <button
             type="button"
             onClick={startNewChat}
-            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#2361d8] px-4 text-sm font-semibold text-white shadow-[0_18px_38px_-26px_rgba(35,97,216,0.8)] transition hover:bg-[#1d55c2]"
           >
             <MessageSquarePlus className="h-4 w-4" />
             Nuevo chat
           </button>
 
-          <div className="mt-6 rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Plan actual
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="mt-5 rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-950">Plan gratuito</div>
-                <div className="mt-1 text-sm text-slate-500">Ideal para empezar con Holded</div>
-              </div>
-              <button
-                type="button"
-                className="rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                Actualizar
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Integraciones
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-sm">
-                  <Image
-                    src="/brand/holded/holded-diamond-logo.png"
-                    alt="Holded"
-                    fill
-                    sizes="40px"
-                    className="object-contain p-2"
-                  />
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  Integracion principal
                 </div>
-                <div>
-                  <div className="text-sm font-semibold text-slate-950">Holded</div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {hasLiveConnection
-                      ? 'Conectado'
-                      : showConnectionWarmup
-                        ? 'Verificando'
-                        : 'Pendiente de conexion'}
-                  </div>
+                <div className="mt-2 text-sm font-semibold text-slate-950">Holded</div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {companyLabel || 'Empresa conectada'}
                 </div>
               </div>
+              <div className="relative h-11 w-11 overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-sm">
+                <Image
+                  src="/brand/holded/holded-diamond-logo.png"
+                  alt="Holded"
+                  fill
+                  sizes="44px"
+                  className="object-contain p-2"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <div>{connectionPill}</div>
               <Link
                 href={connectionSettingsUrl}
-                className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
               >
-                {isConnected ? 'Configurar' : 'Conectar'}
+                Configurar
+                <Settings2 className="h-3.5 w-3.5" />
               </Link>
             </div>
           </div>
 
-          <div className="mt-6">
-            <div className="px-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Historial
+          <div className="mt-5 min-h-0 flex-1 overflow-y-auto pb-4">
+            <div className="px-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+              Conversaciones
             </div>
             <div className="mt-3 space-y-2">
               {recentConversations.length === 0 ? (
-                <div className="rounded-[1.25rem] border border-dashed border-slate-200 px-4 py-5 text-sm leading-6 text-slate-500">
+                <div className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white px-4 py-5 text-sm leading-6 text-slate-500">
                   Tus chats apareceran aqui.
                 </div>
               ) : null}
@@ -853,212 +574,315 @@ export default function IsaakWorkspaceClient({
                   key={item.id}
                   type="button"
                   onClick={() => void openConversation(item.id)}
-                  className={`w-full rounded-[1.25rem] border px-4 py-3 text-left transition ${
-                    conversationId === item.id
-                      ? 'border-slate-900 bg-slate-950 text-white'
-                      : 'border-slate-200 bg-white hover:border-slate-300'
-                  }`}
+                  className={`w-full rounded-[1.25rem] border px-4 py-3 text-left transition ${conversationId === item.id ? 'border-[#2361d8]/20 bg-[#eef4ff] text-slate-900' : 'border-slate-200 bg-white hover:border-slate-300'}`}
                 >
-                  <div
-                    className={`truncate text-sm font-semibold ${
-                      conversationId === item.id ? 'text-white' : 'text-slate-900'
-                    }`}
-                  >
-                    {item.title || 'Chat con Isaak'}
+                  <div className="truncate text-sm font-semibold text-slate-900">
+                    {item.title || 'Nueva conversacion'}
                   </div>
-                  <div
-                    className={`mt-1 text-xs ${
-                      conversationId === item.id ? 'text-slate-300' : 'text-slate-500'
-                    }`}
-                  >
-                    {formatDate(item.lastActivity)}
-                  </div>
+                  <div className="mt-1 text-xs text-slate-500">{formatDate(item.lastActivity)}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="mt-auto pt-6">
+          <div className="border-t border-slate-200 pt-4">
             <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((current) => !current)}
+                className="flex w-full items-center gap-3 text-left"
+              >
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white">
                   {userInitial}
                 </div>
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-slate-950">
-                    {answers?.preferredName || session.name || defaultName}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold text-slate-950">{displayName}</div>
+                  <div className="truncate text-xs text-slate-500">
+                    {companyLabel || formatRoleLabel(answers?.roleInCompany)}
                   </div>
-                  <div className="text-xs text-slate-500">Plan gratuito</div>
                 </div>
-              </div>
+                <ChevronRight
+                  className={`h-4 w-4 text-slate-400 transition ${userMenuOpen ? 'rotate-90' : ''}`}
+                />
+              </button>
               <div className="mt-4 grid gap-2">
                 <Link
-                  href={connectionSettingsUrl}
+                  href={settingsUrl}
                   className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-white"
                 >
-                  Perfil y empresa
+                  Ajustes
                   <CreditCard className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/support"
                   className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-white"
                 >
-                  Soporte
+                  Ayuda
                   <LifeBuoy className="h-4 w-4" />
                 </Link>
               </div>
+              {userMenuOpen ? (
+                <div className="mt-3 space-y-2 rounded-[1.25rem] border border-slate-200 bg-slate-50 p-2">
+                  <Link
+                    href={`${settingsUrl}?section=profile`}
+                    className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
+                  >
+                    Mi perfil
+                  </Link>
+                  <Link
+                    href={`${settingsUrl}?section=company`}
+                    className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
+                  >
+                    Empresa
+                  </Link>
+                  <Link
+                    href={`${settingsUrl}?section=connections`}
+                    className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
+                  >
+                    Conexiones
+                  </Link>
+                  <Link
+                    href={`${settingsUrl}?section=isaak`}
+                    className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
+                  >
+                    Isaak
+                  </Link>
+                  <Link
+                    href={`${settingsUrl}?section=plan`}
+                    className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
+                  >
+                    Plan
+                  </Link>
+                  <Link
+                    href="/support"
+                    className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
+                  >
+                    Ayuda
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => void handleLogout()}
+                    disabled={loggingOut}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-rose-700 transition hover:bg-white disabled:opacity-60"
+                  >
+                    Cerrar sesion
+                    {loggingOut ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogOut className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </aside>
 
-        <section className="relative flex min-h-screen flex-col px-4 py-5 sm:px-8 lg:px-12">
-          <div className="flex items-center justify-end gap-4">
-            <div className="text-sm font-semibold tracking-[0.18em] text-slate-400">isaak.chat</div>
-          </div>
-
-          <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col" ref={chatRef}>
-            {messages.length === 0 ? (
-              <div className="flex flex-1 flex-col justify-center py-10">{renderWelcome()}</div>
-            ) : (
-              <div className="flex flex-1 flex-col justify-end pt-8">
-                <div className="mx-auto w-full max-w-3xl space-y-5 pb-6">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={
-                        message.role === 'assistant'
-                          ? 'mr-8 flex items-start gap-3'
-                          : 'ml-8 flex justify-end'
-                      }
-                    >
-                      {message.role === 'assistant' ? (
-                        <div className="relative mt-1 h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
-                          <Image
-                            src="/Personalidad/isaak-avatar-verifactu.png"
-                            alt="Isaak"
-                            fill
-                            sizes="36px"
-                            className="object-cover"
-                          />
-                        </div>
-                      ) : null}
-                      <div
-                        className={
-                          message.role === 'assistant'
-                            ? 'rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]'
-                            : 'max-w-[85%] rounded-[1.75rem] border border-[#2361d8]/10 bg-[#2361d8] px-5 py-4 text-sm leading-7 text-white shadow-[0_20px_48px_-40px_rgba(35,97,216,0.45)]'
-                        }
-                      >
-                        {message.content}
-                      </div>
-                    </div>
-                  ))}
-                  {loading ? (
-                    <div className="mr-8 flex items-start gap-3">
-                      <div className="relative mt-1 h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
-                        <Image
-                          src="/Personalidad/isaak-avatar-verifactu.png"
-                          alt="Isaak"
-                          fill
-                          sizes="36px"
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="rounded-[1.75rem] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600 shadow-[0_20px_48px_-40px_rgba(15,23,42,0.35)]">
-                        Isaak esta preparando una respuesta...
-                      </div>
-                    </div>
-                  ) : null}
+        <section className="flex min-h-dvh flex-1 flex-col">
+          <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
+            <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(true)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 lg:hidden"
+                >
+                  <Menu className="h-4 w-4" />
+                </button>
+                <div>
+                  <div className="text-sm font-semibold text-slate-950">isaak.chat</div>
+                  <div className="text-xs text-slate-500">
+                    {companyLabel || 'Espacio conectado'}
+                  </div>
                 </div>
               </div>
-            )}
+              <div className="hidden sm:block">{connectionPill}</div>
+            </div>
+          </header>
 
-            <div className="mx-auto w-full max-w-3xl pb-6">
+          <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4 sm:px-6 sm:pt-6 lg:px-8">
+            <div className="flex-1 overflow-y-auto">
+              <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-end">
+                {messages.length === 0 ? (
+                  <div className="space-y-5 py-8 sm:py-12">
+                    {loadingConversation ? (
+                      <AssistantMessage>
+                        Estoy recuperando tu espacio y tus ultimos mensajes...
+                      </AssistantMessage>
+                    ) : (
+                      <>
+                        <AssistantMessage>
+                          <div className="font-medium text-slate-900">
+                            {greetingLine.slice(0, typedGreetingCount)}
+                            {typedGreetingCount < greetingLine.length ? (
+                              <span className="ml-1 inline-block h-5 w-[2px] animate-pulse rounded-full bg-[#2361d8]" />
+                            ) : null}
+                          </div>
+                        </AssistantMessage>
+                        {typedGreetingCount >= greetingLine.length ? (
+                          <>
+                            <AssistantMessage>{assistantLeadMessage}</AssistantMessage>
+                            <AssistantMessage
+                              extra={
+                                <div className="mt-4 flex flex-wrap items-center gap-2">
+                                  {connectionPill}
+                                  {connectionVerificationStalled ? (
+                                    <Link
+                                      href={connectionSettingsUrl}
+                                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+                                    >
+                                      Revisar conexion Holded
+                                      <ChevronRight className="h-3.5 w-3.5" />
+                                    </Link>
+                                  ) : null}
+                                </div>
+                              }
+                            >
+                              {assistantSupportMessage}
+                            </AssistantMessage>
+                          </>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-5 py-8 sm:py-10">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={
+                          message.role === 'assistant'
+                            ? 'flex items-start gap-3'
+                            : 'flex justify-end'
+                        }
+                      >
+                        {message.role === 'assistant' ? <AssistantAvatar /> : null}
+                        <div
+                          className={
+                            message.role === 'assistant'
+                              ? 'max-w-[min(100%,42rem)] rounded-[1.6rem] border border-slate-200 bg-white px-5 py-4 text-sm leading-7 text-slate-700 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.28)]'
+                              : 'max-w-[min(100%,38rem)] rounded-[1.6rem] bg-[#2361d8] px-5 py-4 text-sm leading-7 text-white shadow-[0_20px_48px_-32px_rgba(35,97,216,0.5)]'
+                          }
+                        >
+                          {message.content}
+                        </div>
+                      </div>
+                    ))}
+                    {loading ? (
+                      <AssistantMessage>
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-[#2361d8]" />
+                          Isaak esta preparando una respuesta...
+                        </span>
+                      </AssistantMessage>
+                    ) : null}
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+            </div>
+
+            <div className="mx-auto mt-4 w-full max-w-3xl">
               {chatError ? (
-                <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                <div className="mb-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
                   {chatError}
                 </div>
               ) : null}
 
-              {onboardingDone ? (
-                <div className="mb-4 flex flex-wrap gap-3">
-                  {effectiveQuickPrompts.slice(0, 4).map((prompt) => (
+              {answers ? (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {quickStartPrompts.slice(0, 4).map((prompt) => (
                     <button
                       key={prompt}
                       type="button"
                       onClick={() => applyPromptToInput(prompt)}
                       disabled={!hasLiveConnection}
-                      className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-[#ff5460]/30 hover:bg-[#fff7f7] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
+                      className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-[#2361d8]/30 hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
                     >
                       {prompt}
                     </button>
                   ))}
-                  {canShowSummaryCTA ? (
+                </div>
+              ) : null}
+
+              {attachedFiles.length > 0 ? (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {attachedFiles.map((file) => (
                     <button
+                      key={file.id}
                       type="button"
-                      onClick={() => applyPromptToInput('Quiero ver un resumen del negocio')}
-                      disabled={!hasLiveConnection}
-                      className="rounded-full border border-[#2361d8]/20 bg-[#eef4ff] px-4 py-2.5 text-sm font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#dfeaff] disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-400"
+                      onClick={() =>
+                        setAttachedFiles((current) => current.filter((item) => item.id !== file.id))
+                      }
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
                     >
-                      Ver resumen del negocio
+                      <Paperclip className="h-3.5 w-3.5" />
+                      {file.name}
+                      <span className="text-slate-400">{file.sizeLabel}</span>
+                      <X className="h-3 w-3" />
                     </button>
-                  ) : null}
+                  ))}
                 </div>
               ) : null}
 
               <form
-                className="rounded-[2rem] border border-slate-200 bg-white p-3 shadow-[0_28px_80px_-48px_rgba(15,23,42,0.4)]"
+                className="rounded-[1.75rem] border border-slate-200 bg-white/95 p-3 shadow-[0_28px_64px_-40px_rgba(15,23,42,0.28)] backdrop-blur"
                 onSubmit={(event) => {
                   event.preventDefault();
                   void sendMessage(input);
                 }}
               >
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-2">
+                <div className="mb-3 flex items-center justify-between gap-3 px-2">
                   <button
                     type="button"
+                    onClick={() => fileInputRef.current?.click()}
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
                   >
                     <Paperclip className="h-4 w-4" />
                     Añadir documentos
                   </button>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span>Aplicaciones</span>
-                    <Link
-                      href={connectionSettingsUrl}
-                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 transition hover:bg-slate-50"
-                    >
-                      <div className="relative h-4 w-4 overflow-hidden rounded-full">
-                        <Image
-                          src="/brand/holded/holded-diamond-logo.png"
-                          alt="Holded"
-                          fill
-                          sizes="16px"
-                          className="object-contain"
-                        />
-                      </div>
-                      Holded
-                    </Link>
-                  </div>
+                  <Link
+                    href={connectionSettingsUrl}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    <div className="relative h-4 w-4 overflow-hidden rounded-full">
+                      <Image
+                        src="/brand/holded/holded-diamond-logo.png"
+                        alt="Holded"
+                        fill
+                        sizes="16px"
+                        className="object-contain"
+                      />
+                    </div>
+                    Revisar conexión Holded
+                  </Link>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={handleFilesSelected}
+                  />
                 </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="flex items-end gap-3">
                   <textarea
                     ref={inputRef}
                     value={input}
                     onChange={(event) => setInput(event.target.value)}
                     placeholder={
-                      hasLiveConnection && onboardingDone
+                      hasLiveConnection && answers
                         ? 'Preguntame por ventas, gastos, cobros o facturas'
-                        : showConnectionWarmup && onboardingDone
-                          ? 'Estoy activando Holded con tus datos reales...'
-                          : 'Termina el arranque de Isaak para activar el chat'
+                        : showConnectionWarmup && answers
+                          ? 'Estoy terminando de activar Holded con tus datos reales...'
+                          : 'Completa la conexion de Holded para activar el chat'
                     }
                     rows={3}
-                    className="min-h-[92px] flex-1 resize-none rounded-[1.5rem] border-0 bg-transparent px-3 py-3 text-[15px] leading-7 text-slate-900 outline-none placeholder:text-slate-400"
+                    className="min-h-[96px] flex-1 resize-none rounded-[1.3rem] border border-slate-100 bg-slate-50 px-4 py-3 text-[15px] leading-7 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#2361d8]/20 focus:bg-white"
                   />
                   <button
                     type="submit"
-                    disabled={loading || !input.trim() || !hasLiveConnection || !onboardingDone}
-                    className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-950 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                    disabled={loading || !input.trim() || !hasLiveConnection || !answers}
+                    className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#2361d8] text-white transition hover:bg-[#1d55c2] disabled:cursor-not-allowed disabled:bg-slate-300"
                     aria-label="Enviar mensaje"
                   >
                     {loading ? (
@@ -1070,30 +894,21 @@ export default function IsaakWorkspaceClient({
                 </div>
               </form>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+              <div className="mt-3 flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   {hasLiveConnection
-                    ? `Holded conectado - Ultima validacion ${formatDate(connectionState.lastValidatedAt)}`
+                    ? `Ultima validacion ${formatDate(connectionState.lastValidatedAt)}`
                     : showConnectionWarmup
                       ? isCheckingConnection
-                        ? 'Verificando la conexion final de Holded'
+                        ? 'Comprobando la conexion final de Holded'
                         : 'La verificacion de Holded sigue pendiente'
                       : 'Conecta Holded para usar datos reales'}
                 </div>
-                <div className="flex items-center gap-3">
-                  <span>Integraciones disponibles</span>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
-                    <div className="relative h-4 w-4 overflow-hidden rounded-full">
-                      <Image
-                        src="/brand/holded/holded-diamond-logo.png"
-                        alt="Holded"
-                        fill
-                        sizes="16px"
-                        className="object-contain"
-                      />
-                    </div>
-                    Holded
-                  </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`h-2 w-2 rounded-full ${hasLiveConnection ? 'bg-emerald-500' : showConnectionWarmup ? 'bg-sky-500' : 'bg-amber-500'}`}
+                  />
+                  {companyLabel || 'Espacio de trabajo'}
                 </div>
               </div>
             </div>
