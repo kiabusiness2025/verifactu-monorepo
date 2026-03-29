@@ -2,66 +2,66 @@
 
 ## Objetivo
 
-Persistir la conexion Holded por API key de forma segura y reutilizable para:
+Persistir la conexion Holded por API key de forma segura, reutilizable y compatible con:
 
-- onboarding gratuito
-- dashboard actual
-- premium futuro
-- nuevas integraciones SaaS
+- onboarding publico en `holded.verifactu.business`
+- personalizacion inicial de Isaak
+- chat principal en `isaak.verifactu.business`
+- conector MCP remoto servido desde `app.verifactu.business`
 
-## Modelo de datos final
+## Frontera de ownership
 
-### User
+`apps/holded` se ocupa de:
 
-Representa a la persona autenticada.
+- captacion y acceso
+- recogida de la API key
+- validacion inicial
+- persistencia de la conexion
+- onboarding corto antes del chat
 
-Campos clave usados:
+`apps/holded` no sirve:
 
-- `User.id`
-- `User.email`
-- `User.authSubject`
+- el chat principal
+- el conector MCP de ChatGPT
+- el OAuth server del conector
 
-### Tenant
+El conector ChatGPT usa la conexion ya persistida, pero el runtime MCP vive en `apps/app`.
 
-Es la organizacion real del usuario. En este flujo equivale a la empresa o espacio de trabajo.
+## Modelo de datos reutilizado
 
-Campos clave usados:
+La conexion Holded no crea un modelo aislado solo para `holded`. Reutiliza el schema operativo del monorepo.
 
-- `Tenant.id`
-- `Tenant.name`
-- `Tenant.legalName`
-- `Tenant.nif`
+Entidades clave:
 
-### Membership
+- `User`
+- `Tenant`
+- `Membership`
+- `TenantProfile`
+- `ExternalConnection`
+- `TenantIntegration`
+- `IsaakOnboardingProfile`
+- `UsageEvent`
 
-Tabla de union entre usuario y organizacion.
+## ExternalConnection
 
-Regla minima:
-
-- un usuario autenticado debe tener una membresia activa
-- si no existe, `app/api/auth/session/route.ts` crea tenant + membership + preference
-- en el alta por email, `app/api/auth/register/route.ts` ya intenta dejar creado ese tenant inicial para que el acceso posterior sea mas estable
-
-### ExternalConnection
-
-Tabla canonica de conexiones por proveedor.
+Tabla canonica de conexion por proveedor.
 
 Para Holded:
 
 - `provider = "holded"`
 - `credentialType = "api_key"`
 - `apiKeyEnc` cifrada
-- `providerAccountId` = fingerprint tecnico de la API key
-- `scopesGranted` = modulos validados
-- `connectionStatus` = `connected` o `disconnected`
+- `providerAccountId` como fingerprint tecnico
+- `scopesGranted` con modulos o capacidades detectadas
+- `connectionStatus`
 - `connectedByUserId`
 - `connectedAt`
 - `lastValidatedAt`
 - `lastSyncAt`
 
-### TenantIntegration
+## TenantIntegration
 
-Capa de compatibilidad con la app principal.
+Se mantiene como capa de compatibilidad con superficies del producto que todavia leen integraciones desde ahi.
 
 Para Holded:
 
@@ -71,183 +71,123 @@ Para Holded:
 - `lastSyncAt`
 - `lastError`
 
-### UserOnboarding
+## TenantProfile
 
-Marca el onboarding como completado.
+Se usa para guardar datos de empresa cuando se pueden inferir de Holded o cuando el usuario los completa.
 
-Regla actual:
+Campos habituales:
 
-- al guardar la conexion correctamente se hace `upsert` con `completedAt = now()`
-
-### TenantProfile
-
-Se actualiza cuando se pueden inferir datos utiles del tenant.
-
-Campos usados:
-
-- `source = "holded"`
-- `sourceId = providerAccountId`
 - `tradeName`
 - `legalName`
 - `taxId`
 - `representative`
 - `email`
 - `phone`
+- `website`
+- `sector`
 
-Regla actual:
+## IsaakOnboardingProfile
 
-- en el registro guardamos nombre completo y telefono si el usuario los facilita
-- el nombre de empresa no se pide manualmente
-- la empresa visible para el producto debe venir de Holded cuando se conecta la API key
+Se usa para el contexto del asistente, no para datos canonicos de empresa.
 
-### ExternalConnectionAuditLog
+Campos habituales:
 
-Auditoria segura para eventos de conexion.
+- `preferredName`
+- `companyName`
+- `roleInCompany`
+- `businessSector`
+- `teamSize`
+- `mainGoals`
+- `communicationStyle`
+- `likelyKnowledgeLevel`
+- `holdedContextSnapshot`
 
-Acciones actuales:
+## Flujo backend real
 
-- `connect`
-- `disconnect`
-
-No se guarda nunca la API key en claro.
-
-## Flujo backend
-
-1. El usuario se autentica.
-2. `app/api/auth/session/route.ts` asegura `User`, `Tenant`, `Membership` y `UserPreference`.
+1. El usuario se autentica en `apps/holded`.
+2. `POST /api/auth/session` asegura `User`, `Tenant` y `Membership`.
 3. El usuario pega la API key en `/onboarding/holded`.
-4. `POST /api/holded/validate` prueba varios endpoints de Holded sin persistir.
+4. `POST /api/holded/validate` prueba la API key sin persistir.
 5. `POST /api/holded/connect`:
-   - revalida la API key
-   - cifra la clave
+   - revalida
+   - cifra la API key
    - calcula fingerprint
-   - guarda `ExternalConnection`
-   - guarda `TenantIntegration`
+   - guarda o actualiza `ExternalConnection`
+   - sincroniza `TenantIntegration`
    - intenta inferir metadatos utiles
-   - actualiza `Tenant` y `TenantProfile`
-   - marca `UserOnboarding.completedAt`
-   - escribe audit log seguro
-6. `GET /api/holded/status` devuelve el estado reutilizable para dashboard y futuras UIs.
-7. `DELETE /api/holded/connect` deja preparada la desconexion futura.
+   - actualiza `TenantProfile`
+   - registra `UsageEvent`
+6. El onboarding conversacional escribe `IsaakOnboardingProfile`.
+7. El usuario pasa a `isaak.verifactu.business/chat`.
+8. El chat y el MCP consumen la conexion Holded ya persistida a nivel tenant.
 
-## UX operativa actual
+## Cifrado y seguridad
 
-- el login avisa de que el correo debe coincidir con el registrado en Holded para futuros flujos OAuth
-- el aviso visible se mantiene corto para no cargar el formulario
-- el usuario puede marcar si quiere recordar sesion en ese dispositivo
-- si no llega un `next` explicito, el login entra por defecto al dashboard
-- el dashboard usa una experiencia chat-first minimalista
-- si el nombre del usuario parece autogenerado desde el email, se pide completar perfil antes de abrir el chat
-- el saludo principal usa la hora de `Europe/Madrid`
+- cifrado: `AES-256-GCM`
+- clave derivada de `INTEGRATIONS_SECRET_KEY` o fallback `SESSION_SECRET`
+- fingerprint tecnico: SHA-256 truncado
+- nunca se expone la API key en logs, respuestas o audit payloads
+- las respuestas publicas solo devuelven `keyMasked`
 
-## Cifrado y proteccion
-
-- algoritmo: `AES-256-GCM`
-- clave derivada de `INTEGRATIONS_SECRET_KEY` o fallback de `SESSION_SECRET`
-- fingerprint tecnico: SHA-256 truncado, no reversible
-- respuestas API siempre devuelven `keyMasked`
-
-## Metadatos guardados
-
-Si Holded responde, se intentan inferir:
-
-- nombre comercial
-- nombre legal
-- NIF o codigo
-- modulos disponibles
-- conteos basicos de muestras
-
-Limitacion:
-
-- Holded no expone aqui un `tenant id` claro y estable en este flujo, asi que `providerAccountId` es un fingerprint interno de la credencial, no un identificador remoto oficial.
-
-## Endpoints
+## Endpoints de apps/holded
 
 ### `POST /api/holded/validate`
 
-Valida la API key sin guardar nada.
-
-### `GET /api/holded/status`
-
-Devuelve:
-
-- `connected`
-- `status`
-- `keyMasked`
-- `connectedAt`
-- `lastValidatedAt`
-- `lastSyncAt`
-- `supportedModules`
-- `validationSummary`
-- `providerAccountId`
-- `tenantName`
-- `legalName`
-- `taxId`
+Valida la API key sin persistir.
 
 ### `POST /api/holded/connect`
 
-Conecta o reconecta.
+Conecta o reconecta Holded.
 
 ### `DELETE /api/holded/connect`
 
-Desconecta y limpia la credencial guardada.
+Desconecta Holded y limpia la credencial persistida.
+
+### `GET /api/holded/status`
+
+Devuelve el estado reutilizable por onboarding, settings y handoff.
+
+### `POST /api/onboarding/profile`
+
+Guarda el contexto inicial de Isaak tras la conexion Holded.
+
+## Metadatos que intentamos inferir
+
+Segun lo que responda Holded, se intenta inferir:
+
+- nombre comercial
+- nombre legal
+- NIF o codigo similar
+- modulos disponibles
+- conteos iniciales de muestra
+
+Limitacion importante:
+
+- Holded no nos da aqui un identificador remoto canonico tan claro como querriamos, asi que `providerAccountId` se trata como fingerprint tecnico interno
+
+## Lo que debe consultar el conector MCP
+
+El conector remoto no pide la API key al usuario final. Reutiliza:
+
+- el usuario autenticado en Verifactu
+- el tenant activo
+- la conexion Holded ya cifrada y persistida
+
+Esto mantiene a Verifactu como frontera de seguridad entre ChatGPT y Holded.
+
+## Ayuda oficial para generar la API key
+
+Fuente oficial recomendada para producto y soporte:
+
+- https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded
 
 ## Riesgos conocidos
 
-- la inferencia de metadatos del tenant depende de endpoints de negocio y puede no devolver nombre fiscal perfecto
-- el fingerprint no sustituye a un identificador remoto nativo de Holded
-- aun no existe UI publica de desconexion, solo endpoint backend
-- no hay sync historico ni refresh jobs, solo conexion inicial y chat
+- la inferencia de datos de empresa depende de endpoints de negocio, no de un endpoint publico de configuracion de compania
+- `TenantIntegration` sigue existiendo por compatibilidad y no conviene romperla todavia
+- hay artefactos locales sensibles en `apps/holded` que no deberian considerarse parte del runtime
 
-## Chat y memoria MVP
+## Referencias internas
 
-El MVP de `apps/holded` reutiliza modelos canonicos ya existentes:
-
-- `IsaakConversation`
-- `IsaakConversationMsg`
-- `IsaakMemoryFact`
-
-### Reglas de pertenencia
-
-- cada chat pertenece a un `tenantId`
-- cada chat pertenece a un `userId`
-- `context = "holded_free_dashboard"` delimita este flujo
-- la memoria simple se guarda con `scope = "user_private"`
-
-Esto garantiza que:
-
-- cada usuario tiene sus propios chats
-- cada chat pertenece a una organizacion concreta
-- la memoria no se mezcla entre usuarios del mismo tenant
-- cada consulta usa la conexion Holded del `tenantId` activo
-
-### Memoria MVP
-
-Mientras no exista memoria avanzada completa, se guarda solo:
-
-- `chat_preference:last_user_topic`
-- `holded_snapshot:latest_snapshot_counts`
-
-Caracteristicas:
-
-- persistente
-- acotada por `tenantId + userId`
-- sin documentos
-- sin embeddings
-- sin resumen automatico avanzado
-
-### Endpoints MVP
-
-- `POST /api/holded/chat`
-- `GET /api/holded/conversations`
-- `POST /api/holded/conversations`
-- `GET /api/holded/conversations/[id]`
-
-### Marcadores de evolucion
-
-La estructura ya permite ampliar despues a:
-
-- memoria avanzada por categorias y confirmacion
-- documentos por tenant y por chat
-- nuevas integraciones por `ExternalConnection.provider`
-- multiusuario real con memoria compartida por organizacion o por workspace
+- [README.md](./README.md)
+- [HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)

@@ -15,6 +15,8 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 - [README.md](../README.md) - Descripcion general del proyecto
 - [../apps/landing/README.md](../apps/landing/README.md) - Proyecto publico verifactu.business
 - [../apps/holded/README.md](../apps/holded/README.md) - Proyecto publico Holded
+- [../apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md](../apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md) - Arquitectura real de conexion Holded en la app publica
+- [../apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](../apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md) - Alta del conector MCP de Holded en ChatGPT y valores exactos de OAuth
 - [../apps/isaak/README.md](../apps/isaak/README.md) - Proyecto publico Isaak
 - [../apps/client/README.md](../apps/client/README.md) - Panel cliente y persistencia de Isaak
 - [product/OPERATIVE_CHECKLIST_ACCOUNTING_API_2026.md](product/OPERATIVE_CHECKLIST_ACCOUNTING_API_2026.md) - Checklist operativo unificado (planes, app, backend, datos, QA)

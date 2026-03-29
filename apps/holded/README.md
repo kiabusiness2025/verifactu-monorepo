@@ -1,172 +1,160 @@
 # holded.verifactu.business
 
-Aplicacion publica dedicada al onboarding y uso gratuito de Isaak con Holded.
+Aplicacion publica de captacion, acceso, conexion Holded por API key y onboarding corto antes del handoff a Isaak.
 
-## Posicion dentro del monorepo
+## Posicion real dentro del monorepo
 
-Este proyecto es el dominio publico de Holded:
+Dominios y ownership:
 
 - `verifactu.business` -> `apps/landing`
 - `holded.verifactu.business` -> `apps/holded`
 - `isaak.verifactu.business` -> `apps/isaak`
+- `app.verifactu.business` -> `apps/app`
+- `admin.verifactu.business` -> `apps/admin`
 
-Comparte base de datos, sesion y modelos con el resto, pero su experiencia publica es propia.
+Lo importante:
 
-## Regla de aislamiento
-
-- `apps/holded` solo sirve `holded.verifactu.business`
-- no resolver aqui rutas de `verifactu.business` ni `isaak.verifactu.business`
-- los emails de Holded deben salir desde `@holded.verifactu.business`
-- no reutilizar configuracion publica de landing para auth o branding de Holded
+- `apps/holded` no es el runtime del conector MCP de ChatGPT
+- el servidor MCP y el OAuth del conector viven en `apps/app`
+- `apps/holded` prepara al usuario, conecta Holded y entrega el contexto inicial a Isaak
 
 ## Objetivo del producto
 
-- llevar al usuario por un flujo simple y sin friccion
-- centrar la experiencia en la version gratuita
-- conectar Holded por API key, no por OAuth
-- dejar la persistencia preparada para premium y futuras integraciones
-- terminar siempre con handoff a `isaak.verifactu.business` como producto principal
+- reducir friccion desde la landing hasta el primer valor en Isaak
+- autenticar al usuario
+- conectar Holded por API key
+- recopilar el contexto inicial minimo para Isaak
+- redirigir al producto principal en `isaak.verifactu.business`
 
 ## Flujo funcional actual
 
 1. Landing en `/`
-2. Alta o login en `/auth/holded`
-3. Gracias en `/gracias`
-4. Verificacion en `/verificar`
-5. Onboarding en `/onboarding`
-6. Conexion Holded en `/onboarding/holded`
-7. Exito en `/onboarding/success`
-8. Handoff a Isaak en `/dashboard`
-9. Chat principal en `isaak.verifactu.business/chat`
+2. Alta o acceso en `/auth/holded`
+3. Continuidad de verificacion en `/gracias` y `/verificar`
+4. Entrada al flujo en `/onboarding`
+5. Conexion Holded en `/onboarding/holded`
+6. Transicion en `/onboarding/success`
+7. Onboarding conversacional en `/onboarding/profile`
+8. Handoff privado en `/dashboard`
+9. Chat principal en `https://isaak.verifactu.business/chat`
 
-## Alta y acceso
+## Lo que si vive en apps/holded
 
-### Registro actual
+- landing especifica de Holded
+- acceso y alta con Firebase Auth
+- correos del flujo Holded
+- validacion y guardado de la API key de Holded
+- onboarding conversacional inicial
+- handoff a Isaak
+- ayuda publica para conseguir la API key
 
-En `/auth/holded?mode=register` pedimos:
+## Lo que no debe vivir aqui
 
-- nombre completo
-- correo electronico
-- telefono opcional
-- contrasena
+- el chat principal de Isaak
+- el backoffice operativo definitivo
+- el servidor MCP remoto para ChatGPT
+- el OAuth server del conector MCP
+- la metadata `/.well-known/*` del conector
 
-Reglas UX actuales:
+Esos ownerships viven en:
 
-- el correo debe coincidir con el que el usuario tiene en Holded para facilitar OAuth y unificacion futura
-- el aviso visible en login se mantiene corto: `Usa el mismo correo que tienes registrado en Holded`
-- el usuario puede decidir si quiere recordar la sesion en este dispositivo
-- el nombre de empresa no se pide en el alta
-- la empresa se detecta despues al conectar la API key de Holded
-
-### Perfil minimo antes del chat
-
-El dashboard intenta saludar al usuario por su nombre real.
-
-Si el nombre guardado parece un valor automatico derivado del email:
-
-- se muestra un paso corto para completar perfil antes de abrir el chat
-- al guardar el nombre, el saludo pasa a usarlo directamente
-
-## Dashboard y handoff
-
-Direccion UX actual:
-
-- `apps/holded` ya no debe comportarse como dashboard final
-- `/dashboard` existe como paso de continuidad y redireccion segura hacia Isaak
-- el producto final visible vive en `apps/isaak`
-
-Regla de acceso actual:
-
-- si el login llega sin parametro `next`, la entrada por defecto va a `/dashboard`
-- onboarding solo se abre cuando el flujo lo pide explicitamente
-
-Reglas de contenido:
-
-- no mostrar mensajes contradictorios de “conectado” si no hay API key activa
-- la empresa visible en la experiencia principal debe venir de Holded
-- datos como telefono o preferencias deben vivir en configuracion de perfil, no en el lienzo principal del chat
+- `apps/isaak` para producto conversacional
+- `apps/admin` para operaciones
+- `apps/app` para el conector MCP, OAuth y el core compartido
 
 ## Persistencia e integracion Holded
 
-El diseño persistente actual reutiliza modelos existentes del monorepo:
+`apps/holded` reutiliza el modelo operativo del monorepo y no define un modelo aislado propio.
 
-- `User`: identidad autenticada
-- `Tenant`: organizacion real del usuario
-- `Membership`: relacion usuario-organizacion
-- `ExternalConnection`: conexion canónica por proveedor
-- `TenantIntegration`: capa de compatibilidad con el resto del producto
-- `UserOnboarding`: marca de onboarding completado
+Modelos clave reutilizados:
 
-La conexion Holded se guarda por `tenantId + provider=holded` en `external_connections`, con:
+- `User`
+- `Tenant`
+- `Membership`
+- `TenantProfile`
+- `ExternalConnection`
+- `TenantIntegration`
+- `IsaakOnboardingProfile`
+- `UsageEvent`
 
-- `credentialType=api_key`
-- `apiKeyEnc` cifrada en AES-256-GCM
-- `providerAccountId` como fingerprint no reversible de la API key
-- `scopesGranted` como lista de modulos validados
-- `connectionStatus`, `connectedAt`, `lastValidatedAt`, `lastSyncAt`
+La API key de Holded:
 
-En paralelo se mantiene `tenant_integrations` con `provider=accounting_api` para compatibilidad.
+- se valida primero sin persistir
+- se guarda cifrada
+- se asocia al `tenantId`
+- se reutiliza despues desde `isaak` y desde el MCP del core
 
-Tambien se actualiza:
+Documentacion tecnica:
 
-- `tenants.name`, `tenants.legal_name`, `tenants.nif` si se pueden inferir
-- `tenant_profiles` con `source=holded`
-- `tenant_profiles.representative`, `tenant_profiles.email`, `tenant_profiles.phone` desde el alta cuando el usuario los facilita
-- `user_onboarding.completed_at` cuando la conexion se guarda correctamente
-- `external_connection_audit_logs` con acciones `connect` y `disconnect` sin exponer secretos
-
-Documentacion tecnica detallada:
-
-- [HOLDED_CONNECTION_ARCHITECTURE.md](./HOLDED_CONNECTION_ARCHITECTURE.md)
+- [Arquitectura de conexion Holded](./HOLDED_CONNECTION_ARCHITECTURE.md)
+- [Configuracion del conector ChatGPT / MCP](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)
 
 ## Estructura relevante
 
-- `app/page.tsx`: landing gratuita
-- `app/auth/holded/page.tsx`: acceso y alta
-- `app/gracias/page.tsx`: gracias canonica
-- `app/verificar/page.tsx`: continuidad tras verificaciòn
-- `app/onboarding/page.tsx`: entrada al onboarding
-- `app/onboarding/holded/page.tsx`: pantalla de pegar API key
-- `app/onboarding/success/page.tsx`: exito y acceso al dashboard
-- `app/dashboard/page.tsx`: handoff privado hacia Isaak
-- `app/api/auth/session/route.ts`: sincronizacion de usuario, tenant y cookie
-- `app/api/auth/register/route.ts`: alta y correo de verificacion
-- `app/api/holded/validate/route.ts`: validacion de API key
-- `app/api/holded/connect/route.ts`: conectar, reconectar y desconectar
-- `app/api/holded/status/route.ts`: estado actual de la conexion
-- `app/lib/holded-integration.ts`: cifrado, validacion, persistencia y auditoria
-- `app/lib/holded-session.ts`: resolucion de sesion Holded
-- `app/admin/*`: puente temporal hacia `apps/admin`
-- `middleware.ts`: guard de onboarding y dashboard
+- [app/page.tsx](c:\dev\verifactu-monorepo\apps\holded\app\page.tsx)
+- [app/auth/holded/page.tsx](c:\dev\verifactu-monorepo\apps\holded\app\auth\holded\page.tsx)
+- [app/onboarding/holded/page.tsx](c:\dev\verifactu-monorepo\apps\holded\app\onboarding\holded\page.tsx)
+- [app/onboarding/profile/page.tsx](c:\dev\verifactu-monorepo\apps\holded\app\onboarding\profile\page.tsx)
+- [app/dashboard/page.tsx](c:\dev\verifactu-monorepo\apps\holded\app\dashboard\page.tsx)
+- [app/api/holded/validate/route.ts](c:\dev\verifactu-monorepo\apps\holded\app\api\holded\validate\route.ts)
+- [app/api/holded/connect/route.ts](c:\dev\verifactu-monorepo\apps\holded\app\api\holded\connect\route.ts)
+- [app/api/holded/status/route.ts](c:\dev\verifactu-monorepo\apps\holded\app\api\holded\status\route.ts)
+- [app/api/onboarding/profile/route.ts](c:\dev\verifactu-monorepo\apps\holded\app\api\onboarding\profile\route.ts)
+- [app/lib/holded-integration.ts](c:\dev\verifactu-monorepo\apps\holded\app\lib\holded-integration.ts)
+- [app/lib/auth.ts](c:\dev\verifactu-monorepo\apps\holded\app\lib\auth.ts)
 
 ## Variables de entorno clave
 
 - `DATABASE_URL`
+- `DIRECT_DATABASE_URL`
 - `SESSION_SECRET`
 - `SESSION_COOKIE_DOMAIN`
 - `NEXT_PUBLIC_HOLDED_SITE_URL`
 - `HOLDED_PUBLIC_URL`
-- `HOLDED_API_BASE_URL` opcional
-- `HOLDED_TIMEOUT_MS` opcional
 - `INTEGRATIONS_SECRET_KEY` o `INTEGRATION_SECRET_KEY`
 - `FIREBASE_ADMIN_PROJECT_ID`
 - `FIREBASE_ADMIN_CLIENT_EMAIL`
 - `FIREBASE_ADMIN_PRIVATE_KEY`
-- `NEXT_PUBLIC_FIREBASE_API_KEY` o `NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY`
-- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` o `NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN`
-- `NEXT_PUBLIC_FIREBASE_PROJECT_ID` o `NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID`
-- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` o `NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET`
-- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` o `NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID`
-- `NEXT_PUBLIC_FIREBASE_APP_ID` o `NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_HOLDED_ENABLE_GOOGLE_LOGIN`
 - `RESEND_API_KEY`
 - `RESEND_FROM`
 
-## Seguridad
+## Checklist operativo
 
-- no exponer nunca la API key en logs, respuestas ni audit payloads
-- almacenar la API key solo cifrada
-- mostrar al usuario solo mensajes seguros y cortos
-- usar `providerAccountId` como fingerprint tecnico, no como secreto reutilizable
+Antes de probar el flujo publico:
+
+1. Firebase Email/Password habilitado.
+2. Si se usa Google, provider Google habilitado en Firebase.
+3. `holded.verifactu.business` dado de alta como authorized domain en Firebase.
+4. `SESSION_SECRET` compartido con `isaak` si se quiere handoff sin login repetido.
+5. Holded conectado desde el flujo de onboarding.
+
+## Ayuda oficial de Holded
+
+Para explicar al usuario como generar la API key, usar como fuente principal:
+
+- https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded
+
+Resumen operativo:
+
+- requiere plan de pago de Holded
+- normalmente necesita rol `Owner` o `Administrador`
+- se genera desde configuracion de desarrolladores
+
+## Hallazgos de auditoria de este proyecto
+
+Puntos a vigilar:
+
+- hay artefactos locales sensibles en la raiz de `apps/holded` que no deberian permanecer ahi a largo plazo
+- `apps/holded` contiene archivos de trabajo local como `.next`, `.vercel` y `node_modules`
+- habia documentacion mezclando `apps/holded` con el runtime MCP de ChatGPT; esto ya debe considerarse incorrecto
+- la documentacion historica con referencias al dashboard/chat final dentro de `holded` ya no refleja el ownership actual
 
 ## Desarrollo local
 
@@ -182,33 +170,3 @@ Build:
 ```bash
 pnpm --filter verifactu-holded build
 ```
-
-## Validacion funcional recomendada
-
-- abrir `/`
-- crear acceso en `/auth/holded?mode=register`
-- revisar `/gracias`
-- confirmar `/verificar`
-- entrar en `/onboarding`
-- pegar API key valida en `/onboarding/holded`
-- confirmar `/onboarding/success`
-- entrar en `/dashboard`
-- revisar `GET /api/holded/status`
-
-## OAuth de Google
-
-Aunque Holded se conecta por API key, el acceso del usuario sigue usando Firebase Auth.
-
-Checklist minimo:
-
-1. Firebase Authentication -> Google enabled
-2. Authorized domains:
-   - `holded.verifactu.business`
-   - `localhost`
-   - `verifactu-business.firebaseapp.com`
-3. Redirect URI:
-   - `https://verifactu-business.firebaseapp.com/__/auth/handler`
-
-Endpoint de diagnostico:
-
-- `GET /api/auth/google/diagnostics`

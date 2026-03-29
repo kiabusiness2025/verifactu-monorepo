@@ -6,6 +6,7 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   reload,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -317,5 +318,24 @@ export async function findSignInMethodsForEmail(email: string) {
       error: error instanceof Error ? error.message : String(error),
     });
     return [];
+  }
+}
+
+export async function requestPasswordReset(email: string) {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) {
+    return {
+      ok: false as const,
+      error: authUnavailable().error,
+    };
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return { ok: true as const, error: null };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: getErrorMessage(error as AuthError),
+    };
   }
 }
