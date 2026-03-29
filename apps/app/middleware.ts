@@ -19,6 +19,13 @@ async function getSessionPayload(req: NextRequest): Promise<SessionPayload | nul
   }
 }
 
+function getHoldedUrl() {
+  return (
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.replace(/\/$/, '') ||
+    'https://holded.verifactu.business'
+  );
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const source = req.nextUrl.searchParams.get('source')?.toLowerCase() || '';
@@ -99,6 +106,7 @@ export async function middleware(req: NextRequest) {
 
   if (!session && !isDevelopment && !isAdminRoute) {
     const landingUrl = getLandingUrl();
+    const holdedUrl = getHoldedUrl();
     const appUrl = getAppUrl();
     const returnPath = pathname === '/' ? '/demo' : pathname;
     const returnQuery = req.nextUrl.search || '';
@@ -107,7 +115,8 @@ export async function middleware(req: NextRequest) {
       returnPath.startsWith('/onboarding/holded') ||
       req.nextUrl.searchParams.get('source')?.startsWith('holded') === true;
     const loginPath = isHoldedFlow ? '/auth/holded' : '/auth/login';
-    const loginUrl = `${landingUrl}${loginPath}?next=${encodeURIComponent(`${returnUrl}${returnQuery}`)}`;
+    const loginBase = isHoldedFlow ? holdedUrl : landingUrl;
+    const loginUrl = `${loginBase}${loginPath}?next=${encodeURIComponent(`${returnUrl}${returnQuery}`)}`;
     return NextResponse.redirect(loginUrl);
   }
 

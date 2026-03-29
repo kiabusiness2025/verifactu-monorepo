@@ -5,6 +5,9 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getLandingUrl } from '@/lib/urls';
 
+const HOLDED_SITE_URL =
+  process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+
 export default function LoginPage() {
   const searchParams = useSearchParams();
   const source = searchParams?.get('source')?.trim() || '';
@@ -17,7 +20,8 @@ export default function LoginPage() {
   useEffect(() => {
     const landingUrl = getLandingUrl();
     const loginPath = holdedMode ? '/auth/holded' : '/auth/login';
-    const loginUrl = new URL(loginPath, landingUrl);
+    const loginBase = holdedMode ? HOLDED_SITE_URL : landingUrl;
+    const loginUrl = new URL(loginPath, loginBase);
     if (next) {
       loginUrl.searchParams.set('next', next);
     }

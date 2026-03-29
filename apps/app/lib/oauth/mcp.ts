@@ -259,7 +259,9 @@ export function mapSessionToOAuthUser(input: {
 }
 
 export function buildLoginUrl(currentAuthorizeUrl: string, source?: string) {
-  const loginUrl = new URL('/login', getAppUrl());
+  const holdedSiteUrl =
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() || 'https://holded.verifactu.business';
+  const loginUrl = new URL('/auth/holded', holdedSiteUrl);
   loginUrl.searchParams.set('next', currentAuthorizeUrl);
   if (source?.trim()) {
     loginUrl.searchParams.set('source', source.trim());
