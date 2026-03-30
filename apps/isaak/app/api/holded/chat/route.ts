@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { recordUsageEvent } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
+import { buildYearAnalyticsSummary } from '@/app/lib/holded-analytics';
 import {
   appendConversationMessage,
   ensureHoldedConversation,
@@ -20,10 +21,37 @@ function isSummaryRequest(message: string) {
     text.includes('resumen rapido') ||
     text.includes('este mes') ||
     text.includes('trimestre') ||
+    text.includes('año') ||
+    text.includes('ano') ||
+    text.includes('ejercicio') ||
+    /\b20\d{2}\b/.test(text) ||
     text.includes('beneficio') ||
     text.includes('margen') ||
     text.includes('gasto')
   );
+}
+
+function extractRequestedYear(message: string, now = new Date()) {
+  const text = message.toLowerCase();
+  const explicitYear = text.match(/\b(20\d{2})\b/);
+
+  if (explicitYear) {
+    return Number(explicitYear[1]);
+  }
+
+  if (
+    text.includes('año pasado') ||
+    text.includes('ano pasado') ||
+    text.includes('ejercicio pasado')
+  ) {
+    return now.getFullYear() - 1;
+  }
+
+  if (text.includes('este año') || text.includes('este ano') || text.includes('ejercicio actual')) {
+    return now.getFullYear();
+  }
+
+  return null;
 }
 
 function formatMoney(amount: number | null | undefined) {
@@ -47,9 +75,36 @@ function buildReply(input: {
   const summary = input.context.holded.analytics;
   const insight = summary?.insight || input.context.summary;
   const tenantLabel = input.context.labels.companyName?.trim() || 'tu empresa';
+  const requestedYear = extractRequestedYear(input.message);
 
   if (!summary) {
     return `La conexion con Holded esta activa en ${tenantLabel}. Ya tengo tambien tu contexto de empresa y personalizacion de Isaak, pero todavia no he podido completar la lectura analitica. Si quieres, empezamos por facturas, clientes o configuracion.`;
+  }
+
+  if (requestedYear) {
+    const yearSummary = buildYearAnalyticsSummary(input.snapshot, requestedYear);
+
+    if (yearSummary.invoices === 0) {
+      return [
+        `No he encontrado documentos suficientes de ${tenantLabel} para ${requestedYear} dentro de la lectura actual de Holded.`,
+        '',
+        `Ahora mismo estoy leyendo ${input.snapshot.invoices.length} documentos en la muestra cargada. Si quieres, sigo ampliando la cobertura para darte el ejercicio completo con mas precision.`,
+      ].join('\n');
+    }
+
+    return [
+      `Este es el resumen de ${tenantLabel} para ${requestedYear}:`,
+      '',
+      `- Ventas del ejercicio: ${formatMoney(yearSummary.sales)}`,
+      `- Gastos detectados: ${formatMoney(yearSummary.expenses)}`,
+      `- Margen estimado: ${formatMoney(yearSummary.margin)}`,
+      `- Cobros pendientes en la muestra: ${formatMoney(yearSummary.pendingCollectionsAmount)}`,
+      `- Facturas o documentos analizados: ${yearSummary.invoices}`,
+      '',
+      yearSummary.expenseSignals > 0
+        ? 'Si quieres, puedo seguir con un desglose por trimestre o por meses.'
+        : 'Todavia no tengo suficiente señal de gastos para darte un margen contable fino. Si quieres, sigo con ventas por trimestre o con cobros pendientes.',
+    ].join('\n');
   }
 
   if (isSummaryRequest(text)) {

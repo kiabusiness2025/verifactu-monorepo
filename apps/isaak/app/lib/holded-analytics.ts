@@ -18,6 +18,16 @@ export type HoldedAnalyticsSummary = {
   insight: string;
 };
 
+export type HoldedRangeSummary = {
+  sales: number;
+  expenses: number | null;
+  margin: number | null;
+  pendingCollectionsAmount: number;
+  pendingCollectionsCount: number;
+  invoices: number;
+  expenseSignals: number;
+};
+
 function extractNumber(value: unknown) {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
 
@@ -121,6 +131,12 @@ function getCurrentQuarterRange(now = new Date()) {
   return { start, end };
 }
 
+function getYearRange(year: number) {
+  const start = new Date(year, 0, 1);
+  const end = new Date(year + 1, 0, 1);
+  return { start, end };
+}
+
 function isWithinRange(date: Date, start: Date, end: Date) {
   return date >= start && date < end;
 }
@@ -212,6 +228,62 @@ function buildInsight(summary: Omit<HoldedAnalyticsSummary, 'insight'>) {
   }
 
   return 'Ya puedo empezar a orientarte con una primera lectura real de ventas, facturas y contactos.';
+}
+
+export function buildRangeSummary(
+  snapshot: HoldedSnapshot,
+  start: Date,
+  end: Date
+): HoldedRangeSummary {
+  let sales = 0;
+  let expenses = 0;
+  let pendingCollectionsAmount = 0;
+  let pendingCollectionsCount = 0;
+  let invoices = 0;
+  let expenseSignals = 0;
+
+  for (const document of snapshot.invoices) {
+    if (!document || typeof document !== 'object') continue;
+
+    const date = readDocumentDate(document);
+    const amount = Math.abs(readDocumentAmount(document));
+    const status = readDocumentStatus(document);
+    const direction = inferDocumentDirection(document);
+
+    if (direction === 'sale' && isPendingCollectionStatus(status)) {
+      pendingCollectionsCount += 1;
+      pendingCollectionsAmount += amount;
+    }
+
+    if (!date || !isWithinRange(date, start, end)) continue;
+
+    invoices += 1;
+
+    if (direction === 'expense') {
+      expenses += amount;
+      expenseSignals += 1;
+    } else {
+      sales += amount;
+    }
+  }
+
+  return {
+    sales,
+    expenses: expenseSignals > 0 ? expenses : null,
+    margin: expenseSignals > 0 ? sales - expenses : null,
+    pendingCollectionsAmount,
+    pendingCollectionsCount,
+    invoices,
+    expenseSignals,
+  };
+}
+
+export function buildYearAnalyticsSummary(
+  snapshot: HoldedSnapshot,
+  year: number
+): HoldedRangeSummary {
+  const { start, end } = getYearRange(year);
+  return buildRangeSummary(snapshot, start, end);
 }
 
 export function buildHoldedAnalyticsSummary(

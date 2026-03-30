@@ -3,6 +3,10 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 
 const HOLDED_API_BASE_URL = process.env.HOLDED_API_BASE_URL?.trim() || 'https://api.holded.com';
 const HOLDED_TIMEOUT_MS = Number(process.env.HOLDED_TIMEOUT_MS || '10000');
+const HOLDED_SNAPSHOT_DOCUMENT_LIMIT = Number(process.env.HOLDED_SNAPSHOT_DOCUMENT_LIMIT || '100');
+const HOLDED_SNAPSHOT_DOCUMENT_PAGES = Number(process.env.HOLDED_SNAPSHOT_DOCUMENT_PAGES || '6');
+const HOLDED_SNAPSHOT_CONTACT_LIMIT = Number(process.env.HOLDED_SNAPSHOT_CONTACT_LIMIT || '50');
+const HOLDED_SNAPSHOT_ACCOUNT_LIMIT = Number(process.env.HOLDED_SNAPSHOT_ACCOUNT_LIMIT || '50');
 
 export type HoldedPrismaClient = Pick<
   PrismaClient,
@@ -200,6 +204,36 @@ async function holdedRequest<T>(apiKey: string, path: string, query?: Record<str
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function holdedRequestAllPages<T extends Record<string, unknown>>(input: {
+  apiKey: string;
+  path: string;
+  limit: number;
+  maxPages: number;
+  query?: Record<string, unknown>;
+}) {
+  const results: T[] = [];
+
+  for (let page = 1; page <= input.maxPages; page += 1) {
+    const batch = await holdedRequest<T[]>(input.apiKey, input.path, {
+      ...(input.query || {}),
+      limit: input.limit,
+      page,
+    }).catch(() => []);
+
+    if (!Array.isArray(batch) || batch.length === 0) {
+      break;
+    }
+
+    results.push(...batch);
+
+    if (batch.length < input.limit) {
+      break;
+    }
+  }
+
+  return results;
 }
 
 function pickSupportedModules(probe: HoldedProbeResult) {
@@ -870,27 +904,25 @@ export async function getHoldedConnection(input: {
 }
 
 export async function fetchHoldedSnapshot(apiKey: string) {
-  const [invoicePageOne, invoicePageTwo, contacts, accounts] = await Promise.all([
-    holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/invoicing/v1/documents', {
-      limit: 100,
-      page: 1,
-    }).catch(() => []),
-    holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/invoicing/v1/documents', {
-      limit: 100,
-      page: 2,
+  const [invoices, contacts, accounts] = await Promise.all([
+    holdedRequestAllPages<Record<string, unknown>>({
+      apiKey,
+      path: '/api/invoicing/v1/documents',
+      limit: HOLDED_SNAPSHOT_DOCUMENT_LIMIT,
+      maxPages: HOLDED_SNAPSHOT_DOCUMENT_PAGES,
     }).catch(() => []),
     holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/invoicing/v1/contacts', {
-      limit: 20,
+      limit: HOLDED_SNAPSHOT_CONTACT_LIMIT,
       page: 1,
     }).catch(() => []),
     holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/accounting/v1/accounts', {
-      limit: 20,
+      limit: HOLDED_SNAPSHOT_ACCOUNT_LIMIT,
       page: 1,
     }).catch(() => []),
   ]);
 
   return {
-    invoices: [...invoicePageOne, ...invoicePageTwo],
+    invoices,
     contacts,
     accounts,
   };
