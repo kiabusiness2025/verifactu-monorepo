@@ -172,6 +172,7 @@ export default function IsaakSettingsClient({
   const [isaak, setIsaak] = useState(settingsData.isaak);
   const [billing, setBilling] = useState(settingsData.billing);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeTone, setNoticeTone] = useState<'success' | 'danger'>('success');
   const [error, setError] = useState<string | null>(null);
   const [savingSection, setSavingSection] = useState<SectionKey | null>(null);
   const [apiKeyDraft, setApiKeyDraft] = useState('');
@@ -200,6 +201,7 @@ export default function IsaakSettingsClient({
   async function requestJson<T>(section: SectionKey, url: string, init?: RequestInit): Promise<T> {
     setSavingSection(section);
     setNotice(null);
+    setNoticeTone('success');
     setError(null);
     try {
       const res = await fetch(url, init);
@@ -228,6 +230,7 @@ export default function IsaakSettingsClient({
       });
       setProfile(data);
       setNotice('Perfil guardado.');
+      setNoticeTone('success');
     } catch {
       // handled in requestJson
     }
@@ -246,6 +249,7 @@ export default function IsaakSettingsClient({
         teamSize: company.teamSize,
       });
       setNotice('Empresa guardada.');
+      setNoticeTone('success');
     } catch {
       // handled in requestJson
     }
@@ -265,6 +269,7 @@ export default function IsaakSettingsClient({
       });
       setIsaak(data);
       setNotice('Ajustes de Isaak guardados.');
+      setNoticeTone('success');
     } catch {
       // handled in requestJson
     }
@@ -288,17 +293,19 @@ export default function IsaakSettingsClient({
       setConnection(data);
       setApiKeyDraft('');
       setNotice('Conexion Holded actualizada.');
+      setNoticeTone('success');
     } catch {
       // handled in requestJson
     }
   }
 
   async function disconnectHolded() {
-    if (
-      !window.confirm(
-        'Vas a desconectar Holded de este espacio. Puedes volver a conectarlo despues.'
-      )
-    ) {
+    const connectedCompany = connection.tenantName || company.tradeName || 'este espacio';
+    const confirmed = window.confirm(
+      `Vas a desconectar Holded de ${connectedCompany}.\n\nSi continuas, Isaak perdera acceso a los datos reales de la empresa, algunas respuestas quedaran limitadas y tendras que volver a conectar una API valida para reactivar el contexto.\n\nSolo continua si quieres cortar el acceso ahora.`
+    );
+
+    if (!confirmed) {
       return;
     }
 
@@ -308,10 +315,15 @@ export default function IsaakSettingsClient({
         '/api/settings/connections/holded/disconnect',
         {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirmDisconnect: true }),
         }
       );
       setConnection(data);
-      setNotice('Holded se ha desconectado.');
+      setNotice(
+        'Holded se ha desconectado. Isaak ya no puede acceder a los datos reales de la empresa hasta que vuelvas a conectar una API valida.'
+      );
+      setNoticeTone('danger');
     } catch {
       // handled in requestJson
     }
@@ -466,7 +478,13 @@ export default function IsaakSettingsClient({
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {notice ? (
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+                  <span
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                      noticeTone === 'danger'
+                        ? 'border border-rose-200 bg-rose-50 text-rose-800'
+                        : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+                    }`}
+                  >
                     {notice}
                   </span>
                 ) : null}
@@ -630,7 +648,13 @@ export default function IsaakSettingsClient({
                       </p>
                     </div>
                     <div
-                      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${connection.keyMasked ? 'border border-emerald-200 bg-emerald-50 text-emerald-900' : 'border border-amber-200 bg-amber-50 text-amber-900'}`}
+                      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                        connection.keyMasked
+                          ? 'border border-emerald-200 bg-emerald-50 text-emerald-900'
+                          : connection.status === 'disconnected'
+                            ? 'border border-rose-200 bg-rose-50 text-rose-900'
+                            : 'border border-amber-200 bg-amber-50 text-amber-900'
+                      }`}
                     >
                       {connection.keyMasked ? (
                         <CheckCircle2 className="h-3.5 w-3.5" />
@@ -668,6 +692,18 @@ export default function IsaakSettingsClient({
                         {connection.validationSummary}
                       </div>
                     ) : null}
+                    <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">
+                      <div className="font-semibold">Antes de desconectar Holded</div>
+                      <div className="mt-2">
+                        Si desconectas Holded, Isaak perdera acceso a ventas, gastos, facturas,
+                        cobros y resto de datos reales de tu empresa. El chat seguira disponible,
+                        pero con menos contexto y menos capacidad de ayudarte.
+                      </div>
+                      <div className="mt-2">
+                        Tambien enviaremos un aviso por correo al usuario y al admin para dejar
+                        constancia de la desconexion.
+                      </div>
+                    </div>
                     <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
                       <input
                         value={apiKeyDraft}
@@ -692,7 +728,7 @@ export default function IsaakSettingsClient({
                         type="button"
                         onClick={() => void disconnectHolded()}
                         disabled={savingSection === 'connections' || !connection.keyMasked}
-                        className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-white px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
                       >
                         Desconectar
                       </button>
