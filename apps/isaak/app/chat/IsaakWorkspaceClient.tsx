@@ -192,6 +192,7 @@ export default function IsaakWorkspaceClient({
   );
   const [connectionCheckAttempts, setConnectionCheckAttempts] = useState(0);
   const [typedGreetingCount, setTypedGreetingCount] = useState(0);
+  const [greeting, setGreeting] = useState('Hola');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -213,7 +214,6 @@ export default function IsaakWorkspaceClient({
   const showConnectionWarmup = connectionPending && !hasLiveConnection;
   const connectionVerificationStalled =
     showConnectionWarmup && !isCheckingConnection && connectionCheckAttempts >= 8;
-  const greeting = getSpanishGreeting();
   const displayName =
     takeFirstName(answers?.preferredName || deriveName(connectionState)) || 'Hola';
   const companyLabel =
@@ -398,6 +398,10 @@ export default function IsaakWorkspaceClient({
       if (timeoutId) window.clearTimeout(timeoutId);
     };
   }, [connectionPending, hasLiveConnection]);
+
+  useEffect(() => {
+    setGreeting(getSpanishGreeting());
+  }, []);
 
   useEffect(() => {
     let cancelled = false;

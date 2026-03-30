@@ -161,7 +161,16 @@ function buildReply(input: {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getHoldedSession();
+  let session;
+  try {
+    session = await getHoldedSession();
+  } catch (error) {
+    console.error('[holded/chat] session resolution failed', error);
+    return NextResponse.json(
+      { error: 'No he podido verificar tu sesion. Intenta accediendo de nuevo.' },
+      { status: 503 }
+    );
+  }
 
   if (!session?.tenantId || !session.userId) {
     return NextResponse.json(
@@ -170,15 +179,28 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const context = await loadIsaakBusinessContext(
-    {
+  let context;
+  try {
+    context = await loadIsaakBusinessContext(
+      {
+        tenantId: session.tenantId,
+        userId: session.userId,
+        name: session.name,
+        email: session.email,
+      },
+      { includeSnapshot: true }
+    );
+  } catch (error) {
+    console.error('[holded/chat] context load failed', {
       tenantId: session.tenantId,
       userId: session.userId,
-      name: session.name,
-      email: session.email,
-    },
-    { includeSnapshot: true }
-  );
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json(
+      { error: 'No he podido cargar el contexto de tu negocio en este momento. Intenta de nuevo.' },
+      { status: 503 }
+    );
+  }
 
   if (!context.holded.connection?.apiKey) {
     return NextResponse.json(
@@ -242,17 +264,39 @@ export async function POST(request: NextRequest) {
   const snapshot = context.holded.snapshot;
 
   if (!snapshot) {
+    console.error('[holded/chat] snapshot is null', {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      hasConnection: Boolean(context.holded.connection?.apiKey),
+      connectionStatus: context.holded.connection?.status,
+    });
     return NextResponse.json(
-      { error: 'No he podido recuperar todavia la lectura analitica de Holded.' },
+      {
+        error:
+          'No he podido recuperar todavia la lectura analitica de Holded. Por favor, revisa la conexion.',
+      },
       { status: 503 }
     );
   }
 
-  const reply = buildReply({
-    message,
-    snapshot,
-    context,
-  });
+  let reply: string;
+  try {
+    reply = buildReply({
+      message,
+      snapshot,
+      context,
+    });
+  } catch (error) {
+    console.error('[holded/chat] reply build failed', {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json(
+      { error: 'No he podido procesar tu pregunta en este momento. Intenta de nuevo.' },
+      { status: 503 }
+    );
+  }
 
   let assistantMessage: Awaited<ReturnType<typeof appendConversationMessage>> | null = null;
 

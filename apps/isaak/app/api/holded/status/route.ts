@@ -5,7 +5,16 @@ import { getHoldedConnection } from '@/app/lib/holded-integration';
 export const runtime = 'nodejs';
 
 export async function GET() {
-  const session = await getHoldedSession();
+  let session;
+  try {
+    session = await getHoldedSession();
+  } catch (error) {
+    console.error('[holded/status] session resolution failed', error);
+    return NextResponse.json(
+      { error: 'No he podido validar tu sesion ahora mismo.' },
+      { status: 503 }
+    );
+  }
 
   if (!session?.tenantId) {
     return NextResponse.json(
@@ -14,7 +23,15 @@ export async function GET() {
     );
   }
 
-  const connection = await getHoldedConnection(session.tenantId);
+  let connection = null;
+  try {
+    connection = await getHoldedConnection(session.tenantId);
+  } catch (error) {
+    console.error('[holded/status] connection read failed', {
+      tenantId: session.tenantId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   return NextResponse.json({
     connected: Boolean(connection),
