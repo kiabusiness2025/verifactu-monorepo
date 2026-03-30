@@ -59,7 +59,8 @@ function mapUnknownAccessError(error: unknown): AuthErrorMessage {
   if (error && typeof error === 'object') {
     const maybeError = error as { message?: unknown; code?: unknown };
     const message = typeof maybeError.message === 'string' ? maybeError.message : '';
-    const code = typeof maybeError.code === 'string' ? maybeError.code : 'auth/internal-access-error';
+    const code =
+      typeof maybeError.code === 'string' ? maybeError.code : 'auth/internal-access-error';
 
     if (message.includes('Session mint failed')) {
       const jsonStart = message.indexOf('{');
@@ -154,8 +155,7 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
     },
     'auth/configuration-not-found': {
       message: 'Configuration not found',
-      userMessage:
-        'Google no esta bien configurado en Firebase Authentication para este proyecto.',
+      userMessage: 'Google no esta bien configurado en Firebase Authentication para este proyecto.',
     },
     'auth/operation-not-supported-in-this-environment': {
       message: 'Operation not supported in this environment',
@@ -200,6 +200,21 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
       userMessage:
         'La credencial web de Firebase no es valida para este proyecto. Revisa la configuracion publica.',
     },
+    'auth/firebase-app-check-token-is-invalid': {
+      message: 'Firebase App Check token is invalid',
+      userMessage:
+        'Firebase App Check esta rechazando este acceso. Revisa la configuracion de App Check o desactiva su enforcement para Holded hasta que la site key web este bien configurada.',
+    },
+    'auth/app-check-token-is-invalid': {
+      message: 'App Check token is invalid',
+      userMessage:
+        'Firebase App Check esta devolviendo un token invalido para este acceso. Revisa App Check y la configuracion web publicada de Holded.',
+    },
+    'auth/app-check-token-refresh-failed': {
+      message: 'App Check token refresh failed',
+      userMessage:
+        'Firebase App Check no ha podido renovar el token de seguridad del navegador. Revisa la configuracion de App Check o prueba de nuevo cuando la site key este corregida.',
+    },
     'auth/internal-error': {
       message: 'Internal error',
       userMessage:
@@ -207,8 +222,7 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
     },
     'auth/invalid-api-key': {
       message: 'Invalid API key',
-      userMessage:
-        'La API key publica de Firebase no es valida para este despliegue de Holded.',
+      userMessage: 'La API key publica de Firebase no es valida para este despliegue de Holded.',
     },
     'auth/email-already-in-use': {
       message: 'Email already in use',
@@ -320,7 +334,9 @@ export async function startGoogleRedirectSignIn(): Promise<RedirectSignInResult>
   }
 }
 
-export async function consumeGoogleRedirectResult(options: SignInOptions = {}): Promise<AuthResult> {
+export async function consumeGoogleRedirectResult(
+  options: SignInOptions = {}
+): Promise<AuthResult> {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
 
   try {

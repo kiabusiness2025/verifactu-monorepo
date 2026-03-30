@@ -21,7 +21,10 @@ function parseHost(value: string | null) {
 function deriveFirebaseAuthHandler(value: string | null) {
   if (!value) return null;
 
-  const normalized = value.replace(/^https?:\/\//i, '').split('/')[0]?.trim();
+  const normalized = value
+    .replace(/^https?:\/\//i, '')
+    .split('/')[0]
+    ?.trim();
   if (!normalized) return null;
   return `https://${normalized}/__/auth/handler`;
 }
@@ -38,6 +41,10 @@ export async function GET() {
     process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
     null;
   const firebaseAuthHandler = deriveFirebaseAuthHandler(firebaseAuthDomain);
+  const appCheckSiteKey =
+    process.env.NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY ||
+    process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
+    null;
 
   const checks = {
     firebaseClientConfigComplete: isFirebaseConfigComplete,
@@ -54,6 +61,9 @@ export async function GET() {
     firebaseAuthDomain,
     firebaseProjectId,
     firebaseAuthHandler,
+    appCheckSiteKeyConfigured: Boolean(appCheckSiteKey),
+    appCheckWebImplemented: false,
+    appCheckSiteKeyPreview: appCheckSiteKey ? `${appCheckSiteKey.slice(0, 6)}...` : null,
     appUrl: process.env.NEXT_PUBLIC_APP_URL || null,
   };
 
@@ -74,12 +84,15 @@ export async function GET() {
     firebaseAuthHandler
       ? `Para Firebase Web popup/redirect, confirma que el callback OAuth autorizado existe: ${firebaseAuthHandler}.`
       : 'No se ha podido derivar la URL exacta del callback Firebase desde NEXT_PUBLIC_*_FIREBASE_AUTH_DOMAIN.',
+    'Este proyecto no inicializa App Check en frontend todavia. Si App Check esta forzado en Firebase Authentication o Identity Platform, el login web fallara hasta desactivar enforcement o integrar la site key correcta.',
   ];
 
   const suggestions = [
     'En Firebase Authentication activa Google como proveedor y Email/Password como metodo de acceso.',
     'Anade holded.verifactu.business en Firebase Authentication -> Authorized domains si el login se abre desde Holded.',
     'Confirma que NEXT_PUBLIC_HOLDED_FIREBASE_* o NEXT_PUBLIC_FIREBASE_* estan definidos en el proyecto de Vercel de Holded.',
+    'Si ves errores auth/firebase-app-check-token-is-invalid, revisa si App Check esta activado para la app web de Firebase. Mientras no integremos App Check en frontend, desactiva enforcement para Authentication o elimina la configuracion rota.',
+    'Si quieres mantener App Check activo, crea la site key web correcta y publica NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY antes de volver a forzarlo.',
     'Valida que FIREBASE_ADMIN_* y SESSION_SECRET estan definidos para sesion backend.',
     firebaseAuthHandler
       ? `En Google Cloud Console, verifica que el OAuth client usado por Firebase mantiene ${firebaseAuthHandler} como redirect URI.`
