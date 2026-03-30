@@ -15,6 +15,7 @@ export {
   saveHoldedConnection,
 } from './holded/connection';
 export type {
+  HoldedConnectionChannel,
   HoldedConnectionRecord,
   HoldedPrismaClient,
   HoldedProbeResult,
