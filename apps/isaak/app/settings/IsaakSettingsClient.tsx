@@ -396,7 +396,7 @@ export default function IsaakSettingsClient({
                   {profile.firstName || 'Isaak user'}
                 </div>
                 <div className="text-sm text-slate-500">
-                  {company.tradeName || connection.tenantName || 'Tu espacio'}
+                  {connection.tenantName || company.tradeName || 'Tu espacio'}
                 </div>
               </div>
             </div>

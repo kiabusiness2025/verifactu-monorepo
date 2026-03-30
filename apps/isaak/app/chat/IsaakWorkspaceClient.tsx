@@ -190,7 +190,7 @@ export default function IsaakWorkspaceClient({
   const displayName =
     takeFirstName(answers?.preferredName || deriveName(connectionState)) || 'Hola';
   const companyLabel =
-    answers?.companyName || connectionState.tenantName || connectionState.legalName;
+    connectionState.tenantName || connectionState.legalName || answers?.companyName;
   const quickStartPrompts = quickPrompts?.length ? quickPrompts : QUICK_START_PROMPTS;
   const onboardingGoalSummary =
     answers?.goals?.slice(0, 2).join(' y ') ||
