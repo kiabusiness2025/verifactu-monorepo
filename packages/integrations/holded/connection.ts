@@ -949,6 +949,9 @@ export async function fetchHoldedSnapshot(apiKey: string) {
       record.data,
       record.results,
       record.documents,
+      record.docs,
+      record.invoices,
+      record.entries,
       record.rows,
       record.values,
     ];
@@ -962,13 +965,35 @@ export async function fetchHoldedSnapshot(apiKey: string) {
     return [] as T[];
   };
 
-  const [invoices, contacts, accounts] = await Promise.all([
+  const loadInvoices = async (query?: Record<string, unknown>) =>
     holdedRequestAllPages<Record<string, unknown>>({
       apiKey,
       path: '/api/invoicing/v1/documents',
       limit: HOLDED_SNAPSHOT_DOCUMENT_LIMIT,
       maxPages: HOLDED_SNAPSHOT_DOCUMENT_PAGES,
-    }).catch(() => []),
+      query,
+    }).catch(() => []);
+
+  let invoices = await loadInvoices();
+
+  if (invoices.length === 0) {
+    const invoiceQueryFallbacks: Array<Record<string, unknown>> = [
+      { docType: 'invoice' },
+      { doctype: 'invoice' },
+      { type: 'invoice' },
+      { documentType: 'invoice' },
+    ];
+
+    for (const query of invoiceQueryFallbacks) {
+      const batch = await loadInvoices(query);
+      if (batch.length > 0) {
+        invoices = batch;
+        break;
+      }
+    }
+  }
+
+  const [contacts, accounts] = await Promise.all([
     holdedRequest<unknown>(apiKey, '/api/invoicing/v1/contacts', {
       limit: HOLDED_SNAPSHOT_CONTACT_LIMIT,
       page: 1,
@@ -982,6 +1007,25 @@ export async function fetchHoldedSnapshot(apiKey: string) {
       .then((payload) => toCollection<Record<string, unknown>>(payload))
       .catch(() => []),
   ]);
+
+  if (invoices.length === 0) {
+    const samplePayload = await holdedRequest<unknown>(apiKey, '/api/invoicing/v1/documents', {
+      limit: 1,
+      page: 1,
+    }).catch(() => null);
+
+    const payloadShape = Array.isArray(samplePayload)
+      ? 'array'
+      : samplePayload && typeof samplePayload === 'object'
+        ? `object:${Object.keys(samplePayload as Record<string, unknown>).join(',')}`
+        : typeof samplePayload;
+
+    console.warn('[holded integration] invoice snapshot empty after fallbacks', {
+      payloadShape,
+      contacts: contacts.length,
+      accounts: accounts.length,
+    });
+  }
 
   return {
     invoices,
