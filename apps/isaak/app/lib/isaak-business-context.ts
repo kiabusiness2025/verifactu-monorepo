@@ -20,6 +20,7 @@ type BusinessSession = {
 };
 
 type TenantProfileRecord = {
+  source: string;
   representative: string | null;
   tradeName: string | null;
   legalName: string | null;
@@ -112,10 +113,10 @@ function buildFallbackProfile(input: {
       input.session.email?.split('@')[0] ||
       'Hola',
     companyName:
-      input.connection.tenantName ||
       input.tenantProfile?.tradeName ||
-      input.connection.legalName ||
       input.tenantProfile?.legalName ||
+      input.connection.tenantName ||
+      input.connection.legalName ||
       'tu empresa',
     roleInCompany: 'otro',
     roleInCompanyOther: null,
@@ -193,6 +194,51 @@ function buildContextSummary(input: {
   return parts.join(' ');
 }
 
+function resolvePreferredCompanyName(input: {
+  tenantProfile: TenantProfileRecord | null;
+  onboardingProfile: IsaakOnboardingProfile | null;
+  connection: HoldedConnectionRecord | null;
+}) {
+  const manualTradeName =
+    input.tenantProfile && input.tenantProfile.source !== 'holded'
+      ? input.tenantProfile.tradeName
+      : null;
+  const manualLegalName =
+    input.tenantProfile && input.tenantProfile.source !== 'holded'
+      ? input.tenantProfile.legalName
+      : null;
+  const holdedSyncedTradeName =
+    input.tenantProfile && input.tenantProfile.source === 'holded'
+      ? input.tenantProfile.tradeName
+      : null;
+  const holdedSyncedLegalName =
+    input.tenantProfile && input.tenantProfile.source === 'holded'
+      ? input.tenantProfile.legalName
+      : null;
+
+  const companyName =
+    manualTradeName ||
+    input.onboardingProfile?.companyName ||
+    manualLegalName ||
+    holdedSyncedTradeName ||
+    input.connection?.tenantName ||
+    holdedSyncedLegalName ||
+    input.connection?.legalName ||
+    null;
+
+  const legalName =
+    manualLegalName ||
+    holdedSyncedLegalName ||
+    input.connection?.legalName ||
+    input.onboardingProfile?.companyName ||
+    companyName;
+
+  return {
+    companyName,
+    legalName,
+  };
+}
+
 export async function loadIsaakBusinessContext(
   session: BusinessSession,
   options?: {
@@ -213,6 +259,7 @@ export async function loadIsaakBusinessContext(
     prisma.tenantProfile.findUnique({
       where: { tenantId: session.tenantId },
       select: {
+        source: true,
         representative: true,
         tradeName: true,
         legalName: true,
@@ -269,22 +316,20 @@ export async function loadIsaakBusinessContext(
             email: user?.email ?? session.email ?? null,
           },
           connection: {
-            tenantName: connection?.tenantName ?? tenantProfile?.tradeName ?? null,
-            legalName: connection?.legalName ?? tenantProfile?.legalName ?? null,
+            tenantName: tenantProfile?.tradeName ?? connection?.tenantName ?? null,
+            legalName: tenantProfile?.legalName ?? connection?.legalName ?? null,
           },
           tenantProfile,
         })
       : null);
 
-  const companyName =
-    connection?.tenantName ??
-    tenantProfile?.tradeName ??
-    effectiveProfile?.companyName ??
-    tenantProfile?.legalName ??
-    null;
-
-  const legalName =
-    connection?.legalName ?? tenantProfile?.legalName ?? effectiveProfile?.companyName ?? null;
+  const resolvedCompany = resolvePreferredCompanyName({
+    tenantProfile,
+    onboardingProfile: effectiveProfile,
+    connection,
+  });
+  const companyName = resolvedCompany.companyName;
+  const legalName = resolvedCompany.legalName;
   const taxId = connection?.taxId ?? tenantProfile?.taxId ?? null;
   const firstName =
     takeFirstName(effectiveProfile?.preferredName) ||
@@ -297,8 +342,7 @@ export async function loadIsaakBusinessContext(
     user,
     companyProfile: tenantProfile,
     company: {
-      tradeName:
-        tenantProfile?.tradeName ?? connection?.tenantName ?? effectiveProfile?.companyName ?? null,
+      tradeName: companyName,
       legalName,
       taxId,
       representative: tenantProfile?.representative ?? user?.name ?? null,

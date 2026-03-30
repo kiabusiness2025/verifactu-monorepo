@@ -130,9 +130,9 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
         companyName:
           onboardingState.draft?.companyName ||
           onboardingState.profile?.companyName ||
-          connection?.tenantName ||
           tenantProfile?.tradeName ||
           tenantProfile?.legalName ||
+          connection?.tenantName ||
           '',
         roleInCompany:
           onboardingState.draft?.roleInCompany || onboardingState.profile?.roleInCompany || null,
@@ -157,7 +157,7 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
       }}
       detectedContext={{
         companyName:
-          connection?.tenantName || tenantProfile?.tradeName || tenantProfile?.legalName || '',
+          tenantProfile?.tradeName || tenantProfile?.legalName || connection?.tenantName || '',
         website: tenantProfile?.website || '',
         phone: tenantProfile?.phone || '',
       }}

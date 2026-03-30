@@ -40,6 +40,42 @@ export type HoldedConnectionRecord = {
   apiKey?: string;
 };
 
+function resolveTrustedTenantIdentity(input: {
+  name?: string | null;
+  legalName?: string | null;
+  nif?: string | null;
+  profile?: {
+    source?: string | null;
+    tradeName?: string | null;
+    legalName?: string | null;
+    taxId?: string | null;
+  } | null;
+}) {
+  const profile = input.profile;
+
+  if (profile && profile.source && profile.source !== 'holded') {
+    return {
+      tenantName: profile.tradeName || input.name || null,
+      legalName: profile.legalName || input.legalName || null,
+      taxId: profile.taxId || input.nif || null,
+    };
+  }
+
+  if (!profile) {
+    return {
+      tenantName: input.name || null,
+      legalName: input.legalName || null,
+      taxId: input.nif || null,
+    };
+  }
+
+  return {
+    tenantName: null,
+    legalName: null,
+    taxId: null,
+  };
+}
+
 function isMissingRelationError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
 
@@ -193,6 +229,7 @@ async function saveTenantMetadata(
   input: {
     tenantId: string;
     fingerprint: string;
+    allowProfileSync?: boolean;
     metadata: {
       companyName: string | null;
       legalName: string | null;
@@ -200,6 +237,10 @@ async function saveTenantMetadata(
     };
   }
 ) {
+  if (!input.allowProfileSync) {
+    return;
+  }
+
   try {
     await prisma.tenant.update({
       where: { id: input.tenantId },
@@ -284,24 +325,21 @@ async function fetchHoldedTenantMetadata(apiKey: string, probe: HoldedProbeResul
   ]);
 
   const firstInvoice = invoices[0] || null;
-  const firstContact = contacts[0] || null;
 
-  const companyName =
-    (typeof firstInvoice?.company === 'string' && firstInvoice.company) ||
-    (typeof firstInvoice?.contactName === 'string' && firstInvoice.contactName) ||
-    (typeof firstContact?.name === 'string' && firstContact.name) ||
-    null;
+  const companyName = (typeof firstInvoice?.company === 'string' && firstInvoice.company) || null;
 
   const taxId =
-    (typeof firstInvoice?.contactCode === 'string' && firstInvoice.contactCode) ||
-    (typeof firstContact?.vatnumber === 'string' && firstContact.vatnumber) ||
-    (typeof firstContact?.code === 'string' && firstContact.code) ||
-    null;
+    typeof firstInvoice?.companyVat === 'string'
+      ? firstInvoice.companyVat
+      : typeof firstInvoice?.companyTaxId === 'string'
+        ? firstInvoice.companyTaxId
+        : null;
 
   return {
     companyName,
     legalName: companyName,
     taxId,
+    reliableCompanyIdentity: Boolean(companyName),
     supportedModules,
     sampleCounts: {
       invoices: invoices.length,
@@ -422,6 +460,7 @@ export async function saveHoldedConnection(input: {
     companyName: null,
     legalName: null,
     taxId: null,
+    reliableCompanyIdentity: false,
     supportedModules: pickSupportedModules(input.probe),
     sampleCounts: {
       invoices: 0,
@@ -433,7 +472,7 @@ export async function saveHoldedConnection(input: {
   let connectionId: string | null = null;
 
   try {
-    const [, connection] = await input.prisma.$transaction([
+    const txOperations = [
       input.prisma.tenantIntegration.upsert({
         where: {
           tenantId_provider: {
@@ -488,33 +527,40 @@ export async function saveHoldedConnection(input: {
           lastSyncAt: now,
         },
       }),
-      input.prisma.tenant.update({
-        where: { id: input.tenantId },
-        data: {
-          name: metadata.companyName || undefined,
-          legalName: metadata.legalName || undefined,
-          nif: metadata.taxId || undefined,
-          profile: {
-            upsert: {
-              create: {
-                source: 'holded',
-                sourceId: fingerprint,
-                legalName: metadata.legalName || metadata.companyName || undefined,
-                tradeName: metadata.companyName || undefined,
-                taxId: metadata.taxId || undefined,
+      ...(metadata.reliableCompanyIdentity
+        ? [
+            input.prisma.tenant.update({
+              where: { id: input.tenantId },
+              data: {
+                name: metadata.companyName || undefined,
+                legalName: metadata.legalName || undefined,
+                nif: metadata.taxId || undefined,
+                profile: {
+                  upsert: {
+                    create: {
+                      source: 'holded',
+                      sourceId: fingerprint,
+                      legalName: metadata.legalName || metadata.companyName || undefined,
+                      tradeName: metadata.companyName || undefined,
+                      taxId: metadata.taxId || undefined,
+                    },
+                    update: {
+                      source: 'holded',
+                      sourceId: fingerprint,
+                      legalName: metadata.legalName || metadata.companyName || undefined,
+                      tradeName: metadata.companyName || undefined,
+                      taxId: metadata.taxId || undefined,
+                    },
+                  },
+                },
               },
-              update: {
-                source: 'holded',
-                sourceId: fingerprint,
-                legalName: metadata.legalName || metadata.companyName || undefined,
-                tradeName: metadata.companyName || undefined,
-                taxId: metadata.taxId || undefined,
-              },
-            },
-          },
-        },
-      }),
-    ]);
+            }),
+          ]
+        : []),
+    ];
+
+    const txResults = await input.prisma.$transaction(txOperations);
+    const connection = txResults[1];
     connectionId = connection.id;
   } catch (error) {
     if (!isMissingRelationError(error)) {
@@ -552,6 +598,7 @@ export async function saveHoldedConnection(input: {
     await saveTenantMetadata(input.prisma, {
       tenantId: input.tenantId,
       fingerprint,
+      allowProfileSync: metadata.reliableCompanyIdentity,
       metadata: {
         companyName: metadata.companyName,
         legalName: metadata.legalName,
@@ -761,9 +808,12 @@ export async function getHoldedConnection(input: {
           keyMasked: maskSecret(apiKey),
           supportedModules: [],
           validationSummary: 'Conexion guardada en modo compatible',
-          tenantName: integration.tenant.profile?.tradeName || integration.tenant.name || null,
-          legalName: integration.tenant.profile?.legalName || integration.tenant.legalName || null,
-          taxId: integration.tenant.profile?.taxId || integration.tenant.nif || null,
+          ...resolveTrustedTenantIdentity({
+            name: integration.tenant.name,
+            legalName: integration.tenant.legalName,
+            nif: integration.tenant.nif,
+            profile: integration.tenant.profile,
+          }),
           apiKey,
         };
       } catch (fallbackError) {
@@ -809,9 +859,12 @@ export async function getHoldedConnection(input: {
     supportedModules,
     validationSummary:
       supportedModules.length > 0 ? `Validated modules: ${supportedModules.join(', ')}` : null,
-    tenantName: connection.tenant.profile?.tradeName || connection.tenant.name || null,
-    legalName: connection.tenant.profile?.legalName || connection.tenant.legalName || null,
-    taxId: connection.tenant.profile?.taxId || connection.tenant.nif || null,
+    ...resolveTrustedTenantIdentity({
+      name: connection.tenant.name,
+      legalName: connection.tenant.legalName,
+      nif: connection.tenant.nif,
+      profile: connection.tenant.profile,
+    }),
     apiKey,
   };
 }

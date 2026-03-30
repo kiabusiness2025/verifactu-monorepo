@@ -168,16 +168,16 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
         name: session.name,
         tenantId: session.tenantId,
         tenantName:
-          effectiveConnection?.tenantName ??
           context.company.tradeName ??
+          effectiveConnection?.tenantName ??
           handoff?.profile?.companyName ??
           null,
         legalName:
-          effectiveConnection?.legalName ??
           context.company.legalName ??
+          effectiveConnection?.legalName ??
           handoff?.profile?.companyName ??
           null,
-        taxId: effectiveConnection?.taxId ?? context.company.taxId ?? null,
+        taxId: context.company.taxId ?? effectiveConnection?.taxId ?? null,
         keyMasked: effectiveConnection?.keyMasked ?? null,
         connectedAt: effectiveConnection?.connectedAt ?? null,
         lastValidatedAt: effectiveConnection?.lastValidatedAt ?? null,

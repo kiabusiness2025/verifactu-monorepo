@@ -565,6 +565,8 @@ export async function completeIsaakOnboarding(input: {
     input.prisma.tenantProfile.upsert({
       where: { tenantId: input.tenantId },
       update: {
+        source: 'manual',
+        sourceId: null,
         tradeName: normalizedProfile.companyName || undefined,
         website: normalizedProfile.website || undefined,
         phone: normalizedProfile.phone || undefined,
@@ -572,7 +574,7 @@ export async function completeIsaakOnboarding(input: {
       },
       create: {
         tenantId: input.tenantId,
-        source: 'holded',
+        source: 'manual',
         tradeName: normalizedProfile.companyName || undefined,
         website: normalizedProfile.website || undefined,
         phone: normalizedProfile.phone || undefined,

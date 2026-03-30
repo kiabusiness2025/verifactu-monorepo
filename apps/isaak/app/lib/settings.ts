@@ -323,7 +323,8 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
     },
     connection: {
       status: connection?.status ?? 'disconnected',
-      tenantName: connection?.tenantName ?? tenantProfile?.tradeName ?? null,
+      tenantName:
+        tenantProfile?.tradeName ?? tenantProfile?.legalName ?? connection?.tenantName ?? null,
       keyMasked: connection?.keyMasked ?? null,
       connectedAt: connection?.connectedAt ?? null,
       lastValidatedAt: connection?.lastValidatedAt ?? null,
