@@ -215,12 +215,42 @@ async function holdedRequestAllPages<T extends Record<string, unknown>>(input: {
 }) {
   const results: T[] = [];
 
+  const toCollection = (payload: unknown): T[] => {
+    if (Array.isArray(payload)) {
+      return payload as T[];
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      return [];
+    }
+
+    const record = payload as Record<string, unknown>;
+    const candidates = [
+      record.items,
+      record.data,
+      record.results,
+      record.documents,
+      record.rows,
+      record.values,
+    ];
+
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) {
+        return candidate as T[];
+      }
+    }
+
+    return [];
+  };
+
   for (let page = 1; page <= input.maxPages; page += 1) {
-    const batch = await holdedRequest<T[]>(input.apiKey, input.path, {
+    const rawBatch = await holdedRequest<unknown>(input.apiKey, input.path, {
       ...(input.query || {}),
       limit: input.limit,
       page,
     }).catch(() => []);
+
+    const batch = toCollection(rawBatch);
 
     if (!Array.isArray(batch) || batch.length === 0) {
       break;
@@ -904,6 +934,34 @@ export async function getHoldedConnection(input: {
 }
 
 export async function fetchHoldedSnapshot(apiKey: string) {
+  const toCollection = <T extends Record<string, unknown>>(payload: unknown) => {
+    if (Array.isArray(payload)) {
+      return payload as T[];
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      return [] as T[];
+    }
+
+    const record = payload as Record<string, unknown>;
+    const candidates = [
+      record.items,
+      record.data,
+      record.results,
+      record.documents,
+      record.rows,
+      record.values,
+    ];
+
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) {
+        return candidate as T[];
+      }
+    }
+
+    return [] as T[];
+  };
+
   const [invoices, contacts, accounts] = await Promise.all([
     holdedRequestAllPages<Record<string, unknown>>({
       apiKey,
@@ -911,14 +969,18 @@ export async function fetchHoldedSnapshot(apiKey: string) {
       limit: HOLDED_SNAPSHOT_DOCUMENT_LIMIT,
       maxPages: HOLDED_SNAPSHOT_DOCUMENT_PAGES,
     }).catch(() => []),
-    holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/invoicing/v1/contacts', {
+    holdedRequest<unknown>(apiKey, '/api/invoicing/v1/contacts', {
       limit: HOLDED_SNAPSHOT_CONTACT_LIMIT,
       page: 1,
-    }).catch(() => []),
-    holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/accounting/v1/accounts', {
+    })
+      .then((payload) => toCollection<Record<string, unknown>>(payload))
+      .catch(() => []),
+    holdedRequest<unknown>(apiKey, '/api/accounting/v1/accounts', {
       limit: HOLDED_SNAPSHOT_ACCOUNT_LIMIT,
       page: 1,
-    }).catch(() => []),
+    })
+      .then((payload) => toCollection<Record<string, unknown>>(payload))
+      .catch(() => []),
   ]);
 
   return {
