@@ -309,6 +309,15 @@ export default function IsaakSettingsClient({
       return;
     }
 
+    const typedConfirmation = window.prompt('Para confirmar la desconexion, escribe DESCONECTAR');
+
+    if (typedConfirmation !== 'DESCONECTAR') {
+      setError(
+        'No se ha confirmado la desconexion. Escribe DESCONECTAR exactamente para continuar.'
+      );
+      return;
+    }
+
     try {
       const data = await requestJson<SettingsData['connection']>(
         'connections',
@@ -316,7 +325,10 @@ export default function IsaakSettingsClient({
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ confirmDisconnect: true }),
+          body: JSON.stringify({
+            confirmDisconnect: true,
+            confirmationPhrase: typedConfirmation,
+          }),
         }
       );
       setConnection(data);
@@ -702,6 +714,10 @@ export default function IsaakSettingsClient({
                       <div className="mt-2">
                         Tambien enviaremos un aviso por correo al usuario y al admin para dejar
                         constancia de la desconexion.
+                      </div>
+                      <div className="mt-2 font-medium">
+                        Para ejecutarlo pediremos escribir{' '}
+                        <span className="font-semibold">DESCONECTAR</span>.
                       </div>
                     </div>
                     <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">

@@ -18,6 +18,15 @@ type AccessEmailInput = {
   dashboardUrl: string;
 };
 
+type HoldedConnectedEmailInput = {
+  name: string;
+  email: string;
+  companyName: string;
+  chatUrl: string;
+  settingsUrl: string;
+  supportedModules: string[];
+};
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -166,6 +175,64 @@ export function buildHoldedAccessReadyEmail(input: AccessEmailInput): EmailTempl
       footer: legalFooter(),
     }),
     text: `Tu acceso a Isaak para Holded ya esta activo.\n\nEmail: ${input.email}\n\nEntrar: ${input.accessUrl}\n\nDespues de conectar Holded, entraras directamente en tu espacio principal de Isaak.`,
+  };
+}
+
+export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): EmailTemplate {
+  const hello = greeting(input.name);
+  const modules = input.supportedModules.length
+    ? input.supportedModules.join(', ')
+    : 'facturacion y contabilidad';
+
+  return {
+    subject: `Holded ya esta conectado con Isaak para ${input.companyName}`,
+    html: cardLayout({
+      label: 'Conexion activa',
+      title: 'Ya puedes hablar con Isaak con datos reales',
+      body: `
+        <p style="margin:0 0 14px;">${escapeHtml(hello)}</p>
+        <p style="margin:0 0 14px;">La conexion de Holded para <strong>${escapeHtml(input.companyName)}</strong> ya esta activa en Isaak.</p>
+        <p style="margin:0 0 18px;">Desde ahora Isaak puede ayudarte con datos reales de <strong>${escapeHtml(modules)}</strong>.</p>
+        <div style="margin:0 0 18px;padding:16px;border-radius:18px;background:#f8fafc;border:1px solid #e2e8f0;">
+          <div style="font-weight:700;margin:0 0 8px;">Siguientes pasos recomendados</div>
+          <ol style="padding-left:18px;margin:0;">
+            <li style="margin:0 0 6px;">Abre el chat de Isaak.</li>
+            <li style="margin:0 0 6px;">Pidele un resumen rapido de ventas o cobros.</li>
+            <li style="margin:0;">Si quieres, ajusta empresa, conexiones o personalizacion desde settings.</li>
+          </ol>
+        </div>
+        <div style="margin:0 0 18px;padding:16px;border-radius:18px;background:#fff7ed;border:1px solid #fed7aa;">
+          <div style="font-weight:700;margin:0 0 8px;">Ejemplos de preguntas que ya puedes hacer</div>
+          <ul style="padding-left:18px;margin:0;">
+            <li style="margin:0 0 6px;">Cuanto he vendido este mes?</li>
+            <li style="margin:0 0 6px;">Que facturas tengo pendientes de cobro?</li>
+            <li style="margin:0 0 6px;">Explicame mis gastos recientes</li>
+            <li style="margin:0;">Hazme un resumen simple del negocio</li>
+          </ul>
+        </div>
+        <a href="${escapeHtml(input.chatUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Hablar con Isaak</a>
+        <a href="${escapeHtml(input.settingsUrl)}" style="display:inline-block;margin-left:12px;background:#ffffff;color:#b4233c;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;border:1px solid #f3d0d7;">Revisar ajustes</a>
+      `,
+      footer: legalFooter(),
+    }),
+    text: `${hello}\n\nLa conexion de Holded para ${input.companyName} ya esta activa en Isaak.\n\nSiguientes pasos:\n1) Abre el chat\n2) Pide un resumen rapido de ventas o cobros\n3) Ajusta empresa o conexiones si lo necesitas\n\nPuedes preguntar, por ejemplo:\n- Cuanto he vendido este mes?\n- Que facturas tengo pendientes de cobro?\n- Explicame mis gastos recientes\n- Hazme un resumen simple del negocio\n\nHablar con Isaak: ${input.chatUrl}\nAjustes: ${input.settingsUrl}`,
+  };
+}
+
+export function buildHoldedConnectedAdminEmail(input: HoldedConnectedEmailInput): EmailTemplate {
+  return {
+    subject: `Holded conectado en ${input.companyName}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff;">
+        <h1 style="font-size:24px;line-height:1.2;margin:0 0 16px;">Conexion Holded activada</h1>
+        <p style="margin:0 0 10px;"><strong>Empresa:</strong> ${escapeHtml(input.companyName)}</p>
+        <p style="margin:0 0 10px;"><strong>Email usuario:</strong> ${escapeHtml(input.email)}</p>
+        <p style="margin:0 0 10px;"><strong>Modulos validados:</strong> ${escapeHtml(input.supportedModules.join(', ') || 'sin detalle')}</p>
+        <p style="margin:0 0 16px;">Isaak ya puede responder con datos reales de Holded.</p>
+        <a href="${escapeHtml(input.chatUrl)}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir Isaak</a>
+      </div>
+    `.trim(),
+    text: `Conexion Holded activada\n\nEmpresa: ${input.companyName}\nEmail usuario: ${input.email}\nModulos validados: ${input.supportedModules.join(', ') || 'sin detalle'}\n\nAbrir Isaak: ${input.chatUrl}`,
   };
 }
 

@@ -37,6 +37,15 @@ type SessionInfo = {
   isAdmin?: boolean;
 };
 
+type LiveInsight = {
+  sales: number;
+  pendingInvoices: number;
+  invoices: number;
+  contacts: number;
+  accounts: number;
+  insight: string;
+};
+
 type Message = { id: string; role: 'assistant' | 'user'; content: string };
 type ConversationSummary = { id: string; title: string | null; lastActivity: string };
 type AttachedFile = { id: string; name: string; sizeLabel: string };
@@ -139,6 +148,7 @@ export default function IsaakWorkspaceClient({
   session,
   onboardingProfile,
   instructionProfile,
+  liveInsight,
   connectionPending = false,
   quickPrompts,
   connectionSettingsUrl,
@@ -147,6 +157,7 @@ export default function IsaakWorkspaceClient({
   session: SessionInfo;
   onboardingProfile?: IsaakOnboardingProfile | null;
   instructionProfile?: IsaakInstructionProfile | null;
+  liveInsight?: LiveInsight | null;
   connectionPending?: boolean;
   quickPrompts?: string[];
   connectionSettingsUrl: string;
@@ -221,6 +232,32 @@ export default function IsaakWorkspaceClient({
     }
     return 'Puedo ayudarte a entender tus numeros, resolver dudas contables y preparar acciones concretas desde este mismo chat.';
   }, [hasLiveConnection, onboardingGoalSummary, showConnectionWarmup]);
+
+  const assistantInsightMessage = useMemo(() => {
+    if (!liveInsight || showConnectionWarmup || !hasLiveConnection) return null;
+
+    const fragments: string[] = [];
+    if (liveInsight.sales > 0) {
+      fragments.push(
+        `En la muestra inicial ya veo ${liveInsight.sales.toLocaleString('es-ES', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        })} EUR en ventas aproximadas`
+      );
+    }
+    if (liveInsight.pendingInvoices > 0) {
+      fragments.push(`${liveInsight.pendingInvoices} facturas pendientes de cobro`);
+    }
+    if (liveInsight.contacts > 0) {
+      fragments.push(`${liveInsight.contacts} contactos visibles`);
+    }
+
+    if (fragments.length === 0) {
+      return liveInsight.insight;
+    }
+
+    return `${fragments.join(', ')}. ${liveInsight.insight} Si quieres, sigo con resultados, cobros pendientes o ventas recientes.`;
+  }, [hasLiveConnection, liveInsight, showConnectionWarmup]);
 
   useEffect(() => {
     if (messages.length > 0) return;
@@ -740,6 +777,9 @@ export default function IsaakWorkspaceClient({
                             >
                               {assistantSupportMessage}
                             </AssistantMessage>
+                            {assistantInsightMessage ? (
+                              <AssistantMessage>{assistantInsightMessage}</AssistantMessage>
+                            ) : null}
                           </>
                         ) : null}
                       </>

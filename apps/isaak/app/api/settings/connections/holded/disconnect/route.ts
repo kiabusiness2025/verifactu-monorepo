@@ -17,6 +17,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Confirma la desconexion para continuar.' }, { status: 400 });
   }
 
+  if (body.confirmationPhrase !== 'DESCONECTAR') {
+    return NextResponse.json(
+      { error: 'Escribe DESCONECTAR para confirmar la desconexion.' },
+      { status: 400 }
+    );
+  }
+
   const previousSettings = await loadSettingsData(session);
 
   await disconnectHoldedConnection({

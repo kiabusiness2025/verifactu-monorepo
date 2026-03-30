@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
+import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
+import { recordUsageEvent } from '@verifactu/integrations';
 import {
   disconnectHoldedConnection,
   probeHoldedConnection,
   saveHoldedConnection,
 } from '@/app/lib/holded-integration';
 import { writeHoldedActivity } from '@/app/lib/holded-activity';
+import { prisma } from '@/app/lib/prisma';
 
 export const runtime = 'nodejs';
 
@@ -15,6 +18,16 @@ function normalizeApiKey(value: string) {
 
 function hasBasicApiKeyShape(value: string) {
   return value.length >= 16 && value.length <= 128;
+}
+
+function readProbeSupportedModules(probe: Awaited<ReturnType<typeof probeHoldedConnection>>) {
+  return [
+    probe.invoiceApi.ok ? 'invoicing' : null,
+    probe.accountingApi.ok ? 'accounting' : null,
+    probe.crmApi.ok ? 'crm' : null,
+    probe.projectsApi.ok ? 'projects' : null,
+    probe.teamApi.ok ? 'team' : null,
+  ].filter((value): value is string => Boolean(value));
 }
 
 export async function POST(request: NextRequest) {
@@ -45,17 +58,31 @@ export async function POST(request: NextRequest) {
     const probe = await probeHoldedConnection(apiKey);
 
     if (!probe.ok) {
-      await writeHoldedActivity({
-        tenantId: session.tenantId,
-        userId: session.userId,
-        action: 'connection_error',
-        status: 'failed',
-        resourceType: 'holded_connection',
-        responsePayload: {
-          provider: 'holded',
-          error: probe.error,
-        },
-      });
+      await Promise.allSettled([
+        writeHoldedActivity({
+          tenantId: session.tenantId,
+          userId: session.userId,
+          action: 'connection_error',
+          status: 'failed',
+          resourceType: 'holded_connection',
+          responsePayload: {
+            provider: 'holded',
+            error: probe.error,
+          },
+        }),
+        recordUsageEvent({
+          prisma,
+          tenantId: session.tenantId,
+          userId: session.userId,
+          type: 'CONNECTION_ERROR',
+          source: 'holded_connect',
+          path: '/api/holded/connect',
+          metadataJson: {
+            provider: 'holded',
+            reason: probe.error || 'validation_failed',
+          },
+        }),
+      ]);
 
       return NextResponse.json(
         {
@@ -73,6 +100,32 @@ export async function POST(request: NextRequest) {
       userId: session.userId,
       probe,
     });
+
+    await Promise.allSettled([
+      recordUsageEvent({
+        prisma,
+        tenantId: session.tenantId,
+        userId: session.userId,
+        type: 'HOLDED_CONNECTED',
+        source: 'holded_connect',
+        path: '/api/holded/connect',
+        metadataJson: {
+          provider: 'holded',
+          status: saved?.connected ? 'connected' : 'pending',
+          supportedModules: readProbeSupportedModules(probe),
+        },
+      }),
+      ...(session.email
+        ? [
+            sendHoldedConnectedCommunication({
+              name: session.name || session.email.split('@')[0] || 'Hola',
+              email: session.email,
+              companyName: saved?.tenantName || 'tu empresa',
+              supportedModules: readProbeSupportedModules(probe),
+            }),
+          ]
+        : []),
+    ]);
 
     return NextResponse.json({
       ok: true,
