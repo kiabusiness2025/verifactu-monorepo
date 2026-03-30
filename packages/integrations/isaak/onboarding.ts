@@ -63,7 +63,13 @@ export type IsaakOnboardingState = {
 
 type IsaakOnboardingPrismaClient = Pick<
   PrismaClient,
-  '$transaction' | 'user' | 'tenantProfile' | 'userOnboarding' | 'isaakMemoryFact'
+  | '$transaction'
+  | 'user'
+  | 'tenantProfile'
+  | 'userOnboarding'
+  | 'isaakMemoryFact'
+  | 'isaakOnboardingProfile'
+  | 'usageEvent'
 >;
 
 function normalizeText(value: string | null | undefined) {
@@ -82,7 +88,7 @@ function isMissingOnboardingStorageError(error: unknown) {
   );
 }
 
-function normalizeGoals(goals: string[] | null | undefined): IsaakMainGoal[] {
+function normalizeGoals(goals: readonly unknown[] | null | undefined): IsaakMainGoal[] {
   const allowed = new Set<IsaakMainGoal>([
     'Entender mi contabilidad',
     'Resolver dudas fiscales',
@@ -92,7 +98,9 @@ function normalizeGoals(goals: string[] | null | undefined): IsaakMainGoal[] {
     'Llevar mejor la gestion diaria',
   ]);
 
-  return (goals || []).filter((goal): goal is IsaakMainGoal => allowed.has(goal as IsaakMainGoal));
+  return (goals || []).filter(
+    (goal): goal is IsaakMainGoal => typeof goal === 'string' && allowed.has(goal as IsaakMainGoal)
+  );
 }
 
 function dedupePrompts(values: string[]) {
@@ -199,6 +207,78 @@ function parseJsonValue<T>(value: Prisma.JsonValue | null): T | null {
   return value as T;
 }
 
+function mapOnboardingRowToProfile(
+  row: {
+    preferredName: string | null;
+    companyName: string | null;
+    roleInCompany: string | null;
+    businessSector: string | null;
+    teamSize: string | null;
+    website: string | null;
+    phone: string | null;
+    mainGoals: Prisma.JsonValue | null;
+    communicationStyle: string | null;
+    likelyKnowledgeLevel: string | null;
+    onboardingCompletedAt: Date | null;
+  } | null
+): IsaakOnboardingProfile | null {
+  if (!row) return null;
+
+  return {
+    preferredName: row.preferredName || 'Hola',
+    companyName: row.companyName || 'tu empresa',
+    roleInCompany: (row.roleInCompany as IsaakRoleInCompany | null) || 'otro',
+    roleInCompanyOther: null,
+    businessSector: row.businessSector || 'Actividad general',
+    teamSize: row.teamSize,
+    website: row.website,
+    phone: row.phone,
+    mainGoals: normalizeGoals(Array.isArray(row.mainGoals) ? row.mainGoals : []),
+    communicationStyle:
+      row.communicationStyle === 'spanish_clear_non_technical'
+        ? 'spanish_clear_non_technical'
+        : 'spanish_clear_non_technical',
+    likelyKnowledgeLevel: row.likelyKnowledgeLevel === 'intermediate' ? 'intermediate' : 'starter',
+    onboardingCompletedAt: row.onboardingCompletedAt?.toISOString() || null,
+  };
+}
+
+function buildOnboardingProfilePatch(
+  draft: Partial<IsaakOnboardingProfileInput>,
+  now: Date
+): Prisma.IsaakOnboardingProfileUncheckedUpdateInput {
+  const patch: Prisma.IsaakOnboardingProfileUncheckedUpdateInput = {
+    onboardingStartedAt: now,
+  };
+
+  if (draft.preferredName !== undefined) {
+    patch.preferredName = normalizeText(draft.preferredName);
+  }
+  if (draft.companyName !== undefined) {
+    patch.companyName = normalizeText(draft.companyName);
+  }
+  if (draft.roleInCompany !== undefined) {
+    patch.roleInCompany = draft.roleInCompany || null;
+  }
+  if (draft.businessSector !== undefined) {
+    patch.businessSector = normalizeText(draft.businessSector);
+  }
+  if (draft.teamSize !== undefined) {
+    patch.teamSize = normalizeText(draft.teamSize);
+  }
+  if (draft.website !== undefined) {
+    patch.website = normalizeText(draft.website);
+  }
+  if (draft.phone !== undefined) {
+    patch.phone = normalizeText(draft.phone);
+  }
+  if (draft.mainGoals !== undefined) {
+    patch.mainGoals = normalizeGoals(draft.mainGoals) as Prisma.InputJsonValue;
+  }
+
+  return patch;
+}
+
 async function readFact(
   prisma: IsaakOnboardingPrismaClient,
   tenantId: string,
@@ -223,17 +303,41 @@ export async function getIsaakOnboardingState(input: {
   userId: string;
 }): Promise<IsaakOnboardingState> {
   try {
-    const [profileFact, draftFact, instructionFact, userOnboarding] = await Promise.all([
-      readFact(input.prisma, input.tenantId, input.userId, ISAAK_ONBOARDING_PROFILE_FACT_KEY),
-      readFact(input.prisma, input.tenantId, input.userId, ISAAK_ONBOARDING_DRAFT_FACT_KEY),
-      readFact(input.prisma, input.tenantId, input.userId, ISAAK_INSTRUCTION_PROFILE_FACT_KEY),
-      input.prisma.userOnboarding.findUnique({
-        where: { userId: input.userId },
-        select: { completedAt: true },
-      }),
-    ]);
+    const [onboardingRow, profileFact, draftFact, instructionFact, userOnboarding] =
+      await Promise.all([
+        input.prisma.isaakOnboardingProfile.findFirst({
+          where: {
+            tenantId: input.tenantId,
+            userId: input.userId,
+          },
+          select: {
+            preferredName: true,
+            companyName: true,
+            roleInCompany: true,
+            businessSector: true,
+            teamSize: true,
+            website: true,
+            phone: true,
+            mainGoals: true,
+            communicationStyle: true,
+            likelyKnowledgeLevel: true,
+            businessContextSummary: true,
+            holdedContextSnapshot: true,
+            onboardingCompletedAt: true,
+          },
+        }),
+        readFact(input.prisma, input.tenantId, input.userId, ISAAK_ONBOARDING_PROFILE_FACT_KEY),
+        readFact(input.prisma, input.tenantId, input.userId, ISAAK_ONBOARDING_DRAFT_FACT_KEY),
+        readFact(input.prisma, input.tenantId, input.userId, ISAAK_INSTRUCTION_PROFILE_FACT_KEY),
+        input.prisma.userOnboarding.findUnique({
+          where: { userId: input.userId },
+          select: { completedAt: true },
+        }),
+      ]);
 
-    const profile = parseJsonValue<IsaakOnboardingProfile>(profileFact?.valueJson ?? null);
+    const profile =
+      mapOnboardingRowToProfile(onboardingRow) ||
+      parseJsonValue<IsaakOnboardingProfile>(profileFact?.valueJson ?? null);
     const draft = parseJsonValue<Partial<IsaakOnboardingProfileInput>>(
       draftFact?.valueJson ?? null
     );
@@ -286,7 +390,46 @@ export async function saveIsaakOnboardingDraft(input: {
   const now = new Date();
 
   try {
+    const existingProfile = await input.prisma.isaakOnboardingProfile.findFirst({
+      where: {
+        tenantId: input.tenantId,
+        userId: input.userId,
+      },
+      select: { id: true, onboardingStartedAt: true },
+    });
+
+    const patch = buildOnboardingProfilePatch(input.draft, now);
+    const createData: Prisma.IsaakOnboardingProfileUncheckedCreateInput = {
+      tenantId: input.tenantId,
+      userId: input.userId,
+      preferredName:
+        input.draft.preferredName !== undefined ? normalizeText(input.draft.preferredName) : null,
+      companyName:
+        input.draft.companyName !== undefined ? normalizeText(input.draft.companyName) : null,
+      roleInCompany: input.draft.roleInCompany ?? null,
+      businessSector:
+        input.draft.businessSector !== undefined ? normalizeText(input.draft.businessSector) : null,
+      teamSize: input.draft.teamSize !== undefined ? normalizeText(input.draft.teamSize) : null,
+      website: input.draft.website !== undefined ? normalizeText(input.draft.website) : null,
+      phone: input.draft.phone !== undefined ? normalizeText(input.draft.phone) : null,
+      mainGoals:
+        input.draft.mainGoals !== undefined
+          ? (normalizeGoals(input.draft.mainGoals) as Prisma.InputJsonValue)
+          : undefined,
+      onboardingStartedAt: now,
+    };
+
     await input.prisma.$transaction([
+      existingProfile
+        ? input.prisma.isaakOnboardingProfile.update({
+            where: { id: existingProfile.id },
+            data: existingProfile.onboardingStartedAt
+              ? { ...patch, onboardingStartedAt: undefined }
+              : patch,
+          })
+        : input.prisma.isaakOnboardingProfile.create({
+            data: createData,
+          }),
       input.prisma.isaakMemoryFact.deleteMany({
         where: {
           tenantId: input.tenantId,
@@ -307,6 +450,22 @@ export async function saveIsaakOnboardingDraft(input: {
           lastConfirmedAt: now,
         },
       }),
+      ...(existingProfile
+        ? []
+        : [
+            input.prisma.usageEvent.create({
+              data: {
+                tenantId: input.tenantId,
+                userId: input.userId,
+                type: 'ONBOARDING_STARTED',
+                source: 'holded_onboarding',
+                path: '/onboarding/profile',
+                metadataJson: {
+                  mode: 'draft',
+                } as Prisma.InputJsonValue,
+              },
+            }),
+          ]),
     ]);
   } catch (error) {
     if (isMissingOnboardingStorageError(error)) {
@@ -325,6 +484,16 @@ export async function completeIsaakOnboarding(input: {
   holdedContext: HoldedContextSnapshot;
 }) {
   const now = new Date();
+  const existingProfile = await input.prisma.isaakOnboardingProfile.findFirst({
+    where: {
+      tenantId: input.tenantId,
+      userId: input.userId,
+    },
+    select: {
+      id: true,
+      onboardingStartedAt: true,
+    },
+  });
   const normalizedProfile: IsaakOnboardingProfile = {
     preferredName: normalizeText(input.profile.preferredName) || 'Hola',
     companyName:
@@ -345,6 +514,48 @@ export async function completeIsaakOnboarding(input: {
   };
 
   const instructions = buildInstructionProfile(normalizedProfile, input.holdedContext);
+  const onboardingRowWrite = existingProfile
+    ? input.prisma.isaakOnboardingProfile.update({
+        where: { id: existingProfile.id },
+        data: {
+          preferredName: normalizedProfile.preferredName,
+          companyName: normalizedProfile.companyName,
+          roleInCompany:
+            normalizedProfile.roleInCompanyOther || normalizedProfile.roleInCompany || null,
+          businessSector: normalizedProfile.businessSector,
+          teamSize: normalizedProfile.teamSize,
+          website: normalizedProfile.website,
+          phone: normalizedProfile.phone,
+          mainGoals: normalizedProfile.mainGoals as Prisma.InputJsonValue,
+          communicationStyle: normalizedProfile.communicationStyle,
+          likelyKnowledgeLevel: normalizedProfile.likelyKnowledgeLevel,
+          businessContextSummary: instructions.businessContextSummary,
+          holdedContextSnapshot: input.holdedContext as Prisma.InputJsonValue,
+          onboardingStartedAt: existingProfile.onboardingStartedAt ?? now,
+          onboardingCompletedAt: now,
+        },
+      })
+    : input.prisma.isaakOnboardingProfile.create({
+        data: {
+          tenantId: input.tenantId,
+          userId: input.userId,
+          preferredName: normalizedProfile.preferredName,
+          companyName: normalizedProfile.companyName,
+          roleInCompany:
+            normalizedProfile.roleInCompanyOther || normalizedProfile.roleInCompany || null,
+          businessSector: normalizedProfile.businessSector,
+          teamSize: normalizedProfile.teamSize,
+          website: normalizedProfile.website,
+          phone: normalizedProfile.phone,
+          mainGoals: normalizedProfile.mainGoals as Prisma.InputJsonValue,
+          communicationStyle: normalizedProfile.communicationStyle,
+          likelyKnowledgeLevel: normalizedProfile.likelyKnowledgeLevel,
+          businessContextSummary: instructions.businessContextSummary,
+          holdedContextSnapshot: input.holdedContext as Prisma.InputJsonValue,
+          onboardingStartedAt: now,
+          onboardingCompletedAt: now,
+        },
+      });
 
   const canonicalWrites = [
     input.prisma.user.update({
@@ -378,6 +589,7 @@ export async function completeIsaakOnboarding(input: {
         completedAt: now,
       },
     }),
+    onboardingRowWrite,
   ];
 
   try {
@@ -419,6 +631,19 @@ export async function completeIsaakOnboarding(input: {
           valueJson: instructions as Prisma.InputJsonValue,
           source: 'holded_onboarding',
           lastConfirmedAt: now,
+        },
+      }),
+      input.prisma.usageEvent.create({
+        data: {
+          tenantId: input.tenantId,
+          userId: input.userId,
+          type: 'ONBOARDING_COMPLETED',
+          source: 'holded_onboarding',
+          path: '/onboarding/profile',
+          metadataJson: {
+            mainGoals: normalizedProfile.mainGoals,
+            roleInCompany: normalizedProfile.roleInCompany,
+          } as Prisma.InputJsonValue,
         },
       }),
     ]);

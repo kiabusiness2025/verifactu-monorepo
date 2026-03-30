@@ -73,6 +73,21 @@ enum AuthProvider {
   GOOGLE
 }
 
+enum UsageEventType {
+  LEAD_CREATED
+  EMAIL_VERIFIED
+  LOGIN_COMPLETED
+  HOLDED_CONNECTED
+  ONBOARDING_STARTED
+  ONBOARDING_COMPLETED
+  ISAAK_CHAT_OPENED
+  FIRST_CHAT_CREATED
+  FIRST_MESSAGE_SENT
+  SUMMARY_REQUESTED
+  CONNECTION_ERROR
+  PREMIUM_INTEREST_FLAGGED
+}
+
 // ==================== CORE USER & AUTH ====================
 
 model User {
@@ -80,6 +95,7 @@ model User {
   email          String    @unique
   name           String?
   image          String?
+  phone          String?
   emailVerified  DateTime? // Required by NextAuth PrismaAdapter
   role           UserRole  @default(USER)
   
@@ -110,9 +126,11 @@ model User {
   tenantMemberships  Membership[]
   tenantPreferences  UserPreference?
   onboarding         UserOnboarding?
+  isaakOnboardingProfiles IsaakOnboardingProfile[]
   invoicesCreatedBy  Invoice[]           @relation("CreatedByUser")
   isaakConversations IsaakConversation[]
   isaakMemoryFacts   IsaakMemoryFact[]
+  usageEvents        UsageEvent[]
 
   // NextAuth relations
   accounts Account[]
@@ -361,6 +379,8 @@ model Tenant {
   externalSyncRuns    ExternalSyncRun[]
   isaakConversations  IsaakConversation[]
   isaakMemoryFacts    IsaakMemoryFact[]
+  isaakOnboardingProfiles IsaakOnboardingProfile[]
+  usageEvents         UsageEvent[]
   demoOnboardings     UserOnboarding[]
   supportSessions     SupportSession[]
 
@@ -464,6 +484,55 @@ model UserOnboarding {
 
   @@index([demoTenantId])
   @@map("user_onboarding")
+}
+
+model IsaakOnboardingProfile {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId               String    @map("tenant_id") @db.Uuid
+  userId                 String?   @map("user_id")
+  preferredName          String?   @map("preferred_name")
+  companyName            String?   @map("company_name")
+  roleInCompany          String?   @map("role_in_company")
+  businessSector         String?   @map("business_sector")
+  teamSize               String?   @map("team_size")
+  website                String?
+  phone                  String?
+  mainGoals              Json?     @map("main_goals")
+  communicationStyle     String?   @map("communication_style")
+  likelyKnowledgeLevel   String?   @map("likely_knowledge_level")
+  businessContextSummary String?   @map("business_context_summary")
+  holdedContextSnapshot  Json?     @map("holded_context_snapshot")
+  onboardingStartedAt    DateTime? @map("onboarding_started_at") @db.Timestamptz
+  onboardingCompletedAt  DateTime? @map("onboarding_completed_at") @db.Timestamptz
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@index([userId])
+  @@map("isaak_onboarding_profiles")
+}
+
+model UsageEvent {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String?        @map("tenant_id") @db.Uuid
+  userId       String?        @map("user_id")
+  type         UsageEventType
+  source       String?
+  path         String?
+  metadataJson Json?          @map("metadata_json")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([type, createdAt])
+  @@index([tenantId, createdAt])
+  @@index([userId, createdAt])
+  @@map("usage_events")
 }
 
 model Plan {

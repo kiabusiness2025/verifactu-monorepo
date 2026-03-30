@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Building2,
@@ -58,10 +58,30 @@ type SettingsData = {
     mainGoals: string[];
     resetUrl: string;
   };
-  plan: {
+  billing: {
     name: string;
     code: string;
     status: string;
+    stripeStatus: string | null;
+    nextRenewalAt: string | null;
+    cancelAtPeriodEnd: boolean;
+    paymentMethodSummary: string | null;
+    customerId: string | null;
+    subscriptionId: string | null;
+    portalAvailable: boolean;
+    checkoutAvailable: boolean;
+    cancelAvailable: boolean;
+    invoices: Array<{
+      id: string;
+      number: string | null;
+      status: string | null;
+      amountDue: number | null;
+      amountPaid: number | null;
+      currency: string | null;
+      hostedInvoiceUrl: string | null;
+      invoicePdf: string | null;
+      createdAt: string | null;
+    }>;
   };
   team: {
     enabled: boolean;
@@ -69,7 +89,7 @@ type SettingsData = {
   };
 };
 
-type SectionKey = 'profile' | 'company' | 'connections' | 'isaak' | 'team' | 'plan';
+type SectionKey = 'profile' | 'company' | 'connections' | 'isaak' | 'team' | 'billing';
 
 const TEAM_OPTIONS = ['Solo yo', '2-5 personas', '6-20 personas', 'Mas de 20'];
 const GOAL_OPTIONS = [
@@ -86,7 +106,7 @@ const sections: Array<{ key: SectionKey; label: string; icon: typeof UserCircle2
   { key: 'connections', label: 'Conexiones', icon: PlugZap },
   { key: 'isaak', label: 'Isaak', icon: Sparkles },
   { key: 'team', label: 'Equipo', icon: Users },
-  { key: 'plan', label: 'Plan', icon: CreditCard },
+  { key: 'billing', label: 'Facturacion', icon: CreditCard },
 ];
 
 function deriveInitial(name: string) {
@@ -121,6 +141,18 @@ function formatDate(value: string | null) {
   }
 }
 
+function formatMoney(amount: number | null, currency: string | null) {
+  if (typeof amount !== 'number') return 'No disponible';
+  try {
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: (currency || 'EUR').toUpperCase(),
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${(currency || 'EUR').toUpperCase()}`;
+  }
+}
+
 export default function IsaakSettingsClient({
   initialSection,
   settingsData,
@@ -129,6 +161,7 @@ export default function IsaakSettingsClient({
   settingsData: SettingsData;
 }) {
   const activeSection = useMemo<SectionKey>(() => {
+    if (initialSection === 'plan') return 'billing';
     const valid = new Set(sections.map((item) => item.key));
     return valid.has(initialSection as SectionKey) ? (initialSection as SectionKey) : 'profile';
   }, [initialSection]);
@@ -137,33 +170,103 @@ export default function IsaakSettingsClient({
   const [company, setCompany] = useState(settingsData.company);
   const [connection, setConnection] = useState(settingsData.connection);
   const [isaak, setIsaak] = useState(settingsData.isaak);
+  const [billing, setBilling] = useState(settingsData.billing);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingSection, setSavingSection] = useState<SectionKey | null>(null);
   const [apiKeyDraft, setApiKeyDraft] = useState('');
 
-  async function saveSection(
-    section: 'profile' | 'company' | 'isaak',
-    payload: Record<string, unknown>
-  ) {
+  useEffect(() => {
+    if (activeSection !== 'billing') return;
+    if (billing.invoices.length > 0) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch('/api/settings/billing');
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.ok || cancelled) return;
+        setBilling(data.data);
+      } catch {
+        // best effort lazy refresh
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSection, billing.invoices.length]);
+
+  async function requestJson<T>(section: SectionKey, url: string, init?: RequestInit): Promise<T> {
     setSavingSection(section);
     setNotice(null);
     setError(null);
     try {
-      const res = await fetch('/api/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section, ...payload }),
-      });
+      const res = await fetch(url, init);
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
         throw new Error(data?.error || 'No hemos podido guardar los cambios.');
       }
-      setNotice('Cambios guardados.');
+      return data.data as T;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No hemos podido guardar los cambios.');
+      throw err;
     } finally {
       setSavingSection(null);
+    }
+  }
+
+  async function saveProfile() {
+    try {
+      const data = await requestJson<SettingsData['profile']>('profile', '/api/settings/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: profile.firstName,
+          phone: profile.phone,
+        }),
+      });
+      setProfile(data);
+      setNotice('Perfil guardado.');
+    } catch {
+      // handled in requestJson
+    }
+  }
+
+  async function saveCompany() {
+    try {
+      const data = await requestJson<SettingsData['company']>('company', '/api/settings/company', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(company),
+      });
+      setCompany({
+        ...company,
+        ...data,
+        teamSize: company.teamSize,
+      });
+      setNotice('Empresa guardada.');
+    } catch {
+      // handled in requestJson
+    }
+  }
+
+  async function saveIsaak() {
+    try {
+      const data = await requestJson<SettingsData['isaak']>('isaak', '/api/settings/isaak', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preferredName: isaak.preferredName,
+          communicationStyle: isaak.communicationStyle,
+          likelyKnowledgeLevel: isaak.likelyKnowledgeLevel,
+          mainGoals: isaak.mainGoals,
+        }),
+      });
+      setIsaak(data);
+      setNotice('Ajustes de Isaak guardados.');
+    } catch {
+      // handled in requestJson
     }
   }
 
@@ -172,60 +275,89 @@ export default function IsaakSettingsClient({
       setError('Pega una API key valida de Holded.');
       return;
     }
-    setSavingSection('connections');
+    try {
+      const data = await requestJson<SettingsData['connection']>(
+        'connections',
+        '/api/settings/connections/holded/replace',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiKey: apiKeyDraft }),
+        }
+      );
+      setConnection(data);
+      setApiKeyDraft('');
+      setNotice('Conexion Holded actualizada.');
+    } catch {
+      // handled in requestJson
+    }
+  }
+
+  async function disconnectHolded() {
+    if (
+      !window.confirm(
+        'Vas a desconectar Holded de este espacio. Puedes volver a conectarlo despues.'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const data = await requestJson<SettingsData['connection']>(
+        'connections',
+        '/api/settings/connections/holded/disconnect',
+        {
+          method: 'POST',
+        }
+      );
+      setConnection(data);
+      setNotice('Holded se ha desconectado.');
+    } catch {
+      // handled in requestJson
+    }
+  }
+
+  async function startPasswordReset() {
+    setSavingSection('profile');
     setNotice(null);
     setError(null);
     try {
-      const res = await fetch('/api/holded/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: apiKeyDraft }),
-      });
+      const res = await fetch('/api/settings/profile/change-password', { method: 'POST' });
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || 'No hemos podido validar la nueva API key.');
+      if (data?.redirectUrl) {
+        window.location.href = data.redirectUrl;
+        return;
       }
-      setConnection((current) => ({
-        ...current,
-        status: data.connection?.status || 'connected',
-        keyMasked: data.connection?.keyMasked || current.keyMasked,
-        connectedAt: data.connection?.connectedAt || current.connectedAt,
-        lastValidatedAt: data.connection?.connectedAt || current.lastValidatedAt,
-        validationSummary: data.connection?.validationSummary || current.validationSummary,
-        tenantName: data.connection?.tenantName || current.tenantName,
-        supportedModules: Array.isArray(data.connection?.supportedModules)
-          ? data.connection.supportedModules
-          : current.supportedModules,
-      }));
-      setApiKeyDraft('');
-      setNotice('Conexion Holded actualizada.');
+      throw new Error(data?.error || 'No hemos podido preparar el cambio de contrasena.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No hemos podido actualizar la conexion.');
+      setError(
+        err instanceof Error ? err.message : 'No hemos podido preparar el cambio de contrasena.'
+      );
     } finally {
       setSavingSection(null);
     }
   }
 
-  async function disconnectHolded() {
-    setSavingSection('connections');
+  async function openBillingAction(endpoint: string, loadingText: string) {
+    setSavingSection('billing');
     setNotice(null);
     setError(null);
     try {
-      const res = await fetch('/api/holded/connect', { method: 'DELETE' });
+      const res = await fetch(endpoint, { method: 'POST' });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || 'No hemos podido desconectar Holded.');
+        throw new Error(data?.error || loadingText);
       }
-      setConnection((current) => ({
-        ...current,
-        status: 'disconnected',
-        keyMasked: null,
-        validationSummary: null,
-        supportedModules: [],
-      }));
-      setNotice('Holded se ha desconectado.');
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      if (data?.data) {
+        setBilling(data.data);
+      }
+      setNotice('Facturacion actualizada.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No hemos podido desconectar Holded.');
+      setError(err instanceof Error ? err.message : loadingText);
     } finally {
       setSavingSection(null);
     }
@@ -301,7 +433,7 @@ export default function IsaakSettingsClient({
                 Plan actual
               </div>
               <div className="mt-2 text-base font-semibold text-slate-950">
-                {settingsData.plan.name}
+                {settingsData.billing.name}
               </div>
               <div className="mt-1 text-sm text-slate-500">
                 Ideal para esta primera fase con Holded.
@@ -388,12 +520,7 @@ export default function IsaakSettingsClient({
                     <div className="flex flex-wrap gap-3 pt-2">
                       <button
                         type="button"
-                        onClick={() =>
-                          void saveSection('profile', {
-                            firstName: profile.firstName,
-                            phone: profile.phone,
-                          })
-                        }
+                        onClick={() => void saveProfile()}
                         disabled={savingSection === 'profile'}
                         className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1d55c2] disabled:opacity-60"
                       >
@@ -402,12 +529,13 @@ export default function IsaakSettingsClient({
                         ) : null}
                         Guardar perfil
                       </button>
-                      <Link
-                        href="/auth/holded"
+                      <button
+                        type="button"
+                        onClick={() => void startPasswordReset()}
                         className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                       >
                         Cambiar contrasena
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </section>
@@ -477,7 +605,7 @@ export default function IsaakSettingsClient({
                 <div className="mt-6">
                   <button
                     type="button"
-                    onClick={() => void saveSection('company', company)}
+                    onClick={() => void saveCompany()}
                     disabled={savingSection === 'company'}
                     className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1d55c2] disabled:opacity-60"
                   >
@@ -671,14 +799,7 @@ export default function IsaakSettingsClient({
                 <div className="mt-6 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    onClick={() =>
-                      void saveSection('isaak', {
-                        preferredName: isaak.preferredName,
-                        communicationStyle: isaak.communicationStyle,
-                        likelyKnowledgeLevel: isaak.likelyKnowledgeLevel,
-                        mainGoals: isaak.mainGoals,
-                      })
-                    }
+                    onClick={() => void saveIsaak()}
                     disabled={savingSection === 'isaak'}
                     className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1d55c2] disabled:opacity-60"
                   >
@@ -711,41 +832,146 @@ export default function IsaakSettingsClient({
               </section>
             ) : null}
 
-            {activeSection === 'plan' ? (
+            {activeSection === 'billing' ? (
               <section className="mt-6 rounded-[1.6rem] border border-slate-200 p-5">
-                <div className="text-lg font-semibold text-slate-950">Plan</div>
+                <div className="text-lg font-semibold text-slate-950">Facturacion</div>
                 <div className="mt-5 grid gap-4 sm:grid-cols-3">
                   <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                       Plan actual
                     </div>
-                    <div className="mt-2 text-lg font-semibold text-slate-950">
-                      {settingsData.plan.name}
-                    </div>
+                    <div className="mt-2 text-lg font-semibold text-slate-950">{billing.name}</div>
                   </div>
                   <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                       Codigo
                     </div>
-                    <div className="mt-2 text-lg font-semibold text-slate-950">
-                      {settingsData.plan.code}
-                    </div>
+                    <div className="mt-2 text-lg font-semibold text-slate-950">{billing.code}</div>
                   </div>
                   <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                       Estado
                     </div>
                     <div className="mt-2 text-lg font-semibold text-slate-950">
-                      {settingsData.plan.status}
+                      {billing.stripeStatus || billing.status}
                     </div>
                   </div>
                 </div>
-                <Link
-                  href="/support?source=isaak_settings_upgrade"
-                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1d55c2]"
-                >
-                  Actualizar plan
-                </Link>
+                <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          Proxima renovacion
+                        </div>
+                        <div className="mt-2 text-sm font-medium text-slate-900">
+                          {formatDate(billing.nextRenewalAt)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          Metodo de pago
+                        </div>
+                        <div className="mt-2 text-sm font-medium text-slate-900">
+                          {billing.paymentMethodSummary || 'Se mostrara cuando Stripe lo confirme'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void openBillingAction(
+                            '/api/settings/billing/checkout',
+                            'No hemos podido abrir Stripe Checkout.'
+                          )
+                        }
+                        disabled={savingSection === 'billing'}
+                        className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1d55c2] disabled:opacity-60"
+                      >
+                        {savingSection === 'billing' ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : null}
+                        Actualizar plan
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void openBillingAction(
+                            '/api/settings/billing/portal',
+                            'No hemos podido abrir el portal de facturacion.'
+                          )
+                        }
+                        disabled={savingSection === 'billing' || !billing.portalAvailable}
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        Abrir portal de facturacion
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void openBillingAction(
+                            '/api/settings/billing/cancel',
+                            'No hemos podido preparar la cancelacion.'
+                          )
+                        }
+                        disabled={savingSection === 'billing' || !billing.cancelAvailable}
+                        className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
+                      >
+                        Cancelar al final del periodo
+                      </button>
+                    </div>
+                  </div>
+                  <div className="rounded-[1.5rem] border border-slate-200 p-4">
+                    <div className="text-sm font-semibold text-slate-950">Facturas</div>
+                    <div className="mt-3 space-y-3">
+                      {billing.invoices.length ? (
+                        billing.invoices.slice(0, 5).map((invoice) => (
+                          <div
+                            key={invoice.id}
+                            className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-semibold text-slate-950">
+                                  {invoice.number || 'Factura Stripe'}
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500">
+                                  {formatDate(invoice.createdAt)}
+                                </div>
+                              </div>
+                              <div className="text-sm font-semibold text-slate-900">
+                                {formatMoney(
+                                  invoice.amountPaid ?? invoice.amountDue,
+                                  invoice.currency
+                                )}
+                              </div>
+                            </div>
+                            <div className="mt-2 flex items-center justify-between gap-3">
+                              <div className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                                {invoice.status || 'pending'}
+                              </div>
+                              {invoice.hostedInvoiceUrl ? (
+                                <a
+                                  href={invoice.hostedInvoiceUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs font-semibold text-[#2361d8] transition hover:text-[#174db5]"
+                                >
+                                  Ver factura
+                                </a>
+                              ) : null}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-5 text-sm text-slate-500">
+                          Todavia no hay facturas sincronizadas desde Stripe para este espacio.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </section>
             ) : null}
 

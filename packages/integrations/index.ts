@@ -51,3 +51,5 @@ export type {
   IsaakChatPrismaClient,
   IsaakChatSessionScope,
 } from './isaak/chat';
+export { recordUsageEvent } from './usage-events';
+export type { CanonicalUsageEventType } from './usage-events';

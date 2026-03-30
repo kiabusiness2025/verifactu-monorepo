@@ -648,7 +648,7 @@ export default function IsaakWorkspaceClient({
                     Isaak
                   </Link>
                   <Link
-                    href={`${settingsUrl}?section=plan`}
+                    href={`${settingsUrl}?section=billing`}
                     className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
                   >
                     Plan

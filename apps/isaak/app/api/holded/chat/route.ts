@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { recordUsageEvent } from '@verifactu/integrations';
 import { fetchHoldedSnapshot, getHoldedConnection } from '@/app/lib/holded-integration';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import {
@@ -94,6 +95,16 @@ function buildAutomaticInsight(summary: ReturnType<typeof buildSnapshotSummary>)
   return 'Todavia estoy montando una primera lectura de tu negocio, pero ya puedo ayudarte con preguntas concretas.';
 }
 
+function isSummaryRequest(message: string) {
+  const text = message.toLowerCase();
+  return (
+    text.includes('resumen') ||
+    text.includes('ver resumen') ||
+    text.includes('resumen rapido') ||
+    text.includes('este mes')
+  );
+}
+
 function buildReply(input: {
   message: string;
   snapshot: Awaited<ReturnType<typeof fetchHoldedSnapshot>>;
@@ -108,12 +119,7 @@ function buildReply(input: {
   const insight = buildAutomaticInsight(summary);
   const tenantLabel = input.tenantName?.trim() || 'tu empresa';
 
-  if (
-    text.includes('resumen') ||
-    text.includes('este mes') ||
-    text.includes('resumen rapido') ||
-    text.includes('ver resumen')
-  ) {
+  if (isSummaryRequest(text)) {
     const hasEnoughSummaryData =
       summary.invoices > 0 || summary.contacts > 0 || summary.accounts > 0 || summary.sales > 0;
 
@@ -268,6 +274,49 @@ export async function POST(request: NextRequest) {
       },
       confidence: 0.85,
     }),
+    ...(hadChatsBefore === 0
+      ? [
+          recordUsageEvent({
+            prisma,
+            tenantId: session.tenantId,
+            userId: session.userId,
+            type: 'FIRST_CHAT_CREATED',
+            source: 'isaak_holded_chat',
+            path: '/api/holded/chat',
+            metadataJson: {
+              conversationId: conversation.id,
+            },
+          }),
+          recordUsageEvent({
+            prisma,
+            tenantId: session.tenantId,
+            userId: session.userId,
+            type: 'FIRST_MESSAGE_SENT',
+            source: 'isaak_holded_chat',
+            path: '/api/holded/chat',
+            metadataJson: {
+              conversationId: conversation.id,
+              messageLength: message.length,
+            },
+          }),
+        ]
+      : []),
+    ...(isSummaryRequest(message)
+      ? [
+          recordUsageEvent({
+            prisma,
+            tenantId: session.tenantId,
+            userId: session.userId,
+            type: 'SUMMARY_REQUESTED',
+            source: 'isaak_holded_chat',
+            path: '/api/holded/chat',
+            metadataJson: {
+              conversationId: conversation.id,
+              message,
+            },
+          }),
+        ]
+      : []),
   ]);
 
   return NextResponse.json({
