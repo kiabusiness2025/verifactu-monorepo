@@ -1,6 +1,7 @@
 import admin from 'firebase-admin';
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { recordUsageEvent } from '@verifactu/integrations';
 import {
   buildHoldedAccessReadyEmail,
   buildHoldedOnboardingGuideEmail,
@@ -288,15 +289,28 @@ export async function POST(req: Request) {
           error: emailError instanceof Error ? emailError.message : String(emailError),
         });
       }
-      await writeHoldedActivity({
-        tenantId,
-        userId: user.id,
-        action: 'email_verified',
-        resourceType: 'auth',
-        responsePayload: {
-          email: decoded.email,
-        },
-      });
+      await Promise.allSettled([
+        writeHoldedActivity({
+          tenantId,
+          userId: user.id,
+          action: 'email_verified',
+          resourceType: 'auth',
+          responsePayload: {
+            email: decoded.email,
+          },
+        }),
+        recordUsageEvent({
+          prisma,
+          tenantId,
+          userId: user.id,
+          type: 'EMAIL_VERIFIED',
+          source,
+          path: '/api/auth/session',
+          metadataJson: {
+            email: decoded.email,
+          },
+        }),
+      ]);
     }
     const rolesRaw =
       (decoded as { roles?: unknown; role?: unknown }).roles ??
@@ -349,16 +363,30 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({ ok: true });
     response.cookies.set(cookieOpts);
-    await writeHoldedActivity({
-      tenantId,
-      userId: user.id,
-      action: 'login_completed',
-      resourceType: 'auth',
-      responsePayload: {
-        email: decoded.email,
-        rememberDevice: remember,
-      },
-    });
+    await Promise.allSettled([
+      writeHoldedActivity({
+        tenantId,
+        userId: user.id,
+        action: 'login_completed',
+        resourceType: 'auth',
+        responsePayload: {
+          email: decoded.email,
+          rememberDevice: remember,
+        },
+      }),
+      recordUsageEvent({
+        prisma,
+        tenantId,
+        userId: user.id,
+        type: 'LOGIN_COMPLETED',
+        source,
+        path: '/api/auth/session',
+        metadataJson: {
+          email: decoded.email,
+          rememberDevice: remember,
+        },
+      }),
+    ]);
     return response;
   } catch (error) {
     if (error instanceof Error && error.name === 'HoldedBlockedUserError') {

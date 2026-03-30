@@ -149,6 +149,10 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
 
 - Ruta: `POST /api/mcp/holded` (JSON-RPC 2.0 sobre HTTP).
 - Auth: Bearer con token OAuth propio de Verifactu.
+- Aislamiento actual: el canal OAuth de ChatGPT ya no hace fallback a la sesion web del dashboard para resolver la API key de Holded.
+- Efecto practico: ChatGPT y dashboard/Isaak ya tienen independencia de autenticacion por canal.
+- Limite actual: ambos canales siguen compartiendo la misma conexion Holded a nivel tenant.
+- Siguiente paso recomendado para independencia total real: guardar conexiones Holded separadas por canal, por ejemplo `chatgpt` y `dashboard`, con resolucion y revocacion independientes.
 - Tools expuestas:
   - `holded_list_invoices` — listar facturas (readOnly).
   - `holded_get_invoice` — detalle de factura (readOnly).
@@ -252,6 +256,7 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
 8. Bidireccional de presupuestos solo Empresa/PRO (`canBidirectionalQuotes`).
 9. Libros AEAT disponibles para todos los planes (`canExportAeatBooks=true`).
 10. En producción, desactivar `HOLDED_TEST_API_KEY` y cualquier fallback de credenciales de test.
+11. En el chat Holded de Isaak, priorizar tono cercano, optimista y tranquilizador; si ayuda a la calidez, se permiten emojis suaves sin convertir la respuesta en algo informal en exceso.
 
 ---
 

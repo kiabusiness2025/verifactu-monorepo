@@ -94,7 +94,8 @@ const TOOLS: ToolDefinition[] = [
       properties: {
         invoiceId: {
           type: 'string',
-          description: 'The Holded invoice identifier returned by a previous invoice listing or search.',
+          description:
+            'The Holded invoice identifier returned by a previous invoice listing or search.',
         },
       },
       required: ['invoiceId'],
@@ -228,8 +229,7 @@ const TOOLS: ToolDefinition[] = [
   {
     name: 'holded_get_project',
     title: 'Get one project from Holded',
-    description:
-      'Retrieve a single project from Holded by id for the currently authorized tenant.',
+    description: 'Retrieve a single project from Holded by id for the currently authorized tenant.',
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
@@ -300,12 +300,14 @@ const TOOLS: ToolDefinition[] = [
       properties: {
         confirm: {
           type: 'boolean',
-          description: 'Must be true to confirm that the user explicitly approved creating the draft invoice.',
+          description:
+            'Must be true to confirm that the user explicitly approved creating the draft invoice.',
         },
         docType: {
           type: 'string',
           default: 'invoice',
-          description: 'Document type to create in Holded. Use invoice unless there is a documented alternative for this tenant.',
+          description:
+            'Document type to create in Holded. Use invoice unless there is a documented alternative for this tenant.',
         },
         payload: {
           type: 'object',
@@ -319,7 +321,11 @@ const TOOLS: ToolDefinition[] = [
   },
 ];
 
-function jsonRpc(id: JsonRpcRequest['id'], result?: unknown, error?: { code: number; message: string }) {
+function jsonRpc(
+  id: JsonRpcRequest['id'],
+  result?: unknown,
+  error?: { code: number; message: string }
+) {
   return NextResponse.json({
     jsonrpc: '2.0',
     id: id ?? null,
@@ -375,7 +381,10 @@ function logMcpAccess(event: {
   console.info('[MCP Holded]', JSON.stringify({ ts: new Date().toISOString(), ...event }));
 }
 
-async function resolveHoldedApiKey(access?: { tenantId: string | null }) {
+async function resolveHoldedApiKey(access?: {
+  mode: 'oauth' | 'shared_secret';
+  tenantId: string | null;
+}) {
   if (access?.tenantId) {
     const connection = await resolveSharedHoldedConnectionForTenant(access.tenantId);
     if (connection) {
@@ -384,6 +393,13 @@ async function resolveHoldedApiKey(access?: { tenantId: string | null }) {
         source: connection.source,
       };
     }
+  }
+
+  // Keep OAuth channel isolated from dashboard session state.
+  // If the OAuth token does not resolve to a tenant with a Holded connection,
+  // the caller must reconnect Holded for that tenant instead of falling back.
+  if (access?.mode === 'oauth') {
+    throw new Error('No Holded API key configured for this OAuth tenant');
   }
 
   const session = await getSessionPayload();
@@ -430,7 +446,12 @@ function formatToolResult(data: unknown) {
 }
 
 async function callTool(
-  access: { tenantId: string | null; scope?: string | null; uid?: string | null },
+  access: {
+    mode: 'oauth' | 'shared_secret';
+    tenantId: string | null;
+    scope?: string | null;
+    uid?: string | null;
+  },
   name: string,
   args: Record<string, unknown> | undefined
 ) {
@@ -447,7 +468,10 @@ async function callTool(
     throw new Error(`Missing required scope for tool ${name}`);
   }
 
-  const { apiKey, source } = await resolveHoldedApiKey(access);
+  const { apiKey, source } = await resolveHoldedApiKey({
+    mode: access.mode,
+    tenantId: access.tenantId,
+  });
   const input = args || {};
 
   switch (name) {
@@ -518,7 +542,9 @@ async function callTool(
       }
 
       const docType =
-        typeof input.docType === 'string' && input.docType.trim() ? input.docType.trim() : 'invoice';
+        typeof input.docType === 'string' && input.docType.trim()
+          ? input.docType.trim()
+          : 'invoice';
       const payload =
         input.payload && typeof input.payload === 'object' && !Array.isArray(input.payload)
           ? (input.payload as Record<string, unknown>)
@@ -619,6 +645,7 @@ export async function POST(request: NextRequest) {
 
         const result = await callTool(
           {
+            mode: allowed.mode,
             tenantId: allowed.tenantId,
             scope: 'scope' in allowed ? allowed.scope : null,
             uid: 'uid' in allowed ? allowed.uid : null,

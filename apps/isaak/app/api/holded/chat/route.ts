@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
 import { recordUsageEvent } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import { buildYearAnalyticsSummary } from '@/app/lib/holded-analytics';
+import { probeHoldedConnection } from '@/app/lib/holded-integration';
 import {
   appendConversationMessage,
   ensureHoldedConversation,
@@ -12,6 +14,17 @@ import {
 import { prisma } from '@/app/lib/prisma';
 
 export const runtime = 'nodejs';
+
+function isConnectionDiagnosticRequest(message: string) {
+  const text = message.toLowerCase();
+  return (
+    (text.includes('diagnost') && text.includes('conexion')) ||
+    text.includes('conexion detall') ||
+    text.includes('estado de conexion') ||
+    text.includes('comprobar conexion') ||
+    text.includes('revisar conexion')
+  );
+}
 
 function isSummaryRequest(message: string) {
   const text = message.toLowerCase();
@@ -62,10 +75,119 @@ function formatMoney(amount: number | null | undefined) {
   })} EUR`;
 }
 
+function statusLabel(ok: boolean, status: number | null) {
+  if (ok) return 'Disponible';
+  if (status === 401 || status === 403) return 'Sin permiso';
+  if (status === 404) return 'No disponible';
+  if (status === null) return 'Sin respuesta';
+  return `Error ${status}`;
+}
+
+function buildConnectionDiagnostic(input: {
+  context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>;
+  snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
+  probe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
+}) {
+  const tenantLabel = input.context.labels.companyName?.trim() || 'tu empresa';
+  const connection = input.context.holded.connection;
+  const modules = connection?.supportedModules?.length
+    ? connection.supportedModules.join(', ')
+    : 'Sin modulos confirmados';
+
+  const probe = input.probe;
+  const invoiceStatus = probe
+    ? statusLabel(probe.invoiceApi.ok, probe.invoiceApi.status)
+    : 'No comprobado';
+  const accountsStatus = probe
+    ? statusLabel(probe.accountingApi.ok, probe.accountingApi.status)
+    : 'No comprobado';
+  const contactsStatus = input.snapshot.contacts.length >= 0 ? 'Disponible' : 'No comprobado';
+
+  const healthScore = [
+    probe?.invoiceApi.ok ? 1 : 0,
+    probe?.accountingApi.ok ? 1 : 0,
+    input.snapshot.contacts.length >= 0 ? 1 : 0,
+  ].reduce((sum, item) => sum + item, 0);
+
+  const healthLabel = healthScore >= 3 ? 'Alta' : healthScore === 2 ? 'Parcial' : 'Baja';
+
+  return [
+    `Aqui tienes el diagnostico de conexion para ${tenantLabel} 😊:`,
+    '',
+    `- Estado general: ${healthLabel}`,
+    `- Facturas: ${invoiceStatus}`,
+    `- Cuentas contables: ${accountsStatus}`,
+    `- Contactos: ${contactsStatus}`,
+    `- Modulos confirmados: ${modules}`,
+    `- Muestra actual leida: ${input.snapshot.invoices.length} facturas, ${input.snapshot.contacts.length} contactos, ${input.snapshot.accounts.length} cuentas`,
+    '',
+    healthScore >= 3
+      ? 'La conexion esta operativa y ya podemos trabajar con datos reales. Todo va por buen camino 🙌'
+      : 'La conexion esta activa, pero parcial. Si quieres, te guio paso a paso para dejar facturas y cuentas plenamente operativas.',
+  ].join('\n');
+}
+
+function buildLlmInstructions(input: {
+  context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>;
+  snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
+  diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
+}) {
+  const companyName = input.context.labels.companyName || 'tu empresa';
+  const analytics = input.context.holded.analytics;
+  const modules = input.context.holded.connection?.supportedModules?.join(', ') || 'ninguno';
+
+  return [
+    'Eres Isaak, asistente fiscal y contable para pymes en Espana.',
+    'Responde en espanol claro, breve, calmante, optimista y muy amable.',
+    'Usa un tono cercano y simpatico. Puedes usar 1 o 2 emojis suaves cuando aporten calidez.',
+    'No inventes datos ni funciones. Si faltan datos, dilo con claridad.',
+    'Prioriza confianza y simplicidad.',
+    '',
+    `Contexto empresa: ${companyName}.`,
+    `Muestra disponible: facturas=${input.snapshot.invoices.length}, contactos=${input.snapshot.contacts.length}, cuentas=${input.snapshot.accounts.length}.`,
+    `Modulos confirmados: ${modules}.`,
+    analytics
+      ? `Analitica: ventas_mes=${analytics.monthSales}, gastos_mes=${analytics.monthExpenses}, margen_mes=${analytics.monthMargin}, pendientes=${analytics.pendingCollectionsAmount}.`
+      : 'Analitica: no disponible.',
+    input.diagnosticProbe
+      ? `Probe vivo: invoices=${input.diagnosticProbe.invoiceApi.status}, accounts=${input.diagnosticProbe.accountingApi.status}, crm=${input.diagnosticProbe.crmApi.status}, projects=${input.diagnosticProbe.projectsApi.status}.`
+      : 'Probe vivo: no ejecutado.',
+    '',
+    'Cuando pidan diagnostico, entrega estado por modulo (facturas, cuentas, contactos), conclusion y siguiente paso concreto.',
+    'Evita sonar robotico o repetitivo. Habla como una persona experta, cercana y tranquilizadora.',
+  ].join('\n');
+}
+
+async function buildLlmReply(input: {
+  message: string;
+  context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>;
+  snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
+  diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
+}) {
+  const apiKey = resolveOpenAIKey(process.env);
+  if (!apiKey) return null;
+
+  const model = process.env.ISAAK_OPENAI_MODEL?.trim() || 'gpt-4.1-mini';
+
+  return callOpenAIResponses({
+    apiKey,
+    model,
+    instructions: buildLlmInstructions({
+      context: input.context,
+      snapshot: input.snapshot,
+      diagnosticProbe: input.diagnosticProbe,
+    }),
+    messages: [{ role: 'user', content: input.message }],
+    temperature: 0.35,
+    maxOutputTokens: 340,
+  });
+}
+
 function buildReply(input: {
   message: string;
   snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
   context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>;
+  probe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
 }) {
   const text = input.message.toLowerCase();
   const invoiceCount = input.snapshot.invoices.length;
@@ -76,8 +198,16 @@ function buildReply(input: {
   const tenantLabel = input.context.labels.companyName?.trim() || 'tu empresa';
   const requestedYear = extractRequestedYear(input.message);
 
+  if (isConnectionDiagnosticRequest(text)) {
+    return buildConnectionDiagnostic({
+      context: input.context,
+      snapshot: input.snapshot,
+      probe: input.probe,
+    });
+  }
+
   if (!summary) {
-    return `La conexion con Holded esta activa en ${tenantLabel}. Ya tengo tambien tu contexto de empresa y personalizacion de Isaak, pero todavia no he podido completar la lectura analitica. Si quieres, empezamos por facturas, clientes o configuracion.`;
+    return `La conexion con Holded esta activa en ${tenantLabel} 😊 Ya tengo tambien tu contexto de empresa y personalizacion de Isaak, pero todavia no he podido completar la lectura analitica. Si quieres, empezamos por facturas, clientes o configuracion.`;
   }
 
   if (requestedYear) {
@@ -87,12 +217,12 @@ function buildReply(input: {
       return [
         `No he encontrado documentos suficientes de ${tenantLabel} para ${requestedYear} dentro de la lectura actual de Holded.`,
         '',
-        `Ahora mismo estoy leyendo ${input.snapshot.invoices.length} documentos en la muestra cargada. Si quieres, sigo ampliando la cobertura para darte el ejercicio completo con mas precision.`,
+        `Ahora mismo estoy leyendo ${input.snapshot.invoices.length} documentos en la muestra cargada. Si quieres, sigo ampliando la cobertura para darte el ejercicio completo con mas precision 🙂`,
       ].join('\n');
     }
 
     return [
-      `Este es el resumen de ${tenantLabel} para ${requestedYear}:`,
+      `Este es el resumen de ${tenantLabel} para ${requestedYear} ✨:`,
       '',
       `- Ventas del ejercicio: ${formatMoney(yearSummary.sales)}`,
       `- Gastos detectados: ${formatMoney(yearSummary.expenses)}`,
@@ -143,21 +273,21 @@ function buildReply(input: {
 
   if (text.includes('factura') || text.includes('venta') || text.includes('cobro')) {
     if (invoiceCount === 0) {
-      return `Tu cuenta de Holded ya esta conectada, pero en la muestra inicial de ${tenantLabel} no veo facturas recientes todavia. Puedo ayudarte a revisar si faltan datos por sincronizar o ir directamente a cobros, clientes y configuracion.`;
+      return `Tu cuenta de Holded ya esta conectada, pero en la muestra inicial de ${tenantLabel} no veo facturas recientes todavia. Puedo ayudarte a revisar si faltan datos por sincronizar o ir directamente a cobros, clientes y configuracion 🙂`;
     }
 
-    return `Tu cuenta de Holded ya esta conectada. En ${tenantLabel} ya detecto ${formatMoney(summary.monthSales)} en ventas de este mes y ${formatMoney(summary.pendingCollectionsAmount)} pendientes de cobro. Si quieres, sigo con el trimestre o revisamos una factura concreta.`;
+    return `Tu cuenta de Holded ya esta conectada. En ${tenantLabel} ya detecto ${formatMoney(summary.monthSales)} en ventas de este mes y ${formatMoney(summary.pendingCollectionsAmount)} pendientes de cobro. Si quieres, sigo con el trimestre o revisamos una factura concreta 🙌`;
   }
 
   if (text.includes('cliente') || text.includes('contacto')) {
-    return `La conexion esta activa. En la primera lectura de ${tenantLabel} he encontrado ${contactCount} contactos en la muestra rapida. Ya podemos revisar clientes y actividad sin salir de Isaak.`;
+    return `La conexion esta activa. En la primera lectura de ${tenantLabel} he encontrado ${contactCount} contactos en la muestra rapida. Ya podemos revisar clientes y actividad sin salir de Isaak 😊`;
   }
 
   if (text.includes('cuenta') || text.includes('contabilidad') || text.includes('gasto')) {
-    return `Con la conexion actual ya detecto ${formatMoney(summary.monthExpenses)} en gastos del mes y he podido validar ${accountCount} cuentas contables en ${tenantLabel}. Si quieres, sigo con margen, trimestre o gastos pendientes de revisar.`;
+    return `Con la conexion actual ya detecto ${formatMoney(summary.monthExpenses)} en gastos del mes y he podido validar ${accountCount} cuentas contables en ${tenantLabel}. Si quieres, sigo con margen, trimestre o gastos pendientes de revisar ✨`;
   }
 
-  return `La conexion con Holded esta activa y ya puedo trabajar con una lectura real de ${tenantLabel}: ${formatMoney(summary.monthSales)} en ventas este mes, ${formatMoney(summary.pendingCollectionsAmount)} pendientes de cobro y ${formatMoney(summary.monthMargin)} de margen estimado. Preguntame por trimestre, gastos, cobros o clientes y empezamos.`;
+  return `La conexion con Holded esta activa y ya puedo trabajar con una lectura real de ${tenantLabel}: ${formatMoney(summary.monthSales)} en ventas este mes, ${formatMoney(summary.pendingCollectionsAmount)} pendientes de cobro y ${formatMoney(summary.monthMargin)} de margen estimado. Preguntame por trimestre, gastos, cobros o clientes y empezamos 😊`;
 }
 
 export async function POST(request: NextRequest) {
@@ -280,12 +410,44 @@ export async function POST(request: NextRequest) {
   }
 
   let reply: string;
+  let connectionProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null = null;
+
+  if (isConnectionDiagnosticRequest(message)) {
+    try {
+      connectionProbe = await probeHoldedConnection(context.holded.connection.apiKey);
+    } catch (error) {
+      console.warn('[holded/chat] live probe failed', {
+        tenantId: session.tenantId,
+        userId: session.userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   try {
-    reply = buildReply({
+    const llmReply = await buildLlmReply({
       message,
-      snapshot,
       context,
+      snapshot,
+      diagnosticProbe: connectionProbe,
+    }).catch((error) => {
+      console.warn('[holded/chat] responses api failed, using deterministic fallback', {
+        tenantId: session.tenantId,
+        userId: session.userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
     });
+
+    reply =
+      typeof llmReply === 'string' && llmReply.trim()
+        ? llmReply.trim()
+        : buildReply({
+            message,
+            snapshot,
+            context,
+            probe: connectionProbe,
+          });
   } catch (error) {
     console.error('[holded/chat] reply build failed', {
       tenantId: session.tenantId,
