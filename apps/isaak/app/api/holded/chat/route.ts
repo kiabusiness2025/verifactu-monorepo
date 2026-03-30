@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { recordUsageEvent } from '@verifactu/integrations';
-import { buildHoldedAnalyticsSummary } from '@/app/lib/holded-analytics';
-import { fetchHoldedSnapshot, getHoldedConnection } from '@/app/lib/holded-integration';
 import { getHoldedSession } from '@/app/lib/holded-session';
+import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import {
   appendConversationMessage,
   ensureHoldedConversation,
@@ -37,17 +36,21 @@ function formatMoney(amount: number | null | undefined) {
 
 function buildReply(input: {
   message: string;
-  snapshot: Awaited<ReturnType<typeof fetchHoldedSnapshot>>;
-  tenantName?: string | null;
+  snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
+  context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>;
   memoryContext: Awaited<ReturnType<typeof getSimpleMemoryContext>>;
 }) {
   const text = input.message.toLowerCase();
   const invoiceCount = input.snapshot.invoices.length;
   const contactCount = input.snapshot.contacts.length;
   const accountCount = input.snapshot.accounts.length;
-  const summary = buildHoldedAnalyticsSummary(input.snapshot);
-  const insight = summary.insight;
-  const tenantLabel = input.tenantName?.trim() || 'tu empresa';
+  const summary = input.context.holded.analytics;
+  const insight = summary?.insight || input.context.summary;
+  const tenantLabel = input.context.labels.companyName?.trim() || 'tu empresa';
+
+  if (!summary) {
+    return `La conexion con Holded esta activa en ${tenantLabel}. Ya tengo tambien tu contexto de empresa y personalizacion de Isaak, pero todavia no he podido completar la lectura analitica. Si quieres, empezamos por facturas, clientes o configuracion.`;
+  }
 
   if (isSummaryRequest(text)) {
     const hasEnoughSummaryData =
@@ -113,8 +116,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const connection = await getHoldedConnection(session.tenantId);
-  if (!connection?.apiKey) {
+  const context = await loadIsaakBusinessContext(
+    {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      name: session.name,
+      email: session.email,
+    },
+    { includeSnapshot: true }
+  );
+
+  if (!context.holded.connection?.apiKey) {
     return NextResponse.json(
       { error: 'Antes de usar el chat necesitas conectar tu API key de Holded.' },
       { status: 400 }
@@ -155,7 +167,7 @@ export async function POST(request: NextRequest) {
   });
 
   const [snapshot, memoryContext] = await Promise.all([
-    fetchHoldedSnapshot(connection.apiKey),
+    Promise.resolve(context.holded.snapshot),
     getSimpleMemoryContext(
       {
         tenantId: session.tenantId,
@@ -165,10 +177,17 @@ export async function POST(request: NextRequest) {
     ),
   ]);
 
+  if (!snapshot) {
+    return NextResponse.json(
+      { error: 'No he podido recuperar todavia la lectura analitica de Holded.' },
+      { status: 503 }
+    );
+  }
+
   const reply = buildReply({
     message,
     snapshot,
-    tenantName: connection.tenantName,
+    context,
     memoryContext,
   });
 
@@ -208,6 +227,8 @@ export async function POST(request: NextRequest) {
         invoices: snapshot.invoices.length,
         contacts: snapshot.contacts.length,
         accounts: snapshot.accounts.length,
+        companyName: context.labels.companyName,
+        summary: context.summary,
       },
       confidence: 0.85,
     }),

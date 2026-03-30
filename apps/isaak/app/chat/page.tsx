@@ -1,22 +1,14 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { IsaakInstructionProfile, IsaakOnboardingProfile } from '@verifactu/integrations';
-import {
-  buildSuggestedPrompts,
-  getIsaakOnboardingState,
-  recordUsageEvent,
-} from '@verifactu/integrations';
+import { buildSuggestedPrompts, recordUsageEvent } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import {
-  buildHoldedAnalyticsSummary,
-  type HoldedAnalyticsSummary,
-} from '@/app/lib/holded-analytics';
-import { fetchHoldedSnapshot, getHoldedConnection } from '@/app/lib/holded-integration';
 import {
   buildHoldedAuthUrl,
   buildHoldedProfileOnboardingUrl,
   ISAAK_PUBLIC_URL,
 } from '@/app/lib/isaak-navigation';
+import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import { prisma } from '@/app/lib/prisma';
 import IsaakChatRecovery from './IsaakChatRecovery';
 import IsaakWorkspaceClient from './IsaakWorkspaceClient';
@@ -101,43 +93,6 @@ function readHandoff(value: string | string[] | undefined): {
   }
 }
 
-function buildFallbackProfile(input: {
-  session: { name: string | null; email: string | null };
-  connection: {
-    tenantName: string | null;
-    legalName: string | null;
-  };
-  tenantProfile: {
-    representative: string | null;
-    tradeName: string | null;
-    legalName: string | null;
-  } | null;
-}): IsaakOnboardingProfile {
-  return {
-    preferredName:
-      input.session.name ||
-      input.tenantProfile?.representative ||
-      input.session.email?.split('@')[0] ||
-      'Hola',
-    companyName:
-      input.connection.tenantName ||
-      input.tenantProfile?.tradeName ||
-      input.connection.legalName ||
-      input.tenantProfile?.legalName ||
-      'tu empresa',
-    roleInCompany: 'otro',
-    roleInCompanyOther: null,
-    businessSector: 'Actividad general',
-    teamSize: null,
-    website: null,
-    phone: null,
-    mainGoals: [],
-    communicationStyle: 'spanish_clear_non_technical',
-    likelyKnowledgeLevel: 'starter',
-    onboardingCompletedAt: new Date().toISOString(),
-  };
-}
-
 export default async function IsaakChatWorkspacePage({ searchParams }: PageProps) {
   const resolved = (await searchParams) || {};
   const source = readSource(resolved.source) || 'isaak_chat';
@@ -168,69 +123,23 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
     redirect(buildHoldedAuthUrl('isaak_chat_requires_session', chatReturnUrl));
   }
 
-  const [connection, profile] = await Promise.all([
-    getHoldedConnection(session.tenantId).catch((error) => {
-      console.error('[isaak/chat] holded connection read failed', error);
-      return null;
-    }),
-    prisma.tenantProfile
-      .findUnique({
-        where: { tenantId: session.tenantId },
-        select: {
-          representative: true,
-          tradeName: true,
-          legalName: true,
-        },
-      })
-      .catch((error) => {
-        console.error('[isaak/chat] tenant profile read failed', error);
-        return null;
-      }),
-  ]);
+  const context = await loadIsaakBusinessContext({
+    tenantId: session.tenantId,
+    userId: session.userId,
+    name: session.name,
+    email: session.email,
+  });
 
-  const effectiveConnection = connection || handoff?.connection || null;
+  const effectiveConnection = context.holded.connection || handoff?.connection || null;
 
   if (!effectiveConnection?.keyMasked && !isFreshHoldedHandoff) {
     redirect(buildHoldedProfileOnboardingUrl('isaak_chat_requires_holded', chatReturnUrl));
   }
 
-  const onboardingState = await getIsaakOnboardingState({
-    prisma,
-    tenantId: session.tenantId,
-    userId: session.userId,
-  }).catch((error) => {
-    console.error('[isaak/chat] onboarding state read failed', error);
-    return {
-      completed: false,
-      profile: null,
-      draft: null,
-      instructions: null,
-    };
-  });
-
-  const effectiveCompleted = onboardingState.completed || Boolean(handoff?.profile);
-  const effectiveProfile =
-    onboardingState.profile ||
-    handoff?.profile ||
-    (effectiveCompleted
-      ? buildFallbackProfile({
-          session: { name: session.name, email: session.email },
-          connection: {
-            tenantName: connection?.tenantName ?? profile?.tradeName ?? null,
-            legalName: connection?.legalName ?? profile?.legalName ?? null,
-          },
-          tenantProfile: profile,
-        })
-      : null);
-  const effectiveInstructions = onboardingState.instructions || handoff?.instructions || null;
-  const analyticsSummary: HoldedAnalyticsSummary | null = connection?.apiKey
-    ? await fetchHoldedSnapshot(connection.apiKey)
-        .then((snapshot) => buildHoldedAnalyticsSummary(snapshot))
-        .catch((error) => {
-          console.error('[isaak/chat] live insight read failed', error);
-          return null;
-        })
-    : null;
+  const effectiveCompleted = context.isaak.completed || Boolean(handoff?.profile);
+  const effectiveProfile = context.isaak.profile || handoff?.profile || null;
+  const effectiveInstructions = context.isaak.instructions || handoff?.instructions || null;
+  const analyticsSummary = context.holded.analytics;
 
   if (!effectiveCompleted || !effectiveProfile) {
     redirect(buildHoldedProfileOnboardingUrl('isaak_chat_requires_profile', chatReturnUrl));
@@ -260,22 +169,22 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
         tenantId: session.tenantId,
         tenantName:
           effectiveConnection?.tenantName ??
-          profile?.tradeName ??
+          context.company.tradeName ??
           handoff?.profile?.companyName ??
           null,
         legalName:
           effectiveConnection?.legalName ??
-          profile?.legalName ??
+          context.company.legalName ??
           handoff?.profile?.companyName ??
           null,
-        taxId: effectiveConnection?.taxId ?? null,
+        taxId: effectiveConnection?.taxId ?? context.company.taxId ?? null,
         keyMasked: effectiveConnection?.keyMasked ?? null,
         connectedAt: effectiveConnection?.connectedAt ?? null,
         lastValidatedAt: effectiveConnection?.lastValidatedAt ?? null,
         supportedModules: effectiveConnection?.supportedModules ?? [],
         validationSummary: effectiveConnection?.validationSummary ?? null,
-        phone: effectiveProfile?.phone ?? null,
-        representative: profile?.representative ?? null,
+        phone: context.company.phone ?? effectiveProfile?.phone ?? null,
+        representative: context.company.representative ?? null,
         isAdmin: false,
       }}
       onboardingProfile={effectiveProfile}
