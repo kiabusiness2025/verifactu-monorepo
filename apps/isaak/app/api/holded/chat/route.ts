@@ -66,7 +66,6 @@ function buildReply(input: {
   message: string;
   snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
   context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>;
-  memoryContext: Awaited<ReturnType<typeof getSimpleMemoryContext>>;
 }) {
   const text = input.message.toLowerCase();
   const invoiceCount = input.snapshot.invoices.length;
@@ -192,45 +191,55 @@ export async function POST(request: NextRequest) {
   const message = typeof body?.message === 'string' ? body.message.trim() : '';
   const requestedConversationId =
     typeof body?.conversationId === 'string' ? body.conversationId.trim() : '';
-  const hadChatsBefore = await prisma.isaakConversation.count({
-    where: {
-      tenantId: session.tenantId,
-      userId: session.userId,
-      context: 'holded_free_dashboard',
-    },
-  });
+
+  const hadChatsBefore = await prisma.isaakConversation
+    .count({
+      where: {
+        tenantId: session.tenantId,
+        userId: session.userId,
+        context: 'holded_free_dashboard',
+      },
+    })
+    .catch((error) => {
+      console.warn('[isaak chat] conversation count unavailable', {
+        tenantId: session.tenantId,
+        userId: session.userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return 0;
+    });
 
   if (!message) {
     return NextResponse.json({ error: 'Escribe una pregunta para continuar.' }, { status: 400 });
   }
 
-  const conversation = await ensureHoldedConversation(
-    {
-      tenantId: session.tenantId,
-      userId: session.userId,
-    },
-    {
-      conversationId: requestedConversationId || null,
-      titleSeed: message,
-    }
-  );
-
-  await appendConversationMessage({
-    conversationId: conversation.id,
-    role: 'user',
-    content: message,
-  });
-
-  const [snapshot, memoryContext] = await Promise.all([
-    Promise.resolve(context.holded.snapshot),
-    getSimpleMemoryContext(
+  let conversation: Awaited<ReturnType<typeof ensureHoldedConversation>> | null = null;
+  try {
+    conversation = await ensureHoldedConversation(
       {
         tenantId: session.tenantId,
         userId: session.userId,
       },
-      conversation.id
-    ),
-  ]);
+      {
+        conversationId: requestedConversationId || null,
+        titleSeed: message,
+      }
+    );
+
+    await appendConversationMessage({
+      conversationId: conversation.id,
+      role: 'user',
+      content: message,
+    });
+  } catch (error) {
+    console.warn('[isaak chat] conversation persistence unavailable', {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const snapshot = context.holded.snapshot;
 
   if (!snapshot) {
     return NextResponse.json(
@@ -243,101 +252,129 @@ export async function POST(request: NextRequest) {
     message,
     snapshot,
     context,
-    memoryContext,
   });
 
-  const assistantMessage = await appendConversationMessage({
-    conversationId: conversation.id,
-    role: 'assistant',
-    content: reply,
-    metadata: {
-      source: 'isaak_workspace_mvp',
-      snapshot: {
-        invoices: snapshot.invoices.length,
-        contacts: snapshot.contacts.length,
-        accounts: snapshot.accounts.length,
-      },
-    },
-  });
+  let assistantMessage: Awaited<ReturnType<typeof appendConversationMessage>> | null = null;
 
-  await Promise.all([
-    storeSimpleMemoryFact({
-      tenantId: session.tenantId,
-      userId: session.userId,
-      conversationId: conversation.id,
-      category: 'chat_preference',
-      factKey: 'last_user_topic',
-      value: {
-        text: message,
-      },
-      confidence: 0.55,
-    }),
-    storeSimpleMemoryFact({
-      tenantId: session.tenantId,
-      userId: session.userId,
-      conversationId: conversation.id,
-      category: 'holded_snapshot',
-      factKey: 'latest_snapshot_counts',
-      value: {
-        invoices: snapshot.invoices.length,
-        contacts: snapshot.contacts.length,
-        accounts: snapshot.accounts.length,
-        companyName: context.labels.companyName,
-        summary: context.summary,
-      },
-      confidence: 0.85,
-    }),
-    ...(hadChatsBefore === 0
-      ? [
-          recordUsageEvent({
-            prisma,
+  if (conversation) {
+    try {
+      assistantMessage = await appendConversationMessage({
+        conversationId: conversation.id,
+        role: 'assistant',
+        content: reply,
+        metadata: {
+          source: 'isaak_workspace_mvp',
+          snapshot: {
+            invoices: snapshot.invoices.length,
+            contacts: snapshot.contacts.length,
+            accounts: snapshot.accounts.length,
+          },
+        },
+      });
+
+      await Promise.all([
+        getSimpleMemoryContext(
+          {
             tenantId: session.tenantId,
             userId: session.userId,
-            type: 'FIRST_CHAT_CREATED',
-            source: 'isaak_holded_chat',
-            path: '/api/holded/chat',
-            metadataJson: {
-              conversationId: conversation.id,
-            },
-          }),
-          recordUsageEvent({
-            prisma,
-            tenantId: session.tenantId,
-            userId: session.userId,
-            type: 'FIRST_MESSAGE_SENT',
-            source: 'isaak_holded_chat',
-            path: '/api/holded/chat',
-            metadataJson: {
-              conversationId: conversation.id,
-              messageLength: message.length,
-            },
-          }),
-        ]
-      : []),
-    ...(isSummaryRequest(message)
-      ? [
-          recordUsageEvent({
-            prisma,
-            tenantId: session.tenantId,
-            userId: session.userId,
-            type: 'SUMMARY_REQUESTED',
-            source: 'isaak_holded_chat',
-            path: '/api/holded/chat',
-            metadataJson: {
-              conversationId: conversation.id,
-              message,
-            },
-          }),
-        ]
-      : []),
-  ]);
+          },
+          conversation.id
+        ),
+        storeSimpleMemoryFact({
+          tenantId: session.tenantId,
+          userId: session.userId,
+          conversationId: conversation.id,
+          category: 'chat_preference',
+          factKey: 'last_user_topic',
+          value: {
+            text: message,
+          },
+          confidence: 0.55,
+        }),
+        storeSimpleMemoryFact({
+          tenantId: session.tenantId,
+          userId: session.userId,
+          conversationId: conversation.id,
+          category: 'holded_snapshot',
+          factKey: 'latest_snapshot_counts',
+          value: {
+            invoices: snapshot.invoices.length,
+            contacts: snapshot.contacts.length,
+            accounts: snapshot.accounts.length,
+            companyName: context.labels.companyName,
+            summary: context.summary,
+          },
+          confidence: 0.85,
+        }),
+        ...(hadChatsBefore === 0
+          ? [
+              recordUsageEvent({
+                prisma,
+                tenantId: session.tenantId,
+                userId: session.userId,
+                type: 'FIRST_CHAT_CREATED',
+                source: 'isaak_holded_chat',
+                path: '/api/holded/chat',
+                metadataJson: {
+                  conversationId: conversation.id,
+                },
+              }),
+              recordUsageEvent({
+                prisma,
+                tenantId: session.tenantId,
+                userId: session.userId,
+                type: 'FIRST_MESSAGE_SENT',
+                source: 'isaak_holded_chat',
+                path: '/api/holded/chat',
+                metadataJson: {
+                  conversationId: conversation.id,
+                  messageLength: message.length,
+                },
+              }),
+            ]
+          : []),
+        ...(isSummaryRequest(message)
+          ? [
+              recordUsageEvent({
+                prisma,
+                tenantId: session.tenantId,
+                userId: session.userId,
+                type: 'SUMMARY_REQUESTED',
+                source: 'isaak_holded_chat',
+                path: '/api/holded/chat',
+                metadataJson: {
+                  conversationId: conversation.id,
+                  message,
+                },
+              }),
+            ]
+          : []),
+      ]).catch((error) => {
+        console.warn('[isaak chat] post-reply persistence unavailable', {
+          tenantId: session.tenantId,
+          userId: session.userId,
+          conversationId: conversation?.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    } catch (error) {
+      console.warn('[isaak chat] assistant message persistence unavailable', {
+        tenantId: session.tenantId,
+        userId: session.userId,
+        conversationId: conversation?.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
   return NextResponse.json({
     ok: true,
-    conversation: {
-      id: conversation.id,
-      title: conversation.title,
-    },
+    conversation: conversation
+      ? {
+          id: conversation.id,
+          title: conversation.title,
+        }
+      : null,
     reply,
     assistantMessage,
     snapshot: {
