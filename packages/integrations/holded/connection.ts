@@ -28,8 +28,11 @@ export type HoldedProbeResult = {
   error: string | null;
 };
 
+export type HoldedConnectionChannel = 'dashboard' | 'chatgpt';
+
 export type HoldedConnectionRecord = {
   provider: 'holded';
+  channel: HoldedConnectionChannel | 'legacy';
   status: string;
   connectedAt: string | null;
   lastValidatedAt: string | null;
@@ -43,6 +46,10 @@ export type HoldedConnectionRecord = {
   taxId: string | null;
   apiKey?: string;
 };
+
+function normalizeHoldedChannel(channel?: string | null): HoldedConnectionChannel {
+  return channel === 'chatgpt' ? 'chatgpt' : 'dashboard';
+}
 
 function resolveTrustedTenantIdentity(input: {
   name?: string | null;
@@ -515,7 +522,9 @@ export async function saveHoldedConnection(input: {
   apiKey: string;
   userId?: string | null;
   probe: HoldedProbeResult;
+  channel?: HoldedConnectionChannel;
 }) {
+  const channel = normalizeHoldedChannel(input.channel);
   const normalizedApiKey = input.apiKey.trim();
   const encrypted = encryptHoldedSecret(normalizedApiKey);
   const fingerprint = buildApiKeyFingerprint(normalizedApiKey);
@@ -537,36 +546,42 @@ export async function saveHoldedConnection(input: {
 
   try {
     const txOperations = [
-      input.prisma.tenantIntegration.upsert({
-        where: {
-          tenantId_provider: {
-            tenantId: input.tenantId,
-            provider: 'accounting_api',
-          },
-        },
-        update: {
-          apiKeyEnc: encrypted,
-          status: 'connected',
-          lastError: null,
-          lastSyncAt: now,
-        },
-        create: {
-          tenantId: input.tenantId,
-          provider: 'accounting_api',
-          apiKeyEnc: encrypted,
-          status: 'connected',
-          lastError: null,
-          lastSyncAt: now,
-        },
-      }),
+      ...(channel === 'dashboard'
+        ? [
+            input.prisma.tenantIntegration.upsert({
+              where: {
+                tenantId_provider: {
+                  tenantId: input.tenantId,
+                  provider: 'accounting_api',
+                },
+              },
+              update: {
+                apiKeyEnc: encrypted,
+                status: 'connected',
+                lastError: null,
+                lastSyncAt: now,
+              },
+              create: {
+                tenantId: input.tenantId,
+                provider: 'accounting_api',
+                apiKeyEnc: encrypted,
+                status: 'connected',
+                lastError: null,
+                lastSyncAt: now,
+              },
+            }),
+          ]
+        : []),
       input.prisma.externalConnection.upsert({
         where: {
-          tenantId_provider: {
+          tenantId_provider_channelKey: {
             tenantId: input.tenantId,
             provider: 'holded',
+            channelKey: channel,
           },
         },
         update: {
+          channelKey: channel,
           providerAccountId: fingerprint,
           credentialType: 'api_key',
           apiKeyEnc: encrypted,
@@ -580,6 +595,7 @@ export async function saveHoldedConnection(input: {
         create: {
           tenantId: input.tenantId,
           provider: 'holded',
+          channelKey: channel,
           providerAccountId: fingerprint,
           credentialType: 'api_key',
           apiKeyEnc: encrypted,
@@ -624,7 +640,7 @@ export async function saveHoldedConnection(input: {
     ];
 
     const txResults = await input.prisma.$transaction(txOperations);
-    const connection = txResults[1];
+    const connection = txResults[channel === 'dashboard' ? 1 : 0];
     connectionId = connection.id;
   } catch (error) {
     if (!isMissingRelationError(error)) {
@@ -635,6 +651,10 @@ export async function saveHoldedConnection(input: {
       tenantId: input.tenantId,
       error: error instanceof Error ? error.message : String(error),
     });
+
+    if (channel !== 'dashboard') {
+      throw error;
+    }
 
     await input.prisma.tenantIntegration.upsert({
       where: {
@@ -681,6 +701,7 @@ export async function saveHoldedConnection(input: {
     status: 'success',
     requestPayload: {
       provider: 'holded',
+      channel,
       credentialType: 'api_key',
       keyMasked: maskSecret(normalizedApiKey),
     },
@@ -696,6 +717,7 @@ export async function saveHoldedConnection(input: {
 
   return {
     connected: true,
+    channel,
     keyMasked: maskSecret(normalizedApiKey),
     connectedAt: now.toISOString(),
     providerAccountId: fingerprint,
@@ -711,49 +733,57 @@ export async function disconnectHoldedConnection(input: {
   prisma: HoldedPrismaClient;
   tenantId: string;
   userId?: string | null;
+  channel?: HoldedConnectionChannel;
 }) {
+  const channel = normalizeHoldedChannel(input.channel);
   const now = new Date();
   let existing: { id: string } | null = null;
 
   try {
     existing = await input.prisma.externalConnection.findUnique({
       where: {
-        tenantId_provider: {
+        tenantId_provider_channelKey: {
           tenantId: input.tenantId,
           provider: 'holded',
+          channelKey: channel,
         },
       },
       select: { id: true },
     });
 
     await input.prisma.$transaction([
-      input.prisma.tenantIntegration.upsert({
-        where: {
-          tenantId_provider: {
-            tenantId: input.tenantId,
-            provider: 'accounting_api',
-          },
-        },
-        update: {
-          apiKeyEnc: null,
-          status: 'disconnected',
-          lastError: null,
-          lastSyncAt: now,
-        },
-        create: {
-          tenantId: input.tenantId,
-          provider: 'accounting_api',
-          apiKeyEnc: null,
-          status: 'disconnected',
-          lastError: null,
-          lastSyncAt: now,
-        },
-      }),
+      ...(channel === 'dashboard'
+        ? [
+            input.prisma.tenantIntegration.upsert({
+              where: {
+                tenantId_provider: {
+                  tenantId: input.tenantId,
+                  provider: 'accounting_api',
+                },
+              },
+              update: {
+                apiKeyEnc: null,
+                status: 'disconnected',
+                lastError: null,
+                lastSyncAt: now,
+              },
+              create: {
+                tenantId: input.tenantId,
+                provider: 'accounting_api',
+                apiKeyEnc: null,
+                status: 'disconnected',
+                lastError: null,
+                lastSyncAt: now,
+              },
+            }),
+          ]
+        : []),
       input.prisma.externalConnection.upsert({
         where: {
-          tenantId_provider: {
+          tenantId_provider_channelKey: {
             tenantId: input.tenantId,
             provider: 'holded',
+            channelKey: channel,
           },
         },
         update: {
@@ -766,6 +796,7 @@ export async function disconnectHoldedConnection(input: {
         create: {
           tenantId: input.tenantId,
           provider: 'holded',
+          channelKey: channel,
           credentialType: 'api_key',
           apiKeyEnc: null,
           scopesGranted: [],
@@ -785,6 +816,10 @@ export async function disconnectHoldedConnection(input: {
       tenantId: input.tenantId,
       error: error instanceof Error ? error.message : String(error),
     });
+
+    if (channel !== 'dashboard') {
+      throw error;
+    }
 
     await input.prisma.tenantIntegration.upsert({
       where: {
@@ -818,6 +853,7 @@ export async function disconnectHoldedConnection(input: {
     status: 'success',
     requestPayload: {
       provider: 'holded',
+      channel,
     },
     responsePayload: {
       disconnectedAt: now.toISOString(),
@@ -826,6 +862,7 @@ export async function disconnectHoldedConnection(input: {
 
   return {
     disconnected: true,
+    channel,
     disconnectedAt: now.toISOString(),
   };
 }
@@ -833,14 +870,17 @@ export async function disconnectHoldedConnection(input: {
 export async function getHoldedConnection(input: {
   prisma: HoldedPrismaClient;
   tenantId: string;
+  channel?: HoldedConnectionChannel;
 }): Promise<HoldedConnectionRecord | null> {
+  const channel = normalizeHoldedChannel(input.channel);
   let connection;
   try {
     connection = await input.prisma.externalConnection.findUnique({
       where: {
-        tenantId_provider: {
+        tenantId_provider_channelKey: {
           tenantId: input.tenantId,
           provider: 'holded',
+          channelKey: channel,
         },
       },
       include: {
@@ -858,12 +898,15 @@ export async function getHoldedConnection(input: {
         error: error instanceof Error ? error.message : String(error),
       });
       try {
+        if (channel !== 'dashboard') return null;
+
         const integration = await getTenantIntegrationFallback(input.prisma, input.tenantId);
         if (!integration?.apiKeyEnc) return null;
 
         const apiKey = decryptHoldedSecret(integration.apiKeyEnc);
         return {
           provider: 'holded',
+          channel: 'legacy',
           status: integration.status,
           connectedAt: null,
           lastValidatedAt: null,
@@ -914,6 +957,7 @@ export async function getHoldedConnection(input: {
 
   return {
     provider: 'holded',
+    channel,
     status: connection.connectionStatus,
     connectedAt: connection.connectedAt?.toISOString() || null,
     lastValidatedAt: connection.lastValidatedAt?.toISOString() || null,

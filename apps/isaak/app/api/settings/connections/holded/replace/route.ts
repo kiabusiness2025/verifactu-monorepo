@@ -71,6 +71,7 @@ export async function POST(req: Request) {
     userId: session.userId,
     apiKey,
     probe,
+    channel: 'dashboard',
   });
 
   await recordUsageEvent({

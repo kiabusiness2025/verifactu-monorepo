@@ -259,7 +259,7 @@ export async function loadIsaakBusinessContext(
         employees: true,
       },
     }),
-    getHoldedConnection(session.tenantId).catch((error) => {
+    getHoldedConnection(session.tenantId, 'dashboard').catch((error) => {
       console.error('[isaak context] holded connection read failed', error);
       return null;
     }),

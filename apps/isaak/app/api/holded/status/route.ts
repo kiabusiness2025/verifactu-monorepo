@@ -25,7 +25,7 @@ export async function GET() {
 
   let connection = null;
   try {
-    connection = await getHoldedConnection(session.tenantId);
+    connection = await getHoldedConnection(session.tenantId, 'dashboard');
   } catch (error) {
     console.error('[holded/status] connection read failed', {
       tenantId: session.tenantId,

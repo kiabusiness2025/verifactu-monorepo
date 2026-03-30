@@ -386,7 +386,10 @@ async function resolveHoldedApiKey(access?: {
   tenantId: string | null;
 }) {
   if (access?.tenantId) {
-    const connection = await resolveSharedHoldedConnectionForTenant(access.tenantId);
+    const connection = await resolveSharedHoldedConnectionForTenant(
+      access.tenantId,
+      access.mode === 'oauth' ? 'chatgpt' : 'dashboard'
+    );
     if (connection) {
       return {
         apiKey: connection.apiKey,
@@ -411,7 +414,10 @@ async function resolveHoldedApiKey(access?: {
     });
 
     if (resolved.tenantId) {
-      const connection = await resolveSharedHoldedConnectionForTenant(resolved.tenantId);
+      const connection = await resolveSharedHoldedConnectionForTenant(
+        resolved.tenantId,
+        'dashboard'
+      );
       if (connection) {
         return {
           apiKey: connection.apiKey,

@@ -839,6 +839,7 @@ model ExternalConnection {
   id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId          String    @map("tenant_id") @db.Uuid
   provider          String
+  channelKey        String    @default("dashboard") @map("channel_key")
   providerAccountId String?   @map("provider_account_id")
   credentialType    String    @default("api_key") @map("credential_type")
   apiKeyEnc         String?   @map("api_key_enc")
@@ -856,8 +857,8 @@ model ExternalConnection {
   auditLogs       ExternalConnectionAuditLog[]
   syncRuns        ExternalSyncRun[]
 
-  @@unique([tenantId, provider])
-  @@index([tenantId, provider, connectionStatus])
+  @@unique([tenantId, provider, channelKey])
+  @@index([tenantId, provider, channelKey, connectionStatus])
   @@index([connectedByUserId])
   @@map("external_connections")
 }

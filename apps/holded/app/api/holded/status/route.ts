@@ -4,7 +4,11 @@ import { getHoldedConnection } from '@/app/lib/holded-integration';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+function normalizeChannel(value: string | null) {
+  return value === 'chatgpt' ? 'chatgpt' : 'dashboard';
+}
+
+export async function GET(request: Request) {
   const session = await getHoldedSession();
 
   if (!session?.tenantId) {
@@ -14,9 +18,11 @@ export async function GET() {
     );
   }
 
-  const connection = await getHoldedConnection(session.tenantId);
+  const channel = normalizeChannel(new URL(request.url).searchParams.get('channel'));
+  const connection = await getHoldedConnection(session.tenantId, channel);
 
   return NextResponse.json({
+    channel,
     connected: Boolean(connection),
     status: connection?.status || 'disconnected',
     keyMasked: connection?.keyMasked || null,

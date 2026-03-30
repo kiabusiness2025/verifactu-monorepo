@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       apiKey,
       userId: session.userId,
       probe,
+      channel: 'dashboard',
     });
 
     return NextResponse.json({
@@ -79,6 +80,7 @@ export async function DELETE() {
   const disconnected = await disconnectHoldedConnection({
     tenantId: session.tenantId,
     userId: session.userId,
+    channel: 'dashboard',
   });
 
   return NextResponse.json({

@@ -33,7 +33,9 @@ export async function GET(request: NextRequest) {
   const codeChallengeRaw = url.searchParams.get('code_challenge')?.trim() || '';
   const codeChallengeMethodRaw = url.searchParams.get('code_challenge_method')?.trim() || '';
   const requestedScope = url.searchParams.get('scope');
-  const normalizedScope = requestedScope?.trim() ? requestedScope.trim() : getDefaultScopes().join(' ');
+  const normalizedScope = requestedScope?.trim()
+    ? requestedScope.trim()
+    : getDefaultScopes().join(' ');
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
   const onboardingToken = url.searchParams.get('onboarding_token')?.trim() || null;
 
@@ -55,7 +57,8 @@ export async function GET(request: NextRequest) {
     }
 
     const session = await getSessionPayload();
-    const onboardingPayload = !session?.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
+    const onboardingPayload =
+      !session?.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
 
     if (!session?.uid && !onboardingPayload) {
       const guestToken = await mintHoldedOnboardingToken({
@@ -131,7 +134,10 @@ export async function GET(request: NextRequest) {
     let hasHoldedConnection = false;
     if (resolved.tenantId) {
       try {
-        hasHoldedConnection = await hasSharedHoldedConnectionForTenant(resolved.tenantId);
+        hasHoldedConnection = await hasSharedHoldedConnectionForTenant(
+          resolved.tenantId,
+          'chatgpt'
+        );
       } catch (error) {
         console.error('[oauth/authorize] holded connection lookup failed', {
           tenantId: resolved.tenantId,

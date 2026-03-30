@@ -87,7 +87,7 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
   }
 
   const [connection, tenantProfile] = await Promise.all([
-    getHoldedConnection(session.tenantId),
+    getHoldedConnection(session.tenantId, 'dashboard'),
     readTenantProfileSafe(session.tenantId),
   ]);
 

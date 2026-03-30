@@ -272,7 +272,7 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
           employees: true,
         },
       }),
-      getHoldedConnection(session.tenantId),
+      getHoldedConnection(session.tenantId, 'dashboard'),
       getIsaakOnboardingState({
         prisma,
         tenantId: session.tenantId,

@@ -29,6 +29,7 @@ export async function POST(req: Request) {
   await disconnectHoldedConnection({
     tenantId: session.tenantId,
     userId: session.userId,
+    channel: 'dashboard',
   });
 
   void sendHoldedDisconnectNotifications({

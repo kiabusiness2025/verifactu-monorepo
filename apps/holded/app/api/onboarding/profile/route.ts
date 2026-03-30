@@ -129,7 +129,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const connection = await getHoldedConnection(session.tenantId);
+  const connection = await getHoldedConnection(session.tenantId, 'dashboard');
   if (!connection?.keyMasked) {
     return NextResponse.json(
       { error: 'Conecta Holded antes de continuar con Isaak.' },

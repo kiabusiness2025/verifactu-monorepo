@@ -4,6 +4,7 @@ import {
   encryptHoldedSecret,
   fetchHoldedSnapshot,
   getHoldedConnection as getSharedHoldedConnection,
+  type HoldedConnectionChannel,
   maskSecret,
   probeHoldedConnection,
   saveHoldedConnection as saveSharedHoldedConnection,
@@ -21,12 +22,14 @@ export {
 };
 
 export type { HoldedConnectionRecord, HoldedProbeResult };
+export type { HoldedConnectionChannel };
 
 export async function saveHoldedConnection(input: {
   tenantId: string;
   apiKey: string;
   userId?: string | null;
   probe: HoldedProbeResult;
+  channel?: HoldedConnectionChannel;
 }) {
   return saveSharedHoldedConnection({
     prisma,
@@ -37,6 +40,7 @@ export async function saveHoldedConnection(input: {
 export async function disconnectHoldedConnection(input: {
   tenantId: string;
   userId?: string | null;
+  channel?: HoldedConnectionChannel;
 }) {
   return disconnectSharedHoldedConnection({
     prisma,
@@ -45,10 +49,12 @@ export async function disconnectHoldedConnection(input: {
 }
 
 export async function getHoldedConnection(
-  tenantId: string
+  tenantId: string,
+  channel?: HoldedConnectionChannel
 ): Promise<HoldedConnectionRecord | null> {
   return getSharedHoldedConnection({
     prisma,
     tenantId,
+    channel,
   });
 }

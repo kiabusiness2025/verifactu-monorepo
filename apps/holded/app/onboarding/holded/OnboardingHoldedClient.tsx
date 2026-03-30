@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
 
@@ -17,8 +18,11 @@ type ValidationResponse = {
 };
 
 export default function OnboardingHoldedClient() {
+  const searchParams = useSearchParams();
   const holdedApiGuideUrl =
     'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
+  const channel = searchParams?.get('channel') === 'chatgpt' ? 'chatgpt' : 'dashboard';
+  const nextTarget = searchParams?.get('next')?.trim() || '';
 
   const [apiKey, setApiKey] = useState('');
   const [isValidating, setIsValidating] = useState(false);
@@ -104,7 +108,7 @@ export default function OnboardingHoldedClient() {
       const res = await fetch('/api/holded/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: apiKey.trim() }),
+        body: JSON.stringify({ apiKey: apiKey.trim(), channel }),
       });
 
       const data = await res.json().catch(() => null);
@@ -113,7 +117,7 @@ export default function OnboardingHoldedClient() {
         throw new Error(data?.error || 'No hemos podido conectar Holded.');
       }
 
-      window.location.assign('/onboarding/success');
+      window.location.assign(nextTarget || '/onboarding/success');
     } catch (connectError) {
       setError(
         connectError instanceof Error ? connectError.message : 'No hemos podido conectar Holded.'
@@ -149,7 +153,7 @@ export default function OnboardingHoldedClient() {
                   <a
                     href="https://app.holded.com/login"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noreferrer noopener"
                     className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
                   >
                     Entra en Holded
@@ -161,7 +165,7 @@ export default function OnboardingHoldedClient() {
                   <a
                     href="https://app.holded.com/home#settings:/"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noreferrer noopener"
                     className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
                   >
                     Configuracion

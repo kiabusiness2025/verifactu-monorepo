@@ -12,6 +12,10 @@ import { prisma } from '@/app/lib/prisma';
 
 export const runtime = 'nodejs';
 
+function normalizeChannel(value: unknown) {
+  return value === 'chatgpt' ? 'chatgpt' : 'dashboard';
+}
+
 function normalizeApiKey(value: string) {
   return value.replace(/\s+/g, '').trim();
 }
@@ -43,6 +47,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const apiKey = typeof body?.apiKey === 'string' ? normalizeApiKey(body.apiKey) : '';
+    const channel = normalizeChannel(body?.channel);
 
     if (!apiKey) {
       return NextResponse.json({ error: 'Pega una API key valida de Holded.' }, { status: 400 });
@@ -99,6 +104,7 @@ export async function POST(request: NextRequest) {
       apiKey,
       userId: session.userId,
       probe,
+      channel,
     });
 
     await Promise.allSettled([
@@ -111,6 +117,7 @@ export async function POST(request: NextRequest) {
         path: '/api/holded/connect',
         metadataJson: {
           provider: 'holded',
+          channel,
           status: saved?.connected ? 'connected' : 'pending',
           supportedModules: readProbeSupportedModules(probe),
         },
@@ -147,7 +154,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   const session = await getHoldedSession();
 
   if (!session?.tenantId) {
@@ -157,9 +164,11 @@ export async function DELETE() {
     );
   }
 
+  const channel = normalizeChannel(new URL(request.url).searchParams.get('channel'));
   const disconnected = await disconnectHoldedConnection({
     tenantId: session.tenantId,
     userId: session.userId,
+    channel,
   });
 
   return NextResponse.json({
