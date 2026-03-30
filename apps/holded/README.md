@@ -121,9 +121,60 @@ Documentacion tecnica:
 - `NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET`
 - `NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY`
+- `NEXT_PUBLIC_HOLDED_FIREBASE_APP_CHECK_DEBUG_TOKEN`
 - `NEXT_PUBLIC_HOLDED_ENABLE_GOOGLE_LOGIN`
 - `RESEND_API_KEY`
 - `RESEND_FROM`
+
+### Bloque exacto para Vercel o local
+
+```env
+NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY=your-firebase-api-key
+NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID=your-firebase-app-id
+NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY=your-recaptcha-v3-site-key
+NEXT_PUBLIC_HOLDED_FIREBASE_APP_CHECK_DEBUG_TOKEN=your-app-check-debug-token
+NEXT_PUBLIC_HOLDED_SITE_URL=https://holded.verifactu.business
+NEXT_PUBLIC_HOLDED_ENABLE_GOOGLE_LOGIN=true
+```
+
+Notas:
+
+- `NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY` es obligatoria si App Check esta activado en Firebase para la app web de Holded.
+- `NEXT_PUBLIC_HOLDED_FIREBASE_APP_CHECK_DEBUG_TOKEN` solo debe usarse en local o en una fase temporal de diagnostico.
+- no guardes API keys reales ni debug tokens en el repo.
+
+### Firebase App Check
+
+Estado real del proyecto:
+
+- `apps/holded` ya inicializa App Check en frontend si existe `NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY`
+- tambien soporta debug token mediante `NEXT_PUBLIC_HOLDED_FIREBASE_APP_CHECK_DEBUG_TOKEN`
+- el endpoint de diagnostico es:
+  - `/api/auth/google/diagnostics`
+
+Pasos recomendados en Firebase:
+
+1. Firebase Console -> App Check -> selecciona la app web de Holded.
+2. Crea o reutiliza una `reCAPTCHA v3 site key`.
+3. Publica la site key en Vercel como `NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY`.
+4. Para pruebas locales, registra un debug token en App Check y publicalo solo en tu entorno local como `NEXT_PUBLIC_HOLDED_FIREBASE_APP_CHECK_DEBUG_TOKEN`.
+5. Solo despues de comprobar login con email y Google, activa enforcement.
+
+Si ves este error:
+
+- `auth/firebase-app-check-token-is-invalid`
+
+revisa primero:
+
+- site key incorrecta
+- debug token no registrado en Firebase App Check
+- enforcement activado antes de tener App Check inicializado correctamente en la web
+- mezcla de proyecto Firebase y claves de otro proyecto
 
 ## Checklist operativo
 
@@ -132,8 +183,10 @@ Antes de probar el flujo publico:
 1. Firebase Email/Password habilitado.
 2. Si se usa Google, provider Google habilitado en Firebase.
 3. `holded.verifactu.business` dado de alta como authorized domain en Firebase.
-4. `SESSION_SECRET` compartido con `isaak` si se quiere handoff sin login repetido.
-5. Holded conectado desde el flujo de onboarding.
+4. Si App Check esta activo, `NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY` configurada y valida.
+5. Si pruebas en local con debug token, registrarlo en Firebase App Check y usar `NEXT_PUBLIC_HOLDED_FIREBASE_APP_CHECK_DEBUG_TOKEN`.
+6. `SESSION_SECRET` compartido con `isaak` si se quiere handoff sin login repetido.
+7. Holded conectado desde el flujo de onboarding.
 
 ## Ayuda oficial de Holded
 
