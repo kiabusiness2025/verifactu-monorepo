@@ -199,36 +199,19 @@ function resolvePreferredCompanyName(input: {
   onboardingProfile: IsaakOnboardingProfile | null;
   connection: HoldedConnectionRecord | null;
 }) {
-  const manualTradeName =
-    input.tenantProfile && input.tenantProfile.source !== 'holded'
-      ? input.tenantProfile.tradeName
-      : null;
-  const manualLegalName =
-    input.tenantProfile && input.tenantProfile.source !== 'holded'
-      ? input.tenantProfile.legalName
-      : null;
-  const holdedSyncedTradeName =
-    input.tenantProfile && input.tenantProfile.source === 'holded'
-      ? input.tenantProfile.tradeName
-      : null;
-  const holdedSyncedLegalName =
-    input.tenantProfile && input.tenantProfile.source === 'holded'
-      ? input.tenantProfile.legalName
-      : null;
+  const profileTradeName = input.tenantProfile?.tradeName ?? null;
+  const profileLegalName = input.tenantProfile?.legalName ?? null;
 
   const companyName =
-    manualTradeName ||
+    profileTradeName ||
+    profileLegalName ||
     input.onboardingProfile?.companyName ||
-    manualLegalName ||
-    holdedSyncedTradeName ||
     input.connection?.tenantName ||
-    holdedSyncedLegalName ||
     input.connection?.legalName ||
     null;
 
   const legalName =
-    manualLegalName ||
-    holdedSyncedLegalName ||
+    profileLegalName ||
     input.connection?.legalName ||
     input.onboardingProfile?.companyName ||
     companyName;
