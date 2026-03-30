@@ -401,7 +401,7 @@ export default function IsaakWorkspaceClient({
 
   useEffect(() => {
     let cancelled = false;
-    const loadLatestConversation = async () => {
+    const loadRecentConversations = async () => {
       setLoadingConversation(true);
       try {
         const listRes = await fetch('/api/holded/conversations');
@@ -409,34 +409,16 @@ export default function IsaakWorkspaceClient({
         if (!listRes.ok || !listData?.ok) throw new Error();
         const conversations = Array.isArray(listData.conversations) ? listData.conversations : [];
         if (!cancelled) setRecentConversations(conversations);
-        const latestId = conversations[0]?.id;
-        if (!latestId) return;
-        const detailRes = await fetch(`/api/holded/conversations/${latestId}`);
-        const detailData = await detailRes.json().catch(() => null);
-        if (!detailRes.ok || !detailData?.ok || !detailData?.conversation) throw new Error();
         if (cancelled) return;
-        setConversationId(detailData.conversation.id);
-        setMessages(
-          Array.isArray(detailData.conversation.messages)
-            ? detailData.conversation.messages.map(
-                (message: { id: string; role: 'assistant' | 'user'; content: string }) => ({
-                  id: message.id,
-                  role: message.role,
-                  content: message.content,
-                })
-              )
-            : []
-        );
       } catch {
         if (!cancelled) {
-          setConversationId(null);
-          setMessages([]);
+          setRecentConversations([]);
         }
       } finally {
         if (!cancelled) setLoadingConversation(false);
       }
     };
-    void loadLatestConversation();
+    void loadRecentConversations();
     return () => {
       cancelled = true;
     };
