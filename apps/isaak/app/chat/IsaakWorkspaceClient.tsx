@@ -38,11 +38,18 @@ type SessionInfo = {
 };
 
 type LiveInsight = {
-  sales: number;
-  pendingInvoices: number;
+  monthSales: number;
+  monthExpenses: number | null;
+  monthMargin: number | null;
+  quarterSales: number;
+  quarterExpenses: number | null;
+  quarterMargin: number | null;
+  pendingCollectionsAmount: number;
+  pendingCollectionsCount: number;
   invoices: number;
   contacts: number;
   accounts: number;
+  expenseSignals: number;
   insight: string;
 };
 
@@ -118,6 +125,15 @@ function formatFileSize(size: number) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function formatMoney(amount: number | null | undefined) {
+  if (typeof amount !== 'number') return 'Pendiente';
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 function AssistantAvatar() {
   return (
     <div className="relative mt-1 h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm">
@@ -148,7 +164,7 @@ export default function IsaakWorkspaceClient({
   session,
   onboardingProfile,
   instructionProfile,
-  liveInsight,
+  analyticsSummary,
   connectionPending = false,
   quickPrompts,
   connectionSettingsUrl,
@@ -157,7 +173,7 @@ export default function IsaakWorkspaceClient({
   session: SessionInfo;
   onboardingProfile?: IsaakOnboardingProfile | null;
   instructionProfile?: IsaakInstructionProfile | null;
-  liveInsight?: LiveInsight | null;
+  analyticsSummary?: LiveInsight | null;
   connectionPending?: boolean;
   quickPrompts?: string[];
   connectionSettingsUrl: string;
@@ -234,30 +250,81 @@ export default function IsaakWorkspaceClient({
   }, [hasLiveConnection, onboardingGoalSummary, showConnectionWarmup]);
 
   const assistantInsightMessage = useMemo(() => {
-    if (!liveInsight || showConnectionWarmup || !hasLiveConnection) return null;
+    if (!analyticsSummary || showConnectionWarmup || !hasLiveConnection) return null;
 
     const fragments: string[] = [];
-    if (liveInsight.sales > 0) {
+    if (analyticsSummary.monthSales > 0) {
+      fragments.push(`Este mes ya detecto ${formatMoney(analyticsSummary.monthSales)} en ventas`);
+    }
+    if (analyticsSummary.monthExpenses !== null && analyticsSummary.monthExpenses > 0) {
+      fragments.push(`unos ${formatMoney(analyticsSummary.monthExpenses)} en gastos`);
+    }
+    if (analyticsSummary.monthMargin !== null) {
+      const marginLabel =
+        analyticsSummary.monthMargin >= 0
+          ? `margen estimado de ${formatMoney(analyticsSummary.monthMargin)}`
+          : `margen estimado en rojo de ${formatMoney(Math.abs(analyticsSummary.monthMargin))}`;
+      fragments.push(marginLabel);
+    }
+    if (analyticsSummary.pendingCollectionsAmount > 0) {
       fragments.push(
-        `En la muestra inicial ya veo ${liveInsight.sales.toLocaleString('es-ES', {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 2,
-        })} EUR en ventas aproximadas`
+        `${formatMoney(analyticsSummary.pendingCollectionsAmount)} pendientes de cobro`
       );
-    }
-    if (liveInsight.pendingInvoices > 0) {
-      fragments.push(`${liveInsight.pendingInvoices} facturas pendientes de cobro`);
-    }
-    if (liveInsight.contacts > 0) {
-      fragments.push(`${liveInsight.contacts} contactos visibles`);
     }
 
     if (fragments.length === 0) {
-      return liveInsight.insight;
+      return analyticsSummary.insight;
     }
 
-    return `${fragments.join(', ')}. ${liveInsight.insight} Si quieres, sigo con resultados, cobros pendientes o ventas recientes.`;
-  }, [hasLiveConnection, liveInsight, showConnectionWarmup]);
+    return `${fragments.join(', ')}. ${analyticsSummary.insight}`;
+  }, [analyticsSummary, hasLiveConnection, showConnectionWarmup]);
+
+  const analyticsCards = useMemo(() => {
+    if (!analyticsSummary || showConnectionWarmup || !hasLiveConnection) return [];
+
+    return [
+      {
+        id: 'month-sales',
+        label: 'Ventas este mes',
+        value: formatMoney(analyticsSummary.monthSales),
+        detail: `Trimestre: ${formatMoney(analyticsSummary.quarterSales)}`,
+        tone: 'blue',
+      },
+      {
+        id: 'month-expenses',
+        label: 'Gastos este mes',
+        value: formatMoney(analyticsSummary.monthExpenses),
+        detail:
+          analyticsSummary.quarterExpenses !== null
+            ? `Trimestre: ${formatMoney(analyticsSummary.quarterExpenses)}`
+            : 'Lectura contable aun parcial',
+        tone: 'amber',
+      },
+      {
+        id: 'month-margin',
+        label: 'Margen estimado',
+        value: formatMoney(analyticsSummary.monthMargin),
+        detail:
+          analyticsSummary.quarterMargin !== null
+            ? `Trimestre: ${formatMoney(analyticsSummary.quarterMargin)}`
+            : 'Se afina cuando detecte gastos con claridad',
+        tone:
+          analyticsSummary.monthMargin !== null && analyticsSummary.monthMargin < 0
+            ? 'rose'
+            : 'emerald',
+      },
+      {
+        id: 'pending-collections',
+        label: 'Cobros pendientes',
+        value: formatMoney(analyticsSummary.pendingCollectionsAmount),
+        detail:
+          analyticsSummary.pendingCollectionsCount > 0
+            ? `${analyticsSummary.pendingCollectionsCount} facturas abiertas`
+            : 'Sin facturas pendientes detectadas',
+        tone: analyticsSummary.pendingCollectionsCount > 0 ? 'rose' : 'slate',
+      },
+    ];
+  }, [analyticsSummary, hasLiveConnection, showConnectionWarmup]);
 
   useEffect(() => {
     if (messages.length > 0) return;
@@ -777,6 +844,34 @@ export default function IsaakWorkspaceClient({
                             >
                               {assistantSupportMessage}
                             </AssistantMessage>
+                            {analyticsCards.length > 0 ? (
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                {analyticsCards.map((card) => (
+                                  <div
+                                    key={card.id}
+                                    className={`rounded-[1.5rem] border bg-white px-4 py-4 shadow-[0_16px_40px_-28px_rgba(15,23,42,0.24)] ${
+                                      card.tone === 'blue'
+                                        ? 'border-sky-200'
+                                        : card.tone === 'amber'
+                                          ? 'border-amber-200'
+                                          : card.tone === 'rose'
+                                            ? 'border-rose-200'
+                                            : card.tone === 'emerald'
+                                              ? 'border-emerald-200'
+                                              : 'border-slate-200'
+                                    }`}
+                                  >
+                                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                      {card.label}
+                                    </div>
+                                    <div className="mt-2 text-2xl font-semibold text-slate-950">
+                                      {card.value}
+                                    </div>
+                                    <div className="mt-1 text-sm text-slate-500">{card.detail}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
                             {assistantInsightMessage ? (
                               <AssistantMessage>{assistantInsightMessage}</AssistantMessage>
                             ) : null}

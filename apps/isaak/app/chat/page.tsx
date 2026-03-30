@@ -7,6 +7,10 @@ import {
   recordUsageEvent,
 } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
+import {
+  buildHoldedAnalyticsSummary,
+  type HoldedAnalyticsSummary,
+} from '@/app/lib/holded-analytics';
 import { fetchHoldedSnapshot, getHoldedConnection } from '@/app/lib/holded-integration';
 import {
   buildHoldedAuthUrl,
@@ -24,15 +28,6 @@ export const metadata: Metadata = {
 
 type PageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
-
-type LiveInsight = {
-  sales: number;
-  pendingInvoices: number;
-  invoices: number;
-  contacts: number;
-  accounts: number;
-  insight: string;
 };
 
 function readSource(value: string | string[] | undefined) {
@@ -143,78 +138,6 @@ function buildFallbackProfile(input: {
   };
 }
 
-function extractNumber(value: unknown) {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
-    const normalized = value.replace(/[^\d,.-]/g, '').replace(',', '.');
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-function readInvoiceAmount(invoice: Record<string, unknown>) {
-  const candidates = [
-    invoice.amountGross,
-    invoice.total,
-    invoice.totalWithTax,
-    invoice.amount,
-    invoice.totalAmount,
-    invoice.totalFormatted,
-  ];
-
-  for (const candidate of candidates) {
-    const value = extractNumber(candidate);
-    if (value > 0) return value;
-  }
-
-  return 0;
-}
-
-function readInvoiceStatus(invoice: Record<string, unknown>) {
-  const candidates = [invoice.status, invoice.docStatus, invoice.paymentStatus];
-
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate.trim()) {
-      return candidate.trim().toLowerCase();
-    }
-  }
-
-  return '';
-}
-
-function buildLiveInsight(snapshot: Awaited<ReturnType<typeof fetchHoldedSnapshot>>): LiveInsight {
-  const sales = snapshot.invoices.reduce((sum, invoice) => {
-    if (!invoice || typeof invoice !== 'object') return sum;
-    return sum + readInvoiceAmount(invoice);
-  }, 0);
-
-  const pendingInvoices = snapshot.invoices.filter((invoice) => {
-    if (!invoice || typeof invoice !== 'object') return false;
-    const status = readInvoiceStatus(invoice);
-    return ['pending', 'open', 'unpaid', 'overdue', 'draft'].some((keyword) =>
-      status.includes(keyword)
-    );
-  }).length;
-
-  let insight =
-    'Ya puedo empezar a orientarte con una primera lectura real de ventas, facturas y contactos.';
-  if (pendingInvoices >= 3) {
-    insight = 'Veo varias facturas pendientes y conviene revisar cobros cuanto antes.';
-  } else if (sales > 0) {
-    insight = 'Ya veo movimiento real en ventas y podemos convertirlo en prioridades accionables.';
-  }
-
-  return {
-    sales,
-    pendingInvoices,
-    invoices: snapshot.invoices.length,
-    contacts: snapshot.contacts.length,
-    accounts: snapshot.accounts.length,
-    insight,
-  };
-}
-
 export default async function IsaakChatWorkspacePage({ searchParams }: PageProps) {
   const resolved = (await searchParams) || {};
   const source = readSource(resolved.source) || 'isaak_chat';
@@ -300,9 +223,9 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
         })
       : null);
   const effectiveInstructions = onboardingState.instructions || handoff?.instructions || null;
-  const liveInsight = connection?.apiKey
+  const analyticsSummary: HoldedAnalyticsSummary | null = connection?.apiKey
     ? await fetchHoldedSnapshot(connection.apiKey)
-        .then((snapshot) => buildLiveInsight(snapshot))
+        .then((snapshot) => buildHoldedAnalyticsSummary(snapshot))
         .catch((error) => {
           console.error('[isaak/chat] live insight read failed', error);
           return null;
@@ -363,7 +286,7 @@ export default async function IsaakChatWorkspacePage({ searchParams }: PageProps
           ? buildSuggestedPrompts(effectiveProfile.mainGoals)
           : undefined
       }
-      liveInsight={liveInsight}
+      analyticsSummary={analyticsSummary}
       connectionSettingsUrl="/settings?section=connections"
       settingsUrl="/settings"
     />

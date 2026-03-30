@@ -817,23 +817,27 @@ export async function getHoldedConnection(input: {
 }
 
 export async function fetchHoldedSnapshot(apiKey: string) {
-  const [invoices, contacts, accounts] = await Promise.all([
+  const [invoicePageOne, invoicePageTwo, contacts, accounts] = await Promise.all([
     holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/invoicing/v1/documents', {
-      limit: 5,
+      limit: 100,
       page: 1,
     }).catch(() => []),
+    holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/invoicing/v1/documents', {
+      limit: 100,
+      page: 2,
+    }).catch(() => []),
     holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/invoicing/v1/contacts', {
-      limit: 5,
+      limit: 20,
       page: 1,
     }).catch(() => []),
     holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/accounting/v1/accounts', {
-      limit: 5,
+      limit: 20,
       page: 1,
     }).catch(() => []),
   ]);
 
   return {
-    invoices,
+    invoices: [...invoicePageOne, ...invoicePageTwo],
     contacts,
     accounts,
   };

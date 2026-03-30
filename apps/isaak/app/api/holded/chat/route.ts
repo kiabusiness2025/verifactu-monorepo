@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { recordUsageEvent } from '@verifactu/integrations';
+import { buildHoldedAnalyticsSummary } from '@/app/lib/holded-analytics';
 import { fetchHoldedSnapshot, getHoldedConnection } from '@/app/lib/holded-integration';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import {
@@ -12,97 +13,26 @@ import { prisma } from '@/app/lib/prisma';
 
 export const runtime = 'nodejs';
 
-function extractNumber(value: unknown) {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
-    const normalized = value.replace(/[^\d,.-]/g, '').replace(',', '.');
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-function readInvoiceAmount(invoice: Record<string, unknown>) {
-  const candidates = [
-    invoice.amountGross,
-    invoice.total,
-    invoice.totalWithTax,
-    invoice.amount,
-    invoice.totalAmount,
-    invoice.totalFormatted,
-  ];
-
-  for (const candidate of candidates) {
-    const value = extractNumber(candidate);
-    if (value > 0) return value;
-  }
-
-  return 0;
-}
-
-function readInvoiceStatus(invoice: Record<string, unknown>) {
-  const candidates = [invoice.status, invoice.docStatus, invoice.paymentStatus];
-
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate.trim()) {
-      return candidate.trim().toLowerCase();
-    }
-  }
-
-  return '';
-}
-
-function buildSnapshotSummary(snapshot: Awaited<ReturnType<typeof fetchHoldedSnapshot>>) {
-  const sales = snapshot.invoices.reduce((sum, invoice) => {
-    if (!invoice || typeof invoice !== 'object') return sum;
-    return sum + readInvoiceAmount(invoice);
-  }, 0);
-
-  const pendingInvoices = snapshot.invoices.filter((invoice) => {
-    if (!invoice || typeof invoice !== 'object') return false;
-    const status = readInvoiceStatus(invoice);
-    return ['pending', 'open', 'unpaid', 'overdue', 'draft'].some((keyword) =>
-      status.includes(keyword)
-    );
-  }).length;
-
-  return {
-    sales,
-    pendingInvoices,
-    invoices: snapshot.invoices.length,
-    contacts: snapshot.contacts.length,
-    accounts: snapshot.accounts.length,
-  };
-}
-
-function buildAutomaticInsight(summary: ReturnType<typeof buildSnapshotSummary>) {
-  if (summary.pendingInvoices >= 3) {
-    return 'Tienes varias facturas pendientes de cobro y conviene revisarlas cuanto antes.';
-  }
-
-  if (summary.sales > 0 && summary.pendingInvoices > 0) {
-    return 'Ya hay ventas registradas y la prioridad ahora mismo es vigilar mejor los cobros pendientes.';
-  }
-
-  if (summary.invoices >= 5) {
-    return 'Ya veo bastante movimiento en tu cuenta y un resumen periodico te puede ahorrar mucho tiempo.';
-  }
-
-  if (summary.contacts >= 10) {
-    return 'Tienes varios contactos activos y puede merecer la pena ordenar mejor clientes y seguimiento.';
-  }
-
-  return 'Todavia estoy montando una primera lectura de tu negocio, pero ya puedo ayudarte con preguntas concretas.';
-}
-
 function isSummaryRequest(message: string) {
   const text = message.toLowerCase();
   return (
     text.includes('resumen') ||
     text.includes('ver resumen') ||
     text.includes('resumen rapido') ||
-    text.includes('este mes')
+    text.includes('este mes') ||
+    text.includes('trimestre') ||
+    text.includes('beneficio') ||
+    text.includes('margen') ||
+    text.includes('gasto')
   );
+}
+
+function formatMoney(amount: number | null | undefined) {
+  if (typeof amount !== 'number') return 'Todavia no disponible';
+  return `${amount.toLocaleString('es-ES', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })} EUR`;
 }
 
 function buildReply(input: {
@@ -115,13 +45,17 @@ function buildReply(input: {
   const invoiceCount = input.snapshot.invoices.length;
   const contactCount = input.snapshot.contacts.length;
   const accountCount = input.snapshot.accounts.length;
-  const summary = buildSnapshotSummary(input.snapshot);
-  const insight = buildAutomaticInsight(summary);
+  const summary = buildHoldedAnalyticsSummary(input.snapshot);
+  const insight = summary.insight;
   const tenantLabel = input.tenantName?.trim() || 'tu empresa';
 
   if (isSummaryRequest(text)) {
     const hasEnoughSummaryData =
-      summary.invoices > 0 || summary.contacts > 0 || summary.accounts > 0 || summary.sales > 0;
+      summary.invoices > 0 ||
+      summary.contacts > 0 ||
+      summary.accounts > 0 ||
+      summary.monthSales > 0 ||
+      summary.quarterSales > 0;
 
     if (!hasEnoughSummaryData) {
       return [
@@ -136,14 +70,17 @@ function buildReply(input: {
     return [
       `Este es tu resumen rapido de ${tenantLabel}:`,
       '',
-      `- Ventas aproximadas en la muestra: ${summary.sales.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} EUR`,
-      `- Facturas revisadas: ${summary.invoices}`,
-      `- Facturas pendientes detectadas: ${summary.pendingInvoices}`,
+      `- Ventas de este mes: ${formatMoney(summary.monthSales)}`,
+      `- Ventas del trimestre actual: ${formatMoney(summary.quarterSales)}`,
+      `- Gastos de este mes: ${formatMoney(summary.monthExpenses)}`,
+      `- Margen estimado del mes: ${formatMoney(summary.monthMargin)}`,
+      `- Cobros pendientes: ${formatMoney(summary.pendingCollectionsAmount)}`,
+      `- Facturas pendientes detectadas: ${summary.pendingCollectionsCount}`,
       `- Contactos visibles: ${summary.contacts}`,
       '',
       `Insight: ${insight}`,
       '',
-      'Si quieres, puedo seguir con cobros pendientes, ventas o una factura concreta.',
+      'Si quieres, puedo seguir con resultados del trimestre, cobros pendientes o una factura concreta.',
     ].join('\n');
   }
 
@@ -152,7 +89,7 @@ function buildReply(input: {
       return `Tu cuenta de Holded ya esta conectada, pero en la muestra inicial de ${tenantLabel} no veo facturas recientes todavia. Puedo ayudarte a revisar si faltan datos por sincronizar o ir directamente a cobros, clientes y configuracion.`;
     }
 
-    return `Tu cuenta de Holded ya esta conectada. En ${tenantLabel} he detectado ${invoiceCount} facturas recientes en la muestra inicial. Si quieres, puedo resumirte ventas, cobros pendientes o revisar una factura concreta.`;
+    return `Tu cuenta de Holded ya esta conectada. En ${tenantLabel} ya detecto ${formatMoney(summary.monthSales)} en ventas de este mes y ${formatMoney(summary.pendingCollectionsAmount)} pendientes de cobro. Si quieres, sigo con el trimestre o revisamos una factura concreta.`;
   }
 
   if (text.includes('cliente') || text.includes('contacto')) {
@@ -160,10 +97,10 @@ function buildReply(input: {
   }
 
   if (text.includes('cuenta') || text.includes('contabilidad') || text.includes('gasto')) {
-    return `Con la conexion actual he podido validar ${accountCount} cuentas contables en la muestra basica de ${tenantLabel}. A partir de aqui puedo convertir esos datos en respuestas mas claras para negocio.`;
+    return `Con la conexion actual ya detecto ${formatMoney(summary.monthExpenses)} en gastos del mes y he podido validar ${accountCount} cuentas contables en ${tenantLabel}. Si quieres, sigo con margen, trimestre o gastos pendientes de revisar.`;
   }
 
-  return `La conexion con Holded esta activa y ya puedo trabajar sobre una primera muestra de ${invoiceCount} facturas, ${contactCount} contactos y ${accountCount} cuentas en ${tenantLabel}. Preguntame por ventas, cobros, gastos o clientes y empezamos.`;
+  return `La conexion con Holded esta activa y ya puedo trabajar con una lectura real de ${tenantLabel}: ${formatMoney(summary.monthSales)} en ventas este mes, ${formatMoney(summary.pendingCollectionsAmount)} pendientes de cobro y ${formatMoney(summary.monthMargin)} de margen estimado. Preguntame por trimestre, gastos, cobros o clientes y empezamos.`;
 }
 
 export async function POST(request: NextRequest) {
