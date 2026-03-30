@@ -45,6 +45,10 @@ export async function GET() {
     process.env.NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY ||
     process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
     null;
+  const appCheckDebugToken =
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_APP_CHECK_DEBUG_TOKEN ||
+    process.env.NEXT_PUBLIC_FIREBASE_APP_CHECK_DEBUG_TOKEN ||
+    null;
 
   const checks = {
     firebaseClientConfigComplete: isFirebaseConfigComplete,
@@ -62,8 +66,10 @@ export async function GET() {
     firebaseProjectId,
     firebaseAuthHandler,
     appCheckSiteKeyConfigured: Boolean(appCheckSiteKey),
-    appCheckWebImplemented: false,
+    appCheckDebugTokenConfigured: Boolean(appCheckDebugToken),
+    appCheckWebImplemented: true,
     appCheckSiteKeyPreview: appCheckSiteKey ? `${appCheckSiteKey.slice(0, 6)}...` : null,
+    appCheckDebugTokenPreview: appCheckDebugToken ? `${appCheckDebugToken.slice(0, 6)}...` : null,
     appUrl: process.env.NEXT_PUBLIC_APP_URL || null,
   };
 
