@@ -89,12 +89,31 @@ export function getRegistrationEndpoint() {
   return `${getAppUrl()}${MCP_REGISTRATION_PATH}`;
 }
 
+export function getAuthorizationServerIssuer() {
+  return getAppUrl();
+}
+
 export function getAuthorizationServerMetadataUrl() {
   return `${getAppUrl()}${MCP_AUTH_SERVER_METADATA_PATH}`;
 }
 
-export function getProtectedResourceMetadataUrl() {
-  return `${getAppUrl()}${MCP_PROTECTED_RESOURCE_METADATA_PATH}`;
+function getProtectedResourceMetadataPath(resourcePath: string) {
+  const normalizedPath = resourcePath.startsWith('/') ? resourcePath : `/${resourcePath}`;
+  return `${MCP_PROTECTED_RESOURCE_METADATA_PATH}${normalizedPath}`;
+}
+
+export function getProtectedResourceMetadataUrl(resourceUrl = getMcpResourceUrl()) {
+  const resource = new URL(resourceUrl);
+  return `${resource.origin}${getProtectedResourceMetadataPath(resource.pathname)}`;
+}
+
+export function getProtectedResourceMetadata() {
+  return {
+    resource: getMcpResourceUrl(),
+    authorization_servers: [getAuthorizationServerIssuer()],
+    bearer_methods_supported: ['header'],
+    scopes_supported: getSupportedScopes(),
+  };
 }
 
 export function getAllowedRedirectOrigins() {

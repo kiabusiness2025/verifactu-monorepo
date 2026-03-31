@@ -1,6 +1,7 @@
 # Isaak for Holded - Deploy and QA Checklist
 
 ## Objetivo
+
 Checklist operativa para desplegar y validar la experiencia publica `holded-first` de `Isaak for Holded`.
 
 Esta guia cubre:
@@ -72,13 +73,13 @@ Recomendacion:
 Abrir en navegador:
 
 - `https://app.verifactu.business/.well-known/oauth-authorization-server`
-- `https://app.verifactu.business/.well-known/oauth-protected-resource`
+- `https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded`
 - `https://app.verifactu.business/api/mcp/holded`
 
 Resultado esperado:
 
 - ambos `.well-known` responden `200` con JSON valido
-- `GET /api/mcp/holded` responde sin `Unauthorized MCP access`
+- `GET /api/mcp/holded` responde `401` con `WWW-Authenticate`
 
 ## Flujo E2E principal: usuario nuevo en ChatGPT
 

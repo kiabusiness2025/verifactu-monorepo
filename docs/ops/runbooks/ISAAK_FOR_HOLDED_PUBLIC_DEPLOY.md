@@ -1,6 +1,7 @@
 # Isaak for Holded - Public Deploy Runbook
 
 ## Objetivo
+
 Runbook breve para desplegar `Isaak for Holded` y dejar el entorno listo para una prueba publica controlada.
 
 ## Orden recomendado
@@ -23,7 +24,7 @@ Runbook breve para desplegar `Isaak for Holded` y dejar el entorno listo para un
 ## Endpoints a verificar tras deploy
 
 - `/.well-known/oauth-authorization-server`
-- `/.well-known/oauth-protected-resource`
+- `/.well-known/oauth-protected-resource/api/mcp/holded`
 - `/oauth/authorize`
 - `/oauth/token`
 - `/api/mcp/holded`
@@ -31,7 +32,8 @@ Runbook breve para desplegar `Isaak for Holded` y dejar el entorno listo para un
 
 ## Resultado esperado
 
-- MCP descubre metadata sin bloquear
+- MCP descubre metadata sin bloquear usando la ruta especifica del recurso
 - OAuth resuelve tenant
 - si falta conexion Holded, redirige a onboarding
 - si la conexion ya existe, completa la autorizacion sin pedir API key
+- `GET /api/mcp/holded` sin token responde `401` con challenge OAuth

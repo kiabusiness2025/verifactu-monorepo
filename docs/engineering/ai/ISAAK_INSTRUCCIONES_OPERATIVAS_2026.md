@@ -159,7 +159,7 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
   - `holded_list_contacts` — listar contactos (readOnly).
   - `holded_list_accounts` — listar cuentas contables (readOnly).
   - `holded_create_invoice_draft` — crear borrador con confirmación explícita.
-- Metadata OAuth en `/.well-known/oauth-authorization-server` y `/.well-known/oauth-protected-resource`.
+- Metadata OAuth en `/.well-known/oauth-authorization-server` y `/.well-known/oauth-protected-resource/api/mcp/holded`.
 - Documentación extendida: `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md`.
 
 ### Onboarding

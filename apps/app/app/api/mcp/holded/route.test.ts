@@ -41,7 +41,7 @@ jest.mock('@/lib/oauth/mcp', () => ({
   hasRequiredScopes: jest.fn(() => true),
   MCP_TOOL_SCOPES: {},
   getProtectedResourceMetadataUrl: jest.fn(
-    () => 'https://app.verifactu.business/.well-known/oauth-protected-resource'
+    () => 'https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded'
   ),
   getTokenEndpoint: jest.fn(() => 'https://app.verifactu.business/oauth/token'),
   verifyAccessToken: jest.fn(async () => null),
@@ -67,6 +67,9 @@ describe('MCP Holded route auth challenge', () => {
     expect(response.status).toBe(401);
     expect(payload).toEqual({ error: 'Unauthorized MCP access' });
     expect(response.headers.get('WWW-Authenticate')).toContain('resource_metadata=');
+    expect(response.headers.get('WWW-Authenticate')).toContain(
+      'https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded'
+    );
     expect(response.headers.get('WWW-Authenticate')).toContain('authorization_uri=');
   });
 

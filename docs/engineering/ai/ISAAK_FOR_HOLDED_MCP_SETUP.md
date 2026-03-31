@@ -62,6 +62,7 @@ Holded no se integra por OAuth en este flujo. La documentacion publica usada par
 - Userinfo endpoint: `apps/app/app/oauth/userinfo/route.ts`
 - Metadata OAuth: `apps/app/app/.well-known/oauth-authorization-server/route.ts`
 - Protected resource metadata: `apps/app/app/.well-known/oauth-protected-resource/route.ts`
+- Protected resource metadata del recurso MCP: `apps/app/app/.well-known/oauth-protected-resource/api/mcp/holded/route.ts`
 
 ## Flujo completo
 
@@ -264,14 +265,15 @@ Comprobar en navegador:
 
 ```text
 https://app.verifactu.business/.well-known/oauth-authorization-server
-https://app.verifactu.business/.well-known/oauth-protected-resource
+https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded
 https://app.verifactu.business/api/mcp/holded
 ```
 
 Resultados esperados:
 
 - Los dos `.well-known` responden JSON 200.
-- El endpoint MCP sin token responde `401` con `WWW-Authenticate`.
+- `authorization_servers` anuncia el issuer base `https://app.verifactu.business`, no la URL del metadata.
+- El endpoint MCP sin token responde `401` con `WWW-Authenticate` y `resource_metadata` apuntando a `/.well-known/oauth-protected-resource/api/mcp/holded`.
 - El endpoint MCP con token valido responde metadata del servidor.
 
 ## Validacion operativa recomendada
