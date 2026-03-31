@@ -1,14 +1,21 @@
 'use client';
 
 import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
-import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import styles from './loading.module.css';
+import HoldedMergeAnimation from './HoldedMergeAnimation';
 
 const copy = getIsaakHoldedOnboardingCopy();
-const queuedMessages = copy.loadingMessages;
+const chatgptLoadingMessages = [
+  'Estamos preparando la conexion con Holded para tu espacio de ChatGPT.',
+  'Comprobamos tu acceso para que el siguiente paso sea directo y seguro.',
+  'En cuanto termine, volveras al flujo de ChatGPT automaticamente.',
+];
 
 export default function HoldedOnboardingLoading() {
+  const searchParams = useSearchParams();
+  const isChatgptEntry = searchParams?.get('channel')?.trim().toLowerCase() === 'chatgpt';
+  const queuedMessages = isChatgptEntry ? chatgptLoadingMessages : copy.loadingMessages;
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -17,58 +24,30 @@ export default function HoldedOnboardingLoading() {
     }, 1800);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [queuedMessages.length]);
 
   return (
     <div className="min-h-screen bg-white px-4 py-10 text-black sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[70vh] max-w-2xl items-center justify-center">
         <div className="w-full rounded-[30px] border border-neutral-200 bg-white p-8 text-center shadow-[0_16px_40px_rgba(15,23,42,0.08)] sm:p-10">
-          <div className="flex justify-center">
-            <div className={styles.mergeStage} aria-hidden="true">
-              <div className={styles.glow} />
-
-              <div className={`${styles.iconOrbit} ${styles.leftOrbit}`}>
-                <div className={styles.chatgptBadge}>ChatGPT</div>
-              </div>
-
-              <div className={`${styles.iconOrbit} ${styles.rightOrbit}`}>
-                <Image
-                  src="/brand/holded/holded-diamond-logo.png"
-                  alt="Holded"
-                  width={30}
-                  height={30}
-                  className="h-7 w-7 object-contain"
-                  priority
-                />
-              </div>
-
-              <div className={styles.centerPulse}>
-                <Image
-                  src="/brand/holded/holded-diamond-logo.png"
-                  alt="Holded conectado con ChatGPT"
-                  width={40}
-                  height={40}
-                  className="h-9 w-9 object-contain"
-                  priority
-                />
-              </div>
-            </div>
-          </div>
+          <HoldedMergeAnimation />
 
           <div className="mt-4 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
             Conexion segura en progreso
           </div>
 
           <div className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
-            {copy.eyebrow}
+            {isChatgptEntry ? 'Conecta Holded con ChatGPT' : copy.eyebrow}
           </div>
 
           <h1 className="mt-6 text-3xl font-bold tracking-tight text-black sm:text-4xl">
-            {copy.statusLoading}
+            {isChatgptEntry ? 'Preparando tu conexion con Holded' : copy.statusLoading}
           </h1>
 
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-neutral-600 sm:text-base">
-            {copy.intro}
+            {isChatgptEntry
+              ? 'Estamos comprobando tu espacio para que puedas terminar la conexion y volver a ChatGPT sin pasos innecesarios.'
+              : copy.intro}
           </p>
 
           <div className="mx-auto mt-8 h-2 w-28 overflow-hidden rounded-full bg-neutral-200">

@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
-import { probeHoldedConnection, saveHoldedConnection } from '@/app/lib/holded-integration';
+import {
+  buildHoldedProbeSummary,
+  probeHoldedConnection,
+  saveHoldedConnection,
+} from '@/app/lib/holded-integration';
 import { recordUsageEvent } from '@verifactu/integrations';
 import { loadSettingsData, toSettingsSession } from '@/app/lib/settings';
 
@@ -13,16 +17,6 @@ function normalizeApiKey(value: string) {
 
 function hasBasicApiKeyShape(value: string) {
   return value.length >= 16 && value.length <= 128;
-}
-
-function readProbeSupportedModules(probe: Awaited<ReturnType<typeof probeHoldedConnection>>) {
-  return [
-    probe.invoiceApi.ok ? 'invoicing' : null,
-    probe.accountingApi.ok ? 'accounting' : null,
-    probe.crmApi.ok ? 'crm' : null,
-    probe.projectsApi.ok ? 'projects' : null,
-    probe.teamApi.ok ? 'team' : null,
-  ].filter(Boolean);
 }
 
 export async function POST(req: Request) {
@@ -46,6 +40,7 @@ export async function POST(req: Request) {
   }
 
   const probe = await probeHoldedConnection(apiKey);
+  const diagnostics = buildHoldedProbeSummary(probe);
   if (!probe.ok) {
     await recordUsageEvent({
       prisma,
@@ -56,12 +51,18 @@ export async function POST(req: Request) {
       path: '/api/settings/connections/holded/replace',
       metadataJson: {
         provider: 'holded',
-        reason: probe.error || 'validation_failed',
+        reason: probe.error || diagnostics.summary,
+        validationSummary: diagnostics.summary,
       },
     });
 
     return NextResponse.json(
-      { ok: false, error: probe.error || 'No hemos podido validar la API key.', probe },
+      {
+        ok: false,
+        error: probe.error || diagnostics.summary,
+        diagnostics,
+        probe,
+      },
       { status: 400 }
     );
   }
@@ -83,7 +84,8 @@ export async function POST(req: Request) {
     path: '/api/settings/connections/holded/replace',
     metadataJson: {
       provider: 'holded',
-      supportedModules: readProbeSupportedModules(probe),
+      supportedModules: diagnostics.supportedModules,
+      validationSummary: diagnostics.summary,
     },
   });
 

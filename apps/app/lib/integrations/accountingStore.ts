@@ -3,12 +3,23 @@ import { one, query } from '@/lib/db';
 const PROVIDER = 'accounting_api';
 const SHARED_PROVIDER = 'holded';
 
+export type AccountingIntegrationChannel = 'dashboard' | 'chatgpt';
+
 function describeStorageError(error: unknown) {
   if (error instanceof Error) {
-    const candidate = error as Error & { code?: string; detail?: string; constraint?: string; table?: string };
-    return [candidate.message, candidate.code, candidate.detail, candidate.constraint, candidate.table]
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      .join(' | ') || candidate.name || 'Unknown storage error';
+    const candidate = error as Error & {
+      code?: string;
+      detail?: string;
+      constraint?: string;
+      table?: string;
+    };
+    return (
+      [candidate.message, candidate.code, candidate.detail, candidate.constraint, candidate.table]
+        .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+        .join(' | ') ||
+      candidate.name ||
+      'Unknown storage error'
+    );
   }
 
   if (error && typeof error === 'object') {
@@ -24,7 +35,12 @@ function describeStorageError(error: unknown) {
 
 let tenantIntegrationsTableAvailable: boolean | null = null;
 let externalConnectionsTableAvailable: boolean | null = null;
+let externalConnectionsChannelColumnAvailable: boolean | null = null;
 let storageBootstrapAttempted = false;
+
+function normalizeAccountingChannel(channel?: string | null): AccountingIntegrationChannel {
+  return channel === 'chatgpt' ? 'chatgpt' : 'dashboard';
+}
 
 async function detectTable(tableName: string) {
   const row = await one<{ exists: boolean }>(
@@ -70,6 +86,7 @@ async function bootstrapIntegrationStorageTables() {
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
         provider text NOT NULL,
+        channel_key text NOT NULL DEFAULT 'dashboard',
         provider_account_id text,
         credential_type text NOT NULL DEFAULT 'api_key',
         api_key_enc text,
@@ -81,12 +98,12 @@ async function bootstrapIntegrationStorageTables() {
         last_sync_at timestamptz,
         created_at timestamptz NOT NULL DEFAULT now(),
         updated_at timestamptz NOT NULL DEFAULT now(),
-        UNIQUE (tenant_id, provider)
+        UNIQUE (tenant_id, provider, channel_key)
       )
       `
     );
     await query(
-      'CREATE INDEX IF NOT EXISTS external_connections_tenant_provider_status_idx ON external_connections (tenant_id, provider, connection_status)'
+      'CREATE INDEX IF NOT EXISTS external_connections_tenant_provider_channel_key_connection_status_idx ON external_connections (tenant_id, provider, channel_key, connection_status)'
     );
     await query(
       'CREATE INDEX IF NOT EXISTS external_connections_connected_by_user_idx ON external_connections (connected_by_user_id)'
@@ -98,6 +115,72 @@ async function bootstrapIntegrationStorageTables() {
   } finally {
     tenantIntegrationsTableAvailable = await detectTable('tenant_integrations');
     externalConnectionsTableAvailable = await detectTable('external_connections');
+    externalConnectionsChannelColumnAvailable = externalConnectionsTableAvailable
+      ? await detectExternalConnectionsChannelColumn()
+      : false;
+  }
+}
+
+async function detectExternalConnectionsChannelColumn() {
+  const row = await one<{ exists: boolean }>(
+    [
+      'SELECT EXISTS (',
+      '  SELECT 1 FROM information_schema.columns',
+      "  WHERE table_schema = 'public' AND table_name = 'external_connections' AND column_name = 'channel_key'",
+      ') AS exists',
+    ].join(' ')
+  );
+
+  return row?.exists === true;
+}
+
+async function ensureExternalConnectionsChannelSchema() {
+  if (!(await detectTable('external_connections'))) {
+    externalConnectionsChannelColumnAvailable = false;
+    return;
+  }
+
+  try {
+    await query(
+      "ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS channel_key text NOT NULL DEFAULT 'dashboard'"
+    );
+    await query(
+      "UPDATE external_connections SET channel_key = 'dashboard' WHERE channel_key IS NULL"
+    );
+    await query(
+      [
+        'DO $$',
+        'DECLARE existing_constraint text;',
+        'BEGIN',
+        '  SELECT conname',
+        '  INTO existing_constraint',
+        '  FROM pg_constraint',
+        "  WHERE conrelid = 'external_connections'::regclass",
+        "    AND contype = 'u'",
+        '    AND conkey = ARRAY[',
+        "      (SELECT attnum FROM pg_attribute WHERE attrelid = 'external_connections'::regclass AND attname = 'tenant_id'),",
+        "      (SELECT attnum FROM pg_attribute WHERE attrelid = 'external_connections'::regclass AND attname = 'provider')",
+        '    ];',
+        '',
+        '  IF existing_constraint IS NOT NULL THEN',
+        "    EXECUTE format('ALTER TABLE external_connections DROP CONSTRAINT %I', existing_constraint);",
+        '  END IF;',
+        'END $$;',
+      ].join(' ')
+    );
+    await query('DROP INDEX IF EXISTS external_connections_tenant_provider_status_idx');
+    await query(
+      'CREATE UNIQUE INDEX IF NOT EXISTS external_connections_tenant_provider_channel_key_key ON external_connections (tenant_id, provider, channel_key)'
+    );
+    await query(
+      'CREATE INDEX IF NOT EXISTS external_connections_tenant_provider_channel_key_connection_status_idx ON external_connections (tenant_id, provider, channel_key, connection_status)'
+    );
+  } catch (error) {
+    console.error('[accountingStore] failed to ensure external_connections channel schema', {
+      message: describeStorageError(error),
+    });
+  } finally {
+    externalConnectionsChannelColumnAvailable = await detectExternalConnectionsChannelColumn();
   }
 }
 
@@ -119,6 +202,24 @@ async function hasExternalConnectionsTable() {
     await bootstrapIntegrationStorageTables();
   }
   return externalConnectionsTableAvailable === true;
+}
+
+async function hasExternalConnectionsChannelColumn() {
+  if (externalConnectionsChannelColumnAvailable !== null) {
+    return externalConnectionsChannelColumnAvailable;
+  }
+
+  if (!(await hasExternalConnectionsTable())) {
+    externalConnectionsChannelColumnAvailable = false;
+    return false;
+  }
+
+  externalConnectionsChannelColumnAvailable = await detectExternalConnectionsChannelColumn();
+  if (!externalConnectionsChannelColumnAvailable) {
+    await ensureExternalConnectionsChannelSchema();
+  }
+
+  return externalConnectionsChannelColumnAvailable === true;
 }
 
 export type AccountingIntegrationStatus = {
@@ -186,8 +287,10 @@ export async function upsertAccountingIntegration(args: {
   status: 'connected' | 'error';
   lastError: string | null;
   connectedByUserId?: string | null;
+  channelKey?: AccountingIntegrationChannel | null;
 }) {
-  const { tenantId, apiKeyEnc, status, lastError, connectedByUserId } = args;
+  const { tenantId, apiKeyEnc, status, lastError, connectedByUserId, channelKey } = args;
+  const normalizedChannel = normalizeAccountingChannel(channelKey);
   let saved: AccountingIntegrationStatus | null = null;
 
   if (await hasTenantIntegrationsTable()) {
@@ -214,53 +317,110 @@ export async function upsertAccountingIntegration(args: {
 
   try {
     if (await hasExternalConnectionsTable()) {
-      const external = await one<{
-        id: string;
-        tenant_id: string;
-        provider: string;
-        status: string;
-        last_sync_at: string | null;
-        created_at: string;
-        updated_at: string;
-      }>(
-        `
-        INSERT INTO external_connections (
-          tenant_id,
-          provider,
-          credential_type,
-          api_key_enc,
-          scopes_granted,
-          connection_status,
-          connected_by_user_id,
-          connected_at,
-          last_validated_at,
-          last_sync_at
-        )
-        VALUES (
-          $1,
-          $2,
-          'api_key',
-          $3,
-          ARRAY[]::text[],
-          $4,
-          $5,
-          CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
-          CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
-          CASE WHEN $4 = 'connected' THEN now() ELSE NULL END
-        )
-        ON CONFLICT (tenant_id, provider)
-        DO UPDATE SET
-          api_key_enc = EXCLUDED.api_key_enc,
-          connection_status = EXCLUDED.connection_status,
-          connected_by_user_id = COALESCE(EXCLUDED.connected_by_user_id, external_connections.connected_by_user_id),
-          connected_at = COALESCE(EXCLUDED.connected_at, external_connections.connected_at),
-          last_validated_at = EXCLUDED.last_validated_at,
-          last_sync_at = COALESCE(EXCLUDED.last_sync_at, external_connections.last_sync_at),
-          updated_at = now()
-        RETURNING id, tenant_id, provider, connection_status AS status, last_sync_at::text, created_at::text, updated_at::text
-        `,
-        [tenantId, SHARED_PROVIDER, apiKeyEnc, status, connectedByUserId ?? null]
-      );
+      const external = (await hasExternalConnectionsChannelColumn())
+        ? await one<{
+            id: string;
+            tenant_id: string;
+            provider: string;
+            status: string;
+            last_sync_at: string | null;
+            created_at: string;
+            updated_at: string;
+          }>(
+            `
+            INSERT INTO external_connections (
+              tenant_id,
+              provider,
+              channel_key,
+              credential_type,
+              api_key_enc,
+              scopes_granted,
+              connection_status,
+              connected_by_user_id,
+              connected_at,
+              last_validated_at,
+              last_sync_at
+            )
+            VALUES (
+              $1,
+              $2,
+              $3,
+              'api_key',
+              $4,
+              ARRAY[]::text[],
+              $5,
+              $6,
+              CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
+              CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
+              CASE WHEN $5 = 'connected' THEN now() ELSE NULL END
+            )
+            ON CONFLICT (tenant_id, provider, channel_key)
+            DO UPDATE SET
+              api_key_enc = EXCLUDED.api_key_enc,
+              connection_status = EXCLUDED.connection_status,
+              connected_by_user_id = COALESCE(EXCLUDED.connected_by_user_id, external_connections.connected_by_user_id),
+              connected_at = COALESCE(EXCLUDED.connected_at, external_connections.connected_at),
+              last_validated_at = EXCLUDED.last_validated_at,
+              last_sync_at = COALESCE(EXCLUDED.last_sync_at, external_connections.last_sync_at),
+              updated_at = now()
+            RETURNING id, tenant_id, provider, connection_status AS status, last_sync_at::text, created_at::text, updated_at::text
+            `,
+            [
+              tenantId,
+              SHARED_PROVIDER,
+              normalizedChannel,
+              apiKeyEnc,
+              status,
+              connectedByUserId ?? null,
+            ]
+          )
+        : await one<{
+            id: string;
+            tenant_id: string;
+            provider: string;
+            status: string;
+            last_sync_at: string | null;
+            created_at: string;
+            updated_at: string;
+          }>(
+            `
+            INSERT INTO external_connections (
+              tenant_id,
+              provider,
+              credential_type,
+              api_key_enc,
+              scopes_granted,
+              connection_status,
+              connected_by_user_id,
+              connected_at,
+              last_validated_at,
+              last_sync_at
+            )
+            VALUES (
+              $1,
+              $2,
+              'api_key',
+              $3,
+              ARRAY[]::text[],
+              $4,
+              $5,
+              CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
+              CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
+              CASE WHEN $4 = 'connected' THEN now() ELSE NULL END
+            )
+            ON CONFLICT (tenant_id, provider)
+            DO UPDATE SET
+              api_key_enc = EXCLUDED.api_key_enc,
+              connection_status = EXCLUDED.connection_status,
+              connected_by_user_id = COALESCE(EXCLUDED.connected_by_user_id, external_connections.connected_by_user_id),
+              connected_at = COALESCE(EXCLUDED.connected_at, external_connections.connected_at),
+              last_validated_at = EXCLUDED.last_validated_at,
+              last_sync_at = COALESCE(EXCLUDED.last_sync_at, external_connections.last_sync_at),
+              updated_at = now()
+            RETURNING id, tenant_id, provider, connection_status AS status, last_sync_at::text, created_at::text, updated_at::text
+            `,
+            [tenantId, SHARED_PROVIDER, apiKeyEnc, status, connectedByUserId ?? null]
+          );
 
       if (!saved && external) {
         saved = {
@@ -371,7 +531,14 @@ export async function appendSyncLog(args: {
     VALUES ($1, $2, $3, $4, $5, $6::jsonb)
     RETURNING id
     `,
-    [args.tenantId, PROVIDER, args.outboxId ?? null, args.level, args.message, JSON.stringify(args.data ?? null)]
+    [
+      args.tenantId,
+      PROVIDER,
+      args.outboxId ?? null,
+      args.level,
+      args.message,
+      JSON.stringify(args.data ?? null),
+    ]
   );
 }
 

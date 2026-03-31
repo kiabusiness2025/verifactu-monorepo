@@ -35,7 +35,11 @@
     "debug:tests": "NODE_OPTIONS=--inspect-brk pnpm test -- --watch",
     "deploy:vercel": "curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_ZBVvfBkBG6b4MmSCD9aRQM7QAPAU/9x0EH6QY9J",
     "capture:demo:mockups": "node scripts/capture-demo-mockups.mjs",
-    "capture:demo:hero": "node scripts/capture-demo-mockups.mjs --replace-hero"
+    "capture:demo:hero": "node scripts/capture-demo-mockups.mjs --replace-hero",
+    "holded:ci:contract": "pnpm --filter verifactu-app test -- --runInBand --runTestsByPath lib/integrations/holdedMcpTools.test.ts",
+    "holded:demo:seed": "node scripts/seed-holded-demo.mjs",
+    "holded:demo:smoke": "node scripts/holded-full-smoke.mjs",
+    "holded:demo:validate": "node scripts/holded-demo-regression.mjs"
   },
   "devDependencies": {
     "@next/env": "^16.1.1",

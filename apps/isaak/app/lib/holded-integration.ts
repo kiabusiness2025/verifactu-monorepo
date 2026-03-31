@@ -1,4 +1,5 @@
 import {
+  buildHoldedProbeSummary,
   decryptHoldedSecret,
   disconnectHoldedConnection as disconnectSharedHoldedConnection,
   encryptHoldedSecret,
@@ -9,11 +10,15 @@ import {
   probeHoldedConnection,
   saveHoldedConnection as saveSharedHoldedConnection,
   type HoldedConnectionRecord,
+  type HoldedProbeModuleDiagnostic,
+  type HoldedProbeSummary,
   type HoldedProbeResult,
+  type HoldedSupportedModule,
 } from '@verifactu/integrations';
 import { prisma } from './prisma';
 
 export {
+  buildHoldedProbeSummary,
   decryptHoldedSecret,
   encryptHoldedSecret,
   fetchHoldedSnapshot,
@@ -21,7 +26,13 @@ export {
   probeHoldedConnection,
 };
 
-export type { HoldedConnectionRecord, HoldedProbeResult };
+export type {
+  HoldedConnectionRecord,
+  HoldedProbeModuleDiagnostic,
+  HoldedProbeResult,
+  HoldedProbeSummary,
+  HoldedSupportedModule,
+};
 export type { HoldedConnectionChannel };
 
 export async function saveHoldedConnection(input: {

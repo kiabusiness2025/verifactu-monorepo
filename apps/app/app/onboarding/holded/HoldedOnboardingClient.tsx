@@ -11,7 +11,8 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import HoldedMergeAnimation from './HoldedMergeAnimation';
 
 type IntegrationStatus = {
   provider: string;
@@ -27,49 +28,139 @@ type IntegrationStatus = {
 };
 
 type Props = {
+  entryChannel: 'dashboard' | 'chatgpt';
   nextUrl: string;
   tenantName: string;
   onboardingToken: string | null;
 };
 
-const helpSteps = [
-  'Entra en Holded y abre el area de API.',
-  'Copia una API key activa de tu empresa.',
-  'Pegala aqui para activar tu espacio y entrar al chat de Isaak.',
-];
-
 const onboardingCopy = getIsaakHoldedOnboardingCopy();
-const savingMessages = onboardingCopy.savingMessages;
-const HOLDED_COMPAT_URL = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+const HOLDED_COMPAT_URL =
+  process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 
-export default function HoldedOnboardingClient({ nextUrl, tenantName, onboardingToken }: Props) {
+const chatgptUiCopy = {
+  eyebrow: 'Conecta Holded con ChatGPT',
+  title: 'Activa tu conexion con Holded',
+  intro:
+    'Conecta tu cuenta de Holded para que ChatGPT pueda completar esta conexion con tus datos reales.',
+  security:
+    'Por seguridad, esta conexion solo se habilita con sesion iniciada y una clave valida de Holded.',
+  statusReady: 'Tu espacio ya esta preparado',
+  statusLoading: 'Preparando tu entorno de conexion',
+  statusPending: 'Esperando tu clave de Holded',
+  statusConnected: 'Conexion activada',
+  checkingTitle: 'Estamos comprobando si tu espacio ya estaba conectado',
+  checkingDescription:
+    'Si ya tienes tu clave API, puedes pegarla ahora mismo. No hace falta esperar a que termine esta comprobacion para seguir.',
+  savingDescription:
+    'No cierres esta ventana. Estamos validando la conexion con Holded y preparando la vuelta a ChatGPT.',
+  successConnected: 'Conexion activada. Te devolvemos a ChatGPT.',
+  submitLabel: 'Conectar Holded',
+  apiKeyLabel: 'Clave API de Holded',
+  apiKeyHelp:
+    'Tu clave solo se usa para activar esta conexion. Podras revocarla o cambiarla cuando quieras.',
+  apiKeyPlaceholder: 'Pega aqui la API key de Holded para continuar',
+  redirectTitle: 'Tu conexion ya esta lista. Te devolvemos a ChatGPT.',
+  redirectDescription:
+    'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
+  helpSteps: [
+    'Entra en Holded y abre el area de API.',
+    'Copia una API key activa de tu empresa.',
+    'Pegala aqui para completar la conexion y volver a ChatGPT.',
+  ],
+  savingMessages: [
+    'Estamos validando tu clave de Holded.',
+    'En cuanto termine, volveras a ChatGPT automaticamente.',
+    'Estamos dejando lista la conexion con tus datos de facturacion y clientes.',
+  ],
+} as const;
+
+export default function HoldedOnboardingClient({
+  entryChannel,
+  nextUrl,
+  tenantName,
+  onboardingToken,
+}: Props) {
+  const isChatgptEntry = entryChannel === 'chatgpt';
+  const uiCopy = isChatgptEntry
+    ? chatgptUiCopy
+    : {
+        eyebrow: onboardingCopy.eyebrow,
+        title: 'Activa tu conexion con Holded',
+        intro: onboardingCopy.intro,
+        security:
+          'Por seguridad, el chat de Isaak solo se habilita con sesion iniciada y cuenta conectada.',
+        statusReady: onboardingCopy.statusReady,
+        statusLoading: onboardingCopy.statusLoading,
+        statusPending: onboardingCopy.statusPending,
+        statusConnected: 'Isaak ya esta activado',
+        checkingTitle: 'Estamos comprobando si tu espacio ya estaba conectado',
+        checkingDescription:
+          'Si ya tienes tu clave API, puedes pegarla ahora mismo. No hace falta esperar a que termine esta comprobacion para seguir.',
+        savingDescription:
+          'No cierres esta ventana. Estamos validando la conexion y preparando el contexto inicial para Isaak.',
+        successConnected: onboardingCopy.successConnected,
+        submitLabel: 'Conectar y activar Isaak',
+        apiKeyLabel: 'Clave API de tu ERP (Holded)',
+        apiKeyHelp:
+          'Tus datos se usan unicamente para activar tu entorno de trabajo. Puedes desconectar la integracion cuando quieras.',
+        apiKeyPlaceholder: 'Pega aqui la API key de Holded para activar Isaak',
+        redirectTitle: 'Tu conexion ya esta lista. Te devolvemos al flujo de ChatGPT.',
+        redirectDescription:
+          'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
+        helpSteps: [
+          'Entra en Holded y abre el area de API.',
+          'Copia una API key activa de tu empresa.',
+          'Pegala aqui para activar tu espacio y entrar al chat de Isaak.',
+        ],
+        savingMessages: onboardingCopy.savingMessages,
+      };
+  const savingMessages = uiCopy.savingMessages;
   const [apiKey, setApiKey] = useState('');
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
 
-  const loadStatus = async (signal?: AbortSignal) => {
-    const res = await fetch('/api/integrations/accounting/status?channel=chatgpt', {
-      cache: 'no-store',
-      signal,
-      headers: {
-        'x-isaak-entry-channel': 'chatgpt',
-        ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
-      },
-    });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(data?.error || onboardingCopy.errorLoadFailed);
-    return data as IntegrationStatus;
-  };
+  const loadStatus = useCallback(
+    async (signal?: AbortSignal) => {
+      const res = await fetch(`/api/integrations/accounting/status?channel=${entryChannel}`, {
+        cache: 'no-store',
+        signal,
+        headers: {
+          'x-isaak-entry-channel': entryChannel,
+          ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
+        },
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || onboardingCopy.errorLoadFailed);
+      return data as IntegrationStatus;
+    },
+    [entryChannel, onboardingToken]
+  );
 
   const statusLabel = useMemo(() => {
-    if (status?.connected) return 'Isaak ya esta activado';
-    if (loading) return onboardingCopy.statusLoading;
-    return onboardingCopy.statusPending;
-  }, [loading, status?.connected]);
+    if (status?.connected) return uiCopy.statusConnected;
+    if (redirecting) return 'Llevandote de vuelta al chat';
+    if (loading) return uiCopy.statusLoading;
+    return uiCopy.statusPending;
+  }, [
+    loading,
+    redirecting,
+    status?.connected,
+    uiCopy.statusConnected,
+    uiCopy.statusLoading,
+    uiCopy.statusPending,
+  ]);
+
+  const goToNextStep = useCallback(() => {
+    if (!nextUrl) return;
+    setRedirecting(true);
+    window.location.replace(nextUrl);
+  }, [nextUrl]);
 
   useEffect(() => {
     if (!saving) {
@@ -82,7 +173,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
     }, 1800);
 
     return () => window.clearInterval(interval);
-  }, [saving]);
+  }, [saving, savingMessages]);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,12 +188,11 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
         if (cancelled) return;
         setStatus(data);
         if (data?.connected && nextUrl) {
-          window.location.replace(nextUrl);
+          goToNextStep();
         }
       } catch (loadError) {
         if (!cancelled) {
-          const isAbortError =
-            loadError instanceof DOMException && loadError.name === 'AbortError';
+          const isAbortError = loadError instanceof DOMException && loadError.name === 'AbortError';
           setError(
             isAbortError
               ? 'La conexion tarda mas de lo normal. Pulsa Reintentar para continuar.'
@@ -123,7 +213,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [nextUrl, onboardingToken]);
+  }, [goToNextStep, loadStatus, nextUrl, onboardingToken]);
 
   const handleRetryStatus = async () => {
     setLoading(true);
@@ -132,7 +222,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
       const data = await loadStatus();
       setStatus(data);
       if (data?.connected && nextUrl) {
-        window.location.replace(nextUrl);
+        goToNextStep();
       }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : onboardingCopy.errorLoadFailed);
@@ -157,7 +247,7 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-isaak-entry-channel': entryChannel,
           ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
         },
         body: JSON.stringify({ apiKey: apiKey.trim() }),
@@ -165,7 +255,10 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
       const data = await res.json().catch(() => null);
       if (!res.ok)
         throw new Error(
-          data?.debug || data?.detail || data?.error || `Error HTTP ${res.status} al activar Isaak`
+          data?.debug ||
+            data?.detail ||
+            data?.error ||
+            `Error HTTP ${res.status} al activar ${isChatgptEntry ? 'la conexion' : 'Isaak'}`
         );
       if (!data?.ok) {
         throw new Error(
@@ -175,8 +268,19 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
         );
       }
 
-      setMessage(onboardingCopy.successConnected);
-      window.location.replace(nextUrl);
+      setMessage(uiCopy.successConnected);
+      setStatus((current) =>
+        current
+          ? { ...current, connected: true, status: 'connected', lastError: null }
+          : {
+              provider: 'holded',
+              status: 'connected',
+              lastSyncAt: null,
+              lastError: null,
+              connected: true,
+            }
+      );
+      goToNextStep();
     } catch (submitError) {
       setError(
         submitError instanceof Error ? submitError.message : onboardingCopy.errorConnectFailed
@@ -209,27 +313,22 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
 
           <div className="p-5 sm:p-6">
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
-              {onboardingCopy.eyebrow}
+              {uiCopy.eyebrow}
             </div>
             <h1 className="mt-3 text-2xl font-bold tracking-tight text-black sm:text-[1.8rem]">
-              Activa tu conexion con Holded
+              {uiCopy.title}
             </h1>
-            <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">
-              {onboardingCopy.intro}
-            </p>
+            <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">{uiCopy.intro}</p>
 
             <div className="mt-5 rounded-2xl border border-[#0b6cfb]/20 bg-[#f3f8ff] px-4 py-3 text-sm text-[#0b214a]">
               <div className="flex items-start gap-2">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#0b6cfb]" />
-                <span>
-                  Por seguridad, el chat de Isaak solo se habilita con sesion iniciada y cuenta
-                  conectada.
-                </span>
+                <span>{uiCopy.security}</span>
               </div>
             </div>
 
             <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-              <div className="text-sm font-semibold text-black">{onboardingCopy.statusReady}</div>
+              <div className="text-sm font-semibold text-black">{uiCopy.statusReady}</div>
               <div className="mt-2 text-sm text-neutral-700">
                 Espacio preparado: <span className="font-semibold text-black">{tenantName}</span>
               </div>
@@ -241,106 +340,149 @@ export default function HoldedOnboardingClient({ nextUrl, tenantName, onboarding
               ) : null}
             </div>
 
-            <ol className="mt-4 space-y-2 text-sm text-neutral-700">
-              {helpSteps.map((step, index) => (
-                <li key={step} className="flex gap-3">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-white">
-                    {index + 1}
-                  </span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
-
-            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-black">
-                Clave API de tu ERP (Holded)
-              </span>
-              <span className="mb-3 block text-sm text-neutral-600">
-                Tus datos se usan unicamente para activar tu entorno de trabajo. Puedes desconectar
-                la integracion cuando quieras.
-              </span>
-              <div className="relative">
-                <KeyRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(event) => setApiKey(event.target.value)}
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder="Pega aqui la API key de Holded para activar Isaak"
-                  className="h-12 w-full rounded-2xl border border-neutral-300 bg-white pl-11 pr-4 text-sm text-black outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                />
+            {loading && !saving && !redirecting ? (
+              <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#f7fbff_0%,#ffffff_52%,#fff7f8_100%)] p-4 sm:p-5">
+                <div className="grid gap-4 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center">
+                  <HoldedMergeAnimation compact />
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                      Conexion en progreso
+                    </div>
+                    <div className="mt-2 text-base font-semibold text-black">
+                      {uiCopy.checkingTitle}
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-neutral-700">
+                      {uiCopy.checkingDescription}
+                    </p>
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-neutral-200">
+                      <div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-[#0b6cfb]" />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </label>
+            ) : null}
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="submit"
-                disabled={saving || !apiKey.trim()}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Conectar y activar Isaak
-              </button>
-            </div>
-            </form>
+            {redirecting ? (
+              <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#fff8f8_0%,#ffffff_52%,#f7fbff_100%)] p-4 sm:p-5">
+                <div className="grid gap-4 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center">
+                  <HoldedMergeAnimation compact />
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                      Ultimo paso
+                    </div>
+                    <div className="mt-2 text-base font-semibold text-black">
+                      {uiCopy.redirectTitle}
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-neutral-700">
+                      {uiCopy.redirectDescription}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <a
+                        href={nextUrl}
+                        className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
+                      >
+                        Continuar
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {!redirecting ? (
+              <ol className="mt-4 space-y-2 text-sm text-neutral-700">
+                {uiCopy.helpSteps.map((step, index) => (
+                  <li key={step} className="flex gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-white">
+                      {index + 1}
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+
+            {!redirecting ? (
+              <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-black">
+                    {uiCopy.apiKeyLabel}
+                  </span>
+                  <span className="mb-3 block text-sm text-neutral-600">{uiCopy.apiKeyHelp}</span>
+                  <div className="relative">
+                    <KeyRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={(event) => setApiKey(event.target.value)}
+                      autoComplete="off"
+                      spellCheck={false}
+                      placeholder={uiCopy.apiKeyPlaceholder}
+                      className="h-12 w-full rounded-2xl border border-neutral-300 bg-white pl-11 pr-4 text-sm text-black outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                    />
+                  </div>
+                </label>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="submit"
+                    disabled={saving || !apiKey.trim()}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    {uiCopy.submitLabel}
+                  </button>
+                </div>
+              </form>
+            ) : null}
 
             {saving ? (
               <div className="mt-5 overflow-hidden rounded-2xl border border-neutral-200 bg-[linear-gradient(135deg,#fff8f8_0%,#ffffff_55%,#fff6f6_100%)] p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#ff5460]/10 text-[#ff5460]">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-black">
-                    {onboardingCopy.statusLoading}
-                  </div>
-                  <div className="mt-1 text-sm text-neutral-600">
-                    No cierres esta ventana. Estamos validando la conexion y preparando el contexto
-                    inicial para Isaak.
+                <div className="grid gap-4 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center">
+                  <HoldedMergeAnimation compact />
+                  <div>
+                    <div className="text-sm font-semibold text-black">{uiCopy.statusLoading}</div>
+                    <div className="mt-1 text-sm text-neutral-600">{uiCopy.savingDescription}</div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-5 h-2 overflow-hidden rounded-full bg-neutral-200">
-                <div className="h-full w-1/2 animate-pulse rounded-full bg-[#ff5460]" />
-              </div>
-
-              <div className="mt-4 rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm">
-                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
-                  Mientras lo dejamos listo
+                <div className="mt-5 h-2 overflow-hidden rounded-full bg-neutral-200">
+                  <div className="h-full w-1/2 animate-pulse rounded-full bg-[#ff5460]" />
                 </div>
-                <p className="mt-3 min-h-[48px] text-sm leading-6 text-neutral-800 transition-all duration-300">
-                  {savingMessages[savingMessageIndex]}
-                </p>
-              </div>
+
+                <div className="mt-4 rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                    Mientras lo dejamos listo
+                  </div>
+                  <p className="mt-3 min-h-[48px] text-sm leading-6 text-neutral-800 transition-all duration-300">
+                    {uiCopy.savingMessages[savingMessageIndex]}
+                  </p>
+                </div>
               </div>
             ) : null}
 
             {message ? (
               <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{message}</span>
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{message}</span>
               </div>
             ) : null}
 
             {error ? (
               <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <div className="space-y-2">
-                <span className="block">{error}</span>
-                {!saving ? (
-                  <button
-                    type="button"
-                    onClick={handleRetryStatus}
-                    className="rounded-full border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
-                  >
-                    Reintentar
-                  </button>
-                ) : null}
-              </div>
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <div className="space-y-2">
+                  <span className="block">{error}</span>
+                  {!saving ? (
+                    <button
+                      type="button"
+                      onClick={handleRetryStatus}
+                      className="rounded-full border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                    >
+                      Reintentar
+                    </button>
+                  ) : null}
+                </div>
               </div>
             ) : null}
           </div>

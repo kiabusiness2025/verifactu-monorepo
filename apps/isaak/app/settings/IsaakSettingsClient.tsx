@@ -153,6 +153,23 @@ function formatMoney(amount: number | null, currency: string | null) {
   }
 }
 
+function formatSupportedModule(value: string) {
+  switch (value) {
+    case 'invoicing':
+      return 'Ventas, facturas y clientes';
+    case 'accounting':
+      return 'Contabilidad';
+    case 'crm':
+      return 'CRM';
+    case 'projects':
+      return 'Proyectos';
+    case 'team':
+      return 'Equipo';
+    default:
+      return value;
+  }
+}
+
 export default function IsaakSettingsClient({
   initialSection,
   settingsData,
@@ -702,6 +719,23 @@ export default function IsaakSettingsClient({
                     {connection.validationSummary ? (
                       <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
                         {connection.validationSummary}
+                      </div>
+                    ) : null}
+                    {connection.supportedModules.length > 0 ? (
+                      <div className="mt-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          Partes ya validadas
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {connection.supportedModules.map((module) => (
+                            <span
+                              key={module}
+                              className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900"
+                            >
+                              {formatSupportedModule(module)}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     ) : null}
                     <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">

@@ -2,6 +2,7 @@ import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAccountingIntegration } from '@/lib/integrations/accountingStore';
+import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 
 export const runtime = 'nodejs';
 
@@ -26,7 +27,9 @@ export async function GET(request: NextRequest) {
   try {
     const auth = await requireTenantContext({
       channelType: entryChannel,
-      metadata: { source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext' },
+      metadata: {
+        source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext',
+      },
       onboardingToken,
     });
     if ('error' in auth) {
@@ -35,13 +38,30 @@ export async function GET(request: NextRequest) {
 
     const integration = await getAccountingIntegration(auth.tenantId);
     const access = await getAccountingIntegrationAccess({ tenantId: auth.tenantId, entryChannel });
+    const channelConnection =
+      entryChannel === 'chatgpt'
+        ? await resolveSharedHoldedConnectionForTenant(auth.tenantId, 'chatgpt')
+        : null;
+    const connected =
+      entryChannel === 'chatgpt'
+        ? channelConnection?.status === 'connected'
+        : integration?.status === 'connected';
+    const status =
+      entryChannel === 'chatgpt'
+        ? (channelConnection?.status ?? 'disconnected')
+        : (integration?.status ?? 'disconnected');
+    const lastSyncAt =
+      entryChannel === 'chatgpt'
+        ? (channelConnection?.lastSyncAt ?? null)
+        : (integration?.last_sync_at ?? null);
+    const lastError = entryChannel === 'chatgpt' ? null : (integration?.last_error ?? null);
 
     return NextResponse.json({
       provider: 'holded',
-      status: integration?.status ?? 'disconnected',
-      lastSyncAt: integration?.last_sync_at ?? null,
-      lastError: integration?.last_error ?? null,
-      connected: integration?.status === 'connected',
+      status,
+      lastSyncAt,
+      lastError,
+      connected,
       plan: access.planCode,
       canConnect: access.canConnect,
       canExportAeatBooks: access.canExportAeatBooks,

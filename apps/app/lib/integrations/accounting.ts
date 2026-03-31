@@ -41,7 +41,7 @@ export type HoldedProbeResult = {
 };
 
 type HoldedRequestOptions = {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   path: string;
   apiKey: string;
   query?: Record<string, string | number | boolean | null | undefined>;
@@ -89,7 +89,8 @@ async function holdedRequest<T>(options: HoldedRequestOptions): Promise<T> {
     const parsed = rawText ? safeJsonParse(rawText) : null;
 
     if (!response.ok) {
-      const payload = parsed && typeof parsed === 'object' ? (parsed as HoldedApiErrorPayload) : null;
+      const payload =
+        parsed && typeof parsed === 'object' ? (parsed as HoldedApiErrorPayload) : null;
       const message =
         payload?.error ||
         payload?.message ||
@@ -246,23 +247,137 @@ export type HoldedTimeEntry = {
   description?: string;
 };
 
+type HoldedPaginationArgs = {
+  page?: number;
+  limit?: number;
+};
+
+type HoldedEntityPayload = Record<string, unknown>;
+
+function buildPagingQuery(args?: HoldedPaginationArgs) {
+  return {
+    page: args?.page ?? 1,
+    limit: args?.limit ?? 25,
+  };
+}
+
+function invoicingPath(resource: string, id?: string) {
+  return id ? `/api/invoicing/v1/${resource}/${id}` : `/api/invoicing/v1/${resource}`;
+}
+
+async function listInvoicingResource<T>(
+  apiKey: string,
+  resource: string,
+  args?: HoldedPaginationArgs
+) {
+  return holdedRequest<T[]>({
+    apiKey,
+    path: invoicingPath(resource),
+    query: buildPagingQuery(args),
+  });
+}
+
+async function listSimpleInvoicingResource<T>(apiKey: string, resource: string) {
+  return holdedRequest<T[]>({
+    apiKey,
+    path: invoicingPath(resource),
+  });
+}
+
+async function getInvoicingResource<T>(apiKey: string, resource: string, id: string) {
+  return holdedRequest<T>({
+    apiKey,
+    path: invoicingPath(resource, id),
+  });
+}
+
+async function createInvoicingResource(
+  apiKey: string,
+  resource: string,
+  payload: HoldedEntityPayload
+) {
+  return holdedRequest<Record<string, unknown>>({
+    apiKey,
+    method: 'POST',
+    path: invoicingPath(resource),
+    body: payload,
+  });
+}
+
+async function updateInvoicingResource(
+  apiKey: string,
+  resource: string,
+  id: string,
+  payload: HoldedEntityPayload
+) {
+  return holdedRequest<Record<string, unknown>>({
+    apiKey,
+    method: 'PUT',
+    path: invoicingPath(resource, id),
+    body: payload,
+  });
+}
+
+async function deleteInvoicingResource(apiKey: string, resource: string, id: string) {
+  return holdedRequest<Record<string, unknown>>({
+    apiKey,
+    method: 'DELETE',
+    path: invoicingPath(resource, id),
+  });
+}
+
+async function listTypedDocuments(
+  apiKey: string,
+  docType: string,
+  args?: { page?: number; limit?: number; status?: string }
+) {
+  return holdedRequest<Record<string, unknown>[]>({
+    apiKey,
+    path: `/api/invoicing/v1/documents/${docType}`,
+    query: {
+      page: args?.page ?? 1,
+      limit: args?.limit ?? 25,
+      status: args?.status,
+    },
+  });
+}
+
+function attachDocType(items: Record<string, unknown>[], docType: string) {
+  return items.map((item) => ({ ...item, docType }));
+}
+
 export const holdedAdapter = {
   async listInvoices(apiKey: string, args?: { page?: number; limit?: number; status?: string }) {
-    return holdedRequest<HoldedInvoiceDocument[]>({
-      apiKey,
-      path: '/api/invoicing/v1/documents',
-      query: {
-        page: args?.page ?? 1,
-        limit: args?.limit ?? 25,
-        status: args?.status,
-      },
-    });
+    return listTypedDocuments(apiKey, 'invoice', args);
   },
 
   async getInvoice(apiKey: string, invoiceId: string) {
     return holdedRequest<HoldedInvoiceDocument>({
       apiKey,
-      path: `/api/invoicing/v1/documents/${invoiceId}`,
+      path: `/api/invoicing/v1/documents/invoice/${invoiceId}`,
+    });
+  },
+
+  async listDocuments(
+    apiKey: string,
+    args?: { page?: number; limit?: number; status?: string; docType?: string }
+  ) {
+    if (args?.docType) {
+      return listTypedDocuments(apiKey, args.docType, args);
+    }
+
+    const [invoices, estimates] = await Promise.all([
+      listTypedDocuments(apiKey, 'invoice', args),
+      listTypedDocuments(apiKey, 'estimate', args),
+    ]);
+
+    return [...attachDocType(invoices, 'invoice'), ...attachDocType(estimates, 'estimate')];
+  },
+
+  async getDocument(apiKey: string, docType: string, documentId: string) {
+    return holdedRequest<Record<string, unknown>>({
+      apiKey,
+      path: `/api/invoicing/v1/documents/${docType}/${documentId}`,
     });
   },
 
@@ -284,16 +399,34 @@ export const holdedAdapter = {
     });
   },
 
-  async createDocument(
-    apiKey: string,
-    docType: string,
-    payload: Record<string, unknown>
-  ) {
+  async createDocument(apiKey: string, docType: string, payload: Record<string, unknown>) {
     return holdedRequest<Record<string, unknown>>({
       apiKey,
       method: 'POST',
       path: `/api/invoicing/v1/documents/${docType}`,
       body: payload,
+    });
+  },
+
+  async updateDocument(
+    apiKey: string,
+    docType: string,
+    documentId: string,
+    payload: Record<string, unknown>
+  ) {
+    return holdedRequest<Record<string, unknown>>({
+      apiKey,
+      method: 'PUT',
+      path: `/api/invoicing/v1/documents/${docType}/${documentId}`,
+      body: payload,
+    });
+  },
+
+  async deleteDocument(apiKey: string, docType: string, documentId: string) {
+    return holdedRequest<Record<string, unknown>>({
+      apiKey,
+      method: 'DELETE',
+      path: `/api/invoicing/v1/documents/${docType}/${documentId}`,
     });
   },
 
@@ -309,14 +442,233 @@ export const holdedAdapter = {
   },
 
   async listContactGroups(apiKey: string, args?: { page?: number; limit?: number }) {
-    return holdedRequest<HoldedContactGroup[]>({
+    return listInvoicingResource<HoldedContactGroup>(apiKey, 'contacts/groups', args);
+  },
+
+  async createContact(apiKey: string, payload: HoldedEntityPayload) {
+    return createInvoicingResource(apiKey, 'contacts', payload);
+  },
+
+  async updateContact(apiKey: string, contactId: string, payload: HoldedEntityPayload) {
+    return updateInvoicingResource(apiKey, 'contacts', contactId, payload);
+  },
+
+  async deleteContact(apiKey: string, contactId: string) {
+    return deleteInvoicingResource(apiKey, 'contacts', contactId);
+  },
+
+  async listTreasuryAccounts(apiKey: string) {
+    return listSimpleInvoicingResource<Record<string, unknown>>(apiKey, 'treasury');
+  },
+
+  async getTreasuryAccount(apiKey: string, treasuryId: string) {
+    return getInvoicingResource<Record<string, unknown>>(apiKey, 'treasury', treasuryId);
+  },
+
+  async createTreasuryAccount(apiKey: string, payload: HoldedEntityPayload) {
+    return createInvoicingResource(apiKey, 'treasury', payload);
+  },
+
+  async updateTreasuryAccount(apiKey: string, treasuryId: string, payload: HoldedEntityPayload) {
+    return updateInvoicingResource(apiKey, 'treasury', treasuryId, payload);
+  },
+
+  async listExpenseAccounts(apiKey: string, args?: HoldedPaginationArgs) {
+    return listInvoicingResource<Record<string, unknown>>(apiKey, 'expensesaccounts', args);
+  },
+
+  async getExpenseAccount(apiKey: string, expenseAccountId: string) {
+    return getInvoicingResource<Record<string, unknown>>(
       apiKey,
-      path: '/api/invoicing/v1/contacts/groups',
-      query: {
-        page: args?.page ?? 1,
-        limit: args?.limit ?? 25,
-      },
+      'expensesaccounts',
+      expenseAccountId
+    );
+  },
+
+  async createExpenseAccount(apiKey: string, payload: HoldedEntityPayload) {
+    return createInvoicingResource(apiKey, 'expensesaccounts', payload);
+  },
+
+  async updateExpenseAccount(
+    apiKey: string,
+    expenseAccountId: string,
+    payload: HoldedEntityPayload
+  ) {
+    return updateInvoicingResource(apiKey, 'expensesaccounts', expenseAccountId, payload);
+  },
+
+  async deleteExpenseAccount(apiKey: string, expenseAccountId: string) {
+    return deleteInvoicingResource(apiKey, 'expensesaccounts', expenseAccountId);
+  },
+
+  async listNumberingSeries(apiKey: string, seriesType: string) {
+    return holdedRequest<Record<string, unknown>[]>({
+      apiKey,
+      path: `/api/invoicing/v1/numberingseries/${seriesType}`,
     });
+  },
+
+  async createNumberingSeries(apiKey: string, seriesType: string, payload: HoldedEntityPayload) {
+    return holdedRequest<Record<string, unknown>>({
+      apiKey,
+      method: 'POST',
+      path: `/api/invoicing/v1/numberingseries/${seriesType}`,
+      body: payload,
+    });
+  },
+
+  async updateNumberingSeries(
+    apiKey: string,
+    seriesType: string,
+    seriesId: string,
+    payload: HoldedEntityPayload
+  ) {
+    return holdedRequest<Record<string, unknown>>({
+      apiKey,
+      method: 'PUT',
+      path: `/api/invoicing/v1/numberingseries/${seriesType}/${seriesId}`,
+      body: payload,
+    });
+  },
+
+  async deleteNumberingSeries(apiKey: string, seriesType: string, seriesId: string) {
+    return holdedRequest<Record<string, unknown>>({
+      apiKey,
+      method: 'DELETE',
+      path: `/api/invoicing/v1/numberingseries/${seriesType}/${seriesId}`,
+    });
+  },
+
+  async listProducts(apiKey: string, args?: HoldedPaginationArgs) {
+    return listInvoicingResource<Record<string, unknown>>(apiKey, 'products', args);
+  },
+
+  async getProduct(apiKey: string, productId: string) {
+    return getInvoicingResource<Record<string, unknown>>(apiKey, 'products', productId);
+  },
+
+  async createProduct(apiKey: string, payload: HoldedEntityPayload) {
+    return createInvoicingResource(apiKey, 'products', payload);
+  },
+
+  async updateProduct(apiKey: string, productId: string, payload: HoldedEntityPayload) {
+    return updateInvoicingResource(apiKey, 'products', productId, payload);
+  },
+
+  async deleteProduct(apiKey: string, productId: string) {
+    return deleteInvoicingResource(apiKey, 'products', productId);
+  },
+
+  async listSalesChannels(apiKey: string, args?: HoldedPaginationArgs) {
+    return listInvoicingResource<Record<string, unknown>>(apiKey, 'saleschannels', args);
+  },
+
+  async getSalesChannel(apiKey: string, salesChannelId: string) {
+    return getInvoicingResource<Record<string, unknown>>(apiKey, 'saleschannels', salesChannelId);
+  },
+
+  async createSalesChannel(apiKey: string, payload: HoldedEntityPayload) {
+    return createInvoicingResource(apiKey, 'saleschannels', payload);
+  },
+
+  async updateSalesChannel(apiKey: string, salesChannelId: string, payload: HoldedEntityPayload) {
+    return updateInvoicingResource(apiKey, 'saleschannels', salesChannelId, payload);
+  },
+
+  async deleteSalesChannel(apiKey: string, salesChannelId: string) {
+    return deleteInvoicingResource(apiKey, 'saleschannels', salesChannelId);
+  },
+
+  async listWarehouses(apiKey: string, args?: HoldedPaginationArgs) {
+    return listInvoicingResource<Record<string, unknown>>(apiKey, 'warehouses', args);
+  },
+
+  async getWarehouse(apiKey: string, warehouseId: string) {
+    return getInvoicingResource<Record<string, unknown>>(apiKey, 'warehouses', warehouseId);
+  },
+
+  async createWarehouse(apiKey: string, payload: HoldedEntityPayload) {
+    return createInvoicingResource(apiKey, 'warehouses', payload);
+  },
+
+  async updateWarehouse(apiKey: string, warehouseId: string, payload: HoldedEntityPayload) {
+    return updateInvoicingResource(apiKey, 'warehouses', warehouseId, payload);
+  },
+
+  async deleteWarehouse(apiKey: string, warehouseId: string) {
+    return deleteInvoicingResource(apiKey, 'warehouses', warehouseId);
+  },
+
+  async listPayments(apiKey: string, args?: HoldedPaginationArgs) {
+    return listInvoicingResource<Record<string, unknown>>(apiKey, 'payments', args);
+  },
+
+  async getPayment(apiKey: string, paymentId: string) {
+    return getInvoicingResource<Record<string, unknown>>(apiKey, 'payments', paymentId);
+  },
+
+  async createPayment(apiKey: string, payload: HoldedEntityPayload) {
+    return createInvoicingResource(apiKey, 'payments', payload);
+  },
+
+  async updatePayment(apiKey: string, paymentId: string, payload: HoldedEntityPayload) {
+    return updateInvoicingResource(apiKey, 'payments', paymentId, payload);
+  },
+
+  async deletePayment(apiKey: string, paymentId: string) {
+    return deleteInvoicingResource(apiKey, 'payments', paymentId);
+  },
+
+  async listTaxes(apiKey: string) {
+    return listSimpleInvoicingResource<Record<string, unknown>>(apiKey, 'taxes');
+  },
+
+  async listPaymentMethods(apiKey: string) {
+    return listSimpleInvoicingResource<Record<string, unknown>>(apiKey, 'paymentmethods');
+  },
+
+  async getContactGroup(apiKey: string, contactGroupId: string) {
+    return getInvoicingResource<Record<string, unknown>>(apiKey, 'contacts/groups', contactGroupId);
+  },
+
+  async createContactGroup(apiKey: string, payload: HoldedEntityPayload) {
+    return createInvoicingResource(apiKey, 'contacts/groups', payload);
+  },
+
+  async updateContactGroup(apiKey: string, contactGroupId: string, payload: HoldedEntityPayload) {
+    return updateInvoicingResource(apiKey, 'contacts/groups', contactGroupId, payload);
+  },
+
+  async deleteContactGroup(apiKey: string, contactGroupId: string) {
+    return deleteInvoicingResource(apiKey, 'contacts/groups', contactGroupId);
+  },
+
+  async listRemittances(apiKey: string) {
+    return listSimpleInvoicingResource<Record<string, unknown>>(apiKey, 'remittances');
+  },
+
+  async getRemittance(apiKey: string, remittanceId: string) {
+    return getInvoicingResource<Record<string, unknown>>(apiKey, 'remittances', remittanceId);
+  },
+
+  async listServices(apiKey: string, args?: HoldedPaginationArgs) {
+    return listInvoicingResource<Record<string, unknown>>(apiKey, 'services', args);
+  },
+
+  async getService(apiKey: string, serviceId: string) {
+    return getInvoicingResource<Record<string, unknown>>(apiKey, 'services', serviceId);
+  },
+
+  async createService(apiKey: string, payload: HoldedEntityPayload) {
+    return createInvoicingResource(apiKey, 'services', payload);
+  },
+
+  async updateService(apiKey: string, serviceId: string, payload: HoldedEntityPayload) {
+    return updateInvoicingResource(apiKey, 'services', serviceId, payload);
+  },
+
+  async deleteService(apiKey: string, serviceId: string) {
+    return deleteInvoicingResource(apiKey, 'services', serviceId);
   },
 
   async listBookings(apiKey: string, args?: { page?: number; limit?: number }) {
@@ -344,7 +696,7 @@ export const holdedAdapter = {
   async getProject(apiKey: string, projectId: string) {
     return holdedRequest<HoldedProject>({
       apiKey,
-      path: "/api/projects/v1/projects/" + projectId,
+      path: '/api/projects/v1/projects/' + projectId,
     });
   },
 
@@ -355,7 +707,7 @@ export const holdedAdapter = {
   ) {
     return holdedRequest<HoldedProjectTask[]>({
       apiKey,
-      path: "/api/projects/v1/projects/" + projectId + "/tasks",
+      path: '/api/projects/v1/projects/' + projectId + '/tasks',
       query: {
         page: args?.page ?? 1,
         limit: args?.limit ?? 25,
@@ -374,7 +726,10 @@ export const holdedAdapter = {
     });
   },
 
-  async listTimeEntries(apiKey: string, args?: { page?: number; limit?: number; employeeId?: string }) {
+  async listTimeEntries(
+    apiKey: string,
+    args?: { page?: number; limit?: number; employeeId?: string }
+  ) {
     return holdedRequest<HoldedTimeEntry[]>({
       apiKey,
       path: '/api/team/v1/times',

@@ -1,4 +1,9 @@
 import prisma from '@/lib/prisma';
+import {
+  HOLDED_MCP_SUPPORTED_SCOPES,
+  HOLDED_MCP_TOOL_SCOPES,
+  getHoldedMcpScopePreset,
+} from '@/lib/integrations/holdedMcpScopes';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { getAppUrl, getLandingUrl, signSessionToken, verifySessionToken } from '@verifactu/utils';
 import { createHash } from 'crypto';
@@ -50,22 +55,12 @@ type HoldedOnboardingPayload = {
   name: string | null;
 };
 
-export const MCP_TOOL_SCOPES: Record<string, string[]> = {
-  holded_list_invoices: ['mcp.read', 'holded.invoices.read'],
-  holded_get_invoice: ['mcp.read', 'holded.invoices.read'],
-  holded_list_contacts: ['mcp.read', 'holded.contacts.read'],
-  holded_list_accounts: ['mcp.read', 'holded.accounts.read'],
-  holded_list_bookings: ['mcp.read', 'holded.crm.read'],
-  holded_list_projects: ['mcp.read', 'holded.projects.read'],
-  holded_get_project: ['mcp.read', 'holded.projects.read'],
-  holded_list_project_tasks: ['mcp.read', 'holded.projects.read'],
-  holded_create_invoice_draft: ['mcp.read', 'holded.invoices.write'],
-};
+export const MCP_TOOL_SCOPES = HOLDED_MCP_TOOL_SCOPES;
+
+const SUPPORTED_SCOPES = [...HOLDED_MCP_SUPPORTED_SCOPES];
 
 function readOAuthSecret() {
-  const secret =
-    process.env.MCP_OAUTH_SECRET?.trim() ||
-    process.env.SESSION_SECRET?.trim();
+  const secret = process.env.MCP_OAUTH_SECRET?.trim() || process.env.SESSION_SECRET?.trim();
 
   if (!secret) {
     throw new Error('MCP_OAUTH_SECRET or SESSION_SECRET is required');
@@ -103,7 +98,11 @@ export function getProtectedResourceMetadataUrl() {
 }
 
 export function getAllowedRedirectOrigins() {
-  const defaults = ['https://chatgpt.com', 'https://chat.openai.com', 'https://platform.openai.com'];
+  const defaults = [
+    'https://chatgpt.com',
+    'https://chat.openai.com',
+    'https://platform.openai.com',
+  ];
   const fromEnv = (process.env.MCP_OAUTH_ALLOWED_REDIRECT_ORIGINS || '')
     .split(',')
     .map((value) => value.trim())
@@ -208,27 +207,11 @@ export function verifyPkce(codeVerifier: string, expectedChallenge: string) {
 }
 
 export function getSupportedScopes() {
-  return [
-    'mcp.read',
-    'holded.invoices.read',
-    'holded.contacts.read',
-    'holded.accounts.read',
-    'holded.crm.read',
-    'holded.projects.read',
-    'holded.invoices.write',
-  ];
+  return SUPPORTED_SCOPES;
 }
 
 export function getDefaultScopes() {
-  return [
-    'mcp.read',
-    'holded.invoices.read',
-    'holded.contacts.read',
-    'holded.accounts.read',
-    'holded.crm.read',
-    'holded.projects.read',
-    'holded.invoices.write',
-  ];
+  return getHoldedMcpScopePreset('readonly');
 }
 
 export function ensureScopesAllowed(scope: string) {
@@ -316,7 +299,9 @@ async function findDefaultDemoTenant() {
   });
 
   const fuzzyMatch = allTenants.find((tenant) => {
-    const name = `${tenant.name ?? ''} ${tenant.legalName ?? ''}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const name = `${tenant.name ?? ''} ${tenant.legalName ?? ''}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
     return name.includes(normalizedFallback) || normalizedFallback.includes(name);
   });
 
@@ -386,10 +371,7 @@ async function getOrCreateInternalUserForOAuth(input: {
   const existing =
     (await prisma.user.findFirst({
       where: {
-        OR: [
-          { authSubject: input.uid },
-          ...(input.email ? [{ email: input.email }] : []),
-        ],
+        OR: [{ authSubject: input.uid }, ...(input.email ? [{ email: input.email }] : [])],
       },
       select: { id: true, email: true, name: true },
     })) ?? null;
@@ -446,7 +428,9 @@ async function ensureOwnedTenantForUser(input: {
     })
     .then((pref) => pref?.preferredTenantId ?? null);
 
-  const preferredTenant = memberships.find((membership) => membership.tenantId === preferredTenantId)?.tenant;
+  const preferredTenant = memberships.find(
+    (membership) => membership.tenantId === preferredTenantId
+  )?.tenant;
   if (preferredTenant) {
     return preferredTenant.id;
   }
@@ -581,10 +565,7 @@ export async function resolveTenantForOAuthSession(input: {
 
   const user = await prisma.user.findFirst({
     where: {
-      OR: [
-        { authSubject: input.uid },
-        ...(input.email ? [{ email: input.email }] : []),
-      ],
+      OR: [{ authSubject: input.uid }, ...(input.email ? [{ email: input.email }] : [])],
     },
     select: { id: true },
   });

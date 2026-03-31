@@ -51,6 +51,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 - Auto-fix: `docs/isaak/ISAAK_AUTO_FIX.md`
 - Esquemas de gastos: `docs/isaak/expense_schema.md`, `docs/isaak/expense_schema_v2.md`
 - Guía MCP: `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md`
+- Regresion demo Holded: `docs/engineering/ai/HOLDED_DEMO_REGRESSION.md`
 - Instrucciones operativas 2026: `docs/engineering/ai/ISAAK_INSTRUCCIONES_OPERATIVAS_2026.md`
 
 ### Histórico — `docs/legacy/`

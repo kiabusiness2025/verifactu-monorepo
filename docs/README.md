@@ -92,6 +92,7 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 **engineering/ai/**
 
 - [engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md](engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md) - Setup operativo de Isaak for Holded via MCP + OAuth
+- [engineering/ai/HOLDED_DEMO_REGRESSION.md](engineering/ai/HOLDED_DEMO_REGRESSION.md) - Seed, smoke y criterio de pase para la regresion viva de Holded
 - [engineering/ai/ISAAK_PERSONA_PLAYBOOK_2026.md](engineering/ai/ISAAK_PERSONA_PLAYBOOK_2026.md) - Plan para que Isaak responda como Isaak y no como un asistente generico
 - [engineering/ai/ISAAK_MEMORY_ARCHITECTURE_2026.md](engineering/ai/ISAAK_MEMORY_ARCHITECTURE_2026.md) - Arquitectura de memoria privada de Isaak: conversaciones, facts, documentos y retrieval
 - [engineering/ai/ISAAK_V3_QUICK_START.md](engineering/ai/ISAAK_V3_QUICK_START.md) - Quick start Genkit

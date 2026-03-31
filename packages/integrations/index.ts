@@ -14,12 +14,19 @@ export {
   probeHoldedConnection,
   saveHoldedConnection,
 } from './holded/connection';
+export { buildHoldedProbeSummary, buildStoredHoldedConnectionSummary } from './holded/diagnostics';
 export type {
   HoldedConnectionChannel,
   HoldedConnectionRecord,
   HoldedPrismaClient,
   HoldedProbeResult,
 } from './holded/connection';
+export type {
+  HoldedProbeLike,
+  HoldedProbeModuleDiagnostic,
+  HoldedProbeSummary,
+  HoldedSupportedModule,
+} from './holded/diagnostics';
 export {
   buildSuggestedPrompts,
   completeIsaakOnboarding,

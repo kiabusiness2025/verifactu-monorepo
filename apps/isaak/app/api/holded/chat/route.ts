@@ -4,7 +4,11 @@ import { recordUsageEvent } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import { buildYearAnalyticsSummary } from '@/app/lib/holded-analytics';
-import { probeHoldedConnection } from '@/app/lib/holded-integration';
+import {
+  buildHoldedProbeSummary,
+  probeHoldedConnection,
+  type HoldedProbeModuleDiagnostic,
+} from '@/app/lib/holded-integration';
 import {
   appendConversationMessage,
   ensureHoldedConversation,
@@ -22,7 +26,9 @@ function isConnectionDiagnosticRequest(message: string) {
     text.includes('conexion detall') ||
     text.includes('estado de conexion') ||
     text.includes('comprobar conexion') ||
-    text.includes('revisar conexion')
+    text.includes('revisar conexion') ||
+    text.includes('test de conexion') ||
+    text.includes('prueba de conexion')
   );
 }
 
@@ -75,12 +81,87 @@ function formatMoney(amount: number | null | undefined) {
   })} EUR`;
 }
 
-function statusLabel(ok: boolean, status: number | null) {
-  if (ok) return 'Disponible';
-  if (status === 401 || status === 403) return 'Sin permiso';
-  if (status === 404) return 'No disponible';
-  if (status === null) return 'Sin respuesta';
-  return `Error ${status}`;
+function joinSpanishList(values: string[]) {
+  if (values.length === 0) return '';
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]} y ${values[1]}`;
+  return `${values.slice(0, -1).join(', ')} y ${values[values.length - 1]}`;
+}
+
+function describeSupportedModules(modules: string[] | null | undefined) {
+  const labels = (modules || [])
+    .map((module) => {
+      switch (module) {
+        case 'invoicing':
+          return 'ventas, facturas y clientes';
+        case 'accounting':
+          return 'contabilidad';
+        case 'crm':
+          return 'CRM';
+        case 'projects':
+          return 'proyectos';
+        case 'team':
+          return 'equipo';
+        default:
+          return null;
+      }
+    })
+    .filter(Boolean) as string[];
+
+  return labels.length > 0 ? joinSpanishList(labels) : 'sin detalle todavia';
+}
+
+function describeCommunicationStyle(value: string | null | undefined) {
+  switch (value) {
+    case 'spanish_close_friendly':
+      return 'cercano y muy humano';
+    case 'spanish_professional_reassuring':
+      return 'profesional y tranquilizador';
+    case 'spanish_clear_non_technical':
+      return 'claro y sin tecnicismos';
+    default:
+      return 'claro y cercano';
+  }
+}
+
+function describeKnowledgeLevel(value: string | null | undefined) {
+  switch (value) {
+    case 'starter':
+      return 'inicial';
+    case 'intermediate':
+      return 'intermedio';
+    case 'advanced':
+      return 'avanzado';
+    default:
+      return 'inicial';
+  }
+}
+
+function describeRole(value: string | null | undefined) {
+  switch (value) {
+    case 'autonomo':
+      return 'autonomo';
+    case 'administrador':
+      return 'administrador';
+    case 'gerente':
+      return 'gerente';
+    case 'financiero':
+      return 'responsable financiero';
+    case 'otro':
+      return 'responsable del negocio';
+    default:
+      return value || 'responsable del negocio';
+  }
+}
+
+function formatProbeStatus(status: number | null) {
+  return status === null ? 'sin respuesta' : `HTTP ${status}`;
+}
+
+function formatHealthLabel(value: 'ready' | 'partial' | 'blocked') {
+  if (value === 'ready') return 'Lista';
+  if (value === 'partial') return 'Parcial';
+  return 'Bloqueada';
 }
 
 function buildConnectionDiagnostic(input: {
@@ -90,40 +171,56 @@ function buildConnectionDiagnostic(input: {
 }) {
   const tenantLabel = input.context.labels.companyName?.trim() || 'tu empresa';
   const connection = input.context.holded.connection;
-  const modules = connection?.supportedModules?.length
-    ? connection.supportedModules.join(', ')
-    : 'Sin modulos confirmados';
-
   const probe = input.probe;
-  const invoiceStatus = probe
-    ? statusLabel(probe.invoiceApi.ok, probe.invoiceApi.status)
-    : 'No comprobado';
-  const accountsStatus = probe
-    ? statusLabel(probe.accountingApi.ok, probe.accountingApi.status)
-    : 'No comprobado';
-  const contactsStatus = input.snapshot.contacts.length >= 0 ? 'Disponible' : 'No comprobado';
+  const probeSummary = probe ? buildHoldedProbeSummary(probe) : null;
+  const findModuleDiagnostic = (key: HoldedProbeModuleDiagnostic['key']) =>
+    probeSummary?.modules.find((module: HoldedProbeModuleDiagnostic) => module.key === key);
+  const invoicingDiagnostic = findModuleDiagnostic('invoicing');
+  const accountingDiagnostic = findModuleDiagnostic('accounting');
+  const crmDiagnostic = findModuleDiagnostic('crm');
+  const projectsDiagnostic = findModuleDiagnostic('projects');
+  const teamDiagnostic = findModuleDiagnostic('team');
 
-  const healthScore = [
-    probe?.invoiceApi.ok ? 1 : 0,
-    probe?.accountingApi.ok ? 1 : 0,
-    input.snapshot.contacts.length >= 0 ? 1 : 0,
-  ].reduce((sum, item) => sum + item, 0);
+  let contactsDiagnostic =
+    'No he lanzado ahora mismo una comprobacion en vivo de clientes o contactos.';
 
-  const healthLabel = healthScore >= 3 ? 'Alta' : healthScore === 2 ? 'Parcial' : 'Baja';
+  if (invoicingDiagnostic?.ok) {
+    contactsDiagnostic =
+      input.snapshot.contacts.length > 0
+        ? `He podido leer ${input.snapshot.contacts.length} clientes o contactos en la muestra actual.`
+        : 'La conexion de ventas responde, pero en esta lectura rapida no han aparecido contactos.';
+  } else if (probeSummary) {
+    contactsDiagnostic =
+      'No he podido revisar clientes porque la parte de ventas y facturas no ha respondido bien.';
+  }
 
   return [
-    `Aqui tienes el diagnostico de conexion para ${tenantLabel} 😊:`,
+    `He revisado la conexion de Holded para ${tenantLabel} 😊`,
     '',
-    `- Estado general: ${healthLabel}`,
-    `- Facturas: ${invoiceStatus}`,
-    `- Cuentas contables: ${accountsStatus}`,
-    `- Contactos: ${contactsStatus}`,
-    `- Modulos confirmados: ${modules}`,
-    `- Muestra actual leida: ${input.snapshot.invoices.length} facturas, ${input.snapshot.contacts.length} contactos, ${input.snapshot.accounts.length} cuentas`,
+    `Estado general: ${probeSummary ? formatHealthLabel(probeSummary.health) : 'Pendiente de comprobar'}`,
+    `Resumen: ${probeSummary ? probeSummary.summary : 'La conexion aparece guardada, pero ahora mismo no he podido lanzar el chequeo en vivo.'}`,
+    `Modulos ya confirmados: ${describeSupportedModules(connection?.supportedModules)}.`,
+    `Muestra actual: ${input.snapshot.invoices.length} facturas, ${input.snapshot.contacts.length} contactos y ${input.snapshot.accounts.length} cuentas.`,
     '',
-    healthScore >= 3
-      ? 'La conexion esta operativa y ya podemos trabajar con datos reales. Todo va por buen camino 🙌'
-      : 'La conexion esta activa, pero parcial. Si quieres, te guio paso a paso para dejar facturas y cuentas plenamente operativas.',
+    'Lo que acabo de comprobar:',
+    probeSummary
+      ? `- Facturas y clientes: ${invoicingDiagnostic?.detail} (${formatProbeStatus(invoicingDiagnostic?.status ?? null)})`
+      : '- Facturas y clientes: No comprobado ahora mismo.',
+    `- Contactos leidos: ${contactsDiagnostic}`,
+    probeSummary
+      ? `- Contabilidad: ${accountingDiagnostic?.detail} (${formatProbeStatus(accountingDiagnostic?.status ?? null)})`
+      : '- Contabilidad: No comprobado ahora mismo.',
+    probeSummary
+      ? `- CRM: ${crmDiagnostic?.detail} (${formatProbeStatus(crmDiagnostic?.status ?? null)})`
+      : '- CRM: No comprobado ahora mismo.',
+    probeSummary
+      ? `- Proyectos: ${projectsDiagnostic?.detail} (${formatProbeStatus(projectsDiagnostic?.status ?? null)})`
+      : '- Proyectos: No comprobado ahora mismo.',
+    probeSummary
+      ? `- Equipo: ${teamDiagnostic?.detail} (${formatProbeStatus(teamDiagnostic?.status ?? null)})`
+      : '- Equipo: No comprobado ahora mismo.',
+    '',
+    `Siguiente paso: ${probeSummary ? probeSummary.nextStep : 'Si quieres, repito el chequeo o paso directamente a un resumen del negocio con la lectura actual.'}`,
   ].join('\n');
 }
 
@@ -133,28 +230,61 @@ function buildLlmInstructions(input: {
   diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
 }) {
   const companyName = input.context.labels.companyName || 'tu empresa';
+  const preferredName =
+    input.context.isaak.profile?.preferredName || input.context.labels.firstName || 'la persona';
+  const role = describeRole(
+    input.context.isaak.profile?.roleInCompanyOther || input.context.isaak.profile?.roleInCompany
+  );
+  const communicationStyle = describeCommunicationStyle(
+    input.context.isaak.instructions?.communicationStyle ||
+      input.context.isaak.profile?.communicationStyle
+  );
+  const knowledgeLevel = describeKnowledgeLevel(
+    input.context.isaak.instructions?.likelyKnowledgeLevel ||
+      input.context.isaak.profile?.likelyKnowledgeLevel
+  );
+  const goals = input.context.isaak.profile?.mainGoals?.length
+    ? input.context.isaak.profile.mainGoals.slice(0, 3).join(', ')
+    : 'cuidar el negocio con tranquilidad';
   const analytics = input.context.holded.analytics;
-  const modules = input.context.holded.connection?.supportedModules?.join(', ') || 'ninguno';
+  const modules = describeSupportedModules(input.context.holded.connection?.supportedModules);
+  const probeSummary = input.diagnosticProbe
+    ? buildHoldedProbeSummary(input.diagnosticProbe)
+    : null;
+  const probeDetails = probeSummary
+    ? probeSummary.modules
+        .map((module) => `${module.label}=${module.ok ? 'ok' : formatProbeStatus(module.status)}`)
+        .join(' | ')
+    : 'no ejecutado';
 
   return [
-    'Eres Isaak, asistente fiscal y contable para pymes en Espana.',
-    'Responde en espanol claro, breve, calmante, optimista y muy amable.',
-    'Usa un tono cercano y simpatico. Puedes usar 1 o 2 emojis suaves cuando aporten calidez.',
+    'Eres Isaak, el copiloto fiscal y contable de confianza para pequenos negocios en Espana.',
+    'Tu prioridad es bajar la ansiedad de la persona usuaria y convertir datos en decisiones claras.',
+    'Responde en espanol natural, calmado, optimista, muy amable y nada robotico.',
+    'Puedes usar 1 o 2 emojis suaves cuando aporten calidez, pero no abuses de ellos.',
     'No inventes datos ni funciones. Si faltan datos, dilo con claridad.',
-    'Prioriza confianza y simplicidad.',
+    'Evita jerga de producto y tecnicismos innecesarios. Traduce todo a negocio real.',
+    'Empieza por lo importante, despues explica el impacto y termina con un siguiente paso concreto.',
+    'No suenes como un asistente generico ni como un modelo; suena humano, util y con criterio.',
+    'Cuando ayude, aterriza la lectura a esta idea: ventas - gastos = beneficio.',
+    'Cuando el usuario pida un diagnostico de conexion, detalla que has comprobado ahora mismo, que modulo responde, que modulo falla, como le afecta y que debe hacer despues.',
+    'No digas solo "conexion parcial". Explica exactamente que parte funciona y que parte falta.',
     '',
+    `Persona usuaria: ${preferredName}. Rol: ${role}. Estilo preferido: ${communicationStyle}. Nivel esperado: ${knowledgeLevel}. Objetivos: ${goals}.`,
     `Contexto empresa: ${companyName}.`,
+    `Contexto negocio: ${input.context.summary}`,
     `Muestra disponible: facturas=${input.snapshot.invoices.length}, contactos=${input.snapshot.contacts.length}, cuentas=${input.snapshot.accounts.length}.`,
     `Modulos confirmados: ${modules}.`,
     analytics
       ? `Analitica: ventas_mes=${analytics.monthSales}, gastos_mes=${analytics.monthExpenses}, margen_mes=${analytics.monthMargin}, pendientes=${analytics.pendingCollectionsAmount}.`
       : 'Analitica: no disponible.',
-    input.diagnosticProbe
-      ? `Probe vivo: invoices=${input.diagnosticProbe.invoiceApi.status}, accounts=${input.diagnosticProbe.accountingApi.status}, crm=${input.diagnosticProbe.crmApi.status}, projects=${input.diagnosticProbe.projectsApi.status}.`
-      : 'Probe vivo: no ejecutado.',
+    probeSummary
+      ? `Chequeo vivo: ${probeSummary.summary} Siguiente paso sugerido: ${probeSummary.nextStep}`
+      : 'Chequeo vivo: no ejecutado.',
+    `Detalle del chequeo: ${probeDetails}.`,
     '',
-    'Cuando pidan diagnostico, entrega estado por modulo (facturas, cuentas, contactos), conclusion y siguiente paso concreto.',
-    'Evita sonar robotico o repetitivo. Habla como una persona experta, cercana y tranquilizadora.',
+    'Si el usuario te pide un resumen, usa cifras concretas, concluye que significa para el negocio y remata con una recomendacion accionable.',
+    'Si el usuario pide diagnostico, nombra al menos facturas, contactos y contabilidad aunque alguno falle.',
   ].join('\n');
 }
 
@@ -178,8 +308,8 @@ async function buildLlmReply(input: {
       diagnosticProbe: input.diagnosticProbe,
     }),
     messages: [{ role: 'user', content: input.message }],
-    temperature: 0.35,
-    maxOutputTokens: 340,
+    temperature: 0.45,
+    maxOutputTokens: 420,
   });
 }
 

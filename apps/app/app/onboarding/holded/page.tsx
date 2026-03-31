@@ -8,9 +8,9 @@ import HoldedOnboardingClient from './HoldedOnboardingClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Activa Isaak con tus datos reales | Compatible con Holded',
+  title: 'Activa tu conexion con Holded | Compatible con Holded',
   description:
-    'Estas a un paso de activar tu asistente fiscal. Conecta Holded como ERP compatible y entra en el ecosistema de verifactu.business con datos reales.',
+    'Conecta Holded para activar tu espacio de trabajo con datos reales dentro de verifactu.business.',
   icons: {
     icon: '/brand/holded/holded-diamond-logo.png',
     shortcut: '/brand/holded/holded-diamond-logo.png',
@@ -55,7 +55,7 @@ function attachOnboardingToken(nextUrl: string, onboardingToken: string | null) 
 }
 
 function buildWorkspaceLabel(input: { name?: string | null; email?: string | null } | null) {
-  const base = input?.name?.trim() || input?.email?.split('@')[0]?.trim() || 'Isaak';
+  const base = input?.name?.trim() || input?.email?.split('@')[0]?.trim() || 'Tu';
   return `${base} Workspace`;
 }
 
@@ -94,6 +94,8 @@ export default async function HoldedOnboardingPage({
   const onboardingPayload =
     !session.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
   const nextUrl = attachOnboardingToken(normalizeNextUrl(firstValue(params.next)), onboardingToken);
+  const entryChannel =
+    firstValue(params.channel)?.trim().toLowerCase() === 'chatgpt' ? 'chatgpt' : 'dashboard';
 
   const tenantName = buildWorkspaceLabel(
     session.uid
@@ -105,6 +107,7 @@ export default async function HoldedOnboardingPage({
 
   return (
     <HoldedOnboardingClient
+      entryChannel={entryChannel}
       nextUrl={nextUrl}
       tenantName={tenantName}
       onboardingToken={onboardingToken}

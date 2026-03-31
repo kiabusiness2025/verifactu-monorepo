@@ -25,12 +25,23 @@ Holded no se integra por OAuth en este flujo. La documentacion publica usada par
 ### MCP
 
 - Ruta MCP: `apps/app/app/api/mcp/holded/route.ts`
-- Tools actuales:
-  - `holded_list_invoices`
-  - `holded_get_invoice`
-  - `holded_list_contacts`
-  - `holded_list_accounts`
-  - `holded_create_invoice_draft`
+- Catálogo actual:
+  - facturas legacy: `holded_list_invoices`, `holded_get_invoice`, `holded_create_invoice_draft`
+  - documentos: listar, obtener, crear, actualizar, eliminar
+  - contactos: listar, obtener, crear, actualizar, eliminar
+  - tesorería: listar, obtener, crear, actualizar
+  - cuentas de gasto: listar, obtener, crear, actualizar, eliminar
+  - series de numeración: listar, crear, actualizar, eliminar
+  - productos: listar, obtener, crear, actualizar, eliminar
+  - canales de venta: listar, obtener, crear, actualizar, eliminar
+  - almacenes: listar, obtener, crear, actualizar, eliminar
+  - pagos: listar, obtener, crear, actualizar, eliminar
+  - impuestos: listar
+  - métodos de pago: listar
+  - grupos de contacto: listar, obtener, crear, actualizar, eliminar
+  - remesas: listar, obtener
+  - servicios: listar, obtener, crear, actualizar, eliminar
+  - apoyo operativo: cuentas contables, bookings CRM, proyectos y tareas
 
 ### Adapter Holded
 
@@ -62,6 +73,22 @@ Holded no se integra por OAuth en este flujo. La documentacion publica usada par
 6. ChatGPT llama al MCP con Bearer token.
 7. El MCP resuelve el tenant desde el token OAuth y usa la API key cifrada del tenant para hablar con Holded.
 
+## Flujo holded-first para ChatGPT
+
+Cuando `oauth/authorize` entra con `channel=chatgpt` y el tenant todavia no tiene una conexion compartida valida para ese canal, Verifactu redirige a:
+
+```text
+https://app.verifactu.business/onboarding/holded?...&channel=chatgpt
+```
+
+Reglas operativas de este flujo:
+
+- ChatGPT no se desbloquea con una integracion generica del tenant. La fuente de verdad es `external_connections` con `provider='holded'` y `channel_key='chatgpt'`.
+- `POST /api/integrations/accounting/connect` debe persistir la conexion con `channel_key` y hacer `upsert` por `(tenant_id, provider, channel_key)`.
+- `GET /api/integrations/accounting/status?channel=chatgpt` debe resolver el estado real de ese canal para evitar falsos `connected`.
+- La pantalla de `channel=chatgpt` usa copy neutro y no presenta Isaak como marca principal mientras el usuario solo esta terminando la conexion para ChatGPT.
+- La animacion de espera no bloquea el flujo: el usuario puede pegar la API key en cuanto la tenga, aunque la comprobacion inicial siga en progreso.
+
 ## Variables de entorno
 
 En `apps/app/.env.local` o entorno de despliegue:
@@ -90,6 +117,7 @@ Notas:
 - Registro de cliente: `Cliente OAuth definido por el usuario`
 - Metodo de autenticacion del token endpoint: `none`
 - Secreto de cliente: vacio
+- Registration URL si la pantalla la soporta: `https://app.verifactu.business/oauth/register`
 
 ### Valores
 
@@ -98,20 +126,129 @@ Notas:
 - Token URL: `https://app.verifactu.business/oauth/token`
 - Base del servidor de autorizacion: `https://app.verifactu.business`
 - Recurso: `https://app.verifactu.business/api/mcp/holded`
+- OAuth Client ID: no hay uno fijo global. Si ChatGPT usa `https://app.verifactu.business/oauth/register`, lo obtiene solo. Si una pantalla te obliga a rellenarlo manualmente, primero hay que registrar el cliente con la `redirect_uri` real de OpenAI y usar el `client_id` devuelto.
+- OAuth Client Secret: dejar vacio
+
+### Obtener el OAuth Client ID exacto
+
+Si ChatGPT o OpenAI no hace registro dinamico y te pide un `OAuth Client ID` manual, calcula el valor real con la `redirect_uri` que te muestre esa pantalla.
+
+Ejemplo en PowerShell:
+
+```powershell
+$body = @{
+  client_name = 'OpenAI ChatGPT'
+  redirect_uris = @('<REDIRECT_URI_REAL_DE_OPENAI>')
+  grant_types = @('authorization_code')
+  response_types = @('code')
+  token_endpoint_auth_method = 'none'
+} | ConvertTo-Json -Depth 5
+
+Invoke-RestMethod \
+  -Method Post \
+  -Uri 'https://app.verifactu.business/oauth/register' \
+  -ContentType 'application/json' \
+  -Body $body
+```
+
+La respuesta devuelve un `client_id` determinista con formato `openai-chatgpt-<hash>` para esa `redirect_uri`.
+
+### Si OpenAI muestra `This MCP server doesn't support dynamic client registration`
+
+Ese mensaje puede aparecer aunque el servidor si soporte registro dinamico. Si ocurre, continua con alta manual y usa estos criterios:
+
+- `OAuth Client ID`: el `client_id` calculado para la `redirect_uri` exacta de OpenAI
+- `OAuth Client Secret`: vacio
+- `Token endpoint auth method`: `none`
+- `Grant type`: `authorization_code`
+- `Response type`: `code`
+
+Para la redirect URI `https://chatgpt.com/connector/oauth/Py3iPxF981UJ`, el valor manual correcto es:
+
+```text
+openai-chatgpt-dc3910724e2c913016182543
+```
+
+Nota operativa:
+
+- El servidor si soporta DCR mediante `https://app.verifactu.business/oauth/register`.
+- Si la UI de OpenAI insiste en alta manual, no es prueba de que DCR falle; normalmente significa que esa pantalla ha decidido no usarlo.
+
+### Si OpenAI devuelve `invalid_scope`
+
+En OpenAI Platform, el campo `Default scopes` no puede contener permisos que no aparezcan en `Supported scopes` para el despliegue que estas apuntando.
+
+Regla operativa:
+
+- `Supported scopes`: es la fuente de verdad
+- `Default scopes`: debe ser subconjunto exacto de `Supported scopes`
+- `Base scopes`: usa solo `mcp.read`
+
+Si hoy OpenAI te muestra un `Supported scopes` reducido respecto al repo, no pegues el bloque largo documentado arriba. Eso significa que la instancia desplegada todavia no anuncia el catálogo completo.
+
+Para desbloquear la autorizacion en ese caso:
+
+- `Base scopes`: `mcp.read`
+- `Default scopes`: pega exactamente los scopes soportados por OpenAI para ese despliegue, excluyendo `mcp.read` si ya lo has puesto en `Base scopes`
+
+Ejemplo seguro con el metadata actualmente visible en produccion:
+
+```text
+holded.invoices.read holded.contacts.read holded.accounts.read holded.crm.read holded.projects.read holded.invoices.write
+```
+
+Si tu pantalla de OpenAI muestra una lista mas corta en `Supported scopes`, usa esa lista exacta y nada mas.
 
 ### Scopes por defecto
 
 ```text
-mcp.read
-holded.invoices.read
-holded.contacts.read
-holded.accounts.read
-holded.invoices.write
+mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.write holded.accounts.read holded.crm.read holded.projects.read holded.treasury.read holded.treasury.write holded.expenses.read holded.expenses.write holded.numbering.read holded.numbering.write holded.products.read holded.products.write holded.saleschannels.read holded.saleschannels.write holded.warehouses.read holded.warehouses.write holded.payments.read holded.payments.write holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.contactgroups.write holded.remittances.read holded.services.read holded.services.write
 ```
+
+### Scopes alternativos útiles
+
+Solo lectura de todo el catálogo actual:
+
+```text
+mcp.read holded.invoices.read holded.documents.read holded.contacts.read holded.accounts.read holded.crm.read holded.projects.read holded.treasury.read holded.expenses.read holded.numbering.read holded.products.read holded.saleschannels.read holded.warehouses.read holded.payments.read holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.remittances.read holded.services.read
+```
+
+Si un cliente OAuth no envía `scope`, Verifactu concede solo lectura por defecto. Para habilitar todo el catálogo MCP en ChatGPT hay que pegar explícitamente el bloque completo de `Scopes por defecto`.
+
+Si quieres que ChatGPT pueda usar todas las tools que hoy anuncia el descriptor MCP, usa el bloque completo de la sección anterior. Si pegas menos scopes, las tools fuera de ese permiso seguirán listándose pero fallarán por autorización.
+
+### Valores listos para copiar en ChatGPT
+
+- URL MCP: `https://app.verifactu.business/api/mcp/holded`
+- Authorization URL: `https://app.verifactu.business/oauth/authorize`
+- Token URL: `https://app.verifactu.business/oauth/token`
+- Authorization server base URL: `https://app.verifactu.business`
+- Resource: `https://app.verifactu.business/api/mcp/holded`
+- Client registration: `Cliente OAuth definido por el usuario`
+- Token endpoint auth method: `none`
+- Client secret: dejar vacío
+- Scopes recomendados para catálogo completo: pegar el bloque de `Scopes por defecto`
 
 ### OIDC
 
 No esta habilitado todavia. No rellenar configuracion OIDC en esta fase.
+
+## Troubleshooting del onboarding ChatGPT
+
+### Sintoma: bucle en `Preparando tu entorno de conexion`
+
+Si el usuario vuelve una y otra vez a `/onboarding/holded` o la pantalla se queda en espera, comprobar en este orden:
+
+1. `GET /api/integrations/accounting/status?channel=chatgpt` devuelve `connected: true` tras guardar la API key.
+2. Existe una fila en `external_connections` para el tenant con `provider='holded'` y `channel_key='chatgpt'`.
+3. El despliegue activo de `apps/app` ya contiene el cambio que hace el status channel-aware.
+4. `oauth/authorize` para `channel=chatgpt` deja de redirigir a `/onboarding/holded` en cuanto existe esa fila.
+
+Interpretacion:
+
+- Si `tenant_integrations` sale conectado pero ChatGPT sigue en bucle, el problema suele ser una conexion legacy o de `dashboard`, no una conexion real de `chatgpt`.
+- Si el status API responde `disconnected` tras guardar la clave, revisar persistencia de `channel_key` antes de mirar OAuth.
+- Si el usuario ve una pantalla lenta pero puede pegar la clave y completar la conexion, el problema es de UX o despliegue, no de credenciales.
 
 ## Validaciones previas al alta en ChatGPT
 
@@ -129,6 +266,24 @@ Resultados esperados:
 - El endpoint MCP sin token responde `401` con `WWW-Authenticate`.
 - El endpoint MCP con token valido responde metadata del servidor.
 
+## Validacion operativa recomendada
+
+Desde la raiz del monorepo:
+
+```bash
+pnpm holded:ci:contract
+pnpm holded:demo:validate
+```
+
+Uso recomendado:
+
+- `pnpm holded:ci:contract`: gate rapido de PR para tools MCP, scopes y guards.
+- `pnpm holded:demo:validate`: seed + smoke real contra el tenant demo antes de despliegues que toquen Holded, ChatGPT u onboarding.
+
+Documentacion extendida:
+
+- `docs/engineering/ai/HOLDED_DEMO_REGRESSION.md`
+
 ## Checklist end-to-end
 
 ### 1. Tenant
@@ -141,7 +296,8 @@ Resultados esperados:
 
 - La API key funciona.
 - `POST /api/integrations/accounting/connect` devuelve `ok: true`.
-- `GET /api/integrations/accounting/status` devuelve `connected`.
+- `GET /api/integrations/accounting/status` devuelve `connected` para dashboard.
+- `GET /api/integrations/accounting/status?channel=chatgpt` devuelve `connected` para el flujo ChatGPT.
 
 ### 3. OAuth
 
@@ -161,15 +317,75 @@ Resultados esperados:
 
 - `holded_list_invoices`
 - `holded_get_invoice`
+- `holded_list_documents`
+- `holded_get_document`
+- `holded_create_document`
+- `holded_update_document`
+- `holded_delete_document`
 - `holded_list_contacts`
+- `holded_get_contact`
+- `holded_create_contact`
+- `holded_update_contact`
+- `holded_delete_contact`
+- `holded_list_treasury_accounts`
+- `holded_get_treasury_account`
+- `holded_create_treasury_account`
+- `holded_update_treasury_account`
+- `holded_list_expense_accounts`
+- `holded_get_expense_account`
+- `holded_create_expense_account`
+- `holded_update_expense_account`
+- `holded_delete_expense_account`
+- `holded_list_numbering_series`
+- `holded_create_numbering_series`
+- `holded_update_numbering_series`
+- `holded_delete_numbering_series`
+- `holded_list_products`
+- `holded_get_product`
+- `holded_create_product`
+- `holded_update_product`
+- `holded_delete_product`
+- `holded_list_sales_channels`
+- `holded_get_sales_channel`
+- `holded_create_sales_channel`
+- `holded_update_sales_channel`
+- `holded_delete_sales_channel`
+- `holded_list_warehouses`
+- `holded_get_warehouse`
+- `holded_create_warehouse`
+- `holded_update_warehouse`
+- `holded_delete_warehouse`
+- `holded_list_payments`
+- `holded_get_payment`
+- `holded_create_payment`
+- `holded_update_payment`
+- `holded_delete_payment`
+- `holded_list_taxes`
+- `holded_list_payment_methods`
+- `holded_list_contact_groups`
+- `holded_get_contact_group`
+- `holded_create_contact_group`
+- `holded_update_contact_group`
+- `holded_delete_contact_group`
+- `holded_list_remittances`
+- `holded_get_remittance`
+- `holded_list_services`
+- `holded_get_service`
+- `holded_create_service`
+- `holded_update_service`
+- `holded_delete_service`
 - `holded_list_accounts`
+- `holded_list_bookings`
+- `holded_list_projects`
+- `holded_get_project`
+- `holded_list_project_tasks`
 - `holded_create_invoice_draft`
 
 ## Limitaciones actuales
 
 - El transporte MCP sigue siendo un scaffold HTTP JSON-RPC basico.
 - Si ChatGPT exige un modo remoto mas estricto, habra que adaptar el transporte a `streaming HTTP` o `SSE`.
-- No hay DCR ni CIMD.
+- Hay DCR por `oauth/register`, pero OpenAI puede seguir obligando a rellenar el cliente manualmente.
 - No hay OIDC completo.
 - El fallback `HOLDED_TEST_API_KEY` debe retirarse cuando el tenant ya use integracion persistida.
 
@@ -185,11 +401,11 @@ Motivos:
 
 ## Siguiente iteracion recomendada
 
-1. Eliminar fallback global `HOLDED_TEST_API_KEY` del MCP.
-2. Forzar credencial Holded por tenant.
-3. Adaptar el transporte MCP remoto segun validacion real de ChatGPT.
-4. Añadir OIDC si hace falta para claims de email/dominio.
-5. Añadir scopes mas finos por tool/accion.
+1. Mantener el smoke vivo para validación manual o job interno, no como CI general.
+2. Mantener `holded:ci:contract` como gate rápido de PR para catálogo, scopes y guards.
+3. Eliminar fallback global `HOLDED_TEST_API_KEY` del MCP cuando todo el flujo quede forzado por tenant.
+4. Adaptar el transporte MCP remoto segun validacion real de ChatGPT.
+5. Añadir OIDC si hace falta para claims de email o dominio.
 
 ## Referencias
 

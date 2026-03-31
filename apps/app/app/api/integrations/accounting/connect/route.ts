@@ -1,6 +1,10 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
-import { encryptIntegrationSecret, maskSecret, probeAccountingApiConnection } from '@/lib/integrations/accounting';
+import {
+  encryptIntegrationSecret,
+  maskSecret,
+  probeAccountingApiConnection,
+} from '@/lib/integrations/accounting';
 import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -8,10 +12,19 @@ export const runtime = 'nodejs';
 
 function describeConnectError(error: unknown) {
   if (error instanceof Error) {
-    const candidate = error as Error & { code?: string; detail?: string; constraint?: string; table?: string };
-    return [candidate.message, candidate.code, candidate.detail, candidate.constraint, candidate.table]
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      .join(' | ') || candidate.name || 'Unknown Holded connection error';
+    const candidate = error as Error & {
+      code?: string;
+      detail?: string;
+      constraint?: string;
+      table?: string;
+    };
+    return (
+      [candidate.message, candidate.code, candidate.detail, candidate.constraint, candidate.table]
+        .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+        .join(' | ') ||
+      candidate.name ||
+      'Unknown Holded connection error'
+    );
   }
 
   if (error && typeof error === 'object') {
@@ -49,7 +62,9 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await requireTenantContext({
       channelType: entryChannel,
-      metadata: { source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext' },
+      metadata: {
+        source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext',
+      },
       onboardingToken,
     });
     if ('error' in auth) {
@@ -88,7 +103,9 @@ export async function POST(request: NextRequest) {
     stage = 'probe';
     const probe = await probeAccountingApiConnection(apiKey);
     const status = probe.ok ? 'connected' : 'error';
-    const normalizedError = probe.ok ? null : probe.error || 'Error de validación de integración Holded';
+    const normalizedError = probe.ok
+      ? null
+      : probe.error || 'Error de validación de integración Holded';
 
     stage = 'persist';
     const saved = await upsertAccountingIntegration({
@@ -97,6 +114,7 @@ export async function POST(request: NextRequest) {
       status,
       lastError: normalizedError,
       connectedByUserId: auth.resolvedUserId ?? null,
+      channelKey: entryChannel,
     });
 
     return NextResponse.json({
@@ -110,7 +128,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const detail = describeConnectError(error);
-    const genericError = stage === 'persist' ? 'No se pudo guardar la conexion de Holded' : 'No se pudo conectar Holded';
+    const genericError =
+      stage === 'persist'
+        ? 'No se pudo guardar la conexion de Holded'
+        : 'No se pudo conectar Holded';
 
     console.error('[api/integrations/accounting/connect] failed', {
       stage,

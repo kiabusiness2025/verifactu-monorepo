@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 import { useToast } from '@/components/notifications/ToastNotifications';
+import { useState } from 'react';
 
 type NormalizedCompany = {
   name?: string | null;
@@ -83,10 +83,7 @@ export function EinformaAutofillButton({
       const res = await fetch(buildUrl(withRefresh));
       const data = await res.json();
       if (!res.ok || !data?.normalized) {
-        showError(
-          'Autocompletar empresa',
-          'No se pudieron completar los datos automáticamente. Revisa o rellena manualmente.'
-        );
+        showError('eInforma', data?.error ?? 'No se pudo completar la empresa');
         return;
       }
 
@@ -104,15 +101,12 @@ export function EinformaAutofillButton({
       setMeta(nextMeta);
       onApply(normalizedCompany, nextMeta);
       success(
-        'Autocompletar empresa',
-        data.cached ? 'Datos completados desde snapshot' : 'Datos completados desde búsqueda'
+        'eInforma',
+        data.cached ? 'Datos completados desde snapshot' : 'Datos completados desde eInforma'
       );
     } catch (err) {
       console.error('eInforma autofill error:', err);
-      showError(
-        'Autocompletar empresa',
-        'No se pudieron completar los datos automáticamente. Revisa o rellena manualmente.'
-      );
+      showError('eInforma', 'No se pudo completar la empresa');
     } finally {
       setLoading(false);
     }
@@ -126,7 +120,7 @@ export function EinformaAutofillButton({
           onClick={() => handleClick(false)}
           disabled={!canSearch || loading}
         >
-          {loading ? 'Buscando...' : 'Autocompletar empresa'}
+          {loading ? 'Buscando...' : 'Autocompletar con eInforma'}
         </AccessibleButton>
         {refreshable ? (
           <AccessibleButton
@@ -140,7 +134,7 @@ export function EinformaAutofillButton({
         ) : null}
         {meta ? (
           <span className="rounded-full border px-2 py-1 text-[11px] text-slate-600">
-            {meta.cached ? 'Snapshot (<=30 dias)' : 'Consulta en vivo'}
+            {meta.cached ? 'Snapshot (<=30 dias)' : 'eInforma (live)'}
           </span>
         ) : null}
         {meta?.lastSyncAt ? (

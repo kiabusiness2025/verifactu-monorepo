@@ -1,5 +1,10 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
+import {
+  buildHoldedProbeSummary,
+  buildStoredHoldedConnectionSummary,
+  pickSupportedModules,
+} from './diagnostics';
 
 const HOLDED_API_BASE_URL = process.env.HOLDED_API_BASE_URL?.trim() || 'https://api.holded.com';
 const HOLDED_TIMEOUT_MS = Number(process.env.HOLDED_TIMEOUT_MS || '10000');
@@ -273,28 +278,6 @@ async function holdedRequestAllPages<T extends Record<string, unknown>>(input: {
   return results;
 }
 
-function pickSupportedModules(probe: HoldedProbeResult) {
-  return [
-    probe.invoiceApi.ok ? 'invoicing' : null,
-    probe.accountingApi.ok ? 'accounting' : null,
-    probe.crmApi.ok ? 'crm' : null,
-    probe.projectsApi.ok ? 'projects' : null,
-    probe.teamApi.ok ? 'team' : null,
-  ].filter(Boolean) as string[];
-}
-
-function buildConnectionSummary(probe: HoldedProbeResult) {
-  const supportedModules = pickSupportedModules(probe);
-
-  return {
-    supportedModules,
-    validationSummary:
-      supportedModules.length > 0
-        ? `Validated modules: ${supportedModules.join(', ')}`
-        : 'No Holded modules validated',
-  };
-}
-
 async function saveTenantMetadata(
   prisma: HoldedPrismaClient,
   input: {
@@ -493,6 +476,13 @@ export async function probeHoldedConnection(apiKey: string): Promise<HoldedProbe
   ]);
 
   const ok = invoiceApi.ok || accountingApi.ok || crmApi.ok || projectsApi.ok || teamApi.ok;
+  const diagnostics = buildHoldedProbeSummary({
+    invoiceApi,
+    accountingApi,
+    crmApi,
+    projectsApi,
+    teamApi,
+  });
 
   return {
     ok,
@@ -501,9 +491,7 @@ export async function probeHoldedConnection(apiKey: string): Promise<HoldedProbe
     crmApi,
     projectsApi,
     teamApi,
-    error: ok
-      ? null
-      : 'No hemos podido validar esa API key. Revisa que este activa y vuelve a intentarlo.',
+    error: ok ? null : `${diagnostics.summary} ${diagnostics.nextStep}`,
   };
 }
 
@@ -541,7 +529,7 @@ export async function saveHoldedConnection(input: {
       accounts: 0,
     },
   }));
-  const summary = buildConnectionSummary(input.probe);
+  const summary = buildHoldedProbeSummary(input.probe);
   let connectionId: string | null = null;
 
   try {
@@ -708,7 +696,7 @@ export async function saveHoldedConnection(input: {
     responsePayload: {
       providerAccountId: fingerprint,
       supportedModules: summary.supportedModules,
-      validationSummary: summary.validationSummary,
+      validationSummary: summary.summary,
       companyName: metadata.companyName,
       taxId: metadata.taxId,
       sampleCounts: metadata.sampleCounts,
@@ -722,7 +710,7 @@ export async function saveHoldedConnection(input: {
     connectedAt: now.toISOString(),
     providerAccountId: fingerprint,
     supportedModules: summary.supportedModules,
-    validationSummary: summary.validationSummary,
+    validationSummary: summary.summary,
     tenantName: metadata.companyName,
     legalName: metadata.legalName,
     taxId: metadata.taxId,
@@ -965,8 +953,7 @@ export async function getHoldedConnection(input: {
     providerAccountId: connection.providerAccountId || null,
     keyMasked: maskSecret(apiKey),
     supportedModules,
-    validationSummary:
-      supportedModules.length > 0 ? `Validated modules: ${supportedModules.join(', ')}` : null,
+    validationSummary: buildStoredHoldedConnectionSummary(supportedModules),
     ...resolveTrustedTenantIdentity({
       name: connection.tenant.name,
       legalName: connection.tenant.legalName,

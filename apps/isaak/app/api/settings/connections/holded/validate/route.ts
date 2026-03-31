@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { probeHoldedConnection } from '@/app/lib/holded-integration';
+import { buildHoldedProbeSummary, probeHoldedConnection } from '@/app/lib/holded-integration';
 import { toSettingsSession } from '@/app/lib/settings';
 
 export const runtime = 'nodejs';
@@ -34,12 +34,18 @@ export async function POST(req: Request) {
   }
 
   const probe = await probeHoldedConnection(apiKey);
+  const diagnostics = buildHoldedProbeSummary(probe);
   if (!probe.ok) {
     return NextResponse.json(
-      { ok: false, error: probe.error || 'No hemos podido validar la API key.', probe },
+      {
+        ok: false,
+        error: probe.error || diagnostics.summary,
+        diagnostics,
+        probe,
+      },
       { status: 400 }
     );
   }
 
-  return NextResponse.json({ ok: true, probe });
+  return NextResponse.json({ ok: true, diagnostics, probe });
 }
