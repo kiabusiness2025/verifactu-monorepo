@@ -12,6 +12,7 @@ import { holdedAdapter } from './accounting';
 import {
   HOLDED_MCP_TOOL_SCOPES,
   buildScopeString,
+  getAllowedHoldedMcpToolNames,
   getHoldedMcpScopePreset,
 } from './holdedMcpScopes';
 import { callHoldedMcpTool, holdedMcpTools } from './holdedMcpTools';
@@ -62,6 +63,46 @@ describe('holdedMcpTools', () => {
     expect(scopes).toContain('holded.documents.write');
     expect(scopes).toContain('holded.projects.read');
     expect(scopes.split(' ').length).toBe(new Set(scopes.split(' ')).size);
+  });
+
+  it('grants invoices and accounting by default without opening unrelated modules', () => {
+    const scopes = getHoldedMcpScopePreset('invoicing_accounting');
+    const toolNames = getAllowedHoldedMcpToolNames(scopes);
+
+    expect(scopes).toEqual(
+      expect.arrayContaining([
+        'mcp.read',
+        'holded.invoices.write',
+        'holded.documents.write',
+        'holded.accounts.read',
+        'holded.treasury.write',
+        'holded.expenses.write',
+        'holded.numbering.write',
+        'holded.payments.write',
+      ])
+    );
+    expect(scopes).not.toContain('holded.crm.read');
+    expect(scopes).not.toContain('holded.projects.read');
+    expect(scopes).not.toContain('holded.saleschannels.write');
+    expect(scopes).not.toContain('holded.warehouses.write');
+
+    expect(toolNames).toEqual(
+      expect.arrayContaining([
+        'holded_list_documents',
+        'holded_create_document',
+        'holded_create_contact',
+        'holded_list_accounts',
+        'holded_update_treasury_account',
+        'holded_create_expense_account',
+        'holded_update_numbering_series',
+        'holded_create_payment',
+      ])
+    );
+    expect(toolNames).not.toContain('holded_list_bookings');
+    expect(toolNames).not.toContain('holded_list_projects');
+    expect(toolNames).not.toContain('holded_create_sales_channel');
+    expect(toolNames).not.toContain('holded_update_warehouse');
+    expect(toolNames).not.toContain('holded_create_contact_group');
   });
 
   it('routes list document calls through the shared Holded adapter', async () => {

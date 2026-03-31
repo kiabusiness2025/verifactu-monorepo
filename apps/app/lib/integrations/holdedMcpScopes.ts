@@ -100,12 +100,59 @@ export const HOLDED_MCP_SUPPORTED_SCOPES = [
   'holded.services.write',
 ] as const;
 
-export type HoldedMcpScopePreset = 'full' | 'readonly';
+export type HoldedMcpScopePreset = 'full' | 'readonly' | 'invoicing_accounting';
 
 const READONLY_SCOPE_SET = HOLDED_MCP_SUPPORTED_SCOPES.filter((scope) => !scope.endsWith('.write'));
 
+const INVOICING_ACCOUNTING_SCOPE_SET = [
+  'mcp.read',
+  'holded.invoices.read',
+  'holded.invoices.write',
+  'holded.documents.read',
+  'holded.documents.write',
+  'holded.contacts.read',
+  'holded.contacts.write',
+  'holded.accounts.read',
+  'holded.treasury.read',
+  'holded.treasury.write',
+  'holded.expenses.read',
+  'holded.expenses.write',
+  'holded.numbering.read',
+  'holded.numbering.write',
+  'holded.products.read',
+  'holded.products.write',
+  'holded.payments.read',
+  'holded.payments.write',
+  'holded.taxes.read',
+  'holded.paymentmethods.read',
+  'holded.remittances.read',
+  'holded.services.read',
+  'holded.services.write',
+] as const satisfies readonly (typeof HOLDED_MCP_SUPPORTED_SCOPES)[number][];
+
 export function getHoldedMcpScopePreset(preset: HoldedMcpScopePreset) {
-  return preset === 'readonly' ? READONLY_SCOPE_SET : HOLDED_MCP_SUPPORTED_SCOPES;
+  if (preset === 'readonly') return READONLY_SCOPE_SET;
+  if (preset === 'invoicing_accounting') return INVOICING_ACCOUNTING_SCOPE_SET;
+  return HOLDED_MCP_SUPPORTED_SCOPES;
+}
+
+function normalizeRequestedScopes(scopes: string | readonly string[]) {
+  if (typeof scopes === 'string') {
+    return scopes
+      .split(/[\s,]+/)
+      .map((scope) => scope.trim())
+      .filter(Boolean);
+  }
+
+  return scopes.map((scope) => scope.trim()).filter(Boolean);
+}
+
+export function getAllowedHoldedMcpToolNames(scopes: string | readonly string[]) {
+  const grantedScopes = new Set(normalizeRequestedScopes(scopes));
+
+  return Object.entries(HOLDED_MCP_TOOL_SCOPES)
+    .filter(([, requiredScopes]) => requiredScopes.every((scope) => grantedScopes.has(scope)))
+    .map(([toolName]) => toolName);
 }
 
 export function buildScopeString(scopes: readonly string[]) {

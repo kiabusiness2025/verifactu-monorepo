@@ -202,10 +202,16 @@ Si tu pantalla de OpenAI muestra una lista mas corta en `Supported scopes`, usa 
 ### Scopes por defecto
 
 ```text
-mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.write holded.accounts.read holded.crm.read holded.projects.read holded.treasury.read holded.treasury.write holded.expenses.read holded.expenses.write holded.numbering.read holded.numbering.write holded.products.read holded.products.write holded.saleschannels.read holded.saleschannels.write holded.warehouses.read holded.warehouses.write holded.payments.read holded.payments.write holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.contactgroups.write holded.remittances.read holded.services.read holded.services.write
+mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.write holded.accounts.read holded.treasury.read holded.treasury.write holded.expenses.read holded.expenses.write holded.numbering.read holded.numbering.write holded.products.read holded.products.write holded.payments.read holded.payments.write holded.taxes.read holded.paymentmethods.read holded.remittances.read holded.services.read holded.services.write
 ```
 
 ### Scopes alternativos útiles
+
+Catálogo MCP completo:
+
+```text
+mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.write holded.accounts.read holded.crm.read holded.projects.read holded.treasury.read holded.treasury.write holded.expenses.read holded.expenses.write holded.numbering.read holded.numbering.write holded.products.read holded.products.write holded.saleschannels.read holded.saleschannels.write holded.warehouses.read holded.warehouses.write holded.payments.read holded.payments.write holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.contactgroups.write holded.remittances.read holded.services.read holded.services.write
+```
 
 Solo lectura de todo el catálogo actual:
 
@@ -213,9 +219,11 @@ Solo lectura de todo el catálogo actual:
 mcp.read holded.invoices.read holded.documents.read holded.contacts.read holded.accounts.read holded.crm.read holded.projects.read holded.treasury.read holded.expenses.read holded.numbering.read holded.products.read holded.saleschannels.read holded.warehouses.read holded.payments.read holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.remittances.read holded.services.read
 ```
 
-Si un cliente OAuth no envía `scope`, Verifactu concede solo lectura por defecto. Para habilitar todo el catálogo MCP en ChatGPT hay que pegar explícitamente el bloque completo de `Scopes por defecto`.
+Si un cliente OAuth no envía `scope`, Verifactu concede por defecto el preset de facturación y contabilidad. Ese bloque da acceso operativo a invoices, documents, contacts, treasury, expense accounts, numbering series, products, payments, taxes, payment methods, remittances, services y cuentas contables.
 
-Si quieres que ChatGPT pueda usar todas las tools que hoy anuncia el descriptor MCP, usa el bloque completo de la sección anterior. Si pegas menos scopes, las tools fuera de ese permiso seguirán listándose pero fallarán por autorización.
+El descriptor MCP público y `tools/list` reflejan ahora ese mismo subconjunto por defecto. Si el cliente obtiene más scopes explícitos, el catálogo visible se amplía a las tools permitidas por ese token.
+
+Si quieres que ChatGPT pueda usar todas las tools que hoy anuncia el descriptor MCP, usa el bloque completo de `Catálogo MCP completo`. Si pegas menos scopes, las tools fuera de ese permiso dejarán de anunciarse en `tools/list` para ese token y `tools/call` seguirá rechazándolas si se invocan sin permiso.
 
 ### Valores listos para copiar en ChatGPT
 

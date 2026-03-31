@@ -211,7 +211,7 @@ export function getSupportedScopes() {
 }
 
 export function getDefaultScopes() {
-  return getHoldedMcpScopePreset('readonly');
+  return getHoldedMcpScopePreset('invoicing_accounting');
 }
 
 export function ensureScopesAllowed(scope: string) {

@@ -3,10 +3,13 @@ import {
   holdedMcpTools,
   type HoldedMcpToolDefinition,
 } from '@/lib/integrations/holdedMcpTools';
+import { getAllowedHoldedMcpToolNames } from '@/lib/integrations/holdedMcpScopes';
 import {
+  getDefaultScopes,
   getAuthorizationEndpoint,
   getAuthorizationServerMetadataUrl,
   getMcpResourceUrl,
+  getSupportedScopes,
   hasRequiredScopes,
   MCP_TOOL_SCOPES,
   getProtectedResourceMetadataUrl,
@@ -31,6 +34,28 @@ type JsonRpcRequest = {
 type ToolDefinition = HoldedMcpToolDefinition;
 
 const TOOLS: ToolDefinition[] = holdedMcpTools;
+
+function getVisibleTools(scopes: string | readonly string[]) {
+  const visibleToolNames = new Set(getAllowedHoldedMcpToolNames(scopes));
+  return TOOLS.filter((tool) => visibleToolNames.has(tool.name));
+}
+
+function resolveVisibleTools(
+  access?: {
+    mode: 'oauth' | 'shared_secret';
+    scope?: string | null;
+  } | null
+) {
+  if (!access) {
+    return getVisibleTools(getDefaultScopes());
+  }
+
+  if (access.mode === 'shared_secret') {
+    return getVisibleTools(getSupportedScopes());
+  }
+
+  return getVisibleTools(access.scope ?? '');
+}
 
 function jsonRpc(
   id: JsonRpcRequest['id'],
@@ -212,6 +237,9 @@ export async function OPTIONS() {
 }
 
 export async function GET(request: NextRequest) {
+  const access = await assertMcpAccess(request);
+  const visibleTools = resolveVisibleTools(access);
+
   return NextResponse.json({
     name: 'Isaak for Holded',
     description:
@@ -225,7 +253,7 @@ export async function GET(request: NextRequest) {
       protectedResourceMetadata: getProtectedResourceMetadataUrl(),
       resource: getMcpResourceUrl(),
     },
-    tools: TOOLS.map(({ name, title, description }) => ({ name, title, description })),
+    tools: visibleTools.map(({ name, title, description }) => ({ name, title, description })),
   });
 }
 
@@ -253,10 +281,14 @@ export async function POST(request: NextRequest) {
         });
       case 'notifications/initialized':
         return new NextResponse(null, { status: 202 });
-      case 'tools/list':
+      case 'tools/list': {
+        const allowed = await assertMcpAccess(request);
+        const visibleTools = resolveVisibleTools(allowed);
+
         return jsonRpc(body.id, {
-          tools: TOOLS,
+          tools: visibleTools,
         });
+      }
       case 'tools/call': {
         const allowed = await assertMcpAccess(request);
         if (!allowed) {
