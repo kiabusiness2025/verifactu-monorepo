@@ -3,6 +3,7 @@ import { getSessionPayload } from '@/lib/session';
 import { getAppUrl, getLandingUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { inferHoldedEntryChannel } from './entryChannel';
 import HoldedOnboardingClient from './HoldedOnboardingClient';
 
 export const dynamic = 'force-dynamic';
@@ -94,8 +95,11 @@ export default async function HoldedOnboardingPage({
   const onboardingPayload =
     !session.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
   const nextUrl = attachOnboardingToken(normalizeNextUrl(firstValue(params.next)), onboardingToken);
-  const entryChannel =
-    firstValue(params.channel)?.trim().toLowerCase() === 'chatgpt' ? 'chatgpt' : 'dashboard';
+  const entryChannel = inferHoldedEntryChannel({
+    channel: params.channel,
+    source: params.source,
+    next: params.next,
+  });
 
   const tenantName = buildWorkspaceLabel(
     session.uid

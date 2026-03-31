@@ -60,6 +60,12 @@ const chatgptUiCopy = {
   apiKeyHelp:
     'Tu clave solo se usa para activar esta conexion. Podras revocarla o cambiarla cuando quieras.',
   apiKeyPlaceholder: 'Pega aqui la API key de Holded para continuar',
+  errorApiKeyEmpty: 'Necesitamos tu API key de Holded para completar esta conexion.',
+  errorLoadFailed: 'No se pudo preparar la conexion con Holded.',
+  errorConnectFailed:
+    'No hemos podido validar la conexion. Revisa tu API key e intentalo de nuevo.',
+  degraded:
+    'No hemos podido leer el estado inicial, pero puedes continuar y conectar Holded igualmente.',
   redirectTitle: 'Tu conexion ya esta lista. Te devolvemos a ChatGPT.',
   redirectDescription:
     'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
@@ -75,6 +81,42 @@ const chatgptUiCopy = {
   ],
 } as const;
 
+const dashboardUiCopy = {
+  eyebrow: onboardingCopy.eyebrow,
+  title: 'Activa tu conexion con Holded',
+  intro: onboardingCopy.intro,
+  security:
+    'Por seguridad, el chat de Isaak solo se habilita con sesion iniciada y cuenta conectada.',
+  statusReady: onboardingCopy.statusReady,
+  statusLoading: onboardingCopy.statusLoading,
+  statusPending: onboardingCopy.statusPending,
+  statusConnected: 'Isaak ya esta activado',
+  checkingTitle: 'Estamos comprobando si tu espacio ya estaba conectado',
+  checkingDescription:
+    'Si ya tienes tu clave API, puedes pegarla ahora mismo. No hace falta esperar a que termine esta comprobacion para seguir.',
+  savingDescription:
+    'No cierres esta ventana. Estamos validando la conexion y preparando el contexto inicial para Isaak.',
+  successConnected: onboardingCopy.successConnected,
+  submitLabel: 'Conectar y activar Isaak',
+  apiKeyLabel: 'Clave API de tu ERP (Holded)',
+  apiKeyHelp:
+    'Tus datos se usan unicamente para activar tu entorno de trabajo. Puedes desconectar la integracion cuando quieras.',
+  apiKeyPlaceholder: 'Pega aqui la API key de Holded para activar Isaak',
+  errorApiKeyEmpty: onboardingCopy.errorApiKeyEmpty,
+  errorLoadFailed: onboardingCopy.errorLoadFailed,
+  errorConnectFailed: onboardingCopy.errorConnectFailed,
+  degraded: onboardingCopy.degraded,
+  redirectTitle: 'Tu conexion ya esta lista. Te devolvemos al flujo de ChatGPT.',
+  redirectDescription:
+    'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
+  helpSteps: [
+    'Entra en Holded y abre el area de API.',
+    'Copia una API key activa de tu empresa.',
+    'Pegala aqui para activar tu espacio y entrar al chat de Isaak.',
+  ],
+  savingMessages: onboardingCopy.savingMessages,
+} as const;
+
 export default function HoldedOnboardingClient({
   entryChannel,
   nextUrl,
@@ -82,39 +124,7 @@ export default function HoldedOnboardingClient({
   onboardingToken,
 }: Props) {
   const isChatgptEntry = entryChannel === 'chatgpt';
-  const uiCopy = isChatgptEntry
-    ? chatgptUiCopy
-    : {
-        eyebrow: onboardingCopy.eyebrow,
-        title: 'Activa tu conexion con Holded',
-        intro: onboardingCopy.intro,
-        security:
-          'Por seguridad, el chat de Isaak solo se habilita con sesion iniciada y cuenta conectada.',
-        statusReady: onboardingCopy.statusReady,
-        statusLoading: onboardingCopy.statusLoading,
-        statusPending: onboardingCopy.statusPending,
-        statusConnected: 'Isaak ya esta activado',
-        checkingTitle: 'Estamos comprobando si tu espacio ya estaba conectado',
-        checkingDescription:
-          'Si ya tienes tu clave API, puedes pegarla ahora mismo. No hace falta esperar a que termine esta comprobacion para seguir.',
-        savingDescription:
-          'No cierres esta ventana. Estamos validando la conexion y preparando el contexto inicial para Isaak.',
-        successConnected: onboardingCopy.successConnected,
-        submitLabel: 'Conectar y activar Isaak',
-        apiKeyLabel: 'Clave API de tu ERP (Holded)',
-        apiKeyHelp:
-          'Tus datos se usan unicamente para activar tu entorno de trabajo. Puedes desconectar la integracion cuando quieras.',
-        apiKeyPlaceholder: 'Pega aqui la API key de Holded para activar Isaak',
-        redirectTitle: 'Tu conexion ya esta lista. Te devolvemos al flujo de ChatGPT.',
-        redirectDescription:
-          'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
-        helpSteps: [
-          'Entra en Holded y abre el area de API.',
-          'Copia una API key activa de tu empresa.',
-          'Pegala aqui para activar tu espacio y entrar al chat de Isaak.',
-        ],
-        savingMessages: onboardingCopy.savingMessages,
-      };
+  const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
   const savingMessages = uiCopy.savingMessages;
   const [apiKey, setApiKey] = useState('');
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
@@ -136,10 +146,10 @@ export default function HoldedOnboardingClient({
         },
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || onboardingCopy.errorLoadFailed);
+      if (!res.ok) throw new Error(data?.error || uiCopy.errorLoadFailed);
       return data as IntegrationStatus;
     },
-    [entryChannel, onboardingToken]
+    [entryChannel, onboardingToken, uiCopy.errorLoadFailed]
   );
 
   const statusLabel = useMemo(() => {
@@ -198,7 +208,7 @@ export default function HoldedOnboardingClient({
               ? 'La conexion tarda mas de lo normal. Pulsa Reintentar para continuar.'
               : loadError instanceof Error
                 ? loadError.message
-                : onboardingCopy.errorLoadFailed
+                : uiCopy.errorLoadFailed
           );
         }
       } finally {
@@ -213,7 +223,7 @@ export default function HoldedOnboardingClient({
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [goToNextStep, loadStatus, nextUrl, onboardingToken]);
+  }, [goToNextStep, loadStatus, nextUrl, onboardingToken, uiCopy.errorLoadFailed]);
 
   const handleRetryStatus = async () => {
     setLoading(true);
@@ -225,7 +235,7 @@ export default function HoldedOnboardingClient({
         goToNextStep();
       }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : onboardingCopy.errorLoadFailed);
+      setError(loadError instanceof Error ? loadError.message : uiCopy.errorLoadFailed);
     } finally {
       setLoading(false);
     }
@@ -234,7 +244,7 @@ export default function HoldedOnboardingClient({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!apiKey.trim()) {
-      setError(onboardingCopy.errorApiKeyEmpty);
+      setError(uiCopy.errorApiKeyEmpty);
       return;
     }
 
@@ -282,9 +292,7 @@ export default function HoldedOnboardingClient({
       );
       goToNextStep();
     } catch (submitError) {
-      setError(
-        submitError instanceof Error ? submitError.message : onboardingCopy.errorConnectFailed
-      );
+      setError(submitError instanceof Error ? submitError.message : uiCopy.errorConnectFailed);
     } finally {
       setSaving(false);
     }
@@ -336,7 +344,7 @@ export default function HoldedOnboardingClient({
                 Estado: <span className="font-semibold text-black">{statusLabel}</span>
               </div>
               {status?.degraded ? (
-                <div className="mt-2 text-sm text-amber-700">{onboardingCopy.degraded}</div>
+                <div className="mt-2 text-sm text-amber-700">{uiCopy.degraded}</div>
               ) : null}
             </div>
 

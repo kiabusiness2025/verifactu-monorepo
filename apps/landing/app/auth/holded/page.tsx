@@ -170,7 +170,7 @@ export default function HoldedAuthPage() {
   return (
     <AuthLayout
       title="Accede para conectar Holded"
-      subtitle="Entras ahora y en el siguiente paso conectas Holded con Isaak."
+      subtitle="Entras ahora y en el siguiente paso terminas la conexion con Holded."
       brandMode="holded"
       backHref={HOLDED_SITE_URL}
       backLabel="Volver a Holded"

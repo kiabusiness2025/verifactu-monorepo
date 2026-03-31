@@ -3,6 +3,7 @@
 import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { inferHoldedEntryChannel } from './entryChannel';
 import HoldedMergeAnimation from './HoldedMergeAnimation';
 
 const copy = getIsaakHoldedOnboardingCopy();
@@ -14,7 +15,12 @@ const chatgptLoadingMessages = [
 
 export default function HoldedOnboardingLoading() {
   const searchParams = useSearchParams();
-  const isChatgptEntry = searchParams?.get('channel')?.trim().toLowerCase() === 'chatgpt';
+  const isChatgptEntry =
+    inferHoldedEntryChannel({
+      channel: searchParams?.get('channel'),
+      source: searchParams?.get('source'),
+      next: searchParams?.get('next'),
+    }) === 'chatgpt';
   const queuedMessages = isChatgptEntry ? chatgptLoadingMessages : copy.loadingMessages;
   const [index, setIndex] = useState(0);
 
