@@ -216,12 +216,12 @@ export function getDefaultScopes() {
 
 export function ensureScopesAllowed(scope: string) {
   const requested = buildScopeList(scope);
-  const supported = new Set(getSupportedScopes());
+  const supported = new Set<string>(getSupportedScopes());
   return requested.every((item) => supported.has(item));
 }
 
 export function hasRequiredScopes(scope: string, required: string[]) {
-  const granted = new Set(buildScopeList(scope));
+  const granted = new Set<string>(buildScopeList(scope));
   return required.every((item) => granted.has(item));
 }
 
