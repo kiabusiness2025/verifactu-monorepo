@@ -238,6 +238,11 @@ export async function OPTIONS() {
 
 export async function GET(request: NextRequest) {
   const access = await assertMcpAccess(request);
+  if (!access) {
+    logMcpAccess({ method: 'GET', outcome: 'denied', reason: 'unauthorized' });
+    return unauthorized();
+  }
+
   const visibleTools = resolveVisibleTools(access);
 
   return NextResponse.json({
@@ -266,6 +271,13 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  const access = await assertMcpAccess(request);
+
+  if (!access) {
+    logMcpAccess({ method: body.method, outcome: 'denied', reason: 'unauthorized' });
+    return unauthorized();
+  }
+
   try {
     switch (body.method) {
       case 'initialize':
@@ -282,20 +294,13 @@ export async function POST(request: NextRequest) {
       case 'notifications/initialized':
         return new NextResponse(null, { status: 202 });
       case 'tools/list': {
-        const allowed = await assertMcpAccess(request);
-        const visibleTools = resolveVisibleTools(allowed);
+        const visibleTools = resolveVisibleTools(access);
 
         return jsonRpc(body.id, {
           tools: visibleTools,
         });
       }
       case 'tools/call': {
-        const allowed = await assertMcpAccess(request);
-        if (!allowed) {
-          logMcpAccess({ method: 'tools/call', outcome: 'denied', reason: 'unauthorized' });
-          return unauthorized();
-        }
-
         const name = typeof body.params?.name === 'string' ? body.params.name : '';
         const args =
           body.params?.arguments && typeof body.params.arguments === 'object'
@@ -304,10 +309,10 @@ export async function POST(request: NextRequest) {
 
         const result = await callTool(
           {
-            mode: allowed.mode,
-            tenantId: allowed.tenantId,
-            scope: 'scope' in allowed ? allowed.scope : null,
-            uid: 'uid' in allowed ? allowed.uid : null,
+            mode: access.mode,
+            tenantId: access.tenantId,
+            scope: 'scope' in access ? access.scope : null,
+            uid: 'uid' in access ? access.uid : null,
           },
           name,
           args
