@@ -5,6 +5,7 @@ import {
 } from '@/lib/integrations/holdedMcpTools';
 import { getAllowedHoldedMcpToolNames } from '@/lib/integrations/holdedMcpScopes';
 import {
+  applyOpenAiCorsHeaders,
   getDefaultScopes,
   getAuthorizationEndpoint,
   getAuthorizationServerMetadataUrl,
@@ -69,16 +70,24 @@ function jsonRpc(
   });
 }
 
-function unauthorized() {
-  return NextResponse.json(
-    {
-      error: 'Unauthorized MCP access',
-    },
-    {
-      status: 401,
-      headers: {
-        'WWW-Authenticate': `Bearer resource_metadata="${getProtectedResourceMetadataUrl()}", authorization_uri="${getAuthorizationEndpoint()}", resource="${getMcpResourceUrl()}"`,
+function unauthorized(request: NextRequest) {
+  return applyOpenAiCorsHeaders(
+    NextResponse.json(
+      {
+        error: 'Unauthorized MCP access',
       },
+      {
+        status: 401,
+        headers: {
+          'WWW-Authenticate': `Bearer resource_metadata="${getProtectedResourceMetadataUrl()}", authorization_uri="${getAuthorizationEndpoint()}", resource="${getMcpResourceUrl()}"`,
+        },
+      }
+    ),
+    request,
+    {
+      methods: ['GET', 'POST', 'OPTIONS'],
+      allowHeaders: ['authorization', 'content-type'],
+      exposeHeaders: ['WWW-Authenticate'],
     }
   );
 }
@@ -227,39 +236,55 @@ async function callTool(
   return formatToolResult({ source, ...result });
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: {
-      Allow: 'GET, POST, OPTIONS',
-    },
-  });
+export async function OPTIONS(request: NextRequest) {
+  return applyOpenAiCorsHeaders(
+    new NextResponse(null, {
+      status: 204,
+      headers: {
+        Allow: 'GET, POST, OPTIONS',
+      },
+    }),
+    request,
+    {
+      methods: ['GET', 'POST', 'OPTIONS'],
+      allowHeaders: ['authorization', 'content-type'],
+      exposeHeaders: ['WWW-Authenticate'],
+    }
+  );
 }
 
 export async function GET(request: NextRequest) {
   const access = await assertMcpAccess(request);
   if (!access) {
     logMcpAccess({ method: 'GET', outcome: 'denied', reason: 'unauthorized' });
-    return unauthorized();
+    return unauthorized(request);
   }
 
   const visibleTools = resolveVisibleTools(access);
 
-  return NextResponse.json({
-    name: 'Isaak for Holded',
-    description:
-      'Public-ready MCP connector for Isaak and Holded. It lets authorized Verifactu users inspect and operate validated Holded invoicing modules such as documents, contacts, treasury, payments, products, services, warehouses, numbering series, contact groups, taxes, remittances, accounting accounts, CRM bookings, and project context for the connected tenant.',
-    protocol: 'MCP over JSON-RPC HTTP',
-    endpoint: '/api/mcp/holded',
-    oauth: {
-      authorizationEndpoint: getAuthorizationEndpoint(),
-      tokenEndpoint: getTokenEndpoint(),
-      authorizationServerMetadata: getAuthorizationServerMetadataUrl(),
-      protectedResourceMetadata: getProtectedResourceMetadataUrl(),
-      resource: getMcpResourceUrl(),
-    },
-    tools: visibleTools.map(({ name, title, description }) => ({ name, title, description })),
-  });
+  return applyOpenAiCorsHeaders(
+    NextResponse.json({
+      name: 'Isaak for Holded',
+      description:
+        'Public-ready MCP connector for Isaak and Holded. It lets authorized Verifactu users inspect and operate validated Holded invoicing modules such as documents, contacts, treasury, payments, products, services, warehouses, numbering series, contact groups, taxes, remittances, accounting accounts, CRM bookings, and project context for the connected tenant.',
+      protocol: 'MCP over JSON-RPC HTTP',
+      endpoint: '/api/mcp/holded',
+      oauth: {
+        authorizationEndpoint: getAuthorizationEndpoint(),
+        tokenEndpoint: getTokenEndpoint(),
+        authorizationServerMetadata: getAuthorizationServerMetadataUrl(),
+        protectedResourceMetadata: getProtectedResourceMetadataUrl(),
+        resource: getMcpResourceUrl(),
+      },
+      tools: visibleTools.map(({ name, title, description }) => ({ name, title, description })),
+    }),
+    request,
+    {
+      methods: ['GET', 'POST', 'OPTIONS'],
+      allowHeaders: ['authorization', 'content-type'],
+      exposeHeaders: ['WWW-Authenticate'],
+    }
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -275,7 +300,7 @@ export async function POST(request: NextRequest) {
 
   if (!access) {
     logMcpAccess({ method: body.method, outcome: 'denied', reason: 'unauthorized' });
-    return unauthorized();
+    return unauthorized(request);
   }
 
   try {

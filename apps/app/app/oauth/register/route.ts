@@ -1,4 +1,5 @@
 import {
+  applyOpenAiCorsHeaders,
   ensureScopesAllowed,
   getDefaultScopes,
   validateRedirectUri,
@@ -45,19 +46,43 @@ function buildClientId(redirectUris: string[]) {
   return `openai-chatgpt-${digest}`;
 }
 
+function jsonWithCors(request: NextRequest, body: Record<string, unknown>, init?: ResponseInit) {
+  return applyOpenAiCorsHeaders(NextResponse.json(body, init), request, {
+    methods: ['OPTIONS', 'POST'],
+    allowHeaders: ['content-type'],
+  });
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return applyOpenAiCorsHeaders(
+    new NextResponse(null, {
+      status: 204,
+      headers: {
+        Allow: 'OPTIONS, POST',
+      },
+    }),
+    request,
+    {
+      methods: ['OPTIONS', 'POST'],
+      allowHeaders: ['content-type'],
+    }
+  );
+}
+
 export async function POST(request: NextRequest) {
   let body: DynamicClientRegistrationRequest;
 
   try {
     body = (await request.json()) as DynamicClientRegistrationRequest;
   } catch {
-    return NextResponse.json({ error: 'invalid_client_metadata' }, { status: 400 });
+    return jsonWithCors(request, { error: 'invalid_client_metadata' }, { status: 400 });
   }
 
   const redirectUris = normalizeRedirectUris(body.redirect_uris);
   const grantTypes = normalizeStringArray(body.grant_types);
   const responseTypes = normalizeStringArray(body.response_types);
-  const clientName = typeof body.client_name === 'string' ? body.client_name.trim() : 'OpenAI ChatGPT';
+  const clientName =
+    typeof body.client_name === 'string' ? body.client_name.trim() : 'OpenAI ChatGPT';
   const tokenEndpointAuthMethod =
     typeof body.token_endpoint_auth_method === 'string'
       ? body.token_endpoint_auth_method.trim()
@@ -72,68 +97,74 @@ export async function POST(request: NextRequest) {
       : 'web';
 
   if (redirectUris.length === 0) {
-    return NextResponse.json(
+    return jsonWithCors(
+      request,
       {
         error: 'invalid_redirect_uri',
         error_description: 'At least one redirect URI is required.',
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   if (!redirectUris.every((uri) => validateRedirectUri(uri))) {
-    return NextResponse.json(
+    return jsonWithCors(
+      request,
       {
         error: 'invalid_redirect_uri',
         error_description: 'One or more redirect URIs are not allowed.',
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   if (grantTypes.length > 0 && !grantTypes.every((value) => value === 'authorization_code')) {
-    return NextResponse.json(
+    return jsonWithCors(
+      request,
       {
         error: 'invalid_client_metadata',
         error_description: 'Only authorization_code grant type is supported.',
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   if (responseTypes.length > 0 && !responseTypes.every((value) => value === 'code')) {
-    return NextResponse.json(
+    return jsonWithCors(
+      request,
       {
         error: 'invalid_client_metadata',
         error_description: 'Only code response type is supported.',
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   if (tokenEndpointAuthMethod && tokenEndpointAuthMethod !== 'none') {
-    return NextResponse.json(
+    return jsonWithCors(
+      request,
       {
         error: 'invalid_client_metadata',
         error_description: 'Only public clients without client_secret are supported.',
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   if (!ensureScopesAllowed(requestedScope)) {
-    return NextResponse.json(
+    return jsonWithCors(
+      request,
       {
         error: 'invalid_scope',
         error_description: 'One or more requested scopes are not supported.',
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   const issuedAt = Math.floor(Date.now() / 1000);
 
-  return NextResponse.json({
+  return jsonWithCors(request, {
     client_id: buildClientId(redirectUris),
     client_id_issued_at: issuedAt,
     client_name: clientName,

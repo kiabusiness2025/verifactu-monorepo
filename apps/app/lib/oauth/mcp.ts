@@ -130,6 +130,52 @@ export function getAllowedRedirectOrigins() {
   return Array.from(new Set([...defaults, ...fromEnv]));
 }
 
+function mergeVaryHeader(existing: string | null, value: string) {
+  const varyValues = new Set(
+    (existing || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  );
+
+  varyValues.add(value);
+  return Array.from(varyValues).join(', ');
+}
+
+export function applyOpenAiCorsHeaders<T extends { headers: Headers }>(
+  response: T,
+  request: Pick<Request, 'headers'>,
+  options?: {
+    methods?: string[];
+    allowHeaders?: string[];
+    exposeHeaders?: string[];
+  }
+) {
+  const origin = request.headers.get('origin')?.trim();
+  if (!origin || !getAllowedRedirectOrigins().includes(origin)) {
+    return response;
+  }
+
+  response.headers.set('Access-Control-Allow-Origin', origin);
+
+  if (options?.methods?.length) {
+    response.headers.set('Access-Control-Allow-Methods', options.methods.join(', '));
+  }
+
+  if (options?.allowHeaders?.length) {
+    response.headers.set('Access-Control-Allow-Headers', options.allowHeaders.join(', '));
+  }
+
+  if (options?.exposeHeaders?.length) {
+    response.headers.set('Access-Control-Expose-Headers', options.exposeHeaders.join(', '));
+  }
+
+  response.headers.set('Access-Control-Max-Age', '600');
+  response.headers.set('Vary', mergeVaryHeader(response.headers.get('Vary'), 'Origin'));
+
+  return response;
+}
+
 export function validateRedirectUri(redirectUri: string) {
   let parsed: URL;
 

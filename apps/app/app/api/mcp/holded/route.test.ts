@@ -31,6 +31,7 @@ jest.mock('@/src/server/tenant/resolveActiveTenant', () => ({
 }));
 
 jest.mock('@/lib/oauth/mcp', () => ({
+  applyOpenAiCorsHeaders: jest.fn((response) => response),
   getDefaultScopes: jest.fn(() => ['mcp.read']),
   getAuthorizationEndpoint: jest.fn(() => 'https://app.verifactu.business/oauth/authorize'),
   getAuthorizationServerMetadataUrl: jest.fn(
@@ -48,6 +49,7 @@ jest.mock('@/lib/oauth/mcp', () => ({
 }));
 
 import { GET, POST } from './route';
+import { applyOpenAiCorsHeaders } from '@/lib/oauth/mcp';
 
 describe('MCP Holded route auth challenge', () => {
   beforeEach(() => {
@@ -71,6 +73,7 @@ describe('MCP Holded route auth challenge', () => {
       'https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded'
     );
     expect(response.headers.get('WWW-Authenticate')).toContain('authorization_uri=');
+    expect(applyOpenAiCorsHeaders).toHaveBeenCalled();
   });
 
   it('returns 401 with WWW-Authenticate on unauthenticated initialize', async () => {
