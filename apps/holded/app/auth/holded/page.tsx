@@ -368,8 +368,8 @@ function HoldedAuthContent() {
 
   const currentTitle = isRegisterMode ? 'Crea tu acceso a Holded' : 'Inicia sesion en tu cuenta';
   const currentSubtitle = isRegisterMode
-    ? 'Crea tu acceso y en el siguiente paso conectaras Holded con Isaak.'
-    : 'Vuelve a entrar para continuar con la conexion de Holded y abrir Isaak.';
+    ? 'Crea tu acceso y en el siguiente paso terminaras la conexion con Holded.'
+    : 'Vuelve a entrar para continuar con la conexion de Holded.';
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff5f2_0%,#f8fafc_44%,#f8fafc_100%)] px-4 py-6 text-slate-900 sm:px-6 lg:px-10">
@@ -406,7 +406,7 @@ function HoldedAuthContent() {
               </div>
               <div>
                 <div className="text-sm font-semibold text-slate-950">holded</div>
-                <div className="text-xs text-slate-500">Acceso guiado a Isaak</div>
+                <div className="text-xs text-slate-500">Acceso guiado a tu conexion</div>
               </div>
             </div>
 
@@ -417,8 +417,8 @@ function HoldedAuthContent() {
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-9 text-slate-600">
               {isRegisterMode
-                ? 'Preparamos tu acceso y luego terminas la conexion con Holded para que Isaak pueda ayudarte con ventas, gastos, facturas y dudas fiscales.'
-                : 'Accede a tu cuenta para continuar con Holded y abrir Isaak con tus datos conectados.'}
+                ? 'Preparamos tu acceso y luego terminas la conexion con Holded para empezar con tus datos reales sin pasos innecesarios.'
+                : 'Accede a tu cuenta para continuar con Holded y terminar la conexion con tus datos conectados.'}
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -428,7 +428,7 @@ function HoldedAuthContent() {
                   Acceso seguro
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  La sesion se comparte despues con Isaak para evitar pasos duplicados.
+                  Activamos tu acceso al terminar este paso para evitar entradas repetidas.
                 </p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50/80 px-4 py-4">
@@ -437,7 +437,7 @@ function HoldedAuthContent() {
                   Siguiente paso claro
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Entras, conectas Holded y terminas directamente en el chat principal.
+                  Entras, conectas Holded y sigues directamente al siguiente paso.
                 </p>
               </div>
             </div>
@@ -573,16 +573,29 @@ function HoldedAuthContent() {
                     Contrasena
                   </label>
                   <div className="relative">
-                    <input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="Contrasena"
-                      autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
-                      required
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                    />
+                    {isRegisterMode ? (
+                      <input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="Contrasena"
+                        autoComplete="new-password"
+                        required
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                      />
+                    ) : (
+                      <input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="Contrasena"
+                        autoComplete="current-password"
+                        required
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                      />
+                    )}
                     <button
                       type="button"
                       onClick={() => setShowPassword((value) => !value)}
@@ -682,7 +695,9 @@ function HoldedAuthContent() {
                       onChange={(event) => setAcceptMarketing(event.target.checked)}
                       className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
                     />
-                    <span>Quiero recibir novedades y mejoras sobre Isaak y la integracion.</span>
+                    <span>
+                      Quiero recibir novedades y mejoras sobre la conexion y nuevas funciones.
+                    </span>
                   </label>
                 ) : null}
 
