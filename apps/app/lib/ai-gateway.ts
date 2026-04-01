@@ -1,11 +1,16 @@
 /**
  * AI Gateway Integration for Vercel AI SDK
- * 
- * Permite cambiar entre más de 100 modelos sin administrar límites de velocidad
- * ni cuentas de proveedores separadas.
- * 
+ *
+ * Uso actual:
+ * - fallback opcional para el chat tool-heavy de apps/app
+ * - no es la fuente canónica de credenciales OpenAI de Isaak
+ *
+ * La clave canónica de OpenAI para runtimes Responses es ISAAK_NEW_OPENAI_API_KEY.
+ * Este gateway se mantiene como puente de compatibilidad mientras no migremos
+ * el runtime principal de tools a Responses API nativa.
+ *
  * Documentación: https://vercel.com/docs/ai-gateway
- * 
+ *
  * Modelos disponibles:
  * - OpenAI: gpt-4-turbo, gpt-4, gpt-3.5-turbo
  * - xAI: grok-2
@@ -110,13 +115,13 @@ export const getRecommendedModel = (context: 'dashboard' | 'landing' | 'admin') 
 
 /**
  * Ejemplo de uso en una API route:
- * 
+ *
  * ```typescript
  * import { createAIGatewayClient, getRecommendedModel } from '@/lib/ai-gateway';
- * 
+ *
  * const apiKey = process.env.CLAVE_API_AI_VERCEL;
  * const { openai } = createAIGatewayClient(apiKey);
- * 
+ *
  * const model = getRecommendedModel('dashboard');
  * const result = await streamText({
  *   model: openai(model),

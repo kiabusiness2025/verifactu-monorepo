@@ -94,22 +94,24 @@ export async function POST(req: Request) {
       });
     }
 
-    const aiGatewayApiKey = process.env.CLAVE_API_AI_VERCEL || process.env.VERCEL_AI_API_KEY;
     const directOpenAIKey = resolveOpenAIKey(process.env);
+    const aiGatewayApiKey = process.env.CLAVE_API_AI_VERCEL || process.env.VERCEL_AI_API_KEY;
 
-    if (!aiGatewayApiKey && !directOpenAIKey) {
+    if (!directOpenAIKey && !aiGatewayApiKey) {
       return new Response(JSON.stringify({ error: 'Isaak no esta configurado' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const aiClient = aiGatewayApiKey
-      ? createOpenAI({
-          apiKey: aiGatewayApiKey,
+    // Canonical setup: use the direct OpenAI project key first.
+    // AI Gateway remains a fallback bridge for the tool-heavy chat runtime.
+    const aiClient = directOpenAIKey
+      ? createOpenAI({ apiKey: directOpenAIKey })
+      : createOpenAI({
+          apiKey: aiGatewayApiKey!,
           baseURL: 'https://ai-gateway.vercel.sh/v1',
-        })
-      : createOpenAI({ apiKey: directOpenAIKey! });
+        });
 
     const runtimeContext = await buildIsaakRuntimeContext({
       tenantId: activeTenantId,
