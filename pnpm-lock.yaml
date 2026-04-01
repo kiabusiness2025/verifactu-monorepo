@@ -97,7 +97,7 @@ importers:
         version: 9.1.7
       jest:
         specifier: ^30.2.0
-        version: 30.2.0(@types/node@20.19.30)
+        version: 30.2.0(@types/node@24.8.1)
       jest-environment-jsdom:
         specifier: ^30.2.0
         version: 30.2.0
@@ -112,7 +112,7 @@ importers:
     dependencies:
       '@next-auth/prisma-adapter':
         specifier: ^1.0.7
-        version: 1.0.7(@prisma/client@5.22.0(prisma@5.22.0))(next-auth@4.24.13(next@15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0))
+        version: 1.0.7(@prisma/client@5.22.0(prisma@5.22.0))(next-auth@4.24.13(next@15.5.14(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0))
       '@verifactu/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -210,7 +210,7 @@ importers:
         version: 30.2.0(@babel/core@7.28.6)
       jest:
         specifier: ^30.2.0
-        version: 30.2.0(@types/node@24.8.1)
+        version: 30.2.0(@types/node@20.19.30)
       nodemon:
         specifier: ^3.1.0
         version: 3.1.11
@@ -339,7 +339,7 @@ importers:
         version: 2.6.0
       workflow:
         specifier: 4.0.1-beta.48
-        version: 4.0.1-beta.48(@aws-sdk/client-sts@3.986.0)(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(next@15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3)
+        version: 4.0.1-beta.48(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(next@15.5.14(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3)
       zod:
         specifier: ^4.3.5
         version: 4.3.6
@@ -442,7 +442,7 @@ importers:
         version: file:packages/db(@react-email/render@1.1.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@types/node@20.19.30)(prisma@5.22.0)
       '@verifactu/ui':
         specifier: file:../../packages/ui
-        version: link:../../packages/ui
+        version: file:packages/ui(next@15.5.14(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@verifactu/utils':
         specifier: file:../../packages/utils
         version: link:../../packages/utils
@@ -649,9 +649,6 @@ importers:
       '@genkit-ai/googleai':
         specifier: ^1.28.0
         version: 1.28.0(genkit@1.31.0(@google-cloud/firestore@7.11.6)(firebase-admin@13.6.0)(firebase@12.8.0))
-      '@google-cloud/vertexai':
-        specifier: ^1.10.0
-        version: 1.10.0
       '@prisma/client':
         specifier: 5.22.0
         version: 5.22.0(prisma@5.22.0)
@@ -722,9 +719,6 @@ importers:
       '@genkit-ai/googleai':
         specifier: ^1.27.0
         version: 1.28.0(genkit@1.31.0(@google-cloud/firestore@7.11.6)(firebase-admin@13.6.0)(firebase@12.8.0))
-      '@google-cloud/vertexai':
-        specifier: ^1.10.0
-        version: 1.10.0
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1
@@ -733,7 +727,7 @@ importers:
         version: 4.10.0
       '@vercel/analytics':
         specifier: ^1.6.1
-        version: 1.6.1(next@15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
+        version: 1.6.1(next@15.5.14(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@verifactu/db':
         specifier: file:../../packages/db
         version: link:../../packages/db
@@ -3368,13 +3362,6 @@ packages:
         integrity: sha512-r3ZwDMiz4nwW6R922Z1pwpePxyRwE5GdevYX63hRmAQUkUQJcBH/79EnQPDv5cOv1mFBgevdNWQfi3tie3dHrQ==,
       }
     engines: { node: '>=14' }
-
-  '@google-cloud/vertexai@1.10.0':
-    resolution:
-      {
-        integrity: sha512-HqYqoivNtkq59po8m7KI0n+lWKdz4kabENncYQXZCX/hBWJfXtKAfR/2nUQsP+TwSfHKoA7zDL2RrJYIv/j3VQ==,
-      }
-    engines: { node: '>=18.0.0' }
 
   '@google/generative-ai@0.24.1':
     resolution:
@@ -6206,6 +6193,16 @@ packages:
 
   '@verifactu/db@file:packages/db':
     resolution: { directory: packages/db, type: directory }
+
+  '@verifactu/ui@file:packages/ui':
+    resolution: { directory: packages/ui, type: directory }
+    peerDependencies:
+      next: ^14 || ^15
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
+
+  '@verifactu/utils@file:packages/utils':
+    resolution: { directory: packages/utils, type: directory }
 
   '@workflow/astro@4.0.0-beta.22':
     resolution:
@@ -14355,7 +14352,7 @@ snapshots:
       '@babel/types': 7.28.6
       '@jridgewell/remapping': 2.3.5
       convert-source-map: 2.0.0
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.1
@@ -14407,7 +14404,7 @@ snapshots:
       '@babel/core': 7.28.6
       '@babel/helper-compilation-targets': 7.28.6
       '@babel/helper-plugin-utils': 7.28.6
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       lodash.debounce: 4.0.8
       resolve: 1.22.11
     transitivePeerDependencies:
@@ -15127,7 +15124,7 @@ snapshots:
       '@babel/parser': 7.28.6
       '@babel/template': 7.28.6
       '@babel/types': 7.28.6
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -15353,7 +15350,7 @@ snapshots:
   '@eslint/eslintrc@2.1.4':
     dependencies:
       ajv: 6.14.0
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       espree: 9.6.1
       globals: 13.24.0
       ignore: 5.3.2
@@ -15367,7 +15364,7 @@ snapshots:
   '@eslint/eslintrc@3.3.3':
     dependencies:
       ajv: 6.14.0
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       espree: 10.4.0
       globals: 14.0.0
       ignore: 5.3.2
@@ -16016,13 +16013,6 @@ snapshots:
       - supports-color
     optional: true
 
-  '@google-cloud/vertexai@1.10.0':
-    dependencies:
-      google-auth-library: 9.15.1
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-
   '@google/generative-ai@0.24.1': {}
 
   '@grpc/grpc-js@1.14.3':
@@ -16052,7 +16042,7 @@ snapshots:
   '@humanwhocodes/config-array@0.13.0':
     dependencies:
       '@humanwhocodes/object-schema': 2.0.3
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       minimatch: 3.1.5
     transitivePeerDependencies:
       - supports-color
@@ -16414,7 +16404,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
-  '@next-auth/prisma-adapter@1.0.7(@prisma/client@5.22.0(prisma@5.22.0))(next-auth@4.24.13(next@15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0))':
+  '@next-auth/prisma-adapter@1.0.7(@prisma/client@5.22.0(prisma@5.22.0))(next-auth@4.24.13(next@15.5.14(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0))':
     dependencies:
       '@prisma/client': 5.22.0(prisma@5.22.0)
       next-auth: 4.24.13(next@15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -17963,7 +17953,7 @@ snapshots:
       '@typescript-eslint/types': 8.53.1
       '@typescript-eslint/typescript-estree': 8.53.1(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.53.1
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       eslint: 8.57.1
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -17973,7 +17963,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.53.1(typescript@5.9.3)
       '@typescript-eslint/types': 8.53.1
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
@@ -17992,7 +17982,7 @@ snapshots:
       '@typescript-eslint/types': 8.53.1
       '@typescript-eslint/typescript-estree': 8.53.1(typescript@5.9.3)
       '@typescript-eslint/utils': 8.53.1(eslint@8.57.1)(typescript@5.9.3)
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       eslint: 8.57.1
       ts-api-utils: 2.4.0(typescript@5.9.3)
       typescript: 5.9.3
@@ -18007,7 +17997,7 @@ snapshots:
       '@typescript-eslint/tsconfig-utils': 8.53.1(typescript@5.9.3)
       '@typescript-eslint/types': 8.53.1
       '@typescript-eslint/visitor-keys': 8.53.1
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       minimatch: 9.0.9
       semver: 7.7.3
       tinyglobby: 0.2.15
@@ -18093,7 +18083,7 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
-  '@vercel/analytics@1.6.1(next@15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
+  '@vercel/analytics@1.6.1(next@15.5.14(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
     optionalDependencies:
       next: 15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react: 18.2.0
@@ -18124,6 +18114,23 @@ snapshots:
       - '@react-email/render'
       - '@types/node'
       - prisma
+
+  '@verifactu/ui@file:packages/ui(next@15.5.14(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      '@verifactu/utils': file:packages/utils
+      clsx: 2.1.1
+      dayjs: 1.11.19
+      lucide-react: 0.469.0(react@18.2.0)
+      next: 15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      next-themes: 0.4.6(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      tailwind-merge: 2.6.0
+
+  '@verifactu/utils@file:packages/utils':
+    dependencies:
+      jose: 6.1.3
+      zod: 4.3.6
 
   '@workflow/astro@4.0.0-beta.22(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)':
     dependencies:
@@ -18159,7 +18166,7 @@ snapshots:
       - '@swc/helpers'
       - supports-color
 
-  '@workflow/cli@4.0.1-beta.48(@aws-sdk/client-sts@3.986.0)(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3)':
+  '@workflow/cli@4.0.1-beta.48(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3)':
     dependencies:
       '@oclif/core': 4.0.0(typescript@5.9.3)
       '@oclif/plugin-help': 6.2.31(typescript@5.9.3)
@@ -18169,7 +18176,7 @@ snapshots:
       '@workflow/errors': 4.0.1-beta.13
       '@workflow/swc-plugin': 4.0.1-beta.13(@swc/core@1.15.3(@swc/helpers@0.5.18))
       '@workflow/utils': 4.0.1-beta.10
-      '@workflow/web': 4.0.1-beta.28(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@workflow/web': 4.0.1-beta.28(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@workflow/world': 4.0.1-beta.13(zod@4.1.11)
       '@workflow/world-local': 4.0.1-beta.26(@opentelemetry/api@1.9.0)
       '@workflow/world-vercel': 4.0.1-beta.27
@@ -18216,7 +18223,7 @@ snapshots:
       '@workflow/world': 4.0.1-beta.13(zod@4.1.11)
       '@workflow/world-local': 4.0.1-beta.26(@opentelemetry/api@1.9.0)
       '@workflow/world-vercel': 4.0.1-beta.27
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       devalue: 5.6.4
       ms: 2.1.3
       nanoid: 5.1.6
@@ -18234,7 +18241,7 @@ snapshots:
       '@workflow/utils': 4.0.1-beta.10
       ms: 2.1.3
 
-  '@workflow/next@4.0.1-beta.44(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(next@15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))':
+  '@workflow/next@4.0.1-beta.44(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(next@15.5.14(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))':
     dependencies:
       '@swc/core': 1.15.3(@swc/helpers@0.5.18)
       '@workflow/builders': 4.0.1-beta.39(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)
@@ -18315,9 +18322,9 @@ snapshots:
 
   '@workflow/vite@4.0.0-beta.2': {}
 
-  '@workflow/web@4.0.1-beta.28(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@workflow/web@4.0.1-beta.28(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
-      next: 16.2.0(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      next: 16.2.0(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
     transitivePeerDependencies:
       - '@babel/core'
       - '@opentelemetry/api'
@@ -18384,7 +18391,7 @@ snapshots:
 
   agent-base@6.0.2:
     dependencies:
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -19543,7 +19550,7 @@ snapshots:
   eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.53.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       eslint: 8.57.1
       get-tsconfig: 4.13.0
       is-bun-module: 2.0.0
@@ -19672,7 +19679,7 @@ snapshots:
       ajv: 6.14.0
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.2
@@ -19995,7 +20002,7 @@ snapshots:
 
   follow-redirects@1.15.11(debug@4.4.3):
     optionalDependencies:
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
 
   for-each@0.3.5:
     dependencies:
@@ -20443,28 +20450,28 @@ snapshots:
     dependencies:
       '@tootallnate/once': 3.0.1
       agent-base: 6.0.2
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
   http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
   https-proxy-agent@5.0.1:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
   https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -20708,7 +20715,7 @@ snapshots:
   istanbul-lib-source-maps@5.0.6:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       istanbul-lib-coverage: 3.2.2
     transitivePeerDependencies:
       - supports-color
@@ -21257,7 +21264,7 @@ snapshots:
   jwks-rsa@3.2.2:
     dependencies:
       '@types/jsonwebtoken': 9.0.10
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       jose: 4.15.9
       limiter: 1.1.5
       lru-memoizer: 2.3.0
@@ -21618,7 +21625,7 @@ snapshots:
       - '@babel/core'
       - babel-plugin-macros
 
-  next@16.2.0(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
+  next@16.2.0(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
       '@next/env': 16.2.0
       '@swc/helpers': 0.5.15
@@ -22332,7 +22339,7 @@ snapshots:
 
   require-in-the-middle@7.5.2:
     dependencies:
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       module-details-from-path: 1.0.4
       resolve: 1.22.11
     transitivePeerDependencies:
@@ -22624,7 +22631,7 @@ snapshots:
     dependencies:
       axios: 1.13.6(debug@4.4.3)
       axios-ntlm: 1.4.6(debug@4.4.3)
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       formidable: 3.5.4
       get-stream: 6.0.1
       lodash: 4.17.23
@@ -22833,7 +22840,7 @@ snapshots:
     dependencies:
       component-emitter: 1.3.1
       cookiejar: 2.1.4
-      debug: 4.4.3(supports-color@5.5.0)
+      debug: 4.4.3(supports-color@8.1.1)
       fast-safe-stringify: 2.1.1
       form-data: 4.0.5
       formidable: 3.5.4
@@ -23387,13 +23394,13 @@ snapshots:
 
   workerpool@9.3.4: {}
 
-  workflow@4.0.1-beta.48(@aws-sdk/client-sts@3.986.0)(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(next@15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3):
+  workflow@4.0.1-beta.48(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(next@15.5.14(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3):
     dependencies:
       '@workflow/astro': 4.0.0-beta.22(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)
-      '@workflow/cli': 4.0.1-beta.48(@aws-sdk/client-sts@3.986.0)(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3)
+      '@workflow/cli': 4.0.1-beta.48(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3)
       '@workflow/core': 4.0.1-beta.39(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)
       '@workflow/errors': 4.0.1-beta.13
-      '@workflow/next': 4.0.1-beta.44(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(next@15.5.14(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))
+      '@workflow/next': 4.0.1-beta.44(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)(next@15.5.14(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))
       '@workflow/nitro': 4.0.1-beta.43(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)
       '@workflow/nuxt': 4.0.1-beta.32(@aws-sdk/client-sts@3.986.0)(@opentelemetry/api@1.9.0)(@swc/helpers@0.5.18)
       '@workflow/rollup': 4.0.0-beta.7(@swc/helpers@0.5.18)
