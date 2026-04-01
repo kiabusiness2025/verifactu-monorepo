@@ -273,8 +273,9 @@ Resultados esperados:
 
 - Los dos `.well-known` responden JSON 200.
 - `authorization_servers` anuncia el issuer base `https://app.verifactu.business`, no la URL del metadata.
-- El endpoint MCP sin token responde `401` con `WWW-Authenticate` y `resource_metadata` apuntando a `/.well-known/oauth-protected-resource/api/mcp/holded`.
-- El endpoint MCP con token valido responde metadata del servidor.
+- `GET /api/mcp/holded` responde `200` con el descriptor MCP y el catalogo base de tools.
+- `tools/call` sin token responde `401` con `WWW-Authenticate` y `resource_metadata` apuntando a `/.well-known/oauth-protected-resource/api/mcp/holded`.
+- El endpoint MCP con token valido amplia el catalogo visible segun scopes y permite ejecutar tools.
 
 ## Validacion operativa recomendada
 
@@ -319,8 +320,9 @@ Documentacion extendida:
 
 ### 4. MCP
 
+- `GET /api/mcp/holded` responde descriptor base sin token.
 - `initialize` responde.
-- `tools/list` lista tools Holded.
+- `tools/list` lista tools Holded sin token y amplia el catalogo con OAuth.
 - `tools/call` funciona con token OAuth.
 
 ### 5. Tools

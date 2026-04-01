@@ -662,7 +662,8 @@ Esperado:
 
 - los `.well-known` responden `200`
 - el challenge responde texto plano si esta configurado
-- el MCP sin token responde `401` con cabecera `WWW-Authenticate`
+- `GET /api/mcp/holded` responde `200` con el descriptor MCP base
+- `tools/call` sin token responde `401` con cabecera `WWW-Authenticate`
 
 ## Limitaciones actuales
 

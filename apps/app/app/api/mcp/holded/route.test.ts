@@ -38,13 +38,13 @@ jest.mock('@/lib/oauth/mcp', () => ({
     }
     return response;
   }),
-  getDefaultScopes: jest.fn(() => ['mcp.read']),
+  getDefaultScopes: jest.fn(() => ['mcp.read', 'holded.invoices.read']),
   getAuthorizationEndpoint: jest.fn(() => 'https://app.verifactu.business/oauth/authorize'),
   getAuthorizationServerMetadataUrl: jest.fn(
     () => 'https://app.verifactu.business/.well-known/oauth-authorization-server'
   ),
   getMcpResourceUrl: jest.fn(() => 'https://app.verifactu.business/api/mcp/holded'),
-  getSupportedScopes: jest.fn(() => ['mcp.read']),
+  getSupportedScopes: jest.fn(() => ['mcp.read', 'holded.invoices.read']),
   hasRequiredScopes: jest.fn(() => true),
   MCP_TOOL_SCOPES: {},
   getProtectedResourceMetadataUrl: jest.fn(
@@ -57,7 +57,7 @@ jest.mock('@/lib/oauth/mcp', () => ({
 import { GET, POST } from './route';
 import { applyOpenAiCorsHeaders, verifyAccessToken } from '@/lib/oauth/mcp';
 
-describe('MCP Holded route auth challenge', () => {
+describe('MCP Holded route discovery and auth', () => {
   beforeEach(() => {
     jest.spyOn(console, 'info').mockImplementation(() => undefined);
   });
@@ -66,23 +66,20 @@ describe('MCP Holded route auth challenge', () => {
     jest.restoreAllMocks();
   });
 
-  it('returns 401 with WWW-Authenticate on unauthenticated GET', async () => {
+  it('returns a public descriptor on unauthenticated GET', async () => {
     const response = await GET(
       new Request('https://app.verifactu.business/api/mcp/holded') as never
     );
     const payload = await response.json();
 
-    expect(response.status).toBe(401);
-    expect(payload).toEqual({ error: 'Unauthorized MCP access' });
-    expect(response.headers.get('WWW-Authenticate')).toContain('resource_metadata=');
-    expect(response.headers.get('WWW-Authenticate')).toContain(
-      'https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded'
-    );
-    expect(response.headers.get('WWW-Authenticate')).toContain('authorization_uri=');
+    expect(response.status).toBe(200);
+    expect(payload.name).toBe('Isaak for Holded');
+    expect(payload.endpoint).toBe('/api/mcp/holded');
+    expect(payload.tools).toHaveLength(1);
     expect(applyOpenAiCorsHeaders).toHaveBeenCalled();
   });
 
-  it('returns 401 with WWW-Authenticate on unauthenticated initialize', async () => {
+  it('returns 200 on unauthenticated initialize', async () => {
     const response = await POST(
       new Request('https://app.verifactu.business/api/mcp/holded', {
         method: 'POST',
@@ -101,12 +98,12 @@ describe('MCP Holded route auth challenge', () => {
     );
     const payload = await response.json();
 
-    expect(response.status).toBe(401);
-    expect(payload).toEqual({ error: 'Unauthorized MCP access' });
-    expect(response.headers.get('WWW-Authenticate')).toContain('resource_metadata=');
+    expect(response.status).toBe(200);
+    expect(payload.result.protocolVersion).toBe('2024-11-05');
+    expect(payload.result.serverInfo.name).toBe('Isaak for Holded');
   });
 
-  it('returns 401 with WWW-Authenticate on unauthenticated tools/list', async () => {
+  it('returns a public tools/list on unauthenticated requests', async () => {
     const response = await POST(
       new Request('https://app.verifactu.business/api/mcp/holded', {
         method: 'POST',
@@ -116,6 +113,28 @@ describe('MCP Holded route auth challenge', () => {
           id: 2,
           method: 'tools/list',
           params: {},
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.result.tools).toHaveLength(1);
+  });
+
+  it('returns 401 with WWW-Authenticate on unauthenticated tools/call', async () => {
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/mcp/holded', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 4,
+          method: 'tools/call',
+          params: {
+            name: 'holded_list_invoices',
+            arguments: {},
+          },
         }),
       }) as never
     );

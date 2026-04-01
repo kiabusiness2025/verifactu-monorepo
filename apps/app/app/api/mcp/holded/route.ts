@@ -66,6 +66,12 @@ function resolveVisibleTools(
   return getVisibleTools(access.scope ?? '');
 }
 
+function isPublicMcpMethod(method?: string | null) {
+  return (
+    method === 'initialize' || method === 'notifications/initialized' || method === 'tools/list'
+  );
+}
+
 function jsonRpc(
   request: NextRequest,
   id: JsonRpcRequest['id'],
@@ -257,11 +263,6 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const access = await assertMcpAccess(request);
-  if (!access) {
-    logMcpAccess({ method: 'GET', outcome: 'denied', reason: 'unauthorized' });
-    return unauthorized(request);
-  }
-
   const visibleTools = resolveVisibleTools(access);
 
   return applyMcpCors(
@@ -295,7 +296,7 @@ export async function POST(request: NextRequest) {
 
   const access = await assertMcpAccess(request);
 
-  if (!access) {
+  if (!access && !isPublicMcpMethod(body.method)) {
     logMcpAccess({ method: body.method, outcome: 'denied', reason: 'unauthorized' });
     return unauthorized(request);
   }
@@ -323,6 +324,11 @@ export async function POST(request: NextRequest) {
         });
       }
       case 'tools/call': {
+        if (!access) {
+          logMcpAccess({ method: body.method, outcome: 'denied', reason: 'unauthorized' });
+          return unauthorized(request);
+        }
+
         const name = typeof body.params?.name === 'string' ? body.params.name : '';
         const args =
           body.params?.arguments && typeof body.params.arguments === 'object'
