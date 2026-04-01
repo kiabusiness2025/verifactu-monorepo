@@ -107,7 +107,7 @@ export default function IsaakPrivacyPage() {
           <div className="mt-3 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="font-semibold text-slate-700">Hosting e IA</div>
-              <p className="mt-1 text-xs">Google Cloud y Vertex AI.</p>
+              <p className="mt-1 text-xs">Vercel y OpenAI.</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="font-semibold text-slate-700">Email y soporte</div>

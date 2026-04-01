@@ -79,13 +79,14 @@ npm install ai @ai-sdk/openai zod
 ### Local (`.env.local`)
 
 ```env
-OPENAI_API_KEY=sk-proj-xxxxx
+ISAAK_OPENAI_SERVICE_ACCOUNT=sk-svcacct-xxxxx
+ISAAK_OPENAI_MODEL=gpt-4.1-mini
 ```
 
 ### Vercel (ya configurada)
 
 ```
-OPENAI_API_KEY → Production ✅
+ISAAK_OPENAI_SERVICE_ACCOUNT → Production ✅
 ```
 
 ---
@@ -145,7 +146,7 @@ synth.speak(utterance);
 
 ## 🔧 Testing local
 
-1. Asegúrate de tener `OPENAI_API_KEY` en `.env.local`
+1. Asegúrate de tener `ISAAK_OPENAI_SERVICE_ACCOUNT` en `.env.local`
 2. Ejecuta el dev server:
    ```bash
    npm run dev

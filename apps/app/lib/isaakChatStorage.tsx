@@ -17,16 +17,18 @@ interface IsaakChatWithStorageProps {
  * HOC que envuelve un componente de chat para agregar almacenamiento
  */
 export function withIsaakStorage<P extends object>(
-  ChatComponent: React.ComponentType<P & { onSaveMessage: (role: string, content: string) => Promise<void>; conversationId: string | null }>
+  ChatComponent: React.ComponentType<
+    P & {
+      onSaveMessage: (role: string, content: string) => Promise<void>;
+      conversationId: string | null;
+    }
+  >
 ) {
   return function IsaakChatWithStorageWrapper(props: P & IsaakChatWithStorageProps) {
     const { onConversationLoaded, context, ...chatProps } = props;
-    const {
-      conversation,
-      createConversation,
-      saveMessage,
-      deleteConversation,
-    } = useIsaakChat({ autoLoad: true });
+    const { conversation, createConversation, saveMessage, deleteConversation } = useIsaakChat({
+      autoLoad: true,
+    });
 
     const conversationInitialized = useRef(false);
 
@@ -62,12 +64,9 @@ export function withIsaakStorage<P extends object>(
  * Gestiona automáticamente el almacenamiento
  */
 export function useIsaakChatStorage(context?: string) {
-  const {
-    conversation,
-    createConversation,
-    saveMessage,
-    loadConversations,
-  } = useIsaakChat({ autoLoad: true });
+  const { conversation, createConversation, saveMessage, loadConversations } = useIsaakChat({
+    autoLoad: true,
+  });
 
   const conversationInitialized = useRef(false);
 
@@ -94,7 +93,7 @@ export function useIsaakChatStorage(context?: string) {
 }
 
 /**
- * Utility para integrar en el endpoint de Vertex Chat
+ * Utility para integrar en el endpoint de chat de Isaak
  * Llama al endpoint y guarda automáticamente
  */
 export async function sendIsaakMessageWithStorage(
@@ -118,19 +117,20 @@ export async function sendIsaakMessageWithStorage(
       }
     }
 
-    // 2. Enviar a Vertex AI
-    const vertexResponse = await fetch('/api/vertex-chat', {
+    // 2. Enviar al chat de Isaak
+    const chatResponse = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: userMessage }),
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: userMessage }],
+      }),
     });
 
-    if (!vertexResponse.ok) {
+    if (!chatResponse.ok) {
       throw new Error('Failed to get AI response');
     }
 
-    const vertexData = await vertexResponse.json();
-    const aiResponse = vertexData.text || 'Sin respuesta';
+    const aiResponse = (await chatResponse.text()).trim() || 'Sin respuesta';
 
     // 3. Guardar respuesta del asistente
     let messageId: string | undefined;
@@ -142,7 +142,7 @@ export async function sendIsaakMessageWithStorage(
           role: 'assistant',
           content: aiResponse,
           metadata: {
-            model: 'vertex-ai',
+            model: 'isaak-chat',
             timestamp: new Date().toISOString(),
           },
         }),

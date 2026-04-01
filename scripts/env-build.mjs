@@ -58,7 +58,6 @@ const commonPublic = [
   'NEXT_PUBLIC_FIREBASE_APP_ID',
   'NEXT_PUBLIC_FIREBASE_DATABASE_URL',
   'NEXT_PUBLIC_USE_AUTH_EMULATOR',
-  'NEXT_PUBLIC_ISAAK_ASSISTANT_ID',
   'NEXT_PUBLIC_SUPPORT_EMAIL',
 ];
 
@@ -139,13 +138,10 @@ const stripe = [
 
 const ai = [
   'CLAVE_API_AI_VERCEL',
-  'CLAVE_API_DE_PROYECTO_EXPERTO',
-  'ISAAK_NEW_OPENAI_API_KEY',
-  'ISAAK_OPENAI_SERVICE_ACCAUNT',
+  'VERCEL_AI_API_KEY',
+  'GOOGLE_AI_API_KEY',
   'ISAAK_OPENAI_SERVICE_ACCOUNT',
-  'ISAAK_API_KEY',
-  'ISAAK_ASSISTANT_ID',
-  'OPENAI_API_KEY',
+  'ISAAK_OPENAI_MODEL',
 ];
 
 const adminOnly = [
@@ -187,7 +183,7 @@ const adminKeys = [
   ...stripe,
 ];
 
-const landingKeys = [...commonPublic, ...organization, ...stripe];
+const landingKeys = [...commonPublic, ...organization, ...ai, ...stripe];
 
 const apiKeys = [...sharedDb, ...einforma, ...aeat, ...resend, ...stripe, ...organization];
 

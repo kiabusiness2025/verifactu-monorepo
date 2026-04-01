@@ -331,7 +331,7 @@ Exportar todos los usuarios a CSV.
 - **Cascade deletes:** Al eliminar un usuario, se eliminan automáticamente sus memberships, preferencias y conversaciones
 - **Soft delete:** No implementado aún. Todos los deletes son hard deletes
 - **Backup:** Exportar usuarios regularmente antes de hacer deletes masivos
-- **Logs:** Revisar logs de Cloud Run para auditar acciones de admin
+- **Logs:** Revisar logs de Vercel para auditar acciones de admin
 
 ---
 

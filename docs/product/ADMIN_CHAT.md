@@ -5,6 +5,7 @@ Sistema de chat integrado en el panel de administración que permite verificar e
 ## Características
 
 ### 🤖 Asistente Inteligente
+
 - Responde preguntas sobre el estado del sistema
 - Diagnostica problemas y sugiere soluciones
 - Explica errores y configuraciones
@@ -13,10 +14,13 @@ Sistema de chat integrado en el panel de administración que permite verificar e
 ### ⚡ Comandos Rápidos
 
 #### `/help`
+
 Muestra lista de comandos disponibles
 
 #### `/logs [target]`
+
 Ver logs del sistema
+
 ```
 /logs app          → Logs de la aplicación
 /logs api          → Logs del API
@@ -24,7 +28,9 @@ Ver logs del sistema
 ```
 
 #### `/errors [tipo]`
+
 Mostrar errores recientes
+
 ```
 /errors typescript → Errores de compilación
 /errors runtime    → Errores de ejecución
@@ -32,7 +38,9 @@ Mostrar errores recientes
 ```
 
 #### `/deploy [acción]`
+
 Estado y gestión de deployments
+
 ```
 /deploy status     → Estado actual
 /deploy history    → Historial
@@ -40,14 +48,18 @@ Estado y gestión de deployments
 ```
 
 #### `/preview [componente]`
+
 Vista previa de componentes
+
 ```
 /preview InvoicesTable
 /preview AdminChat
 ```
 
 #### `/check [sistema]`
+
 Verificar configuración y servicios
+
 ```
 /check database    → Estado de PostgreSQL
 /check firebase    → Firebase Auth
@@ -62,13 +74,12 @@ Verificar configuración y servicios
 Añade a `apps/app/.env`:
 
 ```env
-# Opción A: Usar OpenAI
-OPENAI_API_KEY=sk-proj-xxxxx
+# OpenAI service account para Isaak
+ISAAK_OPENAI_SERVICE_ACCOUNT=sk-svcacct-xxxxx
+ISAAK_OPENAI_MODEL=gpt-4.1-mini
 
-# Opción B: Usar Isaak (tu asistente)
+# Activar Isaak en el panel admin
 USE_ISAAK_FOR_ADMIN=true
-ISAAK_API_KEY=your_key
-ISAAK_ASSISTANT_ID=asst_xxxxx
 ```
 
 ### 2. Permisos de Admin
@@ -76,14 +87,15 @@ ISAAK_ASSISTANT_ID=asst_xxxxx
 Solo usuarios con `isAdmin = true` en la base de datos pueden acceder:
 
 ```sql
-UPDATE users 
-SET is_admin = true 
+UPDATE users
+SET is_admin = true
 WHERE email = 'tu_email@ejemplo.com';
 ```
 
 ## Uso
 
 ### Acceso
+
 1. Inicia sesión como admin
 2. Ve a: `/dashboard/admin`
 3. Scroll hasta "Asistente de Administración"
@@ -167,11 +179,14 @@ case '/vercel':
 ## Costos
 
 ### Con OpenAI
+
 - ~$0.03 por 1K tokens (GPT-4)
 - ~100 mensajes = $1-2 USD
 
 ### Con Isaak
+
 - Según tu plan actual de OpenAI/Azure
 
 ### Fallback Gratis
+
 Si no configuras API keys, usa respuestas simples basadas en keywords.

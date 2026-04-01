@@ -99,7 +99,8 @@ RESEND_API_KEY=<resend-api-key>
 RESEND_WEBHOOK_SECRET=whsec_xxx
 
 # OpenAI para Isaak
-OPENAI_API_KEY=sk-xxx
+ISAAK_OPENAI_SERVICE_ACCOUNT=sk-svcacct-xxx
+ISAAK_OPENAI_MODEL=gpt-4.1-mini
 ISAAK_SUPPORT_ENABLED=true
 
 # Admin

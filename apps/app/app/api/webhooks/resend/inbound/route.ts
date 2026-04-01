@@ -7,7 +7,7 @@ import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
  * Isaak analiza y responde automáticamente o escala a humano
  */
 
-const OPENAI_API_KEY = resolveOpenAIKey(process.env);
+const openAIKey = resolveOpenAIKey(process.env);
 const OPENAI_MODEL = process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'kiabusiness2025@gmail.com';
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
  * Clasificar email con Isaak (OpenAI)
  */
 async function classifyEmailWithIsaak(email: IncomingEmail): Promise<EmailClassification> {
-  if (!OPENAI_API_KEY) {
+  if (!openAIKey) {
     return {
       category: 'general',
       confidence: 0,
@@ -118,7 +118,7 @@ async function classifyEmailWithIsaak(email: IncomingEmail): Promise<EmailClassi
 
   try {
     const content = await callOpenAIResponses({
-      apiKey: OPENAI_API_KEY,
+      apiKey: openAIKey,
       model: OPENAI_MODEL,
       instructions: `Eres Isaak, asistente de soporte de Verifactu Business (SaaS de contabilidad y facturación).
 

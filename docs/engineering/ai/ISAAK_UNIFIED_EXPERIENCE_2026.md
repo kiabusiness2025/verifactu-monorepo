@@ -33,7 +33,7 @@ Persistencia actual:
 ### Landing (`apps/landing`)
 
 - Chat flotante con sugerencias por sección de navegación.
-- Endpoint de chat: `POST /api/vertex-chat`.
+- Endpoint de chat: `POST /api/chat`.
 - Prompts recomendados visibles antes de escribir.
 - No requiere tenant; modo anónimo.
 
@@ -141,7 +141,7 @@ Persistencia actual:
 ### Landing (`apps/landing`)
 
 - `apps/landing/app/components/IsaakChat.tsx`
-- `apps/landing/app/api/vertex-chat/route.ts`
+- `apps/landing/app/api/chat/route.ts`
 
 ### Admin (`apps/admin`)
 

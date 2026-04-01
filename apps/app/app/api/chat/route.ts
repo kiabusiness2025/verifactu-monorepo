@@ -15,7 +15,8 @@ import { buildIsaakPersona } from '@/lib/isaak/persona';
 import { buildIsaakRuntimeContext } from '@/lib/isaak/runtimeContext';
 import { getCompanyProfileByNif, searchCompanies } from '@/server/einforma';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
-import { createOpenAI, openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { resolveOpenAIKey } from '@verifactu/utils';
 import { streamText, tool, zodSchema } from 'ai';
 import { z } from 'zod';
 
@@ -93,20 +94,22 @@ export async function POST(req: Request) {
       });
     }
 
-    // Usar AI Gateway de Vercel en lugar de OpenAI directo
     const aiGatewayApiKey = process.env.CLAVE_API_AI_VERCEL || process.env.VERCEL_AI_API_KEY;
+    const directOpenAIKey = resolveOpenAIKey(process.env);
 
-    if (!aiGatewayApiKey) {
-      console.warn('[Isaak Chat API] AI Gateway key not found, falling back to OpenAI direct');
+    if (!aiGatewayApiKey && !directOpenAIKey) {
+      return new Response(JSON.stringify({ error: 'Isaak no esta configurado' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Crear cliente de OpenAI apuntando a AI Gateway
-    const aiGatewayClient = aiGatewayApiKey
+    const aiClient = aiGatewayApiKey
       ? createOpenAI({
           apiKey: aiGatewayApiKey,
           baseURL: 'https://ai-gateway.vercel.sh/v1',
         })
-      : openai;
+      : createOpenAI({ apiKey: directOpenAIKey! });
 
     const runtimeContext = await buildIsaakRuntimeContext({
       tenantId: activeTenantId,
@@ -117,7 +120,7 @@ export async function POST(req: Request) {
     });
 
     const result = await streamText({
-      model: aiGatewayClient('gpt-4-turbo'),
+      model: aiClient(process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini'),
       system: [buildIsaakPersona({ context: contextType }), runtimeContext.systemBlock]
         .filter(Boolean)
         .join('\n\n'),
@@ -379,7 +382,8 @@ export async function POST(req: Request) {
         }),
 
         holdedListInvoices: tool({
-          description: 'Lista facturas de Holded del tenant conectado para que Isaak pueda analizarlas.',
+          description:
+            'Lista facturas de Holded del tenant conectado para que Isaak pueda analizarlas.',
           inputSchema: zodSchema(
             z.object({
               page: z.number().min(1).optional(),
@@ -416,7 +420,8 @@ export async function POST(req: Request) {
         }),
 
         holdedListContacts: tool({
-          description: 'Lista contactos de Holded del tenant conectado para preparar facturas o búsquedas.',
+          description:
+            'Lista contactos de Holded del tenant conectado para preparar facturas o búsquedas.',
           inputSchema: zodSchema(
             z.object({
               page: z.number().min(1).optional(),
@@ -521,7 +526,8 @@ export async function POST(req: Request) {
         }),
 
         holdedListProjects: tool({
-          description: 'Lista proyectos de Holded del tenant conectado para que Isaak explique contexto operativo y rentabilidad.',
+          description:
+            'Lista proyectos de Holded del tenant conectado para que Isaak explique contexto operativo y rentabilidad.',
           inputSchema: zodSchema(
             z.object({
               page: z.number().min(1).optional(),
@@ -556,7 +562,8 @@ export async function POST(req: Request) {
         }),
 
         holdedGetProject: tool({
-          description: 'Obtiene un proyecto concreto de Holded por id para que Isaak pueda explicarlo o revisar su contexto.',
+          description:
+            'Obtiene un proyecto concreto de Holded por id para que Isaak pueda explicarlo o revisar su contexto.',
           inputSchema: zodSchema(
             z.object({
               projectId: z.string().min(1),
@@ -586,7 +593,8 @@ export async function POST(req: Request) {
         }),
 
         holdedListProjectTasks: tool({
-          description: 'Lista tareas de un proyecto de Holded para revisar avance operativo desde Isaak.',
+          description:
+            'Lista tareas de un proyecto de Holded para revisar avance operativo desde Isaak.',
           inputSchema: zodSchema(
             z.object({
               projectId: z.string().min(1),
@@ -622,7 +630,8 @@ export async function POST(req: Request) {
         }),
 
         holdedCreateInvoiceDraft: tool({
-          description: 'Crea un borrador de factura en Holded para el tenant conectado, solo cuando el usuario lo confirma explícitamente.',
+          description:
+            'Crea un borrador de factura en Holded para el tenant conectado, solo cuando el usuario lo confirma explícitamente.',
           inputSchema: zodSchema(
             z.object({
               confirm: z.boolean(),

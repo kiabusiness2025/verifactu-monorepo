@@ -179,7 +179,8 @@ SESSION_SECRET=tu_secreto_aleatorio_aqui
 DATABASE_URL=postgres://...
 
 # OpenAI (para Isaak)
-OPENAI_API_KEY=...
+ISAAK_OPENAI_SERVICE_ACCOUNT=...
+ISAAK_OPENAI_MODEL=gpt-4.1-mini
 
 # URLs públicas
 NEXT_PUBLIC_LANDING_URL=https://www.verifactu.business

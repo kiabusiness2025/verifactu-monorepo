@@ -63,16 +63,16 @@ async function chatWithGemini(userMessage: string): Promise<string> {
 
 // Función para chat con GPT-4
 async function chatWithGPT4(userMessage: string): Promise<string> {
-  const OPENAI_API_KEY = resolveOpenAIKey(process.env);
+  const openAIKey = resolveOpenAIKey(process.env);
 
-  if (!OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY no configurado');
+  if (!openAIKey) {
+    throw new Error('OpenAI no configurado');
   }
 
   const prompt = buildIsaakPrompt(userMessage);
 
   return callOpenAIResponses({
-    apiKey: OPENAI_API_KEY,
+    apiKey: openAIKey,
     model: process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini',
     inputText: prompt,
     temperature: 0.7,

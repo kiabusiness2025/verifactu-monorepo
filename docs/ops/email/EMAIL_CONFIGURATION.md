@@ -22,19 +22,20 @@ ADMIN_EMAILS=kiabusiness2025@gmail.com,soporte@verifactu.business
 ADMIN_NOTIFICATION_EMAIL=kiabusiness2025@gmail.com
 
 # Isaak para auto-respuesta
-OPENAI_API_KEY=sk-xxx
+ISAAK_OPENAI_SERVICE_ACCOUNT=sk-svcacct-xxx
+ISAAK_OPENAI_MODEL=gpt-4.1-mini
 ISAAK_SUPPORT_ENABLED=true
 ```
 
 ### Dominios y Alias de Email
 
-| Alias | Uso | Descripción |
-|-------|-----|-------------|
-| `soporte@verifactu.business` | **Principal** | Soporte técnico y comunicación bidireccional |
+| Alias                               | Uso               | Descripción                                      |
+| ----------------------------------- | ----------------- | ------------------------------------------------ |
+| `soporte@verifactu.business`        | **Principal**     | Soporte técnico y comunicación bidireccional     |
 | `notificaciones@verifactu.business` | **Transaccional** | Verificación, login, reset y alertas del sistema |
-| `info@verifactu.business` | **Comercial** | Demos, presupuestos, contacto comercial |
-| `hola@verifactu.business` | **Publico** | Entrada general (landing) |
-| `kiabusiness2025@gmail.com` | **Admin** | Notificaciones internas y escalamiento |
+| `info@verifactu.business`           | **Comercial**     | Demos, presupuestos, contacto comercial          |
+| `hola@verifactu.business`           | **Publico**       | Entrada general (landing)                        |
+| `kiabusiness2025@gmail.com`         | **Admin**         | Notificaciones internas y escalamiento           |
 
 **Gestión**: Alias creados y gestionados vía CLI de Google Cloud
 
@@ -43,9 +44,11 @@ ISAAK_SUPPORT_ENABLED=true
 ## 📬 Plantillas Disponibles
 
 ### 1. **Email de Verificación** ([VerifyEmail.tsx](../apps/landing/emails/VerifyEmail.tsx))
+
 **Trigger**: Registro de nuevo usuario
 
 **Contenido**:
+
 - Botón de verificación con enlace
 - Mensaje de bienvenida
 - Soporte de ayuda
@@ -56,9 +59,11 @@ ISAAK_SUPPORT_ENABLED=true
 ---
 
 ### 2. **Email de Bienvenida** ([WelcomeEmail.tsx](../apps/landing/emails/WelcomeEmail.tsx))
+
 **Trigger**: Después de verificar email
 
 **Contenido**:
+
 - Saludo personalizado
 - Primeros pasos
 - Recursos útiles
@@ -69,9 +74,11 @@ ISAAK_SUPPORT_ENABLED=true
 ---
 
 ### 3. **Reset de Contraseña** ([ResetPasswordEmail.tsx](../apps/landing/emails/ResetPasswordEmail.tsx))
+
 **Trigger**: Usuario olvida contraseña
 
 **Contenido**:
+
 - Botón para restablecer
 - Advertencia de seguridad
 - Enlace de soporte
@@ -82,9 +89,11 @@ ISAAK_SUPPORT_ENABLED=true
 ---
 
 ### 4. **Contraseña Cambiada** ([PasswordChangedEmail.tsx](../apps/landing/emails/PasswordChangedEmail.tsx))
+
 **Trigger**: Contraseña modificada exitosamente
 
 **Contenido**:
+
 - Confirmación del cambio
 - Alerta de seguridad
 - Contacto de emergencia
@@ -95,9 +104,11 @@ ISAAK_SUPPORT_ENABLED=true
 ---
 
 ### 5. **Invitación a Equipo** ([TeamInviteEmail.tsx](../apps/landing/emails/TeamInviteEmail.tsx))
+
 **Trigger**: Usuario invita a otro a su empresa
 
 **Contenido**:
+
 - Nombre del invitador
 - Empresa destino
 - Rol asignado
@@ -112,16 +123,18 @@ ISAAK_SUPPORT_ENABLED=true
 ### EmailHeader ([EmailHeader.tsx](../apps/landing/emails/EmailHeader.tsx))
 
 **Incluye**:
+
 - Logo de Verifactu
 - Información de contacto: `info@verifactu.business` (alias publico)
 - Texto descriptivo
 - Estilo corporativo
 
 **Uso**:
+
 ```tsx
 import { EmailHeader } from './EmailHeader';
 
-<EmailHeader />
+<EmailHeader />;
 ```
 
 ---
@@ -129,16 +142,18 @@ import { EmailHeader } from './EmailHeader';
 ### EmailFooter ([EmailHeader.tsx](../apps/landing/emails/EmailHeader.tsx))
 
 **Incluye**:
+
 - Copyright © 2026 Verifactu Business
 - Enlace a soporte: `soporte@verifactu.business` (centraliza todo)
 - Enlaces legales (Privacidad, Términos)
 - Diseño responsive
 
 **Uso**:
+
 ```tsx
 import { EmailFooter } from './EmailHeader';
 
-<EmailFooter />
+<EmailFooter />;
 ```
 
 ---
@@ -196,11 +211,13 @@ sendCustomEmail({
 ## 🎯 Integración con Resend
 
 ### API Endpoint
+
 ```
 POST https://api.resend.com/emails
 ```
 
 ### Headers
+
 ```json
 {
   "Authorization": "Bearer RESEND_API_KEY",
@@ -209,6 +226,7 @@ POST https://api.resend.com/emails
 ```
 
 ### Payload
+
 ```json
 {
   "from": "Verifactu Business <soporte@verifactu.business>",
@@ -222,14 +240,14 @@ POST https://api.resend.com/emails
 
 ## ✅ Estado de Configuración
 
-| Componente | Estado | Notas |
-|------------|--------|-------|
-| API Key Resend | ✅ Configurado | `re_BK6kKjAd_34XYNfwf6qkHC7FrQQb64gKA` |
-| Dominio verificado | ✅ `soporte@verifactu.business` | Verificar en Resend dashboard |
-| Plantillas creadas | ✅ 5 plantillas | Verificación, Bienvenida, Reset, Cambio, Invitación |
-| Header/Footer | ✅ Componentes reutilizables | Con logo y firma |
-| Email de admin | ✅ `kiabusiness2025@gmail.com` | En ADMIN_EMAILS |
-| Email soporte | ✅ `soporte@verifactu.business` | Para comunicaciones |
+| Componente         | Estado                          | Notas                                               |
+| ------------------ | ------------------------------- | --------------------------------------------------- |
+| API Key Resend     | ✅ Configurado                  | `re_BK6kKjAd_34XYNfwf6qkHC7FrQQb64gKA`              |
+| Dominio verificado | ✅ `soporte@verifactu.business` | Verificar en Resend dashboard                       |
+| Plantillas creadas | ✅ 5 plantillas                 | Verificación, Bienvenida, Reset, Cambio, Invitación |
+| Header/Footer      | ✅ Componentes reutilizables    | Con logo y firma                                    |
+| Email de admin     | ✅ `kiabusiness2025@gmail.com`  | En ADMIN_EMAILS                                     |
+| Email soporte      | ✅ `soporte@verifactu.business` | Para comunicaciones                                 |
 
 ---
 
@@ -261,7 +279,7 @@ import { sendVerificationEmail } from '@/lib/email/emailService';
 await sendVerificationEmail({
   email: 'test@ejemplo.com',
   userName: 'Usuario Test',
-  verificationLink: 'https://verifactu.business/verify?token=xxx'
+  verificationLink: 'https://verifactu.business/verify?token=xxx',
 });
 ```
 
@@ -270,11 +288,13 @@ await sendVerificationEmail({
 ## 🎨 Diseño de Firma
 
 ### Logo
+
 - **URL**: `https://verifactu.business/brand/logo-horizontal-light.png`
 - **Tamaño**: 140px width
 - **Formato**: PNG con fondo transparente
 
 ### Información de Contacto
+
 ```
 Soporte | Verifactu Business
 soporte@verifactu.business
@@ -283,6 +303,7 @@ Registro de usuarios y comunicaciones generales
 ```
 
 ### Colores Corporativos
+
 - **Azul principal**: `#0060F0`
 - **Texto oscuro**: `#1b2a3a`
 - **Texto secundario**: `#6b7c8a`
@@ -293,12 +314,13 @@ Registro de usuarios y comunicaciones generales
 ## 📊 Logs y Monitoreo
 
 ### Console Logs
+
 ```typescript
 // Éxito
-[📧 EMAIL] Sent successfully: { 
-  to: 'usuario@ejemplo.com', 
-  subject: 'Asunto', 
-  messageId: 'xxx' 
+[📧 EMAIL] Sent successfully: {
+  to: 'usuario@ejemplo.com',
+  subject: 'Asunto',
+  messageId: 'xxx'
 }
 
 // Error
@@ -306,6 +328,7 @@ Registro de usuarios y comunicaciones generales
 ```
 
 ### Verificar en Resend Dashboard
+
 - Ver emails enviados
 - Estado de entrega
 - Tasas de apertura
@@ -316,18 +339,21 @@ Registro de usuarios y comunicaciones generales
 ## 🚨 Troubleshooting
 
 ### Email no se envía
+
 1. ✅ Verificar `RESEND_API_KEY` configurado
 2. ✅ Confirmar dominio verificado en Resend
 3. ✅ Revisar logs en Resend Dashboard
 4. ✅ Verificar que el email destino sea válido
 
 ### Email va a Spam
+
 1. ✅ Configurar registros SPF/DKIM/DMARC
 2. ✅ Usar dominio verificado
 3. ✅ Evitar palabras spam en asunto
 4. ✅ Incluir enlace de "unsubscribe"
 
 ### Plantilla no renderiza
+
 1. ✅ Verificar HTML válido
 2. ✅ Revisar imports de componentes
 3. ✅ Confirmar sintaxis JSX correcta
@@ -357,15 +383,15 @@ Log al admin        kiabusiness2025@gmail.com
 
 ### Categorías de Clasificación
 
-| Categoría | Auto-respuesta | Escala a humano |
-|-----------|----------------|-----------------|
-| `technical` | ✅ Tutoriales y guías | ❌ Bugs complejos |
-| `billing` | ✅ Info de planes | ⚠️ Reembolsos |
+| Categoría         | Auto-respuesta         | Escala a humano          |
+| ----------------- | ---------------------- | ------------------------ |
+| `technical`       | ✅ Tutoriales y guías  | ❌ Bugs complejos        |
+| `billing`         | ✅ Info de planes      | ⚠️ Reembolsos            |
 | `feature_request` | ✅ Agradece y confirma | ✅ Notifica para roadmap |
-| `bug_report` | ⚠️ Pide detalles | ✅ Si es crítico |
-| `general` | ✅ FAQ y ayuda básica | ❌ Casos complejos |
-| `urgent` | ❌ Siempre escala | ✅ Prioridad alta |
-| `spam` | 🚫 Filtrado automático | ❌ No se procesa |
+| `bug_report`      | ⚠️ Pide detalles       | ✅ Si es crítico         |
+| `general`         | ✅ FAQ y ayuda básica  | ❌ Casos complejos       |
+| `urgent`          | ❌ Siempre escala      | ✅ Prioridad alta        |
+| `spam`            | 🚫 Filtrado automático | ❌ No se procesa         |
 
 ### Prioridades
 
@@ -389,7 +415,8 @@ Secret: [generar y guardar en .env]
 
 ```bash
 RESEND_WEBHOOK_SECRET=whsec_xxx
-OPENAI_API_KEY=sk-xxx
+ISAAK_OPENAI_SERVICE_ACCOUNT=sk-svcacct-xxx
+ISAAK_OPENAI_MODEL=gpt-4.1-mini
 ISAAK_SUPPORT_ENABLED=true
 ADMIN_NOTIFICATION_EMAIL=kiabusiness2025@gmail.com
 ```
@@ -411,13 +438,16 @@ curl -X POST https://verifactu.business/api/webhooks/resend/inbound \
 ### Respuestas Automáticas de Isaak
 
 #### Ejemplo 1: Pregunta Técnica Simple
+
 **Email entrante**:
+
 ```
 De: cliente@empresa.com
 Asunto: ¿Cómo generar una factura?
 ```
 
 **Isaak responde**:
+
 ```
 Hola,
 
@@ -438,13 +468,16 @@ Isaak - Verifactu Business
 ```
 
 #### Ejemplo 2: Caso Urgente
+
 **Email entrante**:
+
 ```
 De: cliente@empresa.com
 Asunto: URGENTE: No puedo acceder a mi cuenta
 ```
 
 **Isaak NO responde, escala a humano**:
+
 - ✅ Envía ACK al cliente: "Recibimos tu mensaje urgente..."
 - ✅ Notifica a `kiabusiness2025@gmail.com` con prioridad CRITICAL
 - ✅ Admin recibe email con botón "Responder Ahora"
@@ -488,6 +521,7 @@ Panel en Admin para gestionar emails:
 ```
 
 Características:
+
 - 📥 Bandeja de entrada de emails clasificados
 - 🤖 Ver respuestas de Isaak
 - ✅ Marcar como resuelto
@@ -510,4 +544,3 @@ Características:
 - [Resend Docs](https://resend.com/docs)
 - [React Email](https://react.email)
 - [Email Best Practices](https://www.emailonacid.com/blog/article/email-development/email-development-best-practices-2/)
-

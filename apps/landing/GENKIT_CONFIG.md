@@ -45,7 +45,7 @@ export const ai = genkit({
 Endpoint que usa el flow de Genkit:
 
 ```typescript
-import { isaakChatFlow } from "@/lib/genkit";
+import { isaakChatFlow } from '@/lib/genkit';
 
 const text = await isaakChatFlow(userMessage);
 ```
@@ -57,12 +57,14 @@ const text = await isaakChatFlow(userMessage);
 API Key de Google AI para usar Gemini.
 
 **Obtener API Key:**
+
 1. Ve a [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. Inicia sesión con tu cuenta de Google
 3. Crea una nueva API key
 4. Copia la clave y configúrala en Vercel
 
 **En Vercel:**
+
 - Settings → Environment Variables
 - Name: `GOOGLE_AI_API_KEY`
 - Value: `tu-api-key-aquí`
@@ -113,23 +115,24 @@ Tu objetivo es ayudar a autónomos y pequeñas empresas...`;
 ```
 
 **Para modificar el comportamiento:**
+
 1. Edita el prompt en `lib/genkit.ts`
 2. Ajusta `temperature` (0.0 = determinista, 1.0 = creativo)
 3. Ajusta `maxOutputTokens` (longitud máxima de respuesta)
 
-## Migración desde OpenAI
+## OpenAI directo
 
-Antes usábamos OpenAI directamente:
+Si necesitas llamar OpenAI directamente fuera de Genkit, usa Responses API:
 
 ```typescript
-// ANTES
-const response = await fetch("https://api.openai.com/v1/chat/completions", {
-  headers: { Authorization: `Bearer ${ISAAK_API_KEY}` },
-  body: JSON.stringify({ model: "gpt-4-turbo", messages: [...] }),
+const response = await fetch("https://api.openai.com/v1/responses", {
+  headers: { Authorization: `Bearer ${ISAAK_OPENAI_SERVICE_ACCOUNT}` },
+  body: JSON.stringify({ model: "gpt-4.1-mini", input: [...] }),
 });
 ```
 
 **Ahora con Genkit:**
+
 - ✅ Telemetría automática
 - ✅ Caching de prompts
 - ✅ Tracing de flujos
@@ -151,6 +154,7 @@ Verifica que la variable esté en Vercel o en tu `.env.local`.
 ### Respuestas lentas
 
 Gemini Flash es muy rápido (<1s). Si notas lentitud:
+
 - Verifica la conexión a internet
 - Revisa Firebase Telemetry para ver latencias
 - Considera usar `gemini-1.5-pro` si necesitas respuestas más completas
