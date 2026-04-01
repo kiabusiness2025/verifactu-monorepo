@@ -37,7 +37,7 @@ Important:
 - `Userinfo URL`
   - `https://app.verifactu.business/oauth/userinfo`
 - `Protected Resource Metadata`
-  - `https://app.verifactu.business/.well-known/oauth-protected-resource`
+  - `https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded`
 
 ### 3. OAuth client fields
 
@@ -70,9 +70,9 @@ Example for the current redirect URI already used in your OpenAI setup:
 - `Client Secret`
   - blank
 
-### 4. Supported scopes
+### 4. Supported scopes for OpenAI review v2
 
-Use this exact value if the UI asks for `Supported scopes`:
+Use this exact value if the UI asks for `Supported scopes` in the OpenAI submission flow for the reduced v2 surface:
 
 `mcp.read holded.invoices.read holded.contacts.read holded.accounts.read holded.crm.read holded.projects.read holded.invoices.write`
 
@@ -261,7 +261,7 @@ Userinfo URL
 https://app.verifactu.business/oauth/userinfo
 
 Protected Resource Metadata
-https://app.verifactu.business/.well-known/oauth-protected-resource
+https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded
 
 OAuth Client ID
 Use dynamic client registration. For the current ChatGPT redirect URI https://chatgpt.com/connector/oauth/Py3iPxF981UJ, the derived client_id is:
@@ -456,9 +456,9 @@ Y puede ampliarse via:
 
 - `MCP_OAUTH_ALLOWED_REDIRECT_ORIGINS`
 
-## Scopes soportados
+## Scopes para submission v2
 
-Scopes expuestos por el runtime:
+Scopes por defecto y surface revisada por OpenAI:
 
 - `mcp.read`
 - `holded.invoices.read`
@@ -477,6 +477,11 @@ Scopes por defecto:
 - `holded.crm.read`
 - `holded.projects.read`
 - `holded.invoices.write`
+
+Nota:
+
+- el runtime soporta internamente scopes adicionales de documents, treasury, expenses, numbering, products, payments, taxes, payment methods, contact groups, remittances, services, warehouses y otros bloques de Holded
+- pero la v2 de submission deja por defecto una superficie mas estrecha y coherente con las tools justificadas en esta guia
 
 ## Herramientas disponibles hoy
 

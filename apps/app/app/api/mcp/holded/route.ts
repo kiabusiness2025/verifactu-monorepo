@@ -269,7 +269,7 @@ export async function GET(request: NextRequest) {
     NextResponse.json({
       name: 'Isaak for Holded',
       description:
-        'Public-ready MCP connector for Isaak and Holded. It lets authorized Verifactu users inspect and operate validated Holded invoicing modules such as documents, contacts, treasury, payments, products, services, warehouses, numbering series, contact groups, taxes, remittances, accounting accounts, CRM bookings, and project context for the connected tenant.',
+        'Public-ready MCP connector for Isaak and Holded. By default it exposes a review-safe subset for invoices, contacts, accounting accounts, CRM bookings, project context, and invoice draft creation for the connected tenant. Broader Holded surfaces remain available behind additional scopes.',
       protocol: 'MCP over JSON-RPC HTTP',
       endpoint: '/api/mcp/holded',
       oauth: {

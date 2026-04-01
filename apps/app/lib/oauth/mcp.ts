@@ -276,7 +276,9 @@ export function getSupportedScopes() {
 }
 
 export function getDefaultScopes() {
-  return getHoldedMcpScopePreset('invoicing_accounting');
+  // Keep the public ChatGPT review surface intentionally narrow.
+  // Broader Holded scopes remain supported but are not granted by default.
+  return getHoldedMcpScopePreset('openai_review_v2');
 }
 
 export function ensureScopesAllowed(scope: string) {
