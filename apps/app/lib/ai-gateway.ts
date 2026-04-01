@@ -26,7 +26,7 @@ import { createOpenAI } from '@ai-sdk/openai';
  */
 export const createAIGatewayClient = (apiKey: string) => {
   if (!apiKey) {
-    throw new Error('CLAVE_API_AI_VERCEL o VERCEL_AI_API_KEY no está configurado');
+    throw new Error('AI Gateway no está configurado');
   }
 
   return {

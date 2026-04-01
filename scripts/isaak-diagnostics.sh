@@ -75,7 +75,7 @@ fi
 
 # Check 4: Environment variables
 echo -e "${YELLOW}[4]${NC} Checking required environment variables..."
-REQUIRED_VARS=("CLAVE_API_AI_VERCEL" "DATABASE_URL" "NEXT_PUBLIC_FIREBASE_PROJECT_ID")
+REQUIRED_VARS=("ISAAK_NEW_OPENAI_API_KEY" "DATABASE_URL" "NEXT_PUBLIC_FIREBASE_PROJECT_ID")
 
 for var in "${REQUIRED_VARS[@]}"; do
     if [ -f ".env.local" ] && grep -q "$var=" .env.local; then
