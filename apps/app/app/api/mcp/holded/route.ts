@@ -10,7 +10,9 @@ import {
   getAuthorizationEndpoint,
   getAuthorizationServerMetadataUrl,
   getMcpResourceUrl,
+  getRegistrationEndpoint,
   getSupportedScopes,
+  getUserInfoEndpoint,
   hasRequiredScopes,
   MCP_TOOL_SCOPES,
   getProtectedResourceMetadataUrl,
@@ -275,6 +277,8 @@ export async function GET(request: NextRequest) {
       oauth: {
         authorizationEndpoint: getAuthorizationEndpoint(),
         tokenEndpoint: getTokenEndpoint(),
+        registrationEndpoint: getRegistrationEndpoint(),
+        userinfoEndpoint: getUserInfoEndpoint(),
         authorizationServerMetadata: getAuthorizationServerMetadataUrl(),
         protectedResourceMetadata: getProtectedResourceMetadataUrl(),
         resource: getMcpResourceUrl(),
