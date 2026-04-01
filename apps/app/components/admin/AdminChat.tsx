@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import { Send, Terminal, Code, Eye, Bug, Loader2 } from 'lucide-react';
-import { formatDateTime, formatTime } from "@/src/lib/formatters";
+import { formatDateTime, formatTime } from '@/src/lib/formatters';
 
 type Message = {
   id: string;
@@ -16,7 +16,15 @@ type Message = {
   };
 };
 
-type CommandType = '/logs' | '/errors' | '/deploy' | '/preview' | '/check' | '/vercel' | '/isaak' | '/help';
+type CommandType =
+  | '/logs'
+  | '/errors'
+  | '/deploy'
+  | '/preview'
+  | '/check'
+  | '/vercel'
+  | '/isaak'
+  | '/help';
 
 const COMMANDS: Record<CommandType, { description: string; example: string; icon: any }> = {
   '/deploy': { description: 'Ver despliegues Vercel', example: '/deploy', icon: '🚀' },
@@ -26,7 +34,7 @@ const COMMANDS: Record<CommandType, { description: string; example: string; icon
   '/vercel': { description: 'Historial Vercel', example: '/vercel history', icon: '▲' },
   '/isaak': { description: 'Trigger auto-fix con Isaak', example: '/isaak fix', icon: '🤖' },
   '/preview': { description: 'Vista previa', example: '/preview InvoicesTable', icon: '👁️' },
-  '/help': { description: 'Ayuda completa', example: '/help', icon: '❓' }
+  '/help': { description: 'Ayuda completa', example: '/help', icon: '❓' },
 };
 
 const QUICK_COMMANDS = [
@@ -42,9 +50,10 @@ export function AdminChat() {
     {
       id: '1',
       role: 'system',
-      content: '¡Hola! Soy tu asistente de administración. Puedo ayudarte a verificar el estado del sistema, revisar logs, previsualizar componentes y solucionar problemas. Usa /help para ver comandos disponibles.',
-      timestamp: new Date()
-    }
+      content:
+        '¡Hola! Soy tu asistente de administración. Puedo ayudarte a verificar el estado del sistema, revisar logs, previsualizar componentes y solucionar problemas. Usa /help para ver comandos disponibles.',
+      timestamp: new Date(),
+    },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,64 +66,67 @@ export function AdminChat() {
 
   const handleCommand = async (command: string): Promise<string> => {
     const [cmd, ...args] = command.split(' ');
-    
+
     switch (cmd as CommandType) {
       case '/help':
         return Object.entries(COMMANDS)
-          .map(([cmd, { description, example }]) => 
-            `**${cmd}**: ${description}\nEjemplo: \`${example}\``
+          .map(
+            ([cmd, { description, example }]) =>
+              `**${cmd}**: ${description}\nEjemplo: \`${example}\``
           )
           .join('\n\n');
-      
+
       case '/logs':
         const target = args[0] || 'all';
         return `Obteniendo logs de ${target}...\n\n[Aquí se mostrarían logs en tiempo real]`;
-      
+
       case '/errors':
         return `Buscando errores recientes...\n\n[Lista de errores TypeScript, runtime, etc.]`;
-      
+
       case '/deploy':
-        return `Estado del último deploy:\n\n✓ Vercel: Desplegado hace 5 min\n✓ Cloud Run: Activo\n⚠ Esperando confirmación de tests`;
-      
+        return `Estado del último deploy:\n\n✓ Vercel: Desplegado hace 5 min\n⚠ Esperando confirmación de tests`;
+
       case '/preview':
         const component = args[0];
         if (!component) return 'Especifica un componente. Ejemplo: `/preview InvoicesTable`';
         return `Vista previa de ${component}:\n\n[Aquí se renderizaría el componente]`;
-      
+
       case '/check':
         const system = args[0] || 'all';
         return `Verificando ${system}...\n\n✓ Base de datos: Conectada\n✓ Firebase: OK\n✓ API VeriFactu: Operativa`;
-      
+
       case '/vercel':
         const action = args[0] || 'history';
-        
+
         // Fetch from API
         try {
           const res = await fetch(`/api/admin/vercel?action=deployments&limit=5`);
           if (!res.ok) throw new Error('Failed to fetch');
-          
+
           const data = await res.json();
           const deployments = data.deployments || [];
-          
+
           if (deployments.length === 0) {
             return 'No hay deployments recientes o credenciales de Vercel no configuradas.';
           }
-          
-          const formatted = deployments.map((d: any, i: number) => {
-            const status = d.state === 'READY' ? '✅' : d.state === 'ERROR' ? '❌' : '⏳';
-            const date = formatDateTime(d.createdAt);
-            const commit = d.meta?.githubCommitMessage || 'Sin mensaje';
-            return `${i + 1}. ${status} **${d.target}** - ${date}\n   URL: ${d.url}\n   Commit: ${commit.substring(0, 50)}`;
-          }).join('\n\n');
-          
+
+          const formatted = deployments
+            .map((d: any, i: number) => {
+              const status = d.state === 'READY' ? '✅' : d.state === 'ERROR' ? '❌' : '⏳';
+              const date = formatDateTime(d.createdAt);
+              const commit = d.meta?.githubCommitMessage || 'Sin mensaje';
+              return `${i + 1}. ${status} **${d.target}** - ${date}\n   URL: ${d.url}\n   Commit: ${commit.substring(0, 50)}`;
+            })
+            .join('\n\n');
+
           return `📦 Últimos 5 deployments en Vercel:\n\n${formatted}`;
         } catch (error) {
           return 'Error al obtener datos de Vercel. Verifica las credenciales en .env.local';
         }
-      
+
       case '/isaak':
         const isaakAction = args[0] || 'fix';
-        
+
         if (isaakAction === 'fix') {
           try {
             const triggerRes = await fetch('/api/admin/isaak/trigger', {
@@ -125,26 +137,26 @@ export function AdminChat() {
                   source: 'admin_chat',
                   timestamp: new Date().toISOString(),
                   triggeredBy: 'manual',
-                  message: 'Auto-fix manual desde Admin Chat'
+                  message: 'Auto-fix manual desde Admin Chat',
                 },
-                autoFix: true
-              })
+                autoFix: true,
+              }),
             });
-            
+
             if (!triggerRes.ok) {
               const errorData = await triggerRes.json();
               return `❌ Error al disparar auto-fix:\n${errorData.error || 'Error desconocido'}\n\nVerifica que GITHUB_TOKEN y GITHUB_REPOSITORY estén configurados.`;
             }
-            
+
             const result = await triggerRes.json();
             return `🤖 **Isaak Auto-Fix Activado**\n\n✅ Workflow disparado exitosamente\n📦 Repositorio: ${result.repository}\n⚙️ Workflow: ${result.workflow}\n\nIsaak está analizando el código y aplicará correcciones automáticas. El deploy se realizará automáticamente después de los fixes.\n\nPuedes ver el progreso en GitHub Actions.`;
           } catch (error) {
             return `❌ Error al conectar con Isaak:\n${error instanceof Error ? error.message : 'Error desconocido'}`;
           }
         }
-        
+
         return 'Comando de Isaak no reconocido. Usa: /isaak fix';
-      
+
       default:
         return null as any;
     }
@@ -157,10 +169,10 @@ export function AdminChat() {
       id: Date.now().toString(),
       role: 'user',
       content: input,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setLoading(true);
 
@@ -176,20 +188,20 @@ export function AdminChat() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            messages: [...messages, userMessage].map(m => ({
+            messages: [...messages, userMessage].map((m) => ({
               role: m.role,
-              content: m.content
+              content: m.content,
             })),
             context: {
               project: 'verifactu',
               environment: process.env.NODE_ENV,
-              timestamp: new Date().toISOString()
-            }
-          })
+              timestamp: new Date().toISOString(),
+            },
+          }),
         });
 
         if (!res.ok) throw new Error('Error en la respuesta');
-        
+
         const data = await res.json();
         response = data.response;
       }
@@ -198,18 +210,21 @@ export function AdminChat() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: 'system',
-        content: 'Error al procesar tu mensaje. Por favor, intenta de nuevo.',
-        timestamp: new Date()
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: 'system',
+          content: 'Error al procesar tu mensaje. Por favor, intenta de nuevo.',
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -230,7 +245,7 @@ export function AdminChat() {
           <Terminal className="w-5 h-5 text-white" />
           <h3 className="font-semibold text-white">Chat de Administración</h3>
         </div>
-        
+
         {/* Quick action buttons */}
         <div className="flex flex-wrap gap-2">
           {QUICK_COMMANDS.map((cmd) => (
@@ -262,14 +277,12 @@ export function AdminChat() {
                 message.role === 'user'
                   ? 'bg-blue-600 text-white'
                   : message.role === 'system'
-                  ? 'bg-yellow-50 text-yellow-900 border border-yellow-200'
-                  : 'bg-gray-100 text-gray-900'
+                    ? 'bg-yellow-50 text-yellow-900 border border-yellow-200'
+                    : 'bg-gray-100 text-gray-900'
               }`}
             >
               <div className="whitespace-pre-wrap text-sm">{message.content}</div>
-              <div className="text-xs opacity-70 mt-1">
-                {formatTime(message.timestamp)}
-              </div>
+              <div className="text-xs opacity-70 mt-1">{formatTime(message.timestamp)}</div>
             </div>
           </div>
         ))}

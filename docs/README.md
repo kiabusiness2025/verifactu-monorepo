@@ -48,8 +48,6 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 **ops/deployment/**
 
 - [ops/deployment/VERCEL_DEPLOYMENT_GUIDE.md](ops/deployment/VERCEL_DEPLOYMENT_GUIDE.md) - Vercel
-- [ops/deployment/CLOUD_RUN_QUICK_REFERENCE.md](ops/deployment/CLOUD_RUN_QUICK_REFERENCE.md) - Cloud Run
-- [ops/deployment/GITHUB_CLOUD_BUILD_SETUP.md](ops/deployment/GITHUB_CLOUD_BUILD_SETUP.md) - CI/CD
 - [ops/CI_CHECKLIST.md](ops/CI_CHECKLIST.md) - Checklist mínimo de CI
 - [ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md](ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md) - Runbook breve para desplegar y validar Isaak for Holded
 
@@ -189,7 +187,7 @@ pnpm --filter verifactu-admin dev
 
 Frontend: Next.js, TypeScript, Tailwind CSS  
 Backend: Firebase, PostgreSQL, Prisma, Genkit  
-Deployment: Vercel, Firebase, Google Cloud Run (opcional)
+Deployment: Vercel, Firebase
 
 ---
 

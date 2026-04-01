@@ -30,10 +30,8 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=536174799167
 NEXT_PUBLIC_FIREBASE_APP_ID=<from .env.local>
 NEXT_PUBLIC_USE_AUTH_EMULATOR=false
 
-ISAAK_API_KEY=<from .env.local>
-ISAAK_ASSISTANT_ID=<from .env.local>
-NEXT_PUBLIC_ISAAK_API_KEY=<from .env.local>
-NEXT_PUBLIC_ISAAK_ASSISTANT_ID=<from .env.local>
+ISAAK_OPENAI_SERVICE_ACCOUNT=<from .env.local>
+ISAAK_OPENAI_MODEL=gpt-4.1-mini
 
 RESEND_API_KEY=<from .env.local>
 RESEND_FROM=Verifactu Business <no-reply@verifactu.business>

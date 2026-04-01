@@ -174,15 +174,8 @@ Reglas de correo (Resend):
 
 **Google AI (Genkit con Gemini)**
 
-- `GOOGLE_AI_API_KEY` ⚠️ **REQUERIDO** - API Key de Google AI para Isaak chat  
-  Obtener en [Google AI Studio](https://makersuite.google.com/app/apikey)
-
-**Isaak Chat / OpenAI (Legacy, deprecado)**
-
-- `ISAAK_API_KEY` (ya no se usa, reemplazado por Genkit)
-- `ISAAK_ASSISTANT_ID` (ya no se usa)
-- `NEXT_PUBLIC_ISAAK_API_KEY` (compatibilidad)
-- `NEXT_PUBLIC_ISAAK_ASSISTANT_ID` (compatibilidad)
+- `ISAAK_OPENAI_SERVICE_ACCOUNT` ⚠️ **REQUERIDO** - clave de service account de OpenAI para el chat de Isaak
+- `ISAAK_OPENAI_MODEL` opcional - por defecto `gpt-4.1-mini`
 
 **Resend Email Service (leads)**
 

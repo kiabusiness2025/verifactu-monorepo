@@ -85,7 +85,7 @@ export default function IsaakPublicChat() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/vertex-chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message }),

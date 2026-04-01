@@ -7,30 +7,35 @@ Detectar y corregir automáticamente errores de TypeScript, build y deployment s
 ## 🔧 Componentes
 
 ### 1. GitHub Actions Workflow
+
 **Archivo:** `.github/workflows/auto-fix-and-deploy.yml`
 
 Ejecuta automáticamente en cada push:
+
 - ✅ Type check con TypeScript
 - ✅ ESLint validation
 - ✅ Auto-fix de errores comunes
 - ✅ Commit automático de fixes
 - ✅ Re-validación post-fix
 - ✅ Deploy a Vercel (producción)
-- ✅ Deploy a Cloud Run (API)
 
 ### 2. Auto-Fix Script
+
 **Archivo:** `scripts/auto-fix-typescript.js`
 
 Analiza errores de TypeScript y aplica fixes automáticos para:
+
 - Missing imports (React, Next.js, Prisma)
 - Unused variables
 - Type mismatches (con sugerencias)
 - Missing properties (con warnings)
 
 ### 3. Pre-Deploy Validation
+
 **Archivo:** `scripts/pre-deploy-check.js`
 
 Ejecuta validaciones exhaustivas antes de desplegar:
+
 - Prisma schema validation
 - TypeScript compilation
 - Build test
@@ -38,9 +43,11 @@ Ejecuta validaciones exhaustivas antes de desplegar:
 - Dependencies verification
 
 ### 4. Pre-Commit Hook
+
 **Archivo:** `.git/hooks/pre-commit`
 
 Valida código antes de cada commit:
+
 - Type check apps/app y apps/landing
 - Lint check
 - Prisma validation
@@ -48,6 +55,7 @@ Valida código antes de cada commit:
 ## 📋 Configuración necesaria
 
 ### GitHub Secrets
+
 Añade estos secrets en tu repositorio de GitHub:
 
 ```bash
@@ -101,6 +109,7 @@ gcloud iam service-accounts keys create gcp-key.json \
 ## 🚀 Uso
 
 ### Modo Automático (recomendado)
+
 Simplemente haz push a `main`:
 
 ```bash
@@ -110,6 +119,7 @@ git push origin main
 ```
 
 El workflow automáticamente:
+
 1. Detecta errores
 2. Aplica fixes
 3. Valida
@@ -118,11 +128,13 @@ El workflow automáticamente:
 ### Modo Manual
 
 #### Pre-deploy check local:
+
 ```bash
 pnpm run pre-deploy
 ```
 
 #### Auto-fix local:
+
 ```bash
 cd apps/app
 pnpm exec tsc --noEmit > typecheck-errors.log 2>&1 || true
@@ -130,6 +142,7 @@ node ../../scripts/auto-fix-typescript.js typecheck-errors.log
 ```
 
 #### Validación completa:
+
 ```bash
 pnpm run validate
 ```
@@ -158,7 +171,7 @@ Re-check              Build
     ↓                 ↓
    NO → Fail      Deploy
    SÍ ↓              ↓
-  Deploy         Vercel + Cloud Run
+  Deploy         Vercel
 ```
 
 ## 🛠 Mantenimiento
@@ -193,9 +206,9 @@ Edita `scripts/pre-deploy-check.js`:
 ## 📊 Monitoreo
 
 Ver ejecuciones en:
+
 - GitHub → Actions tab
 - Vercel Dashboard → Deployments
-- Google Cloud Console → Cloud Run
 
 ## ⚡ Optimizaciones
 
@@ -214,6 +227,6 @@ Ver ejecuciones en:
 ## 📝 Logs
 
 Todos los logs están disponibles en:
+
 - GitHub Actions UI
-- Cloud Build console
 - Vercel deployment logs

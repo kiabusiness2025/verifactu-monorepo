@@ -76,6 +76,7 @@ Click en "Guardar y continuar"
 ### 2.4 Sincronización automática con Prisma
 
 Al iniciar sesión con Google/Firebase:
+
 - Si el usuario no existe en Prisma y el email es admin, se crea automáticamente con rol ADMIN.
 - Si el usuario existe y el email es admin, se actualiza el rol a ADMIN si es necesario.
 - El acceso admin está garantizado para soporte@verifactu.business y kiabusiness2025@gmail.com.
@@ -275,15 +276,13 @@ Debe retornar:
    https://admin.verifactu.business/api/auth/callback/google
    ```
 
-### 7.2 Variables de Entorno en Cloud Run
+### 7.2 Variables de Entorno en Vercel
 
 ```bash
-gcloud run services update verifactu-admin \
-  --update-env-vars \
-    NEXTAUTH_URL="https://admin.verifactu.business",\
-    NEXTAUTH_SECRET="<TU_SECRET_PRODUCCION>",\
-    GOOGLE_CLIENT_ID="<TU_CLIENT_ID>",\
-    GOOGLE_CLIENT_SECRET="<TU_CLIENT_SECRET>"
+NEXTAUTH_URL="https://admin.verifactu.business"
+NEXTAUTH_SECRET="<TU_SECRET_PRODUCCION>"
+GOOGLE_CLIENT_ID="<TU_CLIENT_ID>"
+GOOGLE_CLIENT_SECRET="<TU_CLIENT_SECRET>"
 ```
 
 ### 7.3 Verificar en Producción

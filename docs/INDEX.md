@@ -35,7 +35,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 
 ### Operaciones — `docs/ops/`
 
-- Despliegue: `docs/ops/deployment/` (Vercel, Cloud Run, branch protection...)
+- Despliegue: `docs/ops/deployment/` (Vercel, branch protection, validaciones...)
 - Email: `docs/ops/email/` (configuración, aliases, mailbox...)
 - Runbooks: `docs/ops/runbooks/`
   - Identidad admin: `docs/ops/runbooks/ADMIN_USER_IDENTITY_RULES.md`

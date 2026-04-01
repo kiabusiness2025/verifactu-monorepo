@@ -1,19 +1,11 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import {
-  ShieldCheck,
-  Database,
-  UserCheck,
-  Lock,
-  Mail,
-  ExternalLink,
-} from "lucide-react";
-import { getLandingUrl } from "../../lib/urls";
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { ShieldCheck, Database, UserCheck, Lock, Mail, ExternalLink } from 'lucide-react';
+import { getLandingUrl } from '../../lib/urls';
 
 export const metadata: Metadata = {
-  title: "Política de privacidad | Verifactu Business",
-  description:
-    "Información sobre el tratamiento de datos personales en Verifactu Business.",
+  title: 'Política de privacidad | Verifactu Business',
+  description: 'Información sobre el tratamiento de datos personales en Verifactu Business.',
 };
 
 export default function PrivacidadPage() {
@@ -39,7 +31,8 @@ export default function PrivacidadPage() {
             </div>
             <h1 className="text-4xl font-bold text-[#011c67]">Política de privacidad</h1>
             <p className="text-lg text-slate-600">
-              Esta politica explica que datos recogemos, para que los usamos y como puedes ejercer tus derechos.
+              Esta politica explica que datos recogemos, para que los usamos y como puedes ejercer
+              tus derechos.
             </p>
             <p className="text-sm text-slate-500">Ultima actualizacion: 23 de enero de 2026.</p>
           </div>
@@ -61,7 +54,7 @@ export default function PrivacidadPage() {
               Responsable
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Expert Estudios Profesionales, SLU. Contacto:{" "}
+              Expert Estudios Profesionales, SLU. Contacto:{' '}
               <a
                 href="mailto:info@verifactu.business"
                 className="font-semibold text-[#2361d8] underline underline-offset-4"
@@ -88,8 +81,8 @@ export default function PrivacidadPage() {
               Finalidad y base legal
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Prestacion del servicio, soporte y cumplimiento legal. La base legal es la ejecucion del contrato y el
-              cumplimiento normativo.
+              Prestacion del servicio, soporte y cumplimiento legal. La base legal es la ejecucion
+              del contrato y el cumplimiento normativo.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -98,8 +91,8 @@ export default function PrivacidadPage() {
               Retencion
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Conservamos los datos mientras exista una relacion activa o el tiempo necesario para cumplir obligaciones
-              legales y soporte.
+              Conservamos los datos mientras exista una relacion activa o el tiempo necesario para
+              cumplir obligaciones legales y soporte.
             </p>
           </div>
         </div>
@@ -110,8 +103,8 @@ export default function PrivacidadPage() {
             Subencargados y proveedores
           </div>
           <p className="mt-2 text-sm text-slate-600">
-            Utilizamos proveedores para operar el servicio (pagos, email, hosting e IA). Solo tratamos los datos
-            necesarios para prestar el servicio.
+            Utilizamos proveedores para operar el servicio (pagos, email, hosting e IA). Solo
+            tratamos los datos necesarios para prestar el servicio.
           </p>
           <div className="mt-3 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -124,7 +117,7 @@ export default function PrivacidadPage() {
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="font-semibold text-slate-700">Hosting e IA</div>
-              <p className="mt-1 text-xs">Google Cloud y Vertex AI.</p>
+              <p className="mt-1 text-xs">Vercel y OpenAI.</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="font-semibold text-slate-700">Seguridad</div>
@@ -139,7 +132,7 @@ export default function PrivacidadPage() {
             Ejercicio de derechos
           </div>
           <p className="mt-2 text-sm text-slate-600">
-            Puedes acceder, rectificar o eliminar tus datos. Escribe a{" "}
+            Puedes acceder, rectificar o eliminar tus datos. Escribe a{' '}
             <a
               href="mailto:info@verifactu.business"
               className="font-semibold text-[#2361d8] underline underline-offset-4"
@@ -153,7 +146,3 @@ export default function PrivacidadPage() {
     </main>
   );
 }
-
-
-
-

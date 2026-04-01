@@ -1,5 +1,4 @@
-import { resolveOpenAIKey } from '@verifactu/utils';
-import { VertexAI } from '@google-cloud/vertexai';
+import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
 import { NextRequest, NextResponse } from 'next/server';
 
 type RateEntry = {
@@ -91,7 +90,7 @@ Estilo de respuesta:
 - No prometas acciones sobre datos reales ni acceso a informacion privada en este chat abierto.`;
 }
 
-function logProvider(provider: 'vertex' | 'chatgpt' | 'fallback', messageLength: number) {
+function logProvider(provider: 'openai' | 'fallback', messageLength: number) {
   console.info('[Isaak Public Chat] provider_selected', {
     provider,
     messageLength,
@@ -99,109 +98,24 @@ function logProvider(provider: 'vertex' | 'chatgpt' | 'fallback', messageLength:
   });
 }
 
-function extractOpenAIResponseText(payload: any): string | null {
-  if (typeof payload?.output_text === 'string' && payload.output_text.trim()) {
-    return payload.output_text.trim();
-  }
-
-  const output = Array.isArray(payload?.output) ? payload.output : [];
-  for (const item of output) {
-    const content = Array.isArray(item?.content) ? item.content : [];
-    for (const part of content) {
-      if (typeof part?.text === 'string' && part.text.trim()) {
-        return part.text.trim();
-      }
-    }
-  }
-
-  return null;
-}
-
-async function getVertexResponse(message: string): Promise<string | null> {
-  const projectId =
-    process.env.VERTEX_PROJECT_ID || process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
-  const location = process.env.VERTEX_LOCATION || process.env.GCP_LOCATION || 'us-central1';
-
-  if (!projectId) {
-    return null;
-  }
-
-  try {
-    const vertexAI = new VertexAI({
-      project: projectId,
-      location,
-    });
-
-    const model = vertexAI.getGenerativeModel({
-      model: process.env.VERTEX_MODEL_ID || 'gemini-1.5-pro',
-    });
-
-    const chat = model.startChat({
-      history: [
-        {
-          role: 'user',
-          parts: [{ text: buildSystemPrompt() }],
-        },
-        {
-          role: 'model',
-          parts: [{ text: 'Entendido. Soy Isaak y estoy listo para ayudar.' }],
-        },
-      ],
-    });
-
-    const result = await chat.sendMessage(message);
-    const text = result.response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    return text || null;
-  } catch (error) {
-    console.error('[Isaak Public Chat] Vertex error:', error);
-    return null;
-  }
-}
-
-async function getChatGptResponse(message: string): Promise<string | null> {
-  const apiKey =
-    resolveOpenAIKey(process.env) ||
-    process.env.CLAVE_API_AI_VERCEL ||
-    process.env.VERCEL_AI_API_KEY;
+async function getOpenAIResponse(message: string): Promise<string | null> {
+  const apiKey = resolveOpenAIKey(process.env);
 
   if (!apiKey) {
     return null;
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-        input: [
-          {
-            role: 'system',
-            content: [{ type: 'input_text', text: buildSystemPrompt() }],
-          },
-          {
-            role: 'user',
-            content: [{ type: 'input_text', text: message }],
-          },
-        ],
-        temperature: 0.5,
-        max_output_tokens: 450,
-      }),
+    return await callOpenAIResponses({
+      apiKey,
+      model: process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini',
+      instructions: buildSystemPrompt(),
+      inputText: message,
+      temperature: 0.5,
+      maxOutputTokens: 450,
     });
-
-    if (!response.ok) {
-      const errorBody = await response.text().catch(() => '');
-      console.error('[Isaak Public Chat] ChatGPT error:', response.status, errorBody);
-      return null;
-    }
-
-    const payload = await response.json().catch(() => null);
-    return extractOpenAIResponseText(payload);
   } catch (error) {
-    console.error('[Isaak Public Chat] ChatGPT request failed:', error);
+    console.error('[Isaak Public Chat] OpenAI error:', error);
     return null;
   }
 }
@@ -229,16 +143,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Mensaje demasiado largo.' }, { status: 400 });
     }
 
-    const vertexText = await getVertexResponse(message);
-    if (vertexText) {
-      logProvider('vertex', message.length);
-      return NextResponse.json({ response: vertexText });
-    }
-
-    const chatGptText = await getChatGptResponse(message);
-    if (chatGptText) {
-      logProvider('chatgpt', message.length);
-      return NextResponse.json({ response: chatGptText });
+    const openAIText = await getOpenAIResponse(message);
+    if (openAIText) {
+      logProvider('openai', message.length);
+      return NextResponse.json({ response: openAIText });
     }
 
     logProvider('fallback', message.length);

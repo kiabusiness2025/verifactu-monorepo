@@ -67,9 +67,7 @@ verifactu-monorepo/
 │   │   ├── DB_SETUP_GUIDE.md
 │   │   └── MULTI_TENANT_AUTH_SETUP.md
 │   ├── deployment/              # Guías de despliegue
-│   │   ├── VERCEL_DEPLOYMENT_GUIDE.md
-│   │   ├── CLOUD_RUN_QUICK_REFERENCE.md
-│   │   └── GITHUB_CLOUD_BUILD_SETUP.md
+│   │   └── VERCEL_DEPLOYMENT_GUIDE.md
 │   ├── ai/                      # Documentación Genkit/AI
 │   │   ├── ISAAK_V3_QUICK_START.md
 │   │   ├── ISAAK_V3_TESTING_GUIDE.md
@@ -163,12 +161,9 @@ verifactu-monorepo/
 
 ### Despliegue
 
-| Tema      | Ubicación                                                                                    | Descripción                  |
-| --------- | -------------------------------------------------------------------------------------------- | ---------------------------- |
-| Vercel    | [docs/deployment/VERCEL_DEPLOYMENT_GUIDE.md](docs/deployment/VERCEL_DEPLOYMENT_GUIDE.md)     | Despliegue en Vercel         |
-| Cloud Run | [docs/deployment/CLOUD_RUN_QUICK_REFERENCE.md](docs/deployment/CLOUD_RUN_QUICK_REFERENCE.md) | Google Cloud Run             |
-| CI/CD     | [docs/deployment/GITHUB_CLOUD_BUILD_SETUP.md](docs/deployment/GITHUB_CLOUD_BUILD_SETUP.md)   | GitHub Actions / Cloud Build |
-| IAM       | [GOOGLE_CLOUD_RUN_IAM.md](GOOGLE_CLOUD_RUN_IAM.md)                                           | Permisos Google Cloud        |
+| Tema   | Ubicación                                                                                | Descripción          |
+| ------ | ---------------------------------------------------------------------------------------- | -------------------- |
+| Vercel | [docs/deployment/VERCEL_DEPLOYMENT_GUIDE.md](docs/deployment/VERCEL_DEPLOYMENT_GUIDE.md) | Despliegue en Vercel |
 
 ### Mobile
 

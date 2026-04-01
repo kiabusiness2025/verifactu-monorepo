@@ -3,7 +3,7 @@ import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/adminAuth';
 
-const OPENAI_API_KEY = resolveOpenAIKey(process.env);
+const openAIKey = resolveOpenAIKey(process.env);
 const USE_ISAAK = process.env.USE_ISAAK_FOR_ADMIN === 'true';
 const OPENAI_MODEL = process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini';
 
@@ -35,9 +35,9 @@ ${systemContext}
 
     let response: string;
 
-    if (USE_ISAAK && OPENAI_API_KEY) {
+    if (USE_ISAAK && openAIKey) {
       response = await callIsaakAPI(systemPrompt, messages);
-    } else if (OPENAI_API_KEY) {
+    } else if (openAIKey) {
       response = await callOpenAI(systemPrompt, messages);
     } else {
       response = generateSimpleResponse(messages[messages.length - 1].content, systemContext);
@@ -70,17 +70,17 @@ async function buildSystemContext(): Promise<string> {
 **Entorno:** ${process.env.NODE_ENV || 'production'}
 **Version Next.js:** 14.2.35
 **Base de datos:** PostgreSQL con Prisma
-**Servicios:** Firebase Auth, Vercel, Cloud Run
+**Servicios:** Firebase Auth, Vercel
 `.trim();
 }
 
 async function callOpenAI(systemPrompt: string, messages: any[]): Promise<string> {
-  if (!OPENAI_API_KEY) {
-    throw new Error('OPENAI API key not configured');
+  if (!openAIKey) {
+    throw new Error('OpenAI no configurado');
   }
 
   return callOpenAIResponses({
-    apiKey: OPENAI_API_KEY,
+    apiKey: openAIKey,
     model: OPENAI_MODEL,
     instructions: systemPrompt,
     messages: normalizeMessages(messages),
@@ -90,12 +90,12 @@ async function callOpenAI(systemPrompt: string, messages: any[]): Promise<string
 }
 
 async function callIsaakAPI(systemPrompt: string, messages: any[]): Promise<string> {
-  if (!OPENAI_API_KEY) {
-    throw new Error('Isaak API key not configured');
+  if (!openAIKey) {
+    throw new Error('OpenAI no configurado');
   }
 
   return callOpenAIResponses({
-    apiKey: OPENAI_API_KEY,
+    apiKey: openAIKey,
     model: OPENAI_MODEL,
     instructions: systemPrompt,
     messages: normalizeMessages(messages),
@@ -127,7 +127,7 @@ function generateSimpleResponse(userMessage: string, context: string): string {
   }
 
   if (lowerMessage.includes('deploy') || lowerMessage.includes('despliegue')) {
-    return `Para ver el estado del deployment, usa \`/deploy status\`\n\nVercel y Cloud Run estan configurados con auto-deploy desde GitHub Actions.`;
+    return `Para ver el estado del deployment, usa \`/deploy status\`\n\nEl despliegue activo se gestiona en Vercel.`;
   }
 
   return `Entiendo tu consulta. Para ayudarte mejor, puedes:\n\n1. Usar comandos especificos (escribe /help)\n2. Hacer preguntas mas especificas sobre:\n   - Estado del sistema\n   - Errores o logs\n   - Configuracion\n   - Usuarios o datos\n\n${context}`;

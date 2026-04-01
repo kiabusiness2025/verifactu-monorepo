@@ -3,13 +3,15 @@
 ## 1) Autenticación (Firebase Auth) — Obligatorio
 
 Implementar registro/inicio de sesión con:
+
 - **Google OAuth**
 - **Correo + contraseña**
 
 **UX sin fricción:** "Empezar gratis" → login → dashboard.
 
 **Requisitos técnicos:**
-- El backend (Cloud Run) debe validar el ID token emitido por Firebase para autorizar peticiones
+
+- El backend en Vercel debe validar el ID token emitido por Firebase para autorizar peticiones
 - No exponer secretos en cliente
 - **Regla:** Auth siempre centralizada en Firebase (no duplicar sistemas de auth)
 
@@ -22,6 +24,7 @@ Implementar registro/inicio de sesión con:
 Diseñar modelo relacional (clientes, proveedores, facturas, gastos, categorías, impuestos, etc.).
 
 **Incluir:**
+
 - Migraciones
 - Backups automáticos
 - Auditoría básica (quién, qué, cuándo)
@@ -32,9 +35,10 @@ Diseñar modelo relacional (clientes, proveedores, facturas, gastos, categorías
 
 ---
 
-## 3) Backend y ejecución (Google Cloud Run) — Obligatorio
+## 3) Backend y ejecución (Vercel) — Obligatorio
 
-Toda lógica de negocio se ejecuta en Cloud Run:
+Toda lógica de negocio se ejecuta en el backend de Vercel:
+
 - APIs
 - Procesos de clasificación/validación
 - Generación de informes
@@ -46,26 +50,25 @@ Diseñar por módulos (facturación hoy, contabilidad completa mañana).
 
 ---
 
-## 4) Isaak AI (OpenAI + Vertex AI) — Obligatorio con guardarraíles
+## 4) Isaak AI (OpenAI) — Obligatorio con guardarraíles
 
 **Objetivo:** Isaak orquesta acciones y responde; nunca expone claves.
 
 ### Flujo técnico:
+
 1. La UI del usuario llama a tu API (`/api/isaak/...`)
-2. La API decide motor:
-   - **Auto** (por defecto)
-   - OpenAI
-   - Vertex AI
+2. La API valida la petición y llama al servicio de Isaak
 
 ### Debe existir:
-- Fallback si falla un motor
+
+- Manejo seguro de errores y reintentos
 - Rate limit por IP/usuario
 - Logs sin PII sensible
 - Políticas de seguridad:
   - No inventar datos
   - Pedir confirmación antes de acciones críticas
 
-**Regla de UX:** No mencionar "OpenAI/Vertex" en copy al usuario final. Solo "Isaak".
+**Regla de UX:** No mencionar detalles internos del proveedor en copy al usuario final. Solo "Isaak".
 
 ---
 
@@ -74,6 +77,7 @@ Diseñar por módulos (facturación hoy, contabilidad completa mañana).
 Implementar recordatorios de plazos y eventos mediante Google Calendar API.
 
 ### Requisitos:
+
 - **Opt-in:** usuario conecta su calendario
 - Crear eventos con:
   - Título claro
@@ -93,12 +97,14 @@ Implementar recordatorios de plazos y eventos mediante Google Calendar API.
 El sistema debe soportar múltiples proveedores de almacenamiento (diseño por conectores).
 
 **Si el usuario:**
+
 - **Quiere elegir** → se le ofrecen opciones (Google Drive / Microsoft / Dropbox / almacenamiento propio, etc.)
 - **Le da igual** → usar Google (por defecto) por integración y por Workspace
 
 ### Implementación técnica obligatoria:
 
 Crear una interfaz `StorageConnector` (agnóstica) con acciones mínimas:
+
 - `upload`
 - `list`
 - `download`
@@ -106,9 +112,11 @@ Crear una interfaz `StorageConnector` (agnóstica) con acciones mínimas:
 - `metadata`
 
 **Implementar primero con proveedor por defecto:**
+
 - Google Drive o Google Cloud Storage
 
 ### Mantener "data portability":
+
 - Exportaciones disponibles
 - Nunca bloquear acceso a los documentos por el plan
 
@@ -121,11 +129,13 @@ Crear una interfaz `StorageConnector` (agnóstica) con acciones mínimas:
 ### "Tu contabilidad nunca se pierde."
 
 Aunque el usuario baje de plan o cancele:
+
 - ✅ Acceso a datos siempre
 - ✅ Exportación siempre
 - ✅ Solo se limitan funciones avanzadas, no el acceso
 
 **Este mensaje debe aparecer:**
+
 - Pricing
 - Onboarding (Isaak)
 - Dashboard (tooltip/info)
@@ -143,15 +153,15 @@ Aunque el usuario baje de plan o cancele:
 
 ## Resumen de tecnologías
 
-| Componente | Tecnología | Obligatorio |
-|------------|------------|-------------|
-| Autenticación | Firebase Auth | ✅ |
-| Base de datos contable | Cloud SQL (PostgreSQL) | ✅ |
-| Backend APIs | Cloud Run | ✅ |
-| IA/Asistente | OpenAI + Vertex AI | ✅ |
-| Recordatorios | Google Calendar API | ✅ (opt-in) |
-| Storage documentos | Google Drive/GCS (default) | ✅ (agnóstico) |
-| Estados ligeros | Firestore (opcional) | ⚠️ Solo no-crítico |
+| Componente             | Tecnología                 | Obligatorio        |
+| ---------------------- | -------------------------- | ------------------ |
+| Autenticación          | Firebase Auth              | ✅                 |
+| Base de datos contable | Cloud SQL (PostgreSQL)     | ✅                 |
+| Backend APIs           | Vercel                     | ✅                 |
+| IA/Asistente           | OpenAI                     | ✅                 |
+| Recordatorios          | Google Calendar API        | ✅ (opt-in)        |
+| Storage documentos     | Google Drive/GCS (default) | ✅ (agnóstico)     |
+| Estados ligeros        | Firestore (opcional)       | ⚠️ Solo no-crítico |
 
 ---
 

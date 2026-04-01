@@ -13,41 +13,44 @@
 
 ### Apps (`apps/`)
 
-| App | Ruta | Propósito | Host |
-|-----|------|----------|------|
-| **verifactu-app** | `/app` | App principal para clientes | https://app.verifactu.business |
-| **verifactu-admin** | `/admin` | Panel de administración | https://admin.verifactu.business |
-| **verifactu-landing** | `/landing` | Landing page + login | https://verifactu.business |
-| **verifactu-client** | `/client` | Panel alternativo cliente (en desarrollo) | N/A |
-| **verifactu-mobile** | `/mobile` | App Flutter para móviles | N/A |
+| App                   | Ruta       | Propósito                                 | Host                             |
+| --------------------- | ---------- | ----------------------------------------- | -------------------------------- |
+| **verifactu-app**     | `/app`     | App principal para clientes               | https://app.verifactu.business   |
+| **verifactu-admin**   | `/admin`   | Panel de administración                   | https://admin.verifactu.business |
+| **verifactu-landing** | `/landing` | Landing page + login                      | https://verifactu.business       |
+| **verifactu-client**  | `/client`  | Panel alternativo cliente (en desarrollo) | N/A                              |
+| **verifactu-mobile**  | `/mobile`  | App Flutter para móviles                  | N/A                              |
 
 ### Packages Compartidos (`packages/`)
 
-| Package | Propósito |
-|---------|----------|
-| **@verifactu/db** | Prisma schema, migraciones, seeders |
-| **@verifactu/auth** | Configuración auth (Firebase + NextAuth) |
-| **@verifactu/ui** | Componentes reutilizables |
-| **@verifactu/utils** | Utilidades comunes |
+| Package                     | Propósito                                        |
+| --------------------------- | ------------------------------------------------ |
+| **@verifactu/db**           | Prisma schema, migraciones, seeders              |
+| **@verifactu/auth**         | Configuración auth (Firebase + NextAuth)         |
+| **@verifactu/ui**           | Componentes reutilizables                        |
+| **@verifactu/utils**        | Utilidades comunes                               |
 | **@verifactu/integrations** | Integraciones (Holded, eInforma, Stripe, Resend) |
-| **eslint-config** | Configuración ESLint compartida |
-| **typescript-config** | Configuración TypeScript compartida |
+| **eslint-config**           | Configuración ESLint compartida                  |
+| **typescript-config**       | Configuración TypeScript compartida              |
 
 ## Stack Técnico
 
 ### Frontend
+
 - **Framework**: Next.js (App Router)
 - **Lenguaje**: TypeScript
 - **Styling**: Configurado en `@verifactu/ui`
 - **UI Components**: Componentes reutilizables desde `packages/ui`
 
 ### Backend / API
+
 - **API Routes**: Next.js API Routes
 - **Authenticated Endpoints**: Con NextAuth + Firebase
 - **AI/IA**: Genkit para Isaak
 - **OCR/Documentos**: Procesamiento de facturas/comprobantes
 
 ### Base de Datos
+
 - **ORM**: Prisma
 - **Database**: PostgreSQL (Vercel Postgres)
 - **Schema**: `packages/db/prisma/schema.prisma`
@@ -55,25 +58,30 @@
 - **Seed**: `packages/db/prisma/seed.ts`
 
 ### Autenticación
+
 - **Firebase**: Para auth en app y client
 - **NextAuth**: Para Google Workspace en admin
 - **Session Management**: Backend persisted (app + admin)
 
 ### Cloud & DevOps
+
 - **Hosted**: Vercel (apps web)
-- **Backend API** (opcional): Google Cloud Run
-- **CI/CD**: GitHub Actions + Cloud Build
+- **Backend API**: Vercel / server routes del monorepo
+- **CI/CD**: GitHub Actions + Vercel
 - **Deployments**: Vercel automático en push a main
 
 ### Email
+
 - **Provider**: Resend
 - **Admin Emails**: Newsletter, invitations, notifications
 
 ### Pagos
+
 - **Provider**: Stripe
 - **Ubicación**: Admin (suscripciones)
 
 ### IA - Isaak
+
 - **Framework**: Genkit por Google
 - **Características**:
   - Asistente proactivo en landing, app, client y admin
@@ -123,6 +131,7 @@ c:\dev\verifactu-monorepo\
 ## Comandos Principales
 
 ### Instalación y Setup
+
 ```bash
 pnpm install                    # Instalar todas las dependencias
 pnpm -F @verifactu/db exec prisma migrate deploy    # Ejecutar migraciones
@@ -130,6 +139,7 @@ pnpm -F @verifactu/db exec prisma db seed            # Seed datos
 ```
 
 ### Desarrollo Local
+
 ```bash
 pnpm --filter verifactu-app dev           # App (http://localhost:3000)
 pnpm --filter verifactu-admin dev         # Admin (http://localhost:3003)
@@ -139,12 +149,14 @@ pnpm --filter verifactu-mobile dev        # Mobile (Flutter)
 ```
 
 ### Build
+
 ```bash
 pnpm build              # Build todas las apps
 pnpm test               # Ejecutar tests
 ```
 
 ### Database
+
 ```bash
 pnpm -F @verifactu/db exec prisma studio         # Prisma Studio UI
 pnpm -F @verifactu/db exec prisma migrate reset  # Reset DB (dev only)
@@ -153,6 +165,7 @@ pnpm -F @verifactu/db exec prisma migrate reset  # Reset DB (dev only)
 ## Variables de Entorno
 
 Consultar en:
+
 - `apps/admin/README.md` - Variables admin
 - `apps/app/.env.example` - Variables app
 - `apps/client/README.md` - Variables client
@@ -172,6 +185,7 @@ Incluyen: Firebase, Next Auth, Stripe, Resend, Holded, eInforma, Google Cloud, e
 ## Estado Actual (Febrero 2026)
 
 ✅ **Completado**
+
 - Isaak unificado y proactivo en todas las plataformas (landing, app, client, admin)
 - 3 personalidades de Isaak: Amigable, Profesional, Directo
 - Persistencia de preferences en backend (app + admin)
@@ -181,6 +195,7 @@ Incluyen: Firebase, Next Auth, Stripe, Resend, Holded, eInforma, Google Cloud, e
 - Admin con usuarios, empresas, dashboard
 
 ⏳ **En Progreso / Pendiente**
+
 1. Completar paneles admin: suscripciones, emails, Vercel, soporte
 2. Onboarding con eInforma y trial automático
 3. Verificación de permisos y auditoría (admin/support)
@@ -190,12 +205,14 @@ Incluyen: Firebase, Next Auth, Stripe, Resend, Holded, eInforma, Google Cloud, e
 ## Buenas Prácticas y Patrones
 
 ### Code Style
+
 - **TypeScript**: Strict mode habilitado
 - **ESLint**: Configuración compartida (`eslint-config`)
 - **Formatting**: Prettier (si está configurado)
 - **Imports**: Relative imports en features, absolute para packages
 
 ### Arquitectura
+
 - **Feature-based structure** dentro de cada app
 - **Shared packages** para código reutilizable
 - **API Routes** para backend en Next.js (apps/app, apps/admin)
@@ -203,18 +220,21 @@ Incluyen: Firebase, Next Auth, Stripe, Resend, Holded, eInforma, Google Cloud, e
 - **Environment seguro**: Variables en `.env.local` (no commitar)
 
 ### Database
+
 - **Migrations**: Una por cambio significativo
 - **Seed**: Para datos iniciales y testing
 - **Schema**: Single source of truth en `packages/db/prisma/schema.prisma`
 
 ### Testing
+
 - **Framework**: Jest (configurado en root)
 - **Ubicación**: `__tests__/` o `.test.ts`
 - **Cobertura**: Preferida al menos 70%
 
 ### Git & CI/CD
+
 - **Branch Protection**: Main branch protegida
-- **CI**: GitHub Actions + Cloud Build
+- **CI**: GitHub Actions + Vercel
 - **Deploy**: Automático en push a main (Vercel)
 - **PRs**: Requeridos antes de merge a main
 
@@ -232,7 +252,7 @@ Incluyen: Firebase, Next Auth, Stripe, Resend, Holded, eInforma, Google Cloud, e
 
 - **Repositorio**: https://github.com/kiabusiness2025/verifactu-monorepo
 - **Issues**: En GitHub (etiquetadas por sección: product, engineering, ops, isaak)
-- **Deployment Status**: Vercel + Cloud Run dashboards
+- **Deployment Status**: Vercel dashboard
 
 ## Notas Especiales
 

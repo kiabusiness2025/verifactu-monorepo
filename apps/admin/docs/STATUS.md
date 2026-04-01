@@ -428,7 +428,7 @@ pnpm --filter @verifactu/admin dev
 
 ### 7. Deploy to Production
 
-- Configure Cloud Run
+- Configure Vercel
 - Set environment variables
 - Set up domain: admin.verifactu.business
 - SSL configuration

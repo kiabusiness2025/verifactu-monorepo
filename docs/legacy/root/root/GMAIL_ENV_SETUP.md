@@ -124,12 +124,9 @@ Open Prisma Studio: http://localhost:5555
   "subject": "Welcome to Verifactu",
   "message": "<p>Hello! This is a message from our support team.</p>",
   "provider": "GMAIL"
-}
-```
+**Otros entornos internos:**
 
-**Response (Success):**
-
-```json
+Usa el gestor de secretos del hosting activo y carga estas mismas variables sin exponer la private key en el repositorio.
 {
   "success": true,
   "messageId": "18d4a...",
@@ -247,12 +244,9 @@ vercel env add GOOGLE_SERVICE_ACCOUNT_EMAIL production
 vercel env add GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY production
 ```
 
-**Google Cloud Run:**
+**Otros entornos internos:**
 
-```bash
-gcloud secrets create GOOGLE_SERVICE_ACCOUNT_EMAIL --data-file=-
-gcloud secrets create GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY --data-file=-
-```
+Usa el gestor de secretos del hosting activo y carga estas mismas variables sin exponer la private key en el repositorio.
 
 ### Health Check
 

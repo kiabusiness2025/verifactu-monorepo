@@ -37,6 +37,7 @@ apps/admin/
 ## 🔐 Sistema de Autenticación
 
 ### Google Workspace OAuth
+
 - **Dominio restringido**: Solo @verifactu.business
 - **Roles permitidos**: ADMIN, SUPPORT
 - **Email específico**: support@verifactu.business (configurable)
@@ -46,13 +47,15 @@ apps/admin/
 ### Middleware RBAC ([middleware.ts](../middleware.ts))
 
 **Configuración flexible con variables de entorno:**
+
 ```typescript
 // Control de acceso granular
-ADMIN_ALLOWED_EMAIL="support@verifactu.business"
-ADMIN_ALLOWED_DOMAIN="verifactu.business"
+ADMIN_ALLOWED_EMAIL = 'support@verifactu.business';
+ADMIN_ALLOWED_DOMAIN = 'verifactu.business';
 ```
 
 **Características:**
+
 - ✅ Permite rutas públicas: `/api/auth`, `/_next`, assets
 - ✅ Verifica JWT token con `getToken()` de NextAuth
 - ✅ Redirección automática a signin si no autenticado
@@ -61,19 +64,19 @@ ADMIN_ALLOWED_DOMAIN="verifactu.business"
 - ✅ Respuesta 403 Forbidden si no cumple requisitos
 
 **Lógica de validación:**
+
 ```typescript
 // Email válido si:
-const emailOk = 
-  email === "support@verifactu.business" || 
-  email.endsWith("@verifactu.business");
+const emailOk = email === 'support@verifactu.business' || email.endsWith('@verifactu.business');
 
 // Rol válido si:
-const roleOk = role === "SUPPORT" || role === "ADMIN";
+const roleOk = role === 'SUPPORT' || role === 'ADMIN';
 
 // Acceso permitido si AMBOS son true
 ```
 
 ### Verificación en 3 Capas
+
 1. **OAuth**: Restricción de dominio en Google Cloud Console
 2. **Middleware**: Verificación de email, dominio y rol
 3. **API Guards**: Verificación adicional por endpoint
@@ -334,7 +337,7 @@ export async function createAuditLog(entry) {
 
 ### Fase 5: Despliegue
 
-1. Configurar Cloud Run para apps/admin
+1. Configurar Vercel para apps/admin
 2. Variables de entorno en producción
 3. Dominio: admin.verifactu.business
 4. SSL y seguridad

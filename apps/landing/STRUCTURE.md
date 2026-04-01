@@ -15,7 +15,7 @@ apps/landing/
 ├── app/
 │   ├── api/
 │   │   ├── send-lead/route.ts
-│   │   ├── vertex-chat/route.ts
+│   │   ├── chat/route.ts
 │   │   ├── stripe/webhook/route.ts
 │   │   └── ...
 │   ├── components/
@@ -92,7 +92,7 @@ No usar anchors legacy `/#planes` en paginas internas.
 ## Endpoints principales usados en landing
 
 1. `POST /api/send-lead`
-2. `POST /api/vertex-chat`
+2. `POST /api/chat`
 3. `POST /api/stripe/webhook`
 
 ## QA minima al tocar estructura o copy

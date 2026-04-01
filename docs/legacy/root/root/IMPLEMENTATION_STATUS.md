@@ -174,7 +174,7 @@ Abrir Dashboard → Click en Isaak
 
 1. **Deploy a Vercel:**
    - [ ] Revisar que vercel.json está OK
-   - [ ] Verificar env vars en Vercel (SESSION_SECRET, DATABASE_URL, OPENAI_API_KEY)
+   - [ ] Verificar env vars en Vercel (SESSION_SECRET, DATABASE_URL, ISAAK_OPENAI_SERVICE_ACCOUNT)
    - [ ] Deploy landing + app
    - [ ] Test login → dashboard redirect
 

@@ -103,11 +103,11 @@ else
   fail "Rate limit /api/send-lead activo"
 fi
 
-# 4) Rate limiting vertex-chat (20/60s)
+# 4) Rate limiting chat (20/60s)
 chat429=0
 for i in {1..22}; do
   code=$(curl -sS -o "$TMP_DIR/chat_$i.json" -w "%{http_code}" -X POST \
-    "$BASE_URL/api/vertex-chat" \
+    "$BASE_URL/api/chat" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json" \
     -d '{}')
@@ -116,9 +116,9 @@ for i in {1..22}; do
   fi
 done
 if [[ "$chat429" == "1" ]]; then
-  pass "Rate limit /api/vertex-chat activo"
+  pass "Rate limit /api/chat activo"
 else
-  fail "Rate limit /api/vertex-chat activo"
+  fail "Rate limit /api/chat activo"
 fi
 
 # 5) Optional: Stripe webhook idempotency (requires secret)

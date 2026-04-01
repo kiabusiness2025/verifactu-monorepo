@@ -1,4 +1,4 @@
-import { VertexAI } from '@google-cloud/vertexai';
+import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getRequestIp } from '../../lib/security/rate-limit';
@@ -10,10 +10,33 @@ const chatSchema = z.object({
     .max(1000, 'Mensaje demasiado largo'),
 });
 
+const SYSTEM_PROMPT = `Eres Isaak, el asistente fiscal y operativo de verifactu.business.
+
+Objetivo:
+- Ayudar a la persona usuaria a entender prioridades de negocio con una narrativa simple: ventas, gastos y beneficio.
+- Guiar sobre cumplimiento VeriFactu y operativa diaria sin tecnicismos innecesarios.
+- Mantener tono claro, accionable y cercano.
+
+Flujo canonico que debes respetar:
+- Al crear cuenta, el usuario entra en Empresa Demo SL.
+- Demo SL no caduca.
+- Cuando quiera operar con datos reales, activa una prueba real de 30 dias.
+- La prueba real permite crear 1 empresa real.
+
+Identidad:
+- No eres un chatbot generico de facturacion.
+- Eres Isaak by verifactu.business.
+- Si preguntan por Holded, explica que es una compatibilidad de entrada, pero la experiencia y criterio los aporta Isaak.
+
+Estilo de respuesta:
+- Espanol, breve, practico y orientado a siguiente paso.
+- Evita texto legal extenso.
+- Si falta contexto, pide solo lo minimo para avanzar.`;
+
 export async function POST(request: NextRequest) {
   const ip = getRequestIp(request);
   const rate = await checkRateLimit({
-    key: `vertex-chat:${ip}`,
+    key: `isaak-chat:${ip}`,
     limit: 20,
     windowSeconds: 60,
   });
@@ -38,83 +61,36 @@ export async function POST(request: NextRequest) {
     }
 
     const { message } = validationResult.data;
+    const apiKey = resolveOpenAIKey(process.env);
 
-    const projectId =
-      process.env.VERTEX_PROJECT_ID ||
-      process.env.GCP_PROJECT_ID ||
-      process.env.GOOGLE_CLOUD_PROJECT;
-    const location = process.env.VERTEX_LOCATION || process.env.GCP_LOCATION || 'us-central1';
-
-    if (!projectId) {
-      console.error('VERTEX_PROJECT_ID (or GCP_PROJECT_ID) not configured');
+    if (!apiKey) {
       if (process.env.NODE_ENV === 'development') {
-        const mockResponse = generateMockResponse(message);
-        return NextResponse.json({ response: mockResponse });
+        return NextResponse.json({ response: generateMockResponse(message) });
       }
+
       return NextResponse.json({ error: 'Servicio de chat no configurado' }, { status: 500 });
     }
 
-    const vertexAI = new VertexAI({
-      project: projectId,
-      location: location,
+    const response = await callOpenAIResponses({
+      apiKey,
+      model: process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini',
+      instructions: SYSTEM_PROMPT,
+      inputText: message,
+      temperature: 0.5,
+      maxOutputTokens: 450,
     });
 
-    const model = vertexAI.getGenerativeModel({
-      model: process.env.VERTEX_MODEL_ID || 'gemini-1.5-pro',
-    });
-
-    const systemPrompt = `Eres Isaak, el asistente fiscal y operativo de verifactu.business.
-
-  Objetivo:
-  - Ayudar a la persona usuaria a entender prioridades de negocio con una narrativa simple: ventas, gastos y beneficio.
-  - Guiar sobre cumplimiento VeriFactu y operativa diaria sin tecnicismos innecesarios.
-  - Mantener tono claro, accionable y cercano.
-
-  Flujo canonico que debes respetar:
-  - Al crear cuenta, el usuario entra en Empresa Demo SL.
-  - Demo SL no caduca.
-  - Cuando quiera operar con datos reales, activa una prueba real de 30 dias.
-  - La prueba real permite crear 1 empresa real.
-
-  Identidad:
-  - No eres un chatbot generico de facturacion.
-  - Eres Isaak by verifactu.business.
-  - Si preguntan por Holded, explica que es una compatibilidad de entrada, pero la experiencia y criterio los aporta Isaak.
-
-  Estilo de respuesta:
-  - Espanol, breve, practico y orientado a siguiente paso.
-  - Evita texto legal extenso.
-  - Si falta contexto, pide solo lo minimo para avanzar.
-  `;
-
-    const chat = model.startChat({
-      history: [
-        {
-          role: 'user',
-          parts: [{ text: systemPrompt }],
-        },
-        {
-          role: 'model',
-          parts: [{ text: 'Entendido. Soy Isaak y estoy listo para ayudarte.' }],
-        },
-      ],
-    });
-
-    const result = await chat.sendMessage(message);
-    const response = result.response;
-    const text =
-      response.candidates?.[0]?.content?.parts?.[0]?.text ||
-      'Lo siento, no pude generar una respuesta.';
-
-    return NextResponse.json({ response: text });
+    return NextResponse.json({ response });
   } catch (error) {
-    console.error('Error in vertex-chat:', error);
+    console.error('Error in chat:', error);
 
-    const fallbackResponse =
-      'Lo siento, hubo un problema al procesar tu mensaje. ' +
-      'Por favor, contacta con nuestro equipo en hola@verifactu.business o prueba de nuevo más tarde.';
-
-    return NextResponse.json({ response: fallbackResponse });
+    return NextResponse.json(
+      {
+        response:
+          'Lo siento, hubo un problema al procesar tu mensaje. Por favor, contacta con nuestro equipo en hola@verifactu.business o prueba de nuevo más tarde.',
+      },
+      { status: 200 }
+    );
   }
 }
 

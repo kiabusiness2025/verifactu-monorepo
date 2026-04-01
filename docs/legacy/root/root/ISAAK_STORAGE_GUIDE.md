@@ -42,7 +42,7 @@ model IsaakConversationMsg {
   conversationId String @map("conversation_id") @db.Uuid
   role           String // "user" o "assistant"
   content        String // El mensaje
-  tokens         Int?   // Tokens Vertex AI
+  tokens         Int?   // Tokens de la respuesta de Isaak
   metadata       Json?  // Datos adicionales
   createdAt      DateTime @default(now())
 
@@ -125,8 +125,8 @@ function MyComponent() {
     // 1. Guardar mensaje usuario
     await saveMessage('user', userMessage);
 
-    // 2. Obtener respuesta de Vertex AI
-    const response = await fetch('/api/vertex-chat', {
+    // 2. Obtener respuesta de Isaak
+    const response = await fetch('/api/chat', {
       method: 'POST',
       body: JSON.stringify({ message: userMessage }),
     });
@@ -186,7 +186,7 @@ console.log(response); // Respuesta de Isaak
 Esto:
 
 1. Guarda el mensaje del usuario
-2. Llama a `/api/vertex-chat`
+2. Llama a `/api/chat`
 3. Guarda la respuesta de Isaak
 4. Retorna todo automáticamente
 
@@ -308,7 +308,7 @@ const handleSend = async (userInput: string) => {
   await saveMessage('user', userInput);
 
   // 2. Get Isaak response
-  const res = await fetch('/api/vertex-chat', {
+  const res = await fetch('/api/chat', {
     method: 'POST',
     body: JSON.stringify({ message: userInput }),
   });

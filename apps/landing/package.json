@@ -13,7 +13,6 @@
     "@genkit-ai/core": "^1.27.0",
     "@genkit-ai/firebase": "^1.27.0",
     "@genkit-ai/googleai": "^1.27.0",
-    "@google-cloud/vertexai": "^1.10.0",
     "@google/generative-ai": "^0.24.1",
     "@stripe/stripe-js": "^4.1.0",
     "@vercel/analytics": "^1.6.1",

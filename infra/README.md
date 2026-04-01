@@ -4,9 +4,6 @@ Para evitar romper integraciones existentes, los archivos de infraestructura sig
 
 ## Archivos en raíz (pendiente de migración coordinada)
 
-- cloudbuild.yaml
-- cloudbuild-backend.yaml
-- run-service.yaml
 - vercel.json
 - docker-compose.yml
 - Dockerfile

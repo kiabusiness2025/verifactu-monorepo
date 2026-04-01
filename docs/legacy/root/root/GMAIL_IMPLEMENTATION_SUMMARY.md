@@ -275,8 +275,8 @@ https://www.googleapis.com/auth/calendar
 
 ### Production
 
-1. ⬜ Add environment variables to Vercel/Cloud Run
-2. ⬜ Use Secret Manager for private key
+1. ⬜ Add environment variables in Vercel
+2. ⬜ Keep the private key in secure secret storage
 3. ⬜ Test Gmail sending in production
 4. ⬜ Monitor AuditLog for email activity
 5. ⬜ Set up alerts for failed emails

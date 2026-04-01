@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.28.0",
-    "@google-cloud/vertexai": "^1.10.0",
     "@prisma/client": "5.22.0",
     "@prisma/extension-accelerate": "^3.0.1",
     "@verifactu/auth": "file:../../packages/auth",

@@ -39,8 +39,7 @@ const ALLOWED_ORIGINS = [
   'https://pre.app.verifactu.business',
   'https://app.verifactu.business',
   'https://verifactu.business',
-  // TODO: Considerar añadir aquí la URL específica de Cloud Run si es necesaria,
-  // en lugar de permitir cualquier subdominio '.run.app' por seguridad.
+  // Añadir aquí dominios adicionales solo cuando exista un frontend público real.
 ];
 
 app.use(
@@ -244,7 +243,7 @@ app.post('/api/verifactu/register-invoice', async (req, res) => {
   }
 });
 
-// Puerto Cloud Run
+// Puerto HTTP del servidor
 const PORT = process.env.PORT || 8080;
 
 // Solo iniciar el servidor si el script se ejecuta directamente

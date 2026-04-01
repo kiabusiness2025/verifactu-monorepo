@@ -1,6 +1,6 @@
 # VeriFactu Business — Landing Pública
 
-Landing oficial de **verifactu.business**, desplegada en **Google Cloud Run** (región `europe-west1`) y construida con **Next.js (App Router)**.
+Landing oficial de **verifactu.business**, desplegada en **Vercel** y construida con **Next.js (App Router)**.
 
 ## Posicion dentro del monorepo
 
@@ -24,8 +24,8 @@ La landing es **independiente del resto del monorepo** y está diseñada para:
 
 - Conversión (CTA + pricing dinámico)
 - Captura de leads (email vía Resend)
-- Chat inteligente "Isaak" (Vertex AI / Gemini)
-- Despliegue estable y reproducible en Cloud Run
+- Chat inteligente "Isaak" (OpenAI)
+- Despliegue automático en Vercel
 
 ### Isaak en Landing (2026)
 
@@ -47,8 +47,7 @@ La landing es **independiente del resto del monorepo** y está diseñada para:
 
 - **Dominio:** https://verifactu.business
 - **Tipo de proyecto:** Proyecto publico 1 de 3
-- **Servicio Cloud Run:** `verifactu-landing`
-- **Región:** `europe-west1`
+- **Plataforma:** Vercel
 - **Autenticación:** pública (allow unauthenticated)
 
 ---
@@ -63,12 +62,11 @@ apps/landing/
 │   ├── globals.css          # Estilos
 │   └── api/
 │       ├── send-lead/route.ts    # Lead → email (Resend)
-│       └── vertex-chat/route.ts  # Chat IA → Vertex AI
+│       └── chat/route.ts         # Chat IA → OpenAI
 │
 ├── public/
 │   └── assets/              # Logos, iconos
 │
-├── Dockerfile               # Imagen Cloud Run (Next standalone)
 ├── next.config.js           # output: "standalone"
 ├── package.json
 └── README.md
@@ -80,8 +78,7 @@ apps/landing/
 
 - Node.js **20+**
 - npm
-- Acceso a Google Cloud (para deploy)
-- Cloud Run habilitado en el proyecto
+- Acceso al proyecto de Vercel
 
 ---
 
@@ -99,20 +96,16 @@ RESEND_API_KEY
 
 ---
 
-### 2) Chat IA (Vertex AI)
+### 2) Chat IA (OpenAI)
 
-Usado por `POST /api/vertex-chat`.
+Usado por `POST /api/chat`.
 
 **Variables requeridas:**
 
 ```
-VERTEX_PROJECT_ID  # o GOOGLE_CLOUD_PROJECT
-VERTEX_LOCATION    # por defecto: europe-west1 o us-central1
-VERTEX_MODEL_ID    # por defecto: gemini-1.5-pro
+ISAAK_OPENAI_SERVICE_ACCOUNT  # clave de service account de OpenAI
+ISAAK_OPENAI_MODEL            # opcional, por defecto: gpt-4.1-mini
 ```
-
-> ℹ️ En Cloud Run, `GOOGLE_CLOUD_PROJECT` suele existir automáticamente.  
-> Aun así, se recomienda definir explícitamente `VERTEX_PROJECT_ID`.
 
 ---
 
@@ -170,9 +163,9 @@ Envía un email al equipo con la solicitud del usuario.
 
 ---
 
-### `POST /api/vertex-chat`
+### `POST /api/chat`
 
-Chat con el asistente Isaak (Vertex AI).
+Chat con el asistente Isaak (OpenAI Responses API).
 
 **Body JSON:**
 
@@ -185,48 +178,27 @@ Chat con el asistente Isaak (Vertex AI).
 **Respuesta:**
 
 - `200` → `{ response: "respuesta IA" }`
-- `400` / `500` → error de configuración o Vertex
+- `400` / `500` → error de configuración o OpenAI
 
 ---
 
-## 🚀 Deploy a Cloud Run (RECOMENDADO)
+## 🚀 Deploy en Vercel
 
-El despliegue se hace desde la raíz del repo usando Cloud Build.
+El despliegue activo se hace desde el proyecto de Vercel conectado al monorepo.
 
-### Deploy estándar
+Flujo esperado:
 
-```bash
-gcloud config set project verifactu-business-480212
-gcloud builds submit --config cloudbuild.yaml .
-```
+1. Push a `main`
+2. Vercel detecta cambios en `apps/landing`
+3. Build y deploy automáticos sobre `verifactu.business`
 
-Este comando:
-
-1. Construye solo `apps/landing`
-2. Publica la imagen `verifactu-landing`
-3. Despliega en Cloud Run (`europe-west1`)
-4. Mantiene el dominio `verifactu.business`
+Si necesitas forzar un redeploy, hazlo desde el dashboard del proyecto en Vercel.
 
 ---
 
 ## 🌐 Dominio
 
-El dominio está mapeado directamente a Cloud Run.
-
-**Comprobar estado:**
-
-```bash
-gcloud run domain-mappings describe verifactu.business --region europe-west1
-```
-
-**Si fuera necesario recrearlo:**
-
-```bash
-gcloud beta run domain-mappings create \
-  --domain verifactu.business \
-  --service verifactu-landing \
-  --region europe-west1
-```
+El dominio `verifactu.business` se gestiona desde Vercel.
 
 ---
 
@@ -244,24 +216,16 @@ output: 'standalone';
 
 ### No llegan emails de leads
 
-- Verifica `RESEND_API_KEY` en Cloud Run
-- Revisa logs:
-
-```bash
-gcloud run services logs read verifactu-landing --region europe-west1
-```
+- Verifica `RESEND_API_KEY` en Vercel
+- Revisa los logs de funciones del proyecto en Vercel
 
 ---
 
 ### El chat IA no responde
 
-- Revisa variables `VERTEX_*`
-- Verifica permisos del Service Account de Cloud Run para Vertex AI
-- Logs:
-
-```bash
-gcloud run services logs read verifactu-landing --region europe-west1
-```
+- Revisa `ISAAK_OPENAI_SERVICE_ACCOUNT`
+- Si quieres fijar modelo, define `ISAAK_OPENAI_MODEL`
+- Revisa los logs de funciones del proyecto en Vercel
 
 ---
 
@@ -281,4 +245,4 @@ gcloud run services logs read verifactu-landing --region europe-west1
 - **UI / copy:** `app/page.tsx`, `globals.css`
 - **Logos / iconos:** `public/assets`
 - **Emails / leads:** `app/api/send-lead`
-- **IA / chat:** `app/api/vertex-chat`
+- **IA / chat:** `app/api/chat`

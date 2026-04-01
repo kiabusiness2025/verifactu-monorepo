@@ -30,10 +30,8 @@ NEXT_PUBLIC_USE_AUTH_EMULATOR=false
 #### Isaak / OpenAI Configuration
 
 ```
-ISAAK_API_KEY=<your-openai-api-key>
-ISAAK_ASSISTANT_ID=<your-assistant-id>
-NEXT_PUBLIC_ISAAK_API_KEY=<your-openai-api-key>
-NEXT_PUBLIC_ISAAK_ASSISTANT_ID=<your-assistant-id>
+ISAAK_OPENAI_SERVICE_ACCOUNT=<your-openai-service-account-key>
+ISAAK_OPENAI_MODEL=gpt-4.1-mini
 ```
 
 #### Email Service (Resend)

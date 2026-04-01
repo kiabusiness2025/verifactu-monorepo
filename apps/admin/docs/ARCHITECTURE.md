@@ -34,14 +34,14 @@ verifactu-monorepo/
 
 ## 📊 Comparación: apps/app vs apps/admin
 
-| Aspecto | apps/app (Cliente) | apps/admin (Admin) |
-|---------|-------------------|-------------------|
-| **Dominio** | app.verifactu.business | admin.verifactu.business |
-| **Auth** | Firebase Auth | Google Workspace OAuth |
-| **Usuarios** | Clientes finales | Equipo interno |
-| **Roles** | USER | SUPPORT, ADMIN |
-| **Puerto** | 3000 | 3003 |
-| **Propósito** | Facturación Verifactu | Gestión operativa |
+| Aspecto       | apps/app (Cliente)     | apps/admin (Admin)       |
+| ------------- | ---------------------- | ------------------------ |
+| **Dominio**   | app.verifactu.business | admin.verifactu.business |
+| **Auth**      | Firebase Auth          | Google Workspace OAuth   |
+| **Usuarios**  | Clientes finales       | Equipo interno           |
+| **Roles**     | USER                   | SUPPORT, ADMIN           |
+| **Puerto**    | 3000                   | 3003                     |
+| **Propósito** | Facturación Verifactu  | Gestión operativa        |
 
 ## 🔐 Sistema de Autenticación
 
@@ -80,14 +80,14 @@ apps/app/dashboard/admin/*  →  apps/admin/dashboard/*
 
 **Rutas específicas:**
 
-| Desde (app) | Hacia (admin) |
-|-------------|---------------|
-| `/dashboard/admin/empresas` | `/dashboard/companies` |
-| `/dashboard/admin/users` | `/dashboard/users` |
-| `/dashboard/admin/import` | `/dashboard/operations/import` |
-| `/dashboard/admin/emails` | `/dashboard/email` |
-| `/dashboard/admin/contabilidad` | `/dashboard/billing` |
-| `/dashboard/settings` (admin-only) | `/dashboard/operations` |
+| Desde (app)                        | Hacia (admin)                  |
+| ---------------------------------- | ------------------------------ |
+| `/dashboard/admin/empresas`        | `/dashboard/companies`         |
+| `/dashboard/admin/users`           | `/dashboard/users`             |
+| `/dashboard/admin/import`          | `/dashboard/operations/import` |
+| `/dashboard/admin/emails`          | `/dashboard/email`             |
+| `/dashboard/admin/contabilidad`    | `/dashboard/billing`           |
+| `/dashboard/settings` (admin-only) | `/dashboard/operations`        |
 
 ### Rutas que PERMANECEN en apps/app
 
@@ -108,38 +108,29 @@ Componentes reutilizables:
 
 ```typescript
 // Usados en AMBOS apps
-- AccessibleButton
-- AccessibleInput
-- Badge
-- Card
-- Modal
-- Table
+-AccessibleButton - AccessibleInput - Badge - Card - Modal - Table;
 ```
 
 ### @verifactu/auth
 
 ```typescript
 // Config NextAuth
-authOptions
+authOptions;
 
 // Guards
-requireAuth()
-requireRole([ADMIN, SUPPORT])
+requireAuth();
+requireRole([ADMIN, SUPPORT]);
 
 // Utils
-checkPermission(user, 'canViewDocuments')
-canImpersonate(user)
+checkPermission(user, 'canViewDocuments');
+canImpersonate(user);
 ```
 
 ### @verifactu/integrations
 
 ```typescript
 // Clients API
-- stripeClient
-- eInformaClient
-- resendClient
-- vercelClient
-- githubClient
+-stripeClient - eInformaClient - resendClient - vercelClient - githubClient;
 
 // Usado mayormente en apps/admin
 ```
@@ -199,22 +190,22 @@ pnpm dev # Inicia apps/app + apps/admin + apps/landing
 // apps/admin/middleware.ts
 export async function middleware(req: NextRequest) {
   const session = await getSession(req);
-  
+
   // 1. Usuario autenticado?
   if (!session) {
     return NextResponse.redirect('/auth/signin');
   }
-  
+
   // 2. Email @verifactu.business?
   if (!session.user.email?.endsWith('@verifactu.business')) {
     return NextResponse.redirect('/auth/error?error=AccessDenied');
   }
-  
+
   // 3. Rol permitido?
   if (![UserRole.ADMIN, UserRole.SUPPORT].includes(session.user.role)) {
     return NextResponse.redirect('/auth/error?error=Unauthorized');
   }
-  
+
   return NextResponse.next();
 }
 
@@ -234,10 +225,10 @@ async function withAudit<T>(
 ): Promise<T> {
   const session = await getServerSession();
   const start = Date.now();
-  
+
   try {
     const result = await fn();
-    
+
     await prisma.auditLog.create({
       data: {
         actorUserId: session.user.id,
@@ -247,7 +238,7 @@ async function withAudit<T>(
         success: true,
       },
     });
-    
+
     return result;
   } catch (error) {
     await prisma.auditLog.create({
@@ -264,26 +255,20 @@ async function withAudit<T>(
 }
 
 // Uso
-await withAudit('DELETE_USER', async () => {
-  await prisma.user.delete({ where: { id: userId } });
-}, { userId, reason: 'GDPR request' });
+await withAudit(
+  'DELETE_USER',
+  async () => {
+    await prisma.user.delete({ where: { id: userId } });
+  },
+  { userId, reason: 'GDPR request' }
+);
 ```
 
 ## 🌐 Despliegues Independientes
 
-### Cloud Run (Recomendado)
+### Vercel (actual)
 
-```yaml
-# cloudbuild-admin.yaml
-steps:
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args:
-      - 'run'
-      - 'deploy'
-      - 'verifactu-admin'
-      - '--source=apps/admin'
-      - '--region=europe-west1'
-```
+`apps/admin` se despliega como proyecto Next.js en Vercel, conectado al monorepo.
 
 ### Vercel
 
@@ -319,7 +304,7 @@ model User {
   email       String   @unique
   role        UserRole @default(USER)
   supportScope Json?   // Solo para SUPPORT
-  
+
   // Relaciones
   companies   Company[]
   auditLogs   AuditLog[] @relation("actor")
@@ -335,7 +320,7 @@ model Company {
   id            String @id @default(cuid())
   userId        String
   user          User   @relation(fields: [userId], references: [id])
-  
+
   // ... campos de empresa
 }
 
@@ -406,16 +391,19 @@ apps/admin/README.md   → Para equipo interno
 ## 🚀 Roadmap
 
 ### Fase 1: Setup (ACTUAL)
+
 - [x] Estructura packages compartidos
 - [x] apps/admin inicial con OAuth
 - [x] Documentación
 
 ### Fase 2: Migración Módulos
+
 - [ ] Migrar `/admin/users` → apps/admin
 - [ ] Migrar `/admin/companies` → apps/admin
 - [ ] Migrar `/admin/billing` → apps/admin
 
 ### Fase 3: Features Nuevas
+
 - [ ] Dashboard Overview con KPIs
 - [ ] Modo impersonación
 - [ ] Audit log viewer
@@ -423,7 +411,8 @@ apps/admin/README.md   → Para equipo interno
 - [ ] Monitor de Resend/Vercel/GitHub
 
 ### Fase 4: Producción
-- [ ] Deploy a Cloud Run
+
+- [ ] Configurar deploy en Vercel
 - [ ] Configurar dominio admin.verifactu.business
 - [ ] Migración datos completa
 - [ ] Training equipo interno

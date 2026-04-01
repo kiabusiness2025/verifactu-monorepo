@@ -54,17 +54,12 @@ FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE K
 GOOGLE_AI_API_KEY=<tu google ai api key>
 ```
 
-#### OpenAI (GPT-4 para consultas complejas)
-
-**Nota**: Ya existe como `ISAAK_API_KEY` en Vercel.
-
-Añadir alias para sistema híbrido:
+#### Isaak / OpenAI
 
 ```bash
-OPENAI_API_KEY=<valor de ISAAK_API_KEY>
+ISAAK_OPENAI_SERVICE_ACCOUNT=<tu clave sk-svcacct_...>
+ISAAK_OPENAI_MODEL=gpt-4.1-mini
 ```
-
-O bien actualizar el código para usar `process.env.ISAAK_API_KEY` en lugar de `OPENAI_API_KEY`.
 
 #### Stripe
 
@@ -149,8 +144,7 @@ curl https://app.verifactu.business/dashboard \
 
 - [ ] **Landing**: SESSION_SECRET añadido en Vercel
 - [ ] **Landing**: Firebase Admin (PROJECT_ID, CLIENT_EMAIL, PRIVATE_KEY) añadido
-- [ ] **Landing**: GOOGLE_AI_API_KEY añadido
-- [ ] **Landing**: OPENAI_API_KEY (o usar ISAAK_API_KEY) añadido
+- [ ] **Landing**: ISAAK_OPENAI_SERVICE_ACCOUNT añadido
 - [ ] **App**: SESSION_SECRET añadido (mismo valor que landing)
 - [ ] **App**: Firebase Client SDK añadido
 - [ ] Redeploy ambos proyectos en Vercel
@@ -178,8 +172,8 @@ curl https://app.verifactu.business/dashboard \
 - Verificar HTTPS en producción (required para cookies cross-domain)
 - Verificar que `SameSite=None; Secure` está configurado
 
-### Sistema Híbrido no usa GPT-4
+### Chat IA no usa OpenAI
 
-- Verificar que `OPENAI_API_KEY` está configurado (o usar `ISAAK_API_KEY`)
-- Revisar logs: debería mostrar `[Isaak Chat] Using model: gpt-4` o `gemini-flash`
-- Si falla GPT-4, automáticamente usa Gemini como fallback
+- Verificar que `ISAAK_OPENAI_SERVICE_ACCOUNT` está configurado
+- Si quieres fijar el modelo, define `ISAAK_OPENAI_MODEL`
+- Revisar logs del route `/api/chat` en Vercel
