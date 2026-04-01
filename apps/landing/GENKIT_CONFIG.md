@@ -126,7 +126,7 @@ Si necesitas llamar OpenAI directamente fuera de Genkit, usa Responses API:
 
 ```typescript
 const response = await fetch("https://api.openai.com/v1/responses", {
-  headers: { Authorization: `Bearer ${ISAAK_OPENAI_SERVICE_ACCOUNT}` },
+  headers: { Authorization: `Bearer ${ISAAK_NEW_OPENAI_API_KEY}` },
   body: JSON.stringify({ model: "gpt-4.1-mini", input: [...] }),
 });
 ```

@@ -57,7 +57,7 @@ GOOGLE_AI_API_KEY=<tu google ai api key>
 #### Isaak / OpenAI
 
 ```bash
-ISAAK_OPENAI_SERVICE_ACCOUNT=<tu clave sk-svcacct_...>
+ISAAK_NEW_OPENAI_API_KEY=<tu clave sk-proj-...>
 ISAAK_OPENAI_MODEL=gpt-4.1-mini
 ```
 
@@ -144,7 +144,7 @@ curl https://app.verifactu.business/dashboard \
 
 - [ ] **Landing**: SESSION_SECRET añadido en Vercel
 - [ ] **Landing**: Firebase Admin (PROJECT_ID, CLIENT_EMAIL, PRIVATE_KEY) añadido
-- [ ] **Landing**: ISAAK_OPENAI_SERVICE_ACCOUNT añadido
+- [ ] **Landing**: ISAAK_NEW_OPENAI_API_KEY añadido
 - [ ] **App**: SESSION_SECRET añadido (mismo valor que landing)
 - [ ] **App**: Firebase Client SDK añadido
 - [ ] Redeploy ambos proyectos en Vercel
@@ -174,6 +174,6 @@ curl https://app.verifactu.business/dashboard \
 
 ### Chat IA no usa OpenAI
 
-- Verificar que `ISAAK_OPENAI_SERVICE_ACCOUNT` está configurado
+- Verificar que `ISAAK_NEW_OPENAI_API_KEY` está configurado
 - Si quieres fijar el modelo, define `ISAAK_OPENAI_MODEL`
 - Revisar logs del route `/api/chat` en Vercel

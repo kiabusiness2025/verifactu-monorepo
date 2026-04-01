@@ -81,7 +81,7 @@ Si NO ves esto y ves "no se detectó":
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | `536174799167`                                       | -                       |
 | `NEXT_PUBLIC_FIREBASE_APP_ID`              | -                                                    | apps/landing/.env.local |
 | `NEXT_PUBLIC_USE_AUTH_EMULATOR`            | `false`                                              | -                       |
-| `ISAAK_OPENAI_SERVICE_ACCOUNT`             | -                                                    | apps/landing/.env.local |
+| `ISAAK_NEW_OPENAI_API_KEY`                 | -                                                    | apps/landing/.env.local |
 | `ISAAK_OPENAI_MODEL`                       | `gpt-4.1-mini`                                       | -                       |
 | `RESEND_API_KEY`                           | -                                                    | apps/landing/.env.local |
 | `RESEND_FROM`                              | `Verifactu Business <no-reply@verifactu.business>`   | -                       |

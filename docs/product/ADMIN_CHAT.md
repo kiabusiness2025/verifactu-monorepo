@@ -74,8 +74,8 @@ Verificar configuración y servicios
 Añade a `apps/app/.env`:
 
 ```env
-# OpenAI service account para Isaak
-ISAAK_OPENAI_SERVICE_ACCOUNT=sk-svcacct-xxxxx
+# Clave OpenAI para Isaak
+ISAAK_NEW_OPENAI_API_KEY=sk-proj-xxxxx
 ISAAK_OPENAI_MODEL=gpt-4.1-mini
 
 # Activar Isaak en el panel admin

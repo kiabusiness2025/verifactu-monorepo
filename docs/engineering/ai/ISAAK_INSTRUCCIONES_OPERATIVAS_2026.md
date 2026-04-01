@@ -197,7 +197,7 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
 - `SESSION_SECRET`
 - `SESSION_SECRET_PREVIOUS` (opcional, rotación)
 - `CLAVE_API_AI_VERCEL` o `VERCEL_AI_API_KEY`
-- `ISAAK_OPENAI_SERVICE_ACCOUNT` (fallback si no hay AI Gateway)
+- `ISAAK_NEW_OPENAI_API_KEY` (fallback si no hay AI Gateway)
 
 ### Share links
 

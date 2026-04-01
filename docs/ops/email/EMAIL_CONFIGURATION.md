@@ -22,7 +22,7 @@ ADMIN_EMAILS=kiabusiness2025@gmail.com,soporte@verifactu.business
 ADMIN_NOTIFICATION_EMAIL=kiabusiness2025@gmail.com
 
 # Isaak para auto-respuesta
-ISAAK_OPENAI_SERVICE_ACCOUNT=sk-svcacct-xxx
+ISAAK_NEW_OPENAI_API_KEY=sk-proj-xxx
 ISAAK_OPENAI_MODEL=gpt-4.1-mini
 ISAAK_SUPPORT_ENABLED=true
 ```
@@ -415,7 +415,7 @@ Secret: [generar y guardar en .env]
 
 ```bash
 RESEND_WEBHOOK_SECRET=whsec_xxx
-ISAAK_OPENAI_SERVICE_ACCOUNT=sk-svcacct-xxx
+ISAAK_NEW_OPENAI_API_KEY=sk-proj-xxx
 ISAAK_OPENAI_MODEL=gpt-4.1-mini
 ISAAK_SUPPORT_ENABLED=true
 ADMIN_NOTIFICATION_EMAIL=kiabusiness2025@gmail.com

@@ -174,7 +174,7 @@ Reglas de correo (Resend):
 
 **Google AI (Genkit con Gemini)**
 
-- `ISAAK_OPENAI_SERVICE_ACCOUNT` ⚠️ **REQUERIDO** - clave de service account de OpenAI para el chat de Isaak
+- `ISAAK_NEW_OPENAI_API_KEY` ⚠️ **REQUERIDO** - variable canónica para la clave OpenAI del chat de Isaak
 - `ISAAK_OPENAI_MODEL` opcional - por defecto `gpt-4.1-mini`
 
 **Resend Email Service (leads)**

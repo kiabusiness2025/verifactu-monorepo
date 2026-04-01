@@ -103,7 +103,7 @@ Usado por `POST /api/chat`.
 **Variables requeridas:**
 
 ```
-ISAAK_OPENAI_SERVICE_ACCOUNT  # clave de service account de OpenAI
+ISAAK_NEW_OPENAI_API_KEY      # clave de API de OpenAI
 ISAAK_OPENAI_MODEL            # opcional, por defecto: gpt-4.1-mini
 ```
 
@@ -223,7 +223,7 @@ output: 'standalone';
 
 ### El chat IA no responde
 
-- Revisa `ISAAK_OPENAI_SERVICE_ACCOUNT`
+- Revisa `ISAAK_NEW_OPENAI_API_KEY`
 - Si quieres fijar modelo, define `ISAAK_OPENAI_MODEL`
 - Revisa los logs de funciones del proyecto en Vercel
 
