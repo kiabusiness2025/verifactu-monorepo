@@ -32,6 +32,8 @@ type OpenAIResponsesApiOutput = {
 
 export function resolveOpenAIKey(env: NodeJS.ProcessEnv): string | null {
   return (
+    env.ISAAK_OPENAI_SERVICE_ACCOUNT ||
+    env.ISAAK_OPENAI_SERVICE_ACCAUNT ||
     env.ISAAK_NEW_OPENAI_API_KEY ||
     env.CLAVE_API_DE_PROYECTO_EXPERTO ||
     env.OPENAI_API_KEY ||

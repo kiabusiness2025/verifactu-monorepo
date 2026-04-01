@@ -1,3 +1,4 @@
+import { resolveOpenAIKey } from '@verifactu/utils';
 import { VertexAI } from '@google-cloud/vertexai';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -159,8 +160,7 @@ async function getVertexResponse(message: string): Promise<string | null> {
 
 async function getChatGptResponse(message: string): Promise<string | null> {
   const apiKey =
-    process.env.OPENAI_API_KEY ||
-    process.env.CLAVE_API_DE_PROYECTO_EXPERTO ||
+    resolveOpenAIKey(process.env) ||
     process.env.CLAVE_API_AI_VERCEL ||
     process.env.VERCEL_AI_API_KEY;
 
