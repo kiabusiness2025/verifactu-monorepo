@@ -31,7 +31,13 @@ jest.mock('@/src/server/tenant/resolveActiveTenant', () => ({
 }));
 
 jest.mock('@/lib/oauth/mcp', () => ({
-  applyOpenAiCorsHeaders: jest.fn((response) => response),
+  applyOpenAiCorsHeaders: jest.fn((response, request) => {
+    const origin = request.headers.get('origin');
+    if (origin) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+    }
+    return response;
+  }),
   getDefaultScopes: jest.fn(() => ['mcp.read']),
   getAuthorizationEndpoint: jest.fn(() => 'https://app.verifactu.business/oauth/authorize'),
   getAuthorizationServerMetadataUrl: jest.fn(
@@ -49,7 +55,7 @@ jest.mock('@/lib/oauth/mcp', () => ({
 }));
 
 import { GET, POST } from './route';
-import { applyOpenAiCorsHeaders } from '@/lib/oauth/mcp';
+import { applyOpenAiCorsHeaders, verifyAccessToken } from '@/lib/oauth/mcp';
 
 describe('MCP Holded route auth challenge', () => {
   beforeEach(() => {
@@ -118,5 +124,37 @@ describe('MCP Holded route auth challenge', () => {
     expect(response.status).toBe(401);
     expect(payload).toEqual({ error: 'Unauthorized MCP access' });
     expect(response.headers.get('WWW-Authenticate')).toContain('resource_metadata=');
+  });
+
+  it('returns CORS headers on authenticated tools/list', async () => {
+    (verifyAccessToken as jest.Mock).mockResolvedValue({
+      tenantId: 'tenant_123',
+      uid: 'user_123',
+      email: 'user@example.com',
+      scope: 'mcp.read holded.invoices.read',
+    });
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/mcp/holded', {
+        method: 'POST',
+        headers: {
+          origin: 'https://chatgpt.com',
+          authorization: 'Bearer oauth-token',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/list',
+          params: {},
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://chatgpt.com');
+    expect(payload.result.tools).toHaveLength(1);
+    expect(applyOpenAiCorsHeaders).toHaveBeenCalled();
   });
 });

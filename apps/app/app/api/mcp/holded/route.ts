@@ -36,6 +36,14 @@ type ToolDefinition = HoldedMcpToolDefinition;
 
 const TOOLS: ToolDefinition[] = holdedMcpTools;
 
+function applyMcpCors<T extends { headers: Headers }>(response: T, request: NextRequest) {
+  return applyOpenAiCorsHeaders(response, request, {
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowHeaders: ['authorization', 'content-type'],
+    exposeHeaders: ['WWW-Authenticate'],
+  });
+}
+
 function getVisibleTools(scopes: string | readonly string[]) {
   const visibleToolNames = new Set(getAllowedHoldedMcpToolNames(scopes));
   return TOOLS.filter((tool) => visibleToolNames.has(tool.name));
@@ -59,19 +67,23 @@ function resolveVisibleTools(
 }
 
 function jsonRpc(
+  request: NextRequest,
   id: JsonRpcRequest['id'],
   result?: unknown,
   error?: { code: number; message: string }
 ) {
-  return NextResponse.json({
-    jsonrpc: '2.0',
-    id: id ?? null,
-    ...(error ? { error } : { result }),
-  });
+  return applyMcpCors(
+    NextResponse.json({
+      jsonrpc: '2.0',
+      id: id ?? null,
+      ...(error ? { error } : { result }),
+    }),
+    request
+  );
 }
 
 function unauthorized(request: NextRequest) {
-  return applyOpenAiCorsHeaders(
+  return applyMcpCors(
     NextResponse.json(
       {
         error: 'Unauthorized MCP access',
@@ -83,12 +95,7 @@ function unauthorized(request: NextRequest) {
         },
       }
     ),
-    request,
-    {
-      methods: ['GET', 'POST', 'OPTIONS'],
-      allowHeaders: ['authorization', 'content-type'],
-      exposeHeaders: ['WWW-Authenticate'],
-    }
+    request
   );
 }
 
@@ -237,19 +244,14 @@ async function callTool(
 }
 
 export async function OPTIONS(request: NextRequest) {
-  return applyOpenAiCorsHeaders(
+  return applyMcpCors(
     new NextResponse(null, {
       status: 204,
       headers: {
         Allow: 'GET, POST, OPTIONS',
       },
     }),
-    request,
-    {
-      methods: ['GET', 'POST', 'OPTIONS'],
-      allowHeaders: ['authorization', 'content-type'],
-      exposeHeaders: ['WWW-Authenticate'],
-    }
+    request
   );
 }
 
@@ -262,7 +264,7 @@ export async function GET(request: NextRequest) {
 
   const visibleTools = resolveVisibleTools(access);
 
-  return applyOpenAiCorsHeaders(
+  return applyMcpCors(
     NextResponse.json({
       name: 'Isaak for Holded',
       description:
@@ -278,19 +280,14 @@ export async function GET(request: NextRequest) {
       },
       tools: visibleTools.map(({ name, title, description }) => ({ name, title, description })),
     }),
-    request,
-    {
-      methods: ['GET', 'POST', 'OPTIONS'],
-      allowHeaders: ['authorization', 'content-type'],
-      exposeHeaders: ['WWW-Authenticate'],
-    }
+    request
   );
 }
 
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => null)) as JsonRpcRequest | null;
   if (!body?.method) {
-    return jsonRpc(body?.id ?? null, undefined, {
+    return jsonRpc(request, body?.id ?? null, undefined, {
       code: -32600,
       message: 'Invalid Request',
     });
@@ -306,7 +303,7 @@ export async function POST(request: NextRequest) {
   try {
     switch (body.method) {
       case 'initialize':
-        return jsonRpc(body.id, {
+        return jsonRpc(request, body.id, {
           protocolVersion: '2024-11-05',
           serverInfo: {
             name: 'Isaak for Holded',
@@ -317,11 +314,11 @@ export async function POST(request: NextRequest) {
           },
         });
       case 'notifications/initialized':
-        return new NextResponse(null, { status: 202 });
+        return applyMcpCors(new NextResponse(null, { status: 202 }), request);
       case 'tools/list': {
         const visibleTools = resolveVisibleTools(access);
 
-        return jsonRpc(body.id, {
+        return jsonRpc(request, body.id, {
           tools: visibleTools,
         });
       }
@@ -342,16 +339,16 @@ export async function POST(request: NextRequest) {
           name,
           args
         );
-        return jsonRpc(body.id, result);
+        return jsonRpc(request, body.id, result);
       }
       default:
-        return jsonRpc(body.id, undefined, {
+        return jsonRpc(request, body.id, undefined, {
           code: -32601,
           message: `Method not found: ${body.method}`,
         });
     }
   } catch (error) {
-    return jsonRpc(body.id, undefined, {
+    return jsonRpc(request, body.id, undefined, {
       code: -32000,
       message: error instanceof Error ? error.message : 'Unknown MCP error',
     });
