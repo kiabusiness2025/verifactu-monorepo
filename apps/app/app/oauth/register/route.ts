@@ -48,9 +48,41 @@ function buildClientId(redirectUris: string[]) {
 
 function jsonWithCors(request: NextRequest, body: Record<string, unknown>, init?: ResponseInit) {
   return applyOpenAiCorsHeaders(NextResponse.json(body, init), request, {
-    methods: ['OPTIONS', 'POST'],
+    methods: ['GET', 'HEAD', 'OPTIONS', 'POST'],
     allowHeaders: ['content-type'],
   });
+}
+
+export async function GET(request: NextRequest) {
+  const registrationEndpoint =
+    'nextUrl' in request && request.nextUrl ? request.nextUrl.toString() : request.url;
+
+  return jsonWithCors(request, {
+    registration_endpoint: registrationEndpoint,
+    registration_supported: true,
+    token_endpoint_auth_methods_supported: ['none'],
+    grant_types_supported: ['authorization_code'],
+    response_types_supported: ['code'],
+    scope: getDefaultScopes().join(' '),
+    documentation:
+      'Submit a POST request with redirect_uris, grant_types, response_types, and token_endpoint_auth_method=none to dynamically register a public OAuth client.',
+  });
+}
+
+export async function HEAD(request: NextRequest) {
+  return applyOpenAiCorsHeaders(
+    new NextResponse(null, {
+      status: 200,
+      headers: {
+        Allow: 'GET, HEAD, OPTIONS, POST',
+      },
+    }),
+    request,
+    {
+      methods: ['GET', 'HEAD', 'OPTIONS', 'POST'],
+      allowHeaders: ['content-type'],
+    }
+  );
 }
 
 export async function OPTIONS(request: NextRequest) {
@@ -58,12 +90,12 @@ export async function OPTIONS(request: NextRequest) {
     new NextResponse(null, {
       status: 204,
       headers: {
-        Allow: 'OPTIONS, POST',
+        Allow: 'GET, HEAD, OPTIONS, POST',
       },
     }),
     request,
     {
-      methods: ['OPTIONS', 'POST'],
+      methods: ['GET', 'HEAD', 'OPTIONS', 'POST'],
       allowHeaders: ['content-type'],
     }
   );

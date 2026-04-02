@@ -1,11 +1,14 @@
 /** @jest-environment node */
 
 jest.mock('@/lib/oauth/mcp', () => ({
-  applyOpenAiCorsHeaders: jest.fn((response, request) => {
+  applyOpenAiCorsHeaders: jest.fn((response, request, options) => {
     const origin = request.headers.get('origin');
     if (origin) {
       response.headers.set('Access-Control-Allow-Origin', origin);
-      response.headers.set('Access-Control-Allow-Methods', 'OPTIONS, POST');
+      response.headers.set(
+        'Access-Control-Allow-Methods',
+        options?.methods?.join(', ') || 'GET, OPTIONS, POST'
+      );
       response.headers.set('Access-Control-Allow-Headers', 'content-type');
     }
     return response;
@@ -15,9 +18,44 @@ jest.mock('@/lib/oauth/mcp', () => ({
   validateRedirectUri: jest.fn(() => true),
 }));
 
-import { OPTIONS, POST } from './route';
+import { GET, HEAD, OPTIONS, POST } from './route';
 
 describe('OAuth dynamic client registration route', () => {
+  it('returns an informative GET response so link validators do not fail on the DCR endpoint', async () => {
+    const response = await GET(
+      new Request('https://app.verifactu.business/oauth/register', {
+        method: 'GET',
+        headers: {
+          origin: 'https://chatgpt.com',
+        },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://chatgpt.com');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('GET');
+    expect(payload.registration_endpoint).toBe('https://app.verifactu.business/oauth/register');
+    expect(payload.registration_supported).toBe(true);
+    expect(payload.token_endpoint_auth_methods_supported).toEqual(['none']);
+  });
+
+  it('returns a successful HEAD response for strict link validators', async () => {
+    const response = await HEAD(
+      new Request('https://app.verifactu.business/oauth/register', {
+        method: 'HEAD',
+        headers: {
+          origin: 'https://chatgpt.com',
+        },
+      }) as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://chatgpt.com');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('HEAD');
+    expect(response.headers.get('Allow')).toContain('HEAD');
+  });
+
   it('returns CORS headers for preflight requests from ChatGPT', async () => {
     const response = await OPTIONS(
       new Request('https://app.verifactu.business/oauth/register', {
@@ -32,6 +70,8 @@ describe('OAuth dynamic client registration route', () => {
 
     expect(response.status).toBe(204);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://chatgpt.com');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('GET');
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('HEAD');
     expect(response.headers.get('Access-Control-Allow-Methods')).toContain('POST');
     expect(response.headers.get('Access-Control-Allow-Headers')).toContain('content-type');
   });

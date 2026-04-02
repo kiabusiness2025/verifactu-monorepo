@@ -31,7 +31,7 @@ Important:
 - `Registration URL`
   - `https://app.verifactu.business/oauth/register`
 - `Authorization Server Base`
-  - `https://app.verifactu.business/.well-known/oauth-authorization-server`
+  - `https://app.verifactu.business`
 - `Resource`
   - `https://app.verifactu.business/api/mcp/holded`
 - `Userinfo URL`
@@ -252,7 +252,7 @@ Registration URL
 https://app.verifactu.business/oauth/register
 
 Authorization Server Base
-https://app.verifactu.business/.well-known/oauth-authorization-server
+https://app.verifactu.business
 
 Resource
 https://app.verifactu.business/api/mcp/holded
@@ -384,7 +384,7 @@ Runtime real del conector:
 - OAuth register: [apps/app/app/oauth/register/route.ts](c:\dev\verifactu-monorepo\apps\app\app\oauth\register\route.ts)
 - OAuth userinfo: [apps/app/app/oauth/userinfo/route.ts](c:\dev\verifactu-monorepo\apps\app\app\oauth\userinfo\route.ts)
 - Metadata OAuth: [apps/app/app/.well-known/oauth-authorization-server/route.ts](c:\dev\verifactu-monorepo\apps\app\app.well-known\oauth-authorization-server\route.ts)
-- Protected resource metadata: [apps/app/app/.well-known/oauth-protected-resource/route.ts](c:\dev\verifactu-monorepo\apps\app\app.well-known\oauth-protected-resource\route.ts)
+- Protected resource metadata: [apps/app/app/.well-known/oauth-protected-resource/api/mcp/holded/route.ts](c:\dev\verifactu-monorepo\apps\app\app.well-known\oauth-protected-resource\api\mcp\holded\route.ts)
 - OpenAI apps challenge: [apps/app/app/.well-known/openai-apps-challenge/route.ts](c:\dev\verifactu-monorepo\apps\app\app.well-known\openai-apps-challenge\route.ts)
 
 ## Valores exactos para crear el conector
@@ -412,7 +412,7 @@ Runtime real del conector:
 ### 3. Metadata OAuth
 
 - Authorization server metadata: `https://app.verifactu.business/.well-known/oauth-authorization-server`
-- Protected resource metadata: `https://app.verifactu.business/.well-known/oauth-protected-resource`
+- Protected resource metadata: `https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded`
 - Recurso protegido: `https://app.verifactu.business/api/mcp/holded`
 
 ### 3.1 Registro dinamico de cliente

@@ -107,6 +107,27 @@ Archivos clave:
 - `apps/app/lib/integrations/holdedMcpScopes.ts`
 - `apps/app/lib/integrations/holdedMcpTools.ts`
 
+### 5. Compatibilidad con el refresco manual de acciones en OpenAI
+
+Durante el redescubrimiento manual de tools en OpenAI aparecio un error `Link not found`.
+
+Hallazgo operativo:
+
+- el problema no apuntaba al catalogo MCP ni a los scopes ya publicados
+- el candidato mas fuerte era `GET` y `HEAD` sobre `https://app.verifactu.business/oauth/register`, que en produccion respondian `405`
+- ademas, una guia interna seguia empujando un `Authorization Server Base` desfasado usando la URL del documento `/.well-known/oauth-authorization-server` en lugar del issuer base
+
+Correccion aplicada en codigo y docs:
+
+- `apps/app/app/oauth/register/route.ts` ahora responde tambien a `GET` y `HEAD` con informacion minima compatible con validadores de enlaces
+- la guia `apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md` se alineo para usar:
+  - `Authorization Server Base`: `https://app.verifactu.business`
+  - `Protected Resource Metadata`: `https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded`
+
+Validacion local:
+
+- tests focalizados de `app/oauth/register/route.test.ts`, `lib/oauth/mcp.test.ts` y `app/api/mcp/holded/route.test.ts` en verde
+
 ## Hipotesis descartadas
 
 ### Cambio del Authorization Server Base

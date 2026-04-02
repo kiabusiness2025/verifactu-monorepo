@@ -173,7 +173,20 @@ openai-chatgpt-dc3910724e2c913016182543
 Nota operativa:
 
 - El servidor si soporta DCR mediante `https://app.verifactu.business/oauth/register`.
+- El endpoint de registro dinamico sigue usando `POST` para crear el cliente, pero ahora tambien responde a `GET` y `HEAD` con informacion minima para que validadores de enlaces de OpenAI no fallen con `Link not found` antes de intentar el registro real.
 - Si la UI de OpenAI insiste en alta manual, no es prueba de que DCR falle; normalmente significa que esa pantalla ha decidido no usarlo.
+
+### Si OpenAI muestra `Link not found` al actualizar tools
+
+Comprobaciones mas probables:
+
+- `Authorization Server Base` debe ser `https://app.verifactu.business`, no la URL del documento `/.well-known/oauth-authorization-server`
+- `Protected Resource Metadata` debe apuntar al recurso MCP concreto: `https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded`
+- `Registration URL` debe seguir siendo `https://app.verifactu.business/oauth/register`
+
+Matiz importante:
+
+- OpenAI puede refrescar la lista de acciones publicada manualmente, pero si alguno de esos enlaces no es resoluble durante el redescubrimiento, la actualizacion puede fallar aunque el catalogo MCP sea correcto.
 
 ### Si OpenAI devuelve `invalid_scope`
 
