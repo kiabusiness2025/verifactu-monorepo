@@ -12,6 +12,7 @@ export async function requireTenantContext(options?: {
   channelType?: 'dashboard' | 'chatgpt' | 'internal';
   metadata?: Record<string, unknown>;
   onboardingToken?: string | null;
+  tenantIdHint?: string | null;
 }) {
   const session = await getSessionPayload();
   const onboardingPayload =
@@ -64,6 +65,7 @@ export async function requireTenantContext(options?: {
             email: subjectEmail,
             name: subjectName,
             sessionTenantId,
+            tenantIdHint: options?.tenantIdHint ?? null,
           })
         : await resolveTenantForOAuthSession({
             uid: subjectUid,
@@ -80,6 +82,30 @@ export async function requireTenantContext(options?: {
   }
 
   let tenantId = direct.tenantId ?? oauthResolved.tenantId ?? sessionTenantId ?? null;
+
+  const normalizedTenantIdHint = options?.tenantIdHint?.trim() || null;
+  if (normalizedTenantIdHint) {
+    try {
+      const hintMembership = await prisma.membership.findFirst({
+        where: {
+          userId: subjectUid,
+          tenantId: normalizedTenantIdHint,
+          status: 'active',
+        },
+        select: { tenantId: true },
+      });
+
+      if (hintMembership || oauthResolved.tenantId === normalizedTenantIdHint) {
+        tenantId = normalizedTenantIdHint;
+      }
+    } catch (error) {
+      console.error('[requireTenantContext] tenant hint resolution failed', {
+        sessionUid: subjectUid,
+        tenantIdHint: normalizedTenantIdHint,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
   if (options?.channelType === 'chatgpt' && tenantId) {
     try {

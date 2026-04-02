@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
   const onboardingToken = url.searchParams.get('onboarding_token')?.trim() || null;
   const connectionConfirmed = url.searchParams.get('connection_confirmed')?.trim() === '1';
+  const tenantIdHint = url.searchParams.get('tenant_id')?.trim() || null;
 
   try {
     if (responseType !== 'code') {
@@ -102,6 +103,7 @@ export async function GET(request: NextRequest) {
         email: subject.email,
         name: subject.name,
         sessionTenantId: subject.sessionTenantId,
+        tenantIdHint,
       });
     } catch (error) {
       console.error('[oauth/authorize] tenant resolution failed', {
@@ -167,6 +169,9 @@ export async function GET(request: NextRequest) {
       onboardingUrl.searchParams.set('channel', 'chatgpt');
       onboardingUrl.searchParams.set('require_connection_confirmation', '1');
       onboardingUrl.searchParams.set('onboarding_token', effectiveOnboardingToken);
+      if (tenantIdHint) {
+        onboardingUrl.searchParams.set('tenant_id', tenantIdHint);
+      }
 
       if (!hasHoldedConnection) {
         return NextResponse.redirect(onboardingUrl);

@@ -491,6 +491,39 @@ async function getOrCreateInternalUserForOAuth(input: {
   return created.id;
 }
 
+async function ensureUserMembershipAndPreference(input: { userId: string; tenantId: string }) {
+  const membership = await prisma.membership.findFirst({
+    where: {
+      userId: input.userId,
+      tenantId: input.tenantId,
+      status: 'active',
+    },
+    select: { id: true },
+  });
+
+  if (!membership) {
+    await prisma.membership.create({
+      data: {
+        userId: input.userId,
+        tenantId: input.tenantId,
+        role: 'member',
+        status: 'active',
+      },
+    });
+  }
+
+  await prisma.userPreference.upsert({
+    where: { userId: input.userId },
+    create: {
+      userId: input.userId,
+      preferredTenantId: input.tenantId,
+    },
+    update: {
+      preferredTenantId: input.tenantId,
+    },
+  });
+}
+
 async function ensureOwnedTenantForUser(input: {
   userId: string;
   email?: string | null;
@@ -578,12 +611,36 @@ export async function resolveTenantForHoldedFirstSession(input: {
   email?: string | null;
   name?: string | null;
   sessionTenantId?: string | null;
+  tenantIdHint?: string | null;
 }) {
   const internalUserId = await getOrCreateInternalUserForOAuth({
     uid: input.uid,
     email: input.email ?? null,
     name: input.name ?? null,
   });
+
+  const normalizedTenantIdHint = input.tenantIdHint?.trim() || null;
+  if (normalizedTenantIdHint) {
+    const eligibleMembership = await prisma.membership.findFirst({
+      where: {
+        tenantId: normalizedTenantIdHint,
+        status: 'active',
+        userId: {
+          in: Array.from(new Set([input.uid, internalUserId])),
+        },
+      },
+      select: { userId: true },
+    });
+
+    if (eligibleMembership) {
+      await ensureUserMembershipAndPreference({
+        userId: internalUserId,
+        tenantId: normalizedTenantIdHint,
+      });
+
+      return { tenantId: normalizedTenantIdHint, resolvedUserId: internalUserId };
+    }
+  }
 
   const direct = await resolveActiveTenant({
     userId: input.uid,
@@ -597,35 +654,9 @@ export async function resolveTenantForHoldedFirstSession(input: {
     });
 
     if (directTenant && !directTenant.isDemo) {
-      const membership = await prisma.membership.findFirst({
-        where: {
-          userId: internalUserId,
-          tenantId: directTenant.id,
-          status: 'active',
-        },
-        select: { id: true },
-      });
-
-      if (!membership) {
-        await prisma.membership.create({
-          data: {
-            userId: internalUserId,
-            tenantId: directTenant.id,
-            role: 'member',
-            status: 'active',
-          },
-        });
-      }
-
-      await prisma.userPreference.upsert({
-        where: { userId: internalUserId },
-        create: {
-          userId: internalUserId,
-          preferredTenantId: directTenant.id,
-        },
-        update: {
-          preferredTenantId: directTenant.id,
-        },
+      await ensureUserMembershipAndPreference({
+        userId: internalUserId,
+        tenantId: directTenant.id,
       });
 
       return { tenantId: directTenant.id, resolvedUserId: internalUserId };

@@ -56,9 +56,18 @@ function getOnboardingToken(request: NextRequest) {
   );
 }
 
+function getTenantIdHint(request: NextRequest) {
+  return (
+    request.headers.get('x-isaak-tenant-id')?.trim() ||
+    request.nextUrl.searchParams.get('tenant_id')?.trim() ||
+    null
+  );
+}
+
 export async function POST(request: NextRequest) {
   const entryChannel = getEntryChannel(request);
   const onboardingToken = getOnboardingToken(request);
+  const tenantIdHint = getTenantIdHint(request);
   let stage: 'auth' | 'access' | 'body' | 'encrypt' | 'probe' | 'persist' = 'auth';
   let tenantId: string | null = null;
   let resolvedUserId: string | null = null;
@@ -71,6 +80,7 @@ export async function POST(request: NextRequest) {
         source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext',
       },
       onboardingToken,
+      tenantIdHint,
     });
     if ('error' in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });

@@ -108,6 +108,7 @@ describe('POST /api/integrations/accounting/connect', () => {
         headers: {
           'content-type': 'application/json',
           'x-isaak-entry-channel': 'chatgpt',
+          'x-isaak-tenant-id': 'tenant-demo',
         },
         body: JSON.stringify({
           apiKey: 'demo-key',
@@ -122,6 +123,12 @@ describe('POST /api/integrations/accounting/connect', () => {
 
     expect(response.status).toBe(200);
     expect(payload.ok).toBe(true);
+    expect(requireTenantContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channelType: 'chatgpt',
+        tenantIdHint: 'tenant-demo',
+      })
+    );
     expect(probeAccountingApiConnection).toHaveBeenCalledWith('demo-key');
     expect(upsertAccountingIntegration).toHaveBeenCalledWith(
       expect.objectContaining({

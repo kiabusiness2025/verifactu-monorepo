@@ -52,6 +52,9 @@ type Props = {
 const onboardingCopy = getIsaakHoldedOnboardingCopy();
 const HOLDED_COMPAT_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+const ISAAK_CHAT_URL = `${
+  process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business'
+}/chat?source=holded_onboarding_return`;
 const HOLDED_API_GUIDE_URL =
   'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
 const VERIFACTU_TERMS_URL = 'https://verifactu.business/terms';
@@ -178,6 +181,7 @@ export default function HoldedOnboardingClient({
   const [companySaving, setCompanySaving] = useState(false);
   const [companyMessage, setCompanyMessage] = useState<string | null>(null);
   const [companyError, setCompanyError] = useState<string | null>(null);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
   const [loading, setLoading] = useState(!needsPostValidationCompanyStep);
   const [saving, setSaving] = useState(false);
@@ -213,6 +217,7 @@ export default function HoldedOnboardingClient({
       : isChatgptEntry
         ? `${resolvedSummary.contactFirstName}, primero validaremos tu API key y despues guardaremos los datos exactos de empresa y usuario.`
         : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName}.`;
+  const backHref = isChatgptEntry ? ISAAK_CHAT_URL : nextUrl || HOLDED_COMPAT_URL;
 
   const confirmedNextUrl = useMemo(() => {
     if (!requireConnectionConfirmation) return nextUrl;
@@ -221,12 +226,15 @@ export default function HoldedOnboardingClient({
       const parsed = new URL(nextUrl, HOLDED_COMPAT_URL);
       if (parsed.pathname === '/oauth/authorize') {
         parsed.searchParams.set('connection_confirmed', '1');
+        if (selectedTenantId) {
+          parsed.searchParams.set('tenant_id', selectedTenantId);
+        }
       }
       return parsed.toString();
     } catch {
       return nextUrl;
     }
-  }, [nextUrl, requireConnectionConfirmation]);
+  }, [nextUrl, requireConnectionConfirmation, selectedTenantId]);
 
   const loadStatus = useCallback(
     async (signal?: AbortSignal) => {
@@ -393,13 +401,14 @@ export default function HoldedOnboardingClient({
     return data;
   };
 
-  const connectValidatedApi = async () => {
+  const connectValidatedApi = async (tenantIdHint?: string | null) => {
     const res = await fetch('/api/integrations/accounting/connect', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-isaak-entry-channel': entryChannel,
         ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
+        ...(tenantIdHint ? { 'x-isaak-tenant-id': tenantIdHint } : {}),
       },
       body: JSON.stringify({
         apiKey: apiKey.trim(),
@@ -437,40 +446,6 @@ export default function HoldedOnboardingClient({
     );
 
     return data;
-  };
-
-  const handleUseResolvedCompany = async () => {
-    setCompanySaving(true);
-    setSaving(true);
-    setCompanyError(null);
-    setCompanyMessage(null);
-
-    try {
-      setCompanyConfirmed(true);
-      setShowCompanyForm(false);
-      await connectValidatedApi();
-      setCompanyMessage('Datos confirmados. Ya estamos cerrando la conexion con Holded.');
-      setError(null);
-      setMessage(uiCopy.successConnected);
-      goToNextStep(confirmedNextUrl);
-    } catch (confirmError) {
-      setCompanyConfirmed(false);
-      setCompanyError(
-        confirmError instanceof Error
-          ? confirmError.message
-          : 'No hemos podido guardar la conexion de esta empresa.'
-      );
-    } finally {
-      setCompanySaving(false);
-      setSaving(false);
-    }
-  };
-
-  const handleChooseAnotherCompany = () => {
-    setCompanyConfirmed(false);
-    setShowCompanyForm(true);
-    setCompanyMessage(null);
-    setCompanyError(null);
   };
 
   const handleCompanySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -541,6 +516,8 @@ export default function HoldedOnboardingClient({
         throw new Error('La empresa se ha creado, pero no hemos podido activarla en tu sesion.');
       }
 
+      setSelectedTenantId(nextTenantId);
+
       const switchRes = await fetch('/api/session/tenant-switch', {
         method: 'POST',
         headers: {
@@ -577,7 +554,7 @@ export default function HoldedOnboardingClient({
         contactPhone: normalizedContactPhone || null,
       });
 
-      await connectValidatedApi();
+      await connectValidatedApi(nextTenantId);
 
       setCompanyConfirmed(true);
       setShowCompanyForm(false);
@@ -616,12 +593,10 @@ export default function HoldedOnboardingClient({
       if (needsPostValidationCompanyStep && !apiValidated) {
         await validateApiKey();
         setApiValidated(true);
-        setShowCompanyForm(!hasResolvedCompanyProfile);
+        setShowCompanyForm(true);
         setCompanyConfirmed(false);
         setCompanyMessage(
-          hasResolvedCompanyProfile
-            ? 'API key validada. Ahora confirma que el nombre de empresa y el correo coinciden exactamente con Holded.'
-            : 'API key validada. Ahora necesitamos el nombre exacto de la empresa, su NIF/CIF y el correo principal tal y como aparecen en Holded.'
+          'API key validada. Ahora necesitamos el nombre exacto de la empresa, su NIF/CIF y el correo principal tal y como aparecen en Holded.'
         );
         return;
       }
@@ -647,14 +622,14 @@ export default function HoldedOnboardingClient({
         <div className="rounded-[28px] border border-neutral-200 bg-white shadow-[0_18px_46px_rgba(15,23,42,0.09)]">
           <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
             <Link
-              href={HOLDED_COMPAT_URL}
+              href={backHref}
               className="inline-flex items-center gap-2 rounded-full border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Volver
             </Link>
             <Link
-              href={HOLDED_COMPAT_URL}
+              href={backHref}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 hover:bg-neutral-50"
               aria-label="Cerrar"
             >
@@ -693,176 +668,97 @@ export default function HoldedOnboardingClient({
               {companyStepPending ? (
                 <div>
                   <div className="text-sm font-semibold text-black">
-                    {showCompanyForm
-                      ? 'Datos de empresa y contacto'
-                      : 'Confirma la empresa que quieres conectar'}
+                    Datos de empresa y contacto
                   </div>
                   <p className="mt-2 text-sm leading-6 text-neutral-700">
-                    {showCompanyForm
-                      ? 'La API key ya es valida. Ahora necesitamos guardar el nombre exacto de la empresa, su NIF/CIF y el correo principal tal y como aparecen en Holded.'
-                      : 'Hemos cargado los datos actuales de tu empresa. Confirma que el nombre y el correo coinciden exactamente con Holded o corrigelos antes de guardar la conexion.'}
+                    La API key ya es valida. Ahora necesitamos guardar el nombre exacto de la
+                    empresa, su NIF/CIF y el correo principal tal y como aparecen en Holded.
                   </p>
 
-                  {showCompanyForm ? (
-                    <form onSubmit={handleCompanySubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
-                      <label className="block text-sm font-medium text-neutral-700">
-                        Nombre comercial
-                        <input
-                          type="text"
-                          value={companyName}
-                          onChange={(event) => setCompanyName(event.target.value)}
-                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                          placeholder="Tu empresa"
-                          autoComplete="organization"
-                        />
-                      </label>
-                      <label className="block text-sm font-medium text-neutral-700">
-                        Razon social
-                        <input
-                          type="text"
-                          value={companyLegalName}
-                          onChange={(event) => setCompanyLegalName(event.target.value)}
-                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                          placeholder="Tu empresa, S.L."
-                          autoComplete="organization"
-                        />
-                      </label>
-                      <label className="block text-sm font-medium text-neutral-700">
-                        NIF / CIF
-                        <input
-                          type="text"
-                          value={companyTaxId}
-                          onChange={(event) => setCompanyTaxId(event.target.value)}
-                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                          placeholder="B12345678"
-                          autoComplete="off"
-                        />
-                      </label>
-                      <label className="block text-sm font-medium text-neutral-700">
-                        Persona usuaria en Holded
-                        <input
-                          type="text"
-                          value={contactName}
-                          onChange={(event) => setContactName(event.target.value)}
-                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                          placeholder="Nombre y apellidos"
-                          autoComplete="name"
-                        />
-                      </label>
-                      <label className="block text-sm font-medium text-neutral-700">
-                        Correo principal en Holded
-                        <input
-                          type="email"
-                          value={contactEmail}
-                          onChange={(event) => setContactEmail(event.target.value)}
-                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                          placeholder="nombre@empresa.com"
-                          autoComplete="email"
-                        />
-                      </label>
-                      <label className="block text-sm font-medium text-neutral-700">
-                        Telefono
-                        <input
-                          type="tel"
-                          value={contactPhone}
-                          onChange={(event) => setContactPhone(event.target.value)}
-                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                          placeholder="600 000 000"
-                          autoComplete="tel"
-                        />
-                      </label>
-                      <div className="sm:col-span-2 flex flex-wrap gap-3">
-                        {companySetup.hasResolvedCompany ? (
-                          <button
-                            type="button"
-                            onClick={() => setShowCompanyForm(false)}
-                            disabled={companySaving}
-                            className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
-                          >
-                            Volver a la empresa detectada
-                          </button>
-                        ) : null}
-                        <button
-                          type="submit"
-                          disabled={companySaving}
-                          className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {companySaving ? 'Guardando...' : 'Guardar datos y terminar conexion'}
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className="mt-4">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div>
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                            Empresa
-                          </div>
-                          <div className="mt-1 text-sm font-semibold text-black">
-                            {resolvedSummary.companyName}
-                          </div>
-                        </div>
-                        {showCompanyLegalName ? (
-                          <div>
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                              Razon social
-                            </div>
-                            <div className="mt-1 text-sm text-neutral-700">
-                              {resolvedSummary.companyLegalName}
-                            </div>
-                          </div>
-                        ) : null}
-                        {resolvedSummary.companyTaxId ? (
-                          <div>
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                              NIF / CIF
-                            </div>
-                            <div className="mt-1 text-sm text-neutral-700">
-                              {resolvedSummary.companyTaxId}
-                            </div>
-                          </div>
-                        ) : null}
-                        {resolvedSummary.contactFullName ? (
-                          <div>
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                              Persona usuaria
-                            </div>
-                            <div className="mt-1 text-sm text-neutral-700">
-                              {resolvedSummary.contactFullName}
-                            </div>
-                          </div>
-                        ) : null}
-                        {resolvedSummary.contactEmail ? (
-                          <div>
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                              Correo principal
-                            </div>
-                            <div className="mt-1 break-all text-sm text-neutral-700">
-                              {resolvedSummary.contactEmail}
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-3">
-                        <button
-                          type="button"
-                          onClick={handleUseResolvedCompany}
-                          disabled={companySaving}
-                          className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {companySaving ? 'Conectando...' : 'Si, estos datos coinciden'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleChooseAnotherCompany}
-                          disabled={companySaving}
-                          className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          No, corregir datos
-                        </button>
-                      </div>
+                  {hasResolvedCompanyProfile ? (
+                    <div className="mt-3 rounded-2xl border border-[#0b6cfb]/15 bg-[#f7fbff] px-4 py-3 text-sm text-[#0b214a]">
+                      Hemos precargado los datos de tu empresa actual como punto de partida. Si la
+                      API pertenece a otra empresa, sustituyelos aqui antes de guardar.
                     </div>
-                  )}
+                  ) : null}
+
+                  <form onSubmit={handleCompanySubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <label className="block text-sm font-medium text-neutral-700">
+                      Nombre comercial
+                      <input
+                        type="text"
+                        value={companyName}
+                        onChange={(event) => setCompanyName(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="Tu empresa"
+                        autoComplete="organization"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-neutral-700">
+                      Razon social
+                      <input
+                        type="text"
+                        value={companyLegalName}
+                        onChange={(event) => setCompanyLegalName(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="Tu empresa, S.L."
+                        autoComplete="organization"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-neutral-700">
+                      NIF / CIF
+                      <input
+                        type="text"
+                        value={companyTaxId}
+                        onChange={(event) => setCompanyTaxId(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="B12345678"
+                        autoComplete="off"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-neutral-700">
+                      Persona usuaria en Holded
+                      <input
+                        type="text"
+                        value={contactName}
+                        onChange={(event) => setContactName(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="Nombre y apellidos"
+                        autoComplete="name"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-neutral-700">
+                      Correo principal en Holded
+                      <input
+                        type="email"
+                        value={contactEmail}
+                        onChange={(event) => setContactEmail(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="nombre@empresa.com"
+                        autoComplete="email"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-neutral-700">
+                      Telefono
+                      <input
+                        type="tel"
+                        value={contactPhone}
+                        onChange={(event) => setContactPhone(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="600 000 000"
+                        autoComplete="tel"
+                      />
+                    </label>
+                    <div className="sm:col-span-2 flex flex-wrap gap-3">
+                      <button
+                        type="submit"
+                        disabled={companySaving}
+                        className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {companySaving ? 'Guardando...' : 'Guardar datos y terminar conexion'}
+                      </button>
+                    </div>
+                  </form>
 
                   {companyMessage ? (
                     <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
