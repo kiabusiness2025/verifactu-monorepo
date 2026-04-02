@@ -2,6 +2,8 @@
 
 Aplicacion publica de captacion, acceso, conexion Holded por API key y onboarding corto antes del handoff a Isaak.
 
+Este proyecto existe para reducir friccion antes del primer valor: no es el chat principal, no es el runtime del conector MCP y no es el backoffice. Es la puerta de entrada Holded-first.
+
 ## Posicion real dentro del monorepo
 
 Dominios y ownership:
@@ -18,6 +20,17 @@ Lo importante:
 - el servidor MCP y el OAuth del conector viven en `apps/app`
 - `apps/holded` prepara al usuario, conecta Holded y entrega el contexto inicial a Isaak
 
+## Que problema resuelve
+
+`apps/holded` debe hacer muy bien solo esta parte del recorrido:
+
+- captar al usuario adecuado
+- explicarle con claridad que necesita para conectar Holded
+- validar la API key sin generar miedo ni ruido tecnico
+- guardar la conexion de forma segura
+- recopilar el minimo contexto inicial para arrancar con sentido
+- entregar al usuario a Isaak con continuidad
+
 ## Objetivo del producto
 
 - reducir friccion desde la landing hasta el primer valor en Isaak
@@ -25,6 +38,22 @@ Lo importante:
 - conectar Holded por API key
 - recopilar el contexto inicial minimo para Isaak
 - redirigir al producto principal en `isaak.verifactu.business`
+
+## Como encaja con el conector y con Isaak
+
+La secuencia real es esta:
+
+1. El usuario llega aqui y entiende la propuesta Holded-first.
+2. Se autentica y conecta Holded con API key.
+3. La conexion se guarda server-side y se asocia al tenant.
+4. Esa misma conexion puede reutilizarse despues desde `apps/isaak`.
+5. El runtime MCP de `apps/app` puede reutilizarla tambien cuando el acceso es por OAuth o por flujo compartido.
+
+En otras palabras:
+
+- `apps/holded` conecta
+- `apps/isaak` conversa y acompana
+- `apps/app` expone el conector remoto y el core operativo
 
 ## Flujo funcional actual
 
@@ -37,6 +66,25 @@ Lo importante:
 7. Onboarding conversacional en `/onboarding/profile`
 8. Handoff privado en `/dashboard`
 9. Chat principal en `https://isaak.verifactu.business/chat`
+
+## Cuando debes tocar `apps/holded`
+
+Toca esta app cuando cambias:
+
+- copy publico Holded-first
+- formularios de acceso o alta
+- ayuda para generar la API key de Holded
+- onboarding corto antes de Isaak
+- validacion inicial y handoff de la conexion
+- correos del flujo Holded
+
+No la toques si el cambio real es:
+
+- scopes, tools o schemas del conector MCP
+- endpoints OAuth o `/.well-known/*`
+- chat principal, historial o memoria de Isaak
+
+En esos casos, el ownership suele estar en `apps/app` o `apps/isaak`.
 
 ## Lo que si vive en apps/holded
 
@@ -88,6 +136,14 @@ Documentacion tecnica:
 
 - [Arquitectura de conexion Holded](./HOLDED_CONNECTION_ARCHITECTURE.md)
 - [Configuracion del conector ChatGPT / MCP](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)
+
+## Lectura recomendada segun necesidad
+
+- Quiero tocar el runtime del conector -> [../app/README.md](../app/README.md)
+- Quiero entender la conexion compartida -> [HOLDED_CONNECTION_ARCHITECTURE.md](./HOLDED_CONNECTION_ARCHITECTURE.md)
+- Quiero registrar el conector en OpenAI -> [HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)
+- Quiero entender la app principal Isaak -> [../isaak/README.md](../isaak/README.md)
+- Quiero ver el alcance de API que queremos cubrir -> [../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md](../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md)
 
 ## Estructura relevante
 
@@ -223,3 +279,10 @@ Build:
 ```bash
 pnpm --filter verifactu-holded build
 ```
+
+## Resumen corto para el equipo
+
+- `apps/holded` vende, autentica, conecta y entrega
+- no publica el MCP ni el OAuth del conector
+- si el usuario ve mal el onboarding o no entiende como sacar la API key, el cambio va aqui
+- si ChatGPT no ve scopes o tools, el cambio no va aqui sino en `apps/app`

@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, ArrowLeft, CheckCircle2, KeyRound, Loader2 } from 'lucide-react';
 
+const VERIFACTU_TERMS_URL = 'https://verifactu.business/terms';
+const VERIFACTU_PRIVACY_URL = 'https://verifactu.business/privacy';
+
 type IntegrationStatus = {
   provider: string;
   status: string;
@@ -22,6 +25,8 @@ export default function IsaakForHoldedConnectPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
 
   const statusLabel = useMemo(() => {
     if (status?.connected) return 'Conectado';
@@ -54,6 +59,10 @@ export default function IsaakForHoldedConnectPage() {
       setError('Necesitamos una API key valida para conectar Holded.');
       return;
     }
+    if (!acceptedTerms || !acceptedPrivacy) {
+      setError('Debes aceptar los Terminos y la Politica de Privacidad para continuar.');
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -62,13 +71,22 @@ export default function IsaakForHoldedConnectPage() {
     try {
       const res = await fetch('/api/integrations/accounting/connect', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: apiKey.trim() }),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-isaak-entry-channel': 'dashboard',
+        },
+        body: JSON.stringify({
+          apiKey: apiKey.trim(),
+          acceptedTerms,
+          acceptedPrivacy,
+        }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || 'No se pudo conectar Holded');
       if (!data?.ok) {
-        throw new Error(data?.probe?.error || data?.lastError || 'La API key de Holded no se pudo validar');
+        throw new Error(
+          data?.probe?.error || data?.lastError || 'La API key de Holded no se pudo validar'
+        );
       }
 
       setMessage('Holded se ha conectado correctamente para este tenant.');
@@ -93,7 +111,8 @@ export default function IsaakForHoldedConnectPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Conectar Holded</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Flujo interno para clientes de verifactu.business con control por plan y configuracion avanzada.
+            Flujo interno para clientes de verifactu.business con control por plan y configuracion
+            avanzada.
           </p>
         </div>
       </div>
@@ -105,7 +124,9 @@ export default function IsaakForHoldedConnectPage() {
               <div className="text-sm font-semibold text-slate-900">Estado actual</div>
               <div className="mt-1 text-sm text-slate-600">{statusLabel}</div>
             </div>
-            <div className={`rounded-full border px-3 py-1 text-xs font-semibold ${status?.connected ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
+            <div
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${status?.connected ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}
+            >
               {status?.connected ? 'Activo' : 'Pendiente'}
             </div>
           </div>
@@ -121,7 +142,9 @@ export default function IsaakForHoldedConnectPage() {
             </div>
             <div className="flex items-start justify-between gap-3">
               <dt className="text-slate-500">Ultimo error</dt>
-              <dd className="max-w-[18rem] text-right font-semibold text-slate-900">{status?.lastError || '—'}</dd>
+              <dd className="max-w-[18rem] text-right font-semibold text-slate-900">
+                {status?.lastError || '—'}
+              </dd>
             </div>
           </dl>
 
@@ -135,7 +158,8 @@ export default function IsaakForHoldedConnectPage() {
         <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="text-sm font-semibold text-slate-900">API key de Holded</div>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Usa esta pantalla solo para la conexion interna del dashboard. Si vienes desde ChatGPT, el flujo correcto es el onboarding publico de Isaak for Holded.
+            Usa esta pantalla solo para la conexion interna del dashboard. Si vienes desde ChatGPT,
+            el flujo correcto es el onboarding publico de Isaak for Holded.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -155,10 +179,61 @@ export default function IsaakForHoldedConnectPage() {
               </div>
             </label>
 
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              <div className="flex items-start gap-3">
+                <input
+                  id="dashboard-accept-terms"
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(event) => setAcceptedTerms(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-[#0b6cfb] focus:ring-[#0b6cfb]"
+                />
+                <label htmlFor="dashboard-accept-terms" className="leading-6">
+                  Acepto los{' '}
+                  <a
+                    href={VERIFACTU_TERMS_URL}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="font-semibold text-[#0b6cfb] hover:text-[#095edb]"
+                  >
+                    Terminos de verifactu.business
+                  </a>
+                  .
+                </label>
+              </div>
+              <div className="mt-3 flex items-start gap-3">
+                <input
+                  id="dashboard-accept-privacy"
+                  type="checkbox"
+                  checked={acceptedPrivacy}
+                  onChange={(event) => setAcceptedPrivacy(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-[#0b6cfb] focus:ring-[#0b6cfb]"
+                />
+                <label htmlFor="dashboard-accept-privacy" className="leading-6">
+                  Acepto la{' '}
+                  <a
+                    href={VERIFACTU_PRIVACY_URL}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="font-semibold text-[#0b6cfb] hover:text-[#095edb]"
+                  >
+                    Politica de Privacidad de verifactu.business
+                  </a>
+                  .
+                </label>
+              </div>
+            </div>
+
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                disabled={saving || loading || status?.canConnect === false}
+                disabled={
+                  saving ||
+                  loading ||
+                  status?.canConnect === false ||
+                  !acceptedTerms ||
+                  !acceptedPrivacy
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0b6cfb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#095edb] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

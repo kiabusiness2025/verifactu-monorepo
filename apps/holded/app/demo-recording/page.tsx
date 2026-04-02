@@ -14,7 +14,7 @@ const checklist = [
   'Pegar la API key de Holded en onboarding.',
   'Mostrar al menos un caso de lectura de facturas, contactos y cuentas.',
   'Mostrar una accion de borrador con confirmacion explicita.',
-  'Cerrar con CTA a los planes de Isaak para siguiente paso.',
+  'Cerrar mostrando que la experiencia revisada en ChatGPT es gratuita y sin compra dentro del flujo.',
 ];
 
 export default function HoldedDemoRecordingPage() {

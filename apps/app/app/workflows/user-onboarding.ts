@@ -1,17 +1,18 @@
 /**
  * Workflow: Onboarding completo de nuevo usuario
- * 
+ *
  * Este flujo se ejecuta cuando un usuario se registra:
  * 1. Envía email de bienvenida inmediatamente
  * 2. Pausa 7 días sin consumir recursos
  * 3. Envía email de seguimiento
- * 
+ *
  * Es duradero, reanudable y observable
  */
 
 import { sleep } from 'workflow';
 import {
   sendWelcomeEmail,
+  sendWelcomeAdminNotification,
   sendFollowUpEmail,
   updateEmailStatus,
 } from './email-steps';
@@ -27,14 +28,20 @@ export interface UserSignupData {
  * Marca: "use workflow"
  */
 export async function userOnboardingWorkflow(data: UserSignupData) {
-  "use workflow";
+  'use workflow';
 
   try {
     // Step 1: Enviar email de bienvenida inmediatamente
     const welcomeResult = await sendWelcomeEmail(data.email, data.userName);
-    
+
     if (!welcomeResult.success) {
       throw new Error('Failed to send welcome email');
+    }
+
+    const adminWelcomeResult = await sendWelcomeAdminNotification(data.email, data.userName);
+
+    if (!adminWelcomeResult.success) {
+      throw new Error('Failed to send welcome admin notification');
     }
 
     // Step 2: Pausar 7 días sin consumir recursos
@@ -84,12 +91,12 @@ export async function emailProcessingWorkflow(emailData: {
   html?: string;
   messageId: string;
 }) {
-  "use workflow";
+  'use workflow';
 
   try {
     // Step 1: Procesar y guardar el email
     const processResult = await updateEmailStatus(1, 'read');
-    
+
     // Step 2: Enviar auto-respuesta
     const nameMatch = emailData.from.match(/^([^<]+)/);
     const senderName = nameMatch ? nameMatch[1].trim() : 'Usuario';

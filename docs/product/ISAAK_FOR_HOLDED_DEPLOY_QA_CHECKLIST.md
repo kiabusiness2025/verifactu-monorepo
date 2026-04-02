@@ -38,6 +38,7 @@ En `apps/app`:
 - `SESSION_SECRET`
 - `MCP_OAUTH_SECRET`
 - `MCP_OAUTH_ALLOWED_REDIRECT_ORIGINS`
+- `MCP_PUBLIC_SCOPE_PRESET`
 - `INTEGRATIONS_SECRET_KEY`
 - `HOLDED_TEST_API_KEY`
   - solo para test interno y nunca como fallback en produccion real
@@ -48,6 +49,8 @@ Recomendacion:
 
 - mantener `HOLDED_TEST_API_KEY` solo en entornos internos
 - no depender de ella en el flujo publico
+- usar `MCP_PUBLIC_SCOPE_PRESET=openai_review_v2` cuando el objetivo sea review publica
+- reservar `MCP_PUBLIC_SCOPE_PRESET=full` para la fase de apertura del catalogo amplio ya implementado
 
 ## Antes del deploy
 
@@ -134,16 +137,20 @@ Desde ChatGPT o desde la app interna de validacion:
 1. `holded_list_invoices`
 2. `holded_get_invoice`
 3. `holded_list_contacts`
-4. `holded_list_accounts`
-5. `holded_list_bookings`
-6. `holded_list_projects`
-7. `holded_get_project`
-8. `holded_list_project_tasks`
-9. `holded_create_invoice_draft`
+4. `holded_get_contact`
+5. `holded_list_accounts`
+6. `holded_list_daily_ledger`
+7. `holded_list_bookings`
+8. `holded_list_projects`
+9. `holded_get_project`
+10. `holded_list_project_tasks`
+11. `holded_create_invoice_draft`
 
 Resultado esperado:
 
+- descriptor publico y `tools/list` devuelven estas 11 tools del preset de review
 - lectura responde con datos del tenant correcto
+- si se pide historico con `year`, `from` o `to`, el conector debe salir de la primera pagina y devolver tambien metadatos de exploracion
 - escritura exige confirmacion
 - no devuelve secretos ni ids internos innecesarios
 

@@ -8,13 +8,15 @@ import { Resend } from 'resend';
 import { query } from '@/lib/db';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const ADMIN_NOTIFICATION_EMAIL =
+  process.env.SUPPORT_NOTIFICATION_EMAIL?.trim() || 'support@verifactu.business';
 
 /**
  * Step: Enviar email de bienvenida a nuevo usuario
  * Marca: "use step"
  */
 export async function sendWelcomeEmail(email: string, userName: string) {
-  "use step";
+  'use step';
 
   try {
     const resp = await resend.emails.send({
@@ -44,6 +46,37 @@ export async function sendWelcomeEmail(email: string, userName: string) {
 }
 
 /**
+ * Step: Enviar aviso interno de bienvenida a soporte
+ */
+export async function sendWelcomeAdminNotification(email: string, userName: string) {
+  'use step';
+
+  try {
+    const resp = await resend.emails.send({
+      from: 'Soporte Verifactu <soporte@verifactu.business>',
+      to: [ADMIN_NOTIFICATION_EMAIL],
+      subject: 'Nuevo usuario en Verifactu',
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h2>Nuevo usuario registrado</h2>
+          <p><strong>Nombre:</strong> ${userName}</p>
+          <p><strong>Email:</strong> ${email}</p>
+        </div>
+      `,
+    });
+
+    if (resp.error) {
+      throw new FatalError(`Failed to send welcome admin notification: ${resp.error.message}`);
+    }
+
+    return { success: true, emailId: resp.data?.id };
+  } catch (error) {
+    if (error instanceof FatalError) throw error;
+    throw new FatalError(`Unexpected error in sendWelcomeAdminNotification: ${String(error)}`);
+  }
+}
+
+/**
  * Step: Procesar email entrante y guardar en base de datos
  */
 export async function processIncomingEmail(data: {
@@ -53,7 +86,7 @@ export async function processIncomingEmail(data: {
   html?: string;
   messageId: string;
 }) {
-  "use step";
+  'use step';
 
   try {
     const result = await query(
@@ -78,7 +111,7 @@ export async function processIncomingEmail(data: {
  * Step: Enviar respuesta automática a email recibido
  */
 export async function sendAutoReplyEmail(toEmail: string, senderName: string) {
-  "use step";
+  'use step';
 
   try {
     const resp = await resend.emails.send({
@@ -109,12 +142,8 @@ export async function sendAutoReplyEmail(toEmail: string, senderName: string) {
 /**
  * Step: Enviar email de seguimiento después de N días
  */
-export async function sendFollowUpEmail(
-  email: string,
-  subject: string,
-  message: string
-) {
-  "use step";
+export async function sendFollowUpEmail(email: string, subject: string, message: string) {
+  'use step';
 
   try {
     const resp = await resend.emails.send({
@@ -143,7 +172,7 @@ export async function sendFollowUpEmail(
  * Step: Actualizar estado de email en la base de datos
  */
 export async function updateEmailStatus(emailId: number, status: 'read' | 'archived' | 'replied') {
-  "use step";
+  'use step';
 
   try {
     const result = await query(

@@ -21,6 +21,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 - Alcance de APIs Holded para facturacion y contabilidad: `docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md`
 - Review publica OpenAI: `docs/product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md`
 - Deploy + QA publica Isaak for Holded: `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
+- Estado y cambios 2026-04-01: `docs/product/ISAAK_FOR_HOLDED_STATUS_2026-04-01.md`
 - Demo: `docs/product/DEMO_FLOW.md`, `docs/product/DEMO_QA_CHECKLIST.md`
 - Precios: `docs/product/pricing/`
 - Onboarding: `docs/product/onboarding/`

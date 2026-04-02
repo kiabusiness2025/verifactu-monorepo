@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     : getDefaultScopes().join(' ');
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
   const onboardingToken = url.searchParams.get('onboarding_token')?.trim() || null;
+  const connectionConfirmed = url.searchParams.get('connection_confirmed')?.trim() === '1';
 
   try {
     if (responseType !== 'code') {
@@ -146,17 +147,31 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (resolved.tenantId && !hasHoldedConnection) {
+    if (resolved.tenantId && (!hasHoldedConnection || !connectionConfirmed)) {
       const authorizeUrl = new URL(url.toString());
-      if (onboardingToken) {
-        authorizeUrl.searchParams.set('onboarding_token', onboardingToken);
-      }
+      const effectiveOnboardingToken =
+        onboardingToken ||
+        (await mintHoldedOnboardingToken({
+          seed: [clientId, redirectUri, state ?? '', codeChallengeRaw, resource, subject.uid].join(
+            '|'
+          ),
+          email: subject.email,
+          name: subject.name,
+        }));
+
+      authorizeUrl.searchParams.set('onboarding_token', effectiveOnboardingToken);
+      authorizeUrl.searchParams.delete('connection_confirmed');
+
       const onboardingUrl = new URL('/onboarding/holded', request.nextUrl.origin);
       onboardingUrl.searchParams.set('next', authorizeUrl.toString());
       onboardingUrl.searchParams.set('channel', 'chatgpt');
-      if (onboardingToken) {
-        onboardingUrl.searchParams.set('onboarding_token', onboardingToken);
+      onboardingUrl.searchParams.set('require_connection_confirmation', '1');
+      onboardingUrl.searchParams.set('onboarding_token', effectiveOnboardingToken);
+
+      if (!hasHoldedConnection) {
+        return NextResponse.redirect(onboardingUrl);
       }
+
       return NextResponse.redirect(onboardingUrl);
     }
 

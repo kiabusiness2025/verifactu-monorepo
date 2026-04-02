@@ -200,31 +200,57 @@ holded.invoices.read holded.contacts.read holded.accounts.read holded.crm.read h
 
 Si tu pantalla de OpenAI muestra una lista mas corta en `Supported scopes`, usa esa lista exacta y nada mas.
 
-### Scopes por defecto
+### Presets disponibles
+
+Preset de review publica (`openai_review_v2`):
 
 ```text
-mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.write holded.accounts.read holded.treasury.read holded.treasury.write holded.expenses.read holded.expenses.write holded.numbering.read holded.numbering.write holded.products.read holded.products.write holded.payments.read holded.payments.write holded.taxes.read holded.paymentmethods.read holded.remittances.read holded.services.read holded.services.write
+mcp.read holded.invoices.read holded.contacts.read holded.accounts.read holded.crm.read holded.projects.read holded.invoices.write
 ```
 
-### Scopes alternativos útiles
-
-Catálogo MCP completo:
+Preset operativo por defecto del servidor (`invoicing_accounting`):
 
 ```text
-mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.write holded.accounts.read holded.crm.read holded.projects.read holded.treasury.read holded.treasury.write holded.expenses.read holded.expenses.write holded.numbering.read holded.numbering.write holded.products.read holded.products.write holded.saleschannels.read holded.saleschannels.write holded.warehouses.read holded.warehouses.write holded.payments.read holded.payments.write holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.contactgroups.write holded.remittances.read holded.services.read holded.services.write
+mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.attachments.read holded.contacts.write holded.accounts.read holded.accounts.write holded.treasury.read holded.treasury.write holded.expenses.read holded.expenses.write holded.numbering.read holded.numbering.write holded.products.read holded.products.media.read holded.products.write holded.payments.read holded.payments.write holded.taxes.read holded.paymentmethods.read holded.remittances.read holded.services.read holded.services.write
 ```
 
-Solo lectura de todo el catálogo actual:
+Catalogo MCP completo (`full`):
 
 ```text
-mcp.read holded.invoices.read holded.documents.read holded.contacts.read holded.accounts.read holded.crm.read holded.projects.read holded.treasury.read holded.expenses.read holded.numbering.read holded.products.read holded.saleschannels.read holded.warehouses.read holded.payments.read holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.remittances.read holded.services.read
+mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.attachments.read holded.contacts.write holded.accounts.read holded.accounts.write holded.crm.read holded.projects.read holded.treasury.read holded.treasury.write holded.expenses.read holded.expenses.write holded.numbering.read holded.numbering.write holded.products.read holded.products.media.read holded.products.write holded.saleschannels.read holded.saleschannels.write holded.warehouses.read holded.warehouses.write holded.payments.read holded.payments.write holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.contactgroups.write holded.remittances.read holded.services.read holded.services.write
 ```
 
-Si un cliente OAuth no envía `scope`, Verifactu concede por defecto el preset de facturación y contabilidad. Ese bloque da acceso operativo a invoices, documents, contacts, treasury, expense accounts, numbering series, products, payments, taxes, payment methods, remittances, services y cuentas contables.
+Solo lectura de todo el catalogo actual (`readonly`):
 
-El descriptor MCP público y `tools/list` reflejan ahora ese mismo subconjunto por defecto. Si el cliente obtiene más scopes explícitos, el catálogo visible se amplía a las tools permitidas por ese token.
+```text
+mcp.read holded.invoices.read holded.documents.read holded.contacts.read holded.contacts.attachments.read holded.accounts.read holded.crm.read holded.projects.read holded.treasury.read holded.expenses.read holded.numbering.read holded.products.read holded.products.media.read holded.saleschannels.read holded.warehouses.read holded.payments.read holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.remittances.read holded.services.read
+```
 
-Si quieres que ChatGPT pueda usar todas las tools que hoy anuncia el descriptor MCP, usa el bloque completo de `Catálogo MCP completo`. Si pegas menos scopes, las tools fuera de ese permiso dejarán de anunciarse en `tools/list` para ese token y `tools/call` seguirá rechazándolas si se invocan sin permiso.
+### Catalogo completo de scopes soportados
+
+- base: `mcp.read`
+- facturas: `holded.invoices.read`, `holded.invoices.write`
+- documentos: `holded.documents.read`, `holded.documents.write`
+- contactos: `holded.contacts.read`, `holded.contacts.attachments.read`, `holded.contacts.write`
+- contabilidad: `holded.accounts.read`, `holded.accounts.write`
+- crm y proyectos: `holded.crm.read`, `holded.projects.read`
+- tesoreria: `holded.treasury.read`, `holded.treasury.write`
+- gastos: `holded.expenses.read`, `holded.expenses.write`
+- numeracion: `holded.numbering.read`, `holded.numbering.write`
+- productos: `holded.products.read`, `holded.products.media.read`, `holded.products.write`
+- canales de venta: `holded.saleschannels.read`, `holded.saleschannels.write`
+- almacenes: `holded.warehouses.read`, `holded.warehouses.write`
+- pagos: `holded.payments.read`, `holded.payments.write`
+- fiscalidad: `holded.taxes.read`, `holded.paymentmethods.read`
+- grupos de contacto: `holded.contactgroups.read`, `holded.contactgroups.write`
+- remesas: `holded.remittances.read`
+- servicios: `holded.services.read`, `holded.services.write`
+
+Si un cliente OAuth no envia `scope`, Verifactu concede por defecto el preset operativo `invoicing_accounting`. Ese bloque da acceso operativo a invoices, documents, contacts, treasury, expense accounts, numbering series, products, payments, taxes, payment methods, remittances, services y cuentas contables, incluyendo ahora adjuntos de contacto, media de producto y escritura contable.
+
+El descriptor MCP publico sigue anunciando el catalogo completo en `scopes_supported`, mientras `default_scopes` depende de `MCP_PUBLIC_SCOPE_PRESET`. Si el cliente obtiene mas scopes explicitos, el catalogo visible se amplia a las tools permitidas por ese token.
+
+Si quieres que ChatGPT siga en review publica, usa `openai_review_v2`. Si quieres que pueda usar todas las tools que hoy anuncia el descriptor MCP, usa `full`. Si pegas menos scopes, las tools fuera de ese permiso dejaran de anunciarse en `tools/list` para ese token y `tools/call` seguira rechazandolas si se invocan sin permiso.
 
 ### Valores listos para copiar en ChatGPT
 
@@ -236,7 +262,8 @@ Si quieres que ChatGPT pueda usar todas las tools que hoy anuncia el descriptor 
 - Client registration: `Cliente OAuth definido por el usuario`
 - Token endpoint auth method: `none`
 - Client secret: dejar vacío
-- Scopes recomendados para catálogo completo: pegar el bloque de `Scopes por defecto`
+- Scopes recomendados para review publica: pegar el bloque `openai_review_v2`
+- Scopes recomendados para catalogo completo: pegar el bloque `full`
 
 ### OIDC
 
@@ -334,8 +361,19 @@ Documentacion extendida:
 - `holded_create_document`
 - `holded_update_document`
 - `holded_delete_document`
+- `holded_send_document`
+- `holded_get_document_pdf`
+- `holded_update_document_tracking`
+- `holded_update_document_pipeline`
+- `holded_ship_document_all_items`
+- `holded_ship_document_by_lines`
+- `holded_get_document_shipped_items`
+- `holded_attach_document_file`
+- `holded_pay_document`
 - `holded_list_contacts`
 - `holded_get_contact`
+- `holded_list_contact_attachments`
+- `holded_get_contact_attachment`
 - `holded_create_contact`
 - `holded_update_contact`
 - `holded_delete_contact`
@@ -354,6 +392,10 @@ Documentacion extendida:
 - `holded_delete_numbering_series`
 - `holded_list_products`
 - `holded_get_product`
+- `holded_get_product_main_image`
+- `holded_list_product_images`
+- `holded_get_product_secondary_image`
+- `holded_update_product_stock`
 - `holded_create_product`
 - `holded_update_product`
 - `holded_delete_product`
@@ -387,6 +429,9 @@ Documentacion extendida:
 - `holded_update_service`
 - `holded_delete_service`
 - `holded_list_accounts`
+- `holded_list_daily_ledger`
+- `holded_create_daily_ledger_entry`
+- `holded_create_accounting_account`
 - `holded_list_bookings`
 - `holded_list_projects`
 - `holded_get_project`

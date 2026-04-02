@@ -66,6 +66,12 @@ async function runReadChecks() {
   await runContinuing('products.list', () =>
     checkListOnly('products.list', '/api/invoicing/v1/products', { limit: 5, page: 1 })
   );
+  await runContinuing('chartofaccounts.list', () =>
+    checkListOnly('chartofaccounts.list', '/api/accounting/v1/chartofaccounts', {
+      limit: 5,
+      page: 1,
+    })
+  );
   await runContinuing('services.list', () =>
     checkListOnly('services.list', '/api/invoicing/v1/services', { limit: 5, page: 1 })
   );

@@ -4,7 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  return applyOpenAiCorsHeaders(NextResponse.json(getProtectedResourceMetadata()), request, {
+  const response = NextResponse.json(getProtectedResourceMetadata());
+  response.headers.set('Cache-Control', 'no-store');
+
+  return applyOpenAiCorsHeaders(response, request, {
     methods: ['GET', 'OPTIONS'],
     allowHeaders: ['content-type'],
   });

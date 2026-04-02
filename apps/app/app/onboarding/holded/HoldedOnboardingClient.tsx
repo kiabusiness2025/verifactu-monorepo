@@ -32,11 +32,16 @@ type Props = {
   nextUrl: string;
   tenantName: string;
   onboardingToken: string | null;
+  requireConnectionConfirmation: boolean;
 };
 
 const onboardingCopy = getIsaakHoldedOnboardingCopy();
 const HOLDED_COMPAT_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+const HOLDED_API_GUIDE_URL =
+  'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
+const VERIFACTU_TERMS_URL = 'https://verifactu.business/terms';
+const VERIFACTU_PRIVACY_URL = 'https://verifactu.business/privacy';
 
 const chatgptUiCopy = {
   eyebrow: 'Conecta Holded con ChatGPT',
@@ -122,6 +127,7 @@ export default function HoldedOnboardingClient({
   nextUrl,
   tenantName,
   onboardingToken,
+  requireConnectionConfirmation,
 }: Props) {
   const isChatgptEntry = entryChannel === 'chatgpt';
   const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
@@ -131,9 +137,26 @@ export default function HoldedOnboardingClient({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [redirectTarget, setRedirectTarget] = useState(nextUrl);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+
+  const confirmedNextUrl = useMemo(() => {
+    if (!requireConnectionConfirmation) return nextUrl;
+
+    try {
+      const parsed = new URL(nextUrl, HOLDED_COMPAT_URL);
+      if (parsed.pathname === '/oauth/authorize') {
+        parsed.searchParams.set('connection_confirmed', '1');
+      }
+      return parsed.toString();
+    } catch {
+      return nextUrl;
+    }
+  }, [nextUrl, requireConnectionConfirmation]);
 
   const loadStatus = useCallback(
     async (signal?: AbortSignal) => {
@@ -166,11 +189,15 @@ export default function HoldedOnboardingClient({
     uiCopy.statusPending,
   ]);
 
-  const goToNextStep = useCallback(() => {
-    if (!nextUrl) return;
-    setRedirecting(true);
-    window.location.replace(nextUrl);
-  }, [nextUrl]);
+  const goToNextStep = useCallback(
+    (target = nextUrl) => {
+      if (!target) return;
+      setRedirecting(true);
+      setRedirectTarget(target);
+      window.location.replace(target);
+    },
+    [nextUrl]
+  );
 
   useEffect(() => {
     if (!saving) {
@@ -197,7 +224,7 @@ export default function HoldedOnboardingClient({
         const data = await loadStatus(controller.signal);
         if (cancelled) return;
         setStatus(data);
-        if (data?.connected && nextUrl) {
+        if (data?.connected && nextUrl && !requireConnectionConfirmation) {
           goToNextStep();
         }
       } catch (loadError) {
@@ -223,7 +250,14 @@ export default function HoldedOnboardingClient({
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [goToNextStep, loadStatus, nextUrl, onboardingToken, uiCopy.errorLoadFailed]);
+  }, [
+    goToNextStep,
+    loadStatus,
+    nextUrl,
+    onboardingToken,
+    requireConnectionConfirmation,
+    uiCopy.errorLoadFailed,
+  ]);
 
   const handleRetryStatus = async () => {
     setLoading(true);
@@ -231,7 +265,7 @@ export default function HoldedOnboardingClient({
     try {
       const data = await loadStatus();
       setStatus(data);
-      if (data?.connected && nextUrl) {
+      if (data?.connected && nextUrl && !requireConnectionConfirmation) {
         goToNextStep();
       }
     } catch (loadError) {
@@ -247,6 +281,10 @@ export default function HoldedOnboardingClient({
       setError(uiCopy.errorApiKeyEmpty);
       return;
     }
+    if (!acceptedTerms || !acceptedPrivacy) {
+      setError('Necesitamos tu aceptacion de Terminos y Politica de Privacidad para continuar.');
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -260,7 +298,11 @@ export default function HoldedOnboardingClient({
           'x-isaak-entry-channel': entryChannel,
           ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
         },
-        body: JSON.stringify({ apiKey: apiKey.trim() }),
+        body: JSON.stringify({
+          apiKey: apiKey.trim(),
+          acceptedTerms,
+          acceptedPrivacy,
+        }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok)
@@ -290,7 +332,7 @@ export default function HoldedOnboardingClient({
               connected: true,
             }
       );
-      goToNextStep();
+      goToNextStep(confirmedNextUrl);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : uiCopy.errorConnectFailed);
     } finally {
@@ -386,7 +428,7 @@ export default function HoldedOnboardingClient({
                     </p>
                     <div className="mt-4 flex flex-wrap gap-3">
                       <a
-                        href={nextUrl}
+                        href={redirectTarget}
                         className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
                       >
                         Continuar
@@ -417,6 +459,14 @@ export default function HoldedOnboardingClient({
                     {uiCopy.apiKeyLabel}
                   </span>
                   <span className="mb-3 block text-sm text-neutral-600">{uiCopy.apiKeyHelp}</span>
+                  <a
+                    href={HOLDED_API_GUIDE_URL}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="mb-3 inline-flex text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                  >
+                    Ver guia oficial de Holded para generar la API key
+                  </a>
                   <div className="relative">
                     <KeyRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                     <input
@@ -431,10 +481,55 @@ export default function HoldedOnboardingClient({
                   </div>
                 </label>
 
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-700">
+                  <div className="flex items-start gap-3">
+                    <input
+                      id="accept-terms"
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(event) => setAcceptedTerms(event.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-neutral-300 text-black focus:ring-black"
+                    />
+                    <label htmlFor="accept-terms" className="leading-6">
+                      Acepto los{' '}
+                      <a
+                        href={VERIFACTU_TERMS_URL}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                      >
+                        Terminos de verifactu.business
+                      </a>
+                      .
+                    </label>
+                  </div>
+                  <div className="mt-3 flex items-start gap-3">
+                    <input
+                      id="accept-privacy"
+                      type="checkbox"
+                      checked={acceptedPrivacy}
+                      onChange={(event) => setAcceptedPrivacy(event.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-neutral-300 text-black focus:ring-black"
+                    />
+                    <label htmlFor="accept-privacy" className="leading-6">
+                      Acepto la{' '}
+                      <a
+                        href={VERIFACTU_PRIVACY_URL}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                      >
+                        Politica de Privacidad de verifactu.business
+                      </a>
+                      .
+                    </label>
+                  </div>
+                </div>
+
                 <div className="flex flex-wrap gap-3">
                   <button
                     type="submit"
-                    disabled={saving || !apiKey.trim()}
+                    disabled={saving || !apiKey.trim() || !acceptedTerms || !acceptedPrivacy}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -493,6 +588,18 @@ export default function HoldedOnboardingClient({
                 </div>
               </div>
             ) : null}
+
+            <div className="mt-6 border-t border-neutral-200 pt-4 text-center text-xs text-neutral-500">
+              Powered by{' '}
+              <a
+                href="https://verifactu.business"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="font-semibold text-neutral-700 hover:text-black"
+              >
+                verifactu.business
+              </a>
+            </div>
           </div>
         </div>
       </div>

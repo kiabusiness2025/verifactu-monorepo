@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import {
+  type HoldedMcpScopePreset,
   HOLDED_MCP_SUPPORTED_SCOPES,
   HOLDED_MCP_TOOL_SCOPES,
   getHoldedMcpScopePreset,
@@ -58,6 +59,16 @@ type HoldedOnboardingPayload = {
 export const MCP_TOOL_SCOPES = HOLDED_MCP_TOOL_SCOPES;
 
 const SUPPORTED_SCOPES = [...HOLDED_MCP_SUPPORTED_SCOPES];
+const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'openai_review_v2';
+
+function isHoldedMcpScopePreset(value: string): value is HoldedMcpScopePreset {
+  return (
+    value === 'full' ||
+    value === 'readonly' ||
+    value === 'invoicing_accounting' ||
+    value === 'openai_review_v2'
+  );
+}
 
 function readOAuthSecret() {
   const secret = process.env.MCP_OAUTH_SECRET?.trim() || process.env.SESSION_SECRET?.trim();
@@ -112,7 +123,7 @@ export function getProtectedResourceMetadata() {
     resource: getMcpResourceUrl(),
     authorization_servers: [getAuthorizationServerIssuer()],
     bearer_methods_supported: ['header'],
-    scopes_supported: getSupportedScopes(),
+    scopes_supported: getAdvertisedScopes(),
   };
 }
 
@@ -275,10 +286,21 @@ export function getSupportedScopes() {
   return SUPPORTED_SCOPES;
 }
 
+export function getPublicScopePreset(): HoldedMcpScopePreset {
+  const requested = process.env.MCP_PUBLIC_SCOPE_PRESET?.trim();
+  if (requested && isHoldedMcpScopePreset(requested)) {
+    return requested;
+  }
+
+  return DEFAULT_PUBLIC_SCOPE_PRESET;
+}
+
+export function getAdvertisedScopes() {
+  return [...getSupportedScopes()];
+}
+
 export function getDefaultScopes() {
-  // Keep the public ChatGPT review surface intentionally narrow.
-  // Broader Holded scopes remain supported but are not granted by default.
-  return getHoldedMcpScopePreset('openai_review_v2');
+  return [...getHoldedMcpScopePreset(getPublicScopePreset())];
 }
 
 export function ensureScopesAllowed(scope: string) {

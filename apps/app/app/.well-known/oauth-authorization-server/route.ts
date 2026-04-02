@@ -1,10 +1,10 @@
 import {
   applyOpenAiCorsHeaders,
+  getAdvertisedScopes,
   getAuthorizationEndpoint,
   getAuthorizationServerMetadataUrl,
   getDefaultScopes,
   getRegistrationEndpoint,
-  getSupportedScopes,
   getTokenEndpoint,
   getUserInfoEndpoint,
 } from '@/lib/oauth/mcp';
@@ -14,28 +14,28 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 function buildMetadataResponse(request: NextRequest) {
-  return applyOpenAiCorsHeaders(
-    NextResponse.json({
-      issuer: getAppUrl(),
-      authorization_endpoint: getAuthorizationEndpoint(),
-      token_endpoint: getTokenEndpoint(),
-      userinfo_endpoint: getUserInfoEndpoint(),
-      registration_endpoint: getRegistrationEndpoint(),
-      scopes_supported: getSupportedScopes(),
-      response_types_supported: ['code'],
-      grant_types_supported: ['authorization_code'],
-      code_challenge_methods_supported: ['S256'],
-      token_endpoint_auth_methods_supported: ['none'],
-      service_documentation: getAuthorizationServerMetadataUrl(),
-      resource: `${getAppUrl()}/api/mcp/holded`,
-      default_scopes: getDefaultScopes(),
-    }),
-    request,
-    {
-      methods: ['GET', 'OPTIONS'],
-      allowHeaders: ['content-type'],
-    }
-  );
+  const response = NextResponse.json({
+    issuer: getAppUrl(),
+    authorization_endpoint: getAuthorizationEndpoint(),
+    token_endpoint: getTokenEndpoint(),
+    userinfo_endpoint: getUserInfoEndpoint(),
+    registration_endpoint: getRegistrationEndpoint(),
+    scopes_supported: getAdvertisedScopes(),
+    response_types_supported: ['code'],
+    grant_types_supported: ['authorization_code'],
+    code_challenge_methods_supported: ['S256'],
+    token_endpoint_auth_methods_supported: ['none'],
+    service_documentation: getAuthorizationServerMetadataUrl(),
+    resource: `${getAppUrl()}/api/mcp/holded`,
+    default_scopes: getDefaultScopes(),
+  });
+
+  response.headers.set('Cache-Control', 'no-store');
+
+  return applyOpenAiCorsHeaders(response, request, {
+    methods: ['GET', 'OPTIONS'],
+    allowHeaders: ['content-type'],
+  });
 }
 
 export async function GET(request: NextRequest) {

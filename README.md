@@ -26,7 +26,7 @@ Plataforma SaaS para facturacion y cumplimiento VeriFactu. Este monorepo contien
 
 ## Apps internas y compartidas
 
-- `apps/app`: core canonico de negocio + panel avanzado -> `https://app.verifactu.business`
+- `apps/app`: core canonico de negocio + panel avanzado + runtime MCP/OAuth de Holded -> `https://app.verifactu.business`
 - `apps/admin`: panel de administracion -> `https://admin.verifactu.business`
 - `apps/client`: legacy congelado, sin nuevas features
 - `packages/*`: UI, utils, db, auth, integrations
@@ -57,13 +57,23 @@ Normas de no mezcla:
 
 ## Apps
 
-- apps/app: core compartido y panel avanzado
+- apps/app: core compartido, panel avanzado y conector remoto Holded/MCP
 - apps/client: legacy congelado
 - apps/landing: Proyecto publico 1 -> verifactu.business
 - apps/holded: Proyecto publico 2 -> holded.verifactu.business
 - apps/isaak: Proyecto publico 3 -> isaak.verifactu.business
 - apps/admin: Panel de administracion -> /admin
 - packages/\*: UI, utils, db, auth, integrations
+
+## Si trabajas en Holded o en Isaak
+
+La ruta de lectura recomendada es:
+
+1. [apps/app/README.md](apps/app/README.md) para entender el core y el runtime real del conector MCP/OAuth.
+2. [packages/integrations/README.md](packages/integrations/README.md) para la capa compartida de conexion e integraciones.
+3. [apps/holded/README.md](apps/holded/README.md) para la entrada Holded-first, autenticacion y handoff.
+4. [apps/isaak/README.md](apps/isaak/README.md) para el producto principal conversacional.
+5. [docs/README.md](docs/README.md) para bajar al resto de documentos tecnicos, de producto y operacion.
 
 ## Implementaciones clave (resumen)
 
@@ -104,10 +114,10 @@ La documentacion detallada de variables esta en:
 
 - docs/INDEX.md (indice general)
 - docs/product/ISAAK_PRODUCT_REORDER_PLAN_2026.md (reordenacion del producto: Isaak como producto principal, Holded como entrada y app como core)
-- apps/app/README.md (core canónico del negocio y fuente de verdad operativa)
+- apps/app/README.md (core canonico del negocio, runtime MCP/OAuth y fuente de verdad operativa)
 - apps/landing/README.md (proyecto publico verifactu.business)
-- apps/holded/README.md (proyecto publico Holded)
-- apps/isaak/README.md (proyecto publico Isaak)
+- apps/holded/README.md (proyecto publico Holded y puerta de entrada Holded-first)
+- apps/isaak/README.md (producto principal Isaak)
 - docs/engineering/ai/ISAAK_UNIFIED_EXPERIENCE_2026.md (flujo unificado de Isaak)
 - apps/client/README.md (panel cliente)
 
@@ -148,4 +158,4 @@ La documentacion detallada de variables esta en:
 - Migraciones (admin/app): pnpm -F @verifactu/db exec prisma migrate deploy
 - Seed: pnpm -F @verifactu/db exec prisma db seed
 
-Actualizado: enero 2026
+Actualizado: abril 2026

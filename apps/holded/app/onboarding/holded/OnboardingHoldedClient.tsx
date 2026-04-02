@@ -233,6 +233,19 @@ export default function OnboardingHoldedClient() {
               />
             </label>
 
+            <div className="mt-3 text-sm leading-6 text-slate-600">
+              Si necesitas ayuda para obtenerla, abre{' '}
+              <a
+                href={holdedApiGuideUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+              >
+                la guia oficial de Holded
+              </a>
+              .
+            </div>
+
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
               <div className="flex items-start gap-2">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />

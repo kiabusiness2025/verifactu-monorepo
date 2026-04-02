@@ -44,7 +44,9 @@ jest.mock('@/lib/oauth/mcp', () => ({
     () => 'https://app.verifactu.business/.well-known/oauth-authorization-server'
   ),
   getMcpResourceUrl: jest.fn(() => 'https://app.verifactu.business/api/mcp/holded'),
+  getRegistrationEndpoint: jest.fn(() => 'https://app.verifactu.business/oauth/register'),
   getSupportedScopes: jest.fn(() => ['mcp.read', 'holded.invoices.read']),
+  getUserInfoEndpoint: jest.fn(() => 'https://app.verifactu.business/oauth/userinfo'),
   hasRequiredScopes: jest.fn(() => true),
   MCP_TOOL_SCOPES: {},
   getProtectedResourceMetadataUrl: jest.fn(
@@ -73,6 +75,7 @@ describe('MCP Holded route discovery and auth', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(payload.name).toBe('Isaak for Holded');
     expect(payload.endpoint).toBe('/api/mcp/holded');
     expect(payload.tools).toHaveLength(1);
@@ -119,6 +122,7 @@ describe('MCP Holded route discovery and auth', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(payload.result.tools).toHaveLength(1);
   });
 

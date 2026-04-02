@@ -1,6 +1,7 @@
 # Isaak for Holded - Public Review Readiness
 
 ## Objetivo
+
 Preparar `Isaak for Holded` para envio a revision de OpenAI como app publica basada en:
 
 - servidor MCP propio de Verifactu
@@ -33,6 +34,25 @@ Razon:
 - evita exponer de inicio datos laborales o de empleados
 - hace mas facil justificar el valor de negocio y la seguridad de la app
 
+## Contratos publicos soportados
+
+Desde abril de 2026 hay que distinguir dos contratos publicos distintos:
+
+- `openai_review_v2` -> preset estrecho para review publica de OpenAI
+- `full` -> preset amplio para exponer el catalogo ya implementado cuando se decida abrirlo publicamente
+
+Regla operativa:
+
+- el contrato visible se controla con `MCP_PUBLIC_SCOPE_PRESET`
+- para review publica, el valor correcto sigue siendo `openai_review_v2`
+- `full` no debe activarse por accidente durante review ni en demos que prometen una superficie mas estrecha
+
+Matiz tecnico actual:
+
+- `scopes_supported` puede anunciar el catalogo completo de scopes soportados por Holded para que apps internas soliciten mas permisos
+- `default_scopes` sigue siendo el punto donde se estrecha la experiencia publica por defecto
+- la review publica debe validar que el preset por defecto siga siendo el esperado aunque el catalogo soportado sea mas amplio
+
 ## Que debe quedar claro en producto
 
 `Isaak` es un unico asistente fiscal y contable.
@@ -52,6 +72,7 @@ La app publica debe comunicar:
 - obtener una factura concreta
 - listar contactos
 - listar cuentas contables
+- listar libro diario
 - listar bookings CRM
 - listar proyectos
 - obtener un proyecto
@@ -75,6 +96,7 @@ La app publica debe comunicar:
 - terminos publicos
 - pagina de contacto/soporte publica
 - nombre y descripcion consistentes con el comportamiento real de la app
+- no incluir CTAs de compra, checkout ni enlaces a suscripcion dentro del flujo revisado en ChatGPT
 
 ## Requisitos MCP / tool review
 
@@ -111,6 +133,7 @@ Pendiente operativo actual:
 - smoke tests finales tras el ultimo ajuste de infraestructura
 - seguimiento de la revision de OpenAI
 - cambio de URL beta a URL publica final cuando OpenAI la publique
+- activar el preset `full` solo cuando producto, QA y despliegue lo aprueben explicitamente
 
 Pendiente antes de submission:
 
@@ -157,7 +180,7 @@ Para la version publica objetivo:
 3. Verifactu resuelve identidad y tenant
 4. si no existe conexion Holded, redirige a `/onboarding/holded`
 5. el usuario pega su API key de Holded
-6. Verifactu la valida y la guarda server-side
+6. Verifactu la valida, guarda server-side la conexion y registra la aceptacion legal del flujo
 7. el navegador vuelve al flujo OAuth original
 8. ChatGPT completa la conexion
 

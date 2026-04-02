@@ -76,10 +76,15 @@ export default async function HoldedOnboardingPage({
     const channel = firstValue(params.channel)?.trim();
     const source = firstValue(params.source)?.trim();
     const onboardingToken = firstValue(params.onboarding_token)?.trim();
+    const requireConnectionConfirmation =
+      firstValue(params.require_connection_confirmation)?.trim() === '1';
     if (nextParam) current.searchParams.set('next', nextParam);
     if (channel) current.searchParams.set('channel', channel);
     if (source) current.searchParams.set('source', source);
     if (onboardingToken) current.searchParams.set('onboarding_token', onboardingToken);
+    if (requireConnectionConfirmation) {
+      current.searchParams.set('require_connection_confirmation', '1');
+    }
     loginUrl.searchParams.set('next', current.toString());
     redirect(loginUrl.toString());
   }
@@ -95,6 +100,8 @@ export default async function HoldedOnboardingPage({
   const onboardingPayload =
     !session.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
   const nextUrl = attachOnboardingToken(normalizeNextUrl(firstValue(params.next)), onboardingToken);
+  const requireConnectionConfirmation =
+    firstValue(params.require_connection_confirmation)?.trim() === '1';
   const entryChannel = inferHoldedEntryChannel({
     channel: params.channel,
     source: params.source,
@@ -115,6 +122,7 @@ export default async function HoldedOnboardingPage({
       nextUrl={nextUrl}
       tenantName={tenantName}
       onboardingToken={onboardingToken}
+      requireConnectionConfirmation={requireConnectionConfirmation}
     />
   );
 }

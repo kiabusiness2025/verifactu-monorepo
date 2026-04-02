@@ -89,6 +89,7 @@ Resultado validado del último pase:
 
 La configuración MCP de Holded expone ya la superficie validada de facturación que tiene sentido abrir hoy:
 
+- lectura historica de facturas y documentos por `year`, `from` y `to`, con escaneo de paginas adicionales cuando hace falta salir de la primera pagina
 - documentos: listar, obtener, crear, actualizar, eliminar
 - contactos: listar, obtener, crear, actualizar, eliminar
 - tesorería: listar, obtener, crear, actualizar
@@ -106,27 +107,24 @@ La configuración MCP de Holded expone ya la superficie validada de facturación
 - lectura de apoyo ya existente: cuentas contables, bookings CRM, proyectos y tareas
 - compatibilidad mantenida: `holded_list_invoices`, `holded_get_invoice`, `holded_create_invoice_draft`
 
+Implementado en código y pendiente de validación viva antes de despliegue:
+
+- libro diario: listar asientos y crear asiento
+- plan de cuentas: crear cuenta contable
+- documentos: registrar pago, enviar, obtener PDF, actualizar tracking y actualizar pipeline
+- documentos: enviar todos los artículos, envío por línea, unidades enviadas por artículo y adjuntar archivo
+- almacenes: stock por almacén
+- contactos: listar adjuntos y obtener adjunto concreto
+- productos: obtener imagen principal, listar imágenes y obtener imagen secundaria
+- productos: actualizar stock
+
 ## Endpoints todavía no expuestos en MCP
 
 Estos bloques siguen fuera del catálogo MCP porque no están validados en el smoke actual o porque Holded tiene semántica especial que requiere otra capa de producto:
 
 - eliminar cuentas de tesorería
-- libro diario contable: listar asientos y crear asiento
-- crear cuenta contable
-- adjuntos de contacto
 - compra de producto
-- imágenes de producto
-- actualización de stock de producto
-- stock por almacén
 - documento de nómina
-- enviar documento
-- obtener PDF de documento
-- enviar todos los artículos
-- envío por línea
-- unidades enviadas por artículo
-- adjuntar archivo a documento
-- actualizar tracking de documento
-- actualizar data string de documento
 
 ## Semántica especial de Holded ya verificada
 
@@ -164,4 +162,4 @@ El cambio queda listo si se cumplen las tres condiciones:
 
 1. `pnpm holded:ci:contract` termina sin fallos.
 2. `pnpm holded:demo:validate` termina sin fallos cuando el cambio toca integración real o despliegue.
-3. No se abre en MCP ninguna operación no validada todavía contra el tenant demo.
+3. Cualquier operación nueva abierta en MCP queda validada contra el tenant demo antes de despliegue.

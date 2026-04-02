@@ -88,7 +88,10 @@ export default function IsaakForHoldedPage() {
     setWorking(true);
     setMessage(null);
     try {
-      const res = await fetch('/api/integrations/accounting/disconnect', { method: 'POST' });
+      const res = await fetch('/api/integrations/accounting/disconnect', {
+        method: 'POST',
+        headers: { 'x-isaak-entry-channel': 'dashboard' },
+      });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || 'No se pudo desconectar Holded');
       setMessage('Holded desconectado.');

@@ -75,13 +75,14 @@ Valor para Isaak:
 - actualizar contacto
 - eliminar contacto
 - listar adjuntos de contacto
-- adjuntar archivos
+- obtener adjunto concreto
 
 Valor para Isaak:
 
 - responder sobre clientes y proveedores
 - crear y mantener fichas desde chat
-- preparar envio de documentos y seguimiento comercial
+- consultar documentación adjunta sin salir del chat
+- preparar envío de documentos y seguimiento comercial
 
 #### Cuentas de gastos
 
@@ -116,15 +117,15 @@ Valor para Isaak:
 - eliminar producto
 - obtener compra de producto
 - obtener imagen principal
-- listar imagenes
+- listar imágenes
 - obtener imagen secundaria
 - actualizar stock
 
 Valor para Isaak:
 
-- responder sobre catalogo y stock
+- responder sobre catálogo, imágenes y stock
 - preparar facturas y presupuestos con productos reales
-- detectar referencias de negocio y rotacion basica
+- detectar referencias de negocio y rotación básica
 
 #### Canales de venta
 
@@ -184,6 +185,7 @@ Valor para Isaak:
 - actualizar documento
 - eliminar documento
 - crear documento de nomina
+- pagar documento
 - enviar documento
 - obtener PDF
 - enviar todos los articulos
@@ -191,14 +193,15 @@ Valor para Isaak:
 - obtener unidades enviadas por articulo
 - adjuntar archivo a documento
 - actualizar tracking de un documento
-- actualizar data string de un documento
+- actualizar pipeline de un documento
 - listar metodos de pago
 
 Valor para Isaak:
 
 - resumen de ventas, gastos y facturacion
+- lectura de historico por ano o por rango explicito, como minimo ano actual y ano anterior
 - creacion de facturas, presupuestos y otros documentos desde chat
-- seguimiento de pendientes
+- seguimiento de pendientes, envios y adjuntos
 - descarga y envio de PDFs
 
 #### Grupos de contacto

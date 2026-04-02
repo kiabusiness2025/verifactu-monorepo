@@ -1,5 +1,7 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
+import prisma from '@/lib/prisma';
+import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
 import {
   encryptIntegrationSecret,
   maskSecret,
@@ -9,6 +11,9 @@ import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore'
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
+
+const HOLDED_CONNECTION_LEGAL_VERSION =
+  process.env.HOLDED_CONNECTION_LEGAL_VERSION?.trim() || 'holded_connection_v1';
 
 function describeConnectError(error: unknown) {
   if (error instanceof Error) {
@@ -93,8 +98,19 @@ export async function POST(request: NextRequest) {
     stage = 'body';
     const body = await request.json().catch(() => ({}));
     const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
+    const acceptedTerms = body?.acceptedTerms === true;
+    const acceptedPrivacy = body?.acceptedPrivacy === true;
     if (!apiKey) {
       return NextResponse.json({ error: 'apiKey es obligatorio' }, { status: 400 });
+    }
+    if (!acceptedTerms || !acceptedPrivacy) {
+      return NextResponse.json(
+        {
+          error:
+            'Debes aceptar los Terminos y la Politica de Privacidad de verifactu.business para continuar.',
+        },
+        { status: 400 }
+      );
     }
 
     stage = 'encrypt';
@@ -108,6 +124,7 @@ export async function POST(request: NextRequest) {
       : probe.error || 'Error de validación de integración Holded';
 
     stage = 'persist';
+    const legalAcceptedAt = new Date();
     const saved = await upsertAccountingIntegration({
       tenantId: auth.tenantId,
       apiKeyEnc: encrypted,
@@ -115,7 +132,36 @@ export async function POST(request: NextRequest) {
       lastError: normalizedError,
       connectedByUserId: auth.resolvedUserId ?? null,
       channelKey: entryChannel,
+      legalTermsAcceptedAt: legalAcceptedAt,
+      legalPrivacyAcceptedAt: legalAcceptedAt,
+      legalAcceptanceVersion: HOLDED_CONNECTION_LEGAL_VERSION,
     });
+
+    if (probe.ok) {
+      try {
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: auth.tenantId },
+          select: { name: true },
+        });
+
+        await sendHoldedConnectionLifecycleEmails({
+          userEmail: auth.session.email ?? null,
+          userName: auth.session.name ?? null,
+          tenantName: tenant?.name || 'tu empresa',
+          action: 'connected',
+          channel: entryChannel,
+        });
+      } catch (notificationError) {
+        console.error('[api/integrations/accounting/connect] notification failed', {
+          tenantId: auth.tenantId,
+          entryChannel,
+          message:
+            notificationError instanceof Error
+              ? notificationError.message
+              : String(notificationError),
+        });
+      }
+    }
 
     return NextResponse.json({
       ok: probe.ok,

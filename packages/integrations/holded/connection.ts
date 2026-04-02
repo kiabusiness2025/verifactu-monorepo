@@ -12,6 +12,7 @@ const HOLDED_SNAPSHOT_DOCUMENT_LIMIT = Number(process.env.HOLDED_SNAPSHOT_DOCUME
 const HOLDED_SNAPSHOT_DOCUMENT_PAGES = Number(process.env.HOLDED_SNAPSHOT_DOCUMENT_PAGES || '6');
 const HOLDED_SNAPSHOT_CONTACT_LIMIT = Number(process.env.HOLDED_SNAPSHOT_CONTACT_LIMIT || '50');
 const HOLDED_SNAPSHOT_ACCOUNT_LIMIT = Number(process.env.HOLDED_SNAPSHOT_ACCOUNT_LIMIT || '50');
+const HOLDED_CHART_OF_ACCOUNTS_PATH = '/api/accounting/v1/chartofaccounts';
 
 export type HoldedPrismaClient = Pick<
   PrismaClient,
@@ -371,7 +372,7 @@ async function fetchHoldedTenantMetadata(apiKey: string, probe: HoldedProbeResul
         }).catch(() => [])
       : Promise.resolve([]),
     probe.accountingApi.ok
-      ? holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/accounting/v1/accounts', {
+      ? holdedRequest<Array<Record<string, unknown>>>(apiKey, HOLDED_CHART_OF_ACCOUNTS_PATH, {
           limit: 3,
           page: 1,
         }).catch(() => [])
@@ -469,7 +470,7 @@ export async function probeHoldedConnection(apiKey: string): Promise<HoldedProbe
 
   const [invoiceApi, accountingApi, crmApi, projectsApi, teamApi] = await Promise.all([
     probeEndpoint(normalized, '/api/invoicing/v1/documents', { limit: 1, page: 1 }),
-    probeEndpoint(normalized, '/api/accounting/v1/accounts', { limit: 1, page: 1 }),
+    probeEndpoint(normalized, HOLDED_CHART_OF_ACCOUNTS_PATH, { limit: 1, page: 1 }),
     probeEndpoint(normalized, '/api/crm/v1/bookings', { limit: 1, page: 1 }),
     probeEndpoint(normalized, '/api/projects/v1/projects', { limit: 1, page: 1 }),
     probeEndpoint(normalized, '/api/team/v1/employees', { limit: 1, page: 1 }),
@@ -1031,7 +1032,7 @@ export async function fetchHoldedSnapshot(apiKey: string) {
     })
       .then((payload) => toCollection<Record<string, unknown>>(payload))
       .catch(() => []),
-    holdedRequest<unknown>(apiKey, '/api/accounting/v1/accounts', {
+    holdedRequest<unknown>(apiKey, HOLDED_CHART_OF_ACCOUNTS_PATH, {
       limit: HOLDED_SNAPSHOT_ACCOUNT_LIMIT,
       page: 1,
     })

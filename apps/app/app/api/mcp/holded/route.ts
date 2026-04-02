@@ -39,6 +39,8 @@ type ToolDefinition = HoldedMcpToolDefinition;
 const TOOLS: ToolDefinition[] = holdedMcpTools;
 
 function applyMcpCors<T extends { headers: Headers }>(response: T, request: NextRequest) {
+  response.headers.set('Cache-Control', 'no-store');
+
   return applyOpenAiCorsHeaders(response, request, {
     methods: ['GET', 'POST', 'OPTIONS'],
     allowHeaders: ['authorization', 'content-type'],

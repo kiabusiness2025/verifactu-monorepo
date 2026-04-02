@@ -71,39 +71,22 @@ export default function IntegrationsPage() {
     void load();
   }, []);
 
-  const connectIntegration = async () => {
-    const apiKey = window.prompt('Introduce API key de tu programa de contabilidad');
-    if (!apiKey) return;
-    setLoading(true);
-    setMessage(null);
-    try {
-      const res = await fetch('/api/integrations/accounting/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || 'No se pudo conectar la integración contable');
-      setMessage(data?.ok ? 'Integración contable conectada correctamente.' : 'Integración validada con errores.');
-      await load();
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'No se pudo conectar la integración contable');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const disconnectIntegration = async () => {
     setLoading(true);
     setMessage(null);
     try {
-      const res = await fetch('/api/integrations/accounting/disconnect', { method: 'POST' });
+      const res = await fetch('/api/integrations/accounting/disconnect', {
+        method: 'POST',
+        headers: { 'x-isaak-entry-channel': 'dashboard' },
+      });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || 'No se pudo desconectar la integración');
       setMessage('Integración contable desconectada.');
       await load();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'No se pudo desconectar la integración contable');
+      setMessage(
+        err instanceof Error ? err.message : 'No se pudo desconectar la integración contable'
+      );
     } finally {
       setLoading(false);
     }
@@ -137,7 +120,8 @@ export default function IntegrationsPage() {
     try {
       const res = await fetch('/api/integrations/gdrive/disconnect', { method: 'POST' });
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) throw new Error(data?.error || 'No se pudo desconectar Google Drive');
+      if (!res.ok || !data?.ok)
+        throw new Error(data?.error || 'No se pudo desconectar Google Drive');
       setMessage('Google Drive desconectado.');
       await load();
     } catch (err) {
@@ -175,7 +159,8 @@ export default function IntegrationsPage() {
       <header>
         <h1 className="text-2xl font-bold text-slate-900">Integraciones</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Estado de integración contable vía API, sincronización manual y alta de empresa con eInforma.
+          Estado de integración contable vía API, sincronización manual y alta de empresa con
+          eInforma.
         </p>
       </header>
 
@@ -193,21 +178,22 @@ export default function IntegrationsPage() {
           </p>
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Plan actual: <span className="font-semibold">{integration?.plan || '—'}</span>. Esta integración es opcional y está disponible en Empresa y PRO.
+          Plan actual: <span className="font-semibold">{integration?.plan || '—'}</span>. Esta
+          integración es opcional y está disponible en Empresa y PRO.
         </p>
         {integration?.canConnect === false ? (
           <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-            Tu plan actual incluye exportación AEAT en Excel, pero no incluye integración API.
-            Para activarla, mejora a Empresa o PRO.
+            Tu plan actual incluye exportación AEAT en Excel, pero no incluye integración API. Para
+            activarla, mejora a Empresa o PRO.
           </div>
         ) : (
           <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              onClick={connectIntegration}
+            <Link
+              href="/dashboard/integrations/isaak-for-holded/connect"
               className="rounded-full bg-[#0b6cfb]/10 px-4 py-2 text-xs font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/20"
             >
               Conectar integración
-            </button>
+            </Link>
             <button
               onClick={disconnectIntegration}
               className="rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
@@ -235,8 +221,8 @@ export default function IntegrationsPage() {
           <div>
             <h2 className="text-base font-semibold text-slate-900">Isaak for Holded</h2>
             <p className="mt-1 max-w-2xl text-sm text-slate-600">
-              Accede a una capa guiada para traducir Holded a lenguaje de negocio, consultar facturas,
-              clientes y cuentas contables, y preparar borradores desde Isaak.
+              Accede a una capa guiada para traducir Holded a lenguaje de negocio, consultar
+              facturas, clientes y cuentas contables, y preparar borradores desde Isaak.
             </p>
           </div>
           <Link
@@ -251,7 +237,9 @@ export default function IntegrationsPage() {
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-base font-semibold text-slate-900">Google Drive (opcional)</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Al conectar se crea automáticamente la carpeta <span className="font-semibold">verifactu_business</span> en el Drive del cliente para importación documental.
+          Al conectar se crea automáticamente la carpeta{' '}
+          <span className="font-semibold">verifactu_business</span> en el Drive del cliente para
+          importación documental.
         </p>
         <div className="mt-3 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
           <p>
@@ -269,8 +257,7 @@ export default function IntegrationsPage() {
         </div>
         {drive?.oauthReady === false ? (
           <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-            Google Drive no está listo en este entorno. Faltan variables:
-            {' '}
+            Google Drive no está listo en este entorno. Faltan variables:{' '}
             <span className="font-semibold">{drive.missingEnv?.join(', ') || '—'}</span>
           </div>
         ) : null}
@@ -329,7 +316,10 @@ export default function IntegrationsPage() {
         <div className="mt-3 space-y-2">
           {logs.length === 0 ? <p className="text-sm text-slate-500">Sin logs recientes.</p> : null}
           {logs.map((log) => (
-            <div key={log.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+            <div
+              key={log.id}
+              className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700"
+            >
               <p className="font-semibold uppercase text-slate-500">{log.level}</p>
               <p className="mt-1">{log.message}</p>
               <p className="mt-1 text-slate-500">{log.created_at || log.createdAt || '—'}</p>
