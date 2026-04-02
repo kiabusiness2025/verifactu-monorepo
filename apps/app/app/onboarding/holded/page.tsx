@@ -6,6 +6,7 @@ import { getSessionPayload } from '@/lib/session';
 import { getAppUrl, getLandingUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { deriveHoldedCompanySetupState } from './flowState';
 import { inferHoldedEntryChannel } from './entryChannel';
 import HoldedOnboardingClient from './HoldedOnboardingClient';
 
@@ -116,6 +117,7 @@ export default async function HoldedOnboardingPage({
   let summary = {
     companyName: 'Tu empresa',
     companyLegalName: null as string | null,
+    companyTaxId: null as string | null,
     contactFirstName: getPreferredFirstName({
       fullName: defaultContactName,
       email: defaultContactEmail,
@@ -126,6 +128,11 @@ export default async function HoldedOnboardingPage({
     companyEmail: null as string | null,
     contactPhone: null as string | null,
   };
+  let resolvedTenantInfo = {
+    tenantId: null as string | null,
+    tenantIsDemo: null as boolean | null,
+    tenantNif: null as string | null,
+  };
 
   try {
     const auth = await requireTenantContext({
@@ -135,9 +142,18 @@ export default async function HoldedOnboardingPage({
     });
 
     if (!('error' in auth)) {
+      resolvedTenantInfo = {
+        tenantId: auth.tenantId,
+        tenantIsDemo: null,
+        tenantNif: null,
+      };
+
       const tenant = await prisma.tenant.findUnique({
         where: { id: auth.tenantId },
         select: {
+          id: true,
+          nif: true,
+          isDemo: true,
           name: true,
           legalName: true,
           profile: {
@@ -152,6 +168,12 @@ export default async function HoldedOnboardingPage({
         },
       });
 
+      resolvedTenantInfo = {
+        tenantId: tenant?.id || auth.tenantId,
+        tenantIsDemo: tenant?.isDemo ?? null,
+        tenantNif: normalizeText(tenant?.nif),
+      };
+
       const contactFullName =
         normalizeText(auth.session.name) ||
         normalizeText(tenant?.profile?.representative) ||
@@ -161,6 +183,7 @@ export default async function HoldedOnboardingPage({
       summary = {
         companyName: tenant?.profile?.tradeName || tenant?.name || 'Tu empresa',
         companyLegalName: tenant?.profile?.legalName || tenant?.legalName || null,
+        companyTaxId: normalizeText(tenant?.nif),
         contactFirstName: getPreferredFirstName({
           fullName: contactFullName,
           email: contactEmail,
@@ -179,6 +202,15 @@ export default async function HoldedOnboardingPage({
     });
   }
 
+  const companySetup = deriveHoldedCompanySetupState({
+    entryChannel,
+    requireConnectionConfirmation,
+    tenantId: resolvedTenantInfo.tenantId,
+    tenantIsDemo: resolvedTenantInfo.tenantIsDemo,
+    tenantNif: resolvedTenantInfo.tenantNif,
+    companyName: summary.companyName,
+  });
+
   return (
     <HoldedOnboardingClient
       entryChannel={entryChannel}
@@ -186,6 +218,7 @@ export default async function HoldedOnboardingPage({
       onboardingToken={onboardingToken}
       requireConnectionConfirmation={requireConnectionConfirmation}
       summary={summary}
+      companySetup={companySetup}
     />
   );
 }

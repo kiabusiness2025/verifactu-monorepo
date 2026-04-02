@@ -3,6 +3,7 @@
 const mockTx = {
   tenant: {
     create: jest.fn(),
+    update: jest.fn(),
   },
   membership: {
     create: jest.fn(),
@@ -15,6 +16,7 @@ const mockTx = {
     upsert: jest.fn(),
   },
   tenantSubscription: {
+    findFirst: jest.fn(),
     create: jest.fn(),
   },
   tenantProfile: {
@@ -36,6 +38,7 @@ jest.mock('@/lib/prisma', () => ({
   prisma: {
     tenant: {
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
     },
     membership: {
       findFirst: jest.fn(),
@@ -53,6 +56,7 @@ jest.mock('@/lib/prisma', () => ({
   default: {
     tenant: {
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
     },
     membership: {
       findFirst: jest.fn(),
@@ -80,7 +84,7 @@ import { prisma } from '@/lib/prisma';
 import { sendWelcomeLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
 
 const prismaMock = prisma as unknown as {
-  tenant: { findFirst: jest.Mock };
+  tenant: { findFirst: jest.Mock; findUnique: jest.Mock };
   membership: { findFirst: jest.Mock; findMany: jest.Mock };
   plan: { findFirst: jest.Mock; create: jest.Mock };
   tenantSubscription: { findFirst: jest.Mock };
@@ -98,7 +102,9 @@ describe('POST /api/onboarding/tenant', () => {
     (upsertUser as jest.Mock).mockResolvedValue(undefined);
 
     prismaMock.tenant.findFirst.mockResolvedValue(null);
+    prismaMock.tenant.findUnique.mockResolvedValue(null);
     prismaMock.membership.findMany.mockResolvedValue([]);
+    prismaMock.membership.findFirst.mockResolvedValue(null);
     prismaMock.plan.findFirst.mockResolvedValue({ id: 7 });
     prismaMock.$transaction.mockImplementation(async (callback: (tx: typeof mockTx) => unknown) =>
       callback(mockTx)
@@ -109,10 +115,16 @@ describe('POST /api/onboarding/tenant', () => {
       name: 'Empresa Demo',
       legalName: 'Empresa Demo SL',
     });
+    (mockTx.tenant.update as jest.Mock).mockResolvedValue({
+      id: 'tenant-1',
+      name: 'Empresa Demo',
+      legalName: 'Empresa Demo SL',
+    });
     (mockTx.membership.create as jest.Mock).mockResolvedValue({ id: 'membership-1' });
     (mockTx.membership.upsert as jest.Mock).mockResolvedValue({ id: 'membership-support' });
     (mockTx.user.upsert as jest.Mock).mockResolvedValue({ id: 'support-user' });
     (mockTx.userPreference.upsert as jest.Mock).mockResolvedValue({ userId: 'user-1' });
+    (mockTx.tenantSubscription.findFirst as jest.Mock).mockResolvedValue(null);
     (mockTx.tenantSubscription.create as jest.Mock).mockResolvedValue({
       status: 'trial',
       trialEndsAt: new Date('2026-05-02T00:00:00.000Z'),
@@ -183,5 +195,67 @@ describe('POST /api/onboarding/tenant', () => {
     });
 
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses the current placeholder tenant when the caller confirms real company data after Holded validation', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Ksenia Ivanova Lopez',
+      tenantId: 'tenant-temp',
+    });
+    prismaMock.tenant.findUnique.mockResolvedValue({
+      id: 'tenant-temp',
+      name: 'Isaak Workspace',
+      legalName: null,
+      nif: null,
+      isDemo: true,
+      profile: {
+        tradeName: 'Isaak Workspace',
+        taxId: null,
+      },
+    });
+    prismaMock.membership.findFirst.mockResolvedValue({ tenantId: 'tenant-temp' });
+    (mockTx.tenantSubscription.findFirst as jest.Mock).mockResolvedValue({
+      status: 'trial',
+      trialEndsAt: new Date('2026-05-02T00:00:00.000Z'),
+    });
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/onboarding/tenant', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          reuseCurrentTenant: true,
+          name: 'Empresa Demo',
+          legalName: 'Empresa Demo SL',
+          taxId: 'B12345678',
+          tradeName: 'Empresa Demo',
+          extra: {
+            representative: 'Ksenia Ivanova Lopez',
+            email: 'info@empresa-demo.es',
+            phone: '+34 600 111 222',
+          },
+        }),
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.action).toBe('UPDATED_CURRENT');
+    expect(mockTx.tenant.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'tenant-temp' },
+        data: expect.objectContaining({
+          name: 'Empresa Demo',
+          legalName: 'Empresa Demo SL',
+          nif: 'B12345678',
+          isDemo: false,
+        }),
+      })
+    );
+    expect(mockTx.tenant.create).not.toHaveBeenCalled();
   });
 });

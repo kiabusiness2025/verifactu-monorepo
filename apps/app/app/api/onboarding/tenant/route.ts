@@ -6,6 +6,7 @@ import { getSessionPayload, requireUserId } from '@/lib/session';
 import { upsertUser } from '@/lib/tenants';
 
 type TenantPayload = {
+  reuseCurrentTenant?: boolean;
   source?: 'einforma' | 'manual';
   einformaId?: string;
   name: string;
@@ -44,6 +45,64 @@ type TenantPayload = {
     raw?: unknown;
   };
 };
+
+function normalizeText(value?: string | null) {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+function looksLikeSyntheticCompanyName(value?: string | null) {
+  const normalized = normalizeText(value)?.toLowerCase();
+  if (!normalized) return true;
+
+  return normalized === 'tu empresa' || normalized.endsWith(' workspace');
+}
+
+async function findReusableCurrentTenant(input: {
+  sessionTenantId?: string | null;
+  userId: string;
+}) {
+  const tenantId = normalizeText(input.sessionTenantId);
+  if (!tenantId) return null;
+
+  const [membership, tenant] = await Promise.all([
+    prisma.membership.findFirst({
+      where: {
+        tenantId,
+        userId: input.userId,
+        status: 'active',
+      },
+      select: { tenantId: true },
+    }),
+    prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        id: true,
+        name: true,
+        legalName: true,
+        nif: true,
+        isDemo: true,
+        profile: {
+          select: {
+            tradeName: true,
+            taxId: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  if (!membership || !tenant) {
+    return null;
+  }
+
+  const currentCompanyName = tenant.profile?.tradeName || tenant.name;
+  const currentTaxId = normalizeText(tenant.profile?.taxId) || normalizeText(tenant.nif);
+  const canReuse =
+    tenant.isDemo || (!currentTaxId && looksLikeSyntheticCompanyName(currentCompanyName));
+
+  return canReuse ? tenant : null;
+}
 
 function splitCnae(value?: string) {
   if (!value) return { code: undefined, text: undefined };
@@ -117,6 +176,7 @@ export async function POST(req: Request) {
       : 'ES';
   const source = body?.source === 'einforma' ? 'einforma' : 'manual';
   const einformaId = typeof body?.einformaId === 'string' ? body.einformaId.trim() : undefined;
+  const reuseCurrentTenant = body?.reuseCurrentTenant === true;
   const fiscalAddress =
     body?.fiscalAddress && typeof body.fiscalAddress === 'object' ? body.fiscalAddress : null;
   const companyEmail =
@@ -208,24 +268,40 @@ export async function POST(req: Request) {
   trialEndsAt.setDate(trialEndsAt.getDate() + 30);
 
   const planId = await resolvePlanId();
+  const reusableCurrentTenant = await findReusableCurrentTenant({
+    sessionTenantId: reuseCurrentTenant ? (session.tenantId ?? null) : null,
+    userId: uid,
+  });
 
   const result = await prisma.$transaction(async (tx) => {
-    const tenant = await tx.tenant.create({
-      data: {
-        name,
-        legalName: legalName || undefined,
-        nif: taxIdRaw,
-      },
-    });
+    const tenant = reusableCurrentTenant
+      ? await tx.tenant.update({
+          where: { id: reusableCurrentTenant.id },
+          data: {
+            name,
+            legalName: legalName || undefined,
+            nif: taxIdRaw,
+            isDemo: false,
+          },
+        })
+      : await tx.tenant.create({
+          data: {
+            name,
+            legalName: legalName || undefined,
+            nif: taxIdRaw,
+          },
+        });
 
-    await tx.membership.create({
-      data: {
-        tenantId: tenant.id,
-        userId: uid,
-        role: 'owner',
-        status: 'active',
-      },
-    });
+    if (!reusableCurrentTenant) {
+      await tx.membership.create({
+        data: {
+          tenantId: tenant.id,
+          userId: uid,
+          role: 'owner',
+          status: 'active',
+        },
+      });
+    }
 
     const supportUser = await tx.user.upsert({
       where: { email: 'support@verifactu.business' },
@@ -262,16 +338,24 @@ export async function POST(req: Request) {
       update: { preferredTenantId: tenant.id },
     });
 
-    const subscription = await tx.tenantSubscription.create({
-      data: {
-        tenantId: tenant.id,
-        planId,
-        status: 'trial',
-        trialEndsAt,
-        currentPeriodStart: now,
-        currentPeriodEnd: trialEndsAt,
-      },
-    });
+    const existingSubscription = reusableCurrentTenant
+      ? await tx.tenantSubscription.findFirst({
+          where: { tenantId: tenant.id },
+          orderBy: { createdAt: 'desc' },
+        })
+      : null;
+    const subscription =
+      existingSubscription ||
+      (await tx.tenantSubscription.create({
+        data: {
+          tenantId: tenant.id,
+          planId,
+          status: 'trial',
+          trialEndsAt,
+          currentPeriodStart: now,
+          currentPeriodEnd: trialEndsAt,
+        },
+      }));
 
     const extra = body?.extra;
     const isEinforma = source === 'einforma';
@@ -353,7 +437,11 @@ export async function POST(req: Request) {
       } as never,
     });
 
-    return { tenant, subscription };
+    return {
+      tenant,
+      subscription,
+      action: reusableCurrentTenant ? 'UPDATED_CURRENT' : 'CREATED',
+    };
   });
 
   try {
@@ -378,7 +466,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    action: 'CREATED',
+    action: result.action,
     tenantId: result.tenant.id,
     trial: {
       status: result.subscription.status,

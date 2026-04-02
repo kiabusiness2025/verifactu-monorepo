@@ -1,6 +1,7 @@
 'use client';
 
 import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
+import { getPreferredFirstName } from '@/lib/personName';
 import Image from 'next/image';
 import {
   AlertCircle,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { HoldedCompanySetupState } from './flowState';
 import HoldedMergeAnimation from './HoldedMergeAnimation';
 
 type IntegrationStatus = {
@@ -37,12 +39,14 @@ type Props = {
   summary: {
     companyName: string;
     companyLegalName: string | null;
+    companyTaxId: string | null;
     contactFirstName: string;
     contactFullName: string | null;
     contactEmail: string | null;
     companyEmail: string | null;
     contactPhone: string | null;
   };
+  companySetup: HoldedCompanySetupState;
 };
 
 const onboardingCopy = getIsaakHoldedOnboardingCopy();
@@ -52,6 +56,11 @@ const HOLDED_API_GUIDE_URL =
   'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
 const VERIFACTU_TERMS_URL = 'https://verifactu.business/terms';
 const VERIFACTU_PRIVACY_URL = 'https://verifactu.business/privacy';
+
+function normalizeText(value?: string | null) {
+  const normalized = value?.trim();
+  return normalized ? normalized : '';
+}
 
 const chatgptUiCopy = {
   eyebrow: 'Conecta Holded con ChatGPT',
@@ -73,7 +82,7 @@ const chatgptUiCopy = {
   submitLabel: 'Conectar Holded',
   apiKeyLabel: 'Clave API de Holded',
   apiKeyHelp:
-    'Tu clave solo se usa para activar esta conexion. Podras revocarla o cambiarla cuando quieras.',
+    'Primero validaremos la API key. Despues te pediremos el nombre de empresa y el correo exactos tal y como aparecen en Holded.',
   apiKeyPlaceholder: 'Pega aqui la API key de Holded para continuar',
   errorApiKeyEmpty: 'Necesitamos tu API key de Holded para completar esta conexion.',
   errorLoadFailed: 'No se pudo preparar la conexion con Holded.',
@@ -87,7 +96,7 @@ const chatgptUiCopy = {
   helpSteps: [
     'Entra en Holded y abre el area de API.',
     'Copia una API key activa de tu empresa.',
-    'Pegala aqui para completar la conexion y volver a ChatGPT.',
+    'Pegala aqui para validarla y luego confirma los datos exactos de empresa y usuario.',
   ],
   savingMessages: [
     'Estamos validando tu clave de Holded.',
@@ -138,18 +147,39 @@ export default function HoldedOnboardingClient({
   onboardingToken,
   requireConnectionConfirmation,
   summary,
+  companySetup,
 }: Props) {
   const isChatgptEntry = entryChannel === 'chatgpt';
+  const needsPostValidationCompanyStep = isChatgptEntry;
   const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
   const savingMessages = uiCopy.savingMessages;
-  const showCompanyLegalName =
-    !!summary.companyLegalName &&
-    summary.companyLegalName.trim().toLowerCase() !== summary.companyName.trim().toLowerCase();
-  const showCompanyEmail =
-    !!summary.companyEmail && summary.companyEmail.trim() !== (summary.contactEmail || '').trim();
+  const hasResolvedCompanyProfile =
+    companySetup.hasResolvedCompany &&
+    Boolean(summary.contactEmail || summary.companyEmail || summary.companyTaxId);
   const [apiKey, setApiKey] = useState('');
+  const [resolvedSummary, setResolvedSummary] = useState(summary);
+  const [companyName, setCompanyName] = useState(
+    summary.companyName === 'Tu empresa' ? '' : summary.companyName
+  );
+  const [companyLegalName, setCompanyLegalName] = useState(
+    summary.companyLegalName ?? (summary.companyName === 'Tu empresa' ? '' : summary.companyName)
+  );
+  const [companyTaxId, setCompanyTaxId] = useState(summary.companyTaxId ?? '');
+  const [contactName, setContactName] = useState(
+    summary.contactFullName ?? summary.contactFirstName
+  );
+  const [contactEmail, setContactEmail] = useState(
+    summary.contactEmail ?? summary.companyEmail ?? ''
+  );
+  const [contactPhone, setContactPhone] = useState(summary.contactPhone ?? '');
+  const [apiValidated, setApiValidated] = useState(!needsPostValidationCompanyStep);
+  const [showCompanyForm, setShowCompanyForm] = useState(!hasResolvedCompanyProfile);
+  const [companyConfirmed, setCompanyConfirmed] = useState(!needsPostValidationCompanyStep);
+  const [companySaving, setCompanySaving] = useState(false);
+  const [companyMessage, setCompanyMessage] = useState<string | null>(null);
+  const [companyError, setCompanyError] = useState<string | null>(null);
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!needsPostValidationCompanyStep);
   const [saving, setSaving] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [redirectTarget, setRedirectTarget] = useState(nextUrl);
@@ -158,6 +188,28 @@ export default function HoldedOnboardingClient({
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const showApiStep = !needsPostValidationCompanyStep || !apiValidated;
+  const companyStepPending =
+    needsPostValidationCompanyStep && apiValidated && (showCompanyForm || !companyConfirmed);
+  const showCompanyLegalName =
+    !!resolvedSummary.companyLegalName &&
+    resolvedSummary.companyLegalName.trim().toLowerCase() !==
+      resolvedSummary.companyName.trim().toLowerCase();
+  const showCompanyEmail =
+    !!resolvedSummary.companyEmail &&
+    resolvedSummary.companyEmail.trim() !== (resolvedSummary.contactEmail || '').trim();
+  const canContinueWithExistingConnection =
+    !!status?.connected &&
+    !needsPostValidationCompanyStep &&
+    requireConnectionConfirmation &&
+    companyConfirmed &&
+    !saving &&
+    !redirecting;
+  const personalizedLead = !showApiStep
+    ? `${resolvedSummary.contactFirstName}, ahora necesitamos confirmar los datos exactos de empresa y usuario tal y como aparecen en Holded.`
+    : isChatgptEntry
+      ? `${resolvedSummary.contactFirstName}, primero validaremos tu API key y despues guardaremos los datos exactos de empresa y usuario.`
+      : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName}.`;
 
   const confirmedNextUrl = useMemo(() => {
     if (!requireConnectionConfirmation) return nextUrl;
@@ -191,13 +243,20 @@ export default function HoldedOnboardingClient({
   );
 
   const statusLabel = useMemo(() => {
+    if (needsPostValidationCompanyStep && !apiValidated) return 'Pendiente de validar API key';
+    if (showCompanyForm) return 'Pendiente de datos de empresa';
+    if (!companyConfirmed) return 'Pendiente de confirmar empresa';
     if (status?.connected) return uiCopy.statusConnected;
     if (redirecting) return 'Llevandote de vuelta al chat';
     if (loading) return uiCopy.statusLoading;
     return uiCopy.statusPending;
   }, [
+    apiValidated,
+    companyConfirmed,
     loading,
+    needsPostValidationCompanyStep,
     redirecting,
+    showCompanyForm,
     status?.connected,
     uiCopy.statusConnected,
     uiCopy.statusLoading,
@@ -228,6 +287,11 @@ export default function HoldedOnboardingClient({
   }, [saving, savingMessages]);
 
   useEffect(() => {
+    if (needsPostValidationCompanyStep || companyStepPending) {
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     const controller = new AbortController();
     const timer = window.setTimeout(() => controller.abort(), 12000);
@@ -266,8 +330,10 @@ export default function HoldedOnboardingClient({
       controller.abort();
     };
   }, [
+    companyStepPending,
     goToNextStep,
     loadStatus,
+    needsPostValidationCompanyStep,
     nextUrl,
     onboardingToken,
     requireConnectionConfirmation,
@@ -275,6 +341,8 @@ export default function HoldedOnboardingClient({
   ]);
 
   const handleRetryStatus = async () => {
+    if (needsPostValidationCompanyStep || companyStepPending) return;
+
     setLoading(true);
     setError(null);
     try {
@@ -287,6 +355,241 @@ export default function HoldedOnboardingClient({
       setError(loadError instanceof Error ? loadError.message : uiCopy.errorLoadFailed);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const validateApiKey = async () => {
+    const res = await fetch('/api/integrations/accounting/validate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-isaak-entry-channel': entryChannel,
+        ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
+      },
+      body: JSON.stringify({
+        apiKey: apiKey.trim(),
+        acceptedTerms,
+        acceptedPrivacy,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error(
+        data?.debug ||
+          data?.detail ||
+          data?.error ||
+          `Error HTTP ${res.status} al validar la API key de Holded`
+      );
+    }
+    if (!data?.ok) {
+      throw new Error(
+        data?.probe?.error || 'No hemos podido validar tu acceso con el ERP compatible'
+      );
+    }
+
+    return data;
+  };
+
+  const connectValidatedApi = async () => {
+    const res = await fetch('/api/integrations/accounting/connect', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-isaak-entry-channel': entryChannel,
+        ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
+      },
+      body: JSON.stringify({
+        apiKey: apiKey.trim(),
+        acceptedTerms,
+        acceptedPrivacy,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error(
+        data?.debug ||
+          data?.detail ||
+          data?.error ||
+          `Error HTTP ${res.status} al activar ${isChatgptEntry ? 'la conexion' : 'Isaak'}`
+      );
+    }
+    if (!data?.ok) {
+      throw new Error(
+        data?.probe?.error ||
+          data?.lastError ||
+          'No hemos podido validar tu acceso con el ERP compatible'
+      );
+    }
+
+    setStatus((current) =>
+      current
+        ? { ...current, connected: true, status: 'connected', lastError: null }
+        : {
+            provider: 'holded',
+            status: 'connected',
+            lastSyncAt: null,
+            lastError: null,
+            connected: true,
+          }
+    );
+
+    return data;
+  };
+
+  const handleUseResolvedCompany = async () => {
+    setCompanySaving(true);
+    setSaving(true);
+    setCompanyError(null);
+    setCompanyMessage(null);
+
+    try {
+      setCompanyConfirmed(true);
+      setShowCompanyForm(false);
+      await connectValidatedApi();
+      setCompanyMessage('Datos confirmados. Ya estamos cerrando la conexion con Holded.');
+      setError(null);
+      setMessage(uiCopy.successConnected);
+      goToNextStep(confirmedNextUrl);
+    } catch (confirmError) {
+      setCompanyConfirmed(false);
+      setCompanyError(
+        confirmError instanceof Error
+          ? confirmError.message
+          : 'No hemos podido guardar la conexion de esta empresa.'
+      );
+    } finally {
+      setCompanySaving(false);
+      setSaving(false);
+    }
+  };
+
+  const handleChooseAnotherCompany = () => {
+    setCompanyConfirmed(false);
+    setShowCompanyForm(true);
+    setCompanyMessage(null);
+    setCompanyError(null);
+  };
+
+  const handleCompanySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const normalizedCompanyName = normalizeText(companyName);
+    const normalizedLegalName = normalizeText(companyLegalName) || normalizedCompanyName;
+    const normalizedTaxId = normalizeText(companyTaxId).toUpperCase();
+    const normalizedContactName = normalizeText(contactName);
+    const normalizedContactEmail = normalizeText(contactEmail);
+    const normalizedContactPhone = normalizeText(contactPhone);
+
+    if (
+      !normalizedCompanyName ||
+      !normalizedTaxId ||
+      !normalizedContactName ||
+      !normalizedContactEmail
+    ) {
+      setCompanyError(
+        'Necesitamos nombre de empresa, NIF/CIF, persona de contacto y correo para continuar.'
+      );
+      return;
+    }
+
+    setCompanySaving(true);
+    setCompanyError(null);
+    setCompanyMessage(null);
+
+    try {
+      const createRes = await fetch('/api/onboarding/tenant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reuseCurrentTenant: true,
+          source: 'manual',
+          name: normalizedCompanyName,
+          legalName: normalizedLegalName,
+          nif: normalizedTaxId,
+          extra: {
+            representative: normalizedContactName,
+            email: normalizedContactEmail,
+            phone: normalizedContactPhone || undefined,
+          },
+        }),
+      });
+      const createData = await createRes.json().catch(() => null);
+
+      if (createData?.action === 'REQUEST_ACCESS') {
+        throw new Error('Esta empresa ya existe, pero tu usuario no tiene acceso a ella.');
+      }
+
+      if (!createRes.ok || !createData?.ok) {
+        if (createData?.action === 'TRIAL_LIMIT_REACHED') {
+          throw new Error(
+            createData?.error ||
+              'En modo prueba solo puedes usar una empresa con datos reales. Revisa tu plan para continuar.'
+          );
+        }
+
+        throw new Error(createData?.error || 'No hemos podido preparar la empresa para continuar.');
+      }
+
+      const nextTenantId =
+        typeof createData?.tenantId === 'string' ? createData.tenantId.trim() : '';
+      if (!nextTenantId) {
+        throw new Error('La empresa se ha creado, pero no hemos podido activarla en tu sesion.');
+      }
+
+      const switchRes = await fetch('/api/session/tenant-switch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tenantId: nextTenantId }),
+      });
+      const switchData = await switchRes.json().catch(() => null);
+
+      if (!switchRes.ok || !switchData?.ok) {
+        throw new Error(
+          switchData?.error || 'No hemos podido activar la empresa nueva en esta sesion.'
+        );
+      }
+
+      const nextLegalName =
+        normalizedLegalName.toLowerCase() === normalizedCompanyName.toLowerCase()
+          ? null
+          : normalizedLegalName;
+      const nextContactFirstName = getPreferredFirstName({
+        fullName: normalizedContactName,
+        email: normalizedContactEmail,
+        fallback: resolvedSummary.contactFirstName,
+      });
+
+      setResolvedSummary({
+        companyName: normalizedCompanyName,
+        companyLegalName: nextLegalName,
+        companyTaxId: normalizedTaxId,
+        contactFirstName: nextContactFirstName,
+        contactFullName: normalizedContactName,
+        contactEmail: normalizedContactEmail,
+        companyEmail: normalizedContactEmail,
+        contactPhone: normalizedContactPhone || null,
+      });
+
+      await connectValidatedApi();
+
+      setCompanyConfirmed(true);
+      setShowCompanyForm(false);
+      setCompanyMessage('Datos guardados. Ya estamos cerrando la conexion con Holded.');
+      setError(null);
+      setMessage(uiCopy.successConnected);
+      goToNextStep(confirmedNextUrl);
+    } catch (submitError) {
+      setCompanyError(
+        submitError instanceof Error
+          ? submitError.message
+          : 'No hemos podido guardar la empresa y el contacto.'
+      );
+    } finally {
+      setCompanySaving(false);
     }
   };
 
@@ -304,49 +607,29 @@ export default function HoldedOnboardingClient({
     setSaving(true);
     setError(null);
     setMessage(null);
+    setCompanyError(null);
 
     try {
-      const res = await fetch('/api/integrations/accounting/connect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-isaak-entry-channel': entryChannel,
-          ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
-        },
-        body: JSON.stringify({
-          apiKey: apiKey.trim(),
-          acceptedTerms,
-          acceptedPrivacy,
-        }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok)
-        throw new Error(
-          data?.debug ||
-            data?.detail ||
-            data?.error ||
-            `Error HTTP ${res.status} al activar ${isChatgptEntry ? 'la conexion' : 'Isaak'}`
+      if (needsPostValidationCompanyStep && !apiValidated) {
+        await validateApiKey();
+        setApiValidated(true);
+        setShowCompanyForm(!hasResolvedCompanyProfile);
+        setCompanyConfirmed(false);
+        setCompanyMessage(
+          hasResolvedCompanyProfile
+            ? 'API key validada. Ahora confirma que el nombre de empresa y el correo coinciden exactamente con Holded.'
+            : 'API key validada. Ahora necesitamos el nombre exacto de la empresa, su NIF/CIF y el correo principal tal y como aparecen en Holded.'
         );
-      if (!data?.ok) {
-        throw new Error(
-          data?.probe?.error ||
-            data?.lastError ||
-            'No hemos podido validar tu acceso con el ERP compatible'
-        );
+        return;
       }
 
+      if (companyStepPending) {
+        setError('Primero confirma la empresa con la que quieres continuar.');
+        return;
+      }
+
+      await connectValidatedApi();
       setMessage(uiCopy.successConnected);
-      setStatus((current) =>
-        current
-          ? { ...current, connected: true, status: 'connected', lastError: null }
-          : {
-              provider: 'holded',
-              status: 'connected',
-              lastSyncAt: null,
-              lastError: null,
-              connected: true,
-            }
-      );
       goToNextStep(confirmedNextUrl);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : uiCopy.errorConnectFailed);
@@ -394,9 +677,7 @@ export default function HoldedOnboardingClient({
               {uiCopy.title}
             </h1>
             <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">{uiCopy.intro}</p>
-            <p className="mt-2 text-sm font-medium text-[#0b214a]">
-              {summary.contactFirstName}, vamos a dejar lista la conexion de {summary.companyName}.
-            </p>
+            <p className="mt-2 text-sm font-medium text-[#0b214a]">{personalizedLead}</p>
 
             <div className="mt-5 rounded-2xl border border-[#0b6cfb]/20 bg-[#f3f8ff] px-4 py-3 text-sm text-[#0b214a]">
               <div className="flex items-start gap-2">
@@ -406,87 +687,293 @@ export default function HoldedOnboardingClient({
             </div>
 
             <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#d9e6ff] bg-white shadow-sm">
-                  <Image
-                    src="/brand/holded/holded-diamond-logo.png"
-                    alt="Holded"
-                    width={20}
-                    height={20}
-                    className="h-5 w-5"
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-black">{uiCopy.statusReady}</div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                        Empresa
+              {companyStepPending ? (
+                <div>
+                  <div className="text-sm font-semibold text-black">
+                    {showCompanyForm
+                      ? 'Datos de empresa y contacto'
+                      : 'Confirma la empresa que quieres conectar'}
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-neutral-700">
+                    {showCompanyForm
+                      ? 'La API key ya es valida. Ahora necesitamos guardar el nombre exacto de la empresa, su NIF/CIF y el correo principal tal y como aparecen en Holded.'
+                      : 'Hemos cargado los datos actuales de tu empresa. Confirma que el nombre y el correo coinciden exactamente con Holded o corrigelos antes de guardar la conexion.'}
+                  </p>
+
+                  {showCompanyForm ? (
+                    <form onSubmit={handleCompanySubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <label className="block text-sm font-medium text-neutral-700">
+                        Nombre comercial
+                        <input
+                          type="text"
+                          value={companyName}
+                          onChange={(event) => setCompanyName(event.target.value)}
+                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                          placeholder="Tu empresa"
+                          autoComplete="organization"
+                        />
+                      </label>
+                      <label className="block text-sm font-medium text-neutral-700">
+                        Razon social
+                        <input
+                          type="text"
+                          value={companyLegalName}
+                          onChange={(event) => setCompanyLegalName(event.target.value)}
+                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                          placeholder="Tu empresa, S.L."
+                          autoComplete="organization"
+                        />
+                      </label>
+                      <label className="block text-sm font-medium text-neutral-700">
+                        NIF / CIF
+                        <input
+                          type="text"
+                          value={companyTaxId}
+                          onChange={(event) => setCompanyTaxId(event.target.value)}
+                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                          placeholder="B12345678"
+                          autoComplete="off"
+                        />
+                      </label>
+                      <label className="block text-sm font-medium text-neutral-700">
+                        Persona usuaria en Holded
+                        <input
+                          type="text"
+                          value={contactName}
+                          onChange={(event) => setContactName(event.target.value)}
+                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                          placeholder="Nombre y apellidos"
+                          autoComplete="name"
+                        />
+                      </label>
+                      <label className="block text-sm font-medium text-neutral-700">
+                        Correo principal en Holded
+                        <input
+                          type="email"
+                          value={contactEmail}
+                          onChange={(event) => setContactEmail(event.target.value)}
+                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                          placeholder="nombre@empresa.com"
+                          autoComplete="email"
+                        />
+                      </label>
+                      <label className="block text-sm font-medium text-neutral-700">
+                        Telefono
+                        <input
+                          type="tel"
+                          value={contactPhone}
+                          onChange={(event) => setContactPhone(event.target.value)}
+                          className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                          placeholder="600 000 000"
+                          autoComplete="tel"
+                        />
+                      </label>
+                      <div className="sm:col-span-2 flex flex-wrap gap-3">
+                        {companySetup.hasResolvedCompany ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowCompanyForm(false)}
+                            disabled={companySaving}
+                            className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                          >
+                            Volver a la empresa detectada
+                          </button>
+                        ) : null}
+                        <button
+                          type="submit"
+                          disabled={companySaving}
+                          className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {companySaving ? 'Guardando...' : 'Guardar datos y terminar conexion'}
+                        </button>
                       </div>
-                      <div className="mt-1 text-sm font-semibold text-black">
-                        {summary.companyName}
+                    </form>
+                  ) : (
+                    <div className="mt-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Empresa
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-black">
+                            {resolvedSummary.companyName}
+                          </div>
+                        </div>
+                        {showCompanyLegalName ? (
+                          <div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                              Razon social
+                            </div>
+                            <div className="mt-1 text-sm text-neutral-700">
+                              {resolvedSummary.companyLegalName}
+                            </div>
+                          </div>
+                        ) : null}
+                        {resolvedSummary.companyTaxId ? (
+                          <div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                              NIF / CIF
+                            </div>
+                            <div className="mt-1 text-sm text-neutral-700">
+                              {resolvedSummary.companyTaxId}
+                            </div>
+                          </div>
+                        ) : null}
+                        {resolvedSummary.contactFullName ? (
+                          <div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                              Persona usuaria
+                            </div>
+                            <div className="mt-1 text-sm text-neutral-700">
+                              {resolvedSummary.contactFullName}
+                            </div>
+                          </div>
+                        ) : null}
+                        {resolvedSummary.contactEmail ? (
+                          <div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                              Correo principal
+                            </div>
+                            <div className="mt-1 break-all text-sm text-neutral-700">
+                              {resolvedSummary.contactEmail}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          onClick={handleUseResolvedCompany}
+                          disabled={companySaving}
+                          className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {companySaving ? 'Conectando...' : 'Si, estos datos coinciden'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleChooseAnotherCompany}
+                          disabled={companySaving}
+                          className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          No, corregir datos
+                        </button>
                       </div>
                     </div>
-                    {showCompanyLegalName ? (
-                      <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                          Razon social
-                        </div>
-                        <div className="mt-1 text-sm text-neutral-700">
-                          {summary.companyLegalName}
-                        </div>
-                      </div>
-                    ) : null}
-                    {summary.contactFullName ? (
-                      <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                          Persona de contacto
-                        </div>
-                        <div className="mt-1 text-sm text-neutral-700">
-                          {summary.contactFullName}
-                        </div>
-                      </div>
-                    ) : null}
-                    {summary.contactEmail ? (
-                      <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                          Correo de acceso
-                        </div>
-                        <div className="mt-1 break-all text-sm text-neutral-700">
-                          {summary.contactEmail}
-                        </div>
-                      </div>
-                    ) : null}
-                    {showCompanyEmail ? (
-                      <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                          Correo de empresa
-                        </div>
-                        <div className="mt-1 break-all text-sm text-neutral-700">
-                          {summary.companyEmail}
-                        </div>
-                      </div>
-                    ) : null}
-                    {summary.contactPhone ? (
-                      <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                          Telefono
-                        </div>
-                        <div className="mt-1 text-sm text-neutral-700">{summary.contactPhone}</div>
-                      </div>
-                    ) : null}
+                  )}
+
+                  {companyMessage ? (
+                    <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>{companyMessage}</span>
+                    </div>
+                  ) : null}
+
+                  {companyError ? (
+                    <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>{companyError}</span>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#d9e6ff] bg-white shadow-sm">
+                    <Image
+                      src="/brand/holded/holded-diamond-logo.png"
+                      alt="Holded"
+                      width={20}
+                      height={20}
+                      className="h-5 w-5"
+                    />
                   </div>
-                  <div className="mt-3 text-sm text-neutral-700">
-                    Estado: <span className="font-semibold text-black">{statusLabel}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-black">{uiCopy.statusReady}</div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                          Empresa
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-black">
+                          {resolvedSummary.companyName}
+                        </div>
+                      </div>
+                      {showCompanyLegalName ? (
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Razon social
+                          </div>
+                          <div className="mt-1 text-sm text-neutral-700">
+                            {resolvedSummary.companyLegalName}
+                          </div>
+                        </div>
+                      ) : null}
+                      {resolvedSummary.companyTaxId ? (
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            NIF / CIF
+                          </div>
+                          <div className="mt-1 text-sm text-neutral-700">
+                            {resolvedSummary.companyTaxId}
+                          </div>
+                        </div>
+                      ) : null}
+                      {resolvedSummary.contactFullName ? (
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Persona de contacto
+                          </div>
+                          <div className="mt-1 text-sm text-neutral-700">
+                            {resolvedSummary.contactFullName}
+                          </div>
+                        </div>
+                      ) : null}
+                      {resolvedSummary.contactEmail ? (
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Correo de acceso
+                          </div>
+                          <div className="mt-1 break-all text-sm text-neutral-700">
+                            {resolvedSummary.contactEmail}
+                          </div>
+                        </div>
+                      ) : null}
+                      {showCompanyEmail ? (
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Correo de empresa
+                          </div>
+                          <div className="mt-1 break-all text-sm text-neutral-700">
+                            {resolvedSummary.companyEmail}
+                          </div>
+                        </div>
+                      ) : null}
+                      {resolvedSummary.contactPhone ? (
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Telefono
+                          </div>
+                          <div className="mt-1 text-sm text-neutral-700">
+                            {resolvedSummary.contactPhone}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 text-sm text-neutral-700">
+                      Estado: <span className="font-semibold text-black">{statusLabel}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              {status?.degraded ? (
+              )}
+              {!companyStepPending && !needsPostValidationCompanyStep && status?.degraded ? (
                 <div className="mt-2 text-sm text-amber-700">{uiCopy.degraded}</div>
               ) : null}
             </div>
 
-            {loading && !saving && !redirecting ? (
+            {!needsPostValidationCompanyStep &&
+            !companyStepPending &&
+            loading &&
+            !saving &&
+            !redirecting ? (
               <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#f7fbff_0%,#ffffff_52%,#fff7f8_100%)] p-4 sm:p-5">
                 <div className="grid gap-4 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center">
                   <HoldedMergeAnimation compact />
@@ -508,7 +995,7 @@ export default function HoldedOnboardingClient({
               </div>
             ) : null}
 
-            {redirecting ? (
+            {!companyStepPending && redirecting ? (
               <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#fff8f8_0%,#ffffff_52%,#f7fbff_100%)] p-4 sm:p-5">
                 <div className="grid gap-4 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center">
                   <HoldedMergeAnimation compact />
@@ -535,7 +1022,28 @@ export default function HoldedOnboardingClient({
               </div>
             ) : null}
 
-            {!redirecting ? (
+            {!companyStepPending && !redirecting ? (
+              canContinueWithExistingConnection ? (
+                <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="space-y-3">
+                    <span className="block">
+                      Ya detectamos una conexion activa de Holded para esta empresa. Si quieres
+                      usarla tal cual, puedes continuar ahora mismo.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => goToNextStep(confirmedNextUrl)}
+                      className="rounded-full bg-emerald-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800"
+                    >
+                      Continuar con esta empresa
+                    </button>
+                  </div>
+                </div>
+              ) : null
+            ) : null}
+
+            {showApiStep && !redirecting ? (
               <ol className="mt-4 space-y-2 text-sm text-neutral-700">
                 {uiCopy.helpSteps.map((step, index) => (
                   <li key={step} className="flex gap-3">
@@ -548,7 +1056,7 @@ export default function HoldedOnboardingClient({
               </ol>
             ) : null}
 
-            {!redirecting ? (
+            {showApiStep && !redirecting ? (
               <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                 <a
                   href={HOLDED_API_GUIDE_URL}
@@ -647,7 +1155,9 @@ export default function HoldedOnboardingClient({
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {uiCopy.submitLabel}
+                    {needsPostValidationCompanyStep && !apiValidated
+                      ? 'Validar API key'
+                      : uiCopy.submitLabel}
                   </button>
                 </div>
               </form>
@@ -690,7 +1200,7 @@ export default function HoldedOnboardingClient({
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <div className="space-y-2">
                   <span className="block">{error}</span>
-                  {!saving ? (
+                  {!saving && !needsPostValidationCompanyStep ? (
                     <button
                       type="button"
                       onClick={handleRetryStatus}
