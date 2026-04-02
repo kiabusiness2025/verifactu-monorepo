@@ -189,6 +189,7 @@ export default function HoldedOnboardingClient({
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const showApiStep = !needsPostValidationCompanyStep || !apiValidated;
+  const hideResolvedCompanyUntilApiValidation = needsPostValidationCompanyStep && !apiValidated;
   const companyStepPending =
     needsPostValidationCompanyStep && apiValidated && (showCompanyForm || !companyConfirmed);
   const showCompanyLegalName =
@@ -207,9 +208,11 @@ export default function HoldedOnboardingClient({
     !redirecting;
   const personalizedLead = !showApiStep
     ? `${resolvedSummary.contactFirstName}, ahora necesitamos confirmar los datos exactos de empresa y usuario tal y como aparecen en Holded.`
-    : isChatgptEntry
-      ? `${resolvedSummary.contactFirstName}, primero validaremos tu API key y despues guardaremos los datos exactos de empresa y usuario.`
-      : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName}.`;
+    : hideResolvedCompanyUntilApiValidation
+      ? 'Primero validaremos tu API key. Despues te pediremos confirmar los datos exactos de la empresa conectada.'
+      : isChatgptEntry
+        ? `${resolvedSummary.contactFirstName}, primero validaremos tu API key y despues guardaremos los datos exactos de empresa y usuario.`
+        : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName}.`;
 
   const confirmedNextUrl = useMemo(() => {
     if (!requireConnectionConfirmation) return nextUrl;
@@ -874,6 +877,30 @@ export default function HoldedOnboardingClient({
                       <span>{companyError}</span>
                     </div>
                   ) : null}
+                </div>
+              ) : hideResolvedCompanyUntilApiValidation ? (
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#d9e6ff] bg-white shadow-sm">
+                    <Image
+                      src="/brand/holded/holded-diamond-logo.png"
+                      alt="Holded"
+                      width={20}
+                      height={20}
+                      className="h-5 w-5"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-black">
+                      Primero valida tu API key
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-neutral-700">
+                      Antes de mostrar o confirmar ninguna empresa, necesitamos comprobar que la API
+                      key corresponde a una conexion real de Holded.
+                    </p>
+                    <div className="mt-3 text-sm text-neutral-700">
+                      Estado: <span className="font-semibold text-black">{statusLabel}</span>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-start gap-3">
