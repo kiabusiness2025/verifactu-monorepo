@@ -6,17 +6,57 @@
 import { FatalError } from 'workflow';
 import { Resend } from 'resend';
 import { query } from '@/lib/db';
+import { getPreferredFirstName } from '@/lib/personName';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const ADMIN_NOTIFICATION_EMAIL =
   process.env.SUPPORT_NOTIFICATION_EMAIL?.trim() || 'support@verifactu.business';
 
+function normalizeText(value?: string | null) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function buildTenantDisplayName(args: {
+  tenantName?: string | null;
+  tenantLegalName?: string | null;
+}) {
+  const tenantName = normalizeText(args.tenantName) || null;
+  const tenantLegalName = normalizeText(args.tenantLegalName) || null;
+
+  if (!tenantName && !tenantLegalName) return null;
+  if (!tenantName) return tenantLegalName;
+  if (!tenantLegalName || tenantLegalName.toLowerCase() === tenantName.toLowerCase()) {
+    return tenantName;
+  }
+
+  return `${tenantLegalName} (${tenantName})`;
+}
+
+function renderDetailLine(label: string, value?: string | null) {
+  const normalized = normalizeText(value);
+  if (!normalized) return '';
+  return `<p><strong>${label}:</strong> ${normalized}</p>`;
+}
+
 /**
  * Step: Enviar email de bienvenida a nuevo usuario
  * Marca: "use step"
  */
-export async function sendWelcomeEmail(email: string, userName: string) {
+export async function sendWelcomeEmail(
+  email: string,
+  userName: string,
+  context?: {
+    tenantName?: string | null;
+    tenantLegalName?: string | null;
+    companyEmail?: string | null;
+    contactPhone?: string | null;
+  }
+) {
   'use step';
+
+  const tenantDisplayName = buildTenantDisplayName(context || {});
+  const greetingName = getPreferredFirstName({ fullName: userName, email });
 
   try {
     const resp = await resend.emails.send({
@@ -25,8 +65,11 @@ export async function sendWelcomeEmail(email: string, userName: string) {
       subject: '¡Bienvenido a Verifactu!',
       html: `
         <div style="font-family: Arial, sans-serif; color: #333;">
-          <h2>¡Hola ${userName}!</h2>
+          <h2>¡Hola ${greetingName}!</h2>
           <p>Gracias por registrarte en <strong>Verifactu</strong>.</p>
+          ${tenantDisplayName ? `<p>Tu espacio para <strong>${tenantDisplayName}</strong> ya está preparado.</p>` : ''}
+          ${renderDetailLine('Correo de empresa', context?.companyEmail)}
+          ${renderDetailLine('Telefono de contacto', context?.contactPhone)}
           <p>Tu cuenta está lista. Puedes acceder a tu dashboard en cualquier momento.</p>
           <p>Si tienes preguntas, nos encuentras en <strong>soporte@verifactu.business</strong></p>
           <p>¡Que disfrutes!</p>
@@ -48,8 +91,19 @@ export async function sendWelcomeEmail(email: string, userName: string) {
 /**
  * Step: Enviar aviso interno de bienvenida a soporte
  */
-export async function sendWelcomeAdminNotification(email: string, userName: string) {
+export async function sendWelcomeAdminNotification(
+  email: string,
+  userName: string,
+  context?: {
+    tenantName?: string | null;
+    tenantLegalName?: string | null;
+    companyEmail?: string | null;
+    contactPhone?: string | null;
+  }
+) {
   'use step';
+
+  const tenantDisplayName = buildTenantDisplayName(context || {});
 
   try {
     const resp = await resend.emails.send({
@@ -61,6 +115,9 @@ export async function sendWelcomeAdminNotification(email: string, userName: stri
           <h2>Nuevo usuario registrado</h2>
           <p><strong>Nombre:</strong> ${userName}</p>
           <p><strong>Email:</strong> ${email}</p>
+          ${tenantDisplayName ? `<p><strong>Empresa:</strong> ${tenantDisplayName}</p>` : ''}
+          ${renderDetailLine('Correo de empresa', context?.companyEmail)}
+          ${renderDetailLine('Telefono de contacto', context?.contactPhone)}
         </div>
       `,
     });

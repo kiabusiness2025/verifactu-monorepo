@@ -10,6 +10,7 @@
  */
 
 import { sleep } from 'workflow';
+import { getPreferredFirstName } from '@/lib/personName';
 import {
   sendWelcomeEmail,
   sendWelcomeAdminNotification,
@@ -21,6 +22,10 @@ export interface UserSignupData {
   userId: string;
   email: string;
   userName: string;
+  tenantName?: string;
+  tenantLegalName?: string;
+  companyEmail?: string;
+  contactPhone?: string;
 }
 
 /**
@@ -31,14 +36,26 @@ export async function userOnboardingWorkflow(data: UserSignupData) {
   'use workflow';
 
   try {
+    const greetingName = getPreferredFirstName({ fullName: data.userName, email: data.email });
+
     // Step 1: Enviar email de bienvenida inmediatamente
-    const welcomeResult = await sendWelcomeEmail(data.email, data.userName);
+    const welcomeResult = await sendWelcomeEmail(data.email, data.userName, {
+      tenantName: data.tenantName,
+      tenantLegalName: data.tenantLegalName,
+      companyEmail: data.companyEmail,
+      contactPhone: data.contactPhone,
+    });
 
     if (!welcomeResult.success) {
       throw new Error('Failed to send welcome email');
     }
 
-    const adminWelcomeResult = await sendWelcomeAdminNotification(data.email, data.userName);
+    const adminWelcomeResult = await sendWelcomeAdminNotification(data.email, data.userName, {
+      tenantName: data.tenantName,
+      tenantLegalName: data.tenantLegalName,
+      companyEmail: data.companyEmail,
+      contactPhone: data.contactPhone,
+    });
 
     if (!adminWelcomeResult.success) {
       throw new Error('Failed to send welcome admin notification');
@@ -53,7 +70,7 @@ export async function userOnboardingWorkflow(data: UserSignupData) {
       data.email,
       '¿Cómo va tu experiencia con Verifactu?',
       `
-        <h2>Hola ${data.userName},</h2>
+        <h2>Hola ${greetingName},</h2>
         <p>Ha pasado una semana desde que te uniste a Verifactu.</p>
         <p>¿Cómo ha sido tu experiencia hasta ahora?</p>
         <p>Si tienes preguntas o necesitas ayuda, no dudes en escribirnos.</p>

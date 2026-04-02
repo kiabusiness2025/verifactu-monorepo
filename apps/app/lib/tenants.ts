@@ -3,6 +3,7 @@
  * Migrated from raw SQL to Prisma for consistency with admin panel
  */
 import { prisma } from '@verifactu/db';
+import { getPreferredFullName, splitFullName } from './personName';
 import { Role } from './roles';
 
 export type Tenant = {
@@ -92,19 +93,33 @@ export async function upsertUser(params: {
   id: string;
   email?: string | null;
   name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
 }): Promise<void> {
-  const { id, email, name } = params;
+  const { id, email, name, firstName, lastName } = params;
+  const fullName = getPreferredFullName({
+    firstName,
+    lastName,
+    fullName: name,
+    email,
+    fallback: 'Unknown User',
+  });
+  const nameParts = splitFullName(fullName);
 
   await prisma.user.upsert({
     where: { id },
     create: {
       id,
       email: email || `unknown-${id}@user`,
-      name: name || 'Unknown User',
+      name: fullName,
+      firstName: nameParts.firstName || undefined,
+      lastName: nameParts.lastName || undefined,
     },
     update: {
       email: email || undefined,
-      name: name || undefined,
+      name: fullName || undefined,
+      firstName: nameParts.firstName || undefined,
+      lastName: nameParts.lastName || undefined,
     },
   });
 }

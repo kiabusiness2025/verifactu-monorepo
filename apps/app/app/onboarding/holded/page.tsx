@@ -1,3 +1,6 @@
+import { requireTenantContext } from '@/lib/api/tenantAuth';
+import { getPreferredFirstName } from '@/lib/personName';
+import prisma from '@/lib/prisma';
 import { mintHoldedOnboardingToken, verifyHoldedOnboardingToken } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
 import { getAppUrl, getLandingUrl } from '@verifactu/utils';
@@ -55,9 +58,9 @@ function attachOnboardingToken(nextUrl: string, onboardingToken: string | null) 
   }
 }
 
-function buildWorkspaceLabel(input: { name?: string | null; email?: string | null } | null) {
-  const base = input?.name?.trim() || input?.email?.split('@')[0]?.trim() || 'Tu';
-  return `${base} Workspace`;
+function normalizeText(value?: string | null) {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
 }
 
 export default async function HoldedOnboardingPage({
@@ -108,21 +111,81 @@ export default async function HoldedOnboardingPage({
     next: params.next,
   });
 
-  const tenantName = buildWorkspaceLabel(
-    session.uid
-      ? { name: session.name ?? null, email: session.email ?? null }
-      : onboardingPayload
-        ? { name: onboardingPayload.name ?? null, email: onboardingPayload.email ?? null }
-        : null
-  );
+  const defaultContactName = session.name ?? onboardingPayload?.name ?? null;
+  const defaultContactEmail = session.email ?? onboardingPayload?.email ?? null;
+  let summary = {
+    companyName: 'Tu empresa',
+    companyLegalName: null as string | null,
+    contactFirstName: getPreferredFirstName({
+      fullName: defaultContactName,
+      email: defaultContactEmail,
+      fallback: 'Usuario',
+    }),
+    contactFullName: normalizeText(defaultContactName),
+    contactEmail: normalizeText(defaultContactEmail),
+    companyEmail: null as string | null,
+    contactPhone: null as string | null,
+  };
+
+  try {
+    const auth = await requireTenantContext({
+      channelType: entryChannel,
+      onboardingToken,
+      metadata: { source: 'holded-onboarding-page' },
+    });
+
+    if (!('error' in auth)) {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: auth.tenantId },
+        select: {
+          name: true,
+          legalName: true,
+          profile: {
+            select: {
+              tradeName: true,
+              legalName: true,
+              representative: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      });
+
+      const contactFullName =
+        normalizeText(auth.session.name) ||
+        normalizeText(tenant?.profile?.representative) ||
+        normalizeText(defaultContactName);
+      const contactEmail = normalizeText(auth.session.email) || normalizeText(defaultContactEmail);
+
+      summary = {
+        companyName: tenant?.profile?.tradeName || tenant?.name || 'Tu empresa',
+        companyLegalName: tenant?.profile?.legalName || tenant?.legalName || null,
+        contactFirstName: getPreferredFirstName({
+          fullName: contactFullName,
+          email: contactEmail,
+          fallback: 'Usuario',
+        }),
+        contactFullName,
+        contactEmail,
+        companyEmail: normalizeText(tenant?.profile?.email),
+        contactPhone: normalizeText(tenant?.profile?.phone),
+      };
+    }
+  } catch (error) {
+    console.error('[onboarding/holded] failed to load tenant summary', {
+      message: error instanceof Error ? error.message : String(error),
+      entryChannel,
+    });
+  }
 
   return (
     <HoldedOnboardingClient
       entryChannel={entryChannel}
       nextUrl={nextUrl}
-      tenantName={tenantName}
       onboardingToken={onboardingToken}
       requireConnectionConfirmation={requireConnectionConfirmation}
+      summary={summary}
     />
   );
 }

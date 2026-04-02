@@ -37,7 +37,16 @@ describe('POST /api/integrations/accounting/disconnect', () => {
     (disconnectAccountingIntegration as jest.Mock).mockResolvedValue({ status: 'disconnected' });
     (
       (prisma as unknown as { tenant: { findUnique: jest.Mock } }).tenant.findUnique as jest.Mock
-    ).mockResolvedValue({ name: 'Empresa Demo SL' });
+    ).mockResolvedValue({
+      name: 'Empresa Demo SL',
+      legalName: 'Empresa Demo SL',
+      profile: {
+        legalName: 'Empresa Demo SL',
+        tradeName: 'Empresa Demo',
+        email: 'empresa@example.com',
+        phone: '+34 600 000 000',
+      },
+    });
     (sendHoldedConnectionLifecycleEmails as jest.Mock).mockResolvedValue([]);
   });
 
@@ -63,7 +72,12 @@ describe('POST /api/integrations/accounting/disconnect', () => {
     expect(sendHoldedConnectionLifecycleEmails).toHaveBeenCalledWith({
       userEmail: 'demo@example.com',
       userName: 'Demo User',
-      tenantName: 'Empresa Demo SL',
+      tenantName: 'Empresa Demo',
+      tenantLegalName: 'Empresa Demo SL',
+      contactName: 'Demo User',
+      contactEmail: 'demo@example.com',
+      companyEmail: 'empresa@example.com',
+      contactPhone: '+34 600 000 000',
       action: 'disconnected',
       channel: 'dashboard',
     });

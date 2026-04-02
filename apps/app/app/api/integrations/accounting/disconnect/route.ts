@@ -26,13 +26,29 @@ export async function POST(request: NextRequest) {
   try {
     const tenant = await prisma.tenant.findUnique({
       where: { id: auth.tenantId },
-      select: { name: true },
+      select: {
+        name: true,
+        legalName: true,
+        profile: {
+          select: {
+            legalName: true,
+            tradeName: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
     });
 
     await sendHoldedConnectionLifecycleEmails({
       userEmail: auth.session.email ?? null,
       userName: auth.session.name ?? null,
-      tenantName: tenant?.name || 'tu empresa',
+      tenantName: tenant?.profile?.tradeName || tenant?.name || 'tu empresa',
+      tenantLegalName: tenant?.profile?.legalName || tenant?.legalName || null,
+      contactName: auth.session.name ?? null,
+      contactEmail: auth.session.email ?? null,
+      companyEmail: tenant?.profile?.email || null,
+      contactPhone: tenant?.profile?.phone || null,
       action: 'disconnected',
       channel: entryChannel,
     });

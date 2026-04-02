@@ -7,6 +7,7 @@ import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
 import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import { formatCurrency, formatDateTime } from '@/src/lib/formatters';
 import { auth } from '@/lib/firebase';
+import { buildFullName, normalizePersonNamePart, splitFullName } from '@/lib/personName';
 import { sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { Camera } from 'lucide-react';
 import { useSession } from 'next-auth/react';
@@ -52,16 +53,20 @@ function SettingsContent() {
   const [sessionInfoLoading, setSessionInfoLoading] = useState(false);
   const [sessionInfoError, setSessionInfoError] = useState<string | null>(null);
 
+  const sessionNameParts = splitFullName(session?.user?.name || null);
   const [profileSettings, setProfileSettings] = useState({
-    displayName: session?.user?.name || '',
+    firstName: sessionNameParts.firstName || '',
+    lastName: sessionNameParts.lastName || '',
     email: session?.user?.email || '',
     phone: '',
   });
 
   useEffect(() => {
+    const nextNameParts = splitFullName(session?.user?.name || null);
     setProfileSettings((prev) => ({
       ...prev,
-      displayName: session?.user?.name || prev.displayName,
+      firstName: nextNameParts.firstName || prev.firstName,
+      lastName: nextNameParts.lastName || prev.lastName,
       email: session?.user?.email || prev.email,
     }));
   }, [session?.user?.email, session?.user?.name]);
@@ -295,8 +300,14 @@ function SettingsContent() {
     e.preventDefault();
     setLoading(true);
     try {
-      const nextDisplayName = profileSettings.displayName.trim();
-      if (!nextDisplayName) {
+      const nextFirstName = normalizePersonNamePart(profileSettings.firstName);
+      const nextLastName = normalizePersonNamePart(profileSettings.lastName);
+      const nextDisplayName = buildFullName({
+        firstName: nextFirstName,
+        lastName: nextLastName,
+      });
+
+      if (!nextFirstName || !nextDisplayName) {
         showError('Nombre inválido', 'El nombre no puede estar vacío');
         return;
       }
@@ -316,6 +327,8 @@ function SettingsContent() {
           uid: auth.currentUser.uid,
           email: auth.currentUser.email || profileSettings.email,
           displayName: nextDisplayName,
+          firstName: nextFirstName,
+          lastName: nextLastName,
           photoURL: auth.currentUser.photoURL || null,
           emailVerified: auth.currentUser.emailVerified,
           provider: auth.currentUser.providerData?.[0]?.providerId || 'password',
@@ -414,15 +427,26 @@ function SettingsContent() {
             <form onSubmit={handleSaveProfile} className="space-y-6">
               <div className="space-y-4">
                 <AccessibleInput
-                  label="Nombre Completo"
+                  label="Nombre"
                   type="text"
-                  value={profileSettings.displayName}
+                  value={profileSettings.firstName}
                   onChange={(e) =>
-                    setProfileSettings({ ...profileSettings, displayName: e.target.value })
+                    setProfileSettings({ ...profileSettings, firstName: e.target.value })
                   }
-                  placeholder="Ej: Ksenia Ivanova"
+                  placeholder="Ej: Ksenia"
                   required
-                  helperText="Este nombre aparecerá en tu perfil y saludos de Isaak"
+                  helperText="Isaak y los correos usarán solo este nombre para saludarte"
+                />
+
+                <AccessibleInput
+                  label="Apellidos"
+                  type="text"
+                  value={profileSettings.lastName}
+                  onChange={(e) =>
+                    setProfileSettings({ ...profileSettings, lastName: e.target.value })
+                  }
+                  placeholder="Ej: Ivanova Lopez"
+                  helperText="Guárdalos aparte para tener bien identificado el contacto"
                 />
 
                 <AccessibleInput

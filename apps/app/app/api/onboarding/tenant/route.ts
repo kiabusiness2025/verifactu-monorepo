@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
+import { sendWelcomeLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload, requireUserId } from '@/lib/session';
 import { upsertUser } from '@/lib/tenants';
@@ -102,8 +103,8 @@ export async function POST(req: Request) {
     typeof body?.taxId === 'string'
       ? body.taxId.trim()
       : typeof body?.nif === 'string'
-      ? body.nif.trim()
-      : '';
+        ? body.nif.trim()
+        : '';
   const tradeName = typeof body?.tradeName === 'string' ? body.tradeName.trim() : '';
   const taxRegime = typeof body?.taxRegime === 'string' ? body.taxRegime.trim() : '';
   const defaultCurrency =
@@ -111,11 +112,21 @@ export async function POST(req: Request) {
       ? body.defaultCurrency.trim().toUpperCase()
       : 'EUR';
   const country =
-    typeof body?.country === 'string' && body.country.trim() ? body.country.trim().toUpperCase() : 'ES';
+    typeof body?.country === 'string' && body.country.trim()
+      ? body.country.trim().toUpperCase()
+      : 'ES';
   const source = body?.source === 'einforma' ? 'einforma' : 'manual';
   const einformaId = typeof body?.einformaId === 'string' ? body.einformaId.trim() : undefined;
   const fiscalAddress =
     body?.fiscalAddress && typeof body.fiscalAddress === 'object' ? body.fiscalAddress : null;
+  const companyEmail =
+    typeof body?.extra?.email === 'string' && body.extra.email.trim()
+      ? body.extra.email.trim()
+      : null;
+  const companyPhone =
+    typeof body?.extra?.phone === 'string' && body.extra.phone.trim()
+      ? body.extra.phone.trim()
+      : null;
 
   if (!name || !taxIdRaw) {
     return NextResponse.json({ ok: false, error: 'name and taxId required' }, { status: 400 });
@@ -305,6 +316,8 @@ export async function POST(req: Request) {
         province: extra?.province || undefined,
         country: extra?.country || country || undefined,
         representative: extra?.representative || undefined,
+        email: companyEmail || undefined,
+        phone: companyPhone || undefined,
         einformaRaw: profileRaw,
         einformaLastSyncAt: isEinforma ? new Date() : undefined,
         einformaTaxIdVerified: isEinforma ? true : undefined,
@@ -332,6 +345,8 @@ export async function POST(req: Request) {
         province: extra?.province || undefined,
         country: extra?.country || country || undefined,
         representative: extra?.representative || undefined,
+        email: companyEmail || undefined,
+        phone: companyPhone || undefined,
         einformaRaw: profileRaw,
         einformaLastSyncAt: isEinforma ? new Date() : undefined,
         einformaTaxIdVerified: isEinforma ? true : undefined,
@@ -340,6 +355,26 @@ export async function POST(req: Request) {
 
     return { tenant, subscription };
   });
+
+  try {
+    await sendWelcomeLifecycleEmails({
+      userEmail: session.email ?? null,
+      userName: session.name ?? null,
+      tenantName: tradeName || result.tenant.name,
+      tenantLegalName: legalName || result.tenant.legalName || result.tenant.name,
+      contactName: session.name ?? null,
+      contactEmail: session.email ?? null,
+      companyEmail,
+      contactPhone: companyPhone,
+    });
+  } catch (notificationError) {
+    console.error('[api/onboarding/tenant] welcome notification failed', {
+      tenantId: result.tenant.id,
+      uid,
+      message:
+        notificationError instanceof Error ? notificationError.message : String(notificationError),
+    });
+  }
 
   return NextResponse.json({
     ok: true,

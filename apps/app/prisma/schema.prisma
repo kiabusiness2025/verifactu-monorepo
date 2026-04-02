@@ -49,6 +49,8 @@ model TenantProfile {
   city              String?
   province          String?
   representative    String?
+  email             String?
+  phone             String?
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("tenant_profiles")
@@ -58,6 +60,8 @@ model User {
   id        String   @id @db.Text
   email     String   @unique
   name      String?
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

@@ -1,10 +1,12 @@
 'use client';
 
 import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
+import Image from 'next/image';
 import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
+  ExternalLink,
   KeyRound,
   Loader2,
   ShieldCheck,
@@ -30,9 +32,17 @@ type IntegrationStatus = {
 type Props = {
   entryChannel: 'dashboard' | 'chatgpt';
   nextUrl: string;
-  tenantName: string;
   onboardingToken: string | null;
   requireConnectionConfirmation: boolean;
+  summary: {
+    companyName: string;
+    companyLegalName: string | null;
+    contactFirstName: string;
+    contactFullName: string | null;
+    contactEmail: string | null;
+    companyEmail: string | null;
+    contactPhone: string | null;
+  };
 };
 
 const onboardingCopy = getIsaakHoldedOnboardingCopy();
@@ -125,13 +135,18 @@ const dashboardUiCopy = {
 export default function HoldedOnboardingClient({
   entryChannel,
   nextUrl,
-  tenantName,
   onboardingToken,
   requireConnectionConfirmation,
+  summary,
 }: Props) {
   const isChatgptEntry = entryChannel === 'chatgpt';
   const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
   const savingMessages = uiCopy.savingMessages;
+  const showCompanyLegalName =
+    !!summary.companyLegalName &&
+    summary.companyLegalName.trim().toLowerCase() !== summary.companyName.trim().toLowerCase();
+  const showCompanyEmail =
+    !!summary.companyEmail && summary.companyEmail.trim() !== (summary.contactEmail || '').trim();
   const [apiKey, setApiKey] = useState('');
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -365,10 +380,23 @@ export default function HoldedOnboardingClient({
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
               {uiCopy.eyebrow}
             </div>
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#d9e6ff] bg-[#f7fbff] px-3 py-1.5 text-xs font-semibold text-[#0b214a]">
+              <Image
+                src="/brand/holded/holded-diamond-logo.png"
+                alt="Holded"
+                width={16}
+                height={16}
+                className="h-4 w-4"
+              />
+              Compatible con Holded
+            </div>
             <h1 className="mt-3 text-2xl font-bold tracking-tight text-black sm:text-[1.8rem]">
               {uiCopy.title}
             </h1>
             <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">{uiCopy.intro}</p>
+            <p className="mt-2 text-sm font-medium text-[#0b214a]">
+              {summary.contactFirstName}, vamos a dejar lista la conexion de {summary.companyName}.
+            </p>
 
             <div className="mt-5 rounded-2xl border border-[#0b6cfb]/20 bg-[#f3f8ff] px-4 py-3 text-sm text-[#0b214a]">
               <div className="flex items-start gap-2">
@@ -378,12 +406,80 @@ export default function HoldedOnboardingClient({
             </div>
 
             <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-              <div className="text-sm font-semibold text-black">{uiCopy.statusReady}</div>
-              <div className="mt-2 text-sm text-neutral-700">
-                Espacio preparado: <span className="font-semibold text-black">{tenantName}</span>
-              </div>
-              <div className="mt-1 text-sm text-neutral-700">
-                Estado: <span className="font-semibold text-black">{statusLabel}</span>
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#d9e6ff] bg-white shadow-sm">
+                  <Image
+                    src="/brand/holded/holded-diamond-logo.png"
+                    alt="Holded"
+                    width={20}
+                    height={20}
+                    className="h-5 w-5"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-black">{uiCopy.statusReady}</div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                        Empresa
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-black">
+                        {summary.companyName}
+                      </div>
+                    </div>
+                    {showCompanyLegalName ? (
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                          Razon social
+                        </div>
+                        <div className="mt-1 text-sm text-neutral-700">
+                          {summary.companyLegalName}
+                        </div>
+                      </div>
+                    ) : null}
+                    {summary.contactFullName ? (
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                          Persona de contacto
+                        </div>
+                        <div className="mt-1 text-sm text-neutral-700">
+                          {summary.contactFullName}
+                        </div>
+                      </div>
+                    ) : null}
+                    {summary.contactEmail ? (
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                          Correo de acceso
+                        </div>
+                        <div className="mt-1 break-all text-sm text-neutral-700">
+                          {summary.contactEmail}
+                        </div>
+                      </div>
+                    ) : null}
+                    {showCompanyEmail ? (
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                          Correo de empresa
+                        </div>
+                        <div className="mt-1 break-all text-sm text-neutral-700">
+                          {summary.companyEmail}
+                        </div>
+                      </div>
+                    ) : null}
+                    {summary.contactPhone ? (
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                          Telefono
+                        </div>
+                        <div className="mt-1 text-sm text-neutral-700">{summary.contactPhone}</div>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="mt-3 text-sm text-neutral-700">
+                    Estado: <span className="font-semibold text-black">{statusLabel}</span>
+                  </div>
+                </div>
               </div>
               {status?.degraded ? (
                 <div className="mt-2 text-sm text-amber-700">{uiCopy.degraded}</div>
@@ -454,19 +550,37 @@ export default function HoldedOnboardingClient({
 
             {!redirecting ? (
               <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+                <a
+                  href={HOLDED_API_GUIDE_URL}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="group flex items-center gap-3 rounded-2xl border border-[#ff5460]/20 bg-[linear-gradient(135deg,#fff6f7_0%,#ffffff_100%)] px-4 py-4 text-left transition hover:border-[#ff5460]/40 hover:bg-[#fff7f8]"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+                    <Image
+                      src="/brand/holded/holded-diamond-logo.png"
+                      alt="Holded"
+                      width={20}
+                      height={20}
+                      className="h-5 w-5"
+                    />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff5460]">
+                      Guia oficial
+                    </span>
+                    <span className="mt-1 block text-sm font-semibold text-[#7a1f2a] underline decoration-[#ff5460]/40 underline-offset-4 group-hover:decoration-[#ff5460]">
+                      Ver guia oficial de Holded para generar la API key
+                    </span>
+                  </span>
+                  <ExternalLink className="h-4 w-4 shrink-0 text-[#ff5460]" />
+                </a>
+
                 <label className="block">
                   <span className="mb-2 block text-sm font-semibold text-black">
                     {uiCopy.apiKeyLabel}
                   </span>
                   <span className="mb-3 block text-sm text-neutral-600">{uiCopy.apiKeyHelp}</span>
-                  <a
-                    href={HOLDED_API_GUIDE_URL}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="mb-3 inline-flex text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
-                  >
-                    Ver guia oficial de Holded para generar la API key
-                  </a>
                   <div className="relative">
                     <KeyRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                     <input

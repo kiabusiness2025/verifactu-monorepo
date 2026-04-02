@@ -94,6 +94,8 @@ model User {
   id             String    @id @default(cuid())
   email          String    @unique
   name           String?
+  firstName      String?   @map("first_name")
+  lastName       String?   @map("last_name")
   image          String?
   phone          String?
   emailVerified  DateTime? // Required by NextAuth PrismaAdapter

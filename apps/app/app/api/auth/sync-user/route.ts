@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "../../../../lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '../../../../lib/prisma';
+import { getPreferredFullName, normalizePersonNamePart, splitFullName } from '@/lib/personName';
 
 /**
  * API Route para sincronizar usuarios de Firebase Auth con PostgreSQL (Prisma)
@@ -10,11 +11,22 @@ import prisma from "../../../../lib/prisma";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { uid, email, displayName, photoURL, emailVerified, provider } = body;
+    const { uid, email, displayName, firstName, lastName, photoURL, emailVerified, provider } =
+      body;
+
+    const normalizedFirstName = normalizePersonNamePart(firstName);
+    const normalizedLastName = normalizePersonNamePart(lastName);
+    const normalizedDisplayName = getPreferredFullName({
+      firstName: normalizedFirstName,
+      lastName: normalizedLastName,
+      fullName: displayName,
+      email,
+    });
+    const nameParts = splitFullName(normalizedDisplayName);
 
     if (!uid || !email) {
       return NextResponse.json(
-        { error: "Missing required fields: uid and email" },
+        { error: 'Missing required fields: uid and email' },
         { status: 400 }
       );
     }
@@ -29,7 +41,9 @@ export async function POST(request: NextRequest) {
       user = await prisma.user.update({
         where: { id: uid },
         data: {
-          name: displayName || user.name,
+          name: normalizedDisplayName || user.name,
+          firstName: nameParts.firstName || user.firstName || undefined,
+          lastName: nameParts.lastName || user.lastName || undefined,
           email: email,
         },
       });
@@ -50,7 +64,9 @@ export async function POST(request: NextRequest) {
           data: {
             id: uid,
             email,
-            name: displayName || byEmail.name,
+            name: normalizedDisplayName || byEmail.name,
+            firstName: nameParts.firstName || byEmail.firstName || undefined,
+            lastName: nameParts.lastName || byEmail.lastName || undefined,
           },
         });
       } else {
@@ -59,7 +75,9 @@ export async function POST(request: NextRequest) {
           data: {
             id: uid,
             email: email,
-            name: displayName || null,
+            name: normalizedDisplayName || null,
+            firstName: nameParts.firstName || undefined,
+            lastName: nameParts.lastName || undefined,
           },
         });
       }
@@ -68,13 +86,13 @@ export async function POST(request: NextRequest) {
         ok: true,
         user,
         created: true,
-        message: "User created",
+        message: 'User created',
       });
     }
   } catch (error: any) {
-    console.error("Error syncing user with Prisma:", error);
+    console.error('Error syncing user with Prisma:', error);
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     );
   }
@@ -86,10 +104,10 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const uid = searchParams.get("uid");
+    const uid = searchParams.get('uid');
 
     if (!uid) {
-      return NextResponse.json({ error: "Missing uid parameter" }, { status: 400 });
+      return NextResponse.json({ error: 'Missing uid parameter' }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -109,7 +127,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -117,9 +135,9 @@ export async function GET(request: NextRequest) {
       user,
     });
   } catch (error: any) {
-    console.error("Error fetching user from Prisma:", error);
+    console.error('Error fetching user from Prisma:', error);
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     );
   }

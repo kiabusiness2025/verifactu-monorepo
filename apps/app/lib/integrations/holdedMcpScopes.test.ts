@@ -11,7 +11,7 @@ import { holdedMcpTools } from './holdedMcpTools';
 
 describe('holdedMcpScopes', () => {
   it('keeps every referenced scope inside the supported scope catalog', () => {
-    const supportedScopes = new Set(HOLDED_MCP_SUPPORTED_SCOPES);
+    const supportedScopes = new Set<string>(HOLDED_MCP_SUPPORTED_SCOPES);
 
     for (const [toolName, requiredScopes] of Object.entries(HOLDED_MCP_TOOL_SCOPES)) {
       expect(requiredScopes[0]).toBe('mcp.read');

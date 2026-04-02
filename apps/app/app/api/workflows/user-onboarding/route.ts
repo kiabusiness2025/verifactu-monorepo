@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/workflows/user-onboarding
- * 
+ *
  * Dispara el flujo de onboarding de usuario
  * Requiere autenticación de admin
  */
@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
     await requireAdmin(request);
 
     const body = await request.json();
-    const { userId, email, userName } = body as UserSignupData;
+    const { userId, email, userName, tenantName, tenantLegalName, companyEmail, contactPhone } =
+      body as UserSignupData;
 
     // Validar datos
     if (!userId || !email || !userName) {
@@ -32,6 +33,10 @@ export async function POST(request: NextRequest) {
       userId,
       email,
       userName,
+      tenantName,
+      tenantLegalName,
+      companyEmail,
+      contactPhone,
     });
 
     return NextResponse.json({
@@ -41,9 +46,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in userOnboarding workflow:', error);
-    return NextResponse.json(
-      { error: 'Failed to start onboarding workflow' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to start onboarding workflow' }, { status: 500 });
   }
 }
