@@ -3,7 +3,7 @@ import { getPreferredFirstName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
 import { mintHoldedOnboardingToken, verifyHoldedOnboardingToken } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
-import { getAppUrl, getLandingUrl } from '@verifactu/utils';
+import { getAppUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { deriveHoldedCompanySetupState } from './flowState';
@@ -36,10 +36,7 @@ function normalizeNextUrl(nextUrl: string | undefined) {
   try {
     const parsed = new URL(nextUrl, getAppUrl());
     const appOrigin = new URL(getAppUrl()).origin;
-    const landingOrigin = new URL(getLandingUrl()).origin;
-    return parsed.origin === appOrigin || parsed.origin === landingOrigin
-      ? parsed.toString()
-      : fallback;
+    return parsed.origin === appOrigin ? parsed.toString() : fallback;
   } catch {
     return fallback;
   }
