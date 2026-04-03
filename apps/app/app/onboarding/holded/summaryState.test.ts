@@ -18,7 +18,8 @@ describe('holded onboarding summary state', () => {
     expect(draft).toEqual({
       companyLegalName: 'ALVILS ESP SL',
       companyTaxId: 'B12345678',
-      contactName: 'Ksenia Ivanova Lopez',
+      contactFirstName: 'Ksenia',
+      contactLastName: 'Ivanova Lopez',
       contactEmail: 'kiabusiness2025@gmail.com',
       contactPhone: '600000000',
     });
@@ -50,7 +51,8 @@ describe('holded onboarding summary state', () => {
     expect(createCompanyDraftFromSummary(summary)).toEqual({
       companyLegalName: '',
       companyTaxId: '',
-      contactName: 'Ksenia Ivanova Lopez',
+      contactFirstName: 'Ksenia',
+      contactLastName: 'Ivanova Lopez',
       contactEmail: 'kiabusiness2025@gmail.com',
       contactPhone: '',
     });

@@ -36,6 +36,8 @@ type TenantPayload = {
     defaultCurrency?: string;
     fiscalAddress?: unknown;
     representative?: string;
+    contactFirstName?: string;
+    contactLastName?: string;
     email?: string;
     phone?: string;
     employees?: number;
@@ -187,6 +189,19 @@ export async function POST(req: Request) {
     typeof body?.extra?.phone === 'string' && body.extra.phone.trim()
       ? body.extra.phone.trim()
       : null;
+  const contactFirstName =
+    typeof body?.extra?.contactFirstName === 'string' && body.extra.contactFirstName.trim()
+      ? body.extra.contactFirstName.trim()
+      : null;
+  const contactLastName =
+    typeof body?.extra?.contactLastName === 'string' && body.extra.contactLastName.trim()
+      ? body.extra.contactLastName.trim()
+      : null;
+  const contactFullName =
+    [contactFirstName, contactLastName].filter(Boolean).join(' ').trim() ||
+    (typeof body?.extra?.representative === 'string' && body.extra.representative.trim()
+      ? body.extra.representative.trim()
+      : null);
 
   if (!name || !taxIdRaw) {
     return NextResponse.json({ ok: false, error: 'name and taxId required' }, { status: 400 });
@@ -195,7 +210,9 @@ export async function POST(req: Request) {
   const userId = await upsertUser({
     id: uid,
     email: session?.email as string | undefined,
-    name: session?.name as string | undefined,
+    name: contactFullName || (session?.name as string | undefined),
+    firstName: contactFirstName,
+    lastName: contactLastName,
   });
 
   const existingTenant = await prisma.tenant.findFirst({
@@ -450,7 +467,7 @@ export async function POST(req: Request) {
       userName: session.name ?? null,
       tenantName: tradeName || result.tenant.name,
       tenantLegalName: legalName || result.tenant.legalName || result.tenant.name,
-      contactName: session.name ?? null,
+      contactName: contactFullName || session.name || null,
       contactEmail: session.email ?? null,
       companyEmail,
       contactPhone: companyPhone,

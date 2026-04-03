@@ -149,6 +149,8 @@ describe('POST /api/onboarding/tenant', () => {
           tradeName: 'Empresa Demo',
           extra: {
             representative: 'Ksenia Ivanova Lopez',
+            contactFirstName: 'Ksenia',
+            contactLastName: 'Ivanova Lopez',
             email: 'info@empresa-demo.es',
             phone: '+34 600 111 222',
           },
@@ -166,6 +168,8 @@ describe('POST /api/onboarding/tenant', () => {
       id: 'user-1',
       email: 'demo@example.com',
       name: 'Ksenia Ivanova Lopez',
+      firstName: 'Ksenia',
+      lastName: 'Ivanova Lopez',
     });
 
     expect(mockTx.membership.create).toHaveBeenCalledWith({
@@ -245,6 +249,8 @@ describe('POST /api/onboarding/tenant', () => {
           tradeName: 'Empresa Demo',
           extra: {
             representative: 'Ksenia Ivanova Lopez',
+            contactFirstName: 'Ksenia',
+            contactLastName: 'Ivanova Lopez',
             email: 'info@empresa-demo.es',
             phone: '+34 600 111 222',
           },

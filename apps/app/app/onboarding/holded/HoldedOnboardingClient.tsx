@@ -1,7 +1,7 @@
 'use client';
 
 import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
-import { getPreferredFirstName } from '@/lib/personName';
+import { buildFullName, getPreferredFirstName } from '@/lib/personName';
 import Image from 'next/image';
 import {
   AlertCircle,
@@ -161,7 +161,8 @@ export default function HoldedOnboardingClient({
   const [resolvedSummary, setResolvedSummary] = useState(summary);
   const [companyLegalName, setCompanyLegalName] = useState(initialCompanyDraft.companyLegalName);
   const [companyTaxId, setCompanyTaxId] = useState(initialCompanyDraft.companyTaxId);
-  const [contactName, setContactName] = useState(initialCompanyDraft.contactName);
+  const [contactFirstName, setContactFirstName] = useState(initialCompanyDraft.contactFirstName);
+  const [contactLastName, setContactLastName] = useState(initialCompanyDraft.contactLastName);
   const [contactEmail, setContactEmail] = useState(initialCompanyDraft.contactEmail);
   const [contactPhone, setContactPhone] = useState(initialCompanyDraft.contactPhone);
   const [apiValidated, setApiValidated] = useState(!needsPostValidationCompanyStep);
@@ -277,7 +278,8 @@ export default function HoldedOnboardingClient({
 
     setCompanyLegalName(nextDraft.companyLegalName);
     setCompanyTaxId(nextDraft.companyTaxId);
-    setContactName(nextDraft.contactName);
+    setContactFirstName(nextDraft.contactFirstName);
+    setContactLastName(nextDraft.contactLastName);
     setContactEmail(nextDraft.contactEmail);
     setContactPhone(nextDraft.contactPhone);
   }, []);
@@ -483,18 +485,24 @@ export default function HoldedOnboardingClient({
     const normalizedLegalName = normalizeText(companyLegalName);
     const normalizedCompanyName = normalizedLegalName;
     const normalizedTaxId = normalizeText(companyTaxId).toUpperCase();
-    const normalizedContactName = normalizeText(contactName);
+    const normalizedContactFirstName = normalizeText(contactFirstName);
+    const normalizedContactLastName = normalizeText(contactLastName);
+    const normalizedContactName = buildFullName({
+      firstName: normalizedContactFirstName,
+      lastName: normalizedContactLastName,
+    });
     const normalizedContactEmail = normalizeText(contactEmail);
     const normalizedContactPhone = normalizeText(contactPhone);
 
     if (
       !normalizedCompanyName ||
       !normalizedTaxId ||
-      !normalizedContactName ||
+      !normalizedContactFirstName ||
+      !normalizedContactLastName ||
       !normalizedContactEmail
     ) {
       setCompanyError(
-        'Necesitamos nombre de empresa, NIF/CIF, persona de contacto y correo para continuar.'
+        'Necesitamos nombre de empresa, NIF/CIF, nombre, apellidos y correo para continuar.'
       );
       return;
     }
@@ -517,6 +525,8 @@ export default function HoldedOnboardingClient({
           nif: normalizedTaxId,
           extra: {
             representative: normalizedContactName,
+            contactFirstName: normalizedContactFirstName,
+            contactLastName: normalizedContactLastName,
             email: normalizedContactEmail,
             phone: normalizedContactPhone || undefined,
           },
@@ -566,17 +576,11 @@ export default function HoldedOnboardingClient({
         normalizedLegalName.toLowerCase() === normalizedCompanyName.toLowerCase()
           ? null
           : normalizedLegalName;
-      const nextContactFirstName = getPreferredFirstName({
-        fullName: normalizedContactName,
-        email: normalizedContactEmail,
-        fallback: resolvedSummary.contactFirstName,
-      });
-
       setResolvedSummary({
         companyName: normalizedCompanyName,
         companyLegalName: nextLegalName,
         companyTaxId: normalizedTaxId,
-        contactFirstName: nextContactFirstName,
+        contactFirstName: normalizedContactFirstName,
         contactFullName: normalizedContactName,
         contactEmail: normalizedContactEmail,
         companyEmail: normalizedContactEmail,
@@ -704,7 +708,8 @@ export default function HoldedOnboardingClient({
                   </div>
                   <p className="mt-2 text-sm leading-6 text-neutral-700">
                     La API key ya es valida. Ahora necesitamos guardar el nombre exacto de la
-                    empresa, su NIF/CIF y el correo principal tal y como aparecen en Holded.
+                    empresa, su NIF/CIF, el nombre, los apellidos y el correo principal tal y como
+                    aparecen en Holded.
                   </p>
 
                   <form onSubmit={handleCompanySubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -731,14 +736,25 @@ export default function HoldedOnboardingClient({
                       />
                     </label>
                     <label className="block text-sm font-medium text-neutral-700">
-                      Persona usuaria en Holded
+                      Nombre
                       <input
                         type="text"
-                        value={contactName}
-                        onChange={(event) => setContactName(event.target.value)}
+                        value={contactFirstName}
+                        onChange={(event) => setContactFirstName(event.target.value)}
                         className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="Nombre y apellidos"
-                        autoComplete="name"
+                        placeholder="Nombre"
+                        autoComplete="given-name"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-neutral-700">
+                      Apellidos
+                      <input
+                        type="text"
+                        value={contactLastName}
+                        onChange={(event) => setContactLastName(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="Apellidos"
+                        autoComplete="family-name"
                       />
                     </label>
                     <label className="block text-sm font-medium text-neutral-700">

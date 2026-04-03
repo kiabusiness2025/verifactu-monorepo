@@ -1,3 +1,5 @@
+import { splitFullName } from '@/lib/personName';
+
 export type HoldedOnboardingSummary = {
   companyName: string;
   companyLegalName: string | null;
@@ -12,7 +14,8 @@ export type HoldedOnboardingSummary = {
 export type HoldedOnboardingCompanyDraft = {
   companyLegalName: string;
   companyTaxId: string;
-  contactName: string;
+  contactFirstName: string;
+  contactLastName: string;
   contactEmail: string;
   contactPhone: string;
 };
@@ -32,12 +35,13 @@ export function createCompanyDraftFromSummary(
     (normalizedCompanyName && normalizedCompanyName.toLowerCase() !== 'tu empresa'
       ? normalizedCompanyName
       : null);
+  const contactNameParts = splitFullName(summary.contactFullName || summary.contactFirstName);
 
   return {
     companyLegalName: effectiveCompanyLegalName || '',
     companyTaxId: normalizeText(summary.companyTaxId) || '',
-    contactName:
-      normalizeText(summary.contactFullName) || normalizeText(summary.contactFirstName) || '',
+    contactFirstName: contactNameParts.firstName || '',
+    contactLastName: contactNameParts.lastName || '',
     contactEmail: normalizeText(summary.contactEmail) || '',
     contactPhone: normalizeText(summary.contactPhone) || '',
   };
