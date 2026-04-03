@@ -89,6 +89,22 @@ export async function getTenant(id: string): Promise<Tenant | null> {
   };
 }
 
+export async function resolveInternalUserId(idOrAuthSubject: string): Promise<string | null> {
+  const normalized = idOrAuthSubject.trim();
+  if (!normalized) return null;
+
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [{ id: normalized }, { authSubject: normalized }],
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  return user?.id ?? null;
+}
+
 export async function upsertUser(params: {
   id: string;
   email?: string | null;

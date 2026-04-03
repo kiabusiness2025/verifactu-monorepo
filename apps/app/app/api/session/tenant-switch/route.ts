@@ -1,14 +1,11 @@
-import { NextResponse } from "next/server";
-import { getSessionPayload, requireUserId } from "../../../../lib/session";
-import { ensureRole } from "../../../../lib/authz";
-import { Roles } from "../../../../lib/roles";
-import { setUserPreferredTenant } from "../../../../lib/preferences";
-import { fetchMembership } from "../../../../lib/memberships";
-import {
-  signSessionToken,
-  readSessionSecret,
-  buildSessionCookieOptions,
-} from "@verifactu/utils";
+import { NextResponse } from 'next/server';
+import { getSessionPayload, requireUserId } from '../../../../lib/session';
+import { ensureRole } from '../../../../lib/authz';
+import { Roles } from '../../../../lib/roles';
+import { setUserPreferredTenant } from '../../../../lib/preferences';
+import { fetchMembership } from '../../../../lib/memberships';
+import { resolveInternalUserId, upsertUser } from '../../../../lib/tenants';
+import { signSessionToken, readSessionSecret, buildSessionCookieOptions } from '@verifactu/utils';
 
 export async function POST(req: Request) {
   const session = await getSessionPayload();
@@ -17,19 +14,30 @@ export async function POST(req: Request) {
   const uid = requireUserId(session);
 
   const body = await req.json().catch(() => null);
-  const tenantId = typeof body?.tenantId === "string" ? body.tenantId.trim() : "";
+  const tenantId = typeof body?.tenantId === 'string' ? body.tenantId.trim() : '';
   if (!tenantId) {
-    return NextResponse.json({ ok: false, error: "tenantId required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'tenantId required' }, { status: 400 });
   }
+
+  const userId =
+    (await resolveInternalUserId(uid)) ??
+    (await upsertUser({
+      id: uid,
+      email: session?.email as string | undefined,
+      name: session?.name as string | undefined,
+    }));
 
   // Validate user has access to this tenant
-  const membership = await fetchMembership(uid, tenantId);
-  if (!membership || membership.status !== "active") {
-    return NextResponse.json({ ok: false, error: "no active membership for tenant" }, { status: 403 });
+  const membership = await fetchMembership(userId, tenantId);
+  if (!membership || membership.status !== 'active') {
+    return NextResponse.json(
+      { ok: false, error: 'no active membership for tenant' },
+      { status: 403 }
+    );
   }
 
-  await setUserPreferredTenant(uid, tenantId).catch((err) => {
-    console.error("[tenant-switch] Failed to persist preference:", err);
+  await setUserPreferredTenant(userId, tenantId).catch((err) => {
+    console.error('[tenant-switch] Failed to persist preference:', err);
   });
 
   const payload = {
@@ -39,9 +47,9 @@ export async function POST(req: Request) {
   };
 
   const secret = readSessionSecret();
-  const token = await signSessionToken({ payload, secret, expiresIn: "30d" });
+  const token = await signSessionToken({ payload, secret, expiresIn: '30d' });
   const url = new URL(req.url);
-  const host = req.headers.get("host");
+  const host = req.headers.get('host');
   const cookieOpts = buildSessionCookieOptions({
     url: url.toString(),
     host,

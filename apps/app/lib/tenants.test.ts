@@ -20,7 +20,7 @@ jest.mock('@verifactu/db', () => ({
 }));
 
 import { prisma } from '@verifactu/db';
-import { upsertUser } from './tenants';
+import { resolveInternalUserId, upsertUser } from './tenants';
 
 const prismaMock = prisma as unknown as {
   user: {
@@ -113,6 +113,28 @@ describe('upsertUser', () => {
         authSubject: 'firebase-uid-123',
         authProvider: 'FIREBASE',
       }),
+      select: {
+        id: true,
+      },
+    });
+  });
+});
+
+describe('resolveInternalUserId', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('resolves a firebase auth subject to the internal SQL user id', async () => {
+    prismaMock.user.findFirst.mockResolvedValueOnce({ id: 'internal-user-id' });
+
+    const userId = await resolveInternalUserId('firebase-uid-123');
+
+    expect(userId).toBe('internal-user-id');
+    expect(prismaMock.user.findFirst).toHaveBeenCalledWith({
+      where: {
+        OR: [{ id: 'firebase-uid-123' }, { authSubject: 'firebase-uid-123' }],
+      },
       select: {
         id: true,
       },
