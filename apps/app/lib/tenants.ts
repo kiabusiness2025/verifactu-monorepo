@@ -106,18 +106,61 @@ export async function upsertUser(params: {
   });
   const nameParts = splitFullName(fullName);
 
-  await prisma.user.upsert({
+  const existingById = await prisma.user.findUnique({
     where: { id },
-    create: {
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      firstName: true,
+      lastName: true,
+    },
+  });
+
+  if (existingById) {
+    await prisma.user.update({
+      where: { id },
+      data: {
+        email: email || existingById.email,
+        name: fullName || existingById.name || undefined,
+        firstName: nameParts.firstName || existingById.firstName || undefined,
+        lastName: nameParts.lastName || existingById.lastName || undefined,
+      },
+    });
+    return;
+  }
+
+  if (email) {
+    const existingByEmail = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        name: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+    if (existingByEmail) {
+      await prisma.user.update({
+        where: { id: existingByEmail.id },
+        data: {
+          id,
+          email,
+          name: fullName || existingByEmail.name || undefined,
+          firstName: nameParts.firstName || existingByEmail.firstName || undefined,
+          lastName: nameParts.lastName || existingByEmail.lastName || undefined,
+        },
+      });
+      return;
+    }
+  }
+
+  await prisma.user.create({
+    data: {
       id,
       email: email || `unknown-${id}@user`,
       name: fullName,
-      firstName: nameParts.firstName || undefined,
-      lastName: nameParts.lastName || undefined,
-    },
-    update: {
-      email: email || undefined,
-      name: fullName || undefined,
       firstName: nameParts.firstName || undefined,
       lastName: nameParts.lastName || undefined,
     },
