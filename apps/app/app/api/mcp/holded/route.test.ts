@@ -15,6 +15,30 @@ jest.mock('@/lib/integrations/holdedMcpTools', () => ({
       },
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     },
+    {
+      name: 'holded_create_accounting_account',
+      title: 'Create accounting account in Holded',
+      description: 'Create an accounting account.',
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+      inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    },
+    {
+      name: 'holded_create_daily_ledger_entry',
+      title: 'Create daily ledger entry in Holded',
+      description: 'Create a daily ledger entry.',
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+      inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    },
   ],
 }));
 
@@ -124,6 +148,39 @@ describe('MCP Holded route discovery and auth', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(payload.result.tools).toHaveLength(1);
+  });
+
+  it('includes accounting write tools in public tools/list when the accounting phase preset is active', async () => {
+    const { getDefaultScopes } = jest.requireMock('@/lib/oauth/mcp') as {
+      getDefaultScopes: jest.Mock;
+    };
+    getDefaultScopes.mockReturnValue([
+      'mcp.read',
+      'holded.invoices.read',
+      'holded.accounts.read',
+      'holded.accounts.write',
+    ]);
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/mcp/holded', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 5,
+          method: 'tools/list',
+          params: {},
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.result.tools.map((tool: { name: string }) => tool.name)).toEqual([
+      'holded_list_invoices',
+      'holded_create_accounting_account',
+      'holded_create_daily_ledger_entry',
+    ]);
   });
 
   it('returns 401 with WWW-Authenticate on unauthenticated tools/call', async () => {

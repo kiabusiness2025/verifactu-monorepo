@@ -74,4 +74,18 @@ describe('MCP OAuth metadata helpers', () => {
       scopes_supported: [...HOLDED_MCP_SUPPORTED_SCOPES],
     });
   });
+
+  it('can advertise the accounting phase preset when configured explicitly', () => {
+    process.env.MCP_PUBLIC_SCOPE_PRESET = 'holded_phase2_accounting';
+
+    expect(getPublicScopePreset()).toBe('holded_phase2_accounting');
+    expect(getDefaultScopes()).toEqual([...getHoldedMcpScopePreset('holded_phase2_accounting')]);
+    expect(getAdvertisedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
+    expect(getProtectedResourceMetadata()).toEqual({
+      resource: 'https://app.verifactu.business/api/mcp/holded',
+      authorization_servers: ['https://app.verifactu.business'],
+      bearer_methods_supported: ['header'],
+      scopes_supported: [...HOLDED_MCP_SUPPORTED_SCOPES],
+    });
+  });
 });

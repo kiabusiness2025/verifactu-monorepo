@@ -300,6 +300,55 @@ Objetivo:
 
 - dar soporte a operativa mas completa sin ensuciar el onboarding inicial
 
+## Adaptacion al conector directo ChatGPT con Holded
+
+Para el conector directo de ChatGPT con Holded, el roadmap no se ejecuta entero de una vez.
+
+La regla acordada es:
+
+- antes de la aprobacion de OpenAI se mantiene el preset estrecho `openai_review_v2`
+- despues de la aprobacion se abre una Fase 2 especifica del conector Holded
+- esa Fase 2 sigue dentro del dominio Holded y no debe confundirse con `Isaak Universal`
+
+### Fase 2 del conector Holded tras aprobacion
+
+Objetivo:
+
+- ampliar la escritura estructurada sobre datos de Holded desde ChatGPT sin convertir el conector en web abierta ni en asesor universal
+
+Primera ola recomendada:
+
+- crear cuentas contables
+- crear asientos contables
+
+Mapeo directo con la base ya implementada:
+
+- `holded_create_accounting_account`
+- `holded_create_daily_ledger_entry`
+
+Segunda ola recomendada:
+
+- creacion y actualizacion estructurada de documentos
+- envio de documentos y cambios de pipeline
+- creacion y actualizacion de contactos
+- pagos estructurados y `holded_pay_document`
+- altas y mantenimiento estructurado de productos, servicios, tesoreria y otras entidades maestras
+
+Principio de despliegue:
+
+- no abrir todo de golpe
+- activar por familias mutativas
+- validar cada familia con QA y smoke real
+- mantener confirmacion explicita y lectura posterior de verificacion
+
+### Reglas de Fase 2
+
+- cada escritura debe partir de un schema estricto
+- cada escritura debe exigir confirmacion explicita
+- cada escritura debe dejar log y trazabilidad por tenant
+- tras escribir, Isaak debe poder leer y resumir lo creado o actualizado
+- la Fase 2 del conector Holded no sustituye ni absorbe el roadmap de `Isaak Universal`
+
 ## Reglas de implementacion
 
 - no exponer toda la API de Holded como menu tecnico al usuario

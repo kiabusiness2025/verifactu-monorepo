@@ -373,8 +373,8 @@ function HoldedAuthContent() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff5f2_0%,#f8fafc_44%,#f8fafc_100%)] px-4 py-6 text-slate-900 sm:px-6 lg:px-10">
-      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl flex-col rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_40px_120px_-72px_rgba(15,23,42,0.35)] backdrop-blur lg:grid lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative flex flex-col justify-between overflow-hidden px-6 py-8 sm:px-10 sm:py-10 lg:px-14 lg:py-14">
+      <div className="mx-auto flex w-full max-w-7xl flex-col rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_40px_120px_-72px_rgba(15,23,42,0.35)] backdrop-blur sm:min-h-[calc(100svh-3rem)] lg:grid lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="relative flex flex-col justify-between overflow-hidden px-5 py-6 sm:px-10 sm:py-10 lg:px-14 lg:py-14">
           <div className="absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_top_left,rgba(255,84,96,0.16),transparent_68%)]" />
           <div className="relative flex items-center justify-between gap-4">
             <Link
@@ -392,7 +392,7 @@ function HoldedAuthContent() {
             </a>
           </div>
 
-          <div className="relative mt-12 max-w-xl lg:mt-20">
+          <div className="relative mt-8 max-w-xl sm:mt-10 lg:mt-20">
             <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
                 <Image
@@ -410,18 +410,18 @@ function HoldedAuthContent() {
               </div>
             </div>
 
-            <h1 className="mt-10 max-w-lg text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
+            <h1 className="mt-6 max-w-lg text-3xl font-bold tracking-tight text-slate-950 sm:mt-8 sm:text-5xl">
               {isRegisterMode
                 ? 'Crea tu acceso y conecta Holded sin friccion.'
                 : 'Bienvenido de nuevo.'}
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-9 text-slate-600">
+            <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-9">
               {isRegisterMode
                 ? 'Preparamos tu acceso y luego terminas la conexion con Holded para empezar con tus datos reales sin pasos innecesarios.'
                 : 'Accede a tu cuenta para continuar con Holded y terminar la conexion con tus datos conectados.'}
             </p>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <div className="mt-6 hidden gap-3 sm:grid sm:grid-cols-2">
               <div className="rounded-3xl border border-slate-200 bg-slate-50/80 px-4 py-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                   <ShieldCheck className="h-4 w-4 text-[#ff5460]" />
@@ -449,8 +449,8 @@ function HoldedAuthContent() {
           </div>
         </section>
 
-        <section className="flex items-center justify-center border-t border-slate-200/80 bg-[linear-gradient(180deg,#fbfdff_0%,#f8fafc_100%)] px-4 py-8 sm:px-8 lg:border-l lg:border-t-0 lg:px-10">
-          <div className="w-full max-w-[30rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_-56px_rgba(15,23,42,0.35)]">
+        <section className="flex items-center justify-center border-t border-slate-200/80 bg-[linear-gradient(180deg,#fbfdff_0%,#f8fafc_100%)] px-4 py-6 sm:px-8 sm:py-8 lg:border-l lg:border-t-0 lg:px-10">
+          <div className="w-full max-w-[32rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_-56px_rgba(15,23,42,0.35)]">
             <div className="px-6 pb-6 pt-7 sm:px-8">
               <div className="text-center">
                 <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">

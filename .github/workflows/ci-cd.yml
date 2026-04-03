@@ -101,12 +101,22 @@ jobs:
 
       - run: pnpm install --frozen-lockfile --node-linker=isolated
 
-      - name: Run Tests
-        run: pnpm --filter verifactu-app test:ci --coverage
+      - name: Run Workspace Tests
+        run: pnpm test
+
+      - name: Detect Coverage Artifact
+        id: coverage
+        shell: bash
+        run: |
+          if [ -f coverage/coverage-final.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
-        if: always()
+        if: always() && steps.coverage.outputs.exists == 'true'
         with:
           files: ./coverage/coverage-final.json
           flags: unittests

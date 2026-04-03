@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { HoldedCompanySetupState } from './flowState';
-import HoldedMergeAnimation from './HoldedMergeAnimation';
 import {
   createCompanyDraftFromSummary,
   createSummaryForFreshApiValidation,
@@ -36,6 +35,7 @@ type IntegrationStatus = {
 };
 
 type Props = {
+  captureMode: boolean;
   entryChannel: 'dashboard' | 'chatgpt';
   nextUrl: string;
   onboardingToken: string | null;
@@ -52,6 +52,28 @@ const HOLDED_API_GUIDE_URL =
   'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
 const VERIFACTU_TERMS_URL = 'https://verifactu.business/terms';
 const VERIFACTU_PRIVACY_URL = 'https://verifactu.business/privacy';
+
+function HoldedStatusVisual({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <div className="flex h-full min-h-[120px] items-center justify-center rounded-[26px] border border-[#d9e6ff] bg-white/90 p-4 shadow-sm">
+      <div className="text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff1f2] ring-1 ring-[#ff5460]/12">
+          <Image
+            src="/brand/holded/holded-diamond-logo.png"
+            alt="Holded"
+            width={24}
+            height={24}
+            className="h-6 w-6"
+          />
+        </div>
+        <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+          {eyebrow}
+        </div>
+        <div className="mt-1 text-sm font-semibold text-black">{title}</div>
+      </div>
+    </div>
+  );
+}
 
 function normalizeText(value?: string | null) {
   const normalized = value?.trim();
@@ -138,6 +160,7 @@ const dashboardUiCopy = {
 } as const;
 
 export default function HoldedOnboardingClient({
+  captureMode,
   entryChannel,
   nextUrl,
   onboardingToken,
@@ -152,6 +175,7 @@ export default function HoldedOnboardingClient({
   const hasResolvedCompanyProfile =
     companySetup.hasResolvedCompany &&
     Boolean(summary.contactEmail || summary.companyEmail || summary.companyTaxId);
+  const reusesStoredCompanyData = isChatgptEntry && hasResolvedCompanyProfile;
   const initialCompanyDraft = useMemo(() => createCompanyDraftFromSummary(summary), [summary]);
   const freshValidationSummary = useMemo(
     () => createSummaryForFreshApiValidation(summary),
@@ -200,10 +224,33 @@ export default function HoldedOnboardingClient({
     companyConfirmed &&
     !saving &&
     !redirecting;
+  const apiKeyHelp = reusesStoredCompanyData
+    ? 'Validaremos la API key y, si tu empresa ya esta preparada aqui, conectaremos Holded sin pedirte esos datos otra vez.'
+    : uiCopy.apiKeyHelp;
+  const helpSteps = reusesStoredCompanyData
+    ? [
+        'Entra en Holded y abre el area de API.',
+        'Copia una API key activa de tu empresa.',
+        'Pegala aqui y la conectaremos usando los datos de empresa que ya tienes guardados.',
+      ]
+    : uiCopy.helpSteps;
+  const redirectDescription = captureMode
+    ? 'Tu conexion ya esta lista. Puedes continuar manualmente cuando quieras.'
+    : uiCopy.redirectDescription;
+  const submitLabel =
+    needsPostValidationCompanyStep && !apiValidated
+      ? reusesStoredCompanyData
+        ? 'Validar y conectar Holded'
+        : 'Validar API key'
+      : uiCopy.submitLabel;
   const personalizedLead = !showApiStep
-    ? `${resolvedSummary.contactFirstName}, ahora necesitamos confirmar los datos exactos de empresa y usuario tal y como aparecen en Holded.`
+    ? reusesStoredCompanyData
+      ? `${resolvedSummary.contactFirstName}, hemos usado los datos guardados de ${resolvedSummary.companyName} para cerrar la conexion sin volver a pedirte la empresa.`
+      : `${resolvedSummary.contactFirstName}, ahora necesitamos confirmar los datos exactos de empresa y usuario tal y como aparecen en Holded.`
     : hideResolvedCompanyUntilApiValidation
-      ? 'Primero validaremos tu API key. Despues te pediremos confirmar los datos exactos de la empresa conectada.'
+      ? reusesStoredCompanyData
+        ? 'Primero validaremos tu API key. Si tu empresa ya estaba preparada aqui, terminaremos la conexion sin volver a pedirte los datos.'
+        : 'Primero validaremos tu API key. Despues te pediremos confirmar los datos exactos de la empresa conectada.'
       : isChatgptEntry
         ? `${resolvedSummary.contactFirstName}, primero validaremos tu API key y despues guardaremos los datos exactos de empresa y usuario.`
         : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName}.`;
@@ -268,9 +315,11 @@ export default function HoldedOnboardingClient({
       if (!target) return;
       setRedirecting(true);
       setRedirectTarget(target);
-      window.location.replace(target);
+      if (!captureMode) {
+        window.location.replace(target);
+      }
     },
-    [nextUrl]
+    [captureMode, nextUrl]
   );
 
   const applySummaryToCompanyForm = useCallback((nextSummary: HoldedOnboardingSummary) => {
@@ -625,13 +674,26 @@ export default function HoldedOnboardingClient({
     try {
       if (needsPostValidationCompanyStep && !apiValidated) {
         await validateApiKey();
-        resetForFreshApiValidation();
-        setApiValidated(true);
-        setShowCompanyForm(true);
-        setCompanyConfirmed(false);
-        setCompanyMessage(
-          'API key validada. Hemos limpiado los datos anteriores para que confirmes solo la empresa de esta nueva conexion.'
-        );
+        if (hasResolvedCompanyProfile) {
+          setResolvedSummary(summary);
+          applySummaryToCompanyForm(summary);
+          await connectValidatedApi();
+          setApiValidated(true);
+          setShowCompanyForm(false);
+          setCompanyConfirmed(true);
+          setCompanyMessage(null);
+          setMessage(uiCopy.successConnected);
+          goToNextStep(confirmedNextUrl);
+        } else {
+          resetForFreshApiValidation();
+          setApiValidated(true);
+          setShowCompanyForm(true);
+          setCompanyConfirmed(false);
+          setCompanyMessage(
+            'API key validada. Hemos limpiado los datos anteriores para que confirmes solo la empresa de esta nueva conexion.'
+          );
+          return;
+        }
         return;
       }
 
@@ -651,8 +713,8 @@ export default function HoldedOnboardingClient({
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_45%,#ffffff_100%)] px-4 py-6 text-black sm:px-6 sm:py-10 lg:px-8">
-      <div className="mx-auto max-w-lg">
+    <div className="min-h-[100svh] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_45%,#ffffff_100%)] px-3 py-4 text-black sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto max-w-2xl xl:max-w-3xl">
         <div className="rounded-[28px] border border-neutral-200 bg-white shadow-[0_18px_46px_rgba(15,23,42,0.09)]">
           <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
             <button
@@ -707,9 +769,9 @@ export default function HoldedOnboardingClient({
                     Datos de empresa y contacto
                   </div>
                   <p className="mt-2 text-sm leading-6 text-neutral-700">
-                    La API key ya es valida. Ahora necesitamos guardar el nombre exacto de la
-                    empresa, su NIF/CIF, el nombre, los apellidos y el correo principal tal y como
-                    aparecen en Holded.
+                    {reusesStoredCompanyData
+                      ? 'La API key ya es valida. Hemos recuperado los datos guardados de empresa y contacto para que solo revises lo que haya cambiado.'
+                      : 'La API key ya es valida. Ahora necesitamos guardar el nombre exacto de la empresa, su NIF/CIF, el nombre, los apellidos y el correo principal tal y como aparecen en Holded.'}
                   </p>
 
                   <form onSubmit={handleCompanySubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -936,8 +998,8 @@ export default function HoldedOnboardingClient({
             !saving &&
             !redirecting ? (
               <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#f7fbff_0%,#ffffff_52%,#fff7f8_100%)] p-4 sm:p-5">
-                <div className="grid gap-4 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center">
-                  <HoldedMergeAnimation compact />
+                <div className="grid gap-4 sm:grid-cols-[156px_minmax(0,1fr)] sm:items-center">
+                  <HoldedStatusVisual eyebrow="Conexion segura" title="Comprobando acceso" />
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
                       Conexion en progreso
@@ -958,8 +1020,8 @@ export default function HoldedOnboardingClient({
 
             {!companyStepPending && redirecting ? (
               <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#fff8f8_0%,#ffffff_52%,#f7fbff_100%)] p-4 sm:p-5">
-                <div className="grid gap-4 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center">
-                  <HoldedMergeAnimation compact />
+                <div className="grid gap-4 sm:grid-cols-[156px_minmax(0,1fr)] sm:items-center">
+                  <HoldedStatusVisual eyebrow="Conexion lista" title="Ultimo paso" />
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
                       Ultimo paso
@@ -967,9 +1029,7 @@ export default function HoldedOnboardingClient({
                     <div className="mt-2 text-base font-semibold text-black">
                       {uiCopy.redirectTitle}
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-neutral-700">
-                      {uiCopy.redirectDescription}
-                    </p>
+                    <p className="mt-2 text-sm leading-6 text-neutral-700">{redirectDescription}</p>
                     <div className="mt-4 flex flex-wrap gap-3">
                       <a
                         href={redirectTarget}
@@ -1006,7 +1066,7 @@ export default function HoldedOnboardingClient({
 
             {showApiStep && !redirecting ? (
               <ol className="mt-4 space-y-2 text-sm text-neutral-700">
-                {uiCopy.helpSteps.map((step, index) => (
+                {helpSteps.map((step, index) => (
                   <li key={step} className="flex gap-3">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-white">
                       {index + 1}
@@ -1049,7 +1109,7 @@ export default function HoldedOnboardingClient({
                   <span className="mb-2 block text-sm font-semibold text-black">
                     {uiCopy.apiKeyLabel}
                   </span>
-                  <span className="mb-3 block text-sm text-neutral-600">{uiCopy.apiKeyHelp}</span>
+                  <span className="mb-3 block text-sm text-neutral-600">{apiKeyHelp}</span>
                   <div className="relative">
                     <KeyRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                     <input
@@ -1116,9 +1176,7 @@ export default function HoldedOnboardingClient({
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {needsPostValidationCompanyStep && !apiValidated
-                      ? 'Validar API key'
-                      : uiCopy.submitLabel}
+                    {submitLabel}
                   </button>
                 </div>
               </form>
@@ -1126,8 +1184,8 @@ export default function HoldedOnboardingClient({
 
             {saving ? (
               <div className="mt-5 overflow-hidden rounded-2xl border border-neutral-200 bg-[linear-gradient(135deg,#fff8f8_0%,#ffffff_55%,#fff6f6_100%)] p-4">
-                <div className="grid gap-4 sm:grid-cols-[132px_minmax(0,1fr)] sm:items-center">
-                  <HoldedMergeAnimation compact />
+                <div className="grid gap-4 sm:grid-cols-[156px_minmax(0,1fr)] sm:items-center">
+                  <HoldedStatusVisual eyebrow="Validacion activa" title="Dejando todo listo" />
                   <div>
                     <div className="text-sm font-semibold text-black">{uiCopy.statusLoading}</div>
                     <div className="mt-1 text-sm text-neutral-600">{uiCopy.savingDescription}</div>

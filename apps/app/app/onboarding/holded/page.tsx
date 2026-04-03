@@ -68,6 +68,7 @@ export default async function HoldedOnboardingPage({
 }) {
   const params = await searchParams;
   const session = await getSessionPayload();
+  const captureMode = firstValue(params.capture)?.trim() === '1';
 
   if (!session?.uid) {
     const loginUrl = new URL('/login', getAppUrl());
@@ -85,6 +86,9 @@ export default async function HoldedOnboardingPage({
     if (onboardingToken) current.searchParams.set('onboarding_token', onboardingToken);
     if (requireConnectionConfirmation) {
       current.searchParams.set('require_connection_confirmation', '1');
+    }
+    if (captureMode) {
+      current.searchParams.set('capture', '1');
     }
     loginUrl.searchParams.set('next', current.toString());
     redirect(loginUrl.toString());
@@ -210,6 +214,7 @@ export default async function HoldedOnboardingPage({
 
   return (
     <HoldedOnboardingClient
+      captureMode={captureMode}
       entryChannel={entryChannel}
       nextUrl={nextUrl}
       onboardingToken={onboardingToken}

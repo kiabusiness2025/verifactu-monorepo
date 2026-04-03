@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
 import { recordUsageEvent } from '@verifactu/integrations';
+import { verifyHoldedValidationToken } from '@/app/lib/holded-validation-token';
 import {
   disconnectHoldedConnection,
   probeHoldedConnection,
@@ -22,6 +23,37 @@ function normalizeApiKey(value: string) {
 
 function hasBasicApiKeyShape(value: string) {
   return value.length >= 16 && value.length <= 128;
+}
+
+function normalizeOptionalEmail(value: unknown) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().toLowerCase();
+  return trimmed || null;
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+async function resolveNotificationEmail(input: {
+  tenantId: string;
+  sessionEmail: string | null;
+  requestedEmail: string | null;
+}) {
+  if (input.sessionEmail?.trim()) {
+    return input.sessionEmail.trim();
+  }
+
+  if (input.requestedEmail?.trim()) {
+    return input.requestedEmail.trim();
+  }
+
+  const tenantProfile = await prisma.tenantProfile.findFirst({
+    where: { tenantId: input.tenantId },
+    select: { email: true },
+  });
+
+  return tenantProfile?.email?.trim() || null;
 }
 
 function readProbeSupportedModules(probe: Awaited<ReturnType<typeof probeHoldedConnection>>) {
@@ -48,6 +80,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const apiKey = typeof body?.apiKey === 'string' ? normalizeApiKey(body.apiKey) : '';
     const channel = normalizeChannel(body?.channel);
+    const requestedNotificationEmail = normalizeOptionalEmail(body?.notificationEmail);
+    const validationToken = typeof body?.validationToken === 'string' ? body.validationToken : '';
 
     if (!apiKey) {
       return NextResponse.json({ error: 'Pega una API key valida de Holded.' }, { status: 400 });
@@ -60,7 +94,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const probe = await probeHoldedConnection(apiKey);
+    if (requestedNotificationEmail && !isValidEmail(requestedNotificationEmail)) {
+      return NextResponse.json(
+        { error: 'El correo de aviso no parece valido. Revísalo y vuelve a intentarlo.' },
+        { status: 400 }
+      );
+    }
+
+    const validated = validationToken
+      ? await verifyHoldedValidationToken({
+          token: validationToken,
+          tenantId: session.tenantId,
+          channel,
+          apiKey,
+        })
+      : null;
+
+    const probe = validated?.probe ?? (await probeHoldedConnection(apiKey));
 
     if (!probe.ok) {
       await Promise.allSettled([
@@ -107,7 +157,13 @@ export async function POST(request: NextRequest) {
       channel,
     });
 
-    await Promise.allSettled([
+    const notificationEmail = await resolveNotificationEmail({
+      tenantId: session.tenantId,
+      sessionEmail: session.email,
+      requestedEmail: requestedNotificationEmail,
+    });
+
+    const [usageEventResult, communicationResult] = await Promise.allSettled([
       recordUsageEvent({
         prisma,
         tenantId: session.tenantId,
@@ -122,22 +178,47 @@ export async function POST(request: NextRequest) {
           supportedModules: readProbeSupportedModules(probe),
         },
       }),
-      ...(session.email
-        ? [
-            sendHoldedConnectedCommunication({
-              name: session.name || session.email.split('@')[0] || 'Hola',
-              email: session.email,
-              companyName: saved?.tenantName || 'tu empresa',
-              supportedModules: readProbeSupportedModules(probe),
-            }),
-          ]
-        : []),
+      notificationEmail
+        ? sendHoldedConnectedCommunication({
+            name: session.name || notificationEmail.split('@')[0] || 'Hola',
+            email: notificationEmail,
+            companyName: saved?.tenantName || 'tu empresa',
+            supportedModules: readProbeSupportedModules(probe),
+          })
+        : Promise.resolve(null),
     ]);
+
+    if (usageEventResult.status === 'rejected') {
+      console.error('[holded connect] usage event failed', {
+        error:
+          usageEventResult.reason instanceof Error
+            ? usageEventResult.reason.message
+            : String(usageEventResult.reason),
+      });
+    }
+
+    if (communicationResult.status === 'rejected') {
+      console.error('[holded connect] communication email failed', {
+        error:
+          communicationResult.reason instanceof Error
+            ? communicationResult.reason.message
+            : String(communicationResult.reason),
+        notificationEmail,
+      });
+    }
+
+    if (!notificationEmail) {
+      console.warn('[holded connect] notification email unavailable', {
+        tenantId: session.tenantId,
+        userId: session.userId,
+      });
+    }
 
     return NextResponse.json({
       ok: true,
       probe,
       connection: saved,
+      notificationEmail,
     });
   } catch (error) {
     console.error('[holded connect] failed', {

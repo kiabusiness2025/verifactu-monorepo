@@ -117,6 +117,28 @@ Resultado esperado:
 - no aparece `invalid_request`
 - no vuelve al dashboard salvo que falte configuracion adicional
 
+## Validacion de modo captura y layouts de review
+
+Caso objetivo:
+
+- generar capturas internas del flujo ChatGPT sin alterar el recorrido normal del reviewer
+
+Pasos:
+
+1. Repetir el flujo hasta llegar a `/onboarding/holded`.
+2. Anadir `capture=1` a la URL de onboarding.
+3. Confirmar que el flag sobrevive si el usuario pasa por `/login`.
+4. Completar la conexion con una cuenta de review.
+5. Confirmar que la pantalla final queda fija con boton `Continuar` y no redirige automaticamente.
+6. Revisar las mismas pantallas en desktop y en movil.
+
+Resultado esperado:
+
+- `capture=1` solo congela la pantalla final; no cambia tools, scopes ni el comportamiento MCP
+- desktop y movil muestran las tarjetas completas sin recorte vertical innecesario
+- los estados de carga y redireccion usan tarjetas estaticas y no la composicion anterior de tres logos
+- al quitar `capture=1`, el flujo vuelve a redirigir automaticamente
+
 ## Flujo E2E secundario: usuario con conexion ya creada
 
 Pasos:
@@ -172,6 +194,9 @@ Resultado esperado:
 3. El usuario debe entender que:
    - conecta Holded una sola vez
    - despues puede usar ChatGPT y dashboard sobre la misma conexion
+4. El reviewer no debe ver una UI recargada o inventada en las esperas:
+   - las pantallas de transicion deben ser sobrias
+   - el contenido principal debe quedar visible sin scroll innecesario en desktop y movil
 
 ## Incidencias tipicas a revisar
 
@@ -182,6 +207,9 @@ Resultado esperado:
 - usuario redirigido al dashboard en vez de al onboarding Holded
 - tenant resuelto incorrectamente
 - API key valida pero no persistida
+- `capture=1` no se conserva al pasar por login
+- la pantalla final sigue redirigiendo aunque `capture=1` este presente
+- recorte visual en mobile o desktop en alguna tarjeta del flujo de conexion
 
 ## Criterio de salida para seguir hacia review publica
 

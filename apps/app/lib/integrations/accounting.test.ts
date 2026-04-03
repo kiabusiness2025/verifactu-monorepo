@@ -163,6 +163,24 @@ describe('Holded accounting adapter', () => {
     );
   });
 
+  it('surfaces the Holded response body when daily ledger listing fails', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 400,
+      text: async () => 'starttmp and endtmp are required',
+    });
+
+    await expect(
+      holdedAdapter.listDailyLedger('demo-key', {
+        page: 1,
+        starttmp: 1_704_067_200,
+        endtmp: 1_704_153_599,
+      })
+    ).rejects.toThrow(
+      'Holded API request failed with status 400: starttmp and endtmp are required'
+    );
+  });
+
   it('creates daily ledger entries through the accounting endpoint', async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,

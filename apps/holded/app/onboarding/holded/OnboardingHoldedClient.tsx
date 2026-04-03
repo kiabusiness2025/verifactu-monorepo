@@ -2,12 +2,15 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
+import { auth } from '@/app/lib/firebase';
+import { mintSessionCookie } from '@/app/lib/serverSession';
 
 type ValidationResponse = {
   ok: boolean;
   error?: string | null;
+  validationToken?: string | null;
   probe?: {
     invoiceApi: { ok: boolean; status: number | null };
     accountingApi: { ok: boolean; status: number | null };
@@ -17,21 +20,79 @@ type ValidationResponse = {
   };
 };
 
-export default function OnboardingHoldedClient() {
+type OnboardingHoldedClientProps = {
+  sessionEmail?: string | null;
+};
+
+function looksLikeEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function normalizeApiKey(value: string) {
+  return value.replace(/\s+/g, '').trim();
+}
+
+async function refreshSharedSession() {
+  if (!auth?.currentUser) return false;
+
+  try {
+    await mintSessionCookie(auth.currentUser, { rememberDevice: true });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function postWithSessionRetry(url: string, body: Record<string, unknown>) {
+  const makeRequest = () =>
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      cache: 'no-store',
+      body: JSON.stringify(body),
+    });
+
+  let response = await makeRequest();
+  if (response.status !== 401) {
+    return response;
+  }
+
+  const refreshed = await refreshSharedSession();
+  if (!refreshed) {
+    return response;
+  }
+
+  response = await makeRequest();
+  return response;
+}
+
+export default function OnboardingHoldedClient({
+  sessionEmail = null,
+}: OnboardingHoldedClientProps) {
   const searchParams = useSearchParams();
   const holdedApiGuideUrl =
     'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
   const channel = searchParams?.get('channel') === 'chatgpt' ? 'chatgpt' : 'dashboard';
   const nextTarget = searchParams?.get('next')?.trim() || '';
+  const initialNotificationEmail = sessionEmail?.trim() || '';
 
   const [apiKey, setApiKey] = useState('');
+  const [notificationEmail, setNotificationEmail] = useState(initialNotificationEmail);
   const [isValidating, setIsValidating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [validation, setValidation] = useState<ValidationResponse | null>(null);
+  const [validationToken, setValidationToken] = useState<string | null>(null);
+  const [validatedApiKey, setValidatedApiKey] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [errorTitle, setErrorTitle] = useState('No hemos podido continuar');
 
-  const canValidate = apiKey.trim().length >= 12;
-  const canConnect = validation?.ok === true && !isConnecting;
+  const normalizedApiKey = useMemo(() => normalizeApiKey(apiKey), [apiKey]);
+  const canValidate = normalizedApiKey.length >= 16;
+  const emailIsLocked = initialNotificationEmail.length > 0;
+  const canConnect = canValidate && !isConnecting && looksLikeEmail(notificationEmail.trim());
+  const hasReusableValidationToken =
+    validation?.ok === true && validatedApiKey === normalizedApiKey && Boolean(validationToken);
 
   const statusLine = useMemo(() => {
     if (!validation?.probe) return null;
@@ -51,17 +112,18 @@ export default function OnboardingHoldedClient() {
     return `Validacion correcta en: ${checks.join(', ')}.`;
   }, [validation]);
 
-  const runValidation = async (value = apiKey) => {
-    if (value.trim().length < 12) return;
+  const runValidation = async (value = normalizedApiKey) => {
+    const targetApiKey = normalizeApiKey(value);
+    if (targetApiKey.length < 16) return;
 
     setIsValidating(true);
     setError(null);
+    setErrorTitle('No hemos podido validar la clave');
 
     try {
-      const res = await fetch('/api/holded/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: value.trim() }),
+      const res = await postWithSessionRetry('/api/holded/validate', {
+        apiKey: targetApiKey,
+        channel,
       });
 
       const data = (await res.json().catch(() => null)) as ValidationResponse | null;
@@ -71,12 +133,18 @@ export default function OnboardingHoldedClient() {
       }
 
       setValidation(data);
+      setValidatedApiKey(targetApiKey);
+      setValidationToken(data?.validationToken || null);
 
       if (!data?.ok) {
+        setValidatedApiKey('');
+        setValidationToken(null);
         setError(data?.error || 'No hemos podido validar la API key.');
       }
     } catch (validationError) {
       setValidation(null);
+      setValidatedApiKey('');
+      setValidationToken(null);
       setError(
         validationError instanceof Error
           ? validationError.message
@@ -87,28 +155,26 @@ export default function OnboardingHoldedClient() {
     }
   };
 
-  useEffect(() => {
-    if (!canValidate) {
-      setValidation(null);
+  const handleConnect = async () => {
+    const trimmedNotificationEmail = notificationEmail.trim();
+
+    if (!looksLikeEmail(trimmedNotificationEmail)) {
+      setError(
+        'Necesitamos un correo valido para enviarte la confirmacion y los siguientes pasos.'
+      );
       return;
     }
 
-    const handle = window.setTimeout(() => {
-      void runValidation(apiKey);
-    }, 900);
-
-    return () => window.clearTimeout(handle);
-  }, [apiKey, canValidate]);
-
-  const handleConnect = async () => {
     setIsConnecting(true);
     setError(null);
+    setErrorTitle('No hemos podido conectar Holded');
 
     try {
-      const res = await fetch('/api/holded/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: apiKey.trim(), channel }),
+      const res = await postWithSessionRetry('/api/holded/connect', {
+        apiKey: normalizedApiKey,
+        channel,
+        notificationEmail: trimmedNotificationEmail,
+        validationToken: hasReusableValidationToken ? validationToken : undefined,
       });
 
       const data = await res.json().catch(() => null);
@@ -226,7 +292,13 @@ export default function OnboardingHoldedClient() {
               </span>
               <textarea
                 value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
+                onChange={(event) => {
+                  setApiKey(event.target.value);
+                  setValidation(null);
+                  setValidationToken(null);
+                  setValidatedApiKey('');
+                  setError(null);
+                }}
                 placeholder="Pega aqui la API key generada en Holded"
                 rows={5}
                 className="w-full resize-none rounded-3xl border border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
@@ -257,6 +329,26 @@ export default function OnboardingHoldedClient() {
               </div>
             </div>
 
+            <label className="mt-4 block">
+              <span className="mb-2 block text-sm font-semibold text-slate-900">
+                Correo para avisarte cuando quede conectado
+              </span>
+              <input
+                type="email"
+                value={notificationEmail}
+                onChange={(event) => setNotificationEmail(event.target.value)}
+                readOnly={emailIsLocked}
+                placeholder="tu@empresa.com"
+                className="h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10 read-only:cursor-not-allowed read-only:bg-slate-100 read-only:text-slate-500"
+              />
+            </label>
+
+            <div className="mt-2 text-sm leading-6 text-slate-600">
+              {emailIsLocked
+                ? 'Usaremos el correo de tu acceso actual para enviarte la confirmacion y los siguientes pasos.'
+                : 'Si no podemos leer tu correo desde la sesion, te avisaremos en esta direccion cuando Holded quede conectado.'}
+            </div>
+
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 type="button"
@@ -278,6 +370,11 @@ export default function OnboardingHoldedClient() {
               </button>
             </div>
 
+            <div className="mt-3 text-sm leading-6 text-slate-600">
+              Puedes conectar directamente sin esperar a la validacion previa. Si pulsas "Validar
+              ahora", reutilizaremos esa comprobacion para acelerar la conexion.
+            </div>
+
             {validation?.ok ? (
               <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
                 <div className="flex items-start gap-2">
@@ -295,7 +392,7 @@ export default function OnboardingHoldedClient() {
                 <div className="flex items-start gap-2">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                   <div>
-                    <div className="font-semibold">No hemos podido validarla</div>
+                    <div className="font-semibold">{errorTitle}</div>
                     <div className="mt-1">{error}</div>
                   </div>
                 </div>

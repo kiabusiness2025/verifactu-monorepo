@@ -88,7 +88,8 @@ Reglas operativas de este flujo:
 - `POST /api/integrations/accounting/connect` debe persistir la conexion con `channel_key` y hacer `upsert` por `(tenant_id, provider, channel_key)`.
 - `GET /api/integrations/accounting/status?channel=chatgpt` debe resolver el estado real de ese canal para evitar falsos `connected`.
 - La pantalla de `channel=chatgpt` usa copy neutro y no presenta Isaak como marca principal mientras el usuario solo esta terminando la conexion para ChatGPT.
-- La animacion de espera no bloquea el flujo: el usuario puede pegar la API key en cuanto la tenga, aunque la comprobacion inicial siga en progreso.
+- La pantalla de espera no bloquea el flujo: el usuario puede pegar la API key en cuanto la tenga, aunque la comprobacion inicial siga en progreso.
+- Para capturas internas de review existe un flag temporal `capture=1` sobre `/onboarding/holded`; ese flag se conserva al pasar por login y congela la pantalla final para screenshots, pero no forma parte del recorrido normal del reviewer.
 
 ## Variables de entorno
 

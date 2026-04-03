@@ -42,5 +42,5 @@ export default async function HoldedOnboardingConnectionPage({ searchParams }: P
     );
   }
 
-  return <OnboardingHoldedClient />;
+  return <OnboardingHoldedClient sessionEmail={session.email} />;
 }

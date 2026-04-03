@@ -358,26 +358,12 @@ async function getTenantIntegrationFallback(prisma: HoldedPrismaClient, tenantId
 async function fetchHoldedTenantMetadata(apiKey: string, probe: HoldedProbeResult) {
   const supportedModules = pickSupportedModules(probe);
 
-  const [invoices, contacts, accounts] = await Promise.all([
-    probe.invoiceApi.ok
-      ? holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/invoicing/v1/documents', {
-          limit: 3,
-          page: 1,
-        }).catch(() => [])
-      : Promise.resolve([]),
-    probe.invoiceApi.ok
-      ? holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/invoicing/v1/contacts', {
-          limit: 3,
-          page: 1,
-        }).catch(() => [])
-      : Promise.resolve([]),
-    probe.accountingApi.ok
-      ? holdedRequest<Array<Record<string, unknown>>>(apiKey, HOLDED_CHART_OF_ACCOUNTS_PATH, {
-          limit: 3,
-          page: 1,
-        }).catch(() => [])
-      : Promise.resolve([]),
-  ]);
+  const invoices = probe.invoiceApi.ok
+    ? await holdedRequest<Array<Record<string, unknown>>>(apiKey, '/api/invoicing/v1/documents', {
+        limit: 3,
+        page: 1,
+      }).catch(() => [])
+    : [];
 
   const firstInvoice = invoices[0] || null;
 
@@ -398,8 +384,8 @@ async function fetchHoldedTenantMetadata(apiKey: string, probe: HoldedProbeResul
     supportedModules,
     sampleCounts: {
       invoices: invoices.length,
-      contacts: contacts.length,
-      accounts: accounts.length,
+      contacts: 0,
+      accounts: 0,
     },
   };
 }

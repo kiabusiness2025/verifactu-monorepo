@@ -1,7 +1,10 @@
 import admin from 'firebase-admin';
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { buildHoldedVerificationEmail } from '@/app/lib/communications/holded-email-templates';
+import {
+  buildHoldedVerificationEmail,
+  buildHoldedWelcomeEmail,
+} from '@/app/lib/communications/holded-email-templates';
 import { prisma } from '@/app/lib/prisma';
 
 export const runtime = 'nodejs';
@@ -256,6 +259,7 @@ export async function POST(req: Request) {
     let resend: Resend | null = null;
     let verificationEmailId: string | null = null;
     let verificationEmailSent = false;
+    let welcomeEmailId: string | null = null;
 
     if (resendApiKey) {
       resend = new Resend(resendApiKey);
@@ -291,11 +295,35 @@ export async function POST(req: Request) {
               : String(verificationError),
         });
       }
+
+      try {
+        const welcome = buildHoldedWelcomeEmail({
+          name: userName,
+          email: decoded.email,
+          companyName: 'tu empresa',
+          phone: phone || undefined,
+          source,
+        });
+        const welcomeResult = await resend.emails.send({
+          from,
+          to: [decoded.email],
+          subject: welcome.subject,
+          html: welcome.html,
+          text: welcome.text,
+          replyTo,
+        });
+
+        welcomeEmailId = welcomeResult.data?.id ?? null;
+      } catch (welcomeError) {
+        console.error('[holded auth register] welcome email failed', {
+          error: welcomeError instanceof Error ? welcomeError.message : String(welcomeError),
+        });
+      }
     }
 
     if (adminRecipients.length > 0 && resend) {
-      resend.emails
-        .send({
+      try {
+        await resend.emails.send({
           from,
           to: adminRecipients,
           subject: adminNotification.subject,
@@ -308,22 +336,22 @@ export async function POST(req: Request) {
             </p>`,
           text: `${adminNotification.text}\n\nResumen rapido: nuevos usuarios (7 dias): ${newUsersCount} · conexiones activas: ${connectedCount} · conexiones desconectadas: ${disconnectedCount}\n\nPanel admin: ${adminUrl.toString()}`,
           replyTo,
-        })
-        .catch((notificationError) => {
-          console.error('[holded auth register] admin notification failed', {
-            error:
-              notificationError instanceof Error
-                ? notificationError.message
-                : String(notificationError),
-          });
         });
+      } catch (notificationError) {
+        console.error('[holded auth register] admin notification failed', {
+          error:
+            notificationError instanceof Error
+              ? notificationError.message
+              : String(notificationError),
+        });
+      }
     }
 
     return NextResponse.json({
       ok: true,
       verificationEmailId,
       verificationEmailSent,
-      welcomeEmailId: null,
+      welcomeEmailId,
     });
   } catch (error) {
     console.error('[holded auth register] failed', error);

@@ -1,8 +1,12 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import nextJest from '../../node_modules/next/jest.js'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const createJestConfig = nextJest({
   // Proporciona la ruta a tu aplicación Next.js para cargar next.config.mjs y los archivos .env en tu entorno de prueba
-  dir: './',
+  dir: __dirname,
 })
 
 /** @type {import('jest').Config} */

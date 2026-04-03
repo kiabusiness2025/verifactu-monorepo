@@ -53,6 +53,47 @@ Matiz tecnico actual:
 - `default_scopes` sigue siendo el punto donde se estrecha la experiencia publica por defecto
 - la review publica debe validar que el preset por defecto siga siendo el esperado aunque el catalogo soportado sea mas amplio
 
+## Decision estrategica de roadmap
+
+La decision aprobada para preservar la review publica es esta:
+
+- primero se espera la aprobacion de OpenAI para la version limitada actual de `Isaak for Holded`
+- hasta esa aprobacion, el conector de Holded no debe mezclarse con un asesor universal ni con acceso web oficial amplio, salvo fixes criticos de review y seguridad
+- la futura oferta de pago con asesor universal, acceso a fuentes oficiales y contrato mas amplio no debe nacer como ampliacion informal de esta misma submission
+- esa oferta debe materializarse como otra app o conector `Isaak`, con su propio OAuth, su propia propuesta de valor, su propia politica comercial y su propia superficie de tools
+
+Despues de la aprobacion hay dos carriles permitidos y distintos:
+
+- carril A: Fase 2 de `Isaak for Holded`, ampliando escritura estructurada dentro de Holded
+- carril B: `Isaak Universal`, producto separado y de pago con acceso a fuentes oficiales
+
+Impacto practico:
+
+- `Isaak for Holded` sigue siendo la experiencia limitada, gratuita dentro del flujo revisado y centrada en Holded
+- el futuro `Isaak` universal sera una experiencia separada y de pago
+- las capacidades de web oficial deben evolucionar en ese producto separado, no en la submission actual de Holded
+- las nuevas escrituras estructuradas de Holded solo se planifican para despues de la aprobacion de OpenAI
+
+## Fase 2 del conector Holded tras aprobacion
+
+Una vez aprobada la app actual, la Fase 2 del conector directo ChatGPT con Holded puede abrir escritura estructurada por olas.
+
+Primera ola:
+
+- crear cuentas contables
+- crear asientos contables
+
+Segunda ola:
+
+- otras acciones estructuradas sobre Holded, por familias y con QA independiente
+
+Reglas:
+
+- no activar Fase 2 antes de la aprobacion
+- mantener confirmacion explicita para escritura
+- desplegar por familias funcionales, no como apertura total del catalogo mutativo
+- mantener separado este carril del producto `Isaak Universal`
+
 ## Que debe quedar claro en producto
 
 `Isaak` es un unico asistente fiscal y contable.
@@ -186,6 +227,44 @@ Para la version publica objetivo:
 
 Este flujo no sustituye el dashboard. Lo complementa.
 
+Nota operativa para assets internos:
+
+- existe un flag temporal `capture=1` sobre `/onboarding/holded` para congelar la pantalla final y sacar capturas internas
+- ese flag no debe presentarse como parte del recorrido normal del reviewer
+- en el flujo normal, la vuelta a ChatGPT sigue siendo automatica
+
+## Capturas recomendadas para submission
+
+Orden recomendado:
+
+1. Pantalla puente de acceso en `app.verifactu.business/login`
+2. Pantalla de acceso Holded en `holded.verifactu.business/auth/holded`
+3. Pantalla de preparacion en `app.verifactu.business/onboarding/holded`
+4. Pantalla de API key en `app.verifactu.business/onboarding/holded`
+5. Pantalla final congelada en `app.verifactu.business/onboarding/holded?...&capture=1`
+
+Texto visible recomendado por pantalla:
+
+1. `Preparando tu conexion`
+2. `Bienvenido de nuevo.` o `Crea tu acceso y conecta Holded sin friccion.`
+3. `Preparando tu conexion con Holded`
+4. `Activa tu conexion con Holded`
+5. `Tu conexion ya esta lista. Te devolvemos a ChatGPT.`
+
+Lo que no debe verse:
+
+- API key real
+- correo personal o tenant no destinado a review
+- barras del navegador con query params sensibles
+- devtools, extensiones o mensajes tecnicos
+- errores temporales de redireccion o de sesion
+
+Notas de presentacion:
+
+- las pantallas de carga y redireccion para review deben verse completas en desktop y movil, sin recortes verticales innecesarios
+- el estado visual ya no usa la composicion anterior de tres logos; para review se esperan tarjetas estaticas, calmadas y legibles
+- si necesitas la pantalla final fija para hacer varias capturas, usa `capture=1` solo durante la sesion de captura
+
 ## Checklist previo a submission en Platform
 
 1. Cuenta de OpenAI Platform verificada como persona o empresa.
@@ -197,9 +276,18 @@ Este flujo no sustituye el dashboard. Lo complementa.
 7. QA manual en ChatGPT web y, cuando aplique, en mobile.
 8. Flujo real `Conectar con cuenta -> onboarding -> conectar Holded -> volver a ChatGPT` pasando en produccion.
 9. Release notes claras para la version que se envie.
+10. Capturas de submission rehechas con el flujo visual actual y sin datos sensibles visibles.
 
 ## Referencias operativas
 
 - Arquitectura compartida: `docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md`
 - Checklist de deploy y QA: `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
 - Runbook de despliegue: `docs/ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md`
+- Plan de la primera semana post-aprobacion: `docs/product/ISAAK_POST_APPROVAL_WEEK1_PLAN_2026.md`
+- Alcance API y Fase 2 Holded: `docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md`
+- Matriz detallada de Fase 2 Holded: `docs/product/ISAAK_HOLDED_PHASE2_MATRIX_2026.md`
+- Backlog ejecutable de Fase 2 Holded: `docs/product/ISAAK_HOLDED_PHASE2_BACKLOG_2026.md`
+- Contrato de producto universal: `docs/product/ISAAK_UNIVERSAL_PRODUCT_CONTRACT_2026.md`
+- Roadmap tecnico universal: `docs/engineering/ai/ISAAK_UNIVERSAL_TECHNICAL_ROADMAP_2026.md`
+- Sprint plan universal: `docs/engineering/ai/ISAAK_UNIVERSAL_SPRINT_PLAN_2026.md`
+- Tickets ejecutables de Isaak Universal: `docs/engineering/ai/ISAAK_UNIVERSAL_TICKETS_2026.md`

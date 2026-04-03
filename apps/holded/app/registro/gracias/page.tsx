@@ -39,7 +39,7 @@ export default async function HoldedRegistrationThanksPage({ searchParams }: Pag
             <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
               {verified
                 ? 'Ya puedes entrar y seguir con la conexion de Holded y tu dashboard.'
-                : 'Te hemos enviado un correo de confirmacion y otro con los siguientes pasos para conectar Holded sin perderte.'}
+                : 'Te hemos enviado un correo de confirmacion y otro de bienvenida para que puedas retomar la conexion de Holded sin perderte.'}
             </p>
             {email ? (
               <p className="mt-3 text-sm font-semibold text-slate-900">

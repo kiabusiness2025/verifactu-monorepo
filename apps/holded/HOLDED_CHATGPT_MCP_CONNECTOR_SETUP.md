@@ -138,6 +138,21 @@ These are the exact values and explanations to paste when OpenAI asks for tool a
 - `Why Destructive is false`
   - `It is read-only and has no side effects.`
 
+#### `holded_get_contact`
+
+- `Read Only`
+  - `Yes`
+- `Why Read Only is true`
+  - `This tool retrieves one existing Holded contact by id. It does not update, merge, or delete contacts.`
+- `Open World`
+  - `No`
+- `Why Open World is false`
+  - `It only reads data from the authenticated tenant's connected Holded account and does not browse external sources.`
+- `Destructive`
+  - `No`
+- `Why Destructive is false`
+  - `It is a read-only lookup with no side effects.`
+
 #### `holded_list_accounts`
 
 - `Read Only`
@@ -152,6 +167,21 @@ These are the exact values and explanations to paste when OpenAI asks for tool a
   - `No`
 - `Why Destructive is false`
   - `It performs no write or delete action.`
+
+#### `holded_list_daily_ledger`
+
+- `Read Only`
+  - `Yes`
+- `Why Read Only is true`
+  - `This tool lists daily ledger entries already stored in Holded. It does not create, edit, or delete accounting entries.`
+- `Open World`
+  - `No`
+- `Why Open World is false`
+  - `It is limited to the tenant's authorized Holded integration and cannot browse the web or external documentation.`
+- `Destructive`
+  - `No`
+- `Why Destructive is false`
+  - `It is a pure read operation without side effects.`
 
 #### `holded_list_bookings`
 
@@ -320,6 +350,14 @@ Why Open World is False: It only accesses the tenant's connected Holded account 
 Destructive: No
 Why Destructive is False: It is read-only and has no side effects.
 
+holded_get_contact
+Read Only: Yes
+Why Read Only is True: This tool retrieves one existing Holded contact by id. It does not update, merge, or delete contacts.
+Open World: No
+Why Open World is False: It only reads data from the authenticated tenant's connected Holded account and does not browse external sources.
+Destructive: No
+Why Destructive is False: It is a read-only lookup with no side effects.
+
 holded_list_accounts
 Read Only: Yes
 Why Read Only is True: This tool lists accounting accounts available in Holded. It does not modify the chart of accounts.
@@ -327,6 +365,14 @@ Open World: No
 Why Open World is False: It is limited to the tenant's authorized Holded integration.
 Destructive: No
 Why Destructive is False: It performs no write or delete action.
+
+holded_list_daily_ledger
+Read Only: Yes
+Why Read Only is True: This tool lists daily ledger entries already stored in Holded. It does not create, edit, or delete accounting entries.
+Open World: No
+Why Open World is False: It is limited to the tenant's authorized Holded integration and cannot browse the web or external documentation.
+Destructive: No
+Why Destructive is False: It is a pure read operation without side effects.
 
 holded_list_bookings
 Read Only: Yes
@@ -368,6 +414,36 @@ Why Open World is False: Even though it writes data, it is still scoped to the a
 Destructive: No
 Why Destructive is False: It creates a draft and does not delete or irreversibly destroy existing data. It also requires explicit confirmation via confirm = true.
 ```
+
+## Modo temporal de captura para review
+
+Existe un modo temporal solo para generar capturas internas del flujo ChatGPT -> Holded.
+
+Regla:
+
+- no forma parte del recorrido normal del reviewer
+- no debe enlazarse desde la landing ni desde copy publico
+- no debe quedarse activado por defecto en demos o walkthroughs de produccion
+
+Como usarlo:
+
+1. entra en el flujo normal hasta que Verifactu te mande a `https://app.verifactu.business/onboarding/holded?...`
+2. anade `capture=1` a esa URL concreta
+3. si el usuario pasa por `/login`, el flag se conserva automaticamente
+4. al final del onboarding, la pantalla final queda congelada con el boton `Continuar` en vez de redirigir sola
+
+Uso esperado:
+
+- sirve para capturar la pantalla final sin prisa
+- mantiene el mismo copy y CTA del flujo real
+- deja las pantallas de carga y transicion en tarjetas estaticas mas sobrias
+
+No ensenar en capturas:
+
+- query params completos (`onboarding_token`, `capture`, ids internos)
+- API keys reales
+- correos o empresas que no sean de review
+- barras del navegador, extensiones o devtools
 
 ## Resumen ejecutivo
 
@@ -490,12 +566,24 @@ Tools MCP actuales:
 - `holded_list_invoices`
 - `holded_get_invoice`
 - `holded_list_contacts`
+- `holded_get_contact`
 - `holded_list_accounts`
+- `holded_list_daily_ledger`
 - `holded_list_bookings`
 - `holded_list_projects`
 - `holded_get_project`
 - `holded_list_project_tasks`
 - `holded_create_invoice_draft`
+
+Limites operativos importantes:
+
+- `holded_list_daily_ledger` requiere `startTimestamp` y `endTimestamp`; no se publica ya como consulta abierta sin rango.
+- esta restriccion aplica solo a este integrador MCP, no al runtime general de Isaak
+- el conector no tiene tools de navegador, buscador ni fetch web generico
+- a traves de este integrador, ChatGPT no puede consultar dinamicamente Holded API docs, Holded Academy ni portales oficiales externos como AEAT, SEPE o Seguridad Social
+- si se habilita acceso web oficial, debe vivir en el chat principal de Isaak y no en este conector MCP de Holded
+- hasta la aprobacion de OpenAI, no ampliar este conector con nuevas capacidades de asesor universal salvo fixes criticos para review, onboarding o seguridad
+- la version futura de pago con asesor universal y acceso a fuentes oficiales debe salir como otro producto/conector con OAuth y contrato publico separados
 
 ## Anotaciones MCP y justificacion
 
@@ -539,6 +627,17 @@ Importante para OpenAI:
 - `destructiveHint = false`
   - no cambia datos ni ejecuta acciones irreversibles
 
+### `holded_get_contact`
+
+- `readOnlyHint = true`
+  - recupera un contacto concreto por id
+  - no modifica ni elimina el contacto
+- `openWorldHint = false`
+  - sigue acotada a la cuenta Holded conectada del tenant autenticado
+  - no navega internet ni consulta documentacion externa
+- `destructiveHint = false`
+  - la operacion es de consulta, sin efectos laterales
+
 ### `holded_list_accounts`
 
 - `readOnlyHint = true`
@@ -548,6 +647,20 @@ Importante para OpenAI:
   - solo lee datos internos de la cuenta Holded conectada
 - `destructiveHint = false`
   - no hay ninguna mutacion
+
+### `holded_list_daily_ledger`
+
+- `readOnlyHint = true`
+  - lista apuntes ya existentes del libro diario
+  - no crea ni altera asientos contables
+- `openWorldHint = false`
+  - solo usa la conexion Holded del tenant autenticado
+  - no puede navegar internet ni consultar fuentes externas abiertas
+- `destructiveHint = false`
+  - es una consulta pura
+- Requisito operativo actual:
+  - exige `startTimestamp` y `endTimestamp`
+  - el endpoint productivo devuelve `400` si se intenta consultar sin rango
 
 ### `holded_list_bookings`
 
@@ -608,7 +721,9 @@ Si el formulario de OpenAI muestra nombres traducidos automaticamente, este es e
 - `facturas_lista_retenidas` -> `holded_list_invoices`
 - `retenido_obtener_factura` -> `holded_get_invoice`
 - `lista_de_contactos_retenida` -> `holded_list_contacts`
+- `holded_get_contact` -> `holded_get_contact`
 - `cuentas_de_lista_mantenidas` -> `holded_list_accounts`
+- `libro_diario_lista_retenida` -> `holded_list_daily_ledger`
 - `reservas_lista_retenidas` -> `holded_list_bookings`
 - `proyectos_lista_sostenidos` -> `holded_list_projects`
 - `holded_get_project` -> `holded_get_project`
@@ -677,6 +792,30 @@ Esperado:
 - el token endpoint usa `none` como metodo de autenticacion del cliente
 - el registro dinamico devuelve un cliente publico sin secreto
 - el conector depende de que el usuario ya tenga Holded conectado en Verifactu
+
+## Fase 2 tras aprobacion de OpenAI
+
+Esta fase no se debe activar antes de que OpenAI apruebe la version limitada actual.
+
+Objetivo:
+
+- ampliar el conector directo ChatGPT con Holded hacia escritura estructurada sobre datos de Holded
+
+Primera ola prevista:
+
+- crear cuentas contables
+- crear asientos contables
+
+Segunda ola prevista:
+
+- otras acciones estructuradas sobre Holded, activadas por familias y con QA propio
+
+Reglas operativas:
+
+- mantener confirmacion explicita antes de cada escritura
+- desplegar por familias funcionales, no abrir toda la superficie mutativa de una vez
+- seguir separados del roadmap de `Isaak Universal`
+- no mezclar esta Fase 2 con acceso web oficial abierto
 
 ## Errores tipicos
 

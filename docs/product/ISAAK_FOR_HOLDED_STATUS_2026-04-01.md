@@ -220,6 +220,131 @@ Falta materializar la cuenta final que se entregara al reviewer con todos los pr
 
 Sigue pendiente cerrar pruebas reales end-to-end y la grabacion final con la URL publica y el estado final de la cuenta de review.
 
+## Actualizacion adicional 2026-04-03
+
+Durante el siguiente bloque se cerraron cuatro ajustes operativos que ya estaban afectando a onboarding, sesion y contrato publico del conector.
+
+### 1. Identidad interna de usuario para memberships y tenant-switch
+
+Se normalizo la regla de identidad compartida:
+
+- `session.uid` representa el `authSubject` de Firebase y no debe usarse directamente como `User.id` SQL
+- `memberships`, `user_preferences` y `tenant-switch` ya resuelven primero el id interno real del usuario
+- con esto se corrigio el falso `403 no active membership for tenant` que aparecia tras onboarding y cambio de tenant
+
+Resultado:
+
+- onboarding y activacion de tenant ya no rompen por mezclar `authSubject` con ids SQL internos
+
+### 2. Logout real del dashboard/app
+
+Se alineo el cierre de sesion del dashboard con el modelo real de autenticacion:
+
+- Firebase `signOut()` ya no se considera suficiente por si solo
+- el flujo correcto limpia tambien la cookie `__session` desde `/api/auth/logout` en el mismo origen
+- con esto se evita quedar aparentemente deslogueado en cliente mientras middleware y backend siguen viendo sesion activa
+
+### 3. Superficie publica real del preset `openai_review_v2`
+
+Se reviso el contrato publico real del conector y se fijo como referencia operativa:
+
+- el preset publico por defecto sigue siendo `openai_review_v2`
+- el catalogo publico validado queda en 11 tools:
+  - `holded_list_invoices`
+  - `holded_get_invoice`
+  - `holded_list_contacts`
+  - `holded_get_contact`
+  - `holded_list_accounts`
+  - `holded_list_daily_ledger`
+  - `holded_list_bookings`
+  - `holded_list_projects`
+  - `holded_get_project`
+  - `holded_list_project_tasks`
+  - `holded_create_invoice_draft`
+- `scopes_supported` sigue siendo mas amplio que `default_scopes`, asi que el copy publico no debe prometer mas capacidad que la expuesta por el preset activo
+- la expresion correcta para las ausencias actuales es `capacidades no habilitadas en este canal publico ahora mismo`
+
+### 4. Libro diario y alcance de red
+
+Tambien se cerro el desajuste del tool de libro diario y se aclaro el limite de red del integrador:
+
+- `holded_list_daily_ledger` mantiene el scope `holded.accounts.read`, pero ahora exige `startTimestamp` y `endTimestamp`
+- el motivo es operativo: el endpoint productivo devuelve `400` cuando se consulta sin rango en tenants reales
+- el integrador MCP de Holded sigue siendo `closed-world`
+- esta restriccion aplica solo al conector MCP, no al chat principal completo
+- el requisito correcto para el chat principal es acceso a Holded Academy y a paginas oficiales de AEAT, SEPE, Seguridad Social y otros organismos publicos espanoles
+- en el runtime actual y en el historial directo auditado no se encontro todavia navegador, buscador ni fetch web generico para ese acceso oficial
+- por tanto el integrador no puede consultar dinamicamente esas fuentes y el acceso web oficial sigue requiriendo una implementacion explicita en el chat principal
+
+### 5. Decision estrategica para despues de la review
+
+Se fija como decision de producto y de roadmap:
+
+- primero se espera la aprobacion de OpenAI sobre la version limitada actual de `Isaak for Holded`
+- hasta entonces el conector en review no debe ensancharse con capacidades de asesor universal, acceso web oficial amplio o nuevos contratos comerciales dentro del flujo revisado
+- mientras la review siga abierta, solo se admiten fixes criticos de onboarding, seguridad, OAuth, estabilidad o coherencia del contrato publico ya prometido
+- despues de la aprobacion se abren dos lineas separadas
+- linea 1: Fase 2 del conector directo `Isaak for Holded`, ampliando escritura estructurada sobre datos de Holded
+- linea 2: `Isaak Universal`, app o conector separado con API y OAuth propios, acceso a fuentes oficiales y modelo de pago
+- la version futura universal no debe reciclar sin mas el conector actual de Holded; debe tener contrato de producto, pricing, mensaje comercial y superficie tecnica diferenciados
+- la version limitada de Holded sigue siendo la experiencia estrecha y revisable; la version universal sera una oferta aparte
+
+### 6. Fase 2 del conector directo Holded tras aprobacion
+
+Se documenta ya la Fase 2 que solo deberia arrancar despues de la aprobacion de OpenAI.
+
+Objetivo:
+
+- abrir escritura estructurada sobre Holded desde ChatGPT sin romper el contrato claro del conector
+
+Primera ola prevista:
+
+- crear cuentas contables
+- crear asientos contables
+
+Segunda ola prevista:
+
+- otras acciones estructuradas por familias, con despliegue progresivo y QA por dominio
+
+Reglas de esta Fase 2:
+
+- no activar antes de la aprobacion
+- confirmar explicitamente antes de escribir
+- desplegar por familias funcionales, no como apertura total sin control
+- mantener este carril separado del roadmap de `Isaak Universal`
+
+### 7. Preparacion tecnica no publica ya realizada para la ola contable
+
+Sin cambiar el preset publico por defecto ni ampliar la surface en review, hoy ha quedado preparada la base tecnica inicial de la ola 2.1.
+
+Implementado ya en codigo:
+
+- existe el preset intermedio `holded_phase2_accounting`
+- ese preset equivale a `openai_review_v2` mas `holded.accounts.write`
+- `MCP_PUBLIC_SCOPE_PRESET=holded_phase2_accounting` ya es aceptado por la capa OAuth/MCP
+- la discovery publica `tools/list` ya tiene cobertura de test para mostrar `holded_create_accounting_account` y `holded_create_daily_ledger_entry` solo cuando ese preset este activo
+- `openai_review_v2` sigue intacto y continua siendo el preset publico por defecto
+
+Archivos tocados en esta preparacion:
+
+- `apps/app/lib/integrations/holdedMcpScopes.ts`
+- `apps/app/lib/integrations/holdedMcpScopes.test.ts`
+- `apps/app/lib/oauth/mcp.ts`
+- `apps/app/lib/oauth/mcp.test.ts`
+- `apps/app/app/api/mcp/holded/route.test.ts`
+
+Estado de validacion al cierre de hoy:
+
+- los archivos editados no reportan errores estaticos
+- la validacion focalizada con Jest no pudo cerrarse por un bloqueo de configuracion a nivel repo en `apps/api/jest.config.cjs`
+- el error observado fue la validacion de `extensionsToTreatAsEsm: ['.js']`, por lo que el bloqueo no apunta a esta preparacion del preset en si
+
+Pendiente para retomar mas adelante:
+
+- H2A-004 endurecer `holded_create_accounting_account`
+- H2A-005 endurecer `holded_create_daily_ledger_entry`
+- H2A-006 smoke y QA real de la ola contable
+
 ## Siguiente bloque recomendado
 
 1. crear y verificar la cuenta de review final
@@ -234,5 +359,13 @@ Sigue pendiente cerrar pruebas reales end-to-end y la grabacion final con la URL
 - `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
 - `docs/product/DEMO_CAPTURE_README.md`
 - `docs/product/ISAAK_FOR_HOLDED_STATUS_2026-03-19.md`
+- `docs/product/ISAAK_POST_APPROVAL_WEEK1_PLAN_2026.md`
+- `docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md`
+- `docs/product/ISAAK_HOLDED_PHASE2_MATRIX_2026.md`
+- `docs/product/ISAAK_HOLDED_PHASE2_BACKLOG_2026.md`
+- `docs/product/ISAAK_UNIVERSAL_PRODUCT_CONTRACT_2026.md`
+- `docs/engineering/ai/ISAAK_UNIVERSAL_TECHNICAL_ROADMAP_2026.md`
+- `docs/engineering/ai/ISAAK_UNIVERSAL_SPRINT_PLAN_2026.md`
+- `docs/engineering/ai/ISAAK_UNIVERSAL_TICKETS_2026.md`
 - `apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md`
 - `apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md`

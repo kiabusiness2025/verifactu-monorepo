@@ -257,6 +257,39 @@ describe('holdedMcpTools', () => {
     ).rejects.toThrow('payload.lines or payload.products must be a non-empty array');
   });
 
+  it('requires a bounded timestamp range for daily ledger listing', async () => {
+    await expect(
+      callHoldedMcpTool('demo-key', 'holded_list_daily_ledger', {
+        page: 1,
+        endTimestamp: 1_704_153_599,
+      })
+    ).rejects.toThrow('startTimestamp is required');
+
+    await expect(
+      callHoldedMcpTool('demo-key', 'holded_list_daily_ledger', {
+        page: 1,
+        startTimestamp: 1_704_067_200,
+      })
+    ).rejects.toThrow('endTimestamp is required');
+  });
+
+  it('passes the required timestamp range to the daily ledger adapter', async () => {
+    mockedHoldedAdapter.listDailyLedger.mockResolvedValue([{ id: 'entry-1' }]);
+
+    const result = await callHoldedMcpTool('demo-key', 'holded_list_daily_ledger', {
+      page: 3,
+      startTimestamp: 1_704_067_200,
+      endTimestamp: 1_704_153_599,
+    });
+
+    expect(mockedHoldedAdapter.listDailyLedger).toHaveBeenCalledWith('demo-key', {
+      page: 3,
+      starttmp: 1_704_067_200,
+      endtmp: 1_704_153_599,
+    });
+    expect(result).toEqual({ items: [{ id: 'entry-1' }] });
+  });
+
   it('routes list document calls through the shared Holded adapter', async () => {
     mockedHoldedAdapter.listDocuments.mockResolvedValue([{ id: 'doc-1' }]);
 

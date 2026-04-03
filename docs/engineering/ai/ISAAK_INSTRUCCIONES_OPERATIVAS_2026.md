@@ -149,16 +149,28 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
 
 - Ruta: `POST /api/mcp/holded` (JSON-RPC 2.0 sobre HTTP).
 - Auth: Bearer con token OAuth propio de Verifactu.
-- Aislamiento actual: el canal OAuth de ChatGPT ya no hace fallback a la sesion web del dashboard para resolver la API key de Holded.
-- Efecto practico: ChatGPT y dashboard/Isaak ya tienen independencia de autenticacion por canal.
-- Limite actual: ambos canales siguen compartiendo la misma conexion Holded a nivel tenant.
-- Siguiente paso recomendado para independencia total real: guardar conexiones Holded separadas por canal, por ejemplo `chatgpt` y `dashboard`, con resolucion y revocacion independientes.
+- Preset publico por defecto: `openai_review_v2`.
+- Aislamiento actual: el canal OAuth de ChatGPT resuelve su conexion Holded por `channel_key = 'chatgpt'` y ya no hace fallback a la sesion web del dashboard.
+- Efecto practico: dashboard e integrador ChatGPT ya pueden mantener conexiones Holded separadas por canal.
+- Compatibilidad legacy: el dashboard todavia puede leer la integracion antigua de `tenant_integrations` mientras exista migracion pendiente; ChatGPT no.
+- Alcance de red del conector: el integrador MCP Holded es `closed-world`; no navega internet, no hace busqueda web y no consulta dinamicamente Holded API docs ni Holded Academy.
+- Alcance de red del chat principal: el requisito de producto es acceso a fuentes oficiales relevantes, incluyendo Holded Academy y paginas oficiales de AEAT, SEPE, Seguridad Social y otros organismos publicos espanoles.
+- Estado actual del runtime auditado: no existe todavia una tool de navegador o busqueda web generica para ese acceso oficial.
+- Regla de evolucion: hasta que OpenAI apruebe la review actual, este conector debe quedarse limitado al contrato `openai_review_v2` salvo fixes criticos.
+- Regla tras aprobacion: la Fase 2 del conector Holded puede ampliar escritura estructurada dentro del dominio Holded por olas controladas, empezando por cuentas contables y asientos.
+- Regla de producto futuro: el asesor universal con acceso web oficial, API propia y monetizacion debe implementarse como una app/conector separado, no como ensanche informal del conector Holded en review.
+- Scopes soportados vs expuestos: `scopes_supported` puede ser mas amplio que `default_scopes`; el copy publico debe describir solo la superficie del preset activo.
 - Tools expuestas:
   - `holded_list_invoices` — listar facturas (readOnly).
   - `holded_get_invoice` — detalle de factura (readOnly).
   - `holded_list_contacts` — listar contactos (readOnly).
+  - `holded_get_contact` — detalle de contacto (readOnly).
   - `holded_list_accounts` — listar cuentas contables (readOnly).
-  - `holded_list_daily_ledger` — listar libro diario (readOnly).
+  - `holded_list_daily_ledger` — listar libro diario (readOnly, exige `startTimestamp` y `endTimestamp`).
+  - `holded_list_bookings` — listar bookings CRM (readOnly).
+  - `holded_list_projects` — listar proyectos (readOnly).
+  - `holded_get_project` — detalle de proyecto (readOnly).
+  - `holded_list_project_tasks` — listar tareas de proyecto (readOnly).
   - `holded_create_invoice_draft` — crear borrador con confirmación explícita.
 - Metadata OAuth en `/.well-known/oauth-authorization-server` y `/.well-known/oauth-protected-resource/api/mcp/holded`.
 - Documentación extendida: `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md`.

@@ -70,6 +70,21 @@ Cuando exista duda sobre el modelo compartido, empieza por:
 
 Ese schema define la referencia operativa que consumen `apps/isaak`, `apps/holded`, `apps/admin` y las capas compartidas del monorepo.
 
+## Invariantes operativas recientes
+
+- `session.uid` representa el `authSubject` o Firebase UID, no el `User.id` SQL interno.
+- Cualquier acceso a `memberships`, `user_preferences` o `tenant-switch` debe resolver antes el id interno del usuario via `authSubject`.
+- El canal `chatgpt` ya resuelve conexiones Holded por `channel_key` y no hace fallback a la sesion web del dashboard ni a la integracion legacy de `tenant_integrations`.
+- El logout real de `apps/app` no termina en Firebase `signOut()`; tambien debe limpiar la cookie `__session` en el mismo origen via `/api/auth/logout`.
+- El integrador MCP de Holded es `closed-world`: solo ejecuta las tools catalogadas contra la cuenta Holded conectada del tenant.
+- Esa restriccion aplica solo al conector MCP de Holded; no describe por si sola todo el runtime de Isaak.
+- El chat principal de `apps/app` debe reservar la web abierta para fuentes oficiales relevantes del producto: Holded Academy y paginas oficiales de AEAT, SEPE, Seguridad Social y otros organismos publicos espanoles.
+- En el runtime auditado no existe todavia una tool de navegador o busqueda web generica para ese acceso oficial.
+- En el preset publico `openai_review_v2`, `holded_list_daily_ledger` sigue expuesta bajo `holded.accounts.read`, pero ahora exige `startTimestamp` y `endTimestamp` porque el endpoint productivo rechaza consultas sin rango.
+- Hasta que OpenAI apruebe la version limitada de `Isaak for Holded`, el conector actual debe mantenerse estrecho: no ampliar scopes, no mezclar acceso web abierto y no convertir esta surface en asesor universal salvo fixes criticos.
+- Tras la aprobacion de OpenAI, el conector Holded puede abrir una Fase 2 de escritura estructurada dentro del propio dominio Holded, empezando por cuentas contables, asientos y otras acciones mutativas por familias.
+- Si se lanza un asesor universal con acceso web oficial y modelo de pago, debe salir como una app/conector separado con su propio contrato de producto, OAuth, pricing y superficie de tools.
+
 ## Que no debe vivir aqui
 
 - landing especifica de Holded

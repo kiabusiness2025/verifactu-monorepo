@@ -66,6 +66,7 @@ function isHoldedMcpScopePreset(value: string): value is HoldedMcpScopePreset {
     value === 'full' ||
     value === 'readonly' ||
     value === 'invoicing_accounting' ||
+    value === 'holded_phase2_accounting' ||
     value === 'openai_review_v2'
   );
 }

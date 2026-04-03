@@ -187,6 +187,20 @@ function listSchema(extraProperties: Record<string, unknown> = {}) {
   });
 }
 
+function listSchemaWithRequired(
+  extraProperties: Record<string, unknown> = {},
+  required: string[] = []
+) {
+  return buildSchema(
+    {
+      page: pageProperty,
+      limit: limitProperty,
+      ...extraProperties,
+    },
+    required
+  );
+}
+
 function simpleSchema(extraProperties: Record<string, unknown> = {}, required: string[] = []) {
   return buildSchema(extraProperties, required);
 }
@@ -399,6 +413,14 @@ function optionalUnixTimestamp(input: Record<string, unknown>, key: string) {
   const value = input[key];
   if (value === undefined || value === null || value === '') {
     return undefined;
+  }
+  return normalizeUnixTimestamp(value, key);
+}
+
+function requiredUnixTimestamp(input: Record<string, unknown>, key: string) {
+  const value = input[key];
+  if (value === undefined || value === null || value === '') {
+    throw new Error(`${key} is required`);
   }
   return normalizeUnixTimestamp(value, key);
 }
@@ -1256,8 +1278,8 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   async holded_list_daily_ledger(apiKey, input) {
     const items = await holdedAdapter.listDailyLedger(apiKey, {
       page: readPage(input),
-      starttmp: optionalUnixTimestamp(input, 'startTimestamp'),
-      endtmp: optionalUnixTimestamp(input, 'endTimestamp'),
+      starttmp: requiredUnixTimestamp(input, 'startTimestamp'),
+      endtmp: requiredUnixTimestamp(input, 'endTimestamp'),
     });
     return { items };
   },
@@ -2070,11 +2092,14 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_daily_ledger',
     'List daily ledger entries in Holded',
-    'List daily ledger entries from Holded. Use timestamps when you need a bounded accounting window.',
-    listSchema({
-      startTimestamp: unixTimestampProperty,
-      endTimestamp: unixTimestampProperty,
-    })
+    'List daily ledger entries from Holded for a bounded accounting window. startTimestamp and endTimestamp are required because this endpoint rejects unbounded requests in production tenants.',
+    listSchemaWithRequired(
+      {
+        startTimestamp: unixTimestampProperty,
+        endTimestamp: unixTimestampProperty,
+      },
+      ['startTimestamp', 'endTimestamp']
+    )
   ),
   writeTool(
     'holded_create_daily_ledger_entry',

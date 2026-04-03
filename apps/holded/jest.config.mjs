@@ -6,7 +6,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const createJestConfig = nextJest({ dir: __dirname });
 
-/** @type {import('jest').Config} */
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-node',

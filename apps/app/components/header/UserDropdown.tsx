@@ -1,40 +1,61 @@
-"use client";
-import Image from "next/image";
-import Link from "next/link";
-import React, { useState } from "react";
-import { Dropdown } from "@verifactu/ui";
+'use client';
+
+import Link from 'next/link';
+import React, { useState } from 'react';
+import { Dropdown } from '@verifactu/ui';
+import { useAuth } from '@/hooks/useAuth';
+import { getUserFirstName, getUserFullName, getUserInitials } from '@/lib/getUserName';
+
+const PROFILE_HREF = '/dashboard/settings?tab=profile';
+const SETTINGS_HREF = '/dashboard/settings?tab=general';
+const SUPPORT_HREF = 'mailto:soporte@verifactu.business';
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const { user, loading, signOut } = useAuth();
 
-function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
-  e.stopPropagation();
-  setIsOpen((prev) => !prev);
-}
+  const firstName = loading ? 'Cuenta' : getUserFirstName(user);
+  const fullName = loading ? 'Cargando cuenta...' : getUserFullName(user);
+  const initials = getUserInitials(user);
+  const email = user?.email?.trim() || 'Sin email';
+
+  function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    e.stopPropagation();
+    setIsOpen((prev) => !prev);
+  }
 
   function closeDropdown() {
     setIsOpen(false);
   }
+
+  async function handleSignOut() {
+    setIsSigningOut(true);
+    closeDropdown();
+
+    try {
+      await signOut();
+    } finally {
+      setIsSigningOut(false);
+    }
+  }
+
   return (
     <div className="relative">
       <button
-        onClick={toggleDropdown} 
-        className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
+        type="button"
+        onClick={toggleDropdown}
+        className="dropdown-toggle flex items-center text-gray-700 dark:text-gray-400"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <Image
-            width={44}
-            height={44}
-            src="/images/user/owner.jpg"
-            alt="User"
-          />
+        <span className="mr-3 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#002060] text-sm font-semibold text-white">
+          {initials}
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Musharof</span>
+        <span className="mr-1 block font-medium text-theme-sm">{firstName}</span>
 
         <svg
-          className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
+          className={`stroke-gray-500 transition-transform duration-200 dark:stroke-gray-400 ${
+            isOpen ? 'rotate-180' : ''
           }`}
           width="18"
           height="20"
@@ -59,19 +80,19 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            Musharof Chowdhury
+            {fullName}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            randomuser@pimjo.com
+            {email}
           </span>
         </div>
 
-        <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
+        <ul className="flex flex-col gap-1 border-b border-gray-200 pt-4 pb-3 dark:border-gray-800">
           <li>
             <Link
-              href="/profile"
+              href={PROFILE_HREF}
               onClick={closeDropdown}
-              className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              className="group flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-gray-700 text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg
                 className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
@@ -88,14 +109,14 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
                   fill=""
                 />
               </svg>
-              Edit profile
+              Editar perfil
             </Link>
           </li>
           <li>
             <Link
-              href="/profile"
+              href={SETTINGS_HREF}
               onClick={closeDropdown}
-              className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              className="group flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-gray-700 text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg
                 className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
@@ -112,14 +133,14 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
                   fill=""
                 />
               </svg>
-              Account settings
+              Ajustes de cuenta
             </Link>
           </li>
           <li>
-            <Link
-              href="/profile"
+            <a
+              href={SUPPORT_HREF}
               onClick={closeDropdown}
-              className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              className="group flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-gray-700 text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg
                 className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
@@ -136,13 +157,15 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
                   fill=""
                 />
               </svg>
-              Support
-            </Link>
+              Contactar soporte
+            </a>
           </li>
         </ul>
-        <Link
-          href="/signin"
-          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+        <button
+          type="button"
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+          className="group mt-3 flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-gray-700 text-theme-sm hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-60 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <svg
             className="fill-gray-500 group-hover:fill-gray-700 dark:group-hover:fill-gray-300"
@@ -159,8 +182,8 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
               fill=""
             />
           </svg>
-          Sign out
-        </Link>
+          {isSigningOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+        </button>
       </Dropdown>
     </div>
   );

@@ -60,6 +60,21 @@ type HoldedApiErrorPayload = {
   message?: string;
 };
 
+function buildHoldedErrorMessage(
+  status: number,
+  payload: HoldedApiErrorPayload | null,
+  rawText: string
+) {
+  const bodyMessage =
+    payload?.error ||
+    payload?.message ||
+    (rawText.trim() ? rawText.trim().replace(/\s+/g, ' ').slice(0, 300) : null);
+
+  return bodyMessage
+    ? `Holded API request failed with status ${status}: ${bodyMessage}`
+    : `Holded API request failed with status ${status}`;
+}
+
 export type HoldedBinaryFile = {
   base64: string;
   contentType: string | null;
@@ -108,10 +123,7 @@ async function holdedRequest<T>(options: HoldedRequestOptions): Promise<T> {
     if (!response.ok) {
       const payload =
         parsed && typeof parsed === 'object' ? (parsed as HoldedApiErrorPayload) : null;
-      const message =
-        payload?.error ||
-        payload?.message ||
-        `Holded API request failed with status ${response.status}`;
+      const message = buildHoldedErrorMessage(response.status, payload, rawText);
       throw new Error(message);
     }
 

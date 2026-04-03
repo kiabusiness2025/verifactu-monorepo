@@ -88,4 +88,46 @@ describe('holdedMcpScopes', () => {
     expect(toolNames).not.toContain('holded_list_warehouse_stock');
     expect(toolNames).not.toContain('holded_create_contact_group');
   });
+
+  it('keeps holded_phase2_accounting aligned with review tools plus accounting writes', () => {
+    const scopes = getHoldedMcpScopePreset('holded_phase2_accounting');
+    const toolNames = getAllowedHoldedMcpToolNames(scopes);
+
+    expect(scopes).toEqual(
+      expect.arrayContaining([
+        'mcp.read',
+        'holded.invoices.read',
+        'holded.contacts.read',
+        'holded.accounts.read',
+        'holded.accounts.write',
+        'holded.crm.read',
+        'holded.projects.read',
+        'holded.invoices.write',
+      ])
+    );
+    expect(scopes).not.toContain('holded.documents.write');
+    expect(scopes).not.toContain('holded.contacts.write');
+    expect(scopes).not.toContain('holded.payments.write');
+
+    expect(toolNames).toEqual(
+      expect.arrayContaining([
+        'holded_list_invoices',
+        'holded_get_invoice',
+        'holded_list_contacts',
+        'holded_get_contact',
+        'holded_list_accounts',
+        'holded_list_daily_ledger',
+        'holded_list_bookings',
+        'holded_list_projects',
+        'holded_get_project',
+        'holded_list_project_tasks',
+        'holded_create_invoice_draft',
+        'holded_create_daily_ledger_entry',
+        'holded_create_accounting_account',
+      ])
+    );
+    expect(toolNames).not.toContain('holded_create_document');
+    expect(toolNames).not.toContain('holded_create_contact');
+    expect(toolNames).not.toContain('holded_pay_document');
+  });
 });
