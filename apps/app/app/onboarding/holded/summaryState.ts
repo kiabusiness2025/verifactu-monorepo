@@ -10,7 +10,6 @@ export type HoldedOnboardingSummary = {
 };
 
 export type HoldedOnboardingCompanyDraft = {
-  companyName: string;
   companyLegalName: string;
   companyTaxId: string;
   contactName: string;
@@ -27,13 +26,15 @@ export function createCompanyDraftFromSummary(
   summary: HoldedOnboardingSummary
 ): HoldedOnboardingCompanyDraft {
   const normalizedCompanyName = normalizeText(summary.companyName);
-  const hasRealCompany =
-    !!normalizedCompanyName && normalizedCompanyName.toLowerCase() !== 'tu empresa';
+  const normalizedCompanyLegalName = normalizeText(summary.companyLegalName);
+  const effectiveCompanyLegalName =
+    normalizedCompanyLegalName ||
+    (normalizedCompanyName && normalizedCompanyName.toLowerCase() !== 'tu empresa'
+      ? normalizedCompanyName
+      : null);
 
   return {
-    companyName: hasRealCompany ? normalizedCompanyName : '',
-    companyLegalName:
-      normalizeText(summary.companyLegalName) || (hasRealCompany ? normalizedCompanyName : ''),
+    companyLegalName: effectiveCompanyLegalName || '',
     companyTaxId: normalizeText(summary.companyTaxId) || '',
     contactName:
       normalizeText(summary.contactFullName) || normalizeText(summary.contactFirstName) || '',

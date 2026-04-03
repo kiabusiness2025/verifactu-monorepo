@@ -149,6 +149,9 @@ export default function HoldedOnboardingClient({
   const needsPostValidationCompanyStep = isChatgptEntry;
   const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
   const savingMessages = uiCopy.savingMessages;
+  const hasResolvedCompanyProfile =
+    companySetup.hasResolvedCompany &&
+    Boolean(summary.contactEmail || summary.companyEmail || summary.companyTaxId);
   const initialCompanyDraft = useMemo(() => createCompanyDraftFromSummary(summary), [summary]);
   const freshValidationSummary = useMemo(
     () => createSummaryForFreshApiValidation(summary),
@@ -156,7 +159,6 @@ export default function HoldedOnboardingClient({
   );
   const [apiKey, setApiKey] = useState('');
   const [resolvedSummary, setResolvedSummary] = useState(summary);
-  const [companyName, setCompanyName] = useState(initialCompanyDraft.companyName);
   const [companyLegalName, setCompanyLegalName] = useState(initialCompanyDraft.companyLegalName);
   const [companyTaxId, setCompanyTaxId] = useState(initialCompanyDraft.companyTaxId);
   const [contactName, setContactName] = useState(initialCompanyDraft.contactName);
@@ -273,7 +275,6 @@ export default function HoldedOnboardingClient({
   const applySummaryToCompanyForm = useCallback((nextSummary: HoldedOnboardingSummary) => {
     const nextDraft = createCompanyDraftFromSummary(nextSummary);
 
-    setCompanyName(nextDraft.companyName);
     setCompanyLegalName(nextDraft.companyLegalName);
     setCompanyTaxId(nextDraft.companyTaxId);
     setContactName(nextDraft.contactName);
@@ -479,8 +480,8 @@ export default function HoldedOnboardingClient({
   const handleCompanySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const normalizedCompanyName = normalizeText(companyName);
-    const normalizedLegalName = normalizeText(companyLegalName) || normalizedCompanyName;
+    const normalizedLegalName = normalizeText(companyLegalName);
+    const normalizedCompanyName = normalizedLegalName;
     const normalizedTaxId = normalizeText(companyTaxId).toUpperCase();
     const normalizedContactName = normalizeText(contactName);
     const normalizedContactEmail = normalizeText(contactEmail);
@@ -707,17 +708,6 @@ export default function HoldedOnboardingClient({
                   </p>
 
                   <form onSubmit={handleCompanySubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label className="block text-sm font-medium text-neutral-700">
-                      Nombre comercial
-                      <input
-                        type="text"
-                        value={companyName}
-                        onChange={(event) => setCompanyName(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="Tu empresa"
-                        autoComplete="organization"
-                      />
-                    </label>
                     <label className="block text-sm font-medium text-neutral-700">
                       Razon social
                       <input
