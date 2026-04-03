@@ -67,6 +67,25 @@ async function postWithSessionRetry(url: string, body: Record<string, unknown>) 
   return response;
 }
 
+export function buildHoldedReauthHref(input: { origin: string; pathname: string; search: string }) {
+  const loginUrl = new URL('/auth/holded', input.origin);
+  loginUrl.searchParams.set('source', 'holded_onboarding_retry');
+  loginUrl.searchParams.set('next', `${input.pathname}${input.search}`);
+  return `${loginUrl.pathname}${loginUrl.search}`;
+}
+
+function redirectToHoldedReauth() {
+  if (typeof window === 'undefined') return;
+
+  window.location.assign(
+    buildHoldedReauthHref({
+      origin: window.location.origin,
+      pathname: window.location.pathname,
+      search: window.location.search,
+    })
+  );
+}
+
 export default function OnboardingHoldedClient({
   sessionEmail = null,
 }: OnboardingHoldedClientProps) {
@@ -126,6 +145,11 @@ export default function OnboardingHoldedClient({
         channel,
       });
 
+      if (res.status === 401) {
+        redirectToHoldedReauth();
+        return;
+      }
+
       const data = (await res.json().catch(() => null)) as ValidationResponse | null;
 
       if (!res.ok) {
@@ -177,6 +201,11 @@ export default function OnboardingHoldedClient({
         validationToken: hasReusableValidationToken ? validationToken : undefined,
       });
 
+      if (res.status === 401) {
+        redirectToHoldedReauth();
+        return;
+      }
+
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
@@ -194,100 +223,67 @@ export default function OnboardingHoldedClient({
   };
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_42%,#f8fafc_100%)] px-4 py-8 text-slate-900">
-      <div className="mx-auto max-w-6xl">
-        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+    <main className="min-h-[100svh] bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_42%,#f8fafc_100%)] px-3 py-4 text-slate-900 sm:px-4 sm:py-8">
+      <div className="mx-auto max-w-5xl">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[0.88fr_1.12fr]">
+          <section className="order-2 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:order-1">
+            <div className="text-sm font-semibold text-slate-900">Si aun no la tienes</div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              La API key se crea una sola vez dentro de Holded y luego solo tienes que pegarla aqui.
+            </p>
+
+            <div className="mt-5 grid gap-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+                <span className="font-semibold text-slate-900">1.</span> Entra en Holded y abre
+                Configuracion.
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+                <span className="font-semibold text-slate-900">2.</span> Ve a Mas y despues a
+                Desarrolladores.
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+                <span className="font-semibold text-slate-900">3.</span> Crea una nueva API key,
+                copiala y pegala aqui.
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+              Necesitas un usuario Owner o Administrador y, segun Holded, la API no esta disponible
+              en el plan Free.
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <a
+                href={holdedApiGuideUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                Guia oficial de Holded
+              </a>
+              <Link
+                href="/onboarding/holded/help"
+                className="inline-flex items-center justify-center rounded-full border border-[#ff5460]/20 bg-[#fff5f6] px-4 py-2 text-sm font-semibold text-[#c53f4d] hover:bg-[#ffecee]"
+              >
+                Ayuda paso a paso
+              </Link>
+            </div>
+          </section>
+
+          <section className="order-1 rounded-[2rem] border border-[#ff5460]/15 bg-white p-5 shadow-[0_32px_90px_-48px_rgba(255,84,96,0.35)] sm:p-6 lg:order-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#ff5460]">
               Paso 2
             </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-              Conecta tu cuenta de Holded
+              Pega tu API key de Holded
             </h1>
-            <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
-              Asi podre ayudarte con tus ventas, gastos y facturas desde el primer momento.
+            <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+              La validamos al momento y, si todo esta bien, terminamos la conexion sin mas pasos
+              tecnicos.
             </p>
 
-            <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <KeyRound className="h-4 w-4 text-[#ff5460]" />
-                Como obtener tu API
-              </div>
-              <div className="mt-4 grid gap-3">
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                  <span className="font-semibold text-slate-900">1.</span>{' '}
-                  <a
-                    href="https://app.holded.com/login"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
-                  >
-                    Entra en Holded
-                  </a>
-                  .
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                  <span className="font-semibold text-slate-900">2.</span> Ve a{' '}
-                  <a
-                    href="https://app.holded.com/home#settings:/"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
-                  >
-                    Configuracion
-                  </a>
-                  , luego Mas y despues Desarrolladores.
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                  <span className="font-semibold text-slate-900">3.</span> Pulsa{' '}
-                  <span className="font-semibold text-slate-900">+ Nueva API Key</span>.
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                  <span className="font-semibold text-slate-900">4.</span> Ponle como nombre{' '}
-                  <span className="font-mono text-slate-900">ISAAK_HOLDED_API_KEY</span>.
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                  <span className="font-semibold text-slate-900">5.</span> Copia la clave generada y
-                  pegala aqui. Nosotros la comprobamos al instante.
-                </div>
-              </div>
-              <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
-                Si prefieres la guia oficial de Holded, abre{' '}
-                <a
-                  href={holdedApiGuideUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
-                >
-                  este articulo oficial
-                </a>
-                . Si quieres una version mas corta con capturas y vuelta rapida a Isaak, abre la{' '}
-                <Link
-                  href="/onboarding/holded/help"
-                  className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
-                >
-                  ayuda paso a paso
-                </Link>
-                .
-              </div>
-              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
-                <div className="font-semibold">Si no ves el menu Desarrolladores</div>
-                <p className="mt-1">
-                  Normalmente significa que tu usuario de Holded no tiene permisos suficientes o que
-                  estas en una cuenta distinta. Prueba con el usuario administrador principal de la
-                  empresa o pide acceso a esa seccion.
-                </p>
-                <p className="mt-2">
-                  Segun Holded, la API no esta disponible en el plan Free y la clave la debe generar
-                  un usuario Owner o Administrador.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-[2rem] border border-[#ff5460]/15 bg-white p-6 shadow-[0_32px_90px_-48px_rgba(255,84,96,0.35)]">
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-slate-900">
+              <span className="mb-2 mt-5 block text-sm font-semibold text-slate-900">
                 API key de Holded
               </span>
               <textarea
@@ -300,31 +296,21 @@ export default function OnboardingHoldedClient({
                   setError(null);
                 }}
                 placeholder="Pega aqui la API key generada en Holded"
-                rows={5}
+                rows={4}
                 className="w-full resize-none rounded-3xl border border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
               />
             </label>
 
             <div className="mt-3 text-sm leading-6 text-slate-600">
-              Si necesitas ayuda para obtenerla, abre{' '}
-              <a
-                href={holdedApiGuideUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
-              >
-                la guia oficial de Holded
-              </a>
-              .
+              Pegala tal cual, sin espacios ni saltos de linea.
             </div>
 
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
               <div className="flex items-start gap-2">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                 <div>
-                  <div>Solo se usara para leer datos de tu cuenta.</div>
-                  <div>No haremos ningun cambio en tu cuenta.</div>
-                  <div>Puedes desconectarlo en cualquier momento.</div>
+                  <div>La clave se guarda protegida.</div>
+                  <div>Puedes desconectarla cuando quieras.</div>
                 </div>
               </div>
             </div>
@@ -345,16 +331,16 @@ export default function OnboardingHoldedClient({
 
             <div className="mt-2 text-sm leading-6 text-slate-600">
               {emailIsLocked
-                ? 'Usaremos el correo de tu acceso actual para enviarte la confirmacion y los siguientes pasos.'
-                : 'Si no podemos leer tu correo desde la sesion, te avisaremos en esta direccion cuando Holded quede conectado.'}
+                ? 'Usaremos el correo de tu acceso actual.'
+                : 'Si no lo vemos en tu sesion, te avisaremos en este correo.'}
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
                 onClick={() => void runValidation()}
                 disabled={!canValidate || isValidating || isConnecting}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {isValidating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Validar ahora
@@ -363,7 +349,7 @@ export default function OnboardingHoldedClient({
                 type="button"
                 onClick={handleConnect}
                 disabled={!canConnect}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Conectar Holded
@@ -371,8 +357,8 @@ export default function OnboardingHoldedClient({
             </div>
 
             <div className="mt-3 text-sm leading-6 text-slate-600">
-              Puedes conectar directamente sin esperar a la validacion previa. Si pulsas "Validar
-              ahora", reutilizaremos esa comprobacion para acelerar la conexion.
+              Puedes conectar directamente. Si pulsas "Validar ahora", reutilizaremos esa
+              comprobacion para acelerar el paso final.
             </div>
 
             {validation?.ok ? (
@@ -399,21 +385,8 @@ export default function OnboardingHoldedClient({
               </div>
             ) : null}
 
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-              <div className="flex items-center gap-2 font-semibold text-slate-900">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                Lo siguiente
-              </div>
-              <p className="mt-2">
-                Si la clave es correcta, terminare de preparar tu espacio y te llevare con Isaak
-                para empezar sin mas pasos tecnicos.
-              </p>
-            </div>
-
             <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
-              Al conectar tu cuenta, autorizas a la plataforma a utilizar la API key facilitada para
-              acceder a los datos de tu cuenta de Holded y ofrecerte la funcionalidad solicitada, de
-              acuerdo con nuestros{' '}
+              Al continuar aceptas nuestros{' '}
               <Link href="/terms" className="font-semibold text-[#ff5460] hover:text-[#ef4654]">
                 Terminos
               </Link>{' '}
@@ -421,7 +394,7 @@ export default function OnboardingHoldedClient({
               <Link href="/privacy" className="font-semibold text-[#ff5460] hover:text-[#ef4654]">
                 Politica de Privacidad
               </Link>
-              . La clave se guarda protegida y no se muestra de nuevo en pantalla.
+              . La API key se guarda protegida y no vuelve a mostrarse en pantalla.
             </div>
           </section>
         </div>

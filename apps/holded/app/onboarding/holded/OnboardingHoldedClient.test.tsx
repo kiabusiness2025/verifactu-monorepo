@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const mockSearchParamGet = jest.fn();
 const mockMintSessionCookie = jest.fn();
@@ -21,13 +21,18 @@ jest.mock('@/app/lib/serverSession', () => ({
   mintSessionCookie: (...args: unknown[]) => mockMintSessionCookie(...args),
 }));
 
-import OnboardingHoldedClient from './OnboardingHoldedClient';
+import OnboardingHoldedClient, { buildHoldedReauthHref } from './OnboardingHoldedClient';
 
 describe('OnboardingHoldedClient', () => {
+  const fetchMock = jest.fn();
+
   beforeEach(() => {
     mockSearchParamGet.mockReset();
     mockSearchParamGet.mockReturnValue(null);
     mockMintSessionCookie.mockReset();
+    fetchMock.mockReset();
+    global.fetch = fetchMock as unknown as typeof fetch;
+    window.history.pushState({}, '', '/onboarding/holded?channel=dashboard');
   });
 
   it('shows the session email as a read-only notification target', () => {
@@ -37,11 +42,7 @@ describe('OnboardingHoldedClient', () => {
 
     expect(input).toHaveValue('ana@example.com');
     expect(input).toHaveAttribute('readonly');
-    expect(
-      screen.getByText(
-        'Usaremos el correo de tu acceso actual para enviarte la confirmacion y los siguientes pasos.'
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByText('Usaremos el correo de tu acceso actual.')).toBeInTheDocument();
   });
 
   it('allows entering a fallback notification email when there is no session email', () => {
@@ -66,5 +67,17 @@ describe('OnboardingHoldedClient', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Conectar Holded' })).toBeEnabled();
+  });
+
+  it('builds the expected reauth url for session recovery after a 401', async () => {
+    expect(
+      buildHoldedReauthHref({
+        origin: 'https://holded.verifactu.business',
+        pathname: '/onboarding/holded',
+        search: '?channel=dashboard',
+      })
+    ).toBe(
+      '/auth/holded?source=holded_onboarding_retry&next=%2Fonboarding%2Fholded%3Fchannel%3Ddashboard'
+    );
   });
 });
