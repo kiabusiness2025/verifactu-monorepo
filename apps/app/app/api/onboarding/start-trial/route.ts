@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'name required' }, { status: 400 });
   }
 
-  await upsertUser({
+  const userId = await upsertUser({
     id: uid,
     email: session?.email as string | undefined,
     name: session?.name as string | undefined,
@@ -74,21 +74,21 @@ export async function POST(req: Request) {
     await tx.membership.create({
       data: {
         tenantId: tenant.id,
-        userId: uid,
+        userId,
         role: 'owner',
         status: 'active',
       },
     });
 
     await tx.userPreference.upsert({
-      where: { userId: uid },
-      create: { userId: uid, preferredTenantId: tenant.id },
+      where: { userId },
+      create: { userId, preferredTenantId: tenant.id },
       update: { preferredTenantId: tenant.id },
     });
 
     await tx.userOnboarding.upsert({
-      where: { userId: uid },
-      create: { userId: uid, demoTenantId: tenant.id },
+      where: { userId },
+      create: { userId, demoTenantId: tenant.id },
       update: { demoTenantId: tenant.id },
     });
 

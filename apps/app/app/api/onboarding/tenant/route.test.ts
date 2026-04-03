@@ -99,7 +99,7 @@ describe('POST /api/onboarding/tenant', () => {
       name: 'Ksenia Ivanova Lopez',
     });
     (requireUserId as jest.Mock).mockReturnValue('user-1');
-    (upsertUser as jest.Mock).mockResolvedValue(undefined);
+    (upsertUser as jest.Mock).mockResolvedValue('internal-user-1');
 
     prismaMock.tenant.findFirst.mockResolvedValue(null);
     prismaMock.tenant.findUnique.mockResolvedValue(null);
@@ -167,6 +167,18 @@ describe('POST /api/onboarding/tenant', () => {
       email: 'demo@example.com',
       name: 'Ksenia Ivanova Lopez',
     });
+
+    expect(mockTx.membership.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'internal-user-1',
+      }),
+    });
+
+    expect(mockTx.userPreference.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'internal-user-1' },
+      })
+    );
 
     expect(mockTx.tenantProfile.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -257,5 +269,12 @@ describe('POST /api/onboarding/tenant', () => {
       })
     );
     expect(mockTx.tenant.create).not.toHaveBeenCalled();
+    expect(prismaMock.membership.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'internal-user-1',
+        }),
+      })
+    );
   });
 });

@@ -95,7 +95,7 @@ export async function upsertUser(params: {
   name?: string | null;
   firstName?: string | null;
   lastName?: string | null;
-}): Promise<void> {
+}): Promise<string> {
   const { id, email, name, firstName, lastName } = params;
   const fullName = getPreferredFullName({
     firstName,
@@ -106,8 +106,10 @@ export async function upsertUser(params: {
   });
   const nameParts = splitFullName(fullName);
 
-  const existingById = await prisma.user.findUnique({
-    where: { id },
+  const existingByAuthSubject = await prisma.user.findFirst({
+    where: {
+      OR: [{ authSubject: id }, { id }],
+    },
     select: {
       id: true,
       email: true,
@@ -117,17 +119,19 @@ export async function upsertUser(params: {
     },
   });
 
-  if (existingById) {
+  if (existingByAuthSubject) {
     await prisma.user.update({
-      where: { id },
+      where: { id: existingByAuthSubject.id },
       data: {
-        email: email || existingById.email,
-        name: fullName || existingById.name || undefined,
-        firstName: nameParts.firstName || existingById.firstName || undefined,
-        lastName: nameParts.lastName || existingById.lastName || undefined,
+        email: email || existingByAuthSubject.email,
+        name: fullName || existingByAuthSubject.name || undefined,
+        firstName: nameParts.firstName || existingByAuthSubject.firstName || undefined,
+        lastName: nameParts.lastName || existingByAuthSubject.lastName || undefined,
+        authProvider: 'FIREBASE',
+        authSubject: id,
       },
     });
-    return;
+    return existingByAuthSubject.id;
   }
 
   if (email) {
@@ -145,26 +149,33 @@ export async function upsertUser(params: {
       await prisma.user.update({
         where: { id: existingByEmail.id },
         data: {
-          id,
           email,
           name: fullName || existingByEmail.name || undefined,
           firstName: nameParts.firstName || existingByEmail.firstName || undefined,
           lastName: nameParts.lastName || existingByEmail.lastName || undefined,
+          authProvider: 'FIREBASE',
+          authSubject: id,
         },
       });
-      return;
+      return existingByEmail.id;
     }
   }
 
-  await prisma.user.create({
+  const created = await prisma.user.create({
     data: {
-      id,
       email: email || `unknown-${id}@user`,
       name: fullName,
       firstName: nameParts.firstName || undefined,
       lastName: nameParts.lastName || undefined,
+      authProvider: 'FIREBASE',
+      authSubject: id,
+    },
+    select: {
+      id: true,
     },
   });
+
+  return created.id;
 }
 
 export const tenantRoles: Role[] = ['owner', 'admin', 'member', 'asesor'];

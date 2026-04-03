@@ -192,7 +192,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'name and taxId required' }, { status: 400 });
   }
 
-  await upsertUser({
+  const userId = await upsertUser({
     id: uid,
     email: session?.email as string | undefined,
     name: session?.name as string | undefined,
@@ -204,13 +204,13 @@ export async function POST(req: Request) {
 
   if (existingTenant) {
     const membership = await prisma.membership.findFirst({
-      where: { tenantId: existingTenant.id, userId: uid },
+      where: { tenantId: existingTenant.id, userId },
     });
 
     if (membership) {
       await prisma.userPreference.upsert({
-        where: { userId: uid },
-        create: { userId: uid, preferredTenantId: existingTenant.id },
+        where: { userId },
+        create: { userId, preferredTenantId: existingTenant.id },
         update: { preferredTenantId: existingTenant.id },
       });
       return NextResponse.json({
@@ -230,7 +230,7 @@ export async function POST(req: Request) {
 
   const existingRealMemberships = await prisma.membership.findMany({
     where: {
-      userId: uid,
+      userId,
       status: 'active',
       tenant: { isDemo: false },
     },
@@ -270,7 +270,7 @@ export async function POST(req: Request) {
   const planId = await resolvePlanId();
   const reusableCurrentTenant = await findReusableCurrentTenant({
     sessionTenantId: reuseCurrentTenant ? (session.tenantId ?? null) : null,
-    userId: uid,
+    userId,
   });
 
   const result = await prisma.$transaction(async (tx) => {
@@ -296,7 +296,7 @@ export async function POST(req: Request) {
       await tx.membership.create({
         data: {
           tenantId: tenant.id,
-          userId: uid,
+          userId,
           role: 'owner',
           status: 'active',
         },
@@ -333,8 +333,8 @@ export async function POST(req: Request) {
     });
 
     await tx.userPreference.upsert({
-      where: { userId: uid },
-      create: { userId: uid, preferredTenantId: tenant.id },
+      where: { userId },
+      create: { userId, preferredTenantId: tenant.id },
       update: { preferredTenantId: tenant.id },
     });
 

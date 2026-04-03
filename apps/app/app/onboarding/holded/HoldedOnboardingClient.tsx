@@ -13,10 +13,14 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { HoldedCompanySetupState } from './flowState';
 import HoldedMergeAnimation from './HoldedMergeAnimation';
+import {
+  createCompanyDraftFromSummary,
+  createSummaryForFreshApiValidation,
+  type HoldedOnboardingSummary,
+} from './summaryState';
 
 type IntegrationStatus = {
   provider: string;
@@ -36,16 +40,7 @@ type Props = {
   nextUrl: string;
   onboardingToken: string | null;
   requireConnectionConfirmation: boolean;
-  summary: {
-    companyName: string;
-    companyLegalName: string | null;
-    companyTaxId: string | null;
-    contactFirstName: string;
-    contactFullName: string | null;
-    contactEmail: string | null;
-    companyEmail: string | null;
-    contactPhone: string | null;
-  };
+  summary: HoldedOnboardingSummary;
   companySetup: HoldedCompanySetupState;
 };
 
@@ -154,25 +149,19 @@ export default function HoldedOnboardingClient({
   const needsPostValidationCompanyStep = isChatgptEntry;
   const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
   const savingMessages = uiCopy.savingMessages;
-  const hasResolvedCompanyProfile =
-    companySetup.hasResolvedCompany &&
-    Boolean(summary.contactEmail || summary.companyEmail || summary.companyTaxId);
+  const initialCompanyDraft = useMemo(() => createCompanyDraftFromSummary(summary), [summary]);
+  const freshValidationSummary = useMemo(
+    () => createSummaryForFreshApiValidation(summary),
+    [summary]
+  );
   const [apiKey, setApiKey] = useState('');
   const [resolvedSummary, setResolvedSummary] = useState(summary);
-  const [companyName, setCompanyName] = useState(
-    summary.companyName === 'Tu empresa' ? '' : summary.companyName
-  );
-  const [companyLegalName, setCompanyLegalName] = useState(
-    summary.companyLegalName ?? (summary.companyName === 'Tu empresa' ? '' : summary.companyName)
-  );
-  const [companyTaxId, setCompanyTaxId] = useState(summary.companyTaxId ?? '');
-  const [contactName, setContactName] = useState(
-    summary.contactFullName ?? summary.contactFirstName
-  );
-  const [contactEmail, setContactEmail] = useState(
-    summary.contactEmail ?? summary.companyEmail ?? ''
-  );
-  const [contactPhone, setContactPhone] = useState(summary.contactPhone ?? '');
+  const [companyName, setCompanyName] = useState(initialCompanyDraft.companyName);
+  const [companyLegalName, setCompanyLegalName] = useState(initialCompanyDraft.companyLegalName);
+  const [companyTaxId, setCompanyTaxId] = useState(initialCompanyDraft.companyTaxId);
+  const [contactName, setContactName] = useState(initialCompanyDraft.contactName);
+  const [contactEmail, setContactEmail] = useState(initialCompanyDraft.contactEmail);
+  const [contactPhone, setContactPhone] = useState(initialCompanyDraft.contactPhone);
   const [apiValidated, setApiValidated] = useState(!needsPostValidationCompanyStep);
   const [showCompanyForm, setShowCompanyForm] = useState(!hasResolvedCompanyProfile);
   const [companyConfirmed, setCompanyConfirmed] = useState(!needsPostValidationCompanyStep);
@@ -281,6 +270,23 @@ export default function HoldedOnboardingClient({
     [nextUrl]
   );
 
+  const applySummaryToCompanyForm = useCallback((nextSummary: HoldedOnboardingSummary) => {
+    const nextDraft = createCompanyDraftFromSummary(nextSummary);
+
+    setCompanyName(nextDraft.companyName);
+    setCompanyLegalName(nextDraft.companyLegalName);
+    setCompanyTaxId(nextDraft.companyTaxId);
+    setContactName(nextDraft.contactName);
+    setContactEmail(nextDraft.contactEmail);
+    setContactPhone(nextDraft.contactPhone);
+  }, []);
+
+  const resetForFreshApiValidation = useCallback(() => {
+    setResolvedSummary(freshValidationSummary);
+    applySummaryToCompanyForm(freshValidationSummary);
+    setShowCompanyForm(false);
+  }, [applySummaryToCompanyForm, freshValidationSummary]);
+
   const returnToApiStep = useCallback(() => {
     setApiValidated(false);
     setCompanyConfirmed(false);
@@ -289,7 +295,8 @@ export default function HoldedOnboardingClient({
     setMessage(null);
     setError(null);
     setSelectedTenantId(null);
-  }, []);
+    resetForFreshApiValidation();
+  }, [resetForFreshApiValidation]);
 
   const handleHeaderBack = useCallback(() => {
     if (companyStepPending) {
@@ -613,11 +620,12 @@ export default function HoldedOnboardingClient({
     try {
       if (needsPostValidationCompanyStep && !apiValidated) {
         await validateApiKey();
+        resetForFreshApiValidation();
         setApiValidated(true);
         setShowCompanyForm(true);
         setCompanyConfirmed(false);
         setCompanyMessage(
-          'API key validada. Ahora necesitamos el nombre exacto de la empresa, su NIF/CIF y el correo principal tal y como aparecen en Holded.'
+          'API key validada. Hemos limpiado los datos anteriores para que confirmes solo la empresa de esta nueva conexion.'
         );
         return;
       }
@@ -697,13 +705,6 @@ export default function HoldedOnboardingClient({
                     La API key ya es valida. Ahora necesitamos guardar el nombre exacto de la
                     empresa, su NIF/CIF y el correo principal tal y como aparecen en Holded.
                   </p>
-
-                  {hasResolvedCompanyProfile ? (
-                    <div className="mt-3 rounded-2xl border border-[#0b6cfb]/15 bg-[#f7fbff] px-4 py-3 text-sm text-[#0b214a]">
-                      Hemos precargado los datos de tu empresa actual como punto de partida. Si la
-                      API pertenece a otra empresa, sustituyelos aqui antes de guardar.
-                    </div>
-                  ) : null}
 
                   <form onSubmit={handleCompanySubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
                     <label className="block text-sm font-medium text-neutral-700">
