@@ -1,6 +1,7 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
 import { maskSecret, probeAccountingApiConnection } from '@/lib/integrations/accounting';
+import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     stage = 'body';
     const body = await request.json().catch(() => ({}));
-    const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
+    const apiKey = typeof body?.apiKey === 'string' ? normalizeHoldedApiKey(body.apiKey) : '';
     const acceptedTerms = body?.acceptedTerms === true;
     const acceptedPrivacy = body?.acceptedPrivacy === true;
 

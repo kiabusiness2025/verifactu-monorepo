@@ -151,4 +151,34 @@ describe('POST /api/integrations/accounting/connect', () => {
       channel: 'chatgpt',
     });
   });
+
+  it('normalizes pasted api keys before probing and saving the connection', async () => {
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/integrations/accounting/connect',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+        },
+        body: JSON.stringify({
+          apiKey: ' demo-\nkey \t 123 ',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(probeAccountingApiConnection).toHaveBeenCalledWith('demo-key123');
+    expect(upsertAccountingIntegration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apiKeyEnc: 'encrypted-demo-key',
+      })
+    );
+  });
 });

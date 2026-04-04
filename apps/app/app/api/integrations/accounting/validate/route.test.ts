@@ -63,4 +63,29 @@ describe('POST /api/integrations/accounting/validate', () => {
     expect(payload.keyMasked).toBe('demo****key');
     expect(probeAccountingApiConnection).toHaveBeenCalledWith('demo-key');
   });
+
+  it('normalizes pasted api keys before validating them', async () => {
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/integrations/accounting/validate',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+        },
+        body: JSON.stringify({
+          apiKey: ' demo-\nkey \t 123 ',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(probeAccountingApiConnection).toHaveBeenCalledWith('demo-key123');
+  });
 });
