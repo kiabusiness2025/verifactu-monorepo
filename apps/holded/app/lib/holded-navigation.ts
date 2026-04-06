@@ -18,11 +18,17 @@ export const ISAAK_PUBLIC_URL = getOrigin(
   process.env.NEXT_PUBLIC_ISAAK_SITE_URL,
   'https://isaak.verifactu.business'
 );
+export const APP_PUBLIC_URL = getOrigin(
+  process.env.NEXT_PUBLIC_APP_SITE_URL,
+  'https://app.verifactu.business'
+);
 export const ISAAK_CHAT_URL = `${ISAAK_PUBLIC_URL}/chat`;
 export const ADMIN_PUBLIC_URL = getOrigin(
   process.env.NEXT_PUBLIC_ADMIN_SITE_URL,
   'https://admin.verifactu.business'
 );
+
+const ALLOWED_RETURN_ORIGINS = new Set([HOLDED_PUBLIC_URL, ISAAK_PUBLIC_URL, APP_PUBLIC_URL]);
 
 export const buildLeadCaptureUrl = (source?: string) => {
   const base = `${HOLDED_PUBLIC_URL}/`;
@@ -50,6 +56,22 @@ export const buildAuthUrl = (source: string, next = buildOnboardingUrl(source)) 
 
 export const buildRegisterUrl = (source: string, next = buildOnboardingUrl(source)) =>
   `${HOLDED_PUBLIC_URL}/auth/holded?mode=register&source=${encodeURIComponent(source)}&next=${encodeURIComponent(next)}`;
+
+export const sanitizeHoldedReturnTarget = (candidate: string | undefined, fallback: string) => {
+  const normalized = candidate?.trim();
+  if (!normalized) return fallback;
+
+  try {
+    if (normalized.startsWith('/')) {
+      return new URL(normalized, HOLDED_PUBLIC_URL).toString();
+    }
+
+    const parsed = new URL(normalized);
+    return ALLOWED_RETURN_ORIGINS.has(parsed.origin) ? parsed.toString() : fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 export const buildAdminRedirectUrl = (path = '/dashboard/admin') => {
   const normalized = path.startsWith('/') ? path : `/${path}`;

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { buildDashboardUrl } from '@/app/lib/holded-navigation';
+import { buildDashboardUrl, sanitizeHoldedReturnTarget } from '@/app/lib/holded-navigation';
 
 export const metadata: Metadata = {
   title: 'Redirigiendo a Isaak | Holded',
@@ -17,25 +17,7 @@ function readSource(value: string | string[] | undefined) {
 }
 
 function sanitizeNext(value: string | string[] | undefined, source: string) {
-  const fallback = buildDashboardUrl(source);
-  const candidate = readSource(value);
-  if (!candidate) return fallback;
-
-  try {
-    const parsed = new URL(candidate);
-    if (
-      parsed.origin === 'https://isaak.verifactu.business' ||
-      parsed.origin === 'https://holded.verifactu.business'
-    ) {
-      return parsed.toString();
-    }
-  } catch {
-    if (candidate.startsWith('/')) {
-      return `https://holded.verifactu.business${candidate}`;
-    }
-  }
-
-  return fallback;
+  return sanitizeHoldedReturnTarget(readSource(value), buildDashboardUrl(source));
 }
 
 export default async function HoldedDashboardPage({ searchParams }: PageProps) {

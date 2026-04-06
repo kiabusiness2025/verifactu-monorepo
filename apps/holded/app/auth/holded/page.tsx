@@ -18,12 +18,11 @@ import {
   startGoogleRedirectSignIn,
 } from '@/app/lib/auth';
 import { auth } from '@/app/lib/firebase';
-import { buildDashboardUrl } from '@/app/lib/holded-navigation';
+import { buildDashboardUrl, sanitizeHoldedReturnTarget } from '@/app/lib/holded-navigation';
 import { mintSessionCookie } from '@/app/lib/serverSession';
 
 const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
-const ISAAK_SITE_URL = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
 const GOOGLE_REDIRECT_PENDING_KEY = 'holded_google_redirect_pending';
 
@@ -39,23 +38,7 @@ function buildLocalHandoffTarget(source: string, target: string) {
 }
 
 function resolveRedirectTarget(nextParam: string, source: string) {
-  if (!nextParam) return buildFallbackTarget(source);
-
-  try {
-    const parsed = new URL(nextParam, HOLDED_SITE_URL);
-    const allowedOrigins = new Set([
-      new URL(HOLDED_SITE_URL).origin,
-      new URL(ISAAK_SITE_URL).origin,
-    ]);
-
-    if (!allowedOrigins.has(parsed.origin)) {
-      return buildFallbackTarget(source);
-    }
-
-    return parsed.toString();
-  } catch {
-    return buildFallbackTarget(source);
-  }
+  return sanitizeHoldedReturnTarget(nextParam, buildFallbackTarget(source));
 }
 
 async function activateSessionAndRedirect(user: User, rememberDevice: boolean, target: string) {

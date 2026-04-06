@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { getIsaakOnboardingState } from '@verifactu/integrations';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { buildDashboardUrl } from '@/app/lib/holded-navigation';
+import { buildDashboardUrl, sanitizeHoldedReturnTarget } from '@/app/lib/holded-navigation';
 import { prisma } from '@/app/lib/prisma';
 import HoldedConversationalOnboardingClient from './HoldedConversationalOnboardingClient';
 
@@ -36,22 +36,7 @@ function appendQueryFlag(target: string, key: string, value: string) {
 }
 
 function sanitizeNext(value: string | undefined) {
-  const fallback = buildDashboardUrl('holded_profile_complete');
-  if (!value) return fallback;
-  try {
-    const url = new URL(value);
-    if (
-      url.origin === 'https://isaak.verifactu.business' ||
-      url.origin === 'https://holded.verifactu.business'
-    ) {
-      return url.toString();
-    }
-  } catch {
-    if (value.startsWith('/')) {
-      return `https://holded.verifactu.business${value}`;
-    }
-  }
-  return fallback;
+  return sanitizeHoldedReturnTarget(value, buildDashboardUrl('holded_profile_complete'));
 }
 
 async function readTenantProfileSafe(tenantId: string) {
