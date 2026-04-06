@@ -77,7 +77,10 @@ export async function requireTenantContext(options?: {
     });
   }
 
-  let tenantId = direct.tenantId ?? oauthResolved.tenantId ?? sessionTenantId ?? null;
+  const prefersOauthResolved = options?.channelType === 'chatgpt';
+  let tenantId = prefersOauthResolved
+    ? (oauthResolved.tenantId ?? direct.tenantId ?? sessionTenantId ?? null)
+    : (direct.tenantId ?? oauthResolved.tenantId ?? sessionTenantId ?? null);
 
   const normalizedTenantIdHint =
     options?.tenantIdHint?.trim() || onboardingSession?.tenantId?.trim() || null;

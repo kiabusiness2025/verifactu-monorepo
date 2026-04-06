@@ -110,4 +110,33 @@ describe('requireTenantContext', () => {
       })
     );
   });
+
+  it('prefers the oauth-resolved tenant for chatgpt when the current session points elsewhere', async () => {
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue(null);
+
+    const result = await requireTenantContext({
+      channelType: 'chatgpt',
+    });
+
+    expect(resolveTenantForHoldedFirstSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionTenantId: 'tenant-session',
+        tenantIdHint: null,
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        tenantId: 'tenant-from-token',
+        resolvedUserId: 'internal-user-1',
+        session: expect.objectContaining({
+          tenantId: 'tenant-from-token',
+        }),
+      })
+    );
+    expect(upsertChannelIdentity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: 'tenant-from-token',
+      })
+    );
+  });
 });
