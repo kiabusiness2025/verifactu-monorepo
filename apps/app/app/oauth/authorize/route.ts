@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
 
     const session = await getSessionPayload();
     const onboardingToken = getHoldedOnboardingTokenFromSearchParams(url.searchParams);
-    const onboardingSession = !session?.uid
+    const onboardingSession = onboardingToken
       ? await resolveHoldedOnboardingSession(onboardingToken)
       : null;
     const tenantIdHint = tenantIdQuery ?? onboardingSession?.tenantId ?? null;
@@ -98,6 +98,7 @@ export async function GET(request: NextRequest) {
         seed: [clientId, redirectUri, state ?? '', codeChallengeRaw, Date.now().toString()].join(
           '|'
         ),
+        tenantId: tenantIdQuery,
       });
       const authorizeUrl = new URL(url.toString());
       authorizeUrl.searchParams.set('onboarding_token', mintedOnboardingToken);

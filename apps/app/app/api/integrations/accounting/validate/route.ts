@@ -7,7 +7,10 @@ import {
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
 import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
-import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
+import {
+  getHoldedOnboardingTokenFromHeaders,
+  resolveHoldedOnboardingSessionFromHeaders,
+} from '@/lib/integrations/holdedOnboardingSession';
 import { mintHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
 import { getSessionPayload } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
@@ -47,15 +50,25 @@ function getEntryChannel(request: NextRequest) {
   return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
 }
 
+function getTenantIdHint(request: NextRequest) {
+  return (
+    request.headers.get('x-isaak-tenant-id')?.trim() ||
+    request.nextUrl.searchParams.get('tenant_id')?.trim() ||
+    null
+  );
+}
+
 export async function POST(request: NextRequest) {
   const entryChannel = getEntryChannel(request);
   const requestId = getConnectorRequestId(request);
+  const onboardingToken = getHoldedOnboardingTokenFromHeaders(request.headers);
+  const tenantIdHint = getTenantIdHint(request);
   let stage: 'auth' | 'access' | 'body' | 'probe' = 'auth';
 
   try {
     const signedSession = await getSessionPayload();
     const onboardingSession =
-      !signedSession?.uid && entryChannel === 'chatgpt'
+      entryChannel === 'chatgpt'
         ? await resolveHoldedOnboardingSessionFromHeaders(request.headers)
         : null;
     const auth =
@@ -66,6 +79,8 @@ export async function POST(request: NextRequest) {
             metadata: {
               source: entryChannel === 'chatgpt' ? 'holded-validation' : 'requireTenantContext',
             },
+            tenantIdHint,
+            onboardingToken,
           });
 
     if (auth && 'error' in auth) {

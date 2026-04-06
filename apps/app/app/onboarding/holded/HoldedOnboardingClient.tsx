@@ -60,6 +60,7 @@ type Props = {
   summary: HoldedOnboardingSummary;
   companySetup: HoldedCompanySetupState;
   onboardingToken?: string | null;
+  tenantIdHint?: string | null;
 };
 
 const HOLDED_COMPAT_URL =
@@ -207,6 +208,7 @@ export default function HoldedOnboardingClient({
   summary,
   companySetup,
   onboardingToken = null,
+  tenantIdHint = null,
 }: Props) {
   const isChatgptEntry = entryChannel === 'chatgpt';
   const needsPostValidationCompanyStep = isChatgptEntry;
@@ -250,6 +252,7 @@ export default function HoldedOnboardingClient({
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const initialTenantIdHint = tenantIdHint?.trim() || null;
   const showApiStep = !needsPostValidationCompanyStep || !apiValidated;
   const hideResolvedCompanyUntilApiValidation = needsPostValidationCompanyStep && !apiValidated;
   const companyStepPending =
@@ -331,13 +334,21 @@ export default function HoldedOnboardingClient({
           parsed.searchParams.delete('tenant_id');
         } else if (selectedTenantId) {
           parsed.searchParams.set('tenant_id', selectedTenantId);
+        } else if (initialTenantIdHint) {
+          parsed.searchParams.set('tenant_id', initialTenantIdHint);
         }
       }
       return parsed.toString();
     } catch {
       return nextUrl;
     }
-  }, [activeOnboardingToken, nextUrl, requireConnectionConfirmation, selectedTenantId]);
+  }, [
+    activeOnboardingToken,
+    initialTenantIdHint,
+    nextUrl,
+    requireConnectionConfirmation,
+    selectedTenantId,
+  ]);
 
   const loadStatus = useCallback(
     async (signal?: AbortSignal) => {
@@ -517,11 +528,13 @@ export default function HoldedOnboardingClient({
   };
 
   const validateApiKey = async () => {
+    const requestTenantIdHint = selectedTenantId ?? initialTenantIdHint;
     const res = await fetch('/api/integrations/accounting/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-isaak-entry-channel': entryChannel,
+        ...(requestTenantIdHint ? { 'x-isaak-tenant-id': requestTenantIdHint } : {}),
         ...(activeOnboardingToken ? { 'x-holded-onboarding-token': activeOnboardingToken } : {}),
       },
       body: JSON.stringify({
@@ -555,15 +568,16 @@ export default function HoldedOnboardingClient({
   };
 
   const connectValidatedApi = async (
-    tenantIdHint?: string | null,
+    requestTenantIdHint?: string | null,
     validationTokenHint?: string | null
   ) => {
+    const effectiveTenantIdHint = requestTenantIdHint ?? selectedTenantId ?? initialTenantIdHint;
     const res = await fetch('/api/integrations/accounting/connect', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-isaak-entry-channel': entryChannel,
-        ...(tenantIdHint ? { 'x-isaak-tenant-id': tenantIdHint } : {}),
+        ...(effectiveTenantIdHint ? { 'x-isaak-tenant-id': effectiveTenantIdHint } : {}),
         ...(activeOnboardingToken ? { 'x-holded-onboarding-token': activeOnboardingToken } : {}),
       },
       body: JSON.stringify({

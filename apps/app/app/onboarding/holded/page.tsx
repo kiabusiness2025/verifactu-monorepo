@@ -68,10 +68,11 @@ export default async function HoldedOnboardingPage({
   }
   const session = await getSessionPayload();
   const onboardingToken = getHoldedOnboardingTokenFromSearchParams(search);
-  const onboardingSession = !session?.uid
+  const onboardingSession = onboardingToken
     ? await resolveHoldedOnboardingSession(onboardingToken)
     : null;
   const captureMode = firstValue(params.capture)?.trim() === '1';
+  const tenantIdHint = normalizeText(firstValue(params.tenant_id));
 
   if (!session?.uid && !onboardingSession?.uid) {
     const loginUrl = new URL('/login', getAppUrl());
@@ -90,6 +91,12 @@ export default async function HoldedOnboardingPage({
     }
     if (captureMode) {
       current.searchParams.set('capture', '1');
+    }
+    if (onboardingToken) {
+      current.searchParams.set('onboarding_token', onboardingToken);
+    }
+    if (tenantIdHint) {
+      current.searchParams.set('tenant_id', tenantIdHint);
     }
     loginUrl.searchParams.set('next', current.toString());
     redirect(loginUrl.toString());
@@ -132,6 +139,7 @@ export default async function HoldedOnboardingPage({
         ? await requireTenantContext({
             channelType: entryChannel,
             metadata: { source: 'holded-onboarding-page' },
+            tenantIdHint,
             onboardingToken,
           })
         : null;
@@ -215,6 +223,7 @@ export default async function HoldedOnboardingPage({
       summary={summary}
       companySetup={companySetup}
       onboardingToken={onboardingToken}
+      tenantIdHint={resolvedTenantInfo.tenantId ?? tenantIdHint}
     />
   );
 }

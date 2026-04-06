@@ -93,6 +93,50 @@ describe('HoldedOnboardingClient', () => {
     expect(window.location.hash).toBe('#connected');
   });
 
+  it('forwards the tenant hint through validation and connection requests', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({ ok: true }),
+    });
+
+    render(
+      <HoldedOnboardingClient {...baseProps} captureMode={false} tenantIdHint="tenant-demo" />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {
+      target: { value: 'holded-demo-api-key-123' },
+    });
+    fireEvent.click(screen.getByLabelText(/Acepto los Terminos de verifactu\.business/i));
+    fireEvent.click(
+      screen.getByLabelText(/Acepto la Politica de Privacidad de verifactu\.business/i)
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        '/api/integrations/accounting/validate',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-isaak-tenant-id': 'tenant-demo',
+          }),
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        '/api/integrations/accounting/connect',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-isaak-tenant-id': 'tenant-demo',
+          }),
+        })
+      );
+    });
+  });
+
   it('freezes the final ChatGPT step in capture mode instead of redirecting automatically', async () => {
     fetchMock.mockResolvedValue({
       ok: true,

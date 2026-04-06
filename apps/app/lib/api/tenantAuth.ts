@@ -13,8 +13,8 @@ export async function requireTenantContext(options?: {
 }) {
   const session = await getSessionPayload();
   const onboardingSession =
-    !session?.uid && options?.channelType === 'chatgpt'
-      ? await resolveHoldedOnboardingSession(options.onboardingToken ?? null)
+    options?.channelType === 'chatgpt' && options?.onboardingToken?.trim()
+      ? await resolveHoldedOnboardingSession(options.onboardingToken)
       : null;
   if (!session?.uid && !onboardingSession?.uid) {
     return { error: 'Unauthorized', status: 401 as const };

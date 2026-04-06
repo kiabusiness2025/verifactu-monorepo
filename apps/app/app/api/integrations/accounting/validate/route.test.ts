@@ -18,6 +18,9 @@ jest.mock('@/lib/session', () => ({
 }));
 
 jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
+  getHoldedOnboardingTokenFromHeaders: jest.fn((headers: Headers) =>
+    headers.get('x-holded-onboarding-token')
+  ),
   resolveHoldedOnboardingSessionFromHeaders: jest.fn(),
 }));
 
@@ -253,5 +256,45 @@ describe('POST /api/integrations/accounting/validate', () => {
     expect(typeof payload.validationToken).toBe('string');
     expect(requireTenantContext).not.toHaveBeenCalled();
     expect(getAccountingIntegrationAccess).not.toHaveBeenCalled();
+  });
+
+  it('passes onboarding token and tenant hints into tenant auth when a signed session exists', async () => {
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'guest@example.com',
+      name: 'Guest User',
+      tenantId: 'tenant-demo',
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/integrations/accounting/validate',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+          'x-isaak-tenant-id': 'tenant-demo',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({
+          apiKey: 'demo-key',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(requireTenantContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channelType: 'chatgpt',
+        tenantIdHint: 'tenant-demo',
+        onboardingToken: 'onboarding-token-123',
+      })
+    );
   });
 });

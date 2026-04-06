@@ -4,6 +4,13 @@ jest.mock('@/lib/integrations/channelIdentityStore', () => ({
   upsertChannelIdentity: jest.fn(),
 }));
 
+jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
+  getHoldedOnboardingTokenFromSearchParams: jest.fn((searchParams: URLSearchParams) =>
+    searchParams.get('onboarding_token')
+  ),
+  resolveHoldedOnboardingSession: jest.fn(async () => null),
+}));
+
 jest.mock('@/lib/integrations/holdedConnectionResolver', () => ({
   hasSharedHoldedConnectionForTenant: jest.fn(),
 }));
@@ -39,9 +46,14 @@ jest.mock('@/lib/oauth/mcp', () => ({
 
 import { NextRequest } from 'next/server';
 import { GET } from './route';
+import { resolveHoldedOnboardingSession } from '@/lib/integrations/holdedOnboardingSession';
 import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { getSessionPayload } from '@/lib/session';
-import { mintAuthorizationCode, resolveTenantForHoldedFirstSession } from '@/lib/oauth/mcp';
+import {
+  mintAuthorizationCode,
+  mintHoldedOnboardingToken,
+  resolveTenantForHoldedFirstSession,
+} from '@/lib/oauth/mcp';
 
 describe('oauth authorize holded flow', () => {
   afterEach(() => {
@@ -63,6 +75,23 @@ describe('oauth authorize holded flow', () => {
     expect(location).toContain('/onboarding/holded');
     expect(location).toContain('onboarding_token=onboarding-token-123');
     expect(mintAuthorizationCode).not.toHaveBeenCalled();
+  });
+
+  it('mints a tenant-aware onboarding token when oauth starts with a tenant hint', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue(null);
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&tenant_id=tenant-demo&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+    );
+
+    const response = await GET(request);
+    const location = response.headers.get('location');
+
+    expect(response.status).toBe(307);
+    expect(location).toContain('tenant_id=tenant-demo');
+    expect(mintHoldedOnboardingToken).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId: 'tenant-demo' })
+    );
   });
 
   it('redirects to onboarding even when a chatgpt connection already exists until the user confirms reconnection', async () => {
@@ -151,6 +180,35 @@ describe('oauth authorize holded flow', () => {
     expect(resolveTenantForHoldedFirstSession).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantIdHint: 'tenant-demo',
+      })
+    );
+  });
+
+  it('uses the onboarding token tenant hint when a signed session is already open', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-session',
+    });
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'guest@example.com',
+      name: 'Guest User',
+      tenantId: 'tenant-from-token',
+    });
+    (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&connection_confirmed=1&onboarding_token=onboarding-token-123&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+    );
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(307);
+    expect(resolveTenantForHoldedFirstSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantIdHint: 'tenant-from-token',
       })
     );
   });
