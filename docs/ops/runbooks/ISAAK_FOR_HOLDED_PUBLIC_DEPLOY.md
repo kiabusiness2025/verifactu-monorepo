@@ -52,8 +52,46 @@ la opcion recomendada es la primera.
 - `/oauth/authorize`
 - `/oauth/token`
 - `/api/mcp/holded`
+- `/onboarding`
 - `/onboarding/holded`
 - `/api/integrations/accounting/status?channel=chatgpt`
+
+## Ajustes aplicados (2026-04-06)
+
+### Public onboarding UX
+
+- `apps/holded/app/onboarding/page.tsx` reescrita como pagina de alcance funcional del conector
+- `apps/holded/app/onboarding/holded/OnboardingHoldedClient.tsx` reescrita con formulario unico de empresa + contacto + API key
+- `apps/holded/app/onboarding/holded/page.tsx` actualizado para precargar identidad inicial desde tenant/profile
+
+### Public navigation and mobile handoff
+
+- `apps/holded/app/lib/holded-navigation.ts` agrega helpers de flujo (`buildConnectorIntroUrl`, `buildConnectorConnectUrl`)
+- se preservan `source`, `channel`, `next`, `onboarding_token` entre intro y connect
+- test de regresion en `apps/holded/app/lib/holded-navigation.test.ts`
+
+### Public connect API and data capture
+
+- `apps/holded/app/api/holded/connect/route.ts` ahora valida y persiste identidad minima requerida antes de conectar
+- campos requeridos: `companyName`, `taxId`, `contactFirstName`, `contactLastName`, `contactEmail`
+- campos opcionales: `legalName`, `contactPhone`
+- persistencia: `tenant`, `tenant.profile` (`source: manual`) y `user`
+- soporte de `validationToken` mantenido para evitar doble probe
+
+### Test status
+
+Validated test suites for this rollout:
+
+- `apps/holded/app/api/holded/connect/route.test.ts`
+- `apps/holded/app/lib/holded-navigation.test.ts`
+- `apps/holded/app/onboarding/holded/OnboardingHoldedClient.test.tsx`
+- `apps/app/app/oauth/authorize/route.test.ts`
+- `apps/app/app/api/integrations/accounting/validate/route.test.ts`
+- `apps/app/app/api/integrations/accounting/connect/route.test.ts`
+- `apps/app/app/api/mcp/holded/route.test.ts`
+- `apps/app/lib/integrations/holdedMcpTools.test.ts`
+
+Expected combined result from latest focused runs: all passing.
 
 ## Resultado esperado
 

@@ -1,15 +1,7 @@
 /** @jest-environment jsdom */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-
-const mockSearchParamGet = jest.fn();
 const mockMintSessionCookie = jest.fn();
-
-jest.mock('next/navigation', () => ({
-  useSearchParams: () => ({
-    get: mockSearchParamGet,
-  }),
-}));
 
 jest.mock('@/app/lib/firebase', () => ({
   auth: {
@@ -23,50 +15,100 @@ jest.mock('@/app/lib/serverSession', () => ({
 
 import OnboardingHoldedClient, { buildHoldedReauthHref } from './OnboardingHoldedClient';
 
+const defaultProps = {
+  channel: 'dashboard' as const,
+  nextTarget: '/onboarding/success',
+  initialIdentity: {
+    companyName: 'Acme SL',
+    legalName: 'Acme Sociedad Limitada',
+    taxId: 'B12345678',
+    contactFirstName: 'Ana',
+    contactLastName: 'Garcia',
+    contactEmail: 'ana@example.com',
+    contactPhone: '+34600111222',
+  },
+};
+
 describe('OnboardingHoldedClient', () => {
   const fetchMock = jest.fn();
 
   beforeEach(() => {
-    mockSearchParamGet.mockReset();
-    mockSearchParamGet.mockReturnValue(null);
     mockMintSessionCookie.mockReset();
     fetchMock.mockReset();
     global.fetch = fetchMock as unknown as typeof fetch;
     window.history.pushState({}, '', '/onboarding/holded?channel=dashboard');
   });
 
-  it('shows the session email as a read-only notification target', () => {
-    render(<OnboardingHoldedClient sessionEmail="ana@example.com" />);
+  it('renders prefilled company and contact identity fields', () => {
+    render(<OnboardingHoldedClient {...defaultProps} />);
 
-    const input = screen.getByLabelText('Correo para avisarte cuando quede conectado');
-
-    expect(input).toHaveValue('ana@example.com');
-    expect(input).toHaveAttribute('readonly');
-    expect(screen.getByText('Usaremos el correo de tu acceso actual.')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Acme SL')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Acme Sociedad Limitada')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('B12345678')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Ana')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Garcia')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('ana@example.com')).toBeInTheDocument();
   });
 
-  it('allows entering a fallback notification email when there is no session email', () => {
-    render(<OnboardingHoldedClient sessionEmail={null} />);
-
-    const input = screen.getByLabelText('Correo para avisarte cuando quede conectado');
-
-    fireEvent.change(input, { target: { value: 'equipo@example.com' } });
-
-    expect(input).toHaveValue('equipo@example.com');
-    expect(input).not.toHaveAttribute('readonly');
-  });
-
-  it('allows connecting with a valid api key and email even before manual validation', () => {
-    render(<OnboardingHoldedClient sessionEmail={null} />);
+  it('enables submit when identity and api key are valid', () => {
+    render(<OnboardingHoldedClient {...defaultProps} />);
 
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
       target: { value: 'abcdefghijklmnop' },
     });
-    fireEvent.change(screen.getByLabelText('Correo para avisarte cuando quede conectado'), {
-      target: { value: 'equipo@example.com' },
+
+    expect(screen.getByRole('button', { name: 'Validar y conectar' })).toBeEnabled();
+  });
+
+  it('runs validate then connect with company and contact data', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: async () => ({ ok: true, validationToken: 'token-123' }),
+      })
+      .mockResolvedValueOnce({
+        status: 400,
+        ok: false,
+        json: async () => ({ ok: false, error: 'Error de prueba en connect' }),
+      });
+
+    render(<OnboardingHoldedClient {...defaultProps} />);
+
+    fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
+      target: { value: 'abcdefghijklmnop' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
-    expect(screen.getByRole('button', { name: 'Conectar Holded' })).toBeEnabled();
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/holded/validate',
+      expect.objectContaining({ method: 'POST' })
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/holded/connect',
+      expect.objectContaining({ method: 'POST' })
+    );
+
+    const connectBody = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(connectBody).toEqual(
+      expect.objectContaining({
+        companyName: 'Acme SL',
+        legalName: 'Acme Sociedad Limitada',
+        taxId: 'B12345678',
+        contactFirstName: 'Ana',
+        contactLastName: 'Garcia',
+        contactEmail: 'ana@example.com',
+        contactPhone: '+34600111222',
+        validationToken: 'token-123',
+      })
+    );
+    expect(screen.getByText('Error de prueba en connect')).toBeInTheDocument();
   });
 
   it('builds the expected reauth url for session recovery after a 401', async () => {

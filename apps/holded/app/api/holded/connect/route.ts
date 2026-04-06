@@ -31,8 +31,180 @@ function normalizeOptionalEmail(value: unknown) {
   return trimmed || null;
 }
 
+function normalizeOptionalText(value: unknown) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().replace(/\s+/g, ' ');
+  return trimmed || null;
+}
+
+function normalizeTaxId(value: unknown) {
+  const normalized = normalizeOptionalText(value);
+  return normalized ? normalized.toUpperCase() : null;
+}
+
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function splitNameParts(value: string | null) {
+  const normalized = normalizeOptionalText(value);
+  if (!normalized) {
+    return { firstName: null, lastName: null };
+  }
+
+  const parts = normalized.split(' ');
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: null };
+  }
+
+  return {
+    firstName: parts.slice(0, -1).join(' '),
+    lastName: parts.slice(-1).join(' '),
+  };
+}
+
+function buildFullName(firstName: string | null, lastName: string | null) {
+  return [firstName, lastName].filter(Boolean).join(' ').trim() || null;
+}
+
+async function readExistingIdentity(tenantId: string) {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: {
+      name: true,
+      legalName: true,
+      nif: true,
+      profile: {
+        select: {
+          tradeName: true,
+          legalName: true,
+          taxId: true,
+          representative: true,
+          email: true,
+          phone: true,
+        },
+      },
+    },
+  });
+
+  return {
+    companyName:
+      normalizeOptionalText(tenant?.profile?.tradeName) || normalizeOptionalText(tenant?.name),
+    legalName:
+      normalizeOptionalText(tenant?.profile?.legalName) || normalizeOptionalText(tenant?.legalName),
+    taxId: normalizeTaxId(tenant?.profile?.taxId) || normalizeTaxId(tenant?.nif),
+    representative: normalizeOptionalText(tenant?.profile?.representative),
+    contactEmail: normalizeOptionalEmail(tenant?.profile?.email),
+    contactPhone: normalizeOptionalText(tenant?.profile?.phone),
+  };
+}
+
+function resolveConnectionIdentity(input: {
+  body: Record<string, unknown>;
+  existing: Awaited<ReturnType<typeof readExistingIdentity>>;
+  sessionName: string | null;
+  sessionEmail: string | null;
+}) {
+  const sessionNameParts = splitNameParts(input.sessionName);
+  const existingNameParts = splitNameParts(input.existing.representative);
+  const requestedContactEmail =
+    normalizeOptionalEmail(input.body.contactEmail) ||
+    normalizeOptionalEmail(input.body.notificationEmail);
+
+  const contactFirstName =
+    normalizeOptionalText(input.body.contactFirstName) ||
+    existingNameParts.firstName ||
+    sessionNameParts.firstName ||
+    null;
+  const contactLastName =
+    normalizeOptionalText(input.body.contactLastName) ||
+    existingNameParts.lastName ||
+    sessionNameParts.lastName ||
+    null;
+
+  return {
+    companyName:
+      normalizeOptionalText(input.body.companyName) || input.existing.companyName || null,
+    legalName: normalizeOptionalText(input.body.legalName) || input.existing.legalName || null,
+    taxId: normalizeTaxId(input.body.taxId ?? input.body.nif) || input.existing.taxId || null,
+    contactFirstName,
+    contactLastName,
+    contactFullName: buildFullName(contactFirstName, contactLastName),
+    contactEmail:
+      requestedContactEmail ||
+      input.existing.contactEmail ||
+      normalizeOptionalEmail(input.sessionEmail),
+    contactPhone:
+      normalizeOptionalText(input.body.contactPhone) || input.existing.contactPhone || null,
+  };
+}
+
+function validateConnectionIdentity(identity: ReturnType<typeof resolveConnectionIdentity>) {
+  if (!identity.companyName) {
+    return 'Necesitamos el nombre de la empresa para crear correctamente tu espacio.';
+  }
+
+  if (!identity.taxId) {
+    return 'Necesitamos el NIF/CIF de la empresa para continuar.';
+  }
+
+  if (!identity.contactFirstName || !identity.contactLastName) {
+    return 'Necesitamos nombre y apellidos de la persona de contacto.';
+  }
+
+  if (!identity.contactEmail || !isValidEmail(identity.contactEmail)) {
+    return 'Necesitamos un correo valido de contacto para enviarte las comunicaciones del conector.';
+  }
+
+  return null;
+}
+
+async function persistConnectionIdentity(input: {
+  tenantId: string;
+  userId: string;
+  identity: ReturnType<typeof resolveConnectionIdentity>;
+}) {
+  await Promise.all([
+    prisma.user.update({
+      where: { id: input.userId },
+      data: {
+        name: input.identity.contactFullName || undefined,
+        firstName: input.identity.contactFirstName || undefined,
+        lastName: input.identity.contactLastName || undefined,
+        phone: input.identity.contactPhone || undefined,
+      },
+    }),
+    prisma.tenant.update({
+      where: { id: input.tenantId },
+      data: {
+        name: input.identity.companyName || undefined,
+        legalName: input.identity.legalName || input.identity.companyName || undefined,
+        nif: input.identity.taxId || undefined,
+        profile: {
+          upsert: {
+            create: {
+              source: 'manual',
+              tradeName: input.identity.companyName || undefined,
+              legalName: input.identity.legalName || input.identity.companyName || undefined,
+              taxId: input.identity.taxId || undefined,
+              representative: input.identity.contactFullName || undefined,
+              email: input.identity.contactEmail || undefined,
+              phone: input.identity.contactPhone || undefined,
+            },
+            update: {
+              source: 'manual',
+              tradeName: input.identity.companyName || undefined,
+              legalName: input.identity.legalName || input.identity.companyName || undefined,
+              taxId: input.identity.taxId || undefined,
+              representative: input.identity.contactFullName || undefined,
+              email: input.identity.contactEmail || undefined,
+              phone: input.identity.contactPhone || undefined,
+            },
+          },
+        },
+      },
+    }),
+  ]);
 }
 
 async function resolveNotificationEmail(input: {
@@ -40,12 +212,12 @@ async function resolveNotificationEmail(input: {
   sessionEmail: string | null;
   requestedEmail: string | null;
 }) {
-  if (input.sessionEmail?.trim()) {
-    return input.sessionEmail.trim();
-  }
-
   if (input.requestedEmail?.trim()) {
     return input.requestedEmail.trim();
+  }
+
+  if (input.sessionEmail?.trim()) {
+    return input.sessionEmail.trim();
   }
 
   const tenantProfile = await prisma.tenantProfile.findFirst({
@@ -80,7 +252,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const apiKey = typeof body?.apiKey === 'string' ? normalizeApiKey(body.apiKey) : '';
     const channel = normalizeChannel(body?.channel);
-    const requestedNotificationEmail = normalizeOptionalEmail(body?.notificationEmail);
+    const existingIdentity = await readExistingIdentity(session.tenantId);
+    const identity = resolveConnectionIdentity({
+      body,
+      existing: existingIdentity,
+      sessionName: session.name || null,
+      sessionEmail: session.email || null,
+    });
+    const identityError = validateConnectionIdentity(identity);
+    const requestedNotificationEmail = identity.contactEmail;
     const validationToken = typeof body?.validationToken === 'string' ? body.validationToken : '';
 
     if (!apiKey) {
@@ -92,6 +272,10 @@ export async function POST(request: NextRequest) {
         { error: 'La API key parece incompleta. Revísala y vuelve a pegarla.' },
         { status: 400 }
       );
+    }
+
+    if (identityError) {
+      return NextResponse.json({ error: identityError }, { status: 400 });
     }
 
     if (requestedNotificationEmail && !isValidEmail(requestedNotificationEmail)) {
@@ -157,6 +341,12 @@ export async function POST(request: NextRequest) {
       channel,
     });
 
+    await persistConnectionIdentity({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      identity,
+    });
+
     const notificationEmail = await resolveNotificationEmail({
       tenantId: session.tenantId,
       sessionEmail: session.email,
@@ -180,9 +370,14 @@ export async function POST(request: NextRequest) {
       }),
       notificationEmail
         ? sendHoldedConnectedCommunication({
-            name: session.name || notificationEmail.split('@')[0] || 'Hola',
+            name:
+              identity.contactFirstName ||
+              identity.contactFullName ||
+              session.name ||
+              notificationEmail.split('@')[0] ||
+              'Hola',
             email: notificationEmail,
-            companyName: saved?.tenantName || 'tu empresa',
+            companyName: identity.companyName || saved?.tenantName || 'tu empresa',
             supportedModules: readProbeSupportedModules(probe),
           })
         : Promise.resolve(null),
@@ -217,7 +412,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       probe,
-      connection: saved,
+      connection: {
+        ...saved,
+        tenantName: identity.companyName || saved?.tenantName || null,
+        legalName: identity.legalName || saved?.legalName || null,
+        taxId: identity.taxId || saved?.taxId || null,
+      },
       notificationEmail,
     });
   } catch (error) {

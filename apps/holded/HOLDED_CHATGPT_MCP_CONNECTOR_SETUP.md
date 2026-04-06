@@ -107,6 +107,45 @@ Operational note:
 
 - support should use the `x-verifactu-request-id` header from `authorize`, `status`, `validate`, or `connect` when debugging mobile failures
 
+### 9. 2026-04-06 connector onboarding rewrite (public holded pages)
+
+The public onboarding flow was rewritten to reduce friction and eliminate duplicated or noisy copy.
+
+What changed:
+
+- step 1 (`/onboarding`): scope-first intro with a plain summary of connector capabilities
+- step 2 (`/onboarding/holded`): single form for company identity, contact identity, and API key
+- removed repeated validation/help text; only the official Holded API key help link is shown
+- consent copy simplified: by pressing `Validar y conectar`, user accepts terms and privacy
+
+Mobile handoff hardening:
+
+- connector flow now preserves `source`, `channel`, `next`, and `onboarding_token`
+- this is built through `buildConnectorIntroUrl` and `buildConnectorConnectUrl` in public navigation helpers
+
+Identity data required in public connect:
+
+- company: `companyName`, `legalName` (optional), `taxId`
+- contact: `contactFirstName`, `contactLastName`, `contactEmail`, `contactPhone` (optional)
+
+Persistence behavior after successful connect:
+
+- updates `user` display/contact fields
+- upserts `tenant.profile` with source `manual`
+- updates `tenant` legal identity (`name`, `legalName`, `nif`)
+
+Validation notes:
+
+- if identity is missing, the route rejects before probing Holded
+- if contact email is invalid, connect is rejected before probe
+- when `validationToken` is provided and valid, connection reuses it and skips a second probe
+
+Minimum regression set for this rewrite:
+
+- `apps/holded/app/api/holded/connect/route.test.ts`
+- `apps/holded/app/lib/holded-navigation.test.ts`
+- `apps/holded/app/onboarding/holded/OnboardingHoldedClient.test.tsx`
+
 #### `holded_list_invoices`
 
 - `Read Only`

@@ -45,6 +45,49 @@ export const buildDashboardUrl = (source = 'holded_dashboard') =>
 export const buildOnboardingUrl = (source = 'holded_onboarding') =>
   `${HOLDED_ONBOARDING_URL}?source=${encodeURIComponent(source)}`;
 
+type HoldedConnectorFlowInput = {
+  source?: string | null;
+  channel?: string | null;
+  next?: string | null;
+  onboardingToken?: string | null;
+};
+
+function cleanFlowValue(value: string | null | undefined) {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+function buildHoldedConnectorFlowPath(
+  pathname: '/onboarding' | '/onboarding/holded',
+  input: HoldedConnectorFlowInput
+) {
+  const source = cleanFlowValue(input.source) || 'holded_onboarding';
+  const url = new URL(pathname, HOLDED_PUBLIC_URL);
+  url.searchParams.set('source', source);
+
+  if (input.channel === 'chatgpt') {
+    url.searchParams.set('channel', 'chatgpt');
+  }
+
+  const next = cleanFlowValue(input.next);
+  if (next) {
+    url.searchParams.set('next', sanitizeHoldedReturnTarget(next, buildDashboardUrl(source)));
+  }
+
+  const onboardingToken = cleanFlowValue(input.onboardingToken);
+  if (onboardingToken) {
+    url.searchParams.set('onboarding_token', onboardingToken);
+  }
+
+  return `${url.pathname}${url.search}`;
+}
+
+export const buildConnectorIntroUrl = (input: HoldedConnectorFlowInput = {}) =>
+  buildHoldedConnectorFlowPath('/onboarding', input);
+
+export const buildConnectorConnectUrl = (input: HoldedConnectorFlowInput = {}) =>
+  buildHoldedConnectorFlowPath('/onboarding/holded', input);
+
 export const buildProfileOnboardingUrl = (
   source = 'holded_profile_onboarding',
   next = buildDashboardUrl(source)

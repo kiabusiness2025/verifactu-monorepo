@@ -50,4 +50,31 @@ describe('holded navigation return target sanitization', () => {
       )
     ).toBe('https://isaak.verifactu.business/chat?source=fallback');
   });
+
+  it('preserves chatgpt handoff params across connector intro and connect pages', async () => {
+    const { buildConnectorIntroUrl, buildConnectorConnectUrl } =
+      await import('./holded-navigation');
+
+    expect(
+      buildConnectorIntroUrl({
+        source: 'holded_chatgpt_entry',
+        channel: 'chatgpt',
+        next: 'https://app.verifactu.business/oauth/authorize?client_id=openai-mobile',
+        onboardingToken: 'token-123',
+      })
+    ).toBe(
+      '/onboarding?source=holded_chatgpt_entry&channel=chatgpt&next=https%3A%2F%2Fapp.verifactu.business%2Foauth%2Fauthorize%3Fclient_id%3Dopenai-mobile&onboarding_token=token-123'
+    );
+
+    expect(
+      buildConnectorConnectUrl({
+        source: 'holded_chatgpt_entry',
+        channel: 'chatgpt',
+        next: 'https://app.verifactu.business/oauth/authorize?client_id=openai-mobile',
+        onboardingToken: 'token-123',
+      })
+    ).toBe(
+      '/onboarding/holded?source=holded_chatgpt_entry&channel=chatgpt&next=https%3A%2F%2Fapp.verifactu.business%2Foauth%2Fauthorize%3Fclient_id%3Dopenai-mobile&onboarding_token=token-123'
+    );
+  });
 });
