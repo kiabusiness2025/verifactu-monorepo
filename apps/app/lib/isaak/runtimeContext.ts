@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { normalizeIsaakContext } from '@/lib/isaak/persona';
 
 type BuildIsaakRuntimeContextInput = {
@@ -45,13 +46,21 @@ function formatPreferenceLine(preferredTenantName?: string | null): string | nul
   return `- tenant preferido guardado: ${preferredTenantName.trim()}`;
 }
 
-function formatHoldedLine(input: { connected: boolean; lastSyncAt?: Date | null; lastError?: string | null }): string {
+function formatHoldedLine(input: {
+  connected: boolean;
+  lastSyncAt?: Date | string | null;
+  lastError?: string | null;
+}): string {
   if (!input.connected) {
     return '- estado Holded: sin conexion activa';
   }
 
   const parts = ['- estado Holded: conectado'];
-  if (input.lastSyncAt) parts.push(`ultimo sync: ${input.lastSyncAt.toISOString()}`);
+  const lastSyncAt =
+    typeof input.lastSyncAt === 'string' ? new Date(input.lastSyncAt) : (input.lastSyncAt ?? null);
+  if (lastSyncAt && !Number.isNaN(lastSyncAt.getTime())) {
+    parts.push(`ultimo sync: ${lastSyncAt.toISOString()}`);
+  }
   if (input.lastError?.trim()) parts.push(`ultimo error registrado: ${input.lastError.trim()}`);
   return parts.join(' | ');
 }
@@ -70,7 +79,7 @@ export async function buildIsaakRuntimeContext(
     const normalizedContext = normalizeIsaakContext(input.context);
     const activeConversationId = input.conversationId ?? null;
 
-    const [preferredTenant, recentConversations, recentMessages, tenantIntegration] =
+    const [preferredTenant, recentConversations, recentMessages, holdedConnection] =
       await Promise.all([
         prisma.userPreference.findUnique({
           where: { userId },
@@ -106,18 +115,7 @@ export async function buildIsaakRuntimeContext(
             content: true,
           },
         }),
-        prisma.tenantIntegration.findFirst({
-          where: {
-            tenantId,
-            provider: 'holded',
-          },
-          orderBy: { updatedAt: 'desc' },
-          select: {
-            status: true,
-            lastSyncAt: true,
-            lastError: true,
-          },
-        }),
+        resolveSharedHoldedConnectionStatusForTenant(tenantId, 'dashboard'),
       ]);
 
     const blocks: string[] = [];
@@ -129,9 +127,9 @@ ${preferenceLine}`);
     }
 
     const holdedLine = formatHoldedLine({
-      connected: tenantIntegration?.status === 'connected',
-      lastSyncAt: tenantIntegration?.lastSyncAt ?? null,
-      lastError: tenantIntegration?.lastError ?? null,
+      connected: holdedConnection?.status === 'connected',
+      lastSyncAt: holdedConnection?.lastSyncAt ?? null,
+      lastError: holdedConnection?.lastError ?? null,
     });
     blocks.push(`Estado de integracion:
 ${holdedLine}`);
@@ -139,20 +137,14 @@ ${holdedLine}`);
     if (recentConversations.length > 0) {
       blocks.push(
         `Memoria conversacional reciente del usuario (${normalizedContext}):
-${recentConversations
-          .map(formatConversationLine)
-          .join('\n')}`
+${recentConversations.map(formatConversationLine).join('\n')}`
       );
     }
 
     if (recentMessages.length > 0) {
       blocks.push(
         `Mensajes recientes a tener en cuenta antes de responder:
-${recentMessages
-          .slice()
-          .reverse()
-          .map(formatMessageLine)
-          .join('\n')}`
+${recentMessages.slice().reverse().map(formatMessageLine).join('\n')}`
       );
     }
 
