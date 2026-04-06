@@ -1,7 +1,10 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
+import {
+  getHoldedOnboardingTokenFromSearchParams,
+  resolveHoldedOnboardingSession,
+} from '@/lib/integrations/holdedOnboardingSession';
 import { getPreferredFirstName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
-import { mintHoldedOnboardingToken, verifyHoldedOnboardingToken } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
 import { getAppUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
@@ -30,7 +33,7 @@ function firstValue(value: string | string[] | undefined) {
 }
 
 function normalizeNextUrl(nextUrl: string | undefined) {
-  const fallback = new URL('/dashboard/isaak', getAppUrl()).toString();
+  const fallback = new URL('/dashboard', getAppUrl()).toString();
   if (!nextUrl) return fallback;
 
   try {
@@ -39,20 +42,6 @@ function normalizeNextUrl(nextUrl: string | undefined) {
     return parsed.origin === appOrigin ? parsed.toString() : fallback;
   } catch {
     return fallback;
-  }
-}
-
-function attachOnboardingToken(nextUrl: string, onboardingToken: string | null) {
-  if (!onboardingToken) return nextUrl;
-
-  try {
-    const parsed = new URL(nextUrl);
-    if (parsed.origin === new URL(getAppUrl()).origin && parsed.pathname === '/oauth/authorize') {
-      parsed.searchParams.set('onboarding_token', onboardingToken);
-    }
-    return parsed.toString();
-  } catch {
-    return nextUrl;
   }
 }
 
@@ -67,23 +56,35 @@ export default async function HoldedOnboardingPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+  const search = new URLSearchParams();
+  for (const [key, rawValue] of Object.entries(params)) {
+    if (Array.isArray(rawValue)) {
+      for (const value of rawValue) search.append(key, value);
+      continue;
+    }
+    if (typeof rawValue === 'string') {
+      search.set(key, rawValue);
+    }
+  }
   const session = await getSessionPayload();
+  const onboardingToken = getHoldedOnboardingTokenFromSearchParams(search);
+  const onboardingSession = !session?.uid
+    ? await resolveHoldedOnboardingSession(onboardingToken)
+    : null;
   const captureMode = firstValue(params.capture)?.trim() === '1';
 
-  if (!session?.uid) {
+  if (!session?.uid && !onboardingSession?.uid) {
     const loginUrl = new URL('/login', getAppUrl());
     loginUrl.searchParams.set('source', 'holded_onboarding');
     const current = new URL('/onboarding/holded', getAppUrl());
     const nextParam = firstValue(params.next)?.trim();
     const channel = firstValue(params.channel)?.trim();
     const source = firstValue(params.source)?.trim();
-    const onboardingToken = firstValue(params.onboarding_token)?.trim();
     const requireConnectionConfirmation =
       firstValue(params.require_connection_confirmation)?.trim() === '1';
     if (nextParam) current.searchParams.set('next', nextParam);
     if (channel) current.searchParams.set('channel', channel);
     if (source) current.searchParams.set('source', source);
-    if (onboardingToken) current.searchParams.set('onboarding_token', onboardingToken);
     if (requireConnectionConfirmation) {
       current.searchParams.set('require_connection_confirmation', '1');
     }
@@ -94,17 +95,7 @@ export default async function HoldedOnboardingPage({
     redirect(loginUrl.toString());
   }
 
-  const existingToken = firstValue(params.onboarding_token)?.trim() || null;
-  const onboardingToken =
-    existingToken ||
-    (!session.uid
-      ? await mintHoldedOnboardingToken({
-          seed: `holded-onboarding:${Date.now()}:${Math.random()}`,
-        })
-      : null);
-  const onboardingPayload =
-    !session.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
-  const nextUrl = attachOnboardingToken(normalizeNextUrl(firstValue(params.next)), onboardingToken);
+  const nextUrl = normalizeNextUrl(firstValue(params.next));
   const requireConnectionConfirmation =
     firstValue(params.require_connection_confirmation)?.trim() === '1';
   const entryChannel = inferHoldedEntryChannel({
@@ -113,8 +104,8 @@ export default async function HoldedOnboardingPage({
     next: params.next,
   });
 
-  const defaultContactName = session.name ?? onboardingPayload?.name ?? null;
-  const defaultContactEmail = session.email ?? onboardingPayload?.email ?? null;
+  const defaultContactName = session?.name ?? onboardingSession?.name ?? null;
+  const defaultContactEmail = session?.email ?? onboardingSession?.email ?? null;
   let summary = {
     companyName: 'Tu empresa',
     companyLegalName: null as string | null,
@@ -136,13 +127,16 @@ export default async function HoldedOnboardingPage({
   };
 
   try {
-    const auth = await requireTenantContext({
-      channelType: entryChannel,
-      onboardingToken,
-      metadata: { source: 'holded-onboarding-page' },
-    });
+    const auth =
+      session?.uid || onboardingSession?.tenantId
+        ? await requireTenantContext({
+            channelType: entryChannel,
+            metadata: { source: 'holded-onboarding-page' },
+            onboardingToken,
+          })
+        : null;
 
-    if (!('error' in auth)) {
+    if (auth && !('error' in auth)) {
       resolvedTenantInfo = {
         tenantId: auth.tenantId,
         tenantIsDemo: null,
@@ -217,10 +211,10 @@ export default async function HoldedOnboardingPage({
       captureMode={captureMode}
       entryChannel={entryChannel}
       nextUrl={nextUrl}
-      onboardingToken={onboardingToken}
       requireConnectionConfirmation={requireConnectionConfirmation}
       summary={summary}
       companySetup={companySetup}
+      onboardingToken={onboardingToken}
     />
   );
 }

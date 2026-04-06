@@ -173,7 +173,9 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
   - `holded_list_project_tasks` — listar tareas de proyecto (readOnly).
   - `holded_create_invoice_draft` — crear borrador con confirmación explícita.
 - Metadata OAuth en `/.well-known/oauth-authorization-server` y `/.well-known/oauth-protected-resource/api/mcp/holded`.
-- Documentación extendida: `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md`.
+- Documentacion extendida: `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md`.
+- Contrato publico canonico actual: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md`.
+- Flujo publico actual: conector directo Holded para ChatGPT, sin login visible, con `connector onboarding session`.
 
 ### Onboarding
 
@@ -322,5 +324,5 @@ Dock compartido (multi-app): `packages/ui/src/isaak/IsaakDock.tsx`.
 ## Notas
 
 - El documento `docs/isaak/ISAAK_SUPPORT_SYSTEM.md` se mantiene para el flujo de soporte email.
-- El documento `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md` cubre la arquitectura MCP en detalle.
+- El documento `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md` cubre la arquitectura MCP y el onboarding directo en detalle.
 - El documento `docs/product/ISAAK_PLATFORM_SYNC_PLAN.md` define el modelo de ownership de datos por tenant.

@@ -16,6 +16,30 @@ jest.mock('@/lib/integrations/holdedMcpTools', () => ({
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     },
     {
+      name: 'holded_list_purchases',
+      title: 'List purchase invoices in Holded',
+      description: 'List purchase invoices.',
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    },
+    {
+      name: 'holded_list_expense_invoices',
+      title: 'List expense invoices in Holded',
+      description: 'List expense invoices.',
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    },
+    {
       name: 'holded_create_accounting_account',
       title: 'Create accounting account in Holded',
       description: 'Create an accounting account.',
@@ -100,9 +124,13 @@ describe('MCP Holded route discovery and auth', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
-    expect(payload.name).toBe('Isaak for Holded');
+    expect(payload.name).toBe('Holded Connector for ChatGPT');
     expect(payload.endpoint).toBe('/api/mcp/holded');
-    expect(payload.tools).toHaveLength(1);
+    expect(payload.tools.map((tool: { name: string }) => tool.name)).toEqual([
+      'holded_list_invoices',
+      'holded_list_purchases',
+      'holded_list_expense_invoices',
+    ]);
     expect(applyOpenAiCorsHeaders).toHaveBeenCalled();
   });
 
@@ -127,7 +155,7 @@ describe('MCP Holded route discovery and auth', () => {
 
     expect(response.status).toBe(200);
     expect(payload.result.protocolVersion).toBe('2024-11-05');
-    expect(payload.result.serverInfo.name).toBe('Isaak for Holded');
+    expect(payload.result.serverInfo.name).toBe('Holded Connector for ChatGPT');
   });
 
   it('returns a public tools/list on unauthenticated requests', async () => {
@@ -147,7 +175,11 @@ describe('MCP Holded route discovery and auth', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
-    expect(payload.result.tools).toHaveLength(1);
+    expect(payload.result.tools.map((tool: { name: string }) => tool.name)).toEqual([
+      'holded_list_invoices',
+      'holded_list_purchases',
+      'holded_list_expense_invoices',
+    ]);
   });
 
   it('includes accounting write tools in public tools/list when the accounting phase preset is active', async () => {
@@ -178,6 +210,8 @@ describe('MCP Holded route discovery and auth', () => {
     expect(response.status).toBe(200);
     expect(payload.result.tools.map((tool: { name: string }) => tool.name)).toEqual([
       'holded_list_invoices',
+      'holded_list_purchases',
+      'holded_list_expense_invoices',
       'holded_create_accounting_account',
       'holded_create_daily_ledger_entry',
     ]);
@@ -234,7 +268,11 @@ describe('MCP Holded route discovery and auth', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://chatgpt.com');
-    expect(payload.result.tools).toHaveLength(1);
+    expect(payload.result.tools.map((tool: { name: string }) => tool.name)).toEqual([
+      'holded_list_invoices',
+      'holded_list_purchases',
+      'holded_list_expense_invoices',
+    ]);
     expect(applyOpenAiCorsHeaders).toHaveBeenCalled();
   });
 });

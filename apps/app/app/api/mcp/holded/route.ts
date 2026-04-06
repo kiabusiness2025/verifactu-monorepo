@@ -37,6 +37,9 @@ type JsonRpcRequest = {
 type ToolDefinition = HoldedMcpToolDefinition;
 
 const TOOLS: ToolDefinition[] = holdedMcpTools;
+const MCP_CONNECTOR_NAME = 'Holded Connector for ChatGPT';
+const MCP_CONNECTOR_DESCRIPTION =
+  'Direct MCP connector between ChatGPT and Holded powered by Verifactu. By default it exposes a review-safe subset for sales invoices, expense invoices and purchase bills, invoice and purchase PDFs, purchase summaries, contacts, accounting accounts, CRM bookings, project context, and invoice draft creation for the connected tenant. Broader Holded surfaces remain available behind additional scopes.';
 
 function applyMcpCors<T extends { headers: Headers }>(response: T, request: NextRequest) {
   response.headers.set('Cache-Control', 'no-store');
@@ -271,9 +274,8 @@ export async function GET(request: NextRequest) {
 
   return applyMcpCors(
     NextResponse.json({
-      name: 'Isaak for Holded',
-      description:
-        'Public-ready MCP connector for Isaak and Holded. By default it exposes a review-safe subset for invoices, contacts, accounting accounts, CRM bookings, project context, and invoice draft creation for the connected tenant. Broader Holded surfaces remain available behind additional scopes.',
+      name: MCP_CONNECTOR_NAME,
+      description: MCP_CONNECTOR_DESCRIPTION,
       protocol: 'MCP over JSON-RPC HTTP',
       endpoint: '/api/mcp/holded',
       oauth: {
@@ -313,7 +315,7 @@ export async function POST(request: NextRequest) {
         return jsonRpc(request, body.id, {
           protocolVersion: '2024-11-05',
           serverInfo: {
-            name: 'Isaak for Holded',
+            name: MCP_CONNECTOR_NAME,
             version: '0.3.0',
           },
           capabilities: {

@@ -1,7 +1,15 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
 import { maskSecret, probeAccountingApiConnection } from '@/lib/integrations/accounting';
+import {
+  getConnectorRequestId,
+  logConnectorEvent,
+  withConnectorRequestId,
+} from '@/lib/integrations/connectorObservability';
 import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
+import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
+import { mintHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
+import { getSessionPayload } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -39,43 +47,68 @@ function getEntryChannel(request: NextRequest) {
   return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
 }
 
-function getOnboardingToken(request: NextRequest) {
-  return (
-    request.headers.get('x-isaak-onboarding-token')?.trim() ||
-    request.nextUrl.searchParams.get('onboarding_token')?.trim() ||
-    null
-  );
-}
-
 export async function POST(request: NextRequest) {
   const entryChannel = getEntryChannel(request);
-  const onboardingToken = getOnboardingToken(request);
+  const requestId = getConnectorRequestId(request);
   let stage: 'auth' | 'access' | 'body' | 'probe' = 'auth';
 
   try {
-    const auth = await requireTenantContext({
-      channelType: entryChannel,
-      metadata: {
-        source: entryChannel === 'chatgpt' ? 'holded-validation' : 'requireTenantContext',
-      },
-      onboardingToken,
-    });
-    if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    const signedSession = await getSessionPayload();
+    const onboardingSession =
+      !signedSession?.uid && entryChannel === 'chatgpt'
+        ? await resolveHoldedOnboardingSessionFromHeaders(request.headers)
+        : null;
+    const auth =
+      onboardingSession && !signedSession?.uid
+        ? null
+        : await requireTenantContext({
+            channelType: entryChannel,
+            metadata: {
+              source: entryChannel === 'chatgpt' ? 'holded-validation' : 'requireTenantContext',
+            },
+          });
+
+    if (auth && 'error' in auth) {
+      return withConnectorRequestId(
+        NextResponse.json(
+          { error: auth.error, requestId, stage, reason: 'auth_error' },
+          { status: auth.status }
+        ),
+        requestId
+      );
     }
 
-    stage = 'access';
-    const access = await getAccountingIntegrationAccess({ tenantId: auth.tenantId, entryChannel });
-    if (!access.canConnect) {
-      return NextResponse.json(
-        {
-          error:
-            'La integración con tu programa de contabilidad vía API es opcional y está disponible en planes Empresa y PRO.',
-          plan: access.planCode ?? 'unknown',
-          allowedPlans: ['empresa', 'pro'],
-          connectionMode: access.connectionMode,
-        },
-        { status: 403 }
+    if (auth) {
+      stage = 'access';
+      const access = await getAccountingIntegrationAccess({
+        tenantId: auth.tenantId,
+        entryChannel,
+      });
+      if (!access.canConnect) {
+        return withConnectorRequestId(
+          NextResponse.json(
+            {
+              error:
+                'La integracion con tu programa de contabilidad via API es opcional y esta disponible en planes Empresa y PRO.',
+              plan: access.planCode ?? 'unknown',
+              allowedPlans: ['empresa', 'pro'],
+              connectionMode: access.connectionMode,
+              requestId,
+              stage,
+              reason: 'plan_access_denied',
+            },
+            { status: 403 }
+          ),
+          requestId
+        );
+      }
+    } else if (!onboardingSession) {
+      return withConnectorRequestId(
+        NextResponse.json(
+          { error: 'Unauthorized', requestId, stage, reason: 'auth_error' },
+          { status: 401 }
+        ),
+        requestId
       );
     }
 
@@ -86,45 +119,77 @@ export async function POST(request: NextRequest) {
     const acceptedPrivacy = body?.acceptedPrivacy === true;
 
     if (!apiKey) {
-      return NextResponse.json({ error: 'apiKey es obligatorio' }, { status: 400 });
+      return withConnectorRequestId(
+        NextResponse.json(
+          { error: 'apiKey es obligatorio', requestId, stage, reason: 'invalid_input' },
+          { status: 400 }
+        ),
+        requestId
+      );
     }
 
     if (!acceptedTerms || !acceptedPrivacy) {
-      return NextResponse.json(
-        {
-          error:
-            'Debes aceptar los Terminos y la Politica de Privacidad de verifactu.business para continuar.',
-        },
-        { status: 400 }
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            error:
+              'Debes aceptar los Terminos y la Politica de Privacidad de verifactu.business para continuar.',
+            requestId,
+            stage,
+            reason: 'legal_acceptance_required',
+          },
+          { status: 400 }
+        ),
+        requestId
       );
     }
 
     stage = 'probe';
-    const probe = await probeAccountingApiConnection(apiKey);
+    const probe = await probeAccountingApiConnection(apiKey, { profile: entryChannel });
+    const validationToken = probe.ok
+      ? await mintHoldedValidationToken({
+          tenantId: auth?.tenantId ?? null,
+          subjectUid: auth?.session.uid ?? onboardingSession?.uid ?? null,
+          channel: entryChannel,
+          apiKey,
+          probe,
+        })
+      : null;
 
-    return NextResponse.json({
-      ok: probe.ok,
-      provider: 'holded',
-      keyMasked: maskSecret(apiKey),
-      probe,
-    });
+    return withConnectorRequestId(
+      NextResponse.json({
+        ok: probe.ok,
+        provider: 'holded',
+        keyMasked: maskSecret(apiKey),
+        probe,
+        validationToken,
+        requestId,
+      }),
+      requestId
+    );
   } catch (error) {
     const detail = describeValidateError(error);
 
-    console.error('[api/integrations/accounting/validate] failed', {
+    logConnectorEvent('api/integrations/accounting/validate', 'error', {
+      requestId,
       stage,
       entryChannel,
       detail,
     });
 
-    return NextResponse.json(
-      {
-        error: 'No se pudo validar la API key de Holded',
-        detail,
-        stage,
-        debug: `No se pudo validar la API key de Holded [${stage}] ${detail}`,
-      },
-      { status: 500 }
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          error: 'No se pudo validar la API key de Holded',
+          detail,
+          stage,
+          requestId,
+          reason: 'validate_failed',
+          debug: `No se pudo validar la API key de Holded [${stage}] ${detail}`,
+        },
+        { status: 500 }
+      ),
+      requestId
     );
   }
 }

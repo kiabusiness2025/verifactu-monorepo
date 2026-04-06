@@ -1,32 +1,28 @@
 import { upsertChannelIdentity } from '@/lib/integrations/channelIdentityStore';
+import { resolveHoldedOnboardingSession } from '@/lib/integrations/holdedOnboardingSession';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
-import {
-  resolveTenantForHoldedFirstSession,
-  resolveTenantForOAuthSession,
-  verifyHoldedOnboardingToken,
-} from '@/lib/oauth/mcp';
+import { resolveTenantForHoldedFirstSession, resolveTenantForOAuthSession } from '@/lib/oauth/mcp';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 
 export async function requireTenantContext(options?: {
   channelType?: 'dashboard' | 'chatgpt' | 'internal';
   metadata?: Record<string, unknown>;
-  onboardingToken?: string | null;
   tenantIdHint?: string | null;
+  onboardingToken?: string | null;
 }) {
   const session = await getSessionPayload();
-  const onboardingPayload =
-    !session?.uid && options?.channelType === 'chatgpt' && options?.onboardingToken
-      ? await verifyHoldedOnboardingToken(options.onboardingToken)
+  const onboardingSession =
+    !session?.uid && options?.channelType === 'chatgpt'
+      ? await resolveHoldedOnboardingSession(options.onboardingToken ?? null)
       : null;
-
-  if (!session?.uid && !onboardingPayload) {
+  if (!session?.uid && !onboardingSession?.uid) {
     return { error: 'Unauthorized', status: 401 as const };
   }
 
-  const subjectUid = session?.uid ?? onboardingPayload?.uid ?? null;
-  const subjectEmail = session?.email ?? onboardingPayload?.email ?? null;
-  const subjectName = session?.name ?? onboardingPayload?.name ?? null;
+  const subjectUid = session?.uid ?? onboardingSession?.uid ?? null;
+  const subjectEmail = session?.email ?? onboardingSession?.email ?? null;
+  const subjectName = session?.name ?? onboardingSession?.name ?? null;
   const sessionTenantId = session?.tenantId ?? null;
 
   if (!subjectUid) {
@@ -65,7 +61,7 @@ export async function requireTenantContext(options?: {
             email: subjectEmail,
             name: subjectName,
             sessionTenantId,
-            tenantIdHint: options?.tenantIdHint ?? null,
+            tenantIdHint: options?.tenantIdHint ?? onboardingSession?.tenantId ?? null,
           })
         : await resolveTenantForOAuthSession({
             uid: subjectUid,
@@ -83,7 +79,8 @@ export async function requireTenantContext(options?: {
 
   let tenantId = direct.tenantId ?? oauthResolved.tenantId ?? sessionTenantId ?? null;
 
-  const normalizedTenantIdHint = options?.tenantIdHint?.trim() || null;
+  const normalizedTenantIdHint =
+    options?.tenantIdHint?.trim() || onboardingSession?.tenantId?.trim() || null;
   if (normalizedTenantIdHint) {
     try {
       const hintMembership = await prisma.membership.findFirst({

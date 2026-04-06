@@ -1,14 +1,21 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
-import prisma from '@/lib/prisma';
 import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
 import {
   encryptIntegrationSecret,
   maskSecret,
   probeAccountingApiConnection,
 } from '@/lib/integrations/accounting';
+import {
+  getConnectorRequestId,
+  logConnectorEvent,
+  withConnectorRequestId,
+} from '@/lib/integrations/connectorObservability';
 import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
+import { getHoldedOnboardingTokenFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
+import { verifyHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
 import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore';
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -49,14 +56,6 @@ function getEntryChannel(request: NextRequest) {
   return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
 }
 
-function getOnboardingToken(request: NextRequest) {
-  return (
-    request.headers.get('x-isaak-onboarding-token')?.trim() ||
-    request.nextUrl.searchParams.get('onboarding_token')?.trim() ||
-    null
-  );
-}
-
 function getTenantIdHint(request: NextRequest) {
   return (
     request.headers.get('x-isaak-tenant-id')?.trim() ||
@@ -67,9 +66,10 @@ function getTenantIdHint(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const entryChannel = getEntryChannel(request);
-  const onboardingToken = getOnboardingToken(request);
+  const requestId = getConnectorRequestId(request);
   const tenantIdHint = getTenantIdHint(request);
-  let stage: 'auth' | 'access' | 'body' | 'encrypt' | 'probe' | 'persist' = 'auth';
+  const onboardingToken = getHoldedOnboardingTokenFromHeaders(request.headers);
+  let stage: 'auth' | 'access' | 'body' | 'encrypt' | 'verify' | 'probe' | 'persist' = 'auth';
   let tenantId: string | null = null;
   let resolvedUserId: string | null = null;
   let sessionUid: string | null = null;
@@ -80,11 +80,17 @@ export async function POST(request: NextRequest) {
       metadata: {
         source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext',
       },
-      onboardingToken,
       tenantIdHint,
+      onboardingToken,
     });
     if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
+      return withConnectorRequestId(
+        NextResponse.json(
+          { error: auth.error, requestId, stage, reason: 'auth_error' },
+          { status: auth.status }
+        ),
+        requestId
+      );
     }
 
     tenantId = auth.tenantId;
@@ -94,45 +100,77 @@ export async function POST(request: NextRequest) {
     stage = 'access';
     const access = await getAccountingIntegrationAccess({ tenantId: auth.tenantId, entryChannel });
     if (!access.canConnect) {
-      return NextResponse.json(
-        {
-          error:
-            'La integración con tu programa de contabilidad vía API es opcional y está disponible en planes Empresa y PRO.',
-          plan: access.planCode ?? 'unknown',
-          allowedPlans: ['empresa', 'pro'],
-          connectionMode: access.connectionMode,
-        },
-        { status: 403 }
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            error:
+              'La integracion con tu programa de contabilidad via API es opcional y esta disponible en planes Empresa y PRO.',
+            plan: access.planCode ?? 'unknown',
+            allowedPlans: ['empresa', 'pro'],
+            connectionMode: access.connectionMode,
+            requestId,
+            stage,
+            reason: 'plan_access_denied',
+          },
+          { status: 403 }
+        ),
+        requestId
       );
     }
 
     stage = 'body';
     const body = await request.json().catch(() => ({}));
     const apiKey = typeof body?.apiKey === 'string' ? normalizeHoldedApiKey(body.apiKey) : '';
+    const validationToken = typeof body?.validationToken === 'string' ? body.validationToken : '';
     const acceptedTerms = body?.acceptedTerms === true;
     const acceptedPrivacy = body?.acceptedPrivacy === true;
+
     if (!apiKey) {
-      return NextResponse.json({ error: 'apiKey es obligatorio' }, { status: 400 });
+      return withConnectorRequestId(
+        NextResponse.json(
+          { error: 'apiKey es obligatorio', requestId, stage, reason: 'invalid_input' },
+          { status: 400 }
+        ),
+        requestId
+      );
     }
     if (!acceptedTerms || !acceptedPrivacy) {
-      return NextResponse.json(
-        {
-          error:
-            'Debes aceptar los Terminos y la Politica de Privacidad de verifactu.business para continuar.',
-        },
-        { status: 400 }
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            error:
+              'Debes aceptar los Terminos y la Politica de Privacidad de verifactu.business para continuar.',
+            requestId,
+            stage,
+            reason: 'legal_acceptance_required',
+          },
+          { status: 400 }
+        ),
+        requestId
       );
     }
 
     stage = 'encrypt';
     const encrypted = encryptIntegrationSecret(apiKey);
 
+    stage = 'verify';
+    const validated = validationToken
+      ? await verifyHoldedValidationToken({
+          token: validationToken,
+          tenantId: auth.tenantId,
+          subjectUid: auth.session.uid ?? null,
+          channel: entryChannel,
+          apiKey,
+        })
+      : null;
+
     stage = 'probe';
-    const probe = await probeAccountingApiConnection(apiKey);
+    const probe =
+      validated?.probe ?? (await probeAccountingApiConnection(apiKey, { profile: entryChannel }));
     const status = probe.ok ? 'connected' : 'error';
     const normalizedError = probe.ok
       ? null
-      : probe.error || 'Error de validación de integración Holded';
+      : probe.error || 'Error de validacion de integracion Holded';
 
     stage = 'persist';
     const legalAcceptedAt = new Date();
@@ -179,26 +217,33 @@ export async function POST(request: NextRequest) {
           channel: entryChannel,
         });
       } catch (notificationError) {
-        console.error('[api/integrations/accounting/connect] notification failed', {
+        logConnectorEvent('api/integrations/accounting/connect', 'error', {
+          requestId,
+          stage: 'persist',
           tenantId: auth.tenantId,
           entryChannel,
           message:
             notificationError instanceof Error
               ? notificationError.message
               : String(notificationError),
+          reason: 'notification_failed',
         });
       }
     }
 
-    return NextResponse.json({
-      ok: probe.ok,
-      provider: 'holded',
-      status: saved?.status ?? status,
-      lastSyncAt: saved?.last_sync_at ?? null,
-      lastError: saved?.last_error ?? null,
-      keyMasked: maskSecret(apiKey),
-      probe,
-    });
+    return withConnectorRequestId(
+      NextResponse.json({
+        ok: probe.ok,
+        provider: 'holded',
+        status: saved?.status ?? status,
+        lastSyncAt: saved?.last_sync_at ?? null,
+        lastError: saved?.last_error ?? null,
+        keyMasked: maskSecret(apiKey),
+        probe,
+        requestId,
+      }),
+      requestId
+    );
   } catch (error) {
     const detail = describeConnectError(error);
     const genericError =
@@ -206,23 +251,30 @@ export async function POST(request: NextRequest) {
         ? 'No se pudo guardar la conexion de Holded'
         : 'No se pudo conectar Holded';
 
-    console.error('[api/integrations/accounting/connect] failed', {
+    logConnectorEvent('api/integrations/accounting/connect', 'error', {
+      requestId,
       stage,
       entryChannel,
       tenantId,
       resolvedUserId,
       sessionUid,
       detail,
+      reason: 'connect_failed',
     });
 
-    return NextResponse.json(
-      {
-        error: genericError,
-        detail,
-        stage,
-        debug: `${genericError} [${stage}] ${detail}`,
-      },
-      { status: 500 }
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          error: genericError,
+          detail,
+          stage,
+          requestId,
+          reason: 'connect_failed',
+          debug: `${genericError} [${stage}] ${detail}`,
+        },
+        { status: 500 }
+      ),
+      requestId
     );
   }
 }

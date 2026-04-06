@@ -31,16 +31,41 @@ jest.mock('@/lib/email/holdedConnectionEmails', () => ({
   sendHoldedConnectionLifecycleEmails: jest.fn(),
 }));
 
+jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
+  getHoldedOnboardingTokenFromHeaders: jest.fn(() => null),
+}));
+
 import { NextRequest } from 'next/server';
 import { POST } from './route';
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
 import { probeAccountingApiConnection } from '@/lib/integrations/accounting';
+import { mintHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
 import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore';
 import prisma from '@/lib/prisma';
 import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
 
 describe('POST /api/integrations/accounting/connect', () => {
+  const previousSessionSecret = process.env.SESSION_SECRET;
+  const chatgptProbe = {
+    ok: true,
+    provider: 'holded' as const,
+    profile: 'chatgpt' as const,
+    invoiceApi: { ok: true, status: 200 },
+    contactsApi: { ok: true, status: 200 },
+    accountingApi: { ok: true, status: 200 },
+    crmApi: { ok: true, status: 200 },
+    projectsApi: { ok: true, status: 200 },
+    teamApi: { ok: false, status: 403 },
+    requiredCapabilities: ['invoiceApi', 'contactsApi', 'accountingApi', 'crmApi', 'projectsApi'],
+    missingCapabilities: [],
+    error: null,
+  };
+
+  beforeAll(() => {
+    process.env.SESSION_SECRET = 'test-session-secret';
+  });
+
   beforeEach(() => {
     (requireTenantContext as jest.Mock).mockResolvedValue({
       tenantId: 'tenant-1',
@@ -52,7 +77,7 @@ describe('POST /api/integrations/accounting/connect', () => {
       connectionMode: 'holded_first',
       planCode: 'empresa',
     });
-    (probeAccountingApiConnection as jest.Mock).mockResolvedValue({ ok: true });
+    (probeAccountingApiConnection as jest.Mock).mockResolvedValue(chatgptProbe);
     (upsertAccountingIntegration as jest.Mock).mockResolvedValue({
       status: 'connected',
       last_sync_at: null,
@@ -75,6 +100,10 @@ describe('POST /api/integrations/accounting/connect', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    process.env.SESSION_SECRET = previousSessionSecret;
   });
 
   it('rejects the connection when legal acceptance is incomplete', async () => {
@@ -122,14 +151,18 @@ describe('POST /api/integrations/accounting/connect', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
+    expect(response.headers.get('x-verifactu-request-id')).toBeTruthy();
     expect(payload.ok).toBe(true);
+    expect(payload.requestId).toEqual(expect.any(String));
     expect(requireTenantContext).toHaveBeenCalledWith(
       expect.objectContaining({
         channelType: 'chatgpt',
         tenantIdHint: 'tenant-demo',
       })
     );
-    expect(probeAccountingApiConnection).toHaveBeenCalledWith('demo-key');
+    expect(probeAccountingApiConnection).toHaveBeenCalledWith('demo-key', {
+      profile: 'chatgpt',
+    });
     expect(upsertAccountingIntegration).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantId: 'tenant-1',
@@ -150,6 +183,93 @@ describe('POST /api/integrations/accounting/connect', () => {
       action: 'connected',
       channel: 'chatgpt',
     });
+  });
+
+  it('reuses a valid validation token and skips the second Holded probe', async () => {
+    const validationToken = await mintHoldedValidationToken({
+      tenantId: 'tenant-1',
+      channel: 'chatgpt',
+      apiKey: 'demo-key',
+      probe: chatgptProbe,
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/integrations/accounting/connect',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+        },
+        body: JSON.stringify({
+          apiKey: 'demo-key',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+          validationToken,
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.requestId).toEqual(expect.any(String));
+    expect(probeAccountingApiConnection).not.toHaveBeenCalled();
+    expect(upsertAccountingIntegration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: 'tenant-1',
+        status: 'connected',
+      })
+    );
+  });
+
+  it('stores an error when chatgpt probing lacks the required crm and projects access', async () => {
+    (upsertAccountingIntegration as jest.Mock).mockResolvedValue({
+      status: 'error',
+      last_sync_at: null,
+      last_error:
+        'La API key de Holded no tiene acceso suficiente para la conexion con ChatGPT. Falta acceso a agenda comercial y proyectos.',
+    });
+    (probeAccountingApiConnection as jest.Mock).mockResolvedValue({
+      ...chatgptProbe,
+      ok: false,
+      crmApi: { ok: false, status: 403 },
+      projectsApi: { ok: false, status: 403 },
+      missingCapabilities: ['crmApi', 'projectsApi'],
+      error:
+        'La API key de Holded no tiene acceso suficiente para la conexion con ChatGPT. Falta acceso a agenda comercial y proyectos.',
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/integrations/accounting/connect',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+        },
+        body: JSON.stringify({
+          apiKey: 'demo-key',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(false);
+    expect(payload.lastError).toContain('agenda comercial');
+    expect(upsertAccountingIntegration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'error',
+        lastError: expect.stringContaining('agenda comercial'),
+      })
+    );
   });
 
   it('normalizes pasted api keys before probing and saving the connection', async () => {
@@ -174,7 +294,9 @@ describe('POST /api/integrations/accounting/connect', () => {
 
     expect(response.status).toBe(200);
     expect(payload.ok).toBe(true);
-    expect(probeAccountingApiConnection).toHaveBeenCalledWith('demo-key123');
+    expect(probeAccountingApiConnection).toHaveBeenCalledWith('demo-key123', {
+      profile: 'chatgpt',
+    });
     expect(upsertAccountingIntegration).toHaveBeenCalledWith(
       expect.objectContaining({
         apiKeyEnc: 'encrypted-demo-key',

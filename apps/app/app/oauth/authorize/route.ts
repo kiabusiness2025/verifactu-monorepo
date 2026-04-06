@@ -1,17 +1,26 @@
 import { upsertChannelIdentity } from '@/lib/integrations/channelIdentityStore';
+import {
+  getHoldedOnboardingTokenFromSearchParams,
+  resolveHoldedOnboardingSession,
+} from '@/lib/integrations/holdedOnboardingSession';
 import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import {
+  getConnectorRequestId,
+  logConnectorEvent,
+  withConnectorRequestId,
+} from '@/lib/integrations/connectorObservability';
 import { getSessionPayload } from '@/lib/session';
 import {
   buildLoginUrl,
   ensureScopesAllowed,
   getDefaultScopes,
   getMcpResourceUrl,
+  isValidPkceCodeChallenge,
   mapSessionToOAuthUser,
-  mintAuthorizationCode,
   mintHoldedOnboardingToken,
+  mintAuthorizationCode,
   resolveTenantForHoldedFirstSession,
   validateRedirectUri,
-  verifyHoldedOnboardingToken,
 } from '@/lib/oauth/mcp';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -26,6 +35,7 @@ function redirectWithError(redirectUri: string, error: string, state?: string | 
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
+  const requestId = getConnectorRequestId(request);
   const responseType = url.searchParams.get('response_type');
   const clientId = url.searchParams.get('client_id')?.trim() || '';
   const redirectUri = url.searchParams.get('redirect_uri')?.trim() || '';
@@ -37,59 +47,85 @@ export async function GET(request: NextRequest) {
     ? requestedScope.trim()
     : getDefaultScopes().join(' ');
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
-  const onboardingToken = url.searchParams.get('onboarding_token')?.trim() || null;
   const connectionConfirmed = url.searchParams.get('connection_confirmed')?.trim() === '1';
-  const tenantIdHint = url.searchParams.get('tenant_id')?.trim() || null;
+  const tenantIdQuery = url.searchParams.get('tenant_id')?.trim() || null;
 
   try {
     if (responseType !== 'code') {
-      return NextResponse.json({ error: 'unsupported_response_type' }, { status: 400 });
+      return withConnectorRequestId(
+        NextResponse.json({ error: 'unsupported_response_type', requestId }, { status: 400 }),
+        requestId
+      );
     }
     if (!clientId || !redirectUri) {
-      return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
-    }
-    if (codeChallengeRaw && codeChallengeMethodRaw && codeChallengeMethodRaw !== 'S256') {
-      return redirectWithError(redirectUri, 'invalid_request', state);
+      return withConnectorRequestId(
+        NextResponse.json({ error: 'invalid_request', requestId }, { status: 400 }),
+        requestId
+      );
     }
     if (!validateRedirectUri(redirectUri)) {
-      return NextResponse.json({ error: 'invalid_redirect_uri' }, { status: 400 });
+      return withConnectorRequestId(
+        NextResponse.json({ error: 'invalid_redirect_uri', requestId }, { status: 400 }),
+        requestId
+      );
+    }
+    if (
+      !codeChallengeRaw ||
+      !codeChallengeMethodRaw ||
+      codeChallengeMethodRaw !== 'S256' ||
+      !isValidPkceCodeChallenge(codeChallengeRaw)
+    ) {
+      return withConnectorRequestId(
+        redirectWithError(redirectUri, 'invalid_request', state),
+        requestId
+      );
     }
     if (!ensureScopesAllowed(normalizedScope)) {
-      return redirectWithError(redirectUri, 'invalid_scope', state);
+      return withConnectorRequestId(
+        redirectWithError(redirectUri, 'invalid_scope', state),
+        requestId
+      );
     }
 
     const session = await getSessionPayload();
-    const onboardingPayload =
-      !session?.uid && onboardingToken ? await verifyHoldedOnboardingToken(onboardingToken) : null;
-
-    if (!session?.uid && !onboardingPayload) {
-      const guestToken = await mintHoldedOnboardingToken({
-        seed: [clientId, redirectUri, state ?? '', codeChallengeRaw, resource].join('|'),
+    const onboardingToken = getHoldedOnboardingTokenFromSearchParams(url.searchParams);
+    const onboardingSession = !session?.uid
+      ? await resolveHoldedOnboardingSession(onboardingToken)
+      : null;
+    const tenantIdHint = tenantIdQuery ?? onboardingSession?.tenantId ?? null;
+    if (!session?.uid && !onboardingSession?.uid) {
+      const mintedOnboardingToken = await mintHoldedOnboardingToken({
+        seed: [clientId, redirectUri, state ?? '', codeChallengeRaw, Date.now().toString()].join(
+          '|'
+        ),
       });
       const authorizeUrl = new URL(url.toString());
-      authorizeUrl.searchParams.set('onboarding_token', guestToken);
+      authorizeUrl.searchParams.set('onboarding_token', mintedOnboardingToken);
 
-      return NextResponse.redirect(buildLoginUrl(authorizeUrl.toString(), 'holded_oauth'));
+      const onboardingUrl = new URL('/onboarding/holded', request.nextUrl.origin);
+      onboardingUrl.searchParams.set('next', authorizeUrl.toString());
+      onboardingUrl.searchParams.set('channel', 'chatgpt');
+      onboardingUrl.searchParams.set('require_connection_confirmation', '1');
+      onboardingUrl.searchParams.set('onboarding_token', mintedOnboardingToken);
+      if (tenantIdQuery) {
+        onboardingUrl.searchParams.set('tenant_id', tenantIdQuery);
+      }
+
+      return withConnectorRequestId(NextResponse.redirect(onboardingUrl), requestId);
     }
 
-    const subject = session?.uid
-      ? {
-          uid: session.uid,
-          email: session.email ?? null,
-          name: session.name ?? null,
-          sessionTenantId: session.tenantId ?? null,
-        }
-      : onboardingPayload
-        ? {
-            uid: onboardingPayload.uid,
-            email: onboardingPayload.email ?? null,
-            name: onboardingPayload.name ?? null,
-            sessionTenantId: null,
-          }
-        : null;
+    const subject = {
+      uid: session?.uid ?? onboardingSession?.uid ?? null,
+      email: session?.email ?? onboardingSession?.email ?? null,
+      name: session?.name ?? onboardingSession?.name ?? null,
+      sessionTenantId: session?.tenantId ?? null,
+    };
 
     if (!subject?.uid) {
-      return NextResponse.redirect(buildLoginUrl(url.toString()));
+      return withConnectorRequestId(
+        NextResponse.redirect(buildLoginUrl(url.toString())),
+        requestId
+      );
     }
 
     let resolved: { tenantId: string | null; resolvedUserId: string | null } = {
@@ -106,7 +142,8 @@ export async function GET(request: NextRequest) {
         tenantIdHint,
       });
     } catch (error) {
-      console.error('[oauth/authorize] tenant resolution failed', {
+      logConnectorEvent('oauth/authorize', 'error', {
+        requestId,
         clientId,
         sessionUid: subject.uid,
         message: error instanceof Error ? error.message : String(error),
@@ -125,7 +162,8 @@ export async function GET(request: NextRequest) {
           metadata: { clientId, guest: !session?.uid },
         });
       } catch (error) {
-        console.error('[oauth/authorize] channel identity upsert failed', {
+        logConnectorEvent('oauth/authorize', 'error', {
+          requestId,
           clientId,
           tenantId: resolved.tenantId,
           resolvedUserId: resolved.resolvedUserId,
@@ -142,7 +180,8 @@ export async function GET(request: NextRequest) {
           'chatgpt'
         );
       } catch (error) {
-        console.error('[oauth/authorize] holded connection lookup failed', {
+        logConnectorEvent('oauth/authorize', 'error', {
+          requestId,
           tenantId: resolved.tenantId,
           message: error instanceof Error ? error.message : String(error),
         });
@@ -151,33 +190,27 @@ export async function GET(request: NextRequest) {
 
     if (resolved.tenantId && (!hasHoldedConnection || !connectionConfirmed)) {
       const authorizeUrl = new URL(url.toString());
-      const effectiveOnboardingToken =
-        onboardingToken ||
-        (await mintHoldedOnboardingToken({
-          seed: [clientId, redirectUri, state ?? '', codeChallengeRaw, resource, subject.uid].join(
-            '|'
-          ),
-          email: subject.email,
-          name: subject.name,
-        }));
-
-      authorizeUrl.searchParams.set('onboarding_token', effectiveOnboardingToken);
       authorizeUrl.searchParams.delete('connection_confirmed');
+      if (onboardingToken) {
+        authorizeUrl.searchParams.set('onboarding_token', onboardingToken);
+      }
 
       const onboardingUrl = new URL('/onboarding/holded', request.nextUrl.origin);
       onboardingUrl.searchParams.set('next', authorizeUrl.toString());
       onboardingUrl.searchParams.set('channel', 'chatgpt');
       onboardingUrl.searchParams.set('require_connection_confirmation', '1');
-      onboardingUrl.searchParams.set('onboarding_token', effectiveOnboardingToken);
-      if (tenantIdHint) {
-        onboardingUrl.searchParams.set('tenant_id', tenantIdHint);
+      if (onboardingToken) {
+        onboardingUrl.searchParams.set('onboarding_token', onboardingToken);
+      }
+      if (tenantIdQuery) {
+        onboardingUrl.searchParams.set('tenant_id', tenantIdQuery);
       }
 
       if (!hasHoldedConnection) {
-        return NextResponse.redirect(onboardingUrl);
+        return withConnectorRequestId(NextResponse.redirect(onboardingUrl), requestId);
       }
 
-      return NextResponse.redirect(onboardingUrl);
+      return withConnectorRequestId(NextResponse.redirect(onboardingUrl), requestId);
     }
 
     const user = mapSessionToOAuthUser({
@@ -188,7 +221,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'no_tenant_selected' }, { status: 400 });
+      return withConnectorRequestId(
+        NextResponse.json({ error: 'no_tenant_selected', requestId }, { status: 400 }),
+        requestId
+      );
     }
 
     const code = await mintAuthorizationCode({
@@ -208,9 +244,10 @@ export async function GET(request: NextRequest) {
     const redirect = new URL(redirectUri);
     redirect.searchParams.set('code', code);
     if (state) redirect.searchParams.set('state', state);
-    return NextResponse.redirect(redirect);
+    return withConnectorRequestId(NextResponse.redirect(redirect), requestId);
   } catch (error) {
-    console.error('[oauth/authorize] unexpected error', {
+    logConnectorEvent('oauth/authorize', 'error', {
+      requestId,
       clientId,
       redirectUri,
       state,
@@ -218,9 +255,15 @@ export async function GET(request: NextRequest) {
     });
 
     if (redirectUri && validateRedirectUri(redirectUri)) {
-      return redirectWithError(redirectUri, 'server_error', state);
+      return withConnectorRequestId(
+        redirectWithError(redirectUri, 'server_error', state),
+        requestId
+      );
     }
 
-    return NextResponse.json({ error: 'server_error' }, { status: 500 });
+    return withConnectorRequestId(
+      NextResponse.json({ error: 'server_error', requestId }, { status: 500 }),
+      requestId
+    );
   }
 }

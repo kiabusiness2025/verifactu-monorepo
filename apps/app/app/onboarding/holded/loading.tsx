@@ -1,16 +1,19 @@
 'use client';
 
-import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { inferHoldedEntryChannel } from './entryChannel';
 
-const copy = getIsaakHoldedOnboardingCopy();
 const chatgptLoadingMessages = [
   'Estamos preparando la conexion con Holded para tu espacio de ChatGPT.',
   'Comprobamos tu acceso para que el siguiente paso sea directo y seguro.',
   'En cuanto termine, volveras al flujo de ChatGPT automaticamente.',
+];
+const dashboardLoadingMessages = [
+  'Estamos preparando tu conexion con Holded.',
+  'Comprobamos el acceso para que el siguiente paso sea directo y seguro.',
+  'En cuanto termine, continuaremos automaticamente con el flujo de Verifactu.',
 ];
 
 export default function HoldedOnboardingLoading() {
@@ -21,7 +24,7 @@ export default function HoldedOnboardingLoading() {
       source: searchParams?.get('source'),
       next: searchParams?.get('next'),
     }) === 'chatgpt';
-  const queuedMessages = isChatgptEntry ? chatgptLoadingMessages : copy.loadingMessages;
+  const queuedMessages = isChatgptEntry ? chatgptLoadingMessages : dashboardLoadingMessages;
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -56,17 +59,17 @@ export default function HoldedOnboardingLoading() {
 
             <div className="text-center lg:text-left">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
-                {isChatgptEntry ? 'Conecta Holded con ChatGPT' : copy.eyebrow}
+                {isChatgptEntry ? 'Conecta Holded con ChatGPT' : 'Conecta Holded con Verifactu'}
               </div>
 
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-black sm:text-4xl">
-                {isChatgptEntry ? 'Preparando tu conexion con Holded' : copy.statusLoading}
+                {isChatgptEntry ? 'Preparando tu conexion con Holded' : 'Preparando tu conexion'}
               </h1>
 
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-neutral-600 sm:text-base lg:mx-0">
                 {isChatgptEntry
                   ? 'Estamos comprobando tu espacio para que puedas terminar la conexion y volver a ChatGPT sin pasos innecesarios.'
-                  : copy.intro}
+                  : 'Estamos comprobando tu espacio para que puedas terminar la conexion con Holded sin pasos innecesarios.'}
               </p>
 
               <div className="mx-auto mt-6 h-2 w-28 overflow-hidden rounded-full bg-neutral-200 lg:mx-0">

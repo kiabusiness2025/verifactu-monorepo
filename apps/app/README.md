@@ -81,7 +81,9 @@ Ese schema define la referencia operativa que consumen `apps/isaak`, `apps/holde
 - El chat principal de `apps/app` debe reservar la web abierta para fuentes oficiales relevantes del producto: Holded Academy y paginas oficiales de AEAT, SEPE, Seguridad Social y otros organismos publicos espanoles.
 - En el runtime auditado no existe todavia una tool de navegador o busqueda web generica para ese acceso oficial.
 - En el preset publico `openai_review_v2`, `holded_list_daily_ledger` sigue expuesta bajo `holded.accounts.read`, pero ahora exige `startTimestamp` y `endTimestamp` porque el endpoint productivo rechaza consultas sin rango.
-- Hasta que OpenAI apruebe la version limitada de `Isaak for Holded`, el conector actual debe mantenerse estrecho: no ampliar scopes, no mezclar acceso web abierto y no convertir esta surface en asesor universal salvo fixes criticos.
+- Hasta que OpenAI apruebe la version limitada del conector directo `Holded Connector for ChatGPT`, la surface publica debe mantenerse estrecha: no ampliar scopes, no mezclar acceso web abierto y no convertir este conector en asesor universal salvo fixes criticos.
+- Desde abril de 2026, el flujo publico `channel=chatgpt` usa una `connector onboarding session` propia, no exige login visible, y el onboarding directo valida la API key, resuelve internamente identidad/tenant y vuelve al OAuth original.
+- El troubleshooting del conector debe apoyarse en `x-verifactu-request-id` y en los logs de `authorize`, `status`, `validate` y `connect`.
 - Tras la aprobacion de OpenAI, el conector Holded puede abrir una Fase 2 de escritura estructurada dentro del propio dominio Holded, empezando por cuentas contables, asientos y otras acciones mutativas por familias.
 - Si se lanza un asesor universal con acceso web oficial y modelo de pago, debe salir como una app/conector separado con su propio contrato de producto, OAuth, pricing y superficie de tools.
 
@@ -160,12 +162,14 @@ pnpm --filter verifactu-app test -- --runInBand app/api/mcp/holded/route.test.ts
 
 ## Documentos que debes leer primero
 
+- [../../docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md](../../docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md) -> contrato publico canonico del conector directo en Fase 1
+- [../../docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md](../../docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md) -> backlog tecnico y orden de ejecucion del cambio publico
 - [../holded/README.md](../holded/README.md) -> ownership de la app publica Holded-first
 - [../holded/HOLDED_CONNECTION_ARCHITECTURE.md](../holded/HOLDED_CONNECTION_ARCHITECTURE.md) -> como se comparte la conexion Holded
-- [../holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](../holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md) -> setup operativo del conector en OpenAI
+- [../holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](../holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md) -> setup operativo del conector directo en OpenAI
 - [../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md](../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md) -> alcance funcional objetivo
 - [../../docs/engineering/ai/HOLDED_DEMO_REGRESSION.md](../../docs/engineering/ai/HOLDED_DEMO_REGRESSION.md) -> smoke, huecos y semantica viva de Holded
-- [../../docs/product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md](../../docs/product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md) -> contrato publico y review
+- [../../docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md](../../docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md) -> arquitectura tecnica viva del runtime MCP/OAuth y del onboarding directo
 
 ## Resumen corto para el equipo
 

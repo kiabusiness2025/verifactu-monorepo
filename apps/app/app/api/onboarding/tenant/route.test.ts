@@ -33,6 +33,14 @@ jest.mock('@/lib/tenants', () => ({
   upsertUser: jest.fn(),
 }));
 
+jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
+  resolveHoldedOnboardingSessionFromHeaders: jest.fn(),
+}));
+
+jest.mock('@/lib/oauth/mcp', () => ({
+  mintHoldedOnboardingTokenForSubject: jest.fn(async () => 'refreshed-onboarding-token'),
+}));
+
 jest.mock('@/lib/prisma', () => ({
   __esModule: true,
   prisma: {
@@ -79,6 +87,8 @@ jest.mock('@/lib/email/holdedConnectionEmails', () => ({
 
 import { POST } from './route';
 import { getSessionPayload, requireUserId } from '@/lib/session';
+import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
+import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { upsertUser } from '@/lib/tenants';
 import { prisma } from '@/lib/prisma';
 import { sendWelcomeLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
@@ -98,6 +108,7 @@ describe('POST /api/onboarding/tenant', () => {
       email: 'demo@example.com',
       name: 'Ksenia Ivanova Lopez',
     });
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue(null);
     (requireUserId as jest.Mock).mockReturnValue('user-1');
     (upsertUser as jest.Mock).mockResolvedValue('internal-user-1');
 
@@ -282,5 +293,50 @@ describe('POST /api/onboarding/tenant', () => {
         }),
       })
     );
+  });
+
+  it('returns a refreshed onboarding token when the direct connector flow creates the tenant without session login', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue(null);
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'guest@example.com',
+      name: 'Connector Guest',
+      tenantId: null,
+    });
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/onboarding/tenant', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({
+          name: 'Empresa Demo',
+          legalName: 'Empresa Demo SL',
+          taxId: 'B12345678',
+          tradeName: 'Empresa Demo',
+          extra: {
+            representative: 'Connector Guest',
+            contactFirstName: 'Connector',
+            contactLastName: 'Guest',
+            email: 'info@empresa-demo.es',
+            phone: '+34 600 111 222',
+          },
+        }),
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.onboardingToken).toBe('refreshed-onboarding-token');
+    expect(mintHoldedOnboardingTokenForSubject).toHaveBeenCalledWith({
+      uid: 'holded-guest-1',
+      email: 'guest@example.com',
+      name: 'Connector Guest',
+      tenantId: 'tenant-1',
+    });
   });
 });

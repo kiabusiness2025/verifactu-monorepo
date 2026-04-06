@@ -20,14 +20,15 @@ jest.mock('@/lib/oauth/mcp', () => ({
   ensureScopesAllowed: jest.fn(() => true),
   getDefaultScopes: jest.fn(() => ['mcp.read', 'holded.invoices.read']),
   getMcpResourceUrl: jest.fn(() => 'https://app.verifactu.business/api/mcp/holded'),
+  isValidPkceCodeChallenge: jest.fn(() => true),
   mapSessionToOAuthUser: jest.fn((input) => ({
     uid: input.uid,
     email: input.email,
     name: input.name,
     tenantId: input.tenantId,
   })),
-  mintAuthorizationCode: jest.fn(async () => 'code-123'),
   mintHoldedOnboardingToken: jest.fn(async () => 'onboarding-token-123'),
+  mintAuthorizationCode: jest.fn(async () => 'code-123'),
   resolveTenantForHoldedFirstSession: jest.fn(async () => ({
     tenantId: 'tenant-1',
     resolvedUserId: 'user-db-1',
@@ -47,6 +48,23 @@ describe('oauth authorize holded flow', () => {
     jest.clearAllMocks();
   });
 
+  it('redirects unauthenticated users to direct onboarding with a connector session token', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue(null);
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+    );
+
+    const response = await GET(request);
+    const location = response.headers.get('location');
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('x-verifactu-request-id')).toBeTruthy();
+    expect(location).toContain('/onboarding/holded');
+    expect(location).toContain('onboarding_token=onboarding-token-123');
+    expect(mintAuthorizationCode).not.toHaveBeenCalled();
+  });
+
   it('redirects to onboarding even when a chatgpt connection already exists until the user confirms reconnection', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'user-1',
@@ -57,16 +75,17 @@ describe('oauth authorize holded flow', () => {
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read'
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
     );
 
     const response = await GET(request);
     const location = response.headers.get('location');
 
     expect(response.status).toBe(307);
+    expect(response.headers.get('x-verifactu-request-id')).toBeTruthy();
     expect(location).toContain('/onboarding/holded');
     expect(location).toContain('require_connection_confirmation=1');
-    expect(location).toContain('onboarding_token=onboarding-token-123');
+    expect(location).not.toContain('onboarding_token=');
     expect(location).not.toContain('connection_confirmed=1');
   });
 
@@ -80,7 +99,7 @@ describe('oauth authorize holded flow', () => {
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(false);
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&tenant_id=tenant-demo'
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&tenant_id=tenant-demo&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
     );
 
     const response = await GET(request);
@@ -101,13 +120,14 @@ describe('oauth authorize holded flow', () => {
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&onboarding_token=onboarding-token-123&connection_confirmed=1&state=abc123'
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&connection_confirmed=1&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
     );
 
     const response = await GET(request);
     const location = response.headers.get('location');
 
     expect(response.status).toBe(307);
+    expect(response.headers.get('x-verifactu-request-id')).toBeTruthy();
     expect(mintAuthorizationCode).toHaveBeenCalled();
     expect(location).toBe('https://chat.openai.com/aip/oauth/callback?code=code-123&state=abc123');
   });
@@ -122,7 +142,7 @@ describe('oauth authorize holded flow', () => {
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&onboarding_token=onboarding-token-123&connection_confirmed=1&tenant_id=tenant-demo&state=abc123'
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&connection_confirmed=1&tenant_id=tenant-demo&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
     );
 
     const response = await GET(request);
@@ -133,5 +153,19 @@ describe('oauth authorize holded flow', () => {
         tenantIdHint: 'tenant-demo',
       })
     );
+  });
+
+  it('rejects authorization requests without PKCE parameters', async () => {
+    const request = new NextRequest(
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read'
+    );
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'https://chat.openai.com/aip/oauth/callback?error=invalid_request'
+    );
+    expect(mintAuthorizationCode).not.toHaveBeenCalled();
   });
 });

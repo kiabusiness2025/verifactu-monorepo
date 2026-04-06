@@ -1,8 +1,8 @@
-# Isaak for Holded - Deploy and QA Checklist
+# Holded Direct Connector - Deploy and QA Checklist
 
 ## Objetivo
 
-Checklist operativa para desplegar y validar la experiencia publica `holded-first` de `Isaak for Holded`.
+Checklist operativa para desplegar y validar la experiencia publica del conector directo `Holded Connector for ChatGPT`.
 
 Esta guia cubre:
 
@@ -15,7 +15,7 @@ Esta guia cubre:
 
 Incluido en esta validacion:
 
-- MCP remoto `Isaak for Holded`
+- MCP remoto `Holded Connector for ChatGPT`
 - OAuth propio de Verifactu
 - onboarding `holded-first`
 - conexion Holded por API key server-side
@@ -96,26 +96,27 @@ Caso objetivo:
 
 Pasos:
 
-1. Abrir la app `Isaak for Holded` en ChatGPT.
+1. Abrir el conector `Holded Connector for ChatGPT` en ChatGPT.
 2. Pulsar `Conectar con cuenta`.
-3. Completar login de Verifactu.
-4. Verificar redireccion a `/onboarding/holded`.
+3. Verificar redireccion a `/onboarding/holded`.
+4. Confirmar que no aparece login visible ni selector de tenant.
 5. Confirmar que la pantalla muestra:
-   - empresa o tenant resuelto
-   - explicacion clara del siguiente paso
-   - formulario para pegar API key
+   - copy directo de conexion Holded para ChatGPT
+   - formulario minimo con datos de empresa/contacto
+   - campo para pegar API key
 6. Pegar una API key valida de Holded.
 7. Confirmar que:
    - la API key se valida
+   - se crea o resuelve internamente la empresa
    - se guarda server-side
-   - el navegador vuelve automaticamente al flujo original
+   - el navegador vuelve automaticamente al flujo OAuth original
 8. Confirmar que ChatGPT termina la conexion sin error.
 
 Resultado esperado:
 
 - no aparece `no_tenant_selected`
 - no aparece `invalid_request`
-- no vuelve al dashboard salvo que falte configuracion adicional
+- no aparece login visible, `tenant-switch` ni handoff a dashboard
 
 ## Validacion de modo captura y layouts de review
 
@@ -127,7 +128,7 @@ Pasos:
 
 1. Repetir el flujo hasta llegar a `/onboarding/holded`.
 2. Anadir `capture=1` a la URL de onboarding.
-3. Confirmar que el flag sobrevive si el usuario pasa por `/login`.
+3. Confirmar que el flag no depende de pasar por `/login`.
 4. Completar la conexion con una cuenta de review.
 5. Confirmar que la pantalla final queda fija con boton `Continuar` y no redirige automaticamente.
 6. Revisar las mismas pantallas en desktop y en movil.
@@ -183,10 +184,11 @@ Resultado esperado:
 3. Confirmar que `channel_identities` registra `chatgpt` y `dashboard` de forma idempotente.
 4. Confirmar que `external_connections` refleja la conexion compartida cuando la tabla esta desplegada.
 5. Confirmar que los logs MCP no exponen payloads sensibles innecesarios.
+6. Confirmar que las respuestas criticas devuelven `x-verifactu-request-id`.
 
 ## Validacion de producto
 
-1. El copy visible debe hablar de `Isaak`, no de un backend tecnico.
+1. El copy visible debe hablar de Holded, ChatGPT y Verifactu como capa tecnica si hace falta, no de Isaak.
 2. El onboarding debe sentirse:
    - corto
    - claro
@@ -207,9 +209,9 @@ Resultado esperado:
 - usuario redirigido al dashboard en vez de al onboarding Holded
 - tenant resuelto incorrectamente
 - API key valida pero no persistida
-- `capture=1` no se conserva al pasar por login
 - la pantalla final sigue redirigiendo aunque `capture=1` este presente
 - recorte visual en mobile o desktop en alguna tarjeta del flujo de conexion
+- falta `x-verifactu-request-id` en una ruta del flujo
 
 ## Criterio de salida para seguir hacia review publica
 

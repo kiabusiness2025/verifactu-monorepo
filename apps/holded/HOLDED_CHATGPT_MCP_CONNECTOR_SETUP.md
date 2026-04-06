@@ -1,6 +1,6 @@
-# Holded in ChatGPT: MCP Connector Setup
+# Holded in ChatGPT: Direct MCP Connector Setup
 
-Guia operativa para registrar `Isaak for Holded` como conector MCP remoto en ChatGPT.
+Guia operativa para registrar `Holded Connector for ChatGPT` como conector MCP remoto en ChatGPT.
 
 ## OpenAI screen: exact values to paste
 
@@ -9,7 +9,7 @@ Use these exact values in the OpenAI connector registration screen.
 ### 1. Basic connector fields
 
 - `App / Connector name`
-  - `Isaak for Holded`
+  - `Holded Connector for ChatGPT`
 - `MCP Server`
   - `Remote MCP Server`
 - `MCP Server URL`
@@ -70,7 +70,7 @@ Example for the current redirect URI already used in your OpenAI setup:
 - `Client Secret`
   - blank
 
-### 4. Supported scopes for OpenAI review v2
+### 4. Supported scopes for direct review v2
 
 Use this exact value if the UI asks for `Supported scopes` in the OpenAI submission flow for the reduced v2 surface:
 
@@ -92,6 +92,20 @@ Use this exact value if the UI asks for `Default scopes`:
 ### 7. Tool annotations: exact English justification
 
 These are the exact values and explanations to paste when OpenAI asks for tool annotation justification.
+
+### 8. Public flow notes for current deployment
+
+The current public flow is direct:
+
+- no visible Google login
+- no visible classic signup
+- no visible tenant selector
+- ChatGPT can redirect to `https://app.verifactu.business/onboarding/holded?channel=chatgpt...`
+- the user completes a short form, pastes the Holded API key, and returns to OAuth
+
+Operational note:
+
+- support should use the `x-verifactu-request-id` header from `authorize`, `status`, `validate`, or `connect` when debugging mobile failures
 
 #### `holded_list_invoices`
 
@@ -429,7 +443,7 @@ Como usarlo:
 
 1. entra en el flujo normal hasta que Verifactu te mande a `https://app.verifactu.business/onboarding/holded?...`
 2. anade `capture=1` a esa URL concreta
-3. si el usuario pasa por `/login`, el flag se conserva automaticamente
+3. el flag acompana el flujo de onboarding y no depende de un login visible
 4. al final del onboarding, la pantalla final queda congelada con el boton `Continuar` en vez de redirigir sola
 
 Uso esperado:

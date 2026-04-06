@@ -13,7 +13,6 @@ import HoldedOnboardingClient from './HoldedOnboardingClient';
 const baseProps = {
   entryChannel: 'chatgpt' as const,
   nextUrl: '#connected',
-  onboardingToken: null,
   requireConnectionConfirmation: false,
   summary: {
     companyName: 'ALVILS ESP',
@@ -112,5 +111,108 @@ describe('HoldedOnboardingClient', () => {
     await screen.findByText('Tu conexion ya esta lista. Te devolvemos a ChatGPT.');
     expect(screen.getByRole('link', { name: 'Continuar' })).toHaveAttribute('href', '#connected');
     expect(window.location.hash).toBe('');
+  });
+
+  it('submits the direct connector form in one pass when the company is not resolved yet', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true, validationToken: 'validation-token-123' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true, tenantId: 'tenant-123' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true }),
+      });
+
+    render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode={false}
+        onboardingToken="onboarding-token-123"
+        summary={{
+          companyName: 'Tu empresa',
+          companyLegalName: null,
+          companyTaxId: null,
+          contactFirstName: 'Usuario',
+          contactFullName: null,
+          contactEmail: null,
+          companyEmail: null,
+          contactPhone: null,
+        }}
+        companySetup={{
+          hasResolvedCompany: false,
+          needsCompanySetup: true,
+          requiresCompanyConfirmation: false,
+        }}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Empresa'), {
+      target: { value: 'Empresa Demo SL' },
+    });
+    fireEvent.change(screen.getByLabelText('NIF / CIF'), {
+      target: { value: 'B12345678' },
+    });
+    fireEvent.change(screen.getByLabelText('Nombre'), {
+      target: { value: 'Ksenia' },
+    });
+    fireEvent.change(screen.getByLabelText('Apellidos'), {
+      target: { value: 'Ivanova Lopez' },
+    });
+    fireEvent.change(screen.getByLabelText('Correo'), {
+      target: { value: 'kiabusiness2025@gmail.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {
+      target: { value: 'holded-demo-api-key-123' },
+    });
+    fireEvent.click(screen.getByLabelText(/Acepto los Terminos de verifactu\.business/i));
+    fireEvent.click(
+      screen.getByLabelText(/Acepto la Politica de Privacidad de verifactu\.business/i)
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        '/api/integrations/accounting/validate',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-holded-onboarding-token': 'onboarding-token-123',
+          }),
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        '/api/onboarding/tenant',
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
+        '/api/integrations/accounting/connect',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-isaak-tenant-id': 'tenant-123',
+            'x-holded-onboarding-token': 'onboarding-token-123',
+          }),
+        })
+      );
+    });
+
+    expect(
+      fetchMock.mock.calls.find((call) => call[0] === '/api/session/tenant-switch')
+    ).toBeUndefined();
+    expect(window.location.hash).toBe('#connected');
   });
 });

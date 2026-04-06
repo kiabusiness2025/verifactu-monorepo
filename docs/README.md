@@ -8,11 +8,13 @@ Empieza por estos documentos de entrada y luego baja al detalle tecnico:
 
 ### Conector Holded
 
+- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md) - Contrato publico canonico del conector directo `ChatGPT <-> Holded` en Fase 1
+- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md) - Backlog tecnico y orden de ejecucion de la separacion publica
 - [../apps/app/README.md](../apps/app/README.md) - Core compartido y runtime real del conector MCP/OAuth
 - [../packages/integrations/README.md](../packages/integrations/README.md) - Capa compartida de integraciones, conexion Holded y continuidad reutilizable
 - [../apps/holded/README.md](../apps/holded/README.md) - App publica Holded-first y handoff a Isaak
 - [../apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md](../apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md) - Conexion compartida entre onboarding, Isaak y MCP
-- [../apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](../apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md) - Setup operativo del conector en OpenAI
+- [../apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](../apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md) - Setup operativo del conector directo en OpenAI
 - [product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md](product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md) - Alcance funcional de la API Holded
 - [engineering/ai/HOLDED_DEMO_REGRESSION.md](engineering/ai/HOLDED_DEMO_REGRESSION.md) - Smoke, semantica real y huecos pendientes
 
@@ -40,6 +42,8 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 - [../apps/holded/README.md](../apps/holded/README.md) - Proyecto publico Holded
 - [../apps/app/README.md](../apps/app/README.md) - Core compartido y conector Holded/MCP
 - [../apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md](../apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md) - Arquitectura real de conexion Holded en la app publica
+- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md) - Contrato publico actual del conector directo en review
+- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md) - Plan de implementacion de la separacion publica Fase 1
 - [../apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](../apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md) - Alta del conector MCP de Holded en ChatGPT y valores exactos de OAuth
 - [../apps/isaak/README.md](../apps/isaak/README.md) - Proyecto publico Isaak
 - [../apps/client/README.md](../apps/client/README.md) - Panel cliente y persistencia de Isaak
@@ -48,8 +52,8 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 - [product/ISAAK_PLATFORM_SYNC_PLAN.md](product/ISAAK_PLATFORM_SYNC_PLAN.md) - Arquitectura objetivo de Isaak, ownership de datos y fases de sync
 - [product/ISAAK_HOLDED_SHARED_CONNECTIONS.md](product/ISAAK_HOLDED_SHARED_CONNECTIONS.md) - Arquitectura de conexion compartida Holded para app interna, app publica y dashboard
 - [product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md](product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md) - Alcance oficial de APIs Holded a implementar para facturacion, contabilidad y acciones operativas desde Isaak
-- [product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md](product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md) - Checklist y alcance para preparar la app publica de OpenAI
-- [product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md](product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md) - Checklist operativa para desplegar y probar el flujo publico holded-first
+- [product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md](product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md) - Documento historico de review publica anterior, ya no canonico para la Fase 1 directa
+- [product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md](product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md) - Checklist operativa actualizada del conector directo en ChatGPT
 - [product/ISAAK_FOR_HOLDED_STATUS_2026-03-19.md](product/ISAAK_FOR_HOLDED_STATUS_2026-03-19.md) - Estado operativo, incidente final y decisiones de producto de Isaak for Holded
 - [product/ISAAK_FOR_HOLDED_STATUS_2026-04-01.md](product/ISAAK_FOR_HOLDED_STATUS_2026-04-01.md) - Bitacora de cambios: fix MCP discovery, contrato OpenAI y preparacion de review publica
 - [INTEGRITY_REVIEW_2026-03-03.md](INTEGRITY_REVIEW_2026-03-03.md) - Revisión de integridad sin tests (estado actual)
@@ -74,7 +78,7 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 
 - [ops/deployment/VERCEL_DEPLOYMENT_GUIDE.md](ops/deployment/VERCEL_DEPLOYMENT_GUIDE.md) - Vercel
 - [ops/CI_CHECKLIST.md](ops/CI_CHECKLIST.md) - Checklist mínimo de CI
-- [ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md](ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md) - Runbook breve para desplegar y validar Isaak for Holded
+- [ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md](ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md) - Runbook breve para desplegar y validar el conector directo Holded para ChatGPT
 
 **legacy/root/**
 
@@ -114,7 +118,7 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 
 **engineering/ai/**
 
-- [engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md](engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md) - Setup operativo de Isaak for Holded via MCP + OAuth
+- [engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md](engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md) - Setup tecnico vivo del conector directo Holded para ChatGPT via MCP + OAuth
 - [engineering/ai/HOLDED_DEMO_REGRESSION.md](engineering/ai/HOLDED_DEMO_REGRESSION.md) - Seed, smoke y criterio de pase para la regresion viva de Holded
 - [engineering/ai/ISAAK_PERSONA_PLAYBOOK_2026.md](engineering/ai/ISAAK_PERSONA_PLAYBOOK_2026.md) - Plan para que Isaak responda como Isaak y no como un asistente generico
 - [engineering/ai/ISAAK_MEMORY_ARCHITECTURE_2026.md](engineering/ai/ISAAK_MEMORY_ARCHITECTURE_2026.md) - Arquitectura de memoria privada de Isaak: conversaciones, facts, documentos y retrieval

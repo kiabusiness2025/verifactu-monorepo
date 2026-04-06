@@ -1,14 +1,16 @@
-# Isaak for Holded MCP
+# Holded Direct Connector MCP
 
 ## Objetivo
 
-Exponer `Isaak for Holded` como servidor MCP remoto en:
+Este documento mantiene la ruta historica de nombre, pero la surface publica actual es el conector directo `Holded Connector for ChatGPT`.
+
+Exponer el conector directo Holded como servidor MCP remoto en:
 
 ```text
 https://app.verifactu.business/api/mcp/holded
 ```
 
-El objetivo es que ChatGPT consulte y accione datos de Holded a traves de Verifactu, sin exponer la API key de Holded al cliente final.
+El objetivo es que ChatGPT consulte y accione datos de Holded a traves de Verifactu, sin exponer la API key de Holded al cliente final y sin exigir login visible del producto principal.
 
 ## Arquitectura
 
@@ -16,7 +18,7 @@ La autenticacion es mixta:
 
 - ChatGPT -> Verifactu MCP: OAuth propio de Verifactu.
 - Verifactu MCP -> Holded: API key de Holded guardada cifrada por tenant.
-- Usuario final -> Verifactu: sesion normal de la plataforma.
+- Usuario final -> Verifactu: `connector onboarding session` propia del flujo directo o sesion normal ya existente.
 
 Holded no se integra por OAuth en este flujo. La documentacion publica usada para esta integracion expone autenticacion por API key.
 
@@ -66,15 +68,17 @@ Holded no se integra por OAuth en este flujo. La documentacion publica usada par
 
 ## Flujo completo
 
-1. El usuario conecta Holded desde Verifactu en `Integraciones`.
-2. La API key de Holded se cifra y se guarda en `tenant_integrations`.
-3. ChatGPT inicia OAuth contra Verifactu.
-4. Verifactu usa la sesion del usuario, resuelve su tenant activo y emite `authorization_code`.
-5. ChatGPT intercambia el code por un `access_token`.
-6. ChatGPT llama al MCP con Bearer token.
-7. El MCP resuelve el tenant desde el token OAuth y usa la API key cifrada del tenant para hablar con Holded.
+1. ChatGPT inicia OAuth contra Verifactu.
+2. Si ya existe conexion valida para `channel=chatgpt`, Verifactu continua el OAuth.
+3. Si no existe conexion valida, Verifactu redirige a `/onboarding/holded` con una `connector onboarding session`.
+4. El usuario completa el formulario minimo y pega la API key de Holded.
+5. Verifactu valida la key, crea o resuelve internamente identidad/tenant y guarda la conexion cifrada server-side.
+6. El navegador vuelve al flujo OAuth original.
+7. ChatGPT intercambia el code por un `access_token`.
+8. ChatGPT llama al MCP con Bearer token.
+9. El MCP resuelve el tenant desde el token OAuth y usa la API key cifrada del tenant para hablar con Holded.
 
-## Flujo holded-first para ChatGPT
+## Flujo directo para ChatGPT
 
 Cuando `oauth/authorize` entra con `channel=chatgpt` y el tenant todavia no tiene una conexion compartida valida para ese canal, Verifactu redirige a:
 
@@ -82,14 +86,31 @@ Cuando `oauth/authorize` entra con `channel=chatgpt` y el tenant todavia no tien
 https://app.verifactu.business/onboarding/holded?...&channel=chatgpt
 ```
 
-Reglas operativas de este flujo:
+Reglas operativas actuales:
 
 - ChatGPT no se desbloquea con una integracion generica del tenant. La fuente de verdad es `external_connections` con `provider='holded'` y `channel_key='chatgpt'`.
 - `POST /api/integrations/accounting/connect` debe persistir la conexion con `channel_key` y hacer `upsert` por `(tenant_id, provider, channel_key)`.
 - `GET /api/integrations/accounting/status?channel=chatgpt` debe resolver el estado real de ese canal para evitar falsos `connected`.
-- La pantalla de `channel=chatgpt` usa copy neutro y no presenta Isaak como marca principal mientras el usuario solo esta terminando la conexion para ChatGPT.
+- La pantalla de `channel=chatgpt` usa copy directo del conector y no presenta Isaak como marca principal.
 - La pantalla de espera no bloquea el flujo: el usuario puede pegar la API key en cuanto la tenga, aunque la comprobacion inicial siga en progreso.
-- Para capturas internas de review existe un flag temporal `capture=1` sobre `/onboarding/holded`; ese flag se conserva al pasar por login y congela la pantalla final para screenshots, pero no forma parte del recorrido normal del reviewer.
+- El formulario directo puede crear o resolver internamente la empresa antes de persistir la conexion.
+- El retorno a OAuth ya no depende de exponer `tenant_id` en la URL publica; el tenant puede viajar en la sesion temporal del conector.
+- Para capturas internas de review existe un flag temporal `capture=1` sobre `/onboarding/holded`; ese flag acompana el flujo de onboarding y congela la pantalla final para screenshots, pero no forma parte del recorrido normal del reviewer.
+
+## Observabilidad y soporte
+
+Rutas con observabilidad explicita del conector:
+
+- `/oauth/authorize`
+- `/api/integrations/accounting/status`
+- `/api/integrations/accounting/validate`
+- `/api/integrations/accounting/connect`
+
+Contrato operativo:
+
+- estas rutas devuelven `x-verifactu-request-id`
+- los errores distinguen `stage` y `reason` o `failureStage` y `failureReason`
+- el soporte debe cruzar incidencias de movil usando ese `requestId`
 
 ## Variables de entorno
 

@@ -1,6 +1,5 @@
 'use client';
 
-import { getIsaakHoldedOnboardingCopy } from '@/lib/isaak/persona';
 import { buildFullName, getPreferredFirstName } from '@/lib/personName';
 import Image from 'next/image';
 import {
@@ -34,17 +33,35 @@ type IntegrationStatus = {
   degraded?: boolean;
 };
 
+type ValidationResponse = {
+  ok: boolean;
+  error?: string | null;
+  detail?: string | null;
+  debug?: string | null;
+  validationToken?: string | null;
+  probe?: {
+    error?: string | null;
+  } | null;
+};
+
+type TenantCreateResponse = {
+  ok?: boolean;
+  error?: string | null;
+  action?: string | null;
+  tenantId?: string | null;
+  onboardingToken?: string | null;
+};
+
 type Props = {
   captureMode: boolean;
   entryChannel: 'dashboard' | 'chatgpt';
   nextUrl: string;
-  onboardingToken: string | null;
   requireConnectionConfirmation: boolean;
   summary: HoldedOnboardingSummary;
   companySetup: HoldedCompanySetupState;
+  onboardingToken?: string | null;
 };
 
-const onboardingCopy = getIsaakHoldedOnboardingCopy();
 const HOLDED_COMPAT_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 const CHATGPT_HOME_URL = 'https://chatgpt.com';
@@ -80,13 +97,17 @@ function normalizeText(value?: string | null) {
   return normalized ? normalized : '';
 }
 
+function normalizeApiKey(value: string) {
+  return value.replace(/\s+/g, '').trim();
+}
+
 const chatgptUiCopy = {
   eyebrow: 'Conecta Holded con ChatGPT',
   title: 'Activa tu conexion con Holded',
   intro:
     'Conecta tu cuenta de Holded para que ChatGPT pueda completar esta conexion con tus datos reales.',
   security:
-    'Por seguridad, esta conexion solo se habilita con sesion iniciada y una clave valida de Holded.',
+    'Por seguridad, esta conexion solo se habilita con una sesion temporal segura y una clave valida de Holded.',
   statusReady: 'Tu espacio ya esta preparado',
   statusLoading: 'Preparando tu entorno de conexion',
   statusPending: 'Esperando tu clave de Holded',
@@ -124,49 +145,55 @@ const chatgptUiCopy = {
 } as const;
 
 const dashboardUiCopy = {
-  eyebrow: onboardingCopy.eyebrow,
+  eyebrow: 'Conecta Holded con Verifactu',
   title: 'Activa tu conexion con Holded',
-  intro: onboardingCopy.intro,
+  intro: 'Conecta Holded para activar tu espacio de trabajo con datos reales dentro de Verifactu.',
   security:
-    'Por seguridad, el chat de Isaak solo se habilita con sesion iniciada y cuenta conectada.',
-  statusReady: onboardingCopy.statusReady,
-  statusLoading: onboardingCopy.statusLoading,
-  statusPending: onboardingCopy.statusPending,
-  statusConnected: 'Isaak ya esta activado',
+    'Por seguridad, esta conexion solo se habilita con sesion iniciada y una clave valida de Holded.',
+  statusReady: 'Tu espacio ya esta preparado',
+  statusLoading: 'Preparando tu entorno',
+  statusPending: 'Esperando tu clave de Holded',
+  statusConnected: 'Conexion activada',
   checkingTitle: 'Estamos comprobando si tu espacio ya estaba conectado',
   checkingDescription:
     'Si ya tienes tu clave API, puedes pegarla ahora mismo. No hace falta esperar a que termine esta comprobacion para seguir.',
   savingDescription:
-    'No cierres esta ventana. Estamos validando la conexion y preparando el contexto inicial para Isaak.',
-  successConnected: onboardingCopy.successConnected,
-  submitLabel: 'Conectar y activar Isaak',
+    'No cierres esta ventana. Estamos validando la conexion y preparando tu espacio de trabajo.',
+  successConnected: 'Conexion activada. Tu espacio ya esta listo.',
+  submitLabel: 'Conectar Holded',
   apiKeyLabel: 'Clave API de tu ERP (Holded)',
   apiKeyHelp:
     'Tus datos se usan unicamente para activar tu entorno de trabajo. Puedes desconectar la integracion cuando quieras.',
-  apiKeyPlaceholder: 'Pega aqui la API key de Holded para activar Isaak',
-  errorApiKeyEmpty: onboardingCopy.errorApiKeyEmpty,
-  errorLoadFailed: onboardingCopy.errorLoadFailed,
-  errorConnectFailed: onboardingCopy.errorConnectFailed,
-  degraded: onboardingCopy.degraded,
-  redirectTitle: 'Tu conexion ya esta lista. Te devolvemos al flujo de ChatGPT.',
+  apiKeyPlaceholder: 'Pega aqui la API key de Holded para continuar',
+  errorApiKeyEmpty: 'Necesitamos tu API key de Holded para completar esta conexion.',
+  errorLoadFailed: 'No se pudo preparar la conexion con Holded.',
+  errorConnectFailed:
+    'No hemos podido validar la conexion. Revisa tu API key e intentalo de nuevo.',
+  degraded:
+    'No hemos podido leer el estado inicial, pero puedes continuar y conectar Holded igualmente.',
+  redirectTitle: 'Tu conexion ya esta lista.',
   redirectDescription:
     'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
   helpSteps: [
     'Entra en Holded y abre el area de API.',
     'Copia una API key activa de tu empresa.',
-    'Pegala aqui para activar tu espacio y entrar al chat de Isaak.',
+    'Pegala aqui para activar tu espacio de trabajo.',
   ],
-  savingMessages: onboardingCopy.savingMessages,
+  savingMessages: [
+    'Estamos validando tu clave de Holded.',
+    'Estamos dejando lista la conexion para tu espacio de trabajo.',
+    'En cuanto termine, continuaremos automaticamente con el siguiente paso.',
+  ],
 } as const;
 
 export default function HoldedOnboardingClient({
   captureMode,
   entryChannel,
   nextUrl,
-  onboardingToken,
   requireConnectionConfirmation,
   summary,
   companySetup,
+  onboardingToken = null,
 }: Props) {
   const isChatgptEntry = entryChannel === 'chatgpt';
   const needsPostValidationCompanyStep = isChatgptEntry;
@@ -182,6 +209,8 @@ export default function HoldedOnboardingClient({
     [summary]
   );
   const [apiKey, setApiKey] = useState('');
+  const [validationToken, setValidationToken] = useState<string | null>(null);
+  const [validatedApiKey, setValidatedApiKey] = useState('');
   const [resolvedSummary, setResolvedSummary] = useState(summary);
   const [companyLegalName, setCompanyLegalName] = useState(initialCompanyDraft.companyLegalName);
   const [companyTaxId, setCompanyTaxId] = useState(initialCompanyDraft.companyTaxId);
@@ -201,6 +230,7 @@ export default function HoldedOnboardingClient({
   const [saving, setSaving] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [redirectTarget, setRedirectTarget] = useState(nextUrl);
+  const [activeOnboardingToken, setActiveOnboardingToken] = useState(onboardingToken);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
@@ -224,6 +254,16 @@ export default function HoldedOnboardingClient({
     companyConfirmed &&
     !saving &&
     !redirecting;
+  const normalizedApiKey = useMemo(() => normalizeApiKey(apiKey), [apiKey]);
+  const hasReusableValidationToken =
+    validatedApiKey === normalizedApiKey && Boolean(validationToken);
+  const usesInlineDirectForm = needsPostValidationCompanyStep && !hasResolvedCompanyProfile;
+  const hasInlineDirectFormMinimum =
+    !!normalizeText(companyLegalName) &&
+    !!normalizeText(companyTaxId) &&
+    !!normalizeText(contactFirstName) &&
+    !!normalizeText(contactLastName) &&
+    !!normalizeText(contactEmail);
   const apiKeyHelp = reusesStoredCompanyData
     ? 'Validaremos la API key y, si tu empresa ya esta preparada aqui, conectaremos Holded sin pedirte esos datos otra vez.'
     : uiCopy.apiKeyHelp;
@@ -233,7 +273,13 @@ export default function HoldedOnboardingClient({
         'Copia una API key activa de tu empresa.',
         'Pegala aqui y la conectaremos usando los datos de empresa que ya tienes guardados.',
       ]
-    : uiCopy.helpSteps;
+    : usesInlineDirectForm
+      ? [
+          'Completa tus datos de contacto y empresa.',
+          'Copia una API key activa de tu empresa en Holded.',
+          'La validaremos y dejaremos la conexion lista para volver a ChatGPT.',
+        ]
+      : uiCopy.helpSteps;
   const redirectDescription = captureMode
     ? 'Tu conexion ya esta lista. Puedes continuar manualmente cuando quieras.'
     : uiCopy.redirectDescription;
@@ -241,7 +287,9 @@ export default function HoldedOnboardingClient({
     needsPostValidationCompanyStep && !apiValidated
       ? reusesStoredCompanyData
         ? 'Validar y conectar Holded'
-        : 'Validar API key'
+        : usesInlineDirectForm
+          ? 'Validar y conectar Holded'
+          : 'Validar API key'
       : uiCopy.submitLabel;
   const personalizedLead = !showApiStep
     ? reusesStoredCompanyData
@@ -250,7 +298,9 @@ export default function HoldedOnboardingClient({
     : hideResolvedCompanyUntilApiValidation
       ? reusesStoredCompanyData
         ? 'Primero validaremos tu API key. Si tu empresa ya estaba preparada aqui, terminaremos la conexion sin volver a pedirte los datos.'
-        : 'Primero validaremos tu API key. Despues te pediremos confirmar los datos exactos de la empresa conectada.'
+        : usesInlineDirectForm
+          ? 'Completa este formulario directo con tu empresa y tu API key de Holded. Nos encargamos del resto sin mostrarte login ni registro.'
+          : 'Primero validaremos tu API key. Despues te pediremos confirmar los datos exactos de la empresa conectada.'
       : isChatgptEntry
         ? `${resolvedSummary.contactFirstName}, primero validaremos tu API key y despues guardaremos los datos exactos de empresa y usuario.`
         : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName}.`;
@@ -262,7 +312,10 @@ export default function HoldedOnboardingClient({
       const parsed = new URL(nextUrl, HOLDED_COMPAT_URL);
       if (parsed.pathname === '/oauth/authorize') {
         parsed.searchParams.set('connection_confirmed', '1');
-        if (selectedTenantId) {
+        if (activeOnboardingToken) {
+          parsed.searchParams.set('onboarding_token', activeOnboardingToken);
+          parsed.searchParams.delete('tenant_id');
+        } else if (selectedTenantId) {
           parsed.searchParams.set('tenant_id', selectedTenantId);
         }
       }
@@ -270,7 +323,7 @@ export default function HoldedOnboardingClient({
     } catch {
       return nextUrl;
     }
-  }, [nextUrl, requireConnectionConfirmation, selectedTenantId]);
+  }, [activeOnboardingToken, nextUrl, requireConnectionConfirmation, selectedTenantId]);
 
   const loadStatus = useCallback(
     async (signal?: AbortSignal) => {
@@ -279,14 +332,13 @@ export default function HoldedOnboardingClient({
         signal,
         headers: {
           'x-isaak-entry-channel': entryChannel,
-          ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
         },
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || uiCopy.errorLoadFailed);
       return data as IntegrationStatus;
     },
-    [entryChannel, onboardingToken, uiCopy.errorLoadFailed]
+    [entryChannel, uiCopy.errorLoadFailed]
   );
 
   const statusLabel = useMemo(() => {
@@ -346,6 +398,8 @@ export default function HoldedOnboardingClient({
     setCompanyMessage(null);
     setMessage(null);
     setError(null);
+    setValidationToken(null);
+    setValidatedApiKey('');
     setSelectedTenantId(null);
     resetForFreshApiValidation();
   }, [resetForFreshApiValidation]);
@@ -426,7 +480,6 @@ export default function HoldedOnboardingClient({
     loadStatus,
     needsPostValidationCompanyStep,
     nextUrl,
-    onboardingToken,
     requireConnectionConfirmation,
     uiCopy.errorLoadFailed,
   ]);
@@ -455,16 +508,18 @@ export default function HoldedOnboardingClient({
       headers: {
         'Content-Type': 'application/json',
         'x-isaak-entry-channel': entryChannel,
-        ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
+        ...(activeOnboardingToken ? { 'x-holded-onboarding-token': activeOnboardingToken } : {}),
       },
       body: JSON.stringify({
-        apiKey: apiKey.trim(),
+        apiKey: normalizedApiKey,
         acceptedTerms,
         acceptedPrivacy,
       }),
     });
-    const data = await res.json().catch(() => null);
+    const data = (await res.json().catch(() => null)) as ValidationResponse | null;
     if (!res.ok) {
+      setValidationToken(null);
+      setValidatedApiKey('');
       throw new Error(
         data?.debug ||
           data?.detail ||
@@ -473,27 +528,36 @@ export default function HoldedOnboardingClient({
       );
     }
     if (!data?.ok) {
+      setValidationToken(null);
+      setValidatedApiKey('');
       throw new Error(
         data?.probe?.error || 'No hemos podido validar tu acceso con el ERP compatible'
       );
     }
 
+    setValidationToken(data?.validationToken || null);
+    setValidatedApiKey(normalizedApiKey);
     return data;
   };
 
-  const connectValidatedApi = async (tenantIdHint?: string | null) => {
+  const connectValidatedApi = async (
+    tenantIdHint?: string | null,
+    validationTokenHint?: string | null
+  ) => {
     const res = await fetch('/api/integrations/accounting/connect', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-isaak-entry-channel': entryChannel,
-        ...(onboardingToken ? { 'x-isaak-onboarding-token': onboardingToken } : {}),
         ...(tenantIdHint ? { 'x-isaak-tenant-id': tenantIdHint } : {}),
+        ...(activeOnboardingToken ? { 'x-holded-onboarding-token': activeOnboardingToken } : {}),
       },
       body: JSON.stringify({
-        apiKey: apiKey.trim(),
+        apiKey: normalizedApiKey,
         acceptedTerms,
         acceptedPrivacy,
+        validationToken:
+          validationTokenHint ?? (hasReusableValidationToken ? validationToken : undefined),
       }),
     });
     const data = await res.json().catch(() => null);
@@ -502,7 +566,7 @@ export default function HoldedOnboardingClient({
         data?.debug ||
           data?.detail ||
           data?.error ||
-          `Error HTTP ${res.status} al activar ${isChatgptEntry ? 'la conexion' : 'Isaak'}`
+          `Error HTTP ${res.status} al activar ${isChatgptEntry ? 'la conexion' : 'Holded'}`
       );
     }
     if (!data?.ok) {
@@ -528,9 +592,7 @@ export default function HoldedOnboardingClient({
     return data;
   };
 
-  const handleCompanySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const createTenantAndConnect = async (validationTokenHint?: string | null) => {
     const normalizedLegalName = normalizeText(companyLegalName);
     const normalizedCompanyName = normalizedLegalName;
     const normalizedTaxId = normalizeText(companyTaxId).toUpperCase();
@@ -550,62 +612,60 @@ export default function HoldedOnboardingClient({
       !normalizedContactLastName ||
       !normalizedContactEmail
     ) {
-      setCompanyError(
+      throw new Error(
         'Necesitamos nombre de empresa, NIF/CIF, nombre, apellidos y correo para continuar.'
       );
-      return;
     }
 
-    setCompanySaving(true);
-    setCompanyError(null);
-    setCompanyMessage(null);
-
-    try {
-      const createRes = await fetch('/api/onboarding/tenant', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    const createRes = await fetch('/api/onboarding/tenant', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(activeOnboardingToken ? { 'x-holded-onboarding-token': activeOnboardingToken } : {}),
+      },
+      body: JSON.stringify({
+        reuseCurrentTenant: true,
+        source: 'manual',
+        name: normalizedCompanyName,
+        legalName: normalizedLegalName,
+        nif: normalizedTaxId,
+        extra: {
+          representative: normalizedContactName,
+          contactFirstName: normalizedContactFirstName,
+          contactLastName: normalizedContactLastName,
+          email: normalizedContactEmail,
+          phone: normalizedContactPhone || undefined,
         },
-        body: JSON.stringify({
-          reuseCurrentTenant: true,
-          source: 'manual',
-          name: normalizedCompanyName,
-          legalName: normalizedLegalName,
-          nif: normalizedTaxId,
-          extra: {
-            representative: normalizedContactName,
-            contactFirstName: normalizedContactFirstName,
-            contactLastName: normalizedContactLastName,
-            email: normalizedContactEmail,
-            phone: normalizedContactPhone || undefined,
-          },
-        }),
-      });
-      const createData = await createRes.json().catch(() => null);
+      }),
+    });
+    const createData = (await createRes.json().catch(() => null)) as TenantCreateResponse | null;
 
-      if (createData?.action === 'REQUEST_ACCESS') {
-        throw new Error('Esta empresa ya existe, pero tu usuario no tiene acceso a ella.');
+    if (createData?.action === 'REQUEST_ACCESS') {
+      throw new Error('Esta empresa ya existe, pero tu usuario no tiene acceso a ella.');
+    }
+
+    if (!createRes.ok || !createData?.ok) {
+      if (createData?.action === 'TRIAL_LIMIT_REACHED') {
+        throw new Error(
+          createData?.error ||
+            'En modo prueba solo puedes usar una empresa con datos reales. Revisa tu plan para continuar.'
+        );
       }
 
-      if (!createRes.ok || !createData?.ok) {
-        if (createData?.action === 'TRIAL_LIMIT_REACHED') {
-          throw new Error(
-            createData?.error ||
-              'En modo prueba solo puedes usar una empresa con datos reales. Revisa tu plan para continuar.'
-          );
-        }
+      throw new Error(createData?.error || 'No hemos podido preparar la empresa para continuar.');
+    }
 
-        throw new Error(createData?.error || 'No hemos podido preparar la empresa para continuar.');
-      }
+    const nextTenantId = typeof createData?.tenantId === 'string' ? createData.tenantId.trim() : '';
+    if (!nextTenantId) {
+      throw new Error('La empresa se ha creado, pero no hemos podido activarla en tu sesion.');
+    }
 
-      const nextTenantId =
-        typeof createData?.tenantId === 'string' ? createData.tenantId.trim() : '';
-      if (!nextTenantId) {
-        throw new Error('La empresa se ha creado, pero no hemos podido activarla en tu sesion.');
-      }
+    setSelectedTenantId(nextTenantId);
+    if (typeof createData?.onboardingToken === 'string' && createData.onboardingToken.trim()) {
+      setActiveOnboardingToken(createData.onboardingToken.trim());
+    }
 
-      setSelectedTenantId(nextTenantId);
-
+    if (!activeOnboardingToken) {
       const switchRes = await fetch('/api/session/tenant-switch', {
         method: 'POST',
         headers: {
@@ -620,23 +680,35 @@ export default function HoldedOnboardingClient({
           switchData?.error || 'No hemos podido activar la empresa nueva en esta sesion.'
         );
       }
+    }
 
-      const nextLegalName =
-        normalizedLegalName.toLowerCase() === normalizedCompanyName.toLowerCase()
-          ? null
-          : normalizedLegalName;
-      setResolvedSummary({
-        companyName: normalizedCompanyName,
-        companyLegalName: nextLegalName,
-        companyTaxId: normalizedTaxId,
-        contactFirstName: normalizedContactFirstName,
-        contactFullName: normalizedContactName,
-        contactEmail: normalizedContactEmail,
-        companyEmail: normalizedContactEmail,
-        contactPhone: normalizedContactPhone || null,
-      });
+    const nextLegalName =
+      normalizedLegalName.toLowerCase() === normalizedCompanyName.toLowerCase()
+        ? null
+        : normalizedLegalName;
+    setResolvedSummary({
+      companyName: normalizedCompanyName,
+      companyLegalName: nextLegalName,
+      companyTaxId: normalizedTaxId,
+      contactFirstName: normalizedContactFirstName,
+      contactFullName: normalizedContactName,
+      contactEmail: normalizedContactEmail,
+      companyEmail: normalizedContactEmail,
+      contactPhone: normalizedContactPhone || null,
+    });
 
-      await connectValidatedApi(nextTenantId);
+    await connectValidatedApi(nextTenantId, validationTokenHint);
+  };
+
+  const handleCompanySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    setCompanySaving(true);
+    setCompanyError(null);
+    setCompanyMessage(null);
+
+    try {
+      await createTenantAndConnect();
 
       setCompanyConfirmed(true);
       setShowCompanyForm(false);
@@ -657,7 +729,7 @@ export default function HoldedOnboardingClient({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!apiKey.trim()) {
+    if (!normalizedApiKey) {
       setError(uiCopy.errorApiKeyEmpty);
       return;
     }
@@ -673,14 +745,21 @@ export default function HoldedOnboardingClient({
 
     try {
       if (needsPostValidationCompanyStep && !apiValidated) {
-        await validateApiKey();
+        const validation = await validateApiKey();
         if (hasResolvedCompanyProfile) {
           setResolvedSummary(summary);
           applySummaryToCompanyForm(summary);
-          await connectValidatedApi();
+          await connectValidatedApi(undefined, validation?.validationToken || null);
           setApiValidated(true);
           setShowCompanyForm(false);
           setCompanyConfirmed(true);
+          setCompanyMessage(null);
+          setMessage(uiCopy.successConnected);
+          goToNextStep(confirmedNextUrl);
+        } else if (usesInlineDirectForm) {
+          await createTenantAndConnect(validation?.validationToken || null);
+          setCompanyConfirmed(true);
+          setShowCompanyForm(false);
           setCompanyMessage(null);
           setMessage(uiCopy.successConnected);
           goToNextStep(confirmedNextUrl);
@@ -887,11 +966,14 @@ export default function HoldedOnboardingClient({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold text-black">
-                      Primero valida tu API key
+                      {usesInlineDirectForm
+                        ? 'Formulario directo del conector'
+                        : 'Primero valida tu API key'}
                     </div>
                     <p className="mt-2 text-sm leading-6 text-neutral-700">
-                      Antes de mostrar o confirmar ninguna empresa, necesitamos comprobar que la API
-                      key corresponde a una conexion real de Holded.
+                      {usesInlineDirectForm
+                        ? 'Completa tus datos y la API key de Holded en este mismo formulario. Validaremos la conexion y prepararemos la empresa internamente sin mostrarte login ni registro.'
+                        : 'Antes de mostrar o confirmar ninguna empresa, necesitamos comprobar que la API key corresponde a una conexion real de Holded.'}
                     </p>
                     <div className="mt-3 text-sm text-neutral-700">
                       Estado: <span className="font-semibold text-black">{statusLabel}</span>
@@ -987,7 +1069,7 @@ export default function HoldedOnboardingClient({
                   </div>
                 </div>
               )}
-              {!companyStepPending && !needsPostValidationCompanyStep && status?.degraded ? (
+              {!companyStepPending && status?.degraded ? (
                 <div className="mt-2 text-sm text-amber-700">{uiCopy.degraded}</div>
               ) : null}
             </div>
@@ -1105,6 +1187,66 @@ export default function HoldedOnboardingClient({
                   <ExternalLink className="h-4 w-4 shrink-0 text-[#ff5460]" />
                 </a>
 
+                {usesInlineDirectForm ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block text-sm font-medium text-neutral-700">
+                      Empresa
+                      <input
+                        type="text"
+                        value={companyLegalName}
+                        onChange={(event) => setCompanyLegalName(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="Tu empresa, S.L."
+                        autoComplete="organization"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-neutral-700">
+                      NIF / CIF
+                      <input
+                        type="text"
+                        value={companyTaxId}
+                        onChange={(event) => setCompanyTaxId(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="B12345678"
+                        autoComplete="off"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-neutral-700">
+                      Nombre
+                      <input
+                        type="text"
+                        value={contactFirstName}
+                        onChange={(event) => setContactFirstName(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="Nombre"
+                        autoComplete="given-name"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-neutral-700">
+                      Apellidos
+                      <input
+                        type="text"
+                        value={contactLastName}
+                        onChange={(event) => setContactLastName(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="Apellidos"
+                        autoComplete="family-name"
+                      />
+                    </label>
+                    <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
+                      Correo
+                      <input
+                        type="email"
+                        value={contactEmail}
+                        onChange={(event) => setContactEmail(event.target.value)}
+                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                        placeholder="nombre@empresa.com"
+                        autoComplete="email"
+                      />
+                    </label>
+                  </div>
+                ) : null}
+
                 <label className="block">
                   <span className="mb-2 block text-sm font-semibold text-black">
                     {uiCopy.apiKeyLabel}
@@ -1115,7 +1257,11 @@ export default function HoldedOnboardingClient({
                     <input
                       type="password"
                       value={apiKey}
-                      onChange={(event) => setApiKey(event.target.value)}
+                      onChange={(event) => {
+                        setApiKey(event.target.value);
+                        setValidationToken(null);
+                        setValidatedApiKey('');
+                      }}
                       autoComplete="off"
                       spellCheck={false}
                       placeholder={uiCopy.apiKeyPlaceholder}
@@ -1172,7 +1318,13 @@ export default function HoldedOnboardingClient({
                 <div className="flex flex-wrap gap-3">
                   <button
                     type="submit"
-                    disabled={saving || !apiKey.trim() || !acceptedTerms || !acceptedPrivacy}
+                    disabled={
+                      saving ||
+                      !normalizedApiKey ||
+                      !acceptedTerms ||
+                      !acceptedPrivacy ||
+                      (usesInlineDirectForm && !hasInlineDirectFormMinimum)
+                    }
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

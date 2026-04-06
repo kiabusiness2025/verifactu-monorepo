@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { sendWelcomeLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
+import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
+import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { prisma } from '@/lib/prisma';
-import { getSessionPayload, requireUserId } from '@/lib/session';
+import { getSessionPayload } from '@/lib/session';
 import { upsertUser } from '@/lib/tenants';
 
 type TenantPayload = {
@@ -151,11 +153,24 @@ async function resolvePlanId(): Promise<number> {
 
 export async function POST(req: Request) {
   const session = await getSessionPayload();
-  if (!session?.uid) {
+  const onboardingSession = !session?.uid
+    ? await resolveHoldedOnboardingSessionFromHeaders(req.headers)
+    : null;
+  const authSession = session?.uid
+    ? session
+    : onboardingSession
+      ? {
+          uid: onboardingSession.uid,
+          email: onboardingSession.email ?? null,
+          name: onboardingSession.name ?? null,
+          tenantId: undefined,
+        }
+      : null;
+  if (!authSession?.uid) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  const uid = requireUserId(session);
+  const uid = authSession.uid;
   const body = (await req.json().catch(() => null)) as TenantPayload | null;
 
   const name = typeof body?.name === 'string' ? body.name.trim() : '';
@@ -209,8 +224,8 @@ export async function POST(req: Request) {
 
   const userId = await upsertUser({
     id: uid,
-    email: session?.email as string | undefined,
-    name: contactFullName || (session?.name as string | undefined),
+    email: (authSession.email as string | undefined) || companyEmail || undefined,
+    name: contactFullName || (authSession.name as string | undefined),
     firstName: contactFirstName,
     lastName: contactLastName,
   });
@@ -286,7 +301,7 @@ export async function POST(req: Request) {
 
   const planId = await resolvePlanId();
   const reusableCurrentTenant = await findReusableCurrentTenant({
-    sessionTenantId: reuseCurrentTenant ? (session.tenantId ?? null) : null,
+    sessionTenantId: reuseCurrentTenant ? (authSession.tenantId ?? null) : null,
     userId,
   });
 
@@ -463,12 +478,12 @@ export async function POST(req: Request) {
 
   try {
     await sendWelcomeLifecycleEmails({
-      userEmail: session.email ?? null,
-      userName: session.name ?? null,
+      userEmail: authSession.email ?? null,
+      userName: authSession.name ?? null,
       tenantName: tradeName || result.tenant.name,
       tenantLegalName: legalName || result.tenant.legalName || result.tenant.name,
-      contactName: contactFullName || session.name || null,
-      contactEmail: session.email ?? null,
+      contactName: contactFullName || authSession.name || null,
+      contactEmail: authSession.email ?? null,
       companyEmail,
       contactPhone: companyPhone,
     });
@@ -485,6 +500,14 @@ export async function POST(req: Request) {
     ok: true,
     action: result.action,
     tenantId: result.tenant.id,
+    onboardingToken: onboardingSession
+      ? await mintHoldedOnboardingTokenForSubject({
+          uid: onboardingSession.uid,
+          email: authSession.email ?? null,
+          name: authSession.name ?? null,
+          tenantId: result.tenant.id,
+        })
+      : null,
     trial: {
       status: result.subscription.status,
       trialEndsAt: result.subscription.trialEndsAt,

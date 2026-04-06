@@ -105,11 +105,11 @@ export function buildHoldedOnboardingBlueprint(mode: HoldedConnectionMode) {
     return {
       mode,
       steps: [
-        'Authenticate the person in Isaak using Verifactu identity.',
+        'Resolve the person using Verifactu identity or the direct connector onboarding session.',
         'Capture or reuse the Holded API key server-side.',
         'Create or resolve the internal tenant and channel identity.',
-        'Validate the Holded connection and activate Isaak tools.',
-        'Offer dashboard access for advanced configuration and history.',
+        'Validate the Holded connection and enable the direct ChatGPT connector.',
+        'Keep the connection available for later OAuth and support flows.',
       ],
     };
   }
@@ -120,7 +120,7 @@ export function buildHoldedOnboardingBlueprint(mode: HoldedConnectionMode) {
       'Authenticate the person in Verifactu dashboard.',
       'Connect Holded from the tenant integrations area.',
       'Validate and store the Holded API key server-side.',
-      'Expose the same connection to Isaak and internal jobs.',
+      'Expose the same connection to ChatGPT and internal jobs.',
       'Reuse the connection later from ChatGPT without reconnecting Holded.',
     ],
   };
@@ -132,6 +132,6 @@ export function buildHoldedConnectionLabel(input: {
 }) {
   const suffix = input.providerAccountId ? ' (' + input.providerAccountId + ')' : '';
   return input.mode === 'holded_first'
-    ? 'Isaak for Holded' + suffix
+    ? 'Holded Direct Connector' + suffix
     : 'Verifactu + Holded' + suffix;
 }

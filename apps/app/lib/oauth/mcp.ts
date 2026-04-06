@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { query } from '@/lib/db';
 import {
   type HoldedMcpScopePreset,
   HOLDED_MCP_SUPPORTED_SCOPES,
@@ -7,7 +8,7 @@ import {
 } from '@/lib/integrations/holdedMcpScopes';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { getAppUrl, getLandingUrl, signSessionToken, verifySessionToken } from '@verifactu/utils';
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 
 export const MCP_RESOURCE_PATH = '/api/mcp/holded';
 export const MCP_AUTHORIZATION_PATH = '/oauth/authorize';
@@ -26,6 +27,7 @@ type MappedSession = {
 
 type AuthorizationCodePayload = {
   type: 'mcp_auth_code';
+  codeId: string;
   clientId: string;
   redirectUri: string;
   scope: string;
@@ -54,12 +56,18 @@ type HoldedOnboardingPayload = {
   uid: string;
   email: string | null;
   name: string | null;
+  tenantId?: string | null;
 };
 
 export const MCP_TOOL_SCOPES = HOLDED_MCP_TOOL_SCOPES;
 
 const SUPPORTED_SCOPES = [...HOLDED_MCP_SUPPORTED_SCOPES];
 const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'openai_review_v2';
+const AUTHORIZATION_CODE_REDEMPTIONS_TABLE = 'oauth_authorization_code_redemptions';
+
+type MintAuthorizationCodeInput = Omit<AuthorizationCodePayload, 'codeId'>;
+
+let authorizationCodeRedemptionsTableEnsured = false;
 
 function isHoldedMcpScopePreset(value: string): value is HoldedMcpScopePreset {
   return (
@@ -79,6 +87,31 @@ function readOAuthSecret() {
   }
 
   return secret;
+}
+
+function buildAuthorizationCodeIdHash(codeId: string) {
+  return createHash('sha256').update(codeId).digest('hex');
+}
+
+async function ensureAuthorizationCodeRedemptionsTable() {
+  if (authorizationCodeRedemptionsTableEnsured) {
+    return;
+  }
+
+  await query(
+    [
+      `CREATE TABLE IF NOT EXISTS ${AUTHORIZATION_CODE_REDEMPTIONS_TABLE} (`,
+      '  code_id_hash text PRIMARY KEY,',
+      '  redeemed_at timestamptz NOT NULL DEFAULT now(),',
+      '  expires_at timestamptz',
+      ')',
+    ].join(' ')
+  );
+  await query(
+    `CREATE INDEX IF NOT EXISTS ${AUTHORIZATION_CODE_REDEMPTIONS_TABLE}_expires_at_idx ON ${AUTHORIZATION_CODE_REDEMPTIONS_TABLE} (expires_at)`
+  );
+
+  authorizationCodeRedemptionsTableEnsured = true;
 }
 
 export function getMcpResourceUrl() {
@@ -219,9 +252,20 @@ export function buildScopeList(input: string | null | undefined) {
     .filter(Boolean);
 }
 
-export async function mintAuthorizationCode(input: AuthorizationCodePayload) {
+export function isValidPkceCodeChallenge(codeChallenge: string) {
+  return /^[A-Za-z0-9_-]{43,128}$/.test(codeChallenge);
+}
+
+export function isValidPkceCodeVerifier(codeVerifier: string) {
+  return /^[A-Za-z0-9._~-]{43,128}$/.test(codeVerifier);
+}
+
+export async function mintAuthorizationCode(input: MintAuthorizationCodeInput) {
   return signSessionToken({
-    payload: input,
+    payload: {
+      ...input,
+      codeId: randomUUID(),
+    },
     secret: readOAuthSecret(),
     expiresIn: '5m',
   });
@@ -231,7 +275,27 @@ export async function verifyAuthorizationCode(code: string) {
   const payload = await verifySessionToken(code, readOAuthSecret());
 
   if (!payload || payload.type !== 'mcp_auth_code') return null;
+  if (typeof payload.codeId !== 'string' || !payload.codeId.trim()) return null;
   return payload as AuthorizationCodePayload & { exp?: number; iat?: number };
+}
+
+export async function consumeAuthorizationCode(codeId: string, exp?: number) {
+  await ensureAuthorizationCodeRedemptionsTable();
+
+  const rows = await query<{ code_id_hash: string }>(
+    [
+      `INSERT INTO ${AUTHORIZATION_CODE_REDEMPTIONS_TABLE} (code_id_hash, expires_at)`,
+      'VALUES ($1, $2)',
+      'ON CONFLICT (code_id_hash) DO NOTHING',
+      'RETURNING code_id_hash',
+    ].join(' '),
+    [
+      buildAuthorizationCodeIdHash(codeId),
+      typeof exp === 'number' ? new Date(exp * 1000).toISOString() : null,
+    ]
+  );
+
+  return rows.length > 0;
 }
 
 export async function mintAccessToken(input: AccessTokenPayload) {
@@ -258,6 +322,7 @@ export async function mintHoldedOnboardingToken(input: {
   seed: string;
   email?: string | null;
   name?: string | null;
+  tenantId?: string | null;
 }) {
   return signSessionToken({
     payload: {
@@ -265,6 +330,26 @@ export async function mintHoldedOnboardingToken(input: {
       uid: buildHoldedGuestUid(input.seed),
       email: input.email ?? null,
       name: input.name ?? 'Isaak user',
+      tenantId: input.tenantId?.trim() || undefined,
+    } satisfies HoldedOnboardingPayload,
+    secret: readOAuthSecret(),
+    expiresIn: '2h',
+  });
+}
+
+export async function mintHoldedOnboardingTokenForSubject(input: {
+  uid: string;
+  email?: string | null;
+  name?: string | null;
+  tenantId?: string | null;
+}) {
+  return signSessionToken({
+    payload: {
+      type: 'mcp_holded_onboarding',
+      uid: input.uid,
+      email: input.email ?? null,
+      name: input.name ?? 'Connector user',
+      tenantId: input.tenantId?.trim() || undefined,
     } satisfies HoldedOnboardingPayload,
     secret: readOAuthSecret(),
     expiresIn: '2h',

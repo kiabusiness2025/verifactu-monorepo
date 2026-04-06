@@ -15,12 +15,14 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 ### Producto — `docs/product/`
 
 - Features implementadas, planes, presupuestos, gastos, facturas, integraciones
+- Contrato canonico del conector directo Fase 1: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md`
+- Plan de implementacion Fase 1: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md`
 - Reordenacion de producto y ownership: `docs/product/ISAAK_PRODUCT_REORDER_PLAN_2026.md`
 - Arquitectura de sync Isaak: `docs/product/ISAAK_PLATFORM_SYNC_PLAN.md`
 - Conexiones compartidas Holded: `docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md`
 - Alcance de APIs Holded para facturacion y contabilidad: `docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md`
-- Review publica OpenAI: `docs/product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md`
-- Deploy + QA publica Isaak for Holded: `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
+- Review publica OpenAI previa: `docs/product/ISAAK_FOR_HOLDED_PUBLIC_REVIEW.md`
+- Deploy + QA del conector directo: `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
 - Estado y cambios 2026-04-01: `docs/product/ISAAK_FOR_HOLDED_STATUS_2026-04-01.md`
 - Demo: `docs/product/DEMO_FLOW.md`, `docs/product/DEMO_QA_CHECKLIST.md`
 - Precios: `docs/product/pricing/`
@@ -40,7 +42,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 - Email: `docs/ops/email/` (configuración, aliases, mailbox...)
 - Runbooks: `docs/ops/runbooks/`
   - Identidad admin: `docs/ops/runbooks/ADMIN_USER_IDENTITY_RULES.md`
-  - Deploy publico Isaak for Holded: `docs/ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md`
+  - Deploy publico del conector directo Holded: `docs/ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md`
   - Vercel stale commit: `docs/ops/runbooks/VERCEL_STALE_COMMIT_AND_BODYINIT.md`
   - Onboarding empresa: `docs/ops/runbooks/ONBOARDING_ADD_COMPANY_FLOW.md`
 - CI: `docs/ops/CI_CHECKLIST.md`
@@ -51,7 +53,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 - Sistema de soporte: `docs/isaak/ISAAK_SUPPORT_SYSTEM.md`
 - Auto-fix: `docs/isaak/ISAAK_AUTO_FIX.md`
 - Esquemas de gastos: `docs/isaak/expense_schema.md`, `docs/isaak/expense_schema_v2.md`
-- Guía MCP: `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md`
+- Guia MCP del conector directo: `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md`
 - Regresion demo Holded: `docs/engineering/ai/HOLDED_DEMO_REGRESSION.md`
 - Instrucciones operativas 2026: `docs/engineering/ai/ISAAK_INSTRUCCIONES_OPERATIVAS_2026.md`
 
