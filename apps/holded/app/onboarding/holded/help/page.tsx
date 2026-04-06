@@ -4,8 +4,9 @@ import type { Metadata } from 'next';
 import { ArrowLeft, ExternalLink, KeyRound, LifeBuoy } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Ayuda API de Holded | Isaak para Holded',
-  description: 'Guia paso a paso para crear una API key en Holded y conectarla con Isaak.',
+  title: 'Ayuda API de Holded | Verifactu',
+  description:
+    'Guia paso a paso para crear una API key en Holded y pegarla en el conector directo.',
 };
 
 const screenshots = [
@@ -38,8 +39,8 @@ export default function HoldedApiHelpPage() {
                 Como crear tu API key de Holded
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                Sigue estos pasos y vuelve despues a pegar la clave en Isaak. Solo necesitas una API
-                key activa y creada desde tu propia cuenta de Holded.
+                Sigue estos pasos y vuelve despues a pegar la clave en el conector. Solo necesitas
+                una API key activa y creada desde tu propia cuenta de Holded.
               </p>
             </div>
             <Link
@@ -55,7 +56,7 @@ export default function HoldedApiHelpPage() {
             <a
               href="https://app.holded.com/login"
               target="_blank"
-              rel="noreferrer"
+              rel="noreferrer noopener"
               className="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-[#ff5460]/40 hover:bg-white"
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -70,7 +71,7 @@ export default function HoldedApiHelpPage() {
             <a
               href="https://app.holded.com/home#settings:/"
               target="_blank"
-              rel="noreferrer"
+              rel="noreferrer noopener"
               className="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-[#ff5460]/40 hover:bg-white"
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -94,12 +95,13 @@ export default function HoldedApiHelpPage() {
                 <span className="font-semibold text-slate-900">+ Nueva API Key</span>.
               </li>
               <li className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <span className="font-semibold text-slate-900">4.</span> Usa como nombre{' '}
-                <span className="font-mono text-slate-900">ISAAK_HOLDED_API_KEY</span>.
+                <span className="font-semibold text-slate-900">4.</span> Usa un nombre reconocible,
+                por ejemplo{' '}
+                <span className="font-mono text-slate-900">VERIFACTU_HOLDED_API_KEY</span>.
               </li>
               <li className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
                 <span className="font-semibold text-slate-900">5.</span> Copia la clave generada,
-                vuelve a Isaak y pegala en el campo de conexion.
+                vuelve al conector y pegala en el campo de conexion.
               </li>
             </ol>
             <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">

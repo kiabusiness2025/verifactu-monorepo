@@ -11,9 +11,9 @@ import {
 import OnboardingHoldedClient from './OnboardingHoldedClient';
 
 export const metadata: Metadata = {
-  title: 'Conectar Holded | Isaak para Holded',
+  title: 'Conectar Holded | Verifactu',
   description:
-    'Introduce los datos base de empresa y contacto junto con tu API key de Holded para activar el conector.',
+    'Introduce los datos base de empresa y contacto junto con tu API key de Holded para activar el conector directo.',
 };
 
 type InitialIdentity = {

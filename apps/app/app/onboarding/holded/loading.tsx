@@ -12,7 +12,7 @@ const chatgptLoadingMessages = [
 ];
 const dashboardLoadingMessages = [
   'Estamos preparando la conexion segura con Holded para tu espacio de Verifactu.',
-  'Validamos el acceso y dejamos la empresa lista sin pasos duplicados.',
+  'Validamos el acceso y dejamos la conexion lista sin pasos visibles extra.',
   'En cuanto termine, continuaremos automaticamente con el flujo de Verifactu.',
 ];
 

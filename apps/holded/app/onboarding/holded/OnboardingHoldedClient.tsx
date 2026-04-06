@@ -167,7 +167,7 @@ export default function OnboardingHoldedClient({
       : phase === 'connecting'
         ? {
             title: 'Estamos cerrando la conexion',
-            body: 'Guardamos empresa, contacto y conexion para dejar el panel y los avisos listos.',
+            body: 'Guardamos empresa, contacto y conexion para dejar el conector operativo.',
           }
         : null;
 
@@ -265,15 +265,15 @@ export default function OnboardingHoldedClient({
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-[0.88fr_1.12fr]">
           <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#ff5460]">
-              Paso 2 de 2
+              Conexion directa
             </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-              Activa tu conexion con Holded
+              Conecta tu empresa de Holded
             </h1>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              En este paso recogemos la identidad basica de empresa y contacto para dejar la base
-              lista, poder enviarte los avisos de conexion y mostrar bien la informacion en el panel
-              desde el primer uso.
+              Completa los datos minimos de empresa y contacto junto con tu API key de Holded.
+              Nosotros dejamos la conexion lista server-side para que no tengas que pasar por un
+              alta tecnica separada.
             </p>
 
             <div className="mt-6 space-y-3">
@@ -283,8 +283,8 @@ export default function OnboardingHoldedClient({
                   Empresa
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Guardaremos el nombre de empresa, la razon social y el NIF/CIF para crear bien tu
-                  espacio de trabajo.
+                  Guardaremos nombre comercial, razon social y NIF/CIF para resolver correctamente
+                  la identidad de empresa.
                 </p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
@@ -293,8 +293,7 @@ export default function OnboardingHoldedClient({
                   Contacto principal
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Usaremos nombre, apellidos y correo para enviarte bienvenida, avisos de conexion o
-                  desconexion y las comunicaciones operativas del conector.
+                  Usaremos nombre, apellidos y correo como contacto operativo de la conexion.
                 </p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">

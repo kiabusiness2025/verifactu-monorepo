@@ -102,6 +102,36 @@ function normalizeApiKey(value: string) {
   return value.replace(/\s+/g, '').trim();
 }
 
+function buildConfirmedNextUrl(input: {
+  nextUrl: string;
+  requireConnectionConfirmation: boolean;
+  onboardingToken?: string | null;
+  tenantIdHint?: string | null;
+}) {
+  if (!input.requireConnectionConfirmation) return input.nextUrl;
+
+  try {
+    const parsed = new URL(input.nextUrl, HOLDED_COMPAT_URL);
+    if (parsed.pathname === '/oauth/authorize') {
+      parsed.searchParams.set('connection_confirmed', '1');
+
+      const normalizedOnboardingToken = input.onboardingToken?.trim() || null;
+      const normalizedTenantIdHint = input.tenantIdHint?.trim() || null;
+
+      if (normalizedOnboardingToken) {
+        parsed.searchParams.set('onboarding_token', normalizedOnboardingToken);
+        parsed.searchParams.delete('tenant_id');
+      } else if (normalizedTenantIdHint) {
+        parsed.searchParams.set('tenant_id', normalizedTenantIdHint);
+      }
+    }
+
+    return parsed.toString();
+  } catch {
+    return input.nextUrl;
+  }
+}
+
 const chatgptUiCopy = {
   eyebrow: 'Conector directo Holded + ChatGPT',
   title: 'Conecta tu empresa de Holded',
@@ -282,13 +312,13 @@ export default function HoldedOnboardingClient({
     !!normalizeText(contactLastName) &&
     !!normalizeText(contactEmail);
   const apiKeyHelp = reusesStoredCompanyData
-    ? 'Validaremos la API key y, si tu empresa ya esta preparada aqui, conectaremos Holded sin pedirte esos datos otra vez.'
+    ? 'Validaremos la API key y, si todo encaja, dejaremos la conexion directa cerrada sin pasos visibles extra.'
     : uiCopy.apiKeyHelp;
   const helpSteps = reusesStoredCompanyData
     ? [
         'Entra en Holded y abre el area de API.',
         'Copia una API key activa de tu empresa.',
-        'Pegala aqui y la conectaremos usando los datos de empresa que ya tienes guardados.',
+        'Pegala aqui y terminaremos la conexion directa con Holded para devolverte al flujo original.',
       ]
     : usesInlineDirectForm
       ? [
@@ -310,11 +340,11 @@ export default function HoldedOnboardingClient({
       : uiCopy.submitLabel;
   const personalizedLead = !showApiStep
     ? reusesStoredCompanyData
-      ? `${resolvedSummary.contactFirstName}, hemos reutilizado los datos guardados de ${resolvedSummary.companyName} para cerrar la conexion sin pedirte la empresa otra vez.`
+      ? `${resolvedSummary.contactFirstName}, ya hemos resuelto internamente la empresa y estamos cerrando la conexion directa con Holded.`
       : `${resolvedSummary.contactFirstName}, ahora solo necesitamos confirmar los datos minimos de empresa y contacto para terminar la conexion.`
     : hideResolvedCompanyUntilApiValidation
       ? reusesStoredCompanyData
-        ? 'Primero validaremos tu API key. Si tu empresa ya estaba preparada aqui, terminaremos la conexion sin volver a pedirte datos duplicados.'
+        ? 'Primero validaremos tu API key y, si es correcta, cerraremos la conexion directa sin pasos manuales extra.'
         : usesInlineDirectForm
           ? 'Completa este formulario directo con tu empresa y tu API key de Holded. Nosotros resolvemos el resto sin mostrarte login ni registro.'
           : 'Primero validaremos tu API key. Solo si hace falta te pediremos confirmar los datos de empresa asociados a la conexion.'
@@ -322,33 +352,34 @@ export default function HoldedOnboardingClient({
         ? `${resolvedSummary.contactFirstName}, validaremos tu API key y dejaremos lista la conexion directa con Holded para volver a ChatGPT.`
         : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName} dentro de Verifactu.`;
 
-  const confirmedNextUrl = useMemo(() => {
-    if (!requireConnectionConfirmation) return nextUrl;
+  const resolveConfirmedNextUrl = useCallback(
+    (overrides?: { onboardingToken?: string | null; tenantIdHint?: string | null }) => {
+      const effectiveOnboardingToken =
+        overrides && Object.prototype.hasOwnProperty.call(overrides, 'onboardingToken')
+          ? (overrides.onboardingToken ?? null)
+          : activeOnboardingToken;
+      const effectiveTenantIdHint =
+        overrides && Object.prototype.hasOwnProperty.call(overrides, 'tenantIdHint')
+          ? (overrides.tenantIdHint ?? null)
+          : (selectedTenantId ?? initialTenantIdHint);
 
-    try {
-      const parsed = new URL(nextUrl, HOLDED_COMPAT_URL);
-      if (parsed.pathname === '/oauth/authorize') {
-        parsed.searchParams.set('connection_confirmed', '1');
-        if (activeOnboardingToken) {
-          parsed.searchParams.set('onboarding_token', activeOnboardingToken);
-          parsed.searchParams.delete('tenant_id');
-        } else if (selectedTenantId) {
-          parsed.searchParams.set('tenant_id', selectedTenantId);
-        } else if (initialTenantIdHint) {
-          parsed.searchParams.set('tenant_id', initialTenantIdHint);
-        }
-      }
-      return parsed.toString();
-    } catch {
-      return nextUrl;
-    }
-  }, [
-    activeOnboardingToken,
-    initialTenantIdHint,
-    nextUrl,
-    requireConnectionConfirmation,
-    selectedTenantId,
-  ]);
+      return buildConfirmedNextUrl({
+        nextUrl,
+        requireConnectionConfirmation,
+        onboardingToken: effectiveOnboardingToken,
+        tenantIdHint: effectiveTenantIdHint,
+      });
+    },
+    [
+      activeOnboardingToken,
+      initialTenantIdHint,
+      nextUrl,
+      requireConnectionConfirmation,
+      selectedTenantId,
+    ]
+  );
+
+  const confirmedNextUrl = useMemo(() => resolveConfirmedNextUrl(), [resolveConfirmedNextUrl]);
 
   const loadStatus = useCallback(
     async (signal?: AbortSignal) => {
@@ -569,16 +600,21 @@ export default function HoldedOnboardingClient({
 
   const connectValidatedApi = async (
     requestTenantIdHint?: string | null,
-    validationTokenHint?: string | null
+    validationTokenHint?: string | null,
+    onboardingTokenHint?: string | null
   ) => {
     const effectiveTenantIdHint = requestTenantIdHint ?? selectedTenantId ?? initialTenantIdHint;
+    const effectiveOnboardingToken =
+      onboardingTokenHint === undefined ? activeOnboardingToken : onboardingTokenHint;
     const res = await fetch('/api/integrations/accounting/connect', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-isaak-entry-channel': entryChannel,
         ...(effectiveTenantIdHint ? { 'x-isaak-tenant-id': effectiveTenantIdHint } : {}),
-        ...(activeOnboardingToken ? { 'x-holded-onboarding-token': activeOnboardingToken } : {}),
+        ...(effectiveOnboardingToken
+          ? { 'x-holded-onboarding-token': effectiveOnboardingToken }
+          : {}),
       },
       body: JSON.stringify({
         apiKey: normalizedApiKey,
@@ -688,12 +724,15 @@ export default function HoldedOnboardingClient({
       throw new Error('La empresa se ha creado, pero no hemos podido activarla en tu sesion.');
     }
 
-    setSelectedTenantId(nextTenantId);
-    if (typeof createData?.onboardingToken === 'string' && createData.onboardingToken.trim()) {
-      setActiveOnboardingToken(createData.onboardingToken.trim());
-    }
+    const nextOnboardingToken =
+      typeof createData?.onboardingToken === 'string' && createData.onboardingToken.trim()
+        ? createData.onboardingToken.trim()
+        : null;
 
-    if (!activeOnboardingToken) {
+    setSelectedTenantId(nextTenantId);
+    setActiveOnboardingToken(nextOnboardingToken);
+
+    if (!nextOnboardingToken) {
       const switchRes = await fetch('/api/session/tenant-switch', {
         method: 'POST',
         headers: {
@@ -725,7 +764,12 @@ export default function HoldedOnboardingClient({
       contactPhone: normalizedContactPhone || null,
     });
 
-    await connectValidatedApi(nextTenantId, validationTokenHint);
+    await connectValidatedApi(nextTenantId, validationTokenHint, nextOnboardingToken);
+
+    return {
+      tenantId: nextTenantId,
+      onboardingToken: nextOnboardingToken,
+    };
   };
 
   const handleCompanySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -736,14 +780,19 @@ export default function HoldedOnboardingClient({
     setCompanyMessage(null);
 
     try {
-      await createTenantAndConnect();
+      const createdTenant = await createTenantAndConnect();
 
       setCompanyConfirmed(true);
       setShowCompanyForm(false);
-      setCompanyMessage('Datos guardados. Ya estamos cerrando la conexion con Holded.');
+      setCompanyMessage('Datos confirmados. Ya estamos terminando la conexion con Holded.');
       setError(null);
       setMessage(uiCopy.successConnected);
-      goToNextStep(confirmedNextUrl);
+      goToNextStep(
+        resolveConfirmedNextUrl({
+          onboardingToken: createdTenant.onboardingToken,
+          tenantIdHint: createdTenant.tenantId,
+        })
+      );
     } catch (submitError) {
       setCompanyError(
         submitError instanceof Error
@@ -785,12 +834,17 @@ export default function HoldedOnboardingClient({
           setMessage(uiCopy.successConnected);
           goToNextStep(confirmedNextUrl);
         } else if (usesInlineDirectForm) {
-          await createTenantAndConnect(validation?.validationToken || null);
+          const createdTenant = await createTenantAndConnect(validation?.validationToken || null);
           setCompanyConfirmed(true);
           setShowCompanyForm(false);
           setCompanyMessage(null);
           setMessage(uiCopy.successConnected);
-          goToNextStep(confirmedNextUrl);
+          goToNextStep(
+            resolveConfirmedNextUrl({
+              onboardingToken: createdTenant.onboardingToken,
+              tenantIdHint: createdTenant.tenantId,
+            })
+          );
         } else {
           resetForFreshApiValidation();
           setApiValidated(true);
@@ -888,7 +942,7 @@ export default function HoldedOnboardingClient({
                   </div>
                   <p className="mt-2 text-sm leading-6 text-neutral-700">
                     {reusesStoredCompanyData
-                      ? 'La API key ya es valida. Hemos recuperado los datos guardados de empresa y contacto para que solo revises lo que haya cambiado.'
+                      ? 'La API key ya es valida. Revisa solo los datos minimos de empresa y contacto antes de terminar la conexion.'
                       : 'La API key ya es valida. Ahora necesitamos guardar los datos minimos de empresa y contacto para dejar la conexion cerrada correctamente.'}
                   </p>
 

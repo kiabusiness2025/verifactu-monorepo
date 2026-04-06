@@ -42,6 +42,9 @@ describe('OnboardingHoldedClient', () => {
   it('renders prefilled company and contact identity fields', () => {
     render(<OnboardingHoldedClient {...defaultProps} />);
 
+    expect(screen.getByText('Conexion directa')).toBeInTheDocument();
+    expect(screen.getByText('Conecta tu empresa de Holded')).toBeInTheDocument();
+    expect(screen.queryByText('Activa tu conexion con Holded')).not.toBeInTheDocument();
     expect(screen.getByDisplayValue('Acme SL')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Acme Sociedad Limitada')).toBeInTheDocument();
     expect(screen.getByDisplayValue('B12345678')).toBeInTheDocument();
