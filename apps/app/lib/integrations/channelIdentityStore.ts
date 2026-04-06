@@ -48,7 +48,7 @@ export async function upsertChannelIdentity(input: ChannelIdentityInput) {
       '  email,',
       '  display_name,',
       '  metadata',
-      ') VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)',
+      ') VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)',
       'ON CONFLICT (channel_type, channel_subject_id)',
       'DO UPDATE SET',
       '  user_id = EXCLUDED.user_id,',

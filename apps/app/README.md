@@ -152,6 +152,14 @@ Build:
 pnpm --filter verifactu-app build
 ```
 
+Reglas de despliegue en Vercel para este proyecto:
+
+- el proyecto enlazado correcto es `verifactu-monorepo-app`
+- desplegar siempre desde un commit limpio ya empujado o desde un snapshot equivalente
+- no lanzar deploys desde workspaces sucios ni desde carpetas temporales enlazadas como proyecto nuevo
+- en Windows, no usar `vercel --prebuilt` como camino principal para `apps/app`; preferir build remoto normal o redeploy desde dashboard
+- cualquier cambio en `apps/app/vercel.json` debe validarse junto al script de install real para no volver a romper la resolucion del root del monorepo
+
 Tests utiles cuando tocas el conector:
 
 ```bash

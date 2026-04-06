@@ -12,6 +12,28 @@ Runbook breve para desplegar el conector directo `Holded Connector for ChatGPT` 
 4. Validar endpoints OAuth, MCP y onboarding directo.
 5. Ejecutar la checklist de `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`.
 
+## Reglas fijas de despliegue en Vercel
+
+Estas reglas evitan repetir los errores ya vistos al desplegar `apps/app`:
+
+1. El proyecto correcto de Vercel para este runtime es `verifactu-monorepo-app`.
+2. El despliegue debe salir de un commit ya empujado a `main` o de un snapshot limpio equivalente. No desplegar desde un workspace sucio.
+3. No enlazar carpetas temporales, exports ni `worktree` a proyectos nuevos de Vercel. El link canonico es el de `apps/app`.
+4. Si se hace deploy manual por CLI, comprobar antes que el proyecto enlazado no sea el repo raiz `verifactu-monorepo`, sino `verifactu-monorepo-app`.
+5. En Windows, evitar la via `vercel deploy --prebuilt` como ruta principal: puede fallar al crear symlinks en `.vercel/output`.
+6. Si el deploy manual por CLI devuelve un error generico antes de arrancar build, preferir redeploy desde el dashboard de Vercel sobre el commit ya empujado.
+7. Cualquier cambio en `apps/app/vercel.json` debe revisarse junto con el script real de install usado por el proyecto; no dejar wrappers o rutas relativas a medio migrar.
+8. Antes de declarar bueno un deploy, validar al menos `/.well-known/oauth-authorization-server`, `/.well-known/oauth-protected-resource/api/mcp/holded`, `/oauth/authorize`, `/oauth/token`, `/api/mcp/holded` y `/onboarding/holded`.
+
+## Regla practica para futuros incidentes
+
+Si hay dudas entre:
+
+- redeploy rapido desde dashboard sobre un commit conocido
+- o deploy manual desde un entorno local improvisado
+
+la opcion recomendada es la primera.
+
 ## Secrets minimos
 
 - `SESSION_SECRET`
