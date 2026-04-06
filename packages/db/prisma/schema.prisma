@@ -851,6 +851,7 @@ model ExternalConnection {
   connectedAt       DateTime? @map("connected_at") @db.Timestamptz
   lastValidatedAt   DateTime? @map("last_validated_at") @db.Timestamptz
   lastSyncAt        DateTime? @map("last_sync_at") @db.Timestamptz
+  lastError         String?   @map("last_error")
   legalTermsAcceptedAt DateTime? @map("legal_terms_accepted_at") @db.Timestamptz
   legalPrivacyAcceptedAt DateTime? @map("legal_privacy_accepted_at") @db.Timestamptz
   legalAcceptanceVersion String? @map("legal_acceptance_version")

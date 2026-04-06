@@ -1,4 +1,6 @@
 import { one, query } from '@/lib/db';
+import { ensureSharedHoldedDashboardExternalConnectionFromLegacy } from '@/lib/integrations/holdedLegacyBackfill';
+import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
 
 const PROVIDER = 'accounting_api';
 const SHARED_PROVIDER = 'holded';
@@ -36,7 +38,7 @@ function describeStorageError(error: unknown) {
 let tenantIntegrationsTableAvailable: boolean | null = null;
 let externalConnectionsTableAvailable: boolean | null = null;
 let externalConnectionsChannelColumnAvailable: boolean | null = null;
-let externalConnectionsLegalColumnsEnsured = false;
+let externalConnectionsOptionalColumnsEnsured = false;
 let storageBootstrapAttempted = false;
 
 function normalizeAccountingChannel(channel?: string | null): AccountingIntegrationChannel {
@@ -97,6 +99,7 @@ async function bootstrapIntegrationStorageTables() {
         connected_at timestamptz,
         last_validated_at timestamptz,
         last_sync_at timestamptz,
+        last_error text,
         legal_terms_accepted_at timestamptz,
         legal_privacy_accepted_at timestamptz,
         legal_acceptance_version text,
@@ -123,7 +126,7 @@ async function bootstrapIntegrationStorageTables() {
       ? await detectExternalConnectionsChannelColumn()
       : false;
     if (externalConnectionsTableAvailable) {
-      await ensureExternalConnectionsLegalSchema();
+      await ensureExternalConnectionsOptionalSchema();
     }
   }
 }
@@ -191,14 +194,15 @@ async function ensureExternalConnectionsChannelSchema() {
   }
 }
 
-async function ensureExternalConnectionsLegalSchema() {
-  if (externalConnectionsLegalColumnsEnsured) return;
+async function ensureExternalConnectionsOptionalSchema() {
+  if (externalConnectionsOptionalColumnsEnsured) return;
 
   if (!(await detectTable('external_connections'))) {
     return;
   }
 
   try {
+    await query('ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS last_error text');
     await query(
       'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS legal_terms_accepted_at timestamptz'
     );
@@ -208,22 +212,12 @@ async function ensureExternalConnectionsLegalSchema() {
     await query(
       'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS legal_acceptance_version text'
     );
-    externalConnectionsLegalColumnsEnsured = true;
+    externalConnectionsOptionalColumnsEnsured = true;
   } catch (error) {
-    console.error('[accountingStore] failed to ensure external_connections legal schema', {
+    console.error('[accountingStore] failed to ensure external_connections optional schema', {
       message: describeStorageError(error),
     });
   }
-}
-
-async function hasTenantIntegrationsTable() {
-  if (tenantIntegrationsTableAvailable !== null) return tenantIntegrationsTableAvailable;
-
-  tenantIntegrationsTableAvailable = await detectTable('tenant_integrations');
-  if (!tenantIntegrationsTableAvailable) {
-    await bootstrapIntegrationStorageTables();
-  }
-  return tenantIntegrationsTableAvailable === true;
 }
 
 async function hasExternalConnectionsTable() {
@@ -234,7 +228,7 @@ async function hasExternalConnectionsTable() {
     await bootstrapIntegrationStorageTables();
   }
   if (externalConnectionsTableAvailable) {
-    await ensureExternalConnectionsLegalSchema();
+    await ensureExternalConnectionsOptionalSchema();
   }
   return externalConnectionsTableAvailable === true;
 }
@@ -264,56 +258,45 @@ export type AccountingIntegrationStatus = {
   status: string;
   last_sync_at: string | null;
   last_error: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
+function mapResolvedHoldedStatusToAccountingIntegration(
+  connection: NonNullable<Awaited<ReturnType<typeof resolveSharedHoldedConnectionStatusForTenant>>>
+): AccountingIntegrationStatus {
+  return {
+    id: connection.id,
+    tenant_id: connection.tenantId,
+    provider: PROVIDER,
+    status: connection.status,
+    last_sync_at: connection.lastSyncAt,
+    last_error: connection.lastError,
+    created_at: null,
+    updated_at: null,
+  };
+}
+
 export async function getAccountingIntegration(tenantId: string) {
-  if (await hasTenantIntegrationsTable()) {
-    return one<AccountingIntegrationStatus>(
-      `
-      SELECT id, tenant_id, provider, status, last_sync_at::text, last_error, created_at::text, updated_at::text
-      FROM tenant_integrations
-      WHERE tenant_id = $1 AND provider = $2
-      LIMIT 1
-      `,
-      [tenantId, PROVIDER]
-    );
-  }
-
-  if (await hasExternalConnectionsTable()) {
-    return one<AccountingIntegrationStatus>(
-      `
-      SELECT
-        id,
-        tenant_id,
-        provider,
-        connection_status AS status,
-        last_sync_at::text,
-        NULL::text AS last_error,
-        created_at::text,
-        updated_at::text
-      FROM external_connections
-      WHERE tenant_id = $1 AND provider = $2
-      LIMIT 1
-      `,
-      [tenantId, SHARED_PROVIDER]
-    );
-  }
-
-  return null;
+  const holded = await resolveSharedHoldedConnectionStatusForTenant(tenantId, 'dashboard');
+  return holded ? mapResolvedHoldedStatusToAccountingIntegration(holded) : null;
 }
 
 export async function listTenantIntegrations(tenantId: string) {
-  return query<AccountingIntegrationStatus>(
+  const legacyRows = await query<AccountingIntegrationStatus>(
     `
     SELECT id, tenant_id, provider, status, last_sync_at::text, last_error, created_at::text, updated_at::text
     FROM tenant_integrations
-    WHERE tenant_id = $1
+    WHERE tenant_id = $1 AND provider <> $2
     ORDER BY provider ASC
     `,
-    [tenantId]
+    [tenantId, PROVIDER]
   );
+  const holded = await getAccountingIntegration(tenantId);
+
+  return holded
+    ? [...legacyRows, holded].sort((left, right) => left.provider.localeCompare(right.provider))
+    : legacyRows;
 }
 
 export async function upsertAccountingIntegration(args: {
@@ -341,28 +324,6 @@ export async function upsertAccountingIntegration(args: {
   const normalizedChannel = normalizeAccountingChannel(channelKey);
   let saved: AccountingIntegrationStatus | null = null;
 
-  if (await hasTenantIntegrationsTable()) {
-    try {
-      saved = await one<AccountingIntegrationStatus>(
-        `
-        INSERT INTO tenant_integrations (tenant_id, provider, api_key_enc, status, last_sync_at, last_error)
-        VALUES ($1, $2, $3, $4, CASE WHEN $4 = 'connected' THEN now() ELSE NULL END, $5)
-        ON CONFLICT (tenant_id, provider)
-        DO UPDATE SET
-          api_key_enc = EXCLUDED.api_key_enc,
-          status = EXCLUDED.status,
-          last_sync_at = CASE WHEN EXCLUDED.status = 'connected' THEN now() ELSE tenant_integrations.last_sync_at END,
-          last_error = EXCLUDED.last_error,
-          updated_at = now()
-        RETURNING id, tenant_id, provider, status, last_sync_at::text, last_error, created_at::text, updated_at::text
-        `,
-        [tenantId, PROVIDER, apiKeyEnc, status, lastError]
-      );
-    } catch (error) {
-      throw new Error(`tenant_integrations upsert failed: ${describeStorageError(error)}`);
-    }
-  }
-
   try {
     if (await hasExternalConnectionsTable()) {
       const external = (await hasExternalConnectionsChannelColumn())
@@ -384,6 +345,7 @@ export async function upsertAccountingIntegration(args: {
               api_key_enc,
               scopes_granted,
               connection_status,
+              last_error,
               connected_by_user_id,
               connected_at,
               last_validated_at,
@@ -401,17 +363,19 @@ export async function upsertAccountingIntegration(args: {
               ARRAY[]::text[],
               $5,
               $6,
-              CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
-              CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
-              CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
               $7,
+              CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
+              CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
+              CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
               $8,
-              $9
+              $9,
+              $10
             )
             ON CONFLICT (tenant_id, provider, channel_key)
             DO UPDATE SET
               api_key_enc = EXCLUDED.api_key_enc,
               connection_status = EXCLUDED.connection_status,
+              last_error = EXCLUDED.last_error,
               connected_by_user_id = COALESCE(EXCLUDED.connected_by_user_id, external_connections.connected_by_user_id),
               connected_at = COALESCE(EXCLUDED.connected_at, external_connections.connected_at),
               last_validated_at = EXCLUDED.last_validated_at,
@@ -428,6 +392,7 @@ export async function upsertAccountingIntegration(args: {
               normalizedChannel,
               apiKeyEnc,
               status,
+              lastError,
               connectedByUserId ?? null,
               legalTermsAcceptedAt ?? null,
               legalPrivacyAcceptedAt ?? null,
@@ -451,6 +416,7 @@ export async function upsertAccountingIntegration(args: {
               api_key_enc,
               scopes_granted,
               connection_status,
+              last_error,
               connected_by_user_id,
               connected_at,
               last_validated_at,
@@ -467,17 +433,19 @@ export async function upsertAccountingIntegration(args: {
               ARRAY[]::text[],
               $4,
               $5,
-              CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
-              CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
-              CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
               $6,
+              CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
+              CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
+              CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
               $7,
-              $8
+              $8,
+              $9
             )
             ON CONFLICT (tenant_id, provider)
             DO UPDATE SET
               api_key_enc = EXCLUDED.api_key_enc,
               connection_status = EXCLUDED.connection_status,
+              last_error = EXCLUDED.last_error,
               connected_by_user_id = COALESCE(EXCLUDED.connected_by_user_id, external_connections.connected_by_user_id),
               connected_at = COALESCE(EXCLUDED.connected_at, external_connections.connected_at),
               last_validated_at = EXCLUDED.last_validated_at,
@@ -493,6 +461,7 @@ export async function upsertAccountingIntegration(args: {
               SHARED_PROVIDER,
               apiKeyEnc,
               status,
+              lastError,
               connectedByUserId ?? null,
               legalTermsAcceptedAt ?? null,
               legalPrivacyAcceptedAt ?? null,
@@ -534,17 +503,10 @@ export async function disconnectAccountingIntegration(
   channelKey?: AccountingIntegrationChannel | null
 ) {
   const normalizedChannel = normalizeAccountingChannel(channelKey);
-  let saved = await one<AccountingIntegrationStatus>(
-    `
-    UPDATE tenant_integrations
-    SET status = 'disconnected', api_key_enc = NULL, last_error = NULL, updated_at = now()
-    WHERE tenant_id = $1 AND provider = $2
-    RETURNING id, tenant_id, provider, status, last_sync_at::text, last_error, created_at::text, updated_at::text
-    `,
-    [tenantId, PROVIDER]
-  );
+  let saved: AccountingIntegrationStatus | null = null;
 
   if (await hasExternalConnectionsTable()) {
+    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
     const external = (await hasExternalConnectionsChannelColumn())
       ? await one<{
           id: string;
@@ -556,9 +518,23 @@ export async function disconnectAccountingIntegration(
           updated_at: string;
         }>(
           `
-          UPDATE external_connections
-          SET connection_status = 'disconnected', api_key_enc = NULL, updated_at = now()
-          WHERE tenant_id = $1 AND provider = $2 AND channel_key = $3
+          INSERT INTO external_connections (
+            tenant_id,
+            provider,
+            channel_key,
+            credential_type,
+            api_key_enc,
+            scopes_granted,
+            connection_status,
+            last_error
+          )
+          VALUES ($1, $2, $3, 'api_key', NULL, ARRAY[]::text[], 'disconnected', NULL)
+          ON CONFLICT (tenant_id, provider, channel_key)
+          DO UPDATE SET
+            connection_status = 'disconnected',
+            api_key_enc = NULL,
+            last_error = NULL,
+            updated_at = now()
           RETURNING id, tenant_id, provider, connection_status AS status, last_sync_at::text, created_at::text, updated_at::text
           `,
           [tenantId, SHARED_PROVIDER, normalizedChannel]
@@ -573,9 +549,22 @@ export async function disconnectAccountingIntegration(
           updated_at: string;
         }>(
           `
-          UPDATE external_connections
-          SET connection_status = 'disconnected', api_key_enc = NULL, updated_at = now()
-          WHERE tenant_id = $1 AND provider = $2
+          INSERT INTO external_connections (
+            tenant_id,
+            provider,
+            credential_type,
+            api_key_enc,
+            scopes_granted,
+            connection_status,
+            last_error
+          )
+          VALUES ($1, $2, 'api_key', NULL, ARRAY[]::text[], 'disconnected', NULL)
+          ON CONFLICT (tenant_id, provider)
+          DO UPDATE SET
+            connection_status = 'disconnected',
+            api_key_enc = NULL,
+            last_error = NULL,
+            updated_at = now()
           RETURNING id, tenant_id, provider, connection_status AS status, last_sync_at::text, created_at::text, updated_at::text
           `,
           [tenantId, SHARED_PROVIDER]
@@ -711,47 +700,64 @@ export async function markOutboxError(id: string, error: string) {
   );
 }
 
-export async function touchIntegrationSyncOk(tenantId: string) {
-  await query(
-    `
-    UPDATE tenant_integrations
-    SET status = 'connected', last_sync_at = now(), last_error = NULL, updated_at = now()
-    WHERE tenant_id = $1 AND provider = $2
-    `,
-    [tenantId, PROVIDER]
-  );
+export async function touchIntegrationSyncOk(
+  tenantId: string,
+  channelKey?: AccountingIntegrationChannel | null
+) {
+  const normalizedChannel = normalizeAccountingChannel(channelKey);
 
   if (await hasExternalConnectionsTable()) {
-    await query(
-      `
-      UPDATE external_connections
-      SET connection_status = 'connected', last_sync_at = now(), last_validated_at = now(), updated_at = now()
-      WHERE tenant_id = $1 AND provider = $2
-      `,
-      [tenantId, SHARED_PROVIDER]
-    );
+    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
+    if (await hasExternalConnectionsChannelColumn()) {
+      await query(
+        `
+        UPDATE external_connections
+        SET connection_status = 'connected', last_sync_at = now(), last_validated_at = now(), last_error = NULL, updated_at = now()
+        WHERE tenant_id = $1 AND provider = $2 AND channel_key = $3
+        `,
+        [tenantId, SHARED_PROVIDER, normalizedChannel]
+      );
+    } else {
+      await query(
+        `
+        UPDATE external_connections
+        SET connection_status = 'connected', last_sync_at = now(), last_validated_at = now(), last_error = NULL, updated_at = now()
+        WHERE tenant_id = $1 AND provider = $2
+        `,
+        [tenantId, SHARED_PROVIDER]
+      );
+    }
   }
 }
 
-export async function setIntegrationError(tenantId: string, error: string) {
-  await query(
-    `
-    UPDATE tenant_integrations
-    SET status = 'error', last_error = $2, updated_at = now()
-    WHERE tenant_id = $1 AND provider = $3
-    `,
-    [tenantId, error.slice(0, 1000), PROVIDER]
-  );
+export async function setIntegrationError(
+  tenantId: string,
+  error: string,
+  channelKey?: AccountingIntegrationChannel | null
+) {
+  const normalizedChannel = normalizeAccountingChannel(channelKey);
 
   if (await hasExternalConnectionsTable()) {
-    await query(
-      `
-      UPDATE external_connections
-      SET connection_status = 'error', updated_at = now()
-      WHERE tenant_id = $1 AND provider = $2
-      `,
-      [tenantId, SHARED_PROVIDER]
-    );
+    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
+    if (await hasExternalConnectionsChannelColumn()) {
+      await query(
+        `
+        UPDATE external_connections
+        SET connection_status = 'error', last_error = $2, updated_at = now()
+        WHERE tenant_id = $1 AND provider = $3 AND channel_key = $4
+        `,
+        [tenantId, error.slice(0, 1000), SHARED_PROVIDER, normalizedChannel]
+      );
+    } else {
+      await query(
+        `
+        UPDATE external_connections
+        SET connection_status = 'error', last_error = $2, updated_at = now()
+        WHERE tenant_id = $1 AND provider = $3
+        `,
+        [tenantId, error.slice(0, 1000), SHARED_PROVIDER]
+      );
+    }
   }
 }
 

@@ -8,19 +8,32 @@ import {
   setIntegrationError,
   touchIntegrationSyncOk,
 } from '@/lib/integrations/accountingStore';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-export async function POST() {
-  const auth = await requireTenantContext();
+function getEntryChannel(request: NextRequest) {
+  const header = request.headers.get('x-isaak-entry-channel')?.trim().toLowerCase();
+  return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
+}
+
+export async function POST(request: NextRequest) {
+  const entryChannel = getEntryChannel(request);
+  const auth = await requireTenantContext({
+    channelType: entryChannel,
+    metadata: {
+      source: entryChannel === 'chatgpt' ? 'accounting-sync-run' : 'requireTenantContext',
+    },
+  });
   if ('error' in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
   const enabled = await canUseAccountingIntegration(auth.tenantId);
   if (!enabled) {
     return NextResponse.json(
-      { error: 'La sincronización con programa contable vía API está disponible en Empresa y PRO.' },
+      {
+        error: 'La sincronización con programa contable vía API está disponible en Empresa y PRO.',
+      },
       { status: 403 }
     );
   }
@@ -58,9 +71,13 @@ export async function POST() {
   }
 
   if (failed > 0) {
-    await setIntegrationError(auth.tenantId, `${failed} elementos en error durante sync manual`);
+    await setIntegrationError(
+      auth.tenantId,
+      `${failed} elementos en error durante sync manual`,
+      entryChannel
+    );
   } else {
-    await touchIntegrationSyncOk(auth.tenantId);
+    await touchIntegrationSyncOk(auth.tenantId, entryChannel);
   }
 
   return NextResponse.json({
