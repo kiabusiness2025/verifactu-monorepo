@@ -11,6 +11,33 @@ const HOLDED_HISTORY_FETCH_LIMIT = Math.max(
 
 export { encryptIntegrationSecret };
 
+export type HoldedProbeProfile = 'dashboard' | 'chatgpt';
+
+type HoldedProbeEndpointStatus = {
+  ok: boolean;
+  status: number | null;
+};
+
+type HoldedProbeCapabilityKey =
+  | 'invoiceApi'
+  | 'contactsApi'
+  | 'accountingApi'
+  | 'crmApi'
+  | 'projectsApi';
+
+const HOLDED_PROBE_REQUIREMENTS: Record<HoldedProbeProfile, readonly HoldedProbeCapabilityKey[]> = {
+  dashboard: ['invoiceApi', 'contactsApi', 'accountingApi'],
+  chatgpt: ['invoiceApi', 'contactsApi', 'accountingApi', 'crmApi', 'projectsApi'],
+};
+
+const HOLDED_PROBE_LABELS: Record<HoldedProbeCapabilityKey, string> = {
+  invoiceApi: 'facturas',
+  contactsApi: 'contactos',
+  accountingApi: 'cuentas contables',
+  crmApi: 'agenda comercial',
+  projectsApi: 'proyectos',
+};
+
 export function maskSecret(value: string) {
   const normalized = value.trim();
   if (normalized.length <= 8) {
@@ -23,26 +50,15 @@ export function maskSecret(value: string) {
 export type HoldedProbeResult = {
   ok: boolean;
   provider: 'holded';
-  invoiceApi: {
-    ok: boolean;
-    status: number | null;
-  };
-  accountingApi: {
-    ok: boolean;
-    status: number | null;
-  };
-  crmApi: {
-    ok: boolean;
-    status: number | null;
-  };
-  projectsApi: {
-    ok: boolean;
-    status: number | null;
-  };
-  teamApi: {
-    ok: boolean;
-    status: number | null;
-  };
+  profile: HoldedProbeProfile;
+  invoiceApi: HoldedProbeEndpointStatus;
+  contactsApi: HoldedProbeEndpointStatus;
+  accountingApi: HoldedProbeEndpointStatus;
+  crmApi: HoldedProbeEndpointStatus;
+  projectsApi: HoldedProbeEndpointStatus;
+  teamApi: HoldedProbeEndpointStatus;
+  requiredCapabilities: HoldedProbeCapabilityKey[];
+  missingCapabilities: HoldedProbeCapabilityKey[];
   error?: string | null;
 };
 
@@ -280,31 +296,86 @@ async function probeEndpoint(apiKey: string, path: string, query?: HoldedRequest
   }
 }
 
-export async function probeAccountingApiConnection(apiKey: string): Promise<HoldedProbeResult> {
-  const normalizedApiKey = apiKey.trim();
+function formatHoldedCapabilityList(capabilities: readonly HoldedProbeCapabilityKey[]) {
+  const labels = capabilities.map((capability) => HOLDED_PROBE_LABELS[capability]);
 
-  const [invoiceApi, accountingApi, crmApi, projectsApi, teamApi] = await Promise.all([
-    probeEndpoint(normalizedApiKey, '/api/invoicing/v1/documents', { limit: 1, page: 1 }),
+  if (labels.length <= 1) {
+    return labels[0] || '';
+  }
+
+  if (labels.length === 2) {
+    return `${labels[0]} y ${labels[1]}`;
+  }
+
+  return `${labels.slice(0, -1).join(', ')} y ${labels.at(-1)}`;
+}
+
+export function summarizeHoldedProbeReadiness(
+  probe: Pick<
+    HoldedProbeResult,
+    'invoiceApi' | 'contactsApi' | 'accountingApi' | 'crmApi' | 'projectsApi'
+  >,
+  profile: HoldedProbeProfile = 'dashboard'
+) {
+  const requiredCapabilities = [...HOLDED_PROBE_REQUIREMENTS[profile]];
+  const missingCapabilities = requiredCapabilities.filter((capability) => !probe[capability]?.ok);
+  const ok = missingCapabilities.length === 0;
+  const targetLabel = profile === 'chatgpt' ? 'la conexion con ChatGPT' : 'la conexion con Isaak';
+  const error = ok
+    ? null
+    : `La API key de Holded no tiene acceso suficiente para ${targetLabel}. Falta acceso a ${formatHoldedCapabilityList(missingCapabilities)}.`;
+
+  return {
+    ok,
+    requiredCapabilities,
+    missingCapabilities,
+    error,
+  };
+}
+
+export async function probeAccountingApiConnection(
+  apiKey: string,
+  options?: { profile?: HoldedProbeProfile }
+): Promise<HoldedProbeResult> {
+  const normalizedApiKey = apiKey.trim();
+  const profile = options?.profile ?? 'dashboard';
+
+  const [invoiceApi, contactsApi, accountingApi, crmApi, projectsApi, teamApi] = await Promise.all([
+    probeEndpoint(normalizedApiKey, '/api/invoicing/v1/documents/invoice', {
+      limit: 1,
+      page: 1,
+    }),
+    probeEndpoint(normalizedApiKey, '/api/invoicing/v1/contacts', { limit: 1, page: 1 }),
     probeEndpoint(normalizedApiKey, HOLDED_CHART_OF_ACCOUNTS_PATH, { limit: 1, page: 1 }),
     probeEndpoint(normalizedApiKey, '/api/crm/v1/bookings', { limit: 1, page: 1 }),
     probeEndpoint(normalizedApiKey, '/api/projects/v1/projects', { limit: 1, page: 1 }),
     probeEndpoint(normalizedApiKey, '/api/team/v1/employees', { limit: 1, page: 1 }),
   ]);
 
-  const ok = invoiceApi.ok || accountingApi.ok || crmApi.ok || projectsApi.ok || teamApi.ok;
-  const error = ok
-    ? null
-    : 'No se pudo validar acceso a ninguna API principal de Holded con la API key proporcionada';
+  const readiness = summarizeHoldedProbeReadiness(
+    {
+      invoiceApi,
+      contactsApi,
+      accountingApi,
+      crmApi,
+      projectsApi,
+    },
+    profile
+  );
 
   return {
-    ok,
+    ok: readiness.ok,
     provider: 'holded',
+    profile,
     invoiceApi,
+    contactsApi,
     accountingApi,
     crmApi,
     projectsApi,
     teamApi,
-    error,
+    requiredCapabilities: readiness.requiredCapabilities,
+    missingCapabilities: readiness.missingCapabilities,
+    error: readiness.error,
   };
 }
 
@@ -819,7 +890,8 @@ export const holdedAdapter = {
     args?: { page?: number; limit?: number; status?: string; docType?: string }
   ) {
     if (args?.docType) {
-      return listTypedDocuments(apiKey, args.docType, args);
+      const items = await listTypedDocuments(apiKey, args.docType, args);
+      return attachDocType(items, args.docType);
     }
 
     const [invoices, estimates] = await Promise.all([
@@ -849,7 +921,9 @@ export const holdedAdapter = {
         scanPages: args.scanPages,
         targetMatches: page * limit,
       });
-      const items = scan.entries.slice(offset, offset + limit).map((entry) => entry.item);
+      const items = scan.entries
+        .slice(offset, offset + limit)
+        .map((entry) => ({ ...entry.item, docType: args.docType }));
 
       return {
         items,
@@ -1092,13 +1166,14 @@ export const holdedAdapter = {
 
   async listDailyLedger(
     apiKey: string,
-    args?: { page?: number; starttmp?: number; endtmp?: number }
+    args?: { page?: number; limit?: number; starttmp?: number; endtmp?: number }
   ) {
     return holdedRequest<Record<string, unknown>[]>({
       apiKey,
       path: '/api/accounting/v1/dailyledger',
       query: {
         page: args?.page ?? 1,
+        limit: args?.limit ?? 25,
         starttmp: args?.starttmp,
         endtmp: args?.endtmp,
       },

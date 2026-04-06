@@ -43,6 +43,7 @@ describe('Holded accounting adapter', () => {
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({ ok: true, status: 200 })
       .mockResolvedValueOnce({ ok: true, status: 200 })
+      .mockResolvedValueOnce({ ok: true, status: 200 })
       .mockResolvedValueOnce({ ok: false, status: 404 })
       .mockResolvedValueOnce({ ok: false, status: 404 })
       .mockResolvedValueOnce({ ok: false, status: 404 });
@@ -51,9 +52,48 @@ describe('Holded accounting adapter', () => {
     const fetchCalls = (global.fetch as jest.Mock).mock.calls.map((call) => String(call[0]));
 
     expect(fetchCalls).toContain(
+      'https://api.holded.com/api/invoicing/v1/documents/invoice?limit=1&page=1'
+    );
+    expect(fetchCalls).toContain('https://api.holded.com/api/invoicing/v1/contacts?limit=1&page=1');
+    expect(fetchCalls).toContain(
       'https://api.holded.com/api/accounting/v1/chartofaccounts?limit=1&page=1'
     );
+    expect(result.invoiceApi).toEqual({ ok: true, status: 200 });
+    expect(result.contactsApi).toEqual({ ok: true, status: 200 });
     expect(result.accountingApi).toEqual({ ok: true, status: 200 });
+    expect(result.ok).toBe(true);
+  });
+
+  it('allows dashboard validation without crm and projects access', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, status: 200 })
+      .mockResolvedValueOnce({ ok: true, status: 200 })
+      .mockResolvedValueOnce({ ok: true, status: 200 })
+      .mockResolvedValueOnce({ ok: false, status: 403 })
+      .mockResolvedValueOnce({ ok: false, status: 403 })
+      .mockResolvedValueOnce({ ok: false, status: 403 });
+
+    const result = await probeAccountingApiConnection('demo-key', { profile: 'dashboard' });
+
+    expect(result.ok).toBe(true);
+    expect(result.missingCapabilities).toEqual([]);
+  });
+
+  it('requires crm and projects access for chatgpt validation', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, status: 200 })
+      .mockResolvedValueOnce({ ok: true, status: 200 })
+      .mockResolvedValueOnce({ ok: true, status: 200 })
+      .mockResolvedValueOnce({ ok: false, status: 403 })
+      .mockResolvedValueOnce({ ok: false, status: 403 })
+      .mockResolvedValueOnce({ ok: false, status: 403 });
+
+    const result = await probeAccountingApiConnection('demo-key', { profile: 'chatgpt' });
+
+    expect(result.ok).toBe(false);
+    expect(result.missingCapabilities).toEqual(['crmApi', 'projectsApi']);
+    expect(result.error).toContain('agenda comercial');
+    expect(result.error).toContain('proyectos');
   });
 
   it('scans additional invoice pages to reach a previous year', async () => {
@@ -106,6 +146,62 @@ describe('Holded accounting adapter', () => {
     );
   });
 
+  it('lists purchase documents through the typed purchase endpoint', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify([{ id: 'purchase-1', subject: 'Proveedor abril' }]),
+    });
+
+    const result = await holdedAdapter.listDocuments('demo-key', {
+      page: 2,
+      limit: 5,
+      docType: 'purchase',
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.holded.com/api/invoicing/v1/documents/purchase?page=2&limit=5',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          key: 'demo-key',
+        }),
+      })
+    );
+    expect(result).toEqual([{ id: 'purchase-1', subject: 'Proveedor abril', docType: 'purchase' }]);
+  });
+
+  it('keeps purchase docType when scanning purchase history', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify([{ id: 'purchase-2025', date: '2025-04-10T00:00:00.000Z' }]),
+    });
+
+    const result = await holdedAdapter.listDocumentsHistory('demo-key', {
+      year: 2025,
+      limit: 10,
+      docType: 'purchase',
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.holded.com/api/invoicing/v1/documents/purchase?page=1&limit=100',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          key: 'demo-key',
+        }),
+      })
+    );
+    expect(result.items).toEqual([
+      { id: 'purchase-2025', date: '2025-04-10T00:00:00.000Z', docType: 'purchase' },
+    ]);
+  });
+
   it('merges invoice and estimate history when listing documents by year', async () => {
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({
@@ -146,12 +242,13 @@ describe('Holded accounting adapter', () => {
 
     await holdedAdapter.listDailyLedger('demo-key', {
       page: 3,
+      limit: 100,
       starttmp: 1_704_067_200,
       endtmp: 1_704_153_599,
     });
 
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.holded.com/api/accounting/v1/dailyledger?page=3&starttmp=1704067200&endtmp=1704153599',
+      'https://api.holded.com/api/accounting/v1/dailyledger?page=3&limit=100&starttmp=1704067200&endtmp=1704153599',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -173,6 +270,7 @@ describe('Holded accounting adapter', () => {
     await expect(
       holdedAdapter.listDailyLedger('demo-key', {
         page: 1,
+        limit: 100,
         starttmp: 1_704_067_200,
         endtmp: 1_704_153_599,
       })

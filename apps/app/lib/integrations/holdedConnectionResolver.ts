@@ -1,4 +1,5 @@
 import { one } from '@/lib/db';
+import { ensureSharedHoldedDashboardExternalConnectionFromLegacy } from '@/lib/integrations/holdedLegacyBackfill';
 import { decryptIntegrationSecret } from '@/lib/integrations/secretCrypto';
 
 type ExternalConnectionRow = {
@@ -14,21 +15,32 @@ type ExternalConnectionRow = {
   connected_at: string | null;
   last_validated_at: string | null;
   last_sync_at: string | null;
-};
-
-type TenantIntegrationRow = {
-  id: string;
-  tenant_id: string;
-  provider: string;
-  api_key_enc: string | null;
-  status: string;
-  last_sync_at: string | null;
+  last_error: string | null;
 };
 
 let externalConnectionsTableAvailable: boolean | null = null;
 let externalConnectionsChannelColumnAvailable: boolean | null = null;
+let externalConnectionsLastErrorColumnAvailable: boolean | null = null;
 
 export type HoldedConnectionChannel = 'dashboard' | 'chatgpt';
+export type HoldedConnectionSource = 'external_connection';
+
+export type HoldedConnectionStatusSnapshot = {
+  id: string;
+  tenantId: string;
+  provider: 'holded';
+  providerAccountId: string | null;
+  credentialType: string;
+  status: string;
+  channel: HoldedConnectionChannel;
+  lastSyncAt: string | null;
+  lastError: string | null;
+  source: HoldedConnectionSource;
+};
+
+export type HoldedResolvedConnection = HoldedConnectionStatusSnapshot & {
+  apiKey: string;
+};
 
 function normalizeHoldedChannel(channel?: string | null): HoldedConnectionChannel {
   return channel === 'chatgpt' ? 'chatgpt' : 'dashboard';
@@ -63,52 +75,144 @@ async function hasExternalConnectionsChannelColumn() {
   return externalConnectionsChannelColumnAvailable;
 }
 
+async function hasExternalConnectionsLastErrorColumn() {
+  if (externalConnectionsLastErrorColumnAvailable !== null) {
+    return externalConnectionsLastErrorColumnAvailable;
+  }
+
+  const row = await one<{ exists: boolean }>(
+    [
+      'SELECT EXISTS (',
+      '  SELECT 1 FROM information_schema.columns',
+      "  WHERE table_schema = 'public' AND table_name = 'external_connections' AND column_name = 'last_error'",
+      ') AS exists',
+    ].join(' ')
+  );
+
+  externalConnectionsLastErrorColumnAvailable = row?.exists === true;
+  return externalConnectionsLastErrorColumnAvailable;
+}
+
+async function loadExternalConnectionRow(
+  tenantId: string,
+  channel: HoldedConnectionChannel,
+  options?: { requireApiKey?: boolean }
+) {
+  if (!(await hasExternalConnectionsTable())) {
+    return null;
+  }
+
+  const apiKeyFilter = options?.requireApiKey === false ? '' : ' AND api_key_enc IS NOT NULL';
+  const hasLastErrorColumn = await hasExternalConnectionsLastErrorColumn();
+  const lastErrorSelect = hasLastErrorColumn ? '  last_error,' : '  NULL::text AS last_error,';
+
+  return (await hasExternalConnectionsChannelColumn())
+    ? await one<ExternalConnectionRow>(
+        [
+          'SELECT',
+          '  id,',
+          '  tenant_id,',
+          '  provider,',
+          '  channel_key,',
+          '  provider_account_id,',
+          '  credential_type,',
+          '  api_key_enc,',
+          '  connection_status,',
+          '  connected_by_user_id,',
+          '  connected_at::text,',
+          '  last_validated_at::text,',
+          '  last_sync_at::text,',
+          lastErrorSelect,
+          'FROM external_connections',
+          `WHERE tenant_id = $1 AND provider = 'holded' AND channel_key = $2${apiKeyFilter}`,
+          'ORDER BY updated_at DESC',
+          'LIMIT 1',
+        ].join(' '),
+        [tenantId, channel]
+      )
+    : await one<ExternalConnectionRow>(
+        [
+          'SELECT',
+          '  id,',
+          '  tenant_id,',
+          '  provider,',
+          '  NULL::text AS channel_key,',
+          '  provider_account_id,',
+          '  credential_type,',
+          '  api_key_enc,',
+          '  connection_status,',
+          '  connected_by_user_id,',
+          '  connected_at::text,',
+          '  last_validated_at::text,',
+          '  last_sync_at::text,',
+          lastErrorSelect,
+          'FROM external_connections',
+          `WHERE tenant_id = $1 AND provider = 'holded'${apiKeyFilter}`,
+          'ORDER BY updated_at DESC',
+          'LIMIT 1',
+        ].join(' '),
+        [tenantId]
+      );
+}
+
+function mapExternalConnectionStatus(
+  external: ExternalConnectionRow,
+  requestedChannel: HoldedConnectionChannel
+): HoldedConnectionStatusSnapshot {
+  return {
+    id: external.id,
+    tenantId: external.tenant_id,
+    provider: 'holded',
+    providerAccountId: external.provider_account_id,
+    credentialType: external.credential_type,
+    status: external.connection_status,
+    channel: external.channel_key === 'chatgpt' ? 'chatgpt' : requestedChannel,
+    lastSyncAt: external.last_sync_at,
+    lastError: external.last_error ?? null,
+    source: 'external_connection',
+  };
+}
+
 export async function hasSharedHoldedConnectionForTenant(
   tenantId: string,
   channel?: HoldedConnectionChannel
 ) {
   const normalizedChannel = normalizeHoldedChannel(channel);
-  if (await hasExternalConnectionsTable()) {
-    const external = (await hasExternalConnectionsChannelColumn())
-      ? await one<{ exists: boolean }>(
-          [
-            'SELECT EXISTS (',
-            '  SELECT 1 FROM external_connections',
-            "  WHERE tenant_id = $1 AND provider = 'holded' AND channel_key = $2 AND api_key_enc IS NOT NULL",
-            ') AS exists',
-          ].join(' '),
-          [tenantId, normalizedChannel]
-        )
-      : await one<{ exists: boolean }>(
-          [
-            'SELECT EXISTS (',
-            '  SELECT 1 FROM external_connections',
-            "  WHERE tenant_id = $1 AND provider = 'holded' AND api_key_enc IS NOT NULL",
-            ') AS exists',
-          ].join(' '),
-          [tenantId]
-        );
+  let external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
+    requireApiKey: false,
+  });
 
-    if (external?.exists) {
-      return true;
-    }
+  if (!external && normalizedChannel === 'dashboard') {
+    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
+    external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
+      requireApiKey: false,
+    });
   }
 
-  if (normalizedChannel !== 'dashboard') {
-    return false;
+  return Boolean(external?.api_key_enc);
+}
+
+export async function resolveSharedHoldedConnectionStatusForTenant(
+  tenantId: string,
+  channel?: HoldedConnectionChannel
+) {
+  const normalizedChannel = normalizeHoldedChannel(channel);
+  let external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
+    requireApiKey: false,
+  });
+
+  if (!external && normalizedChannel === 'dashboard') {
+    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
+    external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
+      requireApiKey: false,
+    });
   }
 
-  const legacy = await one<{ exists: boolean }>(
-    [
-      'SELECT EXISTS (',
-      '  SELECT 1 FROM tenant_integrations',
-      "  WHERE tenant_id = $1 AND provider = 'accounting_api' AND api_key_enc IS NOT NULL",
-      ') AS exists',
-    ].join(' '),
-    [tenantId]
-  );
+  if (external) {
+    return mapExternalConnectionStatus(external, normalizedChannel);
+  }
 
-  return legacy?.exists === true;
+  return null;
 }
 
 export async function resolveSharedHoldedConnectionForTenant(
@@ -116,90 +220,23 @@ export async function resolveSharedHoldedConnectionForTenant(
   channel?: HoldedConnectionChannel
 ) {
   const normalizedChannel = normalizeHoldedChannel(channel);
-  if (await hasExternalConnectionsTable()) {
-    const external = (await hasExternalConnectionsChannelColumn())
-      ? await one<ExternalConnectionRow>(
-          [
-            'SELECT',
-            '  id,',
-            '  tenant_id,',
-            '  provider,',
-            '  channel_key,',
-            '  provider_account_id,',
-            '  credential_type,',
-            '  api_key_enc,',
-            '  connection_status,',
-            '  connected_by_user_id,',
-            '  connected_at::text,',
-            '  last_validated_at::text,',
-            '  last_sync_at::text',
-            'FROM external_connections',
-            "WHERE tenant_id = $1 AND provider = 'holded' AND channel_key = $2 AND api_key_enc IS NOT NULL",
-            'ORDER BY updated_at DESC',
-            'LIMIT 1',
-          ].join(' '),
-          [tenantId, normalizedChannel]
-        )
-      : await one<ExternalConnectionRow>(
-          [
-            'SELECT',
-            '  id,',
-            '  tenant_id,',
-            '  provider,',
-            '  NULL::text AS channel_key,',
-            '  provider_account_id,',
-            '  credential_type,',
-            '  api_key_enc,',
-            '  connection_status,',
-            '  connected_by_user_id,',
-            '  connected_at::text,',
-            '  last_validated_at::text,',
-            '  last_sync_at::text',
-            'FROM external_connections',
-            "WHERE tenant_id = $1 AND provider = 'holded' AND api_key_enc IS NOT NULL",
-            'ORDER BY updated_at DESC',
-            'LIMIT 1',
-          ].join(' '),
-          [tenantId]
-        );
+  let external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
+    requireApiKey: false,
+  });
 
-    if (external?.api_key_enc) {
-      return {
-        id: external.id,
-        tenantId: external.tenant_id,
-        provider: 'holded' as const,
-        providerAccountId: external.provider_account_id,
-        credentialType: external.credential_type,
-        apiKey: decryptIntegrationSecret(external.api_key_enc),
-        status: external.connection_status,
-        channel: external.channel_key ?? 'legacy',
-        lastSyncAt: external.last_sync_at,
-        source: 'external_connection' as const,
-      };
-    }
+  if (!external && normalizedChannel === 'dashboard') {
+    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
+    external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
+      requireApiKey: false,
+    });
   }
 
-  if (normalizedChannel !== 'dashboard') {
-    return null;
+  if (external?.api_key_enc) {
+    return {
+      ...mapExternalConnectionStatus(external, normalizedChannel),
+      apiKey: decryptIntegrationSecret(external.api_key_enc),
+    } satisfies HoldedResolvedConnection;
   }
 
-  const legacy = await one<TenantIntegrationRow>(
-    "SELECT id, tenant_id, provider, api_key_enc, status, last_sync_at::text FROM tenant_integrations WHERE tenant_id = $1 AND provider = 'accounting_api' LIMIT 1",
-    [tenantId]
-  );
-
-  if (!legacy?.api_key_enc) return null;
-
-  return {
-    id: legacy.id,
-    tenantId: legacy.tenant_id,
-    provider: 'holded' as const,
-    providerAccountId: null,
-    credentialType: 'api_key' as const,
-    apiKey: decryptIntegrationSecret(legacy.api_key_enc),
-    status: legacy.status,
-    channel: 'legacy' as const,
-    lastSyncAt: legacy.last_sync_at,
-    source: 'tenant_integration' as const,
-  };
+  return null;
 }
