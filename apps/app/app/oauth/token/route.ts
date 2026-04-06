@@ -1,4 +1,6 @@
 import {
+  consumeAuthorizationCode,
+  isValidPkceCodeVerifier,
   mintAccessToken,
   verifyAuthorizationCode,
   verifyPkce,
@@ -37,35 +39,53 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
   }
 
-  const parsed = await verifyAuthorizationCode(code);
-  if (!parsed) {
-    return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
-  }
-  if (parsed.clientId !== clientId || parsed.redirectUri !== redirectUri) {
-    return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
-  }
-  if (parsed.codeChallenge && !codeVerifier) {
-    return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
-  }
-  if (parsed.codeChallenge && !verifyPkce(codeVerifier, parsed.codeChallenge)) {
-    return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
-  }
+  try {
+    const parsed = await verifyAuthorizationCode(code);
+    if (!parsed) {
+      return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
+    }
+    if (parsed.clientId !== clientId || parsed.redirectUri !== redirectUri) {
+      return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
+    }
+    if (!parsed.codeChallenge || parsed.codeChallengeMethod !== 'S256') {
+      return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
+    }
+    if (!codeVerifier || !isValidPkceCodeVerifier(codeVerifier)) {
+      return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
+    }
+    if (!verifyPkce(codeVerifier, parsed.codeChallenge)) {
+      return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
+    }
 
-  const accessToken = await mintAccessToken({
-    type: 'mcp_access_token',
-    clientId: parsed.clientId,
-    scope: parsed.scope,
-    resource: parsed.resource,
-    uid: parsed.uid,
-    email: parsed.email,
-    name: parsed.name,
-    tenantId: parsed.tenantId,
-  });
+    const consumed = await consumeAuthorizationCode(parsed.codeId, parsed.exp);
+    if (!consumed) {
+      return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
+    }
 
-  return NextResponse.json({
-    access_token: accessToken,
-    token_type: 'Bearer',
-    expires_in: 3600,
-    scope: parsed.scope,
-  });
+    const accessToken = await mintAccessToken({
+      type: 'mcp_access_token',
+      clientId: parsed.clientId,
+      scope: parsed.scope,
+      resource: parsed.resource,
+      uid: parsed.uid,
+      email: parsed.email,
+      name: parsed.name,
+      tenantId: parsed.tenantId,
+    });
+
+    return NextResponse.json({
+      access_token: accessToken,
+      token_type: 'Bearer',
+      expires_in: 3600,
+      scope: parsed.scope,
+    });
+  } catch (error) {
+    console.error('[oauth/token] unexpected error', {
+      clientId,
+      redirectUri,
+      message: error instanceof Error ? error.message : String(error),
+    });
+
+    return NextResponse.json({ error: 'server_error' }, { status: 500 });
+  }
 }
