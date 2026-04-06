@@ -161,19 +161,10 @@ function validateConnectionIdentity(identity: ReturnType<typeof resolveConnectio
 
 async function persistConnectionIdentity(input: {
   tenantId: string;
-  userId: string;
+  userId: string | null;
   identity: ReturnType<typeof resolveConnectionIdentity>;
 }) {
-  await Promise.all([
-    prisma.user.update({
-      where: { id: input.userId },
-      data: {
-        name: input.identity.contactFullName || undefined,
-        firstName: input.identity.contactFirstName || undefined,
-        lastName: input.identity.contactLastName || undefined,
-        phone: input.identity.contactPhone || undefined,
-      },
-    }),
+  const operations: Promise<unknown>[] = [
     prisma.tenant.update({
       where: { id: input.tenantId },
       data: {
@@ -204,7 +195,23 @@ async function persistConnectionIdentity(input: {
         },
       },
     }),
-  ]);
+  ];
+
+  if (input.userId) {
+    operations.push(
+      prisma.user.update({
+        where: { id: input.userId },
+        data: {
+          name: input.identity.contactFullName || undefined,
+          firstName: input.identity.contactFirstName || undefined,
+          lastName: input.identity.contactLastName || undefined,
+          phone: input.identity.contactPhone || undefined,
+        },
+      })
+    );
+  }
+
+  await Promise.all(operations);
 }
 
 async function resolveNotificationEmail(input: {
