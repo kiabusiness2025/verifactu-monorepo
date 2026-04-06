@@ -23,7 +23,8 @@ Estas reglas evitan repetir los errores ya vistos al desplegar `apps/app`:
 5. En Windows, evitar la via `vercel deploy --prebuilt` como ruta principal: puede fallar al crear symlinks en `.vercel/output`.
 6. Si el deploy manual por CLI devuelve un error generico antes de arrancar build, preferir redeploy desde el dashboard de Vercel sobre el commit ya empujado.
 7. Cualquier cambio en `apps/app/vercel.json` debe revisarse junto con el script real de install usado por el proyecto; no dejar wrappers o rutas relativas a medio migrar.
-8. Antes de declarar bueno un deploy, validar al menos `/.well-known/oauth-authorization-server`, `/.well-known/oauth-protected-resource/api/mcp/holded`, `/oauth/authorize`, `/oauth/token`, `/api/mcp/holded` y `/onboarding/holded`.
+8. Mantener disponible tambien `scripts/vercel-install.mjs` en la raiz del monorepo. Vercel puede ejecutar `installCommand` desde el root o desde `apps/app` segun el contexto del proyecto y del redeploy.
+9. Antes de declarar bueno un deploy, validar al menos `/.well-known/oauth-authorization-server`, `/.well-known/oauth-protected-resource/api/mcp/holded`, `/oauth/authorize`, `/oauth/token`, `/api/mcp/holded` y `/onboarding/holded`.
 
 ## Regla practica para futuros incidentes
 

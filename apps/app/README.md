@@ -159,6 +159,7 @@ Reglas de despliegue en Vercel para este proyecto:
 - no lanzar deploys desde workspaces sucios ni desde carpetas temporales enlazadas como proyecto nuevo
 - en Windows, no usar `vercel --prebuilt` como camino principal para `apps/app`; preferir build remoto normal o redeploy desde dashboard
 - cualquier cambio en `apps/app/vercel.json` debe validarse junto al script de install real para no volver a romper la resolucion del root del monorepo
+- mantener tambien `scripts/vercel-install.mjs` en la raiz del repo: Vercel puede evaluar el `installCommand` desde el root o desde `apps/app` segun el contexto del proyecto
 
 Tests utiles cuando tocas el conector:
 
