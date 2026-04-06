@@ -2,13 +2,9 @@ import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
-import {
-  HOLDED_PUBLIC_URL,
-  buildAuthUrl,
-  buildConnectorConnectUrl,
-  sanitizeHoldedReturnTarget,
-} from '@/app/lib/holded-navigation';
+import { buildAuthUrl, buildConnectorConnectUrl } from '@/app/lib/holded-navigation';
 import OnboardingHoldedClient from './OnboardingHoldedClient';
+import { resolveHoldedCompletionTarget } from './completionTarget';
 
 export const metadata: Metadata = {
   title: 'Conectar Holded | Verifactu',
@@ -130,10 +126,7 @@ export default async function HoldedOnboardingConnectionPage({ searchParams }: P
   const next = readSource(resolved.next);
   const onboardingToken = readSource(resolved.onboarding_token);
   const session = await getHoldedSession();
-  const nextTarget = sanitizeHoldedReturnTarget(
-    next || undefined,
-    new URL('/onboarding/success', HOLDED_PUBLIC_URL).toString()
-  );
+  const nextTarget = resolveHoldedCompletionTarget(next || undefined);
 
   if (!session?.tenantId) {
     redirect(
