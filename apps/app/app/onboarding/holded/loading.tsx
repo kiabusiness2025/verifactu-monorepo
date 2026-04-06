@@ -6,13 +6,13 @@ import { useEffect, useState } from 'react';
 import { inferHoldedEntryChannel } from './entryChannel';
 
 const chatgptLoadingMessages = [
-  'Estamos preparando la conexion con Holded para tu espacio de ChatGPT.',
-  'Comprobamos tu acceso para que el siguiente paso sea directo y seguro.',
+  'Estamos preparando el conector directo entre Holded y ChatGPT.',
+  'Validamos tu acceso y resolvemos la empresa sin mostrarte login ni registro.',
   'En cuanto termine, volveras al flujo de ChatGPT automaticamente.',
 ];
 const dashboardLoadingMessages = [
-  'Estamos preparando tu conexion con Holded.',
-  'Comprobamos el acceso para que el siguiente paso sea directo y seguro.',
+  'Estamos preparando la conexion segura con Holded para tu espacio de Verifactu.',
+  'Validamos el acceso y dejamos la empresa lista sin pasos duplicados.',
   'En cuanto termine, continuaremos automaticamente con el flujo de Verifactu.',
 ];
 
@@ -59,17 +59,21 @@ export default function HoldedOnboardingLoading() {
 
             <div className="text-center lg:text-left">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
-                {isChatgptEntry ? 'Conecta Holded con ChatGPT' : 'Conecta Holded con Verifactu'}
+                {isChatgptEntry
+                  ? 'Conector directo Holded + ChatGPT'
+                  : 'Conexion Holded en Verifactu'}
               </div>
 
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-black sm:text-4xl">
-                {isChatgptEntry ? 'Preparando tu conexion con Holded' : 'Preparando tu conexion'}
+                {isChatgptEntry
+                  ? 'Preparando tu conexion directa'
+                  : 'Preparando tu conexion segura'}
               </h1>
 
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-neutral-600 sm:text-base lg:mx-0">
                 {isChatgptEntry
-                  ? 'Estamos comprobando tu espacio para que puedas terminar la conexion y volver a ChatGPT sin pasos innecesarios.'
-                  : 'Estamos comprobando tu espacio para que puedas terminar la conexion con Holded sin pasos innecesarios.'}
+                  ? 'Estamos comprobando tu sesion temporal y tu espacio para que puedas terminar la conexion con Holded y volver a ChatGPT sin pasos innecesarios.'
+                  : 'Estamos comprobando tu espacio para terminar la conexion con Holded de forma directa, segura y sin pasos innecesarios.'}
               </p>
 
               <div className="mx-auto mt-6 h-2 w-28 overflow-hidden rounded-full bg-neutral-200 lg:mx-0">
@@ -78,7 +82,7 @@ export default function HoldedOnboardingLoading() {
 
               <div className="mt-6 min-h-[96px] rounded-3xl border border-neutral-200 bg-neutral-50 px-5 py-4 text-left">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                  Mientras preparamos tu entorno
+                  Mientras dejamos el conector listo
                 </div>
                 <p className="mt-3 text-base leading-8 text-neutral-700 sm:text-lg">
                   {queuedMessages[index]}

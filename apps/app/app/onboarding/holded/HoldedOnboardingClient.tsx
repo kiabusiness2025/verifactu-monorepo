@@ -102,26 +102,26 @@ function normalizeApiKey(value: string) {
 }
 
 const chatgptUiCopy = {
-  eyebrow: 'Conecta Holded con ChatGPT',
-  title: 'Activa tu conexion con Holded',
+  eyebrow: 'Conector directo Holded + ChatGPT',
+  title: 'Conecta tu empresa de Holded',
   intro:
-    'Conecta tu cuenta de Holded para que ChatGPT pueda completar esta conexion con tus datos reales.',
+    'Esta pantalla valida tu API key de Holded, prepara la empresa y te devuelve a ChatGPT sin mostrarte login ni registro.',
   security:
-    'Por seguridad, esta conexion solo se habilita con una sesion temporal segura y una clave valida de Holded.',
-  statusReady: 'Tu espacio ya esta preparado',
-  statusLoading: 'Preparando tu entorno de conexion',
-  statusPending: 'Esperando tu clave de Holded',
-  statusConnected: 'Conexion activada',
-  checkingTitle: 'Estamos comprobando si tu espacio ya estaba conectado',
+    'La API key se valida en servidor y solo se usa para activar esta conexion temporal del conector de forma segura.',
+  statusReady: 'Empresa preparada para conectar',
+  statusLoading: 'Validando acceso y preparando la conexion',
+  statusPending: 'Esperando tu API key de Holded',
+  statusConnected: 'Conexion confirmada',
+  checkingTitle: 'Estamos comprobando si ya existe una conexion valida',
   checkingDescription:
-    'Si ya tienes tu clave API, puedes pegarla ahora mismo. No hace falta esperar a que termine esta comprobacion para seguir.',
+    'Si ya tienes la API key, puedes pegarla ahora mismo. Esta comprobacion solo intenta evitar pasos duplicados antes de volver a ChatGPT.',
   savingDescription:
-    'No cierres esta ventana. Estamos validando la conexion con Holded y preparando la vuelta a ChatGPT.',
-  successConnected: 'Conexion activada. Te devolvemos a ChatGPT.',
+    'No cierres esta ventana. Estamos validando la API key, resolviendo la empresa y preparando la vuelta a ChatGPT.',
+  successConnected: 'Conexion activada. Volvemos a ChatGPT.',
   submitLabel: 'Conectar Holded',
   apiKeyLabel: 'Clave API de Holded',
   apiKeyHelp:
-    'Primero validaremos la API key. Despues te pediremos el nombre de empresa y el correo exactos tal y como aparecen en Holded.',
+    'Validaremos la API key y, si hace falta, completaremos los datos minimos de empresa para dejar listo el conector directo.',
   apiKeyPlaceholder: 'Pega aqui la API key de Holded para continuar',
   errorApiKeyEmpty: 'Necesitamos tu API key de Holded para completar esta conexion.',
   errorLoadFailed: 'No se pudo preparar la conexion con Holded.',
@@ -129,41 +129,42 @@ const chatgptUiCopy = {
     'No hemos podido validar la conexion. Revisa tu API key e intentalo de nuevo.',
   degraded:
     'No hemos podido leer el estado inicial, pero puedes continuar y conectar Holded igualmente.',
-  redirectTitle: 'Tu conexion ya esta lista. Te devolvemos a ChatGPT.',
+  redirectTitle: 'Tu conexion ya esta lista. Volvemos a ChatGPT.',
   redirectDescription:
     'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
   helpSteps: [
-    'Entra en Holded y abre el area de API.',
-    'Copia una API key activa de tu empresa.',
-    'Pegala aqui para validarla y luego confirma los datos exactos de empresa y usuario.',
+    'Abre Holded y entra en el area de API de tu empresa.',
+    'Copia una API key activa y pegala aqui.',
+    'La validaremos y dejaremos listo el retorno al flujo de ChatGPT.',
   ],
   savingMessages: [
-    'Estamos validando tu clave de Holded.',
+    'Estamos validando tu API key de Holded.',
+    'Estamos resolviendo la empresa asociada a esta conexion.',
     'En cuanto termine, volveras a ChatGPT automaticamente.',
-    'Estamos dejando lista la conexion con tus datos de facturacion y clientes.',
   ],
 } as const;
 
 const dashboardUiCopy = {
-  eyebrow: 'Conecta Holded con Verifactu',
-  title: 'Activa tu conexion con Holded',
-  intro: 'Conecta Holded para activar tu espacio de trabajo con datos reales dentro de Verifactu.',
+  eyebrow: 'Conexion Holded en Verifactu',
+  title: 'Conecta tu empresa de Holded',
+  intro:
+    'Esta pantalla valida tu API key de Holded y deja preparada la conexion segura para tu espacio de Verifactu.',
   security:
-    'Por seguridad, esta conexion solo se habilita con sesion iniciada y una clave valida de Holded.',
-  statusReady: 'Tu espacio ya esta preparado',
-  statusLoading: 'Preparando tu entorno',
-  statusPending: 'Esperando tu clave de Holded',
-  statusConnected: 'Conexion activada',
-  checkingTitle: 'Estamos comprobando si tu espacio ya estaba conectado',
+    'La API key se valida en servidor y se guarda como conexion del tenant, sin depender del navegador para mantenerla activa.',
+  statusReady: 'Empresa preparada para conectar',
+  statusLoading: 'Validando acceso y preparando la conexion',
+  statusPending: 'Esperando tu API key de Holded',
+  statusConnected: 'Conexion confirmada',
+  checkingTitle: 'Estamos comprobando si ya existe una conexion valida',
   checkingDescription:
-    'Si ya tienes tu clave API, puedes pegarla ahora mismo. No hace falta esperar a que termine esta comprobacion para seguir.',
+    'Si ya tienes la API key, puedes pegarla ahora mismo. Esta comprobacion solo intenta evitar pasos duplicados dentro de Verifactu.',
   savingDescription:
-    'No cierres esta ventana. Estamos validando la conexion y preparando tu espacio de trabajo.',
-  successConnected: 'Conexion activada. Tu espacio ya esta listo.',
+    'No cierres esta ventana. Estamos validando la API key y dejando la conexion lista para tu empresa.',
+  successConnected: 'Conexion activada. Tu empresa ya esta lista.',
   submitLabel: 'Conectar Holded',
   apiKeyLabel: 'Clave API de tu ERP (Holded)',
   apiKeyHelp:
-    'Tus datos se usan unicamente para activar tu entorno de trabajo. Puedes desconectar la integracion cuando quieras.',
+    'Tus datos se usan unicamente para activar la conexion de tu empresa. Podras desconectarla cuando quieras.',
   apiKeyPlaceholder: 'Pega aqui la API key de Holded para continuar',
   errorApiKeyEmpty: 'Necesitamos tu API key de Holded para completar esta conexion.',
   errorLoadFailed: 'No se pudo preparar la conexion con Holded.',
@@ -175,16 +176,28 @@ const dashboardUiCopy = {
   redirectDescription:
     'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
   helpSteps: [
-    'Entra en Holded y abre el area de API.',
-    'Copia una API key activa de tu empresa.',
-    'Pegala aqui para activar tu espacio de trabajo.',
+    'Abre Holded y entra en el area de API de tu empresa.',
+    'Copia una API key activa y pegala aqui.',
+    'La validaremos y dejaremos lista la conexion para tu tenant de Verifactu.',
   ],
   savingMessages: [
-    'Estamos validando tu clave de Holded.',
-    'Estamos dejando lista la conexion para tu espacio de trabajo.',
+    'Estamos validando tu API key de Holded.',
+    'Estamos guardando la conexion segura de tu empresa.',
     'En cuanto termine, continuaremos automaticamente con el siguiente paso.',
   ],
 } as const;
+
+const chatgptHighlights = [
+  'Sin login visible ni registro en este paso.',
+  'Validacion segura de API key en servidor.',
+  'Vuelta automatica al flujo de ChatGPT.',
+] as const;
+
+const dashboardHighlights = [
+  'Conexion guardada server-side para tu tenant.',
+  'Sin duplicar la clave en pasos intermedios.',
+  'Podras gestionarla despues desde integraciones.',
+] as const;
 
 export default function HoldedOnboardingClient({
   captureMode,
@@ -198,6 +211,7 @@ export default function HoldedOnboardingClient({
   const isChatgptEntry = entryChannel === 'chatgpt';
   const needsPostValidationCompanyStep = isChatgptEntry;
   const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
+  const uiHighlights = isChatgptEntry ? chatgptHighlights : dashboardHighlights;
   const savingMessages = uiCopy.savingMessages;
   const hasResolvedCompanyProfile =
     companySetup.hasResolvedCompany &&
@@ -293,17 +307,17 @@ export default function HoldedOnboardingClient({
       : uiCopy.submitLabel;
   const personalizedLead = !showApiStep
     ? reusesStoredCompanyData
-      ? `${resolvedSummary.contactFirstName}, hemos usado los datos guardados de ${resolvedSummary.companyName} para cerrar la conexion sin volver a pedirte la empresa.`
-      : `${resolvedSummary.contactFirstName}, ahora necesitamos confirmar los datos exactos de empresa y usuario tal y como aparecen en Holded.`
+      ? `${resolvedSummary.contactFirstName}, hemos reutilizado los datos guardados de ${resolvedSummary.companyName} para cerrar la conexion sin pedirte la empresa otra vez.`
+      : `${resolvedSummary.contactFirstName}, ahora solo necesitamos confirmar los datos minimos de empresa y contacto para terminar la conexion.`
     : hideResolvedCompanyUntilApiValidation
       ? reusesStoredCompanyData
-        ? 'Primero validaremos tu API key. Si tu empresa ya estaba preparada aqui, terminaremos la conexion sin volver a pedirte los datos.'
+        ? 'Primero validaremos tu API key. Si tu empresa ya estaba preparada aqui, terminaremos la conexion sin volver a pedirte datos duplicados.'
         : usesInlineDirectForm
-          ? 'Completa este formulario directo con tu empresa y tu API key de Holded. Nos encargamos del resto sin mostrarte login ni registro.'
-          : 'Primero validaremos tu API key. Despues te pediremos confirmar los datos exactos de la empresa conectada.'
+          ? 'Completa este formulario directo con tu empresa y tu API key de Holded. Nosotros resolvemos el resto sin mostrarte login ni registro.'
+          : 'Primero validaremos tu API key. Solo si hace falta te pediremos confirmar los datos de empresa asociados a la conexion.'
       : isChatgptEntry
-        ? `${resolvedSummary.contactFirstName}, primero validaremos tu API key y despues guardaremos los datos exactos de empresa y usuario.`
-        : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName}.`;
+        ? `${resolvedSummary.contactFirstName}, validaremos tu API key y dejaremos lista la conexion directa con Holded para volver a ChatGPT.`
+        : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName} dentro de Verifactu.`;
 
   const confirmedNextUrl = useMemo(() => {
     if (!requireConnectionConfirmation) return nextUrl;
@@ -841,6 +855,17 @@ export default function HoldedOnboardingClient({
               </div>
             </div>
 
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {uiHighlights.map((item) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm leading-6 text-neutral-700"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+
             <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
               {companyStepPending ? (
                 <div>
@@ -850,7 +875,7 @@ export default function HoldedOnboardingClient({
                   <p className="mt-2 text-sm leading-6 text-neutral-700">
                     {reusesStoredCompanyData
                       ? 'La API key ya es valida. Hemos recuperado los datos guardados de empresa y contacto para que solo revises lo que haya cambiado.'
-                      : 'La API key ya es valida. Ahora necesitamos guardar el nombre exacto de la empresa, su NIF/CIF, el nombre, los apellidos y el correo principal tal y como aparecen en Holded.'}
+                      : 'La API key ya es valida. Ahora necesitamos guardar los datos minimos de empresa y contacto para dejar la conexion cerrada correctamente.'}
                   </p>
 
                   <form onSubmit={handleCompanySubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -973,7 +998,7 @@ export default function HoldedOnboardingClient({
                     <p className="mt-2 text-sm leading-6 text-neutral-700">
                       {usesInlineDirectForm
                         ? 'Completa tus datos y la API key de Holded en este mismo formulario. Validaremos la conexion y prepararemos la empresa internamente sin mostrarte login ni registro.'
-                        : 'Antes de mostrar o confirmar ninguna empresa, necesitamos comprobar que la API key corresponde a una conexion real de Holded.'}
+                        : 'Antes de mostrar o confirmar ninguna empresa, necesitamos comprobar que la API key corresponde a una conexion real y utilizable de Holded.'}
                     </p>
                     <div className="mt-3 text-sm text-neutral-700">
                       Estado: <span className="font-semibold text-black">{statusLabel}</span>
@@ -1271,6 +1296,9 @@ export default function HoldedOnboardingClient({
                 </label>
 
                 <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-700">
+                  <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                    Consentimiento y tratamiento
+                  </div>
                   <div className="flex items-start gap-3">
                     <input
                       id="accept-terms"
@@ -1385,7 +1413,7 @@ export default function HoldedOnboardingClient({
             ) : null}
 
             <div className="mt-6 border-t border-neutral-200 pt-4 text-center text-xs text-neutral-500">
-              Powered by{' '}
+              Operado de forma segura por{' '}
               <a
                 href="https://verifactu.business"
                 target="_blank"

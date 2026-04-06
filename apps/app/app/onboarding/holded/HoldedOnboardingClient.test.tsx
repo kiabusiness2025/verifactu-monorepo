@@ -40,6 +40,18 @@ describe('HoldedOnboardingClient', () => {
     window.location.hash = '';
   });
 
+  it('shows the direct connector messaging for ChatGPT entry', () => {
+    render(<HoldedOnboardingClient {...baseProps} captureMode={false} />);
+
+    expect(screen.getByText('Conector directo Holded + ChatGPT')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Esta pantalla valida tu API key de Holded, prepara la empresa y te devuelve a ChatGPT sin mostrarte login ni registro.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Sin login visible ni registro en este paso.')).toBeInTheDocument();
+  });
+
   it('connects directly after validating the API key when company data is already resolved', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
@@ -108,7 +120,7 @@ describe('HoldedOnboardingClient', () => {
       );
     });
 
-    await screen.findByText('Tu conexion ya esta lista. Te devolvemos a ChatGPT.');
+    await screen.findByText('Tu conexion ya esta lista. Volvemos a ChatGPT.');
     expect(screen.getByRole('link', { name: 'Continuar' })).toHaveAttribute('href', '#connected');
     expect(window.location.hash).toBe('');
   });

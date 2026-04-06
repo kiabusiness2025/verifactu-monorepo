@@ -16,9 +16,9 @@ import HoldedOnboardingClient from './HoldedOnboardingClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Activa tu conexion con Holded | Compatible con Holded',
+  title: 'Conector directo Holded | verifactu.business',
   description:
-    'Conecta Holded para activar tu espacio de trabajo con datos reales dentro de verifactu.business.',
+    'Valida tu API key de Holded y deja lista la conexion directa con ChatGPT o Verifactu sin pasos innecesarios.',
   icons: {
     icon: '/brand/holded/holded-diamond-logo.png',
     shortcut: '/brand/holded/holded-diamond-logo.png',

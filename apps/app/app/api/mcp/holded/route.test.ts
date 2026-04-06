@@ -125,11 +125,12 @@ describe('MCP Holded route discovery and auth', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(payload.name).toBe('Holded Connector for ChatGPT');
+    expect(payload.description).toContain('review-safe Phase 1 subset');
+    expect(payload.description).toContain('bounded daily ledger reads');
+    expect(payload.description).not.toContain('purchase summaries');
     expect(payload.endpoint).toBe('/api/mcp/holded');
     expect(payload.tools.map((tool: { name: string }) => tool.name)).toEqual([
       'holded_list_invoices',
-      'holded_list_purchases',
-      'holded_list_expense_invoices',
     ]);
     expect(applyOpenAiCorsHeaders).toHaveBeenCalled();
   });
@@ -177,8 +178,6 @@ describe('MCP Holded route discovery and auth', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(payload.result.tools.map((tool: { name: string }) => tool.name)).toEqual([
       'holded_list_invoices',
-      'holded_list_purchases',
-      'holded_list_expense_invoices',
     ]);
   });
 
@@ -210,8 +209,6 @@ describe('MCP Holded route discovery and auth', () => {
     expect(response.status).toBe(200);
     expect(payload.result.tools.map((tool: { name: string }) => tool.name)).toEqual([
       'holded_list_invoices',
-      'holded_list_purchases',
-      'holded_list_expense_invoices',
       'holded_create_accounting_account',
       'holded_create_daily_ledger_entry',
     ]);
@@ -270,8 +267,6 @@ describe('MCP Holded route discovery and auth', () => {
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://chatgpt.com');
     expect(payload.result.tools.map((tool: { name: string }) => tool.name)).toEqual([
       'holded_list_invoices',
-      'holded_list_purchases',
-      'holded_list_expense_invoices',
     ]);
     expect(applyOpenAiCorsHeaders).toHaveBeenCalled();
   });
