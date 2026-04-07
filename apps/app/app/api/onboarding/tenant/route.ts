@@ -41,6 +41,7 @@ type TenantPayload = {
     defaultCurrency?: string;
     fiscalAddress?: unknown;
     representative?: string;
+    representativeRole?: string;
     contactFirstName?: string;
     contactLastName?: string;
     email?: string;
@@ -156,9 +157,7 @@ async function resolvePlanId(): Promise<number> {
 
 export async function POST(req: Request) {
   const session = await getSessionPayload();
-  const onboardingSession = !session?.uid
-    ? await resolveHoldedOnboardingSessionFromHeaders(req.headers)
-    : null;
+  const onboardingSession = await resolveHoldedOnboardingSessionFromHeaders(req.headers);
   const authSession = session?.uid
     ? session
     : onboardingSession
@@ -173,11 +172,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  if (
-    !session?.uid &&
-    onboardingSession &&
-    !isVerifiedHoldedOnboardingIdentity(onboardingSession)
-  ) {
+  if (onboardingSession && !isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
     return NextResponse.json(
       { ok: false, error: 'identity verification required' },
       { status: 403 }
@@ -446,6 +441,7 @@ export async function POST(req: Request) {
         province: extra?.province || undefined,
         country: extra?.country || country || undefined,
         representative: extra?.representative || undefined,
+        representativeRole: extra?.representativeRole || undefined,
         email: companyEmail || undefined,
         phone: companyPhone || undefined,
         einformaRaw: profileRaw,
@@ -475,6 +471,7 @@ export async function POST(req: Request) {
         province: extra?.province || undefined,
         country: extra?.country || country || undefined,
         representative: extra?.representative || undefined,
+        representativeRole: extra?.representativeRole || undefined,
         email: companyEmail || undefined,
         phone: companyPhone || undefined,
         einformaRaw: profileRaw,

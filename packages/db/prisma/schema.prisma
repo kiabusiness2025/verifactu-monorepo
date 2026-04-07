@@ -419,6 +419,7 @@ model TenantProfile {
   province          String?
   country           String?
   representative    String?
+  representativeRole String?  @map("representative_role")
   email             String?
   phone             String?
   employees         Int?

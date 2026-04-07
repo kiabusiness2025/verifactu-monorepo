@@ -20,6 +20,7 @@ jest.mock('firebase/auth', () => ({
   signOut: jest.fn().mockResolvedValue(undefined),
 }));
 
+import { signInWithPopup } from 'firebase/auth';
 import HoldedOnboardingClient from './HoldedOnboardingClient';
 
 const baseProps = {
@@ -39,7 +40,16 @@ const baseProps = {
     companyName: 'ALVILS ESP',
     companyLegalName: 'ALVILS ESP SL',
     companyTaxId: 'B12345678',
+    companyAddress: 'Calle Mayor 1',
+    companyPostalCode: '28001',
+    companyCity: 'Madrid',
+    companyProvince: 'Madrid',
+    companyCountry: 'Espana',
+    companyWebsite: 'https://alvils.es',
+    companySectorCode: 'M',
+    companySectorLabel: 'Actividades profesionales, cientificas y tecnicas',
     contactFirstName: 'Ksenia',
+    contactRole: 'owner',
     contactFullName: 'Ksenia Ivanova Lopez',
     contactEmail: 'kiabusiness2025@gmail.com',
     companyEmail: 'admin@alvils.es',
@@ -67,7 +77,7 @@ describe('HoldedOnboardingClient', () => {
   });
 
   it('shows the direct connector messaging for ChatGPT entry', () => {
-    render(<HoldedOnboardingClient {...baseProps} captureMode={false} />);
+    render(<HoldedOnboardingClient {...baseProps} captureMode={false} requiresVerifiedIdentity />);
 
     expect(screen.getByText('Conector directo Holded + ChatGPT')).toBeInTheDocument();
     expect(
@@ -76,12 +86,13 @@ describe('HoldedOnboardingClient', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByText('Sin login visible.')).toBeInTheDocument();
-    expect(screen.getByText('Paso 2: quien eres')).toBeInTheDocument();
+    expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
     expect(screen.getByText(/Correo verificado:/i)).toBeInTheDocument();
     expect(
       screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/Si tu empresa ya estaba preparada aqui/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cambiar correo o Google' })).toBeInTheDocument();
   });
 
   it('shows the identity gate and sends a verification email before exposing the API key step', async () => {
@@ -136,6 +147,88 @@ describe('HoldedOnboardingClient', () => {
     expect(
       await screen.findByText(/Te hemos enviado un enlace de verificacion/i)
     ).toBeInTheDocument();
+  });
+
+  it('fills the person step with the Google profile name instead of the email alias', async () => {
+    (signInWithPopup as jest.Mock).mockResolvedValue({
+      user: {
+        getIdToken: jest.fn().mockResolvedValue('google-id-token'),
+      },
+    });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        ok: true,
+        onboardingToken: 'onboarding-token-456',
+        identity: {
+          authMethod: 'google',
+          email: 'kiabusiness2025@gmail.com',
+          emailVerified: true,
+          firstName: 'Ksenia',
+          lastName: 'Ivanova Lopez',
+          name: 'Ksenia Ivanova Lopez',
+        },
+      }),
+    });
+
+    render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode={false}
+        requiresVerifiedIdentity
+        onboardingToken="onboarding-token-123"
+        summary={{
+          companyName: 'Tu empresa',
+          companyLegalName: null,
+          companyTaxId: null,
+          companyAddress: null,
+          companyPostalCode: null,
+          companyCity: null,
+          companyProvince: null,
+          companyCountry: null,
+          companyWebsite: null,
+          companySectorCode: null,
+          companySectorLabel: null,
+          contactFirstName: '',
+          contactRole: null,
+          contactFullName: null,
+          contactEmail: 'kiabusiness2025@gmail.com',
+          companyEmail: null,
+          contactPhone: null,
+        }}
+        companySetup={{
+          hasResolvedCompany: false,
+          needsCompanySetup: true,
+          requiresCompanyConfirmation: false,
+        }}
+        identity={{
+          authMethod: 'unknown',
+          email: null,
+          emailVerified: false,
+          firstName: null,
+          lastName: null,
+          verifiedAt: null,
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Continuar con Google/i }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/onboarding/identity/google',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'x-holded-onboarding-token': 'onboarding-token-123',
+          }),
+        })
+      );
+    });
+
+    expect(await screen.findByLabelText('Nombre')).toHaveValue('Ksenia');
+    expect(screen.getByLabelText('Apellidos')).toHaveValue('Ivanova Lopez');
+    expect(screen.getByLabelText('Rol en la empresa')).toHaveValue('');
   });
 
   it('connects directly after validating the API key when company data is already resolved', async () => {
@@ -343,7 +436,16 @@ describe('HoldedOnboardingClient', () => {
           companyName: 'Tu empresa',
           companyLegalName: null,
           companyTaxId: null,
+          companyAddress: null,
+          companyPostalCode: null,
+          companyCity: null,
+          companyProvince: null,
+          companyCountry: null,
+          companyWebsite: null,
+          companySectorCode: null,
+          companySectorLabel: null,
           contactFirstName: 'Usuario',
+          contactRole: null,
           contactFullName: null,
           contactEmail: null,
           companyEmail: null,
@@ -371,12 +473,39 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.change(screen.getByLabelText('Apellidos'), {
       target: { value: 'Ivanova Lopez' },
     });
+    fireEvent.change(screen.getByLabelText('Rol en la empresa'), {
+      target: { value: 'owner' },
+    });
+    fireEvent.change(screen.getByLabelText('Telefono'), {
+      target: { value: '+34 600 111 222' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
     fireEvent.change(screen.getByLabelText('Razon social'), {
       target: { value: 'Empresa Demo SL' },
     });
     fireEvent.change(screen.getByLabelText('CIF / NIF'), {
       target: { value: 'B12345678' },
+    });
+    fireEvent.change(screen.getByLabelText('Sector (CNAE base)'), {
+      target: { value: 'M' },
+    });
+    fireEvent.change(screen.getByLabelText('Domicilio'), {
+      target: { value: 'Calle Mayor 1' },
+    });
+    fireEvent.change(screen.getByLabelText('Codigo postal'), {
+      target: { value: '28001' },
+    });
+    fireEvent.change(screen.getByLabelText('Ciudad'), {
+      target: { value: 'Madrid' },
+    });
+    fireEvent.change(screen.getByLabelText('Provincia'), {
+      target: { value: 'Madrid' },
+    });
+    fireEvent.change(screen.getByLabelText('Pais'), {
+      target: { value: 'Espana' },
+    });
+    fireEvent.change(screen.getByLabelText('Pagina web (opcional)'), {
+      target: { value: 'https://empresa-demo.es' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {
@@ -393,6 +522,24 @@ describe('HoldedOnboardingClient', () => {
         })
       );
     });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual(
+      expect.objectContaining({
+        country: 'Espana',
+        extra: expect.objectContaining({
+          representativeRole: 'owner',
+          phone: '+34 600 111 222',
+          cnaeCode: 'M',
+          cnaeText: 'Actividades profesionales, cientificas y tecnicas',
+          address: 'Calle Mayor 1',
+          postalCode: '28001',
+          city: 'Madrid',
+          province: 'Madrid',
+          country: 'Espana',
+          website: 'https://empresa-demo.es',
+        }),
+      })
+    );
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
@@ -452,7 +599,16 @@ describe('HoldedOnboardingClient', () => {
           companyName: 'Tu empresa',
           companyLegalName: null,
           companyTaxId: null,
+          companyAddress: null,
+          companyPostalCode: null,
+          companyCity: null,
+          companyProvince: null,
+          companyCountry: null,
+          companyWebsite: null,
+          companySectorCode: null,
+          companySectorLabel: null,
           contactFirstName: 'Usuario',
+          contactRole: null,
           contactFullName: null,
           contactEmail: null,
           companyEmail: null,
@@ -480,12 +636,39 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.change(screen.getByLabelText('Apellidos'), {
       target: { value: 'Ivanova Lopez' },
     });
+    fireEvent.change(screen.getByLabelText('Rol en la empresa'), {
+      target: { value: 'owner' },
+    });
+    fireEvent.change(screen.getByLabelText('Telefono'), {
+      target: { value: '+34 600 111 222' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
     fireEvent.change(screen.getByLabelText('Razon social'), {
       target: { value: 'Empresa Demo SL' },
     });
     fireEvent.change(screen.getByLabelText('CIF / NIF'), {
       target: { value: 'B12345678' },
+    });
+    fireEvent.change(screen.getByLabelText('Sector (CNAE base)'), {
+      target: { value: 'M' },
+    });
+    fireEvent.change(screen.getByLabelText('Domicilio'), {
+      target: { value: 'Calle Mayor 1' },
+    });
+    fireEvent.change(screen.getByLabelText('Codigo postal'), {
+      target: { value: '28001' },
+    });
+    fireEvent.change(screen.getByLabelText('Ciudad'), {
+      target: { value: 'Madrid' },
+    });
+    fireEvent.change(screen.getByLabelText('Provincia'), {
+      target: { value: 'Madrid' },
+    });
+    fireEvent.change(screen.getByLabelText('Pais'), {
+      target: { value: 'Espana' },
+    });
+    fireEvent.change(screen.getByLabelText('Pagina web (opcional)'), {
+      target: { value: 'https://empresa-demo.es' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {

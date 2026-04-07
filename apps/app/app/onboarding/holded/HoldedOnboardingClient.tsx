@@ -21,6 +21,12 @@ import {
   createSummaryForFreshApiValidation,
   type HoldedOnboardingSummary,
 } from './summaryState';
+import {
+  CNAE_SECTION_OPTIONS,
+  COMPANY_ROLE_OPTIONS,
+  getCnaeSectionLabel,
+  getCompanyRoleLabel,
+} from './profileOptions';
 
 type IntegrationStatus = {
   provider: string;
@@ -131,6 +137,27 @@ function normalizeText(value?: string | null) {
 
 function normalizeApiKey(value: string) {
   return value.replace(/\s+/g, '').trim();
+}
+
+function buildAddressPreview(parts: {
+  address?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  province?: string | null;
+  country?: string | null;
+}) {
+  const locality = [normalizeText(parts.postalCode), normalizeText(parts.city)]
+    .filter(Boolean)
+    .join(' ');
+
+  return [
+    normalizeText(parts.address),
+    locality || null,
+    normalizeText(parts.province),
+    normalizeText(parts.country),
+  ]
+    .filter(Boolean)
+    .join(', ');
 }
 
 function buildConfirmedNextUrl(input: {
@@ -277,7 +304,17 @@ export default function HoldedOnboardingClient({
   const savingMessages = uiCopy.savingMessages;
   const hasResolvedCompanyProfile =
     companySetup.hasResolvedCompany &&
-    Boolean(summary.contactEmail || summary.companyEmail || summary.companyTaxId);
+    Boolean(
+      summary.contactEmail &&
+      summary.companyTaxId &&
+      summary.contactRole &&
+      summary.companyAddress &&
+      summary.companyPostalCode &&
+      summary.companyCity &&
+      summary.companyProvince &&
+      summary.companyCountry &&
+      summary.companySectorCode
+    );
   const reusesStoredCompanyData = isChatgptEntry && hasResolvedCompanyProfile;
   const initialCompanyDraft = useMemo(() => createCompanyDraftFromSummary(summary), [summary]);
   const freshValidationSummary = useMemo(
@@ -290,8 +327,16 @@ export default function HoldedOnboardingClient({
   const [resolvedSummary, setResolvedSummary] = useState(summary);
   const [companyLegalName, setCompanyLegalName] = useState(initialCompanyDraft.companyLegalName);
   const [companyTaxId, setCompanyTaxId] = useState(initialCompanyDraft.companyTaxId);
+  const [companyAddress, setCompanyAddress] = useState(initialCompanyDraft.companyAddress);
+  const [companyPostalCode, setCompanyPostalCode] = useState(initialCompanyDraft.companyPostalCode);
+  const [companyCity, setCompanyCity] = useState(initialCompanyDraft.companyCity);
+  const [companyProvince, setCompanyProvince] = useState(initialCompanyDraft.companyProvince);
+  const [companyCountry, setCompanyCountry] = useState(initialCompanyDraft.companyCountry);
+  const [companyWebsite, setCompanyWebsite] = useState(initialCompanyDraft.companyWebsite);
+  const [companySectorCode, setCompanySectorCode] = useState(initialCompanyDraft.companySectorCode);
   const [contactFirstName, setContactFirstName] = useState(initialCompanyDraft.contactFirstName);
   const [contactLastName, setContactLastName] = useState(initialCompanyDraft.contactLastName);
+  const [contactRole, setContactRole] = useState(initialCompanyDraft.contactRole);
   const [contactEmail, setContactEmail] = useState(initialCompanyDraft.contactEmail);
   const [contactPhone, setContactPhone] = useState(initialCompanyDraft.contactPhone);
   const [apiValidated, setApiValidated] = useState(!needsPostValidationCompanyStep);
@@ -321,8 +366,11 @@ export default function HoldedOnboardingClient({
   const acceptedTerms = true;
   const acceptedPrivacy = true;
   const initialTenantIdHint = tenantIdHint?.trim() || null;
+  const normalizedIdentityEmail = normalizeText(identityState.email).toLowerCase();
   const verifiedIdentityReady =
-    !requiresVerifiedIdentity || (identityState.emailVerified && !!identityState.email);
+    !requiresVerifiedIdentity ||
+    ((identityState.authMethod === 'google' || identityState.emailVerified) &&
+      !!normalizedIdentityEmail);
   const showIdentityGate = requiresVerifiedIdentity && !verifiedIdentityReady;
   const showApiStep = !showIdentityGate && (!needsPostValidationCompanyStep || !apiValidated);
   const hideResolvedCompanyUntilApiValidation = needsPostValidationCompanyStep && !apiValidated;
@@ -357,13 +405,38 @@ export default function HoldedOnboardingClient({
     !!normalizeText(contactLastName) &&
     !!normalizeText(contactEmail);
   const canContinuePersonStep =
-    !!normalizeText(contactFirstName) && !!normalizeText(contactLastName);
-  const canContinueCompanyStep = !!normalizeText(companyLegalName) && !!normalizeText(companyTaxId);
+    !!normalizeText(contactFirstName) &&
+    !!normalizeText(contactLastName) &&
+    !!normalizeText(contactRole);
+  const canContinueCompanyStep =
+    !!normalizeText(companyLegalName) &&
+    !!normalizeText(companyTaxId) &&
+    !!normalizeText(companyAddress) &&
+    !!normalizeText(companyPostalCode) &&
+    !!normalizeText(companyCity) &&
+    !!normalizeText(companyProvince) &&
+    !!normalizeText(companyCountry) &&
+    !!normalizeText(companySectorCode);
   const stepContactEmail = normalizeText(contactEmail) || normalizeText(identityState.email);
   const currentDirectFullName =
     buildFullName({ firstName: contactFirstName, lastName: contactLastName }) ||
     resolvedSummary.contactFullName;
+  const currentDirectRoleLabel =
+    getCompanyRoleLabel(normalizeText(contactRole) || resolvedSummary.contactRole) || 'Sin rol';
   const currentDirectCompanyName = normalizeText(companyLegalName) || resolvedSummary.companyName;
+  const currentDirectCompanySector =
+    getCnaeSectionLabel({
+      code: normalizeText(companySectorCode) || resolvedSummary.companySectorCode,
+      fallback: resolvedSummary.companySectorLabel,
+    }) || 'Sin sector';
+  const currentDirectCompanyAddress =
+    buildAddressPreview({
+      address: normalizeText(companyAddress) || resolvedSummary.companyAddress,
+      postalCode: normalizeText(companyPostalCode) || resolvedSummary.companyPostalCode,
+      city: normalizeText(companyCity) || resolvedSummary.companyCity,
+      province: normalizeText(companyProvince) || resolvedSummary.companyProvince,
+      country: normalizeText(companyCountry) || resolvedSummary.companyCountry,
+    }) || 'Sin domicilio';
   const apiKeyHelp = reusesStoredCompanyData
     ? 'Validaremos la API key y cerraremos la conexion sin pasos visibles extra.'
     : uiCopy.apiKeyHelp;
@@ -393,7 +466,7 @@ export default function HoldedOnboardingClient({
   const personalizedLead = showIdentityGate
     ? identityState.authMethod === 'email' && identityState.email
       ? `Antes de seguir, confirma el correo ${identityState.email} para desbloquear la conexion directa con Holded.`
-      : 'Antes de pedir la API key, necesitamos identificarte con Google o confirmar tu correo.'
+      : 'Antes de pedir la API key, necesitamos identificarte con Google o confirmar el correo que quieres usar con Holded.'
     : !showApiStep
       ? reusesStoredCompanyData
         ? `${resolvedSummary.contactFirstName}, ya hemos resuelto internamente la empresa y estamos cerrando la conexion directa con Holded.`
@@ -477,7 +550,7 @@ export default function HoldedOnboardingClient({
   const confirmedNextUrl = useMemo(() => resolveConfirmedNextUrl(), [resolveConfirmedNextUrl]);
   const directStepItems: Array<{ key: Exclude<DirectOnboardingStep, 'success'>; label: string }> = [
     { key: 'identity', label: 'Identidad' },
-    { key: 'person', label: 'Persona' },
+    { key: 'person', label: 'Usuario' },
     { key: 'company', label: 'Empresa' },
     { key: 'api', label: 'API key' },
   ];
@@ -547,8 +620,16 @@ export default function HoldedOnboardingClient({
 
     setCompanyLegalName(nextDraft.companyLegalName);
     setCompanyTaxId(nextDraft.companyTaxId);
+    setCompanyAddress(nextDraft.companyAddress);
+    setCompanyPostalCode(nextDraft.companyPostalCode);
+    setCompanyCity(nextDraft.companyCity);
+    setCompanyProvince(nextDraft.companyProvince);
+    setCompanyCountry(nextDraft.companyCountry);
+    setCompanyWebsite(nextDraft.companyWebsite);
+    setCompanySectorCode(nextDraft.companySectorCode);
     setContactFirstName(nextDraft.contactFirstName);
     setContactLastName(nextDraft.contactLastName);
+    setContactRole(nextDraft.contactRole);
     setContactEmail(nextDraft.contactEmail);
     setContactPhone(nextDraft.contactPhone);
   }, []);
@@ -579,17 +660,22 @@ export default function HoldedOnboardingClient({
   }, []);
 
   const handleDirectNextFromPerson = useCallback(() => {
+    if (!verifiedIdentityReady) {
+      setError('Primero confirma tu identidad con Google o verifica el correo que quieres usar.');
+      return;
+    }
+
     if (!canContinuePersonStep) {
-      setError('Necesitamos nombre y apellidos para continuar.');
+      setError('Necesitamos nombre, apellidos y rol para continuar.');
       return;
     }
 
     goToDirectStep('company');
-  }, [canContinuePersonStep, goToDirectStep]);
+  }, [canContinuePersonStep, goToDirectStep, verifiedIdentityReady]);
 
   const handleDirectNextFromCompany = useCallback(() => {
     if (!canContinueCompanyStep) {
-      setError('Necesitamos empresa y CIF/NIF para continuar.');
+      setError('Necesitamos razon social, CIF/NIF, domicilio y sector para continuar.');
       return;
     }
 
@@ -600,6 +686,11 @@ export default function HoldedOnboardingClient({
     if (usesDirectStepFlow && !redirecting) {
       if (directStep === 'company') {
         goToDirectStep('person');
+        return;
+      }
+
+      if (directStep === 'person' && requiresVerifiedIdentity) {
+        goToDirectStep('identity');
         return;
       }
 
@@ -631,6 +722,7 @@ export default function HoldedOnboardingClient({
     goToDirectStep,
     isChatgptEntry,
     nextUrl,
+    requiresVerifiedIdentity,
     redirecting,
     returnToApiStep,
     usesDirectStepFlow,
@@ -830,8 +922,19 @@ export default function HoldedOnboardingClient({
     const normalizedLegalName = normalizeText(companyLegalName);
     const normalizedCompanyName = normalizedLegalName;
     const normalizedTaxId = normalizeText(companyTaxId).toUpperCase();
+    const normalizedCompanyAddress = normalizeText(companyAddress);
+    const normalizedCompanyPostalCode = normalizeText(companyPostalCode);
+    const normalizedCompanyCity = normalizeText(companyCity);
+    const normalizedCompanyProvince = normalizeText(companyProvince);
+    const normalizedCompanyCountry = normalizeText(companyCountry);
+    const normalizedCompanyWebsite = normalizeText(companyWebsite);
+    const normalizedCompanySectorCode = normalizeText(companySectorCode);
+    const normalizedCompanySectorLabel =
+      CNAE_SECTION_OPTIONS.find((option) => option.value === normalizedCompanySectorCode)?.label ||
+      null;
     const normalizedContactFirstName = normalizeText(contactFirstName);
     const normalizedContactLastName = normalizeText(contactLastName);
+    const normalizedContactRole = normalizeText(contactRole);
     const normalizedContactName = buildFullName({
       firstName: normalizedContactFirstName,
       lastName: normalizedContactLastName,
@@ -842,12 +945,19 @@ export default function HoldedOnboardingClient({
     if (
       !normalizedCompanyName ||
       !normalizedTaxId ||
+      !normalizedCompanyAddress ||
+      !normalizedCompanyPostalCode ||
+      !normalizedCompanyCity ||
+      !normalizedCompanyProvince ||
+      !normalizedCompanyCountry ||
+      !normalizedCompanySectorCode ||
       !normalizedContactFirstName ||
       !normalizedContactLastName ||
+      !normalizedContactRole ||
       !normalizedContactEmail
     ) {
       throw new Error(
-        'Necesitamos nombre de empresa, NIF/CIF, nombre, apellidos y correo para continuar.'
+        'Necesitamos nombre de empresa, NIF/CIF, domicilio, sector, nombre, apellidos, rol y correo para continuar.'
       );
     }
 
@@ -863,8 +973,28 @@ export default function HoldedOnboardingClient({
         name: normalizedCompanyName,
         legalName: normalizedLegalName,
         nif: normalizedTaxId,
+        country: normalizedCompanyCountry,
         extra: {
+          cnae: normalizedCompanySectorLabel
+            ? `${normalizedCompanySectorCode} - ${normalizedCompanySectorLabel}`
+            : normalizedCompanySectorCode,
+          cnaeCode: normalizedCompanySectorCode,
+          cnaeText: normalizedCompanySectorLabel || undefined,
+          website: normalizedCompanyWebsite || undefined,
+          address: normalizedCompanyAddress,
+          postalCode: normalizedCompanyPostalCode,
+          city: normalizedCompanyCity,
+          province: normalizedCompanyProvince,
+          country: normalizedCompanyCountry,
+          fiscalAddress: {
+            address: normalizedCompanyAddress,
+            postalCode: normalizedCompanyPostalCode,
+            city: normalizedCompanyCity,
+            province: normalizedCompanyProvince,
+            country: normalizedCompanyCountry,
+          },
           representative: normalizedContactName,
+          representativeRole: normalizedContactRole,
           contactFirstName: normalizedContactFirstName,
           contactLastName: normalizedContactLastName,
           email: normalizedContactEmail,
@@ -927,7 +1057,16 @@ export default function HoldedOnboardingClient({
       companyName: normalizedCompanyName,
       companyLegalName: nextLegalName,
       companyTaxId: normalizedTaxId,
+      companyAddress: normalizedCompanyAddress,
+      companyPostalCode: normalizedCompanyPostalCode,
+      companyCity: normalizedCompanyCity,
+      companyProvince: normalizedCompanyProvince,
+      companyCountry: normalizedCompanyCountry,
+      companyWebsite: normalizedCompanyWebsite || null,
+      companySectorCode: normalizedCompanySectorCode,
+      companySectorLabel: normalizedCompanySectorLabel,
       contactFirstName: normalizedContactFirstName,
+      contactRole: normalizedContactRole,
       contactFullName: normalizedContactName,
       contactEmail: normalizedContactEmail,
       companyEmail: normalizedContactEmail,
@@ -1096,6 +1235,7 @@ export default function HoldedOnboardingClient({
 
       setIdentityState(nextIdentity);
       setManualEmail(data.identity.email || '');
+      setContactEmail(data.identity.email || '');
       if (data.onboardingToken) {
         setActiveOnboardingToken(data.onboardingToken);
       }
@@ -1160,6 +1300,7 @@ export default function HoldedOnboardingClient({
         setActiveOnboardingToken(data.onboardingToken);
       }
       setManualEmail(data.identity?.email ?? normalizedEmail);
+      setContactEmail(data.identity?.email ?? normalizedEmail);
       setIdentityMessage(
         'Te hemos enviado un enlace de verificacion. Abre ese correo y volveras aqui con la identidad confirmada.'
       );
@@ -1343,6 +1484,10 @@ export default function HoldedOnboardingClient({
                             si entras con Google o con un correo verificado, y despues seguimos con
                             Holded.
                           </p>
+                          <p className="mt-2 text-sm leading-6 text-neutral-700">
+                            Puedes usar un correo distinto al de ChatGPT si ese es el contacto real
+                            que tiene tu empresa en Holded.
+                          </p>
                           <div className="mt-3 text-sm text-neutral-700">
                             Estado: <span className="font-semibold text-black">{statusLabel}</span>
                           </div>
@@ -1367,7 +1512,7 @@ export default function HoldedOnboardingClient({
                           className="rounded-2xl border border-neutral-300 bg-white p-3 shadow-sm"
                         >
                           <label className="block text-sm font-medium text-neutral-700">
-                            Continuar con correo
+                            Correo que quieres confirmar
                             <input
                               type="email"
                               value={manualEmail}
@@ -1421,10 +1566,10 @@ export default function HoldedOnboardingClient({
                       className="space-y-4"
                     >
                       <div>
-                        <div className="text-sm font-semibold text-black">Paso 2: quien eres</div>
+                        <div className="text-sm font-semibold text-black">Paso 2: usuario</div>
                         <p className="mt-2 text-sm leading-6 text-neutral-700">
-                          Queremos dejar tu nombre listo para la bienvenida, el correo final y la
-                          empresa que se conecte a Holded.
+                          Queremos dejar listos los datos del usuario que actuara dentro de la
+                          empresa conectada a Holded.
                         </p>
                       </div>
 
@@ -1451,6 +1596,32 @@ export default function HoldedOnboardingClient({
                             autoComplete="family-name"
                           />
                         </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Rol en la empresa
+                          <select
+                            value={contactRole}
+                            onChange={(event) => setContactRole(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                          >
+                            <option value="">Selecciona tu rol</option>
+                            {COMPANY_ROLE_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
+                          Telefono
+                          <input
+                            type="tel"
+                            value={contactPhone}
+                            onChange={(event) => setContactPhone(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="600 000 000"
+                            autoComplete="tel"
+                          />
+                        </label>
                       </div>
 
                       <div className="rounded-2xl border border-[#d9e6ff] bg-[#f7fbff] px-4 py-3 text-sm text-[#0b214a]">
@@ -1458,9 +1629,18 @@ export default function HoldedOnboardingClient({
                       </div>
 
                       <div className="flex flex-wrap gap-3">
+                        {requiresVerifiedIdentity ? (
+                          <button
+                            type="button"
+                            onClick={() => goToDirectStep('identity')}
+                            className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                          >
+                            Cambiar correo o Google
+                          </button>
+                        ) : null}
                         <button
                           type="submit"
-                          disabled={!canContinuePersonStep}
+                          disabled={!canContinuePersonStep || !verifiedIdentityReady}
                           className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Continuar con empresa
@@ -1480,8 +1660,8 @@ export default function HoldedOnboardingClient({
                           Paso 3: datos de empresa
                         </div>
                         <p className="mt-2 text-sm leading-6 text-neutral-700">
-                          Solo necesitamos los datos minimos de la empresa para crear o reusar el
-                          tenant correcto antes de tocar la API key.
+                          Antes de tocar la API key, necesitamos los datos fiscales y el sector base
+                          de la empresa que vas a conectar.
                         </p>
                       </div>
 
@@ -1509,14 +1689,84 @@ export default function HoldedOnboardingClient({
                           />
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Telefono
-                          <input
-                            type="tel"
-                            value={contactPhone}
-                            onChange={(event) => setContactPhone(event.target.value)}
+                          Sector (CNAE base)
+                          <select
+                            value={companySectorCode}
+                            onChange={(event) => setCompanySectorCode(event.target.value)}
                             className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                            placeholder="600 000 000"
-                            autoComplete="tel"
+                          >
+                            <option value="">Selecciona el sector principal</option>
+                            {CNAE_SECTION_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.value} - {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
+                          Domicilio
+                          <input
+                            type="text"
+                            value={companyAddress}
+                            onChange={(event) => setCompanyAddress(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Calle, numero, nave o local"
+                            autoComplete="street-address"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Codigo postal
+                          <input
+                            type="text"
+                            value={companyPostalCode}
+                            onChange={(event) => setCompanyPostalCode(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="28001"
+                            autoComplete="postal-code"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Ciudad
+                          <input
+                            type="text"
+                            value={companyCity}
+                            onChange={(event) => setCompanyCity(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Madrid"
+                            autoComplete="address-level2"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Provincia
+                          <input
+                            type="text"
+                            value={companyProvince}
+                            onChange={(event) => setCompanyProvince(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Madrid"
+                            autoComplete="address-level1"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Pais
+                          <input
+                            type="text"
+                            value={companyCountry}
+                            onChange={(event) => setCompanyCountry(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Espana"
+                            autoComplete="country-name"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
+                          Pagina web (opcional)
+                          <input
+                            type="url"
+                            value={companyWebsite}
+                            onChange={(event) => setCompanyWebsite(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="https://tuempresa.com"
+                            autoComplete="url"
                           />
                         </label>
                       </div>
@@ -1524,7 +1774,8 @@ export default function HoldedOnboardingClient({
                       <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700">
                         Esta empresa quedara asociada a{' '}
                         <strong>{currentDirectFullName || 'tu perfil'}</strong> con el correo{' '}
-                        <strong>{stepContactEmail || 'pendiente'}</strong>.
+                        <strong>{stepContactEmail || 'pendiente'}</strong> y el rol{' '}
+                        <strong>{currentDirectRoleLabel}</strong>.
                       </div>
 
                       <div className="flex flex-wrap gap-3">
@@ -1559,13 +1810,16 @@ export default function HoldedOnboardingClient({
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                            Persona
+                            Usuario
                           </div>
                           <div className="mt-1 text-sm font-semibold text-black">
                             {currentDirectFullName || 'Pendiente'}
                           </div>
                           <div className="mt-2 break-all text-sm text-neutral-700">
                             {stepContactEmail || 'Sin correo'}
+                          </div>
+                          <div className="mt-2 text-sm text-neutral-700">
+                            {currentDirectRoleLabel}
                           </div>
                         </div>
                         <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3">
@@ -1577,6 +1831,12 @@ export default function HoldedOnboardingClient({
                           </div>
                           <div className="mt-2 text-sm text-neutral-700">
                             {normalizeText(companyTaxId) || 'Sin CIF/NIF'}
+                          </div>
+                          <div className="mt-2 text-sm text-neutral-700">
+                            {currentDirectCompanySector}
+                          </div>
+                          <div className="mt-2 text-sm text-neutral-700">
+                            {currentDirectCompanyAddress}
                           </div>
                         </div>
                       </div>

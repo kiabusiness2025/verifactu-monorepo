@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyIdToken } from '@/lib/firebase-admin';
 import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
-import { getPreferredFullName, splitFullName } from '@/lib/personName';
+import { buildFullName, normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 
 export const runtime = 'nodejs';
@@ -24,12 +24,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Google account email missing' }, { status: 400 });
   }
 
-  const rawName = typeof decoded.name === 'string' ? decoded.name : onboardingSession.name;
-  const name = getPreferredFullName({
-    fullName: rawName,
-    email,
-    fallback: onboardingSession.name || 'Connector user',
-  });
+  const claims = decoded as Record<string, unknown>;
+  const googleFirstName = normalizeMeaningfulPersonName(
+    typeof claims.given_name === 'string' ? claims.given_name : null
+  );
+  const googleLastName = normalizeMeaningfulPersonName(
+    typeof claims.family_name === 'string' ? claims.family_name : null
+  );
+  const googleFullName = normalizeMeaningfulPersonName(
+    typeof claims.name === 'string' ? claims.name : null
+  );
+  const preservedOnboardingName =
+    buildFullName({
+      firstName: onboardingSession.firstName,
+      lastName: onboardingSession.lastName,
+    }) ?? normalizeMeaningfulPersonName(onboardingSession.name);
+  const name =
+    googleFullName ||
+    buildFullName({ firstName: googleFirstName, lastName: googleLastName }) ||
+    preservedOnboardingName;
   const nameParts = splitFullName(name);
   const verifiedAt = decoded.email_verified ? new Date().toISOString() : null;
 

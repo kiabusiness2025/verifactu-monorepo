@@ -162,12 +162,23 @@ describe('POST /api/onboarding/tenant', () => {
           legalName: 'Empresa Demo SL',
           taxId: 'B12345678',
           tradeName: 'Empresa Demo',
+          country: 'Espana',
           extra: {
             representative: 'Ksenia Ivanova Lopez',
+            representativeRole: 'owner',
             contactFirstName: 'Ksenia',
             contactLastName: 'Ivanova Lopez',
             email: 'info@empresa-demo.es',
             phone: '+34 600 111 222',
+            cnae: 'M - Actividades profesionales, cientificas y tecnicas',
+            cnaeCode: 'M',
+            cnaeText: 'Actividades profesionales, cientificas y tecnicas',
+            website: 'https://empresa-demo.es',
+            address: 'Calle Mayor 1',
+            postalCode: '28001',
+            city: 'Madrid',
+            province: 'Madrid',
+            country: 'Espana',
           },
         }),
       })
@@ -205,11 +216,29 @@ describe('POST /api/onboarding/tenant', () => {
           email: 'info@empresa-demo.es',
           phone: '+34 600 111 222',
           representative: 'Ksenia Ivanova Lopez',
+          representativeRole: 'owner',
+          cnaeCode: 'M',
+          cnaeText: 'Actividades profesionales, cientificas y tecnicas',
+          website: 'https://empresa-demo.es',
+          address: 'Calle Mayor 1',
+          postalCode: '28001',
+          city: 'Madrid',
+          province: 'Madrid',
+          country: 'Espana',
         }),
         update: expect.objectContaining({
           email: 'info@empresa-demo.es',
           phone: '+34 600 111 222',
           representative: 'Ksenia Ivanova Lopez',
+          representativeRole: 'owner',
+          cnaeCode: 'M',
+          cnaeText: 'Actividades profesionales, cientificas y tecnicas',
+          website: 'https://empresa-demo.es',
+          address: 'Calle Mayor 1',
+          postalCode: '28001',
+          city: 'Madrid',
+          province: 'Madrid',
+          country: 'Espana',
         }),
       })
     );
@@ -281,6 +310,46 @@ describe('POST /api/onboarding/tenant', () => {
       emailVerified: false,
       firstName: 'Ksenia',
       lastName: 'Ivanova Lopez',
+      tenantId: null,
+      verifiedAt: null,
+    });
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/onboarding/tenant', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({
+          name: 'Empresa Demo',
+          legalName: 'Empresa Demo SL',
+          taxId: 'B12345678',
+        }),
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toBe('identity verification required');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects tenant creation when a signed session exists but the onboarding email is still pending verification', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Ksenia Ivanova Lopez',
+    });
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'holded@example.com',
+      name: 'Holded Contact',
+      authMethod: 'email',
+      emailVerified: false,
+      firstName: 'Holded',
+      lastName: 'Contact',
       tenantId: null,
       verifiedAt: null,
     });

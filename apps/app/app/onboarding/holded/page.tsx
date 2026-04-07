@@ -3,7 +3,7 @@ import {
   getHoldedOnboardingTokenFromSearchParams,
   resolveHoldedOnboardingSession,
 } from '@/lib/integrations/holdedOnboardingSession';
-import { getPreferredFirstName } from '@/lib/personName';
+import { normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { getAppUrl } from '@verifactu/utils';
@@ -48,6 +48,10 @@ function normalizeNextUrl(nextUrl: string | undefined) {
 function normalizeText(value?: string | null) {
   const normalized = value?.trim();
   return normalized ? normalized : null;
+}
+
+function getOnboardingContactFirstName(value?: string | null) {
+  return splitFullName(normalizeMeaningfulPersonName(value)).firstName || '';
 }
 
 export default async function HoldedOnboardingPage({
@@ -111,17 +115,25 @@ export default async function HoldedOnboardingPage({
     next: params.next,
   });
 
-  const defaultContactName = session?.name ?? onboardingSession?.name ?? null;
+  const defaultContactName =
+    normalizeMeaningfulPersonName(session?.name) ??
+    normalizeMeaningfulPersonName(onboardingSession?.name) ??
+    null;
   const defaultContactEmail = session?.email ?? onboardingSession?.email ?? null;
   let summary = {
     companyName: 'Tu empresa',
     companyLegalName: null as string | null,
     companyTaxId: null as string | null,
-    contactFirstName: getPreferredFirstName({
-      fullName: defaultContactName,
-      email: defaultContactEmail,
-      fallback: 'Usuario',
-    }),
+    companyAddress: null as string | null,
+    companyPostalCode: null as string | null,
+    companyCity: null as string | null,
+    companyProvince: null as string | null,
+    companyCountry: null as string | null,
+    companyWebsite: null as string | null,
+    companySectorCode: null as string | null,
+    companySectorLabel: null as string | null,
+    contactFirstName: getOnboardingContactFirstName(defaultContactName),
+    contactRole: null as string | null,
     contactFullName: normalizeText(defaultContactName),
     contactEmail: normalizeText(defaultContactEmail),
     companyEmail: null as string | null,
@@ -164,8 +176,18 @@ export default async function HoldedOnboardingPage({
               tradeName: true,
               legalName: true,
               representative: true,
+              representativeRole: true,
               email: true,
               phone: true,
+              website: true,
+              cnae: true,
+              cnaeCode: true,
+              cnaeText: true,
+              address: true,
+              postalCode: true,
+              city: true,
+              province: true,
+              country: true,
             },
           },
         },
@@ -178,8 +200,8 @@ export default async function HoldedOnboardingPage({
       };
 
       const contactFullName =
-        normalizeText(auth.session.name) ||
-        normalizeText(tenant?.profile?.representative) ||
+        normalizeMeaningfulPersonName(auth.session.name) ||
+        normalizeMeaningfulPersonName(tenant?.profile?.representative) ||
         normalizeText(defaultContactName);
       const contactEmail = normalizeText(auth.session.email) || normalizeText(defaultContactEmail);
 
@@ -187,11 +209,17 @@ export default async function HoldedOnboardingPage({
         companyName: tenant?.profile?.tradeName || tenant?.name || 'Tu empresa',
         companyLegalName: tenant?.profile?.legalName || tenant?.legalName || null,
         companyTaxId: normalizeText(tenant?.nif),
-        contactFirstName: getPreferredFirstName({
-          fullName: contactFullName,
-          email: contactEmail,
-          fallback: 'Usuario',
-        }),
+        companyAddress: normalizeText(tenant?.profile?.address),
+        companyPostalCode: normalizeText(tenant?.profile?.postalCode),
+        companyCity: normalizeText(tenant?.profile?.city),
+        companyProvince: normalizeText(tenant?.profile?.province),
+        companyCountry: normalizeText(tenant?.profile?.country),
+        companyWebsite: normalizeText(tenant?.profile?.website),
+        companySectorCode: normalizeText(tenant?.profile?.cnaeCode),
+        companySectorLabel:
+          normalizeText(tenant?.profile?.cnaeText) || normalizeText(tenant?.profile?.cnae),
+        contactFirstName: getOnboardingContactFirstName(contactFullName),
+        contactRole: normalizeText(tenant?.profile?.representativeRole),
         contactFullName,
         contactEmail,
         companyEmail: normalizeText(tenant?.profile?.email),
@@ -220,11 +248,12 @@ export default async function HoldedOnboardingPage({
       entryChannel={entryChannel}
       nextUrl={nextUrl}
       requireConnectionConfirmation={requireConnectionConfirmation}
-      requiresVerifiedIdentity={entryChannel === 'chatgpt' && !session?.uid}
+      requiresVerifiedIdentity={entryChannel === 'chatgpt'}
       identity={{
         authMethod: onboardingSession?.authMethod ?? 'unknown',
-        email: normalizeText(onboardingSession?.email) || normalizeText(session?.email),
-        emailVerified: onboardingSession?.emailVerified === true || Boolean(session?.uid),
+        email: normalizeText(onboardingSession?.email),
+        emailVerified:
+          onboardingSession?.authMethod === 'google' || onboardingSession?.emailVerified === true,
         firstName: normalizeText(onboardingSession?.firstName),
         lastName: normalizeText(onboardingSession?.lastName),
         verifiedAt: normalizeText(onboardingSession?.verifiedAt),

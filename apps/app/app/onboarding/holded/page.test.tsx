@@ -135,5 +135,64 @@ describe('HoldedOnboardingPage', () => {
       })
     );
     expect(element.props.tenantIdHint).toBe('tenant-auth');
+    expect(element.props.requiresVerifiedIdentity).toBe(true);
+    expect(element.props.identity).toEqual(
+      expect.objectContaining({
+        authMethod: 'unknown',
+        email: 'guest@example.com',
+        emailVerified: false,
+      })
+    );
+  });
+
+  it('keeps the contact first name blank when only the verified email is known', async () => {
+    prismaMock.tenant.findUnique.mockResolvedValueOnce({
+      id: 'tenant-auth',
+      nif: 'B12345678',
+      isDemo: false,
+      name: 'Empresa Demo',
+      legalName: 'Empresa Demo SL',
+      profile: {
+        tradeName: 'Empresa Demo',
+        legalName: 'Empresa Demo SL',
+        representative: null,
+        email: 'empresa@example.com',
+        phone: '+34 600 000 000',
+      },
+    });
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'session-user-1',
+      email: 'kiabusiness2025@gmail.com',
+      name: null,
+      tenantId: 'tenant-session',
+    });
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'kiabusiness2025@gmail.com',
+      name: 'Connector user',
+      tenantId: 'tenant-from-token',
+      authMethod: 'google',
+      firstName: null,
+      lastName: null,
+    });
+    (requireTenantContext as jest.Mock).mockResolvedValue({
+      tenantId: 'tenant-auth',
+      session: {
+        uid: 'session-user-1',
+        email: 'kiabusiness2025@gmail.com',
+        name: null,
+      },
+    });
+
+    const element = await HoldedOnboardingPage({
+      searchParams: Promise.resolve({
+        next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
+        channel: 'chatgpt',
+        onboarding_token: 'onboarding-token-123',
+      }),
+    });
+
+    expect(element.props.summary.contactFirstName).toBe('');
+    expect(element.props.summary.contactEmail).toBe('kiabusiness2025@gmail.com');
   });
 });

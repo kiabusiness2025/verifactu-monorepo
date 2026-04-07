@@ -62,15 +62,104 @@ describe('POST /api/onboarding/identity/google', () => {
         authMethod: 'google',
         email: 'demo@example.com',
         emailVerified: true,
+        firstName: 'Demo',
+        lastName: 'User',
       })
     );
     expect(mintHoldedOnboardingTokenForSubject).toHaveBeenCalledWith(
       expect.objectContaining({
         uid: 'google-user-1',
         email: 'demo@example.com',
+        name: 'Demo User',
+        firstName: 'Demo',
+        lastName: 'User',
         tenantId: 'tenant-123',
         authMethod: 'google',
         emailVerified: true,
+      })
+    );
+  });
+
+  it('uses Google given_name and family_name when the display name is missing', async () => {
+    (verifyIdToken as jest.Mock).mockResolvedValue({
+      uid: 'google-user-1',
+      email: 'kiabusiness2025@gmail.com',
+      email_verified: true,
+      given_name: 'Ksenia',
+      family_name: 'Ivanova Lopez',
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/onboarding/identity/google',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({ idToken: 'google-id-token' }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.identity).toEqual(
+      expect.objectContaining({
+        email: 'kiabusiness2025@gmail.com',
+        firstName: 'Ksenia',
+        lastName: 'Ivanova Lopez',
+        name: 'Ksenia Ivanova Lopez',
+      })
+    );
+    expect(mintHoldedOnboardingTokenForSubject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'kiabusiness2025@gmail.com',
+        name: 'Ksenia Ivanova Lopez',
+        firstName: 'Ksenia',
+        lastName: 'Ivanova Lopez',
+      })
+    );
+  });
+
+  it('does not derive the first name from the email alias when Google has no profile name', async () => {
+    (verifyIdToken as jest.Mock).mockResolvedValue({
+      uid: 'google-user-1',
+      email: 'kiabusiness2025@gmail.com',
+      email_verified: true,
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/onboarding/identity/google',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({ idToken: 'google-id-token' }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.identity).toEqual(
+      expect.objectContaining({
+        email: 'kiabusiness2025@gmail.com',
+        firstName: null,
+        lastName: null,
+        name: null,
+      })
+    );
+    expect(mintHoldedOnboardingTokenForSubject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'kiabusiness2025@gmail.com',
+        name: null,
+        firstName: null,
+        lastName: null,
       })
     );
   });

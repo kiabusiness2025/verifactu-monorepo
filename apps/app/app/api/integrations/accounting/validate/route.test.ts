@@ -299,12 +299,48 @@ describe('POST /api/integrations/accounting/validate', () => {
     expect(probeAccountingApiConnection).not.toHaveBeenCalled();
   });
 
+  it('rejects chatgpt onboarding validation even if a signed session exists when the onboarding identity is still pending', async () => {
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'guest@example.com',
+      name: 'Connector Guest',
+      authMethod: 'email',
+      emailVerified: false,
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/integrations/accounting/validate',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({
+          apiKey: 'demo-key',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.reason).toBe('identity_verification_required');
+    expect(requireTenantContext).not.toHaveBeenCalled();
+  });
+
   it('passes onboarding token and tenant hints into tenant auth when a signed session exists', async () => {
     (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
       uid: 'holded-guest-1',
       email: 'guest@example.com',
       name: 'Guest User',
       tenantId: 'tenant-demo',
+      authMethod: 'google',
+      emailVerified: true,
     });
 
     const request = new NextRequest(

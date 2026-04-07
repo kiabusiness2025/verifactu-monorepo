@@ -72,23 +72,8 @@ export async function POST(request: NextRequest) {
       entryChannel === 'chatgpt'
         ? await resolveHoldedOnboardingSessionFromHeaders(request.headers)
         : null;
-    const auth =
-      onboardingSession && !signedSession?.uid
-        ? null
-        : await requireTenantContext({
-            channelType: entryChannel,
-            metadata: {
-              source: entryChannel === 'chatgpt' ? 'holded-validation' : 'requireTenantContext',
-            },
-            tenantIdHint,
-            onboardingToken,
-          });
 
-    if (
-      onboardingSession &&
-      !signedSession?.uid &&
-      !isVerifiedHoldedOnboardingIdentity(onboardingSession)
-    ) {
+    if (onboardingSession && !isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
       return withConnectorRequestId(
         NextResponse.json(
           {
@@ -102,6 +87,18 @@ export async function POST(request: NextRequest) {
         requestId
       );
     }
+
+    const auth =
+      onboardingSession && !signedSession?.uid
+        ? null
+        : await requireTenantContext({
+            channelType: entryChannel,
+            metadata: {
+              source: entryChannel === 'chatgpt' ? 'holded-validation' : 'requireTenantContext',
+            },
+            tenantIdHint,
+            onboardingToken,
+          });
 
     if (auth && 'error' in auth) {
       return withConnectorRequestId(

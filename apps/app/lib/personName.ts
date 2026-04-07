@@ -3,6 +3,8 @@ function normalizeNameValue(value?: string | null) {
   return normalized ? normalized : null;
 }
 
+const SYSTEM_PERSON_NAME_PLACEHOLDERS = new Set(['connector user', 'connector guest']);
+
 function getEmailAlias(email?: string | null) {
   const normalized = email?.trim();
   if (!normalized) return null;
@@ -21,6 +23,13 @@ export type PersonNameParts = {
 
 export function normalizePersonNamePart(value?: string | null) {
   return normalizeNameValue(value);
+}
+
+export function normalizeMeaningfulPersonName(value?: string | null) {
+  const normalized = normalizeNameValue(value);
+  if (!normalized) return null;
+
+  return SYSTEM_PERSON_NAME_PLACEHOLDERS.has(normalized.toLowerCase()) ? null : normalized;
 }
 
 export function splitFullName(value?: string | null): PersonNameParts {
