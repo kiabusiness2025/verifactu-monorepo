@@ -15,8 +15,8 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 ### Producto — `docs/product/`
 
 - Features implementadas, planes, presupuestos, gastos, facturas, integraciones
-- Contrato canonico del conector directo Fase 1: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md`
-- Plan de implementacion Fase 1: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md`
+- Contrato canonico del conector directo Fase 1: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md` (Google opcional, correo verificado y onboarding por pasos)
+- Plan de implementacion Fase 1: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md` (base ya entregada + nueva ola de identidad ligera)
 - Reordenacion de producto y ownership: `docs/product/ISAAK_PRODUCT_REORDER_PLAN_2026.md`
 - Arquitectura de sync Isaak: `docs/product/ISAAK_PLATFORM_SYNC_PLAN.md`
 - Conexiones compartidas Holded: `docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md`

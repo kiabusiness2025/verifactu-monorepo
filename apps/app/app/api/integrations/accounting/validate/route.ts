@@ -9,6 +9,7 @@ import {
 import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
 import {
   getHoldedOnboardingTokenFromHeaders,
+  isVerifiedHoldedOnboardingIdentity,
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
 import { mintHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
@@ -82,6 +83,25 @@ export async function POST(request: NextRequest) {
             tenantIdHint,
             onboardingToken,
           });
+
+    if (
+      onboardingSession &&
+      !signedSession?.uid &&
+      !isVerifiedHoldedOnboardingIdentity(onboardingSession)
+    ) {
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            error: 'Debes verificar tu identidad antes de validar la API key de Holded.',
+            requestId,
+            stage,
+            reason: 'identity_verification_required',
+          },
+          { status: 403 }
+        ),
+        requestId
+      );
+    }
 
     if (auth && 'error' in auth) {
       return withConnectorRequestId(

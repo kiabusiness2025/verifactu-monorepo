@@ -21,6 +21,10 @@ jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
   getHoldedOnboardingTokenFromHeaders: jest.fn((headers: Headers) =>
     headers.get('x-holded-onboarding-token')
   ),
+  isVerifiedHoldedOnboardingIdentity: jest.fn(
+    (session: { email?: string | null; emailVerified?: boolean; authMethod?: string | null }) =>
+      Boolean(session?.email && (session?.emailVerified || session?.authMethod === 'google'))
+  ),
   resolveHoldedOnboardingSessionFromHeaders: jest.fn(),
 }));
 
@@ -227,8 +231,10 @@ describe('POST /api/integrations/accounting/validate', () => {
     (getSessionPayload as jest.Mock).mockResolvedValue(null);
     (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
       uid: 'holded-guest-1',
-      email: null,
+      email: 'guest@example.com',
       name: 'Connector Guest',
+      authMethod: 'email',
+      emailVerified: true,
     });
 
     const request = new NextRequest(
@@ -256,6 +262,41 @@ describe('POST /api/integrations/accounting/validate', () => {
     expect(typeof payload.validationToken).toBe('string');
     expect(requireTenantContext).not.toHaveBeenCalled();
     expect(getAccountingIntegrationAccess).not.toHaveBeenCalled();
+  });
+
+  it('rejects chatgpt onboarding validation when identity is not verified yet', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue(null);
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'guest@example.com',
+      name: 'Connector Guest',
+      authMethod: 'email',
+      emailVerified: false,
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/integrations/accounting/validate',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({
+          apiKey: 'demo-key',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.reason).toBe('identity_verification_required');
+    expect(probeAccountingApiConnection).not.toHaveBeenCalled();
   });
 
   it('passes onboarding token and tenant hints into tenant auth when a signed session exists', async () => {

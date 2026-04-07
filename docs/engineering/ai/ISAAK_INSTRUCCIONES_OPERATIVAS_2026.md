@@ -175,7 +175,7 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
 - Metadata OAuth en `/.well-known/oauth-authorization-server` y `/.well-known/oauth-protected-resource/api/mcp/holded`.
 - Documentacion extendida: `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md`.
 - Contrato publico canonico actual: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md`.
-- Flujo publico actual: conector directo Holded para ChatGPT, sin login visible, con `connector onboarding session`.
+- Flujo publico actual: conector directo Holded para ChatGPT con `connector onboarding session`. La nueva ola de Fase 1 ya adopta como objetivo visible identidad ligera: Google opcional o correo verificado antes del onboarding por pasos.
 
 ### Onboarding
 

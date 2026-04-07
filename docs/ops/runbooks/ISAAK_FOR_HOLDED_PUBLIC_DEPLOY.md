@@ -97,7 +97,8 @@ Expected combined result from latest focused runs: all passing.
 
 - MCP descubre metadata sin bloquear usando la ruta especifica del recurso
 - OAuth conserva el contexto original del conector
-- si falta conexion Holded, redirige a onboarding directo sin login visible
+- si falta conexion Holded, redirige a onboarding directo sin login clasico visible
+- la nueva ola de Fase 1 puede mostrar identidad ligera al inicio (`Google` opcional o correo verificado), pero no dashboard ni selector de tenant
 - si la conexion ya existe, completa la autorizacion sin pedir API key
 - `GET /api/mcp/holded` sin token responde `401` con challenge OAuth
 - errores de `authorize`, `status`, `validate` y `connect` dejan `x-verifactu-request-id` para soporte

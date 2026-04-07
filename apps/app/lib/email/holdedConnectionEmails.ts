@@ -135,10 +135,12 @@ function buildWelcomeUserHtml(args: {
     <div style="font-family: Arial, sans-serif; color: #1b2a3a; line-height: 1.6;">
       <h2 style="color:#0d2b4a; margin:0 0 16px 0;">Bienvenido a Verifactu Business</h2>
       <p>Hola ${args.userFirstName},</p>
-      <p>Tu espacio para <strong>${args.tenantDisplayName}</strong> ya esta preparado.</p>
+      <p>La conexion de Holded para <strong>${args.tenantDisplayName}</strong> ya esta lista.</p>
+      <p>Desde este momento puedes continuar usando el conector directo con la empresa ya enlazada.</p>
       ${renderDetailLine('Correo de contacto', args.contactEmail)}
       ${renderDetailLine('Correo de empresa', args.companyEmail)}
       ${renderDetailLine('Telefono de contacto', args.contactPhone)}
+      <p>Primer paso recomendado: vuelve a tu flujo en ChatGPT o entra en tu area de Verifactu para revisar que todo responde como esperas.</p>
       <p>Si necesitas ayuda, escríbenos a <strong>support@verifactu.business</strong>.</p>
     </div>
   `;

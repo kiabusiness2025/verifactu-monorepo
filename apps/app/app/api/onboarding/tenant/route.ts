@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { sendWelcomeLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
-import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
+import {
+  isVerifiedHoldedOnboardingIdentity,
+  resolveHoldedOnboardingSessionFromHeaders,
+} from '@/lib/integrations/holdedOnboardingSession';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
@@ -168,6 +171,17 @@ export async function POST(req: Request) {
       : null;
   if (!authSession?.uid) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  }
+
+  if (
+    !session?.uid &&
+    onboardingSession &&
+    !isVerifiedHoldedOnboardingIdentity(onboardingSession)
+  ) {
+    return NextResponse.json(
+      { ok: false, error: 'identity verification required' },
+      { status: 403 }
+    );
   }
 
   const uid = authSession.uid;
@@ -476,24 +490,28 @@ export async function POST(req: Request) {
     };
   });
 
-  try {
-    await sendWelcomeLifecycleEmails({
-      userEmail: authSession.email ?? null,
-      userName: authSession.name ?? null,
-      tenantName: tradeName || result.tenant.name,
-      tenantLegalName: legalName || result.tenant.legalName || result.tenant.name,
-      contactName: contactFullName || authSession.name || null,
-      contactEmail: authSession.email ?? null,
-      companyEmail,
-      contactPhone: companyPhone,
-    });
-  } catch (notificationError) {
-    console.error('[api/onboarding/tenant] welcome notification failed', {
-      tenantId: result.tenant.id,
-      uid,
-      message:
-        notificationError instanceof Error ? notificationError.message : String(notificationError),
-    });
+  if (!onboardingSession) {
+    try {
+      await sendWelcomeLifecycleEmails({
+        userEmail: authSession.email ?? null,
+        userName: authSession.name ?? null,
+        tenantName: tradeName || result.tenant.name,
+        tenantLegalName: legalName || result.tenant.legalName || result.tenant.name,
+        contactName: contactFullName || authSession.name || null,
+        contactEmail: authSession.email ?? null,
+        companyEmail,
+        contactPhone: companyPhone,
+      });
+    } catch (notificationError) {
+      console.error('[api/onboarding/tenant] welcome notification failed', {
+        tenantId: result.tenant.id,
+        uid,
+        message:
+          notificationError instanceof Error
+            ? notificationError.message
+            : String(notificationError),
+      });
+    }
   }
 
   return NextResponse.json({
@@ -506,6 +524,11 @@ export async function POST(req: Request) {
           email: authSession.email ?? null,
           name: authSession.name ?? null,
           tenantId: result.tenant.id,
+          authMethod: onboardingSession.authMethod,
+          emailVerified: onboardingSession.emailVerified,
+          firstName: onboardingSession.firstName,
+          lastName: onboardingSession.lastName,
+          verifiedAt: onboardingSession.verifiedAt,
         })
       : null,
     trial: {

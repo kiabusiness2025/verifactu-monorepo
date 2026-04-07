@@ -157,6 +157,11 @@ export async function requireTenantContext(options?: {
       email: subjectEmail,
       name: subjectName,
       tenantId,
+      authMethod: onboardingSession?.authMethod ?? null,
+      emailVerified: onboardingSession?.emailVerified ?? false,
+      firstName: onboardingSession?.firstName ?? null,
+      lastName: onboardingSession?.lastName ?? null,
+      verifiedAt: onboardingSession?.verifiedAt ?? null,
     },
     resolved: {
       ...direct,

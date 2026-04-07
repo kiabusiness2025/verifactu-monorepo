@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Convertir el flujo publico actual en un conector directo `ChatGPT <-> Holded` sin marca Isaak visible y sin login clasico visible, manteniendo intacto el backend compartido.
+Evolucionar la Fase 1 ya entregada hacia un onboarding mas simple y mas robusto para el conector directo `ChatGPT <-> Holded`, manteniendo intacto el backend compartido.
 
 Documento complementario a:
 
@@ -14,222 +14,230 @@ Documento complementario a:
 - no se duplica OAuth
 - no se cambia el modelo de datos base
 - no se rompe el dashboard ni el producto Isaak existente
-- la separacion es publica, no de plataforma
+- la separacion sigue siendo publica, no de plataforma
+- Google visible pasa a ser una opcion de identidad, no un login clasico de producto
 
-## Alcance
+## Alcance de esta nueva ola
 
-Incluido en Fase 1:
+Incluido ahora:
 
-- naming publico del conector
-- copy y UX del onboarding `channel=chatgpt`
-- sesion temporal propia del conector
-- formulario minimo sin login visible
-- persistencia de conexion Holded en el backend existente
-- retorno correcto al flujo OAuth de ChatGPT
+- actualizar el contrato documental de Fase 1
+- introducir estado de identidad verificada en la `connector onboarding session`
+- preparar Google opcional y correo verificado como punto de entrada
+- rediseñar el onboarding como secuencia de pantallas cortas
+- mover el correo final de bienvenida al momento de conexion completa
 
 No incluido:
 
 - producto `Isaak Universal`
 - acceso web abierto
-- nuevas familias grandes de tools
+- ampliaciones grandes de tools MCP
 - split de backend
-- migracion profunda de branding interno
+- migracion profunda de branding interno fuera del conector directo
 
-## Backlog priorizado
+## Fundacion ya entregada antes de esta ola
 
-### P0.1 - Canonizar el contrato publico
+### F0.1 - Contrato publico directo separado de Isaak
+
+Estado:
+
+- listo
+
+### F0.2 - `connector onboarding session`
+
+Estado:
+
+- listo
+
+### F0.3 - Persistencia channel-aware y retorno OAuth estable
+
+Estado:
+
+- listo
+
+### F0.4 - Observabilidad del flujo
+
+Estado:
+
+- listo
+
+## Backlog priorizado de la nueva ola
+
+### P0.1 - Actualizar documentacion canonica de Fase 1
 
 Resultado:
 
-- un unico documento de referencia para Fase 1
-- desambiguacion entre conector directo e Isaak
+- contrato, plan, README y guias operativas alineadas con el nuevo flujo objetivo
 
 Entregables:
 
 - `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md`
-- enlaces desde `docs/README.md`, `docs/INDEX.md` y `apps/app/README.md`
+- `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md`
+- referencias desde `docs/README.md`, `docs/INDEX.md`, `apps/app/README.md`
+- ajuste de guias tecnicas y runbooks del conector directo
 
 Estado:
 
-- listo
+- en progreso
 
-### P0.2 - Separar branding publico de Isaak
+### P0.2 - Extender la sesion temporal del conector con estado de identidad
 
 Resultado:
 
-- el flujo `channel=chatgpt` habla solo de Holded, ChatGPT y Verifactu
+- el token de onboarding ya puede transportar metodo de identidad y verificacion sin perderse entre pasos
 
-Cambios previstos:
+Campos objetivo:
 
-- renombrar descriptor MCP publico
-- eliminar copy visible de Isaak en onboarding/loading
-- eliminar descripciones de tools que presenten Isaak como interfaz publica del conector
-- quitar fallbacks visuales a `/dashboard/isaak`
+- `authMethod`
+- `emailVerified`
+- `verifiedAt`
+- `firstName`
+- `lastName`
+- `email`
+- `tenantId`
 
 Archivos candidatos:
 
-- `apps/app/app/api/mcp/holded/route.ts`
-- `apps/app/app/onboarding/holded/HoldedOnboardingClient.tsx`
-- `apps/app/app/onboarding/holded/loading.tsx`
-- `apps/app/app/onboarding/holded/page.tsx`
-- `apps/app/lib/integrations/holdedMcpTools.ts`
-- `apps/app/lib/integrations/sharedConnections.ts`
+- `apps/app/lib/oauth/mcp.ts`
+- `apps/app/lib/integrations/holdedOnboardingSession.ts`
+- `apps/app/app/api/onboarding/tenant/route.ts`
 
 Aceptacion:
 
-- no aparece `Isaak` en ninguna pantalla publica del conector
-- el descriptor MCP y el onboarding usan naming directo
+- el token refrescado tras crear o reusar tenant conserva el estado de identidad
+- el resto del flujo puede leer ese estado sin depender de login clasico
 
 Estado:
 
-- listo
+- en progreso
 
-### P0.3 - Introducir sesion temporal del conector
+### P0.3 - Pantalla de entrada de identidad del conector
 
 Resultado:
 
-- el flujo deja de depender de login web clasico visible
+- primera decision visible: `Google` o `Correo`
+
+Reglas:
+
+- Google es opcional
+- no hay selector de tenant ni dashboard
+- el flujo sigue siendo del conector, no del producto principal
+
+Estado:
+
+- pendiente
+
+### P0.4 - Verificacion obligatoria del correo manual
+
+Resultado:
+
+- la via manual no deja continuar a empresa/API key sin correo verificado
+
+Decision operativa:
+
+- preferir magic link o codigo ligero
+- evitar convertir esta fase en un alta clasica con contrasena como centro del flujo
+
+Estado:
+
+- pendiente
+
+### P0.5 - Onboarding por pasos conversacionales
+
+Resultado:
+
+- una pantalla por tarea, con menos friccion y menos copia repetitiva
+
+Secuencia objetivo:
+
+1. identidad
+2. nombre y apellidos
+3. empresa y CIF/NIF
+4. API key de Holded
+5. exito y celebracion
+
+Estado:
+
+- pendiente
+
+### P0.6 - Politica final de correos del conector directo
+
+Resultado:
+
+- paridad entre via Google y via manual
+- sin duplicados de welcome
+- correo final de bienvenida tras conexion completada
 
 Cambios previstos:
 
-- crear una `connector onboarding session`
-- guardar contexto minimo del flujo OAuth original
-- permitir completar onboarding directo sin mostrar `/login` ni `/signup`
-
-Archivos candidatos:
-
-- nuevas rutas/helpers en `apps/app/app/api/...`
-- `apps/app/app/oauth/authorize/route.ts`
-- `apps/app/app/onboarding/holded/page.tsx`
-- `apps/app/app/onboarding/holded/HoldedOnboardingClient.tsx`
-
-Aceptacion:
-
-- el usuario completa el flujo sin pantalla de login visible
-- ChatGPT vuelve al OAuth original al terminar
+- verificacion solo para la via manual
+- welcome final con nombre + empresa + primeros pasos
+- admin notification deduplicada y etiquetada por origen
 
 Estado:
 
-- listo
+- pendiente
 
-### P0.4 - Formulario minimo del conector
+### P1.1 - Reordenar `HoldedOnboardingClient` como flujo por estados claros
 
 Resultado:
 
-- el usuario se identifica con formulario directo en lugar de cuenta web clasica
-
-Campos propuestos:
-
-- nombre
-- email
-- empresa
-- API key de Holded
-- terminos
-- privacidad
-
-Aceptacion:
-
-- el backend crea o resuelve identidad interna sin exponer registro clasico
+- menos riesgo de regresiones por estados mezclados
+- mas facil introducir nuevos pasos sin loops ni stale state
 
 Estado:
 
-- listo
+- pendiente
 
-### P1.1 - Mantener persistencia y tenant invisibles al usuario
+### P1.2 - Mantener retorno OAuth exacto durante la nueva UX
 
 Resultado:
 
-- la plataforma sigue usando `users`, `tenants`, `memberships`, `channel_identities` y `external_connections`
-- la UI publica no expone `tenant-switch` ni conceptos de dashboard
-
-Cambios previstos:
-
-- ajustar resolucion interna al nuevo flujo de sesion temporal
-- ocultar conceptos de tenancy en la UI
-
-Aceptacion:
-
-- la conexion queda persistida y trazable
-- el usuario no ve pasos de tenancy
+- el nuevo onboarding no rompe `authorize -> onboarding -> return`
 
 Estado:
 
-- listo
+- pendiente de revalidacion sobre la nueva UX
 
-### P1.2 - Endurecer retorno OAuth
+### P1.3 - Matriz de QA de la nueva ola
 
-Resultado:
+Casos minimos:
 
-- el flujo `authorize -> onboarding -> return` queda estable en movil y escritorio
-
-Cambios previstos:
-
-- preservar `client_id`, `redirect_uri`, `state`, `code_challenge` y contexto de scopes
-- cerrar el onboarding devolviendo al flujo exacto original
-
-Aceptacion:
-
-- ChatGPT completa la conexion despues del onboarding sin pasos extra
+- Google nuevo usuario
+- Google usuario ya existente
+- correo manual verificado
+- correo manual sin verificar
+- desktop y mobile/webview
+- no duplicado de correos
 
 Estado:
 
-- listo
-
-### P1.3 - Observabilidad del flujo
-
-Resultado:
-
-- soporte puede diagnosticar fallos reales en movil
-
-Cambios previstos:
-
-- loggear `request_id`, `channel`, `tenant_id`, `stage`
-- distinguir fallos de sesion temporal, validacion Holded y retorno OAuth
-
-Aceptacion:
-
-- cada intento deja un rastro util en logs
-
-Estado:
-
-- listo
-
-## Estado actual del backlog
-
-Implementado en esta ola:
-
-- `P0.2`
-- `P0.3`
-- `P0.4`
-- `P1.1`
-- `P1.2`
-- `P1.3`
-
-Pendiente para una siguiente ola:
-
-- endurecimiento adicional de OAuth si se decide cambiar el contrato tecnico del `authorization_code`
-- limpieza documental mas amplia de materiales historicos que siguen usando el naming `Isaak for Holded`
-- posible mecanismo de recuperacion/gestion por email para la conexion directa
+- pendiente
 
 ## Orden recomendado de ejecucion
 
-1. `P0.2` separacion de branding/copy
-2. `P0.3` sesion temporal del conector
-3. `P0.4` formulario minimo directo
-4. `P1.1` persistencia invisible
-5. `P1.2` retorno OAuth estable
-6. `P1.3` observabilidad
+1. `P0.1` documentacion canonica y runbooks
+2. `P0.2` sesion temporal con estado de identidad
+3. `P0.3` pantalla de entrada `Google` o `Correo`
+4. `P0.4` verificacion de correo manual
+5. `P0.5` onboarding por pasos
+6. `P0.6` welcome final y paridad de correos
+7. `P1.1` limpieza estructural del cliente
+8. `P1.2` revalidacion exhaustiva del retorno OAuth
+9. `P1.3` QA multi-camino
 
 ## Riesgos
 
-- mezclar branding publico y branding interno en el mismo componente
-- depender otra vez de cookies de sesion web clasicas en movil
-- romper el flujo actual de dashboard por reutilizar demasiado codigo sin frontera de canal
-- dejar el onboarding directo sin mecanismo de recuperacion por email
+- mezclar login de producto con onboarding del conector
+- reintroducir dependencias de sesion web clasica en movil
+- duplicar correos entre creacion de tenant y conexion final
+- perder el estado de identidad al refrescar el onboarding token
+- degradar el retorno OAuth al introducir pasos extra
 
-## Criterio de exito de Fase 1
+## Criterio de exito de esta nueva ola
 
-- el reviewer de OpenAI ve un conector directo Holded para ChatGPT
-- el usuario no ve Isaak, login Google ni dashboard
+- el usuario entiende el flujo en 3 a 5 pantallas como maximo
+- Google es opcional, no obligatorio
+- la via manual exige correo verificado antes de seguir
 - el backend sigue resolviendo identidad, tenant y conexion con el stack actual
-- el flujo funciona en movil y escritorio con el mismo contrato publico
+- el correo final sale despues de la conexion completa y nombra a la empresa conectada

@@ -44,6 +44,13 @@ describe('OnboardingHoldedClient', () => {
 
     expect(screen.getByText('Conexion directa')).toBeInTheDocument();
     expect(screen.getByText('Conecta tu empresa de Holded')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Solo necesitamos los datos basicos de empresa, una persona de contacto y una API key activa de Holded. Nosotros dejamos la conexion lista por ti.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Que te pediremos')).toBeInTheDocument();
+    expect(screen.getByText(/Al conectar aceptas los/i)).toBeInTheDocument();
     expect(screen.queryByText('Activa tu conexion con Holded')).not.toBeInTheDocument();
     expect(screen.getByDisplayValue('Acme SL')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Acme Sociedad Limitada')).toBeInTheDocument();

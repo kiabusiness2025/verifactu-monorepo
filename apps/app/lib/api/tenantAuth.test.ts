@@ -80,6 +80,18 @@ describe('requireTenantContext', () => {
   });
 
   it('honors the onboarding token tenant hint even when a signed session already exists', async () => {
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'guest@example.com',
+      name: 'Guest User',
+      tenantId: 'tenant-from-token',
+      authMethod: 'google',
+      emailVerified: true,
+      firstName: 'Guest',
+      lastName: 'User',
+      verifiedAt: '2026-04-06T13:00:00.000Z',
+    });
+
     const result = await requireTenantContext({
       channelType: 'chatgpt',
       onboardingToken: 'onboarding-token-123',
@@ -100,6 +112,8 @@ describe('requireTenantContext', () => {
         session: expect.objectContaining({
           uid: 'session-user-1',
           tenantId: 'tenant-from-token',
+          authMethod: 'google',
+          emailVerified: true,
         }),
       })
     );

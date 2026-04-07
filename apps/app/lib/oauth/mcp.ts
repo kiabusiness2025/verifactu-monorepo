@@ -51,12 +51,30 @@ type AccessTokenPayload = {
   tenantId: string;
 };
 
+export type HoldedOnboardingAuthMethod = 'unknown' | 'google' | 'email';
+
 type HoldedOnboardingPayload = {
   type: 'mcp_holded_onboarding';
   uid: string;
   email: string | null;
   name: string | null;
   tenantId?: string | null;
+  authMethod?: HoldedOnboardingAuthMethod | null;
+  emailVerified?: boolean | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  verifiedAt?: string | null;
+};
+
+type HoldedEmailVerificationPayload = {
+  type: 'mcp_holded_email_verification';
+  uid: string;
+  email: string;
+  name?: string | null;
+  tenantId?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  returnUrl?: string | null;
 };
 
 export const MCP_TOOL_SCOPES = HOLDED_MCP_TOOL_SCOPES;
@@ -318,19 +336,59 @@ function buildHoldedGuestUid(seed: string) {
   return `holded-guest-${digest}`;
 }
 
+function normalizeOptionalTokenText(value?: string | null) {
+  const normalized = value?.trim();
+  return normalized ? normalized : undefined;
+}
+
+function buildHoldedOnboardingDisplayName(input: {
+  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  fallback: string;
+}) {
+  const explicit = normalizeOptionalTokenText(input.name);
+  if (explicit) return explicit;
+
+  const fromParts = [
+    normalizeOptionalTokenText(input.firstName),
+    normalizeOptionalTokenText(input.lastName),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+
+  return fromParts || input.fallback;
+}
+
 export async function mintHoldedOnboardingToken(input: {
   seed: string;
   email?: string | null;
   name?: string | null;
   tenantId?: string | null;
+  authMethod?: HoldedOnboardingAuthMethod | null;
+  emailVerified?: boolean | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  verifiedAt?: string | null;
 }) {
   return signSessionToken({
     payload: {
       type: 'mcp_holded_onboarding',
       uid: buildHoldedGuestUid(input.seed),
       email: input.email ?? null,
-      name: input.name ?? 'Isaak user',
-      tenantId: input.tenantId?.trim() || undefined,
+      name: buildHoldedOnboardingDisplayName({
+        name: input.name,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        fallback: 'Connector user',
+      }),
+      tenantId: normalizeOptionalTokenText(input.tenantId),
+      authMethod: input.authMethod ?? 'unknown',
+      emailVerified: input.emailVerified ?? false,
+      firstName: normalizeOptionalTokenText(input.firstName),
+      lastName: normalizeOptionalTokenText(input.lastName),
+      verifiedAt: normalizeOptionalTokenText(input.verifiedAt),
     } satisfies HoldedOnboardingPayload,
     secret: readOAuthSecret(),
     expiresIn: '2h',
@@ -342,14 +400,29 @@ export async function mintHoldedOnboardingTokenForSubject(input: {
   email?: string | null;
   name?: string | null;
   tenantId?: string | null;
+  authMethod?: HoldedOnboardingAuthMethod | null;
+  emailVerified?: boolean | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  verifiedAt?: string | null;
 }) {
   return signSessionToken({
     payload: {
       type: 'mcp_holded_onboarding',
       uid: input.uid,
       email: input.email ?? null,
-      name: input.name ?? 'Connector user',
-      tenantId: input.tenantId?.trim() || undefined,
+      name: buildHoldedOnboardingDisplayName({
+        name: input.name,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        fallback: 'Connector user',
+      }),
+      tenantId: normalizeOptionalTokenText(input.tenantId),
+      authMethod: input.authMethod ?? 'unknown',
+      emailVerified: input.emailVerified ?? false,
+      firstName: normalizeOptionalTokenText(input.firstName),
+      lastName: normalizeOptionalTokenText(input.lastName),
+      verifiedAt: normalizeOptionalTokenText(input.verifiedAt),
     } satisfies HoldedOnboardingPayload,
     secret: readOAuthSecret(),
     expiresIn: '2h',
@@ -361,6 +434,38 @@ export async function verifyHoldedOnboardingToken(token: string) {
 
   if (!payload || payload.type !== 'mcp_holded_onboarding') return null;
   return payload as HoldedOnboardingPayload & { exp?: number; iat?: number };
+}
+
+export async function mintHoldedEmailVerificationToken(input: {
+  uid: string;
+  email: string;
+  name?: string | null;
+  tenantId?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  returnUrl?: string | null;
+}) {
+  return signSessionToken({
+    payload: {
+      type: 'mcp_holded_email_verification',
+      uid: input.uid,
+      email: input.email.trim(),
+      name: normalizeOptionalTokenText(input.name),
+      tenantId: normalizeOptionalTokenText(input.tenantId),
+      firstName: normalizeOptionalTokenText(input.firstName),
+      lastName: normalizeOptionalTokenText(input.lastName),
+      returnUrl: normalizeOptionalTokenText(input.returnUrl),
+    } satisfies HoldedEmailVerificationPayload,
+    secret: readOAuthSecret(),
+    expiresIn: '45m',
+  });
+}
+
+export async function verifyHoldedEmailVerificationToken(token: string) {
+  const payload = await verifySessionToken(token, readOAuthSecret());
+
+  if (!payload || payload.type !== 'mcp_holded_email_verification') return null;
+  return payload as HoldedEmailVerificationPayload & { exp?: number; iat?: number };
 }
 
 export function verifyPkce(codeVerifier: string, expectedChallenge: string) {

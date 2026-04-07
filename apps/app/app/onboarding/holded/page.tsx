@@ -220,6 +220,15 @@ export default async function HoldedOnboardingPage({
       entryChannel={entryChannel}
       nextUrl={nextUrl}
       requireConnectionConfirmation={requireConnectionConfirmation}
+      requiresVerifiedIdentity={entryChannel === 'chatgpt' && !session?.uid}
+      identity={{
+        authMethod: onboardingSession?.authMethod ?? 'unknown',
+        email: normalizeText(onboardingSession?.email) || normalizeText(session?.email),
+        emailVerified: onboardingSession?.emailVerified === true || Boolean(session?.uid),
+        firstName: normalizeText(onboardingSession?.firstName),
+        lastName: normalizeText(onboardingSession?.lastName),
+        verifiedAt: normalizeText(onboardingSession?.verifiedAt),
+      }}
       summary={summary}
       companySetup={companySetup}
       onboardingToken={onboardingToken}

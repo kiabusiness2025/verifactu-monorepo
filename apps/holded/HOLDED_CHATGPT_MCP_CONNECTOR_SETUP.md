@@ -95,21 +95,27 @@ These are the exact values and explanations to paste when OpenAI asks for tool a
 
 ### 8. Public flow notes for current deployment
 
-The current public flow is direct:
+The current production flow remains direct:
 
-- no visible Google login
 - no visible classic signup
 - no visible tenant selector
 - ChatGPT can redirect to `https://app.verifactu.business/onboarding/holded?channel=chatgpt...`
-- the user completes a short form, pastes the Holded API key, and returns to OAuth
+- the user completes the currently deployed direct onboarding and returns to OAuth
+
+Important:
+
+- OAuth registration values do not change with the next UX wave
+- the next Phase 1 wave introduces identity-first onboarding, with optional Google or verified email before the step-by-step company/API flow
 
 Operational note:
 
 - support should use the `x-verifactu-request-id` header from `authorize`, `status`, `validate`, or `connect` when debugging mobile failures
 
-### 9. 2026-04-06 connector onboarding rewrite (public holded pages)
+### 9. 2026-04-06 connector onboarding rewrite and next wave
 
-The public onboarding flow was rewritten to reduce friction and eliminate duplicated or noisy copy.
+The already deployed rewrite reduced friction and eliminated duplicated copy.
+
+The next wave now started moves the public contract one step further.
 
 What changed:
 
@@ -117,6 +123,14 @@ What changed:
 - step 2 (`/onboarding/holded`): single form for company identity, contact identity, and API key
 - removed repeated validation/help text; only the official Holded API key help link is shown
 - consent copy simplified: by pressing `Validar y conectar`, user accepts terms and privacy
+
+What is being introduced next:
+
+- identity-first connector entry
+- `Continue with Google` as an optional shortcut
+- manual email verification before continuing when Google is not used
+- multi-step onboarding screens for full name, company/CIF, and Holded API key
+- final success screen plus welcome email after successful connect
 
 Mobile handoff hardening:
 

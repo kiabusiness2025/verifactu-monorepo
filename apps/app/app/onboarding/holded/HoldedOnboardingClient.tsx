@@ -1,6 +1,8 @@
 'use client';
 
+import { auth } from '@/lib/firebase';
 import { buildFullName, getPreferredFirstName } from '@/lib/personName';
+import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import Image from 'next/image';
 import {
   AlertCircle,
@@ -52,11 +54,40 @@ type TenantCreateResponse = {
   onboardingToken?: string | null;
 };
 
+type IdentityResponse = {
+  ok?: boolean;
+  error?: string | null;
+  detail?: string | null;
+  onboardingToken?: string | null;
+  identity?: {
+    authMethod?: 'unknown' | 'google' | 'email';
+    email?: string | null;
+    emailVerified?: boolean;
+    firstName?: string | null;
+    lastName?: string | null;
+    name?: string | null;
+    verifiedAt?: string | null;
+  } | null;
+};
+
+type OnboardingIdentityState = {
+  authMethod: 'unknown' | 'google' | 'email';
+  email: string | null;
+  emailVerified: boolean;
+  firstName: string | null;
+  lastName: string | null;
+  verifiedAt: string | null;
+};
+
+type DirectOnboardingStep = 'identity' | 'person' | 'company' | 'api' | 'success';
+
 type Props = {
   captureMode: boolean;
   entryChannel: 'dashboard' | 'chatgpt';
   nextUrl: string;
   requireConnectionConfirmation: boolean;
+  requiresVerifiedIdentity: boolean;
+  identity: OnboardingIdentityState;
   summary: HoldedOnboardingSummary;
   companySetup: HoldedCompanySetupState;
   onboardingToken?: string | null;
@@ -120,8 +151,9 @@ function buildConfirmedNextUrl(input: {
 
       if (normalizedOnboardingToken) {
         parsed.searchParams.set('onboarding_token', normalizedOnboardingToken);
-        parsed.searchParams.delete('tenant_id');
-      } else if (normalizedTenantIdHint) {
+      }
+
+      if (normalizedTenantIdHint) {
         parsed.searchParams.set('tenant_id', normalizedTenantIdHint);
       }
     }
@@ -136,23 +168,22 @@ const chatgptUiCopy = {
   eyebrow: 'Conector directo Holded + ChatGPT',
   title: 'Conecta tu empresa de Holded',
   intro:
-    'Esta pantalla valida tu API key de Holded, prepara la empresa y te devuelve a ChatGPT sin mostrarte login ni registro.',
+    'Empezamos confirmando tu identidad y, justo despues, validamos la API key de Holded para volver a ChatGPT.',
   security:
-    'La API key se valida en servidor y solo se usa para activar esta conexion temporal del conector de forma segura.',
+    'La identidad y la API key se validan en servidor y se guardan protegidas solo para esta conexion.',
   statusReady: 'Empresa preparada para conectar',
   statusLoading: 'Validando acceso y preparando la conexion',
   statusPending: 'Esperando tu API key de Holded',
   statusConnected: 'Conexion confirmada',
   checkingTitle: 'Estamos comprobando si ya existe una conexion valida',
   checkingDescription:
-    'Si ya tienes la API key, puedes pegarla ahora mismo. Esta comprobacion solo intenta evitar pasos duplicados antes de volver a ChatGPT.',
+    'Si ya existe una conexion valida, evitaremos repetir pasos antes de volver a ChatGPT.',
   savingDescription:
-    'No cierres esta ventana. Estamos validando la API key, resolviendo la empresa y preparando la vuelta a ChatGPT.',
+    'No cierres esta ventana. Estamos validando la API key y preparando la vuelta a ChatGPT.',
   successConnected: 'Conexion activada. Volvemos a ChatGPT.',
   submitLabel: 'Conectar Holded',
   apiKeyLabel: 'Clave API de Holded',
-  apiKeyHelp:
-    'Validaremos la API key y, si hace falta, completaremos los datos minimos de empresa para dejar listo el conector directo.',
+  apiKeyHelp: 'Solo necesitamos una API key activa para validar Holded y cerrar la conexion.',
   apiKeyPlaceholder: 'Pega aqui la API key de Holded para continuar',
   errorApiKeyEmpty: 'Necesitamos tu API key de Holded para completar esta conexion.',
   errorLoadFailed: 'No se pudo preparar la conexion con Holded.',
@@ -164,13 +195,13 @@ const chatgptUiCopy = {
   redirectDescription:
     'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
   helpSteps: [
-    'Abre Holded y entra en el area de API de tu empresa.',
-    'Copia una API key activa y pegala aqui.',
-    'La validaremos y dejaremos listo el retorno al flujo de ChatGPT.',
+    'Confirma tu identidad con Google o con un correo verificado.',
+    'Abre Holded y copia una API key activa de tu empresa.',
+    'Pegala aqui y volveremos a ChatGPT en cuanto la conexion quede lista.',
   ],
   savingMessages: [
     'Estamos validando tu API key de Holded.',
-    'Estamos resolviendo la empresa asociada a esta conexion.',
+    'Estamos dejando preparada la empresa asociada a esta conexion.',
     'En cuanto termine, volveras a ChatGPT automaticamente.',
   ],
 } as const;
@@ -178,24 +209,21 @@ const chatgptUiCopy = {
 const dashboardUiCopy = {
   eyebrow: 'Conexion Holded en Verifactu',
   title: 'Conecta tu empresa de Holded',
-  intro:
-    'Esta pantalla valida tu API key de Holded y deja preparada la conexion segura para tu espacio de Verifactu.',
-  security:
-    'La API key se valida en servidor y se guarda como conexion del tenant, sin depender del navegador para mantenerla activa.',
+  intro: 'Pega tu API key de Holded y dejaremos la conexion lista para tu espacio en Verifactu.',
+  security: 'La API key se valida en servidor y se guarda como conexion segura del tenant.',
   statusReady: 'Empresa preparada para conectar',
   statusLoading: 'Validando acceso y preparando la conexion',
   statusPending: 'Esperando tu API key de Holded',
   statusConnected: 'Conexion confirmada',
   checkingTitle: 'Estamos comprobando si ya existe una conexion valida',
   checkingDescription:
-    'Si ya tienes la API key, puedes pegarla ahora mismo. Esta comprobacion solo intenta evitar pasos duplicados dentro de Verifactu.',
+    'Si ya existe una conexion valida, evitaremos repetir pasos dentro de Verifactu.',
   savingDescription:
     'No cierres esta ventana. Estamos validando la API key y dejando la conexion lista para tu empresa.',
   successConnected: 'Conexion activada. Tu empresa ya esta lista.',
   submitLabel: 'Conectar Holded',
   apiKeyLabel: 'Clave API de tu ERP (Holded)',
-  apiKeyHelp:
-    'Tus datos se usan unicamente para activar la conexion de tu empresa. Podras desconectarla cuando quieras.',
+  apiKeyHelp: 'Solo necesitamos una API key activa para dejar lista la conexion de tu empresa.',
   apiKeyPlaceholder: 'Pega aqui la API key de Holded para continuar',
   errorApiKeyEmpty: 'Necesitamos tu API key de Holded para completar esta conexion.',
   errorLoadFailed: 'No se pudo preparar la conexion con Holded.',
@@ -207,9 +235,8 @@ const dashboardUiCopy = {
   redirectDescription:
     'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
   helpSteps: [
-    'Abre Holded y entra en el area de API de tu empresa.',
-    'Copia una API key activa y pegala aqui.',
-    'La validaremos y dejaremos lista la conexion para tu tenant de Verifactu.',
+    'Abre Holded y copia una API key activa de tu empresa.',
+    'Pegala aqui y dejaremos lista la conexion para tu tenant de Verifactu.',
   ],
   savingMessages: [
     'Estamos validando tu API key de Holded.',
@@ -219,15 +246,15 @@ const dashboardUiCopy = {
 } as const;
 
 const chatgptHighlights = [
-  'Sin login visible ni registro en este paso.',
-  'Validacion segura de API key en servidor.',
-  'Vuelta automatica al flujo de ChatGPT.',
+  'Sin login visible.',
+  'Clave validada en servidor.',
+  'Vuelta automatica a ChatGPT.',
 ] as const;
 
 const dashboardHighlights = [
-  'Conexion guardada server-side para tu tenant.',
-  'Sin duplicar la clave en pasos intermedios.',
-  'Podras gestionarla despues desde integraciones.',
+  'Conexion guardada en servidor para tu tenant.',
+  'Sin repetir la clave en pasos intermedios.',
+  'Gestionable despues desde integraciones.',
 ] as const;
 
 export default function HoldedOnboardingClient({
@@ -235,12 +262,15 @@ export default function HoldedOnboardingClient({
   entryChannel,
   nextUrl,
   requireConnectionConfirmation,
+  requiresVerifiedIdentity,
+  identity,
   summary,
   companySetup,
   onboardingToken = null,
   tenantIdHint = null,
 }: Props) {
   const isChatgptEntry = entryChannel === 'chatgpt';
+  const usesDirectStepFlow = isChatgptEntry;
   const needsPostValidationCompanyStep = isChatgptEntry;
   const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
   const uiHighlights = isChatgptEntry ? chatgptHighlights : dashboardHighlights;
@@ -277,16 +307,30 @@ export default function HoldedOnboardingClient({
   const [redirecting, setRedirecting] = useState(false);
   const [redirectTarget, setRedirectTarget] = useState(nextUrl);
   const [activeOnboardingToken, setActiveOnboardingToken] = useState(onboardingToken);
+  const [identityState, setIdentityState] = useState(identity);
+  const [manualEmail, setManualEmail] = useState(identity.email ?? summary.contactEmail ?? '');
+  const [identitySubmitting, setIdentitySubmitting] = useState(false);
+  const [identityMessage, setIdentityMessage] = useState<string | null>(null);
+  const [identityError, setIdentityError] = useState<string | null>(null);
+  const [directStep, setDirectStep] = useState<DirectOnboardingStep>(
+    requiresVerifiedIdentity && !identity.emailVerified ? 'identity' : 'person'
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const acceptedTerms = true;
+  const acceptedPrivacy = true;
   const initialTenantIdHint = tenantIdHint?.trim() || null;
-  const showApiStep = !needsPostValidationCompanyStep || !apiValidated;
+  const verifiedIdentityReady =
+    !requiresVerifiedIdentity || (identityState.emailVerified && !!identityState.email);
+  const showIdentityGate = requiresVerifiedIdentity && !verifiedIdentityReady;
+  const showApiStep = !showIdentityGate && (!needsPostValidationCompanyStep || !apiValidated);
   const hideResolvedCompanyUntilApiValidation = needsPostValidationCompanyStep && !apiValidated;
   const companyStepPending =
-    needsPostValidationCompanyStep && apiValidated && (showCompanyForm || !companyConfirmed);
+    !showIdentityGate &&
+    needsPostValidationCompanyStep &&
+    apiValidated &&
+    (showCompanyForm || !companyConfirmed);
   const showCompanyLegalName =
     !!resolvedSummary.companyLegalName &&
     resolvedSummary.companyLegalName.trim().toLowerCase() !==
@@ -296,6 +340,7 @@ export default function HoldedOnboardingClient({
     resolvedSummary.companyEmail.trim() !== (resolvedSummary.contactEmail || '').trim();
   const canContinueWithExistingConnection =
     !!status?.connected &&
+    !showIdentityGate &&
     !needsPostValidationCompanyStep &&
     requireConnectionConfirmation &&
     companyConfirmed &&
@@ -311,20 +356,27 @@ export default function HoldedOnboardingClient({
     !!normalizeText(contactFirstName) &&
     !!normalizeText(contactLastName) &&
     !!normalizeText(contactEmail);
+  const canContinuePersonStep =
+    !!normalizeText(contactFirstName) && !!normalizeText(contactLastName);
+  const canContinueCompanyStep = !!normalizeText(companyLegalName) && !!normalizeText(companyTaxId);
+  const stepContactEmail = normalizeText(contactEmail) || normalizeText(identityState.email);
+  const currentDirectFullName =
+    buildFullName({ firstName: contactFirstName, lastName: contactLastName }) ||
+    resolvedSummary.contactFullName;
+  const currentDirectCompanyName = normalizeText(companyLegalName) || resolvedSummary.companyName;
   const apiKeyHelp = reusesStoredCompanyData
-    ? 'Validaremos la API key y, si todo encaja, dejaremos la conexion directa cerrada sin pasos visibles extra.'
+    ? 'Validaremos la API key y cerraremos la conexion sin pasos visibles extra.'
     : uiCopy.apiKeyHelp;
   const helpSteps = reusesStoredCompanyData
     ? [
-        'Entra en Holded y abre el area de API.',
-        'Copia una API key activa de tu empresa.',
-        'Pegala aqui y terminaremos la conexion directa con Holded para devolverte al flujo original.',
+        'Abre Holded y copia una API key activa de tu empresa.',
+        'Pegala aqui y terminaremos la conexion para devolverte al flujo original.',
       ]
     : usesInlineDirectForm
       ? [
-          'Completa tus datos de contacto y empresa.',
-          'Copia una API key activa de tu empresa en Holded.',
-          'La validaremos y dejaremos la conexion lista para volver a ChatGPT.',
+          'Completa empresa y contacto.',
+          'Pega una API key activa de Holded.',
+          'Validaremos la conexion y volveremos al flujo original.',
         ]
       : uiCopy.helpSteps;
   const redirectDescription = captureMode
@@ -338,19 +390,62 @@ export default function HoldedOnboardingClient({
           ? 'Validar y conectar Holded'
           : 'Validar API key'
       : uiCopy.submitLabel;
-  const personalizedLead = !showApiStep
-    ? reusesStoredCompanyData
-      ? `${resolvedSummary.contactFirstName}, ya hemos resuelto internamente la empresa y estamos cerrando la conexion directa con Holded.`
-      : `${resolvedSummary.contactFirstName}, ahora solo necesitamos confirmar los datos minimos de empresa y contacto para terminar la conexion.`
-    : hideResolvedCompanyUntilApiValidation
+  const personalizedLead = showIdentityGate
+    ? identityState.authMethod === 'email' && identityState.email
+      ? `Antes de seguir, confirma el correo ${identityState.email} para desbloquear la conexion directa con Holded.`
+      : 'Antes de pedir la API key, necesitamos identificarte con Google o confirmar tu correo.'
+    : !showApiStep
       ? reusesStoredCompanyData
-        ? 'Primero validaremos tu API key y, si es correcta, cerraremos la conexion directa sin pasos manuales extra.'
-        : usesInlineDirectForm
-          ? 'Completa este formulario directo con tu empresa y tu API key de Holded. Nosotros resolvemos el resto sin mostrarte login ni registro.'
-          : 'Primero validaremos tu API key. Solo si hace falta te pediremos confirmar los datos de empresa asociados a la conexion.'
-      : isChatgptEntry
-        ? `${resolvedSummary.contactFirstName}, validaremos tu API key y dejaremos lista la conexion directa con Holded para volver a ChatGPT.`
-        : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName} dentro de Verifactu.`;
+        ? `${resolvedSummary.contactFirstName}, ya hemos resuelto internamente la empresa y estamos cerrando la conexion directa con Holded.`
+        : `${resolvedSummary.contactFirstName}, ahora solo necesitamos confirmar los datos minimos de empresa y contacto para terminar la conexion.`
+      : hideResolvedCompanyUntilApiValidation
+        ? reusesStoredCompanyData
+          ? 'Primero validaremos tu API key y, si es correcta, cerraremos la conexion directa sin pasos manuales extra.'
+          : usesInlineDirectForm
+            ? 'Completa este formulario directo con tu empresa y tu API key de Holded. Nosotros resolvemos el resto sin mostrarte login ni registro.'
+            : 'Primero validaremos tu API key. Solo si hace falta te pediremos confirmar los datos de empresa asociados a la conexion.'
+        : isChatgptEntry
+          ? `${resolvedSummary.contactFirstName}, validaremos tu API key y dejaremos lista la conexion directa con Holded para volver a ChatGPT.`
+          : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName} dentro de Verifactu.`;
+
+  useEffect(() => {
+    if (identity.email && !identityState.email) {
+      setIdentityState(identity);
+    }
+  }, [identity, identityState.email]);
+
+  useEffect(() => {
+    if (!usesDirectStepFlow) return;
+
+    if (showIdentityGate) {
+      setDirectStep('identity');
+      return;
+    }
+
+    setDirectStep((current) => (current === 'identity' ? 'person' : current));
+  }, [showIdentityGate, usesDirectStepFlow]);
+
+  useEffect(() => {
+    if (identityState.email && !contactEmail) {
+      setContactEmail(identityState.email);
+    }
+
+    if (identityState.firstName && !contactFirstName) {
+      setContactFirstName(identityState.firstName);
+    }
+
+    if (identityState.lastName && !contactLastName) {
+      setContactLastName(identityState.lastName);
+    }
+  }, [contactEmail, contactFirstName, contactLastName, identityState]);
+
+  useEffect(() => {
+    if (!usesDirectStepFlow) return;
+
+    if (identityState.email && !manualEmail) {
+      setManualEmail(identityState.email);
+    }
+  }, [identityState.email, manualEmail, usesDirectStepFlow]);
 
   const resolveConfirmedNextUrl = useCallback(
     (overrides?: { onboardingToken?: string | null; tenantIdHint?: string | null }) => {
@@ -380,6 +475,21 @@ export default function HoldedOnboardingClient({
   );
 
   const confirmedNextUrl = useMemo(() => resolveConfirmedNextUrl(), [resolveConfirmedNextUrl]);
+  const directStepItems: Array<{ key: Exclude<DirectOnboardingStep, 'success'>; label: string }> = [
+    { key: 'identity', label: 'Identidad' },
+    { key: 'person', label: 'Persona' },
+    { key: 'company', label: 'Empresa' },
+    { key: 'api', label: 'API key' },
+  ];
+  const directStepIndex = showIdentityGate
+    ? 0
+    : directStep === 'person'
+      ? 1
+      : directStep === 'company'
+        ? 2
+        : directStep === 'api'
+          ? 3
+          : 4;
 
   const loadStatus = useCallback(
     async (signal?: AbortSignal) => {
@@ -398,6 +508,7 @@ export default function HoldedOnboardingClient({
   );
 
   const statusLabel = useMemo(() => {
+    if (showIdentityGate) return 'Pendiente de verificar identidad';
     if (needsPostValidationCompanyStep && !apiValidated) return 'Pendiente de validar API key';
     if (showCompanyForm) return 'Pendiente de datos de empresa';
     if (!companyConfirmed) return 'Pendiente de confirmar empresa';
@@ -411,6 +522,7 @@ export default function HoldedOnboardingClient({
     loading,
     needsPostValidationCompanyStep,
     redirecting,
+    showIdentityGate,
     showCompanyForm,
     status?.connected,
     uiCopy.statusConnected,
@@ -460,7 +572,48 @@ export default function HoldedOnboardingClient({
     resetForFreshApiValidation();
   }, [resetForFreshApiValidation]);
 
+  const goToDirectStep = useCallback((step: DirectOnboardingStep) => {
+    setError(null);
+    setMessage(null);
+    setDirectStep(step);
+  }, []);
+
+  const handleDirectNextFromPerson = useCallback(() => {
+    if (!canContinuePersonStep) {
+      setError('Necesitamos nombre y apellidos para continuar.');
+      return;
+    }
+
+    goToDirectStep('company');
+  }, [canContinuePersonStep, goToDirectStep]);
+
+  const handleDirectNextFromCompany = useCallback(() => {
+    if (!canContinueCompanyStep) {
+      setError('Necesitamos empresa y CIF/NIF para continuar.');
+      return;
+    }
+
+    goToDirectStep('api');
+  }, [canContinueCompanyStep, goToDirectStep]);
+
   const handleHeaderBack = useCallback(() => {
+    if (usesDirectStepFlow && !redirecting) {
+      if (directStep === 'company') {
+        goToDirectStep('person');
+        return;
+      }
+
+      if (directStep === 'api') {
+        goToDirectStep('company');
+        return;
+      }
+
+      if (directStep === 'success') {
+        goToDirectStep('api');
+        return;
+      }
+    }
+
     if (companyStepPending) {
       returnToApiStep();
       return;
@@ -472,7 +625,16 @@ export default function HoldedOnboardingClient({
     }
 
     window.location.assign(isChatgptEntry ? CHATGPT_HOME_URL : nextUrl || HOLDED_COMPAT_URL);
-  }, [companyStepPending, isChatgptEntry, nextUrl, returnToApiStep]);
+  }, [
+    companyStepPending,
+    directStep,
+    goToDirectStep,
+    isChatgptEntry,
+    nextUrl,
+    redirecting,
+    returnToApiStep,
+    usesDirectStepFlow,
+  ]);
 
   useEffect(() => {
     if (!saving) {
@@ -488,7 +650,7 @@ export default function HoldedOnboardingClient({
   }, [saving, savingMessages]);
 
   useEffect(() => {
-    if (needsPostValidationCompanyStep || companyStepPending) {
+    if (showIdentityGate || needsPostValidationCompanyStep || companyStepPending) {
       setLoading(false);
       return;
     }
@@ -537,11 +699,12 @@ export default function HoldedOnboardingClient({
     needsPostValidationCompanyStep,
     nextUrl,
     requireConnectionConfirmation,
+    showIdentityGate,
     uiCopy.errorLoadFailed,
   ]);
 
   const handleRetryStatus = async () => {
-    if (needsPostValidationCompanyStep || companyStepPending) return;
+    if (showIdentityGate || needsPostValidationCompanyStep || companyStepPending) return;
 
     setLoading(true);
     setError(null);
@@ -558,15 +721,22 @@ export default function HoldedOnboardingClient({
     }
   };
 
-  const validateApiKey = async () => {
-    const requestTenantIdHint = selectedTenantId ?? initialTenantIdHint;
+  const validateApiKey = async (
+    requestTenantIdHint?: string | null,
+    onboardingTokenHint?: string | null
+  ) => {
+    const effectiveTenantIdHint = requestTenantIdHint ?? selectedTenantId ?? initialTenantIdHint;
+    const effectiveOnboardingToken =
+      onboardingTokenHint === undefined ? activeOnboardingToken : onboardingTokenHint;
     const res = await fetch('/api/integrations/accounting/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-isaak-entry-channel': entryChannel,
-        ...(requestTenantIdHint ? { 'x-isaak-tenant-id': requestTenantIdHint } : {}),
-        ...(activeOnboardingToken ? { 'x-holded-onboarding-token': activeOnboardingToken } : {}),
+        ...(effectiveTenantIdHint ? { 'x-isaak-tenant-id': effectiveTenantIdHint } : {}),
+        ...(effectiveOnboardingToken
+          ? { 'x-holded-onboarding-token': effectiveOnboardingToken }
+          : {}),
       },
       body: JSON.stringify({
         apiKey: normalizedApiKey,
@@ -656,7 +826,7 @@ export default function HoldedOnboardingClient({
     return data;
   };
 
-  const createTenantAndConnect = async (validationTokenHint?: string | null) => {
+  const prepareTenantForConnection = async () => {
     const normalizedLegalName = normalizeText(companyLegalName);
     const normalizedCompanyName = normalizedLegalName;
     const normalizedTaxId = normalizeText(companyTaxId).toUpperCase();
@@ -666,7 +836,7 @@ export default function HoldedOnboardingClient({
       firstName: normalizedContactFirstName,
       lastName: normalizedContactLastName,
     });
-    const normalizedContactEmail = normalizeText(contactEmail);
+    const normalizedContactEmail = stepContactEmail;
     const normalizedContactPhone = normalizeText(contactPhone);
 
     if (
@@ -764,12 +934,22 @@ export default function HoldedOnboardingClient({
       contactPhone: normalizedContactPhone || null,
     });
 
-    await connectValidatedApi(nextTenantId, validationTokenHint, nextOnboardingToken);
-
     return {
       tenantId: nextTenantId,
       onboardingToken: nextOnboardingToken,
     };
+  };
+
+  const createTenantAndConnect = async (validationTokenHint?: string | null) => {
+    const preparedTenant = await prepareTenantForConnection();
+
+    await connectValidatedApi(
+      preparedTenant.tenantId,
+      validationTokenHint,
+      preparedTenant.onboardingToken
+    );
+
+    return preparedTenant;
   };
 
   const handleCompanySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -806,12 +986,12 @@ export default function HoldedOnboardingClient({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!normalizedApiKey) {
-      setError(uiCopy.errorApiKeyEmpty);
+    if (showIdentityGate) {
+      setError('Debes verificar tu identidad antes de continuar.');
       return;
     }
-    if (!acceptedTerms || !acceptedPrivacy) {
-      setError('Necesitamos tu aceptacion de Terminos y Politica de Privacidad para continuar.');
+    if (!normalizedApiKey) {
+      setError(uiCopy.errorApiKeyEmpty);
       return;
     }
 
@@ -866,6 +1046,184 @@ export default function HoldedOnboardingClient({
       await connectValidatedApi();
       setMessage(uiCopy.successConnected);
       goToNextStep(confirmedNextUrl);
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : uiCopy.errorConnectFailed);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleContinueWithGoogle = async () => {
+    if (!activeOnboardingToken) {
+      setIdentityError('No hemos podido recuperar la sesion temporal del conector.');
+      return;
+    }
+
+    setIdentitySubmitting(true);
+    setIdentityError(null);
+    setIdentityMessage(null);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      const result = await signInWithPopup(auth, provider);
+      const idToken = await result.user.getIdToken();
+      const response = await fetch('/api/onboarding/identity/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-holded-onboarding-token': activeOnboardingToken,
+        },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = (await response.json().catch(() => null)) as IdentityResponse | null;
+
+      if (!response.ok || !data?.ok || !data.identity?.email) {
+        throw new Error(
+          data?.detail || data?.error || 'No hemos podido verificar tu identidad con Google.'
+        );
+      }
+
+      const nextIdentity: OnboardingIdentityState = {
+        authMethod: data.identity.authMethod ?? 'google',
+        email: data.identity.email ?? null,
+        emailVerified: data.identity.emailVerified === true,
+        firstName: data.identity.firstName ?? null,
+        lastName: data.identity.lastName ?? null,
+        verifiedAt: data.identity.verifiedAt ?? null,
+      };
+
+      setIdentityState(nextIdentity);
+      setManualEmail(data.identity.email || '');
+      if (data.onboardingToken) {
+        setActiveOnboardingToken(data.onboardingToken);
+      }
+      setIdentityMessage('Identidad confirmada con Google. Ya puedes continuar con la API key.');
+    } catch (identityRequestError) {
+      setIdentityError(
+        identityRequestError instanceof Error
+          ? identityRequestError.message
+          : 'No hemos podido verificar tu identidad con Google.'
+      );
+    } finally {
+      await signOut(auth).catch(() => undefined);
+      setIdentitySubmitting(false);
+    }
+  };
+
+  const handleSendVerificationEmail = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!activeOnboardingToken) {
+      setIdentityError('No hemos podido recuperar la sesion temporal del conector.');
+      return;
+    }
+
+    const normalizedEmail = normalizeText(manualEmail).toLowerCase();
+    if (!normalizedEmail) {
+      setIdentityError('Necesitamos un correo para enviarte el enlace de verificacion.');
+      return;
+    }
+
+    setIdentitySubmitting(true);
+    setIdentityError(null);
+    setIdentityMessage(null);
+
+    try {
+      const response = await fetch('/api/onboarding/identity/email/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-holded-onboarding-token': activeOnboardingToken,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          returnUrl: window.location.href,
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as IdentityResponse | null;
+
+      if (!response.ok || !data?.ok) {
+        throw new Error(
+          data?.detail || data?.error || 'No hemos podido enviar el correo de verificacion.'
+        );
+      }
+
+      setIdentityState((current) => ({
+        ...current,
+        authMethod: 'email',
+        email: data.identity?.email ?? normalizedEmail,
+        emailVerified: false,
+      }));
+      if (data.onboardingToken) {
+        setActiveOnboardingToken(data.onboardingToken);
+      }
+      setManualEmail(data.identity?.email ?? normalizedEmail);
+      setIdentityMessage(
+        'Te hemos enviado un enlace de verificacion. Abre ese correo y volveras aqui con la identidad confirmada.'
+      );
+    } catch (identityRequestError) {
+      setIdentityError(
+        identityRequestError instanceof Error
+          ? identityRequestError.message
+          : 'No hemos podido enviar el correo de verificacion.'
+      );
+    } finally {
+      setIdentitySubmitting(false);
+    }
+  };
+
+  const handleDirectApiSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (showIdentityGate) {
+      setError('Debes verificar tu identidad antes de continuar.');
+      return;
+    }
+
+    if (!canContinuePersonStep) {
+      goToDirectStep('person');
+      setError('Necesitamos nombre y apellidos para continuar.');
+      return;
+    }
+
+    if (!canContinueCompanyStep) {
+      goToDirectStep('company');
+      setError('Necesitamos empresa y CIF/NIF para continuar.');
+      return;
+    }
+
+    if (!normalizedApiKey) {
+      setError(uiCopy.errorApiKeyEmpty);
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const preparedTenant = await prepareTenantForConnection();
+      const validation = await validateApiKey(
+        preparedTenant.tenantId,
+        preparedTenant.onboardingToken
+      );
+
+      await connectValidatedApi(
+        preparedTenant.tenantId,
+        validation?.validationToken || null,
+        preparedTenant.onboardingToken
+      );
+
+      setMessage(uiCopy.successConnected);
+      setDirectStep('success');
+      goToNextStep(
+        resolveConfirmedNextUrl({
+          onboardingToken: preparedTenant.onboardingToken,
+          tenantIdHint: preparedTenant.tenantId,
+        })
+      );
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : uiCopy.errorConnectFailed);
     } finally {
@@ -934,501 +1292,898 @@ export default function HoldedOnboardingClient({
               ))}
             </div>
 
-            <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-              {companyStepPending ? (
-                <div>
-                  <div className="text-sm font-semibold text-black">
-                    Datos de empresa y contacto
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-neutral-700">
-                    {reusesStoredCompanyData
-                      ? 'La API key ya es valida. Revisa solo los datos minimos de empresa y contacto antes de terminar la conexion.'
-                      : 'La API key ya es valida. Ahora necesitamos guardar los datos minimos de empresa y contacto para dejar la conexion cerrada correctamente.'}
-                  </p>
+            {usesDirectStepFlow ? (
+              <>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {directStepItems.map((step, index) => {
+                    const active = directStepIndex === index;
+                    const completed = directStepIndex > index;
 
-                  <form onSubmit={handleCompanySubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label className="block text-sm font-medium text-neutral-700">
-                      Razon social
-                      <input
-                        type="text"
-                        value={companyLegalName}
-                        onChange={(event) => setCompanyLegalName(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="Tu empresa, S.L."
-                        autoComplete="organization"
-                      />
-                    </label>
-                    <label className="block text-sm font-medium text-neutral-700">
-                      NIF / CIF
-                      <input
-                        type="text"
-                        value={companyTaxId}
-                        onChange={(event) => setCompanyTaxId(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="B12345678"
-                        autoComplete="off"
-                      />
-                    </label>
-                    <label className="block text-sm font-medium text-neutral-700">
-                      Nombre
-                      <input
-                        type="text"
-                        value={contactFirstName}
-                        onChange={(event) => setContactFirstName(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="Nombre"
-                        autoComplete="given-name"
-                      />
-                    </label>
-                    <label className="block text-sm font-medium text-neutral-700">
-                      Apellidos
-                      <input
-                        type="text"
-                        value={contactLastName}
-                        onChange={(event) => setContactLastName(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="Apellidos"
-                        autoComplete="family-name"
-                      />
-                    </label>
-                    <label className="block text-sm font-medium text-neutral-700">
-                      Correo principal en Holded
-                      <input
-                        type="email"
-                        value={contactEmail}
-                        onChange={(event) => setContactEmail(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="nombre@empresa.com"
-                        autoComplete="email"
-                      />
-                    </label>
-                    <label className="block text-sm font-medium text-neutral-700">
-                      Telefono
-                      <input
-                        type="tel"
-                        value={contactPhone}
-                        onChange={(event) => setContactPhone(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="600 000 000"
-                        autoComplete="tel"
-                      />
-                    </label>
-                    <div className="sm:col-span-2 flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        onClick={returnToApiStep}
-                        disabled={companySaving}
-                        className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    return (
+                      <div
+                        key={step.key}
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                          active
+                            ? 'border-[#0b6cfb] bg-[#f3f8ff] text-[#0b214a]'
+                            : completed
+                              ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                              : 'border-neutral-200 bg-white text-neutral-500'
+                        }`}
                       >
-                        Volver a la API key
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={companySaving}
-                        className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {companySaving ? 'Guardando...' : 'Guardar datos y terminar conexion'}
-                      </button>
-                    </div>
-                  </form>
-
-                  {companyMessage ? (
-                    <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-                      <span>{companyMessage}</span>
-                    </div>
-                  ) : null}
-
-                  {companyError ? (
-                    <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                      <span>{companyError}</span>
-                    </div>
-                  ) : null}
+                        <span
+                          className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${
+                            active
+                              ? 'bg-[#0b6cfb] text-white'
+                              : completed
+                                ? 'bg-emerald-700 text-white'
+                                : 'bg-neutral-200 text-neutral-700'
+                          }`}
+                        >
+                          {completed ? '✓' : index + 1}
+                        </span>
+                        {step.label}
+                      </div>
+                    );
+                  })}
                 </div>
-              ) : hideResolvedCompanyUntilApiValidation ? (
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#d9e6ff] bg-white shadow-sm">
-                    <Image
-                      src="/brand/holded/holded-diamond-logo.png"
-                      alt="Holded"
-                      width={20}
-                      height={20}
-                      className="h-5 w-5"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-black">
-                      {usesInlineDirectForm
-                        ? 'Formulario directo del conector'
-                        : 'Primero valida tu API key'}
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-neutral-700">
-                      {usesInlineDirectForm
-                        ? 'Completa tus datos y la API key de Holded en este mismo formulario. Validaremos la conexion y prepararemos la empresa internamente sin mostrarte login ni registro.'
-                        : 'Antes de mostrar o confirmar ninguna empresa, necesitamos comprobar que la API key corresponde a una conexion real y utilizable de Holded.'}
-                    </p>
-                    <div className="mt-3 text-sm text-neutral-700">
-                      Estado: <span className="font-semibold text-black">{statusLabel}</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#d9e6ff] bg-white shadow-sm">
-                    <Image
-                      src="/brand/holded/holded-diamond-logo.png"
-                      alt="Holded"
-                      width={20}
-                      height={20}
-                      className="h-5 w-5"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-black">{uiCopy.statusReady}</div>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                          Empresa
+
+                <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+                  {showIdentityGate ? (
+                    <div>
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#d9e6ff] bg-white shadow-sm">
+                          <ShieldCheck className="h-5 w-5 text-[#0b6cfb]" />
                         </div>
-                        <div className="mt-1 text-sm font-semibold text-black">
-                          {resolvedSummary.companyName}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-black">
+                            Paso 1: verifica tu identidad
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-neutral-700">
+                            Este conector directo ya no empieza por la API key. Primero confirmamos
+                            si entras con Google o con un correo verificado, y despues seguimos con
+                            Holded.
+                          </p>
+                          <div className="mt-3 text-sm text-neutral-700">
+                            Estado: <span className="font-semibold text-black">{statusLabel}</span>
+                          </div>
                         </div>
                       </div>
-                      {showCompanyLegalName ? (
-                        <div>
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                            Razon social
-                          </div>
-                          <div className="mt-1 text-sm text-neutral-700">
-                            {resolvedSummary.companyLegalName}
-                          </div>
-                        </div>
-                      ) : null}
-                      {resolvedSummary.companyTaxId ? (
-                        <div>
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                            NIF / CIF
-                          </div>
-                          <div className="mt-1 text-sm text-neutral-700">
-                            {resolvedSummary.companyTaxId}
-                          </div>
-                        </div>
-                      ) : null}
-                      {resolvedSummary.contactFullName ? (
-                        <div>
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                            Persona de contacto
-                          </div>
-                          <div className="mt-1 text-sm text-neutral-700">
-                            {resolvedSummary.contactFullName}
-                          </div>
-                        </div>
-                      ) : null}
-                      {resolvedSummary.contactEmail ? (
-                        <div>
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                            Correo de acceso
-                          </div>
-                          <div className="mt-1 break-all text-sm text-neutral-700">
-                            {resolvedSummary.contactEmail}
-                          </div>
-                        </div>
-                      ) : null}
-                      {showCompanyEmail ? (
-                        <div>
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                            Correo de empresa
-                          </div>
-                          <div className="mt-1 break-all text-sm text-neutral-700">
-                            {resolvedSummary.companyEmail}
-                          </div>
-                        </div>
-                      ) : null}
-                      {resolvedSummary.contactPhone ? (
-                        <div>
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                            Telefono
-                          </div>
-                          <div className="mt-1 text-sm text-neutral-700">
-                            {resolvedSummary.contactPhone}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                    <div className="mt-3 text-sm text-neutral-700">
-                      Estado: <span className="font-semibold text-black">{statusLabel}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {!companyStepPending && status?.degraded ? (
-                <div className="mt-2 text-sm text-amber-700">{uiCopy.degraded}</div>
-              ) : null}
-            </div>
 
-            {!needsPostValidationCompanyStep &&
-            !companyStepPending &&
-            loading &&
-            !saving &&
-            !redirecting ? (
-              <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#f7fbff_0%,#ffffff_52%,#fff7f8_100%)] p-4 sm:p-5">
-                <div className="grid gap-4 sm:grid-cols-[156px_minmax(0,1fr)] sm:items-center">
-                  <HoldedStatusVisual eyebrow="Conexion segura" title="Comprobando acceso" />
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
-                      Conexion en progreso
-                    </div>
-                    <div className="mt-2 text-base font-semibold text-black">
-                      {uiCopy.checkingTitle}
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-neutral-700">
-                      {uiCopy.checkingDescription}
-                    </p>
-                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-neutral-200">
-                      <div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-[#0b6cfb]" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={handleContinueWithGoogle}
+                          disabled={identitySubmitting}
+                          className="inline-flex min-h-[56px] items-center justify-center gap-3 rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-left text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f8ff] text-[#0b6cfb]">
+                            G
+                          </span>
+                          Continuar con Google
+                        </button>
 
-            {!companyStepPending && redirecting ? (
-              <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#fff8f8_0%,#ffffff_52%,#f7fbff_100%)] p-4 sm:p-5">
-                <div className="grid gap-4 sm:grid-cols-[156px_minmax(0,1fr)] sm:items-center">
-                  <HoldedStatusVisual eyebrow="Conexion lista" title="Ultimo paso" />
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
-                      Ultimo paso
-                    </div>
-                    <div className="mt-2 text-base font-semibold text-black">
-                      {uiCopy.redirectTitle}
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-neutral-700">{redirectDescription}</p>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <a
-                        href={redirectTarget}
-                        className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
-                      >
-                        Continuar
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
+                        <form
+                          onSubmit={handleSendVerificationEmail}
+                          className="rounded-2xl border border-neutral-300 bg-white p-3 shadow-sm"
+                        >
+                          <label className="block text-sm font-medium text-neutral-700">
+                            Continuar con correo
+                            <input
+                              type="email"
+                              value={manualEmail}
+                              onChange={(event) => setManualEmail(event.target.value)}
+                              placeholder="tu@empresa.com"
+                              autoComplete="email"
+                              className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            />
+                          </label>
+                          <button
+                            type="submit"
+                            disabled={identitySubmitting || !normalizeText(manualEmail)}
+                            className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {identityState.authMethod === 'email' &&
+                            identityState.email === normalizeText(manualEmail).toLowerCase()
+                              ? 'Reenviar enlace de verificacion'
+                              : 'Enviar enlace de verificacion'}
+                          </button>
+                        </form>
+                      </div>
 
-            {!companyStepPending && !redirecting ? (
-              canContinueWithExistingConnection ? (
-                <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-                  <div className="space-y-3">
-                    <span className="block">
-                      Ya detectamos una conexion activa de Holded para esta empresa. Si quieres
-                      usarla tal cual, puedes continuar ahora mismo.
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => goToNextStep(confirmedNextUrl)}
-                      className="rounded-full bg-emerald-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800"
+                      {identityState.authMethod === 'email' && identityState.email ? (
+                        <div className="mt-4 rounded-2xl border border-[#d9e6ff] bg-[#f7fbff] px-4 py-3 text-sm text-[#0b214a]">
+                          Hemos dejado preparado el correo <strong>{identityState.email}</strong>.
+                          En cuanto abras el enlace de verificacion, volveras a este flujo y se
+                          desbloqueara el siguiente paso.
+                        </div>
+                      ) : null}
+
+                      {identityMessage ? (
+                        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>{identityMessage}</span>
+                        </div>
+                      ) : null}
+
+                      {identityError ? (
+                        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>{identityError}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : directStep === 'person' ? (
+                    <form
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        handleDirectNextFromPerson();
+                      }}
+                      className="space-y-4"
                     >
-                      Continuar con esta empresa
-                    </button>
-                  </div>
+                      <div>
+                        <div className="text-sm font-semibold text-black">Paso 2: quien eres</div>
+                        <p className="mt-2 text-sm leading-6 text-neutral-700">
+                          Queremos dejar tu nombre listo para la bienvenida, el correo final y la
+                          empresa que se conecte a Holded.
+                        </p>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Nombre
+                          <input
+                            type="text"
+                            value={contactFirstName}
+                            onChange={(event) => setContactFirstName(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Nombre"
+                            autoComplete="given-name"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Apellidos
+                          <input
+                            type="text"
+                            value={contactLastName}
+                            onChange={(event) => setContactLastName(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Apellidos"
+                            autoComplete="family-name"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="rounded-2xl border border-[#d9e6ff] bg-[#f7fbff] px-4 py-3 text-sm text-[#0b214a]">
+                        Correo verificado: <strong>{stepContactEmail || 'pendiente'}</strong>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="submit"
+                          disabled={!canContinuePersonStep}
+                          className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Continuar con empresa
+                        </button>
+                      </div>
+                    </form>
+                  ) : directStep === 'company' ? (
+                    <form
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        handleDirectNextFromCompany();
+                      }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <div className="text-sm font-semibold text-black">
+                          Paso 3: datos de empresa
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-neutral-700">
+                          Solo necesitamos los datos minimos de la empresa para crear o reusar el
+                          tenant correcto antes de tocar la API key.
+                        </p>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
+                          Razon social
+                          <input
+                            type="text"
+                            value={companyLegalName}
+                            onChange={(event) => setCompanyLegalName(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Tu empresa, S.L."
+                            autoComplete="organization"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          CIF / NIF
+                          <input
+                            type="text"
+                            value={companyTaxId}
+                            onChange={(event) => setCompanyTaxId(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="B12345678"
+                            autoComplete="off"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Telefono
+                          <input
+                            type="tel"
+                            value={contactPhone}
+                            onChange={(event) => setContactPhone(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="600 000 000"
+                            autoComplete="tel"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700">
+                        Esta empresa quedara asociada a{' '}
+                        <strong>{currentDirectFullName || 'tu perfil'}</strong> con el correo{' '}
+                        <strong>{stepContactEmail || 'pendiente'}</strong>.
+                      </div>
+
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          onClick={() => goToDirectStep('person')}
+                          className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                        >
+                          Volver
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={!canContinueCompanyStep}
+                          className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Continuar con API key
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleDirectApiSubmit} className="space-y-4">
+                      <div>
+                        <div className="text-sm font-semibold text-black">
+                          Paso 4: conecta Holded
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-neutral-700">
+                          Ya tenemos la identidad y la empresa. Solo falta validar una API key
+                          activa de Holded para cerrar la conexion y volver a ChatGPT.
+                        </p>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Persona
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-black">
+                            {currentDirectFullName || 'Pendiente'}
+                          </div>
+                          <div className="mt-2 break-all text-sm text-neutral-700">
+                            {stepContactEmail || 'Sin correo'}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Empresa
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-black">
+                            {currentDirectCompanyName || 'Pendiente'}
+                          </div>
+                          <div className="mt-2 text-sm text-neutral-700">
+                            {normalizeText(companyTaxId) || 'Sin CIF/NIF'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <a
+                        href={HOLDED_API_GUIDE_URL}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="group flex items-center gap-3 rounded-2xl border border-[#ff5460]/20 bg-[linear-gradient(135deg,#fff6f7_0%,#ffffff_100%)] px-4 py-4 text-left transition hover:border-[#ff5460]/40 hover:bg-[#fff7f8]"
+                      >
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+                          <Image
+                            src="/brand/holded/holded-diamond-logo.png"
+                            alt="Holded"
+                            width={20}
+                            height={20}
+                            className="h-5 w-5"
+                          />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff5460]">
+                            Guia oficial
+                          </span>
+                          <span className="mt-1 block text-sm font-semibold text-[#7a1f2a] underline decoration-[#ff5460]/40 underline-offset-4 group-hover:decoration-[#ff5460]">
+                            Ver guia oficial de Holded para generar la API key
+                          </span>
+                        </span>
+                        <ExternalLink className="h-4 w-4 shrink-0 text-[#ff5460]" />
+                      </a>
+
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-semibold text-black">
+                          {uiCopy.apiKeyLabel}
+                        </span>
+                        <span className="mb-3 block text-sm text-neutral-600">
+                          {uiCopy.apiKeyHelp}
+                        </span>
+                        <div className="relative">
+                          <KeyRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                          <input
+                            type="password"
+                            value={apiKey}
+                            onChange={(event) => {
+                              setApiKey(event.target.value);
+                              setValidationToken(null);
+                              setValidatedApiKey('');
+                            }}
+                            autoComplete="off"
+                            spellCheck={false}
+                            placeholder={uiCopy.apiKeyPlaceholder}
+                            className="h-12 w-full rounded-2xl border border-neutral-300 bg-white pl-11 pr-4 text-sm text-black outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                          />
+                        </div>
+                      </label>
+
+                      <div className="flex items-start gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 text-sm leading-6 text-neutral-700">
+                        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                        <div>
+                          Al conectar aceptas los{' '}
+                          <a
+                            href={VERIFACTU_TERMS_URL}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                          >
+                            Terminos
+                          </a>{' '}
+                          y la{' '}
+                          <a
+                            href={VERIFACTU_PRIVACY_URL}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                          >
+                            Politica de Privacidad
+                          </a>{' '}
+                          de verifactu.business.
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          onClick={() => goToDirectStep('company')}
+                          className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                        >
+                          Volver
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={saving || !normalizedApiKey}
+                          className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                          {submitLabel}
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
-              ) : null
-            ) : null}
 
-            {showApiStep && !redirecting ? (
-              <ol className="mt-4 space-y-2 text-sm text-neutral-700">
-                {helpSteps.map((step, index) => (
-                  <li key={step} className="flex gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-white">
-                      {index + 1}
-                    </span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
-            ) : null}
+                {redirecting ? (
+                  <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#fff8f8_0%,#ffffff_52%,#f7fbff_100%)] p-4 sm:p-5">
+                    <div className="grid gap-4 sm:grid-cols-[156px_minmax(0,1fr)] sm:items-center">
+                      <HoldedStatusVisual eyebrow="Conexion lista" title="Ultimo paso" />
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                          Ultimo paso
+                        </div>
+                        <div className="mt-2 text-base font-semibold text-black">
+                          {uiCopy.redirectTitle}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-neutral-700">
+                          {redirectDescription}
+                        </p>
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <a
+                            href={redirectTarget}
+                            className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
+                          >
+                            Continuar
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+                  {companyStepPending ? (
+                    <div>
+                      <div className="text-sm font-semibold text-black">
+                        Datos de empresa y contacto
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-neutral-700">
+                        {reusesStoredCompanyData
+                          ? 'La API key ya es valida. Revisa solo los datos minimos de empresa y contacto antes de terminar la conexion.'
+                          : 'La API key ya es valida. Ahora necesitamos guardar los datos minimos de empresa y contacto para dejar la conexion cerrada correctamente.'}
+                      </p>
 
-            {showApiStep && !redirecting ? (
-              <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-                <a
-                  href={HOLDED_API_GUIDE_URL}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="group flex items-center gap-3 rounded-2xl border border-[#ff5460]/20 bg-[linear-gradient(135deg,#fff6f7_0%,#ffffff_100%)] px-4 py-4 text-left transition hover:border-[#ff5460]/40 hover:bg-[#fff7f8]"
-                >
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
-                    <Image
-                      src="/brand/holded/holded-diamond-logo.png"
-                      alt="Holded"
-                      width={20}
-                      height={20}
-                      className="h-5 w-5"
-                    />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff5460]">
-                      Guia oficial
-                    </span>
-                    <span className="mt-1 block text-sm font-semibold text-[#7a1f2a] underline decoration-[#ff5460]/40 underline-offset-4 group-hover:decoration-[#ff5460]">
-                      Ver guia oficial de Holded para generar la API key
-                    </span>
-                  </span>
-                  <ExternalLink className="h-4 w-4 shrink-0 text-[#ff5460]" />
-                </a>
+                      <form
+                        onSubmit={handleCompanySubmit}
+                        className="mt-4 grid gap-4 sm:grid-cols-2"
+                      >
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Razon social
+                          <input
+                            type="text"
+                            value={companyLegalName}
+                            onChange={(event) => setCompanyLegalName(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Tu empresa, S.L."
+                            autoComplete="organization"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          NIF / CIF
+                          <input
+                            type="text"
+                            value={companyTaxId}
+                            onChange={(event) => setCompanyTaxId(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="B12345678"
+                            autoComplete="off"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Nombre
+                          <input
+                            type="text"
+                            value={contactFirstName}
+                            onChange={(event) => setContactFirstName(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Nombre"
+                            autoComplete="given-name"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Apellidos
+                          <input
+                            type="text"
+                            value={contactLastName}
+                            onChange={(event) => setContactLastName(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Apellidos"
+                            autoComplete="family-name"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Correo principal en Holded
+                          <input
+                            type="email"
+                            value={contactEmail}
+                            onChange={(event) => setContactEmail(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="nombre@empresa.com"
+                            autoComplete="email"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Telefono
+                          <input
+                            type="tel"
+                            value={contactPhone}
+                            onChange={(event) => setContactPhone(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="600 000 000"
+                            autoComplete="tel"
+                          />
+                        </label>
+                        <div className="sm:col-span-2 flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={returnToApiStep}
+                            disabled={companySaving}
+                            className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Volver a la API key
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={companySaving}
+                            className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {companySaving ? 'Guardando...' : 'Guardar datos y terminar conexion'}
+                          </button>
+                        </div>
+                      </form>
 
-                {usesInlineDirectForm ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block text-sm font-medium text-neutral-700">
-                      Empresa
-                      <input
-                        type="text"
-                        value={companyLegalName}
-                        onChange={(event) => setCompanyLegalName(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="Tu empresa, S.L."
-                        autoComplete="organization"
-                      />
-                    </label>
-                    <label className="block text-sm font-medium text-neutral-700">
-                      NIF / CIF
-                      <input
-                        type="text"
-                        value={companyTaxId}
-                        onChange={(event) => setCompanyTaxId(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="B12345678"
-                        autoComplete="off"
-                      />
-                    </label>
-                    <label className="block text-sm font-medium text-neutral-700">
-                      Nombre
-                      <input
-                        type="text"
-                        value={contactFirstName}
-                        onChange={(event) => setContactFirstName(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="Nombre"
-                        autoComplete="given-name"
-                      />
-                    </label>
-                    <label className="block text-sm font-medium text-neutral-700">
-                      Apellidos
-                      <input
-                        type="text"
-                        value={contactLastName}
-                        onChange={(event) => setContactLastName(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="Apellidos"
-                        autoComplete="family-name"
-                      />
-                    </label>
-                    <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
-                      Correo
-                      <input
-                        type="email"
-                        value={contactEmail}
-                        onChange={(event) => setContactEmail(event.target.value)}
-                        className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                        placeholder="nombre@empresa.com"
-                        autoComplete="email"
-                      />
-                    </label>
+                      {companyMessage ? (
+                        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>{companyMessage}</span>
+                        </div>
+                      ) : null}
+
+                      {companyError ? (
+                        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>{companyError}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : hideResolvedCompanyUntilApiValidation ? (
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#d9e6ff] bg-white shadow-sm">
+                        <Image
+                          src="/brand/holded/holded-diamond-logo.png"
+                          alt="Holded"
+                          width={20}
+                          height={20}
+                          className="h-5 w-5"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold text-black">
+                          {usesInlineDirectForm
+                            ? 'Formulario directo del conector'
+                            : 'Primero valida tu API key'}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-neutral-700">
+                          {usesInlineDirectForm
+                            ? 'Completa tus datos y la API key de Holded en este mismo formulario. Validaremos la conexion y prepararemos la empresa internamente sin mostrarte login ni registro.'
+                            : 'Antes de mostrar o confirmar ninguna empresa, necesitamos comprobar que la API key corresponde a una conexion real y utilizable de Holded.'}
+                        </p>
+                        <div className="mt-3 text-sm text-neutral-700">
+                          Estado: <span className="font-semibold text-black">{statusLabel}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#d9e6ff] bg-white shadow-sm">
+                        <Image
+                          src="/brand/holded/holded-diamond-logo.png"
+                          alt="Holded"
+                          width={20}
+                          height={20}
+                          className="h-5 w-5"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold text-black">{uiCopy.statusReady}</div>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                              Empresa
+                            </div>
+                            <div className="mt-1 text-sm font-semibold text-black">
+                              {resolvedSummary.companyName}
+                            </div>
+                          </div>
+                          {showCompanyLegalName ? (
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                                Razon social
+                              </div>
+                              <div className="mt-1 text-sm text-neutral-700">
+                                {resolvedSummary.companyLegalName}
+                              </div>
+                            </div>
+                          ) : null}
+                          {resolvedSummary.companyTaxId ? (
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                                NIF / CIF
+                              </div>
+                              <div className="mt-1 text-sm text-neutral-700">
+                                {resolvedSummary.companyTaxId}
+                              </div>
+                            </div>
+                          ) : null}
+                          {resolvedSummary.contactFullName ? (
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                                Persona de contacto
+                              </div>
+                              <div className="mt-1 text-sm text-neutral-700">
+                                {resolvedSummary.contactFullName}
+                              </div>
+                            </div>
+                          ) : null}
+                          {resolvedSummary.contactEmail ? (
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                                Correo de acceso
+                              </div>
+                              <div className="mt-1 break-all text-sm text-neutral-700">
+                                {resolvedSummary.contactEmail}
+                              </div>
+                            </div>
+                          ) : null}
+                          {showCompanyEmail ? (
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                                Correo de empresa
+                              </div>
+                              <div className="mt-1 break-all text-sm text-neutral-700">
+                                {resolvedSummary.companyEmail}
+                              </div>
+                            </div>
+                          ) : null}
+                          {resolvedSummary.contactPhone ? (
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                                Telefono
+                              </div>
+                              <div className="mt-1 text-sm text-neutral-700">
+                                {resolvedSummary.contactPhone}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="mt-3 text-sm text-neutral-700">
+                          Estado: <span className="font-semibold text-black">{statusLabel}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {!companyStepPending && status?.degraded ? (
+                    <div className="mt-2 text-sm text-amber-700">{uiCopy.degraded}</div>
+                  ) : null}
+                </div>
+
+                {!needsPostValidationCompanyStep &&
+                !companyStepPending &&
+                loading &&
+                !saving &&
+                !redirecting ? (
+                  <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#f7fbff_0%,#ffffff_52%,#fff7f8_100%)] p-4 sm:p-5">
+                    <div className="grid gap-4 sm:grid-cols-[156px_minmax(0,1fr)] sm:items-center">
+                      <HoldedStatusVisual eyebrow="Conexion segura" title="Comprobando acceso" />
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                          Conexion en progreso
+                        </div>
+                        <div className="mt-2 text-base font-semibold text-black">
+                          {uiCopy.checkingTitle}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-neutral-700">
+                          {uiCopy.checkingDescription}
+                        </p>
+                        <div className="mt-4 h-2 overflow-hidden rounded-full bg-neutral-200">
+                          <div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-[#0b6cfb]" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : null}
 
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-black">
-                    {uiCopy.apiKeyLabel}
-                  </span>
-                  <span className="mb-3 block text-sm text-neutral-600">{apiKeyHelp}</span>
-                  <div className="relative">
-                    <KeyRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                    <input
-                      type="password"
-                      value={apiKey}
-                      onChange={(event) => {
-                        setApiKey(event.target.value);
-                        setValidationToken(null);
-                        setValidatedApiKey('');
-                      }}
-                      autoComplete="off"
-                      spellCheck={false}
-                      placeholder={uiCopy.apiKeyPlaceholder}
-                      className="h-12 w-full rounded-2xl border border-neutral-300 bg-white pl-11 pr-4 text-sm text-black outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                    />
+                {!companyStepPending && redirecting ? (
+                  <div className="mt-5 overflow-hidden rounded-3xl border border-neutral-200 bg-[linear-gradient(135deg,#fff8f8_0%,#ffffff_52%,#f7fbff_100%)] p-4 sm:p-5">
+                    <div className="grid gap-4 sm:grid-cols-[156px_minmax(0,1fr)] sm:items-center">
+                      <HoldedStatusVisual eyebrow="Conexion lista" title="Ultimo paso" />
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                          Ultimo paso
+                        </div>
+                        <div className="mt-2 text-base font-semibold text-black">
+                          {uiCopy.redirectTitle}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-neutral-700">
+                          {redirectDescription}
+                        </p>
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <a
+                            href={redirectTarget}
+                            className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
+                          >
+                            Continuar
+                          </a>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </label>
+                ) : null}
 
-                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-700">
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                    Consentimiento y tratamiento
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <input
-                      id="accept-terms"
-                      type="checkbox"
-                      checked={acceptedTerms}
-                      onChange={(event) => setAcceptedTerms(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-neutral-300 text-black focus:ring-black"
-                    />
-                    <label htmlFor="accept-terms" className="leading-6">
-                      Acepto los{' '}
-                      <a
-                        href={VERIFACTU_TERMS_URL}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
-                      >
-                        Terminos de verifactu.business
-                      </a>
-                      .
-                    </label>
-                  </div>
-                  <div className="mt-3 flex items-start gap-3">
-                    <input
-                      id="accept-privacy"
-                      type="checkbox"
-                      checked={acceptedPrivacy}
-                      onChange={(event) => setAcceptedPrivacy(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-neutral-300 text-black focus:ring-black"
-                    />
-                    <label htmlFor="accept-privacy" className="leading-6">
-                      Acepto la{' '}
-                      <a
-                        href={VERIFACTU_PRIVACY_URL}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
-                      >
-                        Politica de Privacidad de verifactu.business
-                      </a>
-                      .
-                    </label>
-                  </div>
-                </div>
+                {!companyStepPending && !redirecting ? (
+                  canContinueWithExistingConnection ? (
+                    <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                      <div className="space-y-3">
+                        <span className="block">
+                          Ya detectamos una conexion activa de Holded para esta empresa. Si quieres
+                          usarla tal cual, puedes continuar ahora mismo.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => goToNextStep(confirmedNextUrl)}
+                          className="rounded-full bg-emerald-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800"
+                        >
+                          Continuar con esta empresa
+                        </button>
+                      </div>
+                    </div>
+                  ) : null
+                ) : null}
 
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="submit"
-                    disabled={
-                      saving ||
-                      !normalizedApiKey ||
-                      !acceptedTerms ||
-                      !acceptedPrivacy ||
-                      (usesInlineDirectForm && !hasInlineDirectFormMinimum)
-                    }
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {submitLabel}
-                  </button>
-                </div>
-              </form>
-            ) : null}
+                {showApiStep && !redirecting ? (
+                  <ol className="mt-4 space-y-2 text-sm text-neutral-700">
+                    {helpSteps.map((step, index) => (
+                      <li key={step} className="flex gap-3">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-white">
+                          {index + 1}
+                        </span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
+
+                {showApiStep && !redirecting ? (
+                  <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+                    <a
+                      href={HOLDED_API_GUIDE_URL}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="group flex items-center gap-3 rounded-2xl border border-[#ff5460]/20 bg-[linear-gradient(135deg,#fff6f7_0%,#ffffff_100%)] px-4 py-4 text-left transition hover:border-[#ff5460]/40 hover:bg-[#fff7f8]"
+                    >
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+                        <Image
+                          src="/brand/holded/holded-diamond-logo.png"
+                          alt="Holded"
+                          width={20}
+                          height={20}
+                          className="h-5 w-5"
+                        />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff5460]">
+                          Guia oficial
+                        </span>
+                        <span className="mt-1 block text-sm font-semibold text-[#7a1f2a] underline decoration-[#ff5460]/40 underline-offset-4 group-hover:decoration-[#ff5460]">
+                          Ver guia oficial de Holded para generar la API key
+                        </span>
+                      </span>
+                      <ExternalLink className="h-4 w-4 shrink-0 text-[#ff5460]" />
+                    </a>
+
+                    {usesInlineDirectForm ? (
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Empresa
+                          <input
+                            type="text"
+                            value={companyLegalName}
+                            onChange={(event) => setCompanyLegalName(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Tu empresa, S.L."
+                            autoComplete="organization"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          NIF / CIF
+                          <input
+                            type="text"
+                            value={companyTaxId}
+                            onChange={(event) => setCompanyTaxId(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="B12345678"
+                            autoComplete="off"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Nombre
+                          <input
+                            type="text"
+                            value={contactFirstName}
+                            onChange={(event) => setContactFirstName(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Nombre"
+                            autoComplete="given-name"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Apellidos
+                          <input
+                            type="text"
+                            value={contactLastName}
+                            onChange={(event) => setContactLastName(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="Apellidos"
+                            autoComplete="family-name"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
+                          Correo
+                          <input
+                            type="email"
+                            value={contactEmail}
+                            onChange={(event) => setContactEmail(event.target.value)}
+                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            placeholder="nombre@empresa.com"
+                            autoComplete="email"
+                          />
+                        </label>
+                      </div>
+                    ) : null}
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-black">
+                        {uiCopy.apiKeyLabel}
+                      </span>
+                      <span className="mb-3 block text-sm text-neutral-600">{apiKeyHelp}</span>
+                      <div className="relative">
+                        <KeyRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                        <input
+                          type="password"
+                          value={apiKey}
+                          onChange={(event) => {
+                            setApiKey(event.target.value);
+                            setValidationToken(null);
+                            setValidatedApiKey('');
+                          }}
+                          autoComplete="off"
+                          spellCheck={false}
+                          placeholder={uiCopy.apiKeyPlaceholder}
+                          className="h-12 w-full rounded-2xl border border-neutral-300 bg-white pl-11 pr-4 text-sm text-black outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                        />
+                      </div>
+                    </label>
+
+                    <div className="flex items-start gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 text-sm leading-6 text-neutral-700">
+                      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                      <div>
+                        Al conectar aceptas los{' '}
+                        <a
+                          href={VERIFACTU_TERMS_URL}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                        >
+                          Terminos
+                        </a>{' '}
+                        y la{' '}
+                        <a
+                          href={VERIFACTU_PRIVACY_URL}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                        >
+                          Politica de Privacidad
+                        </a>{' '}
+                        de verifactu.business.
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="submit"
+                        disabled={
+                          saving ||
+                          !normalizedApiKey ||
+                          (usesInlineDirectForm && !hasInlineDirectFormMinimum)
+                        }
+                        className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                        {submitLabel}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+              </>
+            )}
 
             {saving ? (
               <div className="mt-5 overflow-hidden rounded-2xl border border-neutral-200 bg-[linear-gradient(135deg,#fff8f8_0%,#ffffff_55%,#fff6f6_100%)] p-4">

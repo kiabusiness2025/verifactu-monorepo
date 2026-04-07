@@ -34,6 +34,10 @@ jest.mock('@/lib/tenants', () => ({
 }));
 
 jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
+  isVerifiedHoldedOnboardingIdentity: jest.fn(
+    (session: { email?: string | null; emailVerified?: boolean; authMethod?: string | null }) =>
+      Boolean(session?.email && (session?.emailVerified || session?.authMethod === 'google'))
+  ),
   resolveHoldedOnboardingSessionFromHeaders: jest.fn(),
 }));
 
@@ -224,6 +228,85 @@ describe('POST /api/onboarding/tenant', () => {
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
   });
 
+  it('skips the early welcome email when the request belongs to direct connector onboarding', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue(null);
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'demo@example.com',
+      name: 'Ksenia Ivanova Lopez',
+      authMethod: 'email',
+      emailVerified: true,
+      firstName: 'Ksenia',
+      lastName: 'Ivanova Lopez',
+      tenantId: null,
+      verifiedAt: '2026-01-15T10:00:00.000Z',
+    });
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/onboarding/tenant', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({
+          name: 'Empresa Demo',
+          legalName: 'Empresa Demo SL',
+          taxId: 'B12345678',
+          tradeName: 'Empresa Demo',
+          extra: {
+            representative: 'Ksenia Ivanova Lopez',
+            contactFirstName: 'Ksenia',
+            contactLastName: 'Ivanova Lopez',
+            email: 'info@empresa-demo.es',
+          },
+        }),
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(sendWelcomeLifecycleEmails).not.toHaveBeenCalled();
+  });
+
+  it('rejects tenant creation when direct connector email verification is still pending', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue(null);
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'demo@example.com',
+      name: 'Ksenia Ivanova Lopez',
+      authMethod: 'email',
+      emailVerified: false,
+      firstName: 'Ksenia',
+      lastName: 'Ivanova Lopez',
+      tenantId: null,
+      verifiedAt: null,
+    });
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/onboarding/tenant', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({
+          name: 'Empresa Demo',
+          legalName: 'Empresa Demo SL',
+          taxId: 'B12345678',
+        }),
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toBe('identity verification required');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
   it('reuses the current placeholder tenant when the caller confirms real company data after Holded validation', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'user-1',
@@ -302,6 +385,11 @@ describe('POST /api/onboarding/tenant', () => {
       email: 'guest@example.com',
       name: 'Connector Guest',
       tenantId: null,
+      authMethod: 'email',
+      emailVerified: true,
+      firstName: 'Connector',
+      lastName: 'Guest',
+      verifiedAt: '2026-04-06T12:00:00.000Z',
     });
 
     const response = await POST(
@@ -337,6 +425,11 @@ describe('POST /api/onboarding/tenant', () => {
       email: 'guest@example.com',
       name: 'Connector Guest',
       tenantId: 'tenant-1',
+      authMethod: 'email',
+      emailVerified: true,
+      firstName: 'Connector',
+      lastName: 'Guest',
+      verifiedAt: '2026-04-06T12:00:00.000Z',
     });
   });
 });

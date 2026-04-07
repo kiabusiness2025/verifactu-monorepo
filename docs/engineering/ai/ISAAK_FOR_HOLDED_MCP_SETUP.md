@@ -18,7 +18,7 @@ La autenticacion es mixta:
 
 - ChatGPT -> Verifactu MCP: OAuth propio de Verifactu.
 - Verifactu MCP -> Holded: API key de Holded guardada cifrada por tenant.
-- Usuario final -> Verifactu: `connector onboarding session` propia del flujo directo o sesion normal ya existente.
+- Usuario final -> Verifactu: `connector onboarding session` propia del flujo directo o sesion normal ya existente. En la nueva ola de Fase 1, esa sesion tambien transporta estado de identidad (`authMethod`, `emailVerified`, `firstName`, `lastName`, `verifiedAt`).
 
 Holded no se integra por OAuth en este flujo. La documentacion publica usada para esta integracion expone autenticacion por API key.
 
@@ -71,12 +71,14 @@ Holded no se integra por OAuth en este flujo. La documentacion publica usada par
 1. ChatGPT inicia OAuth contra Verifactu.
 2. Si ya existe conexion valida para `channel=chatgpt`, Verifactu continua el OAuth.
 3. Si no existe conexion valida, Verifactu redirige a `/onboarding/holded` con una `connector onboarding session`.
-4. El usuario completa el formulario minimo y pega la API key de Holded.
-5. Verifactu valida la key, crea o resuelve internamente identidad/tenant y guarda la conexion cifrada server-side.
-6. El navegador vuelve al flujo OAuth original.
-7. ChatGPT intercambia el code por un `access_token`.
-8. ChatGPT llama al MCP con Bearer token.
-9. El MCP resuelve el tenant desde el token OAuth y usa la API key cifrada del tenant para hablar con Holded.
+4. La nueva ola del onboarding empieza por identidad: Google opcional o correo manual.
+5. Si la via es manual, el correo debe verificarse antes de seguir.
+6. El usuario completa el resto del flujo por pasos cortos: nombre, empresa/CIF y API key de Holded.
+7. Verifactu valida la key, crea o resuelve internamente identidad/tenant y guarda la conexion cifrada server-side.
+8. El navegador vuelve al flujo OAuth original.
+9. ChatGPT intercambia el code por un `access_token`.
+10. ChatGPT llama al MCP con Bearer token.
+11. El MCP resuelve el tenant desde el token OAuth y usa la API key cifrada del tenant para hablar con Holded.
 
 ## Flujo directo para ChatGPT
 

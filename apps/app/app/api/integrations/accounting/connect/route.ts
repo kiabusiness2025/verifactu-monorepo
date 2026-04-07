@@ -1,6 +1,9 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
-import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
+import {
+  sendHoldedConnectionLifecycleEmails,
+  sendWelcomeLifecycleEmails,
+} from '@/lib/email/holdedConnectionEmails';
 import {
   encryptIntegrationSecret,
   maskSecret,
@@ -12,7 +15,11 @@ import {
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
 import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
-import { getHoldedOnboardingTokenFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
+import {
+  getHoldedOnboardingTokenFromHeaders,
+  isVerifiedHoldedOnboardingIdentity,
+  resolveHoldedOnboardingSessionFromHeaders,
+} from '@/lib/integrations/holdedOnboardingSession';
 import { verifyHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
 import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore';
 import prisma from '@/lib/prisma';
@@ -69,12 +76,30 @@ export async function POST(request: NextRequest) {
   const requestId = getConnectorRequestId(request);
   const tenantIdHint = getTenantIdHint(request);
   const onboardingToken = getHoldedOnboardingTokenFromHeaders(request.headers);
+  const onboardingSession = onboardingToken
+    ? await resolveHoldedOnboardingSessionFromHeaders(request.headers)
+    : null;
   let stage: 'auth' | 'access' | 'body' | 'encrypt' | 'verify' | 'probe' | 'persist' = 'auth';
   let tenantId: string | null = null;
   let resolvedUserId: string | null = null;
   let sessionUid: string | null = null;
 
   try {
+    if (onboardingSession && !isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            error: 'Debes verificar tu identidad antes de conectar Holded.',
+            requestId,
+            stage,
+            reason: 'identity_verification_required',
+          },
+          { status: 403 }
+        ),
+        requestId
+      );
+    }
+
     const auth = await requireTenantContext({
       channelType: entryChannel,
       metadata: {
@@ -204,7 +229,7 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        await sendHoldedConnectionLifecycleEmails({
+        const emailContext = {
           userEmail: auth.session.email ?? null,
           userName: auth.session.name ?? null,
           tenantName: tenant?.profile?.tradeName || tenant?.name || 'tu empresa',
@@ -213,9 +238,17 @@ export async function POST(request: NextRequest) {
           contactEmail: auth.session.email ?? null,
           companyEmail: tenant?.profile?.email || null,
           contactPhone: tenant?.profile?.phone || null,
-          action: 'connected',
-          channel: entryChannel,
-        });
+        };
+
+        if (entryChannel === 'chatgpt' && onboardingSession) {
+          await sendWelcomeLifecycleEmails(emailContext);
+        } else {
+          await sendHoldedConnectionLifecycleEmails({
+            ...emailContext,
+            action: 'connected',
+            channel: entryChannel,
+          });
+        }
       } catch (notificationError) {
         logConnectorEvent('api/integrations/accounting/connect', 'error', {
           requestId,

@@ -24,20 +24,35 @@ import {
   getProtectedResourceMetadata,
   getProtectedResourceMetadataUrl,
   getSupportedScopes,
+  mintHoldedOnboardingToken,
+  mintHoldedOnboardingTokenForSubject,
+  verifyHoldedOnboardingToken,
 } from './mcp';
 import {
   HOLDED_MCP_SUPPORTED_SCOPES,
   getHoldedMcpScopePreset,
 } from '@/lib/integrations/holdedMcpScopes';
+import { signSessionToken, verifySessionToken } from '@verifactu/utils';
 
 describe('MCP OAuth metadata helpers', () => {
   const originalPublicPreset = process.env.MCP_PUBLIC_SCOPE_PRESET;
+  const originalSessionSecret = process.env.SESSION_SECRET;
+
+  beforeEach(() => {
+    process.env.SESSION_SECRET = 'test-session-secret';
+  });
 
   afterEach(() => {
     if (originalPublicPreset === undefined) {
       delete process.env.MCP_PUBLIC_SCOPE_PRESET;
     } else {
       process.env.MCP_PUBLIC_SCOPE_PRESET = originalPublicPreset;
+    }
+
+    if (originalSessionSecret === undefined) {
+      delete process.env.SESSION_SECRET;
+    } else {
+      process.env.SESSION_SECRET = originalSessionSecret;
     }
   });
 
@@ -87,5 +102,90 @@ describe('MCP OAuth metadata helpers', () => {
       bearer_methods_supported: ['header'],
       scopes_supported: [...HOLDED_MCP_SUPPORTED_SCOPES],
     });
+  });
+
+  it('mints onboarding tokens with explicit auth state and derived display name', async () => {
+    (signSessionToken as jest.Mock).mockResolvedValue('signed-onboarding-token');
+
+    const token = await mintHoldedOnboardingToken({
+      seed: 'seed-123',
+      email: 'guest@example.com',
+      firstName: 'Ksenia',
+      lastName: 'Ilicheva',
+      authMethod: 'email',
+      emailVerified: true,
+      verifiedAt: '2026-04-06T10:00:00.000Z',
+    });
+
+    expect(token).toBe('signed-onboarding-token');
+    expect(signSessionToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          type: 'mcp_holded_onboarding',
+          email: 'guest@example.com',
+          name: 'Ksenia Ilicheva',
+          authMethod: 'email',
+          emailVerified: true,
+          firstName: 'Ksenia',
+          lastName: 'Ilicheva',
+          verifiedAt: '2026-04-06T10:00:00.000Z',
+        }),
+      })
+    );
+  });
+
+  it('preserves onboarding auth metadata when minting a refreshed tenant-aware token', async () => {
+    (signSessionToken as jest.Mock).mockResolvedValue('signed-onboarding-token-2');
+
+    await mintHoldedOnboardingTokenForSubject({
+      uid: 'holded-guest-1',
+      email: 'guest@example.com',
+      name: 'Connector Guest',
+      tenantId: 'tenant-123',
+      authMethod: 'google',
+      emailVerified: true,
+      firstName: 'Connector',
+      lastName: 'Guest',
+      verifiedAt: '2026-04-06T11:30:00.000Z',
+    });
+
+    expect(signSessionToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          uid: 'holded-guest-1',
+          tenantId: 'tenant-123',
+          authMethod: 'google',
+          emailVerified: true,
+          firstName: 'Connector',
+          lastName: 'Guest',
+          verifiedAt: '2026-04-06T11:30:00.000Z',
+        }),
+      })
+    );
+  });
+
+  it('returns expanded onboarding payloads from verification', async () => {
+    (verifySessionToken as jest.Mock).mockResolvedValue({
+      type: 'mcp_holded_onboarding',
+      uid: 'holded-guest-1',
+      email: 'guest@example.com',
+      name: 'Connector Guest',
+      tenantId: 'tenant-123',
+      authMethod: 'email',
+      emailVerified: true,
+      firstName: 'Connector',
+      lastName: 'Guest',
+      verifiedAt: '2026-04-06T11:30:00.000Z',
+    });
+
+    await expect(verifyHoldedOnboardingToken('token-123')).resolves.toEqual(
+      expect.objectContaining({
+        uid: 'holded-guest-1',
+        authMethod: 'email',
+        emailVerified: true,
+        firstName: 'Connector',
+        lastName: 'Guest',
+      })
+    );
   });
 });

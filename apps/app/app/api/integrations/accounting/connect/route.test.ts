@@ -29,10 +29,16 @@ jest.mock('@/lib/prisma', () => ({
 
 jest.mock('@/lib/email/holdedConnectionEmails', () => ({
   sendHoldedConnectionLifecycleEmails: jest.fn(),
+  sendWelcomeLifecycleEmails: jest.fn(),
 }));
 
 jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
   getHoldedOnboardingTokenFromHeaders: jest.fn(() => null),
+  isVerifiedHoldedOnboardingIdentity: jest.fn(
+    (session: { email?: string | null; emailVerified?: boolean; authMethod?: string | null }) =>
+      Boolean(session?.email && (session?.emailVerified || session?.authMethod === 'google'))
+  ),
+  resolveHoldedOnboardingSessionFromHeaders: jest.fn(),
 }));
 
 import { NextRequest } from 'next/server';
@@ -43,7 +49,14 @@ import { probeAccountingApiConnection } from '@/lib/integrations/accounting';
 import { mintHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
 import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore';
 import prisma from '@/lib/prisma';
-import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
+import {
+  sendHoldedConnectionLifecycleEmails,
+  sendWelcomeLifecycleEmails,
+} from '@/lib/email/holdedConnectionEmails';
+import {
+  getHoldedOnboardingTokenFromHeaders,
+  resolveHoldedOnboardingSessionFromHeaders,
+} from '@/lib/integrations/holdedOnboardingSession';
 
 describe('POST /api/integrations/accounting/connect', () => {
   const previousSessionSecret = process.env.SESSION_SECRET;
@@ -67,6 +80,7 @@ describe('POST /api/integrations/accounting/connect', () => {
   });
 
   beforeEach(() => {
+    getHoldedOnboardingTokenFromHeaders.mockReturnValue(null);
     (requireTenantContext as jest.Mock).mockResolvedValue({
       tenantId: 'tenant-1',
       resolvedUserId: 'user-1',
@@ -96,6 +110,8 @@ describe('POST /api/integrations/accounting/connect', () => {
       },
     });
     (sendHoldedConnectionLifecycleEmails as jest.Mock).mockResolvedValue([]);
+    (sendWelcomeLifecycleEmails as jest.Mock).mockResolvedValue([]);
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -130,6 +146,18 @@ describe('POST /api/integrations/accounting/connect', () => {
   });
 
   it('connects when terms and privacy are accepted', async () => {
+    const holdedOnboardingSession = {
+      uid: 'holded-guest-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      authMethod: 'google',
+      emailVerified: true,
+    };
+    getHoldedOnboardingTokenFromHeaders.mockReturnValue('onboarding-token-123');
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue(
+      holdedOnboardingSession
+    );
+
     const request = new NextRequest(
       'https://app.verifactu.business/api/integrations/accounting/connect',
       {
@@ -171,7 +199,7 @@ describe('POST /api/integrations/accounting/connect', () => {
         legalAcceptanceVersion: 'holded_connection_v1',
       })
     );
-    expect(sendHoldedConnectionLifecycleEmails).toHaveBeenCalledWith({
+    expect(sendWelcomeLifecycleEmails).toHaveBeenCalledWith({
       userEmail: 'demo@example.com',
       userName: 'Demo User',
       tenantName: 'Empresa Demo',
@@ -180,9 +208,42 @@ describe('POST /api/integrations/accounting/connect', () => {
       contactEmail: 'demo@example.com',
       companyEmail: 'empresa@example.com',
       contactPhone: '+34 600 000 000',
-      action: 'connected',
-      channel: 'chatgpt',
     });
+    expect(sendHoldedConnectionLifecycleEmails).not.toHaveBeenCalled();
+  });
+
+  it('blocks connect when onboarding identity is still unverified', async () => {
+    getHoldedOnboardingTokenFromHeaders.mockReturnValue('onboarding-token-123');
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      authMethod: 'email',
+      emailVerified: false,
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/integrations/accounting/connect',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+        },
+        body: JSON.stringify({
+          apiKey: 'demo-key',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.reason).toBe('identity_verification_required');
+    expect(requireTenantContext).not.toHaveBeenCalled();
   });
 
   it('reuses a valid validation token and skips the second Holded probe', async () => {

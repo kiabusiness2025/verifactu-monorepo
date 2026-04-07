@@ -8,12 +8,33 @@ jest.mock('next/image', () => ({
   default: (props: any) => <img {...props} alt={props.alt || ''} />,
 }));
 
+jest.mock('@/lib/firebase', () => ({
+  auth: {},
+}));
+
+jest.mock('firebase/auth', () => ({
+  GoogleAuthProvider: class GoogleAuthProvider {
+    setCustomParameters() {}
+  },
+  signInWithPopup: jest.fn(),
+  signOut: jest.fn().mockResolvedValue(undefined),
+}));
+
 import HoldedOnboardingClient from './HoldedOnboardingClient';
 
 const baseProps = {
   entryChannel: 'chatgpt' as const,
   nextUrl: '#connected',
   requireConnectionConfirmation: false,
+  requiresVerifiedIdentity: false,
+  identity: {
+    authMethod: 'google' as const,
+    email: 'kiabusiness2025@gmail.com',
+    emailVerified: true,
+    firstName: 'Ksenia',
+    lastName: 'Ivanova Lopez',
+    verifiedAt: '2026-04-06T10:00:00.000Z',
+  },
   summary: {
     companyName: 'ALVILS ESP',
     companyLegalName: 'ALVILS ESP SL',
@@ -34,6 +55,11 @@ const baseProps = {
 describe('HoldedOnboardingClient', () => {
   const fetchMock = jest.fn();
 
+  const advanceToApiStep = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
+  };
+
   beforeEach(() => {
     fetchMock.mockReset();
     global.fetch = fetchMock as unknown as typeof fetch;
@@ -46,39 +72,104 @@ describe('HoldedOnboardingClient', () => {
     expect(screen.getByText('Conector directo Holded + ChatGPT')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Esta pantalla valida tu API key de Holded, prepara la empresa y te devuelve a ChatGPT sin mostrarte login ni registro.'
+        'Empezamos confirmando tu identidad y, justo despues, validamos la API key de Holded para volver a ChatGPT.'
       )
     ).toBeInTheDocument();
-    expect(screen.getByText('Sin login visible ni registro en este paso.')).toBeInTheDocument();
+    expect(screen.getByText('Sin login visible.')).toBeInTheDocument();
+    expect(screen.getByText('Paso 2: quien eres')).toBeInTheDocument();
+    expect(screen.getByText(/Correo verificado:/i)).toBeInTheDocument();
     expect(
-      screen.getByText(
-        'Primero validaremos tu API key y, si es correcta, cerraremos la conexion directa sin pasos manuales extra.'
-      )
-    ).toBeInTheDocument();
+      screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Si tu empresa ya estaba preparada aqui/i)).not.toBeInTheDocument();
   });
 
-  it('connects directly after validating the API key when company data is already resolved', async () => {
+  it('shows the identity gate and sends a verification email before exposing the API key step', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
-      json: jest.fn().mockResolvedValue({ ok: true }),
+      json: jest.fn().mockResolvedValue({
+        ok: true,
+        onboardingToken: 'onboarding-token-456',
+        identity: { authMethod: 'email', email: 'verified@example.com', emailVerified: false },
+      }),
     });
 
+    render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode={false}
+        requiresVerifiedIdentity
+        identity={{
+          authMethod: 'unknown',
+          email: null,
+          emailVerified: false,
+          firstName: null,
+          lastName: null,
+          verifiedAt: null,
+        }}
+        onboardingToken="onboarding-token-123"
+      />
+    );
+
+    expect(screen.getByText('Paso 1: verifica tu identidad')).toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('tu@empresa.com'), {
+      target: { value: 'verified@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar enlace de verificacion' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/onboarding/identity/email/start',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'x-holded-onboarding-token': 'onboarding-token-123',
+          }),
+        })
+      );
+    });
+
+    expect(
+      await screen.findByText(/Te hemos enviado un enlace de verificacion/i)
+    ).toBeInTheDocument();
+  });
+
+  it('connects directly after validating the API key when company data is already resolved', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true, tenantId: 'tenant-123' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true, validationToken: 'validation-token-123' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true }),
+      });
+
     render(<HoldedOnboardingClient {...baseProps} captureMode={false} />);
+
+    advanceToApiStep();
 
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {
       target: { value: 'holded-demo-api-key-123' },
     });
-    fireEvent.click(screen.getByLabelText(/Acepto los Terminos de verifactu\.business/i));
-    fireEvent.click(
-      screen.getByLabelText(/Acepto la Politica de Privacidad de verifactu\.business/i)
-    );
     fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
         1,
-        '/api/integrations/accounting/validate',
+        '/api/onboarding/tenant',
         expect.objectContaining({
           method: 'POST',
         })
@@ -88,6 +179,26 @@ describe('HoldedOnboardingClient', () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
         2,
+        '/api/session/tenant-switch',
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
+        '/api/integrations/accounting/validate',
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        4,
         '/api/integrations/accounting/connect',
         expect.objectContaining({
           method: 'POST',
@@ -95,32 +206,50 @@ describe('HoldedOnboardingClient', () => {
       );
     });
 
+    expect(JSON.parse(fetchMock.mock.calls[2][1].body as string)).toEqual(
+      expect.objectContaining({ acceptedTerms: true, acceptedPrivacy: true })
+    );
+    expect(JSON.parse(fetchMock.mock.calls[3][1].body as string)).toEqual(
+      expect.objectContaining({ acceptedTerms: true, acceptedPrivacy: true })
+    );
+
     expect(screen.queryByText('Datos de empresa y contacto')).not.toBeInTheDocument();
     expect(window.location.hash).toBe('#connected');
   });
 
-  it('forwards the tenant hint through validation and connection requests', async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: jest.fn().mockResolvedValue({ ok: true }),
-    });
+  it('uses the tenant created in the direct flow when validating and connecting Holded', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true, tenantId: 'tenant-demo' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true, validationToken: 'validation-token-123' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true }),
+      });
 
     render(
       <HoldedOnboardingClient {...baseProps} captureMode={false} tenantIdHint="tenant-demo" />
     );
 
+    advanceToApiStep();
+
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {
       target: { value: 'holded-demo-api-key-123' },
     });
-    fireEvent.click(screen.getByLabelText(/Acepto los Terminos de verifactu\.business/i));
-    fireEvent.click(
-      screen.getByLabelText(/Acepto la Politica de Privacidad de verifactu\.business/i)
-    );
     fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
-        1,
+        3,
         '/api/integrations/accounting/validate',
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -132,7 +261,7 @@ describe('HoldedOnboardingClient', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
-        2,
+        4,
         '/api/integrations/accounting/connect',
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -144,25 +273,36 @@ describe('HoldedOnboardingClient', () => {
   });
 
   it('freezes the final ChatGPT step in capture mode instead of redirecting automatically', async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: jest.fn().mockResolvedValue({ ok: true }),
-    });
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true, tenantId: 'tenant-123' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true, validationToken: 'validation-token-123' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true }),
+      });
 
     render(<HoldedOnboardingClient {...baseProps} captureMode />);
+
+    advanceToApiStep();
 
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {
       target: { value: 'holded-demo-api-key-123' },
     });
-    fireEvent.click(screen.getByLabelText(/Acepto los Terminos de verifactu\.business/i));
-    fireEvent.click(
-      screen.getByLabelText(/Acepto la Politica de Privacidad de verifactu\.business/i)
-    );
     fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
-        2,
+        4,
         '/api/integrations/accounting/connect',
         expect.objectContaining({
           method: 'POST',
@@ -175,15 +315,19 @@ describe('HoldedOnboardingClient', () => {
     expect(window.location.hash).toBe('');
   });
 
-  it('submits the direct connector form in one pass when the company is not resolved yet', async () => {
+  it('creates the tenant, validates the key, and connects after the explicit direct steps', async () => {
     fetchMock
       .mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValue({ ok: true, validationToken: 'validation-token-123' }),
+        json: jest.fn().mockResolvedValue({
+          ok: true,
+          tenantId: 'tenant-123',
+          onboardingToken: 'onboarding-token-456',
+        }),
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValue({ ok: true, tenantId: 'tenant-123' }),
+        json: jest.fn().mockResolvedValue({ ok: true, validationToken: 'validation-token-123' }),
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -210,48 +354,39 @@ describe('HoldedOnboardingClient', () => {
           needsCompanySetup: true,
           requiresCompanyConfirmation: false,
         }}
+        identity={{
+          authMethod: 'email',
+          email: 'kiabusiness2025@gmail.com',
+          emailVerified: true,
+          firstName: 'Ksenia',
+          lastName: 'Ivanova Lopez',
+          verifiedAt: '2026-04-06T10:00:00.000Z',
+        }}
       />
     );
 
-    fireEvent.change(screen.getByLabelText('Empresa'), {
-      target: { value: 'Empresa Demo SL' },
-    });
-    fireEvent.change(screen.getByLabelText('NIF / CIF'), {
-      target: { value: 'B12345678' },
-    });
     fireEvent.change(screen.getByLabelText('Nombre'), {
       target: { value: 'Ksenia' },
     });
     fireEvent.change(screen.getByLabelText('Apellidos'), {
       target: { value: 'Ivanova Lopez' },
     });
-    fireEvent.change(screen.getByLabelText('Correo'), {
-      target: { value: 'kiabusiness2025@gmail.com' },
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
+    fireEvent.change(screen.getByLabelText('Razon social'), {
+      target: { value: 'Empresa Demo SL' },
     });
+    fireEvent.change(screen.getByLabelText('CIF / NIF'), {
+      target: { value: 'B12345678' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {
       target: { value: 'holded-demo-api-key-123' },
     });
-    fireEvent.click(screen.getByLabelText(/Acepto los Terminos de verifactu\.business/i));
-    fireEvent.click(
-      screen.getByLabelText(/Acepto la Politica de Privacidad de verifactu\.business/i)
-    );
     fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
         1,
-        '/api/integrations/accounting/validate',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'x-holded-onboarding-token': 'onboarding-token-123',
-          }),
-        })
-      );
-    });
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        2,
         '/api/onboarding/tenant',
         expect.objectContaining({
           method: 'POST',
@@ -261,36 +396,34 @@ describe('HoldedOnboardingClient', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenNthCalledWith(
-        3,
-        '/api/session/tenant-switch',
+        2,
+        '/api/integrations/accounting/validate',
         expect.objectContaining({
           method: 'POST',
-        })
-      );
-    });
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        4,
-        '/api/integrations/accounting/connect',
-        expect.objectContaining({
           headers: expect.objectContaining({
+            'x-holded-onboarding-token': 'onboarding-token-456',
             'x-isaak-tenant-id': 'tenant-123',
           }),
         })
       );
     });
 
-    const connectHeaders = fetchMock.mock.calls[3][1].headers as Record<string, string>;
-    expect(connectHeaders['x-holded-onboarding-token']).toBeUndefined();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
+        '/api/integrations/accounting/connect',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-isaak-tenant-id': 'tenant-123',
+            'x-holded-onboarding-token': 'onboarding-token-456',
+          }),
+        })
+      );
+    });
   });
 
   it('returns to oauth with the refreshed onboarding token after creating the tenant inline', async () => {
     fetchMock
-      .mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ ok: true, validationToken: 'validation-token-123' }),
-      })
       .mockResolvedValueOnce({
         ok: true,
         json: jest.fn().mockResolvedValue({
@@ -298,6 +431,10 @@ describe('HoldedOnboardingClient', () => {
           tenantId: 'tenant-123',
           onboardingToken: 'onboarding-token-456',
         }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ ok: true, validationToken: 'validation-token-123' }),
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -326,31 +463,34 @@ describe('HoldedOnboardingClient', () => {
           needsCompanySetup: true,
           requiresCompanyConfirmation: false,
         }}
+        identity={{
+          authMethod: 'email',
+          email: 'kiabusiness2025@gmail.com',
+          emailVerified: true,
+          firstName: 'Ksenia',
+          lastName: 'Ivanova Lopez',
+          verifiedAt: '2026-04-06T10:00:00.000Z',
+        }}
       />
     );
 
-    fireEvent.change(screen.getByLabelText('Empresa'), {
-      target: { value: 'Empresa Demo SL' },
-    });
-    fireEvent.change(screen.getByLabelText('NIF / CIF'), {
-      target: { value: 'B12345678' },
-    });
     fireEvent.change(screen.getByLabelText('Nombre'), {
       target: { value: 'Ksenia' },
     });
     fireEvent.change(screen.getByLabelText('Apellidos'), {
       target: { value: 'Ivanova Lopez' },
     });
-    fireEvent.change(screen.getByLabelText('Correo'), {
-      target: { value: 'kiabusiness2025@gmail.com' },
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
+    fireEvent.change(screen.getByLabelText('Razon social'), {
+      target: { value: 'Empresa Demo SL' },
     });
+    fireEvent.change(screen.getByLabelText('CIF / NIF'), {
+      target: { value: 'B12345678' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {
       target: { value: 'holded-demo-api-key-123' },
     });
-    fireEvent.click(screen.getByLabelText(/Acepto los Terminos de verifactu\.business/i));
-    fireEvent.click(
-      screen.getByLabelText(/Acepto la Politica de Privacidad de verifactu\.business/i)
-    );
     fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
 
     const continueLink = await screen.findByRole('link', { name: 'Continuar' });
@@ -358,6 +498,7 @@ describe('HoldedOnboardingClient', () => {
 
     expect(redirectHref).toContain('connection_confirmed=1');
     expect(redirectHref).toContain('onboarding_token=onboarding-token-456');
+    expect(redirectHref).toContain('tenant_id=tenant-123');
     expect(redirectHref).not.toContain('onboarding-token-123');
   });
 });

@@ -2,16 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import {
-  AlertCircle,
-  Building2,
-  CheckCircle2,
-  FileText,
-  KeyRound,
-  Loader2,
-  Mail,
-  ShieldCheck,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileText, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
 import { auth } from '@/app/lib/firebase';
 import { mintSessionCookie } from '@/app/lib/serverSession';
 
@@ -162,12 +153,12 @@ export default function OnboardingHoldedClient({
     phase === 'validating'
       ? {
           title: 'Estamos validando la API key',
-          body: 'Comprobamos que la conexion con Holded es usable antes de guardar la empresa.',
+          body: 'Comprobamos que la conexion con Holded es usable antes de guardarla.',
         }
       : phase === 'connecting'
         ? {
             title: 'Estamos cerrando la conexion',
-            body: 'Guardamos empresa, contacto y conexion para dejar el conector operativo.',
+            body: 'Guardamos empresa, contacto y conexion para dejar todo listo.',
           }
         : null;
 
@@ -271,49 +262,30 @@ export default function OnboardingHoldedClient({
               Conecta tu empresa de Holded
             </h1>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              Completa los datos minimos de empresa y contacto junto con tu API key de Holded.
-              Nosotros dejamos la conexion lista server-side para que no tengas que pasar por un
-              alta tecnica separada.
+              Solo necesitamos los datos basicos de empresa, una persona de contacto y una API key
+              activa de Holded. Nosotros dejamos la conexion lista por ti.
             </p>
 
-            <div className="mt-6 space-y-3">
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <Building2 className="h-4 w-4 text-[#ff5460]" />
-                  Empresa
+            <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start gap-3">
+                <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Que te pediremos</div>
+                  <ul className="mt-2 space-y-2 text-sm leading-6 text-slate-600">
+                    <li>Empresa y NIF/CIF.</li>
+                    <li>Persona de contacto principal.</li>
+                    <li>Una API key activa de Holded.</li>
+                  </ul>
+                  <a
+                    href={holdedApiGuideUrl}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Ver guia oficial de Holded
+                  </a>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Guardaremos nombre comercial, razon social y NIF/CIF para resolver correctamente
-                  la identidad de empresa.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <Mail className="h-4 w-4 text-[#ff5460]" />
-                  Contacto principal
-                </div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Usaremos nombre, apellidos y correo como contacto operativo de la conexion.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <KeyRound className="h-4 w-4 text-[#ff5460]" />
-                  API key de Holded
-                </div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Solo te pedimos la clave y la guia oficial de Holded. No vamos a repetir pasos de
-                  validacion ni explicaciones tecnicas dentro de este formulario.
-                </p>
-                <a
-                  href={holdedApiGuideUrl}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
-                >
-                  <FileText className="h-4 w-4" />
-                  Ver guia oficial de Holded
-                </a>
               </div>
             </div>
           </section>
@@ -432,9 +404,7 @@ export default function OnboardingHoldedClient({
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                   <div>
-                    Al pulsar{' '}
-                    <span className="font-semibold text-slate-900">Validar y conectar</span> aceptas
-                    los{' '}
+                    Al conectar aceptas los{' '}
                     <Link
                       href="/terms"
                       className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
