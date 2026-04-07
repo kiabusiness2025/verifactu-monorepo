@@ -14,8 +14,7 @@ const HOLDED_RESEND_API_KEY = cleanEnv(process.env.RESEND_API_KEY_HOLDED) || DEF
 const DEFAULT_EMAIL_FROM =
   cleanEnv(process.env.RESEND_FROM) || 'Verifactu Business <no-reply@verifactu.business>';
 const HOLDED_EMAIL_FROM =
-  cleanEnv(process.env.RESEND_FROM_HOLDED) ||
-  'Holded for Isaak <no-reply@holded.verifactu.business>';
+  cleanEnv(process.env.RESEND_FROM_HOLDED) || 'Holded <no-reply@holded.verifactu.business>';
 
 // Alias de emails según contexto
 const EMAIL_FROM_SUPPORT = cleanEnv(process.env.RESEND_FROM_SUPPORT) || DEFAULT_EMAIL_FROM;

@@ -85,6 +85,16 @@ describe('POST /api/onboarding/identity/email/start', () => {
         html: expect.stringContaining('email-verification-token'),
       })
     );
+    expect(sendCustomEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        html: expect.stringContaining('holded-diamond-logo.png'),
+      })
+    );
+    expect(sendCustomEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        html: expect.stringContaining('Powered by'),
+      })
+    );
     expect(mintHoldedOnboardingTokenForSubject).toHaveBeenCalledWith(
       expect.objectContaining({
         uid: 'holded-guest-1',

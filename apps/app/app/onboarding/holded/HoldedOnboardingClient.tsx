@@ -139,6 +139,35 @@ function normalizeApiKey(value: string) {
   return value.replace(/\s+/g, '').trim();
 }
 
+function getIdentityStrength(identity: OnboardingIdentityState) {
+  return [
+    identity.email ? 1 : 0,
+    identity.authMethod !== 'unknown' ? 1 : 0,
+    identity.emailVerified ? 2 : 0,
+    identity.verifiedAt ? 1 : 0,
+    identity.firstName || identity.lastName ? 1 : 0,
+  ].reduce((total, value) => total + value, 0);
+}
+
+function shouldAdoptIncomingIdentity(
+  current: OnboardingIdentityState,
+  incoming: OnboardingIdentityState
+) {
+  const incomingEmail = normalizeText(incoming.email).toLowerCase();
+  const currentEmail = normalizeText(current.email).toLowerCase();
+  const incomingStrength = getIdentityStrength(incoming);
+  const currentStrength = getIdentityStrength(current);
+
+  if (!incomingStrength) return false;
+  if (incomingStrength > currentStrength) return true;
+  if (incomingEmail && incomingEmail !== currentEmail) return true;
+  if (incoming.verifiedAt && incoming.verifiedAt !== current.verifiedAt) return true;
+  if (incoming.emailVerified && !current.emailVerified) return true;
+  if (incoming.authMethod === 'google' && current.authMethod !== 'google') return true;
+
+  return false;
+}
+
 function buildAddressPreview(parts: {
   address?: string | null;
   postalCode?: string | null;
@@ -535,10 +564,18 @@ export default function HoldedOnboardingClient({
           : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName} dentro de Verifactu.`;
 
   useEffect(() => {
-    if (identity.email && !identityState.email) {
-      setIdentityState(identity);
-    }
-  }, [identity, identityState.email]);
+    setIdentityState((current) => {
+      if (!shouldAdoptIncomingIdentity(current, identity)) {
+        return current;
+      }
+
+      if (onboardingToken && onboardingToken !== activeOnboardingToken) {
+        setActiveOnboardingToken(onboardingToken);
+      }
+
+      return identity;
+    });
+  }, [activeOnboardingToken, identity, onboardingToken]);
 
   useEffect(() => {
     if (!usesDirectStepFlow) return;
@@ -572,6 +609,48 @@ export default function HoldedOnboardingClient({
       setManualEmail(identityState.email);
     }
   }, [identityState.email, manualEmail, usesDirectStepFlow]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const url = new URL(window.location.href);
+    const verifiedFromUrl = url.searchParams.get('identity_verified') === '1';
+    const onboardingTokenFromUrl = normalizeText(url.searchParams.get('onboarding_token')) || null;
+
+    if (
+      verifiedFromUrl &&
+      onboardingTokenFromUrl &&
+      onboardingTokenFromUrl !== activeOnboardingToken
+    ) {
+      setActiveOnboardingToken(onboardingTokenFromUrl);
+    }
+
+    if (!verifiedFromUrl || !identityState.emailVerified) return;
+
+    setIdentityError(null);
+    setIdentityMessage(
+      identityState.authMethod === 'email' && identityState.email
+        ? `Correo confirmado para ${identityState.email}. Ya puedes continuar con el paso Usuario.`
+        : 'Identidad confirmada. Ya puedes continuar con el paso Usuario.'
+    );
+
+    if (usesDirectStepFlow) {
+      setDirectStep((current) => (current === 'identity' ? 'person' : current));
+    }
+
+    url.searchParams.delete('identity_verified');
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${url.pathname}${url.search}${url.hash}`
+    );
+  }, [
+    activeOnboardingToken,
+    identityState.authMethod,
+    identityState.email,
+    identityState.emailVerified,
+    usesDirectStepFlow,
+  ]);
 
   const resolveConfirmedNextUrl = useCallback(
     (overrides?: { onboardingToken?: string | null; tenantIdHint?: string | null }) => {

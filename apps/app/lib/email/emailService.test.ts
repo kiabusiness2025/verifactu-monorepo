@@ -16,7 +16,7 @@ describe('emailService', () => {
       RESEND_API_KEY: 'resend-test-key',
       RESEND_API_KEY_HOLDED: 'resend-holded-key',
       RESEND_FROM: 'Verifactu Business <no-reply@verifactu.business>',
-      RESEND_FROM_HOLDED: 'Holded for Isaak <no-reply@holded.verifactu.business>',
+      RESEND_FROM_HOLDED: 'Holded <no-reply@holded.verifactu.business>',
       RESEND_FROM_NOREPLY: '',
       RESEND_FROM_SUPPORT: '',
       RESEND_FROM_INFO: '',
@@ -66,7 +66,7 @@ describe('emailService', () => {
     const payload = JSON.parse(String(requestInit.body));
 
     expect(requestInit.headers.Authorization).toBe('Bearer resend-holded-key');
-    expect(payload.from).toBe('Holded for Isaak <no-reply@holded.verifactu.business>');
+    expect(payload.from).toBe('Holded <no-reply@holded.verifactu.business>');
     expect(payload.to).toBe('verified@example.com');
     expect(payload.subject).toBe('Holded test email');
   });

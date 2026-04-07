@@ -33,19 +33,38 @@ function buildVerificationEmailHtml(input: {
   verificationUrl: string;
   email: string;
 }) {
+  const holdedLogoUrl = new URL('/brand/holded/holded-diamond-logo.png', getAppUrl()).toString();
+
   return `
-    <div style="font-family: Arial, sans-serif; color: #1b2a3a; line-height: 1.6;">
-      <h2 style="color:#0d2b4a; margin:0 0 16px 0;">Confirma tu correo para conectar Holded</h2>
-      <p>Hola ${input.firstName},</p>
-      <p>Solo nos falta confirmar que este correo es tuyo antes de seguir con la conexion del conector directo de Holded para ChatGPT.</p>
-      <p>
-        <a href="${input.verificationUrl}" style="display:inline-block; background:#111111; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:999px; font-weight:600;">
-          Confirmar correo y continuar
-        </a>
-      </p>
-      <p>Si el boton no funciona, copia y pega este enlace en tu navegador:</p>
-      <p><a href="${input.verificationUrl}">${input.verificationUrl}</a></p>
-      <p style="font-size:13px; color:#5b6777;">Correo asociado: ${input.email}</p>
+    <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
+      <div style="background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,0.08);">
+        <div style="padding:28px 28px 18px;background:linear-gradient(135deg,#fff7ed 0%,#fff1f2 55%,#eef4ff 100%);border-bottom:1px solid #fde7ea;">
+          <table role="presentation" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td style="vertical-align:middle;">
+                <div style="display:inline-flex;align-items:center;gap:10px;padding:7px 14px;border-radius:999px;background:#ffffff;border:1px solid #f3d0d7;color:#b4233c;font-size:12px;font-weight:700;letter-spacing:0.04em;">
+                  <img src="${holdedLogoUrl}" alt="Holded" width="18" height="18" style="display:block;border:0;" />
+                  Holded
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div style="padding:28px;">
+          <h1 style="font-size:28px;line-height:1.15;margin:0 0 12px;">Confirma tu correo para continuar con Holded</h1>
+          <p style="margin:0 0 14px;">Hola ${input.firstName},</p>
+          <p style="margin:0 0 14px;">Ya hemos preparado el acceso para el conector directo de Holded. Solo falta confirmar que este correo es tuyo para desbloquear el siguiente paso del onboarding.</p>
+          <p style="margin:0 0 18px;"><strong>Correo asociado:</strong> ${input.email}</p>
+          <a href="${input.verificationUrl}" style="display:inline-block;background:#ff5460;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Confirmar correo y volver</a>
+          <p style="margin:18px 0 0;color:#64748b;font-size:13px;">Cuando abras el enlace volveras al onboarding y se habilitara automaticamente el paso Usuario.</p>
+          <div style="margin:18px 0 0;padding:16px;border-radius:18px;background:#f8fafc;border:1px solid #e2e8f0;">
+            <div style="font-weight:700;margin:0 0 8px;">Si el boton no funciona</div>
+            <p style="margin:0 0 8px;color:#475569;">Copia y pega este enlace en tu navegador:</p>
+            <p style="margin:0;word-break:break-all;"><a href="${input.verificationUrl}" style="color:#b4233c;text-decoration:none;">${input.verificationUrl}</a></p>
+          </div>
+          <p style="margin:18px 0 0;color:#64748b;font-size:12px;">Powered by <a href="https://verifactu.business" style="color:#b4233c;text-decoration:none;">verifactu.business</a></p>
+        </div>
+      </div>
     </div>
   `;
 }

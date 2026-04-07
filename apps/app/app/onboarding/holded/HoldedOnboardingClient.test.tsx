@@ -148,6 +148,55 @@ describe('HoldedOnboardingClient', () => {
     ).toBeInTheDocument();
   });
 
+  it('adopts the verified email identity from refreshed props and unlocks the user step', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/onboarding/holded?identity_verified=1&onboarding_token=verified-onboarding-token'
+    );
+
+    const { rerender } = render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode={false}
+        requiresVerifiedIdentity
+        identity={{
+          authMethod: 'email',
+          email: 'verified@example.com',
+          emailVerified: false,
+          firstName: 'Ksenia',
+          lastName: 'Ivanova Lopez',
+          verifiedAt: null,
+        }}
+        onboardingToken="onboarding-token-123"
+      />
+    );
+
+    expect(screen.getByText('Paso 1: confirma tu identidad')).toBeInTheDocument();
+
+    rerender(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode={false}
+        requiresVerifiedIdentity
+        identity={{
+          authMethod: 'email',
+          email: 'verified@example.com',
+          emailVerified: true,
+          firstName: 'Ksenia',
+          lastName: 'Ivanova Lopez',
+          verifiedAt: '2026-04-07T16:05:00.000Z',
+        }}
+        onboardingToken="verified-onboarding-token"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
+  });
+
   it('fills the person step with the Google profile name instead of the email alias', async () => {
     (signInWithPopup as jest.Mock).mockResolvedValue({
       user: {
