@@ -3,6 +3,7 @@ import {
   getHoldedOnboardingTokenFromSearchParams,
   resolveHoldedOnboardingSession,
 } from '@/lib/integrations/holdedOnboardingSession';
+import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
@@ -114,12 +115,43 @@ export default async function HoldedOnboardingPage({
     source: params.source,
     next: params.next,
   });
+  const sessionNameParts = splitFullName(normalizeMeaningfulPersonName(session?.name));
+  const effectiveOnboardingToken =
+    onboardingToken ||
+    (entryChannel === 'chatgpt' && session?.uid
+      ? await mintHoldedOnboardingTokenForSubject({
+          uid: session.uid,
+          email: session.email ?? null,
+          name: normalizeMeaningfulPersonName(session.name),
+          tenantId: tenantIdHint,
+          authMethod: 'unknown',
+          emailVerified: false,
+          firstName: sessionNameParts.firstName,
+          lastName: sessionNameParts.lastName,
+          verifiedAt: null,
+        })
+      : null);
+  const effectiveOnboardingSession = onboardingSession
+    ? onboardingSession
+    : effectiveOnboardingToken && entryChannel === 'chatgpt' && session?.uid
+      ? {
+          uid: session.uid,
+          email: session.email ?? null,
+          name: normalizeMeaningfulPersonName(session.name),
+          tenantId: tenantIdHint,
+          authMethod: 'unknown' as const,
+          emailVerified: false,
+          firstName: sessionNameParts.firstName,
+          lastName: sessionNameParts.lastName,
+          verifiedAt: null,
+        }
+      : null;
 
   const defaultContactName =
     normalizeMeaningfulPersonName(session?.name) ??
-    normalizeMeaningfulPersonName(onboardingSession?.name) ??
+    normalizeMeaningfulPersonName(effectiveOnboardingSession?.name) ??
     null;
-  const defaultContactEmail = session?.email ?? onboardingSession?.email ?? null;
+  const defaultContactEmail = session?.email ?? effectiveOnboardingSession?.email ?? null;
   let summary = {
     companyName: 'Tu empresa',
     companyLegalName: null as string | null,
@@ -147,12 +179,12 @@ export default async function HoldedOnboardingPage({
 
   try {
     const auth =
-      session?.uid || onboardingSession?.tenantId
+      session?.uid || effectiveOnboardingSession?.tenantId
         ? await requireTenantContext({
             channelType: entryChannel,
             metadata: { source: 'holded-onboarding-page' },
             tenantIdHint,
-            onboardingToken,
+            onboardingToken: effectiveOnboardingToken,
           })
         : null;
 
@@ -250,17 +282,18 @@ export default async function HoldedOnboardingPage({
       requireConnectionConfirmation={requireConnectionConfirmation}
       requiresVerifiedIdentity={entryChannel === 'chatgpt'}
       identity={{
-        authMethod: onboardingSession?.authMethod ?? 'unknown',
-        email: normalizeText(onboardingSession?.email),
+        authMethod: effectiveOnboardingSession?.authMethod ?? 'unknown',
+        email: normalizeText(effectiveOnboardingSession?.email),
         emailVerified:
-          onboardingSession?.authMethod === 'google' || onboardingSession?.emailVerified === true,
-        firstName: normalizeText(onboardingSession?.firstName),
-        lastName: normalizeText(onboardingSession?.lastName),
-        verifiedAt: normalizeText(onboardingSession?.verifiedAt),
+          effectiveOnboardingSession?.authMethod === 'google' ||
+          effectiveOnboardingSession?.emailVerified === true,
+        firstName: normalizeText(effectiveOnboardingSession?.firstName),
+        lastName: normalizeText(effectiveOnboardingSession?.lastName),
+        verifiedAt: normalizeText(effectiveOnboardingSession?.verifiedAt),
       }}
       summary={summary}
       companySetup={companySetup}
-      onboardingToken={onboardingToken}
+      onboardingToken={effectiveOnboardingToken}
       tenantIdHint={resolvedTenantInfo.tenantId ?? tenantIdHint}
     />
   );

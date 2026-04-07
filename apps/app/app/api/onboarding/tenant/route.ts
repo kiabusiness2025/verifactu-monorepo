@@ -518,8 +518,8 @@ export async function POST(req: Request) {
     onboardingToken: onboardingSession
       ? await mintHoldedOnboardingTokenForSubject({
           uid: onboardingSession.uid,
-          email: authSession.email ?? null,
-          name: authSession.name ?? null,
+          email: onboardingSession.email ?? authSession.email ?? null,
+          name: onboardingSession.name ?? contactFullName ?? authSession.name ?? null,
           tenantId: result.tenant.id,
           authMethod: onboardingSession.authMethod,
           emailVerified: onboardingSession.emailVerified,

@@ -160,6 +160,29 @@ function buildAddressPreview(parts: {
     .join(', ');
 }
 
+function GoogleMark() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
+    </svg>
+  );
+}
+
 function buildConfirmedNextUrl(input: {
   nextUrl: string;
   requireConnectionConfirmation: boolean;
@@ -194,10 +217,8 @@ function buildConfirmedNextUrl(input: {
 const chatgptUiCopy = {
   eyebrow: 'Conector directo Holded + ChatGPT',
   title: 'Conecta tu empresa de Holded',
-  intro:
-    'Empezamos confirmando tu identidad y, justo despues, validamos la API key de Holded para volver a ChatGPT.',
-  security:
-    'La identidad y la API key se validan en servidor y se guardan protegidas solo para esta conexion.',
+  intro: 'Confirma tu identidad, conecta Holded y vuelve a ChatGPT.',
+  security: 'Validamos la conexion en servidor y protegemos la API key.',
   statusReady: 'Empresa preparada para conectar',
   statusLoading: 'Validando acceso y preparando la conexion',
   statusPending: 'Esperando tu API key de Holded',
@@ -465,8 +486,8 @@ export default function HoldedOnboardingClient({
       : uiCopy.submitLabel;
   const personalizedLead = showIdentityGate
     ? identityState.authMethod === 'email' && identityState.email
-      ? `Antes de seguir, confirma el correo ${identityState.email} para desbloquear la conexion directa con Holded.`
-      : 'Antes de pedir la API key, necesitamos identificarte con Google o confirmar el correo que quieres usar con Holded.'
+      ? `Revisa ${identityState.email} para confirmar el correo.`
+      : 'Elige como quieres confirmar tu identidad.'
     : !showApiStep
       ? reusesStoredCompanyData
         ? `${resolvedSummary.contactFirstName}, ya hemos resuelto internamente la empresa y estamos cerrando la conexion directa con Holded.`
@@ -1412,26 +1433,32 @@ export default function HoldedOnboardingClient({
             <h1 className="mt-3 text-2xl font-bold tracking-tight text-black sm:text-[1.8rem]">
               {uiCopy.title}
             </h1>
-            <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">{uiCopy.intro}</p>
-            <p className="mt-2 text-sm font-medium text-[#0b214a]">{personalizedLead}</p>
+            <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">
+              {showIdentityGate ? 'Confirma tu identidad para continuar.' : uiCopy.intro}
+            </p>
+            {!showIdentityGate ? (
+              <>
+                <p className="mt-2 text-sm font-medium text-[#0b214a]">{personalizedLead}</p>
 
-            <div className="mt-5 rounded-2xl border border-[#0b6cfb]/20 bg-[#f3f8ff] px-4 py-3 text-sm text-[#0b214a]">
-              <div className="flex items-start gap-2">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#0b6cfb]" />
-                <span>{uiCopy.security}</span>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {uiHighlights.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm leading-6 text-neutral-700"
-                >
-                  {item}
+                <div className="mt-5 rounded-2xl border border-[#0b6cfb]/20 bg-[#f3f8ff] px-4 py-3 text-sm text-[#0b214a]">
+                  <div className="flex items-start gap-2">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#0b6cfb]" />
+                    <span>{uiCopy.security}</span>
+                  </div>
                 </div>
-              ))}
-            </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  {uiHighlights.map((item) => (
+                    <div
+                      key={item}
+                      className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm leading-6 text-neutral-700"
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
 
             {usesDirectStepFlow ? (
               <>
@@ -1477,20 +1504,12 @@ export default function HoldedOnboardingClient({
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-semibold text-black">
-                            Paso 1: verifica tu identidad
+                            Paso 1: confirma tu identidad
                           </div>
                           <p className="mt-2 text-sm leading-6 text-neutral-700">
-                            Este conector directo ya no empieza por la API key. Primero confirmamos
-                            si entras con Google o con un correo verificado, y despues seguimos con
-                            Holded.
+                            Elige una opcion para continuar. Si quieres, puedes usar un correo
+                            distinto al de ChatGPT.
                           </p>
-                          <p className="mt-2 text-sm leading-6 text-neutral-700">
-                            Puedes usar un correo distinto al de ChatGPT si ese es el contacto real
-                            que tiene tu empresa en Holded.
-                          </p>
-                          <div className="mt-3 text-sm text-neutral-700">
-                            Estado: <span className="font-semibold text-black">{statusLabel}</span>
-                          </div>
                         </div>
                       </div>
 
@@ -1498,12 +1517,10 @@ export default function HoldedOnboardingClient({
                         <button
                           type="button"
                           onClick={handleContinueWithGoogle}
-                          disabled={identitySubmitting}
+                          disabled={identitySubmitting || !activeOnboardingToken}
                           className="inline-flex min-h-[56px] items-center justify-center gap-3 rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-left text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f8ff] text-[#0b6cfb]">
-                            G
-                          </span>
+                          <GoogleMark />
                           Continuar con Google
                         </button>
 
@@ -1511,8 +1528,9 @@ export default function HoldedOnboardingClient({
                           onSubmit={handleSendVerificationEmail}
                           className="rounded-2xl border border-neutral-300 bg-white p-3 shadow-sm"
                         >
+                          <div className="text-sm font-semibold text-black">Confirmar correo</div>
                           <label className="block text-sm font-medium text-neutral-700">
-                            Correo que quieres confirmar
+                            Correo electronico
                             <input
                               type="email"
                               value={manualEmail}
@@ -1524,13 +1542,17 @@ export default function HoldedOnboardingClient({
                           </label>
                           <button
                             type="submit"
-                            disabled={identitySubmitting || !normalizeText(manualEmail)}
+                            disabled={
+                              identitySubmitting ||
+                              !normalizeText(manualEmail) ||
+                              !activeOnboardingToken
+                            }
                             className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {identityState.authMethod === 'email' &&
                             identityState.email === normalizeText(manualEmail).toLowerCase()
-                              ? 'Reenviar enlace de verificacion'
-                              : 'Enviar enlace de verificacion'}
+                              ? 'Reenviar correo de confirmacion'
+                              : 'Confirmar correo'}
                           </button>
                         </form>
                       </div>

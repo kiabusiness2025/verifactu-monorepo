@@ -22,6 +22,10 @@ jest.mock('@/lib/api/tenantAuth', () => ({
   requireTenantContext: jest.fn(),
 }));
 
+jest.mock('@/lib/oauth/mcp', () => ({
+  mintHoldedOnboardingTokenForSubject: jest.fn(async () => 'generated-onboarding-token'),
+}));
+
 jest.mock('@/lib/prisma', () => ({
   __esModule: true,
   default: {
@@ -44,6 +48,7 @@ jest.mock('./HoldedOnboardingClient', () => ({
 
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { resolveHoldedOnboardingSession } from '@/lib/integrations/holdedOnboardingSession';
+import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import HoldedOnboardingPage from './page';
@@ -194,5 +199,52 @@ describe('HoldedOnboardingPage', () => {
 
     expect(element.props.summary.contactFirstName).toBe('');
     expect(element.props.summary.contactEmail).toBe('kiabusiness2025@gmail.com');
+  });
+
+  it('mints a temporary onboarding token when chatgpt onboarding starts from an existing session without one', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'session-user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-session',
+    });
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue(null);
+    (requireTenantContext as jest.Mock).mockResolvedValue({
+      tenantId: 'tenant-auth',
+      session: {
+        uid: 'session-user-1',
+        email: 'demo@example.com',
+        name: 'Demo User',
+      },
+    });
+
+    const element = await HoldedOnboardingPage({
+      searchParams: Promise.resolve({
+        next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
+        channel: 'chatgpt',
+      }),
+    });
+
+    expect(mintHoldedOnboardingTokenForSubject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        uid: 'session-user-1',
+        email: 'demo@example.com',
+        authMethod: 'unknown',
+        emailVerified: false,
+      })
+    );
+    expect(requireTenantContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        onboardingToken: 'generated-onboarding-token',
+      })
+    );
+    expect(element.props.onboardingToken).toBe('generated-onboarding-token');
+    expect(element.props.identity).toEqual(
+      expect.objectContaining({
+        authMethod: 'unknown',
+        email: 'demo@example.com',
+        emailVerified: false,
+      })
+    );
   });
 });

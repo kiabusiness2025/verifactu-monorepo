@@ -81,9 +81,7 @@ describe('HoldedOnboardingClient', () => {
 
     expect(screen.getByText('Conector directo Holded + ChatGPT')).toBeInTheDocument();
     expect(
-      screen.getByText(
-        'Empezamos confirmando tu identidad y, justo despues, validamos la API key de Holded para volver a ChatGPT.'
-      )
+      screen.getByText('Confirma tu identidad, conecta Holded y vuelve a ChatGPT.')
     ).toBeInTheDocument();
     expect(screen.getByText('Sin login visible.')).toBeInTheDocument();
     expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
@@ -122,15 +120,16 @@ describe('HoldedOnboardingClient', () => {
       />
     );
 
-    expect(screen.getByText('Paso 1: verifica tu identidad')).toBeInTheDocument();
+    expect(screen.getByText('Paso 1: confirma tu identidad')).toBeInTheDocument();
     expect(
       screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
     ).not.toBeInTheDocument();
+    expect(screen.queryByText('Sin login visible.')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText('tu@empresa.com'), {
       target: { value: 'verified@example.com' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Enviar enlace de verificacion' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar correo' }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
