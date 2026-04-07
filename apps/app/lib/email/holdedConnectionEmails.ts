@@ -186,6 +186,7 @@ export async function sendWelcomeLifecycleEmails(args: TenantEmailContext) {
       sendCustomEmail({
         to: safeUserEmail,
         subject: 'Bienvenido a Verifactu Business',
+        senderProfile: 'holded',
         html: buildWelcomeUserHtml({
           userFirstName: safeUserFirstName,
           tenantDisplayName: company.displayName,
@@ -201,6 +202,7 @@ export async function sendWelcomeLifecycleEmails(args: TenantEmailContext) {
     sendCustomEmail({
       to: ADMIN_NOTIFICATION_EMAIL,
       subject: 'Admin: nueva empresa activada',
+      senderProfile: 'holded',
       html: buildWelcomeAdminHtml({
         userName: safeUserName,
         userEmail: safeUserEmail || 'sin-email',
@@ -247,6 +249,7 @@ export async function sendHoldedConnectionLifecycleEmails(args: {
       sendCustomEmail({
         to: safeUserEmail,
         subject: `Holded: ${actionLabel}`,
+        senderProfile: 'holded',
         html: buildUserHtml({
           userFirstName: safeUserFirstName,
           tenantDisplayName: company.displayName,
@@ -265,6 +268,7 @@ export async function sendHoldedConnectionLifecycleEmails(args: {
     sendCustomEmail({
       to: ADMIN_NOTIFICATION_EMAIL,
       subject: `Admin: Holded ${actionLabel}`,
+      senderProfile: 'holded',
       html: buildAdminHtml({
         userName: safeUserName,
         userEmail: safeUserEmail || 'sin-email',

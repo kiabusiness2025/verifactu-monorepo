@@ -12,11 +12,18 @@ jest.mock('@/lib/integrations/holdedConnectionResolver', () => ({
   resolveSharedHoldedConnectionStatusForTenant: jest.fn(),
 }));
 
+jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
+  getHoldedOnboardingTokenFromHeaders: jest.fn((headers: Headers) =>
+    headers.get('x-holded-onboarding-token')
+  ),
+}));
+
 import { NextRequest } from 'next/server';
 import { GET } from './route';
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
 import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import { getHoldedOnboardingTokenFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
 
 describe('GET /api/integrations/accounting/status', () => {
   beforeEach(() => {
@@ -32,6 +39,9 @@ describe('GET /api/integrations/accounting/status', () => {
       planCode: 'empresa',
     });
     (resolveSharedHoldedConnectionStatusForTenant as jest.Mock).mockResolvedValue(null);
+    (getHoldedOnboardingTokenFromHeaders as jest.Mock).mockImplementation((headers: Headers) =>
+      headers.get('x-holded-onboarding-token')
+    );
   });
 
   afterEach(() => {
@@ -106,6 +116,50 @@ describe('GET /api/integrations/accounting/status', () => {
       lastError: 'holded validation failed',
       degraded: false,
       requestId: expect.any(String),
+    });
+  });
+
+  it('passes the onboarding token and tenant hint into chatgpt tenant resolution', async () => {
+    (resolveSharedHoldedConnectionStatusForTenant as jest.Mock).mockResolvedValue({
+      id: 'ext-chatgpt-1',
+      tenantId: 'tenant-1',
+      provider: 'holded',
+      providerAccountId: 'holded-company-1',
+      credentialType: 'api_key',
+      status: 'connected',
+      channel: 'chatgpt',
+      lastSyncAt: '2026-04-07T14:30:00.000Z',
+      lastError: null,
+      source: 'external_connection',
+    });
+
+    const response = await GET(
+      new NextRequest(
+        'https://app.verifactu.business/api/integrations/accounting/status?channel=chatgpt&tenant_id=tenant-demo',
+        {
+          headers: {
+            'x-isaak-entry-channel': 'chatgpt',
+            'x-isaak-tenant-id': 'tenant-demo',
+            'x-holded-onboarding-token': 'onboarding-token-123',
+          },
+        }
+      )
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(requireTenantContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channelType: 'chatgpt',
+        tenantIdHint: 'tenant-demo',
+        onboardingToken: 'onboarding-token-123',
+      })
+    );
+    expect(payload).toMatchObject({
+      provider: 'holded',
+      status: 'connected',
+      connected: true,
+      degraded: false,
     });
   });
 

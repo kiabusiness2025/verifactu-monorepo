@@ -3,27 +3,53 @@
  * Sistema completo de envío de emails con Resend
  */
 
-// Importar Resend
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
+type EmailSenderProfile = 'default' | 'holded';
+
+function cleanEnv(value?: string | null) {
+  return value?.replace(/[\r\n]/g, '').trim() || '';
+}
+
+const DEFAULT_RESEND_API_KEY = cleanEnv(process.env.RESEND_API_KEY);
+const HOLDED_RESEND_API_KEY = cleanEnv(process.env.RESEND_API_KEY_HOLDED) || DEFAULT_RESEND_API_KEY;
 const DEFAULT_EMAIL_FROM =
-  process.env.RESEND_FROM || 'Verifactu Business <no-reply@verifactu.business>';
+  cleanEnv(process.env.RESEND_FROM) || 'Verifactu Business <no-reply@verifactu.business>';
+const HOLDED_EMAIL_FROM =
+  cleanEnv(process.env.RESEND_FROM_HOLDED) ||
+  'Holded for Isaak <no-reply@holded.verifactu.business>';
 
 // Alias de emails según contexto
-const EMAIL_FROM_SUPPORT = process.env.RESEND_FROM_SUPPORT || DEFAULT_EMAIL_FROM;
-const EMAIL_FROM_NOREPLY = process.env.RESEND_FROM_NOREPLY || DEFAULT_EMAIL_FROM;
-const EMAIL_FROM_INFO = process.env.RESEND_FROM_INFO || DEFAULT_EMAIL_FROM;
+const EMAIL_FROM_SUPPORT = cleanEnv(process.env.RESEND_FROM_SUPPORT) || DEFAULT_EMAIL_FROM;
+const EMAIL_FROM_NOREPLY = cleanEnv(process.env.RESEND_FROM_NOREPLY) || DEFAULT_EMAIL_FROM;
+const EMAIL_FROM_INFO = cleanEnv(process.env.RESEND_FROM_INFO) || DEFAULT_EMAIL_FROM;
+
+function resolveEmailTransport(senderProfile: EmailSenderProfile) {
+  if (senderProfile === 'holded') {
+    return {
+      apiKey: HOLDED_RESEND_API_KEY,
+      from: HOLDED_EMAIL_FROM,
+    };
+  }
+
+  return {
+    apiKey: DEFAULT_RESEND_API_KEY,
+    from: EMAIL_FROM_NOREPLY,
+  };
+}
 
 export interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
+  senderProfile?: EmailSenderProfile;
 }
 
 /**
  * Función auxiliar para enviar email via Resend
  */
-async function sendEmail({ to, subject, html }: SendEmailParams) {
-  if (!RESEND_API_KEY) {
+async function sendEmail({ to, subject, html, senderProfile = 'default' }: SendEmailParams) {
+  const transport = resolveEmailTransport(senderProfile);
+
+  if (!transport.apiKey) {
     console.error('RESEND_API_KEY no está configurado');
     return { success: false, error: 'Email service not configured' };
   }
@@ -34,10 +60,10 @@ async function sendEmail({ to, subject, html }: SendEmailParams) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${transport.apiKey}`,
       },
       body: JSON.stringify({
-        from: EMAIL_FROM_NOREPLY,
+        from: transport.from,
         to,
         subject,
         html,
@@ -198,12 +224,14 @@ export async function sendCustomEmail({
   to,
   subject,
   html,
+  senderProfile = 'default',
 }: {
   to: string;
   subject: string;
   html: string;
+  senderProfile?: EmailSenderProfile;
 }) {
-  return sendEmail({ to, subject, html });
+  return sendEmail({ to, subject, html, senderProfile });
 }
 
 // ============================================================================

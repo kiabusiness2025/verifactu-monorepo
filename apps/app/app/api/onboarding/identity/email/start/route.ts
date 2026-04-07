@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
   const emailResult = await sendCustomEmail({
     to: email,
     subject: 'Confirma tu correo para conectar Holded',
+    senderProfile: 'holded',
     html: buildVerificationEmailHtml({
       firstName: getPreferredFirstName({
         firstName: onboardingSession.firstName,

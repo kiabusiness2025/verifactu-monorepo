@@ -81,6 +81,7 @@ describe('POST /api/onboarding/identity/email/start', () => {
       expect.objectContaining({
         to: 'verified@example.com',
         subject: 'Confirma tu correo para conectar Holded',
+        senderProfile: 'holded',
         html: expect.stringContaining('email-verification-token'),
       })
     );

@@ -6,6 +6,7 @@ import {
   logConnectorEvent,
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
+import { getHoldedOnboardingTokenFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
 import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
 
 export const runtime = 'nodejs';
@@ -16,9 +17,19 @@ function getEntryChannel(request: NextRequest) {
   return query === 'chatgpt' || header === 'chatgpt' ? 'chatgpt' : 'dashboard';
 }
 
+function getTenantIdHint(request: NextRequest) {
+  return (
+    request.headers.get('x-isaak-tenant-id')?.trim() ||
+    request.nextUrl.searchParams.get('tenant_id')?.trim() ||
+    null
+  );
+}
+
 export async function GET(request: NextRequest) {
   const entryChannel = getEntryChannel(request);
   const requestId = getConnectorRequestId(request);
+  const tenantIdHint = getTenantIdHint(request);
+  const onboardingToken = getHoldedOnboardingTokenFromHeaders(request.headers);
   let stage: 'auth' | 'access' | 'lookup' = 'auth';
 
   try {
@@ -27,6 +38,8 @@ export async function GET(request: NextRequest) {
       metadata: {
         source: entryChannel === 'chatgpt' ? 'holded-first-onboarding' : 'requireTenantContext',
       },
+      tenantIdHint,
+      onboardingToken,
     });
     if ('error' in auth) {
       if (entryChannel === 'chatgpt') {
