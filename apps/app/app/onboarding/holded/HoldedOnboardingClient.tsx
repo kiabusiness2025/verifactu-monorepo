@@ -160,6 +160,34 @@ function buildAddressPreview(parts: {
     .join(', ');
 }
 
+function getGoogleIdentityErrorMessage(error: unknown) {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: unknown }).code ?? '')
+      : '';
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+
+  if (code === 'auth/popup-closed-by-user') {
+    return 'La ventana de Google se ha cerrado antes de terminar. Vuelve a intentarlo y permite el popup si tu navegador lo bloquea.';
+  }
+
+  if (code === 'auth/popup-blocked') {
+    return 'Tu navegador ha bloqueado la ventana de Google. Permite los popups para este sitio y vuelve a intentarlo.';
+  }
+
+  if (code === 'auth/cancelled-popup-request') {
+    return 'Ya hay un acceso con Google en curso. Cierra la otra ventana y vuelve a intentarlo.';
+  }
+
+  if (message.includes('Cross-Origin-Opener-Policy') || message.includes('window.closed')) {
+    return 'Tu navegador ha bloqueado la comunicacion con la ventana de Google. Recarga la pagina y vuelve a intentarlo.';
+  }
+
+  return error instanceof Error
+    ? error.message
+    : 'No hemos podido verificar tu identidad con Google.';
+}
+
 function GoogleMark() {
   return (
     <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -393,7 +421,6 @@ export default function HoldedOnboardingClient({
     ((identityState.authMethod === 'google' || identityState.emailVerified) &&
       !!normalizedIdentityEmail);
   const showIdentityGate = requiresVerifiedIdentity && !verifiedIdentityReady;
-  const showApiStep = !showIdentityGate && (!needsPostValidationCompanyStep || !apiValidated);
   const hideResolvedCompanyUntilApiValidation = needsPostValidationCompanyStep && !apiValidated;
   const companyStepPending =
     !showIdentityGate &&
@@ -407,14 +434,19 @@ export default function HoldedOnboardingClient({
   const showCompanyEmail =
     !!resolvedSummary.companyEmail &&
     resolvedSummary.companyEmail.trim() !== (resolvedSummary.contactEmail || '').trim();
+  const confirmationModeNeedsExistingConnectionCheck =
+    requireConnectionConfirmation && hasResolvedCompanyProfile;
   const canContinueWithExistingConnection =
     !!status?.connected &&
     !showIdentityGate &&
-    !needsPostValidationCompanyStep &&
     requireConnectionConfirmation &&
-    companyConfirmed &&
     !saving &&
-    !redirecting;
+    !redirecting &&
+    (confirmationModeNeedsExistingConnectionCheck || companyConfirmed);
+  const showApiStep =
+    !showIdentityGate &&
+    (!needsPostValidationCompanyStep || !apiValidated) &&
+    !canContinueWithExistingConnection;
   const normalizedApiKey = useMemo(() => normalizeApiKey(apiKey), [apiKey]);
   const hasReusableValidationToken =
     validatedApiKey === normalizedApiKey && Boolean(validationToken);
@@ -587,18 +619,27 @@ export default function HoldedOnboardingClient({
 
   const loadStatus = useCallback(
     async (signal?: AbortSignal) => {
+      const effectiveTenantIdHint = selectedTenantId ?? initialTenantIdHint;
       const res = await fetch(`/api/integrations/accounting/status?channel=${entryChannel}`, {
         cache: 'no-store',
         signal,
         headers: {
           'x-isaak-entry-channel': entryChannel,
+          ...(activeOnboardingToken ? { 'x-holded-onboarding-token': activeOnboardingToken } : {}),
+          ...(effectiveTenantIdHint ? { 'x-isaak-tenant-id': effectiveTenantIdHint } : {}),
         },
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || uiCopy.errorLoadFailed);
       return data as IntegrationStatus;
     },
-    [entryChannel, uiCopy.errorLoadFailed]
+    [
+      activeOnboardingToken,
+      entryChannel,
+      initialTenantIdHint,
+      selectedTenantId,
+      uiCopy.errorLoadFailed,
+    ]
   );
 
   const statusLabel = useMemo(() => {
@@ -679,6 +720,11 @@ export default function HoldedOnboardingClient({
     setMessage(null);
     setDirectStep(step);
   }, []);
+
+  const shouldCheckExistingConnectionStatus =
+    !showIdentityGate &&
+    !companyStepPending &&
+    (!needsPostValidationCompanyStep || confirmationModeNeedsExistingConnectionCheck);
 
   const handleDirectNextFromPerson = useCallback(() => {
     if (!verifiedIdentityReady) {
@@ -763,7 +809,7 @@ export default function HoldedOnboardingClient({
   }, [saving, savingMessages]);
 
   useEffect(() => {
-    if (showIdentityGate || needsPostValidationCompanyStep || companyStepPending) {
+    if (!shouldCheckExistingConnectionStatus) {
       setLoading(false);
       return;
     }
@@ -779,8 +825,15 @@ export default function HoldedOnboardingClient({
         const data = await loadStatus(controller.signal);
         if (cancelled) return;
         setStatus(data);
-        if (data?.connected && nextUrl && !requireConnectionConfirmation) {
-          goToNextStep();
+        if (data?.connected && nextUrl) {
+          if (confirmationModeNeedsExistingConnectionCheck) {
+            goToNextStep(confirmedNextUrl);
+            return;
+          }
+
+          if (!requireConnectionConfirmation) {
+            goToNextStep();
+          }
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -807,25 +860,35 @@ export default function HoldedOnboardingClient({
     };
   }, [
     companyStepPending,
+    confirmationModeNeedsExistingConnectionCheck,
+    confirmedNextUrl,
     goToNextStep,
     loadStatus,
     needsPostValidationCompanyStep,
     nextUrl,
     requireConnectionConfirmation,
     showIdentityGate,
+    shouldCheckExistingConnectionStatus,
     uiCopy.errorLoadFailed,
   ]);
 
   const handleRetryStatus = async () => {
-    if (showIdentityGate || needsPostValidationCompanyStep || companyStepPending) return;
+    if (!shouldCheckExistingConnectionStatus) return;
 
     setLoading(true);
     setError(null);
     try {
       const data = await loadStatus();
       setStatus(data);
-      if (data?.connected && nextUrl && !requireConnectionConfirmation) {
-        goToNextStep();
+      if (data?.connected && nextUrl) {
+        if (confirmationModeNeedsExistingConnectionCheck) {
+          goToNextStep(confirmedNextUrl);
+          return;
+        }
+
+        if (!requireConnectionConfirmation) {
+          goToNextStep();
+        }
       }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : uiCopy.errorLoadFailed);
@@ -1262,11 +1325,7 @@ export default function HoldedOnboardingClient({
       }
       setIdentityMessage('Identidad confirmada con Google. Ya puedes continuar con la API key.');
     } catch (identityRequestError) {
-      setIdentityError(
-        identityRequestError instanceof Error
-          ? identityRequestError.message
-          : 'No hemos podido verificar tu identidad con Google.'
-      );
+      setIdentityError(getGoogleIdentityErrorMessage(identityRequestError));
     } finally {
       await signOut(auth).catch(() => undefined);
       setIdentitySubmitting(false);
@@ -1507,8 +1566,8 @@ export default function HoldedOnboardingClient({
                             Paso 1: confirma tu identidad
                           </div>
                           <p className="mt-2 text-sm leading-6 text-neutral-700">
-                            Elige una opcion para continuar. Si quieres, puedes usar un correo
-                            distinto al de ChatGPT.
+                            Elige una opcion para continuar. El correo tiene que ser el mismo que
+                            tienes configurado en Holded.
                           </p>
                         </div>
                       </div>

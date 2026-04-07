@@ -5,11 +5,13 @@
 
 // Importar Resend
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const DEFAULT_EMAIL_FROM =
+  process.env.RESEND_FROM || 'Verifactu Business <no-reply@verifactu.business>';
 
 // Alias de emails según contexto
-const EMAIL_FROM_SUPPORT = process.env.RESEND_FROM_SUPPORT || 'Verifactu Business <info@verifactu.business>';
-const EMAIL_FROM_NOREPLY = process.env.RESEND_FROM_NOREPLY || 'Verifactu Business <notificaciones@verifactu.business>';
-const EMAIL_FROM_INFO = process.env.RESEND_FROM_INFO || 'Verifactu Business <info@verifactu.business>';
+const EMAIL_FROM_SUPPORT = process.env.RESEND_FROM_SUPPORT || DEFAULT_EMAIL_FROM;
+const EMAIL_FROM_NOREPLY = process.env.RESEND_FROM_NOREPLY || DEFAULT_EMAIL_FROM;
+const EMAIL_FROM_INFO = process.env.RESEND_FROM_INFO || DEFAULT_EMAIL_FROM;
 
 export interface SendEmailParams {
   to: string;
@@ -616,5 +618,3 @@ function generateTeamInviteEmailHtml({
 
   return wrapEmail(content);
 }
-
-

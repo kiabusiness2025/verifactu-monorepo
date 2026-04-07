@@ -26,23 +26,23 @@ function getHoldedUrl() {
   );
 }
 
+function applyCrossOriginOpenerPolicy(response: NextResponse, pathname: string, source: string) {
+  const requiresPopupCompatibility =
+    pathname.startsWith('/onboarding/holded') || source.startsWith('holded');
+
+  response.headers.set(
+    'Cross-Origin-Opener-Policy',
+    requiresPopupCompatibility ? 'same-origin-allow-popups' : 'same-origin'
+  );
+
+  return response;
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const source = req.nextUrl.searchParams.get('source')?.toLowerCase() || '';
 
-  // Backward compatibility for cached clients still probing legacy admin status.
-  if (pathname === '/api/admin/check') {
-    return NextResponse.json({ isAdmin: false }, { status: 200 });
-  }
-
-  if (pathname.startsWith('/api/admin')) {
-    return NextResponse.json(
-      { error: 'Legacy admin API removed. Use admin.verifactu.business.' },
-      { status: 410 }
-    );
-  }
-
-  // Force legacy admin routes to the new admin app
+  // Redirect admin routes to the new admin app.
   if (pathname.startsWith('/dashboard/admin')) {
     const adminBase =
       process.env.NEXT_PUBLIC_ADMIN_URL ??
@@ -52,7 +52,11 @@ export async function middleware(req: NextRequest) {
     const target = new URL(adminBase);
     target.pathname = pathname;
     target.search = req.nextUrl.search;
-    return NextResponse.redirect(target, { status: 308 });
+    return applyCrossOriginOpenerPolicy(
+      NextResponse.redirect(target, { status: 308 }),
+      pathname,
+      source
+    );
   }
 
   // Redirect /dashboard/admin/tenants -> /dashboard/admin/companies
@@ -60,17 +64,21 @@ export async function middleware(req: NextRequest) {
     const newPath = pathname.replace('/dashboard/admin/tenants', '/dashboard/admin/companies');
     const url = req.nextUrl.clone();
     url.pathname = newPath;
-    return NextResponse.redirect(url, { status: 308 });
+    return applyCrossOriginOpenerPolicy(
+      NextResponse.redirect(url, { status: 308 }),
+      pathname,
+      source
+    );
   }
 
   // Demo is always public
   if (pathname === '/demo' || pathname.startsWith('/demo/')) {
-    return NextResponse.next();
+    return applyCrossOriginOpenerPolicy(NextResponse.next(), pathname, source);
   }
 
   // Support handoff route is public (token protected)
   if (pathname.startsWith('/support/handoff')) {
-    return NextResponse.next();
+    return applyCrossOriginOpenerPolicy(NextResponse.next(), pathname, source);
   }
 
   const supportToken = req.cookies.get(SUPPORT_SESSION_COOKIE)?.value;
@@ -82,11 +90,15 @@ export async function middleware(req: NextRequest) {
       headers.set('x-support-user-id', support.userId);
       headers.set('x-support-session-id', support.supportSessionId);
       headers.set('x-support-admin-id', support.adminId);
-      return NextResponse.next({ request: { headers } });
+      return applyCrossOriginOpenerPolicy(
+        NextResponse.next({ request: { headers } }),
+        pathname,
+        source
+      );
     } catch {
       const response = NextResponse.next();
       response.cookies.delete(SUPPORT_SESSION_COOKIE);
-      return response;
+      return applyCrossOriginOpenerPolicy(response, pathname, source);
     }
   }
 
@@ -101,7 +113,11 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = '/demo';
     url.search = '';
-    return NextResponse.redirect(url, { status: 307 });
+    return applyCrossOriginOpenerPolicy(
+      NextResponse.redirect(url, { status: 307 }),
+      pathname,
+      source
+    );
   }
 
   if (!session && !isDevelopment && !isAdminRoute) {
@@ -117,13 +133,13 @@ export async function middleware(req: NextRequest) {
     const loginPath = isHoldedFlow ? '/auth/holded' : '/auth/login';
     const loginBase = isHoldedFlow ? holdedUrl : landingUrl;
     const loginUrl = `${loginBase}${loginPath}?next=${encodeURIComponent(`${returnUrl}${returnQuery}`)}`;
-    return NextResponse.redirect(loginUrl);
+    return applyCrossOriginOpenerPolicy(NextResponse.redirect(loginUrl), pathname, source);
   }
 
   if (pathname === '/') {
     const url = req.nextUrl.clone();
     url.pathname = '/demo';
-    return NextResponse.redirect(url);
+    return applyCrossOriginOpenerPolicy(NextResponse.redirect(url), pathname, source);
   }
 
   const holdedFlow =
@@ -134,12 +150,16 @@ export async function middleware(req: NextRequest) {
   if (holdedFlow) {
     const headers = new Headers(req.headers);
     headers.set('x-holded-flow', '1');
-    return NextResponse.next({ request: { headers } });
+    return applyCrossOriginOpenerPolicy(
+      NextResponse.next({ request: { headers } }),
+      pathname,
+      source
+    );
   }
 
-  return NextResponse.next();
+  return applyCrossOriginOpenerPolicy(NextResponse.next(), pathname, source);
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/onboarding/:path*', '/demo/:path*', '/api/admin/:path*'],
+  matcher: ['/', '/dashboard/:path*', '/onboarding/:path*', '/demo/:path*'],
 };

@@ -230,6 +230,65 @@ describe('HoldedOnboardingClient', () => {
     expect(screen.getByLabelText('Rol en la empresa')).toHaveValue('');
   });
 
+  it('shows a friendly message when the Google popup closes before finishing', async () => {
+    (signInWithPopup as jest.Mock).mockRejectedValue({
+      code: 'auth/popup-closed-by-user',
+      message: 'Firebase: Error (auth/popup-closed-by-user).',
+    });
+
+    render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode={false}
+        requiresVerifiedIdentity
+        onboardingToken="onboarding-token-123"
+        summary={{
+          companyName: 'Tu empresa',
+          companyLegalName: null,
+          companyTaxId: null,
+          companyAddress: null,
+          companyPostalCode: null,
+          companyCity: null,
+          companyProvince: null,
+          companyCountry: null,
+          companyWebsite: null,
+          companySectorCode: null,
+          companySectorLabel: null,
+          contactFirstName: '',
+          contactRole: null,
+          contactFullName: null,
+          contactEmail: 'kiabusiness2025@gmail.com',
+          companyEmail: null,
+          contactPhone: null,
+        }}
+        companySetup={{
+          hasResolvedCompany: false,
+          needsCompanySetup: true,
+          requiresCompanyConfirmation: false,
+        }}
+        identity={{
+          authMethod: 'unknown',
+          email: null,
+          emailVerified: false,
+          firstName: null,
+          lastName: null,
+          verifiedAt: null,
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Continuar con Google/i }));
+
+    expect(
+      await screen.findByText(
+        'La ventana de Google se ha cerrado antes de terminar. Vuelve a intentarlo y permite el popup si tu navegador lo bloquea.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Firebase: Error (auth/popup-closed-by-user).')
+    ).not.toBeInTheDocument();
+  });
+
   it('connects directly after validating the API key when company data is already resolved', async () => {
     fetchMock
       .mockResolvedValueOnce({
@@ -682,5 +741,53 @@ describe('HoldedOnboardingClient', () => {
     expect(redirectHref).toContain('onboarding_token=onboarding-token-456');
     expect(redirectHref).toContain('tenant_id=tenant-123');
     expect(redirectHref).not.toContain('onboarding-token-123');
+  });
+
+  it('auto-forwards to the confirmed oauth return when the chatgpt connection is already active for the resolved company', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        provider: 'holded',
+        status: 'connected',
+        lastSyncAt: null,
+        lastError: null,
+        connected: true,
+        degraded: false,
+      }),
+    });
+
+    render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode
+        nextUrl="https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback"
+        requireConnectionConfirmation
+        onboardingToken="onboarding-token-123"
+        tenantIdHint="tenant-demo"
+      />
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/integrations/accounting/status?channel=chatgpt',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-isaak-entry-channel': 'chatgpt',
+            'x-holded-onboarding-token': 'onboarding-token-123',
+            'x-isaak-tenant-id': 'tenant-demo',
+          }),
+        })
+      );
+    });
+
+    const continueLink = await screen.findByRole('link', { name: 'Continuar' });
+    const redirectHref = continueLink.getAttribute('href') || '';
+
+    expect(
+      screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
+    ).not.toBeInTheDocument();
+    expect(redirectHref).toContain('connection_confirmed=1');
+    expect(redirectHref).toContain('onboarding_token=onboarding-token-123');
+    expect(redirectHref).toContain('tenant_id=tenant-demo');
   });
 });
