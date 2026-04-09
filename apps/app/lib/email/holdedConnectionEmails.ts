@@ -2,7 +2,7 @@ import { sendCustomEmail } from '@/lib/email/emailService';
 import { getPreferredFirstName, getPreferredFullName } from '@/lib/personName';
 
 const ADMIN_NOTIFICATION_EMAIL =
-  process.env.SUPPORT_NOTIFICATION_EMAIL?.trim() || 'support@verifactu.business';
+  process.env.SUPPORT_NOTIFICATION_EMAIL?.trim() || 'soporte@verifactu.business';
 
 type HoldedLifecycleAction = 'connected' | 'disconnected';
 type HoldedLifecycleChannel = 'dashboard' | 'chatgpt';
@@ -90,7 +90,7 @@ function buildUserHtml(args: {
       <p>Te confirmamos que la ${actionLabel} para la empresa <strong>${args.tenantDisplayName}</strong> se ha realizado correctamente.</p>
       <p>Canal: <strong>${channelLabel}</strong>.</p>
       ${contactLine}
-      <p>Si no reconoces este cambio, responde a este correo o escríbenos a <strong>support@verifactu.business</strong>.</p>
+      <p>Si no reconoces este cambio, responde a este correo o escríbenos a <strong>soporte@verifactu.business</strong>.</p>
     </div>
   `;
 }
@@ -141,7 +141,7 @@ function buildWelcomeUserHtml(args: {
       ${renderDetailLine('Correo de empresa', args.companyEmail)}
       ${renderDetailLine('Telefono de contacto', args.contactPhone)}
       <p>Primer paso recomendado: vuelve a tu flujo en ChatGPT o entra en tu area de Verifactu para revisar que todo responde como esperas.</p>
-      <p>Si necesitas ayuda, escríbenos a <strong>support@verifactu.business</strong>.</p>
+      <p>Si necesitas ayuda, escríbenos a <strong>soporte@verifactu.business</strong>.</p>
     </div>
   `;
 }

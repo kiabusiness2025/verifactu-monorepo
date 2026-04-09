@@ -5,7 +5,7 @@ import { getPreferredFirstName, getPreferredFullName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
 
 const SUPPORT_EMAIL =
-  process.env.SUPPORT_NOTIFICATION_EMAIL?.trim() || 'support@verifactu.business';
+  process.env.SUPPORT_NOTIFICATION_EMAIL?.trim() || 'soporte@verifactu.business';
 
 export type HoldedSecurityAlertAction = 'connected' | 'disconnected';
 export type HoldedSecurityAlertChannel = 'dashboard' | 'chatgpt';
@@ -45,6 +45,10 @@ function renderChannelLabel(channel: HoldedSecurityAlertChannel) {
   return channel === 'chatgpt' ? 'ChatGPT' : 'tu area privada';
 }
 
+function renderChannelProductLabel(channel: HoldedSecurityAlertChannel) {
+  return channel === 'chatgpt' ? 'ChatGPT' : 'Verifactu';
+}
+
 function formatOccurredAt(value: Date) {
   try {
     return new Intl.DateTimeFormat('es-ES', {
@@ -75,9 +79,31 @@ function buildSecurityAlertHtml(args: {
     actorName || actorEmail
       ? `${actorName || 'Usuario identificado'}${actorEmail ? ` (${actorEmail})` : ''}`
       : 'No disponible';
+  const holdedLogoUrl = new URL('/brand/holded/holded-diamond-logo.png', getAppUrl()).toString();
+  const chatgptLogoUrl = new URL('/brand/chatgpt/chatgpt-logo.png', getAppUrl()).toString();
+  const channelProductLabel = renderChannelProductLabel(args.channel);
 
   return `
     <div style="font-family: Arial, sans-serif; color: #1b2a3a; line-height: 1.6;">
+      <div style="margin:0 0 18px 0;padding:18px;border-radius:20px;background:linear-gradient(135deg,#fff7ed 0%,#fff1f2 52%,#eef6ff 100%);border:1px solid #ffd7c2;">
+        <table role="presentation" width="100%" style="border-collapse:collapse;">
+          <tr>
+            <td style="vertical-align:middle;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#7a1f2a;">Alerta de seguridad</div>
+              <div style="margin-top:8px;font-size:18px;font-weight:700;color:#0d2b4a;">Holded + ${channelProductLabel}</div>
+            </td>
+            <td align="right" style="vertical-align:middle;white-space:nowrap;">
+              <span style="display:inline-block;vertical-align:middle;background:#ffffff;border:1px solid #f1d4d9;border-radius:16px;padding:10px;">
+                <img src="${holdedLogoUrl}" alt="Holded" width="28" height="28" style="display:block;border:0;outline:none;">
+              </span>
+              <span style="display:inline-block;vertical-align:middle;font-size:18px;font-weight:700;color:#7b8794;padding:0 8px;">+</span>
+              <span style="display:inline-block;vertical-align:middle;background:#ffffff;border:1px solid #dbe7ff;border-radius:16px;padding:10px;">
+                <img src="${chatgptLogoUrl}" alt="${channelProductLabel}" width="28" height="28" style="display:block;border:0;outline:none;">
+              </span>
+            </td>
+          </tr>
+        </table>
+      </div>
       <h2 style="color:#0d2b4a; margin:0 0 16px 0;">Alerta de seguridad Holded</h2>
       <p>Hola ${args.recipientName},</p>
       <p>Se ha detectado una <strong>${actionLabel}</strong> para la empresa <strong>${args.tenantDisplayName}</strong>.</p>
