@@ -37,8 +37,6 @@ Comportamiento relevante:
 - `/demo` y `/demo/*` son publicas (`NextResponse.next()`).
 - `/` redirige a `/dashboard` (si no hay sesion, luego se redirige a login por flujo normal).
 - `/dashboard/*` requiere sesion en produccion.
-- `/api/admin/check` devuelve `200` con `{ isAdmin: false }` para compatibilidad con clientes legacy.
-- `/api/admin/*` devuelve `410` (API admin legacy retirada).
 
 ## Layout demo y conversion CTA
 

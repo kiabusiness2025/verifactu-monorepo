@@ -42,9 +42,7 @@ Para actualizar productos/precios de los planes:
   - Si hay sesión y accede a `/`, redirige a `/dashboard`.
   - Si hay sesión en `/dashboard`, deja pasar.
 - `/demo` y `/demo/*` son públicos (sin login).
-- `/api/admin/check` mantiene compatibilidad y responde `200` con `isAdmin: false`.
-- `/api/admin/*` responde `410` (legacy admin API removed).
-- Config matcher: `/`, `/dashboard/:path*`, `/onboarding`, `/demo/:path*`, `/api/admin/:path*`.
+- Config matcher: `/`, `/dashboard/:path*`, `/onboarding`, `/demo/:path*`.
 
 **Notas:**
 
