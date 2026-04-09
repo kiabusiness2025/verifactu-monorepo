@@ -311,6 +311,7 @@ export default async function HoldedOnboardingPage({
           email: session.email ?? null,
           name: normalizeMeaningfulPersonName(session.name),
           tenantId: tenantIdHint,
+          tenantBound: false,
           authMethod: 'unknown' as const,
           emailVerified: false,
           firstName: sessionNameParts.firstName,
