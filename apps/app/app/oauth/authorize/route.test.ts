@@ -208,6 +208,7 @@ describe('oauth authorize holded flow', () => {
     expect(response.status).toBe(307);
     expect(resolveTenantForHoldedFirstSession).toHaveBeenCalledWith(
       expect.objectContaining({
+        uid: 'holded-guest-1',
         tenantIdHint: 'tenant-from-token',
       })
     );

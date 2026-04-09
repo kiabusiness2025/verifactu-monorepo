@@ -115,11 +115,20 @@ export async function GET(request: NextRequest) {
       return withConnectorRequestId(NextResponse.redirect(onboardingUrl), requestId);
     }
 
+    const prefersOnboardingSubject = Boolean(onboardingSession?.uid);
     const subject = {
-      uid: session?.uid ?? onboardingSession?.uid ?? null,
-      email: session?.email ?? onboardingSession?.email ?? null,
-      name: session?.name ?? onboardingSession?.name ?? null,
-      sessionTenantId: session?.tenantId ?? null,
+      uid: prefersOnboardingSubject
+        ? (onboardingSession?.uid ?? null)
+        : (session?.uid ?? onboardingSession?.uid ?? null),
+      email: prefersOnboardingSubject
+        ? (onboardingSession?.email ?? session?.email ?? null)
+        : (session?.email ?? onboardingSession?.email ?? null),
+      name: prefersOnboardingSubject
+        ? (onboardingSession?.name ?? session?.name ?? null)
+        : (session?.name ?? onboardingSession?.name ?? null),
+      sessionTenantId: prefersOnboardingSubject
+        ? (onboardingSession?.tenantId ?? session?.tenantId ?? null)
+        : (session?.tenantId ?? onboardingSession?.tenantId ?? null),
     };
 
     if (!subject?.uid) {
@@ -160,7 +169,11 @@ export async function GET(request: NextRequest) {
           channelSubjectId: clientId + ':' + subject.uid,
           email: subject.email,
           displayName: subject.name,
-          metadata: { clientId, guest: !session?.uid },
+          metadata: {
+            clientId,
+            guest:
+              !session?.uid || (!!onboardingSession?.uid && onboardingSession.uid === subject.uid),
+          },
         });
       } catch (error) {
         logConnectorEvent('oauth/authorize', 'error', {

@@ -597,4 +597,58 @@ describe('POST /api/onboarding/tenant', () => {
       })
     );
   });
+
+  it('prefers the verified onboarding identity over an existing web session when creating the tenant', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'session-user-1',
+      email: 'session@example.com',
+      name: 'Session User',
+      tenantId: 'tenant-session',
+    });
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({
+      uid: 'holded-google-1',
+      email: 'verified@holded.com',
+      name: 'Verified Holded User',
+      tenantId: null,
+      authMethod: 'google',
+      emailVerified: true,
+      firstName: 'Verified',
+      lastName: 'Holded User',
+      verifiedAt: '2026-04-07T09:30:00.000Z',
+    });
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/onboarding/tenant', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({
+          name: 'Empresa Demo',
+          legalName: 'Empresa Demo SL',
+          taxId: 'B12345678',
+          tradeName: 'Empresa Demo',
+          extra: {
+            representative: 'Verified Holded User',
+            contactFirstName: 'Verified',
+            contactLastName: 'Holded User',
+            email: 'info@empresa-demo.es',
+          },
+        }),
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(upsertUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'holded-google-1',
+        email: 'verified@holded.com',
+        name: 'Verified Holded User',
+      })
+    );
+  });
 });

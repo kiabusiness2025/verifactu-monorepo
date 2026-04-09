@@ -100,8 +100,8 @@ describe('requireTenantContext', () => {
     expect(resolveHoldedOnboardingSession).toHaveBeenCalledWith('onboarding-token-123');
     expect(resolveTenantForHoldedFirstSession).toHaveBeenCalledWith(
       expect.objectContaining({
-        uid: 'session-user-1',
-        sessionTenantId: 'tenant-session',
+        uid: 'holded-guest-1',
+        sessionTenantId: 'tenant-from-token',
         tenantIdHint: 'tenant-from-token',
       })
     );
@@ -110,7 +110,7 @@ describe('requireTenantContext', () => {
         tenantId: 'tenant-from-token',
         resolvedUserId: 'internal-user-1',
         session: expect.objectContaining({
-          uid: 'session-user-1',
+          uid: 'holded-guest-1',
           tenantId: 'tenant-from-token',
           authMethod: 'google',
           emailVerified: true,
@@ -120,7 +120,7 @@ describe('requireTenantContext', () => {
     expect(upsertChannelIdentity).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantId: 'tenant-from-token',
-        channelSubjectId: 'session-user-1',
+        channelSubjectId: 'holded-guest-1',
       })
     );
   });

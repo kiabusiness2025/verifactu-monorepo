@@ -20,10 +20,20 @@ export async function requireTenantContext(options?: {
     return { error: 'Unauthorized', status: 401 as const };
   }
 
-  const subjectUid = session?.uid ?? onboardingSession?.uid ?? null;
-  const subjectEmail = session?.email ?? onboardingSession?.email ?? null;
-  const subjectName = session?.name ?? onboardingSession?.name ?? null;
-  const sessionTenantId = session?.tenantId ?? null;
+  const prefersOnboardingSubject =
+    options?.channelType === 'chatgpt' && Boolean(onboardingSession?.uid);
+  const subjectUid = prefersOnboardingSubject
+    ? (onboardingSession?.uid ?? null)
+    : (session?.uid ?? onboardingSession?.uid ?? null);
+  const subjectEmail = prefersOnboardingSubject
+    ? (onboardingSession?.email ?? session?.email ?? null)
+    : (session?.email ?? onboardingSession?.email ?? null);
+  const subjectName = prefersOnboardingSubject
+    ? (onboardingSession?.name ?? session?.name ?? null)
+    : (session?.name ?? onboardingSession?.name ?? null);
+  const sessionTenantId = prefersOnboardingSubject
+    ? (onboardingSession?.tenantId ?? session?.tenantId ?? null)
+    : (session?.tenantId ?? onboardingSession?.tenantId ?? null);
 
   if (!subjectUid) {
     return { error: 'Unauthorized', status: 401 as const };

@@ -158,15 +158,15 @@ async function resolvePlanId(): Promise<number> {
 export async function POST(req: Request) {
   const session = await getSessionPayload();
   const onboardingSession = await resolveHoldedOnboardingSessionFromHeaders(req.headers);
-  const authSession = session?.uid
-    ? session
-    : onboardingSession
-      ? {
-          uid: onboardingSession.uid,
-          email: onboardingSession.email ?? null,
-          name: onboardingSession.name ?? null,
-          tenantId: undefined,
-        }
+  const authSession = onboardingSession
+    ? {
+        uid: onboardingSession.uid,
+        email: onboardingSession.email ?? session?.email ?? null,
+        name: onboardingSession.name ?? session?.name ?? null,
+        tenantId: onboardingSession.tenantId ?? session?.tenantId ?? undefined,
+      }
+    : session?.uid
+      ? session
       : null;
   if (!authSession?.uid) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
