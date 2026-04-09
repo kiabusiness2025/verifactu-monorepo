@@ -156,318 +156,337 @@ async function resolvePlanId(): Promise<number> {
 }
 
 export async function POST(req: Request) {
-  const session = await getSessionPayload();
-  const onboardingSession = await resolveHoldedOnboardingSessionFromHeaders(req.headers);
-  const authSession = onboardingSession
-    ? {
-        uid: onboardingSession.uid,
-        email: onboardingSession.email ?? session?.email ?? null,
-        name: onboardingSession.name ?? session?.name ?? null,
-        tenantId: onboardingSession.tenantId ?? session?.tenantId ?? undefined,
-      }
-    : session?.uid
-      ? session
-      : null;
-  if (!authSession?.uid) {
-    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-  }
+  try {
+    const session = await getSessionPayload();
+    const onboardingSession = await resolveHoldedOnboardingSessionFromHeaders(req.headers);
+    const authSession = onboardingSession
+      ? {
+          uid: onboardingSession.uid,
+          email: onboardingSession.email ?? session?.email ?? null,
+          name: onboardingSession.name ?? session?.name ?? null,
+          tenantId: onboardingSession.tenantId ?? session?.tenantId ?? undefined,
+        }
+      : session?.uid
+        ? session
+        : null;
+    if (!authSession?.uid) {
+      return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+    }
 
-  if (onboardingSession && !isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
-    return NextResponse.json(
-      { ok: false, error: 'identity verification required' },
-      { status: 403 }
-    );
-  }
+    if (onboardingSession && !isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
+      return NextResponse.json(
+        { ok: false, error: 'identity verification required' },
+        { status: 403 }
+      );
+    }
 
-  const uid = authSession.uid;
-  const body = (await req.json().catch(() => null)) as TenantPayload | null;
+    const uid = authSession.uid;
+    const body = (await req.json().catch(() => null)) as TenantPayload | null;
 
-  const name = typeof body?.name === 'string' ? body.name.trim() : '';
-  const legalName = typeof body?.legalName === 'string' ? body.legalName.trim() : '';
-  const taxIdRaw =
-    typeof body?.taxId === 'string'
-      ? body.taxId.trim()
-      : typeof body?.nif === 'string'
-        ? body.nif.trim()
-        : '';
-  const tradeName = typeof body?.tradeName === 'string' ? body.tradeName.trim() : '';
-  const taxRegime = typeof body?.taxRegime === 'string' ? body.taxRegime.trim() : '';
-  const defaultCurrency =
-    typeof body?.defaultCurrency === 'string' && body.defaultCurrency.trim()
-      ? body.defaultCurrency.trim().toUpperCase()
-      : 'EUR';
-  const country =
-    typeof body?.country === 'string' && body.country.trim()
-      ? body.country.trim().toUpperCase()
-      : 'ES';
-  const source = body?.source === 'einforma' ? 'einforma' : 'manual';
-  const einformaId = typeof body?.einformaId === 'string' ? body.einformaId.trim() : undefined;
-  const reuseCurrentTenant = body?.reuseCurrentTenant === true;
-  const fiscalAddress =
-    body?.fiscalAddress && typeof body.fiscalAddress === 'object' ? body.fiscalAddress : null;
-  const companyEmail =
-    typeof body?.extra?.email === 'string' && body.extra.email.trim()
-      ? body.extra.email.trim()
-      : null;
-  const companyPhone =
-    typeof body?.extra?.phone === 'string' && body.extra.phone.trim()
-      ? body.extra.phone.trim()
-      : null;
-  const contactFirstName =
-    typeof body?.extra?.contactFirstName === 'string' && body.extra.contactFirstName.trim()
-      ? body.extra.contactFirstName.trim()
-      : null;
-  const contactLastName =
-    typeof body?.extra?.contactLastName === 'string' && body.extra.contactLastName.trim()
-      ? body.extra.contactLastName.trim()
-      : null;
-  const contactFullName =
-    [contactFirstName, contactLastName].filter(Boolean).join(' ').trim() ||
-    (typeof body?.extra?.representative === 'string' && body.extra.representative.trim()
-      ? body.extra.representative.trim()
-      : null);
+    const name = typeof body?.name === 'string' ? body.name.trim() : '';
+    const legalName = typeof body?.legalName === 'string' ? body.legalName.trim() : '';
+    const taxIdRaw =
+      typeof body?.taxId === 'string'
+        ? body.taxId.trim()
+        : typeof body?.nif === 'string'
+          ? body.nif.trim()
+          : '';
+    const tradeName = typeof body?.tradeName === 'string' ? body.tradeName.trim() : '';
+    const taxRegime = typeof body?.taxRegime === 'string' ? body.taxRegime.trim() : '';
+    const defaultCurrency =
+      typeof body?.defaultCurrency === 'string' && body.defaultCurrency.trim()
+        ? body.defaultCurrency.trim().toUpperCase()
+        : 'EUR';
+    const country =
+      typeof body?.country === 'string' && body.country.trim()
+        ? body.country.trim().toUpperCase()
+        : 'ES';
+    const source = body?.source === 'einforma' ? 'einforma' : 'manual';
+    const einformaId = typeof body?.einformaId === 'string' ? body.einformaId.trim() : undefined;
+    const reuseCurrentTenant = body?.reuseCurrentTenant === true;
+    const fiscalAddress =
+      body?.fiscalAddress && typeof body.fiscalAddress === 'object' ? body.fiscalAddress : null;
+    const companyEmail =
+      typeof body?.extra?.email === 'string' && body.extra.email.trim()
+        ? body.extra.email.trim()
+        : null;
+    const companyPhone =
+      typeof body?.extra?.phone === 'string' && body.extra.phone.trim()
+        ? body.extra.phone.trim()
+        : null;
+    const contactFirstName =
+      typeof body?.extra?.contactFirstName === 'string' && body.extra.contactFirstName.trim()
+        ? body.extra.contactFirstName.trim()
+        : null;
+    const contactLastName =
+      typeof body?.extra?.contactLastName === 'string' && body.extra.contactLastName.trim()
+        ? body.extra.contactLastName.trim()
+        : null;
+    const contactFullName =
+      [contactFirstName, contactLastName].filter(Boolean).join(' ').trim() ||
+      (typeof body?.extra?.representative === 'string' && body.extra.representative.trim()
+        ? body.extra.representative.trim()
+        : null);
 
-  if (!name || !taxIdRaw) {
-    return NextResponse.json({ ok: false, error: 'name and taxId required' }, { status: 400 });
-  }
+    if (!name || !taxIdRaw) {
+      return NextResponse.json({ ok: false, error: 'name and taxId required' }, { status: 400 });
+    }
 
-  const userId = await upsertUser({
-    id: uid,
-    email: (authSession.email as string | undefined) || companyEmail || undefined,
-    name: contactFullName || (authSession.name as string | undefined),
-    firstName: contactFirstName,
-    lastName: contactLastName,
-  });
-
-  const existingTenant = await prisma.tenant.findFirst({
-    where: { nif: taxIdRaw },
-  });
-
-  if (existingTenant) {
-    const membership = await prisma.membership.findFirst({
-      where: { tenantId: existingTenant.id, userId },
+    const userId = await upsertUser({
+      id: uid,
+      email: (authSession.email as string | undefined) || companyEmail || undefined,
+      name: contactFullName || (authSession.name as string | undefined),
+      firstName: contactFirstName,
+      lastName: contactLastName,
     });
 
-    if (membership) {
-      await prisma.userPreference.upsert({
-        where: { userId },
-        create: { userId, preferredTenantId: existingTenant.id },
-        update: { preferredTenantId: existingTenant.id },
+    const existingTenant = await prisma.tenant.findFirst({
+      where: { nif: taxIdRaw },
+    });
+
+    if (existingTenant) {
+      const membership = await prisma.membership.findFirst({
+        where: { tenantId: existingTenant.id, userId },
       });
+
+      if (membership) {
+        await prisma.userPreference.upsert({
+          where: { userId },
+          create: { userId, preferredTenantId: existingTenant.id },
+          update: { preferredTenantId: existingTenant.id },
+        });
+        return NextResponse.json({
+          ok: true,
+          action: 'ALREADY_MEMBER',
+          tenantId: existingTenant.id,
+        });
+      }
+
       return NextResponse.json({
         ok: true,
-        action: 'ALREADY_MEMBER',
+        action: 'REQUEST_ACCESS',
         tenantId: existingTenant.id,
+        message: 'Tu usuario no pertenece a esta empresa',
       });
+    }
+
+    const now = new Date();
+    const trialEndsAt = new Date(now);
+    trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+
+    const planId = await resolvePlanId();
+    const reusableCurrentTenant = await findReusableCurrentTenant({
+      sessionTenantId: reuseCurrentTenant ? (authSession.tenantId ?? null) : null,
+      userId,
+    });
+
+    const result = await prisma.$transaction(async (tx) => {
+      const tenant = reusableCurrentTenant
+        ? await tx.tenant.update({
+            where: { id: reusableCurrentTenant.id },
+            data: {
+              name,
+              legalName: legalName || undefined,
+              nif: taxIdRaw,
+              isDemo: false,
+            },
+          })
+        : await tx.tenant.create({
+            data: {
+              name,
+              legalName: legalName || undefined,
+              nif: taxIdRaw,
+            },
+          });
+
+      if (!reusableCurrentTenant) {
+        await tx.membership.create({
+          data: {
+            tenantId: tenant.id,
+            userId,
+            role: 'owner',
+            status: 'active',
+          },
+        });
+      }
+
+      await tx.userPreference.upsert({
+        where: { userId },
+        create: { userId, preferredTenantId: tenant.id },
+        update: { preferredTenantId: tenant.id },
+      });
+
+      const existingSubscription = reusableCurrentTenant
+        ? await tx.tenantSubscription.findFirst({
+            where: { tenantId: tenant.id },
+            orderBy: { createdAt: 'desc' },
+          })
+        : null;
+      const subscription =
+        existingSubscription ||
+        (await tx.tenantSubscription.create({
+          data: {
+            tenantId: tenant.id,
+            planId,
+            status: 'trial',
+            trialEndsAt,
+            currentPeriodStart: now,
+            currentPeriodEnd: trialEndsAt,
+          },
+        }));
+
+      const extra = body?.extra;
+      const isEinforma = source === 'einforma';
+      const cnaeParts = splitCnae(extra?.cnae);
+      const cityParts = normalizeCity(extra?.city);
+      const profileRaw = extra?.raw && typeof extra.raw === 'object' ? extra.raw : undefined;
+      const effectiveFiscalAddress =
+        fiscalAddress ||
+        (extra?.address || extra?.postalCode || extra?.city || extra?.province || extra?.country
+          ? {
+              address: extra?.address || null,
+              postalCode: extra?.postalCode || cityParts.postalCode || null,
+              city: cityParts.city || null,
+              province: extra?.province || null,
+              country: extra?.country || country,
+            }
+          : null);
+
+      await tx.tenantProfile.upsert({
+        where: { tenantId: tenant.id },
+        create: {
+          tenantId: tenant.id,
+          source,
+          sourceId: einformaId,
+          taxId: taxIdRaw,
+          legalName: legalName || name,
+          tradeName: tradeName || name,
+          fiscalAddress: effectiveFiscalAddress ?? undefined,
+          taxRegime: taxRegime || extra?.taxRegime || undefined,
+          defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
+          cnae: extra?.cnae || undefined,
+          cnaeCode: extra?.cnaeCode || cnaeParts.code,
+          cnaeText: extra?.cnaeText || cnaeParts.text,
+          legalForm: extra?.legalForm || undefined,
+          status: extra?.status || undefined,
+          website: extra?.website || undefined,
+          capitalSocial: extra?.capitalSocial ?? undefined,
+          incorporationDate: extra?.incorporationDate
+            ? new Date(extra.incorporationDate)
+            : undefined,
+          address: extra?.address || undefined,
+          postalCode: extra?.postalCode || cityParts.postalCode,
+          city: cityParts.city || undefined,
+          province: extra?.province || undefined,
+          country: extra?.country || country || undefined,
+          representative: extra?.representative || undefined,
+          representativeRole: extra?.representativeRole || undefined,
+          email: companyEmail || undefined,
+          phone: companyPhone || undefined,
+          einformaRaw: profileRaw,
+          einformaLastSyncAt: isEinforma ? new Date() : undefined,
+          einformaTaxIdVerified: isEinforma ? true : undefined,
+        } as never,
+        update: {
+          source,
+          sourceId: einformaId,
+          taxId: taxIdRaw,
+          legalName: legalName || name,
+          tradeName: tradeName || name,
+          fiscalAddress: effectiveFiscalAddress ?? undefined,
+          taxRegime: taxRegime || extra?.taxRegime || undefined,
+          defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
+          cnae: extra?.cnae || undefined,
+          cnaeCode: extra?.cnaeCode || cnaeParts.code,
+          cnaeText: extra?.cnaeText || cnaeParts.text,
+          legalForm: extra?.legalForm || undefined,
+          status: extra?.status || undefined,
+          website: extra?.website || undefined,
+          capitalSocial: extra?.capitalSocial ?? undefined,
+          incorporationDate: extra?.incorporationDate
+            ? new Date(extra.incorporationDate)
+            : undefined,
+          address: extra?.address || undefined,
+          postalCode: extra?.postalCode || cityParts.postalCode,
+          city: cityParts.city || undefined,
+          province: extra?.province || undefined,
+          country: extra?.country || country || undefined,
+          representative: extra?.representative || undefined,
+          representativeRole: extra?.representativeRole || undefined,
+          email: companyEmail || undefined,
+          phone: companyPhone || undefined,
+          einformaRaw: profileRaw,
+          einformaLastSyncAt: isEinforma ? new Date() : undefined,
+          einformaTaxIdVerified: isEinforma ? true : undefined,
+        } as never,
+      });
+
+      return {
+        tenant,
+        subscription,
+        action: reusableCurrentTenant ? 'UPDATED_CURRENT' : 'CREATED',
+      };
+    });
+
+    if (!onboardingSession) {
+      try {
+        await sendWelcomeLifecycleEmails({
+          userEmail: authSession.email ?? null,
+          userName: authSession.name ?? null,
+          tenantName: tradeName || result.tenant.name,
+          tenantLegalName: legalName || result.tenant.legalName || result.tenant.name,
+          contactName: contactFullName || authSession.name || null,
+          contactEmail: authSession.email ?? null,
+          companyEmail,
+          contactPhone: companyPhone,
+        });
+      } catch (notificationError) {
+        console.error('[api/onboarding/tenant] welcome notification failed', {
+          tenantId: result.tenant.id,
+          uid,
+          message:
+            notificationError instanceof Error
+              ? notificationError.message
+              : String(notificationError),
+        });
+      }
     }
 
     return NextResponse.json({
       ok: true,
-      action: 'REQUEST_ACCESS',
-      tenantId: existingTenant.id,
-      message: 'Tu usuario no pertenece a esta empresa',
+      action: result.action,
+      tenantId: result.tenant.id,
+      onboardingToken: onboardingSession
+        ? await mintHoldedOnboardingTokenForSubject({
+            uid: onboardingSession.uid,
+            email: onboardingSession.email ?? authSession.email ?? null,
+            name: onboardingSession.name ?? contactFullName ?? authSession.name ?? null,
+            tenantId: result.tenant.id,
+            tenantBound: true,
+            authMethod: onboardingSession.authMethod,
+            emailVerified: onboardingSession.emailVerified,
+            firstName: onboardingSession.firstName,
+            lastName: onboardingSession.lastName,
+            verifiedAt: onboardingSession.verifiedAt,
+          })
+        : null,
+      trial: {
+        status: result.subscription.status,
+        trialEndsAt: result.subscription.trialEndsAt,
+      },
     });
+  } catch (error) {
+    console.error('[api/onboarding/tenant] tenant provisioning failed', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'No hemos podido preparar la empresa para continuar.',
+        detail: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
-
-  const now = new Date();
-  const trialEndsAt = new Date(now);
-  trialEndsAt.setDate(trialEndsAt.getDate() + 30);
-
-  const planId = await resolvePlanId();
-  const reusableCurrentTenant = await findReusableCurrentTenant({
-    sessionTenantId: reuseCurrentTenant ? (authSession.tenantId ?? null) : null,
-    userId,
-  });
-
-  const result = await prisma.$transaction(async (tx) => {
-    const tenant = reusableCurrentTenant
-      ? await tx.tenant.update({
-          where: { id: reusableCurrentTenant.id },
-          data: {
-            name,
-            legalName: legalName || undefined,
-            nif: taxIdRaw,
-            isDemo: false,
-          },
-        })
-      : await tx.tenant.create({
-          data: {
-            name,
-            legalName: legalName || undefined,
-            nif: taxIdRaw,
-          },
-        });
-
-    if (!reusableCurrentTenant) {
-      await tx.membership.create({
-        data: {
-          tenantId: tenant.id,
-          userId,
-          role: 'owner',
-          status: 'active',
-        },
-      });
-    }
-
-    await tx.userPreference.upsert({
-      where: { userId },
-      create: { userId, preferredTenantId: tenant.id },
-      update: { preferredTenantId: tenant.id },
-    });
-
-    const existingSubscription = reusableCurrentTenant
-      ? await tx.tenantSubscription.findFirst({
-          where: { tenantId: tenant.id },
-          orderBy: { createdAt: 'desc' },
-        })
-      : null;
-    const subscription =
-      existingSubscription ||
-      (await tx.tenantSubscription.create({
-        data: {
-          tenantId: tenant.id,
-          planId,
-          status: 'trial',
-          trialEndsAt,
-          currentPeriodStart: now,
-          currentPeriodEnd: trialEndsAt,
-        },
-      }));
-
-    const extra = body?.extra;
-    const isEinforma = source === 'einforma';
-    const cnaeParts = splitCnae(extra?.cnae);
-    const cityParts = normalizeCity(extra?.city);
-    const profileRaw = extra?.raw && typeof extra.raw === 'object' ? extra.raw : undefined;
-    const effectiveFiscalAddress =
-      fiscalAddress ||
-      (extra?.address || extra?.postalCode || extra?.city || extra?.province || extra?.country
-        ? {
-            address: extra?.address || null,
-            postalCode: extra?.postalCode || cityParts.postalCode || null,
-            city: cityParts.city || null,
-            province: extra?.province || null,
-            country: extra?.country || country,
-          }
-        : null);
-
-    await tx.tenantProfile.upsert({
-      where: { tenantId: tenant.id },
-      create: {
-        tenantId: tenant.id,
-        source,
-        sourceId: einformaId,
-        taxId: taxIdRaw,
-        legalName: legalName || name,
-        tradeName: tradeName || name,
-        fiscalAddress: effectiveFiscalAddress ?? undefined,
-        taxRegime: taxRegime || extra?.taxRegime || undefined,
-        defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
-        cnae: extra?.cnae || undefined,
-        cnaeCode: extra?.cnaeCode || cnaeParts.code,
-        cnaeText: extra?.cnaeText || cnaeParts.text,
-        legalForm: extra?.legalForm || undefined,
-        status: extra?.status || undefined,
-        website: extra?.website || undefined,
-        capitalSocial: extra?.capitalSocial ?? undefined,
-        incorporationDate: extra?.incorporationDate ? new Date(extra.incorporationDate) : undefined,
-        address: extra?.address || undefined,
-        postalCode: extra?.postalCode || cityParts.postalCode,
-        city: cityParts.city || undefined,
-        province: extra?.province || undefined,
-        country: extra?.country || country || undefined,
-        representative: extra?.representative || undefined,
-        representativeRole: extra?.representativeRole || undefined,
-        email: companyEmail || undefined,
-        phone: companyPhone || undefined,
-        einformaRaw: profileRaw,
-        einformaLastSyncAt: isEinforma ? new Date() : undefined,
-        einformaTaxIdVerified: isEinforma ? true : undefined,
-      } as never,
-      update: {
-        source,
-        sourceId: einformaId,
-        taxId: taxIdRaw,
-        legalName: legalName || name,
-        tradeName: tradeName || name,
-        fiscalAddress: effectiveFiscalAddress ?? undefined,
-        taxRegime: taxRegime || extra?.taxRegime || undefined,
-        defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
-        cnae: extra?.cnae || undefined,
-        cnaeCode: extra?.cnaeCode || cnaeParts.code,
-        cnaeText: extra?.cnaeText || cnaeParts.text,
-        legalForm: extra?.legalForm || undefined,
-        status: extra?.status || undefined,
-        website: extra?.website || undefined,
-        capitalSocial: extra?.capitalSocial ?? undefined,
-        incorporationDate: extra?.incorporationDate ? new Date(extra.incorporationDate) : undefined,
-        address: extra?.address || undefined,
-        postalCode: extra?.postalCode || cityParts.postalCode,
-        city: cityParts.city || undefined,
-        province: extra?.province || undefined,
-        country: extra?.country || country || undefined,
-        representative: extra?.representative || undefined,
-        representativeRole: extra?.representativeRole || undefined,
-        email: companyEmail || undefined,
-        phone: companyPhone || undefined,
-        einformaRaw: profileRaw,
-        einformaLastSyncAt: isEinforma ? new Date() : undefined,
-        einformaTaxIdVerified: isEinforma ? true : undefined,
-      } as never,
-    });
-
-    return {
-      tenant,
-      subscription,
-      action: reusableCurrentTenant ? 'UPDATED_CURRENT' : 'CREATED',
-    };
-  });
-
-  if (!onboardingSession) {
-    try {
-      await sendWelcomeLifecycleEmails({
-        userEmail: authSession.email ?? null,
-        userName: authSession.name ?? null,
-        tenantName: tradeName || result.tenant.name,
-        tenantLegalName: legalName || result.tenant.legalName || result.tenant.name,
-        contactName: contactFullName || authSession.name || null,
-        contactEmail: authSession.email ?? null,
-        companyEmail,
-        contactPhone: companyPhone,
-      });
-    } catch (notificationError) {
-      console.error('[api/onboarding/tenant] welcome notification failed', {
-        tenantId: result.tenant.id,
-        uid,
-        message:
-          notificationError instanceof Error
-            ? notificationError.message
-            : String(notificationError),
-      });
-    }
-  }
-
-  return NextResponse.json({
-    ok: true,
-    action: result.action,
-    tenantId: result.tenant.id,
-    onboardingToken: onboardingSession
-      ? await mintHoldedOnboardingTokenForSubject({
-          uid: onboardingSession.uid,
-          email: onboardingSession.email ?? authSession.email ?? null,
-          name: onboardingSession.name ?? contactFullName ?? authSession.name ?? null,
-          tenantId: result.tenant.id,
-          tenantBound: true,
-          authMethod: onboardingSession.authMethod,
-          emailVerified: onboardingSession.emailVerified,
-          firstName: onboardingSession.firstName,
-          lastName: onboardingSession.lastName,
-          verifiedAt: onboardingSession.verifiedAt,
-        })
-      : null,
-    trial: {
-      status: result.subscription.status,
-      trialEndsAt: result.subscription.trialEndsAt,
-    },
-  });
 }

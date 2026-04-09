@@ -136,6 +136,31 @@ export async function upsertUser(params: {
   });
 
   if (existingByAuthSubject) {
+    if (email) {
+      const existingByEmail = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          name: true,
+          firstName: true,
+          lastName: true,
+        },
+      });
+
+      if (existingByEmail && existingByEmail.id !== existingByAuthSubject.id) {
+        await prisma.user.update({
+          where: { id: existingByEmail.id },
+          data: {
+            email,
+            name: fullName || existingByEmail.name || undefined,
+            firstName: nameParts.firstName || existingByEmail.firstName || undefined,
+            lastName: nameParts.lastName || existingByEmail.lastName || undefined,
+          },
+        });
+        return existingByEmail.id;
+      }
+    }
+
     await prisma.user.update({
       where: { id: existingByAuthSubject.id },
       data: {

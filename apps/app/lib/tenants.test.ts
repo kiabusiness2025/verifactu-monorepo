@@ -73,6 +73,12 @@ describe('upsertUser', () => {
       firstName: 'Old',
       lastName: 'Name',
     });
+    prismaMock.user.findUnique.mockResolvedValueOnce({
+      id: 'internal-user-id',
+      name: 'Old Name',
+      firstName: 'Old',
+      lastName: 'Name',
+    });
 
     const userId = await upsertUser({
       id: 'firebase-uid-123',
@@ -81,7 +87,6 @@ describe('upsertUser', () => {
     });
 
     expect(userId).toBe('internal-user-id');
-    expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
     expect(prismaMock.user.update).toHaveBeenCalledWith({
       where: { id: 'internal-user-id' },
       data: expect.objectContaining({
@@ -91,6 +96,39 @@ describe('upsertUser', () => {
         authProvider: 'FIREBASE',
       }),
     });
+  });
+
+  it('prefers the existing email owner when the auth subject points to a temporary duplicate user', async () => {
+    prismaMock.user.findFirst.mockResolvedValueOnce({
+      id: 'temp-user-id',
+      email: 'unknown-firebase-uid-123@user',
+      name: 'Temp User',
+      firstName: 'Temp',
+      lastName: 'User',
+    });
+    prismaMock.user.findUnique.mockResolvedValueOnce({
+      id: 'real-user-id',
+      name: 'Real User',
+      firstName: 'Real',
+      lastName: 'User',
+    });
+    prismaMock.user.update.mockResolvedValue({ id: 'real-user-id' });
+
+    const userId = await upsertUser({
+      id: 'firebase-uid-123',
+      email: 'demo@example.com',
+      name: 'Demo User',
+    });
+
+    expect(userId).toBe('real-user-id');
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: 'real-user-id' },
+      data: expect.objectContaining({
+        email: 'demo@example.com',
+        name: 'Demo User',
+      }),
+    });
+    expect(prismaMock.user.update.mock.calls[0][0].data).not.toHaveProperty('authSubject');
   });
 
   it('creates a new user when neither id nor email exists', async () => {
