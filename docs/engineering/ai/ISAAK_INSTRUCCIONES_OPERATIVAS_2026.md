@@ -152,7 +152,7 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
 - Preset publico por defecto: `openai_review_v2`.
 - Aislamiento actual: el canal OAuth de ChatGPT resuelve su conexion Holded por `channel_key = 'chatgpt'` y ya no hace fallback a la sesion web del dashboard.
 - Efecto practico: dashboard e integrador ChatGPT ya pueden mantener conexiones Holded separadas por canal.
-- Compatibilidad legacy: el dashboard todavia puede leer la integracion antigua de `tenant_integrations` mientras exista migracion pendiente; ChatGPT no.
+- Persistencia actual: tanto `dashboard` como `chatgpt` resuelven Holded desde `external_connections`; `tenant_integrations` ya no participa en el runtime Holded.
 - Alcance de red del conector: el integrador MCP Holded es `closed-world`; no navega internet, no hace busqueda web y no consulta dinamicamente Holded API docs ni Holded Academy.
 - Alcance de red del chat principal: el requisito de producto es acceso a fuentes oficiales relevantes, incluyendo Holded Academy y paginas oficiales de AEAT, SEPE, Seguridad Social y otros organismos publicos espanoles.
 - Estado actual del runtime auditado: no existe todavia una tool de navegador o busqueda web generica para ese acceso oficial.

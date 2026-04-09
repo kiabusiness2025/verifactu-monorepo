@@ -74,7 +74,7 @@ Ese schema define la referencia operativa que consumen `apps/isaak`, `apps/holde
 
 - `session.uid` representa el `authSubject` o Firebase UID, no el `User.id` SQL interno.
 - Cualquier acceso a `memberships`, `user_preferences` o `tenant-switch` debe resolver antes el id interno del usuario via `authSubject`.
-- El canal `chatgpt` ya resuelve conexiones Holded por `channel_key` y no hace fallback a la sesion web del dashboard ni a la integracion legacy de `tenant_integrations`.
+- Holded ya resuelve conexiones por `external_connections` y `channel_key`; ni `dashboard` ni `chatgpt` hacen fallback a `tenant_integrations`.
 - El logout real de `apps/app` no termina en Firebase `signOut()`; tambien debe limpiar la cookie `__session` en el mismo origen via `/api/auth/logout`.
 - El integrador MCP de Holded es `closed-world`: solo ejecuta las tools catalogadas contra la cuenta Holded conectada del tenant.
 - Esa restriccion aplica solo al conector MCP de Holded; no describe por si sola todo el runtime de Isaak.

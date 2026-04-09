@@ -14,7 +14,7 @@ jest.mock('@/lib/integrations/holdedConnectionResolver', () => ({
     mockResolveSharedHoldedConnectionStatusForTenant(...args),
 }));
 
-describe('accountingStore Holded migration', () => {
+describe('accountingStore Holded external connections', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
@@ -119,53 +119,20 @@ describe('accountingStore Holded migration', () => {
     ).toBe(false);
   });
 
-  it('migrates a legacy dashboard Holded row into external_connections before disconnecting', async () => {
-    mockOne.mockImplementation(async (text: string) => {
-      if (text.includes('information_schema.tables')) {
-        return { exists: true };
-      }
-
-      if (text.includes("column_name = 'channel_key'")) {
-        return { exists: true };
-      }
-
-      if (text.includes("column_name = 'last_error'")) {
-        return { exists: true };
-      }
-
-      if (text.includes('SELECT id') && text.includes('FROM external_connections')) {
-        return null;
-      }
-
-      if (text.includes('FROM tenant_integrations')) {
-        return {
-          api_key_enc: 'enc-legacy',
-          status: 'connected',
-          last_sync_at: '2026-04-03T12:00:00.000Z',
-          last_error: null,
-          created_at: '2026-04-01T12:00:00.000Z',
-          updated_at: '2026-04-03T12:00:00.000Z',
-        };
-      }
-
-      if (text.includes('INSERT INTO external_connections') && text.includes('RETURNING id')) {
-        if (!text.includes('connection_status AS status')) {
-          return { id: 'migrated-ext-1' };
-        }
-
-        return {
-          id: 'migrated-ext-1',
-          tenant_id: 'tenant-1',
-          provider: 'holded',
-          status: 'disconnected',
-          last_sync_at: '2026-04-03T12:00:00.000Z',
-          created_at: '2026-04-04T12:00:00.000Z',
-          updated_at: '2026-04-04T12:05:00.000Z',
-        };
-      }
-
-      return null;
-    });
+  it('disconnects Holded only in external_connections for dashboard', async () => {
+    mockOne
+      .mockResolvedValueOnce({ exists: true })
+      .mockResolvedValueOnce({ exists: true })
+      .mockResolvedValueOnce({ exists: true })
+      .mockResolvedValueOnce({
+        id: 'ext-1',
+        tenant_id: 'tenant-1',
+        provider: 'holded',
+        status: 'disconnected',
+        last_sync_at: '2026-04-03T12:00:00.000Z',
+        created_at: '2026-04-04T12:00:00.000Z',
+        updated_at: '2026-04-04T12:05:00.000Z',
+      });
 
     const { disconnectAccountingIntegration } = await import('./accountingStore');
     const result = await disconnectAccountingIntegration('tenant-1', 'dashboard');
@@ -176,7 +143,7 @@ describe('accountingStore Holded migration', () => {
     });
     expect(
       mockOne.mock.calls.some(
-        ([text]) => typeof text === 'string' && text.includes('UPDATE tenant_integrations')
+        ([text]) => typeof text === 'string' && text.includes('tenant_integrations')
       )
     ).toBe(false);
     expect(
@@ -186,48 +153,15 @@ describe('accountingStore Holded migration', () => {
     ).toBe(true);
   });
 
-  it('marks Holded sync success only in external_connections after migrating a legacy dashboard row', async () => {
-    mockOne.mockImplementation(async (text: string) => {
-      if (text.includes('information_schema.tables')) {
-        return { exists: true };
-      }
-
-      if (text.includes("column_name = 'channel_key'")) {
-        return { exists: true };
-      }
-
-      if (text.includes("column_name = 'last_error'")) {
-        return { exists: true };
-      }
-
-      if (text.includes('SELECT id') && text.includes('FROM external_connections')) {
-        return null;
-      }
-
-      if (text.includes('FROM tenant_integrations')) {
-        return {
-          api_key_enc: 'enc-legacy',
-          status: 'connected',
-          last_sync_at: '2026-04-03T12:00:00.000Z',
-          last_error: null,
-          created_at: '2026-04-01T12:00:00.000Z',
-          updated_at: '2026-04-03T12:00:00.000Z',
-        };
-      }
-
-      if (text.includes('INSERT INTO external_connections')) {
-        return { id: 'migrated-ext-1' };
-      }
-
-      return null;
-    });
+  it('marks Holded sync success only in external_connections for dashboard', async () => {
+    mockOne.mockResolvedValueOnce({ exists: true }).mockResolvedValueOnce({ exists: true });
 
     const { touchIntegrationSyncOk } = await import('./accountingStore');
     await touchIntegrationSyncOk('tenant-1', 'dashboard');
 
     expect(
-      mockQuery.mock.calls.some(
-        ([text]) => typeof text === 'string' && text.includes('UPDATE tenant_integrations')
+      mockOne.mock.calls.some(
+        ([text]) => typeof text === 'string' && text.includes('tenant_integrations')
       )
     ).toBe(false);
     expect(
@@ -238,44 +172,16 @@ describe('accountingStore Holded migration', () => {
   });
 
   it('persists Holded last_error only in external_connections', async () => {
-    mockOne.mockImplementation(async (text: string) => {
-      if (text.includes('information_schema.tables')) {
-        return { exists: true };
-      }
-
-      if (text.includes("column_name = 'channel_key'")) {
-        return { exists: true };
-      }
-
-      if (text.includes("column_name = 'last_error'")) {
-        return { exists: true };
-      }
-
-      if (text.includes('SELECT id') && text.includes('FROM external_connections')) {
-        return null;
-      }
-
-      if (text.includes('FROM tenant_integrations')) {
-        return {
-          api_key_enc: 'enc-legacy',
-          status: 'connected',
-          last_sync_at: '2026-04-03T12:00:00.000Z',
-          last_error: null,
-          created_at: '2026-04-01T12:00:00.000Z',
-          updated_at: '2026-04-03T12:00:00.000Z',
-        };
-      }
-
-      if (text.includes('INSERT INTO external_connections')) {
-        return { id: 'migrated-ext-1' };
-      }
-
-      return null;
-    });
+    mockOne.mockResolvedValueOnce({ exists: true }).mockResolvedValueOnce({ exists: true });
 
     const { setIntegrationError } = await import('./accountingStore');
     await setIntegrationError('tenant-1', 'holded validation failed', 'dashboard');
 
+    expect(
+      mockOne.mock.calls.some(
+        ([text]) => typeof text === 'string' && text.includes('tenant_integrations')
+      )
+    ).toBe(false);
     expect(
       mockQuery.mock.calls.some(
         ([text]) =>

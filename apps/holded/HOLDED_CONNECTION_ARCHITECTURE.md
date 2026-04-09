@@ -61,15 +61,9 @@ Para Holded:
 
 ## TenantIntegration
 
-Se mantiene como capa de compatibilidad con superficies del producto que todavia leen integraciones desde ahi.
+Se mantiene para integraciones que todavia usan esa tabla, pero Holded ya no se resuelve desde aqui.
 
-Para Holded:
-
-- `provider = "accounting_api"`
-- `apiKeyEnc`
-- `status`
-- `lastSyncAt`
-- `lastError`
+Para Holded, la fuente canonica y activa es `ExternalConnection` con `provider = "holded"`.
 
 ## TenantProfile
 

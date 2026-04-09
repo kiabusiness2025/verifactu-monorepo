@@ -319,7 +319,7 @@ Si el usuario vuelve una y otra vez a `/onboarding/holded` o la pantalla se qued
 
 Interpretacion:
 
-- Si `tenant_integrations` sale conectado pero ChatGPT sigue en bucle, el problema suele ser una conexion legacy o de `dashboard`, no una conexion real de `chatgpt`.
+- Si `tenant_integrations` sale conectado pero ChatGPT sigue en bucle, tratala como una fila legacy ya ignorada por el runtime Holded actual; revisa `external_connections` y `channel_key`.
 - Si el status API responde `disconnected` tras guardar la clave, revisar persistencia de `channel_key` antes de mirar OAuth.
 - Si el usuario ve una pantalla lenta pero puede pegar la clave y completar la conexion, el problema es de UX o despliegue, no de credenciales.
 

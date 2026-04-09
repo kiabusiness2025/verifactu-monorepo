@@ -69,7 +69,7 @@ Recomendacion:
 2. Verificar en logs de build que compila el proyecto correcto.
 3. Si la migracion aun no esta aplicada en la base de datos de produccion:
    - aplicarla antes de validar el flujo completo
-   - comprobar que el fallback a `tenant_integrations` no es la unica ruta usada
+   - confirmar que las filas dashboard de Holded ya existen en `external_connections`, porque el runtime ya no hace fallback a `tenant_integrations`
 
 ## Smoke test tecnico tras deploy
 

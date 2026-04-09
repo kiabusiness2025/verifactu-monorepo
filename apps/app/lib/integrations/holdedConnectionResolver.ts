@@ -1,5 +1,4 @@
 import { one } from '@/lib/db';
-import { ensureSharedHoldedDashboardExternalConnectionFromLegacy } from '@/lib/integrations/holdedLegacyBackfill';
 import { decryptIntegrationSecret } from '@/lib/integrations/secretCrypto';
 
 type ExternalConnectionRow = {
@@ -178,16 +177,9 @@ export async function hasSharedHoldedConnectionForTenant(
   channel?: HoldedConnectionChannel
 ) {
   const normalizedChannel = normalizeHoldedChannel(channel);
-  let external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
+  const external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
     requireApiKey: false,
   });
-
-  if (!external && normalizedChannel === 'dashboard') {
-    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
-    external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
-      requireApiKey: false,
-    });
-  }
 
   return Boolean(external?.api_key_enc);
 }
@@ -197,16 +189,9 @@ export async function resolveSharedHoldedConnectionStatusForTenant(
   channel?: HoldedConnectionChannel
 ) {
   const normalizedChannel = normalizeHoldedChannel(channel);
-  let external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
+  const external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
     requireApiKey: false,
   });
-
-  if (!external && normalizedChannel === 'dashboard') {
-    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
-    external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
-      requireApiKey: false,
-    });
-  }
 
   if (external) {
     return mapExternalConnectionStatus(external, normalizedChannel);
@@ -220,16 +205,9 @@ export async function resolveSharedHoldedConnectionForTenant(
   channel?: HoldedConnectionChannel
 ) {
   const normalizedChannel = normalizeHoldedChannel(channel);
-  let external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
+  const external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
     requireApiKey: false,
   });
-
-  if (!external && normalizedChannel === 'dashboard') {
-    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
-    external = await loadExternalConnectionRow(tenantId, normalizedChannel, {
-      requireApiKey: false,
-    });
-  }
 
   if (external?.api_key_enc) {
     return {

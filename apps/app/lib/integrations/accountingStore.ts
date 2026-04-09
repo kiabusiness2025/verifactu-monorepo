@@ -1,5 +1,4 @@
 import { one, query } from '@/lib/db';
-import { ensureSharedHoldedDashboardExternalConnectionFromLegacy } from '@/lib/integrations/holdedLegacyBackfill';
 import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
 
 const PROVIDER = 'accounting_api';
@@ -35,7 +34,6 @@ function describeStorageError(error: unknown) {
   return String(error || 'Unknown storage error');
 }
 
-let tenantIntegrationsTableAvailable: boolean | null = null;
 let externalConnectionsTableAvailable: boolean | null = null;
 let externalConnectionsChannelColumnAvailable: boolean | null = null;
 let externalConnectionsOptionalColumnsEnsured = false;
@@ -120,7 +118,6 @@ async function bootstrapIntegrationStorageTables() {
       message: error instanceof Error ? error.message : String(error),
     });
   } finally {
-    tenantIntegrationsTableAvailable = await detectTable('tenant_integrations');
     externalConnectionsTableAvailable = await detectTable('external_connections');
     externalConnectionsChannelColumnAvailable = externalConnectionsTableAvailable
       ? await detectExternalConnectionsChannelColumn()
@@ -506,7 +503,6 @@ export async function disconnectAccountingIntegration(
   let saved: AccountingIntegrationStatus | null = null;
 
   if (await hasExternalConnectionsTable()) {
-    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
     const external = (await hasExternalConnectionsChannelColumn())
       ? await one<{
           id: string;
@@ -707,7 +703,6 @@ export async function touchIntegrationSyncOk(
   const normalizedChannel = normalizeAccountingChannel(channelKey);
 
   if (await hasExternalConnectionsTable()) {
-    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
     if (await hasExternalConnectionsChannelColumn()) {
       await query(
         `
@@ -738,7 +733,6 @@ export async function setIntegrationError(
   const normalizedChannel = normalizeAccountingChannel(channelKey);
 
   if (await hasExternalConnectionsTable()) {
-    await ensureSharedHoldedDashboardExternalConnectionFromLegacy(tenantId, normalizedChannel);
     if (await hasExternalConnectionsChannelColumn()) {
       await query(
         `
