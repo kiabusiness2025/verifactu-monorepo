@@ -3,6 +3,8 @@ import {
   getHoldedOnboardingTokenFromSearchParams,
   resolveHoldedOnboardingSession,
 } from '@/lib/integrations/holdedOnboardingSession';
+import { maskSecret } from '@/lib/integrations/accounting';
+import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
@@ -28,6 +30,16 @@ export const metadata: Metadata = {
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
+
+type HoldedSavedPrefill = {
+  companyName: string | null;
+  companyTaxId: string | null;
+  contactEmail: string | null;
+  maskedApiKey: string | null;
+  connectionStatus: string | null;
+  lastSyncAt: string | null;
+  lastError: string | null;
+};
 
 function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -336,6 +348,7 @@ export default async function HoldedOnboardingPage({
     tenantIsDemo: null as boolean | null,
     tenantNif: null as string | null,
   };
+  let savedPrefill: HoldedSavedPrefill | null = null;
 
   const passiveVerifiedTenantPrefill =
     entryChannel === 'chatgpt' &&
@@ -442,6 +455,57 @@ export default async function HoldedOnboardingPage({
     companyName: summary.companyName,
   });
 
+  const shouldBindResolvedTenantToOnboardingToken =
+    entryChannel === 'chatgpt' &&
+    effectiveOnboardingSession?.emailVerified === true &&
+    !!resolvedTenantInfo.tenantId &&
+    (effectiveOnboardingSession?.tenantBound !== true ||
+      effectiveOnboardingSession?.tenantId !== resolvedTenantInfo.tenantId);
+
+  const clientOnboardingToken =
+    shouldBindResolvedTenantToOnboardingToken && effectiveOnboardingSession?.uid
+      ? await mintHoldedOnboardingTokenForSubject({
+          uid: effectiveOnboardingSession.uid,
+          email: effectiveOnboardingSession.email ?? session?.email ?? null,
+          name:
+            normalizeMeaningfulPersonName(effectiveOnboardingSession.name) ??
+            normalizeMeaningfulPersonName(session?.name),
+          tenantId: resolvedTenantInfo.tenantId,
+          tenantBound: true,
+          authMethod: effectiveOnboardingSession.authMethod,
+          emailVerified: effectiveOnboardingSession.emailVerified,
+          firstName: effectiveOnboardingSession.firstName,
+          lastName: effectiveOnboardingSession.lastName,
+          verifiedAt: effectiveOnboardingSession.verifiedAt,
+        })
+      : effectiveOnboardingToken;
+
+  if (resolvedTenantInfo.tenantId) {
+    try {
+      const savedConnection = await resolveSharedHoldedConnectionForTenant(
+        resolvedTenantInfo.tenantId,
+        entryChannel === 'chatgpt' ? 'chatgpt' : 'dashboard'
+      );
+
+      if (savedConnection) {
+        savedPrefill = {
+          companyName: normalizeText(summary.companyName),
+          companyTaxId: normalizeText(summary.companyTaxId),
+          contactEmail: normalizeText(summary.contactEmail),
+          maskedApiKey: maskSecret(savedConnection.apiKey),
+          connectionStatus: savedConnection.status ?? null,
+          lastSyncAt: savedConnection.lastSyncAt ?? null,
+          lastError: savedConnection.lastError ?? null,
+        };
+      }
+    } catch (error) {
+      console.error('[onboarding/holded] failed to load saved Holded prefill', {
+        tenantId: resolvedTenantInfo.tenantId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   return (
     <HoldedOnboardingClient
       captureMode={captureMode}
@@ -459,10 +523,11 @@ export default async function HoldedOnboardingPage({
       }}
       summary={summary}
       companySetup={companySetup}
-      onboardingToken={effectiveOnboardingToken}
+      onboardingToken={clientOnboardingToken}
       tenantIdHint={
         resolvedTenantInfo.tenantId ?? passiveVerifiedTenantPrefill?.tenantId ?? tenantIdHint
       }
+      savedPrefill={savedPrefill}
     />
   );
 }

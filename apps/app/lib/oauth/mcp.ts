@@ -59,6 +59,7 @@ type HoldedOnboardingPayload = {
   email: string | null;
   name: string | null;
   tenantId?: string | null;
+  tenantBound?: boolean | null;
   authMethod?: HoldedOnboardingAuthMethod | null;
   emailVerified?: boolean | null;
   firstName?: string | null;
@@ -72,6 +73,7 @@ type HoldedEmailVerificationPayload = {
   email: string;
   name?: string | null;
   tenantId?: string | null;
+  tenantBound?: boolean | null;
   firstName?: string | null;
   lastName?: string | null;
   returnUrl?: string | null;
@@ -366,6 +368,7 @@ export async function mintHoldedOnboardingToken(input: {
   email?: string | null;
   name?: string | null;
   tenantId?: string | null;
+  tenantBound?: boolean | null;
   authMethod?: HoldedOnboardingAuthMethod | null;
   emailVerified?: boolean | null;
   firstName?: string | null;
@@ -384,6 +387,7 @@ export async function mintHoldedOnboardingToken(input: {
         fallback: 'Connector user',
       }),
       tenantId: normalizeOptionalTokenText(input.tenantId),
+      tenantBound: input.tenantBound === true,
       authMethod: input.authMethod ?? 'unknown',
       emailVerified: input.emailVerified ?? false,
       firstName: normalizeOptionalTokenText(input.firstName),
@@ -400,6 +404,7 @@ export async function mintHoldedOnboardingTokenForSubject(input: {
   email?: string | null;
   name?: string | null;
   tenantId?: string | null;
+  tenantBound?: boolean | null;
   authMethod?: HoldedOnboardingAuthMethod | null;
   emailVerified?: boolean | null;
   firstName?: string | null;
@@ -418,6 +423,7 @@ export async function mintHoldedOnboardingTokenForSubject(input: {
         fallback: 'Connector user',
       }),
       tenantId: normalizeOptionalTokenText(input.tenantId),
+      tenantBound: input.tenantBound === true,
       authMethod: input.authMethod ?? 'unknown',
       emailVerified: input.emailVerified ?? false,
       firstName: normalizeOptionalTokenText(input.firstName),
@@ -441,6 +447,7 @@ export async function mintHoldedEmailVerificationToken(input: {
   email: string;
   name?: string | null;
   tenantId?: string | null;
+  tenantBound?: boolean | null;
   firstName?: string | null;
   lastName?: string | null;
   returnUrl?: string | null;
@@ -452,6 +459,7 @@ export async function mintHoldedEmailVerificationToken(input: {
       email: input.email.trim(),
       name: normalizeOptionalTokenText(input.name),
       tenantId: normalizeOptionalTokenText(input.tenantId),
+      tenantBound: input.tenantBound === true,
       firstName: normalizeOptionalTokenText(input.firstName),
       lastName: normalizeOptionalTokenText(input.lastName),
       returnUrl: normalizeOptionalTokenText(input.returnUrl),

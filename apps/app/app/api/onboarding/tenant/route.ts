@@ -457,6 +457,7 @@ export async function POST(req: Request) {
           email: onboardingSession.email ?? authSession.email ?? null,
           name: onboardingSession.name ?? contactFullName ?? authSession.name ?? null,
           tenantId: result.tenant.id,
+          tenantBound: true,
           authMethod: onboardingSession.authMethod,
           emailVerified: onboardingSession.emailVerified,
           firstName: onboardingSession.firstName,

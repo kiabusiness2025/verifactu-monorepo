@@ -86,6 +86,16 @@ type OnboardingIdentityState = {
   verifiedAt: string | null;
 };
 
+type SavedPrefillState = {
+  companyName: string | null;
+  companyTaxId: string | null;
+  contactEmail: string | null;
+  maskedApiKey: string | null;
+  connectionStatus: string | null;
+  lastSyncAt: string | null;
+  lastError: string | null;
+};
+
 type DirectOnboardingStep = 'identity' | 'person' | 'company' | 'api' | 'success';
 
 type Props = {
@@ -99,6 +109,7 @@ type Props = {
   companySetup: HoldedCompanySetupState;
   onboardingToken?: string | null;
   tenantIdHint?: string | null;
+  savedPrefill?: SavedPrefillState | null;
 };
 
 const HOLDED_COMPAT_URL =
@@ -378,6 +389,7 @@ export default function HoldedOnboardingClient({
   companySetup,
   onboardingToken = null,
   tenantIdHint = null,
+  savedPrefill = null,
 }: Props) {
   const isChatgptEntry = entryChannel === 'chatgpt';
   const usesDirectStepFlow = isChatgptEntry;
@@ -480,6 +492,22 @@ export default function HoldedOnboardingClient({
     (!needsPostValidationCompanyStep || !apiValidated) &&
     !canContinueWithExistingConnection;
   const normalizedApiKey = useMemo(() => normalizeApiKey(apiKey), [apiKey]);
+  const hasSavedPrefill =
+    !!savedPrefill &&
+    Boolean(
+      normalizeText(savedPrefill.companyName) ||
+      normalizeText(savedPrefill.companyTaxId) ||
+      normalizeText(savedPrefill.contactEmail) ||
+      normalizeText(savedPrefill.maskedApiKey)
+    );
+  const savedConnectionStatusLabel =
+    savedPrefill?.connectionStatus === 'connected'
+      ? 'API guardada y conexion activa'
+      : savedPrefill?.connectionStatus === 'error'
+        ? 'API guardada con ultimo estado en error'
+        : savedPrefill?.maskedApiKey
+          ? 'API guardada anteriormente'
+          : null;
   const hasReusableValidationToken =
     validatedApiKey === normalizedApiKey && Boolean(validationToken);
   const usesInlineDirectForm = needsPostValidationCompanyStep && !hasResolvedCompanyProfile;
@@ -2537,6 +2565,73 @@ export default function HoldedOnboardingClient({
                       </li>
                     ))}
                   </ol>
+                ) : null}
+
+                {showApiStep && !redirecting && hasSavedPrefill ? (
+                  <div className="mt-4 rounded-3xl border border-[#d9e6ff] bg-[linear-gradient(135deg,#f7fbff_0%,#ffffff_52%,#fff8f8_100%)] p-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                      Ultimo relleno recuperado
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      {savedPrefill?.companyName ? (
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Empresa
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-black">
+                            {savedPrefill.companyName}
+                          </div>
+                        </div>
+                      ) : null}
+                      {savedPrefill?.companyTaxId ? (
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            NIF / CIF
+                          </div>
+                          <div className="mt-1 text-sm text-neutral-700">
+                            {savedPrefill.companyTaxId}
+                          </div>
+                        </div>
+                      ) : null}
+                      {savedPrefill?.contactEmail ? (
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Correo verificado
+                          </div>
+                          <div className="mt-1 break-all text-sm text-neutral-700">
+                            {savedPrefill.contactEmail}
+                          </div>
+                        </div>
+                      ) : null}
+                      {savedPrefill?.maskedApiKey ? (
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                            Ultima API guardada
+                          </div>
+                          <div className="mt-1 font-mono text-sm text-neutral-700">
+                            {savedPrefill.maskedApiKey}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                    {savedConnectionStatusLabel ? (
+                      <div className="mt-3 text-sm text-neutral-700">
+                        Estado:{' '}
+                        <span className="font-semibold text-black">
+                          {savedConnectionStatusLabel}
+                        </span>
+                      </div>
+                    ) : null}
+                    {savedPrefill?.lastSyncAt ? (
+                      <div className="mt-1 text-sm text-neutral-600">
+                        Ultima validacion registrada:{' '}
+                        {new Date(savedPrefill.lastSyncAt).toLocaleString('es-ES')}
+                      </div>
+                    ) : null}
+                    {savedPrefill?.lastError ? (
+                      <div className="mt-2 text-sm text-amber-700">{savedPrefill.lastError}</div>
+                    ) : null}
+                  </div>
                 ) : null}
 
                 {showApiStep && !redirecting ? (

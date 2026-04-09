@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
     email: payload.email,
     name: payload.name ?? null,
     tenantId: payload.tenantId ?? null,
+    tenantBound: payload.tenantBound === true,
     authMethod: 'email',
     emailVerified: true,
     firstName: payload.firstName ?? null,

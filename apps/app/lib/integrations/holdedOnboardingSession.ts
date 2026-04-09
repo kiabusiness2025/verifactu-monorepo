@@ -7,6 +7,7 @@ export type HoldedOnboardingSession = {
   email: string | null;
   name: string | null;
   tenantId: string | null;
+  tenantBound: boolean;
   authMethod: HoldedOnboardingAuthMethod | null;
   emailVerified: boolean;
   firstName: string | null;
@@ -55,6 +56,7 @@ export async function resolveHoldedOnboardingSession(
     email: payload.email ?? null,
     name: normalizeToken(typeof payload.name === 'string' ? payload.name : null) ?? fallbackName,
     tenantId: typeof payload.tenantId === 'string' ? payload.tenantId.trim() || null : null,
+    tenantBound: payload.tenantBound === true,
     authMethod: normalizeAuthMethod(payload.authMethod),
     emailVerified: payload.emailVerified === true,
     firstName,

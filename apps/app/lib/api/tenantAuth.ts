@@ -92,6 +92,14 @@ export async function requireTenantContext(options?: {
     ? (oauthResolved.tenantId ?? direct.tenantId ?? sessionTenantId ?? null)
     : (direct.tenantId ?? oauthResolved.tenantId ?? sessionTenantId ?? null);
 
+  if (
+    options?.channelType === 'chatgpt' &&
+    onboardingSession?.tenantBound === true &&
+    onboardingSession.tenantId
+  ) {
+    tenantId = onboardingSession.tenantId;
+  }
+
   const normalizedTenantIdHint =
     options?.tenantIdHint?.trim() || onboardingSession?.tenantId?.trim() || null;
   if (normalizedTenantIdHint) {

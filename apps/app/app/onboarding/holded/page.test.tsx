@@ -26,6 +26,10 @@ jest.mock('@/lib/oauth/mcp', () => ({
   mintHoldedOnboardingTokenForSubject: jest.fn(async () => 'generated-onboarding-token'),
 }));
 
+jest.mock('@/lib/integrations/holdedConnectionResolver', () => ({
+  resolveSharedHoldedConnectionForTenant: jest.fn(async () => null),
+}));
+
 jest.mock('@/lib/prisma', () => ({
   __esModule: true,
   default: {

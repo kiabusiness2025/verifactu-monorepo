@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
     email,
     name,
     tenantId,
+    tenantBound: onboardingSession.tenantBound,
     authMethod: 'google',
     emailVerified: decoded.email_verified === true,
     firstName: nameParts.firstName,

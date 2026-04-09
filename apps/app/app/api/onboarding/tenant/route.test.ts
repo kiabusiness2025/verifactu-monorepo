@@ -532,6 +532,7 @@ describe('POST /api/onboarding/tenant', () => {
       email: 'guest@example.com',
       name: 'Connector Guest',
       tenantId: 'tenant-1',
+      tenantBound: true,
       authMethod: 'email',
       emailVerified: true,
       firstName: 'Connector',

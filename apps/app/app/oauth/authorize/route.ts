@@ -160,6 +160,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    if (onboardingSession?.tenantBound === true && onboardingSession.tenantId) {
+      resolved = {
+        tenantId: onboardingSession.tenantId,
+        resolvedUserId: resolved.resolvedUserId,
+      };
+    }
+
     if (resolved.tenantId && resolved.resolvedUserId) {
       try {
         await upsertChannelIdentity({
