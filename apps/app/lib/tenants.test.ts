@@ -36,7 +36,7 @@ describe('upsertUser', () => {
     jest.clearAllMocks();
   });
 
-  it('links an existing user with the same email to the firebase subject without rewriting the id', async () => {
+  it('reuses an existing user with the same email without rebinding its auth subject', async () => {
     prismaMock.user.findFirst.mockResolvedValueOnce(null);
     prismaMock.user.findUnique.mockResolvedValueOnce({
       id: 'internal-user-id',
@@ -59,10 +59,10 @@ describe('upsertUser', () => {
       data: expect.objectContaining({
         email: 'demo@example.com',
         name: 'Demo User',
-        authSubject: 'firebase-uid-123',
-        authProvider: 'FIREBASE',
       }),
     });
+    expect(prismaMock.user.update.mock.calls[0][0].data).not.toHaveProperty('authSubject');
+    expect(prismaMock.user.update.mock.calls[0][0].data).not.toHaveProperty('authProvider');
   });
 
   it('updates an existing user already linked by auth subject', async () => {

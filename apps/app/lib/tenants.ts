@@ -169,8 +169,6 @@ export async function upsertUser(params: {
           name: fullName || existingByEmail.name || undefined,
           firstName: nameParts.firstName || existingByEmail.firstName || undefined,
           lastName: nameParts.lastName || existingByEmail.lastName || undefined,
-          authProvider: 'FIREBASE',
-          authSubject: id,
         },
       });
       return existingByEmail.id;

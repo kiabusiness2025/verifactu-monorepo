@@ -71,6 +71,5 @@ export function isVerifiedHoldedOnboardingIdentity(
   session: HoldedOnboardingSession | null | undefined
 ) {
   if (!session?.email) return false;
-  if (session.authMethod === 'google') return true;
   return session.emailVerified === true;
 }

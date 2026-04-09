@@ -58,7 +58,7 @@ export async function createHoldedEmailVerificationCode(input: { token: string; 
   throw new Error('Failed to allocate Holded email verification code');
 }
 
-export async function resolveHoldedEmailVerificationTokenFromCode(code: string | null | undefined) {
+export async function consumeHoldedEmailVerificationTokenFromCode(code: string | null | undefined) {
   const normalizedCode = normalizeCode(code);
   if (!normalizedCode) return null;
 
@@ -66,9 +66,9 @@ export async function resolveHoldedEmailVerificationTokenFromCode(code: string |
 
   const row = await one<{ token: string }>(
     [
-      `SELECT token FROM ${HOLDED_EMAIL_VERIFICATION_LINKS_TABLE}`,
+      `DELETE FROM ${HOLDED_EMAIL_VERIFICATION_LINKS_TABLE}`,
       'WHERE code = $1 AND expires_at > now()',
-      'LIMIT 1',
+      'RETURNING token',
     ].join(' '),
     [normalizedCode]
   );

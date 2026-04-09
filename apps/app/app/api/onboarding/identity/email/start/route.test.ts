@@ -10,8 +10,8 @@ jest.mock('@/lib/email/emailService', () => ({
 
 jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
   isVerifiedHoldedOnboardingIdentity: jest.fn(
-    (session: { email?: string | null; emailVerified?: boolean; authMethod?: string | null }) =>
-      Boolean(session?.email && (session?.emailVerified || session?.authMethod === 'google'))
+    (session: { email?: string | null; emailVerified?: boolean }) =>
+      Boolean(session?.email && session?.emailVerified)
   ),
   resolveHoldedOnboardingSession: jest.fn(),
   resolveHoldedOnboardingSessionFromHeaders: jest.fn(),

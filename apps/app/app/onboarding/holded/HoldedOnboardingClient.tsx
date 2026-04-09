@@ -451,9 +451,7 @@ export default function HoldedOnboardingClient({
   const initialTenantIdHint = tenantIdHint?.trim() || null;
   const normalizedIdentityEmail = normalizeText(identityState.email).toLowerCase();
   const verifiedIdentityReady =
-    !requiresVerifiedIdentity ||
-    ((identityState.authMethod === 'google' || identityState.emailVerified) &&
-      !!normalizedIdentityEmail);
+    !requiresVerifiedIdentity || (identityState.emailVerified && !!normalizedIdentityEmail);
   const showIdentityGate = requiresVerifiedIdentity && !verifiedIdentityReady;
   const hideResolvedCompanyUntilApiValidation = needsPostValidationCompanyStep && !apiValidated;
   const companyStepPending =

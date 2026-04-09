@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAppUrl } from '@verifactu/utils';
-import { resolveHoldedEmailVerificationTokenFromCode } from '@/lib/integrations/holdedEmailVerificationLinks';
+import { consumeHoldedEmailVerificationTokenFromCode } from '@/lib/integrations/holdedEmailVerificationLinks';
 import {
   mintHoldedOnboardingTokenForSubject,
   verifyHoldedEmailVerificationToken,
@@ -27,9 +27,8 @@ function sanitizeReturnUrl(value: string | null | undefined) {
 }
 
 export async function GET(request: NextRequest) {
-  const tokenFromUrl = request.nextUrl.searchParams.get('token')?.trim() || '';
   const code = request.nextUrl.searchParams.get('code')?.trim() || '';
-  const token = tokenFromUrl || (await resolveHoldedEmailVerificationTokenFromCode(code)) || '';
+  const token = (await consumeHoldedEmailVerificationTokenFromCode(code)) || '';
   const payload = token ? await verifyHoldedEmailVerificationToken(token) : null;
 
   const redirectUrl = sanitizeReturnUrl(payload?.returnUrl ?? null);

@@ -51,6 +51,12 @@ export async function POST(request: NextRequest) {
   if (!email) {
     return NextResponse.json({ ok: false, error: 'Google account email missing' }, { status: 400 });
   }
+  if (decoded.email_verified !== true) {
+    return NextResponse.json(
+      { ok: false, error: 'Google account email must be verified' },
+      { status: 403 }
+    );
+  }
 
   const claims = decoded as Record<string, unknown>;
   const googleFirstName = normalizeMeaningfulPersonName(
@@ -72,7 +78,7 @@ export async function POST(request: NextRequest) {
     buildFullName({ firstName: googleFirstName, lastName: googleLastName }) ||
     preservedOnboardingName;
   const nameParts = splitFullName(name);
-  const verifiedAt = decoded.email_verified ? new Date().toISOString() : null;
+  const verifiedAt = new Date().toISOString();
   const tenantId = onboardingSession.tenantId ?? readTenantIdHint(body);
 
   const onboardingToken = await mintHoldedOnboardingTokenForSubject({
@@ -93,7 +99,7 @@ export async function POST(request: NextRequest) {
     identity: {
       authMethod: 'google',
       email,
-      emailVerified: decoded.email_verified === true,
+      emailVerified: true,
       firstName: nameParts.firstName,
       lastName: nameParts.lastName,
       name,

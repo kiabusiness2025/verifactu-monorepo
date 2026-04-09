@@ -35,8 +35,8 @@ jest.mock('@/lib/tenants', () => ({
 
 jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
   isVerifiedHoldedOnboardingIdentity: jest.fn(
-    (session: { email?: string | null; emailVerified?: boolean; authMethod?: string | null }) =>
-      Boolean(session?.email && (session?.emailVerified || session?.authMethod === 'google'))
+    (session: { email?: string | null; emailVerified?: boolean }) =>
+      Boolean(session?.email && session?.emailVerified)
   ),
   resolveHoldedOnboardingSessionFromHeaders: jest.fn(),
 }));
@@ -136,8 +136,6 @@ describe('POST /api/onboarding/tenant', () => {
       legalName: 'Empresa Demo SL',
     });
     (mockTx.membership.create as jest.Mock).mockResolvedValue({ id: 'membership-1' });
-    (mockTx.membership.upsert as jest.Mock).mockResolvedValue({ id: 'membership-support' });
-    (mockTx.user.upsert as jest.Mock).mockResolvedValue({ id: 'support-user' });
     (mockTx.userPreference.upsert as jest.Mock).mockResolvedValue({ userId: 'user-1' });
     (mockTx.tenantSubscription.findFirst as jest.Mock).mockResolvedValue(null);
     (mockTx.tenantSubscription.create as jest.Mock).mockResolvedValue({
@@ -209,6 +207,9 @@ describe('POST /api/onboarding/tenant', () => {
         where: { userId: 'internal-user-1' },
       })
     );
+
+    expect(mockTx.user.upsert).not.toHaveBeenCalled();
+    expect(mockTx.membership.upsert).not.toHaveBeenCalled();
 
     expect(mockTx.tenantProfile.upsert).toHaveBeenCalledWith(
       expect.objectContaining({

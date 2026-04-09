@@ -214,6 +214,34 @@ describe('POST /api/onboarding/identity/google', () => {
     expect(resolveHoldedOnboardingSession).toHaveBeenCalledWith('onboarding-token-from-body');
   });
 
+  it('rejects Google identities whose email is not verified by the provider', async () => {
+    (verifyIdToken as jest.Mock).mockResolvedValue({
+      uid: 'google-user-1',
+      email: 'demo@example.com',
+      email_verified: false,
+      name: 'Demo User',
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/onboarding/identity/google',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({ idToken: 'google-id-token' }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload).toEqual({ ok: false, error: 'Google account email must be verified' });
+    expect(mintHoldedOnboardingTokenForSubject).not.toHaveBeenCalled();
+  });
+
   it('rejects the request when the temporary onboarding token is missing', async () => {
     (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue(null);
     (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue(null);

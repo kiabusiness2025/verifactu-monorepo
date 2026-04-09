@@ -43,8 +43,8 @@ jest.mock('@/lib/email/holdedSecurityAlerts', () => ({
 jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
   getHoldedOnboardingTokenFromHeaders: jest.fn(() => null),
   isVerifiedHoldedOnboardingIdentity: jest.fn(
-    (session: { email?: string | null; emailVerified?: boolean; authMethod?: string | null }) =>
-      Boolean(session?.email && (session?.emailVerified || session?.authMethod === 'google'))
+    (session: { email?: string | null; emailVerified?: boolean }) =>
+      Boolean(session?.email && session?.emailVerified)
   ),
   resolveHoldedOnboardingSessionFromHeaders: jest.fn(),
 }));

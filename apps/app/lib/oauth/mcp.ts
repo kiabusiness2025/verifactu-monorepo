@@ -648,25 +648,41 @@ async function getOrCreateInternalUserForOAuth(input: {
   email?: string | null;
   name?: string | null;
 }) {
-  const existing =
+  const existingBySubject =
     (await prisma.user.findFirst({
-      where: {
-        OR: [{ authSubject: input.uid }, ...(input.email ? [{ email: input.email }] : [])],
-      },
-      select: { id: true, email: true, name: true },
+      where: { authSubject: input.uid },
+      select: { id: true, email: true, name: true, authSubject: true },
     })) ?? null;
 
-  if (existing) {
+  if (existingBySubject) {
     await prisma.user.update({
-      where: { id: existing.id },
+      where: { id: existingBySubject.id },
       data: {
         authSubject: input.uid,
         authProvider: 'FIREBASE',
-        email: input.email ?? existing.email,
-        name: input.name ?? existing.name,
+        email: input.email ?? existingBySubject.email,
+        name: input.name ?? existingBySubject.name,
       },
     });
-    return existing.id;
+    return existingBySubject.id;
+  }
+
+  const existingByEmail = input.email
+    ? await prisma.user.findUnique({
+        where: { email: input.email },
+        select: { id: true, email: true, name: true, authSubject: true },
+      })
+    : null;
+
+  if (existingByEmail) {
+    await prisma.user.update({
+      where: { id: existingByEmail.id },
+      data: {
+        email: input.email ?? existingByEmail.email,
+        name: input.name ?? existingByEmail.name,
+      },
+    });
+    return existingByEmail.id;
   }
 
   const created = await prisma.user.create({

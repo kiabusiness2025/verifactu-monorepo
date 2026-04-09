@@ -452,9 +452,7 @@ export default async function HoldedOnboardingPage({
       identity={{
         authMethod: effectiveOnboardingSession?.authMethod ?? 'unknown',
         email: normalizeText(effectiveOnboardingSession?.email),
-        emailVerified:
-          effectiveOnboardingSession?.authMethod === 'google' ||
-          effectiveOnboardingSession?.emailVerified === true,
+        emailVerified: effectiveOnboardingSession?.emailVerified === true,
         firstName: normalizeText(effectiveOnboardingSession?.firstName),
         lastName: normalizeText(effectiveOnboardingSession?.lastName),
         verifiedAt: normalizeText(effectiveOnboardingSession?.verifiedAt),
