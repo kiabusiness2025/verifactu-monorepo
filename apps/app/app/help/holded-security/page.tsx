@@ -44,7 +44,7 @@ export default function HoldedSecurityHelpPage() {
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
             <h2 className="text-lg font-semibold text-slate-950">Si necesitas ayuda</h2>
             <p className="mt-3 text-sm leading-7 text-slate-700">
-              Responde al correo de alerta o escribe a support@verifactu.business indicando la
+              Responde al correo de alerta o escribe a soporte@verifactu.business indicando la
               empresa afectada, el canal usado y la hora aproximada del cambio.
             </p>
           </div>
