@@ -291,6 +291,95 @@ describe('HoldedOnboardingPage', () => {
     expect(element.props.summary.contactFirstName).toBe('Owner');
   });
 
+  it('falls back to the most recent real tenant when the verified email has multiple active memberships', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue(null);
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'owner@example.com',
+      name: 'Owner User',
+      tenantId: null,
+      authMethod: 'email',
+      emailVerified: true,
+      firstName: 'Owner',
+      lastName: 'User',
+      verifiedAt: '2026-04-07T19:10:00.000Z',
+    });
+    prismaMock.user.findFirst.mockResolvedValue({
+      id: 'internal-user-1',
+      name: 'Owner User',
+      email: 'owner@example.com',
+    });
+    prismaMock.userPreference.findUnique.mockResolvedValue(null);
+    prismaMock.membership.findMany.mockResolvedValue([
+      {
+        tenantId: 'tenant-recent',
+        tenant: {
+          id: 'tenant-recent',
+          nif: 'B12345678',
+          isDemo: false,
+          name: 'Empresa Reciente',
+          legalName: 'Empresa Reciente SL',
+          profile: {
+            tradeName: 'Empresa Reciente',
+            legalName: 'Empresa Reciente SL',
+            representative: 'Owner User',
+            representativeRole: 'owner',
+            email: 'reciente@example.com',
+            phone: '+34 600 000 111',
+            website: 'https://empresa-reciente.es',
+            cnae: 'M - Actividades profesionales',
+            cnaeCode: 'M',
+            cnaeText: 'Actividades profesionales',
+            address: 'Calle Nueva 2',
+            postalCode: '28002',
+            city: 'Madrid',
+            province: 'Madrid',
+            country: 'Espana',
+          },
+        },
+      },
+      {
+        tenantId: 'tenant-older',
+        tenant: {
+          id: 'tenant-older',
+          nif: 'B87654321',
+          isDemo: false,
+          name: 'Empresa Antigua',
+          legalName: 'Empresa Antigua SL',
+          profile: {
+            tradeName: 'Empresa Antigua',
+            legalName: 'Empresa Antigua SL',
+            representative: 'Owner User',
+            representativeRole: 'owner',
+            email: 'antigua@example.com',
+            phone: '+34 600 000 222',
+            website: 'https://empresa-antigua.es',
+            cnae: 'G - Comercio',
+            cnaeCode: 'G',
+            cnaeText: 'Comercio',
+            address: 'Calle Vieja 3',
+            postalCode: '28003',
+            city: 'Madrid',
+            province: 'Madrid',
+            country: 'Espana',
+          },
+        },
+      },
+    ]);
+
+    const element = await HoldedOnboardingPage({
+      searchParams: Promise.resolve({
+        next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
+        channel: 'chatgpt',
+        onboarding_token: 'onboarding-token-123',
+      }),
+    });
+
+    expect(element.props.tenantIdHint).toBe('tenant-recent');
+    expect(element.props.summary.companyName).toBe('Empresa Reciente');
+    expect(element.props.summary.companyTaxId).toBe('B12345678');
+  });
+
   it('reuses a remembered verified identity and enters chatgpt onboarding already unlocked', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'session-user-1',

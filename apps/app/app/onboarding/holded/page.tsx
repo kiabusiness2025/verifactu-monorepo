@@ -203,13 +203,7 @@ async function resolveVerifiedEmailTenantPrefill(input: {
     ? memberships.find((membership) => membership.tenantId === preference.preferredTenantId) || null
     : null;
   const realMemberships = memberships.filter((membership) => !membership.tenant.isDemo);
-  const selectedMembership =
-    preferredMembership ||
-    (realMemberships.length === 1
-      ? realMemberships[0]
-      : memberships.length === 1
-        ? memberships[0]
-        : null);
+  const selectedMembership = preferredMembership || realMemberships[0] || memberships[0] || null;
 
   if (!selectedMembership) {
     return null;

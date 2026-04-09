@@ -99,6 +99,56 @@ describe('HoldedOnboardingClient', () => {
     expect(screen.getAllByRole('button', { name: 'Volver' }).length).toBeGreaterThan(0);
   });
 
+  it('keeps the final direct-step button disabled and explains what is missing before validating Holded', () => {
+    render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode={false}
+        requiresVerifiedIdentity
+        summary={{
+          companyName: 'Tu empresa',
+          companyLegalName: null,
+          companyTaxId: null,
+          companyAddress: null,
+          companyPostalCode: null,
+          companyCity: null,
+          companyProvince: null,
+          companyCountry: null,
+          companyWebsite: null,
+          companySectorCode: null,
+          companySectorLabel: null,
+          contactFirstName: '',
+          contactRole: null,
+          contactFullName: null,
+          contactEmail: 'kiabusiness2025@gmail.com',
+          companyEmail: null,
+          contactPhone: null,
+        }}
+        companySetup={{
+          hasResolvedCompany: false,
+          needsCompanySetup: true,
+          requiresCompanyConfirmation: false,
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ir al paso 4: API key' }));
+
+    expect(
+      screen.getByText('Faltan datos obligatorios antes de validar la conexion:')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Paso 2: completa nombre, apellidos y rol del usuario.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Paso 3: completa razon social, CIF/NIF, domicilio, codigo postal, ciudad, provincia, pais, sector y correo principal.'
+      )
+    ).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: 'Validar y conectar Holded' })).toBeDisabled();
+  });
+
   it('shows the identity gate and sends a verification email before exposing the API key step', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
@@ -339,6 +389,138 @@ describe('HoldedOnboardingClient', () => {
       expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
     });
     expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
+  });
+
+  it('hydrates remembered company data after email verification and reuses the remembered tenant for status checks', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/onboarding/holded?identity_verified=1&onboarding_token=verified-onboarding-token'
+    );
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          ok: true,
+          onboardingToken: 'tenant-bound-token',
+          tenantIdHint: 'tenant-owned',
+          summary: {
+            companyName: 'Empresa Recuperada',
+            companyLegalName: 'Empresa Recuperada SL',
+            companyTaxId: 'B12345678',
+            companyAddress: 'Calle Mayor 1',
+            companyPostalCode: '28001',
+            companyCity: 'Madrid',
+            companyProvince: 'Madrid',
+            companyCountry: 'Espana',
+            companyWebsite: 'https://empresa-recuperada.es',
+            companySectorCode: 'M',
+            companySectorLabel: 'Actividades profesionales',
+            contactFirstName: 'Ksenia',
+            contactRole: null,
+            contactFullName: 'Ksenia Ivanova Lopez',
+            contactEmail: 'verified@example.com',
+            companyEmail: 'admin@empresa-recuperada.es',
+            contactPhone: '+34 600 111 222',
+          },
+          savedPrefill: {
+            companyName: 'Empresa Recuperada',
+            companyTaxId: 'B12345678',
+            contactEmail: 'verified@example.com',
+            maskedApiKey: 'hold********123',
+            connectionStatus: 'connected',
+            lastSyncAt: null,
+            lastError: null,
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          provider: 'holded',
+          status: 'connected',
+          lastSyncAt: null,
+          lastError: null,
+          connected: true,
+          degraded: false,
+        }),
+      });
+
+    render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode
+        nextUrl="https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback"
+        requireConnectionConfirmation
+        requiresVerifiedIdentity
+        onboardingToken="onboarding-token-123"
+        tenantIdHint={null}
+        summary={{
+          companyName: 'Tu empresa',
+          companyLegalName: null,
+          companyTaxId: null,
+          companyAddress: null,
+          companyPostalCode: null,
+          companyCity: null,
+          companyProvince: null,
+          companyCountry: null,
+          companyWebsite: null,
+          companySectorCode: null,
+          companySectorLabel: null,
+          contactFirstName: '',
+          contactRole: null,
+          contactFullName: null,
+          contactEmail: null,
+          companyEmail: null,
+          contactPhone: null,
+        }}
+        companySetup={{
+          hasResolvedCompany: false,
+          needsCompanySetup: true,
+          requiresCompanyConfirmation: false,
+        }}
+        identity={{
+          authMethod: 'email',
+          email: 'verified@example.com',
+          emailVerified: true,
+          firstName: 'Ksenia',
+          lastName: 'Ivanova Lopez',
+          verifiedAt: '2026-04-09T11:00:00.000Z',
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/onboarding/prefill',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'x-holded-onboarding-token': 'verified-onboarding-token',
+          }),
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/integrations/accounting/status?channel=chatgpt',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-isaak-entry-channel': 'chatgpt',
+            'x-holded-onboarding-token': 'tenant-bound-token',
+            'x-isaak-tenant-id': 'tenant-owned',
+          }),
+        })
+      );
+    });
+
+    const continueLink = await screen.findByRole('link', { name: 'Continuar' });
+    const redirectHref = continueLink.getAttribute('href') || '';
+    expect(redirectHref).toContain('connection_confirmed=1');
+    expect(redirectHref).toContain('onboarding_token=tenant-bound-token');
+    expect(redirectHref).toContain('tenant_id=tenant-owned');
   });
 
   it('fills the person step with the Google profile name instead of the email alias', async () => {

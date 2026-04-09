@@ -208,7 +208,6 @@ function hasResolvedCompanyData(summary: HoldedOnboardingSummary) {
   return Boolean(
     summary.contactEmail &&
     summary.companyTaxId &&
-    summary.contactRole &&
     summary.companyAddress &&
     summary.companyPostalCode &&
     summary.companyCity &&
@@ -528,8 +527,17 @@ export default function HoldedOnboardingClient({
   const [validatedApiKey, setValidatedApiKey] = useState('');
   const [resolvedSummary, setResolvedSummary] = useState(summary);
   const [savedPrefillState, setSavedPrefillState] = useState(savedPrefill);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+  const initialTenantIdHint = tenantIdHint?.trim() || null;
+  const effectiveTenantIdHint =
+    normalizeText(selectedTenantId) || normalizeText(initialTenantIdHint) || null;
   const hasResolvedCompanyProfile =
-    companySetup.hasResolvedCompany && hasResolvedCompanyData(resolvedSummary);
+    entryChannel === 'chatgpt'
+      ? Boolean(
+          (companySetup.hasResolvedCompany || effectiveTenantIdHint) &&
+          hasResolvedCompanyData(resolvedSummary)
+        )
+      : companySetup.hasResolvedCompany && hasResolvedCompanyData(resolvedSummary);
   const reusesStoredCompanyData = isChatgptEntry && hasResolvedCompanyProfile;
   const initialPhoneDialCode = resolvePhoneDialCode(
     initialCompanyDraft.contactPhone,
@@ -558,7 +566,6 @@ export default function HoldedOnboardingClient({
   const [companySaving, setCompanySaving] = useState(false);
   const [companyMessage, setCompanyMessage] = useState<string | null>(null);
   const [companyError, setCompanyError] = useState<string | null>(null);
-  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
   const [loading, setLoading] = useState(!needsPostValidationCompanyStep);
   const [saving, setSaving] = useState(false);
@@ -582,7 +589,6 @@ export default function HoldedOnboardingClient({
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
   const acceptedTerms = true;
   const acceptedPrivacy = true;
-  const initialTenantIdHint = tenantIdHint?.trim() || null;
   const normalizedIdentityEmail = normalizeText(identityState.email).toLowerCase();
   const verifiedIdentityReady =
     !requiresVerifiedIdentity || (identityState.emailVerified && !!normalizedIdentityEmail);
@@ -767,6 +773,14 @@ export default function HoldedOnboardingClient({
       setManualEmail(identityState.email);
     }
   }, [identityState.email, manualEmail, usesDirectStepFlow]);
+
+  useEffect(() => {
+    if (!hasResolvedCompanyProfile) {
+      return;
+    }
+
+    setShowCompanyForm(false);
+  }, [hasResolvedCompanyProfile]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1058,6 +1072,37 @@ export default function HoldedOnboardingClient({
     normalizedApiKey,
     uiCopy.errorApiKeyEmpty,
   ]);
+
+  const directApiBlockers = useMemo(() => {
+    const blockers: string[] = [];
+
+    if (!verifiedIdentityReady) {
+      blockers.push('Paso 1: confirma la identidad con Google o con un correo verificado.');
+    }
+
+    if (Object.keys(collectPersonFieldErrors()).length > 0) {
+      blockers.push('Paso 2: completa nombre, apellidos y rol del usuario.');
+    }
+
+    if (Object.keys(collectCompanyFieldErrors()).length > 0 || !normalizeText(contactEmail)) {
+      blockers.push(
+        'Paso 3: completa razon social, CIF/NIF, domicilio, codigo postal, ciudad, provincia, pais, sector y correo principal.'
+      );
+    }
+
+    if (!normalizedApiKey) {
+      blockers.push('Paso 4: pega una API key activa de Holded.');
+    }
+
+    return blockers;
+  }, [
+    collectCompanyFieldErrors,
+    collectPersonFieldErrors,
+    contactEmail,
+    normalizedApiKey,
+    verifiedIdentityReady,
+  ]);
+  const canSubmitDirectApi = directApiBlockers.length === 0 && !saving;
 
   const applySummaryToCompanyForm = useCallback((nextSummary: HoldedOnboardingSummary) => {
     const nextDraft = createCompanyDraftFromSummary(nextSummary);
@@ -2690,6 +2735,19 @@ export default function HoldedOnboardingClient({
                         </div>
                       </div>
 
+                      {directApiBlockers.length > 0 ? (
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                          <div className="font-semibold">
+                            Faltan datos obligatorios antes de validar la conexion:
+                          </div>
+                          <ul className="mt-2 list-disc space-y-1 pl-5">
+                            {directApiBlockers.map((blocker) => (
+                              <li key={blocker}>{blocker}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+
                       <div className="flex flex-wrap gap-3">
                         <button
                           type="button"
@@ -2700,7 +2758,7 @@ export default function HoldedOnboardingClient({
                         </button>
                         <button
                           type="submit"
-                          disabled={saving || !normalizedApiKey}
+                          disabled={!canSubmitDirectApi}
                           className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
