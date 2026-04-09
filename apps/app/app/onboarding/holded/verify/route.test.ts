@@ -9,8 +9,13 @@ jest.mock('@/lib/oauth/mcp', () => ({
   verifyHoldedEmailVerificationToken: jest.fn(),
 }));
 
+jest.mock('@/lib/integrations/holdedEmailVerificationLinks', () => ({
+  resolveHoldedEmailVerificationTokenFromCode: jest.fn(async () => null),
+}));
+
 import { NextRequest } from 'next/server';
 import { GET } from './route';
+import { resolveHoldedEmailVerificationTokenFromCode } from '@/lib/integrations/holdedEmailVerificationLinks';
 import {
   mintHoldedOnboardingTokenForSubject,
   verifyHoldedEmailVerificationToken,
@@ -53,5 +58,23 @@ describe('GET /onboarding/holded/verify', () => {
         emailVerified: true,
       })
     );
+  });
+
+  it('accepts short verification codes and resolves the backing token before redirecting', async () => {
+    (resolveHoldedEmailVerificationTokenFromCode as jest.Mock).mockResolvedValue(
+      'email-verification-token'
+    );
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/onboarding/holded/verify?code=holded-verify-code'
+    );
+
+    const response = await GET(request);
+    const location = response.headers.get('location') || '';
+
+    expect(response.status).toBe(307);
+    expect(location).toContain('identity_verified=1');
+    expect(resolveHoldedEmailVerificationTokenFromCode).toHaveBeenCalledWith('holded-verify-code');
+    expect(verifyHoldedEmailVerificationToken).toHaveBeenCalledWith('email-verification-token');
   });
 });

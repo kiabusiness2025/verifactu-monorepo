@@ -1,5 +1,9 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
+import {
+  resolveHoldedSecurityAlertRecipients,
+  sendHoldedSecurityAlertEmails,
+} from '@/lib/email/holdedSecurityAlerts';
 import { disconnectAccountingIntegration } from '@/lib/integrations/accountingStore';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
@@ -49,6 +53,22 @@ export async function POST(request: NextRequest) {
       contactEmail: auth.session.email ?? null,
       companyEmail: tenant?.profile?.email || null,
       contactPhone: tenant?.profile?.phone || null,
+      action: 'disconnected',
+      channel: entryChannel,
+    });
+
+    const securityRecipients = await resolveHoldedSecurityAlertRecipients({
+      tenantId: auth.tenantId,
+      actorEmail: auth.session.email ?? null,
+      actorName: auth.session.name ?? null,
+    });
+
+    await sendHoldedSecurityAlertEmails({
+      recipients: securityRecipients,
+      tenantName: tenant?.profile?.tradeName || tenant?.name || 'tu empresa',
+      tenantLegalName: tenant?.profile?.legalName || tenant?.legalName || null,
+      actorEmail: auth.session.email ?? null,
+      actorName: auth.session.name ?? null,
       action: 'disconnected',
       channel: entryChannel,
     });

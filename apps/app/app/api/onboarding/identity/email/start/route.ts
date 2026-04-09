@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAppUrl } from '@verifactu/utils';
 import { sendCustomEmail } from '@/lib/email/emailService';
-import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
-import { getPreferredFirstName } from '@/lib/personName';
+import {
+  isVerifiedHoldedOnboardingIdentity,
+  resolveHoldedOnboardingSession,
+  resolveHoldedOnboardingSessionFromHeaders,
+} from '@/lib/integrations/holdedOnboardingSession';
+import { createHoldedEmailVerificationCode } from '@/lib/integrations/holdedEmailVerificationLinks';
+import {
+  getPreferredFirstName,
+  normalizeMeaningfulPersonName,
+  splitFullName,
+} from '@/lib/personName';
 import {
   mintHoldedEmailVerificationToken,
   mintHoldedOnboardingTokenForSubject,
 } from '@/lib/oauth/mcp';
 
 export const runtime = 'nodejs';
+
+const EMAIL_VERIFICATION_LINK_TTL_MINUTES = 45;
+
+function readTenantIdHint(body: Record<string, unknown>) {
+  return typeof body.tenantIdHint === 'string' ? body.tenantIdHint.trim() || null : null;
+}
 
 function looksLikeEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -28,9 +43,31 @@ function sanitizeReturnUrl(value: string | null | undefined) {
   }
 }
 
+async function resolveIdentityOnboardingSession(
+  request: NextRequest,
+  body: Record<string, unknown>
+) {
+  const headerSession = await resolveHoldedOnboardingSessionFromHeaders(request.headers);
+  if (headerSession?.uid) {
+    return headerSession;
+  }
+
+  const bodyOnboardingToken =
+    typeof body.onboardingToken === 'string' ? body.onboardingToken.trim() : '';
+  if (bodyOnboardingToken) {
+    const bodySession = await resolveHoldedOnboardingSession(bodyOnboardingToken);
+    if (bodySession?.uid) {
+      return bodySession;
+    }
+  }
+
+  return null;
+}
+
 function buildVerificationEmailHtml(input: {
   firstName: string;
   verificationUrl: string;
+  verificationDisplayUrl: string;
   email: string;
 }) {
   const holdedLogoUrl = new URL('/brand/holded/holded-diamond-logo.png', getAppUrl()).toString();
@@ -59,8 +96,9 @@ function buildVerificationEmailHtml(input: {
           <p style="margin:18px 0 0;color:#64748b;font-size:13px;">Cuando abras el enlace volveras al onboarding y se habilitara automaticamente el paso Usuario.</p>
           <div style="margin:18px 0 0;padding:16px;border-radius:18px;background:#f8fafc;border:1px solid #e2e8f0;">
             <div style="font-weight:700;margin:0 0 8px;">Si el boton no funciona</div>
-            <p style="margin:0 0 8px;color:#475569;">Copia y pega este enlace en tu navegador:</p>
-            <p style="margin:0;word-break:break-all;"><a href="${input.verificationUrl}" style="color:#b4233c;text-decoration:none;">${input.verificationUrl}</a></p>
+            <p style="margin:0 0 8px;color:#475569;">Abre este enlace seguro:</p>
+            <p style="margin:0;"><a href="${input.verificationUrl}" style="color:#b4233c;text-decoration:none;font-weight:600;">${input.verificationDisplayUrl}</a></p>
+            <p style="margin:8px 0 0;color:#64748b;font-size:12px;">Caduca en ${EMAIL_VERIFICATION_LINK_TTL_MINUTES} minutos.</p>
           </div>
           <p style="margin:18px 0 0;color:#64748b;font-size:12px;">Powered by <a href="https://verifactu.business" style="color:#b4233c;text-decoration:none;">verifactu.business</a></p>
         </div>
@@ -70,31 +108,71 @@ function buildVerificationEmailHtml(input: {
 }
 
 export async function POST(request: NextRequest) {
-  const onboardingSession = await resolveHoldedOnboardingSessionFromHeaders(request.headers);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const onboardingSession = await resolveIdentityOnboardingSession(request, body);
   if (!onboardingSession?.uid) {
     return NextResponse.json({ ok: false, error: 'onboarding session required' }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => ({}));
   const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
   const returnUrl = sanitizeReturnUrl(typeof body?.returnUrl === 'string' ? body.returnUrl : null);
+  const tenantId = onboardingSession.tenantId ?? readTenantIdHint(body);
 
   if (!looksLikeEmail(email)) {
     return NextResponse.json({ ok: false, error: 'valid email required' }, { status: 400 });
+  }
+
+  const onboardingEmail = onboardingSession.email?.trim().toLowerCase() || '';
+  const alreadyVerifiedSameEmail =
+    isVerifiedHoldedOnboardingIdentity(onboardingSession) && onboardingEmail === email;
+
+  if (alreadyVerifiedSameEmail) {
+    const verifiedAt = onboardingSession.verifiedAt || new Date().toISOString();
+    const onboardingToken = await mintHoldedOnboardingTokenForSubject({
+      uid: onboardingSession.uid,
+      email,
+      name: onboardingSession.name,
+      tenantId,
+      authMethod: onboardingSession.authMethod ?? 'email',
+      emailVerified: true,
+      firstName: onboardingSession.firstName,
+      lastName: onboardingSession.lastName,
+      verifiedAt,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      alreadyVerified: true,
+      onboardingToken,
+      identity: {
+        authMethod: onboardingSession.authMethod ?? 'email',
+        email,
+        emailVerified: true,
+        firstName: onboardingSession.firstName,
+        lastName: onboardingSession.lastName,
+        verifiedAt,
+      },
+    });
   }
 
   const verificationToken = await mintHoldedEmailVerificationToken({
     uid: onboardingSession.uid,
     email,
     name: onboardingSession.name,
-    tenantId: onboardingSession.tenantId,
+    tenantId,
     firstName: onboardingSession.firstName,
     lastName: onboardingSession.lastName,
     returnUrl: returnUrl.toString(),
   });
 
+  const verificationCode = await createHoldedEmailVerificationCode({
+    token: verificationToken,
+    expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_LINK_TTL_MINUTES * 60 * 1000),
+  });
+
   const verificationUrl = new URL('/onboarding/holded/verify', getAppUrl());
-  verificationUrl.searchParams.set('token', verificationToken);
+  verificationUrl.searchParams.set('code', verificationCode);
+  const verificationDisplayUrl = `${verificationUrl.origin}${verificationUrl.pathname}`;
 
   const emailResult = await sendCustomEmail({
     to: email,
@@ -108,6 +186,7 @@ export async function POST(request: NextRequest) {
         fallback: 'equipo',
       }),
       verificationUrl: verificationUrl.toString(),
+      verificationDisplayUrl,
       email,
     }),
   });
@@ -123,7 +202,7 @@ export async function POST(request: NextRequest) {
     uid: onboardingSession.uid,
     email,
     name: onboardingSession.name,
-    tenantId: onboardingSession.tenantId,
+    tenantId,
     authMethod: 'email',
     emailVerified: false,
     firstName: onboardingSession.firstName,
@@ -138,6 +217,9 @@ export async function POST(request: NextRequest) {
       authMethod: 'email',
       email,
       emailVerified: false,
+      firstName: onboardingSession.firstName,
+      lastName: onboardingSession.lastName,
+      verifiedAt: onboardingSession.verifiedAt,
     },
   });
 }

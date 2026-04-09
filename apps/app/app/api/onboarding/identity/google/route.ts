@@ -1,18 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyIdToken } from '@/lib/firebase-admin';
-import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
+import {
+  resolveHoldedOnboardingSession,
+  resolveHoldedOnboardingSessionFromHeaders,
+} from '@/lib/integrations/holdedOnboardingSession';
 import { buildFullName, normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 
 export const runtime = 'nodejs';
 
+function readTenantIdHint(body: Record<string, unknown>) {
+  return typeof body.tenantIdHint === 'string' ? body.tenantIdHint.trim() || null : null;
+}
+
+async function resolveIdentityOnboardingSession(
+  request: NextRequest,
+  body: Record<string, unknown>
+) {
+  const headerSession = await resolveHoldedOnboardingSessionFromHeaders(request.headers);
+  if (headerSession?.uid) {
+    return headerSession;
+  }
+
+  const bodyOnboardingToken =
+    typeof body.onboardingToken === 'string' ? body.onboardingToken.trim() : '';
+  if (bodyOnboardingToken) {
+    const bodySession = await resolveHoldedOnboardingSession(bodyOnboardingToken);
+    if (bodySession?.uid) {
+      return bodySession;
+    }
+  }
+
+  return null;
+}
+
 export async function POST(request: NextRequest) {
-  const onboardingSession = await resolveHoldedOnboardingSessionFromHeaders(request.headers);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const onboardingSession = await resolveIdentityOnboardingSession(request, body);
   if (!onboardingSession?.uid) {
     return NextResponse.json({ ok: false, error: 'onboarding session required' }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => ({}));
   const idToken = typeof body?.idToken === 'string' ? body.idToken.trim() : '';
   if (!idToken) {
     return NextResponse.json({ ok: false, error: 'idToken required' }, { status: 400 });
@@ -45,12 +73,13 @@ export async function POST(request: NextRequest) {
     preservedOnboardingName;
   const nameParts = splitFullName(name);
   const verifiedAt = decoded.email_verified ? new Date().toISOString() : null;
+  const tenantId = onboardingSession.tenantId ?? readTenantIdHint(body);
 
   const onboardingToken = await mintHoldedOnboardingTokenForSubject({
     uid: decoded.uid,
     email,
     name,
-    tenantId: onboardingSession.tenantId,
+    tenantId,
     authMethod: 'google',
     emailVerified: decoded.email_verified === true,
     firstName: nameParts.firstName,

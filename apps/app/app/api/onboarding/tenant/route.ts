@@ -269,41 +269,6 @@ export async function POST(req: Request) {
     });
   }
 
-  const existingRealMemberships = await prisma.membership.findMany({
-    where: {
-      userId,
-      status: 'active',
-      tenant: { isDemo: false },
-    },
-    select: { tenantId: true },
-  });
-
-  const hasTrialLimitedRealTenant = (
-    await Promise.all(
-      existingRealMemberships.map(async (membership) => {
-        const latestSubscription = await prisma.tenantSubscription.findFirst({
-          where: { tenantId: membership.tenantId },
-          orderBy: { createdAt: 'desc' },
-          select: { status: true },
-        });
-        return latestSubscription?.status === 'trial';
-      })
-    )
-  ).some(Boolean);
-
-  if (hasTrialLimitedRealTenant) {
-    return NextResponse.json(
-      {
-        ok: false,
-        action: 'TRIAL_LIMIT_REACHED',
-        error:
-          'En modo prueba solo puedes usar una empresa con datos reales. Para añadir otra, contrata un plan.',
-        billingUrl: '/dashboard/settings?tab=billing',
-      },
-      { status: 409 }
-    );
-  }
-
   const now = new Date();
   const trialEndsAt = new Date(now);
   trialEndsAt.setDate(trialEndsAt.getDate() + 30);

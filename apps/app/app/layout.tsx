@@ -68,7 +68,7 @@ export default async function RootLayout({
         ) : null}
       </head>
       <body className={`${outfit.className} dark:bg-gray-900`}>
-        <PWARegistration />
+        <PWARegistration disabled={holdedFlow} />
         <PWAInstallPrompt />
         <ErrorMonitor />
         <FirebaseAnalytics />

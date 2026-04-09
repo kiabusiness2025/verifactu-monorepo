@@ -37,17 +37,7 @@ export async function GET() {
     .map((membership) => membership.tenantId);
   const hasRealTenant = realTenantIds.length > 0;
 
-  let hasTrialLimitedRealTenant = false;
-  if (realTenantIds.length > 0) {
-    const trialSubscription = await prisma.tenantSubscription.findFirst({
-      where: {
-        tenantId: { in: realTenantIds },
-        status: 'trial',
-      },
-      select: { id: true },
-    });
-    hasTrialLimitedRealTenant = Boolean(trialSubscription);
-  }
+  const hasTrialLimitedRealTenant = false;
 
   let trial: { status: string; trialEndsAt: string | null } | null = null;
   if (preferredTenantId) {

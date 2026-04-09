@@ -55,6 +55,166 @@ function getOnboardingContactFirstName(value?: string | null) {
   return splitFullName(normalizeMeaningfulPersonName(value)).firstName || '';
 }
 
+type TenantSummaryRecord = {
+  id: string;
+  nif: string | null;
+  isDemo: boolean;
+  name: string;
+  legalName: string | null;
+  profile: {
+    tradeName: string | null;
+    legalName: string | null;
+    representative: string | null;
+    representativeRole: string | null;
+    email: string | null;
+    phone: string | null;
+    website: string | null;
+    cnae: string | null;
+    cnaeCode: string | null;
+    cnaeText: string | null;
+    address: string | null;
+    postalCode: string | null;
+    city: string | null;
+    province: string | null;
+    country: string | null;
+  } | null;
+};
+
+function buildHoldedSummaryFromTenant(
+  tenant: TenantSummaryRecord,
+  defaults: { contactName?: string | null; contactEmail?: string | null }
+) {
+  const contactFullName =
+    normalizeMeaningfulPersonName(defaults.contactName) ||
+    normalizeMeaningfulPersonName(tenant.profile?.representative) ||
+    null;
+  const contactEmail = normalizeText(defaults.contactEmail) || null;
+
+  return {
+    companyName: tenant.profile?.tradeName || tenant.name || 'Tu empresa',
+    companyLegalName: tenant.profile?.legalName || tenant.legalName || null,
+    companyTaxId: normalizeText(tenant.nif),
+    companyAddress: normalizeText(tenant.profile?.address),
+    companyPostalCode: normalizeText(tenant.profile?.postalCode),
+    companyCity: normalizeText(tenant.profile?.city),
+    companyProvince: normalizeText(tenant.profile?.province),
+    companyCountry: normalizeText(tenant.profile?.country),
+    companyWebsite: normalizeText(tenant.profile?.website),
+    companySectorCode: normalizeText(tenant.profile?.cnaeCode),
+    companySectorLabel:
+      normalizeText(tenant.profile?.cnaeText) || normalizeText(tenant.profile?.cnae),
+    contactFirstName: getOnboardingContactFirstName(contactFullName),
+    contactRole: normalizeText(tenant.profile?.representativeRole),
+    contactFullName,
+    contactEmail,
+    companyEmail: normalizeText(tenant.profile?.email),
+    contactPhone: normalizeText(tenant.profile?.phone),
+  };
+}
+
+async function resolveVerifiedEmailTenantPrefill(input: {
+  uid?: string | null;
+  email?: string | null;
+  contactName?: string | null;
+}) {
+  const normalizedUid = normalizeText(input.uid);
+  const normalizedEmail = normalizeText(input.email)?.toLowerCase() || null;
+  if (!normalizedUid && !normalizedEmail) {
+    return null;
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        ...(normalizedUid ? [{ authSubject: normalizedUid }] : []),
+        ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
+      ],
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  const [preference, memberships] = await Promise.all([
+    prisma.userPreference.findUnique({
+      where: { userId: user.id },
+      select: { preferredTenantId: true },
+    }),
+    prisma.membership.findMany({
+      where: {
+        userId: user.id,
+        status: 'active',
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        tenantId: true,
+        tenant: {
+          select: {
+            id: true,
+            nif: true,
+            isDemo: true,
+            name: true,
+            legalName: true,
+            profile: {
+              select: {
+                tradeName: true,
+                legalName: true,
+                representative: true,
+                representativeRole: true,
+                email: true,
+                phone: true,
+                website: true,
+                cnae: true,
+                cnaeCode: true,
+                cnaeText: true,
+                address: true,
+                postalCode: true,
+                city: true,
+                province: true,
+                country: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
+
+  const preferredMembership = preference?.preferredTenantId
+    ? memberships.find((membership) => membership.tenantId === preference.preferredTenantId) || null
+    : null;
+  const realMemberships = memberships.filter((membership) => !membership.tenant.isDemo);
+  const selectedMembership =
+    preferredMembership ||
+    (realMemberships.length === 1
+      ? realMemberships[0]
+      : memberships.length === 1
+        ? memberships[0]
+        : null);
+
+  if (!selectedMembership) {
+    return null;
+  }
+
+  return {
+    tenantId: selectedMembership.tenantId,
+    tenantIsDemo: selectedMembership.tenant.isDemo,
+    tenantNif: normalizeText(selectedMembership.tenant.nif),
+    summary: buildHoldedSummaryFromTenant(selectedMembership.tenant, {
+      contactName:
+        normalizeMeaningfulPersonName(input.contactName) ||
+        normalizeMeaningfulPersonName(user.name),
+      contactEmail: normalizedEmail || normalizeText(user.email),
+    }),
+  };
+}
+
 export default async function HoldedOnboardingPage({
   searchParams,
 }: {
@@ -177,13 +337,28 @@ export default async function HoldedOnboardingPage({
     tenantNif: null as string | null,
   };
 
+  const passiveVerifiedTenantPrefill =
+    entryChannel === 'chatgpt' &&
+    !session?.uid &&
+    !tenantIdHint &&
+    !effectiveOnboardingSession?.tenantId &&
+    effectiveOnboardingSession?.emailVerified &&
+    effectiveOnboardingSession.email
+      ? await resolveVerifiedEmailTenantPrefill({
+          uid: effectiveOnboardingSession.uid,
+          email: effectiveOnboardingSession.email,
+          contactName:
+            normalizeMeaningfulPersonName(effectiveOnboardingSession.name) ?? defaultContactName,
+        })
+      : null;
+
   try {
     const auth =
       session?.uid || effectiveOnboardingSession?.tenantId
         ? await requireTenantContext({
             channelType: entryChannel,
             metadata: { source: 'holded-onboarding-page' },
-            tenantIdHint,
+            tenantIdHint: passiveVerifiedTenantPrefill?.tenantId ?? tenantIdHint,
             onboardingToken: effectiveOnboardingToken,
           })
         : null;
@@ -237,32 +412,25 @@ export default async function HoldedOnboardingPage({
         normalizeText(defaultContactName);
       const contactEmail = normalizeText(auth.session.email) || normalizeText(defaultContactEmail);
 
-      summary = {
-        companyName: tenant?.profile?.tradeName || tenant?.name || 'Tu empresa',
-        companyLegalName: tenant?.profile?.legalName || tenant?.legalName || null,
-        companyTaxId: normalizeText(tenant?.nif),
-        companyAddress: normalizeText(tenant?.profile?.address),
-        companyPostalCode: normalizeText(tenant?.profile?.postalCode),
-        companyCity: normalizeText(tenant?.profile?.city),
-        companyProvince: normalizeText(tenant?.profile?.province),
-        companyCountry: normalizeText(tenant?.profile?.country),
-        companyWebsite: normalizeText(tenant?.profile?.website),
-        companySectorCode: normalizeText(tenant?.profile?.cnaeCode),
-        companySectorLabel:
-          normalizeText(tenant?.profile?.cnaeText) || normalizeText(tenant?.profile?.cnae),
-        contactFirstName: getOnboardingContactFirstName(contactFullName),
-        contactRole: normalizeText(tenant?.profile?.representativeRole),
-        contactFullName,
+      summary = buildHoldedSummaryFromTenant(tenant as TenantSummaryRecord, {
+        contactName: contactFullName,
         contactEmail,
-        companyEmail: normalizeText(tenant?.profile?.email),
-        contactPhone: normalizeText(tenant?.profile?.phone),
-      };
+      });
     }
   } catch (error) {
     console.error('[onboarding/holded] failed to load tenant summary', {
       message: error instanceof Error ? error.message : String(error),
       entryChannel,
     });
+  }
+
+  if (!resolvedTenantInfo.tenantId && passiveVerifiedTenantPrefill) {
+    resolvedTenantInfo = {
+      tenantId: passiveVerifiedTenantPrefill.tenantId,
+      tenantIsDemo: passiveVerifiedTenantPrefill.tenantIsDemo,
+      tenantNif: passiveVerifiedTenantPrefill.tenantNif,
+    };
+    summary = passiveVerifiedTenantPrefill.summary;
   }
 
   const companySetup = deriveHoldedCompanySetupState({
@@ -294,7 +462,9 @@ export default async function HoldedOnboardingPage({
       summary={summary}
       companySetup={companySetup}
       onboardingToken={effectiveOnboardingToken}
-      tenantIdHint={resolvedTenantInfo.tenantId ?? tenantIdHint}
+      tenantIdHint={
+        resolvedTenantInfo.tenantId ?? passiveVerifiedTenantPrefill?.tenantId ?? tenantIdHint
+      }
     />
   );
 }

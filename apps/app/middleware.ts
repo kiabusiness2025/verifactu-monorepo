@@ -81,6 +81,11 @@ export async function middleware(req: NextRequest) {
     return applyCrossOriginOpenerPolicy(NextResponse.next(), pathname, source);
   }
 
+  // The login handoff page is public and needs popup-compatible COOP for Holded flows.
+  if (pathname === '/login') {
+    return applyCrossOriginOpenerPolicy(NextResponse.next(), pathname, source);
+  }
+
   const supportToken = req.cookies.get(SUPPORT_SESSION_COOKIE)?.value;
   if (supportToken) {
     try {
@@ -161,5 +166,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/onboarding/:path*', '/demo/:path*'],
+  matcher: ['/', '/login', '/dashboard/:path*', '/onboarding/:path*', '/demo/:path*'],
 };

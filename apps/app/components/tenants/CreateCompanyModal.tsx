@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, type FormEvent, useEffect } from "react";
+import React, { useState, type FormEvent, useEffect } from 'react';
 
 type CreateCompanyModalProps = {
   isOpen: boolean;
@@ -8,71 +8,66 @@ type CreateCompanyModalProps = {
 };
 
 export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps) {
-  const [name, setName] = useState("");
-  const [nif, setNif] = useState("");
+  const [name, setName] = useState('');
+  const [nif, setNif] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [billingUrl, setBillingUrl] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     if (!isOpen) {
-      setName("");
-      setNif("");
-      setError("");
-      setSuccess("");
-      setBillingUrl(null);
+      setName('');
+      setNif('');
+      setError('');
+      setSuccess('');
       setIsSubmitting(false);
     }
   }, [isOpen]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
 
     const trimmedName = name.trim();
     if (!trimmedName) {
-      setError("Introduce el nombre de la empresa.");
+      setError('Introduce el nombre de la empresa.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/tenants", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/tenants', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: trimmedName, nif: nif.trim() || null }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        if (data?.action === "TRIAL_LIMIT_REACHED") {
-          setBillingUrl(typeof data?.billingUrl === "string" ? data.billingUrl : "/dashboard/settings?tab=billing");
-        }
-        throw new Error(
-          data?.error || "No se pudo guardar la empresa"
-        );
+        throw new Error(data?.error || 'No se pudo guardar la empresa');
       }
 
       const tenantId = data?.tenant?.id as string | undefined;
       if (tenantId) {
-        await fetch("/api/session/tenant-switch", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+        await fetch('/api/session/tenant-switch', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tenantId }),
         });
       }
 
-      setSuccess("Empresa guardada. Te hemos cambiado a la nueva empresa.");
+      setSuccess('Empresa guardada. Te hemos cambiado a la nueva empresa.');
       setTimeout(() => {
         onClose();
         window.location.reload();
       }, 600);
     } catch (err) {
-      console.error("Create company error:", err);
-      setError(err instanceof Error ? err.message : "No se pudo guardar la empresa. Intenta de nuevo.");
+      console.error('Create company error:', err);
+      setError(
+        err instanceof Error ? err.message : 'No se pudo guardar la empresa. Intenta de nuevo.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -114,13 +109,6 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
-              {billingUrl ? (
-                <div className="mt-2">
-                  <a href={billingUrl} className="font-semibold underline">
-                    Ver planes
-                  </a>
-                </div>
-              ) : null}
             </div>
           )}
           {success && (
@@ -142,7 +130,7 @@ export function CreateCompanyModal({ isOpen, onClose }: CreateCompanyModalProps)
               disabled={isSubmitting}
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
-              {isSubmitting ? "Guardando..." : "Guardar"}
+              {isSubmitting ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
         </form>

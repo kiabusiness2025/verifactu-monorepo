@@ -32,6 +32,14 @@ jest.mock('@/lib/email/holdedConnectionEmails', () => ({
   sendWelcomeLifecycleEmails: jest.fn(),
 }));
 
+jest.mock('@/lib/email/holdedSecurityAlerts', () => ({
+  resolveHoldedSecurityAlertRecipients: jest.fn(async () => [
+    { email: 'demo@example.com', name: 'Demo User', source: 'membership' },
+    { email: 'empresa@example.com', name: null, source: 'tenant_profile' },
+  ]),
+  sendHoldedSecurityAlertEmails: jest.fn(async () => []),
+}));
+
 jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
   getHoldedOnboardingTokenFromHeaders: jest.fn(() => null),
   isVerifiedHoldedOnboardingIdentity: jest.fn(
@@ -53,6 +61,10 @@ import {
   sendHoldedConnectionLifecycleEmails,
   sendWelcomeLifecycleEmails,
 } from '@/lib/email/holdedConnectionEmails';
+import {
+  resolveHoldedSecurityAlertRecipients,
+  sendHoldedSecurityAlertEmails,
+} from '@/lib/email/holdedSecurityAlerts';
 import {
   getHoldedOnboardingTokenFromHeaders,
   resolveHoldedOnboardingSessionFromHeaders,
@@ -111,6 +123,11 @@ describe('POST /api/integrations/accounting/connect', () => {
     });
     (sendHoldedConnectionLifecycleEmails as jest.Mock).mockResolvedValue([]);
     (sendWelcomeLifecycleEmails as jest.Mock).mockResolvedValue([]);
+    (resolveHoldedSecurityAlertRecipients as jest.Mock).mockResolvedValue([
+      { email: 'demo@example.com', name: 'Demo User', source: 'membership' },
+      { email: 'empresa@example.com', name: null, source: 'tenant_profile' },
+    ]);
+    (sendHoldedSecurityAlertEmails as jest.Mock).mockResolvedValue([]);
     (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue(null);
   });
 
@@ -208,6 +225,23 @@ describe('POST /api/integrations/accounting/connect', () => {
       contactEmail: 'demo@example.com',
       companyEmail: 'empresa@example.com',
       contactPhone: '+34 600 000 000',
+    });
+    expect(resolveHoldedSecurityAlertRecipients).toHaveBeenCalledWith({
+      tenantId: 'tenant-1',
+      actorEmail: 'demo@example.com',
+      actorName: 'Demo User',
+    });
+    expect(sendHoldedSecurityAlertEmails).toHaveBeenCalledWith({
+      recipients: [
+        { email: 'demo@example.com', name: 'Demo User', source: 'membership' },
+        { email: 'empresa@example.com', name: null, source: 'tenant_profile' },
+      ],
+      tenantName: 'Empresa Demo',
+      tenantLegalName: 'Empresa Demo SL',
+      actorEmail: 'demo@example.com',
+      actorName: 'Demo User',
+      action: 'connected',
+      channel: 'chatgpt',
     });
     expect(sendHoldedConnectionLifecycleEmails).not.toHaveBeenCalled();
   });

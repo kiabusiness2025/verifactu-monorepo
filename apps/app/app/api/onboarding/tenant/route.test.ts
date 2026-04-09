@@ -447,6 +447,43 @@ describe('POST /api/onboarding/tenant', () => {
     );
   });
 
+  it('allows creating another real tenant even when the user already has a trial tenant', async () => {
+    prismaMock.membership.findMany.mockResolvedValue([{ tenantId: 'tenant-existing' }]);
+    prismaMock.tenantSubscription.findFirst.mockResolvedValue({ status: 'trial' });
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/onboarding/tenant', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Segunda Empresa',
+          legalName: 'Segunda Empresa SL',
+          taxId: 'B87654321',
+          tradeName: 'Segunda Empresa',
+          extra: {
+            representative: 'Ksenia Ivanova Lopez',
+            contactFirstName: 'Ksenia',
+            contactLastName: 'Ivanova Lopez',
+            email: 'info@segunda-empresa.es',
+          },
+        }),
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(mockTx.tenant.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          name: 'Segunda Empresa',
+          nif: 'B87654321',
+        }),
+      })
+    );
+  });
+
   it('returns a refreshed onboarding token when the direct connector flow creates the tenant without session login', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue(null);
     (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue({

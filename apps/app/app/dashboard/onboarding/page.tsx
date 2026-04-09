@@ -71,7 +71,6 @@ export default function OnboardingPage() {
   const [nif, setNif] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [hasTrialLimitedRealTenant, setHasTrialLimitedRealTenant] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [docType, setDocType] = useState<CompanyDocumentType>('deed');
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
@@ -86,27 +85,6 @@ export default function OnboardingPage() {
   }, [searchParams]);
 
   const canSubmit = companyName.trim().length > 0 && nif.trim().length > 0;
-
-  useEffect(() => {
-    let mounted = true;
-    async function loadStatus() {
-      try {
-        const res = await fetch('/api/onboarding/status', { credentials: 'include' });
-        const data = await res.json().catch(() => null);
-        if (!mounted) return;
-        setHasTrialLimitedRealTenant(
-          Boolean(data?.hasTrialLimitedRealTenant ?? data?.hasRealTenant)
-        );
-      } catch {
-        if (!mounted) return;
-        setHasTrialLimitedRealTenant(false);
-      }
-    }
-    loadStatus();
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   function applyNormalized(normalized: {
     name?: string | null;
@@ -262,13 +240,6 @@ export default function OnboardingPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!canSubmit || isSubmitting) return;
-    if (hasTrialLimitedRealTenant) {
-      showError(
-        'Límite del modo prueba',
-        'Ya tienes una empresa real activa en prueba. Para añadir otra, contrata un plan.'
-      );
-      return;
-    }
     setIsSubmitting(true);
 
     const rawPayload = {
@@ -317,18 +288,6 @@ export default function OnboardingPage() {
 
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        if (data?.action === 'TRIAL_LIMIT_REACHED') {
-          const billingUrl =
-            typeof data?.billingUrl === 'string'
-              ? data.billingUrl
-              : '/dashboard/settings?tab=billing';
-          showError(
-            'Límite del modo prueba',
-            'En modo prueba solo puedes usar una empresa real. Te llevamos a planes.'
-          );
-          router.push(billingUrl);
-          return;
-        }
         throw new Error(data?.error || 'No se pudo activar la prueba');
       }
 
@@ -431,8 +390,7 @@ export default function OnboardingPage() {
             <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">
               <p className="font-semibold">Consejo rápido</p>
               <p className="mt-1 text-xs text-blue-800">
-                Si no encuentras la empresa por nombre, escribe el NIF y pulsa
-                {' '}
+                Si no encuentras la empresa por nombre, escribe el NIF y pulsa{' '}
                 <span className="font-semibold">Autocompletar empresa</span>.
               </p>
             </div>
@@ -448,6 +406,7 @@ export default function OnboardingPage() {
                 <select
                   value={docType}
                   onChange={(e) => setDocType(e.target.value as CompanyDocumentType)}
+                  aria-label="Tipo de documento de empresa"
                   className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
                 >
                   {COMPANY_DOCUMENT_TYPE_OPTIONS.map((option) => (
@@ -486,8 +445,9 @@ export default function OnboardingPage() {
                         </div>
                         <div className="mt-1 text-slate-500">
                           {
-                            COMPANY_DOCUMENT_TYPE_OPTIONS.find((option) => option.value === doc.type)
-                              ?.label
+                            COMPANY_DOCUMENT_TYPE_OPTIONS.find(
+                              (option) => option.value === doc.type
+                            )?.label
                           }{' '}
                           · {Math.max(1, Math.round(doc.size / 1024))} KB
                         </div>
@@ -508,12 +468,6 @@ export default function OnboardingPage() {
                 </div>
               ) : null}
             </div>
-            {hasTrialLimitedRealTenant ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                Ya tienes una empresa real en modo prueba. Para añadir otra empresa, necesitas
-                contratar un plan.
-              </div>
-            ) : null}
           </div>
         </div>
 
@@ -577,7 +531,9 @@ export default function OnboardingPage() {
                 setManualMode(true);
                 applyNormalized(normalized);
                 if (meta?.cached || meta?.cacheSource) {
-                  setSelected((prev) => prev ?? { name: normalized.name || '', nif: normalized.nif || '' });
+                  setSelected(
+                    (prev) => prev ?? { name: normalized.name || '', nif: normalized.nif || '' }
+                  );
                 }
               }}
               disabled={!manualMode && !selected}
@@ -609,8 +565,7 @@ export default function OnboardingPage() {
               </div>
             )}
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-              En modo prueba solo puedes usar una empresa con datos reales. Después de guardar no
-              podrás modificar estos datos desde este flujo.
+              Revisa bien estos datos. Después de guardar no podrás modificarlos desde este flujo.
             </div>
 
             <div className="flex items-center gap-3">
@@ -623,11 +578,7 @@ export default function OnboardingPage() {
               </button>
               <button
                 type="submit"
-                disabled={
-                  !manualMode && !selected
-                    ? true
-                    : !canSubmit || isSubmitting || hasTrialLimitedRealTenant
-                }
+                disabled={!manualMode && !selected ? true : !canSubmit || isSubmitting}
                 className="w-full rounded-xl bg-[#0b6cfb] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#095edb] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? 'Guardando...' : 'Paso 3 · Guardar y continuar'}

@@ -1,43 +1,57 @@
 // Service Worker para Verifactu Business PWA
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `verifactu-${CACHE_VERSION}`;
 const STATIC_CACHE = `verifactu-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `verifactu-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `verifactu-api-${CACHE_VERSION}`;
 
+const NO_CACHE_PATH_PREFIXES = [
+  '/onboarding/holded',
+  '/oauth/',
+  '/auth/holded',
+  '/api/onboarding/',
+];
+
 // Assets críticos para offline
 const STATIC_ASSETS = [
-  "/dashboard",
-  "/demo",
-  "/offline",
-  "/favicon.ico",
-  "/android-chrome-192x192.png",
-  "/android-chrome-512x512.png",
+  '/dashboard',
+  '/demo',
+  '/offline',
+  '/favicon.ico',
+  '/android-chrome-192x192.png',
+  '/android-chrome-512x512.png',
 ];
 
 // Rutas de API para cachear (lectura)
-const CACHEABLE_API_ROUTES = [
-  "/api/tenants",
-  "/api/invoices",
-  "/api/expenses",
-  "/api/documents",
-];
+const CACHEABLE_API_ROUTES = ['/api/tenants', '/api/invoices', '/api/expenses', '/api/documents'];
 
-self.addEventListener("install", (event) => {
-  console.log("[SW] Installing service worker...");
+function shouldBypassCaching(request, url) {
+  if (request.method !== 'GET') {
+    return false;
+  }
+
+  if (url.searchParams.has('onboarding_token') || url.searchParams.has('connection_confirmed')) {
+    return true;
+  }
+
+  return NO_CACHE_PATH_PREFIXES.some((prefix) => url.pathname.startsWith(prefix));
+}
+
+self.addEventListener('install', (event) => {
+  console.log('[SW] Installing service worker...');
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
-      console.log("[SW] Caching static assets");
+      console.log('[SW] Caching static assets');
       return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.error("[SW] Error caching static assets:", err);
+        console.error('[SW] Error caching static assets:', err);
       });
     })
   );
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
-  console.log("[SW] Activating service worker...");
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating service worker...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -47,7 +61,7 @@ self.addEventListener("activate", (event) => {
             cacheName !== DYNAMIC_CACHE &&
             cacheName !== API_CACHE
           ) {
-            console.log("[SW] Deleting old cache:", cacheName);
+            console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -57,24 +71,37 @@ self.addEventListener("activate", (event) => {
   return self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
+self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
   // Ignorar protocolos no HTTP
-  if (!url.protocol.startsWith("http")) {
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  if (shouldBypassCaching(request, url)) {
+    event.respondWith(
+      fetch(request).catch(() => {
+        if (request.mode === 'navigate') {
+          return caches.match('/offline');
+        }
+
+        return new Response('Offline', { status: 503 });
+      })
+    );
     return;
   }
 
   // Estrategia Network First para APIs de escritura
-  if (url.pathname.startsWith("/api/") && request.method !== "GET") {
+  if (url.pathname.startsWith('/api/') && request.method !== 'GET') {
     event.respondWith(
       fetch(request).catch(() => {
         return new Response(
-          JSON.stringify({ error: "Offline - cambios pendientes de sincronización" }),
+          JSON.stringify({ error: 'Offline - cambios pendientes de sincronización' }),
           {
             status: 503,
-            headers: { "Content-Type": "application/json" },
+            headers: { 'Content-Type': 'application/json' },
           }
         );
       })
@@ -83,10 +110,8 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Estrategia Cache First con Network Fallback para APIs de lectura
-  if (url.pathname.startsWith("/api/")) {
-    const isCacheable = CACHEABLE_API_ROUTES.some((route) =>
-      url.pathname.startsWith(route)
-    );
+  if (url.pathname.startsWith('/api/')) {
+    const isCacheable = CACHEABLE_API_ROUTES.some((route) => url.pathname.startsWith(route));
 
     if (isCacheable) {
       event.respondWith(
@@ -110,10 +135,19 @@ self.addEventListener("fetch", (event) => {
     // APIs no cacheables: Network only con fallback offline
     event.respondWith(
       fetch(request).catch(() => {
-        return new Response(JSON.stringify({ error: "Offline" }), {
+        return new Response(JSON.stringify({ error: 'Offline' }), {
           status: 503,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         });
+      })
+    );
+    return;
+  }
+
+  if (request.method !== 'GET') {
+    event.respondWith(
+      fetch(request).catch(() => {
+        return new Response('Offline', { status: 503 });
       })
     );
     return;
@@ -128,7 +162,7 @@ self.addEventListener("fetch", (event) => {
 
       return fetch(request)
         .then((response) => {
-          if (!response || response.status !== 200 || response.type === "error") {
+          if (!response || response.status !== 200 || response.type === 'error') {
             return response;
           }
 
@@ -141,30 +175,30 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => {
           // Si es navegación, mostrar página offline
-          if (request.mode === "navigate") {
-            return caches.match("/offline");
+          if (request.mode === 'navigate') {
+            return caches.match('/offline');
           }
-          return new Response("Offline", { status: 503 });
+          return new Response('Offline', { status: 503 });
         });
     })
   );
 });
 
-self.addEventListener("push", (event) => {
+self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {};
-  const title = data.title || "Verifactu Business";
+  const title = data.title || 'Verifactu Business';
   const options = {
-    body: data.body || "Nueva notificación",
-    icon: "/android-chrome-192x192.png",
-    badge: "/favicon-48x48.png",
-    tag: data.tag || "default",
-    data: data.url || "/dashboard",
+    body: data.body || 'Nueva notificación',
+    icon: '/android-chrome-192x192.png',
+    badge: '/favicon-48x48.png',
+    tag: data.tag || 'default',
+    data: data.url || '/dashboard',
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-self.addEventListener("notificationclick", (event) => {
+self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(clients.openWindow(event.notification.data || "/dashboard"));
+  event.waitUntil(self.clients.openWindow(event.notification.data || '/dashboard'));
 });

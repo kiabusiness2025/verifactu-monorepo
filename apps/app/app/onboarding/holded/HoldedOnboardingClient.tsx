@@ -64,6 +64,7 @@ type IdentityResponse = {
   ok?: boolean;
   error?: string | null;
   detail?: string | null;
+  alreadyVerified?: boolean;
   onboardingToken?: string | null;
   identity?: {
     authMethod?: 'unknown' | 'google' | 'email';
@@ -215,6 +216,10 @@ function getGoogleIdentityErrorMessage(error: unknown) {
   return error instanceof Error
     ? error.message
     : 'No hemos podido verificar tu identidad con Google.';
+}
+
+function isMissingOnboardingSessionError(input: { status?: number; error?: string | null }) {
+  return input.status === 401 || input.error === 'onboarding session required';
 }
 
 function GoogleMark() {
@@ -564,18 +569,22 @@ export default function HoldedOnboardingClient({
           : `${resolvedSummary.contactFirstName}, vamos a dejar lista la conexion de ${resolvedSummary.companyName} dentro de Verifactu.`;
 
   useEffect(() => {
+    if (!onboardingToken || activeOnboardingToken || onboardingToken === activeOnboardingToken) {
+      return;
+    }
+
+    setActiveOnboardingToken(onboardingToken);
+  }, [activeOnboardingToken, onboardingToken]);
+
+  useEffect(() => {
     setIdentityState((current) => {
       if (!shouldAdoptIncomingIdentity(current, identity)) {
         return current;
       }
 
-      if (onboardingToken && onboardingToken !== activeOnboardingToken) {
-        setActiveOnboardingToken(onboardingToken);
-      }
-
       return identity;
     });
-  }, [activeOnboardingToken, identity, onboardingToken]);
+  }, [identity]);
 
   useEffect(() => {
     if (!usesDirectStepFlow) return;
@@ -678,6 +687,43 @@ export default function HoldedOnboardingClient({
       selectedTenantId,
     ]
   );
+
+  const resolveRequestOnboardingToken = useCallback(() => {
+    const tokenFromState = normalizeText(activeOnboardingToken);
+    if (tokenFromState) {
+      return tokenFromState;
+    }
+
+    const tokenFromProp = normalizeText(onboardingToken);
+    if (tokenFromProp) {
+      return tokenFromProp;
+    }
+
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    return normalizeText(new URL(window.location.href).searchParams.get('onboarding_token'));
+  }, [activeOnboardingToken, onboardingToken]);
+
+  const restartIdentityFlow = useCallback(() => {
+    setIdentityError(
+      'Hemos perdido la sesion temporal del conector. Vamos a reiniciar el acceso para continuar.'
+    );
+
+    if (captureMode || typeof window === 'undefined') {
+      return;
+    }
+
+    const restartTarget =
+      entryChannel === 'chatgpt' && nextUrl.includes('/oauth/authorize')
+        ? nextUrl
+        : window.location.href;
+
+    setRedirecting(true);
+    setRedirectTarget(restartTarget);
+    window.location.replace(restartTarget);
+  }, [captureMode, entryChannel, nextUrl]);
 
   const confirmedNextUrl = useMemo(() => resolveConfirmedNextUrl(), [resolveConfirmedNextUrl]);
   const directStepItems: Array<{ key: Exclude<DirectOnboardingStep, 'success'>; label: string }> = [
@@ -1172,13 +1218,6 @@ export default function HoldedOnboardingClient({
     }
 
     if (!createRes.ok || !createData?.ok) {
-      if (createData?.action === 'TRIAL_LIMIT_REACHED') {
-        throw new Error(
-          createData?.error ||
-            'En modo prueba solo puedes usar una empresa con datos reales. Revisa tu plan para continuar.'
-        );
-      }
-
       throw new Error(createData?.error || 'No hemos podido preparar la empresa para continuar.');
     }
 
@@ -1356,8 +1395,9 @@ export default function HoldedOnboardingClient({
   };
 
   const handleContinueWithGoogle = async () => {
-    if (!activeOnboardingToken) {
-      setIdentityError('No hemos podido recuperar la sesion temporal del conector.');
+    const requestOnboardingToken = resolveRequestOnboardingToken();
+    if (!requestOnboardingToken) {
+      restartIdentityFlow();
       return;
     }
 
@@ -1375,11 +1415,23 @@ export default function HoldedOnboardingClient({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-holded-onboarding-token': activeOnboardingToken,
+          'x-holded-onboarding-token': requestOnboardingToken,
         },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({
+          idToken,
+          onboardingToken: requestOnboardingToken,
+          tenantIdHint: selectedTenantId ?? initialTenantIdHint,
+        }),
       });
       const data = (await response.json().catch(() => null)) as IdentityResponse | null;
+
+      if (
+        !response.ok &&
+        isMissingOnboardingSessionError({ status: response.status, error: data?.error })
+      ) {
+        restartIdentityFlow();
+        return;
+      }
 
       if (!response.ok || !data?.ok || !data.identity?.email) {
         throw new Error(
@@ -1414,8 +1466,9 @@ export default function HoldedOnboardingClient({
   const handleSendVerificationEmail = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!activeOnboardingToken) {
-      setIdentityError('No hemos podido recuperar la sesion temporal del conector.');
+    const requestOnboardingToken = resolveRequestOnboardingToken();
+    if (!requestOnboardingToken) {
+      restartIdentityFlow();
       return;
     }
 
@@ -1434,14 +1487,24 @@ export default function HoldedOnboardingClient({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-holded-onboarding-token': activeOnboardingToken,
+          'x-holded-onboarding-token': requestOnboardingToken,
         },
         body: JSON.stringify({
           email: normalizedEmail,
+          onboardingToken: requestOnboardingToken,
           returnUrl: window.location.href,
+          tenantIdHint: selectedTenantId ?? initialTenantIdHint,
         }),
       });
       const data = (await response.json().catch(() => null)) as IdentityResponse | null;
+
+      if (
+        !response.ok &&
+        isMissingOnboardingSessionError({ status: response.status, error: data?.error })
+      ) {
+        restartIdentityFlow();
+        return;
+      }
 
       if (!response.ok || !data?.ok) {
         throw new Error(
@@ -1449,17 +1512,38 @@ export default function HoldedOnboardingClient({
         );
       }
 
+      const nextIdentity: OnboardingIdentityState = {
+        authMethod: data.identity?.authMethod ?? 'email',
+        email: data.identity?.email ?? normalizedEmail,
+        emailVerified: data.identity?.emailVerified === true,
+        firstName: data.identity?.firstName ?? null,
+        lastName: data.identity?.lastName ?? null,
+        verifiedAt: data.identity?.verifiedAt ?? null,
+      };
+
       setIdentityState((current) => ({
         ...current,
-        authMethod: 'email',
-        email: data.identity?.email ?? normalizedEmail,
-        emailVerified: false,
+        ...nextIdentity,
       }));
       if (data.onboardingToken) {
         setActiveOnboardingToken(data.onboardingToken);
       }
       setManualEmail(data.identity?.email ?? normalizedEmail);
       setContactEmail(data.identity?.email ?? normalizedEmail);
+
+      if (nextIdentity.emailVerified) {
+        setIdentityMessage(
+          data.alreadyVerified
+            ? 'Este correo ya estaba confirmado. Ya puedes continuar con el paso Usuario.'
+            : `Correo confirmado para ${nextIdentity.email}. Ya puedes continuar con el paso Usuario.`
+        );
+
+        if (usesDirectStepFlow) {
+          setDirectStep((current) => (current === 'identity' ? 'person' : current));
+        }
+        return;
+      }
+
       setIdentityMessage(
         'Te hemos enviado un enlace de verificacion. Abre ese correo y volveras aqui con la identidad confirmada.'
       );
@@ -1634,6 +1718,13 @@ export default function HoldedOnboardingClient({
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+                  {!showIdentityGate && identityMessage ? (
+                    <div className="mb-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>{identityMessage}</span>
+                    </div>
+                  ) : null}
+
                   {showIdentityGate ? (
                     <div>
                       <div className="flex items-start gap-3">

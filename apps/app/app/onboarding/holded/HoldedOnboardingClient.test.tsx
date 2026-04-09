@@ -148,6 +148,54 @@ describe('HoldedOnboardingClient', () => {
     ).toBeInTheDocument();
   });
 
+  it('unlocks the user step immediately when the same email was already verified', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        ok: true,
+        alreadyVerified: true,
+        onboardingToken: 'verified-onboarding-token',
+        identity: {
+          authMethod: 'email',
+          email: 'verified@example.com',
+          emailVerified: true,
+          firstName: 'Ksenia',
+          lastName: 'Ivanova Lopez',
+          verifiedAt: '2026-04-07T19:00:00.000Z',
+        },
+      }),
+    });
+
+    render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode={false}
+        requiresVerifiedIdentity
+        identity={{
+          authMethod: 'unknown',
+          email: null,
+          emailVerified: false,
+          firstName: null,
+          lastName: null,
+          verifiedAt: null,
+        }}
+        onboardingToken="onboarding-token-123"
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('tu@empresa.com'), {
+      target: { value: 'verified@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar correo' }));
+
+    expect(await screen.findByText(/Este correo ya estaba confirmado/i)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
+  });
+
   it('adopts the verified email identity from refreshed props and unlocks the user step', async () => {
     window.history.replaceState(
       {},
@@ -336,6 +384,71 @@ describe('HoldedOnboardingClient', () => {
     expect(
       screen.queryByText('Firebase: Error (auth/popup-closed-by-user).')
     ).not.toBeInTheDocument();
+  });
+
+  it('shows a recovery message when the onboarding session expires during Google identity', async () => {
+    (signInWithPopup as jest.Mock).mockResolvedValue({
+      user: {
+        getIdToken: jest.fn().mockResolvedValue('google-id-token'),
+      },
+    });
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: jest.fn().mockResolvedValue({
+        ok: false,
+        error: 'onboarding session required',
+      }),
+    });
+
+    render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode
+        requiresVerifiedIdentity
+        onboardingToken="onboarding-token-123"
+        summary={{
+          companyName: 'Tu empresa',
+          companyLegalName: null,
+          companyTaxId: null,
+          companyAddress: null,
+          companyPostalCode: null,
+          companyCity: null,
+          companyProvince: null,
+          companyCountry: null,
+          companyWebsite: null,
+          companySectorCode: null,
+          companySectorLabel: null,
+          contactFirstName: '',
+          contactRole: null,
+          contactFullName: null,
+          contactEmail: 'kiabusiness2025@gmail.com',
+          companyEmail: null,
+          contactPhone: null,
+        }}
+        companySetup={{
+          hasResolvedCompany: false,
+          needsCompanySetup: true,
+          requiresCompanyConfirmation: false,
+        }}
+        identity={{
+          authMethod: 'unknown',
+          email: null,
+          emailVerified: false,
+          firstName: null,
+          lastName: null,
+          verifiedAt: null,
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Continuar con Google/i }));
+
+    expect(
+      await screen.findByText(
+        'Hemos perdido la sesion temporal del conector. Vamos a reiniciar el acceso para continuar.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('connects directly after validating the API key when company data is already resolved', async () => {

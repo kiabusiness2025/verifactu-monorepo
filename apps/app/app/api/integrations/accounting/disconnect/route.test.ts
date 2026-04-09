@@ -21,12 +21,24 @@ jest.mock('@/lib/email/holdedConnectionEmails', () => ({
   sendHoldedConnectionLifecycleEmails: jest.fn(),
 }));
 
+jest.mock('@/lib/email/holdedSecurityAlerts', () => ({
+  resolveHoldedSecurityAlertRecipients: jest.fn(async () => [
+    { email: 'demo@example.com', name: 'Demo User', source: 'membership' },
+    { email: 'empresa@example.com', name: null, source: 'tenant_profile' },
+  ]),
+  sendHoldedSecurityAlertEmails: jest.fn(async () => []),
+}));
+
 import { NextRequest } from 'next/server';
 import { POST } from './route';
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { disconnectAccountingIntegration } from '@/lib/integrations/accountingStore';
 import prisma from '@/lib/prisma';
 import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
+import {
+  resolveHoldedSecurityAlertRecipients,
+  sendHoldedSecurityAlertEmails,
+} from '@/lib/email/holdedSecurityAlerts';
 
 describe('POST /api/integrations/accounting/disconnect', () => {
   beforeEach(() => {
@@ -48,6 +60,11 @@ describe('POST /api/integrations/accounting/disconnect', () => {
       },
     });
     (sendHoldedConnectionLifecycleEmails as jest.Mock).mockResolvedValue([]);
+    (resolveHoldedSecurityAlertRecipients as jest.Mock).mockResolvedValue([
+      { email: 'demo@example.com', name: 'Demo User', source: 'membership' },
+      { email: 'empresa@example.com', name: null, source: 'tenant_profile' },
+    ]);
+    (sendHoldedSecurityAlertEmails as jest.Mock).mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -78,6 +95,23 @@ describe('POST /api/integrations/accounting/disconnect', () => {
       contactEmail: 'demo@example.com',
       companyEmail: 'empresa@example.com',
       contactPhone: '+34 600 000 000',
+      action: 'disconnected',
+      channel: 'dashboard',
+    });
+    expect(resolveHoldedSecurityAlertRecipients).toHaveBeenCalledWith({
+      tenantId: 'tenant-1',
+      actorEmail: 'demo@example.com',
+      actorName: 'Demo User',
+    });
+    expect(sendHoldedSecurityAlertEmails).toHaveBeenCalledWith({
+      recipients: [
+        { email: 'demo@example.com', name: 'Demo User', source: 'membership' },
+        { email: 'empresa@example.com', name: null, source: 'tenant_profile' },
+      ],
+      tenantName: 'Empresa Demo',
+      tenantLegalName: 'Empresa Demo SL',
+      actorEmail: 'demo@example.com',
+      actorName: 'Demo User',
       action: 'disconnected',
       channel: 'dashboard',
     });

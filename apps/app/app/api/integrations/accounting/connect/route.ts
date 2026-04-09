@@ -5,6 +5,10 @@ import {
   sendWelcomeLifecycleEmails,
 } from '@/lib/email/holdedConnectionEmails';
 import {
+  resolveHoldedSecurityAlertRecipients,
+  sendHoldedSecurityAlertEmails,
+} from '@/lib/email/holdedSecurityAlerts';
+import {
   encryptIntegrationSecret,
   maskSecret,
   probeAccountingApiConnection,
@@ -239,6 +243,11 @@ export async function POST(request: NextRequest) {
           companyEmail: tenant?.profile?.email || null,
           contactPhone: tenant?.profile?.phone || null,
         };
+        const securityRecipients = await resolveHoldedSecurityAlertRecipients({
+          tenantId: auth.tenantId,
+          actorEmail: auth.session.email ?? null,
+          actorName: auth.session.name ?? null,
+        });
 
         if (entryChannel === 'chatgpt' && onboardingSession) {
           await sendWelcomeLifecycleEmails(emailContext);
@@ -249,6 +258,16 @@ export async function POST(request: NextRequest) {
             channel: entryChannel,
           });
         }
+
+        await sendHoldedSecurityAlertEmails({
+          recipients: securityRecipients,
+          tenantName: emailContext.tenantName,
+          tenantLegalName: emailContext.tenantLegalName,
+          actorEmail: auth.session.email ?? null,
+          actorName: auth.session.name ?? null,
+          action: 'connected',
+          channel: entryChannel,
+        });
       } catch (notificationError) {
         logConnectorEvent('api/integrations/accounting/connect', 'error', {
           requestId,

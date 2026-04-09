@@ -5,7 +5,12 @@ jest.mock('@/lib/firebase-admin', () => ({
 }));
 
 jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
+  resolveHoldedOnboardingSession: jest.fn(),
   resolveHoldedOnboardingSessionFromHeaders: jest.fn(),
+}));
+
+jest.mock('@/lib/session', () => ({
+  getSessionPayload: jest.fn(),
 }));
 
 jest.mock('@/lib/oauth/mcp', () => ({
@@ -15,7 +20,10 @@ jest.mock('@/lib/oauth/mcp', () => ({
 import { NextRequest } from 'next/server';
 import { POST } from './route';
 import { verifyIdToken } from '@/lib/firebase-admin';
-import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
+import {
+  resolveHoldedOnboardingSession,
+  resolveHoldedOnboardingSessionFromHeaders,
+} from '@/lib/integrations/holdedOnboardingSession';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 
 describe('POST /api/onboarding/identity/google', () => {
@@ -25,7 +33,13 @@ describe('POST /api/onboarding/identity/google', () => {
       email: null,
       name: 'Connector Guest',
       tenantId: 'tenant-123',
+      authMethod: 'unknown',
+      emailVerified: false,
+      firstName: 'Connector',
+      lastName: 'Guest',
+      verifiedAt: null,
     });
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue(null);
     (verifyIdToken as jest.Mock).mockResolvedValue({
       uid: 'google-user-1',
       email: 'demo@example.com',
@@ -123,7 +137,7 @@ describe('POST /api/onboarding/identity/google', () => {
     );
   });
 
-  it('does not derive the first name from the email alias when Google has no profile name', async () => {
+  it('preserves the onboarding name instead of deriving one from the email alias when Google has no profile name', async () => {
     (verifyIdToken as jest.Mock).mockResolvedValue({
       uid: 'google-user-1',
       email: 'kiabusiness2025@gmail.com',
@@ -149,18 +163,80 @@ describe('POST /api/onboarding/identity/google', () => {
     expect(payload.identity).toEqual(
       expect.objectContaining({
         email: 'kiabusiness2025@gmail.com',
-        firstName: null,
-        lastName: null,
-        name: null,
+        firstName: 'Connector',
+        lastName: 'Guest',
+        name: 'Connector Guest',
       })
     );
     expect(mintHoldedOnboardingTokenForSubject).toHaveBeenCalledWith(
       expect.objectContaining({
         email: 'kiabusiness2025@gmail.com',
-        name: null,
-        firstName: null,
-        lastName: null,
+        name: 'Connector Guest',
+        firstName: 'Connector',
+        lastName: 'Guest',
       })
     );
+  });
+
+  it('accepts the onboarding token from the request body when the custom header is unavailable', async () => {
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue(null);
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: null,
+      name: 'Connector Guest',
+      tenantId: 'tenant-123',
+      authMethod: 'unknown',
+      emailVerified: false,
+      firstName: 'Connector',
+      lastName: 'Guest',
+      verifiedAt: null,
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/onboarding/identity/google',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          idToken: 'google-id-token',
+          onboardingToken: 'onboarding-token-from-body',
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(resolveHoldedOnboardingSession).toHaveBeenCalledWith('onboarding-token-from-body');
+  });
+
+  it('rejects the request when the temporary onboarding token is missing', async () => {
+    (resolveHoldedOnboardingSessionFromHeaders as jest.Mock).mockResolvedValue(null);
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue(null);
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/onboarding/identity/google',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          idToken: 'google-id-token',
+          tenantIdHint: 'tenant-456',
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(payload).toEqual({ ok: false, error: 'onboarding session required' });
+    expect(mintHoldedOnboardingTokenForSubject).not.toHaveBeenCalled();
   });
 });
