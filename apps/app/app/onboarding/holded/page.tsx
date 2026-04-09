@@ -5,6 +5,7 @@ import {
 } from '@/lib/integrations/holdedOnboardingSession';
 import { maskSecret } from '@/lib/integrations/accounting';
 import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import { readVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
@@ -288,7 +289,7 @@ export default async function HoldedOnboardingPage({
     next: params.next,
   });
   const sessionNameParts = splitFullName(normalizeMeaningfulPersonName(session?.name));
-  const effectiveOnboardingToken =
+  let effectiveOnboardingToken =
     onboardingToken ||
     (entryChannel === 'chatgpt' && session?.uid
       ? await mintHoldedOnboardingTokenForSubject({
@@ -303,7 +304,7 @@ export default async function HoldedOnboardingPage({
           verifiedAt: null,
         })
       : null);
-  const effectiveOnboardingSession = onboardingSession
+  let effectiveOnboardingSession = onboardingSession
     ? onboardingSession
     : effectiveOnboardingToken && entryChannel === 'chatgpt' && session?.uid
       ? {
@@ -319,6 +320,41 @@ export default async function HoldedOnboardingPage({
           verifiedAt: null,
         }
       : null;
+
+  const rememberedVerifiedIdentity =
+    entryChannel === 'chatgpt' &&
+    effectiveOnboardingSession?.uid &&
+    effectiveOnboardingSession.email &&
+    !effectiveOnboardingSession.emailVerified
+      ? await readVerifiedHoldedEmailIdentity({
+          uid: effectiveOnboardingSession.uid,
+          email: effectiveOnboardingSession.email,
+        })
+      : null;
+
+  if (rememberedVerifiedIdentity && effectiveOnboardingSession?.uid) {
+    effectiveOnboardingSession = {
+      ...effectiveOnboardingSession,
+      authMethod:
+        rememberedVerifiedIdentity.authMethod ?? effectiveOnboardingSession.authMethod ?? 'email',
+      emailVerified: true,
+      verifiedAt: rememberedVerifiedIdentity.verifiedAt,
+    };
+
+    effectiveOnboardingToken = await mintHoldedOnboardingTokenForSubject({
+      uid: effectiveOnboardingSession.uid,
+      email: effectiveOnboardingSession.email,
+      name: normalizeMeaningfulPersonName(effectiveOnboardingSession.name),
+      tenantId: effectiveOnboardingSession.tenantId,
+      tenantBound: effectiveOnboardingSession.tenantBound,
+      authMethod:
+        rememberedVerifiedIdentity.authMethod ?? effectiveOnboardingSession.authMethod ?? 'email',
+      emailVerified: true,
+      firstName: effectiveOnboardingSession.firstName,
+      lastName: effectiveOnboardingSession.lastName,
+      verifiedAt: rememberedVerifiedIdentity.verifiedAt,
+    });
+  }
 
   const defaultContactName =
     normalizeMeaningfulPersonName(session?.name) ??

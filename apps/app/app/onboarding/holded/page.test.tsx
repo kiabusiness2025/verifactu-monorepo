@@ -30,6 +30,10 @@ jest.mock('@/lib/integrations/holdedConnectionResolver', () => ({
   resolveSharedHoldedConnectionForTenant: jest.fn(async () => null),
 }));
 
+jest.mock('@/lib/integrations/holdedVerifiedEmailIdentities', () => ({
+  readVerifiedHoldedEmailIdentity: jest.fn(async () => null),
+}));
+
 jest.mock('@/lib/prisma', () => ({
   __esModule: true,
   default: {
@@ -61,6 +65,7 @@ jest.mock('./HoldedOnboardingClient', () => ({
 
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { resolveHoldedOnboardingSession } from '@/lib/integrations/holdedOnboardingSession';
+import { readVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
@@ -79,6 +84,7 @@ describe('HoldedOnboardingPage', () => {
     prismaMock.user.findFirst.mockResolvedValue(null);
     prismaMock.userPreference.findUnique.mockResolvedValue(null);
     prismaMock.membership.findMany.mockResolvedValue([]);
+    (readVerifiedHoldedEmailIdentity as jest.Mock).mockResolvedValue(null);
     prismaMock.tenant.findUnique.mockResolvedValue({
       id: 'tenant-auth',
       nif: 'B12345678',
@@ -283,6 +289,53 @@ describe('HoldedOnboardingPage', () => {
     expect(element.props.summary.companyTaxId).toBe('B12345678');
     expect(element.props.summary.contactEmail).toBe('owner@example.com');
     expect(element.props.summary.contactFirstName).toBe('Owner');
+  });
+
+  it('reuses a remembered verified identity and enters chatgpt onboarding already unlocked', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'session-user-1',
+      email: 'verified@example.com',
+      name: 'Verified User',
+      tenantId: 'tenant-session',
+    });
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue(null);
+    (readVerifiedHoldedEmailIdentity as jest.Mock).mockResolvedValue({
+      uid: 'session-user-1',
+      email: 'verified@example.com',
+      authMethod: 'email',
+      verifiedAt: '2026-04-09T09:15:00.000Z',
+    });
+    (requireTenantContext as jest.Mock).mockResolvedValue({
+      tenantId: 'tenant-auth',
+      session: {
+        uid: 'session-user-1',
+        email: 'verified@example.com',
+        name: 'Verified User',
+      },
+    });
+
+    const element = await HoldedOnboardingPage({
+      searchParams: Promise.resolve({
+        next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
+        channel: 'chatgpt',
+      }),
+    });
+
+    expect(element.props.identity).toEqual(
+      expect.objectContaining({
+        authMethod: 'email',
+        email: 'verified@example.com',
+        emailVerified: true,
+        verifiedAt: '2026-04-09T09:15:00.000Z',
+      })
+    );
+    expect(mintHoldedOnboardingTokenForSubject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        uid: 'session-user-1',
+        email: 'verified@example.com',
+        emailVerified: true,
+      })
+    );
   });
 
   it('mints a temporary onboarding token when chatgpt onboarding starts from an existing session without one', async () => {

@@ -4,6 +4,7 @@ import {
   resolveHoldedOnboardingSession,
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
+import { rememberVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import { buildFullName, normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 
@@ -80,6 +81,19 @@ export async function POST(request: NextRequest) {
   const nameParts = splitFullName(name);
   const verifiedAt = new Date().toISOString();
   const tenantId = onboardingSession.tenantId ?? readTenantIdHint(body);
+
+  await rememberVerifiedHoldedEmailIdentity({
+    uid: decoded.uid,
+    email,
+    authMethod: 'google',
+    verifiedAt,
+  }).catch((error) => {
+    console.error('[onboarding identity google] failed to remember verified email', {
+      uid: decoded.uid,
+      email,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  });
 
   const onboardingToken = await mintHoldedOnboardingTokenForSubject({
     uid: decoded.uid,

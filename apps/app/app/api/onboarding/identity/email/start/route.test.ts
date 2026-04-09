@@ -25,6 +25,10 @@ jest.mock('@/lib/integrations/holdedEmailVerificationLinks', () => ({
   createHoldedEmailVerificationCode: jest.fn(async () => 'holded-verify-code'),
 }));
 
+jest.mock('@/lib/integrations/holdedVerifiedEmailIdentities', () => ({
+  readVerifiedHoldedEmailIdentity: jest.fn(async () => null),
+}));
+
 jest.mock('@/lib/oauth/mcp', () => ({
   mintHoldedEmailVerificationToken: jest.fn(async () => 'email-verification-token'),
   mintHoldedOnboardingTokenForSubject: jest.fn(async () => 'email-onboarding-token'),
@@ -38,6 +42,7 @@ import {
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
 import { createHoldedEmailVerificationCode } from '@/lib/integrations/holdedEmailVerificationLinks';
+import { readVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import {
   mintHoldedEmailVerificationToken,
   mintHoldedOnboardingTokenForSubject,
@@ -58,6 +63,7 @@ describe('POST /api/onboarding/identity/email/start', () => {
     });
     (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue(null);
     (sendCustomEmail as jest.Mock).mockResolvedValue({ success: true });
+    (readVerifiedHoldedEmailIdentity as jest.Mock).mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -220,6 +226,87 @@ describe('POST /api/onboarding/identity/email/start', () => {
     expect(response.status).toBe(200);
     expect(payload.ok).toBe(true);
     expect(resolveHoldedOnboardingSession).toHaveBeenCalledWith('onboarding-token-from-body');
+  });
+
+  it('reuses a previously remembered verified email without resending another message', async () => {
+    (readVerifiedHoldedEmailIdentity as jest.Mock).mockResolvedValue({
+      uid: 'holded-guest-1',
+      email: 'verified@example.com',
+      authMethod: 'email',
+      verifiedAt: '2026-04-09T09:15:00.000Z',
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/onboarding/identity/email/start',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({
+          email: 'verified@example.com',
+          returnUrl: 'https://app.verifactu.business/onboarding/holded?channel=chatgpt',
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.alreadyVerified).toBe(true);
+    expect(payload.emailSent).toBe(false);
+    expect(payload.identity).toEqual(
+      expect.objectContaining({
+        authMethod: 'email',
+        email: 'verified@example.com',
+        emailVerified: true,
+        verifiedAt: '2026-04-09T09:15:00.000Z',
+      })
+    );
+    expect(sendCustomEmail).not.toHaveBeenCalled();
+    expect(createHoldedEmailVerificationCode).not.toHaveBeenCalled();
+    expect(mintHoldedEmailVerificationToken).not.toHaveBeenCalled();
+  });
+
+  it('checks the current verification status without resending when checkOnly is true', async () => {
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/onboarding/identity/email/start',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-holded-onboarding-token': 'onboarding-token-123',
+        },
+        body: JSON.stringify({
+          email: 'verified@example.com',
+          returnUrl: 'https://app.verifactu.business/onboarding/holded?channel=chatgpt',
+          checkOnly: true,
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual(
+      expect.objectContaining({
+        ok: true,
+        alreadyVerified: false,
+        emailSent: false,
+        identity: expect.objectContaining({
+          authMethod: 'email',
+          email: 'verified@example.com',
+          emailVerified: false,
+        }),
+      })
+    );
+    expect(sendCustomEmail).not.toHaveBeenCalled();
+    expect(createHoldedEmailVerificationCode).not.toHaveBeenCalled();
+    expect(mintHoldedEmailVerificationToken).not.toHaveBeenCalled();
   });
 
   it('rejects the request when the temporary onboarding token is missing', async () => {

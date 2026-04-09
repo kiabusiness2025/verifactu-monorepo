@@ -7,6 +7,7 @@ import {
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
 import { createHoldedEmailVerificationCode } from '@/lib/integrations/holdedEmailVerificationLinks';
+import { readVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import {
   getPreferredFirstName,
   normalizeMeaningfulPersonName,
@@ -115,6 +116,7 @@ export async function POST(request: NextRequest) {
   }
 
   const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+  const checkOnly = body?.checkOnly === true;
   const returnUrl = sanitizeReturnUrl(typeof body?.returnUrl === 'string' ? body.returnUrl : null);
   const tenantId = onboardingSession.tenantId ?? readTenantIdHint(body);
 
@@ -144,6 +146,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       alreadyVerified: true,
+      emailSent: false,
       onboardingToken,
       identity: {
         authMethod: onboardingSession.authMethod ?? 'email',
@@ -152,6 +155,59 @@ export async function POST(request: NextRequest) {
         firstName: onboardingSession.firstName,
         lastName: onboardingSession.lastName,
         verifiedAt,
+      },
+    });
+  }
+
+  const rememberedVerifiedIdentity = await readVerifiedHoldedEmailIdentity({
+    uid: onboardingSession.uid,
+    email,
+  });
+
+  if (rememberedVerifiedIdentity) {
+    const verifiedAt = rememberedVerifiedIdentity.verifiedAt || new Date().toISOString();
+    const onboardingToken = await mintHoldedOnboardingTokenForSubject({
+      uid: onboardingSession.uid,
+      email,
+      name: onboardingSession.name,
+      tenantId,
+      tenantBound: onboardingSession.tenantBound,
+      authMethod: rememberedVerifiedIdentity.authMethod ?? onboardingSession.authMethod ?? 'email',
+      emailVerified: true,
+      firstName: onboardingSession.firstName,
+      lastName: onboardingSession.lastName,
+      verifiedAt,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      alreadyVerified: true,
+      emailSent: false,
+      onboardingToken,
+      identity: {
+        authMethod:
+          rememberedVerifiedIdentity.authMethod ?? onboardingSession.authMethod ?? 'email',
+        email,
+        emailVerified: true,
+        firstName: onboardingSession.firstName,
+        lastName: onboardingSession.lastName,
+        verifiedAt,
+      },
+    });
+  }
+
+  if (checkOnly) {
+    return NextResponse.json({
+      ok: true,
+      alreadyVerified: false,
+      emailSent: false,
+      identity: {
+        authMethod: 'email',
+        email,
+        emailVerified: false,
+        firstName: onboardingSession.firstName,
+        lastName: onboardingSession.lastName,
+        verifiedAt: onboardingSession.verifiedAt,
       },
     });
   }
@@ -215,6 +271,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
+    emailSent: true,
     onboardingToken,
     identity: {
       authMethod: 'email',

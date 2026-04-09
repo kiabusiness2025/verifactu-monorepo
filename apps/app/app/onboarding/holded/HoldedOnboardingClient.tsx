@@ -65,6 +65,7 @@ type IdentityResponse = {
   error?: string | null;
   detail?: string | null;
   alreadyVerified?: boolean;
+  emailSent?: boolean;
   onboardingToken?: string | null;
   identity?: {
     authMethod?: 'unknown' | 'google' | 'email';
@@ -96,6 +97,30 @@ type SavedPrefillState = {
   lastError: string | null;
 };
 
+type PrefillResponse = {
+  ok?: boolean;
+  error?: string | null;
+  onboardingToken?: string | null;
+  tenantIdHint?: string | null;
+  summary?: HoldedOnboardingSummary | null;
+  savedPrefill?: SavedPrefillState | null;
+};
+
+type FieldErrorKey =
+  | 'contactFirstName'
+  | 'contactLastName'
+  | 'contactRole'
+  | 'contactEmail'
+  | 'companyLegalName'
+  | 'companyTaxId'
+  | 'companySectorCode'
+  | 'companyAddress'
+  | 'companyPostalCode'
+  | 'companyCity'
+  | 'companyProvince'
+  | 'companyCountry'
+  | 'apiKey';
+
 type DirectOnboardingStep = 'identity' | 'person' | 'company' | 'api' | 'success';
 
 type Props = {
@@ -119,6 +144,79 @@ const HOLDED_API_GUIDE_URL =
   'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
 const VERIFACTU_TERMS_URL = 'https://verifactu.business/terms';
 const VERIFACTU_PRIVACY_URL = 'https://verifactu.business/privacy';
+const PHONE_COUNTRY_OPTIONS = [
+  { value: '+34', label: 'Espana (+34)', country: 'Espana' },
+  { value: '+351', label: 'Portugal (+351)', country: 'Portugal' },
+  { value: '+33', label: 'Francia (+33)', country: 'Francia' },
+  { value: '+39', label: 'Italia (+39)', country: 'Italia' },
+  { value: '+49', label: 'Alemania (+49)', country: 'Alemania' },
+  { value: '+44', label: 'Reino Unido (+44)', country: 'Reino Unido' },
+  { value: '+1', label: 'Estados Unidos (+1)', country: 'Estados Unidos' },
+  { value: '+52', label: 'Mexico (+52)', country: 'Mexico' },
+] as const;
+
+function normalizeCountryKey(value?: string | null) {
+  return (
+    value
+      ?.trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') || ''
+  );
+}
+
+function resolvePhoneDialCode(phone?: string | null, country?: string | null) {
+  const normalizedPhone = phone?.replace(/\s+/g, '').trim() || '';
+  const directMatch = PHONE_COUNTRY_OPTIONS.find((option) =>
+    normalizedPhone.startsWith(option.value)
+  );
+  if (directMatch) {
+    return directMatch.value;
+  }
+
+  const countryMatch = PHONE_COUNTRY_OPTIONS.find(
+    (option) => normalizeCountryKey(option.country) === normalizeCountryKey(country)
+  );
+  return countryMatch?.value || '+34';
+}
+
+function stripPhoneDialCode(phone?: string | null, dialCode?: string | null) {
+  const normalizedPhone = phone?.trim() || '';
+  const normalizedDialCode = dialCode?.trim() || '';
+  if (!normalizedPhone || !normalizedDialCode) return normalizedPhone;
+
+  if (normalizedPhone.replace(/\s+/g, '').startsWith(normalizedDialCode.replace(/\s+/g, ''))) {
+    return normalizedPhone
+      .replace(new RegExp(`^${normalizedDialCode.replace('+', '\\+')}\\s*`), '')
+      .trim();
+  }
+
+  return normalizedPhone;
+}
+
+function buildStoredPhoneNumber(localNumber: string, dialCode: string) {
+  const normalizedLocalNumber = localNumber.trim();
+  if (!normalizedLocalNumber) return '';
+  if (normalizedLocalNumber.startsWith('+')) {
+    return normalizedLocalNumber;
+  }
+
+  return `${dialCode} ${normalizedLocalNumber}`.trim();
+}
+
+function hasResolvedCompanyData(summary: HoldedOnboardingSummary) {
+  return Boolean(
+    summary.contactEmail &&
+    summary.companyTaxId &&
+    summary.contactRole &&
+    summary.companyAddress &&
+    summary.companyPostalCode &&
+    summary.companyCity &&
+    summary.companyProvince &&
+    summary.companyCountry &&
+    summary.companySectorCode
+  );
+}
 
 function HoldedStatusVisual({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
@@ -140,6 +238,29 @@ function HoldedStatusVisual({ eyebrow, title }: { eyebrow: string; title: string
       </div>
     </div>
   );
+}
+
+function getFieldClass(hasError: boolean, accent: 'blue' | 'red' = 'blue', withLeftIcon = false) {
+  const focusClass =
+    accent === 'red'
+      ? 'focus:border-[#ff5460] focus:ring-[#ff5460]/10'
+      : 'focus:border-[#0b6cfb] focus:ring-[#0b6cfb]/10';
+
+  return [
+    withLeftIcon
+      ? 'h-12 w-full rounded-2xl bg-white pl-11 pr-4'
+      : 'h-11 w-full rounded-2xl bg-white px-4',
+    'text-sm text-black outline-none transition focus:ring-4',
+    hasError
+      ? 'border border-rose-300 focus:border-rose-500 focus:ring-rose-500/10'
+      : `border border-neutral-300 ${focusClass}`,
+  ].join(' ');
+}
+
+function renderFieldError(message?: string) {
+  if (!message) return null;
+
+  return <span className="mt-2 block text-xs font-medium text-rose-700">{message}</span>;
 }
 
 function normalizeText(value?: string | null) {
@@ -397,20 +518,6 @@ export default function HoldedOnboardingClient({
   const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
   const uiHighlights = isChatgptEntry ? chatgptHighlights : dashboardHighlights;
   const savingMessages = uiCopy.savingMessages;
-  const hasResolvedCompanyProfile =
-    companySetup.hasResolvedCompany &&
-    Boolean(
-      summary.contactEmail &&
-      summary.companyTaxId &&
-      summary.contactRole &&
-      summary.companyAddress &&
-      summary.companyPostalCode &&
-      summary.companyCity &&
-      summary.companyProvince &&
-      summary.companyCountry &&
-      summary.companySectorCode
-    );
-  const reusesStoredCompanyData = isChatgptEntry && hasResolvedCompanyProfile;
   const initialCompanyDraft = useMemo(() => createCompanyDraftFromSummary(summary), [summary]);
   const freshValidationSummary = useMemo(
     () => createSummaryForFreshApiValidation(summary),
@@ -420,6 +527,14 @@ export default function HoldedOnboardingClient({
   const [validationToken, setValidationToken] = useState<string | null>(null);
   const [validatedApiKey, setValidatedApiKey] = useState('');
   const [resolvedSummary, setResolvedSummary] = useState(summary);
+  const [savedPrefillState, setSavedPrefillState] = useState(savedPrefill);
+  const hasResolvedCompanyProfile =
+    companySetup.hasResolvedCompany && hasResolvedCompanyData(resolvedSummary);
+  const reusesStoredCompanyData = isChatgptEntry && hasResolvedCompanyProfile;
+  const initialPhoneDialCode = resolvePhoneDialCode(
+    initialCompanyDraft.contactPhone,
+    initialCompanyDraft.companyCountry
+  );
   const [companyLegalName, setCompanyLegalName] = useState(initialCompanyDraft.companyLegalName);
   const [companyTaxId, setCompanyTaxId] = useState(initialCompanyDraft.companyTaxId);
   const [companyAddress, setCompanyAddress] = useState(initialCompanyDraft.companyAddress);
@@ -433,7 +548,10 @@ export default function HoldedOnboardingClient({
   const [contactLastName, setContactLastName] = useState(initialCompanyDraft.contactLastName);
   const [contactRole, setContactRole] = useState(initialCompanyDraft.contactRole);
   const [contactEmail, setContactEmail] = useState(initialCompanyDraft.contactEmail);
-  const [contactPhone, setContactPhone] = useState(initialCompanyDraft.contactPhone);
+  const [contactPhoneDialCode, setContactPhoneDialCode] = useState<string>(initialPhoneDialCode);
+  const [contactPhone, setContactPhone] = useState(
+    stripPhoneDialCode(initialCompanyDraft.contactPhone, initialPhoneDialCode)
+  );
   const [apiValidated, setApiValidated] = useState(!needsPostValidationCompanyStep);
   const [showCompanyForm, setShowCompanyForm] = useState(!hasResolvedCompanyProfile);
   const [companyConfirmed, setCompanyConfirmed] = useState(!needsPostValidationCompanyStep);
@@ -452,6 +570,10 @@ export default function HoldedOnboardingClient({
   const [identitySubmitting, setIdentitySubmitting] = useState(false);
   const [identityMessage, setIdentityMessage] = useState<string | null>(null);
   const [identityError, setIdentityError] = useState<string | null>(null);
+  const [pendingVerifiedPrefillToken, setPendingVerifiedPrefillToken] = useState<string | null>(
+    null
+  );
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldErrorKey, string>>>({});
   const [directStep, setDirectStep] = useState<DirectOnboardingStep>(
     requiresVerifiedIdentity && !identity.emailVerified ? 'identity' : 'person'
   );
@@ -493,19 +615,19 @@ export default function HoldedOnboardingClient({
     !canContinueWithExistingConnection;
   const normalizedApiKey = useMemo(() => normalizeApiKey(apiKey), [apiKey]);
   const hasSavedPrefill =
-    !!savedPrefill &&
+    !!savedPrefillState &&
     Boolean(
-      normalizeText(savedPrefill.companyName) ||
-      normalizeText(savedPrefill.companyTaxId) ||
-      normalizeText(savedPrefill.contactEmail) ||
-      normalizeText(savedPrefill.maskedApiKey)
+      normalizeText(savedPrefillState.companyName) ||
+      normalizeText(savedPrefillState.companyTaxId) ||
+      normalizeText(savedPrefillState.contactEmail) ||
+      normalizeText(savedPrefillState.maskedApiKey)
     );
   const savedConnectionStatusLabel =
-    savedPrefill?.connectionStatus === 'connected'
+    savedPrefillState?.connectionStatus === 'connected'
       ? 'API guardada y conexion activa'
-      : savedPrefill?.connectionStatus === 'error'
+      : savedPrefillState?.connectionStatus === 'error'
         ? 'API guardada con ultimo estado en error'
-        : savedPrefill?.maskedApiKey
+        : savedPrefillState?.maskedApiKey
           ? 'API guardada anteriormente'
           : null;
   const hasReusableValidationToken =
@@ -516,7 +638,8 @@ export default function HoldedOnboardingClient({
     !!normalizeText(companyTaxId) &&
     !!normalizeText(contactFirstName) &&
     !!normalizeText(contactLastName) &&
-    !!normalizeText(contactEmail);
+    !!normalizeText(contactEmail) &&
+    !!normalizeText(contactRole);
   const canContinuePersonStep =
     !!normalizeText(contactFirstName) &&
     !!normalizeText(contactLastName) &&
@@ -662,6 +785,11 @@ export default function HoldedOnboardingClient({
 
     if (!verifiedFromUrl || !identityState.emailVerified) return;
 
+    const nextOnboardingToken = onboardingTokenFromUrl || activeOnboardingToken;
+    if (nextOnboardingToken) {
+      setPendingVerifiedPrefillToken(nextOnboardingToken);
+    }
+
     setIdentityError(null);
     setIdentityMessage(
       identityState.authMethod === 'email' && identityState.email
@@ -687,33 +815,6 @@ export default function HoldedOnboardingClient({
     usesDirectStepFlow,
   ]);
 
-  const resolveConfirmedNextUrl = useCallback(
-    (overrides?: { onboardingToken?: string | null; tenantIdHint?: string | null }) => {
-      const effectiveOnboardingToken =
-        overrides && Object.prototype.hasOwnProperty.call(overrides, 'onboardingToken')
-          ? (overrides.onboardingToken ?? null)
-          : activeOnboardingToken;
-      const effectiveTenantIdHint =
-        overrides && Object.prototype.hasOwnProperty.call(overrides, 'tenantIdHint')
-          ? (overrides.tenantIdHint ?? null)
-          : (selectedTenantId ?? initialTenantIdHint);
-
-      return buildConfirmedNextUrl({
-        nextUrl,
-        requireConnectionConfirmation,
-        onboardingToken: effectiveOnboardingToken,
-        tenantIdHint: effectiveTenantIdHint,
-      });
-    },
-    [
-      activeOnboardingToken,
-      initialTenantIdHint,
-      nextUrl,
-      requireConnectionConfirmation,
-      selectedTenantId,
-    ]
-  );
-
   const resolveRequestOnboardingToken = useCallback(() => {
     const tokenFromState = normalizeText(activeOnboardingToken);
     if (tokenFromState) {
@@ -731,6 +832,50 @@ export default function HoldedOnboardingClient({
 
     return normalizeText(new URL(window.location.href).searchParams.get('onboarding_token'));
   }, [activeOnboardingToken, onboardingToken]);
+
+  const resolveRequestTenantIdHint = useCallback(() => {
+    const tenantIdFromState = normalizeText(selectedTenantId);
+    if (tenantIdFromState) {
+      return tenantIdFromState;
+    }
+
+    const tenantIdFromProp = normalizeText(initialTenantIdHint);
+    if (tenantIdFromProp) {
+      return tenantIdFromProp;
+    }
+
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    return normalizeText(new URL(window.location.href).searchParams.get('tenant_id'));
+  }, [initialTenantIdHint, selectedTenantId]);
+
+  const resolveConfirmedNextUrl = useCallback(
+    (overrides?: { onboardingToken?: string | null; tenantIdHint?: string | null }) => {
+      const effectiveOnboardingToken =
+        overrides && Object.prototype.hasOwnProperty.call(overrides, 'onboardingToken')
+          ? (overrides.onboardingToken ?? null)
+          : resolveRequestOnboardingToken();
+      const effectiveTenantIdHint =
+        overrides && Object.prototype.hasOwnProperty.call(overrides, 'tenantIdHint')
+          ? (overrides.tenantIdHint ?? null)
+          : resolveRequestTenantIdHint();
+
+      return buildConfirmedNextUrl({
+        nextUrl,
+        requireConnectionConfirmation,
+        onboardingToken: effectiveOnboardingToken,
+        tenantIdHint: effectiveTenantIdHint,
+      });
+    },
+    [
+      nextUrl,
+      requireConnectionConfirmation,
+      resolveRequestOnboardingToken,
+      resolveRequestTenantIdHint,
+    ]
+  );
 
   const restartIdentityFlow = useCallback(() => {
     setIdentityError(
@@ -758,25 +903,25 @@ export default function HoldedOnboardingClient({
     { key: 'company', label: 'Empresa' },
     { key: 'api', label: 'API key' },
   ];
-  const directStepIndex = showIdentityGate
-    ? 0
-    : directStep === 'person'
-      ? 1
-      : directStep === 'company'
-        ? 2
-        : directStep === 'api'
-          ? 3
-          : 4;
+  const completedDirectSteps: Record<Exclude<DirectOnboardingStep, 'success'>, boolean> = {
+    identity: verifiedIdentityReady,
+    person: verifiedIdentityReady && canContinuePersonStep,
+    company: canContinueCompanyStep,
+    api: status?.connected === true || redirecting || directStep === 'success',
+  };
 
   const loadStatus = useCallback(
     async (signal?: AbortSignal) => {
-      const effectiveTenantIdHint = selectedTenantId ?? initialTenantIdHint;
+      const effectiveTenantIdHint = resolveRequestTenantIdHint();
+      const effectiveOnboardingToken = resolveRequestOnboardingToken();
       const res = await fetch(`/api/integrations/accounting/status?channel=${entryChannel}`, {
         cache: 'no-store',
         signal,
         headers: {
           'x-isaak-entry-channel': entryChannel,
-          ...(activeOnboardingToken ? { 'x-holded-onboarding-token': activeOnboardingToken } : {}),
+          ...(effectiveOnboardingToken
+            ? { 'x-holded-onboarding-token': effectiveOnboardingToken }
+            : {}),
           ...(effectiveTenantIdHint ? { 'x-isaak-tenant-id': effectiveTenantIdHint } : {}),
         },
       });
@@ -785,10 +930,9 @@ export default function HoldedOnboardingClient({
       return data as IntegrationStatus;
     },
     [
-      activeOnboardingToken,
       entryChannel,
-      initialTenantIdHint,
-      selectedTenantId,
+      resolveRequestOnboardingToken,
+      resolveRequestTenantIdHint,
       uiCopy.errorLoadFailed,
     ]
   );
@@ -828,8 +972,99 @@ export default function HoldedOnboardingClient({
     [captureMode, nextUrl]
   );
 
+  const clearFieldError = useCallback((key: FieldErrorKey) => {
+    setFieldErrors((current) => {
+      if (!current[key]) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  }, []);
+
+  const collectPersonFieldErrors = useCallback(() => {
+    const nextErrors: Partial<Record<FieldErrorKey, string>> = {};
+
+    if (!normalizeText(contactFirstName)) {
+      nextErrors.contactFirstName = 'El nombre es obligatorio.';
+    }
+    if (!normalizeText(contactLastName)) {
+      nextErrors.contactLastName = 'Los apellidos son obligatorios.';
+    }
+    if (!normalizeText(contactRole)) {
+      nextErrors.contactRole = 'Selecciona tu rol en la empresa.';
+    }
+
+    return nextErrors;
+  }, [contactFirstName, contactLastName, contactRole]);
+
+  const collectCompanyFieldErrors = useCallback(() => {
+    const nextErrors: Partial<Record<FieldErrorKey, string>> = {};
+
+    if (!normalizeText(companyLegalName)) {
+      nextErrors.companyLegalName = 'La razon social es obligatoria.';
+    }
+    if (!normalizeText(companyTaxId)) {
+      nextErrors.companyTaxId = 'El CIF / NIF es obligatorio.';
+    }
+    if (!normalizeText(companySectorCode)) {
+      nextErrors.companySectorCode = 'Selecciona el sector principal.';
+    }
+    if (!normalizeText(companyAddress)) {
+      nextErrors.companyAddress = 'El domicilio es obligatorio.';
+    }
+    if (!normalizeText(companyPostalCode)) {
+      nextErrors.companyPostalCode = 'El codigo postal es obligatorio.';
+    }
+    if (!normalizeText(companyCity)) {
+      nextErrors.companyCity = 'La ciudad es obligatoria.';
+    }
+    if (!normalizeText(companyProvince)) {
+      nextErrors.companyProvince = 'La provincia es obligatoria.';
+    }
+    if (!normalizeText(companyCountry)) {
+      nextErrors.companyCountry = 'El pais es obligatorio.';
+    }
+
+    return nextErrors;
+  }, [
+    companyAddress,
+    companyCity,
+    companyCountry,
+    companyLegalName,
+    companyPostalCode,
+    companyProvince,
+    companySectorCode,
+    companyTaxId,
+  ]);
+
+  const collectInlineDirectFieldErrors = useCallback(() => {
+    const nextErrors = {
+      ...collectPersonFieldErrors(),
+      ...collectCompanyFieldErrors(),
+    } as Partial<Record<FieldErrorKey, string>>;
+
+    if (!normalizeText(contactEmail)) {
+      nextErrors.contactEmail = 'El correo principal en Holded es obligatorio.';
+    }
+    if (!normalizedApiKey) {
+      nextErrors.apiKey = uiCopy.errorApiKeyEmpty;
+    }
+
+    return nextErrors;
+  }, [
+    collectCompanyFieldErrors,
+    collectPersonFieldErrors,
+    contactEmail,
+    normalizedApiKey,
+    uiCopy.errorApiKeyEmpty,
+  ]);
+
   const applySummaryToCompanyForm = useCallback((nextSummary: HoldedOnboardingSummary) => {
     const nextDraft = createCompanyDraftFromSummary(nextSummary);
+    const nextPhoneDialCode = resolvePhoneDialCode(
+      nextDraft.contactPhone,
+      nextDraft.companyCountry
+    );
 
     setCompanyLegalName(nextDraft.companyLegalName);
     setCompanyTaxId(nextDraft.companyTaxId);
@@ -844,8 +1079,73 @@ export default function HoldedOnboardingClient({
     setContactLastName(nextDraft.contactLastName);
     setContactRole(nextDraft.contactRole);
     setContactEmail(nextDraft.contactEmail);
-    setContactPhone(nextDraft.contactPhone);
+    setContactPhoneDialCode(nextPhoneDialCode);
+    setContactPhone(stripPhoneDialCode(nextDraft.contactPhone, nextPhoneDialCode));
   }, []);
+
+  const hydratePrefillForVerifiedIdentity = useCallback(
+    async (nextOnboardingToken: string, nextIdentity: OnboardingIdentityState) => {
+      if (!nextIdentity.emailVerified || !nextIdentity.email) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/onboarding/prefill', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-holded-onboarding-token': nextOnboardingToken,
+          },
+          body: JSON.stringify({
+            onboardingToken: nextOnboardingToken,
+          }),
+        });
+        const data = (await response.json().catch(() => null)) as PrefillResponse | null;
+        if (!response.ok || !data?.ok) {
+          return;
+        }
+
+        if (data.summary) {
+          setResolvedSummary(data.summary);
+          applySummaryToCompanyForm(data.summary);
+        }
+        if (data.savedPrefill) {
+          setSavedPrefillState(data.savedPrefill);
+        }
+        if (data.tenantIdHint) {
+          setSelectedTenantId(data.tenantIdHint);
+        }
+        if (data.onboardingToken) {
+          setActiveOnboardingToken(data.onboardingToken);
+        }
+      } catch {
+        return;
+      }
+    },
+    [applySummaryToCompanyForm]
+  );
+
+  useEffect(() => {
+    if (!pendingVerifiedPrefillToken || !identityState.emailVerified) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      await hydratePrefillForVerifiedIdentity(pendingVerifiedPrefillToken, identityState);
+
+      if (!cancelled) {
+        setPendingVerifiedPrefillToken((current) =>
+          current === pendingVerifiedPrefillToken ? null : current
+        );
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydratePrefillForVerifiedIdentity, identityState, pendingVerifiedPrefillToken]);
 
   const resetForFreshApiValidation = useCallback(() => {
     setResolvedSummary(freshValidationSummary);
@@ -883,22 +1183,45 @@ export default function HoldedOnboardingClient({
       return;
     }
 
-    if (!canContinuePersonStep) {
+    const nextErrors = collectPersonFieldErrors();
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors((current) => ({ ...current, ...nextErrors }));
       setError('Necesitamos nombre, apellidos y rol para continuar.');
       return;
     }
 
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next.contactFirstName;
+      delete next.contactLastName;
+      delete next.contactRole;
+      return next;
+    });
     goToDirectStep('company');
-  }, [canContinuePersonStep, goToDirectStep, verifiedIdentityReady]);
+  }, [collectPersonFieldErrors, goToDirectStep, verifiedIdentityReady]);
 
   const handleDirectNextFromCompany = useCallback(() => {
-    if (!canContinueCompanyStep) {
+    const nextErrors = collectCompanyFieldErrors();
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors((current) => ({ ...current, ...nextErrors }));
       setError('Necesitamos razon social, CIF/NIF, domicilio y sector para continuar.');
       return;
     }
 
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next.companyLegalName;
+      delete next.companyTaxId;
+      delete next.companySectorCode;
+      delete next.companyAddress;
+      delete next.companyPostalCode;
+      delete next.companyCity;
+      delete next.companyProvince;
+      delete next.companyCountry;
+      return next;
+    });
     goToDirectStep('api');
-  }, [canContinueCompanyStep, goToDirectStep]);
+  }, [collectCompanyFieldErrors, goToDirectStep]);
 
   const handleHeaderBack = useCallback(() => {
     if (usesDirectStepFlow && !redirecting) {
@@ -1052,9 +1375,9 @@ export default function HoldedOnboardingClient({
     requestTenantIdHint?: string | null,
     onboardingTokenHint?: string | null
   ) => {
-    const effectiveTenantIdHint = requestTenantIdHint ?? selectedTenantId ?? initialTenantIdHint;
+    const effectiveTenantIdHint = requestTenantIdHint ?? resolveRequestTenantIdHint();
     const effectiveOnboardingToken =
-      onboardingTokenHint === undefined ? activeOnboardingToken : onboardingTokenHint;
+      onboardingTokenHint === undefined ? resolveRequestOnboardingToken() : onboardingTokenHint;
     const res = await fetch('/api/integrations/accounting/validate', {
       method: 'POST',
       headers: {
@@ -1100,9 +1423,9 @@ export default function HoldedOnboardingClient({
     validationTokenHint?: string | null,
     onboardingTokenHint?: string | null
   ) => {
-    const effectiveTenantIdHint = requestTenantIdHint ?? selectedTenantId ?? initialTenantIdHint;
+    const effectiveTenantIdHint = requestTenantIdHint ?? resolveRequestTenantIdHint();
     const effectiveOnboardingToken =
-      onboardingTokenHint === undefined ? activeOnboardingToken : onboardingTokenHint;
+      onboardingTokenHint === undefined ? resolveRequestOnboardingToken() : onboardingTokenHint;
     const res = await fetch('/api/integrations/accounting/connect', {
       method: 'POST',
       headers: {
@@ -1154,6 +1477,7 @@ export default function HoldedOnboardingClient({
   };
 
   const prepareTenantForConnection = async () => {
+    const requestOnboardingToken = resolveRequestOnboardingToken();
     const normalizedLegalName = normalizeText(companyLegalName);
     const normalizedCompanyName = normalizedLegalName;
     const normalizedTaxId = normalizeText(companyTaxId).toUpperCase();
@@ -1175,7 +1499,9 @@ export default function HoldedOnboardingClient({
       lastName: normalizedContactLastName,
     });
     const normalizedContactEmail = stepContactEmail;
-    const normalizedContactPhone = normalizeText(contactPhone);
+    const normalizedContactPhone = normalizeText(
+      buildStoredPhoneNumber(contactPhone, contactPhoneDialCode)
+    );
 
     if (
       !normalizedCompanyName ||
@@ -1200,7 +1526,7 @@ export default function HoldedOnboardingClient({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(activeOnboardingToken ? { 'x-holded-onboarding-token': activeOnboardingToken } : {}),
+        ...(requestOnboardingToken ? { 'x-holded-onboarding-token': requestOnboardingToken } : {}),
       },
       body: JSON.stringify({
         reuseCurrentTenant: true,
@@ -1257,10 +1583,12 @@ export default function HoldedOnboardingClient({
         ? createData.onboardingToken.trim()
         : null;
 
-    setSelectedTenantId(nextTenantId);
-    setActiveOnboardingToken(nextOnboardingToken);
+    const effectiveOnboardingToken = nextOnboardingToken ?? requestOnboardingToken;
 
-    if (!nextOnboardingToken) {
+    setSelectedTenantId(nextTenantId);
+    setActiveOnboardingToken(effectiveOnboardingToken);
+
+    if (!effectiveOnboardingToken) {
       const switchRes = await fetch('/api/session/tenant-switch', {
         method: 'POST',
         headers: {
@@ -1303,7 +1631,7 @@ export default function HoldedOnboardingClient({
 
     return {
       tenantId: nextTenantId,
-      onboardingToken: nextOnboardingToken,
+      onboardingToken: effectiveOnboardingToken,
     };
   };
 
@@ -1322,9 +1650,32 @@ export default function HoldedOnboardingClient({
   const handleCompanySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    const nextErrors: Partial<Record<FieldErrorKey, string>> = {};
+    if (!normalizeText(companyLegalName)) {
+      nextErrors.companyLegalName = 'La razon social es obligatoria.';
+    }
+    if (!normalizeText(companyTaxId)) {
+      nextErrors.companyTaxId = 'El CIF / NIF es obligatorio.';
+    }
+    if (!normalizeText(contactFirstName)) {
+      nextErrors.contactFirstName = 'El nombre es obligatorio.';
+    }
+    if (!normalizeText(contactLastName)) {
+      nextErrors.contactLastName = 'Los apellidos son obligatorios.';
+    }
+    if (!normalizeText(contactEmail)) {
+      nextErrors.contactEmail = 'El correo principal en Holded es obligatorio.';
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors((current) => ({ ...current, ...nextErrors }));
+      setCompanyError('Completa los datos obligatorios antes de terminar la conexion.');
+      return;
+    }
+
     setCompanySaving(true);
     setCompanyError(null);
     setCompanyMessage(null);
+    setFieldErrors({});
 
     try {
       const createdTenant = await createTenantAndConnect();
@@ -1358,6 +1709,7 @@ export default function HoldedOnboardingClient({
       return;
     }
     if (!normalizedApiKey) {
+      setFieldErrors((current) => ({ ...current, apiKey: uiCopy.errorApiKeyEmpty }));
       setError(uiCopy.errorApiKeyEmpty);
       return;
     }
@@ -1446,7 +1798,7 @@ export default function HoldedOnboardingClient({
         body: JSON.stringify({
           idToken,
           onboardingToken: requestOnboardingToken,
-          tenantIdHint: selectedTenantId ?? initialTenantIdHint,
+          tenantIdHint: resolveRequestTenantIdHint(),
         }),
       });
       const data = (await response.json().catch(() => null)) as IdentityResponse | null;
@@ -1480,7 +1832,12 @@ export default function HoldedOnboardingClient({
       if (data.onboardingToken) {
         setActiveOnboardingToken(data.onboardingToken);
       }
-      setIdentityMessage('Identidad confirmada con Google. Ya puedes continuar con la API key.');
+      if (data.onboardingToken) {
+        await hydratePrefillForVerifiedIdentity(data.onboardingToken, nextIdentity);
+      }
+      setIdentityMessage(
+        'Identidad confirmada con Google. Ya puedes continuar con el paso Usuario.'
+      );
     } catch (identityRequestError) {
       setIdentityError(getGoogleIdentityErrorMessage(identityRequestError));
     } finally {
@@ -1489,100 +1846,142 @@ export default function HoldedOnboardingClient({
     }
   };
 
-  const handleSendVerificationEmail = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const requestOnboardingToken = resolveRequestOnboardingToken();
-    if (!requestOnboardingToken) {
-      restartIdentityFlow();
-      return;
-    }
-
-    const normalizedEmail = normalizeText(manualEmail).toLowerCase();
-    if (!normalizedEmail) {
-      setIdentityError('Necesitamos un correo para enviarte el enlace de verificacion.');
-      return;
-    }
-
-    setIdentitySubmitting(true);
-    setIdentityError(null);
-    setIdentityMessage(null);
-
-    try {
-      const response = await fetch('/api/onboarding/identity/email/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-holded-onboarding-token': requestOnboardingToken,
-        },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          onboardingToken: requestOnboardingToken,
-          returnUrl: window.location.href,
-          tenantIdHint: selectedTenantId ?? initialTenantIdHint,
-        }),
-      });
-      const data = (await response.json().catch(() => null)) as IdentityResponse | null;
-
-      if (
-        !response.ok &&
-        isMissingOnboardingSessionError({ status: response.status, error: data?.error })
-      ) {
+  const requestManualEmailIdentity = useCallback(
+    async ({ checkOnly }: { checkOnly: boolean }) => {
+      const requestOnboardingToken = resolveRequestOnboardingToken();
+      if (!requestOnboardingToken) {
         restartIdentityFlow();
         return;
       }
 
-      if (!response.ok || !data?.ok) {
-        throw new Error(
-          data?.detail || data?.error || 'No hemos podido enviar el correo de verificacion.'
-        );
-      }
-
-      const nextIdentity: OnboardingIdentityState = {
-        authMethod: data.identity?.authMethod ?? 'email',
-        email: data.identity?.email ?? normalizedEmail,
-        emailVerified: data.identity?.emailVerified === true,
-        firstName: data.identity?.firstName ?? null,
-        lastName: data.identity?.lastName ?? null,
-        verifiedAt: data.identity?.verifiedAt ?? null,
-      };
-
-      setIdentityState((current) => ({
-        ...current,
-        ...nextIdentity,
-      }));
-      if (data.onboardingToken) {
-        setActiveOnboardingToken(data.onboardingToken);
-      }
-      setManualEmail(data.identity?.email ?? normalizedEmail);
-      setContactEmail(data.identity?.email ?? normalizedEmail);
-
-      if (nextIdentity.emailVerified) {
-        setIdentityMessage(
-          data.alreadyVerified
-            ? 'Este correo ya estaba confirmado. Ya puedes continuar con el paso Usuario.'
-            : `Correo confirmado para ${nextIdentity.email}. Ya puedes continuar con el paso Usuario.`
-        );
-
-        if (usesDirectStepFlow) {
-          setDirectStep((current) => (current === 'identity' ? 'person' : current));
-        }
+      const normalizedEmail = normalizeText(manualEmail).toLowerCase();
+      if (!normalizedEmail) {
+        setIdentityError('Necesitamos un correo para enviarte el enlace de verificacion.');
         return;
       }
 
-      setIdentityMessage(
-        'Te hemos enviado un enlace de verificacion. Abre ese correo y volveras aqui con la identidad confirmada.'
-      );
-    } catch (identityRequestError) {
-      setIdentityError(
-        identityRequestError instanceof Error
-          ? identityRequestError.message
-          : 'No hemos podido enviar el correo de verificacion.'
-      );
-    } finally {
-      setIdentitySubmitting(false);
-    }
+      setIdentitySubmitting(true);
+      setIdentityError(null);
+      setIdentityMessage(null);
+
+      try {
+        const response = await fetch('/api/onboarding/identity/email/start', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-holded-onboarding-token': requestOnboardingToken,
+          },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            onboardingToken: requestOnboardingToken,
+            returnUrl: window.location.href,
+            tenantIdHint: resolveRequestTenantIdHint(),
+            checkOnly,
+          }),
+        });
+        const data = (await response.json().catch(() => null)) as IdentityResponse | null;
+
+        if (
+          !response.ok &&
+          isMissingOnboardingSessionError({ status: response.status, error: data?.error })
+        ) {
+          restartIdentityFlow();
+          return;
+        }
+
+        if (!response.ok || !data?.ok) {
+          throw new Error(
+            data?.detail || data?.error || 'No hemos podido enviar el correo de verificacion.'
+          );
+        }
+
+        const nextIdentity: OnboardingIdentityState = {
+          authMethod: data.identity?.authMethod ?? 'email',
+          email: data.identity?.email ?? normalizedEmail,
+          emailVerified: data.identity?.emailVerified === true,
+          firstName: data.identity?.firstName ?? null,
+          lastName: data.identity?.lastName ?? null,
+          verifiedAt: data.identity?.verifiedAt ?? null,
+        };
+
+        setIdentityState((current) => ({
+          ...current,
+          ...nextIdentity,
+        }));
+        if (data.onboardingToken) {
+          setActiveOnboardingToken(data.onboardingToken);
+        }
+        setManualEmail(data.identity?.email ?? normalizedEmail);
+        setContactEmail(data.identity?.email ?? normalizedEmail);
+
+        if (nextIdentity.emailVerified) {
+          if (data.onboardingToken) {
+            await hydratePrefillForVerifiedIdentity(data.onboardingToken, nextIdentity);
+          }
+
+          setIdentityMessage(
+            data.alreadyVerified
+              ? 'Este correo ya estaba confirmado. Ya puedes continuar con el paso Usuario.'
+              : `Correo confirmado para ${nextIdentity.email}. Ya puedes continuar con el paso Usuario.`
+          );
+
+          if (usesDirectStepFlow) {
+            setDirectStep((current) => (current === 'identity' ? 'person' : current));
+          }
+          return;
+        }
+
+        setIdentityMessage(
+          checkOnly
+            ? 'Seguimos esperando la confirmacion de este correo. Cuando abras el enlace, vuelve aqui y pulsa Siguiente para pasar al paso Usuario.'
+            : 'Te hemos enviado un enlace de verificacion. Puedes abrirlo incluso en otro dispositivo y volver aqui para pulsar Siguiente cuando termines.'
+        );
+      } catch (identityRequestError) {
+        setIdentityError(
+          identityRequestError instanceof Error
+            ? identityRequestError.message
+            : 'No hemos podido enviar el correo de verificacion.'
+        );
+      } finally {
+        setIdentitySubmitting(false);
+      }
+    },
+    [
+      hydratePrefillForVerifiedIdentity,
+      manualEmail,
+      resolveRequestOnboardingToken,
+      resolveRequestTenantIdHint,
+      restartIdentityFlow,
+      usesDirectStepFlow,
+    ]
+  );
+
+  const handleSendVerificationEmail = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    await requestManualEmailIdentity({ checkOnly: false });
   };
+
+  const handleIdentityNext = useCallback(async () => {
+    const normalizedEmail = normalizeText(manualEmail).toLowerCase();
+    if (!normalizedEmail) {
+      setIdentityError('Necesitamos un correo para comprobar tu identidad.');
+      return;
+    }
+
+    const shouldCheckOnly =
+      identityState.authMethod === 'email' &&
+      identityState.email === normalizedEmail &&
+      !identityState.emailVerified;
+
+    await requestManualEmailIdentity({ checkOnly: shouldCheckOnly });
+  }, [
+    identityState.authMethod,
+    identityState.email,
+    identityState.emailVerified,
+    manualEmail,
+    requestManualEmailIdentity,
+  ]);
 
   const handleDirectApiSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -1592,19 +1991,25 @@ export default function HoldedOnboardingClient({
       return;
     }
 
-    if (!canContinuePersonStep) {
+    const nextErrors = collectInlineDirectFieldErrors();
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors((current) => ({ ...current, ...nextErrors }));
+    }
+
+    if (Object.keys(collectPersonFieldErrors()).length > 0) {
       goToDirectStep('person');
-      setError('Necesitamos nombre y apellidos para continuar.');
+      setError('Completa nombre, apellidos y rol antes de conectar Holded.');
       return;
     }
 
-    if (!canContinueCompanyStep) {
+    if (Object.keys(collectCompanyFieldErrors()).length > 0 || !normalizeText(contactEmail)) {
       goToDirectStep('company');
-      setError('Necesitamos empresa y CIF/NIF para continuar.');
+      setError('Completa los datos obligatorios de empresa antes de conectar Holded.');
       return;
     }
 
     if (!normalizedApiKey) {
+      setFieldErrors((current) => ({ ...current, apiKey: uiCopy.errorApiKeyEmpty }));
       setError(uiCopy.errorApiKeyEmpty);
       return;
     }
@@ -1612,6 +2017,7 @@ export default function HoldedOnboardingClient({
     setSaving(true);
     setError(null);
     setMessage(null);
+    setFieldErrors({});
 
     try {
       const preparedTenant = await prepareTenantForConnection();
@@ -1712,19 +2118,29 @@ export default function HoldedOnboardingClient({
               <>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {directStepItems.map((step, index) => {
-                    const active = directStepIndex === index;
-                    const completed = directStepIndex > index;
+                    const active = (showIdentityGate ? 'identity' : directStep) === step.key;
+                    const completed = completedDirectSteps[step.key];
+                    const disabled = showIdentityGate && step.key !== 'identity';
 
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={step.key}
+                        onClick={() => {
+                          if (!disabled) {
+                            goToDirectStep(step.key);
+                          }
+                        }}
+                        disabled={disabled}
                         className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${
                           active
                             ? 'border-[#0b6cfb] bg-[#f3f8ff] text-[#0b214a]'
                             : completed
                               ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
                               : 'border-neutral-200 bg-white text-neutral-500'
-                        }`}
+                        } ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-neutral-50'}`}
+                        aria-current={active ? 'step' : undefined}
+                        aria-label={`Ir al paso ${index + 1}: ${step.label}`}
                       >
                         <span
                           className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${
@@ -1738,7 +2154,7 @@ export default function HoldedOnboardingClient({
                           {completed ? '✓' : index + 1}
                         </span>
                         {step.label}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -1820,6 +2236,28 @@ export default function HoldedOnboardingClient({
                         </div>
                       ) : null}
 
+                      <div className="mt-4 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700">
+                        Pulsa <strong>Siguiente</strong> para comprobar si este correo ya estaba
+                        identificado. Si todavia no lo estaba, te enviaremos el enlace y podras
+                        volver a pulsar <strong>Siguiente</strong> cuando lo confirmes, aunque lo
+                        abras en otro dispositivo.
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          onClick={handleIdentityNext}
+                          disabled={
+                            identitySubmitting ||
+                            !normalizeText(manualEmail) ||
+                            !activeOnboardingToken
+                          }
+                          className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {identitySubmitting ? 'Comprobando...' : 'Siguiente'}
+                        </button>
+                      </div>
+
                       {identityMessage ? (
                         <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
                           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
@@ -1852,33 +2290,44 @@ export default function HoldedOnboardingClient({
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium text-neutral-700">
-                          Nombre
+                          Nombre <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={contactFirstName}
-                            onChange={(event) => setContactFirstName(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setContactFirstName(event.target.value);
+                              clearFieldError('contactFirstName');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactFirstName))}`}
                             placeholder="Nombre"
                             autoComplete="given-name"
                           />
+                          {renderFieldError(fieldErrors.contactFirstName)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Apellidos
+                          Apellidos <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={contactLastName}
-                            onChange={(event) => setContactLastName(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setContactLastName(event.target.value);
+                              clearFieldError('contactLastName');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactLastName))}`}
                             placeholder="Apellidos"
                             autoComplete="family-name"
                           />
+                          {renderFieldError(fieldErrors.contactLastName)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Rol en la empresa
+                          Rol en la empresa <span className="text-rose-600">*</span>
                           <select
                             value={contactRole}
-                            onChange={(event) => setContactRole(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setContactRole(event.target.value);
+                              clearFieldError('contactRole');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactRole))}`}
                           >
                             <option value="">Selecciona tu rol</option>
                             {COMPANY_ROLE_OPTIONS.map((option) => (
@@ -1887,17 +2336,32 @@ export default function HoldedOnboardingClient({
                               </option>
                             ))}
                           </select>
+                          {renderFieldError(fieldErrors.contactRole)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
                           Telefono
-                          <input
-                            type="tel"
-                            value={contactPhone}
-                            onChange={(event) => setContactPhone(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                            placeholder="600 000 000"
-                            autoComplete="tel"
-                          />
+                          <div className="mt-2 grid gap-3 sm:grid-cols-[220px_minmax(0,1fr)]">
+                            <select
+                              value={contactPhoneDialCode}
+                              onChange={(event) => setContactPhoneDialCode(event.target.value)}
+                              className={getFieldClass(false)}
+                              aria-label="Prefijo telefonico"
+                            >
+                              {PHONE_COUNTRY_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="tel"
+                              value={contactPhone}
+                              onChange={(event) => setContactPhone(event.target.value)}
+                              className={getFieldClass(false)}
+                              placeholder="600 000 000"
+                              autoComplete="tel"
+                            />
+                          </div>
                         </label>
                       </div>
 
@@ -1912,7 +2376,7 @@ export default function HoldedOnboardingClient({
                             onClick={() => goToDirectStep('identity')}
                             className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
                           >
-                            Cambiar correo o Google
+                            Volver
                           </button>
                         ) : null}
                         <button
@@ -1944,33 +2408,44 @@ export default function HoldedOnboardingClient({
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
-                          Razon social
+                          Razon social <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyLegalName}
-                            onChange={(event) => setCompanyLegalName(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyLegalName(event.target.value);
+                              clearFieldError('companyLegalName');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyLegalName))}`}
                             placeholder="Tu empresa, S.L."
                             autoComplete="organization"
                           />
+                          {renderFieldError(fieldErrors.companyLegalName)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          CIF / NIF
+                          CIF / NIF <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyTaxId}
-                            onChange={(event) => setCompanyTaxId(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyTaxId(event.target.value);
+                              clearFieldError('companyTaxId');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyTaxId))}`}
                             placeholder="B12345678"
                             autoComplete="off"
                           />
+                          {renderFieldError(fieldErrors.companyTaxId)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Sector (CNAE base)
+                          Sector (CNAE base) <span className="text-rose-600">*</span>
                           <select
                             value={companySectorCode}
-                            onChange={(event) => setCompanySectorCode(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanySectorCode(event.target.value);
+                              clearFieldError('companySectorCode');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companySectorCode))}`}
                           >
                             <option value="">Selecciona el sector principal</option>
                             {CNAE_SECTION_OPTIONS.map((option) => (
@@ -1979,61 +2454,82 @@ export default function HoldedOnboardingClient({
                               </option>
                             ))}
                           </select>
+                          {renderFieldError(fieldErrors.companySectorCode)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
-                          Domicilio
+                          Domicilio <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyAddress}
-                            onChange={(event) => setCompanyAddress(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyAddress(event.target.value);
+                              clearFieldError('companyAddress');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyAddress))}`}
                             placeholder="Calle, numero, nave o local"
                             autoComplete="street-address"
                           />
+                          {renderFieldError(fieldErrors.companyAddress)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Codigo postal
+                          Codigo postal <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyPostalCode}
-                            onChange={(event) => setCompanyPostalCode(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyPostalCode(event.target.value);
+                              clearFieldError('companyPostalCode');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyPostalCode))}`}
                             placeholder="28001"
                             autoComplete="postal-code"
                           />
+                          {renderFieldError(fieldErrors.companyPostalCode)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Ciudad
+                          Ciudad <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyCity}
-                            onChange={(event) => setCompanyCity(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyCity(event.target.value);
+                              clearFieldError('companyCity');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyCity))}`}
                             placeholder="Madrid"
                             autoComplete="address-level2"
                           />
+                          {renderFieldError(fieldErrors.companyCity)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Provincia
+                          Provincia <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyProvince}
-                            onChange={(event) => setCompanyProvince(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyProvince(event.target.value);
+                              clearFieldError('companyProvince');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyProvince))}`}
                             placeholder="Madrid"
                             autoComplete="address-level1"
                           />
+                          {renderFieldError(fieldErrors.companyProvince)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Pais
+                          Pais <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyCountry}
-                            onChange={(event) => setCompanyCountry(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyCountry(event.target.value);
+                              clearFieldError('companyCountry');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyCountry))}`}
                             placeholder="Espana"
                             autoComplete="country-name"
                           />
+                          {renderFieldError(fieldErrors.companyCountry)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
                           Pagina web (opcional)
@@ -2261,70 +2757,104 @@ export default function HoldedOnboardingClient({
                         className="mt-4 grid gap-4 sm:grid-cols-2"
                       >
                         <label className="block text-sm font-medium text-neutral-700">
-                          Razon social
+                          Razon social <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyLegalName}
-                            onChange={(event) => setCompanyLegalName(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyLegalName(event.target.value);
+                              clearFieldError('companyLegalName');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyLegalName))}`}
                             placeholder="Tu empresa, S.L."
                             autoComplete="organization"
                           />
+                          {renderFieldError(fieldErrors.companyLegalName)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          NIF / CIF
+                          NIF / CIF <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyTaxId}
-                            onChange={(event) => setCompanyTaxId(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyTaxId(event.target.value);
+                              clearFieldError('companyTaxId');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyTaxId))}`}
                             placeholder="B12345678"
                             autoComplete="off"
                           />
+                          {renderFieldError(fieldErrors.companyTaxId)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Nombre
+                          Nombre <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={contactFirstName}
-                            onChange={(event) => setContactFirstName(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setContactFirstName(event.target.value);
+                              clearFieldError('contactFirstName');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactFirstName))}`}
                             placeholder="Nombre"
                             autoComplete="given-name"
                           />
+                          {renderFieldError(fieldErrors.contactFirstName)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Apellidos
+                          Apellidos <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={contactLastName}
-                            onChange={(event) => setContactLastName(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setContactLastName(event.target.value);
+                              clearFieldError('contactLastName');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactLastName))}`}
                             placeholder="Apellidos"
                             autoComplete="family-name"
                           />
+                          {renderFieldError(fieldErrors.contactLastName)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Correo principal en Holded
+                          Correo principal en Holded <span className="text-rose-600">*</span>
                           <input
                             type="email"
                             value={contactEmail}
-                            onChange={(event) => setContactEmail(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setContactEmail(event.target.value);
+                              clearFieldError('contactEmail');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactEmail))}`}
                             placeholder="nombre@empresa.com"
                             autoComplete="email"
                           />
+                          {renderFieldError(fieldErrors.contactEmail)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
                           Telefono
-                          <input
-                            type="tel"
-                            value={contactPhone}
-                            onChange={(event) => setContactPhone(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
-                            placeholder="600 000 000"
-                            autoComplete="tel"
-                          />
+                          <div className="mt-2 grid gap-3">
+                            <select
+                              value={contactPhoneDialCode}
+                              onChange={(event) => setContactPhoneDialCode(event.target.value)}
+                              className={getFieldClass(false)}
+                              aria-label="Prefijo telefonico"
+                            >
+                              {PHONE_COUNTRY_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="tel"
+                              value={contactPhone}
+                              onChange={(event) => setContactPhone(event.target.value)}
+                              className={getFieldClass(false)}
+                              placeholder="600 000 000"
+                              autoComplete="tel"
+                            />
+                          </div>
                         </label>
                         <div className="sm:col-span-2 flex flex-wrap gap-3">
                           <button
@@ -2573,43 +3103,43 @@ export default function HoldedOnboardingClient({
                       Ultimo relleno recuperado
                     </div>
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      {savedPrefill?.companyName ? (
+                      {savedPrefillState?.companyName ? (
                         <div>
                           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
                             Empresa
                           </div>
                           <div className="mt-1 text-sm font-semibold text-black">
-                            {savedPrefill.companyName}
+                            {savedPrefillState.companyName}
                           </div>
                         </div>
                       ) : null}
-                      {savedPrefill?.companyTaxId ? (
+                      {savedPrefillState?.companyTaxId ? (
                         <div>
                           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
                             NIF / CIF
                           </div>
                           <div className="mt-1 text-sm text-neutral-700">
-                            {savedPrefill.companyTaxId}
+                            {savedPrefillState.companyTaxId}
                           </div>
                         </div>
                       ) : null}
-                      {savedPrefill?.contactEmail ? (
+                      {savedPrefillState?.contactEmail ? (
                         <div>
                           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
                             Correo verificado
                           </div>
                           <div className="mt-1 break-all text-sm text-neutral-700">
-                            {savedPrefill.contactEmail}
+                            {savedPrefillState.contactEmail}
                           </div>
                         </div>
                       ) : null}
-                      {savedPrefill?.maskedApiKey ? (
+                      {savedPrefillState?.maskedApiKey ? (
                         <div>
                           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
                             Ultima API guardada
                           </div>
                           <div className="mt-1 font-mono text-sm text-neutral-700">
-                            {savedPrefill.maskedApiKey}
+                            {savedPrefillState.maskedApiKey}
                           </div>
                         </div>
                       ) : null}
@@ -2622,14 +3152,16 @@ export default function HoldedOnboardingClient({
                         </span>
                       </div>
                     ) : null}
-                    {savedPrefill?.lastSyncAt ? (
+                    {savedPrefillState?.lastSyncAt ? (
                       <div className="mt-1 text-sm text-neutral-600">
                         Ultima validacion registrada:{' '}
-                        {new Date(savedPrefill.lastSyncAt).toLocaleString('es-ES')}
+                        {new Date(savedPrefillState.lastSyncAt).toLocaleString('es-ES')}
                       </div>
                     ) : null}
-                    {savedPrefill?.lastError ? (
-                      <div className="mt-2 text-sm text-amber-700">{savedPrefill.lastError}</div>
+                    {savedPrefillState?.lastError ? (
+                      <div className="mt-2 text-sm text-amber-700">
+                        {savedPrefillState.lastError}
+                      </div>
                     ) : null}
                   </div>
                 ) : null}
@@ -2665,59 +3197,123 @@ export default function HoldedOnboardingClient({
                     {usesInlineDirectForm ? (
                       <div className="grid gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium text-neutral-700">
-                          Empresa
+                          Empresa <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyLegalName}
-                            onChange={(event) => setCompanyLegalName(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyLegalName(event.target.value);
+                              clearFieldError('companyLegalName');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyLegalName))}`}
                             placeholder="Tu empresa, S.L."
                             autoComplete="organization"
                           />
+                          {renderFieldError(fieldErrors.companyLegalName)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          NIF / CIF
+                          NIF / CIF <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={companyTaxId}
-                            onChange={(event) => setCompanyTaxId(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setCompanyTaxId(event.target.value);
+                              clearFieldError('companyTaxId');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.companyTaxId))}`}
                             placeholder="B12345678"
                             autoComplete="off"
                           />
+                          {renderFieldError(fieldErrors.companyTaxId)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Nombre
+                          Nombre <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={contactFirstName}
-                            onChange={(event) => setContactFirstName(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setContactFirstName(event.target.value);
+                              clearFieldError('contactFirstName');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactFirstName))}`}
                             placeholder="Nombre"
                             autoComplete="given-name"
                           />
+                          {renderFieldError(fieldErrors.contactFirstName)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700">
-                          Apellidos
+                          Apellidos <span className="text-rose-600">*</span>
                           <input
                             type="text"
                             value={contactLastName}
-                            onChange={(event) => setContactLastName(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setContactLastName(event.target.value);
+                              clearFieldError('contactLastName');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactLastName))}`}
                             placeholder="Apellidos"
                             autoComplete="family-name"
                           />
+                          {renderFieldError(fieldErrors.contactLastName)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
-                          Correo
+                          Correo <span className="text-rose-600">*</span>
                           <input
                             type="email"
                             value={contactEmail}
-                            onChange={(event) => setContactEmail(event.target.value)}
-                            className="mt-2 h-11 w-full rounded-2xl border border-neutral-300 bg-white px-4 text-sm text-black outline-none transition focus:border-[#0b6cfb] focus:ring-4 focus:ring-[#0b6cfb]/10"
+                            onChange={(event) => {
+                              setContactEmail(event.target.value);
+                              clearFieldError('contactEmail');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactEmail))}`}
                             placeholder="nombre@empresa.com"
                             autoComplete="email"
                           />
+                          {renderFieldError(fieldErrors.contactEmail)}
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Telefono
+                          <div className="mt-2 grid gap-3">
+                            <select
+                              value={contactPhoneDialCode}
+                              onChange={(event) => setContactPhoneDialCode(event.target.value)}
+                              className={getFieldClass(false)}
+                              aria-label="Prefijo telefonico"
+                            >
+                              {PHONE_COUNTRY_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="tel"
+                              value={contactPhone}
+                              onChange={(event) => setContactPhone(event.target.value)}
+                              className={getFieldClass(false)}
+                              placeholder="600 000 000"
+                              autoComplete="tel"
+                            />
+                          </div>
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700">
+                          Rol en la empresa <span className="text-rose-600">*</span>
+                          <select
+                            value={contactRole}
+                            onChange={(event) => {
+                              setContactRole(event.target.value);
+                              clearFieldError('contactRole');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactRole))}`}
+                          >
+                            <option value="">Selecciona tu rol</option>
+                            {COMPANY_ROLE_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          {renderFieldError(fieldErrors.contactRole)}
                         </label>
                       </div>
                     ) : null}
@@ -2736,13 +3332,15 @@ export default function HoldedOnboardingClient({
                             setApiKey(event.target.value);
                             setValidationToken(null);
                             setValidatedApiKey('');
+                            clearFieldError('apiKey');
                           }}
                           autoComplete="off"
                           spellCheck={false}
                           placeholder={uiCopy.apiKeyPlaceholder}
-                          className="h-12 w-full rounded-2xl border border-neutral-300 bg-white pl-11 pr-4 text-sm text-black outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                          className={getFieldClass(Boolean(fieldErrors.apiKey), 'red', true)}
                         />
                       </div>
+                      {renderFieldError(fieldErrors.apiKey)}
                     </label>
 
                     <div className="flex items-start gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 text-sm leading-6 text-neutral-700">

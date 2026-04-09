@@ -70,6 +70,12 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
   };
 
+  const getFetchCall = (fetchMock: jest.Mock, url: string, occurrence = 0) => {
+    const matches = fetchMock.mock.calls.filter(([requestUrl]) => String(requestUrl) === url);
+    expect(matches[occurrence]).toBeDefined();
+    return matches[occurrence]!;
+  };
+
   beforeEach(() => {
     fetchMock.mockReset();
     global.fetch = fetchMock as unknown as typeof fetch;
@@ -90,7 +96,7 @@ describe('HoldedOnboardingClient', () => {
       screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/Si tu empresa ya estaba preparada aqui/i)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Cambiar correo o Google' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Volver' }).length).toBeGreaterThan(0);
   });
 
   it('shows the identity gate and sends a verification email before exposing the API key step', async () => {
@@ -194,6 +200,96 @@ describe('HoldedOnboardingClient', () => {
       expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
     });
     expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
+  });
+
+  it('lets the user re-check with Siguiente after confirming the email in another device', async () => {
+    const identityResponses = [
+      {
+        ok: true,
+        emailSent: true,
+        onboardingToken: 'pending-onboarding-token',
+        identity: {
+          authMethod: 'email',
+          email: 'verified@example.com',
+          emailVerified: false,
+        },
+      },
+      {
+        ok: true,
+        alreadyVerified: true,
+        emailSent: false,
+        onboardingToken: 'verified-onboarding-token',
+        identity: {
+          authMethod: 'email',
+          email: 'verified@example.com',
+          emailVerified: true,
+          firstName: 'Ksenia',
+          lastName: 'Ivanova Lopez',
+          verifiedAt: '2026-04-09T11:00:00.000Z',
+        },
+      },
+    ];
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url === '/api/onboarding/prefill') {
+        return {
+          ok: true,
+          json: jest.fn().mockResolvedValue({
+            ok: true,
+            summary: null,
+            savedPrefill: null,
+            tenantIdHint: null,
+          }),
+        };
+      }
+
+      const nextPayload = identityResponses.shift();
+      return {
+        ok: true,
+        json: jest.fn().mockResolvedValue(nextPayload),
+      };
+    });
+
+    render(
+      <HoldedOnboardingClient
+        {...baseProps}
+        captureMode={false}
+        requiresVerifiedIdentity
+        identity={{
+          authMethod: 'unknown',
+          email: null,
+          emailVerified: false,
+          firstName: null,
+          lastName: null,
+          verifiedAt: null,
+        }}
+        onboardingToken="onboarding-token-123"
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('tu@empresa.com'), {
+      target: { value: 'verified@example.com' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+
+    expect(
+      await screen.findByText(/Te hemos enviado un enlace de verificacion/i)
+    ).toBeInTheDocument();
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body || '{}'))).toEqual(
+      expect.objectContaining({ email: 'verified@example.com', checkOnly: false })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body || '{}'))).toEqual(
+      expect.objectContaining({ email: 'verified@example.com', checkOnly: true })
+    );
   });
 
   it('adopts the verified email identity from refreshed props and unlocks the user step', async () => {
@@ -322,9 +418,9 @@ describe('HoldedOnboardingClient', () => {
       );
     });
 
-    expect(await screen.findByLabelText('Nombre')).toHaveValue('Ksenia');
-    expect(screen.getByLabelText('Apellidos')).toHaveValue('Ivanova Lopez');
-    expect(screen.getByLabelText('Rol en la empresa')).toHaveValue('');
+    expect(await screen.findByLabelText(/^Nombre/)).toHaveValue('Ksenia');
+    expect(screen.getByLabelText(/^Apellidos/)).toHaveValue('Ivanova Lopez');
+    expect(screen.getByLabelText(/^Rol en la empresa/)).toHaveValue('');
   });
 
   it('shows a friendly message when the Google popup closes before finishing', async () => {
@@ -480,9 +576,7 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        1,
-        '/api/onboarding/tenant',
+      expect(getFetchCall(fetchMock, '/api/integrations/accounting/validate')[1]).toEqual(
         expect.objectContaining({
           method: 'POST',
         })
@@ -490,41 +584,19 @@ describe('HoldedOnboardingClient', () => {
     });
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        2,
-        '/api/session/tenant-switch',
+      expect(getFetchCall(fetchMock, '/api/integrations/accounting/connect')[1]).toEqual(
         expect.objectContaining({
           method: 'POST',
         })
       );
     });
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        3,
-        '/api/integrations/accounting/validate',
-        expect.objectContaining({
-          method: 'POST',
-        })
-      );
-    });
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        4,
-        '/api/integrations/accounting/connect',
-        expect.objectContaining({
-          method: 'POST',
-        })
-      );
-    });
-
-    expect(JSON.parse(fetchMock.mock.calls[2][1].body as string)).toEqual(
-      expect.objectContaining({ acceptedTerms: true, acceptedPrivacy: true })
-    );
-    expect(JSON.parse(fetchMock.mock.calls[3][1].body as string)).toEqual(
-      expect.objectContaining({ acceptedTerms: true, acceptedPrivacy: true })
-    );
+    expect(
+      JSON.parse(String(getFetchCall(fetchMock, '/api/integrations/accounting/validate')[1].body))
+    ).toEqual(expect.objectContaining({ acceptedTerms: true, acceptedPrivacy: true }));
+    expect(
+      JSON.parse(String(getFetchCall(fetchMock, '/api/integrations/accounting/connect')[1].body))
+    ).toEqual(expect.objectContaining({ acceptedTerms: true, acceptedPrivacy: true }));
 
     expect(screen.queryByText('Datos de empresa y contacto')).not.toBeInTheDocument();
     expect(window.location.hash).toBe('#connected');
@@ -561,9 +633,7 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        3,
-        '/api/integrations/accounting/validate',
+      expect(getFetchCall(fetchMock, '/api/integrations/accounting/validate')[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
             'x-isaak-tenant-id': 'tenant-demo',
@@ -573,9 +643,7 @@ describe('HoldedOnboardingClient', () => {
     });
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        4,
-        '/api/integrations/accounting/connect',
+      expect(getFetchCall(fetchMock, '/api/integrations/accounting/connect')[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
             'x-isaak-tenant-id': 'tenant-demo',
@@ -614,9 +682,7 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        4,
-        '/api/integrations/accounting/connect',
+      expect(getFetchCall(fetchMock, '/api/integrations/accounting/connect')[1]).toEqual(
         expect.objectContaining({
           method: 'POST',
         })
@@ -687,44 +753,44 @@ describe('HoldedOnboardingClient', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('Nombre'), {
+    fireEvent.change(screen.getByLabelText(/^Nombre/), {
       target: { value: 'Ksenia' },
     });
-    fireEvent.change(screen.getByLabelText('Apellidos'), {
+    fireEvent.change(screen.getByLabelText(/^Apellidos/), {
       target: { value: 'Ivanova Lopez' },
     });
-    fireEvent.change(screen.getByLabelText('Rol en la empresa'), {
+    fireEvent.change(screen.getByLabelText(/^Rol en la empresa/), {
       target: { value: 'owner' },
     });
-    fireEvent.change(screen.getByLabelText('Telefono'), {
-      target: { value: '+34 600 111 222' },
+    fireEvent.change(screen.getByPlaceholderText('600 000 000'), {
+      target: { value: '600 111 222' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
-    fireEvent.change(screen.getByLabelText('Razon social'), {
+    fireEvent.change(screen.getByLabelText(/^Razon social/), {
       target: { value: 'Empresa Demo SL' },
     });
-    fireEvent.change(screen.getByLabelText('CIF / NIF'), {
+    fireEvent.change(screen.getByLabelText(/^CIF \/ NIF/), {
       target: { value: 'B12345678' },
     });
-    fireEvent.change(screen.getByLabelText('Sector (CNAE base)'), {
+    fireEvent.change(screen.getByLabelText(/^Sector \(CNAE base\)/), {
       target: { value: 'M' },
     });
-    fireEvent.change(screen.getByLabelText('Domicilio'), {
+    fireEvent.change(screen.getByLabelText(/^Domicilio/), {
       target: { value: 'Calle Mayor 1' },
     });
-    fireEvent.change(screen.getByLabelText('Codigo postal'), {
+    fireEvent.change(screen.getByLabelText(/^Codigo postal/), {
       target: { value: '28001' },
     });
-    fireEvent.change(screen.getByLabelText('Ciudad'), {
+    fireEvent.change(screen.getByLabelText(/^Ciudad/), {
       target: { value: 'Madrid' },
     });
-    fireEvent.change(screen.getByLabelText('Provincia'), {
+    fireEvent.change(screen.getByLabelText(/^Provincia/), {
       target: { value: 'Madrid' },
     });
-    fireEvent.change(screen.getByLabelText('Pais'), {
+    fireEvent.change(screen.getByLabelText(/^Pais/), {
       target: { value: 'Espana' },
     });
-    fireEvent.change(screen.getByLabelText('Pagina web (opcional)'), {
+    fireEvent.change(screen.getByLabelText(/^Pagina web \(opcional\)/), {
       target: { value: 'https://empresa-demo.es' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
@@ -734,16 +800,14 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar Holded' }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        1,
-        '/api/onboarding/tenant',
+      expect(getFetchCall(fetchMock, '/api/onboarding/tenant')[1]).toEqual(
         expect.objectContaining({
           method: 'POST',
         })
       );
     });
 
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual(
+    expect(JSON.parse(String(getFetchCall(fetchMock, '/api/onboarding/tenant')[1].body))).toEqual(
       expect.objectContaining({
         country: 'Espana',
         extra: expect.objectContaining({
@@ -762,9 +826,7 @@ describe('HoldedOnboardingClient', () => {
     );
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        2,
-        '/api/integrations/accounting/validate',
+      expect(getFetchCall(fetchMock, '/api/integrations/accounting/validate')[1]).toEqual(
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -776,9 +838,7 @@ describe('HoldedOnboardingClient', () => {
     });
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        3,
-        '/api/integrations/accounting/connect',
+      expect(getFetchCall(fetchMock, '/api/integrations/accounting/connect')[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
             'x-isaak-tenant-id': 'tenant-123',
@@ -850,44 +910,44 @@ describe('HoldedOnboardingClient', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('Nombre'), {
+    fireEvent.change(screen.getByLabelText(/^Nombre/), {
       target: { value: 'Ksenia' },
     });
-    fireEvent.change(screen.getByLabelText('Apellidos'), {
+    fireEvent.change(screen.getByLabelText(/^Apellidos/), {
       target: { value: 'Ivanova Lopez' },
     });
-    fireEvent.change(screen.getByLabelText('Rol en la empresa'), {
+    fireEvent.change(screen.getByLabelText(/^Rol en la empresa/), {
       target: { value: 'owner' },
     });
-    fireEvent.change(screen.getByLabelText('Telefono'), {
-      target: { value: '+34 600 111 222' },
+    fireEvent.change(screen.getByPlaceholderText('600 000 000'), {
+      target: { value: '600 111 222' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
-    fireEvent.change(screen.getByLabelText('Razon social'), {
+    fireEvent.change(screen.getByLabelText(/^Razon social/), {
       target: { value: 'Empresa Demo SL' },
     });
-    fireEvent.change(screen.getByLabelText('CIF / NIF'), {
+    fireEvent.change(screen.getByLabelText(/^CIF \/ NIF/), {
       target: { value: 'B12345678' },
     });
-    fireEvent.change(screen.getByLabelText('Sector (CNAE base)'), {
+    fireEvent.change(screen.getByLabelText(/^Sector \(CNAE base\)/), {
       target: { value: 'M' },
     });
-    fireEvent.change(screen.getByLabelText('Domicilio'), {
+    fireEvent.change(screen.getByLabelText(/^Domicilio/), {
       target: { value: 'Calle Mayor 1' },
     });
-    fireEvent.change(screen.getByLabelText('Codigo postal'), {
+    fireEvent.change(screen.getByLabelText(/^Codigo postal/), {
       target: { value: '28001' },
     });
-    fireEvent.change(screen.getByLabelText('Ciudad'), {
+    fireEvent.change(screen.getByLabelText(/^Ciudad/), {
       target: { value: 'Madrid' },
     });
-    fireEvent.change(screen.getByLabelText('Provincia'), {
+    fireEvent.change(screen.getByLabelText(/^Provincia/), {
       target: { value: 'Madrid' },
     });
-    fireEvent.change(screen.getByLabelText('Pais'), {
+    fireEvent.change(screen.getByLabelText(/^Pais/), {
       target: { value: 'Espana' },
     });
-    fireEvent.change(screen.getByLabelText('Pagina web (opcional)'), {
+    fireEvent.change(screen.getByLabelText(/^Pagina web \(opcional\)/), {
       target: { value: 'https://empresa-demo.es' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));

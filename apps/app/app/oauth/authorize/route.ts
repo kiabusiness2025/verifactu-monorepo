@@ -212,8 +212,12 @@ export async function GET(request: NextRequest) {
     if (resolved.tenantId && (!hasHoldedConnection || !connectionConfirmed)) {
       const authorizeUrl = new URL(url.toString());
       authorizeUrl.searchParams.delete('connection_confirmed');
+      const redirectTenantId = tenantIdQuery ?? onboardingSession?.tenantId ?? resolved.tenantId;
       if (onboardingToken) {
         authorizeUrl.searchParams.set('onboarding_token', onboardingToken);
+      }
+      if (redirectTenantId) {
+        authorizeUrl.searchParams.set('tenant_id', redirectTenantId);
       }
 
       const onboardingUrl = new URL('/onboarding/holded', request.nextUrl.origin);
@@ -223,8 +227,8 @@ export async function GET(request: NextRequest) {
       if (onboardingToken) {
         onboardingUrl.searchParams.set('onboarding_token', onboardingToken);
       }
-      if (tenantIdQuery) {
-        onboardingUrl.searchParams.set('tenant_id', tenantIdQuery);
+      if (redirectTenantId) {
+        onboardingUrl.searchParams.set('tenant_id', redirectTenantId);
       }
 
       if (!hasHoldedConnection) {

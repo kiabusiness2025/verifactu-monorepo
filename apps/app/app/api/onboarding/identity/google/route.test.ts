@@ -17,6 +17,10 @@ jest.mock('@/lib/oauth/mcp', () => ({
   mintHoldedOnboardingTokenForSubject: jest.fn(async () => 'google-onboarding-token'),
 }));
 
+jest.mock('@/lib/integrations/holdedVerifiedEmailIdentities', () => ({
+  rememberVerifiedHoldedEmailIdentity: jest.fn(async () => null),
+}));
+
 import { NextRequest } from 'next/server';
 import { POST } from './route';
 import { verifyIdToken } from '@/lib/firebase-admin';
@@ -24,6 +28,7 @@ import {
   resolveHoldedOnboardingSession,
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
+import { rememberVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 
 describe('POST /api/onboarding/identity/google', () => {
@@ -90,6 +95,13 @@ describe('POST /api/onboarding/identity/google', () => {
         tenantId: 'tenant-123',
         authMethod: 'google',
         emailVerified: true,
+      })
+    );
+    expect(rememberVerifiedHoldedEmailIdentity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        uid: 'google-user-1',
+        email: 'demo@example.com',
+        authMethod: 'google',
       })
     );
   });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAppUrl } from '@verifactu/utils';
 import { consumeHoldedEmailVerificationTokenFromCode } from '@/lib/integrations/holdedEmailVerificationLinks';
+import { rememberVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import {
   mintHoldedOnboardingTokenForSubject,
   verifyHoldedEmailVerificationToken,
@@ -38,6 +39,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  const verifiedAt = new Date().toISOString();
+
+  await rememberVerifiedHoldedEmailIdentity({
+    uid: payload.uid,
+    email: payload.email,
+    authMethod: 'email',
+    verifiedAt,
+  }).catch((error) => {
+    console.error('[onboarding/holded/verify] failed to remember verified email', {
+      uid: payload.uid,
+      email: payload.email,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  });
+
   const onboardingToken = await mintHoldedOnboardingTokenForSubject({
     uid: payload.uid,
     email: payload.email,
@@ -48,7 +64,7 @@ export async function GET(request: NextRequest) {
     emailVerified: true,
     firstName: payload.firstName ?? null,
     lastName: payload.lastName ?? null,
-    verifiedAt: new Date().toISOString(),
+    verifiedAt,
   });
 
   redirectUrl.searchParams.set('onboarding_token', onboardingToken);

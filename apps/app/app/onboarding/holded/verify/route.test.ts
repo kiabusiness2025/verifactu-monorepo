@@ -13,9 +13,14 @@ jest.mock('@/lib/integrations/holdedEmailVerificationLinks', () => ({
   consumeHoldedEmailVerificationTokenFromCode: jest.fn(async () => null),
 }));
 
+jest.mock('@/lib/integrations/holdedVerifiedEmailIdentities', () => ({
+  rememberVerifiedHoldedEmailIdentity: jest.fn(async () => null),
+}));
+
 import { NextRequest } from 'next/server';
 import { GET } from './route';
 import { consumeHoldedEmailVerificationTokenFromCode } from '@/lib/integrations/holdedEmailVerificationLinks';
+import { rememberVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import {
   mintHoldedOnboardingTokenForSubject,
   verifyHoldedEmailVerificationToken,
@@ -61,6 +66,13 @@ describe('GET /onboarding/holded/verify', () => {
         email: 'verified@example.com',
         authMethod: 'email',
         emailVerified: true,
+      })
+    );
+    expect(rememberVerifiedHoldedEmailIdentity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        uid: 'holded-guest-1',
+        email: 'verified@example.com',
+        authMethod: 'email',
       })
     );
   });
