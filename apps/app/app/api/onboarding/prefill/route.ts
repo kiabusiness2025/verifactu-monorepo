@@ -100,132 +100,147 @@ async function resolveIdentityOnboardingSession(
 }
 
 export async function POST(request: NextRequest) {
-  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const onboardingSession = await resolveIdentityOnboardingSession(request, body);
+  try {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const onboardingSession = await resolveIdentityOnboardingSession(request, body);
 
-  if (!isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
-    return NextResponse.json(
-      { ok: false, error: 'identity verification required' },
-      { status: 403 }
-    );
-  }
+    if (!isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
+      return NextResponse.json(
+        { ok: false, error: 'identity verification required' },
+        { status: 403 }
+      );
+    }
 
-  const normalizedUid = normalizeText(onboardingSession?.uid);
-  const normalizedEmail = normalizeText(onboardingSession?.email)?.toLowerCase() || null;
+    const normalizedUid = normalizeText(onboardingSession?.uid);
+    const normalizedEmail = normalizeText(onboardingSession?.email)?.toLowerCase() || null;
 
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [
-        ...(normalizedUid ? [{ authSubject: normalizedUid }] : []),
-        ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
-      ],
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-    },
-  });
-
-  if (!user) {
-    return NextResponse.json({ ok: true, summary: null, tenantIdHint: null, savedPrefill: null });
-  }
-
-  const [preference, memberships] = await Promise.all([
-    prisma.userPreference.findUnique({
-      where: { userId: user.id },
-      select: { preferredTenantId: true },
-    }),
-    prisma.membership.findMany({
+    const user = await prisma.user.findFirst({
       where: {
-        userId: user.id,
-        status: 'active',
+        OR: [
+          ...(normalizedUid ? [{ authSubject: normalizedUid }] : []),
+          ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
+        ],
       },
-      orderBy: { createdAt: 'desc' },
       select: {
-        tenantId: true,
-        tenant: {
-          select: {
-            id: true,
-            nif: true,
-            isDemo: true,
-            name: true,
-            legalName: true,
-            profile: {
-              select: {
-                tradeName: true,
-                legalName: true,
-                representative: true,
-                representativeRole: true,
-                email: true,
-                phone: true,
-                website: true,
-                cnae: true,
-                cnaeCode: true,
-                cnaeText: true,
-                address: true,
-                postalCode: true,
-                city: true,
-                province: true,
-                country: true,
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ ok: true, summary: null, tenantIdHint: null, savedPrefill: null });
+    }
+
+    const [preference, memberships] = await Promise.all([
+      prisma.userPreference.findUnique({
+        where: { userId: user.id },
+        select: { preferredTenantId: true },
+      }),
+      prisma.membership.findMany({
+        where: {
+          userId: user.id,
+          status: 'active',
+        },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          tenantId: true,
+          tenant: {
+            select: {
+              id: true,
+              nif: true,
+              isDemo: true,
+              name: true,
+              legalName: true,
+              profile: {
+                select: {
+                  tradeName: true,
+                  legalName: true,
+                  representative: true,
+                  representativeRole: true,
+                  email: true,
+                  phone: true,
+                  website: true,
+                  cnae: true,
+                  cnaeCode: true,
+                  cnaeText: true,
+                  address: true,
+                  postalCode: true,
+                  city: true,
+                  province: true,
+                  country: true,
+                },
               },
             },
           },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
 
-  const preferredMembership = preference?.preferredTenantId
-    ? memberships.find((membership) => membership.tenantId === preference.preferredTenantId) || null
-    : null;
-  const realMemberships = memberships.filter((membership) => !membership.tenant.isDemo);
-  const selectedMembership = preferredMembership || realMemberships[0] || memberships[0] || null;
+    const preferredMembership = preference?.preferredTenantId
+      ? memberships.find((membership) => membership.tenantId === preference.preferredTenantId) ||
+        null
+      : null;
+    const realMemberships = memberships.filter((membership) => !membership.tenant.isDemo);
+    const selectedMembership = preferredMembership || realMemberships[0] || memberships[0] || null;
 
-  if (!selectedMembership) {
-    return NextResponse.json({ ok: true, summary: null, tenantIdHint: null, savedPrefill: null });
+    if (!selectedMembership) {
+      return NextResponse.json({ ok: true, summary: null, tenantIdHint: null, savedPrefill: null });
+    }
+
+    const summary = buildHoldedSummaryFromTenant(selectedMembership.tenant, {
+      contactName:
+        normalizeMeaningfulPersonName(onboardingSession?.name) ||
+        normalizeMeaningfulPersonName(user.name),
+      contactEmail: normalizedEmail || normalizeText(user.email),
+    });
+
+    const savedConnection = await resolveSharedHoldedConnectionForTenant(
+      selectedMembership.tenantId,
+      'chatgpt'
+    ).catch(() => null);
+
+    const refreshedToken = await mintHoldedOnboardingTokenForSubject({
+      uid: onboardingSession!.uid,
+      email: onboardingSession!.email,
+      name: onboardingSession!.name,
+      tenantId: selectedMembership.tenantId,
+      tenantBound: true,
+      authMethod: onboardingSession!.authMethod,
+      emailVerified: onboardingSession!.emailVerified,
+      firstName: onboardingSession!.firstName,
+      lastName: onboardingSession!.lastName,
+      verifiedAt: onboardingSession!.verifiedAt,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      tenantIdHint: selectedMembership.tenantId,
+      onboardingToken: refreshedToken,
+      summary,
+      savedPrefill: savedConnection
+        ? {
+            companyName: normalizeText(summary.companyName),
+            companyTaxId: normalizeText(summary.companyTaxId),
+            contactEmail: normalizeText(summary.contactEmail),
+            maskedApiKey: maskSecret(savedConnection.apiKey),
+            connectionStatus: savedConnection.status ?? null,
+            lastSyncAt: savedConnection.lastSyncAt ?? null,
+            lastError: savedConnection.lastError ?? null,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error('[api/onboarding/prefill] failed to resolve remembered prefill', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+
+    return NextResponse.json({
+      ok: true,
+      summary: null,
+      tenantIdHint: null,
+      savedPrefill: null,
+      degraded: true,
+    });
   }
-
-  const summary = buildHoldedSummaryFromTenant(selectedMembership.tenant, {
-    contactName:
-      normalizeMeaningfulPersonName(onboardingSession?.name) ||
-      normalizeMeaningfulPersonName(user.name),
-    contactEmail: normalizedEmail || normalizeText(user.email),
-  });
-
-  const savedConnection = await resolveSharedHoldedConnectionForTenant(
-    selectedMembership.tenantId,
-    'chatgpt'
-  ).catch(() => null);
-
-  const refreshedToken = await mintHoldedOnboardingTokenForSubject({
-    uid: onboardingSession!.uid,
-    email: onboardingSession!.email,
-    name: onboardingSession!.name,
-    tenantId: selectedMembership.tenantId,
-    tenantBound: true,
-    authMethod: onboardingSession!.authMethod,
-    emailVerified: onboardingSession!.emailVerified,
-    firstName: onboardingSession!.firstName,
-    lastName: onboardingSession!.lastName,
-    verifiedAt: onboardingSession!.verifiedAt,
-  });
-
-  return NextResponse.json({
-    ok: true,
-    tenantIdHint: selectedMembership.tenantId,
-    onboardingToken: refreshedToken,
-    summary,
-    savedPrefill: savedConnection
-      ? {
-          companyName: normalizeText(summary.companyName),
-          companyTaxId: normalizeText(summary.companyTaxId),
-          contactEmail: normalizeText(summary.contactEmail),
-          maskedApiKey: maskSecret(savedConnection.apiKey),
-          connectionStatus: savedConnection.status ?? null,
-          lastSyncAt: savedConnection.lastSyncAt ?? null,
-          lastError: savedConnection.lastError ?? null,
-        }
-      : null,
-  });
 }

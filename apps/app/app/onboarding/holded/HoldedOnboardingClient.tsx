@@ -1615,7 +1615,11 @@ export default function HoldedOnboardingClient({
     }
 
     if (!createRes.ok || !createData?.ok) {
-      throw new Error(createData?.error || 'No hemos podido preparar la empresa para continuar.');
+      throw new Error(
+        createData?.detail ||
+          createData?.error ||
+          'No hemos podido preparar la empresa para continuar.'
+      );
     }
 
     const nextTenantId = typeof createData?.tenantId === 'string' ? createData.tenantId.trim() : '';
