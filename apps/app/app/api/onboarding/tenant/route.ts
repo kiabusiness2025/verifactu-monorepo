@@ -17,8 +17,6 @@ import { upsertUser } from '@/lib/tenants';
 
 type TenantPayload = {
   reuseCurrentTenant?: boolean;
-  source?: 'einforma' | 'manual';
-  einformaId?: string;
   name: string;
   legalName?: string;
   nif?: string;
@@ -32,10 +30,7 @@ type TenantPayload = {
     cnae?: string;
     cnaeCode?: string;
     cnaeText?: string;
-    legalForm?: string;
-    status?: string;
     website?: string;
-    capitalSocial?: number;
     incorporationDate?: string;
     address?: string;
     postalCode?: string;
@@ -51,11 +46,6 @@ type TenantPayload = {
     contactLastName?: string;
     email?: string;
     phone?: string;
-    employees?: number;
-    sales?: number;
-    salesYear?: number;
-    lastBalanceDate?: string;
-    raw?: unknown;
   };
 };
 
@@ -221,8 +211,6 @@ export async function POST(req: Request) {
       typeof body?.country === 'string' && body.country.trim()
         ? body.country.trim().toUpperCase()
         : 'ES';
-    const source = body?.source === 'einforma' ? 'einforma' : 'manual';
-    const einformaId = typeof body?.einformaId === 'string' ? body.einformaId.trim() : undefined;
     const reuseCurrentTenant = body?.reuseCurrentTenant === true;
     const fiscalAddress =
       body?.fiscalAddress && typeof body.fiscalAddress === 'object' ? body.fiscalAddress : null;
@@ -356,10 +344,8 @@ export async function POST(req: Request) {
         }));
 
       const extra = body?.extra;
-      const isEinforma = source === 'einforma';
       const cnaeParts = splitCnae(extra?.cnae);
       const cityParts = normalizeCity(extra?.city);
-      const profileRaw = extra?.raw && typeof extra.raw === 'object' ? extra.raw : undefined;
       const effectiveFiscalAddress =
         fiscalAddress ||
         (extra?.address || extra?.postalCode || extra?.city || extra?.province || extra?.country
@@ -373,8 +359,7 @@ export async function POST(req: Request) {
           : null);
 
       const buildTenantProfileData = (columns: TenantProfileColumnAvailability) => ({
-        source,
-        sourceId: einformaId,
+        source: 'manual',
         taxId: taxIdRaw,
         legalName: legalName || name,
         tradeName: tradeName || name,
@@ -384,10 +369,7 @@ export async function POST(req: Request) {
         cnae: extra?.cnae || undefined,
         ...(columns.cnaeCode ? { cnaeCode: extra?.cnaeCode || cnaeParts.code } : {}),
         ...(columns.cnaeText ? { cnaeText: extra?.cnaeText || cnaeParts.text } : {}),
-        legalForm: extra?.legalForm || undefined,
-        status: extra?.status || undefined,
         ...(columns.website ? { website: extra?.website || undefined } : {}),
-        capitalSocial: extra?.capitalSocial ?? undefined,
         incorporationDate: extra?.incorporationDate ? new Date(extra.incorporationDate) : undefined,
         address: extra?.address || undefined,
         ...(columns.postalCode ? { postalCode: extra?.postalCode || cityParts.postalCode } : {}),
@@ -400,9 +382,6 @@ export async function POST(req: Request) {
           : {}),
         email: companyEmail || undefined,
         phone: companyPhone || undefined,
-        einformaRaw: profileRaw,
-        einformaLastSyncAt: isEinforma ? new Date() : undefined,
-        einformaTaxIdVerified: isEinforma ? true : undefined,
       });
 
       const upsertTenantProfile = async (columns: TenantProfileColumnAvailability) =>

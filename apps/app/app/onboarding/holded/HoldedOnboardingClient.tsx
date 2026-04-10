@@ -1576,7 +1576,6 @@ export default function HoldedOnboardingClient({
       },
       body: JSON.stringify({
         reuseCurrentTenant: true,
-        source: 'manual',
         name: normalizedCompanyName,
         legalName: normalizedLegalName,
         nif: normalizedTaxId,
