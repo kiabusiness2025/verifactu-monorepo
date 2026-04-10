@@ -90,7 +90,14 @@ jest.mock('@/lib/email/holdedConnectionEmails', () => ({
 }));
 
 jest.mock('@/lib/tenantProfileSchema', () => ({
-  hasTenantProfileRepresentativeRoleColumn: jest.fn(async () => true),
+  getTenantProfileColumnAvailability: jest.fn(async () => ({
+    representativeRole: true,
+    website: true,
+    cnaeCode: true,
+    cnaeText: true,
+    postalCode: true,
+    country: true,
+  })),
 }));
 
 import { POST } from './route';

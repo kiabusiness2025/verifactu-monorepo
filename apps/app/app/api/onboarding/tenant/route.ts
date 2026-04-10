@@ -8,7 +8,7 @@ import {
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
-import { hasTenantProfileRepresentativeRoleColumn } from '@/lib/tenantProfileSchema';
+import { getTenantProfileColumnAvailability } from '@/lib/tenantProfileSchema';
 import { upsertUser } from '@/lib/tenants';
 
 type TenantPayload = {
@@ -183,7 +183,7 @@ export async function POST(req: Request) {
 
     const uid = authSession.uid;
     const body = (await req.json().catch(() => null)) as TenantPayload | null;
-    const hasRepresentativeRoleColumn = await hasTenantProfileRepresentativeRoleColumn();
+    const tenantProfileColumns = await getTenantProfileColumnAvailability();
 
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
     const legalName = typeof body?.legalName === 'string' ? body.legalName.trim() : '';
@@ -367,22 +367,26 @@ export async function POST(req: Request) {
           taxRegime: taxRegime || extra?.taxRegime || undefined,
           defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
           cnae: extra?.cnae || undefined,
-          cnaeCode: extra?.cnaeCode || cnaeParts.code,
-          cnaeText: extra?.cnaeText || cnaeParts.text,
+          ...(tenantProfileColumns.cnaeCode ? { cnaeCode: extra?.cnaeCode || cnaeParts.code } : {}),
+          ...(tenantProfileColumns.cnaeText ? { cnaeText: extra?.cnaeText || cnaeParts.text } : {}),
           legalForm: extra?.legalForm || undefined,
           status: extra?.status || undefined,
-          website: extra?.website || undefined,
+          ...(tenantProfileColumns.website ? { website: extra?.website || undefined } : {}),
           capitalSocial: extra?.capitalSocial ?? undefined,
           incorporationDate: extra?.incorporationDate
             ? new Date(extra.incorporationDate)
             : undefined,
           address: extra?.address || undefined,
-          postalCode: extra?.postalCode || cityParts.postalCode,
+          ...(tenantProfileColumns.postalCode
+            ? { postalCode: extra?.postalCode || cityParts.postalCode }
+            : {}),
           city: cityParts.city || undefined,
           province: extra?.province || undefined,
-          country: extra?.country || country || undefined,
+          ...(tenantProfileColumns.country
+            ? { country: extra?.country || country || undefined }
+            : {}),
           representative: extra?.representative || undefined,
-          ...(hasRepresentativeRoleColumn
+          ...(tenantProfileColumns.representativeRole
             ? { representativeRole: extra?.representativeRole || undefined }
             : {}),
           email: companyEmail || undefined,
@@ -401,22 +405,26 @@ export async function POST(req: Request) {
           taxRegime: taxRegime || extra?.taxRegime || undefined,
           defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
           cnae: extra?.cnae || undefined,
-          cnaeCode: extra?.cnaeCode || cnaeParts.code,
-          cnaeText: extra?.cnaeText || cnaeParts.text,
+          ...(tenantProfileColumns.cnaeCode ? { cnaeCode: extra?.cnaeCode || cnaeParts.code } : {}),
+          ...(tenantProfileColumns.cnaeText ? { cnaeText: extra?.cnaeText || cnaeParts.text } : {}),
           legalForm: extra?.legalForm || undefined,
           status: extra?.status || undefined,
-          website: extra?.website || undefined,
+          ...(tenantProfileColumns.website ? { website: extra?.website || undefined } : {}),
           capitalSocial: extra?.capitalSocial ?? undefined,
           incorporationDate: extra?.incorporationDate
             ? new Date(extra.incorporationDate)
             : undefined,
           address: extra?.address || undefined,
-          postalCode: extra?.postalCode || cityParts.postalCode,
+          ...(tenantProfileColumns.postalCode
+            ? { postalCode: extra?.postalCode || cityParts.postalCode }
+            : {}),
           city: cityParts.city || undefined,
           province: extra?.province || undefined,
-          country: extra?.country || country || undefined,
+          ...(tenantProfileColumns.country
+            ? { country: extra?.country || country || undefined }
+            : {}),
           representative: extra?.representative || undefined,
-          ...(hasRepresentativeRoleColumn
+          ...(tenantProfileColumns.representativeRole
             ? { representativeRole: extra?.representativeRole || undefined }
             : {}),
           email: companyEmail || undefined,

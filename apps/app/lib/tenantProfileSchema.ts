@@ -1,41 +1,71 @@
-import { one } from '@/lib/db';
+import { query } from '@/lib/db';
 
-let tenantProfileRepresentativeRoleColumnAvailable: boolean | null = null;
+export type TenantProfileColumnAvailability = {
+  representativeRole: boolean;
+  website: boolean;
+  cnaeCode: boolean;
+  cnaeText: boolean;
+  postalCode: boolean;
+  country: boolean;
+};
 
-export async function hasTenantProfileRepresentativeRoleColumn() {
-  if (tenantProfileRepresentativeRoleColumnAvailable !== null) {
-    return tenantProfileRepresentativeRoleColumnAvailable;
+let tenantProfileColumnAvailability: TenantProfileColumnAvailability | null = null;
+
+export async function getTenantProfileColumnAvailability(): Promise<TenantProfileColumnAvailability> {
+  if (tenantProfileColumnAvailability) {
+    return tenantProfileColumnAvailability;
   }
 
-  const row = await one<{ exists: boolean }>(
+  const trackedColumns = [
+    'representative_role',
+    'website',
+    'cnae_code',
+    'cnae_text',
+    'postal_code',
+    'country',
+  ];
+
+  const rows = await query<{ column_name: string }>(
     [
-      'SELECT EXISTS (',
-      '  SELECT 1 FROM information_schema.columns',
-      "  WHERE table_schema = 'public' AND table_name = 'tenant_profiles' AND column_name = 'representative_role'",
-      ') AS exists',
-    ].join(' ')
+      'SELECT column_name',
+      'FROM information_schema.columns',
+      "WHERE table_schema = 'public' AND table_name = 'tenant_profiles'",
+      'AND column_name = ANY($1::text[])',
+    ].join(' '),
+    [trackedColumns]
   );
 
-  tenantProfileRepresentativeRoleColumnAvailable = row?.exists === true;
-  return tenantProfileRepresentativeRoleColumnAvailable;
+  const available = new Set(rows.map((row) => row.column_name));
+
+  tenantProfileColumnAvailability = {
+    representativeRole: available.has('representative_role'),
+    website: available.has('website'),
+    cnaeCode: available.has('cnae_code'),
+    cnaeText: available.has('cnae_text'),
+    postalCode: available.has('postal_code'),
+    country: available.has('country'),
+  };
+
+  return tenantProfileColumnAvailability;
 }
 
-export function buildTenantProfileOnboardingSelect(hasRepresentativeRoleColumn: boolean) {
+export function buildTenantProfileOnboardingSelect(availability: TenantProfileColumnAvailability) {
   return {
     tradeName: true,
     legalName: true,
     representative: true,
-    ...(hasRepresentativeRoleColumn ? { representativeRole: true } : {}),
+    ...(availability.representativeRole ? { representativeRole: true } : {}),
     email: true,
     phone: true,
-    website: true,
+    ...(availability.website ? { website: true } : {}),
     cnae: true,
-    cnaeCode: true,
-    cnaeText: true,
+    ...(availability.cnaeCode ? { cnaeCode: true } : {}),
+    ...(availability.cnaeText ? { cnaeText: true } : {}),
     address: true,
-    postalCode: true,
+    fiscalAddress: true,
+    ...(availability.postalCode ? { postalCode: true } : {}),
     city: true,
     province: true,
-    country: true,
+    ...(availability.country ? { country: true } : {}),
   };
 }

@@ -12,7 +12,7 @@ import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import {
   buildTenantProfileOnboardingSelect,
-  hasTenantProfileRepresentativeRoleColumn,
+  getTenantProfileColumnAvailability,
 } from '@/lib/tenantProfileSchema';
 import { getAppUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
@@ -85,15 +85,19 @@ type TenantSummaryRecord = {
     representativeRole?: string | null;
     email: string | null;
     phone: string | null;
-    website: string | null;
+    website?: string | null;
     cnae: string | null;
-    cnaeCode: string | null;
-    cnaeText: string | null;
+    cnaeCode?: string | null;
+    cnaeText?: string | null;
     address: string | null;
-    postalCode: string | null;
+    fiscalAddress?: {
+      postalCode?: string | null;
+      country?: string | null;
+    } | null;
+    postalCode?: string | null;
     city: string | null;
     province: string | null;
-    country: string | null;
+    country?: string | null;
   } | null;
 };
 
@@ -112,10 +116,14 @@ function buildHoldedSummaryFromTenant(
     companyLegalName: tenant.profile?.legalName || tenant.legalName || null,
     companyTaxId: normalizeText(tenant.nif),
     companyAddress: normalizeText(tenant.profile?.address),
-    companyPostalCode: normalizeText(tenant.profile?.postalCode),
+    companyPostalCode:
+      normalizeText(tenant.profile?.postalCode) ||
+      normalizeText(tenant.profile?.fiscalAddress?.postalCode),
     companyCity: normalizeText(tenant.profile?.city),
     companyProvince: normalizeText(tenant.profile?.province),
-    companyCountry: normalizeText(tenant.profile?.country),
+    companyCountry:
+      normalizeText(tenant.profile?.country) ||
+      normalizeText(tenant.profile?.fiscalAddress?.country),
     companyWebsite: normalizeText(tenant.profile?.website),
     companySectorCode: normalizeText(tenant.profile?.cnaeCode),
     companySectorLabel:
@@ -134,7 +142,7 @@ async function resolveVerifiedEmailTenantPrefill(input: {
   email?: string | null;
   contactName?: string | null;
 }) {
-  const hasRepresentativeRoleColumn = await hasTenantProfileRepresentativeRoleColumn();
+  const tenantProfileColumns = await getTenantProfileColumnAvailability();
   const normalizedUid = normalizeText(input.uid);
   const normalizedEmail = normalizeText(input.email)?.toLowerCase() || null;
   if (!normalizedUid && !normalizedEmail) {
@@ -180,7 +188,7 @@ async function resolveVerifiedEmailTenantPrefill(input: {
             name: true,
             legalName: true,
             profile: {
-              select: buildTenantProfileOnboardingSelect(hasRepresentativeRoleColumn),
+              select: buildTenantProfileOnboardingSelect(tenantProfileColumns),
             },
           },
         },
@@ -216,7 +224,7 @@ export default async function HoldedOnboardingPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const hasRepresentativeRoleColumn = await hasTenantProfileRepresentativeRoleColumn();
+  const tenantProfileColumns = await getTenantProfileColumnAvailability();
   const params = await searchParams;
   const search = new URLSearchParams();
   for (const [key, rawValue] of Object.entries(params)) {
@@ -413,7 +421,7 @@ export default async function HoldedOnboardingPage({
           name: true,
           legalName: true,
           profile: {
-            select: buildTenantProfileOnboardingSelect(hasRepresentativeRoleColumn),
+            select: buildTenantProfileOnboardingSelect(tenantProfileColumns),
           },
         },
       });

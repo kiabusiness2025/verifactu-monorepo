@@ -35,23 +35,31 @@ jest.mock('@/lib/integrations/holdedVerifiedEmailIdentities', () => ({
 }));
 
 jest.mock('@/lib/tenantProfileSchema', () => ({
-  hasTenantProfileRepresentativeRoleColumn: jest.fn(async () => true),
-  buildTenantProfileOnboardingSelect: jest.fn((hasRepresentativeRoleColumn: boolean) => ({
+  getTenantProfileColumnAvailability: jest.fn(async () => ({
+    representativeRole: true,
+    website: true,
+    cnaeCode: true,
+    cnaeText: true,
+    postalCode: true,
+    country: true,
+  })),
+  buildTenantProfileOnboardingSelect: jest.fn((availability) => ({
     tradeName: true,
     legalName: true,
     representative: true,
-    ...(hasRepresentativeRoleColumn ? { representativeRole: true } : {}),
+    ...(availability.representativeRole ? { representativeRole: true } : {}),
     email: true,
     phone: true,
-    website: true,
+    ...(availability.website ? { website: true } : {}),
     cnae: true,
-    cnaeCode: true,
-    cnaeText: true,
+    ...(availability.cnaeCode ? { cnaeCode: true } : {}),
+    ...(availability.cnaeText ? { cnaeText: true } : {}),
     address: true,
-    postalCode: true,
+    fiscalAddress: true,
+    ...(availability.postalCode ? { postalCode: true } : {}),
     city: true,
     province: true,
-    country: true,
+    ...(availability.country ? { country: true } : {}),
   })),
 }));
 
