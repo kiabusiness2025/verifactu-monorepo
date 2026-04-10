@@ -55,6 +55,7 @@ type ValidationResponse = {
 type TenantCreateResponse = {
   ok?: boolean;
   error?: string | null;
+  detail?: string | null;
   action?: string | null;
   tenantId?: string | null;
   onboardingToken?: string | null;
