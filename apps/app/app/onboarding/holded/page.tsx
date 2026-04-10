@@ -7,7 +7,7 @@ import { maskSecret } from '@/lib/integrations/accounting';
 import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { readVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
-import { normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
+import { buildFullName, normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import {
@@ -63,8 +63,9 @@ function normalizeNextUrl(nextUrl: string | undefined) {
   }
 }
 
-function normalizeText(value?: string | null) {
-  const normalized = value?.trim();
+function normalizeText(value?: unknown) {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
   return normalized ? normalized : null;
 }
 
@@ -140,6 +141,71 @@ function buildHoldedSummaryFromTenant(
     contactEmail,
     companyEmail: normalizeText(tenant.profile?.email),
     contactPhone: normalizeText(tenant.profile?.phone),
+  };
+}
+
+function mergeSummaryWithRememberedPrefill(
+  summary: ReturnType<typeof buildHoldedSummaryFromTenant>,
+  prefill?: {
+    companyName?: string | null;
+    companyLegalName?: string | null;
+    companyTaxId?: string | null;
+    companyAddress?: string | null;
+    companyPostalCode?: string | null;
+    companyCity?: string | null;
+    companyProvince?: string | null;
+    companyCountry?: string | null;
+    companyWebsite?: string | null;
+    companySectorCode?: string | null;
+    companySectorLabel?: string | null;
+    contactFirstName?: string | null;
+    contactLastName?: string | null;
+    contactRole?: string | null;
+    contactFullName?: string | null;
+    contactEmail?: string | null;
+    companyEmail?: string | null;
+    contactPhone?: string | null;
+  } | null
+) {
+  if (!prefill) {
+    return summary;
+  }
+
+  const rememberedFullName =
+    normalizeMeaningfulPersonName(prefill.contactFullName) ||
+    buildFullName({
+      firstName: prefill.contactFirstName,
+      lastName: prefill.contactLastName,
+    });
+  const companyName = normalizeText(summary.companyName);
+
+  return {
+    ...summary,
+    companyName:
+      companyName && companyName.toLowerCase() !== 'tu empresa'
+        ? summary.companyName
+        : normalizeText(prefill.companyName) ||
+          normalizeText(prefill.companyLegalName) ||
+          summary.companyName,
+    companyLegalName: summary.companyLegalName || normalizeText(prefill.companyLegalName),
+    companyTaxId: summary.companyTaxId || normalizeText(prefill.companyTaxId),
+    companyAddress: summary.companyAddress || normalizeText(prefill.companyAddress),
+    companyPostalCode: summary.companyPostalCode || normalizeText(prefill.companyPostalCode),
+    companyCity: summary.companyCity || normalizeText(prefill.companyCity),
+    companyProvince: summary.companyProvince || normalizeText(prefill.companyProvince),
+    companyCountry: summary.companyCountry || normalizeText(prefill.companyCountry),
+    companyWebsite: summary.companyWebsite || normalizeText(prefill.companyWebsite),
+    companySectorCode: summary.companySectorCode || normalizeText(prefill.companySectorCode),
+    companySectorLabel: summary.companySectorLabel || normalizeText(prefill.companySectorLabel),
+    contactFirstName:
+      summary.contactFirstName ||
+      normalizeText(prefill.contactFirstName) ||
+      getOnboardingContactFirstName(rememberedFullName),
+    contactRole: summary.contactRole || normalizeText(prefill.contactRole),
+    contactFullName: summary.contactFullName || rememberedFullName,
+    contactEmail: summary.contactEmail || normalizeText(prefill.contactEmail),
+    companyEmail: summary.companyEmail || normalizeText(prefill.companyEmail),
+    contactPhone: summary.contactPhone || normalizeText(prefill.contactPhone),
   };
 }
 
@@ -247,10 +313,22 @@ export default async function HoldedOnboardingPage({
   const onboardingSession = onboardingToken
     ? await resolveHoldedOnboardingSession(onboardingToken)
     : null;
+  const entryChannel = inferHoldedEntryChannel({
+    channel: params.channel,
+    source: params.source,
+    next: params.next,
+  });
   const captureMode = firstValue(params.capture)?.trim() === '1';
+  const authReady = firstValue(params.auth_ready)?.trim() === '1';
+  const popupMode = firstValue(params.popup)?.trim() === '1';
+  const popupStepParam = normalizeText(firstValue(params.popup_step));
+  const popupStep =
+    popupStepParam === 'company' || popupStepParam === 'api' ? popupStepParam : null;
+  const popupDraft = normalizeText(firstValue(params.popup_draft));
   const tenantIdHint = normalizeText(firstValue(params.tenant_id));
+  const shouldForceLoginFirst = entryChannel === 'chatgpt' && !authReady;
 
-  if (!session?.uid && !onboardingSession?.uid) {
+  if (shouldForceLoginFirst || (!session?.uid && !onboardingSession?.uid)) {
     const loginUrl = new URL('/login', getAppUrl());
     loginUrl.searchParams.set('source', 'holded_onboarding');
     const current = new URL('/onboarding/holded', getAppUrl());
@@ -268,6 +346,9 @@ export default async function HoldedOnboardingPage({
     if (captureMode) {
       current.searchParams.set('capture', '1');
     }
+    if (entryChannel === 'chatgpt') {
+      current.searchParams.set('auth_ready', '1');
+    }
     if (onboardingToken) {
       current.searchParams.set('onboarding_token', onboardingToken);
     }
@@ -281,11 +362,6 @@ export default async function HoldedOnboardingPage({
   const nextUrl = normalizeNextUrl(firstValue(params.next));
   const requireConnectionConfirmation =
     firstValue(params.require_connection_confirmation)?.trim() === '1';
-  const entryChannel = inferHoldedEntryChannel({
-    channel: params.channel,
-    source: params.source,
-    next: params.next,
-  });
   const sessionNameParts = splitFullName(normalizeMeaningfulPersonName(session?.name));
   let effectiveOnboardingToken =
     onboardingToken ||
@@ -333,9 +409,14 @@ export default async function HoldedOnboardingPage({
   if (rememberedVerifiedIdentity && effectiveOnboardingSession?.uid) {
     effectiveOnboardingSession = {
       ...effectiveOnboardingSession,
+      name:
+        rememberedVerifiedIdentity.fullName ??
+        normalizeMeaningfulPersonName(effectiveOnboardingSession.name),
       authMethod:
         rememberedVerifiedIdentity.authMethod ?? effectiveOnboardingSession.authMethod ?? 'email',
       emailVerified: true,
+      firstName: rememberedVerifiedIdentity.firstName ?? effectiveOnboardingSession.firstName,
+      lastName: rememberedVerifiedIdentity.lastName ?? effectiveOnboardingSession.lastName,
       verifiedAt: rememberedVerifiedIdentity.verifiedAt,
     };
 
@@ -348,8 +429,8 @@ export default async function HoldedOnboardingPage({
       authMethod:
         rememberedVerifiedIdentity.authMethod ?? effectiveOnboardingSession.authMethod ?? 'email',
       emailVerified: true,
-      firstName: effectiveOnboardingSession.firstName,
-      lastName: effectiveOnboardingSession.lastName,
+      firstName: rememberedVerifiedIdentity.firstName ?? effectiveOnboardingSession.firstName,
+      lastName: rememberedVerifiedIdentity.lastName ?? effectiveOnboardingSession.lastName,
       verifiedAt: rememberedVerifiedIdentity.verifiedAt,
     });
   }
@@ -465,6 +546,8 @@ export default async function HoldedOnboardingPage({
     summary = passiveVerifiedTenantPrefill.summary;
   }
 
+  summary = mergeSummaryWithRememberedPrefill(summary, rememberedVerifiedIdentity?.prefill);
+
   const companySetup = deriveHoldedCompanySetupState({
     entryChannel,
     requireConnectionConfirmation,
@@ -531,7 +614,7 @@ export default async function HoldedOnboardingPage({
       entryChannel={entryChannel}
       nextUrl={nextUrl}
       requireConnectionConfirmation={requireConnectionConfirmation}
-      requiresVerifiedIdentity={entryChannel === 'chatgpt'}
+      requiresVerifiedIdentity={false}
       identity={{
         authMethod: effectiveOnboardingSession?.authMethod ?? 'unknown',
         email: normalizeText(effectiveOnboardingSession?.email),
@@ -543,6 +626,10 @@ export default async function HoldedOnboardingPage({
       summary={summary}
       companySetup={companySetup}
       onboardingToken={clientOnboardingToken}
+      enablePopupWindows={entryChannel === 'chatgpt' && !popupMode}
+      popupMode={popupMode}
+      popupStep={popupStep}
+      popupDraft={popupDraft}
       tenantIdHint={
         resolvedTenantInfo.tenantId ?? passiveVerifiedTenantPrefill?.tenantId ?? tenantIdHint
       }

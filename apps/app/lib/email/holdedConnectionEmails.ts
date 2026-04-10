@@ -264,6 +264,27 @@ export async function sendHoldedConnectionLifecycleEmails(args: {
     );
   }
 
+  const safeCompanyEmail = normalizeText(args.companyEmail);
+  if (safeCompanyEmail && safeCompanyEmail.toLowerCase() !== (safeUserEmail || '').toLowerCase()) {
+    deliveries.push(
+      sendCustomEmail({
+        to: safeCompanyEmail,
+        subject: `Holded: ${actionLabel}`,
+        senderProfile: 'holded',
+        html: buildUserHtml({
+          userFirstName: 'equipo',
+          tenantDisplayName: company.displayName,
+          contactName: contact.name,
+          contactEmail: contact.email,
+          companyEmail: company.companyEmail,
+          contactPhone: contact.phone,
+          action: args.action,
+          channel: args.channel,
+        }),
+      })
+    );
+  }
+
   deliveries.push(
     sendCustomEmail({
       to: ADMIN_NOTIFICATION_EMAIL,

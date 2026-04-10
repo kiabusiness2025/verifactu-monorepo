@@ -46,6 +46,9 @@ export async function GET(request: NextRequest) {
     email: payload.email,
     authMethod: 'email',
     verifiedAt,
+    firstName: payload.firstName ?? null,
+    lastName: payload.lastName ?? null,
+    fullName: payload.name ?? null,
   }).catch((error) => {
     console.error('[onboarding/holded/verify] failed to remember verified email', {
       uid: payload.uid,

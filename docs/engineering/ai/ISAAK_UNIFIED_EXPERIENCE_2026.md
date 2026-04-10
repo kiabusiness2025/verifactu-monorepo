@@ -44,7 +44,7 @@ Persistencia actual:
   - `invoices` — emitir, enviar, marcar pagada, Veri\*Factu
   - `expenses` — clasificar con Isaak (`/api/expenses/intake`), confirmar sugerencia
   - `quotes` — crear presupuesto, convertir a factura
-  - `clients` / `suppliers` — revisar facturas vencidas, enriquecimiento eInforma
+  - `clients` / `suppliers` — revisar facturas vencidas y contexto comercial
   - `banks` — conciliación de movimientos, creación de gasto desde movimiento
   - `calendar` — plazos fiscales, integración Google Calendar
   - `documents` — subida de archivos, Google Drive / OneDrive
@@ -107,7 +107,6 @@ Persistencia actual:
 | Gmail            | OAuth             | ✅     | Todos       |
 | Microsoft (M365) | OAuth             | ✅     | Todos       |
 | OneDrive         | OAuth             | ✅     | Todos       |
-| eInforma         | API key           | ✅     | Todos       |
 | Stripe           | Webhook           | ✅     | Todos       |
 | Resend (email)   | API key + inbound | ✅     | Todos       |
 

@@ -128,7 +128,6 @@ export function Topbar({
   }, [showUserMenu]);
 
   useEffect(() => {
-    // Legacy /api/admin/* endpoints are no longer served on app.verifactu.business.
     // Admin access is handled on admin.verifactu.business.
     setIsAdmin(false);
   }, [firebaseUser, effectiveDemo]);

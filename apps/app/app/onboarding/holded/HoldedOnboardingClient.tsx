@@ -124,6 +124,26 @@ type FieldErrorKey =
 
 type DirectOnboardingStep = 'identity' | 'person' | 'company' | 'api' | 'success';
 
+type PopupStep = 'company' | 'api';
+
+type PopupCompanyDraft = {
+  companyLegalName: string;
+  companyTaxId: string;
+  companyAddress: string;
+  companyPostalCode: string;
+  companyCity: string;
+  companyProvince: string;
+  companyCountry: string;
+  companyWebsite: string;
+  companySectorCode: string;
+  contactFirstName: string;
+  contactLastName: string;
+  contactRole: string;
+  contactEmail: string;
+  contactPhoneDialCode: string;
+  contactPhone: string;
+};
+
 type Props = {
   captureMode: boolean;
   entryChannel: 'dashboard' | 'chatgpt';
@@ -134,6 +154,10 @@ type Props = {
   summary: HoldedOnboardingSummary;
   companySetup: HoldedCompanySetupState;
   onboardingToken?: string | null;
+  enablePopupWindows?: boolean;
+  popupMode?: boolean;
+  popupStep?: PopupStep | null;
+  popupDraft?: string | null;
   tenantIdHint?: string | null;
   savedPrefill?: SavedPrefillState | null;
 };
@@ -203,6 +227,43 @@ function buildStoredPhoneNumber(localNumber: string, dialCode: string) {
   }
 
   return `${dialCode} ${normalizedLocalNumber}`.trim();
+}
+
+function encodePopupDraft(draft: PopupCompanyDraft) {
+  return encodeURIComponent(JSON.stringify(draft));
+}
+
+function decodePopupDraft(rawDraft?: string | null): PopupCompanyDraft | null {
+  if (!rawDraft) return null;
+
+  try {
+    const parsed = JSON.parse(decodeURIComponent(rawDraft));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return null;
+    }
+
+    return {
+      companyLegalName: String((parsed as Record<string, unknown>).companyLegalName ?? ''),
+      companyTaxId: String((parsed as Record<string, unknown>).companyTaxId ?? ''),
+      companyAddress: String((parsed as Record<string, unknown>).companyAddress ?? ''),
+      companyPostalCode: String((parsed as Record<string, unknown>).companyPostalCode ?? ''),
+      companyCity: String((parsed as Record<string, unknown>).companyCity ?? ''),
+      companyProvince: String((parsed as Record<string, unknown>).companyProvince ?? ''),
+      companyCountry: String((parsed as Record<string, unknown>).companyCountry ?? ''),
+      companyWebsite: String((parsed as Record<string, unknown>).companyWebsite ?? ''),
+      companySectorCode: String((parsed as Record<string, unknown>).companySectorCode ?? ''),
+      contactFirstName: String((parsed as Record<string, unknown>).contactFirstName ?? ''),
+      contactLastName: String((parsed as Record<string, unknown>).contactLastName ?? ''),
+      contactRole: String((parsed as Record<string, unknown>).contactRole ?? ''),
+      contactEmail: String((parsed as Record<string, unknown>).contactEmail ?? ''),
+      contactPhoneDialCode: String(
+        (parsed as Record<string, unknown>).contactPhoneDialCode ?? '+34'
+      ),
+      contactPhone: String((parsed as Record<string, unknown>).contactPhone ?? ''),
+    };
+  } catch {
+    return null;
+  }
 }
 
 function hasResolvedCompanyData(summary: HoldedOnboardingSummary) {
@@ -411,7 +472,8 @@ function buildConfirmedNextUrl(input: {
 const chatgptUiCopy = {
   eyebrow: 'Conector directo Holded + ChatGPT',
   title: 'Conecta tu empresa de Holded',
-  intro: 'Confirma tu identidad, conecta Holded y vuelve a ChatGPT.',
+  intro:
+    'Inicia sesion o crea tu cuenta, confirma la empresa y conecta Holded para volver a ChatGPT.',
   security: 'Validamos la conexion en servidor y protegemos la API key.',
   statusReady: 'Empresa preparada para conectar',
   statusLoading: 'Validando acceso y preparando la conexion',
@@ -437,7 +499,7 @@ const chatgptUiCopy = {
   redirectDescription:
     'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
   helpSteps: [
-    'Confirma tu identidad con Google o con un correo verificado.',
+    'Inicia sesion o crea tu cuenta completa para continuar.',
     'Abre Holded y copia una API key activa de tu empresa.',
     'Pegala aqui y volveremos a ChatGPT en cuanto la conexion quede lista.',
   ],
@@ -488,7 +550,7 @@ const dashboardUiCopy = {
 } as const;
 
 const chatgptHighlights = [
-  'Sin login visible.',
+  'Acceso con cuenta completa.',
   'Clave validada en servidor.',
   'Vuelta automatica a ChatGPT.',
 ] as const;
@@ -509,11 +571,18 @@ export default function HoldedOnboardingClient({
   summary,
   companySetup,
   onboardingToken = null,
+  enablePopupWindows = false,
+  popupMode = false,
+  popupStep = null,
+  popupDraft = null,
   tenantIdHint = null,
   savedPrefill = null,
 }: Props) {
   const isChatgptEntry = entryChannel === 'chatgpt';
   const usesDirectStepFlow = isChatgptEntry;
+  const requiresPersonStep = usesDirectStepFlow && requiresVerifiedIdentity;
+  const popupStepMode = popupMode && (popupStep === 'company' || popupStep === 'api');
+  const usesPopupOrchestrator = usesDirectStepFlow && enablePopupWindows && !popupStepMode;
   const needsPostValidationCompanyStep = isChatgptEntry;
   const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
   const uiHighlights = isChatgptEntry ? chatgptHighlights : dashboardHighlights;
@@ -583,8 +652,19 @@ export default function HoldedOnboardingClient({
   );
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldErrorKey, string>>>({});
   const [directStep, setDirectStep] = useState<DirectOnboardingStep>(
-    requiresVerifiedIdentity && !identity.emailVerified ? 'identity' : 'person'
+    popupStepMode
+      ? popupStep === 'api'
+        ? 'api'
+        : 'company'
+      : requiresVerifiedIdentity && !identity.emailVerified
+        ? 'identity'
+        : requiresPersonStep
+          ? 'person'
+          : 'company'
   );
+  const [popupFlowEnabled, setPopupFlowEnabled] = useState(usesPopupOrchestrator);
+  const [popupFlowStage, setPopupFlowStage] = useState<'idle' | 'company' | 'api' | 'done'>('idle');
+  const [popupFlowError, setPopupFlowError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
@@ -718,7 +798,7 @@ export default function HoldedOnboardingClient({
         ? reusesStoredCompanyData
           ? 'Primero validaremos tu API key y, si es correcta, cerraremos la conexion directa sin pasos manuales extra.'
           : usesInlineDirectForm
-            ? 'Completa este formulario directo con tu empresa y tu API key de Holded. Nosotros resolvemos el resto sin mostrarte login ni registro.'
+            ? 'Completa este formulario directo con tu empresa y tu API key de Holded. Nosotros resolvemos el resto tras tu acceso inicial.'
             : 'Primero validaremos tu API key. Solo si hace falta te pediremos confirmar los datos de empresa asociados a la conexion.'
         : isChatgptEntry
           ? `${resolvedSummary.contactFirstName}, validaremos tu API key y dejaremos lista la conexion directa con Holded para volver a ChatGPT.`
@@ -750,8 +830,42 @@ export default function HoldedOnboardingClient({
       return;
     }
 
-    setDirectStep((current) => (current === 'identity' ? 'person' : current));
-  }, [showIdentityGate, usesDirectStepFlow]);
+    setDirectStep((current) =>
+      current === 'identity' ? (requiresPersonStep ? 'person' : 'company') : current
+    );
+  }, [requiresPersonStep, showIdentityGate, usesDirectStepFlow]);
+
+  useEffect(() => {
+    setPopupFlowEnabled(usesPopupOrchestrator);
+  }, [usesPopupOrchestrator]);
+
+  useEffect(() => {
+    if (!popupStepMode || popupStep !== 'api') {
+      return;
+    }
+
+    const parsedDraft = decodePopupDraft(popupDraft);
+    if (!parsedDraft) {
+      return;
+    }
+
+    setCompanyLegalName(parsedDraft.companyLegalName);
+    setCompanyTaxId(parsedDraft.companyTaxId);
+    setCompanyAddress(parsedDraft.companyAddress);
+    setCompanyPostalCode(parsedDraft.companyPostalCode);
+    setCompanyCity(parsedDraft.companyCity);
+    setCompanyProvince(parsedDraft.companyProvince);
+    setCompanyCountry(parsedDraft.companyCountry);
+    setCompanyWebsite(parsedDraft.companyWebsite);
+    setCompanySectorCode(parsedDraft.companySectorCode);
+    setContactFirstName(parsedDraft.contactFirstName);
+    setContactLastName(parsedDraft.contactLastName);
+    setContactRole(parsedDraft.contactRole);
+    setContactEmail(parsedDraft.contactEmail);
+    setContactPhoneDialCode(parsedDraft.contactPhoneDialCode || '+34');
+    setContactPhone(parsedDraft.contactPhone);
+    setDirectStep('api');
+  }, [popupDraft, popupStep, popupStepMode]);
 
   useEffect(() => {
     if (identityState.email && !contactEmail) {
@@ -808,12 +922,14 @@ export default function HoldedOnboardingClient({
     setIdentityError(null);
     setIdentityMessage(
       identityState.authMethod === 'email' && identityState.email
-        ? `Correo confirmado para ${identityState.email}. Ya puedes continuar con el paso Usuario.`
-        : 'Identidad confirmada. Ya puedes continuar con el paso Usuario.'
+        ? `Correo confirmado para ${identityState.email}. Ya puedes continuar con tus datos de usuario.`
+        : 'Identidad confirmada. Ya puedes continuar con tus datos de usuario.'
     );
 
     if (usesDirectStepFlow) {
-      setDirectStep((current) => (current === 'identity' ? 'person' : current));
+      setDirectStep((current) =>
+        current === 'identity' ? (requiresPersonStep ? 'person' : 'company') : current
+      );
     }
 
     url.searchParams.delete('identity_verified');
@@ -827,6 +943,7 @@ export default function HoldedOnboardingClient({
     identityState.authMethod,
     identityState.email,
     identityState.emailVerified,
+    requiresPersonStep,
     usesDirectStepFlow,
   ]);
 
@@ -892,6 +1009,50 @@ export default function HoldedOnboardingClient({
     ]
   );
 
+  const fullAccountLoginHref = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return '/login?source=holded_onboarding';
+    }
+
+    const loginUrl = new URL('/login', window.location.origin);
+    loginUrl.searchParams.set('source', 'holded_onboarding');
+
+    const current = new URL('/onboarding/holded', window.location.origin);
+    if (nextUrl) {
+      current.searchParams.set('next', nextUrl);
+    }
+    current.searchParams.set('channel', entryChannel);
+    if (requireConnectionConfirmation) {
+      current.searchParams.set('require_connection_confirmation', '1');
+    }
+    if (captureMode) {
+      current.searchParams.set('capture', '1');
+    }
+    if (entryChannel === 'chatgpt') {
+      current.searchParams.set('auth_ready', '1');
+    }
+
+    const effectiveOnboardingToken = resolveRequestOnboardingToken();
+    if (effectiveOnboardingToken) {
+      current.searchParams.set('onboarding_token', effectiveOnboardingToken);
+    }
+
+    const effectiveTenantIdHint = resolveRequestTenantIdHint();
+    if (effectiveTenantIdHint) {
+      current.searchParams.set('tenant_id', effectiveTenantIdHint);
+    }
+
+    loginUrl.searchParams.set('next', current.toString());
+    return loginUrl.toString();
+  }, [
+    captureMode,
+    entryChannel,
+    nextUrl,
+    requireConnectionConfirmation,
+    resolveRequestOnboardingToken,
+    resolveRequestTenantIdHint,
+  ]);
+
   const restartIdentityFlow = useCallback(() => {
     setIdentityError(
       'Hemos perdido la sesion temporal del conector. Vamos a reiniciar el acceso para continuar.'
@@ -912,15 +1073,19 @@ export default function HoldedOnboardingClient({
   }, [captureMode, entryChannel, nextUrl]);
 
   const confirmedNextUrl = useMemo(() => resolveConfirmedNextUrl(), [resolveConfirmedNextUrl]);
-  const directStepItems: Array<{ key: Exclude<DirectOnboardingStep, 'success'>; label: string }> = [
-    { key: 'identity', label: 'Identidad' },
-    { key: 'person', label: 'Usuario' },
-    { key: 'company', label: 'Empresa' },
-    { key: 'api', label: 'API key' },
-  ];
-  const completedDirectSteps: Record<Exclude<DirectOnboardingStep, 'success'>, boolean> = {
-    identity: verifiedIdentityReady,
-    person: verifiedIdentityReady && canContinuePersonStep,
+  const directStepItems: Array<{ key: 'identity' | 'company' | 'api'; label: string }> =
+    requiresPersonStep
+      ? [
+          { key: 'identity', label: 'Usuario' },
+          { key: 'company', label: 'Empresa' },
+          { key: 'api', label: 'API key' },
+        ]
+      : [
+          { key: 'company', label: 'Empresa' },
+          { key: 'api', label: 'API key' },
+        ];
+  const completedDirectSteps: Record<'identity' | 'company' | 'api', boolean> = {
+    identity: verifiedIdentityReady && canContinuePersonStep,
     company: canContinueCompanyStep,
     api: status?.connected === true || redirecting || directStep === 'success',
   };
@@ -986,6 +1151,169 @@ export default function HoldedOnboardingClient({
     },
     [captureMode, nextUrl]
   );
+
+  const openPopupWindow = useCallback((url: string, popupName: string) => {
+    if (typeof window === 'undefined') return null;
+    return window.open(
+      url,
+      popupName,
+      'popup=yes,width=980,height=860,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes'
+    );
+  }, []);
+
+  const openCompanyPopupWindow = useCallback(() => {
+    if (typeof window === 'undefined') return false;
+
+    const popupUrl = new URL('/onboarding/holded', window.location.origin);
+    popupUrl.searchParams.set('popup', '1');
+    popupUrl.searchParams.set('popup_step', 'company');
+    popupUrl.searchParams.set('channel', entryChannel);
+    popupUrl.searchParams.set('auth_ready', '1');
+    if (nextUrl) {
+      popupUrl.searchParams.set('next', nextUrl);
+    }
+    if (requireConnectionConfirmation) {
+      popupUrl.searchParams.set('require_connection_confirmation', '1');
+    }
+    if (captureMode) {
+      popupUrl.searchParams.set('capture', '1');
+    }
+
+    const effectiveOnboardingToken = resolveRequestOnboardingToken();
+    if (effectiveOnboardingToken) {
+      popupUrl.searchParams.set('onboarding_token', effectiveOnboardingToken);
+    }
+    const effectiveTenantIdHint = resolveRequestTenantIdHint();
+    if (effectiveTenantIdHint) {
+      popupUrl.searchParams.set('tenant_id', effectiveTenantIdHint);
+    }
+
+    const openedWindow = openPopupWindow(popupUrl.toString(), 'holded_company_step');
+    if (!openedWindow) {
+      setPopupFlowError(
+        'Tu navegador ha bloqueado la ventana emergente. Usa "Abrir ventana de empresa" o continua en esta pantalla.'
+      );
+      return false;
+    }
+
+    setPopupFlowStage('company');
+    setPopupFlowError(null);
+    return true;
+  }, [
+    captureMode,
+    entryChannel,
+    nextUrl,
+    openPopupWindow,
+    requireConnectionConfirmation,
+    resolveRequestOnboardingToken,
+    resolveRequestTenantIdHint,
+  ]);
+
+  const openApiPopupWindow = useCallback(
+    (draft: PopupCompanyDraft) => {
+      if (typeof window === 'undefined') return false;
+
+      const popupUrl = new URL('/onboarding/holded', window.location.origin);
+      popupUrl.searchParams.set('popup', '1');
+      popupUrl.searchParams.set('popup_step', 'api');
+      popupUrl.searchParams.set('channel', entryChannel);
+      popupUrl.searchParams.set('auth_ready', '1');
+      popupUrl.searchParams.set('popup_draft', encodePopupDraft(draft));
+      if (nextUrl) {
+        popupUrl.searchParams.set('next', nextUrl);
+      }
+      if (requireConnectionConfirmation) {
+        popupUrl.searchParams.set('require_connection_confirmation', '1');
+      }
+      if (captureMode) {
+        popupUrl.searchParams.set('capture', '1');
+      }
+
+      const effectiveOnboardingToken = resolveRequestOnboardingToken();
+      if (effectiveOnboardingToken) {
+        popupUrl.searchParams.set('onboarding_token', effectiveOnboardingToken);
+      }
+      const effectiveTenantIdHint = resolveRequestTenantIdHint();
+      if (effectiveTenantIdHint) {
+        popupUrl.searchParams.set('tenant_id', effectiveTenantIdHint);
+      }
+
+      const openedWindow = openPopupWindow(popupUrl.toString(), 'holded_api_step');
+      if (!openedWindow) {
+        setPopupFlowError(
+          'No hemos podido abrir la ventana de API. Puedes reintentar o continuar en esta pantalla.'
+        );
+        return false;
+      }
+
+      setPopupFlowStage('api');
+      setPopupFlowError(null);
+      return true;
+    },
+    [
+      captureMode,
+      entryChannel,
+      nextUrl,
+      openPopupWindow,
+      requireConnectionConfirmation,
+      resolveRequestOnboardingToken,
+      resolveRequestTenantIdHint,
+    ]
+  );
+
+  useEffect(() => {
+    if (!popupFlowEnabled || popupStepMode) {
+      return;
+    }
+
+    const autoOpenTimer = window.setTimeout(() => {
+      if (popupFlowStage === 'idle') {
+        openCompanyPopupWindow();
+      }
+    }, 140);
+
+    const onPopupMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      const payload = event.data;
+      if (!payload || typeof payload !== 'object') {
+        return;
+      }
+
+      if ((payload as { type?: string }).type === 'holded-company-complete') {
+        const draft = (payload as { draft?: PopupCompanyDraft }).draft;
+        if (!draft) {
+          setPopupFlowError('No hemos podido recuperar los datos de empresa desde la ventana.');
+          return;
+        }
+        openApiPopupWindow(draft);
+        return;
+      }
+
+      if ((payload as { type?: string; redirectTarget?: string }).type === 'holded-api-complete') {
+        setPopupFlowStage('done');
+        setPopupFlowError(null);
+        goToNextStep((payload as { redirectTarget?: string }).redirectTarget || confirmedNextUrl);
+      }
+    };
+
+    window.addEventListener('message', onPopupMessage);
+
+    return () => {
+      window.clearTimeout(autoOpenTimer);
+      window.removeEventListener('message', onPopupMessage);
+    };
+  }, [
+    confirmedNextUrl,
+    goToNextStep,
+    openApiPopupWindow,
+    openCompanyPopupWindow,
+    popupFlowEnabled,
+    popupFlowStage,
+    popupStepMode,
+  ]);
 
   const clearFieldError = useCallback((key: FieldErrorKey) => {
     setFieldErrors((current) => {
@@ -1054,7 +1382,7 @@ export default function HoldedOnboardingClient({
 
   const collectInlineDirectFieldErrors = useCallback(() => {
     const nextErrors = {
-      ...collectPersonFieldErrors(),
+      ...(requiresPersonStep ? collectPersonFieldErrors() : {}),
       ...collectCompanyFieldErrors(),
     } as Partial<Record<FieldErrorKey, string>>;
 
@@ -1071,39 +1399,14 @@ export default function HoldedOnboardingClient({
     collectPersonFieldErrors,
     contactEmail,
     normalizedApiKey,
+    requiresPersonStep,
     uiCopy.errorApiKeyEmpty,
   ]);
 
-  const directApiBlockers = useMemo(() => {
-    const blockers: string[] = [];
-
-    if (!verifiedIdentityReady) {
-      blockers.push('Paso 1: confirma la identidad con Google o con un correo verificado.');
-    }
-
-    if (Object.keys(collectPersonFieldErrors()).length > 0) {
-      blockers.push('Paso 2: completa nombre, apellidos y rol del usuario.');
-    }
-
-    if (Object.keys(collectCompanyFieldErrors()).length > 0 || !normalizeText(contactEmail)) {
-      blockers.push(
-        'Paso 3: completa razon social, CIF/NIF, domicilio, codigo postal, ciudad, provincia, pais, sector y correo principal.'
-      );
-    }
-
-    if (!normalizedApiKey) {
-      blockers.push('Paso 4: pega una API key activa de Holded.');
-    }
-
-    return blockers;
-  }, [
-    collectCompanyFieldErrors,
-    collectPersonFieldErrors,
-    contactEmail,
-    normalizedApiKey,
-    verifiedIdentityReady,
-  ]);
-  const canSubmitDirectApi = directApiBlockers.length === 0 && !saving;
+  const canOpenCompanyStep =
+    verifiedIdentityReady && (requiresPersonStep ? canContinuePersonStep : true);
+  const canOpenApiStep = canOpenCompanyStep && canContinueCompanyStep;
+  const canSubmitDirectApi = canOpenApiStep && !!normalizedApiKey && !saving;
 
   const applySummaryToCompanyForm = useCallback((nextSummary: HoldedOnboardingSummary) => {
     const nextDraft = createCompanyDraftFromSummary(nextSummary);
@@ -1266,13 +1569,77 @@ export default function HoldedOnboardingClient({
       delete next.companyCountry;
       return next;
     });
+
+    if (
+      popupStepMode &&
+      popupStep === 'company' &&
+      typeof window !== 'undefined' &&
+      window.opener
+    ) {
+      const draft: PopupCompanyDraft = {
+        companyLegalName,
+        companyTaxId,
+        companyAddress,
+        companyPostalCode,
+        companyCity,
+        companyProvince,
+        companyCountry,
+        companyWebsite,
+        companySectorCode,
+        contactFirstName,
+        contactLastName,
+        contactRole,
+        contactEmail: normalizeText(contactEmail) || normalizeText(identityState.email) || '',
+        contactPhoneDialCode,
+        contactPhone,
+      };
+
+      window.opener.postMessage(
+        {
+          type: 'holded-company-complete',
+          draft,
+        },
+        window.location.origin
+      );
+      window.close();
+      return;
+    }
+
     goToDirectStep('api');
-  }, [collectCompanyFieldErrors, goToDirectStep]);
+  }, [
+    collectCompanyFieldErrors,
+    companyAddress,
+    companyCity,
+    companyCountry,
+    companyLegalName,
+    companyPostalCode,
+    companyProvince,
+    companySectorCode,
+    companyTaxId,
+    companyWebsite,
+    contactEmail,
+    contactFirstName,
+    contactLastName,
+    contactPhone,
+    contactPhoneDialCode,
+    contactRole,
+    goToDirectStep,
+    identityState.email,
+    popupStep,
+    popupStepMode,
+  ]);
 
   const handleHeaderBack = useCallback(() => {
     if (usesDirectStepFlow && !redirecting) {
       if (directStep === 'company') {
-        goToDirectStep('person');
+        if (requiresPersonStep) {
+          goToDirectStep('person');
+          return;
+        }
+        if (requiresVerifiedIdentity) {
+          goToDirectStep('identity');
+          return;
+        }
         return;
       }
 
@@ -1309,6 +1676,7 @@ export default function HoldedOnboardingClient({
     goToDirectStep,
     isChatgptEntry,
     nextUrl,
+    requiresPersonStep,
     requiresVerifiedIdentity,
     redirecting,
     returnToApiStep,
@@ -1885,7 +2253,7 @@ export default function HoldedOnboardingClient({
         await hydratePrefillForVerifiedIdentity(data.onboardingToken, nextIdentity);
       }
       setIdentityMessage(
-        'Identidad confirmada con Google. Ya puedes continuar con el paso Usuario.'
+        'Identidad confirmada con Google. Ya puedes continuar con tus datos de usuario.'
       );
     } catch (identityRequestError) {
       setIdentityError(getGoogleIdentityErrorMessage(identityRequestError));
@@ -1970,19 +2338,21 @@ export default function HoldedOnboardingClient({
 
           setIdentityMessage(
             data.alreadyVerified
-              ? 'Este correo ya estaba confirmado. Ya puedes continuar con el paso Usuario.'
-              : `Correo confirmado para ${nextIdentity.email}. Ya puedes continuar con el paso Usuario.`
+              ? 'Este correo ya estaba confirmado. Ya puedes continuar con tus datos de usuario.'
+              : `Correo confirmado para ${nextIdentity.email}. Ya puedes continuar con tus datos de usuario.`
           );
 
           if (usesDirectStepFlow) {
-            setDirectStep((current) => (current === 'identity' ? 'person' : current));
+            setDirectStep((current) =>
+              current === 'identity' ? (requiresPersonStep ? 'person' : 'company') : current
+            );
           }
           return;
         }
 
         setIdentityMessage(
           checkOnly
-            ? 'Seguimos esperando la confirmacion de este correo. Cuando abras el enlace, vuelve aqui y pulsa Siguiente para pasar al paso Usuario.'
+            ? 'Seguimos esperando la confirmacion de este correo. Cuando abras el enlace, vuelve aqui y pulsa Siguiente para continuar con tus datos de usuario.'
             : 'Te hemos enviado un enlace de verificacion. Puedes abrirlo incluso en otro dispositivo y volver aqui para pulsar Siguiente cuando termines.'
         );
       } catch (identityRequestError) {
@@ -2001,6 +2371,7 @@ export default function HoldedOnboardingClient({
       resolveRequestOnboardingToken,
       resolveRequestTenantIdHint,
       restartIdentityFlow,
+      requiresPersonStep,
       usesDirectStepFlow,
     ]
   );
@@ -2045,7 +2416,7 @@ export default function HoldedOnboardingClient({
       setFieldErrors((current) => ({ ...current, ...nextErrors }));
     }
 
-    if (Object.keys(collectPersonFieldErrors()).length > 0) {
+    if (requiresPersonStep && Object.keys(collectPersonFieldErrors()).length > 0) {
       goToDirectStep('person');
       setError('Completa nombre, apellidos y rol antes de conectar Holded.');
       return;
@@ -2083,12 +2454,24 @@ export default function HoldedOnboardingClient({
 
       setMessage(uiCopy.successConnected);
       setDirectStep('success');
-      goToNextStep(
-        resolveConfirmedNextUrl({
-          onboardingToken: preparedTenant.onboardingToken,
-          tenantIdHint: preparedTenant.tenantId,
-        })
-      );
+      const nextTarget = resolveConfirmedNextUrl({
+        onboardingToken: preparedTenant.onboardingToken,
+        tenantIdHint: preparedTenant.tenantId,
+      });
+
+      if (popupStepMode && popupStep === 'api' && typeof window !== 'undefined' && window.opener) {
+        window.opener.postMessage(
+          {
+            type: 'holded-api-complete',
+            redirectTarget: nextTarget,
+          },
+          window.location.origin
+        );
+        window.close();
+        return;
+      }
+
+      goToNextStep(nextTarget);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : uiCopy.errorConnectFailed);
     } finally {
@@ -2163,13 +2546,75 @@ export default function HoldedOnboardingClient({
               </>
             ) : null}
 
-            {usesDirectStepFlow ? (
+            {usesDirectStepFlow && popupFlowEnabled ? (
+              <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
+                <div className="text-sm font-semibold text-black">
+                  Conecta en ventanas separadas
+                </div>
+                <p className="mt-2 text-sm leading-6 text-neutral-700">
+                  Abriremos primero una ventana para los datos de empresa y despues otra para la API
+                  key. Cuando termines, volveras automaticamente a ChatGPT.
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => openCompanyPopupWindow()}
+                    className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
+                  >
+                    {popupFlowStage === 'idle'
+                      ? 'Abrir ventana de empresa'
+                      : 'Reabrir ventana de empresa'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPopupFlowEnabled(false)}
+                    className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                  >
+                    Continuar en esta pantalla
+                  </button>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[#d9e6ff] bg-white px-4 py-3 text-sm text-[#0b214a]">
+                  Estado actual:{' '}
+                  <strong>
+                    {popupFlowStage === 'idle'
+                      ? 'pendiente de abrir empresa'
+                      : popupFlowStage === 'company'
+                        ? 'empresa en curso'
+                        : popupFlowStage === 'api'
+                          ? 'API en curso'
+                          : 'completado'}
+                  </strong>
+                </div>
+
+                {popupFlowError ? (
+                  <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{popupFlowError}</span>
+                  </div>
+                ) : null}
+              </div>
+            ) : usesDirectStepFlow ? (
               <>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {directStepItems.map((step, index) => {
-                    const active = (showIdentityGate ? 'identity' : directStep) === step.key;
+                    const activeStep = requiresPersonStep
+                      ? showIdentityGate || directStep === 'person'
+                        ? 'identity'
+                        : directStep
+                      : directStep === 'api'
+                        ? 'api'
+                        : 'company';
+                    const active = activeStep === step.key;
                     const completed = completedDirectSteps[step.key];
-                    const disabled = showIdentityGate && step.key !== 'identity';
+                    const unlocked =
+                      step.key === 'identity'
+                        ? true
+                        : step.key === 'company'
+                          ? directStep === 'company' || directStep === 'api' || canOpenCompanyStep
+                          : directStep === 'api' || canOpenApiStep;
+                    const disabled = showIdentityGate ? step.key !== 'identity' : !unlocked;
 
                     return (
                       <button
@@ -2177,7 +2622,13 @@ export default function HoldedOnboardingClient({
                         key={step.key}
                         onClick={() => {
                           if (!disabled) {
-                            goToDirectStep(step.key);
+                            goToDirectStep(
+                              step.key === 'identity' && !showIdentityGate
+                                ? requiresPersonStep
+                                  ? 'person'
+                                  : 'company'
+                                : step.key
+                            );
                           }
                         }}
                         disabled={disabled}
@@ -2277,6 +2728,18 @@ export default function HoldedOnboardingClient({
                         </form>
                       </div>
 
+                      <a
+                        href={fullAccountLoginHref}
+                        className="mt-3 inline-flex min-h-[52px] w-full items-center justify-center rounded-2xl border border-[#d9e6ff] bg-[#f7fbff] px-4 py-3 text-sm font-semibold text-[#0b214a] hover:bg-[#eef6ff]"
+                      >
+                        Usar cuenta completa (Google o correo y contrasena)
+                      </a>
+
+                      <p className="mt-2 text-xs text-neutral-600">
+                        Si prefieres, puedes iniciar sesion o crear cuenta completa y volver aqui
+                        sin perder el avance.
+                      </p>
+
                       {identityState.authMethod === 'email' && identityState.email ? (
                         <div className="mt-4 rounded-2xl border border-[#d9e6ff] bg-[#f7fbff] px-4 py-3 text-sm text-[#0b214a]">
                           Hemos dejado preparado el correo <strong>{identityState.email}</strong>.
@@ -2321,7 +2784,7 @@ export default function HoldedOnboardingClient({
                         </div>
                       ) : null}
                     </div>
-                  ) : directStep === 'person' ? (
+                  ) : requiresPersonStep && directStep === 'person' ? (
                     <form
                       onSubmit={(event) => {
                         event.preventDefault();
@@ -2330,7 +2793,7 @@ export default function HoldedOnboardingClient({
                       className="space-y-4"
                     >
                       <div>
-                        <div className="text-sm font-semibold text-black">Paso 2: usuario</div>
+                        <div className="text-sm font-semibold text-black">Paso 1: usuario</div>
                         <p className="mt-2 text-sm leading-6 text-neutral-700">
                           Queremos dejar listos los datos del usuario que actuara dentro de la
                           empresa conectada a Holded.
@@ -2447,7 +2910,9 @@ export default function HoldedOnboardingClient({
                     >
                       <div>
                         <div className="text-sm font-semibold text-black">
-                          Paso 3: datos de empresa
+                          {requiresPersonStep
+                            ? 'Paso 2: datos de empresa'
+                            : 'Paso 1: datos de empresa'}
                         </div>
                         <p className="mt-2 text-sm leading-6 text-neutral-700">
                           Antes de tocar la API key, necesitamos los datos fiscales y el sector base
@@ -2601,13 +3066,15 @@ export default function HoldedOnboardingClient({
                       </div>
 
                       <div className="flex flex-wrap gap-3">
-                        <button
-                          type="button"
-                          onClick={() => goToDirectStep('person')}
-                          className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
-                        >
-                          Volver
-                        </button>
+                        {requiresPersonStep ? (
+                          <button
+                            type="button"
+                            onClick={() => goToDirectStep('person')}
+                            className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                          >
+                            Volver
+                          </button>
+                        ) : null}
                         <button
                           type="submit"
                           disabled={!canContinueCompanyStep}
@@ -2621,7 +3088,7 @@ export default function HoldedOnboardingClient({
                     <form onSubmit={handleDirectApiSubmit} className="space-y-4">
                       <div>
                         <div className="text-sm font-semibold text-black">
-                          Paso 4: conecta Holded
+                          {requiresPersonStep ? 'Paso 3: conecta Holded' : 'Paso 2: conecta Holded'}
                         </div>
                         <p className="mt-2 text-sm leading-6 text-neutral-700">
                           Ya tenemos la identidad y la empresa. Solo falta validar una API key
@@ -2738,19 +3205,6 @@ export default function HoldedOnboardingClient({
                           de verifactu.business.
                         </div>
                       </div>
-
-                      {directApiBlockers.length > 0 ? (
-                        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                          <div className="font-semibold">
-                            Faltan datos obligatorios antes de validar la conexion:
-                          </div>
-                          <ul className="mt-2 list-disc space-y-1 pl-5">
-                            {directApiBlockers.map((blocker) => (
-                              <li key={blocker}>{blocker}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
 
                       <div className="flex flex-wrap gap-3">
                         <button
@@ -2970,7 +3424,7 @@ export default function HoldedOnboardingClient({
                         </div>
                         <p className="mt-2 text-sm leading-6 text-neutral-700">
                           {usesInlineDirectForm
-                            ? 'Completa tus datos y la API key de Holded en este mismo formulario. Validaremos la conexion y prepararemos la empresa internamente sin mostrarte login ni registro.'
+                            ? 'Completa tus datos y la API key de Holded en este mismo formulario. Validaremos la conexion y prepararemos la empresa internamente tras tu acceso inicial.'
                             : 'Antes de mostrar o confirmar ninguna empresa, necesitamos comprobar que la API key corresponde a una conexion real y utilizable de Holded.'}
                         </p>
                         <div className="mt-3 text-sm text-neutral-700">

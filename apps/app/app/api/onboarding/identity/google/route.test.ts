@@ -102,6 +102,9 @@ describe('POST /api/onboarding/identity/google', () => {
         uid: 'google-user-1',
         email: 'demo@example.com',
         authMethod: 'google',
+        firstName: 'Demo',
+        lastName: 'User',
+        fullName: 'Demo User',
       })
     );
   });

@@ -87,6 +87,9 @@ export async function POST(request: NextRequest) {
     email,
     authMethod: 'google',
     verifiedAt,
+    firstName: nameParts.firstName,
+    lastName: nameParts.lastName,
+    fullName: name,
   }).catch((error) => {
     console.error('[onboarding identity google] failed to remember verified email', {
       uid: decoded.uid,

@@ -618,7 +618,6 @@ Puedes exportar o borrar tu historial en cualquier momento.
 - [x] Presupuestos (`/api/quotes/*`) con convert-to-invoice
 - [x] Movimientos bancarios y conciliación (`/api/banks/movements/*`)
 - [x] Libros AEAT y exportación Modelos 303/130 (todos los planes)
-- [x] eInforma para enriquecimiento de empresa en onboarding
 - [ ] RAG sobre documentos propios del tenant
 - [ ] Multiidioma inglés completo
 - [ ] Ampliar tools MCP (CRM, Projects, Teams planned)

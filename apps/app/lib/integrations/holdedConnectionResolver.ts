@@ -103,7 +103,7 @@ async function loadExternalConnectionRow(
 
   const apiKeyFilter = options?.requireApiKey === false ? '' : ' AND api_key_enc IS NOT NULL';
   const hasLastErrorColumn = await hasExternalConnectionsLastErrorColumn();
-  const lastErrorSelect = hasLastErrorColumn ? '  last_error,' : '  NULL::text AS last_error,';
+  const lastErrorSelect = hasLastErrorColumn ? '  last_error' : '  NULL::text AS last_error';
 
   return (await hasExternalConnectionsChannelColumn())
     ? await one<ExternalConnectionRow>(

@@ -12,52 +12,67 @@ import HoldedHeroVisual from './components/HoldedHeroVisual';
 import { buildAuthUrl, buildRegisterUrl } from './lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Isaak para Holded | Gestiona tu negocio en Holded sin complicarte',
+  title: 'Isaak para Holded | Facturas, contactos y contabilidad en claro',
   description:
-    'Habla con un asistente que entiende tus datos de Holded y te ayuda con ventas, gastos, facturas y dudas fiscales.',
+    'Consulta facturas, contactos, cuentas contables, diario y proyectos de Holded, y prepara borradores de factura con confirmacion.',
 };
 
 const problemPoints = [
-  'No sabes donde mirar.',
-  'No entiendes bien los numeros.',
-  'Te cuesta encontrar informacion.',
-  'Dependes de tu asesor para casi todo.',
+  'No sabes que factura revisar primero.',
+  'Te cuesta entender IVA, gastos y cobros.',
+  'Pierdes tiempo saltando entre pantallas.',
+  'Necesitas una explicacion clara antes de actuar.',
 ];
 
-const everydayGoals = ['Saber cuanto ganas.', 'Saber que debes.', 'Hacer facturas rapido.'];
+const everydayGoals = [
+  'Saber que facturas revisar hoy.',
+  'Entender mejor IVA y gastos.',
+  'Preparar un borrador sin perder tiempo.',
+];
 
 const solutionExamples = [
-  '¿Cuanto he vendido este mes?',
-  '¿Que gastos tengo pendientes?',
-  'Hazme una factura para este cliente.',
-  '¿Esto es deducible?',
+  'Que facturas deberia revisar hoy para proteger caja?',
+  'Ensename los contactos con mas riesgo de cobro.',
+  'Explicame el diario de esta semana en lenguaje claro.',
+  'Prepara un borrador de factura para este cliente.',
 ];
 
 const whatItDoes = [
-  'Consultar ingresos y gastos.',
-  'Crear facturas y presupuestos.',
-  'Encontrar informacion en segundos.',
-  'Entender mejor tu situacion financiera.',
-  'Resolver dudas fiscales basicas.',
+  'Consultar facturas emitidas y entender su estado.',
+  'Revisar contactos, cuentas contables y libro diario.',
+  'Preparar borradores de factura con confirmacion.',
+  'Leer mejor IVA, gastos y caja desde el contexto contable.',
+  'Ordenar proyectos y tareas para priorizar trabajo.',
 ];
 
 const faqItems = [
   {
     question: '¿Que necesito para empezar?',
-    answer: 'Solo tu correo y una API key activa de Holded.',
+    answer:
+      'Tu correo y una API key activa de Holded. Validamos la conexion durante el alta para que no entres a ciegas.',
   },
   {
     question: '¿Tengo que pagar ahora?',
-    answer: 'No. Esta primera version es gratuita y no muestra planes de pago.',
+    answer: 'No. Esta version revisada es gratuita y no muestra planes de pago dentro del flujo.',
   },
   {
     question: '¿Que pasa si la API key falla?',
     answer: 'Te lo decimos al momento y puedes pegar otra sin salir del onboarding.',
   },
   {
-    question: '¿Que puedo consultar?',
+    question: '¿Que puede hacer ahora mismo?',
     answer:
-      'Ingresos, gastos, facturas, clientes, resultados y movimientos registrados en tu cuenta.',
+      'Consultar facturas, contactos, cuentas contables, movimientos del diario, proyectos y tareas, y preparar borradores de factura con confirmacion.',
+  },
+  {
+    question: '¿Puede cambiar mis datos?',
+    answer:
+      'Solo prepara borradores de factura cuando tu lo confirmas. El resto del beta publico se mantiene en lectura guiada.',
+  },
+  {
+    question: '¿Que no conviene esperar todavia?',
+    answer:
+      'Este beta publico no promete productos, usuarios, adjuntos, conciliacion bancaria ni documentos como presupuestos, pedidos o albaranes.',
   },
 ];
 
@@ -74,12 +89,13 @@ export default function HoldedHomePage() {
               </div>
 
               <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.4rem] sm:leading-[1.02]">
-                Gestiona tu negocio en Holded sin complicarte
+                Facturas, contactos y contabilidad de Holded en lenguaje claro
               </h1>
 
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Habla con un asistente que entiende tus datos y te ayuda con ventas, gastos,
-                facturas y dudas fiscales sin obligarte a pelearte con menus ni tecnicismos.
+                Isaak ya puede revisar facturas, contactos, cuentas contables, diario y proyectos, y
+                preparar borradores de factura con confirmacion sin obligarte a pelearte con menus
+                ni tecnicismos.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -102,8 +118,8 @@ export default function HoldedHomePage() {
                 <div className="text-sm font-semibold text-slate-900">Empieza en un minuto</div>
                 <div className="mt-4 flex items-start gap-2 text-sm leading-6 text-slate-700">
                   <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                  Solo te hara falta tu correo y una API key activa de Holded. La comprobamos al
-                  momento y te decimos si algo no cuadra.
+                  Solo te hara falta tu correo y una API key activa de Holded. Validamos la conexion
+                  al momento y te dejamos claro desde el principio lo que esta disponible hoy.
                 </div>
               </div>
             </div>
@@ -152,10 +168,11 @@ export default function HoldedHomePage() {
                 La solucion
               </div>
               <h3 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-                Ahora puedes gestionar tu negocio hablando como siempre
+                Lo importante ya lo puedes pedir hablando normal
               </h3>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                Sin menus. Sin complicaciones. Sin volverte tecnico.
+                Lectura clara para el dia a dia y una unica accion de escritura: preparar borradores
+                de factura con tu confirmacion.
               </p>
               <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -202,7 +219,7 @@ export default function HoldedHomePage() {
                 Todo conectado con tu cuenta de Holded
               </div>
               <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-                Accede a tu informacion en segundos y entiende mejor tu negocio
+                Lo que ya puedes consultar hoy en Holded
               </h2>
               <ul className="mt-6 space-y-3 text-sm text-slate-700">
                 {whatItDoes.map((item) => (
@@ -222,15 +239,16 @@ export default function HoldedHomePage() {
                 Todo esto lo hace Isaak
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                Isaak es el asistente que entiende tu negocio y te responde en lenguaje normal.
+                Isaak te ayuda a leer mejor IVA, gastos y parte de la caja a partir del contexto
+                contable que ya existe en Holded.
               </p>
               <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
                 <div className="text-sm font-semibold text-slate-900">
-                  No sustituye a tu asesor, pero te ayuda en el dia a dia
+                  No sustituye a tu asesor ni promete mas de lo que hay hoy
                 </div>
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Te da respuestas inmediatas para revisar ventas, gastos, clientes, facturas y
-                  prioridades sin depender de menus ni de tareas repetitivas.
+                  El beta publico se centra en facturas, contactos, contabilidad y proyectos. No
+                  prometemos productos, usuarios, adjuntos ni conciliacion bancaria en esta fase.
                 </p>
               </div>
             </article>

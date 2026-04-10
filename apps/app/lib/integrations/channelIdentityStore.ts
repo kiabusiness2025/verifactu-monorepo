@@ -91,3 +91,43 @@ export async function listChannelIdentitiesForUser(userId: string) {
     [userId]
   );
 }
+
+export async function clearChatGptChannelIdentity(input: {
+  channelSubjectId?: string | null;
+  email?: string | null;
+}) {
+  if (!(await hasChannelIdentitiesTable())) {
+    return 0;
+  }
+
+  const channelSubjectId = input.channelSubjectId?.trim() || null;
+  const normalizedEmail = input.email?.trim().toLowerCase() || null;
+
+  if (!channelSubjectId && !normalizedEmail) {
+    return 0;
+  }
+
+  const filters: string[] = [];
+  const values: string[] = [];
+
+  if (channelSubjectId) {
+    values.push(channelSubjectId);
+    filters.push(`channel_subject_id = $${values.length}`);
+  }
+
+  if (normalizedEmail) {
+    values.push(normalizedEmail);
+    filters.push(`lower(email) = $${values.length}`);
+  }
+
+  const result = await query<{ id: string }>(
+    [
+      'DELETE FROM channel_identities',
+      `WHERE channel_type = 'chatgpt' AND (${filters.join(' OR ')})`,
+      'RETURNING id',
+    ].join(' '),
+    values
+  );
+
+  return result.length;
+}

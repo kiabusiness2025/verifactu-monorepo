@@ -73,6 +73,9 @@ describe('GET /onboarding/holded/verify', () => {
         uid: 'holded-guest-1',
         email: 'verified@example.com',
         authMethod: 'email',
+        firstName: 'Connector',
+        lastName: 'Guest',
+        fullName: 'Connector Guest',
       })
     );
   });

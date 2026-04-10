@@ -19,11 +19,19 @@ Incluido en esta validacion:
 - OAuth propio de Verifactu
 - onboarding `holded-first`
 - conexion Holded por API key server-side
-- lectura y escritura controlada de:
+- lectura directa de:
   - Invoice
-  - Accounting
-  - CRM
+  - Contacts
+  - Accounts
+  - Daily ledger
+  - CRM bookings
   - Projects
+- escritura publica limitada a:
+  - invoice draft
+- lectura indirecta util de:
+  - gastos
+  - IVA
+  - parte de tesoreria via diario y cuentas
 
 Fuera de esta validacion:
 
@@ -82,7 +90,8 @@ Abrir en navegador:
 Resultado esperado:
 
 - ambos `.well-known` responden `200` con JSON valido
-- `GET /api/mcp/holded` responde `401` con `WWW-Authenticate`
+- `GET /api/mcp/holded` responde `200` con descriptor JSON del conector y metadata OAuth
+- `POST /api/mcp/holded` con `tools/call` no autenticado responde `401` con `WWW-Authenticate`
 
 ## Flujo E2E principal: usuario nuevo en ChatGPT
 
@@ -154,6 +163,10 @@ Resultado esperado:
 - no pide otra vez la API key
 
 ## Validacion funcional minima de tools
+
+Referencia canonica del beta actual:
+
+- `docs/product/HOLDED_DIRECT_CONNECTOR_BETA_CAPABILITY_MATRIX_2026-04-10.md`
 
 Desde ChatGPT o desde la app interna de validacion:
 

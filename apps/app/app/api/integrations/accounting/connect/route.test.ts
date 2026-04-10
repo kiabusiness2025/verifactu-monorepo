@@ -18,6 +18,10 @@ jest.mock('@/lib/integrations/accountingStore', () => ({
   upsertAccountingIntegration: jest.fn(),
 }));
 
+jest.mock('@/lib/integrations/companyNotificationEmailStore', () => ({
+  getConfirmedCompanyNotificationEmail: jest.fn(async () => null),
+}));
+
 jest.mock('@/lib/prisma', () => ({
   __esModule: true,
   default: {
@@ -56,6 +60,7 @@ import { getAccountingIntegrationAccess } from '@/lib/billing/tenantPlan';
 import { probeAccountingApiConnection } from '@/lib/integrations/accounting';
 import { mintHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
 import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore';
+import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
 import prisma from '@/lib/prisma';
 import {
   sendHoldedConnectionLifecycleEmails,
@@ -123,6 +128,7 @@ describe('POST /api/integrations/accounting/connect', () => {
     });
     (sendHoldedConnectionLifecycleEmails as jest.Mock).mockResolvedValue([]);
     (sendWelcomeLifecycleEmails as jest.Mock).mockResolvedValue([]);
+    (getConfirmedCompanyNotificationEmail as jest.Mock).mockResolvedValue(null);
     (resolveHoldedSecurityAlertRecipients as jest.Mock).mockResolvedValue([
       { email: 'demo@example.com', name: 'Demo User', source: 'membership' },
       { email: 'empresa@example.com', name: null, source: 'tenant_profile' },
@@ -230,6 +236,7 @@ describe('POST /api/integrations/accounting/connect', () => {
       tenantId: 'tenant-1',
       actorEmail: 'demo@example.com',
       actorName: 'Demo User',
+      companyNotificationEmail: 'empresa@example.com',
     });
     expect(sendHoldedSecurityAlertEmails).toHaveBeenCalledWith({
       recipients: [

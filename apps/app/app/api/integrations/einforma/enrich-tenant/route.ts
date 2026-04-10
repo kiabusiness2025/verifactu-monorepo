@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
+import {
+  getTenantProfileColumnAvailability,
+  isMissingTenantProfileColumnError,
+  LEGACY_TENANT_PROFILE_COLUMN_AVAILABILITY,
+  resetTenantProfileColumnAvailabilityCache,
+  type TenantProfileColumnAvailability,
+} from '@/lib/tenantProfileSchema';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { getCompanyProfileByNif } from '@/server/einforma';
 
@@ -32,6 +39,52 @@ function normalizeCity(value?: string) {
   return { postalCode: undefined, city: trimmed.split('(')[0]?.trim() || trimmed };
 }
 
+function buildEinformaTenantProfileData(input: {
+  availability: TenantProfileColumnAvailability;
+  taxId: string;
+  verified: boolean;
+  profile: Awaited<ReturnType<typeof getCompanyProfileByNif>>;
+  cnaeParts: ReturnType<typeof splitCnae>;
+  cityParts: ReturnType<typeof normalizeCity>;
+}) {
+  const { availability, taxId, verified, profile, cnaeParts, cityParts } = input;
+
+  return {
+    source: 'einforma',
+    sourceId: profile.sourceId ?? taxId,
+    taxId,
+    legalName: profile.legalName || profile.name || undefined,
+    tradeName: profile.name || profile.legalName || undefined,
+    fiscalAddress: profile.address
+      ? {
+          address: profile.address.street ?? null,
+          city: cityParts.city ?? null,
+          postalCode: cityParts.postalCode ?? null,
+          province: profile.address.province ?? null,
+          country: profile.address.country ?? 'ES',
+        }
+      : undefined,
+    defaultCurrency: 'EUR',
+    cnae: profile.cnae || undefined,
+    ...(availability.cnaeCode ? { cnaeCode: cnaeParts.code } : {}),
+    ...(availability.cnaeText ? { cnaeText: cnaeParts.text } : {}),
+    ...(availability.legalForm ? { legalForm: profile.legalForm || undefined } : {}),
+    ...(availability.status ? { status: profile.status || undefined } : {}),
+    ...(availability.website ? { website: profile.website || undefined } : {}),
+    ...(availability.capitalSocial ? { capitalSocial: profile.capitalSocial ?? undefined } : {}),
+    incorporationDate: profile.constitutionDate ? new Date(profile.constitutionDate) : undefined,
+    address: profile.address?.street || undefined,
+    ...(availability.postalCode ? { postalCode: cityParts.postalCode } : {}),
+    city: cityParts.city || undefined,
+    province: profile.address?.province || undefined,
+    ...(availability.country ? { country: profile.address?.country || undefined } : {}),
+    representative: profile.representatives?.[0]?.name || undefined,
+    ...(availability.einformaLastSyncAt ? { einformaLastSyncAt: new Date() } : {}),
+    ...(availability.einformaTaxIdVerified ? { einformaTaxIdVerified: verified } : {}),
+    ...(availability.einformaRaw ? { einformaRaw: profile.raw ?? undefined } : {}),
+  };
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getSessionPayload();
@@ -54,87 +107,45 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Tenant no resuelto' }, { status: 400 });
     }
 
+    const tenantId = resolved.tenantId;
+
     const profile = await getCompanyProfileByNif(taxId);
     const verified = !!profile.nif && profile.nif.toUpperCase() === taxId;
     const cnaeParts = splitCnae(profile.cnae);
     const cityParts = normalizeCity(profile.address?.city);
 
-    await prisma.tenantProfile.upsert({
-      where: { tenantId: resolved.tenantId },
-      create: {
-        tenantId: resolved.tenantId,
-        source: 'einforma',
-        sourceId: profile.sourceId ?? taxId,
+    const tenantProfileColumns = await getTenantProfileColumnAvailability();
+    const upsertTenantProfile = async (availability: TenantProfileColumnAvailability) => {
+      const tenantProfileData = buildEinformaTenantProfileData({
+        availability,
         taxId,
-        legalName: profile.legalName || profile.name || undefined,
-        tradeName: profile.name || profile.legalName || undefined,
-        fiscalAddress: profile.address
-          ? {
-              address: profile.address.street ?? null,
-              city: cityParts.city ?? null,
-              postalCode: cityParts.postalCode ?? null,
-              province: profile.address.province ?? null,
-              country: profile.address.country ?? 'ES',
-            }
-          : undefined,
-        defaultCurrency: 'EUR',
-        cnae: profile.cnae || undefined,
-        cnaeCode: cnaeParts.code,
-        cnaeText: cnaeParts.text,
-        legalForm: profile.legalForm || undefined,
-        status: profile.status || undefined,
-        website: profile.website || undefined,
-        capitalSocial: profile.capitalSocial ?? undefined,
-        incorporationDate: profile.constitutionDate
-          ? new Date(profile.constitutionDate)
-          : undefined,
-        address: profile.address?.street || undefined,
-        postalCode: cityParts.postalCode,
-        city: cityParts.city || undefined,
-        province: profile.address?.province || undefined,
-        country: profile.address?.country || undefined,
-        representative: profile.representatives?.[0]?.name || undefined,
-        einformaLastSyncAt: new Date(),
-        einformaTaxIdVerified: verified,
-        einformaRaw: profile.raw ?? undefined,
-      } as never,
-      update: {
-        source: 'einforma',
-        sourceId: profile.sourceId ?? taxId,
-        taxId,
-        legalName: profile.legalName || profile.name || undefined,
-        tradeName: profile.name || profile.legalName || undefined,
-        fiscalAddress: profile.address
-          ? {
-              address: profile.address.street ?? null,
-              city: cityParts.city ?? null,
-              postalCode: cityParts.postalCode ?? null,
-              province: profile.address.province ?? null,
-              country: profile.address.country ?? 'ES',
-            }
-          : undefined,
-        defaultCurrency: 'EUR',
-        cnae: profile.cnae || undefined,
-        cnaeCode: cnaeParts.code,
-        cnaeText: cnaeParts.text,
-        legalForm: profile.legalForm || undefined,
-        status: profile.status || undefined,
-        website: profile.website || undefined,
-        capitalSocial: profile.capitalSocial ?? undefined,
-        incorporationDate: profile.constitutionDate
-          ? new Date(profile.constitutionDate)
-          : undefined,
-        address: profile.address?.street || undefined,
-        postalCode: cityParts.postalCode,
-        city: cityParts.city || undefined,
-        province: profile.address?.province || undefined,
-        country: profile.address?.country || undefined,
-        representative: profile.representatives?.[0]?.name || undefined,
-        einformaLastSyncAt: new Date(),
-        einformaTaxIdVerified: verified,
-        einformaRaw: profile.raw ?? undefined,
-      } as never,
-    });
+        verified,
+        profile,
+        cnaeParts,
+        cityParts,
+      });
+
+      await prisma.tenantProfile.upsert({
+        where: { tenantId },
+        create: {
+          tenantId,
+          ...tenantProfileData,
+        } as never,
+        update: tenantProfileData as never,
+        select: { tenantId: true },
+      });
+    };
+
+    try {
+      await upsertTenantProfile(tenantProfileColumns);
+    } catch (error) {
+      if (!isMissingTenantProfileColumnError(error)) {
+        throw error;
+      }
+
+      resetTenantProfileColumnAvailabilityCache();
+      await upsertTenantProfile(LEGACY_TENANT_PROFILE_COLUMN_AVAILABILITY);
+    }
 
     const normalized = {
       name: profile.name ?? null,

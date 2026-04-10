@@ -5,15 +5,19 @@ import {
   isVerifiedHoldedOnboardingIdentity,
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
+import { rememberVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import {
   getTenantProfileColumnAvailability,
+  isMissingTenantProfileColumnError,
+  LEGACY_TENANT_PROFILE_COLUMN_AVAILABILITY,
   type TenantProfileColumnAvailability,
   resetTenantProfileColumnAvailabilityCache,
 } from '@/lib/tenantProfileSchema';
 import { upsertUser } from '@/lib/tenants';
+import { buildFullName } from '@/lib/personName';
 
 type TenantPayload = {
   reuseCurrentTenant?: boolean;
@@ -150,18 +154,51 @@ async function resolvePlanId(): Promise<number> {
   return created.id;
 }
 
-const legacyTenantProfileColumns: TenantProfileColumnAvailability = {
-  representativeRole: false,
-  website: false,
-  cnaeCode: false,
-  cnaeText: false,
-  postalCode: false,
-  country: false,
-};
+function buildRememberedPrefill(input: {
+  companyName: string;
+  legalName?: string | null;
+  taxId: string;
+  address?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  province?: string | null;
+  country?: string | null;
+  website?: string | null;
+  sectorCode?: string | null;
+  sectorLabel?: string | null;
+  contactFirstName?: string | null;
+  contactLastName?: string | null;
+  contactRole?: string | null;
+  contactEmail?: string | null;
+  companyEmail?: string | null;
+  contactPhone?: string | null;
+}) {
+  const normalizedContactFirstName = normalizeText(input.contactFirstName);
+  const normalizedContactLastName = normalizeText(input.contactLastName);
 
-function isMissingTenantProfileColumnError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
-  return message.includes('tenant_profiles.') && message.includes('does not exist');
+  return {
+    companyName: normalizeText(input.companyName),
+    companyLegalName: normalizeText(input.legalName) || normalizeText(input.companyName),
+    companyTaxId: normalizeText(input.taxId)?.toUpperCase() || null,
+    companyAddress: normalizeText(input.address),
+    companyPostalCode: normalizeText(input.postalCode),
+    companyCity: normalizeText(input.city),
+    companyProvince: normalizeText(input.province),
+    companyCountry: normalizeText(input.country),
+    companyWebsite: normalizeText(input.website),
+    companySectorCode: normalizeText(input.sectorCode),
+    companySectorLabel: normalizeText(input.sectorLabel),
+    contactFirstName: normalizedContactFirstName,
+    contactLastName: normalizedContactLastName,
+    contactRole: normalizeText(input.contactRole),
+    contactFullName: buildFullName({
+      firstName: normalizedContactFirstName,
+      lastName: normalizedContactLastName,
+    }),
+    contactEmail: normalizeText(input.contactEmail)?.toLowerCase() || null,
+    companyEmail: normalizeText(input.companyEmail)?.toLowerCase() || null,
+    contactPhone: normalizeText(input.contactPhone),
+  };
 }
 
 export async function POST(req: Request) {
@@ -397,6 +434,7 @@ export async function POST(req: Request) {
               ...buildTenantProfileData(columns),
             } as never,
             update: buildTenantProfileData(columns) as never,
+            select: { tenantId: true },
           });
 
         await upsertTenantProfile();
@@ -423,7 +461,55 @@ export async function POST(req: Request) {
         message: error instanceof Error ? error.message : String(error),
       });
 
-      result = await runTenantProvisionTransaction(legacyTenantProfileColumns);
+      result = await runTenantProvisionTransaction(LEGACY_TENANT_PROFILE_COLUMN_AVAILABILITY);
+    }
+
+    const rememberedContactEmail = normalizeText(authSession.email ?? null)?.toLowerCase() || null;
+    const rememberedContactName =
+      contactFullName ||
+      buildFullName({
+        firstName: onboardingSession?.firstName ?? null,
+        lastName: onboardingSession?.lastName ?? null,
+      }) ||
+      normalizeText(authSession.name ?? null);
+
+    if (rememberedContactEmail) {
+      await rememberVerifiedHoldedEmailIdentity({
+        uid,
+        email: rememberedContactEmail,
+        authMethod: onboardingSession?.authMethod ?? 'unknown',
+        verifiedAt: onboardingSession?.verifiedAt ?? new Date().toISOString(),
+        firstName: contactFirstName ?? onboardingSession?.firstName ?? null,
+        lastName: contactLastName ?? onboardingSession?.lastName ?? null,
+        fullName: rememberedContactName,
+        tenantId: result.tenant.id,
+        prefill: buildRememberedPrefill({
+          companyName: tradeName || name,
+          legalName: legalName || result.tenant.legalName || name,
+          taxId: taxIdRaw,
+          address: body?.extra?.address,
+          postalCode: body?.extra?.postalCode,
+          city: body?.extra?.city,
+          province: body?.extra?.province,
+          country: body?.extra?.country || country,
+          website: body?.extra?.website,
+          sectorCode: body?.extra?.cnaeCode,
+          sectorLabel: body?.extra?.cnaeText,
+          contactFirstName,
+          contactLastName,
+          contactRole: body?.extra?.representativeRole,
+          contactEmail: rememberedContactEmail,
+          companyEmail,
+          contactPhone: companyPhone,
+        }),
+      }).catch((rememberError) => {
+        console.error('[api/onboarding/tenant] failed to remember verified onboarding prefill', {
+          uid,
+          email: rememberedContactEmail,
+          tenantId: result?.tenant?.id,
+          message: rememberError instanceof Error ? rememberError.message : String(rememberError),
+        });
+      });
     }
 
     if (!onboardingSession) {

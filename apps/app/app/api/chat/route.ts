@@ -13,7 +13,6 @@ import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { buildIsaakPersona } from '@/lib/isaak/persona';
 import { buildIsaakRuntimeContext } from '@/lib/isaak/runtimeContext';
-import { getCompanyProfileByNif, searchCompanies } from '@/server/einforma';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { createOpenAI } from '@ai-sdk/openai';
 import { resolveOpenAIKey } from '@verifactu/utils';
@@ -301,85 +300,6 @@ export async function POST(req: Request) {
               deductible: isDeductible,
               message: `Gasto registrado como ${categoryName}${isDeductible ? '' : ' (no deducible)'}.`,
             };
-          },
-        }),
-
-        einformaSearchCompanies: tool({
-          description: 'Busca empresas en eInforma por nombre o CIF/NIF',
-          inputSchema: zodSchema(
-            z.object({
-              query: z.string().min(3),
-            })
-          ),
-          execute: async ({ query }) => {
-            const items = await searchCompanies(query);
-            return { items };
-          },
-        }),
-
-        einformaGetCompanyByTaxId: tool({
-          description: 'Obtiene la ficha de empresa por CIF/NIF desde eInforma',
-          inputSchema: zodSchema(
-            z.object({
-              taxId: z.string().min(3),
-            })
-          ),
-          execute: async ({ taxId }) => {
-            const profile = await getCompanyProfileByNif(taxId);
-            return { profile };
-          },
-        }),
-
-        einformaEnrichTenantFromTaxId: tool({
-          description: 'Enriquece el tenant activo con datos de eInforma',
-          inputSchema: zodSchema(
-            z.object({
-              taxId: z.string().min(3),
-            })
-          ),
-          execute: async ({ taxId }) => {
-            if (!activeTenantId) {
-              return { ok: false, message: 'No hay empresa seleccionada' };
-            }
-            const profile = await getCompanyProfileByNif(taxId);
-            const verified = !!profile.nif && profile.nif.toUpperCase() === taxId.toUpperCase();
-
-            await prisma.tenantProfile.upsert({
-              where: { tenantId: activeTenantId },
-              create: {
-                tenantId: activeTenantId,
-                source: 'einforma',
-                sourceId: profile.sourceId ?? taxId,
-                cnae: profile.cnae || undefined,
-                incorporationDate: profile.constitutionDate
-                  ? new Date(profile.constitutionDate)
-                  : undefined,
-                address: profile.address?.street || undefined,
-                city: profile.address?.city || undefined,
-                province: profile.address?.province || undefined,
-                representative: profile.representatives?.[0]?.name || undefined,
-                einformaLastSyncAt: new Date(),
-                einformaTaxIdVerified: verified,
-                einformaRaw: profile.raw ?? undefined,
-              },
-              update: {
-                source: 'einforma',
-                sourceId: profile.sourceId ?? taxId,
-                cnae: profile.cnae || undefined,
-                incorporationDate: profile.constitutionDate
-                  ? new Date(profile.constitutionDate)
-                  : undefined,
-                address: profile.address?.street || undefined,
-                city: profile.address?.city || undefined,
-                province: profile.address?.province || undefined,
-                representative: profile.representatives?.[0]?.name || undefined,
-                einformaLastSyncAt: new Date(),
-                einformaTaxIdVerified: verified,
-                einformaRaw: profile.raw ?? undefined,
-              },
-            });
-
-            return { ok: true, profile };
           },
         }),
 

@@ -13,7 +13,7 @@ export type HoldedSecurityAlertChannel = 'dashboard' | 'chatgpt';
 export type HoldedSecurityRecipient = {
   email: string;
   name: string | null;
-  source: 'membership' | 'tenant_profile' | 'actor';
+  source: 'membership' | 'tenant_profile' | 'actor' | 'company_notification';
 };
 
 function normalizeText(value?: string | null) {
@@ -124,6 +124,7 @@ export async function resolveHoldedSecurityAlertRecipients(args: {
   tenantId: string;
   actorEmail?: string | null;
   actorName?: string | null;
+  companyNotificationEmail?: string | null;
 }) {
   const [memberships, tenantProfile] = await Promise.all([
     prisma.membership.findMany({
@@ -178,7 +179,12 @@ export async function resolveHoldedSecurityAlertRecipients(args: {
     remember(membership.user.email, fullName, 'membership');
   });
 
-  remember(tenantProfile?.email ?? null, null, 'tenant_profile');
+  const preferredCompanyEmail = normalizeEmail(args.companyNotificationEmail);
+  if (preferredCompanyEmail) {
+    remember(preferredCompanyEmail, null, 'company_notification');
+  } else {
+    remember(tenantProfile?.email ?? null, null, 'tenant_profile');
+  }
   remember(args.actorEmail ?? null, args.actorName ?? null, 'actor');
 
   return Array.from(recipients.values()).sort((left, right) =>

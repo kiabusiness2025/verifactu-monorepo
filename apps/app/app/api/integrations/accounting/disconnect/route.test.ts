@@ -8,6 +8,18 @@ jest.mock('@/lib/integrations/accountingStore', () => ({
   disconnectAccountingIntegration: jest.fn(),
 }));
 
+jest.mock('@/lib/integrations/channelIdentityStore', () => ({
+  clearChatGptChannelIdentity: jest.fn(async () => 0),
+}));
+
+jest.mock('@/lib/integrations/holdedVerifiedEmailIdentities', () => ({
+  forgetVerifiedHoldedEmailIdentity: jest.fn(async () => 0),
+}));
+
+jest.mock('@/lib/integrations/companyNotificationEmailStore', () => ({
+  getConfirmedCompanyNotificationEmail: jest.fn(async () => null),
+}));
+
 jest.mock('@/lib/prisma', () => ({
   __esModule: true,
   default: {
@@ -33,6 +45,9 @@ import { NextRequest } from 'next/server';
 import { POST } from './route';
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { disconnectAccountingIntegration } from '@/lib/integrations/accountingStore';
+import { clearChatGptChannelIdentity } from '@/lib/integrations/channelIdentityStore';
+import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
+import { forgetVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import prisma from '@/lib/prisma';
 import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
 import {
@@ -60,6 +75,9 @@ describe('POST /api/integrations/accounting/disconnect', () => {
       },
     });
     (sendHoldedConnectionLifecycleEmails as jest.Mock).mockResolvedValue([]);
+    (clearChatGptChannelIdentity as jest.Mock).mockResolvedValue(0);
+    (getConfirmedCompanyNotificationEmail as jest.Mock).mockResolvedValue(null);
+    (forgetVerifiedHoldedEmailIdentity as jest.Mock).mockResolvedValue(0);
     (resolveHoldedSecurityAlertRecipients as jest.Mock).mockResolvedValue([
       { email: 'demo@example.com', name: 'Demo User', source: 'membership' },
       { email: 'empresa@example.com', name: null, source: 'tenant_profile' },
@@ -86,6 +104,15 @@ describe('POST /api/integrations/accounting/disconnect', () => {
     expect(response.status).toBe(200);
     expect(payload.status).toBe('disconnected');
     expect(disconnectAccountingIntegration).toHaveBeenCalledWith('tenant-1', 'dashboard');
+    expect(clearChatGptChannelIdentity).toHaveBeenCalledWith({
+      channelSubjectId: 'session-1',
+      email: 'demo@example.com',
+    });
+    expect(forgetVerifiedHoldedEmailIdentity).toHaveBeenCalledWith({
+      uid: 'session-1',
+      email: 'demo@example.com',
+      clearAllForUid: true,
+    });
     expect(sendHoldedConnectionLifecycleEmails).toHaveBeenCalledWith({
       userEmail: 'demo@example.com',
       userName: 'Demo User',
@@ -102,6 +129,7 @@ describe('POST /api/integrations/accounting/disconnect', () => {
       tenantId: 'tenant-1',
       actorEmail: 'demo@example.com',
       actorName: 'Demo User',
+      companyNotificationEmail: null,
     });
     expect(sendHoldedSecurityAlertEmails).toHaveBeenCalledWith({
       recipients: [

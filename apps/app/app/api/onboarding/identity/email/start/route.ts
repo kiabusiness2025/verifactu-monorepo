@@ -166,16 +166,22 @@ export async function POST(request: NextRequest) {
 
   if (rememberedVerifiedIdentity) {
     const verifiedAt = rememberedVerifiedIdentity.verifiedAt || new Date().toISOString();
+    const rememberedFullName =
+      rememberedVerifiedIdentity.fullName ??
+      normalizeMeaningfulPersonName(onboardingSession.name) ??
+      null;
+    const rememberedFirstName = rememberedVerifiedIdentity.firstName ?? onboardingSession.firstName;
+    const rememberedLastName = rememberedVerifiedIdentity.lastName ?? onboardingSession.lastName;
     const onboardingToken = await mintHoldedOnboardingTokenForSubject({
       uid: onboardingSession.uid,
       email,
-      name: onboardingSession.name,
+      name: rememberedFullName,
       tenantId,
       tenantBound: onboardingSession.tenantBound,
       authMethod: rememberedVerifiedIdentity.authMethod ?? onboardingSession.authMethod ?? 'email',
       emailVerified: true,
-      firstName: onboardingSession.firstName,
-      lastName: onboardingSession.lastName,
+      firstName: rememberedFirstName,
+      lastName: rememberedLastName,
       verifiedAt,
     });
 
@@ -189,8 +195,8 @@ export async function POST(request: NextRequest) {
           rememberedVerifiedIdentity.authMethod ?? onboardingSession.authMethod ?? 'email',
         email,
         emailVerified: true,
-        firstName: onboardingSession.firstName,
-        lastName: onboardingSession.lastName,
+        firstName: rememberedFirstName,
+        lastName: rememberedLastName,
         verifiedAt,
       },
     });

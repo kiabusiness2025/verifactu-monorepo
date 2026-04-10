@@ -6,56 +6,57 @@ import { buildOnboardingUrl } from '../lib/holded-navigation';
 export const metadata: Metadata = {
   title: 'Capacidades reales | Isaak para Holded',
   description:
-    'Resumen de lo que Isaak ya puede hacer con datos de Holded dentro del flujo gratuito actual.',
+    'Resumen honesto de lo que Isaak ya puede hacer hoy con Holded dentro del beta publico actual.',
 };
 
 const availableCapabilities = [
   {
-    title: 'Facturas y documentos',
+    title: 'Facturas emitidas',
     points: [
-      'Revisar facturas y su estado para detectar cobros en riesgo.',
+      'Listar facturas emitidas y revisar su estado para detectar cobros en riesgo.',
       'Explicar una factura concreta en lenguaje claro.',
-      'Preparar borradores cuando el usuario confirma la accion.',
+      'Preparar borradores de factura cuando el usuario confirma la accion.',
     ],
   },
   {
     title: 'Clientes y contactos',
     points: [
-      'Listar contactos para preparar seguimiento comercial y de cobro.',
-      'Consultar un cliente concreto para entender su contexto.',
-      'Relacionar clientes y facturas para priorizar accion operativa.',
+      'Listar contactos para preparar seguimiento comercial o de cobro.',
+      'Consultar un contacto concreto para entender su contexto.',
+      'Cruzar clientes y facturas para decidir a quien llamar primero.',
     ],
   },
   {
-    title: 'Caja y operacion',
+    title: 'Contabilidad y lectura del negocio',
     points: [
-      'Revisar cuentas y actividad del negocio.',
-      'Traducir datos en riesgos y siguientes pasos.',
-      'Ayudarte a ordenar el trabajo diario con foco en caja y beneficio.',
+      'Consultar cuentas contables y libro diario.',
+      'Traducir movimientos y asientos a lenguaje normal.',
+      'Ayudarte a leer mejor IVA, gastos y parte de la caja desde lo ya registrado.',
     ],
   },
   {
-    title: 'Proyectos y tareas',
+    title: 'Proyectos y trabajo en curso',
     points: [
       'Listar proyectos para ver carga y contexto operativo.',
-      'Analizar tareas para detectar bloqueos.',
-      'Cruzar agenda y tiempos para priorizar ejecucion.',
+      'Abrir un proyecto concreto y revisar sus tareas.',
+      'Detectar bloqueos o prioridades para la semana.',
     ],
   },
 ];
 
 const workingPrompts = [
   'Que facturas deberia revisar hoy para proteger caja?',
-  'Que clientes me conviene contactar primero esta semana?',
+  'Ensename los contactos con mas riesgo de cobro.',
+  'Explicame el diario de esta semana en lenguaje claro.',
   'Resumeme en 5 lineas los proyectos con mas riesgo.',
-  'Que tareas deberia cerrar hoy para evitar retrasos?',
-  'Dame un plan de accion con 3 prioridades y orden de ejecucion.',
+  'Prepara un borrador de factura para este cliente por este importe.',
 ];
 
 const currentLimits = [
   'Isaak no inventa datos: trabaja con lo que realmente existe en tu entorno.',
-  'Cuando una accion cambia informacion, pide confirmacion antes de ejecutarla.',
-  'Si falta contexto para una recomendacion fiable, te pedira el minimo dato necesario.',
+  'La escritura publica actual se limita a preparar borradores de factura y siempre pide confirmacion.',
+  'La lectura de IVA, gastos y parte de tesoreria depende del contexto contable ya registrado en Holded.',
+  'Este beta no promete productos, usuarios, adjuntos, conciliacion bancaria ni documentos como presupuestos, pedidos o albaranes.',
 ];
 
 export default function HoldedCapabilitiesPage() {
@@ -72,8 +73,9 @@ export default function HoldedCapabilitiesPage() {
           </h1>
 
           <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
-            Esta pagina resume capacidad real ya disponible. El objetivo es simple: que sepas que
-            puedes pedirle ahora mismo para ahorrar tiempo y decidir mejor.
+            Esta pagina resume capacidad real ya disponible en el beta publico. El objetivo es
+            simple: que sepas que puedes pedirle ahora mismo para ahorrar tiempo y decidir mejor,
+            sin confundirlo con areas que todavia no forman parte del conector publico.
           </p>
         </div>
       </section>
@@ -111,7 +113,8 @@ export default function HoldedCapabilitiesPage() {
               Prompts utiles para empezar
             </h2>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              Si le das objetivo, plazo y foco, Isaak responde con mas precision y accion.
+              Si le das objetivo, plazo y foco, Isaak responde con mas precision y accion dentro de
+              las capacidades que ya estan activas hoy.
             </p>
 
             <div className="mt-6 grid gap-3 md:grid-cols-2">
@@ -156,7 +159,8 @@ export default function HoldedCapabilitiesPage() {
               Listo para probarlo con tu operacion real
             </h2>
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              Conecta Holded, valida tu API key y entra al dashboard para arrancar el primer chat.
+              Conecta Holded, valida tu API key y entra al dashboard para arrancar con preguntas que
+              ya tienen respuesta hoy.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">

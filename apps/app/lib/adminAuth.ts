@@ -1,9 +1,9 @@
 /**
  * Admin Authentication & Authorization
- * Protects all /api/admin/* routes with ADMIN_EMAILS allowlist
+ * Protects admin-only server routes with the ADMIN_EMAILS allowlist
  */
 
-import { getSessionPayload } from "./session";
+import { getSessionPayload } from './session';
 
 /**
  * Get current user email from session
@@ -13,7 +13,7 @@ async function getCurrentUserEmail(): Promise<string | null> {
     const payload = await getSessionPayload();
     return payload?.email ?? null;
   } catch (error) {
-    console.error("Error getting user email:", error);
+    console.error('Error getting user email:', error);
     return null;
   }
 }
@@ -22,27 +22,25 @@ async function getCurrentUserEmail(): Promise<string | null> {
  * Require admin privileges for the current request
  * Checks if user email is in ADMIN_EMAILS environment variable
  */
-export async function requireAdmin(
-  _req: Request
-): Promise<{ email: string; userId: string }> {
+export async function requireAdmin(_req: Request): Promise<{ email: string; userId: string }> {
   // Get admin emails from environment
-  const adminEmails = (process.env.ADMIN_EMAILS || "")
-    .split(",")
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
 
   if (adminEmails.length === 0) {
-    throw new Error("ADMIN_EMAILS not configured");
+    throw new Error('ADMIN_EMAILS not configured');
   }
 
   // Get current user email and session
-  const email = (await getCurrentUserEmail())?.toLowerCase() ?? "";
+  const email = (await getCurrentUserEmail())?.toLowerCase() ?? '';
   const payload = await getSessionPayload();
-  const userId = payload?.uid ?? "";
+  const userId = payload?.uid ?? '';
 
   // Check if user is admin
   if (!email || !adminEmails.includes(email)) {
-    throw new Error("FORBIDDEN: Admin access required");
+    throw new Error('FORBIDDEN: Admin access required');
   }
 
   // Return admin info

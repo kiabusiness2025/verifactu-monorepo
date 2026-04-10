@@ -129,6 +129,18 @@ La documentacion detallada de variables esta en:
 - Integracion de guias demo/tour con prefill de preguntas para reducir friccion de uso.
 - Documentacion actualizada en README raiz, docs index y guias especificas de app/admin/client/landing.
 
+## Changelog Abr 2026
+
+- El conector directo `ChatGPT <-> Holded` en `apps/app` se ha estabilizado con onboarding por pasos, sesion temporal propia para `channel=chatgpt` e identidad verificada antes de pedir la API key.
+- El paso de identidad ya soporta Google opcional o correo verificado; la sesion del conector conserva `authMethod`, `emailVerified`, `verifiedAt`, `firstName` y `lastName`, y recuerda identidad validada con prefill reutilizable por `(uid, email)`.
+- El flujo ya no debe depender del login web clasico ni del estado React del mismo ciclo: `tenantId` y onboarding token se propagan de forma explicita hasta `connect` y `oauth/authorize` para evitar rebotes y bucles.
+- La UX publica del conector se ha endurecido: aceptacion legal explicita, correo final solo tras conexion correcta, notificaciones de seguridad, bloqueo del paso de API hasta completar los datos previos y correcciones de popup, cache y mobile.
+- Holded pasa a resolverse en modo `channel-aware`: `external_connections` es la fuente operativa activa para `dashboard` y `chatgpt`, con estado, sync, error y disconnect aislados por `channel_key`.
+- El runtime MCP/OAuth se ha reforzado con PKCE S256, codigos de autorizacion de un solo uso y metadata alineada con OpenAI para discovery y protected resource.
+- Se ha reforzado la compatibilidad con entornos legacy: `tenant_profiles` se lee y escribe segun disponibilidad real de columnas, y se corrigieron incidencias de produccion por columnas ausentes y por SQL mal formado en `holdedConnectionResolver`.
+- El perimetro publico del conector queda ahora mas claro: eInforma sale de la surface publica del conector y el preset publico por defecto `openai_review_v2` mantiene una exposicion limitada y revisable.
+- La capacidad publica validada hoy del conector queda centrada en facturas, contactos, cuentas contables, diario, bookings y proyectos; el detalle operativo del preset actual esta documentado en `apps/app/README.md`.
+
 ## Siguientes pasos (prioridad)
 
 1. Terminar paneles admin: usuarios, suscripciones, emails, Vercel, soporte.

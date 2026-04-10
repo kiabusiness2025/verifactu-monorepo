@@ -41,6 +41,10 @@ jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
   resolveHoldedOnboardingSessionFromHeaders: jest.fn(),
 }));
 
+jest.mock('@/lib/integrations/holdedVerifiedEmailIdentities', () => ({
+  rememberVerifiedHoldedEmailIdentity: jest.fn(async () => null),
+}));
+
 jest.mock('@/lib/oauth/mcp', () => ({
   mintHoldedOnboardingTokenForSubject: jest.fn(async () => 'refreshed-onboarding-token'),
 }));
@@ -97,13 +101,46 @@ jest.mock('@/lib/tenantProfileSchema', () => ({
     cnaeText: true,
     postalCode: true,
     country: true,
+    legalForm: true,
+    status: true,
+    capitalSocial: true,
+    einformaLastSyncAt: true,
+    einformaTaxIdVerified: true,
+    einformaRaw: true,
+    employees: true,
+    sales: true,
+    salesYear: true,
+    lastBalanceDate: true,
   })),
+  LEGACY_TENANT_PROFILE_COLUMN_AVAILABILITY: {
+    representativeRole: false,
+    website: false,
+    cnaeCode: false,
+    cnaeText: false,
+    postalCode: false,
+    country: false,
+    legalForm: false,
+    status: false,
+    capitalSocial: false,
+    einformaLastSyncAt: false,
+    einformaTaxIdVerified: false,
+    einformaRaw: false,
+    employees: false,
+    sales: false,
+    salesYear: false,
+    lastBalanceDate: false,
+  },
+  isMissingTenantProfileColumnError: jest.fn(
+    (error: unknown) =>
+      String(error).includes('tenant_profiles.') && String(error).includes('does not exist')
+  ),
   resetTenantProfileColumnAvailabilityCache: jest.fn(),
 }));
 
 import { POST } from './route';
 import { getSessionPayload, requireUserId } from '@/lib/session';
 import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
+import { rememberVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { upsertUser } from '@/lib/tenants';
 import { prisma } from '@/lib/prisma';
@@ -156,6 +193,7 @@ describe('POST /api/onboarding/tenant', () => {
     });
     (mockTx.tenantProfile.upsert as jest.Mock).mockResolvedValue({ tenantId: 'tenant-1' });
     (sendWelcomeLifecycleEmails as jest.Mock).mockResolvedValue([]);
+    (rememberVerifiedHoldedEmailIdentity as jest.Mock).mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -252,6 +290,24 @@ describe('POST /api/onboarding/tenant', () => {
           city: 'Madrid',
           province: 'Madrid',
           country: 'Espana',
+        }),
+        select: { tenantId: true },
+      })
+    );
+
+    expect(rememberVerifiedHoldedEmailIdentity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        uid: 'user-1',
+        email: 'demo@example.com',
+        tenantId: 'tenant-1',
+        prefill: expect.objectContaining({
+          companyLegalName: 'Empresa Demo SL',
+          companyTaxId: 'B12345678',
+          contactFirstName: 'Ksenia',
+          contactLastName: 'Ivanova Lopez',
+          contactRole: 'owner',
+          companySectorCode: 'M',
+          companySectorLabel: 'Actividades profesionales, cientificas y tecnicas',
         }),
       })
     );
@@ -600,6 +656,7 @@ describe('POST /api/onboarding/tenant', () => {
     expect(mockTx.tenantProfile.upsert).toHaveBeenCalledTimes(2);
 
     const secondCall = (mockTx.tenantProfile.upsert as jest.Mock).mock.calls[1][0];
+    expect(secondCall.select).toEqual({ tenantId: true });
     expect(secondCall.create.representativeRole).toBeUndefined();
     expect(secondCall.create.website).toBeUndefined();
     expect(secondCall.create.cnaeCode).toBeUndefined();

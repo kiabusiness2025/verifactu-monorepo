@@ -66,7 +66,10 @@ describe('HoldedOnboardingClient', () => {
   const fetchMock = jest.fn();
 
   const advanceToApiStep = () => {
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
+    const continuePersonButton = screen.queryByRole('button', { name: 'Continuar con empresa' });
+    if (continuePersonButton) {
+      fireEvent.click(continuePersonButton);
+    }
     fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
   };
 
@@ -87,10 +90,12 @@ describe('HoldedOnboardingClient', () => {
 
     expect(screen.getByText('Conector directo Holded + ChatGPT')).toBeInTheDocument();
     expect(
-      screen.getByText('Confirma tu identidad, conecta Holded y vuelve a ChatGPT.')
+      screen.getByText(
+        'Inicia sesion o crea tu cuenta, confirma la empresa y conecta Holded para volver a ChatGPT.'
+      )
     ).toBeInTheDocument();
-    expect(screen.getByText('Sin login visible.')).toBeInTheDocument();
-    expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
+    expect(screen.getByText('Acceso con cuenta completa.')).toBeInTheDocument();
+    expect(screen.getByText('Paso 1: usuario')).toBeInTheDocument();
     expect(screen.getByText(/Correo verificado:/i)).toBeInTheDocument();
     expect(
       screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
@@ -99,7 +104,7 @@ describe('HoldedOnboardingClient', () => {
     expect(screen.getAllByRole('button', { name: 'Volver' }).length).toBeGreaterThan(0);
   });
 
-  it('keeps the final direct-step button disabled and explains what is missing before validating Holded', () => {
+  it('keeps the final direct step locked until user and company data are complete', () => {
     render(
       <HoldedOnboardingClient
         {...baseProps}
@@ -132,21 +137,13 @@ describe('HoldedOnboardingClient', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ir al paso 4: API key' }));
-
+    expect(screen.getByRole('button', { name: 'Ir al paso 3: API key' })).toBeDisabled();
     expect(
-      screen.getByText('Faltan datos obligatorios antes de validar la conexion:')
-    ).toBeInTheDocument();
+      screen.queryByText('Faltan datos obligatorios antes de validar la conexion:')
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByText('Paso 2: completa nombre, apellidos y rol del usuario.')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Paso 3: completa razon social, CIF/NIF, domicilio, codigo postal, ciudad, provincia, pais, sector y correo principal.'
-      )
-    ).toBeInTheDocument();
-
-    expect(screen.getByRole('button', { name: 'Validar y conectar Holded' })).toBeDisabled();
+      screen.queryByRole('button', { name: 'Validar y conectar Holded' })
+    ).not.toBeInTheDocument();
   });
 
   it('shows the identity gate and sends a verification email before exposing the API key step', async () => {
@@ -180,7 +177,7 @@ describe('HoldedOnboardingClient', () => {
     expect(
       screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
     ).not.toBeInTheDocument();
-    expect(screen.queryByText('Sin login visible.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Acceso con cuenta completa.')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText('tu@empresa.com'), {
       target: { value: 'verified@example.com' },
@@ -247,7 +244,7 @@ describe('HoldedOnboardingClient', () => {
     expect(await screen.findByText(/Este correo ya estaba confirmado/i)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
+      expect(screen.getByText('Paso 1: usuario')).toBeInTheDocument();
     });
     expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
   });
@@ -335,7 +332,7 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
+      expect(screen.getByText('Paso 1: usuario')).toBeInTheDocument();
     });
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body || '{}'))).toEqual(
       expect.objectContaining({ email: 'verified@example.com', checkOnly: true })
@@ -386,7 +383,7 @@ describe('HoldedOnboardingClient', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Paso 2: usuario')).toBeInTheDocument();
+      expect(screen.getByText('Paso 1: usuario')).toBeInTheDocument();
     });
     expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
   });
@@ -899,6 +896,7 @@ describe('HoldedOnboardingClient', () => {
       <HoldedOnboardingClient
         {...baseProps}
         captureMode={false}
+        requiresVerifiedIdentity
         onboardingToken="onboarding-token-123"
         summary={{
           companyName: 'Tu empresa',
@@ -935,19 +933,22 @@ describe('HoldedOnboardingClient', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText(/^Nombre/), {
-      target: { value: 'Ksenia' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Apellidos/), {
-      target: { value: 'Ivanova Lopez' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Rol en la empresa/), {
-      target: { value: 'owner' },
-    });
-    fireEvent.change(screen.getByPlaceholderText('600 000 000'), {
-      target: { value: '600 111 222' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
+    const nameInput = screen.queryByLabelText(/^Nombre/);
+    if (nameInput) {
+      fireEvent.change(nameInput, {
+        target: { value: 'Ksenia' },
+      });
+      fireEvent.change(screen.getByLabelText(/^Apellidos/), {
+        target: { value: 'Ivanova Lopez' },
+      });
+      fireEvent.change(screen.getByLabelText(/^Rol en la empresa/), {
+        target: { value: 'owner' },
+      });
+      fireEvent.change(screen.getByPlaceholderText('600 000 000'), {
+        target: { value: '600 111 222' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
+    }
     fireEvent.change(screen.getByLabelText(/^Razon social/), {
       target: { value: 'Empresa Demo SL' },
     });
@@ -1054,6 +1055,7 @@ describe('HoldedOnboardingClient', () => {
       <HoldedOnboardingClient
         {...baseProps}
         captureMode
+        requiresVerifiedIdentity
         nextUrl="https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback"
         requireConnectionConfirmation
         onboardingToken="onboarding-token-123"
@@ -1092,19 +1094,22 @@ describe('HoldedOnboardingClient', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText(/^Nombre/), {
-      target: { value: 'Ksenia' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Apellidos/), {
-      target: { value: 'Ivanova Lopez' },
-    });
-    fireEvent.change(screen.getByLabelText(/^Rol en la empresa/), {
-      target: { value: 'owner' },
-    });
-    fireEvent.change(screen.getByPlaceholderText('600 000 000'), {
-      target: { value: '600 111 222' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
+    const nameInput = screen.queryByLabelText(/^Nombre/);
+    if (nameInput) {
+      fireEvent.change(nameInput, {
+        target: { value: 'Ksenia' },
+      });
+      fireEvent.change(screen.getByLabelText(/^Apellidos/), {
+        target: { value: 'Ivanova Lopez' },
+      });
+      fireEvent.change(screen.getByLabelText(/^Rol en la empresa/), {
+        target: { value: 'owner' },
+      });
+      fireEvent.change(screen.getByPlaceholderText('600 000 000'), {
+        target: { value: '600 111 222' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
+    }
     fireEvent.change(screen.getByLabelText(/^Razon social/), {
       target: { value: 'Empresa Demo SL' },
     });

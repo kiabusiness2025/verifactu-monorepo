@@ -7,6 +7,35 @@ export type TenantProfileColumnAvailability = {
   cnaeText: boolean;
   postalCode: boolean;
   country: boolean;
+  legalForm: boolean;
+  status: boolean;
+  capitalSocial: boolean;
+  einformaLastSyncAt: boolean;
+  einformaTaxIdVerified: boolean;
+  einformaRaw: boolean;
+  employees: boolean;
+  sales: boolean;
+  salesYear: boolean;
+  lastBalanceDate: boolean;
+};
+
+export const LEGACY_TENANT_PROFILE_COLUMN_AVAILABILITY: TenantProfileColumnAvailability = {
+  representativeRole: false,
+  website: false,
+  cnaeCode: false,
+  cnaeText: false,
+  postalCode: false,
+  country: false,
+  legalForm: false,
+  status: false,
+  capitalSocial: false,
+  einformaLastSyncAt: false,
+  einformaTaxIdVerified: false,
+  einformaRaw: false,
+  employees: false,
+  sales: false,
+  salesYear: false,
+  lastBalanceDate: false,
 };
 
 let tenantProfileColumnAvailability: TenantProfileColumnAvailability | null = null;
@@ -27,6 +56,16 @@ export async function getTenantProfileColumnAvailability(): Promise<TenantProfil
     'cnae_text',
     'postal_code',
     'country',
+    'legal_form',
+    'status',
+    'capital_social',
+    'einforma_last_sync_at',
+    'einforma_tax_id_verified',
+    'einforma_raw',
+    'employees',
+    'sales',
+    'sales_year',
+    'last_balance_date',
   ];
 
   const rows = await query<{ column_name: string }>(
@@ -48,6 +87,16 @@ export async function getTenantProfileColumnAvailability(): Promise<TenantProfil
     cnaeText: available.has('cnae_text'),
     postalCode: available.has('postal_code'),
     country: available.has('country'),
+    legalForm: available.has('legal_form'),
+    status: available.has('status'),
+    capitalSocial: available.has('capital_social'),
+    einformaLastSyncAt: available.has('einforma_last_sync_at'),
+    einformaTaxIdVerified: available.has('einforma_tax_id_verified'),
+    einformaRaw: available.has('einforma_raw'),
+    employees: available.has('employees'),
+    sales: available.has('sales'),
+    salesYear: available.has('sales_year'),
+    lastBalanceDate: available.has('last_balance_date'),
   };
 
   return tenantProfileColumnAvailability;
@@ -72,4 +121,35 @@ export function buildTenantProfileOnboardingSelect(availability: TenantProfileCo
     province: true,
     ...(availability.country ? { country: true } : {}),
   };
+}
+
+export function buildTenantProfileEinformaSelect(availability: TenantProfileColumnAvailability) {
+  return {
+    sourceId: true,
+    cnae: true,
+    ...(availability.cnaeCode ? { cnaeCode: true } : {}),
+    ...(availability.cnaeText ? { cnaeText: true } : {}),
+    ...(availability.legalForm ? { legalForm: true } : {}),
+    ...(availability.status ? { status: true } : {}),
+    ...(availability.website ? { website: true } : {}),
+    ...(availability.capitalSocial ? { capitalSocial: true } : {}),
+    incorporationDate: true,
+    address: true,
+    ...(availability.postalCode ? { postalCode: true } : {}),
+    city: true,
+    province: true,
+    ...(availability.country ? { country: true } : {}),
+    ...(availability.einformaLastSyncAt ? { einformaLastSyncAt: true } : {}),
+    ...(availability.einformaTaxIdVerified ? { einformaTaxIdVerified: true } : {}),
+    ...(availability.einformaRaw ? { einformaRaw: true } : {}),
+    ...(availability.employees ? { employees: true } : {}),
+    ...(availability.sales ? { sales: true } : {}),
+    ...(availability.salesYear ? { salesYear: true } : {}),
+    ...(availability.lastBalanceDate ? { lastBalanceDate: true } : {}),
+  };
+}
+
+export function isMissingTenantProfileColumnError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('tenant_profiles.') && message.includes('does not exist');
 }

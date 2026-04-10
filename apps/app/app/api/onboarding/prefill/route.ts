@@ -5,9 +5,13 @@ import {
   resolveHoldedOnboardingSession,
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
+import {
+  readVerifiedHoldedEmailIdentity,
+  type RememberedHoldedOnboardingPrefill,
+} from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
-import { normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
+import { buildFullName, normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
 import {
   buildTenantProfileOnboardingSelect,
@@ -58,6 +62,84 @@ function getFiscalAddressField(fiscalAddress: unknown, field: 'postalCode' | 'co
 
 function getOnboardingContactFirstName(value?: string | null) {
   return splitFullName(normalizeMeaningfulPersonName(value)).firstName || '';
+}
+
+function buildHoldedSummaryFromRememberedPrefill(
+  prefill: RememberedHoldedOnboardingPrefill,
+  defaults: { contactName?: string | null; contactEmail?: string | null }
+) {
+  const rememberedFullName =
+    normalizeMeaningfulPersonName(prefill.contactFullName) ||
+    buildFullName({
+      firstName: prefill.contactFirstName,
+      lastName: prefill.contactLastName,
+    }) ||
+    normalizeMeaningfulPersonName(defaults.contactName) ||
+    null;
+
+  return {
+    companyName: prefill.companyName || prefill.companyLegalName || 'Tu empresa',
+    companyLegalName: prefill.companyLegalName,
+    companyTaxId: prefill.companyTaxId,
+    companyAddress: prefill.companyAddress,
+    companyPostalCode: prefill.companyPostalCode,
+    companyCity: prefill.companyCity,
+    companyProvince: prefill.companyProvince,
+    companyCountry: prefill.companyCountry,
+    companyWebsite: prefill.companyWebsite,
+    companySectorCode: prefill.companySectorCode,
+    companySectorLabel: prefill.companySectorLabel,
+    contactFirstName: prefill.contactFirstName || getOnboardingContactFirstName(rememberedFullName),
+    contactRole: prefill.contactRole,
+    contactFullName: rememberedFullName,
+    contactEmail: prefill.contactEmail || normalizeText(defaults.contactEmail),
+    companyEmail: prefill.companyEmail,
+    contactPhone: prefill.contactPhone,
+  };
+}
+
+function mergeSummaryWithRememberedPrefill(
+  summary: ReturnType<typeof buildHoldedSummaryFromTenant>,
+  prefill?: RememberedHoldedOnboardingPrefill | null
+) {
+  if (!prefill) {
+    return summary;
+  }
+
+  const rememberedFullName =
+    normalizeMeaningfulPersonName(prefill.contactFullName) ||
+    buildFullName({
+      firstName: prefill.contactFirstName,
+      lastName: prefill.contactLastName,
+    });
+  const companyName = normalizeText(summary.companyName);
+
+  return {
+    ...summary,
+    companyName:
+      companyName && companyName.toLowerCase() !== 'tu empresa'
+        ? summary.companyName
+        : prefill.companyName || prefill.companyLegalName || summary.companyName,
+    companyLegalName: summary.companyLegalName || prefill.companyLegalName,
+    companyTaxId: summary.companyTaxId || prefill.companyTaxId,
+    companyAddress: summary.companyAddress || prefill.companyAddress,
+    companyPostalCode: summary.companyPostalCode || prefill.companyPostalCode,
+    companyCity: summary.companyCity || prefill.companyCity,
+    companyProvince: summary.companyProvince || prefill.companyProvince,
+    companyCountry: summary.companyCountry || prefill.companyCountry,
+    companyWebsite: summary.companyWebsite || prefill.companyWebsite,
+    companySectorCode: summary.companySectorCode || prefill.companySectorCode,
+    companySectorLabel: summary.companySectorLabel || prefill.companySectorLabel,
+    contactFirstName:
+      summary.contactFirstName ||
+      prefill.contactFirstName ||
+      getOnboardingContactFirstName(rememberedFullName),
+    contactRole: summary.contactRole || prefill.contactRole,
+    contactFullName: summary.contactFullName || rememberedFullName,
+    contactEmail: summary.contactEmail || prefill.contactEmail,
+    companyEmail: summary.companyEmail || prefill.companyEmail,
+    contactPhone: summary.contactPhone || prefill.contactPhone,
+  };
 }
 
 function buildHoldedSummaryFromTenant(
@@ -132,6 +214,10 @@ export async function POST(request: NextRequest) {
 
     const normalizedUid = normalizeText(onboardingSession?.uid);
     const normalizedEmail = normalizeText(onboardingSession?.email)?.toLowerCase() || null;
+    const rememberedIdentity = await readVerifiedHoldedEmailIdentity({
+      uid: normalizedUid,
+      email: normalizedEmail,
+    });
 
     const user = await prisma.user.findFirst({
       where: {
@@ -148,7 +234,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ ok: true, summary: null, tenantIdHint: null, savedPrefill: null });
+      return NextResponse.json({
+        ok: true,
+        summary: rememberedIdentity?.prefill
+          ? buildHoldedSummaryFromRememberedPrefill(rememberedIdentity.prefill, {
+              contactName:
+                rememberedIdentity.fullName ||
+                normalizeMeaningfulPersonName(onboardingSession?.name),
+              contactEmail: normalizedEmail,
+            })
+          : null,
+        tenantIdHint: null,
+        savedPrefill: null,
+      });
     }
 
     const [preference, memberships] = await Promise.all([
@@ -188,15 +286,32 @@ export async function POST(request: NextRequest) {
     const selectedMembership = preferredMembership || realMemberships[0] || memberships[0] || null;
 
     if (!selectedMembership) {
-      return NextResponse.json({ ok: true, summary: null, tenantIdHint: null, savedPrefill: null });
+      return NextResponse.json({
+        ok: true,
+        summary: rememberedIdentity?.prefill
+          ? buildHoldedSummaryFromRememberedPrefill(rememberedIdentity.prefill, {
+              contactName:
+                rememberedIdentity.fullName ||
+                normalizeMeaningfulPersonName(onboardingSession?.name) ||
+                normalizeMeaningfulPersonName(user.name),
+              contactEmail: normalizedEmail || normalizeText(user.email),
+            })
+          : null,
+        tenantIdHint: null,
+        savedPrefill: null,
+      });
     }
 
-    const summary = buildHoldedSummaryFromTenant(selectedMembership.tenant, {
-      contactName:
-        normalizeMeaningfulPersonName(onboardingSession?.name) ||
-        normalizeMeaningfulPersonName(user.name),
-      contactEmail: normalizedEmail || normalizeText(user.email),
-    });
+    const summary = mergeSummaryWithRememberedPrefill(
+      buildHoldedSummaryFromTenant(selectedMembership.tenant, {
+        contactName:
+          rememberedIdentity?.fullName ||
+          normalizeMeaningfulPersonName(onboardingSession?.name) ||
+          normalizeMeaningfulPersonName(user.name),
+        contactEmail: normalizedEmail || normalizeText(user.email),
+      }),
+      rememberedIdentity?.prefill
+    );
 
     const savedConnection = await resolveSharedHoldedConnectionForTenant(
       selectedMembership.tenantId,

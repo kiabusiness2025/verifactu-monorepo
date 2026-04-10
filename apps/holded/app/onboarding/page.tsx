@@ -72,26 +72,28 @@ export default async function HoldedOnboardingPage({ searchParams }: PageProps) 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             <article className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <ReceiptText className="h-5 w-5 text-[#ff5460]" />
-              <div className="mt-4 text-sm font-semibold text-slate-900">Ventas y facturas</div>
+              <div className="mt-4 text-sm font-semibold text-slate-900">Facturas emitidas</div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Podras consultar facturas emitidas, abrir sus PDF y preparar borradores de factura
-                desde Isaak.
+                Podras consultar facturas emitidas, entender su estado y preparar borradores de
+                factura desde Isaak con confirmacion explicita.
               </p>
             </article>
             <article className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <Building2 className="h-5 w-5 text-[#ff5460]" />
-              <div className="mt-4 text-sm font-semibold text-slate-900">Compras y gastos</div>
+              <div className="mt-4 text-sm font-semibold text-slate-900">
+                Contactos y contabilidad
+              </div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Tambien podras revisar facturas de gasto y compras, abrir sus PDF y obtener
-                resumenes compactos para trabajar desde el chat.
+                Podras consultar contactos, cuentas contables y libro diario para entender mejor
+                IVA, gastos y cobros desde el contexto ya registrado en Holded.
               </p>
             </article>
             <article className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <FolderKanban className="h-5 w-5 text-[#ff5460]" />
-              <div className="mt-4 text-sm font-semibold text-slate-900">Contexto contable</div>
+              <div className="mt-4 text-sm font-semibold text-slate-900">Proyectos y tareas</div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                La conexion incluye contactos, cuentas contables, diario, proyectos y el contexto
-                necesario para que Isaak responda con datos reales.
+                Tambien podras revisar proyectos y tareas para priorizar trabajo y detectar bloqueos
+                sin salir del flujo.
               </p>
             </article>
           </div>
@@ -99,7 +101,8 @@ export default async function HoldedOnboardingPage({ searchParams }: PageProps) 
           <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">
             La conexion no te pedira configuraciones intermedias. En el siguiente paso solo
             recogeremos la identidad basica de empresa y contacto para crear bien tu espacio,
-            enviarte avisos de conexion o desconexion y dejar el panel listo desde el primer uso.
+            enviarte avisos de conexion o desconexion y dejar el panel listo desde el primer uso. La
+            escritura publica actual se limita a borradores de factura con tu confirmacion.
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">

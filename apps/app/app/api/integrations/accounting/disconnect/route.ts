@@ -5,6 +5,9 @@ import {
   sendHoldedSecurityAlertEmails,
 } from '@/lib/email/holdedSecurityAlerts';
 import { disconnectAccountingIntegration } from '@/lib/integrations/accountingStore';
+import { clearChatGptChannelIdentity } from '@/lib/integrations/channelIdentityStore';
+import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
+import { forgetVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -28,6 +31,27 @@ export async function POST(request: NextRequest) {
   const updated = await disconnectAccountingIntegration(auth.tenantId, entryChannel);
 
   try {
+    await Promise.all([
+      clearChatGptChannelIdentity({
+        channelSubjectId: auth.session.uid ?? null,
+        email: auth.session.email ?? null,
+      }),
+      forgetVerifiedHoldedEmailIdentity({
+        uid: auth.session.uid ?? null,
+        email: auth.session.email ?? null,
+        clearAllForUid: true,
+      }),
+    ]);
+  } catch (cleanupError) {
+    console.error('[api/integrations/accounting/disconnect] connector identity cleanup failed', {
+      tenantId: auth.tenantId,
+      entryChannel,
+      uid: auth.session.uid ?? null,
+      message: cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+    });
+  }
+
+  try {
     const tenant = await prisma.tenant.findUnique({
       where: { id: auth.tenantId },
       select: {
@@ -44,6 +68,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const confirmedCompanyEmail = await getConfirmedCompanyNotificationEmail(auth.tenantId);
+
     await sendHoldedConnectionLifecycleEmails({
       userEmail: auth.session.email ?? null,
       userName: auth.session.name ?? null,
@@ -51,7 +77,7 @@ export async function POST(request: NextRequest) {
       tenantLegalName: tenant?.profile?.legalName || tenant?.legalName || null,
       contactName: auth.session.name ?? null,
       contactEmail: auth.session.email ?? null,
-      companyEmail: tenant?.profile?.email || null,
+      companyEmail: confirmedCompanyEmail || tenant?.profile?.email || null,
       contactPhone: tenant?.profile?.phone || null,
       action: 'disconnected',
       channel: entryChannel,
@@ -61,6 +87,7 @@ export async function POST(request: NextRequest) {
       tenantId: auth.tenantId,
       actorEmail: auth.session.email ?? null,
       actorName: auth.session.name ?? null,
+      companyNotificationEmail: confirmedCompanyEmail,
     });
 
     await sendHoldedSecurityAlertEmails({

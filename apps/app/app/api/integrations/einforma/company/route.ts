@@ -4,6 +4,10 @@ import { getCompanyProfileByNif } from '@/server/einforma';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rateLimit';
+import {
+  buildTenantProfileEinformaSelect,
+  getTenantProfileColumnAvailability,
+} from '@/lib/tenantProfileSchema';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -56,7 +60,7 @@ export async function GET(req: Request) {
     const limiter = rateLimit(req, {
       limit: 20,
       windowMs: 60_000,
-      keyPrefix: 'einforma-integrations-company'
+      keyPrefix: 'einforma-integrations-company',
     });
     if (!limiter.ok) {
       return NextResponse.json(
@@ -95,27 +99,10 @@ export async function GET(req: Request) {
     }
 
     if (resolved.tenantId) {
+      const tenantProfileColumns = await getTenantProfileColumnAvailability();
       const tenantProfile = await prisma.tenantProfile.findUnique({
         where: { tenantId: resolved.tenantId },
-        select: {
-          sourceId: true,
-          cnae: true,
-          cnaeCode: true,
-          cnaeText: true,
-          legalForm: true,
-          status: true,
-          website: true,
-          capitalSocial: true,
-          incorporationDate: true,
-          address: true,
-          postalCode: true,
-          city: true,
-          province: true,
-          country: true,
-          einformaLastSyncAt: true,
-          einformaTaxIdVerified: true,
-          einformaRaw: true,
-        },
+        select: buildTenantProfileEinformaSelect(tenantProfileColumns),
       });
 
       if (
@@ -143,7 +130,9 @@ export async function GET(req: Request) {
               (typeof rawEmpresa.razonSocial === 'string' ? rawEmpresa.razonSocial : undefined) ??
               (typeof raw.razonSocial === 'string' ? raw.razonSocial : undefined),
             tradeName:
-              (typeof rawEmpresa.nombreComercial === 'string' ? rawEmpresa.nombreComercial : undefined) ??
+              (typeof rawEmpresa.nombreComercial === 'string'
+                ? rawEmpresa.nombreComercial
+                : undefined) ??
               (typeof raw.nombreComercial === 'string' ? raw.nombreComercial : undefined),
             nif: rawNif || taxId,
             cnae:
@@ -152,7 +141,9 @@ export async function GET(req: Request) {
               (typeof raw.cnae === 'string' ? raw.cnae : undefined),
             legalForm:
               tenantProfile.legalForm ??
-              (typeof rawEmpresa.formaJuridica === 'string' ? rawEmpresa.formaJuridica : undefined) ??
+              (typeof rawEmpresa.formaJuridica === 'string'
+                ? rawEmpresa.formaJuridica
+                : undefined) ??
               (typeof raw.formaJuridica === 'string' ? raw.formaJuridica : undefined),
             status:
               tenantProfile.status ??
@@ -164,7 +155,9 @@ export async function GET(req: Request) {
               (typeof raw.web === 'string' ? raw.web : undefined),
             capitalSocial:
               tenantProfile.capitalSocial ??
-              (typeof rawEmpresa.capitalSocial === 'number' ? rawEmpresa.capitalSocial : undefined) ??
+              (typeof rawEmpresa.capitalSocial === 'number'
+                ? rawEmpresa.capitalSocial
+                : undefined) ??
               (typeof raw.capitalSocial === 'number' ? raw.capitalSocial : undefined),
             constitutionDate: tenantProfile.incorporationDate
               ? tenantProfile.incorporationDate.toISOString().slice(0, 10)
@@ -175,7 +168,9 @@ export async function GET(req: Request) {
             address: {
               street:
                 tenantProfile.address ??
-                (typeof rawEmpresa.domicilioSocial === 'string' ? rawEmpresa.domicilioSocial : undefined) ??
+                (typeof rawEmpresa.domicilioSocial === 'string'
+                  ? rawEmpresa.domicilioSocial
+                  : undefined) ??
                 (typeof raw.domicilioSocial === 'string' ? raw.domicilioSocial : undefined),
               zip:
                 tenantProfile.postalCode ??
@@ -197,7 +192,9 @@ export async function GET(req: Request) {
             },
             sourceId:
               tenantProfile.sourceId ??
-              (typeof rawEmpresa.identificativo === 'string' ? rawEmpresa.identificativo : undefined) ??
+              (typeof rawEmpresa.identificativo === 'string'
+                ? rawEmpresa.identificativo
+                : undefined) ??
               (typeof rawEmpresa.id === 'string' ? rawEmpresa.id : undefined) ??
               (typeof raw.id === 'string' ? raw.id : undefined),
             raw,

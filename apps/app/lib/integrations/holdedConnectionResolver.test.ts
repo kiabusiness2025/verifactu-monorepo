@@ -16,6 +16,44 @@ describe('holdedConnectionResolver', () => {
     jest.resetModules();
   });
 
+  it.each([true, false])(
+    'builds a valid external connection select when last_error column availability is %s',
+    async (hasLastErrorColumn) => {
+      let externalQuery = '';
+
+      mockOne.mockImplementation(async (text: string) => {
+        if (text.includes('information_schema.tables')) {
+          return { exists: true };
+        }
+
+        if (text.includes("column_name = 'channel_key'")) {
+          return { exists: true };
+        }
+
+        if (text.includes("column_name = 'last_error'")) {
+          return { exists: hasLastErrorColumn };
+        }
+
+        if (text.includes('FROM external_connections')) {
+          externalQuery = text;
+          return null;
+        }
+
+        return null;
+      });
+
+      const { resolveSharedHoldedConnectionStatusForTenant } =
+        await import('./holdedConnectionResolver');
+
+      await expect(
+        resolveSharedHoldedConnectionStatusForTenant('tenant-1', 'chatgpt')
+      ).resolves.toBeNull();
+
+      expect(externalQuery).toContain('FROM external_connections');
+      expect(externalQuery).not.toMatch(/,\s*FROM external_connections/);
+    }
+  );
+
   it('prefers external_connections for dashboard status when both storages exist', async () => {
     mockOne.mockImplementation(async (text: string) => {
       if (text.includes('information_schema.tables')) {

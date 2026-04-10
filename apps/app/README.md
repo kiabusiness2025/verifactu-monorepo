@@ -56,6 +56,58 @@ Matiz importante desde abril 2026:
 - `default_scopes` puede seguir usando un preset mas estrecho, por ejemplo `openai_review_v2`
 - si una app interna necesita mas tools, el cambio no va en `HOLDED_MCP_TOOL_SCOPES`, sino en que el cliente OAuth solicite scopes adicionales y en que `lib/oauth/mcp.ts` los admita
 
+## Preset publico actual del conector Holded Beta
+
+Distinguir siempre entre tres niveles:
+
+- `scopes_supported` -> catalogo completo de scopes y familias que el runtime sabe manejar
+- `default_scopes` -> preset publico que se expone por defecto al conector en revision
+- datos del tenant -> que una tool exista no implica que haya datos utiles en la cuenta conectada
+
+En abril de 2026, el preset publico `openai_review_v2` expone 11 tools y esa es la superficie real que hoy puede validar ChatGPT/OpenAI sin scopes adicionales:
+
+- `holded_list_invoices`
+- `holded_get_invoice`
+- `holded_create_invoice_draft`
+- `holded_list_contacts`
+- `holded_get_contact`
+- `holded_list_accounts`
+- `holded_list_daily_ledger`
+- `holded_list_bookings`
+- `holded_list_projects`
+- `holded_get_project`
+- `holded_list_project_tasks`
+
+## Matriz de capacidades del preset publico `openai_review_v2`
+
+La tabla siguiente describe el beta publico actual. No describe por si sola todo el catalogo interno soportado por el runtime.
+
+| Area                        | Lectura directa   | Lectura indirecta | Escritura                  | Estado de prueba       | Observacion                                                                                                                           |
+| --------------------------- | ----------------- | ----------------- | -------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Facturas                    | Si                | Si                | Si                         | Probado                | `holded_list_invoices`, `holded_get_invoice`, `holded_create_invoice_draft`                                                           |
+| Contactos                   | Si                | -                 | No expuesto en este preset | Probado                | `holded_list_contacts`, `holded_get_contact`                                                                                          |
+| Cuentas contables           | Si                | -                 | No expuesto en este preset | Probado                | `holded_list_accounts`                                                                                                                |
+| Asientos contables / diario | Si                | -                 | No expuesto en este preset | Probado                | `holded_list_daily_ledger`                                                                                                            |
+| Gastos / purchase docs      | No                | Si                | No expuesto en este preset | Probado indirectamente | Aparecen en el diario como `purchase`, con referencias tipo `R0001`, `R0002` y cuentas de gasto                                       |
+| Impuestos                   | No                | Si                | No expuesto en este preset | Probado indirectamente | Se ven por lineas de IVA y por cuentas fiscales como `472` y `477`                                                                    |
+| Bancos / treasury           | No                | Si                | No expuesto en este preset | Probado indirectamente | Se ven por cuentas bancarias y movimientos reflejados en el diario                                                                    |
+| Proyectos                   | Si                | -                 | No expuesto en este preset | Probado                | `holded_list_projects`, `holded_get_project`, `holded_list_project_tasks`; puede devolver lista vacia si el tenant no tiene proyectos |
+| Tareas de proyecto          | Si                | -                 | No expuesto en este preset | No probado utilmente   | Depende de contar con un `projectId` visible                                                                                          |
+| Bookings / agenda CRM       | Si                | -                 | No expuesto en este preset | No probado             | `holded_list_bookings` existe en el preset publico                                                                                    |
+| Productos / items           | No en este preset | No claro          | No expuesto en este preset | No expuesto            | No forma parte del beta publico actual                                                                                                |
+| Usuarios                    | No                | No                | No expuesto                | No expuesto            | No existe familia MCP publica para usuarios                                                                                           |
+| Documentos adjuntos         | No en este preset | No                | No expuesto en este preset | No expuesto            | No forma parte del beta publico actual                                                                                                |
+| Conciliacion bancaria       | No                | No claro          | No expuesto                | No expuesto            | No hay herramienta especifica en el beta publico actual                                                                               |
+| Presupuestos                | No                | No claro          | No expuesto                | No expuesto            | No hay herramienta especifica en el beta publico actual                                                                               |
+| Pedidos                     | No                | No claro          | No expuesto                | No expuesto            | No hay herramienta especifica en el beta publico actual                                                                               |
+| Albaranes                   | No                | No claro          | No expuesto                | No expuesto            | No hay herramienta especifica en el beta publico actual                                                                               |
+
+Conclusion operativa para este preset:
+
+- capacidad fuerte actual -> facturacion, contactos, cuentas contables, diario, contexto CRM y proyectos
+- capacidad indirecta pero util -> gastos, IVA y parte de tesoreria via diario y cuentas
+- fuera del beta publico actual -> inventario, usuarios, adjuntos, conciliacion y otros documentos comerciales fuera del flujo de factura
+
 Regla practica:
 
 - si cambias una tool, casi seguro tocas `holdedMcpTools.ts`

@@ -234,6 +234,11 @@ describe('POST /api/onboarding/identity/email/start', () => {
       email: 'verified@example.com',
       authMethod: 'email',
       verifiedAt: '2026-04-09T09:15:00.000Z',
+      firstName: 'Ksenia',
+      lastName: 'Ivanova Lopez',
+      fullName: 'Ksenia Ivanova Lopez',
+      tenantId: 'tenant-123',
+      prefill: null,
     });
 
     const request = new NextRequest(
@@ -263,12 +268,21 @@ describe('POST /api/onboarding/identity/email/start', () => {
         authMethod: 'email',
         email: 'verified@example.com',
         emailVerified: true,
+        firstName: 'Ksenia',
+        lastName: 'Ivanova Lopez',
         verifiedAt: '2026-04-09T09:15:00.000Z',
       })
     );
     expect(sendCustomEmail).not.toHaveBeenCalled();
     expect(createHoldedEmailVerificationCode).not.toHaveBeenCalled();
     expect(mintHoldedEmailVerificationToken).not.toHaveBeenCalled();
+    expect(mintHoldedOnboardingTokenForSubject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Ksenia Ivanova Lopez',
+        firstName: 'Ksenia',
+        lastName: 'Ivanova Lopez',
+      })
+    );
   });
 
   it('checks the current verification status without resending when checkOnly is true', async () => {

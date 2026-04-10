@@ -18,6 +18,7 @@ import {
   logConnectorEvent,
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
+import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
 import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
 import {
   getHoldedOnboardingTokenFromHeaders,
@@ -233,6 +234,7 @@ export async function POST(request: NextRequest) {
           },
         });
 
+        const confirmedCompanyEmail = await getConfirmedCompanyNotificationEmail(auth.tenantId);
         const emailContext = {
           userEmail: auth.session.email ?? null,
           userName: auth.session.name ?? null,
@@ -240,13 +242,14 @@ export async function POST(request: NextRequest) {
           tenantLegalName: tenant?.profile?.legalName || tenant?.legalName || null,
           contactName: auth.session.name ?? null,
           contactEmail: auth.session.email ?? null,
-          companyEmail: tenant?.profile?.email || null,
+          companyEmail: confirmedCompanyEmail || tenant?.profile?.email || null,
           contactPhone: tenant?.profile?.phone || null,
         };
         const securityRecipients = await resolveHoldedSecurityAlertRecipients({
           tenantId: auth.tenantId,
           actorEmail: auth.session.email ?? null,
           actorName: auth.session.name ?? null,
+          companyNotificationEmail: emailContext.companyEmail,
         });
 
         if (entryChannel === 'chatgpt' && onboardingSession) {

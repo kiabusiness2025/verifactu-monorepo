@@ -5,23 +5,23 @@ import Image from 'next/image';
 
 const featureBadges = [
   {
-    label: 'Preguntas y listo',
+    label: 'Facturas y contactos',
     className: 'left-0 top-10 sm:-left-6',
   },
   {
-    label: 'Sin menus complicados',
+    label: 'Contabilidad en claro',
     className: 'right-0 top-24 sm:-right-8',
   },
   {
-    label: 'Facturas en segundos',
+    label: 'Borradores con confirmacion',
     className: 'left-4 bottom-24 sm:-left-4',
   },
   {
-    label: 'Numeros mas claros',
+    label: 'Proyectos y tareas',
     className: 'right-2 bottom-10 sm:-right-6',
   },
   {
-    label: 'Tu negocio en lenguaje normal',
+    label: 'Sin menus ni ruido',
     className: 'left-1/2 top-0 -translate-x-1/2',
   },
 ];

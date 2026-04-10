@@ -138,13 +138,6 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
 - `GET /api/integrations/onedrive/auth` — iniciar OAuth OneDrive.
 - `GET /api/integrations/onedrive/callback` — callback OAuth OneDrive.
 
-### eInforma (enriquecimiento de empresa)
-
-- `GET /api/integrations/einforma/search` — buscar empresa por nombre/CIF.
-- `GET /api/integrations/einforma/company` — datos detallados de empresa.
-- `POST /api/integrations/einforma/enrich-tenant` — enriquecer perfil del tenant con datos de eInforma.
-- `GET /api/einforma/search` — búsqueda pública (sin tenant obligatorio).
-
 ### MCP Holded (para ChatGPT)
 
 - Ruta: `POST /api/mcp/holded` (JSON-RPC 2.0 sobre HTTP).
@@ -182,8 +175,7 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
 - `GET /api/onboarding/status` — estado del onboarding del usuario.
 - `POST /api/onboarding/tenant` — crear/completar perfil del tenant.
 - `POST /api/onboarding/start-trial` — activar trial.
-- `GET /api/onboarding/einforma/search` — búsqueda de empresa en onboarding.
-- `GET /api/onboarding/einforma/company` — datos de empresa en onboarding.
+- Nota de perímetro: la búsqueda o autocompletado de empresa vive fuera de Isaak y fuera del conector Holded + ChatGPT.
 
 ### Soporte
 
@@ -237,11 +229,6 @@ Requiere `canUseAccountingApiIntegration=true` (plan Empresa/PRO).
 - `GOOGLE_CLIENT_SECRET`
 - `MICROSOFT_CLIENT_ID`
 - `MICROSOFT_CLIENT_SECRET`
-
-### eInforma
-
-- `EINFORMA_API_KEY`
-- `EINFORMA_API_URL`
 
 ### Soporte por email (inbound)
 

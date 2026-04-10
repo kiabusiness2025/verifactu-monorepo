@@ -17,16 +17,20 @@ Preparar `Isaak for Holded` para envio a revision de OpenAI como app publica bas
 
 ## Decision de alcance para la primera submission
 
-Public v1 incluye:
+Public beta actual incluye:
 
-- Invoice API
-- Accounting API
-- CRM API
-- Projects API
+- lectura directa de facturas emitidas, contactos, cuentas contables, libro diario, bookings CRM, proyectos y tareas
+- escritura limitada a borradores de factura con confirmacion explicita
+- lectura indirecta de IVA, gastos y parte de tesoreria a partir del contexto contable ya registrado
 
-Public v1 excluye:
+Public beta actual excluye:
 
-- Team API
+- productos e items
+- usuarios y datos de equipo
+- adjuntos y PDFs como promesa publica principal
+- conciliacion bancaria
+- presupuestos, pedidos y albaranes
+- cualquier activacion publica accidental del preset `full`
 
 Razon:
 
@@ -46,6 +50,20 @@ Regla operativa:
 - el contrato visible se controla con `MCP_PUBLIC_SCOPE_PRESET`
 - para review publica, el valor correcto sigue siendo `openai_review_v2`
 - `full` no debe activarse por accidente durante review ni en demos que prometen una superficie mas estrecha
+
+Hoy `openai_review_v2` expone exactamente 11 tools publicas:
+
+- `holded_list_invoices`
+- `holded_get_invoice`
+- `holded_create_invoice_draft`
+- `holded_list_contacts`
+- `holded_get_contact`
+- `holded_list_accounts`
+- `holded_list_daily_ledger`
+- `holded_list_bookings`
+- `holded_list_projects`
+- `holded_get_project`
+- `holded_list_project_tasks`
 
 Matiz tecnico actual:
 
@@ -106,12 +124,40 @@ La app publica debe comunicar:
 - que Holded se conecta server-side
 - que Verifactu es la capa de explicacion, decision y accion guiada
 - que la API key de Holded no se expone al cliente
+- que la experiencia publica no promete mas alla de la matriz canonica del beta
+
+## Guardrails de copy publico
+
+Descripcion corta recomendada:
+
+- `Consulta facturas, contactos y contabilidad de Holded en lenguaje claro.`
+
+Descripcion expandida recomendada:
+
+- `Isaak ya puede revisar facturas, contactos, cuentas contables, diario y proyectos, y preparar borradores de factura con confirmacion.`
+
+Lo que si podemos prometer en landing, submission y materiales publicos:
+
+- lectura directa de facturas, contactos, cuentas contables, diario, bookings y proyectos
+- lectura indirecta de IVA, gastos y parte de tesoreria a partir del contexto contable
+- escritura limitada a borradores de factura con confirmacion explicita
+- lenguaje claro, sin menus ni configuraciones intermedias dentro del flujo revisado
+
+Lo que no debemos prometer todavia:
+
+- productos o items
+- usuarios o datos de equipo
+- adjuntos y PDFs como capacidad publica comprometida
+- conciliacion bancaria
+- presupuestos, pedidos o albaranes
+- escritura amplia fuera del borrador de factura
 
 ## Requisitos funcionales minimos
 
 - listar facturas
 - obtener una factura concreta
 - listar contactos
+- obtener un contacto
 - listar cuentas contables
 - listar libro diario
 - listar bookings CRM
@@ -155,7 +201,7 @@ Completado:
 - MCP remoto operativo
 - OAuth propio operativo
 - onboarding `holded-first` para conectar Holded por API key desde ChatGPT
-- tools de Invoice, Accounting, CRM y Projects expuestas
+- las 11 tools del preset publico `openai_review_v2` expuestas
 - modulo interno `Isaak for Holded` dentro del dashboard
 - landing publica inicial en `holded.verifactu.business`
 - conexion compartida preparada para reutilizarse entre ChatGPT y dashboard
@@ -195,6 +241,7 @@ Pendiente antes de submission:
 - auditar que las tools publicas devuelven solo datos minimos necesarios
 - confirmar que `Team API` sigue fuera del alcance de la primera submission
 - documentar claramente que la cuenta de Holded se determina por la API key del usuario y que la credencial se guarda server-side
+- alinear landing, review publica y QA con la matriz canonica del beta publico
 
 ## Ruta recomendada de publicacion con Apps SDK
 
@@ -280,6 +327,8 @@ Notas de presentacion:
 
 ## Referencias operativas
 
+- Matriz canonica del beta publico: `docs/product/HOLDED_DIRECT_CONNECTOR_BETA_CAPABILITY_MATRIX_2026-04-10.md`
+- Release notes abril 2026: `docs/product/HOLDED_DIRECT_CONNECTOR_RELEASE_NOTES_2026-04-10.md`
 - Arquitectura compartida: `docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md`
 - Checklist de deploy y QA: `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
 - Runbook de despliegue: `docs/ops/runbooks/ISAAK_FOR_HOLDED_PUBLIC_DEPLOY.md`
