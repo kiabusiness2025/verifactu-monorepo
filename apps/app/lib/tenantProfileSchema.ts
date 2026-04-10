@@ -11,6 +11,10 @@ export type TenantProfileColumnAvailability = {
 
 let tenantProfileColumnAvailability: TenantProfileColumnAvailability | null = null;
 
+export function resetTenantProfileColumnAvailabilityCache() {
+  tenantProfileColumnAvailability = null;
+}
+
 export async function getTenantProfileColumnAvailability(): Promise<TenantProfileColumnAvailability> {
   if (tenantProfileColumnAvailability) {
     return tenantProfileColumnAvailability;

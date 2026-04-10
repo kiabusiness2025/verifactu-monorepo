@@ -98,6 +98,7 @@ jest.mock('@/lib/tenantProfileSchema', () => ({
     postalCode: true,
     country: true,
   })),
+  resetTenantProfileColumnAvailabilityCache: jest.fn(),
 }));
 
 import { POST } from './route';
@@ -550,6 +551,66 @@ describe('POST /api/onboarding/tenant', () => {
       lastName: 'Guest',
       verifiedAt: '2026-04-06T12:00:00.000Z',
     });
+  });
+
+  it('retries tenant profile upsert with the legacy schema when production rejects an optional column', async () => {
+    (mockTx.tenantProfile.upsert as jest.Mock)
+      .mockRejectedValueOnce(
+        new Error(
+          'Invalid `prisma.tenantProfile.upsert()` invocation: The column `tenant_profiles.representative_role` does not exist in the current database.'
+        )
+      )
+      .mockResolvedValueOnce({ tenantId: 'tenant-1' });
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/onboarding/tenant', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Empresa Demo',
+          legalName: 'Empresa Demo SL',
+          taxId: 'B12345678',
+          tradeName: 'Empresa Demo',
+          extra: {
+            representative: 'Ksenia Ivanova Lopez',
+            representativeRole: 'owner',
+            contactFirstName: 'Ksenia',
+            contactLastName: 'Ivanova Lopez',
+            email: 'info@empresa-demo.es',
+            phone: '+34 600 111 222',
+            cnae: 'M - Actividades profesionales, cientificas y tecnicas',
+            cnaeCode: 'M',
+            cnaeText: 'Actividades profesionales, cientificas y tecnicas',
+            website: 'https://empresa-demo.es',
+            address: 'Calle Mayor 1',
+            postalCode: '28001',
+            city: 'Madrid',
+            province: 'Madrid',
+            country: 'Espana',
+          },
+        }),
+      })
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(mockTx.tenantProfile.upsert).toHaveBeenCalledTimes(2);
+
+    const secondCall = (mockTx.tenantProfile.upsert as jest.Mock).mock.calls[1][0];
+    expect(secondCall.create.representativeRole).toBeUndefined();
+    expect(secondCall.create.website).toBeUndefined();
+    expect(secondCall.create.cnaeCode).toBeUndefined();
+    expect(secondCall.create.cnaeText).toBeUndefined();
+    expect(secondCall.create.postalCode).toBeUndefined();
+    expect(secondCall.create.country).toBeUndefined();
+    expect(secondCall.update.representativeRole).toBeUndefined();
+    expect(secondCall.update.website).toBeUndefined();
+    expect(secondCall.update.cnaeCode).toBeUndefined();
+    expect(secondCall.update.cnaeText).toBeUndefined();
+    expect(secondCall.update.postalCode).toBeUndefined();
+    expect(secondCall.update.country).toBeUndefined();
   });
 
   it('preserves the verified onboarding email and name when refreshing the token during a signed-session flow', async () => {

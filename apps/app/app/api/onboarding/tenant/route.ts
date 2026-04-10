@@ -8,7 +8,11 @@ import {
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
-import { getTenantProfileColumnAvailability } from '@/lib/tenantProfileSchema';
+import {
+  getTenantProfileColumnAvailability,
+  type TenantProfileColumnAvailability,
+  resetTenantProfileColumnAvailabilityCache,
+} from '@/lib/tenantProfileSchema';
 import { upsertUser } from '@/lib/tenants';
 
 type TenantPayload = {
@@ -154,6 +158,20 @@ async function resolvePlanId(): Promise<number> {
   });
 
   return created.id;
+}
+
+const legacyTenantProfileColumns: TenantProfileColumnAvailability = {
+  representativeRole: false,
+  website: false,
+  cnaeCode: false,
+  cnaeText: false,
+  postalCode: false,
+  country: false,
+};
+
+function isMissingTenantProfileColumnError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('tenant_profiles.') && message.includes('does not exist');
 }
 
 export async function POST(req: Request) {
@@ -354,86 +372,65 @@ export async function POST(req: Request) {
             }
           : null);
 
-      await tx.tenantProfile.upsert({
-        where: { tenantId: tenant.id },
-        create: {
-          tenantId: tenant.id,
-          source,
-          sourceId: einformaId,
-          taxId: taxIdRaw,
-          legalName: legalName || name,
-          tradeName: tradeName || name,
-          fiscalAddress: effectiveFiscalAddress ?? undefined,
-          taxRegime: taxRegime || extra?.taxRegime || undefined,
-          defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
-          cnae: extra?.cnae || undefined,
-          ...(tenantProfileColumns.cnaeCode ? { cnaeCode: extra?.cnaeCode || cnaeParts.code } : {}),
-          ...(tenantProfileColumns.cnaeText ? { cnaeText: extra?.cnaeText || cnaeParts.text } : {}),
-          legalForm: extra?.legalForm || undefined,
-          status: extra?.status || undefined,
-          ...(tenantProfileColumns.website ? { website: extra?.website || undefined } : {}),
-          capitalSocial: extra?.capitalSocial ?? undefined,
-          incorporationDate: extra?.incorporationDate
-            ? new Date(extra.incorporationDate)
-            : undefined,
-          address: extra?.address || undefined,
-          ...(tenantProfileColumns.postalCode
-            ? { postalCode: extra?.postalCode || cityParts.postalCode }
-            : {}),
-          city: cityParts.city || undefined,
-          province: extra?.province || undefined,
-          ...(tenantProfileColumns.country
-            ? { country: extra?.country || country || undefined }
-            : {}),
-          representative: extra?.representative || undefined,
-          ...(tenantProfileColumns.representativeRole
-            ? { representativeRole: extra?.representativeRole || undefined }
-            : {}),
-          email: companyEmail || undefined,
-          phone: companyPhone || undefined,
-          einformaRaw: profileRaw,
-          einformaLastSyncAt: isEinforma ? new Date() : undefined,
-          einformaTaxIdVerified: isEinforma ? true : undefined,
-        } as never,
-        update: {
-          source,
-          sourceId: einformaId,
-          taxId: taxIdRaw,
-          legalName: legalName || name,
-          tradeName: tradeName || name,
-          fiscalAddress: effectiveFiscalAddress ?? undefined,
-          taxRegime: taxRegime || extra?.taxRegime || undefined,
-          defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
-          cnae: extra?.cnae || undefined,
-          ...(tenantProfileColumns.cnaeCode ? { cnaeCode: extra?.cnaeCode || cnaeParts.code } : {}),
-          ...(tenantProfileColumns.cnaeText ? { cnaeText: extra?.cnaeText || cnaeParts.text } : {}),
-          legalForm: extra?.legalForm || undefined,
-          status: extra?.status || undefined,
-          ...(tenantProfileColumns.website ? { website: extra?.website || undefined } : {}),
-          capitalSocial: extra?.capitalSocial ?? undefined,
-          incorporationDate: extra?.incorporationDate
-            ? new Date(extra.incorporationDate)
-            : undefined,
-          address: extra?.address || undefined,
-          ...(tenantProfileColumns.postalCode
-            ? { postalCode: extra?.postalCode || cityParts.postalCode }
-            : {}),
-          city: cityParts.city || undefined,
-          province: extra?.province || undefined,
-          ...(tenantProfileColumns.country
-            ? { country: extra?.country || country || undefined }
-            : {}),
-          representative: extra?.representative || undefined,
-          ...(tenantProfileColumns.representativeRole
-            ? { representativeRole: extra?.representativeRole || undefined }
-            : {}),
-          email: companyEmail || undefined,
-          phone: companyPhone || undefined,
-          einformaRaw: profileRaw,
-          einformaLastSyncAt: isEinforma ? new Date() : undefined,
-          einformaTaxIdVerified: isEinforma ? true : undefined,
-        } as never,
+      const buildTenantProfileData = (columns: TenantProfileColumnAvailability) => ({
+        source,
+        sourceId: einformaId,
+        taxId: taxIdRaw,
+        legalName: legalName || name,
+        tradeName: tradeName || name,
+        fiscalAddress: effectiveFiscalAddress ?? undefined,
+        taxRegime: taxRegime || extra?.taxRegime || undefined,
+        defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
+        cnae: extra?.cnae || undefined,
+        ...(columns.cnaeCode ? { cnaeCode: extra?.cnaeCode || cnaeParts.code } : {}),
+        ...(columns.cnaeText ? { cnaeText: extra?.cnaeText || cnaeParts.text } : {}),
+        legalForm: extra?.legalForm || undefined,
+        status: extra?.status || undefined,
+        ...(columns.website ? { website: extra?.website || undefined } : {}),
+        capitalSocial: extra?.capitalSocial ?? undefined,
+        incorporationDate: extra?.incorporationDate ? new Date(extra.incorporationDate) : undefined,
+        address: extra?.address || undefined,
+        ...(columns.postalCode ? { postalCode: extra?.postalCode || cityParts.postalCode } : {}),
+        city: cityParts.city || undefined,
+        province: extra?.province || undefined,
+        ...(columns.country ? { country: extra?.country || country || undefined } : {}),
+        representative: extra?.representative || undefined,
+        ...(columns.representativeRole
+          ? { representativeRole: extra?.representativeRole || undefined }
+          : {}),
+        email: companyEmail || undefined,
+        phone: companyPhone || undefined,
+        einformaRaw: profileRaw,
+        einformaLastSyncAt: isEinforma ? new Date() : undefined,
+        einformaTaxIdVerified: isEinforma ? true : undefined,
       });
+
+      const upsertTenantProfile = async (columns: TenantProfileColumnAvailability) =>
+        tx.tenantProfile.upsert({
+          where: { tenantId: tenant.id },
+          create: {
+            tenantId: tenant.id,
+            ...buildTenantProfileData(columns),
+          } as never,
+          update: buildTenantProfileData(columns) as never,
+        });
+
+      try {
+        await upsertTenantProfile(tenantProfileColumns);
+      } catch (error) {
+        if (!isMissingTenantProfileColumnError(error)) {
+          throw error;
+        }
+
+        resetTenantProfileColumnAvailabilityCache();
+
+        console.warn('[api/onboarding/tenant] retrying tenantProfile upsert with legacy schema', {
+          tenantId: tenant.id,
+          message: error instanceof Error ? error.message : String(error),
+        });
+
+        await upsertTenantProfile(legacyTenantProfileColumns);
+      }
 
       return {
         tenant,
