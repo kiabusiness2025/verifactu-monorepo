@@ -89,6 +89,10 @@ jest.mock('@/lib/email/holdedConnectionEmails', () => ({
   sendWelcomeLifecycleEmails: jest.fn(),
 }));
 
+jest.mock('@/lib/tenantProfileSchema', () => ({
+  hasTenantProfileRepresentativeRoleColumn: jest.fn(async () => true),
+}));
+
 import { POST } from './route';
 import { getSessionPayload, requireUserId } from '@/lib/session';
 import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';

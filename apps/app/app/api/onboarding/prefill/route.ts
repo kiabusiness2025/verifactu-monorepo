@@ -9,6 +9,10 @@ import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holde
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
+import {
+  buildTenantProfileOnboardingSelect,
+  hasTenantProfileRepresentativeRoleColumn,
+} from '@/lib/tenantProfileSchema';
 
 export const runtime = 'nodejs';
 
@@ -103,6 +107,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const onboardingSession = await resolveIdentityOnboardingSession(request, body);
+    const hasRepresentativeRoleColumn = await hasTenantProfileRepresentativeRoleColumn();
 
     if (!isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
       return NextResponse.json(
@@ -153,23 +158,7 @@ export async function POST(request: NextRequest) {
               name: true,
               legalName: true,
               profile: {
-                select: {
-                  tradeName: true,
-                  legalName: true,
-                  representative: true,
-                  representativeRole: true,
-                  email: true,
-                  phone: true,
-                  website: true,
-                  cnae: true,
-                  cnaeCode: true,
-                  cnaeText: true,
-                  address: true,
-                  postalCode: true,
-                  city: true,
-                  province: true,
-                  country: true,
-                },
+                select: buildTenantProfileOnboardingSelect(hasRepresentativeRoleColumn),
               },
             },
           },

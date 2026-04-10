@@ -10,6 +10,10 @@ import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
+import {
+  buildTenantProfileOnboardingSelect,
+  hasTenantProfileRepresentativeRoleColumn,
+} from '@/lib/tenantProfileSchema';
 import { getAppUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
@@ -78,7 +82,7 @@ type TenantSummaryRecord = {
     tradeName: string | null;
     legalName: string | null;
     representative: string | null;
-    representativeRole: string | null;
+    representativeRole?: string | null;
     email: string | null;
     phone: string | null;
     website: string | null;
@@ -130,6 +134,7 @@ async function resolveVerifiedEmailTenantPrefill(input: {
   email?: string | null;
   contactName?: string | null;
 }) {
+  const hasRepresentativeRoleColumn = await hasTenantProfileRepresentativeRoleColumn();
   const normalizedUid = normalizeText(input.uid);
   const normalizedEmail = normalizeText(input.email)?.toLowerCase() || null;
   if (!normalizedUid && !normalizedEmail) {
@@ -175,23 +180,7 @@ async function resolveVerifiedEmailTenantPrefill(input: {
             name: true,
             legalName: true,
             profile: {
-              select: {
-                tradeName: true,
-                legalName: true,
-                representative: true,
-                representativeRole: true,
-                email: true,
-                phone: true,
-                website: true,
-                cnae: true,
-                cnaeCode: true,
-                cnaeText: true,
-                address: true,
-                postalCode: true,
-                city: true,
-                province: true,
-                country: true,
-              },
+              select: buildTenantProfileOnboardingSelect(hasRepresentativeRoleColumn),
             },
           },
         },
@@ -227,6 +216,7 @@ export default async function HoldedOnboardingPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  const hasRepresentativeRoleColumn = await hasTenantProfileRepresentativeRoleColumn();
   const params = await searchParams;
   const search = new URLSearchParams();
   for (const [key, rawValue] of Object.entries(params)) {
@@ -423,23 +413,7 @@ export default async function HoldedOnboardingPage({
           name: true,
           legalName: true,
           profile: {
-            select: {
-              tradeName: true,
-              legalName: true,
-              representative: true,
-              representativeRole: true,
-              email: true,
-              phone: true,
-              website: true,
-              cnae: true,
-              cnaeCode: true,
-              cnaeText: true,
-              address: true,
-              postalCode: true,
-              city: true,
-              province: true,
-              country: true,
-            },
+            select: buildTenantProfileOnboardingSelect(hasRepresentativeRoleColumn),
           },
         },
       });

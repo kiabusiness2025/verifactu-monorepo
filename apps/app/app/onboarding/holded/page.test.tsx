@@ -34,6 +34,27 @@ jest.mock('@/lib/integrations/holdedVerifiedEmailIdentities', () => ({
   readVerifiedHoldedEmailIdentity: jest.fn(async () => null),
 }));
 
+jest.mock('@/lib/tenantProfileSchema', () => ({
+  hasTenantProfileRepresentativeRoleColumn: jest.fn(async () => true),
+  buildTenantProfileOnboardingSelect: jest.fn((hasRepresentativeRoleColumn: boolean) => ({
+    tradeName: true,
+    legalName: true,
+    representative: true,
+    ...(hasRepresentativeRoleColumn ? { representativeRole: true } : {}),
+    email: true,
+    phone: true,
+    website: true,
+    cnae: true,
+    cnaeCode: true,
+    cnaeText: true,
+    address: true,
+    postalCode: true,
+    city: true,
+    province: true,
+    country: true,
+  })),
+}));
+
 jest.mock('@/lib/prisma', () => ({
   __esModule: true,
   default: {

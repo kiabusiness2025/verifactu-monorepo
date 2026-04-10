@@ -8,6 +8,7 @@ import {
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
+import { hasTenantProfileRepresentativeRoleColumn } from '@/lib/tenantProfileSchema';
 import { upsertUser } from '@/lib/tenants';
 
 type TenantPayload = {
@@ -182,6 +183,7 @@ export async function POST(req: Request) {
 
     const uid = authSession.uid;
     const body = (await req.json().catch(() => null)) as TenantPayload | null;
+    const hasRepresentativeRoleColumn = await hasTenantProfileRepresentativeRoleColumn();
 
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
     const legalName = typeof body?.legalName === 'string' ? body.legalName.trim() : '';
@@ -380,7 +382,9 @@ export async function POST(req: Request) {
           province: extra?.province || undefined,
           country: extra?.country || country || undefined,
           representative: extra?.representative || undefined,
-          representativeRole: extra?.representativeRole || undefined,
+          ...(hasRepresentativeRoleColumn
+            ? { representativeRole: extra?.representativeRole || undefined }
+            : {}),
           email: companyEmail || undefined,
           phone: companyPhone || undefined,
           einformaRaw: profileRaw,
@@ -412,7 +416,9 @@ export async function POST(req: Request) {
           province: extra?.province || undefined,
           country: extra?.country || country || undefined,
           representative: extra?.representative || undefined,
-          representativeRole: extra?.representativeRole || undefined,
+          ...(hasRepresentativeRoleColumn
+            ? { representativeRole: extra?.representativeRole || undefined }
+            : {}),
           email: companyEmail || undefined,
           phone: companyPhone || undefined,
           einformaRaw: profileRaw,
