@@ -39,16 +39,22 @@ type TenantSummaryRecord = {
     cnaeCode?: string | null;
     cnaeText?: string | null;
     address: string | null;
-    fiscalAddress?: {
-      postalCode?: string | null;
-      country?: string | null;
-    } | null;
+    fiscalAddress?: unknown;
     postalCode?: string | null;
     city: string | null;
     province: string | null;
     country?: string | null;
   } | null;
 };
+
+function getFiscalAddressField(fiscalAddress: unknown, field: 'postalCode' | 'country') {
+  if (!fiscalAddress || typeof fiscalAddress !== 'object' || Array.isArray(fiscalAddress)) {
+    return null;
+  }
+
+  const value = (fiscalAddress as Record<string, unknown>)[field];
+  return typeof value === 'string' ? normalizeText(value) : null;
+}
 
 function getOnboardingContactFirstName(value?: string | null) {
   return splitFullName(normalizeMeaningfulPersonName(value)).firstName || '';
@@ -71,12 +77,12 @@ function buildHoldedSummaryFromTenant(
     companyAddress: normalizeText(tenant.profile?.address),
     companyPostalCode:
       normalizeText(tenant.profile?.postalCode) ||
-      normalizeText(tenant.profile?.fiscalAddress?.postalCode),
+      getFiscalAddressField(tenant.profile?.fiscalAddress, 'postalCode'),
     companyCity: normalizeText(tenant.profile?.city),
     companyProvince: normalizeText(tenant.profile?.province),
     companyCountry:
       normalizeText(tenant.profile?.country) ||
-      normalizeText(tenant.profile?.fiscalAddress?.country),
+      getFiscalAddressField(tenant.profile?.fiscalAddress, 'country'),
     companyWebsite: normalizeText(tenant.profile?.website),
     companySectorCode: normalizeText(tenant.profile?.cnaeCode),
     companySectorLabel:
