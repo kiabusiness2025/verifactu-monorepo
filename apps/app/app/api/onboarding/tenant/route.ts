@@ -288,135 +288,143 @@ export async function POST(req: Request) {
       userId,
     });
 
-    const result = await prisma.$transaction(async (tx) => {
-      const tenant = reusableCurrentTenant
-        ? await tx.tenant.update({
-            where: { id: reusableCurrentTenant.id },
+    const runTenantProvisionTransaction = async (columns: TenantProfileColumnAvailability) =>
+      prisma.$transaction(async (tx) => {
+        const tenant = reusableCurrentTenant
+          ? await tx.tenant.update({
+              where: { id: reusableCurrentTenant.id },
+              data: {
+                name,
+                legalName: legalName || undefined,
+                nif: taxIdRaw,
+                isDemo: false,
+              },
+            })
+          : await tx.tenant.create({
+              data: {
+                name,
+                legalName: legalName || undefined,
+                nif: taxIdRaw,
+              },
+            });
+
+        if (!reusableCurrentTenant) {
+          await tx.membership.create({
             data: {
-              name,
-              legalName: legalName || undefined,
-              nif: taxIdRaw,
-              isDemo: false,
-            },
-          })
-        : await tx.tenant.create({
-            data: {
-              name,
-              legalName: legalName || undefined,
-              nif: taxIdRaw,
+              tenantId: tenant.id,
+              userId,
+              role: 'owner',
+              status: 'active',
             },
           });
-
-      if (!reusableCurrentTenant) {
-        await tx.membership.create({
-          data: {
-            tenantId: tenant.id,
-            userId,
-            role: 'owner',
-            status: 'active',
-          },
-        });
-      }
-
-      await tx.userPreference.upsert({
-        where: { userId },
-        create: { userId, preferredTenantId: tenant.id },
-        update: { preferredTenantId: tenant.id },
-      });
-
-      const existingSubscription = reusableCurrentTenant
-        ? await tx.tenantSubscription.findFirst({
-            where: { tenantId: tenant.id },
-            orderBy: { createdAt: 'desc' },
-          })
-        : null;
-      const subscription =
-        existingSubscription ||
-        (await tx.tenantSubscription.create({
-          data: {
-            tenantId: tenant.id,
-            planId,
-            status: 'trial',
-            trialEndsAt,
-            currentPeriodStart: now,
-            currentPeriodEnd: trialEndsAt,
-          },
-        }));
-
-      const extra = body?.extra;
-      const cnaeParts = splitCnae(extra?.cnae);
-      const cityParts = normalizeCity(extra?.city);
-      const effectiveFiscalAddress =
-        fiscalAddress ||
-        (extra?.address || extra?.postalCode || extra?.city || extra?.province || extra?.country
-          ? {
-              address: extra?.address || null,
-              postalCode: extra?.postalCode || cityParts.postalCode || null,
-              city: cityParts.city || null,
-              province: extra?.province || null,
-              country: extra?.country || country,
-            }
-          : null);
-
-      const buildTenantProfileData = (columns: TenantProfileColumnAvailability) => ({
-        source: 'manual',
-        taxId: taxIdRaw,
-        legalName: legalName || name,
-        tradeName: tradeName || name,
-        fiscalAddress: effectiveFiscalAddress ?? undefined,
-        taxRegime: taxRegime || extra?.taxRegime || undefined,
-        defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
-        cnae: extra?.cnae || undefined,
-        ...(columns.cnaeCode ? { cnaeCode: extra?.cnaeCode || cnaeParts.code } : {}),
-        ...(columns.cnaeText ? { cnaeText: extra?.cnaeText || cnaeParts.text } : {}),
-        ...(columns.website ? { website: extra?.website || undefined } : {}),
-        incorporationDate: extra?.incorporationDate ? new Date(extra.incorporationDate) : undefined,
-        address: extra?.address || undefined,
-        ...(columns.postalCode ? { postalCode: extra?.postalCode || cityParts.postalCode } : {}),
-        city: cityParts.city || undefined,
-        province: extra?.province || undefined,
-        ...(columns.country ? { country: extra?.country || country || undefined } : {}),
-        representative: extra?.representative || undefined,
-        ...(columns.representativeRole
-          ? { representativeRole: extra?.representativeRole || undefined }
-          : {}),
-        email: companyEmail || undefined,
-        phone: companyPhone || undefined,
-      });
-
-      const upsertTenantProfile = async (columns: TenantProfileColumnAvailability) =>
-        tx.tenantProfile.upsert({
-          where: { tenantId: tenant.id },
-          create: {
-            tenantId: tenant.id,
-            ...buildTenantProfileData(columns),
-          } as never,
-          update: buildTenantProfileData(columns) as never,
-        });
-
-      try {
-        await upsertTenantProfile(tenantProfileColumns);
-      } catch (error) {
-        if (!isMissingTenantProfileColumnError(error)) {
-          throw error;
         }
 
-        resetTenantProfileColumnAvailabilityCache();
-
-        console.warn('[api/onboarding/tenant] retrying tenantProfile upsert with legacy schema', {
-          tenantId: tenant.id,
-          message: error instanceof Error ? error.message : String(error),
+        await tx.userPreference.upsert({
+          where: { userId },
+          create: { userId, preferredTenantId: tenant.id },
+          update: { preferredTenantId: tenant.id },
         });
 
-        await upsertTenantProfile(legacyTenantProfileColumns);
+        const existingSubscription = reusableCurrentTenant
+          ? await tx.tenantSubscription.findFirst({
+              where: { tenantId: tenant.id },
+              orderBy: { createdAt: 'desc' },
+            })
+          : null;
+        const subscription =
+          existingSubscription ||
+          (await tx.tenantSubscription.create({
+            data: {
+              tenantId: tenant.id,
+              planId,
+              status: 'trial',
+              trialEndsAt,
+              currentPeriodStart: now,
+              currentPeriodEnd: trialEndsAt,
+            },
+          }));
+
+        const extra = body?.extra;
+        const cnaeParts = splitCnae(extra?.cnae);
+        const cityParts = normalizeCity(extra?.city);
+        const effectiveFiscalAddress =
+          fiscalAddress ||
+          (extra?.address || extra?.postalCode || extra?.city || extra?.province || extra?.country
+            ? {
+                address: extra?.address || null,
+                postalCode: extra?.postalCode || cityParts.postalCode || null,
+                city: cityParts.city || null,
+                province: extra?.province || null,
+                country: extra?.country || country,
+              }
+            : null);
+
+        const buildTenantProfileData = (profileColumns: TenantProfileColumnAvailability) => ({
+          source: 'manual',
+          taxId: taxIdRaw,
+          legalName: legalName || name,
+          tradeName: tradeName || name,
+          fiscalAddress: effectiveFiscalAddress ?? undefined,
+          taxRegime: taxRegime || extra?.taxRegime || undefined,
+          defaultCurrency: defaultCurrency || extra?.defaultCurrency || 'EUR',
+          cnae: extra?.cnae || undefined,
+          ...(profileColumns.cnaeCode ? { cnaeCode: extra?.cnaeCode || cnaeParts.code } : {}),
+          ...(profileColumns.cnaeText ? { cnaeText: extra?.cnaeText || cnaeParts.text } : {}),
+          ...(profileColumns.website ? { website: extra?.website || undefined } : {}),
+          incorporationDate: extra?.incorporationDate
+            ? new Date(extra.incorporationDate)
+            : undefined,
+          address: extra?.address || undefined,
+          ...(profileColumns.postalCode
+            ? { postalCode: extra?.postalCode || cityParts.postalCode }
+            : {}),
+          city: cityParts.city || undefined,
+          province: extra?.province || undefined,
+          ...(profileColumns.country ? { country: extra?.country || country || undefined } : {}),
+          representative: extra?.representative || undefined,
+          ...(profileColumns.representativeRole
+            ? { representativeRole: extra?.representativeRole || undefined }
+            : {}),
+          email: companyEmail || undefined,
+          phone: companyPhone || undefined,
+        });
+
+        const upsertTenantProfile = async () =>
+          tx.tenantProfile.upsert({
+            where: { tenantId: tenant.id },
+            create: {
+              tenantId: tenant.id,
+              ...buildTenantProfileData(columns),
+            } as never,
+            update: buildTenantProfileData(columns) as never,
+          });
+
+        await upsertTenantProfile();
+
+        return {
+          tenant,
+          subscription,
+          action: reusableCurrentTenant ? 'UPDATED_CURRENT' : 'CREATED',
+        };
+      });
+
+    let result;
+
+    try {
+      result = await runTenantProvisionTransaction(tenantProfileColumns);
+    } catch (error) {
+      if (!isMissingTenantProfileColumnError(error)) {
+        throw error;
       }
 
-      return {
-        tenant,
-        subscription,
-        action: reusableCurrentTenant ? 'UPDATED_CURRENT' : 'CREATED',
-      };
-    });
+      resetTenantProfileColumnAvailabilityCache();
+
+      console.warn('[api/onboarding/tenant] retrying tenantProfile upsert with legacy schema', {
+        message: error instanceof Error ? error.message : String(error),
+      });
+
+      result = await runTenantProvisionTransaction(legacyTenantProfileColumns);
+    }
 
     if (!onboardingSession) {
       try {

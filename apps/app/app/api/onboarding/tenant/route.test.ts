@@ -596,6 +596,7 @@ describe('POST /api/onboarding/tenant', () => {
 
     expect(response.status).toBe(200);
     expect(payload.ok).toBe(true);
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(2);
     expect(mockTx.tenantProfile.upsert).toHaveBeenCalledTimes(2);
 
     const secondCall = (mockTx.tenantProfile.upsert as jest.Mock).mock.calls[1][0];
@@ -611,6 +612,7 @@ describe('POST /api/onboarding/tenant', () => {
     expect(secondCall.update.cnaeText).toBeUndefined();
     expect(secondCall.update.postalCode).toBeUndefined();
     expect(secondCall.update.country).toBeUndefined();
+    expect(sendWelcomeLifecycleEmails).toHaveBeenCalledTimes(1);
   });
 
   it('preserves the verified onboarding email and name when refreshing the token during a signed-session flow', async () => {
