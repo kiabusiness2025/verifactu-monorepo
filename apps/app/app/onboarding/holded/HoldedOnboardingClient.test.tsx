@@ -388,7 +388,7 @@ describe('HoldedOnboardingClient', () => {
     expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
   });
 
-  it('hydrates remembered company data after email verification and reuses the remembered tenant for status checks', async () => {
+  it('hydrates remembered company data after email verification and keeps reconnect manual', async () => {
     window.history.replaceState(
       {},
       '',
@@ -500,24 +500,12 @@ describe('HoldedOnboardingClient', () => {
       );
     });
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        '/api/integrations/accounting/status?channel=chatgpt',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'x-isaak-entry-channel': 'chatgpt',
-            'x-holded-onboarding-token': 'tenant-bound-token',
-            'x-isaak-tenant-id': 'tenant-owned',
-          }),
-        })
-      );
-    });
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      '/api/integrations/accounting/status?channel=chatgpt',
+      expect.anything()
+    );
 
-    const continueLink = await screen.findByRole('link', { name: 'Continuar' });
-    const redirectHref = continueLink.getAttribute('href') || '';
-    expect(redirectHref).toContain('connection_confirmed=1');
-    expect(redirectHref).toContain('onboarding_token=tenant-bound-token');
-    expect(redirectHref).toContain('tenant_id=tenant-owned');
+    expect(screen.queryByRole('link', { name: 'Continuar' })).not.toBeInTheDocument();
   });
 
   it('fills the person step with the Google profile name instead of the email alias', async () => {
@@ -1152,19 +1140,7 @@ describe('HoldedOnboardingClient', () => {
     expect(redirectHref).not.toContain('onboarding-token-123');
   });
 
-  it('auto-forwards to the confirmed oauth return when the chatgpt connection is already active for the resolved company', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: true,
-      json: jest.fn().mockResolvedValue({
-        provider: 'holded',
-        status: 'connected',
-        lastSyncAt: null,
-        lastError: null,
-        connected: true,
-        degraded: false,
-      }),
-    });
-
+  it('keeps the reconnect flow manual for chatgpt even when the previous connection was active', async () => {
     render(
       <HoldedOnboardingClient
         {...baseProps}
@@ -1176,27 +1152,15 @@ describe('HoldedOnboardingClient', () => {
       />
     );
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        '/api/integrations/accounting/status?channel=chatgpt',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'x-isaak-entry-channel': 'chatgpt',
-            'x-holded-onboarding-token': 'onboarding-token-123',
-            'x-isaak-tenant-id': 'tenant-demo',
-          }),
-        })
-      );
-    });
-
-    const continueLink = await screen.findByRole('link', { name: 'Continuar' });
-    const redirectHref = continueLink.getAttribute('href') || '';
-
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      '/api/integrations/accounting/status?channel=chatgpt',
+      expect.anything()
+    );
+    expect(screen.getByLabelText(/^Razon social/)).toHaveValue('ALVILS ESP SL');
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
     expect(
-      screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
-    ).not.toBeInTheDocument();
-    expect(redirectHref).toContain('connection_confirmed=1');
-    expect(redirectHref).toContain('onboarding_token=onboarding-token-123');
-    expect(redirectHref).toContain('tenant_id=tenant-demo');
+      screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar')
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Continuar' })).not.toBeInTheDocument();
   });
 });

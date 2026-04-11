@@ -608,7 +608,9 @@ export default function HoldedOnboardingClient({
           hasResolvedCompanyData(resolvedSummary)
         )
       : companySetup.hasResolvedCompany && hasResolvedCompanyData(resolvedSummary);
-  const reusesStoredCompanyData = isChatgptEntry && hasResolvedCompanyProfile;
+  const forceManualReconnectFlow = isChatgptEntry;
+  const reusesStoredCompanyData =
+    isChatgptEntry && hasResolvedCompanyProfile && !forceManualReconnectFlow;
   const initialPhoneDialCode = resolvePhoneDialCode(
     initialCompanyDraft.contactPhone,
     initialCompanyDraft.companyCountry
@@ -631,7 +633,9 @@ export default function HoldedOnboardingClient({
     stripPhoneDialCode(initialCompanyDraft.contactPhone, initialPhoneDialCode)
   );
   const [apiValidated, setApiValidated] = useState(!needsPostValidationCompanyStep);
-  const [showCompanyForm, setShowCompanyForm] = useState(!hasResolvedCompanyProfile);
+  const [showCompanyForm, setShowCompanyForm] = useState(
+    forceManualReconnectFlow || !hasResolvedCompanyProfile
+  );
   const [companyConfirmed, setCompanyConfirmed] = useState(!needsPostValidationCompanyStep);
   const [companySaving, setCompanySaving] = useState(false);
   const [companyMessage, setCompanyMessage] = useState<string | null>(null);
@@ -688,10 +692,11 @@ export default function HoldedOnboardingClient({
     !!resolvedSummary.companyEmail &&
     resolvedSummary.companyEmail.trim() !== (resolvedSummary.contactEmail || '').trim();
   const confirmationModeNeedsExistingConnectionCheck =
-    requireConnectionConfirmation && hasResolvedCompanyProfile;
+    !forceManualReconnectFlow && requireConnectionConfirmation && hasResolvedCompanyProfile;
   const canContinueWithExistingConnection =
     !!status?.connected &&
     !showIdentityGate &&
+    !forceManualReconnectFlow &&
     requireConnectionConfirmation &&
     !saving &&
     !redirecting &&
@@ -719,7 +724,8 @@ export default function HoldedOnboardingClient({
           : null;
   const hasReusableValidationToken =
     validatedApiKey === normalizedApiKey && Boolean(validationToken);
-  const usesInlineDirectForm = needsPostValidationCompanyStep && !hasResolvedCompanyProfile;
+  const usesInlineDirectForm =
+    needsPostValidationCompanyStep && (forceManualReconnectFlow || !hasResolvedCompanyProfile);
   const hasInlineDirectFormMinimum =
     !!normalizeText(companyLegalName) &&
     !!normalizeText(companyTaxId) &&
@@ -890,12 +896,12 @@ export default function HoldedOnboardingClient({
   }, [identityState.email, manualEmail, usesDirectStepFlow]);
 
   useEffect(() => {
-    if (!hasResolvedCompanyProfile) {
+    if (!hasResolvedCompanyProfile || forceManualReconnectFlow) {
       return;
     }
 
     setShowCompanyForm(false);
-  }, [hasResolvedCompanyProfile]);
+  }, [forceManualReconnectFlow, hasResolvedCompanyProfile]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1499,8 +1505,8 @@ export default function HoldedOnboardingClient({
   const resetForFreshApiValidation = useCallback(() => {
     setResolvedSummary(freshValidationSummary);
     applySummaryToCompanyForm(freshValidationSummary);
-    setShowCompanyForm(false);
-  }, [applySummaryToCompanyForm, freshValidationSummary]);
+    setShowCompanyForm(forceManualReconnectFlow);
+  }, [applySummaryToCompanyForm, forceManualReconnectFlow, freshValidationSummary]);
 
   const returnToApiStep = useCallback(() => {
     setApiValidated(false);
@@ -1524,6 +1530,7 @@ export default function HoldedOnboardingClient({
   const shouldCheckExistingConnectionStatus =
     !showIdentityGate &&
     !companyStepPending &&
+    !forceManualReconnectFlow &&
     (!needsPostValidationCompanyStep || confirmationModeNeedsExistingConnectionCheck);
 
   const handleDirectNextFromPerson = useCallback(() => {
