@@ -15,6 +15,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import {
+  appCheckMode,
   auth,
   firebaseInitError,
   isFirebaseConfigComplete,
@@ -355,7 +356,10 @@ export async function consumeGoogleRedirectResult(
         error: {
           code: 'auth/no-redirect-result',
           message: 'No redirect result',
-          userMessage: 'No se ha encontrado un acceso pendiente para completar con Google.',
+          userMessage:
+            appCheckMode === 'debug'
+              ? 'No se pudo completar el acceso con Google en este intento. Repite el acceso y revisa App Check (debug token) en Firebase.'
+              : 'No se pudo completar el acceso con Google en este intento. Pulsa de nuevo "Continuar con Google".',
         },
         warning: null,
       };

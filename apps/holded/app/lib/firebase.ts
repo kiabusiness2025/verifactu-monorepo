@@ -95,6 +95,15 @@ const rawAppCheckDebugToken = readEnv(
 const appCheckDebugToken =
   rawAppCheckDebugToken?.toLowerCase() === 'true' ? true : rawAppCheckDebugToken || null;
 
+function isLocalDevelopmentHost(hostname: string) {
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname.endsWith('.local')
+  );
+}
+
 const isConfigComplete = Object.values(firebaseConfig).every(Boolean);
 const missingConfigFields = REQUIRED_CONFIG_FIELDS.filter((field) => !firebaseConfig[field]);
 let isFirebaseReady = false;
@@ -127,12 +136,21 @@ if (typeof window !== 'undefined' && isConfigComplete) {
 
     if (appCheckSiteKey) {
       try {
-        if (appCheckDebugToken !== null) {
+        const canUseDebugToken = isLocalDevelopmentHost(window.location.hostname);
+        const effectiveDebugToken = canUseDebugToken ? appCheckDebugToken : null;
+
+        if (appCheckDebugToken !== null && !canUseDebugToken) {
+          console.warn(
+            '[holded firebase] Ignoring App Check debug token outside local development host.'
+          );
+        }
+
+        if (effectiveDebugToken !== null) {
           (
             globalThis as typeof globalThis & {
               FIREBASE_APPCHECK_DEBUG_TOKEN?: string | boolean;
             }
-          ).FIREBASE_APPCHECK_DEBUG_TOKEN = appCheckDebugToken;
+          ).FIREBASE_APPCHECK_DEBUG_TOKEN = effectiveDebugToken;
         }
 
         appCheck = initializeAppCheck(app, {
@@ -141,7 +159,7 @@ if (typeof window !== 'undefined' && isConfigComplete) {
         });
         isAppCheckReady = true;
         appCheckInitError = null;
-        appCheckMode = appCheckDebugToken !== null ? 'debug' : 'recaptcha_v3';
+        appCheckMode = effectiveDebugToken !== null ? 'debug' : 'recaptcha_v3';
       } catch (error) {
         console.error('Error initializing Firebase App Check:', error);
         appCheck = undefined;
