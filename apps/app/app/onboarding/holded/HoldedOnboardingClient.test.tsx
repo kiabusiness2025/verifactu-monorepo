@@ -66,7 +66,9 @@ describe('HoldedOnboardingClient', () => {
   const fetchMock = jest.fn();
 
   const advanceToApiStep = () => {
-    const continuePersonButton = screen.queryByRole('button', { name: 'Continuar con empresa' });
+    const continuePersonButton = screen.queryByRole('button', {
+      name: 'Continuar con perfil de empresa',
+    });
     if (continuePersonButton) {
       fireEvent.click(continuePersonButton);
     }
@@ -93,7 +95,7 @@ describe('HoldedOnboardingClient', () => {
       screen.getByText('Confirma empresa y API key para volver a ChatGPT.')
     ).toBeInTheDocument();
     expect(screen.getByText('Acceso con cuenta completa.')).toBeInTheDocument();
-    expect(screen.getByText('Paso 1: usuario')).toBeInTheDocument();
+    expect(screen.getByText('Paso 1: completa tu perfil')).toBeInTheDocument();
     expect(screen.getByText(/Correo verificado:/i)).toBeInTheDocument();
     expect(
       screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
@@ -242,7 +244,7 @@ describe('HoldedOnboardingClient', () => {
     expect(await screen.findByText(/Este correo ya estaba confirmado/i)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('Paso 1: usuario')).toBeInTheDocument();
+      expect(screen.getByText('Paso 1: completa tu perfil')).toBeInTheDocument();
     });
     expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
   });
@@ -330,7 +332,7 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Paso 1: usuario')).toBeInTheDocument();
+      expect(screen.getByText('Paso 1: completa tu perfil')).toBeInTheDocument();
     });
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body || '{}'))).toEqual(
       expect.objectContaining({ email: 'verified@example.com', checkOnly: true })
@@ -381,7 +383,7 @@ describe('HoldedOnboardingClient', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Paso 1: usuario')).toBeInTheDocument();
+      expect(screen.getByText('Paso 1: completa tu perfil')).toBeInTheDocument();
     });
     expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
   });
@@ -933,7 +935,7 @@ describe('HoldedOnboardingClient', () => {
       fireEvent.change(screen.getByPlaceholderText('600 000 000'), {
         target: { value: '600 111 222' },
       });
-      fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Continuar con perfil de empresa' }));
     }
     fireEvent.change(screen.getByLabelText(/^Razon social/), {
       target: { value: 'Empresa Demo SL' },
@@ -1094,7 +1096,7 @@ describe('HoldedOnboardingClient', () => {
       fireEvent.change(screen.getByPlaceholderText('600 000 000'), {
         target: { value: '600 111 222' },
       });
-      fireEvent.click(screen.getByRole('button', { name: 'Continuar con empresa' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Continuar con perfil de empresa' }));
     }
     fireEvent.change(screen.getByLabelText(/^Razon social/), {
       target: { value: 'Empresa Demo SL' },
