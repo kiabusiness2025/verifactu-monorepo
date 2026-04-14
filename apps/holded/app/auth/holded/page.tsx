@@ -14,7 +14,6 @@ import {
   requestPasswordReset,
   resetHoldedAuthState,
   signInWithEmail,
-  signInWithGoogle,
   startGoogleRedirectSignIn,
 } from '@/app/lib/auth';
 import { auth } from '@/app/lib/firebase';
@@ -174,6 +173,7 @@ function HoldedAuthContent() {
   const [acceptMarketing, setAcceptMarketing] = useState(false);
   const [existingUserChecking, setExistingUserChecking] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleRedirecting, setGoogleRedirecting] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [rememberDevice, setRememberDevice] = useState(true);
@@ -342,39 +342,20 @@ function HoldedAuthContent() {
   };
 
   const handleGoogle = async () => {
+    setGoogleRedirecting(true);
     setIsLoading(true);
     setError('');
     setNotice('');
-
-    try {
-      const result = await signInWithGoogle({ rememberDevice });
-      if (result.error) {
-        if (
-          result.error.code === 'auth/popup-blocked' ||
-          result.error.code === 'auth/operation-not-supported-in-this-environment' ||
-          result.error.code === 'auth/web-storage-unsupported'
-        ) {
-          window.sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, '1');
-          const redirectFallback = await startGoogleRedirectSignIn();
-          if (!redirectFallback.redirecting && redirectFallback.error) {
-            setError(redirectFallback.error.userMessage);
-          }
-          return;
-        }
-
-        setError(result.error.userMessage);
-        return;
-      }
-
-      redirectToTarget(postLoginTarget);
-    } catch (error) {
-      console.error('[holded auth] google access failed', error);
-      setError(
-        getAccessErrorMessage(error, 'No hemos podido continuar con Google. Intenta de nuevo.')
-      );
-    } finally {
+    // Usamos redirect siempre — evitamos popup para no romper webviews y contextos embebidos (ChatGPT OAuth)
+    window.sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, '1');
+    const result = await startGoogleRedirectSignIn();
+    if (!result.redirecting && result.error) {
+      window.sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
+      setGoogleRedirecting(false);
       setIsLoading(false);
+      setError(result.error.userMessage);
     }
+    // Si redirige: el navegador navega fuera, no hace falta limpiar estado
   };
 
   const handlePasswordReset = async () => {
@@ -418,7 +399,7 @@ function HoldedAuthContent() {
               className="inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] transition hover:text-[#ef4654]"
             >
               <ArrowLeft className="h-4 w-4" />
-              {isChatgptFlow ? 'Volver a ChatGPT' : 'Cerrar'}
+              Volver
             </button>
             <button
               type="button"
@@ -468,10 +449,23 @@ function HoldedAuthContent() {
           <div className="w-full max-w-[32rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_-56px_rgba(15,23,42,0.35)]">
             <div className="px-6 pb-6 pt-7 sm:px-8">
               <div className="text-center">
-                <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  Verifactu Business
+                <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
+                    <Image
+                      src="/brand/holded/holded-diamond-logo.png"
+                      alt="Holded"
+                      width={22}
+                      height={22}
+                      className="h-[22px] w-[22px] object-contain"
+                      priority
+                    />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-semibold text-slate-950">holded</div>
+                    <div className="text-xs text-slate-500">Acceso a tu conexion</div>
+                  </div>
                 </div>
-                <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
+                <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
                   {currentTitle}
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-slate-500">{currentSubtitle}</p>
@@ -484,8 +478,12 @@ function HoldedAuthContent() {
                   disabled={isLoading || existingUserChecking || !allowGoogleLogin}
                   className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <GoogleBadge />
-                  {allowGoogleLogin ? 'Continuar con Google' : 'Continuar con Google'}
+                  {googleRedirecting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <GoogleBadge />
+                  )}
+                  {googleRedirecting ? 'Redirigiendo...' : 'Continuar con Google'}
                 </button>
 
                 <div className="text-center text-xs text-slate-500">

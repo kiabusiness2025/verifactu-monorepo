@@ -39,29 +39,39 @@ describe('OnboardingHoldedClient', () => {
     window.history.pushState({}, '', '/onboarding/holded?channel=dashboard');
   });
 
-  it('renders prefilled company and contact identity fields', () => {
+  it('renders prefilled contact fields in step 1 and company fields after advancing to step 2', () => {
     render(<OnboardingHoldedClient {...defaultProps} />);
 
+    // Always-visible header elements
     expect(screen.getAllByText('Conector Holded')[0]).toBeInTheDocument();
     expect(screen.getByText('Conecta tu cuenta de Holded')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Verifactu Business valida tu API key, detecta la empresa y deja la conexion lista con estados tecnicos y de gobernanza visibles desde el principio.'
-      )
-    ).toBeInTheDocument();
-    expect(screen.getByText('Antes de empezar')).toBeInTheDocument();
-    expect(screen.getByText(/Confirmo que puedo conectar esta empresa/i)).toBeInTheDocument();
-    expect(screen.queryByText('Activa tu conexion con Holded')).not.toBeInTheDocument();
+
+    // Step 1: name fields visible, company fields not yet rendered
+    expect(screen.getByDisplayValue('Ana')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Garcia')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Acme SL')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('B12345678')).not.toBeInTheDocument();
+
+    // Advance to step 2
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+
+    // Step 2: company and contact fields now visible
     expect(screen.getByDisplayValue('Acme SL')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Acme Sociedad Limitada')).toBeInTheDocument();
     expect(screen.getByDisplayValue('B12345678')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Ana')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Garcia')).toBeInTheDocument();
     expect(screen.getByDisplayValue('ana@example.com')).toBeInTheDocument();
+
+    // API key guide and consent not visible until step 3
+    expect(screen.queryByText('Activa tu conexion con Holded')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Confirmo que puedo conectar esta empresa/i)).not.toBeInTheDocument();
   });
 
   it('enables submit when identity and api key are valid', () => {
     render(<OnboardingHoldedClient {...defaultProps} />);
+
+    // Navigate step 1 → 2 → 3 (pre-filled data satisfies canProceed1 and canProceed2)
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
 
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
       target: { value: 'abcdefghijklmnop' },
@@ -89,6 +99,10 @@ describe('OnboardingHoldedClient', () => {
       });
 
     render(<OnboardingHoldedClient {...defaultProps} />);
+
+    // Navigate step 1 → 2 → 3
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
 
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
       target: { value: 'abcdefghijklmnop' },
