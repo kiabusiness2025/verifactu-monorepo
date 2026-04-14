@@ -43,7 +43,11 @@ type RedirectSignInResult =
   | { redirecting: true; error: null }
   | { redirecting: false; error: AuthErrorMessage };
 
-async function waitForAuthUserAfterRedirect(timeoutMs = 2500): Promise<User | null> {
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function waitForAuthUserAfterRedirect(timeoutMs = 6000): Promise<User | null> {
   const firebaseAuth = auth;
   if (!firebaseAuth) return null;
   if (firebaseAuth.currentUser) return firebaseAuth.currentUser;
@@ -362,7 +366,12 @@ export async function consumeGoogleRedirectResult(
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
 
   try {
-    const result = await getRedirectResult(auth);
+    let result = await getRedirectResult(auth);
+    if (!result?.user) {
+      // Firebase can resolve redirect state a little later on some browsers/devices.
+      await sleep(1200);
+      result = await getRedirectResult(auth);
+    }
     if (!result?.user) {
       // Si el resultado del redirect ya fue consumido pero el usuario ya está
       // autenticado en Firebase (caso: usuario identificado que viene de OAuth),
