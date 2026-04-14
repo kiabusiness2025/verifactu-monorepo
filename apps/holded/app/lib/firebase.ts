@@ -139,7 +139,11 @@ if (typeof window !== 'undefined' && isConfigComplete) {
         const canUseDebugToken = isLocalDevelopmentHost(window.location.hostname);
         const effectiveDebugToken = canUseDebugToken ? appCheckDebugToken : null;
 
-        if (appCheckDebugToken !== null && !canUseDebugToken) {
+        if (
+          appCheckDebugToken !== null &&
+          !canUseDebugToken &&
+          process.env.NODE_ENV !== 'production'
+        ) {
           console.warn(
             '[holded firebase] Ignoring App Check debug token outside local development host.'
           );

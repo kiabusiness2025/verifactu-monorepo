@@ -5,6 +5,7 @@ import {
   fetchSignInMethodsForEmail,
   getRedirectResult,
   GoogleAuthProvider,
+  onAuthStateChanged,
   OAuthProvider,
   reload,
   sendPasswordResetEmail,
@@ -41,6 +42,26 @@ type AuthResult =
 type RedirectSignInResult =
   | { redirecting: true; error: null }
   | { redirecting: false; error: AuthErrorMessage };
+
+async function waitForAuthUserAfterRedirect(timeoutMs = 2500): Promise<User | null> {
+  const firebaseAuth = auth;
+  if (!firebaseAuth) return null;
+  if (firebaseAuth.currentUser) return firebaseAuth.currentUser;
+
+  return new Promise((resolve) => {
+    const timeoutId = window.setTimeout(() => {
+      unsubscribe();
+      resolve(firebaseAuth.currentUser || null);
+    }, timeoutMs);
+
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+      if (!user) return;
+      window.clearTimeout(timeoutId);
+      unsubscribe();
+      resolve(user);
+    });
+  });
+}
 
 const authUnavailable = (): AuthResult => ({
   user: null,
@@ -351,6 +372,13 @@ export async function consumeGoogleRedirectResult(
         await mintSessionCookie(currentUser, { rememberDevice: options.rememberDevice });
         return { user: currentUser, error: null, warning: null };
       }
+
+      const delayedUser = await waitForAuthUserAfterRedirect();
+      if (delayedUser) {
+        await mintSessionCookie(delayedUser, { rememberDevice: options.rememberDevice });
+        return { user: delayedUser, error: null, warning: null };
+      }
+
       return {
         user: null,
         error: {
