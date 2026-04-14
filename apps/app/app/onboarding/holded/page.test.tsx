@@ -29,6 +29,7 @@ jest.mock('@/lib/oauth/mcp', () => ({
     loginUrl.searchParams.set('source', source);
     return loginUrl.toString();
   }),
+  mintHoldedOnboardingToken: jest.fn(async () => 'generated-guest-onboarding-token'),
   mintHoldedOnboardingTokenForSubject: jest.fn(async () => 'generated-onboarding-token'),
 }));
 
@@ -109,7 +110,7 @@ jest.mock('./HoldedOnboardingClient', () => ({
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { resolveHoldedOnboardingSession } from '@/lib/integrations/holdedOnboardingSession';
 import { readVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
-import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
+import { mintHoldedOnboardingToken, mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { getTenantProfileColumnAvailability } from '@/lib/tenantProfileSchema';
@@ -194,7 +195,8 @@ describe('HoldedOnboardingPage', () => {
     expect(loginUrl.pathname).toBe('/login');
     expect(nextUrl.pathname).toBe('/onboarding/holded');
     expect(nextUrl.searchParams.get('tenant_id')).toBe('tenant-demo');
-    expect(nextUrl.searchParams.get('onboarding_token')).toBeNull();
+    expect(nextUrl.searchParams.get('onboarding_token')).toBe('generated-guest-onboarding-token');
+    expect(mintHoldedOnboardingToken).toHaveBeenCalled();
   });
 
   it('mints a clean onboarding token when session exists but incoming token is invalid', async () => {

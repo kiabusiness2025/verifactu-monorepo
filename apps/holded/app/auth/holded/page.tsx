@@ -14,6 +14,7 @@ import {
   requestPasswordReset,
   resetHoldedAuthState,
   signInWithEmail,
+  signInWithGoogle,
   startGoogleRedirectSignIn,
 } from '@/app/lib/auth';
 import { auth } from '@/app/lib/firebase';
@@ -462,7 +463,14 @@ function HoldedAuthContent() {
     setIsLoading(true);
     setError('');
     setNotice('');
-    // Usamos redirect siempre — evitamos popup para no romper webviews y contextos embebidos (ChatGPT OAuth)
+    // Intentamos popup primero para evitar bucles de redirect vacio en algunos navegadores.
+    const popupResult = await signInWithGoogle({ rememberDevice });
+    if (!popupResult.error && popupResult.user) {
+      redirectToTarget(postLoginTarget);
+      return;
+    }
+
+    // Fallback a redirect para entornos embebidos donde popup no es viable.
     window.sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, '1');
     const result = await startGoogleRedirectSignIn();
     if (!result.redirecting && result.error) {

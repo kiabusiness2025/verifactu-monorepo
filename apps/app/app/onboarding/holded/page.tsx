@@ -6,7 +6,11 @@ import {
 import { maskSecret } from '@/lib/integrations/accounting';
 import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { readVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
-import { buildLoginUrl, mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
+import {
+  buildLoginUrl,
+  mintHoldedOnboardingToken,
+  mintHoldedOnboardingTokenForSubject,
+} from '@/lib/oauth/mcp';
 import { buildFullName, normalizeMeaningfulPersonName, splitFullName } from '@/lib/personName';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
@@ -398,8 +402,20 @@ export default async function HoldedOnboardingPage({
       current.searchParams.set('capture', '1');
     }
     current.searchParams.set('login_handoff', '1');
-    if (onboardingToken) {
-      current.searchParams.set('onboarding_token', onboardingToken);
+    let loginOnboardingToken = onboardingToken;
+    if (!loginOnboardingToken && entryChannel === 'chatgpt') {
+      loginOnboardingToken = await mintHoldedOnboardingToken({
+        seed: [
+          nextParam || '',
+          channel || 'chatgpt',
+          tenantIdHint || '',
+          Date.now().toString(),
+        ].join('|'),
+        tenantId: tenantIdHint,
+      });
+    }
+    if (loginOnboardingToken) {
+      current.searchParams.set('onboarding_token', loginOnboardingToken);
     }
     if (tenantIdHint) {
       current.searchParams.set('tenant_id', tenantIdHint);
