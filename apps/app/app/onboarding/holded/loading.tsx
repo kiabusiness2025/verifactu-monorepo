@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
 import { inferHoldedEntryChannel } from './entryChannel';
 
 const chatgptLoadingMessages = [
-  'Estamos preparando el conector directo entre Holded y ChatGPT.',
-  'Validamos tu acceso y resolvemos la empresa sin mostrarte login ni registro.',
+  'Estamos preparando tu acceso a Verifactu Business para continuar desde ChatGPT.',
+  'Validamos tu acceso y dejamos lista la empresa para que puedas revisar todo en un solo paso.',
   'En cuanto termine, volveras al flujo de ChatGPT automaticamente.',
 ];
 const dashboardLoadingMessages = [
@@ -61,13 +61,11 @@ export default function HoldedOnboardingLoading() {
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
                 {isChatgptEntry
                   ? 'Conector directo Holded + ChatGPT'
-                  : 'Conexion Holded en Verifactu'}
+                  : 'Conexion Holded en Verifactu Business'}
               </div>
 
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-black sm:text-4xl">
-                {isChatgptEntry
-                  ? 'Preparando tu conexion directa'
-                  : 'Preparando tu conexion segura'}
+                Preparando tu acceso seguro
               </h1>
 
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-neutral-600 sm:text-base lg:mx-0">

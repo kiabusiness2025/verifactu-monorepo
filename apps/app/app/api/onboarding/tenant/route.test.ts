@@ -45,6 +45,10 @@ jest.mock('@/lib/integrations/holdedVerifiedEmailIdentities', () => ({
   rememberVerifiedHoldedEmailIdentity: jest.fn(async () => null),
 }));
 
+jest.mock('@/lib/integrations/companyNotificationEmailStore', () => ({
+  upsertConfirmedCompanyNotificationEmail: jest.fn(async () => null),
+}));
+
 jest.mock('@/lib/oauth/mcp', () => ({
   mintHoldedOnboardingTokenForSubject: jest.fn(async () => 'refreshed-onboarding-token'),
 }));
@@ -141,6 +145,7 @@ import { POST } from './route';
 import { getSessionPayload, requireUserId } from '@/lib/session';
 import { resolveHoldedOnboardingSessionFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
 import { rememberVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
+import { upsertConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { upsertUser } from '@/lib/tenants';
 import { prisma } from '@/lib/prisma';
@@ -321,6 +326,11 @@ describe('POST /api/onboarding/tenant', () => {
       contactEmail: 'demo@example.com',
       companyEmail: 'info@empresa-demo.es',
       contactPhone: '+34 600 111 222',
+    });
+
+    expect(upsertConfirmedCompanyNotificationEmail).toHaveBeenCalledWith({
+      tenantId: 'tenant-1',
+      email: 'info@empresa-demo.es',
     });
 
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);

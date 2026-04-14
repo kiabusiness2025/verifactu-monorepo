@@ -391,7 +391,7 @@ function getGoogleIdentityErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
 
   if (code === 'auth/popup-closed-by-user') {
-    return 'La ventana de Google se ha cerrado antes de terminar. Vuelve a intentarlo y permite el popup si tu navegador lo bloquea.';
+    return 'No hemos podido completar el acceso con Google. Vuelve a intentarlo.';
   }
 
   if (code === 'auth/popup-blocked') {
@@ -472,9 +472,8 @@ function buildConfirmedNextUrl(input: {
 const chatgptUiCopy = {
   eyebrow: 'Conector directo Holded + ChatGPT',
   title: 'Conecta tu empresa de Holded',
-  intro:
-    'Inicia sesion o crea tu cuenta, confirma la empresa y conecta Holded para volver a ChatGPT.',
-  security: 'Validamos la conexion en servidor y protegemos la API key.',
+  intro: 'Confirma empresa y API key para volver a ChatGPT.',
+  security: 'Conexion segura en servidor.',
   statusReady: 'Empresa preparada para conectar',
   statusLoading: 'Validando acceso y preparando la conexion',
   statusPending: 'Esperando tu API key de Holded',
@@ -487,7 +486,7 @@ const chatgptUiCopy = {
   successConnected: 'Conexion activada. Volvemos a ChatGPT.',
   submitLabel: 'Conectar Holded',
   apiKeyLabel: 'Clave API de Holded',
-  apiKeyHelp: 'Solo necesitamos una API key activa para validar Holded y cerrar la conexion.',
+  apiKeyHelp: 'Pega una API key activa.',
   apiKeyPlaceholder: 'Pega aqui la API key de Holded para continuar',
   errorApiKeyEmpty: 'Necesitamos tu API key de Holded para completar esta conexion.',
   errorLoadFailed: 'No se pudo preparar la conexion con Holded.',
@@ -498,11 +497,7 @@ const chatgptUiCopy = {
   redirectTitle: 'Tu conexion ya esta lista. Volvemos a ChatGPT.',
   redirectDescription:
     'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
-  helpSteps: [
-    'Inicia sesion o crea tu cuenta completa para continuar.',
-    'Abre Holded y copia una API key activa de tu empresa.',
-    'Pegala aqui y volveremos a ChatGPT en cuanto la conexion quede lista.',
-  ],
+  helpSteps: ['Abre Holded y copia una API key activa.', 'Pegala aqui y continuamos.'],
   savingMessages: [
     'Estamos validando tu API key de Holded.',
     'Estamos dejando preparada la empresa asociada a esta conexion.',
@@ -513,8 +508,8 @@ const chatgptUiCopy = {
 const dashboardUiCopy = {
   eyebrow: 'Conexion Holded en Verifactu',
   title: 'Conecta tu empresa de Holded',
-  intro: 'Pega tu API key de Holded y dejaremos la conexion lista para tu espacio en Verifactu.',
-  security: 'La API key se valida en servidor y se guarda como conexion segura del tenant.',
+  intro: 'Confirma empresa y API key para terminar la conexion.',
+  security: 'Conexion segura en servidor.',
   statusReady: 'Empresa preparada para conectar',
   statusLoading: 'Validando acceso y preparando la conexion',
   statusPending: 'Esperando tu API key de Holded',
@@ -527,7 +522,7 @@ const dashboardUiCopy = {
   successConnected: 'Conexion activada. Tu empresa ya esta lista.',
   submitLabel: 'Conectar Holded',
   apiKeyLabel: 'Clave API de tu ERP (Holded)',
-  apiKeyHelp: 'Solo necesitamos una API key activa para dejar lista la conexion de tu empresa.',
+  apiKeyHelp: 'Pega una API key activa.',
   apiKeyPlaceholder: 'Pega aqui la API key de Holded para continuar',
   errorApiKeyEmpty: 'Necesitamos tu API key de Holded para completar esta conexion.',
   errorLoadFailed: 'No se pudo preparar la conexion con Holded.',
@@ -538,10 +533,7 @@ const dashboardUiCopy = {
   redirectTitle: 'Tu conexion ya esta lista.',
   redirectDescription:
     'Si esta pantalla no avanza sola en unos segundos, usa el boton de continuar.',
-  helpSteps: [
-    'Abre Holded y copia una API key activa de tu empresa.',
-    'Pegala aqui y dejaremos lista la conexion para tu tenant de Verifactu.',
-  ],
+  helpSteps: ['Abre Holded y copia una API key activa.', 'Pegala aqui y continuamos.'],
   savingMessages: [
     'Estamos validando tu API key de Holded.',
     'Estamos guardando la conexion segura de tu empresa.',
@@ -745,7 +737,11 @@ export default function HoldedOnboardingClient({
     !!normalizeText(companyCity) &&
     !!normalizeText(companyProvince) &&
     !!normalizeText(companyCountry) &&
-    !!normalizeText(companySectorCode);
+    !!normalizeText(companySectorCode) &&
+    !!normalizeText(contactEmail) &&
+    (!requiresVerifiedIdentity ||
+      normalizeText(contactEmail).toLowerCase() ===
+        normalizeText(identityState.email).toLowerCase());
   const stepContactEmail = normalizeText(contactEmail) || normalizeText(identityState.email);
   const currentDirectFullName =
     buildFullName({ firstName: contactFirstName, lastName: contactLastName }) ||
@@ -1373,6 +1369,14 @@ export default function HoldedOnboardingClient({
     if (!normalizeText(companyCountry)) {
       nextErrors.companyCountry = 'El pais es obligatorio.';
     }
+    if (!normalizeText(contactEmail)) {
+      nextErrors.contactEmail = 'El correo de empresa para avisos es obligatorio.';
+    } else if (
+      requiresVerifiedIdentity &&
+      normalizeText(contactEmail).toLowerCase() !== normalizeText(identityState.email).toLowerCase()
+    ) {
+      nextErrors.contactEmail = 'Para avisos, usa el correo confirmado en el paso de identidad.';
+    }
 
     return nextErrors;
   }, [
@@ -1384,6 +1388,9 @@ export default function HoldedOnboardingClient({
     companyProvince,
     companySectorCode,
     companyTaxId,
+    contactEmail,
+    identityState.email,
+    requiresVerifiedIdentity,
   ]);
 
   const collectInlineDirectFieldErrors = useCallback(() => {
@@ -1647,7 +1654,6 @@ export default function HoldedOnboardingClient({
           goToDirectStep('identity');
           return;
         }
-        return;
       }
 
       if (directStep === 'person' && requiresVerifiedIdentity) {
@@ -1671,6 +1677,11 @@ export default function HoldedOnboardingClient({
       return;
     }
 
+    if (popupStepMode && typeof window !== 'undefined' && window.opener) {
+      window.close();
+      return;
+    }
+
     if (typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
@@ -1683,12 +1694,22 @@ export default function HoldedOnboardingClient({
     goToDirectStep,
     isChatgptEntry,
     nextUrl,
+    popupStepMode,
     requiresPersonStep,
     requiresVerifiedIdentity,
     redirecting,
     returnToApiStep,
     usesDirectStepFlow,
   ]);
+
+  const handleHeaderClose = useCallback(() => {
+    if (popupStepMode && typeof window !== 'undefined' && window.opener) {
+      window.close();
+      return;
+    }
+
+    window.location.assign(isChatgptEntry ? CHATGPT_HOME_URL : nextUrl || HOLDED_COMPAT_URL);
+  }, [isChatgptEntry, nextUrl, popupStepMode]);
 
   useEffect(() => {
     if (!saving) {
@@ -1925,6 +1946,13 @@ export default function HoldedOnboardingClient({
     );
 
     if (
+      requiresVerifiedIdentity &&
+      normalizedContactEmail.toLowerCase() !== normalizeText(identityState.email).toLowerCase()
+    ) {
+      throw new Error('El correo de empresa para avisos debe coincidir con el correo confirmado.');
+    }
+
+    if (
       !normalizedCompanyName ||
       !normalizedTaxId ||
       !normalizedCompanyAddress ||
@@ -1979,6 +2007,8 @@ export default function HoldedOnboardingClient({
           contactFirstName: normalizedContactFirstName,
           contactLastName: normalizedContactLastName,
           email: normalizedContactEmail,
+          companyNotificationEmail: normalizedContactEmail,
+          notificationEmail: normalizedContactEmail,
           phone: normalizedContactPhone || undefined,
         },
       }),
@@ -2501,7 +2531,7 @@ export default function HoldedOnboardingClient({
             </button>
             <button
               type="button"
-              onClick={handleHeaderBack}
+              onClick={handleHeaderClose}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 hover:bg-neutral-50"
               aria-label="Cerrar"
             >
@@ -2922,8 +2952,7 @@ export default function HoldedOnboardingClient({
                             : 'Paso 1: datos de empresa'}
                         </div>
                         <p className="mt-2 text-sm leading-6 text-neutral-700">
-                          Antes de tocar la API key, necesitamos los datos fiscales y el sector base
-                          de la empresa que vas a conectar.
+                          Completa los datos minimos de empresa y el correo para avisos.
                         </p>
                       </div>
 
@@ -3053,6 +3082,21 @@ export default function HoldedOnboardingClient({
                           {renderFieldError(fieldErrors.companyCountry)}
                         </label>
                         <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
+                          Correo de empresa para avisos <span className="text-rose-600">*</span>
+                          <input
+                            type="email"
+                            value={contactEmail}
+                            onChange={(event) => {
+                              setContactEmail(event.target.value);
+                              clearFieldError('contactEmail');
+                            }}
+                            className={`mt-2 ${getFieldClass(Boolean(fieldErrors.contactEmail))}`}
+                            placeholder="avisos@tuempresa.com"
+                            autoComplete="email"
+                          />
+                          {renderFieldError(fieldErrors.contactEmail)}
+                        </label>
+                        <label className="block text-sm font-medium text-neutral-700 sm:col-span-2">
                           Pagina web (opcional)
                           <input
                             type="url"
@@ -3066,10 +3110,7 @@ export default function HoldedOnboardingClient({
                       </div>
 
                       <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700">
-                        Esta empresa quedara asociada a{' '}
-                        <strong>{currentDirectFullName || 'tu perfil'}</strong> con el correo{' '}
-                        <strong>{stepContactEmail || 'pendiente'}</strong> y el rol{' '}
-                        <strong>{currentDirectRoleLabel}</strong>.
+                        Avisos de empresa: <strong>{stepContactEmail || 'pendiente'}</strong>
                       </div>
 
                       <div className="flex flex-wrap gap-3">
@@ -3098,8 +3139,7 @@ export default function HoldedOnboardingClient({
                           {requiresPersonStep ? 'Paso 3: conecta Holded' : 'Paso 2: conecta Holded'}
                         </div>
                         <p className="mt-2 text-sm leading-6 text-neutral-700">
-                          Ya tenemos la identidad y la empresa. Solo falta validar una API key
-                          activa de Holded para cerrar la conexion y volver a ChatGPT.
+                          Ultimo paso: valida tu API key activa.
                         </p>
                       </div>
 
@@ -3131,9 +3171,6 @@ export default function HoldedOnboardingClient({
                           <div className="mt-2 text-sm text-neutral-700">
                             {currentDirectCompanySector}
                           </div>
-                          <div className="mt-2 text-sm text-neutral-700">
-                            {currentDirectCompanyAddress}
-                          </div>
                         </div>
                       </div>
 
@@ -3141,26 +3178,10 @@ export default function HoldedOnboardingClient({
                         href={HOLDED_API_GUIDE_URL}
                         target="_blank"
                         rel="noreferrer noopener"
-                        className="group flex items-center gap-3 rounded-2xl border border-[#ff5460]/20 bg-[linear-gradient(135deg,#fff6f7_0%,#ffffff_100%)] px-4 py-4 text-left transition hover:border-[#ff5460]/40 hover:bg-[#fff7f8]"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] underline decoration-[#ff5460]/40 underline-offset-4 hover:text-[#ef4654]"
                       >
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
-                          <Image
-                            src="/brand/holded/holded-diamond-logo.png"
-                            alt="Holded"
-                            width={20}
-                            height={20}
-                            className="h-5 w-5"
-                          />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff5460]">
-                            Guia oficial
-                          </span>
-                          <span className="mt-1 block text-sm font-semibold text-[#7a1f2a] underline decoration-[#ff5460]/40 underline-offset-4 group-hover:decoration-[#ff5460]">
-                            Ver guia oficial de Holded para generar la API key
-                          </span>
-                        </span>
-                        <ExternalLink className="h-4 w-4 shrink-0 text-[#ff5460]" />
+                        Ver guia de Holded para crear la API key
+                        <ExternalLink className="h-4 w-4" />
                       </a>
 
                       <label className="block">

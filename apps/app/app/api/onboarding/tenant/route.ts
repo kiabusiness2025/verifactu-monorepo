@@ -6,6 +6,7 @@ import {
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
 import { rememberVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
+import { upsertConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import { prisma } from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
@@ -508,6 +509,22 @@ export async function POST(req: Request) {
           email: rememberedContactEmail,
           tenantId: result?.tenant?.id,
           message: rememberError instanceof Error ? rememberError.message : String(rememberError),
+        });
+      });
+    }
+
+    if (companyEmail) {
+      await upsertConfirmedCompanyNotificationEmail({
+        tenantId: result.tenant.id,
+        email: companyEmail,
+      }).catch((notificationEmailError) => {
+        console.warn('[api/onboarding/tenant] company notification email upsert failed', {
+          tenantId: result?.tenant?.id,
+          email: companyEmail,
+          message:
+            notificationEmailError instanceof Error
+              ? notificationEmailError.message
+              : String(notificationEmailError),
         });
       });
     }

@@ -90,9 +90,7 @@ describe('HoldedOnboardingClient', () => {
 
     expect(screen.getByText('Conector directo Holded + ChatGPT')).toBeInTheDocument();
     expect(
-      screen.getByText(
-        'Inicia sesion o crea tu cuenta, confirma la empresa y conecta Holded para volver a ChatGPT.'
-      )
+      screen.getByText('Confirma empresa y API key para volver a ChatGPT.')
     ).toBeInTheDocument();
     expect(screen.getByText('Acceso con cuenta completa.')).toBeInTheDocument();
     expect(screen.getByText('Paso 1: usuario')).toBeInTheDocument();
@@ -641,7 +639,7 @@ describe('HoldedOnboardingClient', () => {
 
     expect(
       await screen.findByText(
-        'La ventana de Google se ha cerrado antes de terminar. Vuelve a intentarlo y permite el popup si tu navegador lo bloquea.'
+        'No hemos podido completar el acceso con Google. Vuelve a intentarlo.'
       )
     ).toBeInTheDocument();
     expect(
