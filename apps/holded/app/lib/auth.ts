@@ -342,6 +342,14 @@ export async function consumeGoogleRedirectResult(
   try {
     const result = await getRedirectResult(auth);
     if (!result?.user) {
+      // Si el resultado del redirect ya fue consumido pero el usuario ya está
+      // autenticado en Firebase (caso: usuario identificado que viene de OAuth),
+      // usamos el currentUser directamente en lugar de devolver un error falso.
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await mintSessionCookie(currentUser, { rememberDevice: options.rememberDevice });
+        return { user: currentUser, error: null, warning: null };
+      }
       return {
         user: null,
         error: {

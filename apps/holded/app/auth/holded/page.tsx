@@ -1,7 +1,7 @@
 'use client';
 
 import type { User } from 'firebase/auth';
-import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Loader2, Mail } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -174,6 +174,8 @@ function HoldedAuthContent() {
   const [existingUserChecking, setExistingUserChecking] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [googleRedirecting, setGoogleRedirecting] = useState(false);
+  // Paso activo en modo login: 'choose' = elige método, 'email' = formulario email
+  const [authStep, setAuthStep] = useState<'choose' | 'email'>('choose');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [rememberDevice, setRememberDevice] = useState(true);
@@ -380,335 +382,445 @@ function HoldedAuthContent() {
     setNotice('Te hemos enviado un correo para restablecer la contrasena.');
   };
 
-  const currentTitle = isRegisterMode
-    ? 'Crea tu acceso en Verifactu Business'
-    : 'Inicia sesion en Verifactu Business';
-  const currentSubtitle = isRegisterMode
-    ? 'Crea tu acceso para continuar.'
-    : 'Accede para continuar.';
+  // ── helpers de UI reutilizables ────────────────────────────────────────────
+
+  const HoldedBadge = () => (
+    <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
+        <Image
+          src="/brand/holded/holded-diamond-logo.png"
+          alt="Holded"
+          width={20}
+          height={20}
+          className="h-5 w-5 object-contain"
+          priority
+        />
+      </div>
+      <div className="text-left">
+        <div className="text-sm font-semibold text-slate-950">holded</div>
+        <div className="text-xs text-slate-500">Acceso a tu conexion</div>
+      </div>
+    </div>
+  );
+
+  const ErrorBox = () =>
+    error ? (
+      <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800">
+        {error}
+      </div>
+    ) : null;
+
+  const NoticeBox = () =>
+    notice ? (
+      <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
+        {notice}
+      </div>
+    ) : null;
+
+  const FooterLinks = () => (
+    <div className="border-t border-slate-200 bg-slate-50 px-6 py-5 text-center text-sm text-slate-600 sm:px-8">
+      {isRegisterMode ? (
+        <Link
+          href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}`}
+          className="font-semibold text-slate-900 underline underline-offset-4"
+        >
+          Ya tienes cuenta? Inicia sesion
+        </Link>
+      ) : (
+        <Link
+          href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}&mode=register`}
+          className="font-semibold text-slate-900 underline underline-offset-4"
+        >
+          No tienes cuenta? Registrate
+        </Link>
+      )}
+      <div className="mt-3 text-xs leading-5 text-slate-500">
+        Si necesitas ayuda, escribenos a{' '}
+        <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-slate-700 underline">
+          {SUPPORT_EMAIL}
+        </a>
+        .
+      </div>
+    </div>
+  );
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff5f2_0%,#f8fafc_44%,#f8fafc_100%)] px-4 py-6 text-slate-900 sm:px-6 lg:px-10">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff5f2_0%,#f8fafc_44%,#f8fafc_100%)] px-4 py-6 text-slate-900 sm:px-6">
       <div className="mx-auto flex min-h-[calc(100svh-3rem)] max-w-7xl items-center justify-center py-6">
         <section className="flex w-full items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
-          <div className="w-full max-w-[32rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_-56px_rgba(15,23,42,0.35)]">
-            <div className="px-6 pb-6 pt-7 sm:px-8">
-              <div className="text-center">
-                <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
-                    <Image
-                      src="/brand/holded/holded-diamond-logo.png"
-                      alt="Holded"
-                      width={22}
-                      height={22}
-                      className="h-[22px] w-[22px] object-contain"
-                      priority
-                    />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-semibold text-slate-950">holded</div>
-                    <div className="text-xs text-slate-500">Acceso a tu conexion</div>
-                  </div>
+          <div className="w-full max-w-[26rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_-56px_rgba(15,23,42,0.35)]">
+            {/* ── Comprobando sesión existente ─────────────────── */}
+            {existingUserChecking ? (
+              <div className="flex flex-col items-center gap-3 px-6 py-14 sm:px-8">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f2]">
+                  <Image
+                    src="/brand/holded/holded-diamond-logo.png"
+                    alt="Holded"
+                    width={28}
+                    height={28}
+                    className="h-7 w-7 object-contain"
+                    priority
+                  />
                 </div>
-                <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-                  {currentTitle}
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-slate-500">{currentSubtitle}</p>
+                <Loader2 className="mt-2 h-5 w-5 animate-spin text-[#ff5460]" />
+                <p className="text-sm text-slate-500">Comprobando acceso...</p>
               </div>
-
-              <div className="mt-7 space-y-4">
-                <button
-                  type="button"
-                  onClick={allowGoogleLogin ? handleGoogle : undefined}
-                  disabled={isLoading || existingUserChecking || !allowGoogleLogin}
-                  className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {googleRedirecting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <GoogleBadge />
-                  )}
-                  {googleRedirecting ? 'Redirigiendo...' : 'Continuar con Google'}
-                </button>
-
-                <div className="text-center text-xs text-slate-500">
-                  {allowGoogleLogin
-                    ? 'Tambien puedes entrar con tu correo habitual.'
-                    : 'Google OAuth quedara disponible aqui en cuanto activemos el proveedor.'}
-                </div>
-              </div>
-
-              <div className="relative mt-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
-                </div>
-                <div className="relative flex justify-center text-xs font-medium text-slate-400">
-                  <span className="bg-white px-3">
-                    {isRegisterMode ? 'o crea tu acceso con email' : 'o con tu email'}
-                  </span>
-                </div>
-              </div>
-
-              {error ? (
-                <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800">
-                  {error}
-                </div>
-              ) : null}
-
-              {notice ? (
-                <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
-                  {notice}
-                </div>
-              ) : null}
-
-              <form onSubmit={handleEmailLogin} className="mt-5 space-y-4">
-                {isRegisterMode ? (
-                  <div className="space-y-1.5">
-                    <label htmlFor="fullName" className="text-sm font-semibold text-slate-800">
-                      Nombre completo
-                    </label>
-                    <input
-                      id="fullName"
-                      type="text"
-                      value={fullName}
-                      onChange={(event) => setFullName(event.target.value)}
-                      placeholder="Nombre y apellidos"
-                      autoComplete="name"
-                      required
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                    />
-                  </div>
-                ) : null}
-
-                <div className="space-y-1.5">
-                  <label htmlFor="email" className="text-sm font-semibold text-slate-800">
-                    Correo electronico
-                  </label>
-                  <div className="relative">
-                    <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      placeholder="Correo electronico"
-                      autoComplete="email"
-                      required
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                    />
-                  </div>
-                </div>
-
-                {isRegisterMode ? (
-                  <div className="space-y-1.5">
-                    <label htmlFor="phone" className="text-sm font-semibold text-slate-800">
-                      Telefono
-                    </label>
-                    <input
-                      id="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(event) => setPhone(event.target.value)}
-                      placeholder="+34 600 000 000"
-                      autoComplete="tel"
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                    />
-                  </div>
-                ) : null}
-
-                <div className="space-y-1.5">
-                  <label htmlFor="password" className="text-sm font-semibold text-slate-800">
-                    Contrasena
-                  </label>
-                  <div className="relative">
-                    {isRegisterMode ? (
-                      <input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        placeholder="Contrasena"
-                        autoComplete="new-password"
-                        required
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+            ) : isRegisterMode ? (
+              /* ── Registro ──────────────────────────────────────── */
+              <>
+                <div className="px-6 pb-6 pt-7 sm:px-8">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
+                      <Image
+                        src="/brand/holded/holded-diamond-logo.png"
+                        alt="Holded"
+                        width={22}
+                        height={22}
+                        className="h-[22px] w-[22px] object-contain"
+                        priority
                       />
-                    ) : (
-                      <input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        placeholder="Contrasena"
-                        autoComplete="current-password"
-                        required
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                      />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((value) => !value)}
-                      className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                      aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {isRegisterMode ? (
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="confirmPassword"
-                      className="text-sm font-semibold text-slate-800"
-                    >
-                      Repite la contrasena
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        value={confirmPassword}
-                        onChange={(event) => setConfirmPassword(event.target.value)}
-                        placeholder="Repite tu contrasena"
-                        autoComplete="new-password"
-                        required
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword((value) => !value)}
-                        className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                        aria-label={
-                          showConfirmPassword ? 'Ocultar confirmacion' : 'Mostrar confirmacion'
-                        }
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
+                    </div>
+                    <div>
+                      <div className="text-base font-bold text-slate-950">Crea tu acceso</div>
+                      <div className="text-xs text-slate-500">Conector Holded</div>
                     </div>
                   </div>
-                ) : null}
 
-                {!isRegisterMode ? (
-                  <div className="flex items-center justify-between gap-4 pt-1 text-sm">
-                    <label className="inline-flex items-center gap-2 text-slate-700">
+                  <ErrorBox />
+                  <NoticeBox />
+
+                  <form onSubmit={handleEmailLogin} className="mt-6 space-y-4">
+                    <div className="space-y-1.5">
+                      <label htmlFor="fullName" className="text-sm font-semibold text-slate-800">
+                        Nombre completo
+                      </label>
+                      <input
+                        id="fullName"
+                        type="text"
+                        value={fullName}
+                        onChange={(event) => setFullName(event.target.value)}
+                        placeholder="Nombre y apellidos"
+                        autoComplete="name"
+                        required
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label htmlFor="email" className="text-sm font-semibold text-slate-800">
+                        Correo electronico
+                      </label>
+                      <div className="relative">
+                        <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                          id="email"
+                          type="email"
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                          placeholder="nombre@empresa.com"
+                          autoComplete="email"
+                          required
+                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label htmlFor="phone" className="text-sm font-semibold text-slate-800">
+                        Telefono <span className="font-normal text-slate-400">(opcional)</span>
+                      </label>
+                      <input
+                        id="phone"
+                        type="tel"
+                        value={phone}
+                        onChange={(event) => setPhone(event.target.value)}
+                        placeholder="+34 600 000 000"
+                        autoComplete="tel"
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label htmlFor="password" className="text-sm font-semibold text-slate-800">
+                        Contrasena
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(event) => setPassword(event.target.value)}
+                          placeholder="Contrasena"
+                          autoComplete="new-password"
+                          required
+                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                          aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="confirmPassword"
+                        className="text-sm font-semibold text-slate-800"
+                      >
+                        Repite la contrasena
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(event) => setConfirmPassword(event.target.value)}
+                          placeholder="Repite tu contrasena"
+                          autoComplete="new-password"
+                          required
+                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((v) => !v)}
+                          className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                          aria-label={
+                            showConfirmPassword ? 'Ocultar confirmacion' : 'Mostrar confirmacion'
+                          }
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={acceptLegal}
+                        onChange={(event) => setAcceptLegal(event.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
+                      />
+                      <span>
+                        Acepto los{' '}
+                        <Link href="/terms" className="font-semibold text-slate-900 underline">
+                          terminos
+                        </Link>{' '}
+                        y la{' '}
+                        <Link href="/privacy" className="font-semibold text-slate-900 underline">
+                          politica de privacidad
+                        </Link>
+                        .
+                      </span>
+                    </label>
+
+                    <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
                       <input
                         type="checkbox"
                         checked={rememberDevice}
                         onChange={(event) => setRememberDevice(event.target.checked)}
-                        className="h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
                       />
-                      Mantener sesion
+                      <span>
+                        Recordar sesion en este dispositivo despues de verificar el correo.
+                      </span>
                     </label>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#ff5460] px-5 text-sm font-semibold text-white shadow-[0_18px_38px_-22px_rgba(255,84,96,0.85)] transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isLoading ? 'Creando acceso...' : 'Crear acceso y verificar correo'}
+                    </button>
+                  </form>
+
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                    Usa el mismo correo que tienes en Holded para que el alta y la conexion queden
+                    alineadas.
+                  </div>
+                </div>
+                <FooterLinks />
+              </>
+            ) : authStep === 'choose' ? (
+              /* ── Elegir método de identidad ────────────────────── */
+              <>
+                <div className="px-6 pb-8 pt-7 sm:px-8">
+                  <div className="text-center">
+                    <HoldedBadge />
+                    <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
+                      Accede para continuar
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Elige como quieres identificarte.
+                    </p>
+                  </div>
+
+                  <ErrorBox />
+
+                  <div className="mt-7 space-y-3">
+                    {allowGoogleLogin ? (
+                      <button
+                        type="button"
+                        onClick={handleGoogle}
+                        disabled={isLoading || googleRedirecting}
+                        className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {googleRedirecting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <GoogleBadge />
+                        )}
+                        {googleRedirecting ? 'Redirigiendo...' : 'Continuar con Google'}
+                      </button>
+                    ) : null}
+
                     <button
                       type="button"
-                      onClick={handlePasswordReset}
-                      className="font-semibold text-slate-700 underline decoration-slate-300 underline-offset-4 transition hover:text-slate-950"
+                      onClick={() => setAuthStep('email')}
+                      className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
                     >
-                      Has olvidado tu contrasena?
+                      <Mail className="h-4 w-4 text-slate-500" />
+                      Continuar con correo
                     </button>
                   </div>
-                ) : null}
+                </div>
+                <FooterLinks />
+              </>
+            ) : (
+              /* ── Formulario email / login ───────────────────────── */
+              <>
+                <div className="px-6 pb-6 pt-6 sm:px-8">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthStep('choose');
+                      setError('');
+                      setNotice('');
+                    }}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Volver
+                  </button>
 
-                {isRegisterMode ? (
-                  <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={acceptLegal}
-                      onChange={(event) => setAcceptLegal(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
-                    />
-                    <span>
-                      Acepto los{' '}
-                      <Link href="/terms" className="font-semibold text-slate-900 underline">
-                        terminos
-                      </Link>{' '}
-                      y la{' '}
-                      <Link href="/privacy" className="font-semibold text-slate-900 underline">
-                        politica de privacidad
-                      </Link>
-                      .
-                    </span>
-                  </label>
-                ) : null}
+                  <div className="mt-5 flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
+                      <Image
+                        src="/brand/holded/holded-diamond-logo.png"
+                        alt="Holded"
+                        width={22}
+                        height={22}
+                        className="h-[22px] w-[22px] object-contain"
+                        priority
+                      />
+                    </div>
+                    <div>
+                      <div className="text-base font-bold text-slate-950">Accede con tu correo</div>
+                      <div className="text-xs text-slate-500">Conector Holded</div>
+                    </div>
+                  </div>
 
-                {isRegisterMode ? (
-                  <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={acceptMarketing}
-                      onChange={(event) => setAcceptMarketing(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
-                    />
-                    <span>
-                      Quiero recibir novedades y mejoras sobre la conexion y nuevas funciones.
-                    </span>
-                  </label>
-                ) : null}
+                  <ErrorBox />
+                  <NoticeBox />
 
-                {isRegisterMode ? (
-                  <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={rememberDevice}
-                      onChange={(event) => setRememberDevice(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
-                    />
-                    <span>Recordar sesion en este dispositivo despues de verificar el correo.</span>
-                  </label>
-                ) : null}
+                  <form onSubmit={handleEmailLogin} className="mt-6 space-y-4">
+                    <div className="space-y-1.5">
+                      <label htmlFor="email" className="text-sm font-semibold text-slate-800">
+                        Correo electronico
+                      </label>
+                      <div className="relative">
+                        <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                          id="email"
+                          type="email"
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                          placeholder="nombre@empresa.com"
+                          autoComplete="email"
+                          required
+                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                        />
+                      </div>
+                    </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading || existingUserChecking}
-                  className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#ff5460] px-5 text-sm font-semibold text-white shadow-[0_18px_38px_-22px_rgba(255,84,96,0.85)] transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isLoading
-                    ? isRegisterMode
-                      ? 'Creando acceso...'
-                      : 'Iniciando sesion...'
-                    : isRegisterMode
-                      ? 'Crear acceso y verificar correo'
-                      : 'Iniciar sesion'}
-                </button>
-              </form>
+                    <div className="space-y-1.5">
+                      <label htmlFor="password" className="text-sm font-semibold text-slate-800">
+                        Contrasena
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(event) => setPassword(event.target.value)}
+                          placeholder="Contrasena"
+                          autoComplete="current-password"
+                          required
+                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                          aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
 
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-                Usa el mismo correo que tienes registrado en Holded para que el alta y la conexion
-                posterior queden alineadas.
-              </div>
-            </div>
+                    <div className="flex items-center justify-between gap-4 pt-1 text-sm">
+                      <label className="inline-flex items-center gap-2 text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={rememberDevice}
+                          onChange={(event) => setRememberDevice(event.target.checked)}
+                          className="h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
+                        />
+                        Mantener sesion
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handlePasswordReset}
+                        className="font-semibold text-slate-700 underline decoration-slate-300 underline-offset-4 transition hover:text-slate-950"
+                      >
+                        Has olvidado tu contrasena?
+                      </button>
+                    </div>
 
-            <div className="border-t border-slate-200 bg-slate-50 px-6 py-5 text-center text-sm text-slate-600 sm:px-8">
-              {isRegisterMode ? (
-                <Link
-                  href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}`}
-                  className="font-semibold text-slate-900 underline underline-offset-4"
-                >
-                  Ya tienes cuenta? Inicia sesion
-                </Link>
-              ) : (
-                <Link
-                  href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}&mode=register`}
-                  className="font-semibold text-slate-900 underline underline-offset-4"
-                >
-                  No tienes cuenta? Registrate
-                </Link>
-              )}
-              <div className="mt-3 text-xs leading-5 text-slate-500">
-                Si necesitas ayuda, escribenos a{' '}
-                <a
-                  href={`mailto:${SUPPORT_EMAIL}`}
-                  className="font-semibold text-slate-700 underline"
-                >
-                  {SUPPORT_EMAIL}
-                </a>
-                .
-              </div>
-            </div>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#ff5460] px-5 text-sm font-semibold text-white shadow-[0_18px_38px_-22px_rgba(255,84,96,0.85)] transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isLoading ? 'Iniciando sesion...' : 'Iniciar sesion'}
+                    </button>
+                  </form>
+
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                    Usa el mismo correo que tienes en Holded para que el alta y la conexion queden
+                    alineadas.
+                  </div>
+                </div>
+                <FooterLinks />
+              </>
+            )}
           </div>
         </section>
       </div>
