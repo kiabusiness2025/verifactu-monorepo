@@ -464,6 +464,11 @@ export default function IsaakForHoldedPage() {
     : fiscalProfilePending
       ? 'Perfil fiscal pendiente'
       : 'Perfil fiscal completo';
+  const fiscalProfileHelpText = !connectedToHolded
+    ? 'Conecta Holded para revisar y completar tu perfil fiscal.'
+    : fiscalProfilePending
+      ? 'Hay revisiones pendientes. Completa tu perfil fiscal para reducir bloqueos y seguir operando con normalidad.'
+      : 'Perfil fiscal al dia. No hay revisiones pendientes en este momento.';
 
   const requestConfirmation = (dialog: ConfirmDialogState) => {
     setConfirmDialog(dialog);
@@ -934,6 +939,8 @@ export default function IsaakForHoldedPage() {
             </div>
           </div>
         </div>
+
+        <p className="mt-4 text-sm text-slate-600">{fiscalProfileHelpText}</p>
 
         <div className="mt-5 flex flex-wrap gap-3">
           <Link

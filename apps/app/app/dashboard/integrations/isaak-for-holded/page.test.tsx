@@ -281,6 +281,11 @@ describe('IsaakForHoldedPage', () => {
     expect(await screen.findByText('Usuarios y permisos')).toBeInTheDocument();
     expect(await screen.findByText('Perfil fiscal pendiente')).toBeInTheDocument();
     expect(
+      await screen.findByText(
+        'Hay revisiones pendientes. Completa tu perfil fiscal para reducir bloqueos y seguir operando con normalidad.'
+      )
+    ).toBeInTheDocument();
+    expect(
       await screen.findByRole('link', { name: 'Completar perfil fiscal' })
     ).toBeInTheDocument();
     expect(screen.getByText('Resumen operativo por tenant/requestId')).toBeInTheDocument();

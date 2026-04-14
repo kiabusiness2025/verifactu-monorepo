@@ -105,6 +105,11 @@ export default function IntegrationsPage() {
     : fiscalProfilePending
       ? 'Perfil fiscal pendiente'
       : 'Perfil fiscal completo';
+  const fiscalProfileHelpText = !connectedToHolded
+    ? 'Conecta Holded para revisar y completar tu perfil fiscal.'
+    : fiscalProfilePending
+      ? 'Hay revisiones pendientes. Completa tu perfil fiscal para reducir bloqueos y continuar con normalidad.'
+      : 'Perfil fiscal al dia. Puedes operar con normalidad desde Isaak for Holded.';
 
   useEffect(() => {
     if (searchParams?.get('holded_admin') === 'forbidden') {
@@ -326,6 +331,7 @@ export default function IntegrationsPage() {
                 </Link>
               ) : null}
             </div>
+            <p className="mt-2 max-w-2xl text-xs text-slate-600">{fiscalProfileHelpText}</p>
           </div>
           <Link
             href="/dashboard/integrations/isaak-for-holded"
