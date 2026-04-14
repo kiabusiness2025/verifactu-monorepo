@@ -11,8 +11,10 @@ import { buildFullName, normalizeMeaningfulPersonName, splitFullName } from '@/l
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import {
+  LEGACY_TENANT_PROFILE_COLUMN_AVAILABILITY,
   buildTenantProfileOnboardingSelect,
   getTenantProfileColumnAvailability,
+  type TenantProfileColumnAvailability,
 } from '@/lib/tenantProfileSchema';
 import { getAppUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
@@ -210,11 +212,12 @@ function mergeSummaryWithRememberedPrefill(
 }
 
 async function resolveVerifiedEmailTenantPrefill(input: {
+  tenantProfileColumns: TenantProfileColumnAvailability;
   uid?: string | null;
   email?: string | null;
   contactName?: string | null;
 }) {
-  const tenantProfileColumns = await getTenantProfileColumnAvailability();
+  const tenantProfileColumns = input.tenantProfileColumns;
   const normalizedUid = normalizeText(input.uid);
   const normalizedEmail = normalizeText(input.email)?.toLowerCase() || null;
   if (!normalizedUid && !normalizedEmail) {
@@ -291,12 +294,22 @@ async function resolveVerifiedEmailTenantPrefill(input: {
   };
 }
 
+async function resolveTenantProfileColumnsSafe() {
+  try {
+    return await getTenantProfileColumnAvailability();
+  } catch (error) {
+    console.error('[onboarding/holded] tenant profile schema unavailable, using legacy fallback', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return LEGACY_TENANT_PROFILE_COLUMN_AVAILABILITY;
+  }
+}
+
 export default async function HoldedOnboardingPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const tenantProfileColumns = await getTenantProfileColumnAvailability();
   const params = await searchParams;
   const search = new URLSearchParams();
   for (const [key, rawValue] of Object.entries(params)) {
@@ -347,6 +360,8 @@ export default async function HoldedOnboardingPage({
     }
     redirect(buildLoginUrl(current.toString(), 'holded_onboarding'));
   }
+
+  const tenantProfileColumns = await resolveTenantProfileColumnsSafe();
 
   const nextUrl = normalizeNextUrl(firstValue(params.next));
   const requireConnectionConfirmation =
@@ -463,6 +478,7 @@ export default async function HoldedOnboardingPage({
     effectiveOnboardingSession?.emailVerified &&
     effectiveOnboardingSession.email
       ? await resolveVerifiedEmailTenantPrefill({
+          tenantProfileColumns,
           uid: effectiveOnboardingSession.uid,
           email: effectiveOnboardingSession.email,
           contactName:

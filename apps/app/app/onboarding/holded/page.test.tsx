@@ -41,6 +41,14 @@ jest.mock('@/lib/integrations/holdedVerifiedEmailIdentities', () => ({
 }));
 
 jest.mock('@/lib/tenantProfileSchema', () => ({
+  LEGACY_TENANT_PROFILE_COLUMN_AVAILABILITY: {
+    representativeRole: false,
+    website: false,
+    cnaeCode: false,
+    cnaeText: false,
+    postalCode: false,
+    country: false,
+  },
   getTenantProfileColumnAvailability: jest.fn(async () => ({
     representativeRole: true,
     website: true,
@@ -104,6 +112,7 @@ import { readVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifi
 import { mintHoldedOnboardingTokenForSubject } from '@/lib/oauth/mcp';
 import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
+import { getTenantProfileColumnAvailability } from '@/lib/tenantProfileSchema';
 import HoldedOnboardingPage from './page';
 
 const prismaMock = prisma as unknown as {
@@ -208,6 +217,36 @@ describe('HoldedOnboardingPage', () => {
         emailVerified: false,
       })
     );
+  });
+
+  it('falls back to legacy tenant profile schema when column lookup fails', async () => {
+    (getTenantProfileColumnAvailability as jest.Mock).mockRejectedValueOnce(
+      new Error('db temporarily unavailable')
+    );
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'session-user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-session',
+    });
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue(null);
+    (requireTenantContext as jest.Mock).mockResolvedValue({
+      tenantId: 'tenant-auth',
+      session: {
+        uid: 'session-user-1',
+        email: 'demo@example.com',
+        name: 'Demo User',
+      },
+    });
+
+    const element = await HoldedOnboardingPage({
+      searchParams: Promise.resolve({
+        next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
+        channel: 'chatgpt',
+      }),
+    });
+
+    expect(element.props.summary.companyName).toBe('Empresa Demo');
   });
 
   it('keeps the contact first name blank when only the verified email is known', async () => {
