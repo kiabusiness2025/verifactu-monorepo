@@ -100,37 +100,31 @@ The current production flow remains direct:
 - no visible classic signup
 - no visible tenant selector
 - ChatGPT can redirect to `https://app.verifactu.business/onboarding/holded?channel=chatgpt...`
-- the user completes the currently deployed direct onboarding and returns to OAuth
+- identity-first onboarding inside the same direct flow: Google or email verification first
+- short steps in order: user, company, Holded API key
+- final success screen + final welcome email, then return to OAuth
 
 Important:
 
-- OAuth registration values do not change with the next UX wave
-- the next Phase 1 wave introduces identity-first onboarding, with optional Google or verified email before the step-by-step company/API flow
+- OAuth registration values do not change
+- the current public flow is already identity-first and keeps the direct connector contract (no popup windows, no classic login wall when onboarding token is present)
 
 Operational note:
 
 - support should use the `x-verifactu-request-id` header from `authorize`, `status`, `validate`, or `connect` when debugging mobile failures
 
-### 9. 2026-04-06 connector onboarding rewrite and next wave
+### 9. 2026-04-06 connector onboarding rewrite
 
-The already deployed rewrite reduced friction and eliminated duplicated copy.
-
-The next wave now started moves the public contract one step further.
+The deployed rewrite reduced friction and eliminated duplicated copy.
 
 What changed:
 
 - step 1 (`/onboarding`): scope-first intro with a plain summary of connector capabilities
-- step 2 (`/onboarding/holded`): single form for company identity, contact identity, and API key
+- step 2 (`/onboarding/holded`): direct identity-first onboarding with short sequential steps
 - removed repeated validation/help text; only the official Holded API key help link is shown
 - consent copy simplified: by pressing `Validar y conectar`, user accepts terms and privacy
-
-What is being introduced next:
-
-- identity-first connector entry
-- `Continue with Google` as an optional shortcut
-- manual email verification before continuing when Google is not used
-- multi-step onboarding screens for full name, company/CIF, and Holded API key
-- final success screen plus welcome email after successful connect
+- Google and email verification are part of the same direct onboarding path
+- popup-window orchestration is not part of the public flow
 
 Mobile handoff hardening:
 

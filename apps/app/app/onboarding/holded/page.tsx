@@ -319,16 +319,11 @@ export default async function HoldedOnboardingPage({
     next: params.next,
   });
   const captureMode = firstValue(params.capture)?.trim() === '1';
-  const authReady = firstValue(params.auth_ready)?.trim() === '1';
-  const popupMode = firstValue(params.popup)?.trim() === '1';
-  const popupStepParam = normalizeText(firstValue(params.popup_step));
-  const popupStep =
-    popupStepParam === 'company' || popupStepParam === 'api' ? popupStepParam : null;
-  const popupDraft = normalizeText(firstValue(params.popup_draft));
   const tenantIdHint = normalizeText(firstValue(params.tenant_id));
-  const shouldForceLoginFirst = entryChannel === 'chatgpt' && !authReady;
+  const hasOnboardingIdentity = Boolean(onboardingSession?.uid);
+  const shouldRequireClassicLogin = !session?.uid && !hasOnboardingIdentity;
 
-  if (shouldForceLoginFirst || (!session?.uid && !onboardingSession?.uid)) {
+  if (shouldRequireClassicLogin) {
     const current = new URL('/onboarding/holded', getAppUrl());
     const nextParam = firstValue(params.next)?.trim();
     const channel = firstValue(params.channel)?.trim();
@@ -343,9 +338,6 @@ export default async function HoldedOnboardingPage({
     }
     if (captureMode) {
       current.searchParams.set('capture', '1');
-    }
-    if (entryChannel === 'chatgpt') {
-      current.searchParams.set('auth_ready', '1');
     }
     if (onboardingToken) {
       current.searchParams.set('onboarding_token', onboardingToken);
@@ -611,7 +603,7 @@ export default async function HoldedOnboardingPage({
       entryChannel={entryChannel}
       nextUrl={nextUrl}
       requireConnectionConfirmation={requireConnectionConfirmation}
-      requiresVerifiedIdentity={false}
+      requiresVerifiedIdentity={entryChannel === 'chatgpt'}
       identity={{
         authMethod: effectiveOnboardingSession?.authMethod ?? 'unknown',
         email: normalizeText(effectiveOnboardingSession?.email),
@@ -623,10 +615,7 @@ export default async function HoldedOnboardingPage({
       summary={summary}
       companySetup={companySetup}
       onboardingToken={clientOnboardingToken}
-      enablePopupWindows={entryChannel === 'chatgpt' && !popupMode}
-      popupMode={popupMode}
-      popupStep={popupStep}
-      popupDraft={popupDraft}
+      enablePopupWindows={false}
       tenantIdHint={
         resolvedTenantInfo.tenantId ?? passiveVerifiedTenantPrefill?.tenantId ?? tenantIdHint
       }

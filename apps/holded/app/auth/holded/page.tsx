@@ -83,6 +83,11 @@ function isChatgptAuthFlow(source: string, target: string) {
   return false;
 }
 
+function hasGoogleProvider(user: User | null | undefined) {
+  if (!user) return false;
+  return user.providerData.some((provider) => provider.providerId === 'google.com');
+}
+
 function exitHoldedAuth(target: string) {
   if (typeof window === 'undefined') return;
 
@@ -171,6 +176,7 @@ function HoldedAuthContent() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptLegal, setAcceptLegal] = useState(false);
   const [acceptMarketing, setAcceptMarketing] = useState(false);
+  const [googleRegisterUser, setGoogleRegisterUser] = useState<User | null>(null);
   const [existingUserChecking, setExistingUserChecking] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [googleRedirecting, setGoogleRedirecting] = useState(false);
@@ -214,8 +220,21 @@ function HoldedAuthContent() {
         }
 
         if (redirectResult.user) {
+          if (isRegisterMode && hasGoogleProvider(redirectResult.user)) {
+            redirectedRef.current = false;
+            setGoogleRegisterUser(redirectResult.user);
+            setEmail(redirectResult.user.email || '');
+            setFullName(redirectResult.user.displayName || '');
+            setCompanyEmail(redirectResult.user.email || '');
+            setAuthStep('register-company');
+            if (!cancelled) {
+              setExistingUserChecking(false);
+            }
+            return;
+          }
+
           redirectedRef.current = true;
-          redirectToTarget(postLoginTarget);
+          await activateSessionAndRedirect(redirectResult.user, rememberDevice, postLoginTarget);
           return;
         }
       }
@@ -356,18 +375,38 @@ function HoldedAuthContent() {
 
       const normalizedFullName = fullName.trim().replace(/\s+/g, ' ');
 
-      const registerResult = await registerWithEmail(
-        email,
-        password,
-        {
-          fullName: normalizedFullName,
-          phone,
-        },
-        source
-      );
-      if (registerResult.error) {
+      const currentFirebaseUser = auth?.currentUser ?? null;
+      const activeGoogleUser = hasGoogleProvider(googleRegisterUser)
+        ? googleRegisterUser
+        : hasGoogleProvider(currentFirebaseUser)
+          ? currentFirebaseUser
+          : null;
+
+      if (!activeGoogleUser) {
+        const registerResult = await registerWithEmail(
+          email,
+          password,
+          {
+            fullName: normalizedFullName,
+            phone,
+          },
+          source
+        );
+        if (registerResult.error) {
+          setIsLoading(false);
+          setError(registerResult.error.userMessage);
+          return;
+        }
+
         setIsLoading(false);
-        setError(registerResult.error.userMessage);
+        const thanksUrl = new URL('/gracias', window.location.origin);
+        thanksUrl.searchParams.set('step', 'check-email');
+        thanksUrl.searchParams.set('email', email);
+        thanksUrl.searchParams.set('source', source);
+        if (registerResult.warning) {
+          thanksUrl.searchParams.set('notice', 'verification-email-may-be-delayed');
+        }
+        router.push(`${thanksUrl.pathname}${thanksUrl.search}`);
         return;
       }
 
@@ -382,15 +421,20 @@ function HoldedAuthContent() {
         contactPhone: phone.trim(),
       });
 
-      setIsLoading(false);
-      const thanksUrl = new URL('/gracias', window.location.origin);
-      thanksUrl.searchParams.set('step', 'check-email');
-      thanksUrl.searchParams.set('email', email);
-      thanksUrl.searchParams.set('source', source);
-      if (registerResult.warning) {
-        thanksUrl.searchParams.set('notice', 'verification-email-may-be-delayed');
+      try {
+        await activateSessionAndRedirect(activeGoogleUser, rememberDevice, postLoginTarget);
+        return;
+      } catch (accessError) {
+        setError(
+          getAccessErrorMessage(
+            accessError,
+            'No hemos podido activar tu acceso con Google. Intentalo de nuevo.'
+          )
+        );
+      } finally {
+        setIsLoading(false);
       }
-      router.push(`${thanksUrl.pathname}${thanksUrl.search}`);
+
       return;
     }
 
@@ -558,6 +602,22 @@ function HoldedAuthContent() {
 
                   <ErrorBox />
                   <NoticeBox />
+
+                  {allowGoogleLogin ? (
+                    <button
+                      type="button"
+                      onClick={handleGoogle}
+                      disabled={isLoading || googleRedirecting}
+                      className="mt-5 inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {googleRedirecting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <GoogleBadge />
+                      )}
+                      {googleRedirecting ? 'Redirigiendo...' : 'Registrarte con Google'}
+                    </button>
+                  ) : null}
 
                   <form onSubmit={handleEmailLogin} className="mt-6 space-y-4">
                     <div className="space-y-1.5">
