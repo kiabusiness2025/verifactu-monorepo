@@ -222,6 +222,66 @@ describe('HoldedOnboardingPage', () => {
     expect(element.props.onboardingToken).toBe('generated-onboarding-token');
   });
 
+  it('forces one-time login panel handoff for cto flow when chatgpt confirmation arrives without onboarding token', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'session-user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-session',
+    });
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      HoldedOnboardingPage({
+        searchParams: Promise.resolve({
+          next: 'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-test',
+          channel: 'chatgpt',
+          require_connection_confirmation: '1',
+          tenant_id: 'tenant-demo',
+        }),
+      })
+    ).rejects.toThrow('NEXT_REDIRECT:');
+
+    const loginUrl = new URL(redirectMock.mock.calls[0][0]);
+    const nextUrl = new URL(loginUrl.searchParams.get('next') || 'https://app.verifactu.business');
+
+    expect(loginUrl.pathname).toBe('/login');
+    expect(nextUrl.pathname).toBe('/onboarding/holded');
+    expect(nextUrl.searchParams.get('login_handoff')).toBe('1');
+    expect(nextUrl.searchParams.get('tenant_id')).toBe('tenant-demo');
+  });
+
+  it('does not loop login handoff when login_handoff marker is already present', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'session-user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-session',
+    });
+    (resolveHoldedOnboardingSession as jest.Mock).mockResolvedValue(null);
+    (requireTenantContext as jest.Mock).mockResolvedValue({
+      tenantId: 'tenant-auth',
+      session: {
+        uid: 'session-user-1',
+        email: 'demo@example.com',
+        name: 'Demo User',
+      },
+    });
+
+    const element = await HoldedOnboardingPage({
+      searchParams: Promise.resolve({
+        next: 'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-test',
+        channel: 'chatgpt',
+        require_connection_confirmation: '1',
+        login_handoff: '1',
+        tenant_id: 'tenant-demo',
+      }),
+    });
+
+    expect(element.props.entryChannel).toBe('chatgpt');
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
   it('passes tenant hints into tenant resolution and the client props', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'session-user-1',

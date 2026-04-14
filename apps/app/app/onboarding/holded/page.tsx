@@ -371,8 +371,15 @@ export default async function HoldedOnboardingPage({
   });
   const captureMode = firstValue(params.capture)?.trim() === '1';
   const tenantIdHint = normalizeText(firstValue(params.tenant_id));
+  const loginHandoffCompleted = firstValue(params.login_handoff)?.trim() === '1';
+  const forceLoginPanelForCtoFlow =
+    entryChannel === 'chatgpt' &&
+    firstValue(params.require_connection_confirmation)?.trim() === '1' &&
+    !onboardingToken &&
+    !loginHandoffCompleted;
   const hasOnboardingIdentity = Boolean(onboardingSession?.uid);
-  const shouldRequireClassicLogin = !session?.uid && !hasOnboardingIdentity;
+  const shouldRequireClassicLogin =
+    (!session?.uid && !hasOnboardingIdentity) || forceLoginPanelForCtoFlow;
 
   if (shouldRequireClassicLogin) {
     const current = new URL('/onboarding/holded', getAppUrl());
@@ -390,6 +397,7 @@ export default async function HoldedOnboardingPage({
     if (captureMode) {
       current.searchParams.set('capture', '1');
     }
+    current.searchParams.set('login_handoff', '1');
     if (onboardingToken) {
       current.searchParams.set('onboarding_token', onboardingToken);
     }
