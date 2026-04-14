@@ -15,12 +15,94 @@ export {
   saveHoldedConnection,
 } from './holded/connection';
 export { buildHoldedProbeSummary, buildStoredHoldedConnectionSummary } from './holded/diagnostics';
+export {
+  buildAccessRequestCreatedEmail,
+  buildAccessRequestReceiptEmail,
+  buildAccessRequestResolvedEmail,
+  buildClaimCreatedEmail,
+  buildClaimReceiptEmail,
+  buildClaimResolvedEmail,
+} from './holded/governanceEmailTemplates';
+export {
+  buildActionState,
+  buildConnectionStatusDto,
+  buildDefaultAvailableActions,
+  buildDefaultDuplicateConflict,
+  buildDetectedCompany,
+  buildGovernanceFlags,
+  normalizeConnectionStatus,
+} from './holded/dtoMappers';
+export {
+  buildConnectorEvent,
+  getConnectorRequestId,
+  logConnectorEvent,
+  withConnectorRequestId,
+} from './holded/observability';
+export {
+  getHoldedConnectionBadge,
+  getHoldedConnectionStatusLabel,
+  getHoldedGovernanceBadges,
+  getHoldedStatusBanners,
+} from './holded/uiState';
 export type {
   HoldedConnectionChannel,
   HoldedConnectionRecord,
   HoldedPrismaClient,
   HoldedProbeResult,
 } from './holded/connection';
+export type {
+  AccessRequestDTO,
+  AccessRequestStatus,
+  AccountingConnectRequest,
+  AccountingConnectResponse,
+  AccountingDisconnectRequest,
+  AccountingDisconnectResponse,
+  AccountingRotateKeyRequest,
+  AccountingRotateKeyResponse,
+  AccountingStatusResponse,
+  ActionBlockReasonDTO,
+  AvailableActionsDTO,
+  ClaimCaseDTO,
+  ClaimResolutionDTO,
+  ClaimStatus,
+  ClaimType,
+  ConnectionStatus,
+  ConnectionStatusDTO,
+  DetectedCompanyDTO,
+  DuplicateConflictDTO,
+  GovernanceFlagsDTO,
+  HoldedActionKey,
+  HoldedClaimDetailsResponse,
+  HoldedClaimNextStep,
+  HoldedConnectMode,
+  HoldedConnectNextStep,
+  HoldedConnectRequest,
+  HoldedConnectResponse,
+  HoldedCreateAccessRequest,
+  HoldedCreateAccessRequestResponse,
+  HoldedCreateClaimRequest,
+  HoldedCreateClaimResponse,
+  HoldedRequestNextStep,
+  HoldedStatusResponse,
+  HoldedValidateNextStep,
+  HoldedValidateRequest,
+  HoldedValidateResponse,
+  LightweightActorDTO,
+  MembershipDTO,
+  MembershipRole,
+  MembershipSide,
+  MembershipStatus,
+  OwnershipStatus,
+  RecipientDTO,
+  RecipientType,
+} from './holded/contracts';
+export type {
+  HoldedUiBadge,
+  HoldedUiBadgeVariant,
+  HoldedUiBanner,
+  HoldedUiBannerTone,
+} from './holded/uiState';
+export type { ConnectorEvent, ConnectorEventLevel } from './holded/observability';
 export type {
   HoldedProbeLike,
   HoldedProbeModuleDiagnostic,

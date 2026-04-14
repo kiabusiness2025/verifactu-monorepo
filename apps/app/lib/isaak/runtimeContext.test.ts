@@ -1,10 +1,14 @@
 /** @jest-environment node */
 
+export {};
+
 const mockFindUserPreference = jest.fn();
 const mockFindConversations = jest.fn();
 const mockFindMessages = jest.fn();
 const mockResolveSharedHoldedConnectionStatusForTenant = jest.fn();
-const mockNormalizeIsaakContext = jest.fn((value?: string | null) => value ?? 'general');
+const mockNormalizeIsaakContext = jest.fn((value?: unknown) =>
+  typeof value === 'string' && value.trim().length > 0 ? value : 'general'
+);
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {

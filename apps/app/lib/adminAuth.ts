@@ -4,6 +4,7 @@
  */
 
 import { getSessionPayload } from './session';
+import { getHoldedConnectorAdminEmails, isHoldedConnectorAdminEmail } from './holdedConnectorAdmin';
 
 /**
  * Get current user email from session
@@ -23,11 +24,7 @@ async function getCurrentUserEmail(): Promise<string | null> {
  * Checks if user email is in ADMIN_EMAILS environment variable
  */
 export async function requireAdmin(_req: Request): Promise<{ email: string; userId: string }> {
-  // Get admin emails from environment
-  const adminEmails = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
+  const adminEmails = getHoldedConnectorAdminEmails();
 
   if (adminEmails.length === 0) {
     throw new Error('ADMIN_EMAILS not configured');
@@ -39,7 +36,7 @@ export async function requireAdmin(_req: Request): Promise<{ email: string; user
   const userId = payload?.uid ?? '';
 
   // Check if user is admin
-  if (!email || !adminEmails.includes(email)) {
+  if (!email || !isHoldedConnectorAdminEmail(email)) {
     throw new Error('FORBIDDEN: Admin access required');
   }
 

@@ -183,11 +183,13 @@ Para el core general y el conector, las variables mas importantes son:
 - `NEXT_PUBLIC_HOLDED_SITE_URL`
 - `HOLDED_CONNECTION_LEGAL_VERSION` opcional para versionar la aceptacion legal del onboarding de Holded
 - `SUPPORT_NOTIFICATION_EMAIL` opcional para duplicar avisos de onboarding y lifecycle de Holded al equipo interno
+- `ADMIN_EMAILS` opcional para ampliar la allowlist del panel admin del conector Holded; por defecto ya quedan preconfigurados `soporte@verifactu.business` y `kiabuasiness2025@gmail.com` y se mantiene compatibilidad con aliases historicos internos
 
 Para un bloque mas amplio, revisa:
 
 - [apps/app/.env.example](./.env.example)
 - [apps/app/.env.local.example](./.env.local.example)
+- [../../docs/engineering/HOLDED_DIRECT_CONNECTOR_RELEASE_CHECKLIST_2026.md](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_RELEASE_CHECKLIST_2026.md)
 
 ## Desarrollo local
 
@@ -230,6 +232,9 @@ pnpm --filter verifactu-app test -- --runInBand app/api/mcp/holded/route.test.ts
 - [../holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](../holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md) -> setup operativo del conector directo en OpenAI
 - [../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md](../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md) -> alcance funcional objetivo
 - [../../docs/engineering/ai/HOLDED_DEMO_REGRESSION.md](../../docs/engineering/ai/HOLDED_DEMO_REGRESSION.md) -> smoke, huecos y semantica viva de Holded
+- [../../docs/engineering/HOLDED_DIRECT_CONNECTOR_POST_RELEASE_SMOKE_EVIDENCE_2026.md](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_POST_RELEASE_SMOKE_EVIDENCE_2026.md) -> plantilla de evidencias para smoke post-release
+- [../../docs/engineering/HOLDED_DIRECT_CONNECTOR_HANDOFF_AND_BACKLOG_2026.md](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_HANDOFF_AND_BACKLOG_2026.md) -> cierre del roadmap principal y backlog posterior
+- [../../docs/engineering/HOLDED_DIRECT_CONNECTOR_EVOLUTION_PLAN_2026.md](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_EVOLUTION_PLAN_2026.md) -> siguiente ola ejecutable sobre observabilidad, notificaciones y panel
 - [../../docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md](../../docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md) -> arquitectura tecnica viva del runtime MCP/OAuth y del onboarding directo
 
 ## Resumen corto para el equipo

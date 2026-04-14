@@ -1,6 +1,9 @@
 import type { AuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import { isPreconfiguredAdminEmail } from '@verifactu/utils/admin-access';
 import { UserRole, type AuthUser } from '../types';
+
+const googleHostedDomain = process.env.GOOGLE_HOSTED_DOMAIN?.trim();
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -12,32 +15,23 @@ export const authOptions: AuthOptions = {
           prompt: 'consent',
           access_type: 'offline',
           response_type: 'code',
-          hd: 'verifactu.business', // Restrict to workspace domain
+          ...(googleHostedDomain ? { hd: googleHostedDomain } : {}),
         },
       },
     }),
   ],
   callbacks: {
     async signIn({ user }) {
-      // Only allow @verifactu.business emails for admin panel
-      const email = user.email || '';
-
-      if (!email.endsWith('@verifactu.business')) {
+      const email = user.email?.trim().toLowerCase() || '';
+      if (!isPreconfiguredAdminEmail(email)) {
         return false;
       }
-
-      // TODO: Check if user exists in database
-      // If not, create with default SUPPORT role
-      // const dbUser = await prisma.user.findUnique({ where: { email } });
 
       return true;
     },
     async jwt({ token, user }) {
       if (user) {
-        // TODO: Fetch user role from database
-        // const dbUser = await prisma.user.findUnique({ where: { email: user.email } });
-
-        token.role = UserRole.ADMIN; // Default for now
+        token.role = UserRole.ADMIN;
         token.id = user.id;
       }
       return token;

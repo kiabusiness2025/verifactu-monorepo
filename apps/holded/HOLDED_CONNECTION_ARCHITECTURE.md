@@ -9,6 +9,12 @@ Persistir la conexion Holded por API key de forma segura, reutilizable y compati
 - chat principal en `isaak.verifactu.business`
 - conector MCP remoto servido desde `app.verifactu.business`
 
+## Documentacion relacionada
+
+- [../../docs/engineering/HOLDED_DIRECT_CONNECTOR_PRISMA_MIGRATION_PLAN_2026.md](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_PRISMA_MIGRATION_PLAN_2026.md)
+- [../../docs/engineering/HOLDED_DIRECT_CONNECTOR_SCHEMA_DESIGN_2026.md](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_SCHEMA_DESIGN_2026.md)
+- [../../docs/engineering/HOLDED_DIRECT_CONNECTOR_ENDPOINT_AND_CONTRACTS_2026.md](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_ENDPOINT_AND_CONTRACTS_2026.md)
+
 ## Frontera de ownership
 
 `apps/holded` se ocupa de:
@@ -54,10 +60,21 @@ Para Holded:
 - `providerAccountId` como fingerprint tecnico
 - `scopesGranted` con modulos o capacidades detectadas
 - `connectionStatus`
+- `originChannel`
+- `ownershipStatus`
+- `managedByThirdParty`
+- `clientAdminGap`
+- `highGovernanceRisk`
+- `underClaimReview`
 - `connectedByUserId`
+- `technicalOperatorUserId`
 - `connectedAt`
 - `lastValidatedAt`
 - `lastSyncAt`
+- `disconnectedAt`
+- `revokedAt`
+- `companyIdentityJson`
+- `governanceUpdatedAt`
 
 ## TenantIntegration
 
@@ -107,13 +124,24 @@ Campos habituales:
    - cifra la API key
    - calcula fingerprint
    - guarda o actualiza `ExternalConnection`
+   - inicializa flags de gobernanza de forma conservadora
    - sincroniza `TenantIntegration`
    - intenta inferir metadatos utiles
    - actualiza `TenantProfile`
-   - registra `UsageEvent`
+   - registra `ExternalConnectionAuditLog`
 6. El onboarding conversacional escribe `IsaakOnboardingProfile`.
 7. El usuario pasa a `isaak.verifactu.business/chat`.
 8. El chat y el MCP consumen la conexion Holded ya persistida a nivel tenant.
+
+## Runtime transitorio actual
+
+Mientras dure el rollout:
+
+- `ExternalConnection` es la fuente tecnica principal
+- `apps/app/lib/integrations/accountingStore.ts` asegura compatibilidad SQL incremental
+- `apps/app/lib/integrations/holdedConnectionResolver.ts` lee columnas opcionales de forma defensiva
+- `TenantIntegration` sigue como compatibilidad para `dashboard`
+- `companyNotificationEmailStore` sigue como fallback hasta activar recipients multiples
 
 ## Cifrado y seguridad
 
@@ -185,3 +213,4 @@ Fuente oficial recomendada para producto y soporte:
 
 - [README.md](./README.md)
 - [HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)
+- [../../docs/engineering/HOLDED_DIRECT_CONNECTOR_PRISMA_MIGRATION_PLAN_2026.md](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_PRISMA_MIGRATION_PLAN_2026.md)

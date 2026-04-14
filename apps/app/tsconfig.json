@@ -21,6 +21,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
+      "@verifactu/integrations": ["../../packages/integrations"],
+      "@verifactu/integrations/*": ["../../packages/integrations/*"],
       "@verifactu/utils": ["../../packages/utils"],
       "@verifactu/utils/*": ["../../packages/utils/*"],
       "@verifactu/ui": ["../../packages/ui"],

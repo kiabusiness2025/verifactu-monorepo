@@ -5,6 +5,7 @@ import {
   getConnectorRequestId,
   logConnectorEvent,
   withConnectorRequestId,
+  buildConnectorEvent,
 } from '@/lib/integrations/connectorObservability';
 import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
 import {
@@ -101,6 +102,18 @@ export async function POST(request: NextRequest) {
           });
 
     if (auth && 'error' in auth) {
+      logConnectorEvent(
+        'api/integrations/accounting/validate',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          entryChannel,
+          tenantId: tenantIdHint,
+          stage,
+          outcome: 'auth_error',
+          error: auth.error,
+        })
+      );
       return withConnectorRequestId(
         NextResponse.json(
           { error: auth.error, requestId, stage, reason: 'auth_error' },
@@ -117,6 +130,18 @@ export async function POST(request: NextRequest) {
         entryChannel,
       });
       if (!access.canConnect) {
+        logConnectorEvent(
+          'api/integrations/accounting/validate',
+          'warn',
+          buildConnectorEvent({
+            requestId,
+            tenantId: auth.tenantId,
+            entryChannel,
+            stage,
+            outcome: 'plan_access_denied',
+            planCode: access.planCode ?? null,
+          })
+        );
         return withConnectorRequestId(
           NextResponse.json(
             {
@@ -151,6 +176,18 @@ export async function POST(request: NextRequest) {
     const acceptedPrivacy = body?.acceptedPrivacy === true;
 
     if (!apiKey) {
+      logConnectorEvent(
+        'api/integrations/accounting/validate',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: auth && !('error' in auth) ? auth.tenantId : tenantIdHint,
+          entryChannel,
+          stage,
+          outcome: 'invalid_input',
+          error: 'apiKey es obligatorio',
+        })
+      );
       return withConnectorRequestId(
         NextResponse.json(
           { error: 'apiKey es obligatorio', requestId, stage, reason: 'invalid_input' },
@@ -161,6 +198,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!acceptedTerms || !acceptedPrivacy) {
+      logConnectorEvent(
+        'api/integrations/accounting/validate',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: auth && !('error' in auth) ? auth.tenantId : tenantIdHint,
+          entryChannel,
+          stage,
+          outcome: 'legal_acceptance_required',
+        })
+      );
       return withConnectorRequestId(
         NextResponse.json(
           {
@@ -188,6 +236,19 @@ export async function POST(request: NextRequest) {
         })
       : null;
 
+    logConnectorEvent(
+      'api/integrations/accounting/validate',
+      probe.ok ? 'info' : 'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth && !('error' in auth) ? auth.tenantId : tenantIdHint,
+        entryChannel,
+        stage,
+        outcome: probe.ok ? 'validated' : 'probe_failed',
+        error: probe.ok ? null : probe.error || 'validation_failed',
+      })
+    );
+
     return withConnectorRequestId(
       NextResponse.json({
         ok: probe.ok,
@@ -206,6 +267,7 @@ export async function POST(request: NextRequest) {
       requestId,
       stage,
       entryChannel,
+      outcome: 'exception',
       detail,
     });
 

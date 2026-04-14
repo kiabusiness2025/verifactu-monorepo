@@ -5,7 +5,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Politica de privacidad | Isaak para Holded',
   description:
-    'Politica de privacidad de holded.verifactu.business y del acceso a Holded mediante API key.',
+    'Politica de privacidad de holded.verifactu.business y del acceso en Verifactu Business mediante API key.',
 };
 
 export default function HoldedPrivacyPage() {

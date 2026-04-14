@@ -1,5 +1,7 @@
 /** @jest-environment node */
 
+export {};
+
 const mockOne = jest.fn();
 const mockQuery = jest.fn();
 

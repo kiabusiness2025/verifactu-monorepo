@@ -10,12 +10,57 @@ jest.mock('@/app/lib/holded-integration', () => ({
   probeHoldedConnection: jest.fn(),
 }));
 
+jest.mock('@/app/lib/prisma', () => ({
+  __esModule: true,
+  prisma: {
+    tenant: {
+      findUnique: jest.fn(),
+    },
+  },
+}));
+
+jest.mock('@/app/lib/holded-governance', () => ({
+  __esModule: true,
+  detectPublicDuplicateConflict: jest.fn(),
+}));
+
+jest.mock('@verifactu/integrations', () => ({
+  __esModule: true,
+  getConnectorRequestId: jest.fn(() => 'req-validate-1'),
+  withConnectorRequestId: jest.fn((response: Response) => response),
+  buildConnectorEvent: jest.fn((input: Record<string, unknown>) => input),
+  logConnectorEvent: jest.fn(),
+  buildDefaultDuplicateConflict: jest.fn(() => ({
+    exists: false,
+    connectionId: null,
+    tenantId: null,
+    providerAccountId: null,
+    userHasAccess: false,
+    canRequestAccess: false,
+    canOpenClaim: false,
+    reason: null,
+  })),
+  buildDetectedCompany: jest.fn((input: Record<string, unknown>) => ({
+    companyName: input.companyName ?? null,
+    legalName: input.legalName ?? null,
+    taxId: input.taxId ?? null,
+    source: input.source ?? 'manual',
+    confidence: 'high',
+    isPartial: false,
+    missingFields: [],
+  })),
+}));
+
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { probeHoldedConnection } from '@/app/lib/holded-integration';
+import { prisma } from '@/app/lib/prisma';
+import { detectPublicDuplicateConflict } from '@/app/lib/holded-governance';
 import { POST } from './route';
 
 const mockGetHoldedSession = getHoldedSession as jest.Mock;
 const mockProbeHoldedConnection = probeHoldedConnection as jest.Mock;
+const mockTenantFindUnique = prisma.tenant.findUnique as jest.Mock;
+const mockDetectPublicDuplicateConflict = detectPublicDuplicateConflict as jest.Mock;
 
 describe('POST /api/holded/validate', () => {
   const originalSessionSecret = process.env.SESSION_SECRET;
@@ -37,6 +82,26 @@ describe('POST /api/holded/validate', () => {
       projectsApi: { ok: false, status: 403 },
       teamApi: { ok: false, status: 403 },
       error: null,
+    });
+    mockTenantFindUnique.mockResolvedValue({
+      name: 'Acme SL',
+      legalName: 'Acme Sociedad Limitada',
+      nif: 'B12345678',
+      profile: {
+        tradeName: 'Acme SL',
+        legalName: 'Acme Sociedad Limitada',
+        taxId: 'B12345678',
+      },
+    });
+    mockDetectPublicDuplicateConflict.mockResolvedValue({
+      exists: false,
+      connectionId: null,
+      tenantId: null,
+      providerAccountId: null,
+      userHasAccess: false,
+      canRequestAccess: false,
+      canOpenClaim: false,
+      reason: null,
     });
   });
 
@@ -62,5 +127,46 @@ describe('POST /api/holded/validate', () => {
     expect(payload.ok).toBe(true);
     expect(typeof payload.validationToken).toBe('string');
     expect(payload.validationToken.length).toBeGreaterThan(20);
+    expect(payload.detectedCompany).toMatchObject({
+      companyName: 'Acme SL',
+      taxId: 'B12345678',
+    });
+    expect(payload.nextStep).toBe('manual_completion_required');
+  });
+
+  it('returns duplicate_conflict when the api key matches another active connection', async () => {
+    mockDetectPublicDuplicateConflict.mockResolvedValueOnce({
+      exists: true,
+      connectionId: 'ext-conflict-1',
+      tenantId: 'tenant_existing',
+      providerAccountId: 'provider-account-1',
+      userHasAccess: false,
+      canRequestAccess: true,
+      canOpenClaim: true,
+      reason: 'Esta empresa ya esta conectada en otra organizacion.',
+    });
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/validate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'chatgpt',
+        }),
+      }) as never
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.nextStep).toBe('duplicate_conflict');
+    expect(payload.duplicateConflict).toMatchObject({
+      exists: true,
+      connectionId: 'ext-conflict-1',
+      canRequestAccess: true,
+      canOpenClaim: true,
+    });
   });
 });

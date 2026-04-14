@@ -349,7 +349,9 @@ function HoldedAuthContent() {
     setNotice('Te hemos enviado un correo para restablecer la contrasena.');
   };
 
-  const currentTitle = isRegisterMode ? 'Crea tu acceso a Holded' : 'Inicia sesion en tu cuenta';
+  const currentTitle = isRegisterMode
+    ? 'Crea tu acceso en Verifactu Business'
+    : 'Inicia sesion en Verifactu Business';
   const currentSubtitle = isRegisterMode
     ? 'Crea tu acceso y en el siguiente paso terminaras la conexion con Holded.'
     : 'Vuelve a entrar para continuar con la conexion de Holded.';
@@ -396,7 +398,7 @@ function HoldedAuthContent() {
             <h1 className="mt-6 max-w-lg text-3xl font-bold tracking-tight text-slate-950 sm:mt-8 sm:text-5xl">
               {isRegisterMode
                 ? 'Crea tu acceso y conecta Holded sin friccion.'
-                : 'Bienvenido de nuevo.'}
+                : 'Inicia sesion y continua en Verifactu Business.'}
             </h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-9">
               {isRegisterMode
@@ -437,7 +439,7 @@ function HoldedAuthContent() {
             <div className="px-6 pb-6 pt-7 sm:px-8">
               <div className="text-center">
                 <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                  {isRegisterMode ? 'Nuevo acceso' : 'Acceso a Holded'}
+                  Verifactu Business
                 </div>
                 <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
                   {currentTitle}
@@ -730,7 +732,7 @@ function HoldedAuthContent() {
                   href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}&mode=register`}
                   className="font-semibold text-slate-900 underline underline-offset-4"
                 >
-                  Nuevo en Holded? Registrate
+                  No tienes cuenta? Registrate
                 </Link>
               )}
               <div className="mt-3 text-xs leading-5 text-slate-500">

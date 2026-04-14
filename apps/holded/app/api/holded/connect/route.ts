@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  buildConnectorEvent,
+  buildConnectionStatusDto,
+  buildDefaultAvailableActions,
+  buildDetectedCompany,
+  buildGovernanceFlags,
+  getConnectorRequestId,
+  logConnectorEvent,
+  recordUsageEvent,
+  withConnectorRequestId,
+} from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
-import { recordUsageEvent } from '@verifactu/integrations';
 import { verifyHoldedValidationToken } from '@/app/lib/holded-validation-token';
 import {
   disconnectHoldedConnection,
+  getHoldedConnection,
   probeHoldedConnection,
   saveHoldedConnection,
 } from '@/app/lib/holded-integration';
@@ -246,13 +257,32 @@ function readProbeSupportedModules(probe: Awaited<ReturnType<typeof probeHoldedC
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = getConnectorRequestId(request);
   try {
     const session = await getHoldedSession();
 
     if (!session?.tenantId) {
-      return NextResponse.json(
-        { error: 'Necesitas iniciar sesion para conectar Holded.' },
-        { status: 401 }
+      logConnectorEvent(
+        'api/holded/connect',
+        'warn',
+        buildConnectorEvent({ requestId, stage: 'auth', outcome: 'auth_required' })
+      );
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            ok: false,
+            connection: null,
+            detectedCompany: null,
+            governanceFlags: null,
+            availableActions: null,
+            warnings: [],
+            nextStep: null,
+            error: 'Necesitas iniciar sesion para conectar Holded.',
+            reason: 'auth_required',
+          },
+          { status: 401 }
+        ),
+        requestId
       );
     }
 
@@ -271,24 +301,127 @@ export async function POST(request: NextRequest) {
     const validationToken = typeof body?.validationToken === 'string' ? body.validationToken : '';
 
     if (!apiKey) {
-      return NextResponse.json({ error: 'Pega una API key valida de Holded.' }, { status: 400 });
+      logConnectorEvent(
+        'api/holded/connect',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: session.tenantId,
+          entryChannel: channel,
+          stage: 'body',
+          outcome: 'invalid_api_key',
+        })
+      );
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            ok: false,
+            connection: null,
+            detectedCompany: null,
+            governanceFlags: null,
+            availableActions: null,
+            warnings: [],
+            nextStep: null,
+            error: 'Pega una API key valida de Holded.',
+            reason: 'invalid_api_key',
+          },
+          { status: 400 }
+        ),
+        requestId
+      );
     }
 
     if (!hasBasicApiKeyShape(apiKey)) {
-      return NextResponse.json(
-        { error: 'La API key parece incompleta. Revísala y vuelve a pegarla.' },
-        { status: 400 }
+      logConnectorEvent(
+        'api/holded/connect',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: session.tenantId,
+          entryChannel: channel,
+          stage: 'body',
+          outcome: 'invalid_api_key',
+        })
+      );
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            ok: false,
+            connection: null,
+            detectedCompany: null,
+            governanceFlags: null,
+            availableActions: null,
+            warnings: [],
+            nextStep: null,
+            error: 'La API key parece incompleta. Revisala y vuelve a pegarla.',
+            reason: 'invalid_api_key',
+          },
+          { status: 400 }
+        ),
+        requestId
       );
     }
 
     if (identityError) {
-      return NextResponse.json({ error: identityError }, { status: 400 });
+      logConnectorEvent(
+        'api/holded/connect',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: session.tenantId,
+          entryChannel: channel,
+          stage: 'body',
+          outcome: 'manual_company_data_required',
+          error: identityError,
+        })
+      );
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            ok: false,
+            connection: null,
+            detectedCompany: null,
+            governanceFlags: null,
+            availableActions: null,
+            warnings: [],
+            nextStep: null,
+            error: identityError,
+            reason: 'manual_company_data_required',
+          },
+          { status: 400 }
+        ),
+        requestId
+      );
     }
 
     if (requestedNotificationEmail && !isValidEmail(requestedNotificationEmail)) {
-      return NextResponse.json(
-        { error: 'El correo de aviso no parece valido. Revísalo y vuelve a intentarlo.' },
-        { status: 400 }
+      logConnectorEvent(
+        'api/holded/connect',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: session.tenantId,
+          entryChannel: channel,
+          stage: 'body',
+          outcome: 'invalid_notification_email',
+        })
+      );
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            ok: false,
+            connection: null,
+            detectedCompany: null,
+            governanceFlags: null,
+            availableActions: null,
+            warnings: [],
+            nextStep: null,
+            error: 'El correo de aviso no parece valido. Revisalo y vuelve a intentarlo.',
+            reason: 'invalid_notification_email',
+          },
+          { status: 400 }
+        ),
+        requestId
       );
     }
 
@@ -330,13 +463,40 @@ export async function POST(request: NextRequest) {
         }),
       ]);
 
-      return NextResponse.json(
-        {
-          ok: false,
-          error: probe.error || 'No hemos podido validar la API key.',
-          probe,
-        },
-        { status: 400 }
+      logConnectorEvent(
+        'api/holded/connect',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: session.tenantId,
+          entryChannel: channel,
+          stage: 'probe',
+          outcome: 'probe_failed',
+          error: probe.error || 'connect_failed',
+        })
+      );
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            ok: false,
+            probe,
+            connection: null,
+            detectedCompany: buildDetectedCompany({
+              companyName: identity.companyName,
+              legalName: identity.legalName,
+              taxId: identity.taxId,
+              source: 'manual',
+            }),
+            governanceFlags: null,
+            availableActions: null,
+            warnings: [],
+            nextStep: null,
+            error: probe.error || 'No hemos podido validar la API key.',
+            reason: 'connect_failed',
+          },
+          { status: 400 }
+        ),
+        requestId
       );
     }
 
@@ -360,38 +520,45 @@ export async function POST(request: NextRequest) {
       requestedEmail: requestedNotificationEmail,
     });
 
-    const [usageEventResult, communicationResult] = await Promise.allSettled([
-      recordUsageEvent({
-        prisma,
-        tenantId: session.tenantId,
-        userId: session.userId,
-        type: 'HOLDED_CONNECTED',
-        source: 'holded_connect',
-        path: '/api/holded/connect',
-        metadataJson: {
-          provider: 'holded',
-          channel,
-          status: saved?.connected ? 'connected' : 'pending',
-          supportedModules: readProbeSupportedModules(probe),
-        },
-      }),
-      notificationEmail
-        ? sendHoldedConnectedCommunication({
-            name:
-              identity.contactFirstName ||
-              identity.contactFullName ||
-              session.name ||
-              notificationEmail.split('@')[0] ||
-              'Hola',
-            email: notificationEmail,
-            companyName: identity.companyName || saved?.tenantName || 'tu empresa',
+    const [usageEventResult, communicationResult, runtimeConnectionResult] =
+      await Promise.allSettled([
+        recordUsageEvent({
+          prisma,
+          tenantId: session.tenantId,
+          userId: session.userId,
+          type: 'HOLDED_CONNECTED',
+          source: 'holded_connect',
+          path: '/api/holded/connect',
+          metadataJson: {
+            provider: 'holded',
+            channel,
+            status: saved?.connected ? 'connected' : 'pending',
             supportedModules: readProbeSupportedModules(probe),
-          })
-        : Promise.resolve(null),
-    ]);
+          },
+        }),
+        notificationEmail
+          ? sendHoldedConnectedCommunication({
+              name:
+                identity.contactFirstName ||
+                identity.contactFullName ||
+                session.name ||
+                notificationEmail.split('@')[0] ||
+                'Hola',
+              email: notificationEmail,
+              companyName: identity.companyName || saved?.tenantName || 'tu empresa',
+              supportedModules: readProbeSupportedModules(probe),
+            })
+          : Promise.resolve(null),
+        getHoldedConnection(session.tenantId, channel),
+      ]);
 
     if (usageEventResult.status === 'rejected') {
-      console.error('[holded connect] usage event failed', {
+      logConnectorEvent('api/holded/connect', 'error', {
+        requestId,
+        tenantId: session.tenantId,
+        entryChannel: channel,
+        stage: 'persist',
+        outcome: 'usage_event_failed',
         error:
           usageEventResult.reason instanceof Error
             ? usageEventResult.reason.message
@@ -400,7 +567,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (communicationResult.status === 'rejected') {
-      console.error('[holded connect] communication email failed', {
+      logConnectorEvent('api/holded/connect', 'error', {
+        requestId,
+        tenantId: session.tenantId,
+        entryChannel: channel,
+        stage: 'notify',
+        outcome: 'communication_email_failed',
         error:
           communicationResult.reason instanceof Error
             ? communicationResult.reason.message
@@ -410,34 +582,108 @@ export async function POST(request: NextRequest) {
     }
 
     if (!notificationEmail) {
-      console.warn('[holded connect] notification email unavailable', {
+      logConnectorEvent('api/holded/connect', 'warn', {
+        requestId,
         tenantId: session.tenantId,
         userId: session.userId,
+        entryChannel: channel,
+        stage: 'notify',
+        outcome: 'notification_email_unavailable',
       });
     }
 
-    return NextResponse.json({
-      ok: true,
-      probe,
-      connection: {
-        ...saved,
-        tenantName: identity.companyName || saved?.tenantName || null,
-        legalName: identity.legalName || saved?.legalName || null,
-        taxId: identity.taxId || saved?.taxId || null,
-      },
-      notificationEmail,
+    const runtimeConnection =
+      runtimeConnectionResult.status === 'fulfilled' ? runtimeConnectionResult.value : null;
+    const connection = buildConnectionStatusDto({
+      connectionId: `${session.tenantId}:${channel}`,
+      tenantId: session.tenantId,
+      status: runtimeConnection?.status ?? (saved?.connected ? 'connected' : 'disconnected'),
+      keyMasked: saved?.keyMasked ?? runtimeConnection?.keyMasked ?? null,
+      providerAccountId: saved?.providerAccountId ?? runtimeConnection?.providerAccountId ?? null,
+      connectedAt: saved?.connectedAt ?? runtimeConnection?.connectedAt ?? null,
+      lastValidatedAt: runtimeConnection?.lastValidatedAt ?? saved?.connectedAt ?? null,
+      lastSyncAt: runtimeConnection?.lastSyncAt ?? saved?.connectedAt ?? null,
+      lastError: null,
+      originChannel: runtimeConnection?.originChannel ?? channel,
+      supportedModules: runtimeConnection?.supportedModules ?? saved?.supportedModules ?? [],
     });
+    const governanceFlags = buildGovernanceFlags(runtimeConnection);
+    const availableActions = buildDefaultAvailableActions({
+      status: connection.status,
+      underClaimReview: governanceFlags.underClaimReview,
+      clientAdminGap: governanceFlags.clientAdminGap,
+      highGovernanceRisk: governanceFlags.highGovernanceRisk,
+    });
+    const detectedCompany = buildDetectedCompany({
+      companyName: identity.companyName || saved?.tenantName,
+      legalName: identity.legalName || saved?.legalName,
+      taxId: identity.taxId || saved?.taxId,
+      source: runtimeConnection ? 'holded' : 'manual',
+    });
+    const warnings = governanceFlags.clientAdminGap
+      ? ['Falta responsable del cliente para cerrar la gobernanza inicial.']
+      : [];
+
+    logConnectorEvent(
+      'api/holded/connect',
+      'info',
+      buildConnectorEvent({
+        requestId,
+        tenantId: session.tenantId,
+        entryChannel: channel,
+        stage: 'persist',
+        outcome: 'connected',
+        status: connection.status,
+      })
+    );
+
+    return withConnectorRequestId(
+      NextResponse.json({
+        ok: true,
+        probe,
+        connection,
+        detectedCompany,
+        governanceFlags,
+        availableActions,
+        warnings,
+        nextStep: warnings.length > 0 ? 'needs_additional_admin' : 'connected',
+        error: null,
+        notificationEmail,
+        requestId,
+        legacyConnection: {
+          ...saved,
+          tenantName: identity.companyName || saved?.tenantName || null,
+          legalName: identity.legalName || saved?.legalName || null,
+          taxId: identity.taxId || saved?.taxId || null,
+        },
+      }),
+      requestId
+    );
   } catch (error) {
-    console.error('[holded connect] failed', {
+    logConnectorEvent('api/holded/connect', 'error', {
+      requestId,
+      stage: 'exception',
+      outcome: 'connect_failed',
       error: error instanceof Error ? error.message : String(error),
     });
-    return NextResponse.json(
-      {
-        ok: false,
-        error:
-          'La API key es valida, pero no hemos podido terminar de guardarla. Intenta de nuevo en unos segundos o escribe a soporte.',
-      },
-      { status: 500 }
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          ok: false,
+          connection: null,
+          detectedCompany: null,
+          governanceFlags: null,
+          availableActions: null,
+          warnings: [],
+          nextStep: null,
+          error:
+            'La API key es valida, pero no hemos podido terminar de guardarla. Intenta de nuevo en unos segundos o escribe a soporte.',
+          reason: 'connect_failed',
+          requestId,
+        },
+        { status: 500 }
+      ),
+      requestId
     );
   }
 }

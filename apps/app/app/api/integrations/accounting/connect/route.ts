@@ -17,6 +17,7 @@ import {
   getConnectorRequestId,
   logConnectorEvent,
   withConnectorRequestId,
+  buildConnectorEvent,
 } from '@/lib/integrations/connectorObservability';
 import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
 import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
@@ -25,10 +26,20 @@ import {
   isVerifiedHoldedOnboardingIdentity,
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
+import {
+  assertHoldedConnectorAdminSessionAccess,
+  getHoldedConnectorAdminNotice,
+} from '@/lib/holdedConnectorAdmin';
+import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { verifyHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
 import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  buildConnectionStatusDto,
+  buildDefaultAvailableActions,
+  buildGovernanceFlags,
+} from '@verifactu/integrations';
 
 export const runtime = 'nodejs';
 
@@ -91,11 +102,28 @@ export async function POST(request: NextRequest) {
 
   try {
     if (onboardingSession && !isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
+      logConnectorEvent(
+        'api/integrations/accounting/connect',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: tenantIdHint,
+          entryChannel,
+          stage,
+          outcome: 'identity_verification_required',
+        })
+      );
       return withConnectorRequestId(
         NextResponse.json(
           {
-            error: 'Debes verificar tu identidad antes de conectar Holded.',
+            ok: false,
+            connection: null,
+            governanceFlags: null,
+            availableActions: null,
+            probe: null,
+            warnings: [],
             requestId,
+            error: 'Debes verificar tu identidad antes de conectar Holded.',
             stage,
             reason: 'identity_verification_required',
           },
@@ -114,13 +142,72 @@ export async function POST(request: NextRequest) {
       onboardingToken,
     });
     if ('error' in auth) {
+      logConnectorEvent(
+        'api/integrations/accounting/connect',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: tenantIdHint,
+          entryChannel,
+          stage,
+          outcome: 'auth_error',
+          error: auth.error,
+        })
+      );
       return withConnectorRequestId(
         NextResponse.json(
-          { error: auth.error, requestId, stage, reason: 'auth_error' },
+          {
+            ok: false,
+            connection: null,
+            governanceFlags: null,
+            availableActions: null,
+            probe: null,
+            warnings: [],
+            error: auth.error,
+            requestId,
+            stage,
+            reason: 'auth_error',
+          },
           { status: auth.status }
         ),
         requestId
       );
+    }
+
+    try {
+      assertHoldedConnectorAdminSessionAccess(auth.session, { entryChannel });
+    } catch {
+      if (entryChannel !== 'chatgpt') {
+        logConnectorEvent(
+          'api/integrations/accounting/connect',
+          'warn',
+          buildConnectorEvent({
+            requestId,
+            tenantId: auth.tenantId,
+            entryChannel,
+            stage,
+            outcome: 'admin_access_required',
+          })
+        );
+        return withConnectorRequestId(
+          NextResponse.json(
+            {
+              ok: false,
+              connection: null,
+              governanceFlags: null,
+              availableActions: null,
+              probe: null,
+              warnings: [],
+              error: getHoldedConnectorAdminNotice(),
+              requestId,
+              stage,
+              reason: 'admin_access_required',
+            },
+            { status: 403 }
+          ),
+          requestId
+        );
+      }
     }
 
     tenantId = auth.tenantId;
@@ -130,9 +217,27 @@ export async function POST(request: NextRequest) {
     stage = 'access';
     const access = await getAccountingIntegrationAccess({ tenantId: auth.tenantId, entryChannel });
     if (!access.canConnect) {
+      logConnectorEvent(
+        'api/integrations/accounting/connect',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: auth.tenantId,
+          entryChannel,
+          stage,
+          outcome: 'plan_access_denied',
+          planCode: access.planCode ?? null,
+        })
+      );
       return withConnectorRequestId(
         NextResponse.json(
           {
+            ok: false,
+            connection: null,
+            governanceFlags: null,
+            availableActions: null,
+            probe: null,
+            warnings: [],
             error:
               'La integracion con tu programa de contabilidad via API es opcional y esta disponible en planes Empresa y PRO.',
             plan: access.planCode ?? 'unknown',
@@ -154,20 +259,61 @@ export async function POST(request: NextRequest) {
     const validationToken = typeof body?.validationToken === 'string' ? body.validationToken : '';
     const acceptedTerms = body?.acceptedTerms === true;
     const acceptedPrivacy = body?.acceptedPrivacy === true;
+    const mode = body?.mode === 'reconnect' ? 'reconnect' : 'initial';
 
     if (!apiKey) {
+      logConnectorEvent(
+        'api/integrations/accounting/connect',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: auth.tenantId,
+          entryChannel,
+          stage,
+          outcome: 'invalid_input',
+          error: 'apiKey es obligatorio',
+        })
+      );
       return withConnectorRequestId(
         NextResponse.json(
-          { error: 'apiKey es obligatorio', requestId, stage, reason: 'invalid_input' },
+          {
+            ok: false,
+            connection: null,
+            governanceFlags: null,
+            availableActions: null,
+            probe: null,
+            warnings: [],
+            error: 'apiKey es obligatorio',
+            requestId,
+            stage,
+            reason: 'invalid_input',
+          },
           { status: 400 }
         ),
         requestId
       );
     }
     if (!acceptedTerms || !acceptedPrivacy) {
+      logConnectorEvent(
+        'api/integrations/accounting/connect',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          tenantId: auth.tenantId,
+          entryChannel,
+          stage,
+          outcome: 'legal_acceptance_required',
+        })
+      );
       return withConnectorRequestId(
         NextResponse.json(
           {
+            ok: false,
+            connection: null,
+            governanceFlags: null,
+            availableActions: null,
+            probe: null,
+            warnings: [],
             error:
               'Debes aceptar los Terminos y la Politica de Privacidad de verifactu.business para continuar.',
             requestId,
@@ -277,6 +423,7 @@ export async function POST(request: NextRequest) {
           stage: 'persist',
           tenantId: auth.tenantId,
           entryChannel,
+          outcome: 'notification_failed',
           message:
             notificationError instanceof Error
               ? notificationError.message
@@ -286,16 +433,65 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const resolved = await resolveSharedHoldedConnectionStatusForTenant(
+      auth.tenantId,
+      entryChannel
+    );
+    const connection = buildConnectionStatusDto({
+      connectionId: resolved?.id ?? `${auth.tenantId}:${entryChannel}`,
+      tenantId: auth.tenantId,
+      status: resolved?.status ?? saved?.status ?? status,
+      keyMasked: maskSecret(apiKey),
+      providerAccountId: resolved?.providerAccountId ?? null,
+      connectedAt: resolved?.connectedAt ?? null,
+      lastValidatedAt: resolved?.lastValidatedAt ?? null,
+      lastSyncAt: saved?.last_sync_at ?? resolved?.lastSyncAt ?? null,
+      lastError: saved?.last_error ?? resolved?.lastError ?? normalizedError,
+      originChannel: resolved?.originChannel ?? entryChannel,
+      supportedModules: [],
+    });
+    const governanceFlags = buildGovernanceFlags(resolved);
+    const availableActions = buildDefaultAvailableActions({
+      status: connection.status,
+      underClaimReview: governanceFlags.underClaimReview,
+      clientAdminGap: governanceFlags.clientAdminGap,
+      highGovernanceRisk: governanceFlags.highGovernanceRisk,
+    });
+    const warnings = governanceFlags.clientAdminGap
+      ? ['Falta responsable del cliente para cerrar la gobernanza inicial.']
+      : [];
+
+    logConnectorEvent(
+      'api/integrations/accounting/connect',
+      probe.ok ? 'info' : 'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage,
+        outcome: probe.ok ? 'connected' : 'probe_failed',
+        status: connection.status,
+        mode,
+        error: probe.ok ? null : normalizedError,
+      })
+    );
+
     return withConnectorRequestId(
       NextResponse.json({
         ok: probe.ok,
         provider: 'holded',
-        status: saved?.status ?? status,
-        lastSyncAt: saved?.last_sync_at ?? null,
-        lastError: saved?.last_error ?? null,
-        keyMasked: maskSecret(apiKey),
+        connection,
+        governanceFlags,
+        availableActions,
         probe,
+        warnings,
         requestId,
+        error: probe.ok ? null : normalizedError,
+        status: connection.status,
+        lastSyncAt: connection.lastSyncAt,
+        lastError: connection.lastError,
+        keyMasked: connection.keyMasked,
+        mode,
       }),
       requestId
     );
@@ -314,12 +510,19 @@ export async function POST(request: NextRequest) {
       resolvedUserId,
       sessionUid,
       detail,
+      outcome: 'exception',
       reason: 'connect_failed',
     });
 
     return withConnectorRequestId(
       NextResponse.json(
         {
+          ok: false,
+          connection: null,
+          governanceFlags: null,
+          availableActions: null,
+          probe: null,
+          warnings: [],
           error: genericError,
           detail,
           stage,

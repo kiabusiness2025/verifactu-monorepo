@@ -137,7 +137,7 @@ function getErrorMessage(error: AuthError): AuthErrorMessage {
     },
     'auth/popup-closed-by-user': {
       message: 'Popup closed',
-      userMessage: 'Has cerrado la ventana antes de terminar el acceso.',
+      userMessage: 'No hemos podido completar el acceso con Google. Intentalo de nuevo.',
     },
     'auth/account-exists-with-different-credential': {
       message: 'Account exists with different credential',

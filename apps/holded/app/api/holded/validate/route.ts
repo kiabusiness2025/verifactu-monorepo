@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  buildConnectorEvent,
+  buildDefaultDuplicateConflict,
+  buildDetectedCompany,
+  getConnectorRequestId,
+  logConnectorEvent,
+  withConnectorRequestId,
+} from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { probeHoldedConnection } from '@/app/lib/holded-integration';
 import { mintHoldedValidationToken } from '@/app/lib/holded-validation-token';
+import { prisma } from '@/app/lib/prisma';
+import { detectPublicDuplicateConflict } from '@/app/lib/holded-governance';
 
 export const runtime = 'nodejs';
 
@@ -18,12 +28,30 @@ function hasBasicApiKeyShape(value: string) {
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = getConnectorRequestId(request);
   const session = await getHoldedSession();
 
   if (!session?.tenantId) {
-    return NextResponse.json(
-      { error: 'Necesitas iniciar sesion para validar la API key.' },
-      { status: 401 }
+    logConnectorEvent(
+      'api/holded/validate',
+      'warn',
+      buildConnectorEvent({ requestId, stage: 'auth', outcome: 'auth_required' })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          ok: false,
+          probe: null,
+          validationToken: null,
+          detectedCompany: null,
+          duplicateConflict: buildDefaultDuplicateConflict(),
+          nextStep: null,
+          error: 'Necesitas iniciar sesion para validar la API key.',
+          reason: 'auth_required',
+        },
+        { status: 401 }
+      ),
+      requestId
     );
   }
 
@@ -32,17 +60,96 @@ export async function POST(request: NextRequest) {
   const channel = normalizeChannel(body?.channel);
 
   if (!apiKey) {
-    return NextResponse.json({ error: 'Pega una API key valida de Holded.' }, { status: 400 });
-  }
-
-  if (!hasBasicApiKeyShape(apiKey)) {
-    return NextResponse.json(
-      { error: 'La API key parece incompleta. Revísala y vuelve a pegarla.' },
-      { status: 400 }
+    logConnectorEvent(
+      'api/holded/validate',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: session.tenantId,
+        entryChannel: channel,
+        stage: 'body',
+        outcome: 'invalid_api_key',
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          ok: false,
+          probe: null,
+          validationToken: null,
+          detectedCompany: null,
+          duplicateConflict: buildDefaultDuplicateConflict(),
+          nextStep: null,
+          error: 'Pega una API key valida de Holded.',
+          reason: 'invalid_api_key',
+        },
+        { status: 400 }
+      ),
+      requestId
     );
   }
 
-  const probe = await probeHoldedConnection(apiKey);
+  if (!hasBasicApiKeyShape(apiKey)) {
+    logConnectorEvent(
+      'api/holded/validate',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: session.tenantId,
+        entryChannel: channel,
+        stage: 'body',
+        outcome: 'invalid_api_key',
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          ok: false,
+          probe: null,
+          validationToken: null,
+          detectedCompany: null,
+          duplicateConflict: buildDefaultDuplicateConflict(),
+          nextStep: null,
+          error: 'La API key parece incompleta. Revisala y vuelve a pegarla.',
+          reason: 'invalid_api_key',
+        },
+        { status: 400 }
+      ),
+      requestId
+    );
+  }
+
+  const [probe, tenant] = await Promise.all([
+    probeHoldedConnection(apiKey),
+    prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: {
+        name: true,
+        legalName: true,
+        nif: true,
+        profile: {
+          select: {
+            tradeName: true,
+            legalName: true,
+            taxId: true,
+          },
+        },
+      },
+    }),
+  ]);
+  const detectedCompany = buildDetectedCompany({
+    companyName: tenant?.profile?.tradeName || tenant?.name || null,
+    legalName: tenant?.profile?.legalName || tenant?.legalName || null,
+    taxId: tenant?.profile?.taxId || tenant?.nif || null,
+    source: 'manual',
+  });
+  const duplicateConflict = probe.ok
+    ? await detectPublicDuplicateConflict({
+        tenantId: session.tenantId,
+        apiKey,
+        channel,
+      })
+    : buildDefaultDuplicateConflict();
   const validationToken = probe.ok
     ? await mintHoldedValidationToken({
         tenantId: session.tenantId,
@@ -52,10 +159,37 @@ export async function POST(request: NextRequest) {
       })
     : null;
 
-  return NextResponse.json({
-    ok: probe.ok,
-    probe,
-    error: probe.ok ? null : probe.error,
-    validationToken,
-  });
+  logConnectorEvent(
+    'api/holded/validate',
+    probe.ok ? 'info' : 'warn',
+    buildConnectorEvent({
+      requestId,
+      tenantId: session.tenantId,
+      entryChannel: channel,
+      stage: 'probe',
+      outcome: probe.ok ? 'validated' : 'probe_failed',
+      error: probe.ok ? null : probe.error || 'validation_failed',
+      duplicateConflict: duplicateConflict.exists,
+    })
+  );
+
+  return withConnectorRequestId(
+    NextResponse.json({
+      ok: probe.ok,
+      probe,
+      validationToken,
+      detectedCompany,
+      duplicateConflict,
+      nextStep: probe.ok
+        ? duplicateConflict.exists
+          ? 'duplicate_conflict'
+          : 'manual_completion_required'
+        : null,
+      error: probe.ok ? null : probe.error,
+      reason: probe.ok ? null : 'validation_failed',
+      suggestedAction: probe.ok ? null : 'Revisar la API key y volver a validar',
+      requestId,
+    }),
+    requestId
+  );
 }

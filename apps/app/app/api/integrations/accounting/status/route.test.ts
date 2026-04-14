@@ -18,6 +18,107 @@ jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
   ),
 }));
 
+jest.mock('@/lib/integrations/holdedGovernanceService', () => ({
+  buildHoldedSummaries: jest.fn(async () => ({
+    membershipsSummary: { total: 1 },
+    recipientsSummary: { total: 1 },
+    claimsSummary: { open: 0 },
+    governanceFlags: null,
+    availableActions: null,
+  })),
+}));
+
+jest.mock(
+  '@verifactu/integrations',
+  () => ({
+    buildConnectionStatusDto: jest.fn((input: Record<string, unknown>) => ({
+      connectionId: input.connectionId ?? 'holded-connection',
+      tenantId: input.tenantId,
+      provider: 'holded',
+      status: input.status === 'error' ? 'failed' : (input.status ?? 'disconnected'),
+      keyMasked: input.keyMasked ?? null,
+      providerAccountId: input.providerAccountId ?? null,
+      connectedAt: input.connectedAt ?? null,
+      lastValidatedAt: input.lastValidatedAt ?? null,
+      lastSyncAt: input.lastSyncAt ?? null,
+      lastError: input.lastError ?? null,
+      originChannel: input.originChannel ?? null,
+      supportedModules: input.supportedModules ?? [],
+    })),
+    buildDefaultAvailableActions: jest.fn((input?: Record<string, unknown>) => {
+      const status = typeof input?.status === 'string' ? input.status : 'disconnected';
+      const underClaimReview = input?.underClaimReview === true;
+      const clientAdminGap = input?.clientAdminGap === true;
+      const highGovernanceRisk = input?.highGovernanceRisk === true;
+      const hasActiveConnection = status !== 'disconnected';
+      return {
+        reconnect: {
+          blocked: false,
+          reason: 'ok',
+          state: status,
+          suggestedAction: null,
+          suggestedActionLabel: null,
+        },
+        rotateApi: {
+          blocked: !hasActiveConnection,
+          reason: hasActiveConnection ? 'ok' : 'blocked',
+          state: status,
+          suggestedAction: null,
+          suggestedActionLabel: null,
+        },
+        disconnect: {
+          blocked: !hasActiveConnection || underClaimReview || highGovernanceRisk,
+          reason: highGovernanceRisk ? 'guarded' : 'ok',
+          state: underClaimReview
+            ? 'under_claim_review'
+            : highGovernanceRisk
+              ? 'high_governance_risk'
+              : status,
+          suggestedAction: highGovernanceRisk
+            ? clientAdminGap
+              ? 'manageMembers'
+              : 'manageRecipients'
+            : null,
+          suggestedActionLabel: highGovernanceRisk
+            ? clientAdminGap
+              ? 'Revisar usuarios'
+              : 'Revisar destinatarios'
+            : null,
+        },
+        manageMembers: {
+          blocked: false,
+          reason: 'ok',
+          state: clientAdminGap ? 'client_admin_gap' : status,
+          suggestedAction: null,
+          suggestedActionLabel: null,
+        },
+        manageRecipients: {
+          blocked: false,
+          reason: 'ok',
+          state: highGovernanceRisk ? 'high_governance_risk' : status,
+          suggestedAction: null,
+          suggestedActionLabel: null,
+        },
+        openClaim: {
+          blocked: underClaimReview,
+          reason: underClaimReview ? 'blocked' : 'ok',
+          state: underClaimReview ? 'under_claim_review' : status,
+          suggestedAction: null,
+          suggestedActionLabel: null,
+        },
+      };
+    }),
+    buildGovernanceFlags: jest.fn((input?: Record<string, unknown> | null) => ({
+      ownershipStatus: input?.ownershipStatus ?? null,
+      managedByThirdParty: input?.managedByThirdParty === true,
+      clientAdminGap: input?.clientAdminGap === true,
+      highGovernanceRisk: input?.highGovernanceRisk === true,
+      underClaimReview: input?.underClaimReview === true,
+    })),
+  }),
+  { virtual: true }
+);
+
 import { NextRequest } from 'next/server';
 import { GET } from './route';
 import { requireTenantContext } from '@/lib/api/tenantAuth';
@@ -29,7 +130,7 @@ describe('GET /api/integrations/accounting/status', () => {
   beforeEach(() => {
     (requireTenantContext as jest.Mock).mockResolvedValue({
       tenantId: 'tenant-1',
-      session: { uid: 'session-1', email: 'demo@example.com', name: 'Demo User' },
+      session: { uid: 'session-1', email: 'soporte@verifactu.business', name: 'Demo User' },
     });
     (getAccountingIntegrationAccess as jest.Mock).mockResolvedValue({
       canConnect: true,
@@ -77,6 +178,10 @@ describe('GET /api/integrations/accounting/status', () => {
     );
     expect(payload).toMatchObject({
       provider: 'holded',
+      connection: {
+        provider: 'holded',
+        status: 'connected',
+      },
       status: 'connected',
       connected: true,
       lastSyncAt: '2026-04-04T12:00:00.000Z',
@@ -111,7 +216,11 @@ describe('GET /api/integrations/accounting/status', () => {
 
     expect(response.status).toBe(200);
     expect(payload).toMatchObject({
-      status: 'error',
+      connection: {
+        provider: 'holded',
+        status: 'failed',
+      },
+      status: 'failed',
       connected: false,
       lastError: 'holded validation failed',
       degraded: false,
@@ -157,9 +266,54 @@ describe('GET /api/integrations/accounting/status', () => {
     );
     expect(payload).toMatchObject({
       provider: 'holded',
+      connection: {
+        provider: 'holded',
+        status: 'connected',
+      },
       status: 'connected',
       connected: true,
       degraded: false,
+    });
+  });
+
+  it('blocks disconnect in the payload when governance risk is high', async () => {
+    (resolveSharedHoldedConnectionStatusForTenant as jest.Mock).mockResolvedValue({
+      id: 'ext-risk-1',
+      tenantId: 'tenant-1',
+      provider: 'holded',
+      providerAccountId: 'holded-company-1',
+      credentialType: 'api_key',
+      status: 'connected',
+      channel: 'dashboard',
+      originChannel: 'dashboard',
+      ownershipStatus: 'third_party_managed',
+      managedByThirdParty: true,
+      clientAdminGap: true,
+      highGovernanceRisk: true,
+      underClaimReview: false,
+      lastSyncAt: '2026-04-07T14:30:00.000Z',
+      lastError: null,
+      source: 'external_connection',
+    });
+
+    const response = await GET(
+      new NextRequest('https://app.verifactu.business/api/integrations/accounting/status', {
+        headers: { 'x-isaak-entry-channel': 'dashboard' },
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.governanceFlags).toMatchObject({
+      managedByThirdParty: true,
+      clientAdminGap: true,
+      highGovernanceRisk: true,
+    });
+    expect(payload.availableActions.disconnect).toMatchObject({
+      blocked: true,
+      state: 'high_governance_risk',
+      suggestedAction: 'manageMembers',
+      suggestedActionLabel: 'Revisar usuarios',
     });
   });
 

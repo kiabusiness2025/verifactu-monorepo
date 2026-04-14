@@ -136,6 +136,9 @@ Documentacion tecnica:
 
 - [Arquitectura de conexion Holded](./HOLDED_CONNECTION_ARCHITECTURE.md)
 - [Configuracion del conector ChatGPT / MCP](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)
+- [Evidencias de smoke post-release](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_POST_RELEASE_SMOKE_EVIDENCE_2026.md)
+- [Handoff y backlog posterior](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_HANDOFF_AND_BACKLOG_2026.md)
+- [Plan de evolucion posterior](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_EVOLUTION_PLAN_2026.md)
 
 ## Lectura recomendada segun necesidad
 
@@ -187,6 +190,10 @@ Documentacion tecnica:
 - `HOLDED_ADMIN_NOTIFICATION_EMAILS`
 - `HOLDED_ADMIN_EMAILS`
 - `HOLDED_LEAD_EMAIL`
+
+Archivo de referencia:
+
+- [apps/holded/.env.example](./.env.example)
 
 ### Bloque exacto para Vercel o local
 

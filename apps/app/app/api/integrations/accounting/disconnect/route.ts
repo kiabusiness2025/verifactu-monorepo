@@ -7,9 +7,25 @@ import {
 import { disconnectAccountingIntegration } from '@/lib/integrations/accountingStore';
 import { clearChatGptChannelIdentity } from '@/lib/integrations/channelIdentityStore';
 import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
+import {
+  buildConnectorEvent,
+  getConnectorRequestId,
+  logConnectorEvent,
+  withConnectorRequestId,
+} from '@/lib/integrations/connectorObservability';
+import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { forgetVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
+import {
+  assertHoldedConnectorAdminSessionAccess,
+  getHoldedConnectorAdminNotice,
+} from '@/lib/holdedConnectorAdmin';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  buildDefaultAvailableActions,
+  buildGovernanceFlags,
+  normalizeConnectionStatus,
+} from '@verifactu/integrations';
 
 export const runtime = 'nodejs';
 
@@ -19,16 +35,115 @@ function getEntryChannel(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = getConnectorRequestId(request);
   const entryChannel = getEntryChannel(request);
   const auth = await requireTenantContext({
     channelType: entryChannel,
     metadata: { source: 'holded-disconnect' },
   });
   if ('error' in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    logConnectorEvent(
+      'api/integrations/accounting/disconnect',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'auth_error',
+        error: auth.error,
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json({ error: auth.error, requestId }, { status: auth.status }),
+      requestId
+    );
   }
 
-  const updated = await disconnectAccountingIntegration(auth.tenantId, entryChannel);
+  try {
+    assertHoldedConnectorAdminSessionAccess(auth.session, { entryChannel });
+  } catch {
+    logConnectorEvent(
+      'api/integrations/accounting/disconnect',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'admin_access_required',
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        { ok: false, error: getHoldedConnectorAdminNotice(), requestId },
+        { status: 403 }
+      ),
+      requestId
+    );
+  }
+
+  const body = await request.json().catch(() => ({}));
+  if (body?.reauthConfirmed !== true) {
+    logConnectorEvent(
+      'api/integrations/accounting/disconnect',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'body',
+        outcome: 'missing_reauth',
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        { ok: false, error: 'Debes confirmar la accion antes de desconectar Holded.', requestId },
+        { status: 400 }
+      ),
+      requestId
+    );
+  }
+
+  const current = await resolveSharedHoldedConnectionStatusForTenant(auth.tenantId, entryChannel);
+  const currentGovernanceFlags = buildGovernanceFlags(current);
+  const currentAvailableActions = buildDefaultAvailableActions({
+    status: current?.status ?? 'disconnected',
+    underClaimReview: currentGovernanceFlags.underClaimReview,
+    clientAdminGap: currentGovernanceFlags.clientAdminGap,
+    highGovernanceRisk: currentGovernanceFlags.highGovernanceRisk,
+  });
+
+  if (currentAvailableActions.disconnect.blocked) {
+    logConnectorEvent(
+      'api/integrations/accounting/disconnect',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'guards',
+        outcome: 'blocked',
+        error: currentAvailableActions.disconnect.reason,
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          ok: false,
+          error: currentAvailableActions.disconnect.reason,
+          governanceFlags: currentGovernanceFlags,
+          availableActions: currentAvailableActions,
+          requestId,
+        },
+        { status: 409 }
+      ),
+      requestId
+    );
+  }
+
+  await disconnectAccountingIntegration(auth.tenantId, entryChannel);
+  const resolved = await resolveSharedHoldedConnectionStatusForTenant(auth.tenantId, entryChannel);
+  const governanceFlags = buildGovernanceFlags(resolved);
 
   try {
     await Promise.all([
@@ -43,9 +158,12 @@ export async function POST(request: NextRequest) {
       }),
     ]);
   } catch (cleanupError) {
-    console.error('[api/integrations/accounting/disconnect] connector identity cleanup failed', {
+    logConnectorEvent('api/integrations/accounting/disconnect', 'error', {
+      requestId,
       tenantId: auth.tenantId,
       entryChannel,
+      stage: 'cleanup',
+      outcome: 'cleanup_failed',
       uid: auth.session.uid ?? null,
       message: cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
     });
@@ -100,17 +218,44 @@ export async function POST(request: NextRequest) {
       channel: entryChannel,
     });
   } catch (notificationError) {
-    console.error('[api/integrations/accounting/disconnect] notification failed', {
+    logConnectorEvent('api/integrations/accounting/disconnect', 'error', {
+      requestId,
       tenantId: auth.tenantId,
       entryChannel,
+      stage: 'notify',
+      outcome: 'notification_failed',
       message:
         notificationError instanceof Error ? notificationError.message : String(notificationError),
     });
   }
 
-  return NextResponse.json({
-    ok: true,
-    provider: 'accounting_api',
-    status: updated?.status ?? 'disconnected',
-  });
+  logConnectorEvent(
+    'api/integrations/accounting/disconnect',
+    'info',
+    buildConnectorEvent({
+      requestId,
+      tenantId: auth.tenantId,
+      entryChannel,
+      stage: 'disconnect',
+      outcome: 'success',
+      status: resolved?.status ?? 'disconnected',
+    })
+  );
+
+  return withConnectorRequestId(
+    NextResponse.json({
+      ok: true,
+      provider: 'holded',
+      status: normalizeConnectionStatus(resolved?.status ?? 'disconnected'),
+      governanceFlags,
+      availableActions: buildDefaultAvailableActions({
+        status: resolved?.status ?? 'disconnected',
+        underClaimReview: governanceFlags.underClaimReview,
+        clientAdminGap: governanceFlags.clientAdminGap,
+        highGovernanceRisk: governanceFlags.highGovernanceRisk,
+      }),
+      requestId,
+    }),
+    requestId
+  );
 }

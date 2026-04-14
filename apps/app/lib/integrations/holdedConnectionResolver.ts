@@ -6,11 +6,18 @@ type ExternalConnectionRow = {
   tenant_id: string;
   provider: string;
   channel_key: string | null;
+  origin_channel: string | null;
   provider_account_id: string | null;
   credential_type: string;
   api_key_enc: string | null;
   connection_status: string;
+  ownership_status: string | null;
+  managed_by_third_party: boolean | null;
+  client_admin_gap: boolean | null;
+  high_governance_risk: boolean | null;
+  under_claim_review: boolean | null;
   connected_by_user_id: string | null;
+  technical_operator_user_id: string | null;
   connected_at: string | null;
   last_validated_at: string | null;
   last_sync_at: string | null;
@@ -19,7 +26,7 @@ type ExternalConnectionRow = {
 
 let externalConnectionsTableAvailable: boolean | null = null;
 let externalConnectionsChannelColumnAvailable: boolean | null = null;
-let externalConnectionsLastErrorColumnAvailable: boolean | null = null;
+const externalConnectionsColumnAvailability = new Map<string, boolean>();
 
 export type HoldedConnectionChannel = 'dashboard' | 'chatgpt';
 export type HoldedConnectionSource = 'external_connection';
@@ -32,6 +39,15 @@ export type HoldedConnectionStatusSnapshot = {
   credentialType: string;
   status: string;
   channel: HoldedConnectionChannel;
+  originChannel: string | null;
+  ownershipStatus: string | null;
+  managedByThirdParty: boolean;
+  clientAdminGap: boolean;
+  highGovernanceRisk: boolean;
+  underClaimReview: boolean;
+  technicalOperatorUserId: string | null;
+  connectedAt: string | null;
+  lastValidatedAt: string | null;
   lastSyncAt: string | null;
   lastError: string | null;
   source: HoldedConnectionSource;
@@ -74,22 +90,24 @@ async function hasExternalConnectionsChannelColumn() {
   return externalConnectionsChannelColumnAvailable;
 }
 
-async function hasExternalConnectionsLastErrorColumn() {
-  if (externalConnectionsLastErrorColumnAvailable !== null) {
-    return externalConnectionsLastErrorColumnAvailable;
+async function hasExternalConnectionsColumn(columnName: string) {
+  if (externalConnectionsColumnAvailability.has(columnName)) {
+    return externalConnectionsColumnAvailability.get(columnName) === true;
   }
 
   const row = await one<{ exists: boolean }>(
     [
       'SELECT EXISTS (',
       '  SELECT 1 FROM information_schema.columns',
-      "  WHERE table_schema = 'public' AND table_name = 'external_connections' AND column_name = 'last_error'",
+      "  WHERE table_schema = 'public' AND table_name = 'external_connections' AND column_name = $1",
       ') AS exists',
-    ].join(' ')
+    ].join(' '),
+    [columnName]
   );
 
-  externalConnectionsLastErrorColumnAvailable = row?.exists === true;
-  return externalConnectionsLastErrorColumnAvailable;
+  const exists = row?.exists === true;
+  externalConnectionsColumnAvailability.set(columnName, exists);
+  return exists;
 }
 
 async function loadExternalConnectionRow(
@@ -102,8 +120,24 @@ async function loadExternalConnectionRow(
   }
 
   const apiKeyFilter = options?.requireApiKey === false ? '' : ' AND api_key_enc IS NOT NULL';
-  const hasLastErrorColumn = await hasExternalConnectionsLastErrorColumn();
-  const lastErrorSelect = hasLastErrorColumn ? '  last_error' : '  NULL::text AS last_error';
+  const optionalColumns = [
+    'origin_channel',
+    'last_error',
+    'ownership_status',
+    'managed_by_third_party',
+    'client_admin_gap',
+    'high_governance_risk',
+    'under_claim_review',
+    'technical_operator_user_id',
+  ] as const;
+
+  const available = new Map<string, boolean>();
+  for (const columnName of optionalColumns) {
+    available.set(columnName, await hasExternalConnectionsColumn(columnName));
+  }
+
+  const selectOrNull = (columnName: string, fallbackSql: string) =>
+    available.get(columnName) ? `  ${columnName},` : `  ${fallbackSql},`;
 
   return (await hasExternalConnectionsChannelColumn())
     ? await one<ExternalConnectionRow>(
@@ -113,15 +147,22 @@ async function loadExternalConnectionRow(
           '  tenant_id,',
           '  provider,',
           '  channel_key,',
+          selectOrNull('origin_channel', 'NULL::text AS origin_channel'),
           '  provider_account_id,',
           '  credential_type,',
           '  api_key_enc,',
           '  connection_status,',
+          selectOrNull('ownership_status', 'NULL::text AS ownership_status'),
+          selectOrNull('managed_by_third_party', 'false::boolean AS managed_by_third_party'),
+          selectOrNull('client_admin_gap', 'false::boolean AS client_admin_gap'),
+          selectOrNull('high_governance_risk', 'false::boolean AS high_governance_risk'),
+          selectOrNull('under_claim_review', 'false::boolean AS under_claim_review'),
           '  connected_by_user_id,',
+          selectOrNull('technical_operator_user_id', 'NULL::text AS technical_operator_user_id'),
           '  connected_at::text,',
           '  last_validated_at::text,',
           '  last_sync_at::text,',
-          lastErrorSelect,
+          available.get('last_error') ? '  last_error' : '  NULL::text AS last_error',
           'FROM external_connections',
           `WHERE tenant_id = $1 AND provider = 'holded' AND channel_key = $2${apiKeyFilter}`,
           'ORDER BY updated_at DESC',
@@ -136,15 +177,22 @@ async function loadExternalConnectionRow(
           '  tenant_id,',
           '  provider,',
           '  NULL::text AS channel_key,',
+          selectOrNull('origin_channel', 'NULL::text AS origin_channel'),
           '  provider_account_id,',
           '  credential_type,',
           '  api_key_enc,',
           '  connection_status,',
+          selectOrNull('ownership_status', 'NULL::text AS ownership_status'),
+          selectOrNull('managed_by_third_party', 'false::boolean AS managed_by_third_party'),
+          selectOrNull('client_admin_gap', 'false::boolean AS client_admin_gap'),
+          selectOrNull('high_governance_risk', 'false::boolean AS high_governance_risk'),
+          selectOrNull('under_claim_review', 'false::boolean AS under_claim_review'),
           '  connected_by_user_id,',
+          selectOrNull('technical_operator_user_id', 'NULL::text AS technical_operator_user_id'),
           '  connected_at::text,',
           '  last_validated_at::text,',
           '  last_sync_at::text,',
-          lastErrorSelect,
+          available.get('last_error') ? '  last_error' : '  NULL::text AS last_error',
           'FROM external_connections',
           `WHERE tenant_id = $1 AND provider = 'holded'${apiKeyFilter}`,
           'ORDER BY updated_at DESC',
@@ -166,6 +214,15 @@ function mapExternalConnectionStatus(
     credentialType: external.credential_type,
     status: external.connection_status,
     channel: external.channel_key === 'chatgpt' ? 'chatgpt' : requestedChannel,
+    originChannel: external.origin_channel ?? external.channel_key ?? requestedChannel,
+    ownershipStatus: external.ownership_status ?? null,
+    managedByThirdParty: external.managed_by_third_party === true,
+    clientAdminGap: external.client_admin_gap === true,
+    highGovernanceRisk: external.high_governance_risk === true,
+    underClaimReview: external.under_claim_review === true,
+    technicalOperatorUserId: external.technical_operator_user_id ?? null,
+    connectedAt: external.connected_at,
+    lastValidatedAt: external.last_validated_at,
     lastSyncAt: external.last_sync_at,
     lastError: external.last_error ?? null,
     source: 'external_connection',

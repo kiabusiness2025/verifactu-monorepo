@@ -43,10 +43,17 @@ export type HoldedConnectionRecord = {
   connectedAt: string | null;
   lastValidatedAt: string | null;
   lastSyncAt: string | null;
+  originChannel?: string | null;
   providerAccountId: string | null;
   keyMasked: string;
   supportedModules: string[];
   validationSummary: string | null;
+  ownershipStatus?: string | null;
+  managedByThirdParty?: boolean;
+  clientAdminGap?: boolean;
+  highGovernanceRisk?: boolean;
+  underClaimReview?: boolean;
+  technicalOperatorUserId?: string | null;
   tenantName: string | null;
   legalName: string | null;
   taxId: string | null;
@@ -518,6 +525,40 @@ export async function saveHoldedConnection(input: {
   }));
   const summary = buildHoldedProbeSummary(input.probe);
   let connectionId: string | null = null;
+  const externalConnectionUpdate = {
+    channelKey: channel,
+    originChannel: channel,
+    providerAccountId: fingerprint,
+    credentialType: 'api_key',
+    apiKeyEnc: encrypted,
+    scopesGranted: summary.supportedModules,
+    connectionStatus: 'connected',
+    ownershipStatus: 'pending_confirmation',
+    managedByThirdParty: false,
+    highGovernanceRisk: false,
+    underClaimReview: false,
+    connectedByUserId: input.userId ?? undefined,
+    technicalOperatorUserId: input.userId ?? undefined,
+    connectedAt: now,
+    lastValidatedAt: now,
+    lastSyncAt: now,
+    disconnectedAt: null,
+    revokedAt: null,
+    governanceUpdatedAt: now,
+    companyIdentityJson: {
+      companyName: metadata.companyName,
+      legalName: metadata.legalName,
+      taxId: metadata.taxId,
+      source: 'holded',
+      reliableCompanyIdentity: metadata.reliableCompanyIdentity,
+      sampleCounts: metadata.sampleCounts,
+    },
+  } as any;
+  const externalConnectionCreate = {
+    tenantId: input.tenantId,
+    provider: 'holded',
+    ...externalConnectionUpdate,
+  } as any;
 
   try {
     const txOperations = [
@@ -555,32 +596,8 @@ export async function saveHoldedConnection(input: {
             channelKey: channel,
           },
         },
-        update: {
-          channelKey: channel,
-          providerAccountId: fingerprint,
-          credentialType: 'api_key',
-          apiKeyEnc: encrypted,
-          scopesGranted: summary.supportedModules,
-          connectionStatus: 'connected',
-          connectedByUserId: input.userId ?? undefined,
-          connectedAt: now,
-          lastValidatedAt: now,
-          lastSyncAt: now,
-        },
-        create: {
-          tenantId: input.tenantId,
-          provider: 'holded',
-          channelKey: channel,
-          providerAccountId: fingerprint,
-          credentialType: 'api_key',
-          apiKeyEnc: encrypted,
-          scopesGranted: summary.supportedModules,
-          connectionStatus: 'connected',
-          connectedByUserId: input.userId ?? undefined,
-          connectedAt: now,
-          lastValidatedAt: now,
-          lastSyncAt: now,
-        },
+        update: externalConnectionUpdate,
+        create: externalConnectionCreate,
       }),
       ...(metadata.reliableCompanyIdentity
         ? [
@@ -765,21 +782,33 @@ export async function disconnectHoldedConnection(input: {
           apiKeyEnc: null,
           scopesGranted: [],
           connectionStatus: 'disconnected',
+          technicalOperatorUserId: input.userId ?? undefined,
           lastValidatedAt: now,
           lastSyncAt: now,
-        },
+          disconnectedAt: now,
+          revokedAt: null,
+          governanceUpdatedAt: now,
+        } as any,
         create: {
           tenantId: input.tenantId,
           provider: 'holded',
           channelKey: channel,
+          originChannel: channel,
           credentialType: 'api_key',
           apiKeyEnc: null,
           scopesGranted: [],
           connectionStatus: 'disconnected',
+          ownershipStatus: 'pending_confirmation',
+          managedByThirdParty: false,
+          highGovernanceRisk: false,
+          underClaimReview: false,
           connectedByUserId: input.userId ?? undefined,
+          technicalOperatorUserId: input.userId ?? undefined,
           lastValidatedAt: now,
           lastSyncAt: now,
-        },
+          disconnectedAt: now,
+          governanceUpdatedAt: now,
+        } as any,
       }),
     ]);
   } catch (error) {
@@ -917,6 +946,15 @@ export async function getHoldedConnection(input: {
   if (!connection?.apiKeyEnc) {
     return null;
   }
+  const typedConnection = connection as typeof connection & {
+    originChannel?: string | null;
+    ownershipStatus?: string | null;
+    managedByThirdParty?: boolean | null;
+    clientAdminGap?: boolean | null;
+    highGovernanceRisk?: boolean | null;
+    underClaimReview?: boolean | null;
+    technicalOperatorUserId?: string | null;
+  };
 
   let apiKey: string;
   try {
@@ -937,10 +975,17 @@ export async function getHoldedConnection(input: {
     connectedAt: connection.connectedAt?.toISOString() || null,
     lastValidatedAt: connection.lastValidatedAt?.toISOString() || null,
     lastSyncAt: connection.lastSyncAt?.toISOString() || null,
+    originChannel: typedConnection.originChannel ?? channel,
     providerAccountId: connection.providerAccountId || null,
     keyMasked: maskSecret(apiKey),
     supportedModules,
     validationSummary: buildStoredHoldedConnectionSummary(supportedModules),
+    ownershipStatus: typedConnection.ownershipStatus ?? null,
+    managedByThirdParty: typedConnection.managedByThirdParty ?? false,
+    clientAdminGap: typedConnection.clientAdminGap ?? false,
+    highGovernanceRisk: typedConnection.highGovernanceRisk ?? false,
+    underClaimReview: typedConnection.underClaimReview ?? false,
+    technicalOperatorUserId: typedConnection.technicalOperatorUserId ?? null,
     ...resolveTrustedTenantIdentity({
       name: connection.tenant.name,
       legalName: connection.tenant.legalName,

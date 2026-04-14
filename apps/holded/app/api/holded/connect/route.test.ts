@@ -12,12 +12,91 @@ jest.mock('@/app/lib/communications/holded-email-service', () => ({
 
 jest.mock('@verifactu/integrations', () => ({
   __esModule: true,
+  getConnectorRequestId: jest.fn(() => 'req-connect-1'),
+  withConnectorRequestId: jest.fn((response: Response) => response),
+  buildConnectorEvent: jest.fn((input: Record<string, unknown>) => input),
+  logConnectorEvent: jest.fn(),
   recordUsageEvent: jest.fn(),
+  buildConnectionStatusDto: jest.fn((input: Record<string, unknown>) => ({
+    connectionId: input.connectionId ?? 'holded-connection',
+    tenantId: input.tenantId,
+    provider: 'holded',
+    status: input.status === 'error' ? 'failed' : input.status,
+    keyMasked: input.keyMasked ?? null,
+    providerAccountId: input.providerAccountId ?? null,
+    connectedAt: input.connectedAt ?? null,
+    lastValidatedAt: input.lastValidatedAt ?? null,
+    lastSyncAt: input.lastSyncAt ?? null,
+    lastError: input.lastError ?? null,
+    originChannel: input.originChannel ?? null,
+    supportedModules: input.supportedModules ?? [],
+  })),
+  buildDefaultAvailableActions: jest.fn(() => ({
+    reconnect: {
+      blocked: false,
+      reason: 'ok',
+      state: 'connected',
+      suggestedAction: null,
+      suggestedActionLabel: null,
+    },
+    rotateApi: {
+      blocked: false,
+      reason: 'ok',
+      state: 'connected',
+      suggestedAction: null,
+      suggestedActionLabel: null,
+    },
+    disconnect: {
+      blocked: false,
+      reason: 'ok',
+      state: 'connected',
+      suggestedAction: null,
+      suggestedActionLabel: null,
+    },
+    manageMembers: {
+      blocked: false,
+      reason: 'ok',
+      state: 'connected',
+      suggestedAction: null,
+      suggestedActionLabel: null,
+    },
+    manageRecipients: {
+      blocked: false,
+      reason: 'ok',
+      state: 'connected',
+      suggestedAction: null,
+      suggestedActionLabel: null,
+    },
+    openClaim: {
+      blocked: false,
+      reason: 'ok',
+      state: 'connected',
+      suggestedAction: null,
+      suggestedActionLabel: null,
+    },
+  })),
+  buildDetectedCompany: jest.fn((input: Record<string, unknown>) => ({
+    companyName: input.companyName ?? null,
+    legalName: input.legalName ?? null,
+    taxId: input.taxId ?? null,
+    source: input.source ?? 'manual',
+    confidence: 'high',
+    isPartial: false,
+    missingFields: [],
+  })),
+  buildGovernanceFlags: jest.fn((input?: Record<string, unknown> | null) => ({
+    ownershipStatus: input?.ownershipStatus ?? null,
+    managedByThirdParty: input?.managedByThirdParty === true,
+    clientAdminGap: input?.clientAdminGap === true,
+    highGovernanceRisk: input?.highGovernanceRisk === true,
+    underClaimReview: input?.underClaimReview === true,
+  })),
 }));
 
 jest.mock('@/app/lib/holded-integration', () => ({
   __esModule: true,
   disconnectHoldedConnection: jest.fn(),
+  getHoldedConnection: jest.fn(),
   probeHoldedConnection: jest.fn(),
   saveHoldedConnection: jest.fn(),
 }));
@@ -49,6 +128,7 @@ import { recordUsageEvent } from '@verifactu/integrations';
 import { mintHoldedValidationToken } from '@/app/lib/holded-validation-token';
 import {
   disconnectHoldedConnection,
+  getHoldedConnection,
   probeHoldedConnection,
   saveHoldedConnection,
 } from '@/app/lib/holded-integration';
@@ -62,6 +142,7 @@ const mockRecordUsageEvent = recordUsageEvent as jest.Mock;
 const mockProbeHoldedConnection = probeHoldedConnection as jest.Mock;
 const mockSaveHoldedConnection = saveHoldedConnection as jest.Mock;
 const mockDisconnectHoldedConnection = disconnectHoldedConnection as jest.Mock;
+const mockGetHoldedConnection = getHoldedConnection as jest.Mock;
 const mockWriteHoldedActivity = writeHoldedActivity as jest.Mock;
 const mockTenantFindUnique = prisma.tenant.findUnique as jest.Mock;
 const mockTenantUpdate = prisma.tenant.update as jest.Mock;
@@ -91,7 +172,34 @@ describe('POST /api/holded/connect', () => {
     });
     mockSaveHoldedConnection.mockResolvedValue({
       connected: true,
+      connectedAt: '2026-04-11T12:00:00.000Z',
+      keyMasked: 'abcd****mnop',
+      providerAccountId: 'provider-account-1',
+      supportedModules: ['invoicing', 'accounting'],
       tenantName: 'Acme SL',
+    });
+    mockGetHoldedConnection.mockResolvedValue({
+      provider: 'holded',
+      channel: 'dashboard',
+      status: 'connected',
+      connectedAt: '2026-04-11T12:00:00.000Z',
+      lastValidatedAt: '2026-04-11T12:00:00.000Z',
+      lastSyncAt: '2026-04-11T12:00:00.000Z',
+      originChannel: 'dashboard',
+      providerAccountId: 'provider-account-1',
+      keyMasked: 'abcd****mnop',
+      supportedModules: ['invoicing', 'accounting'],
+      validationSummary: 'ok',
+      ownershipStatus: 'pending_confirmation',
+      managedByThirdParty: false,
+      clientAdminGap: false,
+      highGovernanceRisk: false,
+      underClaimReview: false,
+      technicalOperatorUserId: 'user_1',
+      tenantName: 'Acme SL',
+      legalName: 'Acme Sociedad Limitada',
+      taxId: 'B12345678',
+      apiKey: 'abcdefghijklmnop',
     });
     mockRecordUsageEvent.mockResolvedValue(undefined);
     mockSendHoldedConnectedCommunication.mockResolvedValue({
@@ -185,9 +293,11 @@ describe('POST /api/holded/connect', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(400);
-    expect(payload).toEqual({
+    expect(payload).toMatchObject({
+      ok: false,
       error:
         'Necesitamos un correo valido de contacto para enviarte las comunicaciones del conector.',
+      reason: 'manual_company_data_required',
     });
     expect(mockProbeHoldedConnection).not.toHaveBeenCalled();
     expect(mockSendHoldedConnectedCommunication).not.toHaveBeenCalled();
@@ -218,8 +328,10 @@ describe('POST /api/holded/connect', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(400);
-    expect(payload).toEqual({
+    expect(payload).toMatchObject({
+      ok: false,
       error: 'Necesitamos el nombre de la empresa para crear correctamente tu espacio.',
+      reason: 'manual_company_data_required',
     });
     expect(mockProbeHoldedConnection).not.toHaveBeenCalled();
     expect(mockSaveHoldedConnection).not.toHaveBeenCalled();
@@ -269,5 +381,10 @@ describe('POST /api/holded/connect', () => {
         probe: expect.objectContaining({ ok: true }),
       })
     );
+    expect(payload.connection).toMatchObject({
+      provider: 'holded',
+      status: 'connected',
+      providerAccountId: 'provider-account-1',
+    });
   });
 });

@@ -9,7 +9,7 @@ import { resolveHoldedCompletionTarget } from './completionTarget';
 export const metadata: Metadata = {
   title: 'Conectar Holded | Verifactu',
   description:
-    'Introduce los datos base de empresa y contacto junto con tu API key de Holded para activar el conector directo.',
+    'Conecta tu cuenta de Holded con Verifactu Business mediante un flujo guiado con validacion de API key, deteccion de empresa y estados de gobernanza visibles.',
 };
 
 type InitialIdentity = {

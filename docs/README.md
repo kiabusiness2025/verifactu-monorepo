@@ -10,8 +10,12 @@ Empieza por estos documentos de entrada y luego baja al detalle tecnico:
 
 - [product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md) - Contrato publico canonico del conector directo `ChatGPT <-> Holded` en Fase 1, actualizado con Google opcional, correo verificado y onboarding por pasos
 - [product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md) - Backlog tecnico de la nueva ola: identidad ligera, verificacion manual y email final tras conexion
+- [product/HOLDED_DIRECT_CONNECTOR_EXECUTION_PROGRESS_2026.md](product/HOLDED_DIRECT_CONNECTOR_EXECUTION_PROGRESS_2026.md) - Bitacora viva de avance por fases del conector directo: entregado, pendiente, compatibilidad temporal y siguiente fase
 - [product/HOLDED_DIRECT_CONNECTOR_BETA_CAPABILITY_MATRIX_2026-04-10.md](product/HOLDED_DIRECT_CONNECTOR_BETA_CAPABILITY_MATRIX_2026-04-10.md) - Matriz canonica del beta publico actual: lo que realmente expone el preset `openai_review_v2`
 - [product/HOLDED_DIRECT_CONNECTOR_RELEASE_NOTES_2026-04-10.md](product/HOLDED_DIRECT_CONNECTOR_RELEASE_NOTES_2026-04-10.md) - Release notes de abril 2026 con onboarding, OAuth, runtime y fixes de produccion
+- [engineering/HOLDED_DIRECT_CONNECTOR_PRISMA_MIGRATION_PLAN_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_PRISMA_MIGRATION_PLAN_2026.md) - Plan canonico de evolucion de schema y rollout incremental sobre `ExternalConnection`, memberships, recipients, requests y claims
+- [engineering/HOLDED_DIRECT_CONNECTOR_SCHEMA_DESIGN_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_SCHEMA_DESIGN_2026.md) - Diseno exacto del schema objetivo sobre los modelos reales del repo antes de tocar Prisma
+- [engineering/HOLDED_DIRECT_CONNECTOR_ENDPOINT_AND_CONTRACTS_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_ENDPOINT_AND_CONTRACTS_2026.md) - Contratos compartidos y mapa endpoint por endpoint sobre rutas existentes
 - [../apps/app/README.md](../apps/app/README.md) - Core compartido y runtime real del conector MCP/OAuth
 - [../packages/integrations/README.md](../packages/integrations/README.md) - Capa compartida de integraciones, conexion Holded y continuidad reutilizable
 - [../apps/holded/README.md](../apps/holded/README.md) - App publica Holded-first y handoff a Isaak
@@ -46,8 +50,12 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 - [../apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md](../apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md) - Arquitectura real de conexion Holded en la app publica
 - [product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md) - Contrato publico actual del conector directo, incluyendo la nueva ola de identidad ligera y onboarding por pasos
 - [product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md) - Plan de implementacion vivo de la nueva ola de Fase 1
+- [product/HOLDED_DIRECT_CONNECTOR_EXECUTION_PROGRESS_2026.md](product/HOLDED_DIRECT_CONNECTOR_EXECUTION_PROGRESS_2026.md) - Progreso vivo de ejecucion por fases y continuidad del roadmap
 - [product/HOLDED_DIRECT_CONNECTOR_BETA_CAPABILITY_MATRIX_2026-04-10.md](product/HOLDED_DIRECT_CONNECTOR_BETA_CAPABILITY_MATRIX_2026-04-10.md) - Matriz operativa del beta publico real y sus limites
 - [product/HOLDED_DIRECT_CONNECTOR_RELEASE_NOTES_2026-04-10.md](product/HOLDED_DIRECT_CONNECTOR_RELEASE_NOTES_2026-04-10.md) - Resumen ejecutivo de todos los ajustes cerrados en abril 2026
+- [engineering/HOLDED_DIRECT_CONNECTOR_PRISMA_MIGRATION_PLAN_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_PRISMA_MIGRATION_PLAN_2026.md) - Evolucion incremental del modelo de datos del conector directo sin romper el backend compartido
+- [engineering/HOLDED_DIRECT_CONNECTOR_SCHEMA_DESIGN_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_SCHEMA_DESIGN_2026.md) - Diseno exacto de `schema.prisma` sobre `ExternalConnection`, `Membership` y nuevas tablas de gobernanza
+- [engineering/HOLDED_DIRECT_CONNECTOR_ENDPOINT_AND_CONTRACTS_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_ENDPOINT_AND_CONTRACTS_2026.md) - DTOs compartidos y mapa de rutas reales antes de la implementacion
 - [../apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](../apps/holded/HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md) - Alta del conector MCP de Holded en ChatGPT y valores exactos de OAuth
 - [../apps/isaak/README.md](../apps/isaak/README.md) - Proyecto publico Isaak
 - [../apps/client/README.md](../apps/client/README.md) - Panel cliente y persistencia de Isaak
@@ -154,6 +162,19 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 - [engineering/optimization/LANDING_OPTIMIZATION_STATUS.md](engineering/optimization/LANDING_OPTIMIZATION_STATUS.md) - Performance
 - [engineering/optimization/ACCESSIBILITY_AUDIT.md](engineering/optimization/ACCESSIBILITY_AUDIT.md) - Accesibilidad
 - [engineering/optimization/IMAGE_OPTIMIZATION_GUIDE.md](engineering/optimization/IMAGE_OPTIMIZATION_GUIDE.md) - Imagenes
+
+### Conector Holded
+
+**engineering/**
+
+- [engineering/HOLDED_DIRECT_CONNECTOR_PRISMA_MIGRATION_PLAN_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_PRISMA_MIGRATION_PLAN_2026.md) - Migraciones Prisma
+- [engineering/HOLDED_DIRECT_CONNECTOR_SCHEMA_DESIGN_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_SCHEMA_DESIGN_2026.md) - Modelo de datos
+- [engineering/HOLDED_DIRECT_CONNECTOR_ENDPOINT_AND_CONTRACTS_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_ENDPOINT_AND_CONTRACTS_2026.md) - Contratos de rutas
+- [engineering/HOLDED_DIRECT_CONNECTOR_BACKFILL_RUNBOOK_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_BACKFILL_RUNBOOK_2026.md) - Backfill y normalizacion
+- [engineering/HOLDED_DIRECT_CONNECTOR_RELEASE_CHECKLIST_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_RELEASE_CHECKLIST_2026.md) - Checklist operativo de release
+- [engineering/HOLDED_DIRECT_CONNECTOR_POST_RELEASE_SMOKE_EVIDENCE_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_POST_RELEASE_SMOKE_EVIDENCE_2026.md) - Evidencias de smoke post-release
+- [engineering/HOLDED_DIRECT_CONNECTOR_HANDOFF_AND_BACKLOG_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_HANDOFF_AND_BACKLOG_2026.md) - Cierre del roadmap principal y backlog posterior recomendado
+- [engineering/HOLDED_DIRECT_CONNECTOR_EVOLUTION_PLAN_2026.md](engineering/HOLDED_DIRECT_CONNECTOR_EVOLUTION_PLAN_2026.md) - Plan ejecutable de la siguiente ola: observabilidad, notificaciones y mantenibilidad
 
 ### Archivos legados
 

@@ -2,14 +2,45 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, FileText, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+  KeyRound,
+  Loader2,
+  ShieldCheck,
+  Sparkles,
+  TriangleAlert,
+} from 'lucide-react';
 import { auth } from '@/app/lib/firebase';
 import { mintSessionCookie } from '@/app/lib/serverSession';
+import type {
+  DetectedCompanyDTO,
+  GovernanceFlagsDTO,
+  HoldedConnectResponse,
+} from '@verifactu/integrations/holded/contracts';
+import {
+  getHoldedConnectionBadge,
+  getHoldedGovernanceBadges,
+  getHoldedStatusBanners,
+} from '@verifactu/integrations/holded/uiState';
+import type { HoldedUiBanner } from '@verifactu/integrations/holded/uiState';
 
 type ValidationResponse = {
   ok: boolean;
   error?: string | null;
   validationToken?: string | null;
+  detectedCompany?: DetectedCompanyDTO | null;
+  duplicateConflict?: {
+    exists: boolean;
+    connectionId?: string | null;
+    tenantId?: string | null;
+    providerAccountId?: string | null;
+    userHasAccess?: boolean;
+    canRequestAccess?: boolean;
+    canOpenClaim?: boolean;
+    reason?: string | null;
+  } | null;
 };
 
 type InitialIdentity = {
@@ -28,6 +59,12 @@ type OnboardingHoldedClientProps = {
   initialIdentity: InitialIdentity;
 };
 
+type UiBadge = {
+  key: string;
+  label: string;
+  variant: 'success' | 'warning' | 'error' | 'info' | 'neutral';
+};
+
 function looksLikeEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
@@ -43,6 +80,36 @@ function normalizeText(value: string) {
 function normalizeOptionalText(value: string) {
   const normalized = normalizeText(value);
   return normalized || '';
+}
+
+function badgeClasses(variant: UiBadge['variant']) {
+  switch (variant) {
+    case 'success':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-800';
+    case 'warning':
+      return 'border-amber-200 bg-amber-50 text-amber-800';
+    case 'error':
+      return 'border-rose-200 bg-rose-50 text-rose-800';
+    case 'info':
+      return 'border-sky-200 bg-sky-50 text-sky-800';
+    case 'neutral':
+    default:
+      return 'border-slate-200 bg-slate-50 text-slate-700';
+  }
+}
+
+function bannerClasses(tone: HoldedUiBanner['tone']) {
+  switch (tone) {
+    case 'error':
+      return 'border-rose-200 bg-rose-50 text-rose-900';
+    case 'warning':
+      return 'border-amber-200 bg-amber-50 text-amber-900';
+    case 'success':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-900';
+    case 'info':
+    default:
+      return 'border-sky-200 bg-sky-50 text-sky-900';
+  }
 }
 
 async function refreshSharedSession() {
@@ -99,6 +166,36 @@ function redirectToHoldedReauth() {
   );
 }
 
+function buildStatusBadges(input: {
+  governanceFlags: GovernanceFlagsDTO | null;
+  connectResponse: HoldedConnectResponse | null;
+}): UiBadge[] {
+  const badges: UiBadge[] = [];
+
+  if (input.connectResponse?.connection) {
+    const mainBadge = getHoldedConnectionBadge(input.connectResponse.connection);
+    badges.push(mainBadge);
+  }
+
+  for (const badge of getHoldedGovernanceBadges(input.governanceFlags)) {
+    badges.push(badge);
+  }
+
+  return badges;
+}
+
+function buildBanners(input: {
+  connectResponse: HoldedConnectResponse | null;
+  warnings: string[];
+}): HoldedUiBanner[] {
+  return getHoldedStatusBanners({
+    connection: input.connectResponse?.connection ?? null,
+    governanceFlags: input.connectResponse?.governanceFlags ?? null,
+    availableActions: input.connectResponse?.availableActions ?? null,
+    warnings: input.warnings,
+  });
+}
+
 export default function OnboardingHoldedClient({
   channel,
   nextTarget,
@@ -115,10 +212,21 @@ export default function OnboardingHoldedClient({
   const [contactEmail, setContactEmail] = useState(initialIdentity.contactEmail);
   const [contactPhone, setContactPhone] = useState(initialIdentity.contactPhone);
   const [apiKey, setApiKey] = useState('');
-  const [phase, setPhase] = useState<'idle' | 'validating' | 'connecting'>('idle');
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [phase, setPhase] = useState<'idle' | 'validating' | 'connecting' | 'connected'>('idle');
   const [validationToken, setValidationToken] = useState<string | null>(null);
   const [validatedApiKey, setValidatedApiKey] = useState('');
+  const [detectedCompany, setDetectedCompany] = useState<DetectedCompanyDTO | null>(null);
+  const [connectResponse, setConnectResponse] = useState<HoldedConnectResponse | null>(null);
+  const [duplicateConflict, setDuplicateConflict] = useState<
+    ValidationResponse['duplicateConflict'] | null
+  >(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [conflictAction, setConflictAction] = useState<'request' | 'claim' | null>(null);
+  const [conflictMessage, setConflictMessage] = useState('');
+  const [conflictWorking, setConflictWorking] = useState(false);
 
   const normalizedApiKey = useMemo(() => normalizeApiKey(apiKey), [apiKey]);
   const normalizedCompanyName = useMemo(() => normalizeOptionalText(companyName), [companyName]);
@@ -137,7 +245,7 @@ export default function OnboardingHoldedClient({
     [contactEmail]
   );
   const normalizedContactPhone = useMemo(() => normalizeOptionalText(contactPhone), [contactPhone]);
-  const isSubmitting = phase !== 'idle';
+  const isSubmitting = phase === 'validating' || phase === 'connecting';
   const hasReusableValidationToken =
     validatedApiKey === normalizedApiKey && Boolean(validationToken);
   const canSubmit =
@@ -147,20 +255,46 @@ export default function OnboardingHoldedClient({
     normalizedContactFirstName.length > 0 &&
     normalizedContactLastName.length > 0 &&
     looksLikeEmail(normalizedContactEmail) &&
+    consentChecked &&
     !isSubmitting;
+
+  const statusBadges = useMemo(
+    () =>
+      buildStatusBadges({
+        governanceFlags: connectResponse?.governanceFlags ?? null,
+        connectResponse,
+      }),
+    [connectResponse]
+  );
+  const banners = useMemo(
+    () =>
+      buildBanners({
+        connectResponse,
+        warnings,
+      }),
+    [connectResponse, warnings]
+  );
 
   const statusCopy =
     phase === 'validating'
       ? {
-          title: 'Estamos validando la API key',
-          body: 'Comprobamos que la conexion con Holded es usable antes de guardarla.',
+          title: 'Validando la API key',
+          body: 'Comprobamos acceso, empresa detectada y posibles conflictos antes de guardar la conexion.',
         }
       : phase === 'connecting'
         ? {
-            title: 'Estamos cerrando la conexion',
-            body: 'Guardamos empresa, contacto y conexion para dejar todo listo.',
+            title: 'Activando el Conector Holded',
+            body: 'Guardamos la conexion y evaluamos el estado inicial de gobernanza.',
           }
-        : null;
+        : phase === 'connected'
+          ? {
+              title: 'Conexion lista',
+              body:
+                warnings.length > 0
+                  ? 'La conexion esta activa, pero dejamos visibles las revisiones recomendadas antes de continuar.'
+                  : 'La conexion esta activa. Te llevamos al siguiente paso.',
+            }
+          : null;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -184,7 +318,16 @@ export default function OnboardingHoldedClient({
       return;
     }
 
+    if (!consentChecked) {
+      setError('Debes confirmar la autorizacion y aceptar los documentos legales para continuar.');
+      return;
+    }
+
     setError(null);
+    setMessage(null);
+    setWarnings([]);
+    setDuplicateConflict(null);
+    setConflictAction(null);
 
     try {
       let reusableToken = hasReusableValidationToken ? validationToken : null;
@@ -210,9 +353,18 @@ export default function OnboardingHoldedClient({
           throw new Error(validationData?.error || 'No hemos podido validar la API key de Holded.');
         }
 
+        if (validationData.duplicateConflict?.exists) {
+          setPhase('idle');
+          setDetectedCompany(validationData.detectedCompany ?? null);
+          setDuplicateConflict(validationData.duplicateConflict);
+          setError(null);
+          return;
+        }
+
         reusableToken = validationData.validationToken || null;
         setValidationToken(reusableToken);
         setValidatedApiKey(normalizedApiKey);
+        setDetectedCompany(validationData.detectedCompany ?? null);
       }
 
       setPhase('connecting');
@@ -228,6 +380,10 @@ export default function OnboardingHoldedClient({
         contactLastName: normalizedContactLastName,
         contactEmail: normalizedContactEmail,
         contactPhone: normalizedContactPhone || undefined,
+        notificationEmail: normalizedContactEmail,
+        acceptedTerms: true,
+        acceptedPrivacy: true,
+        authorizationConfirmed: true,
       });
 
       if (connectResponse.status === 401) {
@@ -235,13 +391,30 @@ export default function OnboardingHoldedClient({
         return;
       }
 
-      const connectData = await connectResponse.json().catch(() => null);
+      const connectData = (await connectResponse
+        .json()
+        .catch(() => null)) as HoldedConnectResponse | null;
 
       if (!connectResponse.ok || !connectData?.ok) {
         throw new Error(connectData?.error || 'No hemos podido conectar Holded.');
       }
 
-      window.location.assign(nextTarget || '/onboarding/success');
+      setConnectResponse(connectData);
+      setDetectedCompany(connectData.detectedCompany ?? detectedCompany);
+      setWarnings(connectData.warnings ?? []);
+      setPhase('connected');
+      setMessage(
+        connectData.warnings?.length
+          ? `Conexion activada. Revision recomendada: ${connectData.warnings[0]}`
+          : 'Conexion activada. Continuamos con el siguiente paso.'
+      );
+
+      window.setTimeout(
+        () => {
+          window.location.assign(nextTarget || '/onboarding/success');
+        },
+        connectData.warnings?.length ? 1600 : 900
+      );
     } catch (submitError) {
       setPhase('idle');
       setError(
@@ -250,27 +423,104 @@ export default function OnboardingHoldedClient({
     }
   };
 
+  const handleDuplicateConflictAction = async (action: 'request' | 'claim') => {
+    if (!duplicateConflict?.connectionId) return;
+
+    setConflictWorking(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      if (action === 'request') {
+        const response = await postWithSessionRetry('/api/holded/access-requests', {
+          connectionId: duplicateConflict.connectionId,
+          requestedRole: 'viewer',
+          message: conflictMessage || undefined,
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data?.ok) {
+          throw new Error(data?.error || 'No se pudo enviar la solicitud de acceso.');
+        }
+        setMessage(
+          'Solicitud enviada. La conexion actual queda pendiente de revision por el titular.'
+        );
+      } else {
+        const reason =
+          conflictMessage.trim() ||
+          'La conexion actual no deberia seguir gestionandose desde esta organizacion.';
+        const response = await postWithSessionRetry('/api/holded/claims', {
+          connectionId: duplicateConflict.connectionId,
+          claimType: 'control',
+          reason,
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data?.ok) {
+          throw new Error(data?.error || 'No se pudo abrir la reclamacion.');
+        }
+        setMessage('Reclamacion enviada. Algunas acciones quedaran limitadas hasta que se revise.');
+      }
+
+      setConflictAction(action);
+    } catch (actionError) {
+      setError(
+        actionError instanceof Error ? actionError.message : 'No se pudo completar la accion.'
+      );
+    } finally {
+      setConflictWorking(false);
+    }
+  };
+
   return (
     <main className="min-h-[100svh] bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_42%,#f8fafc_100%)] px-3 py-4 text-slate-900 sm:px-4 sm:py-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[0.88fr_1.12fr]">
+      <div className="mx-auto max-w-6xl">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#ff5460]">
-              Conexion directa
+              Conector Holded
             </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-              Conecta tu empresa de Holded
+              Conecta tu cuenta de Holded
             </h1>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              Solo necesitamos los datos basicos de empresa, una persona de contacto y una API key
-              activa de Holded. Nosotros dejamos la conexion lista por ti.
+              Verifactu Business valida tu API key, detecta la empresa y deja la conexion lista con
+              estados tecnicos y de gobernanza visibles desde el principio.
             </p>
+
+            <div className="mt-6 space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+              {[
+                {
+                  step: '1',
+                  title: 'Empresa',
+                  text: 'Revisamos empresa, contacto principal y base fiscal.',
+                },
+                {
+                  step: '2',
+                  title: 'API Holded',
+                  text: 'Validamos la API key y comprobamos acceso real.',
+                },
+                {
+                  step: '3',
+                  title: 'Activacion',
+                  text: 'Guardamos la conexion y mostramos revisiones necesarias.',
+                },
+              ].map((item) => (
+                <div key={item.step} className="flex gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                    {item.step}
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">{item.title}</div>
+                    <div className="text-sm leading-6 text-slate-600">{item.text}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-start gap-3">
                 <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">Que te pediremos</div>
+                  <div className="text-sm font-semibold text-slate-900">Antes de empezar</div>
                   <ul className="mt-2 space-y-2 text-sm leading-6 text-slate-600">
                     <li>Empresa y NIF/CIF.</li>
                     <li>Persona de contacto principal.</li>
@@ -288,6 +538,115 @@ export default function OnboardingHoldedClient({
                 </div>
               </div>
             </div>
+
+            {detectedCompany ? (
+              <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <Sparkles className="h-4 w-4 text-[#ff5460]" />
+                  Empresa detectada
+                </div>
+                <div className="mt-3 text-lg font-semibold text-slate-900">
+                  {detectedCompany.companyName || detectedCompany.legalName || 'Empresa detectada'}
+                </div>
+                <div className="mt-1 text-sm text-slate-600">
+                  {detectedCompany.taxId || 'Sin NIF/CIF detectado'}
+                </div>
+                {detectedCompany.isPartial ? (
+                  <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    Faltan campos por completar: {detectedCompany.missingFields.join(', ')}.
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {duplicateConflict?.exists ? (
+              <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-4">
+                <div className="flex items-start gap-3">
+                  <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-amber-900">
+                      Esta empresa ya esta conectada
+                    </div>
+                    <div className="mt-1 text-sm leading-6 text-amber-900">
+                      {duplicateConflict.reason ||
+                        'Puedes solicitar acceso a la conexion existente o abrir una reclamacion de control.'}
+                    </div>
+                    <textarea
+                      value={conflictMessage}
+                      onChange={(event) => setConflictMessage(event.target.value)}
+                      rows={3}
+                      placeholder="Mensaje opcional para la solicitud o motivo de la reclamacion"
+                      className="mt-4 w-full resize-none rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                    />
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      {duplicateConflict.canRequestAccess ? (
+                        <button
+                          type="button"
+                          disabled={conflictWorking}
+                          onClick={() => void handleDuplicateConflictAction('request')}
+                          className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Solicitar acceso
+                        </button>
+                      ) : null}
+                      {duplicateConflict.canOpenClaim ? (
+                        <button
+                          type="button"
+                          disabled={conflictWorking}
+                          onClick={() => void handleDuplicateConflictAction('claim')}
+                          className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Abrir reclamacion
+                        </button>
+                      ) : null}
+                    </div>
+                    {conflictAction ? (
+                      <div className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-amber-900">
+                        Ultima accion enviada:{' '}
+                        {conflictAction === 'request' ? 'solicitud de acceso' : 'reclamacion'}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {statusBadges.length > 0 ? (
+              <div className="mt-6 flex flex-wrap gap-2">
+                {statusBadges.map((badge) => (
+                  <span
+                    key={badge.key}
+                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${badgeClasses(badge.variant)}`}
+                  >
+                    {badge.label}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            {banners.length > 0 ? (
+              <div className="mt-6 space-y-3">
+                {banners.map((banner) => (
+                  <div
+                    key={banner.key}
+                    className={`rounded-3xl border px-4 py-4 text-sm ${bannerClasses(banner.tone)}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                      <div>
+                        <div className="font-semibold">{banner.title}</div>
+                        <div className="mt-1 leading-6">{banner.message}</div>
+                        {banner.actionLabel ? (
+                          <div className="mt-2 text-xs font-semibold uppercase tracking-[0.12em]">
+                            Accion sugerida: {banner.actionLabel}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </section>
 
           <section className="rounded-[2rem] border border-[#ff5460]/15 bg-white p-5 shadow-[0_32px_90px_-48px_rgba(255,84,96,0.35)] sm:p-6">
@@ -382,7 +741,7 @@ export default function OnboardingHoldedClient({
               </div>
 
               <div>
-                <div className="text-sm font-semibold text-slate-900">Conexion Holded</div>
+                <div className="text-sm font-semibold text-slate-900">Conector Holded</div>
                 <label className="mt-3 block text-sm font-medium text-slate-700">
                   API key de Holded
                   <textarea
@@ -391,6 +750,8 @@ export default function OnboardingHoldedClient({
                       setApiKey(event.target.value);
                       setValidationToken(null);
                       setValidatedApiKey('');
+                      setDuplicateConflict(null);
+                      setConflictAction(null);
                       setError(null);
                     }}
                     rows={4}
@@ -400,28 +761,28 @@ export default function OnboardingHoldedClient({
                 </label>
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-                <div className="flex items-start gap-3">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                  <div>
-                    Al conectar aceptas los{' '}
-                    <Link
-                      href="/terms"
-                      className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
-                    >
-                      Terminos
-                    </Link>{' '}
-                    y la{' '}
-                    <Link
-                      href="/privacy"
-                      className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
-                    >
-                      Politica de Privacidad
-                    </Link>
-                    . La API key se guarda protegida y no vuelve a mostrarse en pantalla.
-                  </div>
-                </div>
-              </div>
+              <label className="flex items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={consentChecked}
+                  onChange={(event) => setConsentChecked(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
+                />
+                <span>
+                  Confirmo que puedo conectar esta empresa y acepto los{' '}
+                  <Link href="/terms" className="font-semibold text-[#ff5460] hover:text-[#ef4654]">
+                    Terminos
+                  </Link>{' '}
+                  y la{' '}
+                  <Link
+                    href="/privacy"
+                    className="font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                  >
+                    Politica de Privacidad
+                  </Link>
+                  . La API key se guarda protegida y no vuelve a mostrarse en pantalla.
+                </span>
+              </label>
 
               {statusCopy ? (
                 <div className="rounded-3xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700 shadow-sm">
@@ -431,6 +792,15 @@ export default function OnboardingHoldedClient({
                       <div className="font-semibold text-slate-900">{statusCopy.title}</div>
                       <div className="mt-1">{statusCopy.body}</div>
                     </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {message ? (
+                <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{message}</span>
                   </div>
                 </div>
               ) : null}

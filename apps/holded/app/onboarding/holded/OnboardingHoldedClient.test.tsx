@@ -42,15 +42,15 @@ describe('OnboardingHoldedClient', () => {
   it('renders prefilled company and contact identity fields', () => {
     render(<OnboardingHoldedClient {...defaultProps} />);
 
-    expect(screen.getByText('Conexion directa')).toBeInTheDocument();
-    expect(screen.getByText('Conecta tu empresa de Holded')).toBeInTheDocument();
+    expect(screen.getAllByText('Conector Holded')[0]).toBeInTheDocument();
+    expect(screen.getByText('Conecta tu cuenta de Holded')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Solo necesitamos los datos basicos de empresa, una persona de contacto y una API key activa de Holded. Nosotros dejamos la conexion lista por ti.'
+        'Verifactu Business valida tu API key, detecta la empresa y deja la conexion lista con estados tecnicos y de gobernanza visibles desde el principio.'
       )
     ).toBeInTheDocument();
-    expect(screen.getByText('Que te pediremos')).toBeInTheDocument();
-    expect(screen.getByText(/Al conectar aceptas los/i)).toBeInTheDocument();
+    expect(screen.getByText('Antes de empezar')).toBeInTheDocument();
+    expect(screen.getByText(/Confirmo que puedo conectar esta empresa/i)).toBeInTheDocument();
     expect(screen.queryByText('Activa tu conexion con Holded')).not.toBeInTheDocument();
     expect(screen.getByDisplayValue('Acme SL')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Acme Sociedad Limitada')).toBeInTheDocument();
@@ -66,6 +66,11 @@ describe('OnboardingHoldedClient', () => {
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
       target: { value: 'abcdefghijklmnop' },
     });
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: /confirmo que puedo conectar esta empresa/i,
+      })
+    );
 
     expect(screen.getByRole('button', { name: 'Validar y conectar' })).toBeEnabled();
   });
@@ -88,6 +93,11 @@ describe('OnboardingHoldedClient', () => {
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
       target: { value: 'abcdefghijklmnop' },
     });
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: /confirmo que puedo conectar esta empresa/i,
+      })
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar' }));
 
     await waitFor(() => {
@@ -115,7 +125,11 @@ describe('OnboardingHoldedClient', () => {
         contactLastName: 'Garcia',
         contactEmail: 'ana@example.com',
         contactPhone: '+34600111222',
+        notificationEmail: 'ana@example.com',
         validationToken: 'token-123',
+        acceptedTerms: true,
+        acceptedPrivacy: true,
+        authorizationConfirmed: true,
       })
     );
     expect(screen.getByText('Error de prueba en connect')).toBeInTheDocument();

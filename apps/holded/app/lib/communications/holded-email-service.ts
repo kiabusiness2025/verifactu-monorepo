@@ -48,11 +48,42 @@ function resolveLeadSender() {
   return configured;
 }
 
+function createResendTransport() {
+  return {
+    resend: new Resend(readRequiredEnv('RESEND_API_KEY')),
+    from: resolveLeadSender(),
+    replyTo: readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business'),
+  };
+}
+
+export async function sendHoldedNotificationEmail(input: {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  replyTo?: string;
+}) {
+  const transport = createResendTransport();
+
+  const result = await transport.resend.emails.send({
+    from: transport.from,
+    to: [input.to],
+    subject: input.subject,
+    html: input.html,
+    text: input.text,
+    replyTo: input.replyTo || transport.replyTo,
+  });
+
+  return {
+    success: !result.error,
+    messageId: result.data?.id ?? null,
+    error: result.error ?? null,
+  };
+}
+
 export async function sendHoldedLeadCommunication(input: LeadPayload) {
-  const resend = new Resend(readRequiredEnv('RESEND_API_KEY'));
-  const from = resolveLeadSender();
+  const { resend, from, replyTo } = createResendTransport();
   const internalRecipient = readOptionalEnv('HOLDED_LEAD_EMAIL', 'soporte@verifactu.business');
-  const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business');
 
   const welcome = buildHoldedWelcomeEmail(input);
   const guide = buildHoldedOnboardingGuideEmail(input);
@@ -93,9 +124,7 @@ export async function sendHoldedLeadCommunication(input: LeadPayload) {
 }
 
 export async function sendHoldedConnectedCommunication(input: ConnectedPayload) {
-  const resend = new Resend(readRequiredEnv('RESEND_API_KEY'));
-  const from = resolveLeadSender();
-  const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business');
+  const { resend, from, replyTo } = createResendTransport();
   const adminRecipients = readOptionalEnv(
     'HOLDED_ADMIN_NOTIFICATION_EMAILS',
     readOptionalEnv('HOLDED_ADMIN_EMAILS', 'soporte@verifactu.business')

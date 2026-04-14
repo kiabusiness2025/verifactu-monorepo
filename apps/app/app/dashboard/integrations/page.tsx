@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { ConfirmActionModal } from './components/ConfirmActionModal';
 
 type IntegrationStatus = {
   provider: string;
@@ -36,12 +38,22 @@ type SyncLog = {
 };
 
 export default function IntegrationsPage() {
+  const searchParams = useSearchParams();
   const [integration, setIntegration] = useState<IntegrationStatus | null>(null);
   const [logs, setLogs] = useState<SyncLog[]>([]);
   const [drive, setDrive] = useState<DriveStatus | null>(null);
   const [taxId, setTaxId] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams?.get('holded_admin') === 'forbidden') {
+      setMessage(
+        'Acceso restringido al panel admin del Conector Holded. Inicia sesion con la cuenta autorizada de soporte o con un email incluido en ADMIN_EMAILS.'
+      );
+    }
+  }, [searchParams]);
 
   const load = async () => {
     setLoading(true);
@@ -56,7 +68,7 @@ export default function IntegrationsPage() {
       const logsData = await logsRes.json().catch(() => null);
       const driveData = await driveRes.json().catch(() => null);
 
-      if (!statusRes.ok) throw new Error(statusData?.error || 'No se pudo cargar la integración');
+      if (!statusRes.ok) throw new Error(statusData?.error || 'No se pudo cargar la integracion');
       setIntegration(statusData as IntegrationStatus);
       setLogs(Array.isArray(logsData?.items) ? (logsData.items as SyncLog[]) : []);
       if (driveRes.ok && driveData) setDrive(driveData as DriveStatus);
@@ -77,18 +89,21 @@ export default function IntegrationsPage() {
     try {
       const res = await fetch('/api/integrations/accounting/disconnect', {
         method: 'POST',
-        headers: { 'x-isaak-entry-channel': 'dashboard' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-isaak-entry-channel': 'dashboard',
+        },
+        body: JSON.stringify({ reauthConfirmed: true }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || 'No se pudo desconectar la integración');
-      setMessage('Integración contable desconectada.');
+      if (!res.ok) throw new Error(data?.error || 'No se pudo desconectar la integracion');
+      setMessage('Integracion contable desconectada.');
       await load();
     } catch (err) {
-      setMessage(
-        err instanceof Error ? err.message : 'No se pudo desconectar la integración contable'
-      );
+      setMessage(err instanceof Error ? err.message : 'No se pudo desconectar la integracion');
     } finally {
       setLoading(false);
+      setIsDisconnectModalOpen(false);
     }
   };
 
@@ -98,13 +113,13 @@ export default function IntegrationsPage() {
     try {
       const res = await fetch('/api/integrations/accounting/sync/run', { method: 'POST' });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || 'No se pudo lanzar sincronización');
+      if (!res.ok) throw new Error(data?.error || 'No se pudo lanzar sincronizacion');
       setMessage(
         `Sync lanzado. Procesados: ${data?.counts?.processed ?? 0}, fallidos: ${data?.counts?.failed ?? 0}`
       );
       await load();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'No se pudo lanzar sincronización');
+      setMessage(err instanceof Error ? err.message : 'No se pudo lanzar sincronizacion');
     } finally {
       setLoading(false);
     }
@@ -159,31 +174,31 @@ export default function IntegrationsPage() {
       <header>
         <h1 className="text-2xl font-bold text-slate-900">Integraciones</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Estado de integración contable vía API, sincronización manual y alta de empresa con
+          Estado de integracion contable via API, sincronizacion manual y alta de empresa con
           eInforma.
         </p>
       </header>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-slate-900">Programa de contabilidad vía API</h2>
+        <h2 className="text-base font-semibold text-slate-900">Programa de contabilidad via API</h2>
         <div className="mt-3 grid gap-2 text-sm text-slate-700 md:grid-cols-3">
           <p>
             Estado: <span className="font-semibold">{integration?.status ?? 'desconocido'}</span>
           </p>
           <p>
-            Último sync: <span className="font-semibold">{integration?.lastSyncAt || '—'}</span>
+            Ultimo sync: <span className="font-semibold">{integration?.lastSyncAt || '-'}</span>
           </p>
           <p>
-            Último error: <span className="font-semibold">{integration?.lastError || '—'}</span>
+            Ultimo error: <span className="font-semibold">{integration?.lastError || '-'}</span>
           </p>
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Plan actual: <span className="font-semibold">{integration?.plan || '—'}</span>. Esta
-          integración es opcional y está disponible en Empresa y PRO.
+          Plan actual: <span className="font-semibold">{integration?.plan || '-'}</span>. Esta
+          integracion es opcional y esta disponible en Empresa y PRO.
         </p>
         {integration?.canConnect === false ? (
           <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-            Tu plan actual incluye exportación AEAT en Excel, pero no incluye integración API. Para
+            Tu plan actual incluye exportacion AEAT en Excel, pero no incluye integracion API. Para
             activarla, mejora a Empresa o PRO.
           </div>
         ) : (
@@ -192,10 +207,10 @@ export default function IntegrationsPage() {
               href="/dashboard/integrations/isaak-for-holded/connect"
               className="rounded-full bg-[#0b6cfb]/10 px-4 py-2 text-xs font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/20"
             >
-              Conectar integración
+              Conectar integracion
             </Link>
             <button
-              onClick={disconnectIntegration}
+              onClick={() => setIsDisconnectModalOpen(true)}
               className="rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
             >
               Desconectar
@@ -229,7 +244,7 @@ export default function IntegrationsPage() {
             href="/dashboard/integrations/isaak-for-holded"
             className="inline-flex items-center justify-center rounded-full bg-[#0b6cfb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#095edb]"
           >
-            Entrar al módulo
+            Entrar al modulo
           </Link>
         </div>
       </section>
@@ -237,28 +252,28 @@ export default function IntegrationsPage() {
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-base font-semibold text-slate-900">Google Drive (opcional)</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Al conectar se crea automáticamente la carpeta{' '}
+          Al conectar se crea automaticamente la carpeta{' '}
           <span className="font-semibold">verifactu_business</span> en el Drive del cliente para
-          importación documental.
+          importacion documental.
         </p>
         <div className="mt-3 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
           <p>
             Estado: <span className="font-semibold">{drive?.status ?? 'desconocido'}</span>
           </p>
           <p>
-            Cuenta: <span className="font-semibold">{drive?.email ?? '—'}</span>
+            Cuenta: <span className="font-semibold">{drive?.email ?? '-'}</span>
           </p>
           <p>
-            Carpeta: <span className="font-semibold">{drive?.folderName ?? '—'}</span>
+            Carpeta: <span className="font-semibold">{drive?.folderName ?? '-'}</span>
           </p>
           <p>
-            Último sync: <span className="font-semibold">{drive?.lastSyncAt ?? '—'}</span>
+            Ultimo sync: <span className="font-semibold">{drive?.lastSyncAt ?? '-'}</span>
           </p>
         </div>
         {drive?.oauthReady === false ? (
           <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-            Google Drive no está listo en este entorno. Faltan variables:{' '}
-            <span className="font-semibold">{drive.missingEnv?.join(', ') || '—'}</span>
+            Google Drive no esta listo en este entorno. Faltan variables:{' '}
+            <span className="font-semibold">{drive.missingEnv?.join(', ') || '-'}</span>
           </div>
         ) : null}
         {drive?.lastError ? (
@@ -294,7 +309,7 @@ export default function IntegrationsPage() {
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-slate-900">Añadir empresa con eInforma</h2>
+        <h2 className="text-base font-semibold text-slate-900">Anadir empresa con eInforma</h2>
         <div className="mt-3 flex gap-2">
           <input
             value={taxId}
@@ -312,7 +327,7 @@ export default function IntegrationsPage() {
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-slate-900">Logs de sincronización</h2>
+        <h2 className="text-base font-semibold text-slate-900">Logs de sincronizacion</h2>
         <div className="mt-3 space-y-2">
           {logs.length === 0 ? <p className="text-sm text-slate-500">Sin logs recientes.</p> : null}
           {logs.map((log) => (
@@ -322,7 +337,7 @@ export default function IntegrationsPage() {
             >
               <p className="font-semibold uppercase text-slate-500">{log.level}</p>
               <p className="mt-1">{log.message}</p>
-              <p className="mt-1 text-slate-500">{log.created_at || log.createdAt || '—'}</p>
+              <p className="mt-1 text-slate-500">{log.created_at || log.createdAt || '-'}</p>
             </div>
           ))}
         </div>
@@ -330,6 +345,17 @@ export default function IntegrationsPage() {
 
       {loading ? <p className="text-xs text-slate-500">Procesando...</p> : null}
       {message ? <p className="text-xs text-slate-700">{message}</p> : null}
+
+      <ConfirmActionModal
+        isOpen={isDisconnectModalOpen}
+        title="Desconectar integracion contable"
+        description="Esta accion detendra el acceso tecnico hasta que vuelvas a conectar la cuenta desde el dashboard."
+        confirmLabel="Desconectar"
+        tone="danger"
+        isWorking={loading}
+        onClose={() => setIsDisconnectModalOpen(false)}
+        onConfirm={disconnectIntegration}
+      />
     </div>
   );
 }

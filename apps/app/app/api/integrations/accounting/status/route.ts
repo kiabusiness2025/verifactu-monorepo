@@ -5,9 +5,16 @@ import {
   getConnectorRequestId,
   logConnectorEvent,
   withConnectorRequestId,
+  buildConnectorEvent,
 } from '@/lib/integrations/connectorObservability';
 import { getHoldedOnboardingTokenFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
 import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import { buildHoldedSummaries } from '@/lib/integrations/holdedGovernanceService';
+import {
+  buildConnectionStatusDto,
+  buildDefaultAvailableActions,
+  buildGovernanceFlags,
+} from '@verifactu/integrations';
 
 export const runtime = 'nodejs';
 
@@ -42,10 +49,25 @@ export async function GET(request: NextRequest) {
       onboardingToken,
     });
     if ('error' in auth) {
+      logConnectorEvent(
+        'api/integrations/accounting/status',
+        'warn',
+        buildConnectorEvent({
+          requestId,
+          entryChannel,
+          tenantId: tenantIdHint,
+          stage,
+          outcome: 'auth_error',
+          error: auth.error,
+        })
+      );
       if (entryChannel === 'chatgpt') {
         return withConnectorRequestId(
           NextResponse.json({
             provider: 'holded',
+            connection: null,
+            governanceFlags: null,
+            availableActions: buildDefaultAvailableActions({ status: 'disconnected' }),
             status: 'disconnected',
             lastSyncAt: null,
             lastError: null,
@@ -74,19 +96,65 @@ export async function GET(request: NextRequest) {
     stage = 'access';
     const access = await getAccountingIntegrationAccess({ tenantId: auth.tenantId, entryChannel });
     stage = 'lookup';
-    const connection = await resolveSharedHoldedConnectionStatusForTenant(
+    const resolved = await resolveSharedHoldedConnectionStatusForTenant(
       auth.tenantId,
       entryChannel
     );
+    const summaries = await buildHoldedSummaries({
+      tenantId: auth.tenantId,
+      channel: entryChannel,
+    });
+    const connection = resolved
+      ? buildConnectionStatusDto({
+          connectionId: resolved.id,
+          tenantId: auth.tenantId,
+          status: resolved.status,
+          keyMasked: null,
+          providerAccountId: resolved.providerAccountId,
+          connectedAt: resolved.connectedAt,
+          lastValidatedAt: resolved.lastValidatedAt,
+          lastSyncAt: resolved.lastSyncAt,
+          lastError: resolved.lastError,
+          originChannel: resolved.originChannel,
+          supportedModules: [],
+        })
+      : null;
+    const governanceFlags = resolved ? buildGovernanceFlags(resolved) : null;
+    const availableActions = buildDefaultAvailableActions({
+      status: connection?.status,
+      underClaimReview: governanceFlags?.underClaimReview,
+      clientAdminGap: governanceFlags?.clientAdminGap,
+      highGovernanceRisk: governanceFlags?.highGovernanceRisk,
+    });
     const connected = connection?.status === 'connected';
     const status = connection?.status ?? 'disconnected';
     const lastSyncAt = connection?.lastSyncAt ?? null;
     const lastError = connection?.lastError ?? null;
     const degraded = false;
 
+    logConnectorEvent(
+      'api/integrations/accounting/status',
+      'info',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage,
+        outcome: 'success',
+        status,
+        connected,
+      })
+    );
+
     return withConnectorRequestId(
       NextResponse.json({
         provider: 'holded',
+        connection,
+        governanceFlags,
+        availableActions,
+        membershipsSummary: summaries.membershipsSummary,
+        recipientsSummary: summaries.recipientsSummary,
+        claimsSummary: summaries.claimsSummary,
         status,
         lastSyncAt,
         lastError,
@@ -107,6 +175,7 @@ export async function GET(request: NextRequest) {
       requestId,
       stage,
       entryChannel,
+      outcome: 'exception',
       message: error instanceof Error ? error.message : String(error),
     });
 
@@ -114,6 +183,9 @@ export async function GET(request: NextRequest) {
       return withConnectorRequestId(
         NextResponse.json({
           provider: 'holded',
+          connection: null,
+          governanceFlags: null,
+          availableActions: buildDefaultAvailableActions({ status: 'disconnected' }),
           status: 'disconnected',
           lastSyncAt: null,
           lastError: null,

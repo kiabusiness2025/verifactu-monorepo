@@ -58,6 +58,17 @@ async function bootstrapIntegrationStorageTables() {
 
   try {
     await query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+    await query(
+      [
+        'DO $$',
+        'BEGIN',
+        "  CREATE TYPE ownership_status AS ENUM ('confirmed', 'pending_confirmation', 'third_party_managed');",
+        'EXCEPTION',
+        '  WHEN duplicate_object THEN NULL;',
+        'END',
+        '$$;',
+      ].join(' ')
+    );
 
     await query(
       `
@@ -88,16 +99,27 @@ async function bootstrapIntegrationStorageTables() {
         tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
         provider text NOT NULL,
         channel_key text NOT NULL DEFAULT 'dashboard',
+        origin_channel text,
         provider_account_id text,
         credential_type text NOT NULL DEFAULT 'api_key',
         api_key_enc text,
         scopes_granted text[] NOT NULL DEFAULT ARRAY[]::text[],
         connection_status text NOT NULL DEFAULT 'disconnected',
+        ownership_status ownership_status,
+        managed_by_third_party boolean NOT NULL DEFAULT false,
+        client_admin_gap boolean NOT NULL DEFAULT true,
+        high_governance_risk boolean NOT NULL DEFAULT false,
+        under_claim_review boolean NOT NULL DEFAULT false,
         connected_by_user_id text REFERENCES users(id) ON DELETE SET NULL,
+        technical_operator_user_id text REFERENCES users(id) ON DELETE SET NULL,
         connected_at timestamptz,
         last_validated_at timestamptz,
         last_sync_at timestamptz,
+        disconnected_at timestamptz,
+        revoked_at timestamptz,
         last_error text,
+        company_identity_json jsonb,
+        governance_updated_at timestamptz,
         legal_terms_accepted_at timestamptz,
         legal_privacy_accepted_at timestamptz,
         legal_acceptance_version text,
@@ -112,6 +134,9 @@ async function bootstrapIntegrationStorageTables() {
     );
     await query(
       'CREATE INDEX IF NOT EXISTS external_connections_connected_by_user_idx ON external_connections (connected_by_user_id)'
+    );
+    await query(
+      'CREATE INDEX IF NOT EXISTS external_connections_technical_operator_user_idx ON external_connections (technical_operator_user_id)'
     );
   } catch (error) {
     console.error('[accountingStore] failed to bootstrap integration storage tables', {
@@ -199,6 +224,46 @@ async function ensureExternalConnectionsOptionalSchema() {
   }
 
   try {
+    await query(
+      [
+        'DO $$',
+        'BEGIN',
+        "  CREATE TYPE ownership_status AS ENUM ('confirmed', 'pending_confirmation', 'third_party_managed');",
+        'EXCEPTION',
+        '  WHEN duplicate_object THEN NULL;',
+        'END',
+        '$$;',
+      ].join(' ')
+    );
+    await query('ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS origin_channel text');
+    await query(
+      'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS ownership_status ownership_status'
+    );
+    await query(
+      'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS managed_by_third_party boolean NOT NULL DEFAULT false'
+    );
+    await query(
+      'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS client_admin_gap boolean NOT NULL DEFAULT true'
+    );
+    await query(
+      'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS high_governance_risk boolean NOT NULL DEFAULT false'
+    );
+    await query(
+      'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS under_claim_review boolean NOT NULL DEFAULT false'
+    );
+    await query(
+      'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS technical_operator_user_id text REFERENCES users(id) ON DELETE SET NULL'
+    );
+    await query(
+      'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS disconnected_at timestamptz'
+    );
+    await query('ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS revoked_at timestamptz');
+    await query(
+      'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS company_identity_json jsonb'
+    );
+    await query(
+      'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS governance_updated_at timestamptz'
+    );
     await query('ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS last_error text');
     await query(
       'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS legal_terms_accepted_at timestamptz'
@@ -208,6 +273,9 @@ async function ensureExternalConnectionsOptionalSchema() {
     );
     await query(
       'ALTER TABLE external_connections ADD COLUMN IF NOT EXISTS legal_acceptance_version text'
+    );
+    await query(
+      'CREATE INDEX IF NOT EXISTS external_connections_technical_operator_user_idx ON external_connections (technical_operator_user_id)'
     );
     externalConnectionsOptionalColumnsEnsured = true;
   } catch (error) {
@@ -338,15 +406,26 @@ export async function upsertAccountingIntegration(args: {
               tenant_id,
               provider,
               channel_key,
+              origin_channel,
               credential_type,
               api_key_enc,
               scopes_granted,
               connection_status,
+              ownership_status,
+              managed_by_third_party,
+              client_admin_gap,
+              high_governance_risk,
+              under_claim_review,
               last_error,
               connected_by_user_id,
+              technical_operator_user_id,
               connected_at,
               last_validated_at,
               last_sync_at,
+              disconnected_at,
+              revoked_at,
+              company_identity_json,
+              governance_updated_at,
               legal_terms_accepted_at,
               legal_privacy_accepted_at,
               legal_acceptance_version
@@ -355,28 +434,49 @@ export async function upsertAccountingIntegration(args: {
               $1,
               $2,
               $3,
+              $3,
               'api_key',
               $4,
               ARRAY[]::text[],
               $5,
+              'pending_confirmation',
+              false,
+              true,
+              false,
+              false,
               $6,
+              $7,
               $7,
               CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
               CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
               CASE WHEN $5 = 'connected' THEN now() ELSE NULL END,
+              NULL,
+              NULL,
+              NULL::jsonb,
+              now(),
               $8,
               $9,
               $10
             )
             ON CONFLICT (tenant_id, provider, channel_key)
             DO UPDATE SET
+              origin_channel = COALESCE(EXCLUDED.origin_channel, external_connections.origin_channel),
               api_key_enc = EXCLUDED.api_key_enc,
               connection_status = EXCLUDED.connection_status,
+              ownership_status = COALESCE(external_connections.ownership_status, EXCLUDED.ownership_status),
+              managed_by_third_party = COALESCE(external_connections.managed_by_third_party, EXCLUDED.managed_by_third_party),
+              client_admin_gap = COALESCE(external_connections.client_admin_gap, EXCLUDED.client_admin_gap),
+              high_governance_risk = COALESCE(external_connections.high_governance_risk, EXCLUDED.high_governance_risk),
+              under_claim_review = COALESCE(external_connections.under_claim_review, EXCLUDED.under_claim_review),
               last_error = EXCLUDED.last_error,
               connected_by_user_id = COALESCE(EXCLUDED.connected_by_user_id, external_connections.connected_by_user_id),
+              technical_operator_user_id = COALESCE(EXCLUDED.technical_operator_user_id, external_connections.technical_operator_user_id),
               connected_at = COALESCE(EXCLUDED.connected_at, external_connections.connected_at),
               last_validated_at = EXCLUDED.last_validated_at,
               last_sync_at = COALESCE(EXCLUDED.last_sync_at, external_connections.last_sync_at),
+              disconnected_at = NULL,
+              revoked_at = NULL,
+              governance_updated_at = now(),
               legal_terms_accepted_at = COALESCE(EXCLUDED.legal_terms_accepted_at, external_connections.legal_terms_accepted_at),
               legal_privacy_accepted_at = COALESCE(EXCLUDED.legal_privacy_accepted_at, external_connections.legal_privacy_accepted_at),
               legal_acceptance_version = COALESCE(EXCLUDED.legal_acceptance_version, external_connections.legal_acceptance_version),
@@ -409,15 +509,26 @@ export async function upsertAccountingIntegration(args: {
             INSERT INTO external_connections (
               tenant_id,
               provider,
+              origin_channel,
               credential_type,
               api_key_enc,
               scopes_granted,
               connection_status,
+              ownership_status,
+              managed_by_third_party,
+              client_admin_gap,
+              high_governance_risk,
+              under_claim_review,
               last_error,
               connected_by_user_id,
+              technical_operator_user_id,
               connected_at,
               last_validated_at,
               last_sync_at,
+              disconnected_at,
+              revoked_at,
+              company_identity_json,
+              governance_updated_at,
               legal_terms_accepted_at,
               legal_privacy_accepted_at,
               legal_acceptance_version
@@ -425,28 +536,49 @@ export async function upsertAccountingIntegration(args: {
             VALUES (
               $1,
               $2,
+              $10,
               'api_key',
               $3,
               ARRAY[]::text[],
               $4,
+              'pending_confirmation',
+              false,
+              true,
+              false,
+              false,
               $5,
+              $6,
               $6,
               CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
               CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
               CASE WHEN $4 = 'connected' THEN now() ELSE NULL END,
+              NULL,
+              NULL,
+              NULL::jsonb,
+              now(),
               $7,
               $8,
               $9
             )
             ON CONFLICT (tenant_id, provider)
             DO UPDATE SET
+              origin_channel = COALESCE(EXCLUDED.origin_channel, external_connections.origin_channel),
               api_key_enc = EXCLUDED.api_key_enc,
               connection_status = EXCLUDED.connection_status,
+              ownership_status = COALESCE(external_connections.ownership_status, EXCLUDED.ownership_status),
+              managed_by_third_party = COALESCE(external_connections.managed_by_third_party, EXCLUDED.managed_by_third_party),
+              client_admin_gap = COALESCE(external_connections.client_admin_gap, EXCLUDED.client_admin_gap),
+              high_governance_risk = COALESCE(external_connections.high_governance_risk, EXCLUDED.high_governance_risk),
+              under_claim_review = COALESCE(external_connections.under_claim_review, EXCLUDED.under_claim_review),
               last_error = EXCLUDED.last_error,
               connected_by_user_id = COALESCE(EXCLUDED.connected_by_user_id, external_connections.connected_by_user_id),
+              technical_operator_user_id = COALESCE(EXCLUDED.technical_operator_user_id, external_connections.technical_operator_user_id),
               connected_at = COALESCE(EXCLUDED.connected_at, external_connections.connected_at),
               last_validated_at = EXCLUDED.last_validated_at,
               last_sync_at = COALESCE(EXCLUDED.last_sync_at, external_connections.last_sync_at),
+              disconnected_at = NULL,
+              revoked_at = NULL,
+              governance_updated_at = now(),
               legal_terms_accepted_at = COALESCE(EXCLUDED.legal_terms_accepted_at, external_connections.legal_terms_accepted_at),
               legal_privacy_accepted_at = COALESCE(EXCLUDED.legal_privacy_accepted_at, external_connections.legal_privacy_accepted_at),
               legal_acceptance_version = COALESCE(EXCLUDED.legal_acceptance_version, external_connections.legal_acceptance_version),
@@ -463,6 +595,7 @@ export async function upsertAccountingIntegration(args: {
               legalTermsAcceptedAt ?? null,
               legalPrivacyAcceptedAt ?? null,
               legalAcceptanceVersion ?? null,
+              normalizedChannel,
             ]
           );
 
@@ -518,17 +651,50 @@ export async function disconnectAccountingIntegration(
             tenant_id,
             provider,
             channel_key,
+            origin_channel,
             credential_type,
             api_key_enc,
             scopes_granted,
             connection_status,
+            ownership_status,
+            managed_by_third_party,
+            client_admin_gap,
+            high_governance_risk,
+            under_claim_review,
+            technical_operator_user_id,
+            disconnected_at,
+            governance_updated_at,
             last_error
           )
-          VALUES ($1, $2, $3, 'api_key', NULL, ARRAY[]::text[], 'disconnected', NULL)
+          VALUES (
+            $1,
+            $2,
+            $3,
+            $3,
+            'api_key',
+            NULL,
+            ARRAY[]::text[],
+            'disconnected',
+            'pending_confirmation',
+            false,
+            true,
+            false,
+            false,
+            NULL,
+            now(),
+            now(),
+            NULL
+          )
           ON CONFLICT (tenant_id, provider, channel_key)
           DO UPDATE SET
+            origin_channel = COALESCE(external_connections.origin_channel, EXCLUDED.origin_channel),
             connection_status = 'disconnected',
+            ownership_status = COALESCE(external_connections.ownership_status, EXCLUDED.ownership_status),
             api_key_enc = NULL,
+            technical_operator_user_id = external_connections.technical_operator_user_id,
+            disconnected_at = now(),
+            revoked_at = NULL,
+            governance_updated_at = now(),
             last_error = NULL,
             updated_at = now()
           RETURNING id, tenant_id, provider, connection_status AS status, last_sync_at::text, created_at::text, updated_at::text
@@ -548,22 +714,54 @@ export async function disconnectAccountingIntegration(
           INSERT INTO external_connections (
             tenant_id,
             provider,
+            origin_channel,
             credential_type,
             api_key_enc,
             scopes_granted,
             connection_status,
+            ownership_status,
+            managed_by_third_party,
+            client_admin_gap,
+            high_governance_risk,
+            under_claim_review,
+            technical_operator_user_id,
+            disconnected_at,
+            governance_updated_at,
             last_error
           )
-          VALUES ($1, $2, 'api_key', NULL, ARRAY[]::text[], 'disconnected', NULL)
+          VALUES (
+            $1,
+            $2,
+            $3,
+            'api_key',
+            NULL,
+            ARRAY[]::text[],
+            'disconnected',
+            'pending_confirmation',
+            false,
+            true,
+            false,
+            false,
+            NULL,
+            now(),
+            now(),
+            NULL
+          )
           ON CONFLICT (tenant_id, provider)
           DO UPDATE SET
+            origin_channel = COALESCE(external_connections.origin_channel, EXCLUDED.origin_channel),
             connection_status = 'disconnected',
+            ownership_status = COALESCE(external_connections.ownership_status, EXCLUDED.ownership_status),
             api_key_enc = NULL,
+            technical_operator_user_id = external_connections.technical_operator_user_id,
+            disconnected_at = now(),
+            revoked_at = NULL,
+            governance_updated_at = now(),
             last_error = NULL,
             updated_at = now()
           RETURNING id, tenant_id, provider, connection_status AS status, last_sync_at::text, created_at::text, updated_at::text
           `,
-          [tenantId, SHARED_PROVIDER]
+          [tenantId, SHARED_PROVIDER, normalizedChannel]
         );
 
     if (!saved && external) {
@@ -707,7 +905,14 @@ export async function touchIntegrationSyncOk(
       await query(
         `
         UPDATE external_connections
-        SET connection_status = 'connected', last_sync_at = now(), last_validated_at = now(), last_error = NULL, updated_at = now()
+        SET connection_status = 'connected',
+            last_sync_at = now(),
+            last_validated_at = now(),
+            last_error = NULL,
+            disconnected_at = NULL,
+            revoked_at = NULL,
+            governance_updated_at = now(),
+            updated_at = now()
         WHERE tenant_id = $1 AND provider = $2 AND channel_key = $3
         `,
         [tenantId, SHARED_PROVIDER, normalizedChannel]
@@ -716,7 +921,14 @@ export async function touchIntegrationSyncOk(
       await query(
         `
         UPDATE external_connections
-        SET connection_status = 'connected', last_sync_at = now(), last_validated_at = now(), last_error = NULL, updated_at = now()
+        SET connection_status = 'connected',
+            last_sync_at = now(),
+            last_validated_at = now(),
+            last_error = NULL,
+            disconnected_at = NULL,
+            revoked_at = NULL,
+            governance_updated_at = now(),
+            updated_at = now()
         WHERE tenant_id = $1 AND provider = $2
         `,
         [tenantId, SHARED_PROVIDER]
@@ -737,7 +949,7 @@ export async function setIntegrationError(
       await query(
         `
         UPDATE external_connections
-        SET connection_status = 'error', last_error = $2, updated_at = now()
+        SET connection_status = 'error', last_error = $2, governance_updated_at = now(), updated_at = now()
         WHERE tenant_id = $1 AND provider = $3 AND channel_key = $4
         `,
         [tenantId, error.slice(0, 1000), SHARED_PROVIDER, normalizedChannel]
@@ -746,7 +958,7 @@ export async function setIntegrationError(
       await query(
         `
         UPDATE external_connections
-        SET connection_status = 'error', last_error = $2, updated_at = now()
+        SET connection_status = 'error', last_error = $2, governance_updated_at = now(), updated_at = now()
         WHERE tenant_id = $1 AND provider = $3
         `,
         [tenantId, error.slice(0, 1000), SHARED_PROVIDER]
