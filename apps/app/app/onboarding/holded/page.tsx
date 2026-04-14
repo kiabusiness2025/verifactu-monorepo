@@ -306,9 +306,17 @@ async function resolveTenantProfileColumnsSafe() {
 }
 
 async function resolveOnboardingSessionSafe(token: string | null) {
-  if (!token) return null;
+  if (!token) {
+    return {
+      onboardingToken: null,
+      onboardingSession: null,
+    };
+  }
   try {
-    return await resolveHoldedOnboardingSession(token);
+    return {
+      onboardingToken: token,
+      onboardingSession: await resolveHoldedOnboardingSession(token),
+    };
   } catch (error) {
     console.error(
       '[onboarding/holded] onboarding token validation failed, continuing without token',
@@ -316,7 +324,10 @@ async function resolveOnboardingSessionSafe(token: string | null) {
         message: error instanceof Error ? error.message : String(error),
       }
     );
-    return null;
+    return {
+      onboardingToken: null,
+      onboardingSession: null,
+    };
   }
 }
 
@@ -350,8 +361,9 @@ export default async function HoldedOnboardingPage({
     }
   }
   const session = await getSessionPayload();
-  const onboardingToken = getHoldedOnboardingTokenFromSearchParams(search);
-  const onboardingSession = await resolveOnboardingSessionSafe(onboardingToken);
+  const rawOnboardingToken = getHoldedOnboardingTokenFromSearchParams(search);
+  const { onboardingToken, onboardingSession } =
+    await resolveOnboardingSessionSafe(rawOnboardingToken);
   const entryChannel = inferHoldedEntryChannel({
     channel: params.channel,
     source: params.source,

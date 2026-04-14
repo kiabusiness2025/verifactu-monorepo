@@ -194,6 +194,32 @@ describe('HoldedOnboardingPage', () => {
     expect(loginUrl.pathname).toBe('/login');
     expect(nextUrl.pathname).toBe('/onboarding/holded');
     expect(nextUrl.searchParams.get('tenant_id')).toBe('tenant-demo');
+    expect(nextUrl.searchParams.get('onboarding_token')).toBeNull();
+  });
+
+  it('mints a clean onboarding token when session exists but incoming token is invalid', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'session-user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-session',
+    });
+    (resolveHoldedOnboardingSession as jest.Mock).mockRejectedValueOnce(
+      new Error('invalid onboarding token signature')
+    );
+
+    const element = await HoldedOnboardingPage({
+      searchParams: Promise.resolve({
+        next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
+        channel: 'chatgpt',
+        onboarding_token: 'broken-token',
+      }),
+    });
+
+    expect(mintHoldedOnboardingTokenForSubject).toHaveBeenCalledWith(
+      expect.objectContaining({ uid: 'session-user-1' })
+    );
+    expect(element.props.onboardingToken).toBe('generated-onboarding-token');
   });
 
   it('passes tenant hints into tenant resolution and the client props', async () => {
