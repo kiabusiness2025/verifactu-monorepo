@@ -125,6 +125,19 @@ describe('accounting claim detail route', () => {
     expect(payload.governanceFlags.underClaimReview).toBe(false);
   });
 
+  it('returns 500 when claim details fail unexpectedly', async () => {
+    (getClaimDetails as jest.Mock).mockRejectedValue(new Error('db_down'));
+
+    const response = await GET(
+      new NextRequest('https://app.verifactu.business/api/integrations/accounting/claims/claim-1'),
+      { params: Promise.resolve({ id: 'claim-1' }) }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload.error).toBe('No se pudo cargar la reclamacion.');
+  });
+
   it('keeps claim resolution successful when notification delivery fails', async () => {
     (updateClaim as jest.Mock).mockResolvedValue({
       claimId: 'claim-1',
@@ -158,5 +171,27 @@ describe('accounting claim detail route', () => {
     expect(response.status).toBe(200);
     expect(payload.ok).toBe(true);
     expect(payload.notified).toBe(false);
+  });
+
+  it('returns 500 when claim update fails unexpectedly', async () => {
+    (updateClaim as jest.Mock).mockRejectedValue(new Error('db_down'));
+
+    const response = await PATCH(
+      new NextRequest('https://app.verifactu.business/api/integrations/accounting/claims/claim-1', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          status: 'resolved_rejected',
+          outcome: 'rejected',
+          resolutionNotes: 'Not validated',
+        }),
+      }),
+      { params: Promise.resolve({ id: 'claim-1' }) }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload.ok).toBe(false);
+    expect(payload.error).toBe('No se pudo actualizar la reclamacion.');
   });
 });

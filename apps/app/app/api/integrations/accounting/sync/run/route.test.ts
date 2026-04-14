@@ -56,6 +56,7 @@ describe('POST /api/integrations/accounting/sync/run', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
+    expect(response.headers.get('x-verifactu-request-id')).toBeTruthy();
     expect(payload.ok).toBe(true);
     expect(requireTenantContext).toHaveBeenCalledWith(
       expect.objectContaining({ channelType: 'chatgpt' })
@@ -93,5 +94,23 @@ describe('POST /api/integrations/accounting/sync/run', () => {
       'dashboard'
     );
     expect(touchIntegrationSyncOk).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when sync execution fails before processing outbox', async () => {
+    (getPendingOutbox as jest.Mock).mockRejectedValue(new Error('db_down'));
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/integrations/accounting/sync/run',
+      {
+        method: 'POST',
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get('x-verifactu-request-id')).toBeTruthy();
+    expect(payload.error).toBe('No se pudo ejecutar la sincronizacion manual.');
   });
 });

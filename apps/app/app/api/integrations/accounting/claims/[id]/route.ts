@@ -33,6 +33,17 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   });
 
   if ('error' in auth) {
+    logConnectorEvent(
+      'api/integrations/accounting/claims/[id]',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'auth_error',
+        error: auth.error,
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json({ error: auth.error, requestId }, { status: auth.status }),
       requestId
@@ -42,6 +53,17 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   try {
     assertHoldedConnectorAdminSessionAccess(auth.session, { force: true });
   } catch {
+    logConnectorEvent(
+      'api/integrations/accounting/claims/[id]',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'admin_access_required',
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json({ error: getHoldedConnectorAdminNotice(), requestId }, { status: 403 }),
       requestId
@@ -57,6 +79,20 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     });
     const holdedContext = await getTenantHoldedContext(auth.tenantId, entryChannel);
 
+    logConnectorEvent(
+      'api/integrations/accounting/claims/[id]',
+      'info',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'details',
+        outcome: 'success',
+        claimId: details.claim.claimId,
+        status: details.claim.status,
+      })
+    );
+
     return withConnectorRequestId(
       NextResponse.json({
         claim: details.claim,
@@ -67,12 +103,32 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       requestId
     );
   } catch (error) {
-    const message =
-      error instanceof Error && error.message === 'claim_not_found'
-        ? 'No se ha encontrado la reclamacion.'
-        : error instanceof Error
-          ? error.message
-          : 'No se pudo cargar la reclamacion.';
+    const isNotFound = error instanceof Error && error.message === 'claim_not_found';
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    const message = isNotFound
+      ? 'No se ha encontrado la reclamacion.'
+      : 'No se pudo cargar la reclamacion.';
+
+    logConnectorEvent(
+      'api/integrations/accounting/claims/[id]',
+      isNotFound ? 'warn' : 'error',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'details',
+        outcome: isNotFound ? 'not_found' : 'exception',
+        claimId: params.id,
+        error: rawMessage,
+      })
+    );
+
+    if (!isNotFound) {
+      return withConnectorRequestId(
+        NextResponse.json({ error: message, requestId }, { status: 500 }),
+        requestId
+      );
+    }
 
     return withConnectorRequestId(
       NextResponse.json({ error: message, requestId }, { status: 404 }),
@@ -90,6 +146,17 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   });
 
   if ('error' in auth) {
+    logConnectorEvent(
+      'api/integrations/accounting/claims/[id]',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'auth_error',
+        error: auth.error,
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json({ ok: false, error: auth.error, requestId }, { status: auth.status }),
       requestId
@@ -99,6 +166,17 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   try {
     assertHoldedConnectorAdminSessionAccess(auth.session, { force: true });
   } catch {
+    logConnectorEvent(
+      'api/integrations/accounting/claims/[id]',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'admin_access_required',
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json(
         { ok: false, error: getHoldedConnectorAdminNotice(), requestId },
@@ -111,6 +189,18 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   const params = await context.params;
   const body = await request.json().catch(() => ({}));
   if (typeof body?.status !== 'string' || !body.status.trim()) {
+    logConnectorEvent(
+      'api/integrations/accounting/claims/[id]',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'body',
+        outcome: 'invalid_input',
+        error: 'status es obligatorio',
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json({ ok: false, error: 'status es obligatorio', requestId }, { status: 400 }),
       requestId
@@ -150,6 +240,21 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return false;
     });
 
+    logConnectorEvent(
+      'api/integrations/accounting/claims/[id]',
+      'info',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'update',
+        outcome: 'success',
+        claimId: claim.claimId,
+        status: claim.status,
+        notified,
+      })
+    );
+
     return withConnectorRequestId(
       NextResponse.json({
         ok: true,
@@ -161,15 +266,31 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       requestId
     );
   } catch (error) {
-    const message =
-      error instanceof Error && error.message === 'claim_not_found'
-        ? 'No se ha encontrado la reclamacion.'
-        : error instanceof Error
-          ? error.message
-          : 'No se pudo actualizar la reclamacion.';
+    const isNotFound = error instanceof Error && error.message === 'claim_not_found';
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    const message = isNotFound
+      ? 'No se ha encontrado la reclamacion.'
+      : 'No se pudo actualizar la reclamacion.';
+
+    logConnectorEvent(
+      'api/integrations/accounting/claims/[id]',
+      isNotFound ? 'warn' : 'error',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'update',
+        outcome: isNotFound ? 'not_found' : 'exception',
+        claimId: params.id,
+        error: rawMessage,
+      })
+    );
 
     return withConnectorRequestId(
-      NextResponse.json({ ok: false, error: message, requestId }, { status: 404 }),
+      NextResponse.json(
+        { ok: false, error: message, requestId },
+        { status: isNotFound ? 404 : 500 }
+      ),
       requestId
     );
   }

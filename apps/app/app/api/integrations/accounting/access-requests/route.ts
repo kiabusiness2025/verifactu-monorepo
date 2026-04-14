@@ -1,6 +1,8 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import {
+  buildConnectorEvent,
   getConnectorRequestId,
+  logConnectorEvent,
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
 import { listAccessRequests } from '@/lib/integrations/holdedGovernanceService';
@@ -26,6 +28,17 @@ export async function GET(request: NextRequest) {
   });
 
   if ('error' in auth) {
+    logConnectorEvent(
+      'api/integrations/accounting/access-requests',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'auth_error',
+        error: auth.error,
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json({ error: auth.error, requestId }, { status: auth.status }),
       requestId
@@ -35,22 +48,69 @@ export async function GET(request: NextRequest) {
   try {
     assertHoldedConnectorAdminSessionAccess(auth.session, { force: true });
   } catch {
+    logConnectorEvent(
+      'api/integrations/accounting/access-requests',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'admin_access_required',
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json({ error: getHoldedConnectorAdminNotice(), requestId }, { status: 403 }),
       requestId
     );
   }
 
-  const items = await listAccessRequests({
-    tenantId: auth.tenantId,
-    channel: entryChannel,
-  });
+  try {
+    const items = await listAccessRequests({
+      tenantId: auth.tenantId,
+      channel: entryChannel,
+    });
 
-  return withConnectorRequestId(
-    NextResponse.json({
-      items,
-      requestId,
-    }),
-    requestId
-  );
+    logConnectorEvent(
+      'api/integrations/accounting/access-requests',
+      'info',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'list',
+        outcome: 'success',
+        count: items.length,
+      })
+    );
+
+    return withConnectorRequestId(
+      NextResponse.json({
+        items,
+        requestId,
+      }),
+      requestId
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logConnectorEvent(
+      'api/integrations/accounting/access-requests',
+      'error',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'list',
+        outcome: 'exception',
+        error: message,
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        { error: 'No se pudo cargar la lista de solicitudes de acceso.', requestId },
+        { status: 500 }
+      ),
+      requestId
+    );
+  }
 }
