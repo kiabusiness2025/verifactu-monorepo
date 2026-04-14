@@ -73,8 +73,12 @@ async function buildObservabilitySummary(tenantId: string, request: NextRequest)
       requestId: extractLogRequestId(row.data),
     }));
 
-  const openClaims = claims.filter((claim) => OPEN_CLAIM_STATUSES.has(claim.status)).length;
-  const pendingAccessRequests = accessRequests.filter((item) => item.status === 'submitted').length;
+  const openClaims = claims.filter((claim: { status: string }) =>
+    OPEN_CLAIM_STATUSES.has(claim.status)
+  ).length;
+  const pendingAccessRequests = accessRequests.filter(
+    (item: { status: string }) => item.status === 'submitted'
+  ).length;
   const blockedActions = getBlockedActions(
     (context.availableActions as unknown as Record<string, unknown>) ?? null
   );
