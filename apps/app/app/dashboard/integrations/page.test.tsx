@@ -101,6 +101,7 @@ describe('IntegrationsPage', () => {
 
     expect(await screen.findByText('Programa de contabilidad via API')).toBeInTheDocument();
     expect(await screen.findByText('Resumen operativo por tenant/requestId')).toBeInTheDocument();
+    expect(await screen.findByText('Perfil fiscal pendiente')).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Desconectar' })[0]);
     expect(await screen.findByText('Desconectar integracion contable')).toBeInTheDocument();

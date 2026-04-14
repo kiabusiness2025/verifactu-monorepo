@@ -450,6 +450,20 @@ export default function IsaakForHoldedPage() {
   ).length;
   const disconnectBlocked = integration?.availableActions?.disconnect.blocked ?? true;
   const openClaimBlocked = integration?.availableActions?.openClaim.blocked ?? false;
+  const connectedToHolded = integration?.connection?.status === 'connected';
+  const fiscalProfilePending =
+    connectedToHolded &&
+    (!logsSummary ||
+      logsSummary.summary.governance.blockedActions.length > 0 ||
+      logsSummary.summary.sync.errors > 0 ||
+      logsSummary.summary.accessRequests.pending > 0 ||
+      integration?.governanceFlags?.clientAdminGap === true ||
+      integration?.governanceFlags?.highGovernanceRisk === true);
+  const fiscalProfileBadge = !connectedToHolded
+    ? 'Sin conexion activa'
+    : fiscalProfilePending
+      ? 'Perfil fiscal pendiente'
+      : 'Perfil fiscal completo';
 
   const requestConfirmation = (dialog: ConfirmDialogState) => {
     setConfirmDialog(dialog);
@@ -876,6 +890,12 @@ export default function IsaakForHoldedPage() {
               label={connectionBadge.label}
               variant={badgeVariantToUiVariant(connectionBadge.variant)}
             />
+            <StatusBadge
+              label={fiscalProfileBadge}
+              variant={
+                !connectedToHolded ? 'neutral' : fiscalProfilePending ? 'warning' : 'success'
+              }
+            />
             {governanceBadges.map((badge) => (
               <StatusBadge
                 key={badge.key}
@@ -924,6 +944,14 @@ export default function IsaakForHoldedPage() {
               ? 'Actualizar conexion'
               : 'Conectar Holded'}
           </Link>
+          {connectedToHolded && fiscalProfilePending ? (
+            <Link
+              href="/dashboard/integrations/isaak-for-holded/connect?focus=profile"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Completar perfil fiscal
+            </Link>
+          ) : null}
           <button
             onClick={() => void load()}
             disabled={loading || Boolean(workingAction)}

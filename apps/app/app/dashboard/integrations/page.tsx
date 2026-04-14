@@ -93,6 +93,18 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
+  const connectedToHolded = integration?.connected === true;
+  const fiscalProfilePending =
+    connectedToHolded &&
+    (!logsSummary ||
+      logsSummary.summary.governance.blockedActions.length > 0 ||
+      logsSummary.summary.sync.errors > 0 ||
+      logsSummary.summary.accessRequests.pending > 0);
+  const fiscalProfileBadge = !connectedToHolded
+    ? 'Sin conexion activa'
+    : fiscalProfilePending
+      ? 'Perfil fiscal pendiente'
+      : 'Perfil fiscal completo';
 
   useEffect(() => {
     if (searchParams?.get('holded_admin') === 'forbidden') {
@@ -293,6 +305,27 @@ export default function IntegrationsPage() {
               Accede a una capa guiada para traducir Holded a lenguaje de negocio, consultar
               facturas, clientes y cuentas contables, y preparar borradores desde Isaak.
             </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                  !connectedToHolded
+                    ? 'bg-slate-100 text-slate-700'
+                    : fiscalProfilePending
+                      ? 'bg-amber-100 text-amber-900'
+                      : 'bg-emerald-100 text-emerald-900'
+                }`}
+              >
+                {fiscalProfileBadge}
+              </span>
+              {connectedToHolded && fiscalProfilePending ? (
+                <Link
+                  href="/dashboard/integrations/isaak-for-holded/connect?focus=profile"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Completar perfil fiscal
+                </Link>
+              ) : null}
+            </div>
           </div>
           <Link
             href="/dashboard/integrations/isaak-for-holded"
