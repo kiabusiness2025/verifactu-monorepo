@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -275,6 +275,43 @@ export default function OnboardingHoldedClient({
   const [conflictMessage, setConflictMessage] = useState('');
   const [conflictWorking, setConflictWorking] = useState(false);
 
+  // Pre-fill company data from localStorage if saved during registration
+  useEffect(() => {
+    const currentEmail = contactEmail || initialIdentity.contactEmail;
+    if (!currentEmail) return;
+    try {
+      const key = `verifactu_company_${currentEmail.toLowerCase()}`;
+      const stored = window.localStorage.getItem(key);
+      if (!stored) return;
+      const data = JSON.parse(stored) as {
+        companyName?: string;
+        companyTaxId?: string;
+        companyLegalName?: string;
+        companyEmail?: string;
+        companyPhone?: string;
+        contactFullName?: string;
+        contactPhone?: string;
+      };
+      if (data.companyName && !companyName) setCompanyName(data.companyName);
+      if (data.companyTaxId && !taxId) setTaxId(data.companyTaxId);
+      if (data.companyLegalName && !legalName) setLegalName(data.companyLegalName);
+      if (data.companyEmail && !contactEmail) setContactEmail(data.companyEmail);
+      if (data.companyPhone && !contactPhone) setContactPhone(data.companyPhone);
+      if (data.contactFullName && !contactFirstName && !contactLastName) {
+        const parts = data.contactFullName.trim().split(' ');
+        if (parts.length === 1) {
+          setContactFirstName(parts[0]);
+        } else {
+          setContactFirstName(parts.slice(0, -1).join(' '));
+          setContactLastName(parts[parts.length - 1]);
+        }
+      }
+      if (data.contactPhone && !contactPhone) setContactPhone(data.contactPhone);
+    } catch {
+      // ignore localStorage errors
+    }
+  }, []);
+
   // Normalized values
   const normalizedApiKey = useMemo(() => normalizeApiKey(apiKey), [apiKey]);
   const normalizedCompanyName = useMemo(() => normalizeOptionalText(companyName), [companyName]);
@@ -427,6 +464,14 @@ export default function OnboardingHoldedClient({
       setWarnings(connectData.warnings ?? []);
       setPhase('connected');
       setStep(4); // avanzar al paso de éxito
+
+      // Clear company prefill from localStorage now that registration is complete
+      try {
+        const prefillKey = `verifactu_company_${normalizedContactEmail}`;
+        window.localStorage.removeItem(prefillKey);
+      } catch {
+        // ignore
+      }
       setMessage(
         connectData.warnings?.length
           ? `Conexion activada. Revision recomendada: ${connectData.warnings[0]}`

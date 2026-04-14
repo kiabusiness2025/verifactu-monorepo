@@ -174,8 +174,17 @@ function HoldedAuthContent() {
   const [existingUserChecking, setExistingUserChecking] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [googleRedirecting, setGoogleRedirecting] = useState(false);
-  // Paso activo en modo login: 'choose' = elige método, 'email' = formulario email
-  const [authStep, setAuthStep] = useState<'choose' | 'email'>('choose');
+  // Company data for registration step 2
+  const [companyName, setCompanyName] = useState('');
+  const [companyTaxId, setCompanyTaxId] = useState('');
+  const [companyLegalName, setCompanyLegalName] = useState('');
+  const [companyEmail, setCompanyEmail] = useState('');
+  const [companyPhone, setCompanyPhone] = useState('');
+
+  // Paso activo: login = 'choose' | 'email'; registro = 'register-account' | 'register-company'
+  const [authStep, setAuthStep] = useState<
+    'choose' | 'email' | 'register-account' | 'register-company'
+  >(isRegisterMode ? 'register-account' : 'choose');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [rememberDevice, setRememberDevice] = useState(true);
@@ -272,31 +281,80 @@ function HoldedAuthContent() {
     };
   }, [isRegisterMode, postLoginTarget, rememberDevice, source]);
 
+  const saveCompanyPrefill = (
+    forEmail: string,
+    data: {
+      companyName: string;
+      companyTaxId: string;
+      companyLegalName: string;
+      companyEmail: string;
+      companyPhone: string;
+      contactFullName: string;
+      contactPhone: string;
+    }
+  ) => {
+    try {
+      const key = `verifactu_company_${forEmail.toLowerCase()}`;
+      window.localStorage.setItem(key, JSON.stringify(data));
+    } catch {
+      // localStorage not available — onboarding will start with empty fields
+    }
+  };
+
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
     setError('');
     setNotice('');
 
-    if (isRegisterMode) {
-      if (!acceptLegal) {
-        setIsLoading(false);
-        setError('Necesitas aceptar los terminos y la politica de privacidad para continuar.');
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        setIsLoading(false);
-        setError('Las contrasenas no coinciden. Revisalas e intentalo de nuevo.');
-        return;
-      }
-
+    // ── Paso 1 del registro: datos de cuenta ──────────────────────────────────
+    if (authStep === 'register-account') {
       const normalizedFullName = fullName.trim().replace(/\s+/g, ' ');
       if (normalizedFullName.length < 3) {
         setIsLoading(false);
         setError('Escribe tu nombre completo para continuar.');
         return;
       }
+      if (!email.trim()) {
+        setIsLoading(false);
+        setError('Escribe tu correo electronico para continuar.');
+        return;
+      }
+      if (password.length < 8) {
+        setIsLoading(false);
+        setError('La contrasena debe tener al menos 8 caracteres.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setIsLoading(false);
+        setError('Las contrasenas no coinciden. Revisalas e intentalo de nuevo.');
+        return;
+      }
+      setIsLoading(false);
+      setCompanyEmail(email);
+      setAuthStep('register-company');
+      return;
+    }
+
+    // ── Paso 2 del registro: datos de empresa ─────────────────────────────────
+    if (authStep === 'register-company') {
+      if (!acceptLegal) {
+        setIsLoading(false);
+        setError('Necesitas aceptar los terminos y la politica de privacidad para continuar.');
+        return;
+      }
+      if (!companyName.trim()) {
+        setIsLoading(false);
+        setError('Escribe el nombre de tu empresa para continuar.');
+        return;
+      }
+      if (!companyTaxId.trim()) {
+        setIsLoading(false);
+        setError('Escribe el NIF/CIF de tu empresa para continuar.');
+        return;
+      }
+
+      const normalizedFullName = fullName.trim().replace(/\s+/g, ' ');
 
       const registerResult = await registerWithEmail(
         email,
@@ -313,6 +371,17 @@ function HoldedAuthContent() {
         return;
       }
 
+      // Persist company data to localStorage so the onboarding wizard can pre-fill it
+      saveCompanyPrefill(email, {
+        companyName: companyName.trim(),
+        companyTaxId: companyTaxId.trim().toUpperCase(),
+        companyLegalName: companyLegalName.trim(),
+        companyEmail: companyEmail.trim() || email,
+        companyPhone: companyPhone.trim(),
+        contactFullName: normalizedFullName,
+        contactPhone: phone.trim(),
+      });
+
       setIsLoading(false);
       const thanksUrl = new URL('/gracias', window.location.origin);
       thanksUrl.searchParams.set('step', 'check-email');
@@ -325,6 +394,7 @@ function HoldedAuthContent() {
       return;
     }
 
+    // ── Login ─────────────────────────────────────────────────────────────────
     try {
       const result = await signInWithEmail(email, password, { rememberDevice });
       if (result.error) {
@@ -419,7 +489,7 @@ function HoldedAuthContent() {
 
   const FooterLinks = () => (
     <div className="border-t border-slate-200 bg-slate-50 px-6 py-5 text-center text-sm text-slate-600 sm:px-8">
-      {isRegisterMode ? (
+      {authStep === 'register-account' || authStep === 'register-company' ? (
         <Link
           href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}`}
           className="font-semibold text-slate-900 underline underline-offset-4"
@@ -465,8 +535,8 @@ function HoldedAuthContent() {
                 <Loader2 className="mt-2 h-5 w-5 animate-spin text-[#ff5460]" />
                 <p className="text-sm text-slate-500">Comprobando acceso...</p>
               </div>
-            ) : isRegisterMode ? (
-              /* ── Registro ──────────────────────────────────────── */
+            ) : authStep === 'register-account' ? (
+              /* ── Registro paso 1: cuenta ───────────────────────── */
               <>
                 <div className="px-6 pb-6 pt-7 sm:px-8">
                   <div className="flex items-center gap-3">
@@ -482,7 +552,7 @@ function HoldedAuthContent() {
                     </div>
                     <div>
                       <div className="text-base font-bold text-slate-950">Crea tu acceso</div>
-                      <div className="text-xs text-slate-500">Conector Holded</div>
+                      <div className="text-xs text-slate-500">Paso 1 de 2 · Datos de tu cuenta</div>
                     </div>
                   </div>
 
@@ -550,7 +620,7 @@ function HoldedAuthContent() {
                           type={showPassword ? 'text' : 'password'}
                           value={password}
                           onChange={(event) => setPassword(event.target.value)}
-                          placeholder="Contrasena"
+                          placeholder="Minimo 8 caracteres"
                           autoComplete="new-password"
                           required
                           className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
@@ -605,6 +675,149 @@ function HoldedAuthContent() {
                       </div>
                     </div>
 
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#ff5460] px-5 text-sm font-semibold text-white shadow-[0_18px_38px_-22px_rgba(255,84,96,0.85)] transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Continuar
+                    </button>
+                  </form>
+                </div>
+                <FooterLinks />
+              </>
+            ) : authStep === 'register-company' ? (
+              /* ── Registro paso 2: empresa ──────────────────────── */
+              <>
+                <div className="px-6 pb-6 pt-6 sm:px-8">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthStep('register-account');
+                      setError('');
+                      setNotice('');
+                    }}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Volver
+                  </button>
+
+                  <div className="mt-5 flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
+                      <Image
+                        src="/brand/holded/holded-diamond-logo.png"
+                        alt="Holded"
+                        width={22}
+                        height={22}
+                        className="h-[22px] w-[22px] object-contain"
+                        priority
+                      />
+                    </div>
+                    <div>
+                      <div className="text-base font-bold text-slate-950">Tu empresa</div>
+                      <div className="text-xs text-slate-500">Paso 2 de 2 · Datos de empresa</div>
+                    </div>
+                  </div>
+
+                  <ErrorBox />
+                  <NoticeBox />
+
+                  <form onSubmit={handleEmailLogin} className="mt-6 space-y-4">
+                    <div className="space-y-1.5">
+                      <label htmlFor="companyName" className="text-sm font-semibold text-slate-800">
+                        Nombre comercial
+                      </label>
+                      <input
+                        id="companyName"
+                        type="text"
+                        value={companyName}
+                        onChange={(event) => setCompanyName(event.target.value)}
+                        placeholder="Nombre de tu empresa"
+                        autoComplete="organization"
+                        required
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="companyTaxId"
+                        className="text-sm font-semibold text-slate-800"
+                      >
+                        NIF / CIF
+                      </label>
+                      <input
+                        id="companyTaxId"
+                        type="text"
+                        value={companyTaxId}
+                        onChange={(event) => setCompanyTaxId(event.target.value)}
+                        placeholder="B12345678"
+                        autoComplete="off"
+                        required
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="companyLegalName"
+                        className="text-sm font-semibold text-slate-800"
+                      >
+                        Razon social <span className="font-normal text-slate-400">(opcional)</span>
+                      </label>
+                      <input
+                        id="companyLegalName"
+                        type="text"
+                        value={companyLegalName}
+                        onChange={(event) => setCompanyLegalName(event.target.value)}
+                        placeholder="Razon social completa"
+                        autoComplete="organization"
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="companyEmail"
+                        className="text-sm font-semibold text-slate-800"
+                      >
+                        Correo de notificaciones
+                      </label>
+                      <div className="relative">
+                        <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                          id="companyEmail"
+                          type="email"
+                          value={companyEmail}
+                          onChange={(event) => setCompanyEmail(event.target.value)}
+                          placeholder="nombre@empresa.com"
+                          autoComplete="email"
+                          required
+                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="companyPhone"
+                        className="text-sm font-semibold text-slate-800"
+                      >
+                        Telefono de empresa{' '}
+                        <span className="font-normal text-slate-400">(opcional)</span>
+                      </label>
+                      <input
+                        id="companyPhone"
+                        type="tel"
+                        value={companyPhone}
+                        onChange={(event) => setCompanyPhone(event.target.value)}
+                        placeholder="+34 900 000 000"
+                        autoComplete="tel"
+                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                      />
+                    </div>
+
                     <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
                       <input
                         type="checkbox"
@@ -645,11 +858,6 @@ function HoldedAuthContent() {
                       {isLoading ? 'Creando acceso...' : 'Crear acceso y verificar correo'}
                     </button>
                   </form>
-
-                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-                    Usa el mismo correo que tienes en Holded para que el alta y la conexion queden
-                    alineadas.
-                  </div>
                 </div>
                 <FooterLinks />
               </>
