@@ -41,6 +41,52 @@ type ClaimDetailsResponse = {
   timeline: ClaimResolutionDTO[];
 };
 
+type LogsSummaryPayload = {
+  mode: 'summary';
+  tenantId: string;
+  summaryLimit: number;
+  summary: {
+    sync: {
+      total: number;
+      warnings: number;
+      errors: number;
+    };
+    conflicts: {
+      quotes: number;
+    };
+    claims: {
+      total: number;
+      open: number;
+    };
+    accessRequests: {
+      total: number;
+      pending: number;
+    };
+    governance: {
+      flags: {
+        ownershipStatus: string | null;
+        managedByThirdParty: boolean;
+        clientAdminGap: boolean;
+        highGovernanceRisk: boolean;
+        underClaimReview: boolean;
+      } | null;
+      blockedActions: Array<{
+        action: string;
+        reason: string | null;
+      }>;
+    };
+  };
+  incidents: Array<{
+    source: string;
+    severity: string;
+    message: string;
+    createdAt: string;
+    outboxId: string | null;
+    requestId: string | null;
+  }>;
+  requestId: string;
+};
+
 type NoticeState = {
   tone: 'success' | 'error' | 'info';
   text: string;
@@ -223,6 +269,7 @@ async function readJson<T>(response: Response): Promise<T | null> {
 
 export default function IsaakForHoldedPage() {
   const [integration, setIntegration] = useState<IntegrationStatus | null>(null);
+  const [logsSummary, setLogsSummary] = useState<LogsSummaryPayload | null>(null);
   const [memberships, setMemberships] = useState<MembershipDTO[]>([]);
   const [recipients, setRecipients] = useState<RecipientDTO[]>([]);
   const [accessRequests, setAccessRequests] = useState<AccessRequestDTO[]>([]);
@@ -251,32 +298,48 @@ export default function IsaakForHoldedPage() {
     if (!keepNotice) setNotice(null);
 
     try {
-      const [statusRes, membershipsRes, recipientsRes, accessRequestsRes, claimsRes] =
-        await Promise.all([
-          fetch('/api/integrations/accounting/status', { cache: 'no-store' }),
-          fetch('/api/integrations/accounting/memberships', { cache: 'no-store' }),
-          fetch('/api/integrations/accounting/recipients', {
-            cache: 'no-store',
-            headers: { 'x-isaak-entry-channel': 'dashboard' },
-          }),
-          fetch('/api/integrations/accounting/access-requests', {
-            cache: 'no-store',
-            headers: { 'x-isaak-entry-channel': 'dashboard' },
-          }),
-          fetch('/api/integrations/accounting/claims', {
-            cache: 'no-store',
-            headers: { 'x-isaak-entry-channel': 'dashboard' },
-          }),
-        ]);
+      const [
+        statusRes,
+        logsSummaryRes,
+        membershipsRes,
+        recipientsRes,
+        accessRequestsRes,
+        claimsRes,
+      ] = await Promise.all([
+        fetch('/api/integrations/accounting/status', { cache: 'no-store' }),
+        fetch('/api/integrations/accounting/logs?mode=summary&summaryLimit=120', {
+          cache: 'no-store',
+        }),
+        fetch('/api/integrations/accounting/memberships', { cache: 'no-store' }),
+        fetch('/api/integrations/accounting/recipients', {
+          cache: 'no-store',
+          headers: { 'x-isaak-entry-channel': 'dashboard' },
+        }),
+        fetch('/api/integrations/accounting/access-requests', {
+          cache: 'no-store',
+          headers: { 'x-isaak-entry-channel': 'dashboard' },
+        }),
+        fetch('/api/integrations/accounting/claims', {
+          cache: 'no-store',
+          headers: { 'x-isaak-entry-channel': 'dashboard' },
+        }),
+      ]);
 
-      const [statusData, membershipsData, recipientsData, accessRequestsData, claimsData] =
-        await Promise.all([
-          readJson<IntegrationStatus>(statusRes),
-          readJson<{ items?: MembershipDTO[] }>(membershipsRes),
-          readJson<{ items?: RecipientDTO[] }>(recipientsRes),
-          readJson<{ items?: AccessRequestDTO[] }>(accessRequestsRes),
-          readJson<{ items?: ClaimCaseDTO[] }>(claimsRes),
-        ]);
+      const [
+        statusData,
+        logsSummaryData,
+        membershipsData,
+        recipientsData,
+        accessRequestsData,
+        claimsData,
+      ] = await Promise.all([
+        readJson<IntegrationStatus>(statusRes),
+        readJson<LogsSummaryPayload>(logsSummaryRes),
+        readJson<{ items?: MembershipDTO[] }>(membershipsRes),
+        readJson<{ items?: RecipientDTO[] }>(recipientsRes),
+        readJson<{ items?: AccessRequestDTO[] }>(accessRequestsRes),
+        readJson<{ items?: ClaimCaseDTO[] }>(claimsRes),
+      ]);
 
       if (!statusRes.ok || !statusData) {
         throw new Error(statusData?.error || 'No se pudo cargar el estado de Holded');
@@ -290,6 +353,9 @@ export default function IsaakForHoldedPage() {
       const nextClaims = Array.isArray(claimsData?.items) ? claimsData.items : [];
 
       setIntegration(statusData);
+      setLogsSummary(
+        logsSummaryRes.ok && logsSummaryData?.mode === 'summary' ? logsSummaryData : null
+      );
       setMemberships(nextMemberships);
       setRecipients(nextRecipients);
       setAccessRequests(nextAccessRequests);
@@ -880,6 +946,87 @@ export default function IsaakForHoldedPage() {
             {integration?.availableActions?.disconnect.reason}
           </div>
         ) : null}
+
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+            Resumen operativo por tenant/requestId
+          </div>
+          {!logsSummary ? (
+            <p className="mt-2 text-sm text-slate-600">Resumen no disponible en este momento.</p>
+          ) : (
+            <>
+              <div className="mt-3 grid gap-3 text-sm text-slate-700 md:grid-cols-3">
+                <p>
+                  Sync warnings/errors:{' '}
+                  <span className="font-semibold">
+                    {logsSummary.summary.sync.warnings}/{logsSummary.summary.sync.errors}
+                  </span>
+                </p>
+                <p>
+                  Conflictos quotes:{' '}
+                  <span className="font-semibold">{logsSummary.summary.conflicts.quotes}</span>
+                </p>
+                <p>
+                  Claims abiertas:{' '}
+                  <span className="font-semibold">{logsSummary.summary.claims.open}</span>
+                </p>
+                <p>
+                  Access requests pendientes:{' '}
+                  <span className="font-semibold">
+                    {logsSummary.summary.accessRequests.pending}
+                  </span>
+                </p>
+                <p>
+                  Tenant: <span className="font-semibold">{logsSummary.tenantId}</span>
+                </p>
+                <p>
+                  Muestra de logs: <span className="font-semibold">{logsSummary.summaryLimit}</span>
+                </p>
+              </div>
+
+              <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700">
+                <p className="font-semibold text-slate-600">Acciones bloqueadas</p>
+                {logsSummary.summary.governance.blockedActions.length === 0 ? (
+                  <p className="mt-1 text-slate-500">Ninguna accion bloqueada.</p>
+                ) : (
+                  <ul className="mt-1 space-y-1">
+                    {logsSummary.summary.governance.blockedActions.map((item) => (
+                      <li key={item.action}>
+                        <span className="font-semibold">{item.action}</span>
+                        {item.reason ? `: ${item.reason}` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700">
+                <p className="font-semibold text-slate-600">Incidentes recientes</p>
+                {logsSummary.incidents.length === 0 ? (
+                  <p className="mt-1 text-slate-500">Sin incidentes recientes.</p>
+                ) : (
+                  <div className="mt-2 space-y-2">
+                    {logsSummary.incidents.slice(0, 4).map((incident, index) => (
+                      <article
+                        key={`${incident.message}-${incident.createdAt}-${index}`}
+                        className="rounded-lg border border-slate-200 bg-slate-50 p-2"
+                      >
+                        <p className="font-semibold uppercase text-slate-500">
+                          {incident.severity}
+                        </p>
+                        <p className="mt-1 text-slate-700">{incident.message}</p>
+                        <p className="mt-1 text-slate-500">{incident.createdAt}</p>
+                        <p className="mt-1 text-slate-500">
+                          requestId: {incident.requestId || '-'}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </section>
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">

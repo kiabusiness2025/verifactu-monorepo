@@ -1,6 +1,8 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import {
+  buildConnectorEvent,
   getConnectorRequestId,
+  logConnectorEvent,
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
 import {
@@ -30,6 +32,17 @@ export async function GET(request: NextRequest) {
   });
 
   if ('error' in auth) {
+    logConnectorEvent(
+      'api/integrations/accounting/recipients',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'auth_error',
+        error: auth.error,
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json({ error: auth.error, requestId }, { status: auth.status }),
       requestId
@@ -39,27 +52,74 @@ export async function GET(request: NextRequest) {
   try {
     assertHoldedConnectorAdminSessionAccess(auth.session, { force: true });
   } catch {
+    logConnectorEvent(
+      'api/integrations/accounting/recipients',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'admin_access_required',
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json({ error: getHoldedConnectorAdminNotice(), requestId }, { status: 403 }),
       requestId
     );
   }
 
-  const { items } = await listRecipients({
-    tenantId: auth.tenantId,
-    userId: auth.resolvedUserId ?? null,
-    channel: entryChannel,
-  });
-  const context = await getTenantHoldedContext(auth.tenantId, entryChannel);
+  try {
+    const { items } = await listRecipients({
+      tenantId: auth.tenantId,
+      userId: auth.resolvedUserId ?? null,
+      channel: entryChannel,
+    });
+    const context = await getTenantHoldedContext(auth.tenantId, entryChannel);
 
-  return withConnectorRequestId(
-    NextResponse.json({
-      items,
-      availableActions: context.availableActions,
-      requestId,
-    }),
-    requestId
-  );
+    logConnectorEvent(
+      'api/integrations/accounting/recipients',
+      'info',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'list',
+        outcome: 'success',
+        count: items.length,
+      })
+    );
+
+    return withConnectorRequestId(
+      NextResponse.json({
+        items,
+        availableActions: context.availableActions,
+        requestId,
+      }),
+      requestId
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logConnectorEvent(
+      'api/integrations/accounting/recipients',
+      'error',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'list',
+        outcome: 'exception',
+        error: message,
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        { error: 'No se pudo cargar la lista de destinatarios.', requestId },
+        { status: 500 }
+      ),
+      requestId
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -71,6 +131,17 @@ export async function POST(request: NextRequest) {
   });
 
   if ('error' in auth) {
+    logConnectorEvent(
+      'api/integrations/accounting/recipients',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'auth_error',
+        error: auth.error,
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json({ ok: false, error: auth.error, requestId }, { status: auth.status }),
       requestId
@@ -80,10 +151,51 @@ export async function POST(request: NextRequest) {
   try {
     assertHoldedConnectorAdminSessionAccess(auth.session, { force: true });
   } catch {
+    logConnectorEvent(
+      'api/integrations/accounting/recipients',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'admin_access_required',
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json(
         { ok: false, error: getHoldedConnectorAdminNotice(), requestId },
         { status: 403 }
+      ),
+      requestId
+    );
+  }
+
+  const governanceContext = await getTenantHoldedContext(auth.tenantId, entryChannel);
+  if (governanceContext.availableActions.manageRecipients.blocked) {
+    logConnectorEvent(
+      'api/integrations/accounting/recipients',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'guards',
+        outcome: 'blocked',
+        error: governanceContext.availableActions.manageRecipients.reason,
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          ok: false,
+          error:
+            governanceContext.availableActions.manageRecipients.reason ||
+            'La gobernanza actual bloquea la gestion de destinatarios.',
+          availableActions: governanceContext.availableActions,
+          requestId,
+        },
+        { status: 409 }
       ),
       requestId
     );
@@ -102,6 +214,19 @@ export async function POST(request: NextRequest) {
       isClientSide: body?.isClientSide === true,
     });
 
+    logConnectorEvent(
+      'api/integrations/accounting/recipients',
+      'info',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'create',
+        outcome: 'success',
+        recipientId: recipient.recipientId,
+      })
+    );
+
     return withConnectorRequestId(
       NextResponse.json({
         ok: true,
@@ -111,17 +236,34 @@ export async function POST(request: NextRequest) {
       requestId
     );
   } catch (error) {
+    const isKnownBusinessError =
+      error instanceof Error &&
+      (error.message === 'holded_connection_not_found' || error.message === 'invalid_email');
     const message =
       error instanceof Error && error.message === 'holded_connection_not_found'
         ? 'No existe una conexion Holded activa para este tenant.'
         : error instanceof Error && error.message === 'invalid_email'
           ? 'Indica un correo valido.'
-          : error instanceof Error
-            ? error.message
-            : 'No se pudo crear el destinatario.';
+          : 'No se pudo crear el destinatario.';
+
+    logConnectorEvent(
+      'api/integrations/accounting/recipients',
+      isKnownBusinessError ? 'warn' : 'error',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'create',
+        outcome: isKnownBusinessError ? 'validation_error' : 'exception',
+        error: error instanceof Error ? error.message : String(error),
+      })
+    );
 
     return withConnectorRequestId(
-      NextResponse.json({ ok: false, error: message, requestId }, { status: 400 }),
+      NextResponse.json(
+        { ok: false, error: message, requestId },
+        { status: isKnownBusinessError ? 400 : 500 }
+      ),
       requestId
     );
   }

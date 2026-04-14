@@ -67,6 +67,73 @@ function renderResolutionOutcome(status?: string | null) {
   return 'actualizada';
 }
 
+function renderOwnershipStatus(status?: string | null) {
+  if (status === 'confirmed') return 'Confirmada';
+  if (status === 'pending_confirmation') return 'Pendiente de confirmación';
+  if (status === 'third_party_managed') return 'Gestionada por tercero';
+  return 'Sin clasificar';
+}
+
+function renderChannelLabel(channel?: string | null) {
+  return channel === 'chatgpt' ? 'ChatGPT' : 'Dashboard';
+}
+
+export function buildHighGovernanceRiskInternalEmail(input: {
+  tenantDisplayName: string;
+  channel?: string | null;
+  actorName?: string | null;
+  actorEmail?: string | null;
+  companyEmail?: string | null;
+  contactPhone?: string | null;
+  ownershipStatus?: string | null;
+  managedByThirdParty?: boolean;
+  clientAdminGap?: boolean;
+  underClaimReview?: boolean;
+  detectedAt?: Date | string | null;
+  reviewUrl?: string | null;
+}) {
+  const occurredAt = formatDate(input.detectedAt) ?? 'ahora mismo';
+  const actorSummary =
+    normalizeText(input.actorName) || normalizeText(input.actorEmail) || 'No disponible';
+  const reasons = [
+    input.managedByThirdParty ? 'La conexión figura como gestionada por un tercero.' : null,
+    input.clientAdminGap
+      ? 'Sigue faltando un responsable cliente para cerrar la gobernanza.'
+      : null,
+    input.underClaimReview ? 'Existe una reclamación abierta o todavía en revisión.' : null,
+    'La conexión está marcada con high governance risk y requiere revisión manual.',
+  ].filter((value): value is string => Boolean(value));
+  const reasonsHtml = reasons
+    .map((reason) => `<li style="margin:0 0 8px 0;">${escapeHtml(reason)}</li>`)
+    .join('');
+  const reviewUrl = normalizeText(input.reviewUrl);
+
+  return {
+    subject: `Holded: riesgo alto de gobernanza detectado en ${input.tenantDisplayName}`,
+    html: buildCard(
+      'Riesgo alto de gobernanza detectado',
+      `
+        <p style="margin:0 0 14px 0;">Se ha detectado un estado de <strong>riesgo alto de gobernanza</strong> para <strong>${escapeHtml(input.tenantDisplayName)}</strong>.</p>
+        ${detail('Canal', renderChannelLabel(input.channel))}
+        ${detail('Actor', actorSummary)}
+        ${detail('Correo empresa', input.companyEmail)}
+        ${detail('Teléfono de contacto', input.contactPhone)}
+        ${detail('Ownership status', renderOwnershipStatus(input.ownershipStatus))}
+        ${detail('Detectado', occurredAt)}
+        <div style="margin:16px 0;padding:16px;border-radius:14px;background:#fff7ed;border:1px solid #fdba74;">
+          <p style="margin:0 0 10px 0;font-weight:700;">Motivos activos</p>
+          <ul style="margin:0;padding-left:18px;">${reasonsHtml}</ul>
+        </div>
+        ${
+          reviewUrl
+            ? `<p style="margin:14px 0 0 0;">Revisa el caso en <a href="${escapeHtml(reviewUrl)}" style="color:#b42318;text-decoration:none;font-weight:600;">${escapeHtml(reviewUrl)}</a>.</p>`
+            : ''
+        }
+      `
+    ),
+  };
+}
+
 export function buildAccessRequestCreatedEmail(input: {
   tenantDisplayName: string;
   requesterName: string;

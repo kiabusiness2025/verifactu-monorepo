@@ -110,6 +110,38 @@ describe('IsaakForHoldedPage', () => {
         });
       }
 
+      if (
+        matchesUrl(url, '/api/integrations/accounting/logs?mode=summary&summaryLimit=120') &&
+        method === 'GET'
+      ) {
+        return responseOf({
+          mode: 'summary',
+          tenantId: 'tenant-1',
+          summaryLimit: 120,
+          summary: {
+            sync: { total: 3, warnings: 1, errors: 1 },
+            conflicts: { quotes: 1 },
+            claims: { total: 2, open: 1 },
+            accessRequests: { total: 2, pending: 1 },
+            governance: {
+              flags: null,
+              blockedActions: [{ action: 'openClaim', reason: 'Existe claim activa' }],
+            },
+          },
+          incidents: [
+            {
+              source: 'sync_log',
+              severity: 'warn',
+              message: 'QUOTE_CONFLICT quote-1',
+              createdAt: '2026-04-13T12:45:00.000Z',
+              outboxId: null,
+              requestId: 'req-incident-1',
+            },
+          ],
+          requestId: 'req-summary',
+        });
+      }
+
       if (matchesUrl(url, '/api/integrations/accounting/memberships') && method === 'GET') {
         return responseOf({
           items: [
@@ -247,6 +279,9 @@ describe('IsaakForHoldedPage', () => {
     render(<IsaakForHoldedPage />);
 
     expect(await screen.findByText('Usuarios y permisos')).toBeInTheDocument();
+    expect(screen.getByText('Resumen operativo por tenant/requestId')).toBeInTheDocument();
+    expect(await screen.findByText('Incidentes recientes')).toBeInTheDocument();
+    expect(await screen.findByText('QUOTE_CONFLICT quote-1')).toBeInTheDocument();
     expect(screen.getByText('Destinatarios y avisos')).toBeInTheDocument();
     expect(screen.getByText('Solicitudes de acceso')).toBeInTheDocument();
     expect(screen.getByText('Claims y disputas')).toBeInTheDocument();

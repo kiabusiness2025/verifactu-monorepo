@@ -3,6 +3,7 @@ import {
   buildClaimCreatedEmail,
   buildClaimReceiptEmail,
   buildClaimResolvedEmail,
+  buildHighGovernanceRiskInternalEmail,
 } from '@verifactu/integrations';
 
 import { sendCustomEmail } from '@/lib/email/emailService';
@@ -322,4 +323,41 @@ export async function sendClaimResolvedEmails(input: {
   });
 
   return sendAllEmails([{ to: requesterEmail, subject: email.subject, html: email.html }]);
+}
+
+export async function sendHighGovernanceRiskInternalAlertEmail(input: {
+  tenantName?: string | null;
+  tenantLegalName?: string | null;
+  channel?: 'dashboard' | 'chatgpt' | null;
+  actorName?: string | null;
+  actorEmail?: string | null;
+  companyEmail?: string | null;
+  contactPhone?: string | null;
+  ownershipStatus?: string | null;
+  managedByThirdParty?: boolean;
+  clientAdminGap?: boolean;
+  underClaimReview?: boolean;
+  detectedAt?: Date | string | null;
+  reviewUrl?: string | null;
+}) {
+  const tenantDisplayName = buildTenantDisplayName({
+    tenantName: input.tenantName,
+    tenantLegalName: input.tenantLegalName,
+  });
+  const email = buildHighGovernanceRiskInternalEmail({
+    tenantDisplayName,
+    channel: input.channel,
+    actorName: input.actorName,
+    actorEmail: input.actorEmail,
+    companyEmail: input.companyEmail,
+    contactPhone: input.contactPhone,
+    ownershipStatus: input.ownershipStatus,
+    managedByThirdParty: input.managedByThirdParty,
+    clientAdminGap: input.clientAdminGap,
+    underClaimReview: input.underClaimReview,
+    detectedAt: input.detectedAt,
+    reviewUrl: input.reviewUrl,
+  });
+
+  return sendAllEmails([{ to: SUPPORT_EMAIL, subject: email.subject, html: email.html }]);
 }

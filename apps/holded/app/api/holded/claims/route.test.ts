@@ -37,50 +37,65 @@ jest.mock('@verifactu/integrations', () => ({
     highGovernanceRisk: input?.highGovernanceRisk === true,
     underClaimReview: input?.underClaimReview === true,
   })),
-  buildDefaultAvailableActions: jest.fn(() => ({
-    reconnect: {
-      blocked: false,
-      reason: 'ok',
-      state: 'connected',
-      suggestedAction: null,
-      suggestedActionLabel: null,
-    },
-    rotateApi: {
-      blocked: false,
-      reason: 'ok',
-      state: 'connected',
-      suggestedAction: null,
-      suggestedActionLabel: null,
-    },
-    disconnect: {
-      blocked: true,
-      reason: 'blocked',
-      state: 'under_claim_review',
-      suggestedAction: null,
-      suggestedActionLabel: null,
-    },
-    manageMembers: {
-      blocked: false,
-      reason: 'ok',
-      state: 'connected',
-      suggestedAction: null,
-      suggestedActionLabel: null,
-    },
-    manageRecipients: {
-      blocked: false,
-      reason: 'ok',
-      state: 'connected',
-      suggestedAction: null,
-      suggestedActionLabel: null,
-    },
-    openClaim: {
-      blocked: true,
-      reason: 'blocked',
-      state: 'under_claim_review',
-      suggestedAction: null,
-      suggestedActionLabel: null,
-    },
-  })),
+  buildDefaultAvailableActions: jest.fn((input?: Record<string, unknown>) => {
+    const hasActiveConnection = (input?.status ?? 'disconnected') !== 'disconnected';
+    const underClaimReview = input?.underClaimReview === true;
+
+    return {
+      reconnect: {
+        blocked: false,
+        reason: 'ok',
+        state: hasActiveConnection ? 'connected' : 'disconnected',
+        suggestedAction: null,
+        suggestedActionLabel: null,
+      },
+      rotateApi: {
+        blocked: !hasActiveConnection,
+        reason: hasActiveConnection ? 'ok' : 'blocked',
+        state: hasActiveConnection ? 'connected' : 'disconnected',
+        suggestedAction: hasActiveConnection ? null : 'reconnect',
+        suggestedActionLabel: hasActiveConnection ? null : 'Reconectar',
+      },
+      disconnect: {
+        blocked: underClaimReview,
+        reason: underClaimReview ? 'blocked' : 'ok',
+        state: underClaimReview
+          ? 'under_claim_review'
+          : hasActiveConnection
+            ? 'connected'
+            : 'disconnected',
+        suggestedAction: null,
+        suggestedActionLabel: null,
+      },
+      manageMembers: {
+        blocked: false,
+        reason: 'ok',
+        state: hasActiveConnection ? 'connected' : 'disconnected',
+        suggestedAction: null,
+        suggestedActionLabel: null,
+      },
+      manageRecipients: {
+        blocked: false,
+        reason: 'ok',
+        state: hasActiveConnection ? 'connected' : 'disconnected',
+        suggestedAction: null,
+        suggestedActionLabel: null,
+      },
+      openClaim: {
+        blocked: underClaimReview,
+        reason: underClaimReview
+          ? 'Ya existe una reclamacion en revision para esta conexion.'
+          : 'ok',
+        state: underClaimReview
+          ? 'under_claim_review'
+          : hasActiveConnection
+            ? 'connected'
+            : 'disconnected',
+        suggestedAction: null,
+        suggestedActionLabel: null,
+      },
+    };
+  }),
 }));
 
 import { getHoldedSession } from '@/app/lib/holded-session';
@@ -115,19 +130,30 @@ describe('POST /api/holded/claims', () => {
       resolvedAt: null,
       outcome: null,
     });
-    mockConnectionFindUnique.mockResolvedValue({
-      id: 'ext-1',
-      connectionStatus: 'connected',
-      ownershipStatus: 'pending_confirmation',
-      managedByThirdParty: true,
-      clientAdminGap: true,
-      highGovernanceRisk: true,
-      underClaimReview: true,
-    });
     mockSendPublicClaimCreatedEmails.mockResolvedValue(true);
   });
 
   it('creates a public claim and returns governance flags', async () => {
+    mockConnectionFindUnique
+      .mockResolvedValueOnce({
+        id: 'ext-1',
+        connectionStatus: 'connected',
+        ownershipStatus: 'pending_confirmation',
+        managedByThirdParty: true,
+        clientAdminGap: true,
+        highGovernanceRisk: true,
+        underClaimReview: false,
+      })
+      .mockResolvedValueOnce({
+        id: 'ext-1',
+        connectionStatus: 'connected',
+        ownershipStatus: 'pending_confirmation',
+        managedByThirdParty: true,
+        clientAdminGap: true,
+        highGovernanceRisk: true,
+        underClaimReview: true,
+      });
+
     const response = await POST(
       new Request('https://holded.verifactu.business/api/holded/claims', {
         method: 'POST',
@@ -164,6 +190,25 @@ describe('POST /api/holded/claims', () => {
   });
 
   it('keeps claim creation successful when notification delivery fails', async () => {
+    mockConnectionFindUnique
+      .mockResolvedValueOnce({
+        id: 'ext-1',
+        connectionStatus: 'connected',
+        ownershipStatus: 'pending_confirmation',
+        managedByThirdParty: true,
+        clientAdminGap: true,
+        highGovernanceRisk: true,
+        underClaimReview: false,
+      })
+      .mockResolvedValueOnce({
+        id: 'ext-1',
+        connectionStatus: 'connected',
+        ownershipStatus: 'pending_confirmation',
+        managedByThirdParty: true,
+        clientAdminGap: true,
+        highGovernanceRisk: true,
+        underClaimReview: true,
+      });
     mockSendPublicClaimCreatedEmails.mockRejectedValue(new Error('smtp_down'));
 
     const response = await POST(
@@ -182,5 +227,36 @@ describe('POST /api/holded/claims', () => {
     expect(response.status).toBe(200);
     expect(payload.ok).toBe(true);
     expect(payload.notified).toBe(false);
+  });
+
+  it('blocks public claim creation when an open claim is already under review', async () => {
+    mockConnectionFindUnique.mockResolvedValue({
+      id: 'ext-1',
+      connectionStatus: 'connected',
+      ownershipStatus: 'pending_confirmation',
+      managedByThirdParty: true,
+      clientAdminGap: true,
+      highGovernanceRisk: true,
+      underClaimReview: true,
+    });
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/claims', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          connectionId: 'ext-1',
+          claimType: 'control',
+          reason: 'La conexion no deberia seguir asi',
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload.ok).toBe(false);
+    expect(payload.error).toContain('Ya existe una reclamacion en revision');
+    expect(payload.availableActions.openClaim.blocked).toBe(true);
+    expect(mockCreatePublicClaim).not.toHaveBeenCalled();
   });
 });

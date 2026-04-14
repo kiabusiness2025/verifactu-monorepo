@@ -63,6 +63,18 @@ describe('accounting recipients route', () => {
     expect(payload.availableActions.manageRecipients.blocked).toBe(false);
   });
 
+  it('returns 500 when recipients listing fails unexpectedly', async () => {
+    (listRecipients as jest.Mock).mockRejectedValue(new Error('db_timeout'));
+
+    const response = await GET(
+      new NextRequest('https://app.verifactu.business/api/integrations/accounting/recipients')
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload.error).toContain('No se pudo cargar la lista de destinatarios');
+  });
+
   it('creates a recipient', async () => {
     (createRecipient as jest.Mock).mockResolvedValue({
       recipientId: 'recipient-2',
@@ -94,5 +106,34 @@ describe('accounting recipients route', () => {
       email: 'ops@example.com',
       recipientType: 'ops',
     });
+  });
+
+  it('blocks recipient creation when governance forbids recipient management', async () => {
+    (getTenantHoldedContext as jest.Mock).mockResolvedValue({
+      availableActions: {
+        manageRecipients: {
+          blocked: true,
+          reason: 'Gestion bloqueada por reclamacion activa',
+          state: 'under_claim_review',
+        },
+      },
+    });
+
+    const response = await POST(
+      new NextRequest('https://app.verifactu.business/api/integrations/accounting/recipients', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email: 'ops@example.com',
+          recipientType: 'ops',
+        }),
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload.ok).toBe(false);
+    expect(payload.error).toContain('Gestion bloqueada');
+    expect(createRecipient).not.toHaveBeenCalled();
   });
 });

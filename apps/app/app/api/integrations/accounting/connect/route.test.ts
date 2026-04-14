@@ -40,6 +40,10 @@ jest.mock('@/lib/email/holdedConnectionEmails', () => ({
   sendWelcomeLifecycleEmails: jest.fn(),
 }));
 
+jest.mock('@/lib/email/holdedGovernanceEmails', () => ({
+  sendHighGovernanceRiskInternalAlertEmail: jest.fn(async () => true),
+}));
+
 jest.mock('@/lib/email/holdedSecurityAlerts', () => ({
   resolveHoldedSecurityAlertRecipients: jest.fn(async () => [
     { email: 'demo@example.com', name: 'Demo User', source: 'membership' },
@@ -143,6 +147,7 @@ import {
   sendHoldedConnectionLifecycleEmails,
   sendWelcomeLifecycleEmails,
 } from '@/lib/email/holdedConnectionEmails';
+import { sendHighGovernanceRiskInternalAlertEmail } from '@/lib/email/holdedGovernanceEmails';
 import {
   resolveHoldedSecurityAlertRecipients,
   sendHoldedSecurityAlertEmails,
@@ -353,7 +358,68 @@ describe('POST /api/integrations/accounting/connect', () => {
       action: 'connected',
       channel: 'chatgpt',
     });
+    expect(sendHighGovernanceRiskInternalAlertEmail).not.toHaveBeenCalled();
     expect(sendHoldedConnectionLifecycleEmails).not.toHaveBeenCalled();
+  });
+
+  it('sends an internal governance alert when the resolved connection is high risk', async () => {
+    (resolveSharedHoldedConnectionStatusForTenant as jest.Mock).mockResolvedValue({
+      id: 'ext-1',
+      tenantId: 'tenant-1',
+      provider: 'holded',
+      providerAccountId: 'provider-account-1',
+      credentialType: 'api_key',
+      status: 'connected',
+      channel: 'chatgpt',
+      originChannel: 'chatgpt',
+      ownershipStatus: 'third_party_managed',
+      managedByThirdParty: true,
+      clientAdminGap: true,
+      highGovernanceRisk: true,
+      underClaimReview: false,
+      technicalOperatorUserId: 'user-1',
+      connectedAt: '2026-04-11T12:00:00.000Z',
+      lastValidatedAt: '2026-04-11T12:00:00.000Z',
+      lastSyncAt: '2026-04-11T12:00:00.000Z',
+      lastError: null,
+      source: 'external_connection',
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/api/integrations/accounting/connect?tenant_id=tenant-demo',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+        },
+        body: JSON.stringify({
+          apiKey: ' demo-key ',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      }
+    );
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(sendHighGovernanceRiskInternalAlertEmail).toHaveBeenCalledWith({
+      tenantName: 'Empresa Demo',
+      tenantLegalName: 'Empresa Demo SL',
+      channel: 'chatgpt',
+      actorEmail: 'soporte@verifactu.business',
+      actorName: 'Demo User',
+      companyEmail: 'empresa@example.com',
+      contactPhone: '+34 600 000 000',
+      ownershipStatus: 'third_party_managed',
+      managedByThirdParty: true,
+      clientAdminGap: true,
+      underClaimReview: false,
+      detectedAt: expect.any(Date),
+    });
   });
 
   it('blocks connect when onboarding identity is still unverified', async () => {

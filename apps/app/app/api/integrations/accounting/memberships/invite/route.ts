@@ -1,9 +1,14 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import {
+  buildConnectorEvent,
   getConnectorRequestId,
+  logConnectorEvent,
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
-import { inviteMembership } from '@/lib/integrations/holdedGovernanceService';
+import {
+  getTenantHoldedContext,
+  inviteMembership,
+} from '@/lib/integrations/holdedGovernanceService';
 import {
   assertHoldedConnectorAdminSessionAccess,
   getHoldedConnectorAdminNotice,
@@ -14,12 +19,24 @@ export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   const requestId = getConnectorRequestId(request);
+  const entryChannel = 'dashboard';
   const auth = await requireTenantContext({
-    channelType: 'dashboard',
+    channelType: entryChannel,
     metadata: { source: 'holded-membership-invite' },
   });
 
   if ('error' in auth) {
+    logConnectorEvent(
+      'api/integrations/accounting/memberships/invite',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'auth_error',
+        error: auth.error,
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json({ ok: false, error: auth.error, requestId }, { status: auth.status }),
       requestId
@@ -29,10 +46,51 @@ export async function POST(request: NextRequest) {
   try {
     assertHoldedConnectorAdminSessionAccess(auth.session, { force: true });
   } catch {
+    logConnectorEvent(
+      'api/integrations/accounting/memberships/invite',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'auth',
+        outcome: 'admin_access_required',
+      })
+    );
     return withConnectorRequestId(
       NextResponse.json(
         { ok: false, error: getHoldedConnectorAdminNotice(), requestId },
         { status: 403 }
+      ),
+      requestId
+    );
+  }
+
+  const governanceContext = await getTenantHoldedContext(auth.tenantId, 'dashboard');
+  if (governanceContext.availableActions.manageMembers.blocked) {
+    logConnectorEvent(
+      'api/integrations/accounting/memberships/invite',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'guards',
+        outcome: 'blocked',
+        error: governanceContext.availableActions.manageMembers.reason,
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          ok: false,
+          error:
+            governanceContext.availableActions.manageMembers.reason ||
+            'La gobernanza actual bloquea la gestion de miembros.',
+          availableActions: governanceContext.availableActions,
+          requestId,
+        },
+        { status: 409 }
       ),
       requestId
     );
@@ -49,6 +107,19 @@ export async function POST(request: NextRequest) {
       side: typeof body?.side === 'string' ? body.side : null,
     });
 
+    logConnectorEvent(
+      'api/integrations/accounting/memberships/invite',
+      'info',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'invite',
+        outcome: 'success',
+        membershipId: membership.membershipId,
+      })
+    );
+
     return withConnectorRequestId(
       NextResponse.json({
         ok: true,
@@ -59,15 +130,27 @@ export async function POST(request: NextRequest) {
       requestId
     );
   } catch (error) {
-    const message =
-      error instanceof Error && error.message === 'invalid_email'
-        ? 'Indica un correo valido.'
-        : error instanceof Error && error.message === 'user_not_found'
-          ? 'No existe ningun usuario con ese correo en Verifactu todavia.'
-          : error instanceof Error
-            ? error.message
-            : 'No se pudo invitar al usuario.';
-    const status = error instanceof Error && error.message === 'user_not_found' ? 409 : 400;
+    const isInvalidEmail = error instanceof Error && error.message === 'invalid_email';
+    const isUserNotFound = error instanceof Error && error.message === 'user_not_found';
+    const message = isInvalidEmail
+      ? 'Indica un correo valido.'
+      : isUserNotFound
+        ? 'No existe ningun usuario con ese correo en Verifactu todavia.'
+        : 'No se pudo invitar al usuario.';
+    const status = isUserNotFound ? 409 : isInvalidEmail ? 400 : 500;
+
+    logConnectorEvent(
+      'api/integrations/accounting/memberships/invite',
+      isInvalidEmail || isUserNotFound ? 'warn' : 'error',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'invite',
+        outcome: isUserNotFound ? 'not_found' : isInvalidEmail ? 'validation_error' : 'exception',
+        error: error instanceof Error ? error.message : String(error),
+      })
+    );
 
     return withConnectorRequestId(
       NextResponse.json({ ok: false, error: message, requestId }, { status }),

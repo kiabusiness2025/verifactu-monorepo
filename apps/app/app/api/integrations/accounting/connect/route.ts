@@ -4,6 +4,7 @@ import {
   sendHoldedConnectionLifecycleEmails,
   sendWelcomeLifecycleEmails,
 } from '@/lib/email/holdedConnectionEmails';
+import { sendHighGovernanceRiskInternalAlertEmail } from '@/lib/email/holdedGovernanceEmails';
 import {
   resolveHoldedSecurityAlertRecipients,
   sendHoldedSecurityAlertEmails,
@@ -362,6 +363,12 @@ export async function POST(request: NextRequest) {
       legalAcceptanceVersion: HOLDED_CONNECTION_LEGAL_VERSION,
     });
 
+    const resolved = await resolveSharedHoldedConnectionStatusForTenant(
+      auth.tenantId,
+      entryChannel
+    );
+    const governanceFlags = buildGovernanceFlags(resolved);
+
     if (probe.ok) {
       try {
         const tenant = await prisma.tenant.findUnique({
@@ -417,6 +424,23 @@ export async function POST(request: NextRequest) {
           action: 'connected',
           channel: entryChannel,
         });
+
+        if (governanceFlags.highGovernanceRisk) {
+          await sendHighGovernanceRiskInternalAlertEmail({
+            tenantName: emailContext.tenantName,
+            tenantLegalName: emailContext.tenantLegalName,
+            channel: entryChannel,
+            actorEmail: auth.session.email ?? null,
+            actorName: auth.session.name ?? null,
+            companyEmail: emailContext.companyEmail,
+            contactPhone: emailContext.contactPhone,
+            ownershipStatus: governanceFlags.ownershipStatus,
+            managedByThirdParty: governanceFlags.managedByThirdParty,
+            clientAdminGap: governanceFlags.clientAdminGap,
+            underClaimReview: governanceFlags.underClaimReview,
+            detectedAt: legalAcceptedAt,
+          });
+        }
       } catch (notificationError) {
         logConnectorEvent('api/integrations/accounting/connect', 'error', {
           requestId,
@@ -432,11 +456,6 @@ export async function POST(request: NextRequest) {
         });
       }
     }
-
-    const resolved = await resolveSharedHoldedConnectionStatusForTenant(
-      auth.tenantId,
-      entryChannel
-    );
     const connection = buildConnectionStatusDto({
       connectionId: resolved?.id ?? `${auth.tenantId}:${entryChannel}`,
       tenantId: auth.tenantId,
@@ -450,7 +469,6 @@ export async function POST(request: NextRequest) {
       originChannel: resolved?.originChannel ?? entryChannel,
       supportedModules: [],
     });
-    const governanceFlags = buildGovernanceFlags(resolved);
     const availableActions = buildDefaultAvailableActions({
       status: connection.status,
       underClaimReview: governanceFlags.underClaimReview,

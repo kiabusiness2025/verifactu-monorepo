@@ -10,6 +10,11 @@ jest.mock('@/app/lib/communications/holded-email-service', () => ({
   sendHoldedConnectedCommunication: jest.fn(),
 }));
 
+jest.mock('@/app/lib/communications/holded-governance-emails', () => ({
+  __esModule: true,
+  sendPublicHighGovernanceRiskInternalAlertEmail: jest.fn(),
+}));
+
 jest.mock('@verifactu/integrations', () => ({
   __esModule: true,
   getConnectorRequestId: jest.fn(() => 'req-connect-1'),
@@ -124,6 +129,7 @@ jest.mock('@/app/lib/prisma', () => ({
 
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
+import { sendPublicHighGovernanceRiskInternalAlertEmail } from '@/app/lib/communications/holded-governance-emails';
 import { recordUsageEvent } from '@verifactu/integrations';
 import { mintHoldedValidationToken } from '@/app/lib/holded-validation-token';
 import {
@@ -206,6 +212,7 @@ describe('POST /api/holded/connect', () => {
       customerEmailId: 'customer-mail-id',
       adminEmailId: 'admin-mail-id',
     });
+    (sendPublicHighGovernanceRiskInternalAlertEmail as jest.Mock).mockResolvedValue(true);
     mockWriteHoldedActivity.mockResolvedValue(undefined);
     mockTenantFindUnique.mockResolvedValue({
       name: 'Ana - Holded',
@@ -271,6 +278,69 @@ describe('POST /api/holded/connect', () => {
       email: 'ana@example.com',
       companyName: 'Acme SL',
       supportedModules: ['invoicing', 'accounting'],
+    });
+    expect(sendPublicHighGovernanceRiskInternalAlertEmail).not.toHaveBeenCalled();
+  });
+
+  it('sends an internal governance alert when the resolved public connection is high risk', async () => {
+    mockGetHoldedConnection.mockResolvedValue({
+      provider: 'holded',
+      channel: 'dashboard',
+      status: 'connected',
+      connectedAt: '2026-04-11T12:00:00.000Z',
+      lastValidatedAt: '2026-04-11T12:00:00.000Z',
+      lastSyncAt: '2026-04-11T12:00:00.000Z',
+      originChannel: 'dashboard',
+      providerAccountId: 'provider-account-1',
+      keyMasked: 'abcd****mnop',
+      supportedModules: ['invoicing', 'accounting'],
+      validationSummary: 'ok',
+      ownershipStatus: 'third_party_managed',
+      managedByThirdParty: true,
+      clientAdminGap: true,
+      highGovernanceRisk: true,
+      underClaimReview: false,
+      technicalOperatorUserId: 'user_1',
+      tenantName: 'Acme SL',
+      legalName: 'Acme Sociedad Limitada',
+      taxId: 'B12345678',
+      apiKey: 'abcdefghijklmnop',
+    });
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          companyName: 'Acme SL',
+          legalName: 'Acme Sociedad Limitada',
+          taxId: 'B12345678',
+          contactFirstName: 'Ana',
+          contactLastName: 'Garcia',
+          contactEmail: 'ana@example.com',
+          contactPhone: '+34 600 111 222',
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(sendPublicHighGovernanceRiskInternalAlertEmail).toHaveBeenCalledWith({
+      tenantName: 'Acme SL',
+      tenantLegalName: 'Acme Sociedad Limitada',
+      channel: 'dashboard',
+      actorName: 'Ana Garcia',
+      actorEmail: 'ana@example.com',
+      companyEmail: 'ana@example.com',
+      contactPhone: '+34 600 111 222',
+      ownershipStatus: 'third_party_managed',
+      managedByThirdParty: true,
+      clientAdminGap: true,
+      underClaimReview: false,
+      detectedAt: expect.any(Date),
     });
   });
 

@@ -5,6 +5,7 @@ jest.mock('@/lib/api/tenantAuth', () => ({
 }));
 
 jest.mock('@/lib/integrations/holdedGovernanceService', () => ({
+  getTenantHoldedContext: jest.fn(),
   updateMembership: jest.fn(),
   removeMembership: jest.fn(),
 }));
@@ -12,13 +13,22 @@ jest.mock('@/lib/integrations/holdedGovernanceService', () => ({
 import { NextRequest } from 'next/server';
 import { DELETE, PATCH } from './route';
 import { requireTenantContext } from '@/lib/api/tenantAuth';
-import { removeMembership, updateMembership } from '@/lib/integrations/holdedGovernanceService';
+import {
+  getTenantHoldedContext,
+  removeMembership,
+  updateMembership,
+} from '@/lib/integrations/holdedGovernanceService';
 
 describe('accounting membership detail route', () => {
   beforeEach(() => {
     (requireTenantContext as jest.Mock).mockResolvedValue({
       tenantId: 'tenant-1',
       session: { uid: 'session-1', email: 'soporte@verifactu.business' },
+    });
+    (getTenantHoldedContext as jest.Mock).mockResolvedValue({
+      availableActions: {
+        manageMembers: { blocked: false, reason: 'ok', state: 'connected' },
+      },
     });
   });
 
@@ -74,5 +84,56 @@ describe('accounting membership detail route', () => {
     expect(response.status).toBe(409);
     expect(payload.ok).toBe(false);
     expect(payload.error).toContain('ultimo company_admin');
+  });
+
+  it('blocks membership updates when governance forbids member management', async () => {
+    (getTenantHoldedContext as jest.Mock).mockResolvedValue({
+      availableActions: {
+        manageMembers: {
+          blocked: true,
+          reason: 'Gestion de miembros bloqueada',
+          state: 'high_governance_risk',
+        },
+      },
+    });
+
+    const response = await PATCH(
+      new NextRequest(
+        'https://app.verifactu.business/api/integrations/accounting/memberships/membership-1',
+        {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ status: 'active' }),
+        }
+      ),
+      { params: Promise.resolve({ id: 'membership-1' }) }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload.ok).toBe(false);
+    expect(payload.error).toContain('Gestion de miembros bloqueada');
+    expect(updateMembership).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when membership update fails unexpectedly', async () => {
+    (updateMembership as jest.Mock).mockRejectedValue(new Error('db_timeout'));
+
+    const response = await PATCH(
+      new NextRequest(
+        'https://app.verifactu.business/api/integrations/accounting/memberships/membership-1',
+        {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ status: 'active' }),
+        }
+      ),
+      { params: Promise.resolve({ id: 'membership-1' }) }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload.ok).toBe(false);
+    expect(payload.error).toContain('No se pudo actualizar la membership');
   });
 });

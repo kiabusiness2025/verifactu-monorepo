@@ -143,4 +143,41 @@ describe('accounting claims route', () => {
     expect(payload.ok).toBe(true);
     expect(payload.notified).toBe(false);
   });
+
+  it('blocks claim creation when openClaim is already blocked by governance', async () => {
+    (getTenantHoldedContext as jest.Mock).mockResolvedValue({
+      governanceFlags: {
+        ownershipStatus: 'pending_confirmation',
+        managedByThirdParty: false,
+        clientAdminGap: true,
+        highGovernanceRisk: false,
+        underClaimReview: true,
+      },
+      availableActions: {
+        openClaim: {
+          blocked: true,
+          reason: 'Ya existe una reclamacion en revision para esta conexion.',
+          state: 'under_claim_review',
+        },
+      },
+    });
+
+    const response = await POST(
+      new NextRequest('https://app.verifactu.business/api/integrations/accounting/claims', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          claimType: 'control',
+          reason: 'Mismatch',
+        }),
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload.ok).toBe(false);
+    expect(payload.error).toContain('Ya existe una reclamacion en revision');
+    expect(payload.availableActions.openClaim.blocked).toBe(true);
+    expect(createClaim).not.toHaveBeenCalled();
+  });
 });

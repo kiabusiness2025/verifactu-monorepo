@@ -168,6 +168,37 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const currentContext = await getTenantHoldedContext(auth.tenantId, entryChannel);
+  if (currentContext.availableActions.openClaim.blocked) {
+    logConnectorEvent(
+      'api/integrations/accounting/claims',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: auth.tenantId,
+        entryChannel,
+        stage: 'guards',
+        outcome: 'blocked',
+        error: currentContext.availableActions.openClaim.reason,
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          ok: false,
+          error:
+            currentContext.availableActions.openClaim.reason ||
+            'La gobernanza actual bloquea la apertura de reclamaciones.',
+          governanceFlags: currentContext.governanceFlags,
+          availableActions: currentContext.availableActions,
+          requestId,
+        },
+        { status: 409 }
+      ),
+      requestId
+    );
+  }
+
   try {
     const claim = await createClaim({
       tenantId: auth.tenantId,

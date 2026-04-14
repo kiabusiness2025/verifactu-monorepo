@@ -12,6 +12,7 @@ import {
 } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
+import { sendPublicHighGovernanceRiskInternalAlertEmail } from '@/app/lib/communications/holded-governance-emails';
 import { verifyHoldedValidationToken } from '@/app/lib/holded-validation-token';
 import {
   disconnectHoldedConnection,
@@ -623,6 +624,39 @@ export async function POST(request: NextRequest) {
     const warnings = governanceFlags.clientAdminGap
       ? ['Falta responsable del cliente para cerrar la gobernanza inicial.']
       : [];
+
+    if (governanceFlags.highGovernanceRisk) {
+      try {
+        await sendPublicHighGovernanceRiskInternalAlertEmail({
+          tenantName: identity.companyName || saved?.tenantName || 'tu empresa',
+          tenantLegalName: identity.legalName || saved?.legalName || null,
+          channel,
+          actorName:
+            buildFullName(identity.contactFirstName, identity.contactLastName) || session.name,
+          actorEmail: notificationEmail || session.email || null,
+          companyEmail: notificationEmail || null,
+          contactPhone: identity.contactPhone || null,
+          ownershipStatus: governanceFlags.ownershipStatus,
+          managedByThirdParty: governanceFlags.managedByThirdParty,
+          clientAdminGap: governanceFlags.clientAdminGap,
+          underClaimReview: governanceFlags.underClaimReview,
+          detectedAt: new Date(),
+        });
+      } catch (governanceAlertError) {
+        logConnectorEvent('api/holded/connect', 'error', {
+          requestId,
+          tenantId: session.tenantId,
+          userId: session.userId,
+          entryChannel: channel,
+          stage: 'notify',
+          outcome: 'governance_alert_failed',
+          error:
+            governanceAlertError instanceof Error
+              ? governanceAlertError.message
+              : String(governanceAlertError),
+        });
+      }
+    }
 
     logConnectorEvent(
       'api/holded/connect',

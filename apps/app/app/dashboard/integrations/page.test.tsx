@@ -47,6 +47,26 @@ describe('IntegrationsPage', () => {
         return responseOf({ items: [] });
       }
 
+      if (
+        url.endsWith('/api/integrations/accounting/logs?mode=summary&summaryLimit=120') &&
+        method === 'GET'
+      ) {
+        return responseOf({
+          mode: 'summary',
+          tenantId: 'tenant-1',
+          summaryLimit: 120,
+          summary: {
+            sync: { total: 2, warnings: 1, errors: 1 },
+            conflicts: { quotes: 1 },
+            claims: { total: 2, open: 1 },
+            accessRequests: { total: 1, pending: 1 },
+            governance: { flags: null, blockedActions: [] },
+          },
+          incidents: [],
+          requestId: 'req-summary-1',
+        });
+      }
+
       if (url.endsWith('/api/integrations/gdrive/status') && method === 'GET') {
         return responseOf({
           provider: 'gdrive',
@@ -80,6 +100,7 @@ describe('IntegrationsPage', () => {
     render(<IntegrationsPage />);
 
     expect(await screen.findByText('Programa de contabilidad via API')).toBeInTheDocument();
+    expect(await screen.findByText('Resumen operativo por tenant/requestId')).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Desconectar' })[0]);
     expect(await screen.findByText('Desconectar integracion contable')).toBeInTheDocument();

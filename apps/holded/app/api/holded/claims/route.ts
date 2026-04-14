@@ -72,6 +72,46 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const currentConnection = await prisma.externalConnection.findUnique({
+    where: { id: body.connectionId.trim() },
+  });
+  const currentGovernanceFlags = buildGovernanceFlags(currentConnection);
+  const currentAvailableActions = buildDefaultAvailableActions({
+    status: currentConnection?.connectionStatus ?? 'disconnected',
+    underClaimReview: currentGovernanceFlags.underClaimReview,
+    clientAdminGap: currentGovernanceFlags.clientAdminGap,
+    highGovernanceRisk: currentGovernanceFlags.highGovernanceRisk,
+  });
+
+  if (currentConnection && currentAvailableActions.openClaim.blocked) {
+    logConnectorEvent(
+      'api/holded/claims',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        tenantId: session.tenantId,
+        stage: 'guards',
+        outcome: 'blocked',
+        error: currentAvailableActions.openClaim.reason,
+      })
+    );
+    return withConnectorRequestId(
+      NextResponse.json(
+        {
+          ok: false,
+          error:
+            currentAvailableActions.openClaim.reason ||
+            'La gobernanza actual bloquea la apertura de reclamaciones.',
+          governanceFlags: currentGovernanceFlags,
+          availableActions: currentAvailableActions,
+          requestId,
+        },
+        { status: 409 }
+      ),
+      requestId
+    );
+  }
+
   try {
     const claim = await createPublicClaim({
       requesterUserId: session.userId,

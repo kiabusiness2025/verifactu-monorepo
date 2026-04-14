@@ -22,6 +22,7 @@ export {
   buildClaimCreatedEmail,
   buildClaimReceiptEmail,
   buildClaimResolvedEmail,
+  buildHighGovernanceRiskInternalEmail,
 } from './holded/governanceEmailTemplates';
 export {
   buildActionState,

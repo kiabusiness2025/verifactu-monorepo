@@ -37,10 +37,57 @@ type SyncLog = {
   createdAt?: string;
 };
 
+type LogsSummaryPayload = {
+  mode: 'summary';
+  tenantId: string;
+  summaryLimit: number;
+  summary: {
+    sync: {
+      total: number;
+      warnings: number;
+      errors: number;
+    };
+    conflicts: {
+      quotes: number;
+    };
+    claims: {
+      total: number;
+      open: number;
+    };
+    accessRequests: {
+      total: number;
+      pending: number;
+    };
+    governance: {
+      flags: {
+        ownershipStatus: string | null;
+        managedByThirdParty: boolean;
+        clientAdminGap: boolean;
+        highGovernanceRisk: boolean;
+        underClaimReview: boolean;
+      } | null;
+      blockedActions: Array<{
+        action: string;
+        reason: string | null;
+      }>;
+    };
+  };
+  incidents: Array<{
+    source: string;
+    severity: string;
+    message: string;
+    createdAt: string;
+    outboxId: string | null;
+    requestId: string | null;
+  }>;
+  requestId: string;
+};
+
 export default function IntegrationsPage() {
   const searchParams = useSearchParams();
   const [integration, setIntegration] = useState<IntegrationStatus | null>(null);
   const [logs, setLogs] = useState<SyncLog[]>([]);
+  const [logsSummary, setLogsSummary] = useState<LogsSummaryPayload | null>(null);
   const [drive, setDrive] = useState<DriveStatus | null>(null);
   const [taxId, setTaxId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,18 +106,25 @@ export default function IntegrationsPage() {
     setLoading(true);
     setMessage(null);
     try {
-      const [statusRes, logsRes, driveRes] = await Promise.all([
+      const [statusRes, logsRes, logsSummaryRes, driveRes] = await Promise.all([
         fetch('/api/integrations/accounting/status'),
         fetch('/api/integrations/accounting/logs?limit=10'),
+        fetch('/api/integrations/accounting/logs?mode=summary&summaryLimit=120'),
         fetch('/api/integrations/gdrive/status'),
       ]);
       const statusData = await statusRes.json().catch(() => null);
       const logsData = await logsRes.json().catch(() => null);
+      const logsSummaryData = await logsSummaryRes.json().catch(() => null);
       const driveData = await driveRes.json().catch(() => null);
 
       if (!statusRes.ok) throw new Error(statusData?.error || 'No se pudo cargar la integracion');
       setIntegration(statusData as IntegrationStatus);
       setLogs(Array.isArray(logsData?.items) ? (logsData.items as SyncLog[]) : []);
+      setLogsSummary(
+        logsSummaryRes.ok && logsSummaryData?.mode === 'summary'
+          ? (logsSummaryData as LogsSummaryPayload)
+          : null
+      );
       if (driveRes.ok && driveData) setDrive(driveData as DriveStatus);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'No se pudo cargar integraciones');
@@ -341,6 +395,81 @@ export default function IntegrationsPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-base font-semibold text-slate-900">
+          Resumen operativo por tenant/requestId
+        </h2>
+        {!logsSummary ? (
+          <p className="mt-3 text-sm text-slate-500">Resumen no disponible en este momento.</p>
+        ) : (
+          <>
+            <div className="mt-3 grid gap-2 text-sm text-slate-700 md:grid-cols-3">
+              <p>
+                Sync warnings/errors:{' '}
+                <span className="font-semibold">
+                  {logsSummary.summary.sync.warnings}/{logsSummary.summary.sync.errors}
+                </span>
+              </p>
+              <p>
+                Conflictos quotes:{' '}
+                <span className="font-semibold">{logsSummary.summary.conflicts.quotes}</span>
+              </p>
+              <p>
+                Claims abiertas:{' '}
+                <span className="font-semibold">{logsSummary.summary.claims.open}</span>
+              </p>
+              <p>
+                Access requests pendientes:{' '}
+                <span className="font-semibold">{logsSummary.summary.accessRequests.pending}</span>
+              </p>
+              <p>
+                Tenant: <span className="font-semibold">{logsSummary.tenantId}</span>
+              </p>
+              <p>
+                Muestra de logs: <span className="font-semibold">{logsSummary.summaryLimit}</span>
+              </p>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+              <p className="font-semibold text-slate-600">Acciones bloqueadas</p>
+              {logsSummary.summary.governance.blockedActions.length === 0 ? (
+                <p className="mt-1 text-slate-500">Ninguna accion bloqueada.</p>
+              ) : (
+                <ul className="mt-2 space-y-1">
+                  {logsSummary.summary.governance.blockedActions.map((item) => (
+                    <li key={item.action}>
+                      <span className="font-semibold">{item.action}</span>
+                      {item.reason ? `: ${item.reason}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Incidentes recientes
+              </p>
+              {logsSummary.incidents.length === 0 ? (
+                <p className="text-sm text-slate-500">Sin incidentes recientes.</p>
+              ) : (
+                logsSummary.incidents.slice(0, 6).map((incident, index) => (
+                  <div
+                    key={`${incident.message}-${incident.createdAt}-${index}`}
+                    className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700"
+                  >
+                    <p className="font-semibold uppercase text-slate-500">{incident.severity}</p>
+                    <p className="mt-1">{incident.message}</p>
+                    <p className="mt-1 text-slate-500">{incident.createdAt}</p>
+                    <p className="mt-1 text-slate-500">requestId: {incident.requestId || '-'}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </section>
 
       {loading ? <p className="text-xs text-slate-500">Procesando...</p> : null}
