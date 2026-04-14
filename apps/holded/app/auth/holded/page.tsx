@@ -1,7 +1,7 @@
 'use client';
 
 import type { User } from 'firebase/auth';
-import { ArrowLeft, Eye, EyeOff, Loader2, Mail, X } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -389,63 +389,8 @@ function HoldedAuthContent() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff5f2_0%,#f8fafc_44%,#f8fafc_100%)] px-4 py-6 text-slate-900 sm:px-6 lg:px-10">
-      <div className="mx-auto flex w-full max-w-7xl flex-col rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_40px_120px_-72px_rgba(15,23,42,0.35)] backdrop-blur sm:min-h-[calc(100svh-3rem)] lg:grid lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative flex flex-col justify-between overflow-hidden px-5 py-6 sm:px-10 sm:py-10 lg:px-14 lg:py-14">
-          <div className="absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_top_left,rgba(255,84,96,0.16),transparent_68%)]" />
-          <div className="relative flex items-center justify-between gap-4">
-            <button
-              type="button"
-              onClick={() => exitHoldedAuth(exitTarget)}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] transition hover:text-[#ef4654]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </button>
-            <button
-              type="button"
-              onClick={() => exitHoldedAuth(exitTarget)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
-              aria-label="Cerrar ventana"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="relative mt-8 max-w-xl sm:mt-10 lg:mt-20">
-            <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
-                <Image
-                  src="/brand/holded/holded-diamond-logo.png"
-                  alt="Holded"
-                  width={22}
-                  height={22}
-                  className="h-[22px] w-[22px] object-contain"
-                  priority
-                />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-slate-950">holded</div>
-                <div className="text-xs text-slate-500">Acceso a tu conexion</div>
-              </div>
-            </div>
-
-            <h1 className="mt-6 max-w-lg text-3xl font-bold tracking-tight text-slate-950 sm:mt-8 sm:text-5xl">
-              {isRegisterMode ? 'Crea tu acceso' : 'Inicia sesion'}
-            </h1>
-            <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-9">
-              {isRegisterMode
-                ? 'Crea tu acceso para continuar con Holded.'
-                : 'Accede a tu cuenta para continuar con Holded.'}
-            </p>
-          </div>
-
-          <div className="relative mt-10 hidden items-center justify-between gap-4 text-sm text-slate-500 lg:flex">
-            <span>Soporte: {SUPPORT_EMAIL}</span>
-            <span>Espanol</span>
-          </div>
-        </section>
-
-        <section className="flex items-center justify-center border-t border-slate-200/80 bg-[linear-gradient(180deg,#fbfdff_0%,#f8fafc_100%)] px-4 py-6 sm:px-8 sm:py-8 lg:border-l lg:border-t-0 lg:px-10">
+      <div className="mx-auto flex min-h-[calc(100svh-3rem)] max-w-7xl items-center justify-center py-6">
+        <section className="flex w-full items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
           <div className="w-full max-w-[32rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_-56px_rgba(15,23,42,0.35)]">
             <div className="px-6 pb-6 pt-7 sm:px-8">
               <div className="text-center">
