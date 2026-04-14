@@ -615,7 +615,6 @@ export default async function HoldedOnboardingPage({
       summary={summary}
       companySetup={companySetup}
       onboardingToken={clientOnboardingToken}
-      enablePopupWindows={false}
       tenantIdHint={
         resolvedTenantInfo.tenantId ?? passiveVerifiedTenantPrefill?.tenantId ?? tenantIdHint
       }

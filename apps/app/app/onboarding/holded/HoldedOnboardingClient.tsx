@@ -124,26 +124,6 @@ type FieldErrorKey =
 
 type DirectOnboardingStep = 'identity' | 'person' | 'company' | 'api' | 'success';
 
-type PopupStep = 'company' | 'api';
-
-type PopupCompanyDraft = {
-  companyLegalName: string;
-  companyTaxId: string;
-  companyAddress: string;
-  companyPostalCode: string;
-  companyCity: string;
-  companyProvince: string;
-  companyCountry: string;
-  companyWebsite: string;
-  companySectorCode: string;
-  contactFirstName: string;
-  contactLastName: string;
-  contactRole: string;
-  contactEmail: string;
-  contactPhoneDialCode: string;
-  contactPhone: string;
-};
-
 type Props = {
   captureMode: boolean;
   entryChannel: 'dashboard' | 'chatgpt';
@@ -154,10 +134,6 @@ type Props = {
   summary: HoldedOnboardingSummary;
   companySetup: HoldedCompanySetupState;
   onboardingToken?: string | null;
-  enablePopupWindows?: boolean;
-  popupMode?: boolean;
-  popupStep?: PopupStep | null;
-  popupDraft?: string | null;
   tenantIdHint?: string | null;
   savedPrefill?: SavedPrefillState | null;
 };
@@ -227,43 +203,6 @@ function buildStoredPhoneNumber(localNumber: string, dialCode: string) {
   }
 
   return `${dialCode} ${normalizedLocalNumber}`.trim();
-}
-
-function encodePopupDraft(draft: PopupCompanyDraft) {
-  return encodeURIComponent(JSON.stringify(draft));
-}
-
-function decodePopupDraft(rawDraft?: string | null): PopupCompanyDraft | null {
-  if (!rawDraft) return null;
-
-  try {
-    const parsed = JSON.parse(decodeURIComponent(rawDraft));
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return null;
-    }
-
-    return {
-      companyLegalName: String((parsed as Record<string, unknown>).companyLegalName ?? ''),
-      companyTaxId: String((parsed as Record<string, unknown>).companyTaxId ?? ''),
-      companyAddress: String((parsed as Record<string, unknown>).companyAddress ?? ''),
-      companyPostalCode: String((parsed as Record<string, unknown>).companyPostalCode ?? ''),
-      companyCity: String((parsed as Record<string, unknown>).companyCity ?? ''),
-      companyProvince: String((parsed as Record<string, unknown>).companyProvince ?? ''),
-      companyCountry: String((parsed as Record<string, unknown>).companyCountry ?? ''),
-      companyWebsite: String((parsed as Record<string, unknown>).companyWebsite ?? ''),
-      companySectorCode: String((parsed as Record<string, unknown>).companySectorCode ?? ''),
-      contactFirstName: String((parsed as Record<string, unknown>).contactFirstName ?? ''),
-      contactLastName: String((parsed as Record<string, unknown>).contactLastName ?? ''),
-      contactRole: String((parsed as Record<string, unknown>).contactRole ?? ''),
-      contactEmail: String((parsed as Record<string, unknown>).contactEmail ?? ''),
-      contactPhoneDialCode: String(
-        (parsed as Record<string, unknown>).contactPhoneDialCode ?? '+34'
-      ),
-      contactPhone: String((parsed as Record<string, unknown>).contactPhone ?? ''),
-    };
-  } catch {
-    return null;
-  }
 }
 
 function hasResolvedCompanyData(summary: HoldedOnboardingSummary) {
@@ -563,18 +502,12 @@ export default function HoldedOnboardingClient({
   summary,
   companySetup,
   onboardingToken = null,
-  enablePopupWindows = false,
-  popupMode = false,
-  popupStep = null,
-  popupDraft = null,
   tenantIdHint = null,
   savedPrefill = null,
 }: Props) {
   const isChatgptEntry = entryChannel === 'chatgpt';
   const usesDirectStepFlow = isChatgptEntry;
   const requiresPersonStep = usesDirectStepFlow && requiresVerifiedIdentity;
-  const popupStepMode = popupMode && (popupStep === 'company' || popupStep === 'api');
-  const usesPopupOrchestrator = usesDirectStepFlow && enablePopupWindows && !popupStepMode;
   const needsPostValidationCompanyStep = isChatgptEntry;
   const uiCopy = isChatgptEntry ? chatgptUiCopy : dashboardUiCopy;
   const uiHighlights = isChatgptEntry ? chatgptHighlights : dashboardHighlights;
@@ -648,19 +581,12 @@ export default function HoldedOnboardingClient({
   );
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldErrorKey, string>>>({});
   const [directStep, setDirectStep] = useState<DirectOnboardingStep>(
-    popupStepMode
-      ? popupStep === 'api'
-        ? 'api'
+    requiresVerifiedIdentity && !identity.emailVerified
+      ? 'identity'
+      : requiresPersonStep
+        ? 'person'
         : 'company'
-      : requiresVerifiedIdentity && !identity.emailVerified
-        ? 'identity'
-        : requiresPersonStep
-          ? 'person'
-          : 'company'
   );
-  const [popupFlowEnabled, setPopupFlowEnabled] = useState(usesPopupOrchestrator);
-  const [popupFlowStage, setPopupFlowStage] = useState<'idle' | 'company' | 'api' | 'done'>('idle');
-  const [popupFlowError, setPopupFlowError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingMessageIndex, setSavingMessageIndex] = useState(0);
@@ -838,38 +764,6 @@ export default function HoldedOnboardingClient({
   }, [requiresPersonStep, showIdentityGate, usesDirectStepFlow]);
 
   useEffect(() => {
-    setPopupFlowEnabled(usesPopupOrchestrator);
-  }, [usesPopupOrchestrator]);
-
-  useEffect(() => {
-    if (!popupStepMode || popupStep !== 'api') {
-      return;
-    }
-
-    const parsedDraft = decodePopupDraft(popupDraft);
-    if (!parsedDraft) {
-      return;
-    }
-
-    setCompanyLegalName(parsedDraft.companyLegalName);
-    setCompanyTaxId(parsedDraft.companyTaxId);
-    setCompanyAddress(parsedDraft.companyAddress);
-    setCompanyPostalCode(parsedDraft.companyPostalCode);
-    setCompanyCity(parsedDraft.companyCity);
-    setCompanyProvince(parsedDraft.companyProvince);
-    setCompanyCountry(parsedDraft.companyCountry);
-    setCompanyWebsite(parsedDraft.companyWebsite);
-    setCompanySectorCode(parsedDraft.companySectorCode);
-    setContactFirstName(parsedDraft.contactFirstName);
-    setContactLastName(parsedDraft.contactLastName);
-    setContactRole(parsedDraft.contactRole);
-    setContactEmail(parsedDraft.contactEmail);
-    setContactPhoneDialCode(parsedDraft.contactPhoneDialCode || '+34');
-    setContactPhone(parsedDraft.contactPhone);
-    setDirectStep('api');
-  }, [popupDraft, popupStep, popupStepMode]);
-
-  useEffect(() => {
     if (identityState.email && !contactEmail) {
       setContactEmail(identityState.email);
     }
@@ -1030,9 +924,6 @@ export default function HoldedOnboardingClient({
     if (captureMode) {
       current.searchParams.set('capture', '1');
     }
-    if (entryChannel === 'chatgpt') {
-      current.searchParams.set('auth_ready', '1');
-    }
 
     const effectiveOnboardingToken = resolveRequestOnboardingToken();
     if (effectiveOnboardingToken) {
@@ -1153,169 +1044,6 @@ export default function HoldedOnboardingClient({
     },
     [captureMode, nextUrl]
   );
-
-  const openPopupWindow = useCallback((url: string, popupName: string) => {
-    if (typeof window === 'undefined') return null;
-    return window.open(
-      url,
-      popupName,
-      'popup=yes,width=980,height=860,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes'
-    );
-  }, []);
-
-  const openCompanyPopupWindow = useCallback(() => {
-    if (typeof window === 'undefined') return false;
-
-    const popupUrl = new URL('/onboarding/holded', window.location.origin);
-    popupUrl.searchParams.set('popup', '1');
-    popupUrl.searchParams.set('popup_step', 'company');
-    popupUrl.searchParams.set('channel', entryChannel);
-    popupUrl.searchParams.set('auth_ready', '1');
-    if (nextUrl) {
-      popupUrl.searchParams.set('next', nextUrl);
-    }
-    if (requireConnectionConfirmation) {
-      popupUrl.searchParams.set('require_connection_confirmation', '1');
-    }
-    if (captureMode) {
-      popupUrl.searchParams.set('capture', '1');
-    }
-
-    const effectiveOnboardingToken = resolveRequestOnboardingToken();
-    if (effectiveOnboardingToken) {
-      popupUrl.searchParams.set('onboarding_token', effectiveOnboardingToken);
-    }
-    const effectiveTenantIdHint = resolveRequestTenantIdHint();
-    if (effectiveTenantIdHint) {
-      popupUrl.searchParams.set('tenant_id', effectiveTenantIdHint);
-    }
-
-    const openedWindow = openPopupWindow(popupUrl.toString(), 'holded_company_step');
-    if (!openedWindow) {
-      setPopupFlowError(
-        'Tu navegador ha bloqueado la ventana emergente. Usa "Abrir ventana de empresa" o continua en esta pantalla.'
-      );
-      return false;
-    }
-
-    setPopupFlowStage('company');
-    setPopupFlowError(null);
-    return true;
-  }, [
-    captureMode,
-    entryChannel,
-    nextUrl,
-    openPopupWindow,
-    requireConnectionConfirmation,
-    resolveRequestOnboardingToken,
-    resolveRequestTenantIdHint,
-  ]);
-
-  const openApiPopupWindow = useCallback(
-    (draft: PopupCompanyDraft) => {
-      if (typeof window === 'undefined') return false;
-
-      const popupUrl = new URL('/onboarding/holded', window.location.origin);
-      popupUrl.searchParams.set('popup', '1');
-      popupUrl.searchParams.set('popup_step', 'api');
-      popupUrl.searchParams.set('channel', entryChannel);
-      popupUrl.searchParams.set('auth_ready', '1');
-      popupUrl.searchParams.set('popup_draft', encodePopupDraft(draft));
-      if (nextUrl) {
-        popupUrl.searchParams.set('next', nextUrl);
-      }
-      if (requireConnectionConfirmation) {
-        popupUrl.searchParams.set('require_connection_confirmation', '1');
-      }
-      if (captureMode) {
-        popupUrl.searchParams.set('capture', '1');
-      }
-
-      const effectiveOnboardingToken = resolveRequestOnboardingToken();
-      if (effectiveOnboardingToken) {
-        popupUrl.searchParams.set('onboarding_token', effectiveOnboardingToken);
-      }
-      const effectiveTenantIdHint = resolveRequestTenantIdHint();
-      if (effectiveTenantIdHint) {
-        popupUrl.searchParams.set('tenant_id', effectiveTenantIdHint);
-      }
-
-      const openedWindow = openPopupWindow(popupUrl.toString(), 'holded_api_step');
-      if (!openedWindow) {
-        setPopupFlowError(
-          'No hemos podido abrir la ventana de API. Puedes reintentar o continuar en esta pantalla.'
-        );
-        return false;
-      }
-
-      setPopupFlowStage('api');
-      setPopupFlowError(null);
-      return true;
-    },
-    [
-      captureMode,
-      entryChannel,
-      nextUrl,
-      openPopupWindow,
-      requireConnectionConfirmation,
-      resolveRequestOnboardingToken,
-      resolveRequestTenantIdHint,
-    ]
-  );
-
-  useEffect(() => {
-    if (!popupFlowEnabled || popupStepMode) {
-      return;
-    }
-
-    const autoOpenTimer = window.setTimeout(() => {
-      if (popupFlowStage === 'idle') {
-        openCompanyPopupWindow();
-      }
-    }, 140);
-
-    const onPopupMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) {
-        return;
-      }
-
-      const payload = event.data;
-      if (!payload || typeof payload !== 'object') {
-        return;
-      }
-
-      if ((payload as { type?: string }).type === 'holded-company-complete') {
-        const draft = (payload as { draft?: PopupCompanyDraft }).draft;
-        if (!draft) {
-          setPopupFlowError('No hemos podido recuperar los datos de empresa desde la ventana.');
-          return;
-        }
-        openApiPopupWindow(draft);
-        return;
-      }
-
-      if ((payload as { type?: string; redirectTarget?: string }).type === 'holded-api-complete') {
-        setPopupFlowStage('done');
-        setPopupFlowError(null);
-        goToNextStep((payload as { redirectTarget?: string }).redirectTarget || confirmedNextUrl);
-      }
-    };
-
-    window.addEventListener('message', onPopupMessage);
-
-    return () => {
-      window.clearTimeout(autoOpenTimer);
-      window.removeEventListener('message', onPopupMessage);
-    };
-  }, [
-    confirmedNextUrl,
-    goToNextStep,
-    openApiPopupWindow,
-    openCompanyPopupWindow,
-    popupFlowEnabled,
-    popupFlowStage,
-    popupStepMode,
-  ]);
 
   const clearFieldError = useCallback((key: FieldErrorKey) => {
     setFieldErrors((current) => {
@@ -1584,64 +1312,8 @@ export default function HoldedOnboardingClient({
       return next;
     });
 
-    if (
-      popupStepMode &&
-      popupStep === 'company' &&
-      typeof window !== 'undefined' &&
-      window.opener
-    ) {
-      const draft: PopupCompanyDraft = {
-        companyLegalName,
-        companyTaxId,
-        companyAddress,
-        companyPostalCode,
-        companyCity,
-        companyProvince,
-        companyCountry,
-        companyWebsite,
-        companySectorCode,
-        contactFirstName,
-        contactLastName,
-        contactRole,
-        contactEmail: normalizeText(contactEmail) || normalizeText(identityState.email) || '',
-        contactPhoneDialCode,
-        contactPhone,
-      };
-
-      window.opener.postMessage(
-        {
-          type: 'holded-company-complete',
-          draft,
-        },
-        window.location.origin
-      );
-      window.close();
-      return;
-    }
-
     goToDirectStep('api');
-  }, [
-    collectCompanyFieldErrors,
-    companyAddress,
-    companyCity,
-    companyCountry,
-    companyLegalName,
-    companyPostalCode,
-    companyProvince,
-    companySectorCode,
-    companyTaxId,
-    companyWebsite,
-    contactEmail,
-    contactFirstName,
-    contactLastName,
-    contactPhone,
-    contactPhoneDialCode,
-    contactRole,
-    goToDirectStep,
-    identityState.email,
-    popupStep,
-    popupStepMode,
-  ]);
+  }, [collectCompanyFieldErrors, goToDirectStep]);
 
   const handleHeaderBack = useCallback(() => {
     if (usesDirectStepFlow && !redirecting) {
@@ -1677,11 +1349,6 @@ export default function HoldedOnboardingClient({
       return;
     }
 
-    if (popupStepMode && typeof window !== 'undefined' && window.opener) {
-      window.close();
-      return;
-    }
-
     if (typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back();
       return;
@@ -1694,7 +1361,6 @@ export default function HoldedOnboardingClient({
     goToDirectStep,
     isChatgptEntry,
     nextUrl,
-    popupStepMode,
     requiresPersonStep,
     requiresVerifiedIdentity,
     redirecting,
@@ -1703,13 +1369,8 @@ export default function HoldedOnboardingClient({
   ]);
 
   const handleHeaderClose = useCallback(() => {
-    if (popupStepMode && typeof window !== 'undefined' && window.opener) {
-      window.close();
-      return;
-    }
-
     window.location.assign(isChatgptEntry ? CHATGPT_HOME_URL : nextUrl || HOLDED_COMPAT_URL);
-  }, [isChatgptEntry, nextUrl, popupStepMode]);
+  }, [isChatgptEntry, nextUrl]);
 
   useEffect(() => {
     if (!saving) {
@@ -2496,18 +2157,6 @@ export default function HoldedOnboardingClient({
         tenantIdHint: preparedTenant.tenantId,
       });
 
-      if (popupStepMode && popupStep === 'api' && typeof window !== 'undefined' && window.opener) {
-        window.opener.postMessage(
-          {
-            type: 'holded-api-complete',
-            redirectTarget: nextTarget,
-          },
-          window.location.origin
-        );
-        window.close();
-        return;
-      }
-
       goToNextStep(nextTarget);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : uiCopy.errorConnectFailed);
@@ -2583,56 +2232,7 @@ export default function HoldedOnboardingClient({
               </>
             ) : null}
 
-            {usesDirectStepFlow && popupFlowEnabled ? (
-              <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">
-                <div className="text-sm font-semibold text-black">
-                  Conecta en ventanas separadas
-                </div>
-                <p className="mt-2 text-sm leading-6 text-neutral-700">
-                  Abriremos primero una ventana para los datos de empresa y despues otra para la API
-                  key. Cuando termines, volveras automaticamente a ChatGPT.
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={() => openCompanyPopupWindow()}
-                    className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
-                  >
-                    {popupFlowStage === 'idle'
-                      ? 'Abrir ventana de empresa'
-                      : 'Reabrir ventana de empresa'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPopupFlowEnabled(false)}
-                    className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
-                  >
-                    Continuar en esta pantalla
-                  </button>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-[#d9e6ff] bg-white px-4 py-3 text-sm text-[#0b214a]">
-                  Estado actual:{' '}
-                  <strong>
-                    {popupFlowStage === 'idle'
-                      ? 'pendiente de abrir empresa'
-                      : popupFlowStage === 'company'
-                        ? 'empresa en curso'
-                        : popupFlowStage === 'api'
-                          ? 'API en curso'
-                          : 'completado'}
-                  </strong>
-                </div>
-
-                {popupFlowError ? (
-                  <div className="mt-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{popupFlowError}</span>
-                  </div>
-                ) : null}
-              </div>
-            ) : usesDirectStepFlow ? (
+            {usesDirectStepFlow ? (
               <>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {directStepItems.map((step, index) => {

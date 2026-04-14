@@ -23,6 +23,12 @@ jest.mock('@/lib/api/tenantAuth', () => ({
 }));
 
 jest.mock('@/lib/oauth/mcp', () => ({
+  buildLoginUrl: jest.fn((next: string, source: string) => {
+    const loginUrl = new URL('https://app.verifactu.business/login');
+    loginUrl.searchParams.set('next', next);
+    loginUrl.searchParams.set('source', source);
+    return loginUrl.toString();
+  }),
   mintHoldedOnboardingTokenForSubject: jest.fn(async () => 'generated-onboarding-token'),
 }));
 
@@ -181,7 +187,6 @@ describe('HoldedOnboardingPage', () => {
       searchParams: Promise.resolve({
         next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
         channel: 'chatgpt',
-        auth_ready: '1',
         onboarding_token: 'onboarding-token-123',
         tenant_id: 'tenant-demo',
       }),
@@ -195,7 +200,7 @@ describe('HoldedOnboardingPage', () => {
       })
     );
     expect(element.props.tenantIdHint).toBe('tenant-auth');
-    expect(element.props.requiresVerifiedIdentity).toBe(false);
+    expect(element.props.requiresVerifiedIdentity).toBe(true);
     expect(element.props.identity).toEqual(
       expect.objectContaining({
         authMethod: 'unknown',
@@ -248,7 +253,6 @@ describe('HoldedOnboardingPage', () => {
       searchParams: Promise.resolve({
         next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
         channel: 'chatgpt',
-        auth_ready: '1',
         onboarding_token: 'onboarding-token-123',
       }),
     });
@@ -310,7 +314,6 @@ describe('HoldedOnboardingPage', () => {
       searchParams: Promise.resolve({
         next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
         channel: 'chatgpt',
-        auth_ready: '1',
         onboarding_token: 'onboarding-token-123',
       }),
     });
@@ -403,7 +406,6 @@ describe('HoldedOnboardingPage', () => {
       searchParams: Promise.resolve({
         next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
         channel: 'chatgpt',
-        auth_ready: '1',
         onboarding_token: 'onboarding-token-123',
       }),
     });
@@ -440,7 +442,6 @@ describe('HoldedOnboardingPage', () => {
       searchParams: Promise.resolve({
         next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
         channel: 'chatgpt',
-        auth_ready: '1',
       }),
     });
 
@@ -482,7 +483,6 @@ describe('HoldedOnboardingPage', () => {
       searchParams: Promise.resolve({
         next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
         channel: 'chatgpt',
-        auth_ready: '1',
       }),
     });
 
