@@ -682,6 +682,13 @@ export default function HoldedOnboardingClient({
       province: normalizeText(companyProvince) || resolvedSummary.companyProvince,
       country: normalizeText(companyCountry) || resolvedSummary.companyCountry,
     }) || 'Domicilio pendiente';
+  const hasPendingFiscalProfile =
+    !normalizeText(companyAddress) ||
+    !normalizeText(companyPostalCode) ||
+    !normalizeText(companyCity) ||
+    !normalizeText(companyProvince) ||
+    !normalizeText(companyCountry) ||
+    !normalizeText(companySectorCode);
   const apiKeyHelp = reusesStoredCompanyData
     ? 'Validaremos la API key y cerraremos la conexion sin pasos visibles extra.'
     : uiCopy.apiKeyHelp;
@@ -3158,6 +3165,12 @@ export default function HoldedOnboardingClient({
                         <p className="mt-2 text-sm leading-6 text-neutral-700">
                           {redirectDescription}
                         </p>
+                        {hasPendingFiscalProfile ? (
+                          <div className="mt-3 rounded-2xl border border-[#d9e6ff] bg-[#f7fbff] px-4 py-3 text-sm text-[#0b214a]">
+                            Perfil fiscal pendiente: podras completar domicilio y sector despues
+                            desde Integraciones.
+                          </div>
+                        ) : null}
                         <div className="mt-4 flex flex-wrap gap-3">
                           <a
                             href={redirectTarget}
@@ -3165,6 +3178,14 @@ export default function HoldedOnboardingClient({
                           >
                             Continuar
                           </a>
+                          {hasPendingFiscalProfile && !isChatgptEntry ? (
+                            <a
+                              href="/dashboard/integrations/isaak-for-holded"
+                              className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                            >
+                              Completar perfil fiscal despues
+                            </a>
+                          ) : null}
                         </div>
                       </div>
                     </div>
