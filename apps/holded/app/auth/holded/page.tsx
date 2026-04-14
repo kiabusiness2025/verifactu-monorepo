@@ -1,7 +1,7 @@
 'use client';
 
 import type { User } from 'firebase/auth';
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2, Mail, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Loader2, Mail, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -23,6 +23,7 @@ import { mintSessionCookie } from '@/app/lib/serverSession';
 
 const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+const CHATGPT_HOME_URL = 'https://chatgpt.com';
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
 const GOOGLE_REDIRECT_PENDING_KEY = 'holded_google_redirect_pending';
 
@@ -48,6 +49,50 @@ async function activateSessionAndRedirect(user: User, rememberDevice: boolean, t
 
 function redirectToTarget(target: string) {
   window.location.replace(target);
+}
+
+function isChatgptAuthFlow(source: string, target: string) {
+  const normalizedSource = source.trim().toLowerCase();
+  if (
+    normalizedSource.includes('chatgpt') ||
+    normalizedSource.includes('isaak_chat') ||
+    normalizedSource.includes('openai')
+  ) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(target);
+    if (
+      parsed.hostname.includes('chatgpt.com') ||
+      parsed.hostname.includes('chat.openai.com') ||
+      (parsed.pathname.includes('/oauth/authorize') &&
+        parsed.searchParams.get('client_id')?.startsWith('openai-chatgpt-'))
+    ) {
+      return true;
+    }
+  } catch {
+    if (
+      target.includes('chatgpt.com') ||
+      target.includes('chat.openai.com') ||
+      target.includes('openai-chatgpt-')
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function exitHoldedAuth(target: string) {
+  if (typeof window === 'undefined') return;
+
+  if (window.opener) {
+    window.close();
+    return;
+  }
+
+  window.location.assign(target);
 }
 
 function getAccessErrorMessage(error: unknown, fallback: string) {
@@ -107,6 +152,11 @@ function HoldedAuthContent() {
     () => resolveRedirectTarget(nextParam, source),
     [nextParam, source]
   );
+  const isChatgptFlow = useMemo(
+    () => isChatgptAuthFlow(source, redirectTarget),
+    [redirectTarget, source]
+  );
+  const exitTarget = isChatgptFlow ? CHATGPT_HOME_URL : HOLDED_SITE_URL;
   const postLoginTarget = useMemo(
     () => buildLocalHandoffTarget(source, redirectTarget),
     [redirectTarget, source]
@@ -353,8 +403,8 @@ function HoldedAuthContent() {
     ? 'Crea tu acceso en Verifactu Business'
     : 'Inicia sesion en Verifactu Business';
   const currentSubtitle = isRegisterMode
-    ? 'Crea tu acceso y en el siguiente paso terminaras la conexion con Holded.'
-    : 'Vuelve a entrar para continuar con la conexion de Holded.';
+    ? 'Crea tu acceso para continuar.'
+    : 'Accede para continuar.';
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff5f2_0%,#f8fafc_44%,#f8fafc_100%)] px-4 py-6 text-slate-900 sm:px-6 lg:px-10">
@@ -362,19 +412,22 @@ function HoldedAuthContent() {
         <section className="relative flex flex-col justify-between overflow-hidden px-5 py-6 sm:px-10 sm:py-10 lg:px-14 lg:py-14">
           <div className="absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_top_left,rgba(255,84,96,0.16),transparent_68%)]" />
           <div className="relative flex items-center justify-between gap-4">
-            <Link
-              href="/"
+            <button
+              type="button"
+              onClick={() => exitHoldedAuth(exitTarget)}
               className="inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] transition hover:text-[#ef4654]"
             >
               <ArrowLeft className="h-4 w-4" />
-              Volver a Holded
-            </Link>
-            <a
-              href={HOLDED_SITE_URL}
-              className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 transition hover:text-slate-600"
+              {isChatgptFlow ? 'Volver a ChatGPT' : 'Cerrar'}
+            </button>
+            <button
+              type="button"
+              onClick={() => exitHoldedAuth(exitTarget)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+              aria-label="Cerrar ventana"
             >
-              holded.verifactu.business
-            </a>
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
           <div className="relative mt-8 max-w-xl sm:mt-10 lg:mt-20">
@@ -391,41 +444,18 @@ function HoldedAuthContent() {
               </div>
               <div>
                 <div className="text-sm font-semibold text-slate-950">holded</div>
-                <div className="text-xs text-slate-500">Acceso guiado a tu conexion</div>
+                <div className="text-xs text-slate-500">Acceso a tu conexion</div>
               </div>
             </div>
 
             <h1 className="mt-6 max-w-lg text-3xl font-bold tracking-tight text-slate-950 sm:mt-8 sm:text-5xl">
-              {isRegisterMode
-                ? 'Crea tu acceso y conecta Holded sin friccion.'
-                : 'Inicia sesion y continua en Verifactu Business.'}
+              {isRegisterMode ? 'Crea tu acceso' : 'Inicia sesion'}
             </h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-9">
               {isRegisterMode
-                ? 'Preparamos tu acceso y luego terminas la conexion con Holded para empezar con tus datos reales sin pasos innecesarios.'
-                : 'Accede a tu cuenta para continuar con Holded y terminar la conexion con tus datos conectados.'}
+                ? 'Crea tu acceso para continuar con Holded.'
+                : 'Accede a tu cuenta para continuar con Holded.'}
             </p>
-
-            <div className="mt-6 hidden gap-3 sm:grid sm:grid-cols-2">
-              <div className="rounded-3xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <ShieldCheck className="h-4 w-4 text-[#ff5460]" />
-                  Acceso seguro
-                </div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Activamos tu acceso al terminar este paso para evitar entradas repetidas.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <CheckCircle2 className="h-4 w-4 text-[#ff5460]" />
-                  Siguiente paso claro
-                </div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Entras, conectas Holded y sigues directamente al siguiente paso.
-                </p>
-              </div>
-            </div>
           </div>
 
           <div className="relative mt-10 hidden items-center justify-between gap-4 text-sm text-slate-500 lg:flex">
@@ -475,16 +505,6 @@ function HoldedAuthContent() {
                   </span>
                 </div>
               </div>
-
-              {existingUserChecking ? (
-                <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-center">
-                  <Loader2 className="mx-auto h-5 w-5 animate-spin text-[#ff5460]" />
-                  <p className="mt-3 text-sm font-semibold text-slate-900">Preparando tu acceso</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Estamos recuperando tu sesion para continuar sin pasos repetidos.
-                  </p>
-                </div>
-              ) : null}
 
               {error ? (
                 <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800">
