@@ -170,6 +170,32 @@ describe('HoldedOnboardingPage', () => {
     expect(nextUrl.searchParams.get('tenant_id')).toBe('tenant-demo');
   });
 
+  it('redirects to login even when onboarding token verification throws', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue(null);
+    (resolveHoldedOnboardingSession as jest.Mock).mockRejectedValueOnce(
+      new Error('invalid onboarding token signature')
+    );
+
+    await expect(
+      HoldedOnboardingPage({
+        searchParams: Promise.resolve({
+          next: 'https://app.verifactu.business/oauth/authorize?client_id=openai-test',
+          channel: 'chatgpt',
+          require_connection_confirmation: '1',
+          onboarding_token: 'broken-token',
+          tenant_id: 'tenant-demo',
+        }),
+      })
+    ).rejects.toThrow('NEXT_REDIRECT:');
+
+    const loginUrl = new URL(redirectMock.mock.calls[0][0]);
+    const nextUrl = new URL(loginUrl.searchParams.get('next') || 'https://app.verifactu.business');
+
+    expect(loginUrl.pathname).toBe('/login');
+    expect(nextUrl.pathname).toBe('/onboarding/holded');
+    expect(nextUrl.searchParams.get('tenant_id')).toBe('tenant-demo');
+  });
+
   it('passes tenant hints into tenant resolution and the client props', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'session-user-1',

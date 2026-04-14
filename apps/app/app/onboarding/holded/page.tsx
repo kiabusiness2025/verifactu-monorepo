@@ -305,6 +305,34 @@ async function resolveTenantProfileColumnsSafe() {
   }
 }
 
+async function resolveOnboardingSessionSafe(token: string | null) {
+  if (!token) return null;
+  try {
+    return await resolveHoldedOnboardingSession(token);
+  } catch (error) {
+    console.error(
+      '[onboarding/holded] onboarding token validation failed, continuing without token',
+      {
+        message: error instanceof Error ? error.message : String(error),
+      }
+    );
+    return null;
+  }
+}
+
+async function mintOnboardingTokenSafe(
+  input: Parameters<typeof mintHoldedOnboardingTokenForSubject>[0]
+) {
+  try {
+    return await mintHoldedOnboardingTokenForSubject(input);
+  } catch (error) {
+    console.error('[onboarding/holded] failed to mint onboarding token', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
 export default async function HoldedOnboardingPage({
   searchParams,
 }: {
@@ -323,9 +351,7 @@ export default async function HoldedOnboardingPage({
   }
   const session = await getSessionPayload();
   const onboardingToken = getHoldedOnboardingTokenFromSearchParams(search);
-  const onboardingSession = onboardingToken
-    ? await resolveHoldedOnboardingSession(onboardingToken)
-    : null;
+  const onboardingSession = await resolveOnboardingSessionSafe(onboardingToken);
   const entryChannel = inferHoldedEntryChannel({
     channel: params.channel,
     source: params.source,
@@ -370,7 +396,7 @@ export default async function HoldedOnboardingPage({
   let effectiveOnboardingToken =
     onboardingToken ||
     (entryChannel === 'chatgpt' && session?.uid
-      ? await mintHoldedOnboardingTokenForSubject({
+      ? await mintOnboardingTokenSafe({
           uid: session.uid,
           email: session.email ?? null,
           name: normalizeMeaningfulPersonName(session.name),
@@ -424,7 +450,7 @@ export default async function HoldedOnboardingPage({
       verifiedAt: rememberedVerifiedIdentity.verifiedAt,
     };
 
-    effectiveOnboardingToken = await mintHoldedOnboardingTokenForSubject({
+    effectiveOnboardingToken = await mintOnboardingTokenSafe({
       uid: effectiveOnboardingSession.uid,
       email: effectiveOnboardingSession.email,
       name: normalizeMeaningfulPersonName(effectiveOnboardingSession.name),
@@ -571,7 +597,7 @@ export default async function HoldedOnboardingPage({
 
   const clientOnboardingToken =
     shouldBindResolvedTenantToOnboardingToken && effectiveOnboardingSession?.uid
-      ? await mintHoldedOnboardingTokenForSubject({
+      ? await mintOnboardingTokenSafe({
           uid: effectiveOnboardingSession.uid,
           email: effectiveOnboardingSession.email ?? session?.email ?? null,
           name:
