@@ -60,6 +60,35 @@ function redirectWithError(redirectUri: string, error: string, state?: string | 
   return NextResponse.redirect(url);
 }
 
+function isLikelyChatgptOAuthRequest(input: { clientId: string; redirectUri: string }) {
+  const normalizedClientId = input.clientId.trim().toLowerCase();
+  if (
+    normalizedClientId.startsWith('openai-chatgpt-') ||
+    normalizedClientId.startsWith('openai-') ||
+    normalizedClientId.includes('chatgpt')
+  ) {
+    return true;
+  }
+
+  try {
+    const parsedRedirect = new URL(input.redirectUri);
+    const host = parsedRedirect.hostname.toLowerCase();
+    const path = parsedRedirect.pathname.toLowerCase();
+
+    if (host.includes('chat.openai.com') || host.includes('chatgpt.com')) {
+      return true;
+    }
+
+    if (path.includes('/aip/oauth/callback') || path.includes('/oauth/callback')) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
+}
+
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
   const requestId = getConnectorRequestId(request);
@@ -77,7 +106,7 @@ export async function GET(request: NextRequest) {
   const connectionConfirmed = url.searchParams.get('connection_confirmed')?.trim() === '1';
   const tenantIdQuery = url.searchParams.get('tenant_id')?.trim() || null;
   const loginConfirmed = url.searchParams.get('holded_login_confirmed')?.trim() === '1';
-  const isChatgptClient = clientId.startsWith('openai-chatgpt-') || clientId.startsWith('openai-');
+  const isChatgptClient = isLikelyChatgptOAuthRequest({ clientId, redirectUri });
 
   try {
     if (responseType !== 'code') {

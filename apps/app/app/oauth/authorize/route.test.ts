@@ -117,6 +117,28 @@ describe('oauth authorize holded flow', () => {
     expect(mintAuthorizationCode).not.toHaveBeenCalled();
   });
 
+  it('forces login panel when redirect_uri is ChatGPT even if client_id is custom', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-1',
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=custom-client-id&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+    );
+
+    const response = await GET(request);
+    const location = response.headers.get('location');
+
+    expect(response.status).toBe(307);
+    expect(location).toContain('/auth/holded');
+    expect(location).toContain('source=holded_chat_requires_session');
+    expect(location).toContain(encodeURIComponent('holded_login_confirmed=1'));
+    expect(mintAuthorizationCode).not.toHaveBeenCalled();
+  });
+
   it('redirects to onboarding even when a chatgpt connection already exists until the user confirms reconnection', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'user-1',
