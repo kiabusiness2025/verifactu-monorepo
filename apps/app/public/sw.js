@@ -1,14 +1,16 @@
 // Service Worker para Verifactu Business PWA
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `verifactu-${CACHE_VERSION}`;
 const STATIC_CACHE = `verifactu-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `verifactu-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `verifactu-api-${CACHE_VERSION}`;
 
 const NO_CACHE_PATH_PREFIXES = [
+  '/onboarding',
   '/onboarding/holded',
   '/oauth/',
   '/auth/holded',
+  '/api/holded/',
   '/api/onboarding/',
 ];
 
@@ -28,6 +30,10 @@ const CACHEABLE_API_ROUTES = ['/api/tenants', '/api/invoices', '/api/expenses', 
 function shouldBypassCaching(request, url) {
   if (request.method !== 'GET') {
     return false;
+  }
+
+  if (request.mode === 'navigate') {
+    return true;
   }
 
   if (url.searchParams.has('onboarding_token') || url.searchParams.has('connection_confirmed')) {
@@ -82,7 +88,7 @@ self.addEventListener('fetch', (event) => {
 
   if (shouldBypassCaching(request, url)) {
     event.respondWith(
-      fetch(request).catch(() => {
+      fetch(request, { cache: 'no-store' }).catch(() => {
         if (request.mode === 'navigate') {
           return caches.match('/offline');
         }
