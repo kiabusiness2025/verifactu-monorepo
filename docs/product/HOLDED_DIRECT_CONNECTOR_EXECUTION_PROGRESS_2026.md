@@ -1463,6 +1463,346 @@ Endurecer el conector despues de `PANEL-1` para que las acciones privadas del da
 - Punto recomendado de corte para `commit + push + pruebas reales`
 - Fase OPERATE-2 - pruebas reales con verificacion manual de correos y flujo completo
 
+## Fase NUEVA-OLA-P0.2 - Estado de identidad en la sesion temporal del conector
+
+- Estado: completada
+- Fecha de cierre: 2026-04-14
+
+### Objetivo de fase
+
+Extender el token de onboarding del conector para transportar estado de identidad verificada sin perderse entre pasos, permitiendo que el resto del flujo pueda leer ese estado sin depender del login clasico de producto.
+
+### Entregado
+
+- `HoldedOnboardingPayload` en `apps/app/lib/oauth/mcp.ts` extendido con:
+  - `authMethod` (`unknown` | `google` | `email`)
+  - `emailVerified`
+  - `firstName`
+  - `lastName`
+  - `verifiedAt`
+- `mintHoldedOnboardingToken` y `mintHoldedOnboardingTokenForSubject` actualizados para incluir todos los campos
+- `mintHoldedEmailVerificationToken` anadido para el flujo de verificacion por codigo
+- `verifyHoldedEmailVerificationToken` anadido para consumir el token de verificacion
+- `HoldedOnboardingSession` en `apps/app/lib/integrations/holdedOnboardingSession.ts` expone los mismos campos
+- `isVerifiedHoldedOnboardingIdentity` anadida como helper de acceso guardado
+- `apps/app/app/api/onboarding/tenant/route.ts` conserva el estado de identidad al refrescar el token tras crear o reusar tenant
+
+### Pendiente
+
+- ninguno
+
+### Decisiones cerradas en esta fase
+
+- el token de onboarding es la unica fuente de verdad del estado de identidad dentro del flujo del conector
+- el estado viaja cifrado en el JWT; no se almacena en cookie ni en session de producto
+- `isVerifiedHoldedOnboardingIdentity` es el guard canonico para proteger pasos posteriores al correo
+
+### Compatibilidad temporal vigente
+
+- los consumidores que no envian `authMethod` reciben `unknown` por defecto
+- el campo `emailVerified` llega a `false` si no esta en el payload
+
+### Riesgos abiertos
+
+- ninguno relevante en este punto
+
+### Siguiente fase habilitada
+
+- Fase NUEVA-OLA-P0.3 - pantalla de entrada de identidad del conector
+
+## Fase NUEVA-OLA-P0.3 - Pantalla de entrada de identidad Google o Correo
+
+- Estado: completada
+- Fecha de cierre: 2026-04-14
+
+### Objetivo de fase
+
+Redisenar la pantalla de entrada del conector como una primera decision visible: `Google` o `Correo`. Google es opcional. No hay selector de tenant ni dashboard visible. El flujo sigue siendo del conector, no del producto principal.
+
+### Entregado
+
+- `apps/holded/app/auth/holded/page.tsx` redisanado para:
+  - mostrar `authStep = 'choose'` como primera pantalla con opcion `Google` y `Correo`
+  - el camino Google usa popup primero con fallback a redirect para entornos embebidos
+  - el camino Email lleva a `authStep = 'email'` (login existente) o `authStep = 'register-account'` (registro)
+  - texto de salida `Volver` sustituye al condicional anterior
+  - badge de Holded visible en el formulario de email
+- `apps/holded/app/api/auth/session/health/route.ts` anadido para health check de la sesion compartida
+- hardening del flujo de redirect result de Google:
+  - reintentos antes de fallar
+  - integracion con App Check
+  - limpieza de estado pendiente al detectar error definitivo
+
+### Pendiente
+
+- el camino Email sigue usando Firebase email/password; no usa aun el flujo de magic link
+
+### Decisiones cerradas en esta fase
+
+- `choose` es el estado inicial siempre salvo que el parametro `mode=register` fuerce `register-account`
+- Google usa redirect como fallback real, no solo como ultimo recurso
+- el health check de sesion es un endpoint propio de `apps/holded`, sin depender de `apps/app`
+
+### Compatibilidad temporal vigente
+
+- la ruta de login por correo con contrasena sigue activa para usuarios existentes
+- el flag `NEXT_PUBLIC_HOLDED_ENABLE_GOOGLE_LOGIN` controla si Google aparece en pantalla
+
+### Riesgos abiertos
+
+- el email path usa contrasena en lugar de magic link; esto es el gap principal de P0.4
+
+### Siguiente fase habilitada
+
+- Fase NUEVA-OLA-P0.4 - verificacion obligatoria del correo manual con magic link
+
+## Fase NUEVA-OLA-P0.4 - Verificacion de correo manual con magic link
+
+- Estado: completada
+- Fecha de cierre: 2026-04-15
+
+### Objetivo de fase
+
+Reemplazar el camino de email con contrasena por un flujo de magic link ligero: el usuario escribe su correo, recibe un enlace de un solo uso, lo abre y queda verificado sin contrasena. La via manual no puede continuar al wizard sin correo verificado.
+
+### Entregado
+
+- `apps/holded/app/lib/auth.ts` extendido con:
+  - `sendMagicLinkEmail(email, returnUrl)` — llama a `sendSignInLinkToEmail` de Firebase y guarda email en localStorage
+  - `detectMagicLinkInUrl()` — detecta si la URL actual contiene un magic link de Firebase
+  - `getStoredMagicLinkEmail()` / `clearStoredMagicLinkEmail()` — gestion del email guardado
+  - `consumeMagicLink(email, options)` — llama a `signInWithEmailLink`, limpia localStorage y minta session cookie
+  - `MAGIC_LINK_EMAIL_KEY` exportada para tests
+- `apps/holded/app/auth/holded/page.tsx` redisanado:
+  - `AuthStep` reducido a `'choose' | 'magic-email' | 'magic-sent' | 'password'`
+  - eliminados `'register-account'` y `'register-company'` del flujo publico
+  - pantalla `'magic-email'`: solo campo de correo; envia magic link con URL de retorno preservando `source` y `next`
+  - pantalla `'magic-sent'`: confirmacion con reenvio y cambio de correo
+  - pantalla `'password'`: accesible via "Ya tengo contrasena" como fallback para cuentas existentes
+  - deteccion automatica de magic link en URL al cargar la pagina; consume el enlace y activa la sesion
+  - fallback a pantalla de correo si localStorage no tiene email almacenado al llegar por el link
+- `apps/holded/.env.example` anotado: `holded.verifactu.business` debe estar en Firebase Authorized Domains para email link auth
+- Nota operativa: el dominio debe anadirse en Firebase Console → Authentication → Settings → Authorized Domains
+
+### Pendiente
+
+- ninguno
+
+### Decisiones cerradas en esta fase
+
+- se usa Firebase Email Link Authentication en lugar de la API `identity/email/start` de `apps/app` para evitar dependencias cruzadas
+- la URL de retorno del magic link apunta a la misma pagina de auth con `source` y `next` preservados
+- el fallback de contrasena se mantiene como opcion oculta para cuentas existentes con contrasena
+
+### Compatibilidad temporal vigente
+
+- usuarios con cuenta de contrasena existente pueden usar "Ya tengo contrasena" como fallback
+- el camino `register-account` / `register-company` fue eliminado; el registro nuevo es por magic link o Google
+
+### Riesgos abiertos
+
+- si el correo del magic link va a spam o tarda, el usuario puede quedarse esperando sin retorno visible
+- el dominio de produccion debe estar en Firebase Authorized Domains antes de activar en produccion
+
+### Siguiente fase habilitada
+
+- Fase NUEVA-OLA-P0.5 - onboarding por pasos completo
+
+## Fase NUEVA-OLA-P0.5 - Onboarding por pasos conversacionales
+
+- Estado: completada
+- Fecha de cierre: 2026-04-15
+
+### Objetivo de fase
+
+Un paso por tarea, sin friccion, con identidad como paso externo previo al wizard.
+
+### Entregado
+
+El wizard de `apps/holded/app/onboarding/holded/OnboardingHoldedClient.tsx` ya implementa la secuencia correcta del plan:
+
+- Paso 0 (externo al wizard): pantalla de identidad en `apps/holded/app/auth/holded/page.tsx` — Google o correo verificado via magic link
+- Paso 1 — `Tus datos`: nombre y apellidos (`contactFirstName`, `contactLastName`), correo y telefono opcionales
+- Paso 2 — `Empresa`: nombre de empresa, CIF/NIF, razon social opcional
+- Paso 3 — `Conexion`: API key de Holded con validacion y deteccion de duplicados
+- Paso 4 — pantalla de exito: confirmacion personalizada con nombre de empresa detectada, animacion de exito, badges de modulos soportados
+
+El `StepIndicator` muestra los pasos 1 a 3 con estados done/active/pending. El paso 4 es la pantalla final sin indicador de pasos.
+
+La alineacion con el plan de 5 pasos es completa: identidad → nombre → empresa → API key → exito.
+
+### Pendiente
+
+- ninguno
+
+### Decisiones cerradas en esta fase
+
+- el wizard no necesito reestructuracion; ya implementaba la secuencia correcta
+- la identidad pre-rellena en el wizard viene del `initialIdentity` que el server component lee de la sesion y la base de datos
+- si el usuario entro por magic link su nombre puede llegar vacio (Firebase Email Link no almacena display name); el wizard step 1 sirve para que lo rellene
+
+### Compatibilidad temporal vigente
+
+- el wizard puede arrancar con `initialIdentity` vacio; el usuario rellena en los pasos
+
+### Riesgos abiertos
+
+- ninguno relevante
+
+### Siguiente fase habilitada
+
+- Fase NUEVA-OLA-P0.6 - politica de correos final
+
+## Fase NUEVA-OLA-P0.6 - Politica de correos del conector directo
+
+- Estado: completada
+- Fecha de cierre: 2026-04-15
+
+### Objetivo de fase
+
+Paridad entre via Google y via manual. Sin correos de bienvenida antes de la conexion completada. Un unico correo final de bienvenida tras conexion exitosa, personalizado con nombre y empresa.
+
+### Entregado
+
+- `apps/holded/app/lib/auth.ts`: `SignInOptions` extendida con `source?: string`; todos los `mintSessionCookie` en `signInWithEmail`, `signInWithGoogle`, `consumeGoogleRedirectResult`, `signInWithMicrosoft`, `consumeMagicLink` propagan `source`
+- `apps/holded/app/lib/serverSession.ts`: `MintSessionOptions` extendida con `source?: string`; `mintSessionCookie` adjunta `?source=...` al endpoint `/api/auth/session` cuando esta disponible
+- `apps/holded/app/auth/holded/page.tsx`: `activateSessionAndRedirect` recibe `source` y lo pasa a `mintSessionCookie`; los tres call sites de `activateSessionAndRedirect` y los de `consumeMagicLink`, `consumeGoogleRedirectResult` y `signInWithEmail` propagan el `source` del URL param de la pagina
+- `apps/holded/app/api/auth/session/route.ts`: `isConnectorFlow` detecta cuando el source indica flujo del conector (`chatgpt`, `connector`, `holded_onboarding`) y salta `sendVerifiedAccessEmails` para esas sesiones. El DB update de `emailVerified` y el registro de actividad siguen ocurriendo siempre
+- `apps/holded/app/api/holded/connect/route.ts`: `sendHoldedConnectedCommunication` ya envia el correo final despues de `saveHoldedConnection` y `persistConnectionIdentity` — correcto, sin cambios necesarios
+- todos los tests pasan (25/25)
+
+### Paridad Google / manual verificada
+
+- Google: email verificado en Firebase desde el inicio; `isConnectorFlow=true` suprime `sendVerifiedAccessEmails`; correo final al completar wizard
+- Magic link: email verificado al consumir el link; `isConnectorFlow=true` suprime `sendVerifiedAccessEmails`; correo final al completar wizard
+- Dashboard login (no conector): `isConnectorFlow=false`; `sendVerifiedAccessEmails` se envia normalmente al verificar el correo por primera vez
+
+### Pendiente
+
+- ninguno
+
+### Decisiones cerradas en esta fase
+
+- el `source` del URL param del auth page es la senal canonica de contexto de flujo; no se necesita otro mecanismo de tracking
+- `isConnectorFlow` es conservador: solo suprime para fuentes que contienen `chatgpt`, `connector`, o empiezan por `holded_onboarding`
+- el DB update de `emailVerified` ocurre siempre independientemente del flujo para mantener trazabilidad correcta
+
+### Compatibilidad temporal vigente
+
+- los usuarios de dashboard que no llegan por `source=holded_onboarding*` siguen recibiendo `sendVerifiedAccessEmails` como antes
+
+### Riesgos abiertos
+
+- si el `source` no se propaga correctamente en algun path no cubierto por tests, `isConnectorFlow` puede evaluarse como `false` y enviar emails no deseados; bajo riesgo dado que el check es permisivo
+
+### Siguiente fase habilitada
+
+- Fase NUEVA-OLA-P1.1 - reordenar OnboardingHoldedClient por estados claros
+
+## Fase NUEVA-OLA-P1.1 - Estructura de estados del wizard
+
+- Estado: completada
+- Fecha de cierre: 2026-04-15
+
+### Objetivo de fase
+
+Verificar que `OnboardingHoldedClient` esta organizado como flujo por estados claros, sin estados mezclados y facil de extender.
+
+### Verificado
+
+`apps/holded/app/onboarding/holded/OnboardingHoldedClient.tsx` ya implementa la estructura correcta:
+
+- `WizardStep = 1 | 2 | 3 | 4` — discreto y no solapable
+- `phase = 'idle' | 'validating' | 'connecting' | 'connected'` — separado del step; solo transiciona dentro de step 3
+- steps 1 y 2 son navegacion pura sin side effects
+- step 3 tiene `handleSubmit` que maneja validacion + conexion con `setPhase` claro en cada rama
+- step 4 es la pantalla de exito; `setStep(4)` ocurre al final del flujo de conexion exitosa
+- `conflictWorking` / `conflictAction` solo tienen significado en step 3 con conflicto detectado
+
+No se necesitaron cambios estructurales. El componente ya estaba organizado correctamente.
+
+### Pendiente
+
+- ninguno
+
+### Decisiones cerradas en esta fase
+
+- la separacion `step` (wizard) vs `phase` (async op) es suficiente para este wizard de 4 pasos
+- no es necesario extraer sub-componentes por paso en esta fase; la legibilidad es acceptable
+
+### Siguiente fase habilitada
+
+- Fase NUEVA-OLA-P1.2 - revalidacion del retorno OAuth
+
+## Fase NUEVA-OLA-P1.2 - Retorno OAuth con la nueva UX
+
+- Estado: completada
+- Fecha de cierre: 2026-04-15
+
+### Objetivo de fase
+
+Verificar que el flujo `authorize → onboarding → return` sigue funcionando correctamente con la nueva UX de magic link y la pantalla de identidad.
+
+### Verificado
+
+Flujo completo analizado:
+
+1. ChatGPT → `app.verifactu.business/oauth/authorize?...`
+2. App redirige a `holded.verifactu.business/onboarding/holded?source=holded_chatgpt_entry&channel=chatgpt&next=<authorize_url>&onboarding_token=...`
+3. Onboarding page: sin sesion → redirige a `auth/holded?source=holded_onboarding_connect&next=/onboarding/holded?...`
+4. Auth page: usuario elige magic link → `sendMagicLinkEmail(email, returnUrl)` donde `returnUrl = /auth/holded?source=holded_onboarding_connect&next=/onboarding/holded?...` (source y next preservados)
+5. Usuario abre link → auth page detecta magic link → consume → `activateSessionAndRedirect` con `postLoginTarget = dashboard?source=holded_onboarding_connect&next=/onboarding/holded?...`
+6. Dashboard page: sesion valida → `redirect(nextTarget)` = `/onboarding/holded?source=holded_chatgpt_entry&channel=chatgpt&next=<authorize_url>&onboarding_token=...`
+7. Wizard completa → `window.location.assign(nextTarget)` = `<authorize_url>` original de ChatGPT
+8. ChatGPT completa la conexion OAuth
+
+Identico para Google: el redirect de Google devuelve a la auth page con los mismos params en URL; la cadena es la misma desde el paso 5.
+
+`buildLocalHandoffTarget` en auth page construye el handoff correctamente. `resolveHoldedCompletionTarget` en onboarding devuelve el next sanitizado. No hay roturas.
+
+### Pendiente
+
+- prueba manual end-to-end en entorno con ChatGPT real
+
+### Decisiones cerradas en esta fase
+
+- la URL de retorno del magic link debe incluir `source` y `next` para que el handoff funcione; esto ya esta implementado en `magicLinkReturnUrl`
+
+### Siguiente fase habilitada
+
+- Fase NUEVA-OLA-P1.3 - QA multi-camino
+
+## Fase NUEVA-OLA-P1.3 - Matriz de QA
+
+- Estado: pendiente de pruebas manuales
+- Fecha de inicio: 2026-04-15
+
+### Objetivo de fase
+
+Validar manualmente los casos minimos del flujo completo en entorno real.
+
+### Casos a probar
+
+| Caso                         | Descripcion                               | Resultado esperado                                                                   |
+| ---------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| Google nuevo usuario         | Primer acceso via Google en flujo ChatGPT | Wizard sin datos, correo final despues de conexion, sin emails previos               |
+| Google usuario existente     | Google con tenant ya creado               | Wizard pre-relleno, wizard completa, correo final                                    |
+| Magic link nuevo usuario     | Primer acceso por correo, magic link      | Pantalla magic-sent, link en correo, wizard, correo final                            |
+| Magic link usuario existente | Segundo acceso por correo conocido        | Flujo identico, wizard pre-relleno                                                   |
+| Sin email guardado al volver | magic link consumed sin localStorage      | Pantalla magic-email con error, usuario escribe correo y reintenta                   |
+| Desktop                      | Chrome, Safari, Firefox                   | Flujo completo sin errores                                                           |
+| Mobile / webview             | ChatGPT en iOS o Android                  | Google puede fallar en webview (redirect preferido sobre popup); magic link funciona |
+| Sin duplicados de correo     | Google nuevo usuario                      | Solo recibe correo final despues de conexion; sin correos de acceso previos          |
+| Sin duplicados de correo     | Magic link nuevo usuario                  | Solo recibe correo final despues de conexion; sin correos de acceso previos          |
+
+### Prerequisito operativo
+
+- El dominio `holded.verifactu.business` debe estar en Firebase Console → Authentication → Settings → Authorized Domains antes de probar magic link en produccion
+
+### Pendiente
+
+- ejecucion de todos los casos anteriores en entorno real
+
 ## Plantilla de cierre para siguientes fases
 
 Cada nueva fase debe anadir:

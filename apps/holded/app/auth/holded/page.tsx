@@ -4,15 +4,20 @@ import type { User } from 'firebase/auth';
 import { ArrowLeft, Eye, EyeOff, Loader2, Mail } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   clearStaleFirebaseSession,
+  clearStoredMagicLinkEmail,
   consumeGoogleRedirectResult,
+  consumeMagicLink,
+  detectMagicLinkInUrl,
   ensureCurrentFirebaseUserStillExists,
-  registerWithEmail,
+  getStoredMagicLinkEmail,
+  MAGIC_LINK_EMAIL_KEY,
   requestPasswordReset,
   resetHoldedAuthState,
+  sendMagicLinkEmail,
   signInWithEmail,
   signInWithGoogle,
   startGoogleRedirectSignIn,
@@ -42,8 +47,13 @@ function resolveRedirectTarget(nextParam: string, source: string) {
   return sanitizeHoldedReturnTarget(nextParam, buildFallbackTarget(source));
 }
 
-async function activateSessionAndRedirect(user: User, rememberDevice: boolean, target: string) {
-  await mintSessionCookie(user, { rememberDevice });
+async function activateSessionAndRedirect(
+  user: User,
+  rememberDevice: boolean,
+  target: string,
+  source?: string
+) {
+  await mintSessionCookie(user, { rememberDevice, source });
   window.location.replace(target);
 }
 
@@ -148,8 +158,10 @@ function GoogleBadge() {
   );
 }
 
+// authStep includes 'password' as fallback for existing users who have a password account
+type AuthStep = 'choose' | 'magic-email' | 'magic-sent' | 'password';
+
 function HoldedAuthContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const source = searchParams?.get('source')?.trim() || 'holded_login';
   const nextParam = searchParams?.get('next')?.trim() || '';
@@ -166,37 +178,28 @@ function HoldedAuthContent() {
     () => buildLocalHandoffTarget(source, redirectTarget),
     [redirectTarget, source]
   );
-  const isRegisterMode = (searchParams?.get('mode') || '').toLowerCase() === 'register';
-  const allowGoogleLogin = process.env.NEXT_PUBLIC_HOLDED_ENABLE_GOOGLE_LOGIN === 'true';
 
   const redirectedRef = useRef(false);
+  const magicLinkCheckedRef = useRef(false);
   const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [acceptLegal, setAcceptLegal] = useState(false);
-  const [acceptMarketing, setAcceptMarketing] = useState(false);
-  const [googleRegisterUser, setGoogleRegisterUser] = useState<User | null>(null);
-  const [existingUserChecking, setExistingUserChecking] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [googleRedirecting, setGoogleRedirecting] = useState(false);
-  // Company data for registration step 2
-  const [companyName, setCompanyName] = useState('');
-  const [companyTaxId, setCompanyTaxId] = useState('');
-  const [companyLegalName, setCompanyLegalName] = useState('');
-  const [companyEmail, setCompanyEmail] = useState('');
-  const [companyPhone, setCompanyPhone] = useState('');
-
-  // Paso activo: login = 'choose' | 'email'; registro = 'register-account' | 'register-company'
-  const [authStep, setAuthStep] = useState<
-    'choose' | 'email' | 'register-account' | 'register-company'
-  >(isRegisterMode ? 'register-account' : 'choose');
+  const [showPassword, setShowPassword] = useState(false);
+  const [authStep, setAuthStep] = useState<AuthStep>('choose');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [rememberDevice, setRememberDevice] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [googleRedirecting, setGoogleRedirecting] = useState(false);
+  const [existingUserChecking, setExistingUserChecking] = useState(true);
+  const allowGoogleLogin = process.env.NEXT_PUBLIC_HOLDED_ENABLE_GOOGLE_LOGIN === 'true';
+
+  // Build the magic link return URL: returns to this same page so we can consume it
+  const magicLinkReturnUrl = useMemo(() => {
+    const url = new URL('/auth/holded', HOLDED_SITE_URL);
+    url.searchParams.set('source', source);
+    if (nextParam) url.searchParams.set('next', nextParam);
+    return url.toString();
+  }, [source, nextParam]);
 
   useEffect(() => {
     let cancelled = false;
@@ -207,10 +210,43 @@ function HoldedAuthContent() {
     }, 2500);
 
     const hydrateExistingUser = async () => {
+      // ── Consume magic link if present in URL ─────────────────────────────
+      if (!magicLinkCheckedRef.current && detectMagicLinkInUrl()) {
+        magicLinkCheckedRef.current = true;
+        window.clearTimeout(stopCheckingTimer);
+
+        const storedEmail = getStoredMagicLinkEmail();
+        if (!storedEmail) {
+          // Ask for email to confirm identity before consuming the link
+          setEmail('');
+          setAuthStep('magic-email');
+          setError('Escribe tu correo para confirmar tu identidad y completar el acceso.');
+          if (!cancelled) setExistingUserChecking(false);
+          return;
+        }
+
+        const result = await consumeMagicLink(storedEmail, { rememberDevice, source });
+        if (result.error) {
+          clearStoredMagicLinkEmail();
+          if (!cancelled) {
+            setExistingUserChecking(false);
+            setError(result.error.userMessage);
+          }
+          return;
+        }
+
+        if (result.user) {
+          redirectedRef.current = true;
+          await activateSessionAndRedirect(result.user, rememberDevice, postLoginTarget, source);
+        }
+        return;
+      }
+
+      // ── Check for pending Google redirect ────────────────────────────────
       const pendingGoogleRedirect = window.sessionStorage.getItem(GOOGLE_REDIRECT_PENDING_KEY);
       if (pendingGoogleRedirect === '1') {
         window.sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
-        const redirectResult = await consumeGoogleRedirectResult({ rememberDevice });
+        const redirectResult = await consumeGoogleRedirectResult({ rememberDevice, source });
 
         if (redirectResult.error) {
           if (!cancelled) {
@@ -221,31 +257,18 @@ function HoldedAuthContent() {
         }
 
         if (redirectResult.user) {
-          if (isRegisterMode && hasGoogleProvider(redirectResult.user)) {
-            redirectedRef.current = false;
-            setGoogleRegisterUser(redirectResult.user);
-            setEmail(redirectResult.user.email || '');
-            setFullName(redirectResult.user.displayName || '');
-            setCompanyEmail(redirectResult.user.email || '');
-            setAuthStep('register-company');
-            if (!cancelled) {
-              setExistingUserChecking(false);
-            }
-            return;
-          }
-
           redirectedRef.current = true;
-          await activateSessionAndRedirect(redirectResult.user, rememberDevice, postLoginTarget);
+          await activateSessionAndRedirect(
+            redirectResult.user,
+            rememberDevice,
+            postLoginTarget,
+            source
+          );
           return;
         }
       }
 
-      if (isRegisterMode) {
-        await resetHoldedAuthState();
-        if (!cancelled) setExistingUserChecking(false);
-        return;
-      }
-
+      // ── Check for existing Firebase session ──────────────────────────────
       if (source === 'isaak_chat_requires_session') {
         await resetHoldedAuthState();
         redirectedRef.current = false;
@@ -279,7 +302,8 @@ function HoldedAuthContent() {
         await activateSessionAndRedirect(
           existingState.user as User,
           rememberDevice,
-          postLoginTarget
+          postLoginTarget,
+          source
         );
       } catch {
         await clearStaleFirebaseSession();
@@ -299,187 +323,73 @@ function HoldedAuthContent() {
       cancelled = true;
       window.clearTimeout(stopCheckingTimer);
     };
-  }, [isRegisterMode, postLoginTarget, rememberDevice, source]);
+  }, []);
 
-  const saveCompanyPrefill = (
-    forEmail: string,
-    data: {
-      companyName: string;
-      companyTaxId: string;
-      companyLegalName: string;
-      companyEmail: string;
-      companyPhone: string;
-      contactFullName: string;
-      contactPhone: string;
+  // ── Magic link submit ─────────────────────────────────────────────────────
+
+  const handleMagicEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
+      setError('Escribe tu correo para continuar.');
+      return;
     }
-  ) => {
-    try {
-      const key = `verifactu_company_${forEmail.toLowerCase()}`;
-      window.localStorage.setItem(key, JSON.stringify(data));
-    } catch {
-      // localStorage not available — onboarding will start with empty fields
+
+    setIsLoading(true);
+    setError('');
+    setNotice('');
+
+    const result = await sendMagicLinkEmail(trimmedEmail, magicLinkReturnUrl);
+    setIsLoading(false);
+
+    if (!result.ok) {
+      setError(result.error.userMessage);
+      return;
+    }
+
+    setAuthStep('magic-sent');
+  };
+
+  const handleResendMagicLink = async () => {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) return;
+
+    setIsLoading(true);
+    setError('');
+    setNotice('');
+
+    const result = await sendMagicLinkEmail(trimmedEmail, magicLinkReturnUrl);
+    setIsLoading(false);
+
+    if (!result.ok) {
+      setError(result.error.userMessage);
+    } else {
+      setNotice('Hemos reenviado el enlace. Revisa tu bandeja de entrada.');
     }
   };
 
-  const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
+  // ── Password login (fallback for existing accounts) ───────────────────────
+
+  const handlePasswordLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
     setError('');
     setNotice('');
 
-    // ── Paso 1 del registro: datos de cuenta ──────────────────────────────────
-    if (authStep === 'register-account') {
-      const normalizedFullName = fullName.trim().replace(/\s+/g, ' ');
-      if (normalizedFullName.length < 3) {
-        setIsLoading(false);
-        setError('Escribe tu nombre completo para continuar.');
-        return;
-      }
-      if (!email.trim()) {
-        setIsLoading(false);
-        setError('Escribe tu correo electronico para continuar.');
-        return;
-      }
-      if (password.length < 8) {
-        setIsLoading(false);
-        setError('La contrasena debe tener al menos 8 caracteres.');
-        return;
-      }
-      if (password !== confirmPassword) {
-        setIsLoading(false);
-        setError('Las contrasenas no coinciden. Revisalas e intentalo de nuevo.');
-        return;
-      }
-      setIsLoading(false);
-      setCompanyEmail(email);
-      setAuthStep('register-company');
-      return;
-    }
-
-    // ── Paso 2 del registro: datos de empresa ─────────────────────────────────
-    if (authStep === 'register-company') {
-      if (!acceptLegal) {
-        setIsLoading(false);
-        setError('Necesitas aceptar los terminos y la politica de privacidad para continuar.');
-        return;
-      }
-      if (!companyName.trim()) {
-        setIsLoading(false);
-        setError('Escribe el nombre de tu empresa para continuar.');
-        return;
-      }
-      if (!companyTaxId.trim()) {
-        setIsLoading(false);
-        setError('Escribe el NIF/CIF de tu empresa para continuar.');
-        return;
-      }
-
-      const normalizedFullName = fullName.trim().replace(/\s+/g, ' ');
-
-      const currentFirebaseUser = auth?.currentUser ?? null;
-      const activeGoogleUser = hasGoogleProvider(googleRegisterUser)
-        ? googleRegisterUser
-        : hasGoogleProvider(currentFirebaseUser)
-          ? currentFirebaseUser
-          : null;
-
-      if (!activeGoogleUser) {
-        const registerResult = await registerWithEmail(
-          email,
-          password,
-          {
-            fullName: normalizedFullName,
-            phone,
-          },
-          source
-        );
-        if (registerResult.error) {
-          setIsLoading(false);
-          setError(registerResult.error.userMessage);
-          return;
-        }
-
-        setIsLoading(false);
-        const thanksUrl = new URL('/gracias', window.location.origin);
-        thanksUrl.searchParams.set('step', 'check-email');
-        thanksUrl.searchParams.set('email', email);
-        thanksUrl.searchParams.set('source', source);
-        if (registerResult.warning) {
-          thanksUrl.searchParams.set('notice', 'verification-email-may-be-delayed');
-        }
-        router.push(`${thanksUrl.pathname}${thanksUrl.search}`);
-        return;
-      }
-
-      // Persist company data to localStorage so the onboarding wizard can pre-fill it
-      saveCompanyPrefill(email, {
-        companyName: companyName.trim(),
-        companyTaxId: companyTaxId.trim().toUpperCase(),
-        companyLegalName: companyLegalName.trim(),
-        companyEmail: companyEmail.trim() || email,
-        companyPhone: companyPhone.trim(),
-        contactFullName: normalizedFullName,
-        contactPhone: phone.trim(),
-      });
-
-      try {
-        await activateSessionAndRedirect(activeGoogleUser, rememberDevice, postLoginTarget);
-        return;
-      } catch (accessError) {
-        setError(
-          getAccessErrorMessage(
-            accessError,
-            'No hemos podido activar tu acceso con Google. Intentalo de nuevo.'
-          )
-        );
-      } finally {
-        setIsLoading(false);
-      }
-
-      return;
-    }
-
-    // ── Login ─────────────────────────────────────────────────────────────────
     try {
-      const result = await signInWithEmail(email, password, { rememberDevice });
+      const result = await signInWithEmail(email, password, { rememberDevice, source });
       if (result.error) {
         setError(result.error.userMessage);
         return;
       }
-
       redirectToTarget(postLoginTarget);
     } catch (error) {
-      console.error('[holded auth] email access failed', error);
       setError(
         getAccessErrorMessage(error, 'No hemos podido iniciar tu acceso. Intenta de nuevo.')
       );
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleGoogle = async () => {
-    setGoogleRedirecting(true);
-    setIsLoading(true);
-    setError('');
-    setNotice('');
-    // Intentamos popup primero para evitar bucles de redirect vacio en algunos navegadores.
-    const popupResult = await signInWithGoogle({ rememberDevice });
-    if (!popupResult.error && popupResult.user) {
-      redirectToTarget(postLoginTarget);
-      return;
-    }
-
-    // Fallback a redirect para entornos embebidos donde popup no es viable.
-    window.sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, '1');
-    const result = await startGoogleRedirectSignIn();
-    if (!result.redirecting && result.error) {
-      window.sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
-      setGoogleRedirecting(false);
-      setIsLoading(false);
-      setError(result.error.userMessage);
-    }
-    // Si redirige: el navegador navega fuera, no hace falta limpiar estado
   };
 
   const handlePasswordReset = async () => {
@@ -504,7 +414,30 @@ function HoldedAuthContent() {
     setNotice('Te hemos enviado un correo para restablecer la contrasena.');
   };
 
-  // ── helpers de UI reutilizables ────────────────────────────────────────────
+  // ── Google ────────────────────────────────────────────────────────────────
+
+  const handleGoogle = async () => {
+    setGoogleRedirecting(true);
+    setIsLoading(true);
+    setError('');
+    setNotice('');
+    const popupResult = await signInWithGoogle({ rememberDevice });
+    if (!popupResult.error && popupResult.user) {
+      redirectToTarget(postLoginTarget);
+      return;
+    }
+
+    window.sessionStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, '1');
+    const result = await startGoogleRedirectSignIn();
+    if (!result.redirecting && result.error) {
+      window.sessionStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
+      setGoogleRedirecting(false);
+      setIsLoading(false);
+      setError(result.error.userMessage);
+    }
+  };
+
+  // ── UI helpers ─────────────────────────────────────────────────────────────
 
   const HoldedBadge = () => (
     <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
@@ -539,24 +472,39 @@ function HoldedAuthContent() {
       </div>
     ) : null;
 
+  const BackButton = ({ onClick }: { onClick: () => void }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+    >
+      <ArrowLeft className="h-4 w-4" />
+      Volver
+    </button>
+  );
+
+  const HoldedHeaderBadge = ({ subtitle }: { subtitle: string }) => (
+    <div className="flex items-center gap-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
+        <Image
+          src="/brand/holded/holded-diamond-logo.png"
+          alt="Holded"
+          width={22}
+          height={22}
+          className="h-[22px] w-[22px] object-contain"
+          priority
+        />
+      </div>
+      <div>
+        <div className="text-base font-bold text-slate-950">Conector Holded</div>
+        <div className="text-xs text-slate-500">{subtitle}</div>
+      </div>
+    </div>
+  );
+
   const FooterLinks = () => (
     <div className="border-t border-slate-200 bg-slate-50 px-6 py-5 text-center text-sm text-slate-600 sm:px-8">
-      {authStep === 'register-account' || authStep === 'register-company' ? (
-        <Link
-          href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}`}
-          className="font-semibold text-slate-900 underline underline-offset-4"
-        >
-          Ya tienes cuenta? Inicia sesion
-        </Link>
-      ) : (
-        <Link
-          href={`/auth/holded?source=${encodeURIComponent(source)}&next=${encodeURIComponent(nextParam)}&mode=register`}
-          className="font-semibold text-slate-900 underline underline-offset-4"
-        >
-          No tienes cuenta? Registrate
-        </Link>
-      )}
-      <div className="mt-3 text-xs leading-5 text-slate-500">
+      <div className="text-xs leading-5 text-slate-500">
         Si necesitas ayuda, escribenos a{' '}
         <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-slate-700 underline">
           {SUPPORT_EMAIL}
@@ -566,13 +514,15 @@ function HoldedAuthContent() {
     </div>
   );
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff5f2_0%,#f8fafc_44%,#f8fafc_100%)] px-4 py-6 text-slate-900 sm:px-6">
       <div className="mx-auto flex min-h-[calc(100svh-3rem)] max-w-7xl items-center justify-center py-6">
         <section className="flex w-full items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
           <div className="w-full max-w-[26rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_-56px_rgba(15,23,42,0.35)]">
-            {/* ── Comprobando sesión existente ─────────────────── */}
             {existingUserChecking ? (
+              /* ── Comprobando sesión existente ──────────────────────── */
               <div className="flex flex-col items-center gap-3 px-6 py-14 sm:px-8">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fff1f2]">
                   <Image
@@ -587,350 +537,8 @@ function HoldedAuthContent() {
                 <Loader2 className="mt-2 h-5 w-5 animate-spin text-[#ff5460]" />
                 <p className="text-sm text-slate-500">Comprobando acceso...</p>
               </div>
-            ) : authStep === 'register-account' ? (
-              /* ── Registro paso 1: cuenta ───────────────────────── */
-              <>
-                <div className="px-6 pb-6 pt-7 sm:px-8">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
-                      <Image
-                        src="/brand/holded/holded-diamond-logo.png"
-                        alt="Holded"
-                        width={22}
-                        height={22}
-                        className="h-[22px] w-[22px] object-contain"
-                        priority
-                      />
-                    </div>
-                    <div>
-                      <div className="text-base font-bold text-slate-950">Crea tu acceso</div>
-                      <div className="text-xs text-slate-500">Paso 1 de 2 · Datos de tu cuenta</div>
-                    </div>
-                  </div>
-
-                  <ErrorBox />
-                  <NoticeBox />
-
-                  {allowGoogleLogin ? (
-                    <button
-                      type="button"
-                      onClick={handleGoogle}
-                      disabled={isLoading || googleRedirecting}
-                      className="mt-5 inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {googleRedirecting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <GoogleBadge />
-                      )}
-                      {googleRedirecting ? 'Redirigiendo...' : 'Registrarte con Google'}
-                    </button>
-                  ) : null}
-
-                  <form onSubmit={handleEmailLogin} className="mt-6 space-y-4">
-                    <div className="space-y-1.5">
-                      <label htmlFor="fullName" className="text-sm font-semibold text-slate-800">
-                        Nombre completo
-                      </label>
-                      <input
-                        id="fullName"
-                        type="text"
-                        value={fullName}
-                        onChange={(event) => setFullName(event.target.value)}
-                        placeholder="Nombre y apellidos"
-                        autoComplete="name"
-                        required
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label htmlFor="email" className="text-sm font-semibold text-slate-800">
-                        Correo electronico
-                      </label>
-                      <div className="relative">
-                        <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input
-                          id="email"
-                          type="email"
-                          value={email}
-                          onChange={(event) => setEmail(event.target.value)}
-                          placeholder="nombre@empresa.com"
-                          autoComplete="email"
-                          required
-                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label htmlFor="phone" className="text-sm font-semibold text-slate-800">
-                        Telefono <span className="font-normal text-slate-400">(opcional)</span>
-                      </label>
-                      <input
-                        id="phone"
-                        type="tel"
-                        value={phone}
-                        onChange={(event) => setPhone(event.target.value)}
-                        placeholder="+34 600 000 000"
-                        autoComplete="tel"
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label htmlFor="password" className="text-sm font-semibold text-slate-800">
-                        Contrasena
-                      </label>
-                      <div className="relative">
-                        <input
-                          id="password"
-                          type={showPassword ? 'text' : 'password'}
-                          value={password}
-                          onChange={(event) => setPassword(event.target.value)}
-                          placeholder="Minimo 8 caracteres"
-                          autoComplete="new-password"
-                          required
-                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((v) => !v)}
-                          className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                          aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor="confirmPassword"
-                        className="text-sm font-semibold text-slate-800"
-                      >
-                        Repite la contrasena
-                      </label>
-                      <div className="relative">
-                        <input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          value={confirmPassword}
-                          onChange={(event) => setConfirmPassword(event.target.value)}
-                          placeholder="Repite tu contrasena"
-                          autoComplete="new-password"
-                          required
-                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword((v) => !v)}
-                          className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                          aria-label={
-                            showConfirmPassword ? 'Ocultar confirmacion' : 'Mostrar confirmacion'
-                          }
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#ff5460] px-5 text-sm font-semibold text-white shadow-[0_18px_38px_-22px_rgba(255,84,96,0.85)] transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Continuar
-                    </button>
-                  </form>
-                </div>
-                <FooterLinks />
-              </>
-            ) : authStep === 'register-company' ? (
-              /* ── Registro paso 2: empresa ──────────────────────── */
-              <>
-                <div className="px-6 pb-6 pt-6 sm:px-8">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthStep('register-account');
-                      setError('');
-                      setNotice('');
-                    }}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Volver
-                  </button>
-
-                  <div className="mt-5 flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
-                      <Image
-                        src="/brand/holded/holded-diamond-logo.png"
-                        alt="Holded"
-                        width={22}
-                        height={22}
-                        className="h-[22px] w-[22px] object-contain"
-                        priority
-                      />
-                    </div>
-                    <div>
-                      <div className="text-base font-bold text-slate-950">Tu empresa</div>
-                      <div className="text-xs text-slate-500">Paso 2 de 2 · Datos de empresa</div>
-                    </div>
-                  </div>
-
-                  <ErrorBox />
-                  <NoticeBox />
-
-                  <form onSubmit={handleEmailLogin} className="mt-6 space-y-4">
-                    <div className="space-y-1.5">
-                      <label htmlFor="companyName" className="text-sm font-semibold text-slate-800">
-                        Nombre comercial
-                      </label>
-                      <input
-                        id="companyName"
-                        type="text"
-                        value={companyName}
-                        onChange={(event) => setCompanyName(event.target.value)}
-                        placeholder="Nombre de tu empresa"
-                        autoComplete="organization"
-                        required
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor="companyTaxId"
-                        className="text-sm font-semibold text-slate-800"
-                      >
-                        NIF / CIF
-                      </label>
-                      <input
-                        id="companyTaxId"
-                        type="text"
-                        value={companyTaxId}
-                        onChange={(event) => setCompanyTaxId(event.target.value)}
-                        placeholder="B12345678"
-                        autoComplete="off"
-                        required
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor="companyLegalName"
-                        className="text-sm font-semibold text-slate-800"
-                      >
-                        Razon social <span className="font-normal text-slate-400">(opcional)</span>
-                      </label>
-                      <input
-                        id="companyLegalName"
-                        type="text"
-                        value={companyLegalName}
-                        onChange={(event) => setCompanyLegalName(event.target.value)}
-                        placeholder="Razon social completa"
-                        autoComplete="organization"
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor="companyEmail"
-                        className="text-sm font-semibold text-slate-800"
-                      >
-                        Correo de notificaciones
-                      </label>
-                      <div className="relative">
-                        <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input
-                          id="companyEmail"
-                          type="email"
-                          value={companyEmail}
-                          onChange={(event) => setCompanyEmail(event.target.value)}
-                          placeholder="nombre@empresa.com"
-                          autoComplete="email"
-                          required
-                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor="companyPhone"
-                        className="text-sm font-semibold text-slate-800"
-                      >
-                        Telefono de empresa{' '}
-                        <span className="font-normal text-slate-400">(opcional)</span>
-                      </label>
-                      <input
-                        id="companyPhone"
-                        type="tel"
-                        value={companyPhone}
-                        onChange={(event) => setCompanyPhone(event.target.value)}
-                        placeholder="+34 900 000 000"
-                        autoComplete="tel"
-                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                      />
-                    </div>
-
-                    <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={acceptLegal}
-                        onChange={(event) => setAcceptLegal(event.target.checked)}
-                        className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
-                      />
-                      <span>
-                        Acepto los{' '}
-                        <Link href="/terms" className="font-semibold text-slate-900 underline">
-                          terminos
-                        </Link>{' '}
-                        y la{' '}
-                        <Link href="/privacy" className="font-semibold text-slate-900 underline">
-                          politica de privacidad
-                        </Link>
-                        .
-                      </span>
-                    </label>
-
-                    <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={rememberDevice}
-                        onChange={(event) => setRememberDevice(event.target.checked)}
-                        className="mt-1 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
-                      />
-                      <span>
-                        Recordar sesion en este dispositivo despues de verificar el correo.
-                      </span>
-                    </label>
-
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#ff5460] px-5 text-sm font-semibold text-white shadow-[0_18px_38px_-22px_rgba(255,84,96,0.85)] transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isLoading ? 'Creando acceso...' : 'Crear acceso y verificar correo'}
-                    </button>
-                  </form>
-                </div>
-                <FooterLinks />
-              </>
             ) : authStep === 'choose' ? (
-              /* ── Elegir método de identidad ────────────────────── */
+              /* ── Elegir método de identidad ───────────────────────── */
               <>
                 <div className="px-6 pb-8 pt-7 sm:px-8">
                   <div className="text-center">
@@ -964,54 +572,194 @@ function HoldedAuthContent() {
 
                     <button
                       type="button"
-                      onClick={() => setAuthStep('email')}
+                      onClick={() => {
+                        setError('');
+                        setNotice('');
+                        setAuthStep('magic-email');
+                      }}
                       className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
                     >
                       <Mail className="h-4 w-4 text-slate-500" />
                       Continuar con correo
                     </button>
                   </div>
+
+                  <div className="mt-5 text-center">
+                    <button
+                      type="button"
+                      onClick={() => exitHoldedAuth(exitTarget)}
+                      className="text-xs text-slate-400 underline underline-offset-4 transition hover:text-slate-600"
+                    >
+                      Volver
+                    </button>
+                  </div>
                 </div>
                 <FooterLinks />
               </>
-            ) : (
-              /* ── Formulario email / login ───────────────────────── */
+            ) : authStep === 'magic-email' ? (
+              /* ── Correo para magic link ───────────────────────────── */
               <>
                 <div className="px-6 pb-6 pt-6 sm:px-8">
-                  <button
-                    type="button"
+                  <BackButton
                     onClick={() => {
                       setAuthStep('choose');
                       setError('');
                       setNotice('');
                     }}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Volver
-                  </button>
+                  />
 
-                  <div className="mt-5 flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff1f2] ring-1 ring-[#ff5460]/10">
-                      <Image
-                        src="/brand/holded/holded-diamond-logo.png"
-                        alt="Holded"
-                        width={22}
-                        height={22}
-                        className="h-[22px] w-[22px] object-contain"
-                        priority
+                  <div className="mt-5">
+                    <HoldedHeaderBadge subtitle="Identidad" />
+                  </div>
+
+                  <h2 className="mt-4 text-xl font-bold tracking-tight text-slate-950">
+                    Escribe tu correo
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    Te enviamos un enlace de acceso seguro. Sin contrasena.
+                  </p>
+
+                  <ErrorBox />
+                  <NoticeBox />
+
+                  <form onSubmit={handleMagicEmailSubmit} className="mt-5 space-y-4">
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="magic-email-input"
+                        className="text-sm font-semibold text-slate-800"
+                      >
+                        Correo electronico
+                      </label>
+                      <div className="relative">
+                        <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                          id="magic-email-input"
+                          type="email"
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                          placeholder="nombre@empresa.com"
+                          autoComplete="email"
+                          required
+                          autoFocus
+                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        id="rememberDevice"
+                        checked={rememberDevice}
+                        onChange={(event) => setRememberDevice(event.target.checked)}
+                        className="h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
                       />
+                      <label htmlFor="rememberDevice">Mantener sesion en este dispositivo</label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#ff5460] px-5 text-sm font-semibold text-white shadow-[0_18px_38px_-22px_rgba(255,84,96,0.85)] transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        'Enviar enlace de acceso'
+                      )}
+                    </button>
+                  </form>
+
+                  <div className="mt-5 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError('');
+                        setNotice('');
+                        setAuthStep('password');
+                      }}
+                      className="text-xs text-slate-400 underline underline-offset-4 transition hover:text-slate-600"
+                    >
+                      Ya tengo contrasena
+                    </button>
+                  </div>
+                </div>
+                <FooterLinks />
+              </>
+            ) : authStep === 'magic-sent' ? (
+              /* ── Magic link enviado ───────────────────────────────── */
+              <>
+                <div className="px-6 pb-8 pt-7 sm:px-8">
+                  <div className="flex flex-col items-center gap-4 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 ring-1 ring-emerald-200">
+                      <Mail className="h-7 w-7 text-emerald-600" />
                     </div>
                     <div>
-                      <div className="text-base font-bold text-slate-950">Accede con tu correo</div>
-                      <div className="text-xs text-slate-500">Conector Holded</div>
+                      <h2 className="text-xl font-bold tracking-tight text-slate-950">
+                        Revisa tu correo
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        Hemos enviado un enlace de acceso a{' '}
+                        <span className="font-semibold text-slate-800">{email}</span>. Abrelo para
+                        continuar.
+                      </p>
                     </div>
                   </div>
 
                   <ErrorBox />
                   <NoticeBox />
 
-                  <form onSubmit={handleEmailLogin} className="mt-6 space-y-4">
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                    El enlace caduca en 45 minutos. Si no lo ves, revisa la carpeta de spam.
+                  </div>
+
+                  <div className="mt-5 flex flex-col gap-3 text-center text-sm">
+                    <button
+                      type="button"
+                      onClick={handleResendMagicLink}
+                      disabled={isLoading}
+                      className="font-semibold text-[#ff5460] transition hover:text-[#ef4654] disabled:opacity-60"
+                    >
+                      {isLoading ? 'Reenviando...' : 'Reenviar enlace'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthStep('magic-email');
+                        setError('');
+                        setNotice('');
+                      }}
+                      className="text-xs text-slate-400 underline underline-offset-4 transition hover:text-slate-600"
+                    >
+                      Cambiar correo
+                    </button>
+                  </div>
+                </div>
+                <FooterLinks />
+              </>
+            ) : (
+              /* ── Login con contraseña (fallback) ──────────────────── */
+              <>
+                <div className="px-6 pb-6 pt-6 sm:px-8">
+                  <BackButton
+                    onClick={() => {
+                      setAuthStep('magic-email');
+                      setError('');
+                      setNotice('');
+                    }}
+                  />
+
+                  <div className="mt-5">
+                    <HoldedHeaderBadge subtitle="Acceso con contrasena" />
+                  </div>
+
+                  <ErrorBox />
+                  <NoticeBox />
+
+                  <form onSubmit={handlePasswordLogin} className="mt-6 space-y-4">
                     <div className="space-y-1.5">
                       <label htmlFor="email" className="text-sm font-semibold text-slate-800">
                         Correo electronico
@@ -1089,9 +837,18 @@ function HoldedAuthContent() {
                     </button>
                   </form>
 
-                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-                    Usa el mismo correo que tienes en Holded para que el alta y la conexion queden
-                    alineadas.
+                  <div className="mt-5 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthStep('magic-email');
+                        setError('');
+                        setNotice('');
+                      }}
+                      className="text-xs text-slate-400 underline underline-offset-4 transition hover:text-slate-600"
+                    >
+                      Acceder con enlace de correo
+                    </button>
                   </div>
                 </div>
                 <FooterLinks />

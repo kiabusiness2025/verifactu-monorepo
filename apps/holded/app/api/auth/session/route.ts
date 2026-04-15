@@ -274,20 +274,29 @@ export async function POST(req: Request) {
     const emailVerifiedAt =
       userRecord.emailVerified && !user.emailVerified ? new Date() : user.emailVerified;
 
+    // Connector-flow sources (chatgpt onboarding) get only the final connected email
+    // from the connect route. Skip pre-connection access emails for those flows.
+    const isConnectorFlow =
+      source.includes('chatgpt') ||
+      source.includes('connector') ||
+      source.startsWith('holded_onboarding');
+
     if (emailVerifiedAt !== user.emailVerified) {
       await prisma.user.update({
         where: { id: user.id },
         data: { emailVerified: emailVerifiedAt },
       });
-      try {
-        await sendVerifiedAccessEmails({
-          email: decoded.email,
-          source,
-        });
-      } catch (emailError) {
-        console.error('[holded] verified welcome emails failed', {
-          error: emailError instanceof Error ? emailError.message : String(emailError),
-        });
+      if (!isConnectorFlow) {
+        try {
+          await sendVerifiedAccessEmails({
+            email: decoded.email,
+            source,
+          });
+        } catch (emailError) {
+          console.error('[holded] verified welcome emails failed', {
+            error: emailError instanceof Error ? emailError.message : String(emailError),
+          });
+        }
       }
       await Promise.allSettled([
         writeHoldedActivity({

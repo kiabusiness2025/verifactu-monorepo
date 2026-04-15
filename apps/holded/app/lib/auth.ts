@@ -5,11 +5,14 @@ import {
   fetchSignInMethodsForEmail,
   getRedirectResult,
   GoogleAuthProvider,
+  isSignInWithEmailLink,
   onAuthStateChanged,
   OAuthProvider,
   reload,
   sendPasswordResetEmail,
+  sendSignInLinkToEmail,
   signInWithEmailAndPassword,
+  signInWithEmailLink,
   signInWithPopup,
   signInWithRedirect,
   signOut,
@@ -27,6 +30,7 @@ import { mintSessionCookie } from './serverSession';
 
 type SignInOptions = {
   rememberDevice?: boolean;
+  source?: string;
 };
 
 export interface AuthErrorMessage {
@@ -298,6 +302,7 @@ export async function signInWithEmail(
 
     await mintSessionCookie(userCredential.user, {
       rememberDevice: options.rememberDevice,
+      source: options.source,
     });
 
     return { user: userCredential.user, error: null, warning: null };
@@ -321,6 +326,7 @@ export async function signInWithGoogle(options: SignInOptions = {}): Promise<Aut
 
     await mintSessionCookie(userCredential.user, {
       rememberDevice: options.rememberDevice,
+      source: options.source,
     });
 
     return { user: userCredential.user, error: null, warning: null };
@@ -378,13 +384,19 @@ export async function consumeGoogleRedirectResult(
       // usamos el currentUser directamente en lugar de devolver un error falso.
       const currentUser = auth.currentUser;
       if (currentUser) {
-        await mintSessionCookie(currentUser, { rememberDevice: options.rememberDevice });
+        await mintSessionCookie(currentUser, {
+          rememberDevice: options.rememberDevice,
+          source: options.source,
+        });
         return { user: currentUser, error: null, warning: null };
       }
 
       const delayedUser = await waitForAuthUserAfterRedirect();
       if (delayedUser) {
-        await mintSessionCookie(delayedUser, { rememberDevice: options.rememberDevice });
+        await mintSessionCookie(delayedUser, {
+          rememberDevice: options.rememberDevice,
+          source: options.source,
+        });
         return { user: delayedUser, error: null, warning: null };
       }
 
@@ -404,6 +416,7 @@ export async function consumeGoogleRedirectResult(
 
     await mintSessionCookie(result.user, {
       rememberDevice: options.rememberDevice,
+      source: options.source,
     });
 
     return { user: result.user, error: null, warning: null };
@@ -480,6 +493,7 @@ export async function signInWithMicrosoft(options: SignInOptions = {}): Promise<
 
     await mintSessionCookie(userCredential.user, {
       rememberDevice: options.rememberDevice,
+      source: options.source,
     });
 
     return { user: userCredential.user, error: null, warning: null };
@@ -576,5 +590,70 @@ export async function requestPasswordReset(email: string) {
       ok: false as const,
       error: getErrorMessage(error as AuthError),
     };
+  }
+}
+
+export const MAGIC_LINK_EMAIL_KEY = 'holded_magic_link_email';
+
+export async function sendMagicLinkEmail(
+  email: string,
+  returnUrl: string
+): Promise<{ ok: true } | { ok: false; error: AuthErrorMessage }> {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) {
+    return { ok: false, error: authUnavailable().error! };
+  }
+
+  try {
+    await sendSignInLinkToEmail(auth, email, {
+      url: returnUrl,
+      handleCodeInApp: true,
+    });
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(MAGIC_LINK_EMAIL_KEY, email);
+    }
+
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: getErrorMessage(error as AuthError) };
+  }
+}
+
+export function detectMagicLinkInUrl(): boolean {
+  if (typeof window === 'undefined' || !isFirebaseReady || !auth) return false;
+  return isSignInWithEmailLink(auth, window.location.href);
+}
+
+export function getStoredMagicLinkEmail(): string {
+  if (typeof window === 'undefined') return '';
+  return window.localStorage.getItem(MAGIC_LINK_EMAIL_KEY) || '';
+}
+
+export function clearStoredMagicLinkEmail(): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(MAGIC_LINK_EMAIL_KEY);
+}
+
+export async function consumeMagicLink(
+  email: string,
+  options: SignInOptions = {}
+): Promise<AuthResult> {
+  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
+
+  try {
+    const userCredential = await signInWithEmailLink(auth, email, window.location.href);
+    clearStoredMagicLinkEmail();
+    await mintSessionCookie(userCredential.user, {
+      rememberDevice: options.rememberDevice,
+      source: options.source,
+    });
+    return { user: userCredential.user, error: null, warning: null };
+  } catch (error) {
+    const authError = error as AuthError;
+    const mapped =
+      typeof authError?.code === 'string' && authError.code.startsWith('auth/')
+        ? getErrorMessage(authError)
+        : mapUnknownAccessError(error);
+    return { user: null, error: mapped, warning: null };
   }
 }

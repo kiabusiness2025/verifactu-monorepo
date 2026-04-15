@@ -73,12 +73,13 @@ Entregables:
 
 - `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md`
 - `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md`
+- `docs/product/HOLDED_DIRECT_CONNECTOR_EXECUTION_PROGRESS_2026.md`
 - referencias desde `docs/README.md`, `docs/INDEX.md`, `apps/app/README.md`
 - ajuste de guias tecnicas y runbooks del conector directo
 
 Estado:
 
-- en progreso
+- completado (2026-04-15)
 
 ### P0.2 - Extender la sesion temporal del conector con estado de identidad
 
@@ -109,7 +110,7 @@ Aceptacion:
 
 Estado:
 
-- en progreso
+- completado (2026-04-14)
 
 ### P0.3 - Pantalla de entrada de identidad del conector
 
@@ -125,7 +126,7 @@ Reglas:
 
 Estado:
 
-- pendiente
+- completado (2026-04-14)
 
 ### P0.4 - Verificacion obligatoria del correo manual
 
@@ -140,7 +141,7 @@ Decision operativa:
 
 Estado:
 
-- pendiente
+- completado (2026-04-15)
 
 ### P0.5 - Onboarding por pasos conversacionales
 
@@ -158,7 +159,7 @@ Secuencia objetivo:
 
 Estado:
 
-- pendiente
+- completado (2026-04-15)
 
 ### P0.6 - Politica final de correos del conector directo
 
@@ -176,7 +177,7 @@ Cambios previstos:
 
 Estado:
 
-- pendiente
+- completado (2026-04-15)
 
 ### P1.1 - Reordenar `HoldedOnboardingClient` como flujo por estados claros
 
@@ -187,7 +188,7 @@ Resultado:
 
 Estado:
 
-- pendiente
+- completado (2026-04-15)
 
 ### P1.2 - Mantener retorno OAuth exacto durante la nueva UX
 
@@ -197,7 +198,7 @@ Resultado:
 
 Estado:
 
-- pendiente de revalidacion sobre la nueva UX
+- completado (2026-04-15)
 
 ### P1.3 - Matriz de QA de la nueva ola
 
@@ -212,7 +213,7 @@ Casos minimos:
 
 Estado:
 
-- pendiente
+- pendiente de pruebas manuales en entorno real
 
 ## Orden recomendado de ejecucion
 

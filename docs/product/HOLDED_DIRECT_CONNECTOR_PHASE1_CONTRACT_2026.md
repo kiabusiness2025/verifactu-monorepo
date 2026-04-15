@@ -18,17 +18,21 @@ Este documento sustituye el criterio anterior que mezclaba:
 - branding `Isaak for Holded`
 - propuestas de producto mas amplias que no forman parte de esta Fase 1
 
-## Estado a 2026-04-06
+## Estado a 2026-04-15
 
-### Base ya entregada
+### Base entregada (roadmap principal cerrado 2026-04-13)
 
 - branding publico del conector separado de Isaak en MCP y onboarding `channel=chatgpt`
-- `connector onboarding session` propia para evitar login clasico visible
-- onboarding directo y retorno estable al OAuth original de ChatGPT
-- persistencia channel-aware en `external_connections`
+- `connector onboarding session` propia para evitar login clasico visible, con estado de identidad completo (`authMethod`, `emailVerified`, `firstName`, `lastName`, `verifiedAt`)
+- pantalla de entrada `Google` o `Correo` como primera decision visible del conector
+- onboarding por pasos (datos, empresa, API key, exito) con stepper visual y conflicto/claims integrados
+- retorno estable al OAuth original de ChatGPT
+- persistencia channel-aware en `external_connections` con flags de gobernanza
+- panel admin operativo con gestión de memberships, recipients, claims y access requests
 - observabilidad del flujo con `x-verifactu-request-id`
+- backend de verificacion de correo por magic link (`identity/email/start`, `holded/verify`)
 
-### Nueva ola abierta hoy
+### Nueva ola en progreso (abierta 2026-04-14)
 
 Esta nueva ola de Fase 1 ya no se define como "API key primero" sino como:
 
