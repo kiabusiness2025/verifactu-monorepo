@@ -130,7 +130,7 @@ jest.mock('@/app/lib/prisma', () => ({
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
 import { sendPublicHighGovernanceRiskInternalAlertEmail } from '@/app/lib/communications/holded-governance-emails';
-import { recordUsageEvent } from '@verifactu/integrations';
+import { buildConnectionStatusDto, recordUsageEvent } from '@verifactu/integrations';
 import { mintHoldedValidationToken } from '@/app/lib/holded-validation-token';
 import {
   disconnectHoldedConnection,
@@ -154,6 +154,7 @@ const mockTenantFindUnique = prisma.tenant.findUnique as jest.Mock;
 const mockTenantUpdate = prisma.tenant.update as jest.Mock;
 const mockUserUpdate = prisma.user.update as jest.Mock;
 const mockTenantProfileFindFirst = prisma.tenantProfile.findFirst as jest.Mock;
+const mockBuildConnectionStatusDto = buildConnectionStatusDto as jest.Mock;
 
 describe('POST /api/holded/connect', () => {
   const originalSessionSecret = process.env.SESSION_SECRET;
@@ -395,6 +396,82 @@ describe('POST /api/holded/connect', () => {
     expect(response.status).toBe(200);
     expect(payload.ok).toBe(true);
     expect(mockProbeHoldedConnection).toHaveBeenCalled();
+    expect(mockSaveHoldedConnection).toHaveBeenCalled();
+  });
+
+  it('does not fail public onboarding when identity persistence fails after connecting', async () => {
+    mockTenantUpdate.mockRejectedValueOnce(new Error('tenant update failed'));
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          companyName: 'Acme SL',
+          legalName: 'Acme Sociedad Limitada',
+          taxId: 'B12345678',
+          contactFirstName: 'Ana',
+          contactLastName: 'Garcia',
+          contactEmail: 'ana@example.com',
+        }),
+      }) as never
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(mockSaveHoldedConnection).toHaveBeenCalled();
+  });
+
+  it('does not fail when post-connect shaping throws after saving a valid key', async () => {
+    let calls = 0;
+    mockBuildConnectionStatusDto.mockImplementation((input: Record<string, unknown>) => {
+      calls += 1;
+      if (calls === 2) {
+        throw new Error('dto failed');
+      }
+
+      return {
+        connectionId: input.connectionId ?? 'holded-connection',
+        tenantId: input.tenantId,
+        provider: 'holded',
+        status: input.status === 'error' ? 'failed' : input.status,
+        keyMasked: input.keyMasked ?? null,
+        providerAccountId: input.providerAccountId ?? null,
+        connectedAt: input.connectedAt ?? null,
+        lastValidatedAt: input.lastValidatedAt ?? null,
+        lastSyncAt: input.lastSyncAt ?? null,
+        lastError: input.lastError ?? null,
+        originChannel: input.originChannel ?? null,
+        supportedModules: input.supportedModules ?? [],
+      };
+    });
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          companyName: 'Acme SL',
+          legalName: 'Acme Sociedad Limitada',
+          taxId: 'B12345678',
+          contactFirstName: 'Ana',
+          contactLastName: 'Garcia',
+          contactEmail: 'ana@example.com',
+        }),
+      }) as never
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.error).toBeNull();
     expect(mockSaveHoldedConnection).toHaveBeenCalled();
   });
 

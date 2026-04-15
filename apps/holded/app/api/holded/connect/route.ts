@@ -433,153 +433,210 @@ export async function POST(request: NextRequest) {
       channel,
     });
 
-    await persistConnectionIdentity({
-      tenantId: session.tenantId,
-      userId: session.userId,
-      identity,
-    });
-
-    const notificationEmail = await resolveNotificationEmail({
-      tenantId: session.tenantId,
-      sessionEmail: session.email,
-      requestedEmail: requestedNotificationEmail,
-    });
-
-    const [usageEventResult, communicationResult, runtimeConnectionResult] =
-      await Promise.allSettled([
-        recordUsageEvent({
-          prisma,
-          tenantId: session.tenantId,
-          userId: session.userId,
-          type: 'HOLDED_CONNECTED',
-          source: 'holded_connect',
-          path: '/api/holded/connect',
-          metadataJson: {
-            provider: 'holded',
-            channel,
-            status: saved?.connected ? 'connected' : 'pending',
-            supportedModules: readProbeSupportedModules(probe),
-          },
-        }),
-        notificationEmail
-          ? sendHoldedConnectedCommunication({
-              name:
-                identity.contactFirstName ||
-                identity.contactFullName ||
-                session.name ||
-                notificationEmail.split('@')[0] ||
-                'Hola',
-              email: notificationEmail,
-              companyName: identity.companyName || saved?.tenantName || 'tu empresa',
-              supportedModules: readProbeSupportedModules(probe),
-            })
-          : Promise.resolve(null),
-        getHoldedConnection(session.tenantId, channel),
-      ]);
-
-    if (usageEventResult.status === 'rejected') {
-      logConnectorEvent('api/holded/connect', 'error', {
-        requestId,
+    let notificationEmail = requestedNotificationEmail || normalizeOptionalEmail(session.email);
+    try {
+      await persistConnectionIdentity({
         tenantId: session.tenantId,
-        entryChannel: channel,
-        stage: 'persist',
-        outcome: 'usage_event_failed',
-        error:
-          usageEventResult.reason instanceof Error
-            ? usageEventResult.reason.message
-            : String(usageEventResult.reason),
+        userId: session.userId,
+        identity,
       });
-    }
 
-    if (communicationResult.status === 'rejected') {
-      logConnectorEvent('api/holded/connect', 'error', {
-        requestId,
+      notificationEmail = await resolveNotificationEmail({
         tenantId: session.tenantId,
-        entryChannel: channel,
-        stage: 'notify',
-        outcome: 'communication_email_failed',
-        error:
-          communicationResult.reason instanceof Error
-            ? communicationResult.reason.message
-            : String(communicationResult.reason),
-        notificationEmail,
+        sessionEmail: session.email,
+        requestedEmail: requestedNotificationEmail,
       });
-    }
-
-    if (!notificationEmail) {
-      logConnectorEvent('api/holded/connect', 'warn', {
+    } catch (identityError) {
+      logConnectorEvent('api/holded/connect', 'error', {
         requestId,
         tenantId: session.tenantId,
         userId: session.userId,
         entryChannel: channel,
-        stage: 'notify',
-        outcome: 'notification_email_unavailable',
+        stage: 'persist_identity',
+        outcome: 'identity_persist_failed',
+        error: identityError instanceof Error ? identityError.message : String(identityError),
       });
     }
 
-    const runtimeConnection =
-      runtimeConnectionResult.status === 'fulfilled' ? runtimeConnectionResult.value : null;
-    const connection = buildConnectionStatusDto({
+    let runtimeConnection: Awaited<ReturnType<typeof getHoldedConnection>> | null = null;
+    let connection = buildConnectionStatusDto({
       connectionId: `${session.tenantId}:${channel}`,
       tenantId: session.tenantId,
-      status: runtimeConnection?.status ?? (saved?.connected ? 'connected' : 'disconnected'),
-      keyMasked: saved?.keyMasked ?? runtimeConnection?.keyMasked ?? null,
-      providerAccountId: saved?.providerAccountId ?? runtimeConnection?.providerAccountId ?? null,
-      connectedAt: saved?.connectedAt ?? runtimeConnection?.connectedAt ?? null,
-      lastValidatedAt: runtimeConnection?.lastValidatedAt ?? saved?.connectedAt ?? null,
-      lastSyncAt: runtimeConnection?.lastSyncAt ?? saved?.connectedAt ?? null,
+      status: saved?.connected ? 'connected' : 'disconnected',
+      keyMasked: saved?.keyMasked ?? null,
+      providerAccountId: saved?.providerAccountId ?? null,
+      connectedAt: saved?.connectedAt ?? null,
+      lastValidatedAt: saved?.connectedAt ?? null,
+      lastSyncAt: saved?.connectedAt ?? null,
       lastError: null,
-      originChannel: runtimeConnection?.originChannel ?? channel,
-      supportedModules: runtimeConnection?.supportedModules ?? saved?.supportedModules ?? [],
+      originChannel: channel,
+      supportedModules: saved?.supportedModules ?? [],
     });
-    const governanceFlags = buildGovernanceFlags(runtimeConnection);
-    const availableActions = buildDefaultAvailableActions({
+    let governanceFlags = buildGovernanceFlags(runtimeConnection);
+    let availableActions = buildDefaultAvailableActions({
       status: connection.status,
       underClaimReview: governanceFlags.underClaimReview,
       clientAdminGap: governanceFlags.clientAdminGap,
       highGovernanceRisk: governanceFlags.highGovernanceRisk,
     });
-    const detectedCompany = buildDetectedCompany({
+    let detectedCompany = buildDetectedCompany({
       companyName: identity.companyName || saved?.tenantName,
       legalName: identity.legalName || saved?.legalName,
       taxId: identity.taxId || saved?.taxId,
       source: runtimeConnection ? 'holded' : 'manual',
     });
-    const warnings = governanceFlags.clientAdminGap
+    let warnings = governanceFlags.clientAdminGap
       ? ['Falta responsable del cliente para cerrar la gobernanza inicial.']
       : [];
 
-    if (governanceFlags.highGovernanceRisk) {
-      try {
-        await sendPublicHighGovernanceRiskInternalAlertEmail({
-          tenantName: identity.companyName || saved?.tenantName || 'tu empresa',
-          tenantLegalName: identity.legalName || saved?.legalName || null,
-          channel,
-          actorName:
-            buildFullName(identity.contactFirstName, identity.contactLastName) || session.name,
-          actorEmail: notificationEmail || session.email || null,
-          companyEmail: notificationEmail || null,
-          contactPhone: identity.contactPhone || null,
-          ownershipStatus: governanceFlags.ownershipStatus,
-          managedByThirdParty: governanceFlags.managedByThirdParty,
-          clientAdminGap: governanceFlags.clientAdminGap,
-          underClaimReview: governanceFlags.underClaimReview,
-          detectedAt: new Date(),
-        });
-      } catch (governanceAlertError) {
+    try {
+      const [usageEventResult, communicationResult, runtimeConnectionResult] =
+        await Promise.allSettled([
+          recordUsageEvent({
+            prisma,
+            tenantId: session.tenantId,
+            userId: session.userId,
+            type: 'HOLDED_CONNECTED',
+            source: 'holded_connect',
+            path: '/api/holded/connect',
+            metadataJson: {
+              provider: 'holded',
+              channel,
+              status: saved?.connected ? 'connected' : 'pending',
+              supportedModules: readProbeSupportedModules(probe),
+            },
+          }),
+          notificationEmail
+            ? sendHoldedConnectedCommunication({
+                name:
+                  identity.contactFirstName ||
+                  identity.contactFullName ||
+                  session.name ||
+                  notificationEmail.split('@')[0] ||
+                  'Hola',
+                email: notificationEmail,
+                companyName: identity.companyName || saved?.tenantName || 'tu empresa',
+                supportedModules: readProbeSupportedModules(probe),
+              })
+            : Promise.resolve(null),
+          getHoldedConnection(session.tenantId, channel),
+        ]);
+
+      if (usageEventResult.status === 'rejected') {
         logConnectorEvent('api/holded/connect', 'error', {
+          requestId,
+          tenantId: session.tenantId,
+          entryChannel: channel,
+          stage: 'persist',
+          outcome: 'usage_event_failed',
+          error:
+            usageEventResult.reason instanceof Error
+              ? usageEventResult.reason.message
+              : String(usageEventResult.reason),
+        });
+      }
+
+      if (communicationResult.status === 'rejected') {
+        logConnectorEvent('api/holded/connect', 'error', {
+          requestId,
+          tenantId: session.tenantId,
+          entryChannel: channel,
+          stage: 'notify',
+          outcome: 'communication_email_failed',
+          error:
+            communicationResult.reason instanceof Error
+              ? communicationResult.reason.message
+              : String(communicationResult.reason),
+          notificationEmail,
+        });
+      }
+
+      if (!notificationEmail) {
+        logConnectorEvent('api/holded/connect', 'warn', {
           requestId,
           tenantId: session.tenantId,
           userId: session.userId,
           entryChannel: channel,
           stage: 'notify',
-          outcome: 'governance_alert_failed',
-          error:
-            governanceAlertError instanceof Error
-              ? governanceAlertError.message
-              : String(governanceAlertError),
+          outcome: 'notification_email_unavailable',
         });
       }
+
+      runtimeConnection =
+        runtimeConnectionResult.status === 'fulfilled' ? runtimeConnectionResult.value : null;
+      connection = buildConnectionStatusDto({
+        connectionId: `${session.tenantId}:${channel}`,
+        tenantId: session.tenantId,
+        status: runtimeConnection?.status ?? (saved?.connected ? 'connected' : 'disconnected'),
+        keyMasked: saved?.keyMasked ?? runtimeConnection?.keyMasked ?? null,
+        providerAccountId: saved?.providerAccountId ?? runtimeConnection?.providerAccountId ?? null,
+        connectedAt: saved?.connectedAt ?? runtimeConnection?.connectedAt ?? null,
+        lastValidatedAt: runtimeConnection?.lastValidatedAt ?? saved?.connectedAt ?? null,
+        lastSyncAt: runtimeConnection?.lastSyncAt ?? saved?.connectedAt ?? null,
+        lastError: null,
+        originChannel: runtimeConnection?.originChannel ?? channel,
+        supportedModules: runtimeConnection?.supportedModules ?? saved?.supportedModules ?? [],
+      });
+      governanceFlags = buildGovernanceFlags(runtimeConnection);
+      availableActions = buildDefaultAvailableActions({
+        status: connection.status,
+        underClaimReview: governanceFlags.underClaimReview,
+        clientAdminGap: governanceFlags.clientAdminGap,
+        highGovernanceRisk: governanceFlags.highGovernanceRisk,
+      });
+      detectedCompany = buildDetectedCompany({
+        companyName: identity.companyName || saved?.tenantName,
+        legalName: identity.legalName || saved?.legalName,
+        taxId: identity.taxId || saved?.taxId,
+        source: runtimeConnection ? 'holded' : 'manual',
+      });
+      warnings = governanceFlags.clientAdminGap
+        ? ['Falta responsable del cliente para cerrar la gobernanza inicial.']
+        : [];
+
+      if (governanceFlags.highGovernanceRisk) {
+        try {
+          await sendPublicHighGovernanceRiskInternalAlertEmail({
+            tenantName: identity.companyName || saved?.tenantName || 'tu empresa',
+            tenantLegalName: identity.legalName || saved?.legalName || null,
+            channel,
+            actorName:
+              buildFullName(identity.contactFirstName, identity.contactLastName) || session.name,
+            actorEmail: notificationEmail || session.email || null,
+            companyEmail: notificationEmail || null,
+            contactPhone: identity.contactPhone || null,
+            ownershipStatus: governanceFlags.ownershipStatus,
+            managedByThirdParty: governanceFlags.managedByThirdParty,
+            clientAdminGap: governanceFlags.clientAdminGap,
+            underClaimReview: governanceFlags.underClaimReview,
+            detectedAt: new Date(),
+          });
+        } catch (governanceAlertError) {
+          logConnectorEvent('api/holded/connect', 'error', {
+            requestId,
+            tenantId: session.tenantId,
+            userId: session.userId,
+            entryChannel: channel,
+            stage: 'notify',
+            outcome: 'governance_alert_failed',
+            error:
+              governanceAlertError instanceof Error
+                ? governanceAlertError.message
+                : String(governanceAlertError),
+          });
+        }
+      }
+    } catch (postConnectError) {
+      logConnectorEvent('api/holded/connect', 'error', {
+        requestId,
+        tenantId: session.tenantId,
+        userId: session.userId,
+        entryChannel: channel,
+        stage: 'post_connect',
+        outcome: 'post_connect_failed',
+        error:
+          postConnectError instanceof Error ? postConnectError.message : String(postConnectError),
+      });
     }
 
     logConnectorEvent(
@@ -635,7 +692,7 @@ export async function POST(request: NextRequest) {
           warnings: [],
           nextStep: null,
           error:
-            'La API key es valida, pero no hemos podido terminar de guardarla. Intenta de nuevo en unos segundos o escribe a soporte.',
+            'La conexion es valida, pero no hemos podido terminar de guardarla. Intenta de nuevo en unos segundos o escribe a soporte.',
           reason: 'connect_failed',
           requestId,
         },
