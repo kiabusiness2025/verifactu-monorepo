@@ -30,7 +30,11 @@ const HOLDED_CONNECTION_LEGAL_VERSION =
   process.env.HOLDED_CONNECTION_LEGAL_VERSION?.trim() || 'holded_connection_v1';
 
 function getEntryChannel(request: NextRequest) {
-  const header = request.headers.get('x-isaak-entry-channel')?.trim().toLowerCase();
+  const header = (
+    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
+  )
+    ?.trim()
+    .toLowerCase();
   return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
 }
 

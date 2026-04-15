@@ -15,7 +15,7 @@ type SidebarProps = {
 export function Sidebar({ isOpen, onClose, isDemo = false, minimalMode = false }: SidebarProps) {
   const pathname = usePathname() || '';
   const visibleItems = minimalMode
-    ? navItems.filter((item) => item.href === '/dashboard/integrations/isaak-for-holded')
+    ? navItems.filter((item) => item.href === '/dashboard/integrations/holded')
     : navItems;
 
   return (

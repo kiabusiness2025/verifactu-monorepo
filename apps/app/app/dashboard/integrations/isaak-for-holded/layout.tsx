@@ -1,12 +1,1 @@
-import type { ReactNode } from 'react';
-import { requireHoldedConnectorAdminPageAccess } from '@/lib/holdedConnectorAdmin';
-
-export const dynamic = 'force-dynamic';
-
-export default async function HoldedConnectorAdminLayout({ children }: { children: ReactNode }) {
-  await requireHoldedConnectorAdminPageAccess({
-    nextPath: '/dashboard/integrations/isaak-for-holded',
-  });
-
-  return children;
-}
+export { dynamic, default } from '../holded/layout';

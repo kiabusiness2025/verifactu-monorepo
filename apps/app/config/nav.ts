@@ -29,7 +29,7 @@ export const navItems: NavItem[] = [
   { label: 'Admin', href: '/dashboard/admin-dashboard', icon: Settings, roles: ['admin', 'owner'] },
   {
     label: 'Conector Holded',
-    href: '/dashboard/integrations/isaak-for-holded',
+    href: '/dashboard/integrations/holded',
     icon: Sparkles,
     roles: ['admin', 'owner'],
   },

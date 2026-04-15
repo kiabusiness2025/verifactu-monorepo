@@ -162,7 +162,7 @@ export default function IntegrationsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-isaak-entry-channel': 'dashboard',
+          'x-holded-entry-channel': 'dashboard',
         },
         body: JSON.stringify({ reauthConfirmed: true }),
       });

@@ -20,7 +20,11 @@ export const runtime = 'nodejs';
 
 function getEntryChannel(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('channel')?.trim().toLowerCase();
-  const header = request.headers.get('x-isaak-entry-channel')?.trim().toLowerCase();
+  const header = (
+    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
+  )
+    ?.trim()
+    .toLowerCase();
   return query === 'chatgpt' || header === 'chatgpt' ? 'chatgpt' : 'dashboard';
 }
 

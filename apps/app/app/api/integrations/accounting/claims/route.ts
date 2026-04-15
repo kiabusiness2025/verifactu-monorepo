@@ -20,7 +20,11 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 function getEntryChannel(request: NextRequest) {
-  const header = request.headers.get('x-isaak-entry-channel')?.trim().toLowerCase();
+  const header = (
+    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
+  )
+    ?.trim()
+    .toLowerCase();
   return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
 }
 
