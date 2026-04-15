@@ -19,11 +19,6 @@ jest.mock('@/app/lib/prisma', () => ({
   },
 }));
 
-jest.mock('@/app/lib/holded-governance', () => ({
-  __esModule: true,
-  detectPublicDuplicateConflict: jest.fn(),
-}));
-
 jest.mock('@verifactu/integrations', () => ({
   __esModule: true,
   getConnectorRequestId: jest.fn(() => 'req-validate-1'),
@@ -54,13 +49,11 @@ jest.mock('@verifactu/integrations', () => ({
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { probeHoldedConnection } from '@/app/lib/holded-integration';
 import { prisma } from '@/app/lib/prisma';
-import { detectPublicDuplicateConflict } from '@/app/lib/holded-governance';
 import { POST } from './route';
 
 const mockGetHoldedSession = getHoldedSession as jest.Mock;
 const mockProbeHoldedConnection = probeHoldedConnection as jest.Mock;
 const mockTenantFindUnique = prisma.tenant.findUnique as jest.Mock;
-const mockDetectPublicDuplicateConflict = detectPublicDuplicateConflict as jest.Mock;
 
 describe('POST /api/holded/validate', () => {
   const originalSessionSecret = process.env.SESSION_SECRET;
@@ -93,16 +86,6 @@ describe('POST /api/holded/validate', () => {
         taxId: 'B12345678',
       },
     });
-    mockDetectPublicDuplicateConflict.mockResolvedValue({
-      exists: false,
-      connectionId: null,
-      tenantId: null,
-      providerAccountId: null,
-      userHasAccess: false,
-      canRequestAccess: false,
-      canOpenClaim: false,
-      reason: null,
-    });
   });
 
   afterAll(() => {
@@ -132,41 +115,5 @@ describe('POST /api/holded/validate', () => {
       taxId: 'B12345678',
     });
     expect(payload.nextStep).toBe('manual_completion_required');
-  });
-
-  it('returns duplicate_conflict when the api key matches another active connection', async () => {
-    mockDetectPublicDuplicateConflict.mockResolvedValueOnce({
-      exists: true,
-      connectionId: 'ext-conflict-1',
-      tenantId: 'tenant_existing',
-      providerAccountId: 'provider-account-1',
-      userHasAccess: false,
-      canRequestAccess: true,
-      canOpenClaim: true,
-      reason: 'Esta empresa ya esta conectada en otra organizacion.',
-    });
-
-    const response = await POST(
-      new Request('https://holded.verifactu.business/api/holded/validate', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          apiKey: 'abcdefghijklmnop',
-          channel: 'chatgpt',
-        }),
-      }) as never
-    );
-
-    const payload = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(payload.ok).toBe(true);
-    expect(payload.nextStep).toBe('duplicate_conflict');
-    expect(payload.duplicateConflict).toMatchObject({
-      exists: true,
-      connectionId: 'ext-conflict-1',
-      canRequestAccess: true,
-      canOpenClaim: true,
-    });
   });
 });

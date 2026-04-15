@@ -11,7 +11,6 @@ import { getHoldedSession } from '@/app/lib/holded-session';
 import { probeHoldedConnection } from '@/app/lib/holded-integration';
 import { mintHoldedValidationToken } from '@/app/lib/holded-validation-token';
 import { prisma } from '@/app/lib/prisma';
-import { detectPublicDuplicateConflict } from '@/app/lib/holded-governance';
 
 export const runtime = 'nodejs';
 
@@ -143,13 +142,7 @@ export async function POST(request: NextRequest) {
     taxId: tenant?.profile?.taxId || tenant?.nif || null,
     source: 'manual',
   });
-  const duplicateConflict = probe.ok
-    ? await detectPublicDuplicateConflict({
-        tenantId: session.tenantId,
-        apiKey,
-        channel,
-      })
-    : buildDefaultDuplicateConflict();
+  const duplicateConflict = buildDefaultDuplicateConflict();
   const validationToken = probe.ok
     ? await mintHoldedValidationToken({
         tenantId: session.tenantId,
@@ -180,11 +173,7 @@ export async function POST(request: NextRequest) {
       validationToken,
       detectedCompany,
       duplicateConflict,
-      nextStep: probe.ok
-        ? duplicateConflict.exists
-          ? 'duplicate_conflict'
-          : 'manual_completion_required'
-        : null,
+      nextStep: probe.ok ? 'manual_completion_required' : null,
       error: probe.ok ? null : probe.error,
       reason: probe.ok ? null : 'validation_failed',
       suggestedAction: probe.ok ? null : 'Revisar la API key y volver a validar',

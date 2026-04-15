@@ -69,10 +69,6 @@ type UiBadge = {
 // 1 = Tus datos (nombre), 2 = Empresa, 3 = Conexion (API key), 4 = Exito
 type WizardStep = 1 | 2 | 3 | 4;
 
-function looksLikeEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
-
 function normalizeApiKey(value: string) {
   return value.replace(/\s+/g, '').trim();
 }
@@ -246,7 +242,7 @@ export default function OnboardingHoldedClient({
     'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
 
   // Wizard step
-  const [step, setStep] = useState<WizardStep>(1);
+  const [step, setStep] = useState<WizardStep>(3);
 
   // Form state
   const [companyName, setCompanyName] = useState(initialIdentity.companyName);
@@ -336,8 +332,8 @@ export default function OnboardingHoldedClient({
     validatedApiKey === normalizedApiKey && Boolean(validationToken);
 
   // Per-step validation
-  const canProceed1 = normalizedContactFirstName.length > 0 && normalizedContactLastName.length > 0;
-  const canProceed2 = normalizedCompanyName.length > 0 && looksLikeEmail(normalizedContactEmail);
+  const canProceed1 = true;
+  const canProceed2 = true;
   const canSubmit = normalizedApiKey.length >= 16 && consentChecked && !isSubmitting;
 
   // Computed UI
@@ -358,19 +354,6 @@ export default function OnboardingHoldedClient({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    if (!normalizedCompanyName) {
-      setError('Necesitamos el nombre de la empresa para continuar.');
-      return;
-    }
-    if (
-      !normalizedContactFirstName ||
-      !normalizedContactLastName ||
-      !looksLikeEmail(normalizedContactEmail)
-    ) {
-      setError('Necesitamos nombre, apellidos y un correo valido para la persona de contacto.');
-      return;
-    }
     if (normalizedApiKey.length < 16) {
       setError('Pega una API key valida de Holded para continuar.');
       return;
@@ -408,14 +391,6 @@ export default function OnboardingHoldedClient({
 
         if (!validationResponse.ok || !validationData?.ok) {
           throw new Error(validationData?.error || 'No hemos podido validar la API key de Holded.');
-        }
-
-        if (validationData.duplicateConflict?.exists) {
-          setPhase('idle');
-          setDetectedCompany(validationData.detectedCompany ?? null);
-          setDuplicateConflict(validationData.duplicateConflict);
-          setError(null);
-          return;
         }
 
         reusableToken = validationData.validationToken || null;

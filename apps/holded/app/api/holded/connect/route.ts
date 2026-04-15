@@ -119,9 +119,13 @@ function resolveConnectionIdentity(input: {
 }) {
   const sessionNameParts = splitNameParts(input.sessionName);
   const existingNameParts = splitNameParts(input.existing.representative);
-  const requestedContactEmail =
+  const requestedContactEmailRaw =
     normalizeOptionalEmail(input.body.contactEmail) ||
     normalizeOptionalEmail(input.body.notificationEmail);
+  const requestedContactEmail =
+    requestedContactEmailRaw && isValidEmail(requestedContactEmailRaw)
+      ? requestedContactEmailRaw
+      : null;
 
   const contactFirstName =
     normalizeOptionalText(input.body.contactFirstName) ||
@@ -143,28 +147,12 @@ function resolveConnectionIdentity(input: {
     contactLastName,
     contactFullName: buildFullName(contactFirstName, contactLastName),
     contactEmail:
-      requestedContactEmail ||
       input.existing.contactEmail ||
+      requestedContactEmail ||
       normalizeOptionalEmail(input.sessionEmail),
     contactPhone:
       normalizeOptionalText(input.body.contactPhone) || input.existing.contactPhone || null,
   };
-}
-
-function validateConnectionIdentity(identity: ReturnType<typeof resolveConnectionIdentity>) {
-  if (!identity.companyName) {
-    return 'Necesitamos el nombre de la empresa para crear correctamente tu espacio.';
-  }
-
-  if (!identity.contactFirstName || !identity.contactLastName) {
-    return 'Necesitamos nombre y apellidos de la persona de contacto.';
-  }
-
-  if (!identity.contactEmail || !isValidEmail(identity.contactEmail)) {
-    return 'Necesitamos un correo valido de contacto para enviarte las comunicaciones del conector.';
-  }
-
-  return null;
 }
 
 async function persistConnectionIdentity(input: {
@@ -227,6 +215,15 @@ async function resolveNotificationEmail(input: {
   sessionEmail: string | null;
   requestedEmail: string | null;
 }) {
+  const tenantProfile = await prisma.tenantProfile.findFirst({
+    where: { tenantId: input.tenantId },
+    select: { email: true },
+  });
+
+  if (tenantProfile?.email?.trim()) {
+    return tenantProfile.email.trim();
+  }
+
   if (input.requestedEmail?.trim()) {
     return input.requestedEmail.trim();
   }
@@ -235,12 +232,7 @@ async function resolveNotificationEmail(input: {
     return input.sessionEmail.trim();
   }
 
-  const tenantProfile = await prisma.tenantProfile.findFirst({
-    where: { tenantId: input.tenantId },
-    select: { email: true },
-  });
-
-  return tenantProfile?.email?.trim() || null;
+  return null;
 }
 
 function readProbeSupportedModules(probe: Awaited<ReturnType<typeof probeHoldedConnection>>) {
@@ -293,7 +285,6 @@ export async function POST(request: NextRequest) {
       sessionName: session.name || null,
       sessionEmail: session.email || null,
     });
-    const identityError = validateConnectionIdentity(identity);
     const requestedNotificationEmail = identity.contactEmail;
     const validationToken = typeof body?.validationToken === 'string' ? body.validationToken : '';
 
@@ -352,69 +343,6 @@ export async function POST(request: NextRequest) {
             nextStep: null,
             error: 'La API key parece incompleta. Revisala y vuelve a pegarla.',
             reason: 'invalid_api_key',
-          },
-          { status: 400 }
-        ),
-        requestId
-      );
-    }
-
-    if (identityError) {
-      logConnectorEvent(
-        'api/holded/connect',
-        'warn',
-        buildConnectorEvent({
-          requestId,
-          tenantId: session.tenantId,
-          entryChannel: channel,
-          stage: 'body',
-          outcome: 'manual_company_data_required',
-          error: identityError,
-        })
-      );
-      return withConnectorRequestId(
-        NextResponse.json(
-          {
-            ok: false,
-            connection: null,
-            detectedCompany: null,
-            governanceFlags: null,
-            availableActions: null,
-            warnings: [],
-            nextStep: null,
-            error: identityError,
-            reason: 'manual_company_data_required',
-          },
-          { status: 400 }
-        ),
-        requestId
-      );
-    }
-
-    if (requestedNotificationEmail && !isValidEmail(requestedNotificationEmail)) {
-      logConnectorEvent(
-        'api/holded/connect',
-        'warn',
-        buildConnectorEvent({
-          requestId,
-          tenantId: session.tenantId,
-          entryChannel: channel,
-          stage: 'body',
-          outcome: 'invalid_notification_email',
-        })
-      );
-      return withConnectorRequestId(
-        NextResponse.json(
-          {
-            ok: false,
-            connection: null,
-            detectedCompany: null,
-            governanceFlags: null,
-            availableActions: null,
-            warnings: [],
-            nextStep: null,
-            error: 'El correo de aviso no parece valido. Revisalo y vuelve a intentarlo.',
-            reason: 'invalid_notification_email',
           },
           { status: 400 }
         ),

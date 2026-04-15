@@ -229,7 +229,7 @@ describe('POST /api/holded/connect', () => {
     process.env.SESSION_SECRET = originalSessionSecret;
   });
 
-  it('uses the requested notification email when session email is missing', async () => {
+  it('uses the stored company email as security recipient when available', async () => {
     const response = await POST(
       new Request('https://holded.verifactu.business/api/holded/connect', {
         method: 'POST',
@@ -250,8 +250,8 @@ describe('POST /api/holded/connect', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload.notificationEmail).toBe('ana@example.com');
-    expect(mockTenantProfileFindFirst).not.toHaveBeenCalled();
+    expect(payload.notificationEmail).toBe('tenant@example.com');
+    expect(mockTenantProfileFindFirst).toHaveBeenCalled();
     expect(mockUserUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'user_1' },
@@ -275,7 +275,7 @@ describe('POST /api/holded/connect', () => {
     );
     expect(mockSendHoldedConnectedCommunication).toHaveBeenCalledWith({
       name: 'Ana',
-      email: 'ana@example.com',
+      email: 'tenant@example.com',
       companyName: 'Acme SL',
       supportedModules: ['invoicing', 'accounting'],
     });
@@ -333,8 +333,8 @@ describe('POST /api/holded/connect', () => {
       tenantLegalName: 'Acme Sociedad Limitada',
       channel: 'dashboard',
       actorName: 'Ana Garcia',
-      actorEmail: 'ana@example.com',
-      companyEmail: 'ana@example.com',
+      actorEmail: 'tenant@example.com',
+      companyEmail: 'tenant@example.com',
       contactPhone: '+34 600 111 222',
       ownershipStatus: 'third_party_managed',
       managedByThirdParty: true,
@@ -344,7 +344,7 @@ describe('POST /api/holded/connect', () => {
     });
   });
 
-  it('rejects an invalid requested notification email before probing Holded', async () => {
+  it('does not block connection when requested notification email is invalid', async () => {
     const response = await POST(
       new Request('https://holded.verifactu.business/api/holded/connect', {
         method: 'POST',
@@ -362,18 +362,13 @@ describe('POST /api/holded/connect', () => {
     );
     const payload = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(payload).toMatchObject({
-      ok: false,
-      error:
-        'Necesitamos un correo valido de contacto para enviarte las comunicaciones del conector.',
-      reason: 'manual_company_data_required',
-    });
-    expect(mockProbeHoldedConnection).not.toHaveBeenCalled();
-    expect(mockSendHoldedConnectedCommunication).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(mockProbeHoldedConnection).toHaveBeenCalled();
+    expect(mockSendHoldedConnectedCommunication).toHaveBeenCalled();
   });
 
-  it('rejects the connection before probing when required company data is missing', async () => {
+  it('allows connection even when company profile fields are missing initially', async () => {
     mockTenantFindUnique.mockResolvedValueOnce({
       name: null,
       legalName: null,
@@ -397,14 +392,10 @@ describe('POST /api/holded/connect', () => {
 
     const payload = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(payload).toMatchObject({
-      ok: false,
-      error: 'Necesitamos el nombre de la empresa para crear correctamente tu espacio.',
-      reason: 'manual_company_data_required',
-    });
-    expect(mockProbeHoldedConnection).not.toHaveBeenCalled();
-    expect(mockSaveHoldedConnection).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(mockProbeHoldedConnection).toHaveBeenCalled();
+    expect(mockSaveHoldedConnection).toHaveBeenCalled();
   });
 
   it('reuses a signed validation token instead of probing Holded again', async () => {
