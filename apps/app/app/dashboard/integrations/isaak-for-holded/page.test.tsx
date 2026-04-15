@@ -176,6 +176,38 @@ describe('IsaakForHoldedPage', () => {
         });
       }
 
+      if (
+        matchesUrl(url, '/api/integrations/accounting/admin/user-tenants?limit=300') &&
+        method === 'GET'
+      ) {
+        return responseOf({
+          items: [
+            {
+              membershipId: 'm-1',
+              userId: 'user-1',
+              userEmail: 'admin@cliente.es',
+              userName: 'Admin Cliente',
+              tenantId: 'tenant-1',
+              tenantName: 'Acme SL',
+              tenantLegalName: 'Acme Sociedad Limitada',
+              membershipRole: 'company_admin',
+              membershipStatus: 'active',
+              membershipSide: 'client',
+              connectionId: 'conn-1',
+              connectionStatus: 'connected',
+              channelKey: 'dashboard',
+              managedByThirdParty: false,
+              clientAdminGap: false,
+              highGovernanceRisk: false,
+              lastValidatedAt: '2026-04-13T12:00:00.000Z',
+              lastSyncAt: '2026-04-13T12:30:00.000Z',
+              updatedAt: '2026-04-13T12:30:00.000Z',
+            },
+          ],
+          total: 1,
+          filters: { q: '', status: 'all', limit: 300 },
+        });
+      }
       if (matchesUrl(url, '/api/integrations/accounting/access-requests') && method === 'GET') {
         return responseOf({
           items: [
@@ -294,7 +326,8 @@ describe('IsaakForHoldedPage', () => {
     expect(screen.getByText('Destinatarios y avisos')).toBeInTheDocument();
     expect(screen.getByText('Solicitudes de acceso')).toBeInTheDocument();
     expect(screen.getByText('Claims y disputas')).toBeInTheDocument();
-    expect(await screen.findByText('admin@cliente.es')).toBeInTheDocument();
+    expect(screen.getByText('Usuarios y tenants conectados')).toBeInTheDocument();
+    expect((await screen.findAllByText('admin@cliente.es')).length).toBeGreaterThan(0);
     expect(screen.getByText('avisos@cliente.es')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Ver detalle' }));

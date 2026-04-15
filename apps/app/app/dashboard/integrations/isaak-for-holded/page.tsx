@@ -87,6 +87,28 @@ type LogsSummaryPayload = {
   requestId: string;
 };
 
+type AdminUserTenantRow = {
+  membershipId: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  tenantId: string;
+  tenantName: string;
+  tenantLegalName: string;
+  membershipRole: string;
+  membershipStatus: string;
+  membershipSide: string | null;
+  connectionId: string | null;
+  connectionStatus: string;
+  channelKey: string | null;
+  managedByThirdParty: boolean;
+  clientAdminGap: boolean;
+  highGovernanceRisk: boolean;
+  lastValidatedAt: string | null;
+  lastSyncAt: string | null;
+  updatedAt: string | null;
+};
+
 type NoticeState = {
   tone: 'success' | 'error' | 'info';
   text: string;
@@ -275,6 +297,12 @@ export default function IsaakForHoldedPage() {
   const [accessRequests, setAccessRequests] = useState<AccessRequestDTO[]>([]);
   const [claims, setClaims] = useState<ClaimCaseDTO[]>([]);
   const [claimTimeline, setClaimTimeline] = useState<ClaimResolutionDTO[]>([]);
+  const [adminRows, setAdminRows] = useState<AdminUserTenantRow[]>([]);
+  const [adminUserFilter, setAdminUserFilter] = useState('');
+  const [adminTenantFilter, setAdminTenantFilter] = useState('');
+  const [adminStatusFilter, setAdminStatusFilter] = useState<
+    'all' | 'connected' | 'disconnected' | 'risk'
+  >('all');
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
   const [membershipDrafts, setMembershipDrafts] = useState<Record<string, MembershipDraft>>({});
   const [recipientDrafts, setRecipientDrafts] = useState<Record<string, RecipientDraft>>({});
@@ -332,6 +360,7 @@ export default function IsaakForHoldedPage() {
         recipientsData,
         accessRequestsData,
         claimsData,
+        adminUsersData,
       ] = await Promise.all([
         readJson<IntegrationStatus>(statusRes),
         readJson<LogsSummaryPayload>(logsSummaryRes),
@@ -339,6 +368,11 @@ export default function IsaakForHoldedPage() {
         readJson<{ items?: RecipientDTO[] }>(recipientsRes),
         readJson<{ items?: AccessRequestDTO[] }>(accessRequestsRes),
         readJson<{ items?: ClaimCaseDTO[] }>(claimsRes),
+        readJson<{ items?: AdminUserTenantRow[] }>(
+          await fetch('/api/integrations/accounting/admin/user-tenants?limit=300', {
+            cache: 'no-store',
+          })
+        ),
       ]);
 
       if (!statusRes.ok || !statusData) {
@@ -360,6 +394,7 @@ export default function IsaakForHoldedPage() {
       setRecipients(nextRecipients);
       setAccessRequests(nextAccessRequests);
       setClaims(nextClaims);
+      setAdminRows(Array.isArray(adminUsersData?.items) ? adminUsersData.items : []);
       setMembershipDrafts(
         Object.fromEntries(nextMemberships.map((item) => [item.membershipId, { role: item.role }]))
       );
@@ -443,6 +478,29 @@ export default function IsaakForHoldedPage() {
   );
 
   const selectedClaim = claims.find((item) => item.claimId === selectedClaimId) ?? null;
+  const filteredAdminRows = useMemo(() => {
+    const userNeedle = adminUserFilter.trim().toLowerCase();
+    const tenantNeedle = adminTenantFilter.trim().toLowerCase();
+
+    return adminRows.filter((row) => {
+      if (adminStatusFilter === 'connected' && row.connectionStatus !== 'connected') return false;
+      if (adminStatusFilter === 'disconnected' && row.connectionStatus === 'connected')
+        return false;
+      if (adminStatusFilter === 'risk' && !row.highGovernanceRisk) return false;
+
+      if (userNeedle) {
+        const userText = `${row.userName} ${row.userEmail}`.toLowerCase();
+        if (!userText.includes(userNeedle)) return false;
+      }
+
+      if (tenantNeedle) {
+        const tenantText = `${row.tenantName} ${row.tenantLegalName}`.toLowerCase();
+        if (!tenantText.includes(tenantNeedle)) return false;
+      }
+
+      return true;
+    });
+  }, [adminRows, adminStatusFilter, adminTenantFilter, adminUserFilter]);
   const membershipsTotal = memberships.length;
   const recipientsTotal = recipients.length;
   const claimsOpen = claims.filter((item) =>
@@ -1063,6 +1121,117 @@ export default function IsaakForHoldedPage() {
           )}
         </div>
       </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Usuarios y tenants conectados</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Vista global para gestionar quien tiene acceso y en que tenant hay conexion activa.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+            {filteredAdminRows.length} filas
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <input
+            className={fieldClasses()}
+            value={adminUserFilter}
+            onChange={(event) => setAdminUserFilter(event.target.value)}
+            placeholder="Filtrar por usuario o email"
+          />
+          <input
+            className={fieldClasses()}
+            value={adminTenantFilter}
+            onChange={(event) => setAdminTenantFilter(event.target.value)}
+            placeholder="Filtrar por tenant"
+          />
+          <select
+            className={fieldClasses()}
+            value={adminStatusFilter}
+            onChange={(event) =>
+              setAdminStatusFilter(
+                event.target.value as 'all' | 'connected' | 'disconnected' | 'risk'
+              )
+            }
+          >
+            <option value="all">Todos los estados</option>
+            <option value="connected">Conectado</option>
+            <option value="disconnected">Sin conexion</option>
+            <option value="risk">Riesgo alto</option>
+          </select>
+          <button
+            type="button"
+            className={buttonClasses()}
+            onClick={() => {
+              setAdminUserFilter('');
+              setAdminTenantFilter('');
+              setAdminStatusFilter('all');
+            }}
+          >
+            Limpiar filtros
+          </button>
+        </div>
+
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-[0.08em] text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Usuario</th>
+                <th className="px-4 py-3">Tenant</th>
+                <th className="px-4 py-3">Rol</th>
+                <th className="px-4 py-3">Estado conexion</th>
+                <th className="px-4 py-3">Riesgo</th>
+                <th className="px-4 py-3">Ultima validacion</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
+              {filteredAdminRows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
+                    No hay resultados con los filtros actuales.
+                  </td>
+                </tr>
+              ) : (
+                filteredAdminRows.map((row) => (
+                  <tr key={row.membershipId}>
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-slate-900">{row.userName || '-'}</div>
+                      <div className="text-xs text-slate-500">{row.userEmail || '-'}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-slate-900">{row.tenantName || '-'}</div>
+                      <div className="text-xs text-slate-500">{row.tenantLegalName || '-'}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>{row.membershipRole}</div>
+                      <div className="text-xs text-slate-500">{row.membershipStatus}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge
+                        label={row.connectionStatus === 'connected' ? 'Conectado' : 'Sin conexion'}
+                        variant={row.connectionStatus === 'connected' ? 'success' : 'neutral'}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge
+                        label={row.highGovernanceRisk ? 'Alto' : 'Normal'}
+                        variant={row.highGovernanceRisk ? 'warning' : 'success'}
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-600">
+                      {formatDateTime(row.lastValidatedAt || row.updatedAt)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
