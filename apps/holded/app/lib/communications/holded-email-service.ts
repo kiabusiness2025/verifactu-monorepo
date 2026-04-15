@@ -37,7 +37,7 @@ function readOptionalEnv(name: string, fallback: string) {
 }
 
 function resolveLeadSender() {
-  const holdedFallback = 'Holded for Isaak <no-reply@holded.verifactu.business>';
+  const holdedFallback = 'Holded <no-reply@holded.verifactu.business>';
   const configured =
     cleanEnv(process.env.RESEND_FROM_HOLDED) || cleanEnv(process.env.RESEND_FROM) || holdedFallback;
 
@@ -133,8 +133,10 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
     .map((value) => value.trim())
     .filter(Boolean);
 
-  const chatUrl = 'https://isaak.verifactu.business/chat?source=holded_connected_email';
-  const settingsUrl = 'https://isaak.verifactu.business/settings?section=connections';
+  const appSiteUrl =
+    cleanEnv(process.env.NEXT_PUBLIC_APP_SITE_URL) || 'https://app.verifactu.business';
+  const chatUrl = `${appSiteUrl}/dashboard?source=holded_connected_email`;
+  const settingsUrl = `${appSiteUrl}/dashboard/integrations?source=holded_connected_email`;
   const customer = buildHoldedConnectedEmail({
     name: input.name,
     email: input.email,

@@ -112,7 +112,7 @@ describe('POST /api/auth/register', () => {
       '-----BEGIN PRIVATE KEY-----\\nkey\\n-----END PRIVATE KEY-----';
     process.env.NEXT_PUBLIC_HOLDED_SITE_URL = 'https://holded.verifactu.business';
     process.env.RESEND_API_KEY = 'resend-key';
-    process.env.RESEND_FROM = 'Holded for Isaak <holded@verifactu.business>';
+    process.env.RESEND_FROM = 'Holded <holded@verifactu.business>';
     process.env.RESEND_REPLY_TO = 'soporte@verifactu.business';
     process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS = 'admin@example.com';
 

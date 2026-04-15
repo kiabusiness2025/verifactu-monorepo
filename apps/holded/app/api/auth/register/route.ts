@@ -213,7 +213,7 @@ export async function POST(req: Request) {
       'https://holded.verifactu.business'
     );
     const adminUrl = new URL(`${holdedSite}/admin`);
-    const from = readOptionalEnv('RESEND_FROM', 'Isaak for Holded <holded@verifactu.business>');
+    const from = readOptionalEnv('RESEND_FROM', 'Holded <holded@verifactu.business>');
     const replyTo = readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business');
     const adminRecipients = readEmailList(
       process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS,
