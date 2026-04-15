@@ -427,6 +427,62 @@ describe('POST /api/holded/connect', () => {
     expect(mockSaveHoldedConnection).toHaveBeenCalled();
   });
 
+  it('returns 409 with clear conflict reason when persistence hits duplicate constraint', async () => {
+    mockSaveHoldedConnection.mockRejectedValueOnce(
+      Object.assign(new Error('Unique constraint failed on the fields'), { code: 'P2002' })
+    );
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          companyName: 'Acme SL',
+          contactFirstName: 'Ana',
+          contactLastName: 'Garcia',
+          contactEmail: 'ana@example.com',
+        }),
+      }) as never
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload.ok).toBe(false);
+    expect(payload.reason).toBe('duplicate_connection_conflict');
+    expect(payload.error).toContain('ya aparece conectada');
+  });
+
+  it('returns 503 with explicit reason when integration secret is missing during save', async () => {
+    mockSaveHoldedConnection.mockRejectedValueOnce(
+      new Error('INTEGRATIONS_SECRET_KEY or SESSION_SECRET is required')
+    );
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          companyName: 'Acme SL',
+          contactFirstName: 'Ana',
+          contactLastName: 'Garcia',
+          contactEmail: 'ana@example.com',
+        }),
+      }) as never
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload.ok).toBe(false);
+    expect(payload.reason).toBe('integration_secret_missing');
+    expect(payload.error).toContain('configuracion temporal');
+  });
+
   it('does not fail when post-connect shaping throws after saving a valid key', async () => {
     let calls = 0;
     mockBuildConnectionStatusDto.mockImplementation((input: Record<string, unknown>) => {

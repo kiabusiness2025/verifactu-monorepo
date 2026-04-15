@@ -425,13 +425,88 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const saved = await saveHoldedConnection({
-      tenantId: session.tenantId,
-      apiKey,
-      userId: session.userId,
-      probe,
-      channel,
-    });
+    let saved;
+    try {
+      saved = await saveHoldedConnection({
+        tenantId: session.tenantId,
+        apiKey,
+        userId: session.userId,
+        probe,
+        channel,
+      });
+    } catch (persistError) {
+      const persistMessage =
+        persistError instanceof Error ? persistError.message : String(persistError);
+      const persistCode = (persistError as { code?: string } | null)?.code;
+
+      logConnectorEvent('api/holded/connect', 'error', {
+        requestId,
+        tenantId: session.tenantId,
+        userId: session.userId,
+        entryChannel: channel,
+        stage: 'persist_connection',
+        outcome: 'persist_failed',
+        error: persistMessage,
+        code: persistCode || null,
+      });
+
+      if (
+        persistCode === 'P2002' ||
+        persistMessage.toLowerCase().includes('unique constraint failed')
+      ) {
+        return withConnectorRequestId(
+          NextResponse.json(
+            {
+              ok: false,
+              connection: null,
+              detectedCompany: buildDetectedCompany({
+                companyName: identity.companyName,
+                legalName: identity.legalName,
+                taxId: identity.taxId,
+                source: 'manual',
+              }),
+              governanceFlags: null,
+              availableActions: null,
+              warnings: [],
+              nextStep: null,
+              error:
+                'Esta empresa ya aparece conectada con esta API key. Revisa la conexion existente o solicita acceso.',
+              reason: 'duplicate_connection_conflict',
+              requestId,
+            },
+            { status: 409 }
+          ),
+          requestId
+        );
+      }
+
+      if (
+        persistMessage.includes('INTEGRATIONS_SECRET_KEY or SESSION_SECRET is required') ||
+        persistMessage.includes('MCP_OAUTH_SECRET or SESSION_SECRET is required')
+      ) {
+        return withConnectorRequestId(
+          NextResponse.json(
+            {
+              ok: false,
+              connection: null,
+              detectedCompany: null,
+              governanceFlags: null,
+              availableActions: null,
+              warnings: [],
+              nextStep: null,
+              error:
+                'La API key es valida, pero hay una configuracion temporal pendiente del sistema. Escribe a soporte para activarla de inmediato.',
+              reason: 'integration_secret_missing',
+              requestId,
+            },
+            { status: 503 }
+          ),
+          requestId
+        );
+      }
+
+      throw persistError;
+    }
 
     let notificationEmail = requestedNotificationEmail || normalizeOptionalEmail(session.email);
     try {

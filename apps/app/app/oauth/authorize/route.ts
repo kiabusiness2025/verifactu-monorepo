@@ -76,6 +76,8 @@ export async function GET(request: NextRequest) {
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
   const connectionConfirmed = url.searchParams.get('connection_confirmed')?.trim() === '1';
   const tenantIdQuery = url.searchParams.get('tenant_id')?.trim() || null;
+  const loginConfirmed = url.searchParams.get('holded_login_confirmed')?.trim() === '1';
+  const isChatgptClient = clientId.startsWith('openai-chatgpt-') || clientId.startsWith('openai-');
 
   try {
     if (responseType !== 'code') {
@@ -110,6 +112,18 @@ export async function GET(request: NextRequest) {
     if (!ensureScopesAllowed(normalizedScope)) {
       return withConnectorRequestId(
         redirectWithError(redirectUri, 'invalid_scope', state),
+        requestId
+      );
+    }
+
+    if (isChatgptClient && !loginConfirmed) {
+      const authorizeAfterLoginUrl = new URL(url.toString());
+      authorizeAfterLoginUrl.searchParams.set('holded_login_confirmed', '1');
+
+      return withConnectorRequestId(
+        NextResponse.redirect(
+          buildLoginUrl(authorizeAfterLoginUrl.toString(), 'holded_chat_requires_session')
+        ),
         requestId
       );
     }
