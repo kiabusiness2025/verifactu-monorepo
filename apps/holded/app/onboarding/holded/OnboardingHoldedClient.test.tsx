@@ -61,6 +61,62 @@ describe('OnboardingHoldedClient', () => {
     expect(continueButton).toBeDisabled();
   });
 
+  it('allows continuing from company step without NIF/CIF or razon social', () => {
+    render(<OnboardingHoldedClient {...defaultProps} forceFullReset />);
+
+    fireEvent.change(screen.getByPlaceholderText('Tu nombre'), {
+      target: { value: 'Ana' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Tus apellidos'), {
+      target: { value: 'Garcia' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+
+    fireEvent.change(screen.getByPlaceholderText('Tu empresa'), {
+      target: { value: 'Acme SL' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('nombre@empresa.com'), {
+      target: { value: 'ana@acme.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
+
+    expect(screen.getByText('API key de Holded')).toBeInTheDocument();
+  });
+
+  it('shows explicit step-2 errors when optional fields are filled with invalid format', () => {
+    render(<OnboardingHoldedClient {...defaultProps} forceFullReset />);
+
+    fireEvent.change(screen.getByPlaceholderText('Tu nombre'), {
+      target: { value: 'Ana' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Tus apellidos'), {
+      target: { value: 'Garcia' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+
+    fireEvent.change(screen.getByPlaceholderText('Tu empresa'), {
+      target: { value: 'Acme SL' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('nombre@empresa.com'), {
+      target: { value: 'ana@acme.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('B12345678'), {
+      target: { value: '??' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Si coincide con el nombre, dejalo vacio'), {
+      target: { value: 'A' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
+
+    expect(
+      screen.getByText('El NIF/CIF tiene un formato invalido. Corrigelo o dejalo vacio por ahora.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('La razon social parece incompleta. Ampliala o dejala vacia.')
+    ).toBeInTheDocument();
+  });
+
   it('enables submit when identity and api key are valid', () => {
     render(<OnboardingHoldedClient {...defaultProps} />);
 

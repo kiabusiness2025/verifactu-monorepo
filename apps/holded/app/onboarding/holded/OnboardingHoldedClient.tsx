@@ -82,6 +82,19 @@ function normalizeOptionalText(value: string) {
   const normalized = normalizeText(value);
   return normalized || '';
 }
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isLikelyTaxId(value: string) {
+  return /^[A-Z0-9][A-Z0-9-]{4,15}$/.test(value);
+}
+type Step2FieldErrors = {
+  companyName?: string;
+  contactEmail?: string;
+  taxId?: string;
+  legalName?: string;
+};
 
 function badgeClasses(variant: UiBadge['variant']) {
   switch (variant) {
@@ -280,6 +293,7 @@ export default function OnboardingHoldedClient({
   const [conflictAction, setConflictAction] = useState<'request' | 'claim' | null>(null);
   const [conflictMessage, setConflictMessage] = useState('');
   const [conflictWorking, setConflictWorking] = useState(false);
+  const [step2Validated, setStep2Validated] = useState(false);
 
   // Pre-fill company data from localStorage if saved during registration
   useEffect(() => {
@@ -360,6 +374,37 @@ export default function OnboardingHoldedClient({
     [contactEmail]
   );
   const normalizedContactPhone = useMemo(() => normalizeOptionalText(contactPhone), [contactPhone]);
+  const step2Errors = useMemo<Step2FieldErrors>(() => {
+    const errors: Step2FieldErrors = {};
+
+    if (forceFullReset && normalizedCompanyName.length === 0) {
+      errors.companyName = 'Indica el nombre de tu empresa para continuar.';
+    }
+
+    if (forceFullReset && normalizedContactEmail.length === 0) {
+      errors.contactEmail = 'Indica un correo de contacto para activar la conexion.';
+    } else if (normalizedContactEmail.length > 0 && !isValidEmail(normalizedContactEmail)) {
+      errors.contactEmail =
+        'El correo no parece valido. Revisa el formato (ejemplo: nombre@empresa.com).';
+    }
+
+    if (normalizedTaxId.length > 0 && !isLikelyTaxId(normalizedTaxId)) {
+      errors.taxId = 'El NIF/CIF tiene un formato invalido. Corrigelo o dejalo vacio por ahora.';
+    }
+
+    if (normalizedLegalName.length > 0 && normalizedLegalName.length < 3) {
+      errors.legalName = 'La razon social parece incompleta. Ampliala o dejala vacia.';
+    }
+
+    return errors;
+  }, [
+    forceFullReset,
+    normalizedCompanyName,
+    normalizedContactEmail,
+    normalizedTaxId,
+    normalizedLegalName,
+  ]);
+  const hasStep2BlockingErrors = useMemo(() => Object.keys(step2Errors).length > 0, [step2Errors]);
 
   const isSubmitting = phase === 'validating' || phase === 'connecting';
   const hasReusableValidationToken =
@@ -369,11 +414,7 @@ export default function OnboardingHoldedClient({
   const canProceed1 = forceFullReset
     ? normalizedContactFirstName.length > 0 && normalizedContactLastName.length > 0
     : true;
-  const canProceed2 = forceFullReset
-    ? normalizedCompanyName.length > 0 &&
-      normalizedContactEmail.includes('@') &&
-      normalizedTaxId.length > 0
-    : true;
+  const canProceed2 = true;
   const canSubmit = normalizedApiKey.length >= 16 && consentChecked && !isSubmitting;
 
   // Computed UI
@@ -561,7 +602,7 @@ export default function OnboardingHoldedClient({
     2: {
       title: 'Tu empresa',
       description:
-        'Necesitamos el nombre y el NIF/CIF para registrar la conexion bajo la empresa correcta.',
+        'Necesitamos el nombre y un correo de contacto para activar la conexion. NIF/CIF y razon social son opcionales en este paso.',
     },
     3: {
       title: 'API key de Holded',
@@ -824,11 +865,17 @@ export default function OnboardingHoldedClient({
                           <input
                             type="text"
                             value={companyName}
-                            onChange={(e) => setCompanyName(e.target.value)}
+                            onChange={(e) => {
+                              setCompanyName(e.target.value);
+                              setError(null);
+                            }}
                             className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                             placeholder="Tu empresa"
                             autoComplete="organization"
                           />
+                          {step2Validated && step2Errors.companyName ? (
+                            <p className="mt-2 text-xs text-rose-700">{step2Errors.companyName}</p>
+                          ) : null}
                         </label>
                         <label className="block text-sm font-medium text-slate-700">
                           NIF / CIF{' '}
@@ -836,11 +883,17 @@ export default function OnboardingHoldedClient({
                           <input
                             type="text"
                             value={taxId}
-                            onChange={(e) => setTaxId(e.target.value)}
+                            onChange={(e) => {
+                              setTaxId(e.target.value);
+                              setError(null);
+                            }}
                             className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm uppercase text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                             placeholder="B12345678"
                             autoComplete="off"
                           />
+                          {step2Validated && step2Errors.taxId ? (
+                            <p className="mt-2 text-xs text-rose-700">{step2Errors.taxId}</p>
+                          ) : null}
                         </label>
                         <label className="block text-sm font-medium text-slate-700">
                           Razon social{' '}
@@ -848,22 +901,34 @@ export default function OnboardingHoldedClient({
                           <input
                             type="text"
                             value={legalName}
-                            onChange={(e) => setLegalName(e.target.value)}
+                            onChange={(e) => {
+                              setLegalName(e.target.value);
+                              setError(null);
+                            }}
                             className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                             placeholder="Si coincide con el nombre, dejalo vacio"
                             autoComplete="organization"
                           />
+                          {step2Validated && step2Errors.legalName ? (
+                            <p className="mt-2 text-xs text-rose-700">{step2Errors.legalName}</p>
+                          ) : null}
                         </label>
                         <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
                           Correo de contacto
                           <input
                             type="email"
                             value={contactEmail}
-                            onChange={(e) => setContactEmail(e.target.value)}
+                            onChange={(e) => {
+                              setContactEmail(e.target.value);
+                              setError(null);
+                            }}
                             className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                             placeholder="nombre@empresa.com"
                             autoComplete="email"
                           />
+                          {step2Validated && step2Errors.contactEmail ? (
+                            <p className="mt-2 text-xs text-rose-700">{step2Errors.contactEmail}</p>
+                          ) : null}
                         </label>
                         <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
                           Telefono <span className="font-normal text-slate-400">(opcional)</span>
@@ -891,7 +956,15 @@ export default function OnboardingHoldedClient({
                       <button
                         type="button"
                         disabled={!canProceed2}
-                        onClick={() => setStep(3)}
+                        onClick={() => {
+                          setStep2Validated(true);
+                          if (hasStep2BlockingErrors) {
+                            setError('Revisa los campos marcados para continuar con la API key.');
+                            return;
+                          }
+                          setError(null);
+                          setStep(3);
+                        }}
                         className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Continuar con API key

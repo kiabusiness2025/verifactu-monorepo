@@ -2,7 +2,7 @@
 
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { AvailableActionsDTO } from '@verifactu/integrations/holded/contracts';
-import IsaakForHoldedPage from './page';
+import HoldedConnectorCompatPage from './page';
 
 jest.mock('next/link', () => ({
   __esModule: true,
@@ -66,7 +66,7 @@ function buildActions(): AvailableActionsDTO {
   };
 }
 
-describe('IsaakForHoldedPage', () => {
+describe('HoldedConnectorCompatPage', () => {
   const fetchMock = jest.fn();
   const matchesUrl = (value: string, path: string) => value === path || value.endsWith(path);
   const responseOf = <T,>(body: T, ok = true) =>
@@ -314,7 +314,7 @@ describe('IsaakForHoldedPage', () => {
   });
 
   it('carga las secciones operativas y permite resolver solicitudes y ver claims', async () => {
-    render(<IsaakForHoldedPage />);
+    render(<HoldedConnectorCompatPage />);
 
     expect(await screen.findByText('Usuarios y permisos')).toBeInTheDocument();
     expect(await screen.findByText('Perfil fiscal pendiente')).toBeInTheDocument();
