@@ -57,7 +57,7 @@ function formatDateTime(value?: string | null) {
   }
 }
 
-export default function IsaakForHoldedConnectPage() {
+export default function HoldedConnectorConnectPage() {
   const [apiKey, setApiKey] = useState('');
   const [status, setStatus] = useState<IntegrationStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -167,7 +167,7 @@ export default function IsaakForHoldedConnectPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Link
-          href="/dashboard/integrations/isaak-for-holded"
+          href="/dashboard/integrations/holded"
           className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
         >
           <ArrowLeft className="h-4 w-4" />

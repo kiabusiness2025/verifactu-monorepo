@@ -285,7 +285,7 @@ export default function IntegrationsPage() {
         ) : (
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
-              href="/dashboard/integrations/isaak-for-holded/connect"
+              href="/dashboard/integrations/holded/connect"
               className="rounded-full bg-[#0b6cfb]/10 px-4 py-2 text-xs font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/20"
             >
               Conectar integracion
@@ -303,7 +303,7 @@ export default function IntegrationsPage() {
               Ejecutar sync
             </button>
             <Link
-              href="/dashboard/integrations/isaak-for-holded"
+              href="/dashboard/integrations/holded"
               className="rounded-full border border-[#0b6cfb]/30 bg-white px-4 py-2 text-xs font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/5"
             >
               Abrir panel del conector
@@ -334,7 +334,7 @@ export default function IntegrationsPage() {
               </span>
               {connectedToHolded && fiscalProfilePending ? (
                 <Link
-                  href="/dashboard/integrations/isaak-for-holded/connect?focus=profile"
+                  href="/dashboard/integrations/holded/connect?focus=profile"
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   Completar perfil fiscal
@@ -344,7 +344,7 @@ export default function IntegrationsPage() {
             <p className="mt-2 max-w-2xl text-xs text-slate-600">{fiscalProfileHelpText}</p>
           </div>
           <Link
-            href="/dashboard/integrations/isaak-for-holded"
+            href="/dashboard/integrations/holded"
             className="inline-flex items-center justify-center rounded-full bg-[#0b6cfb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#095edb]"
           >
             Entrar al modulo

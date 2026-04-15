@@ -298,7 +298,7 @@ async function readJson<T>(response: Response): Promise<T | null> {
   return response.json().catch(() => null);
 }
 
-export default function IsaakForHoldedPage() {
+export default function HoldedConnectorPage() {
   const router = useRouter();
   const [integration, setIntegration] = useState<IntegrationStatus | null>(null);
   const [logsSummary, setLogsSummary] = useState<LogsSummaryPayload | null>(null);
@@ -1179,7 +1179,7 @@ export default function IsaakForHoldedPage() {
 
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
-            href="/dashboard/integrations/isaak-for-holded/connect"
+            href="/dashboard/integrations/holded/connect"
             className="inline-flex items-center justify-center rounded-full bg-[#0b6cfb] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#095edb]"
           >
             {integration?.connection?.status === 'connected'
@@ -1188,7 +1188,7 @@ export default function IsaakForHoldedPage() {
           </Link>
           {connectedToHolded && fiscalProfilePending ? (
             <Link
-              href="/dashboard/integrations/isaak-for-holded/connect?focus=profile"
+              href="/dashboard/integrations/holded/connect?focus=profile"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               Completar perfil fiscal
