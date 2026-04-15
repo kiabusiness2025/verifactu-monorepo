@@ -7,8 +7,10 @@ jest.mock('@/lib/adminAuth', () => ({
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     membership: {
+      count: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
   },
 }));
@@ -27,6 +29,7 @@ describe('accounting admin user-tenants route', () => {
   });
 
   it('returns user-tenant rows with holded connection status', async () => {
+    (prisma.membership.count as jest.Mock).mockResolvedValue(1);
     (prisma.membership.findMany as jest.Mock).mockResolvedValue([
       {
         id: 'm-1',
@@ -68,6 +71,8 @@ describe('accounting admin user-tenants route', () => {
 
     expect(response.status).toBe(200);
     expect(payload.total).toBe(1);
+    expect(payload.page).toBe(1);
+    expect(payload.pageSize).toBe(200);
     expect(payload.items[0]).toEqual(
       expect.objectContaining({
         userEmail: 'admin@acme.es',
@@ -123,6 +128,32 @@ describe('accounting admin user-tenants route', () => {
       expect.objectContaining({
         where: { id: 'm-1' },
         data: expect.objectContaining({ role: 'operator', status: 'disabled' }),
+      })
+    );
+  });
+
+  it('updates multiple memberships through PATCH bulk action', async () => {
+    (prisma.membership.updateMany as jest.Mock).mockResolvedValue({ count: 2 });
+
+    const response = await PATCH(
+      new Request('https://app.verifactu.business/api/integrations/accounting/admin/user-tenants', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          membershipIds: ['m-1', 'm-2'],
+          status: 'disabled',
+        }),
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.affected).toBe(2);
+    expect(prisma.membership.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: { in: ['m-1', 'm-2'] } },
+        data: expect.objectContaining({ status: 'disabled' }),
       })
     );
   });

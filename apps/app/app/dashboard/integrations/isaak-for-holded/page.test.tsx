@@ -182,10 +182,7 @@ describe('IsaakForHoldedPage', () => {
         });
       }
 
-      if (
-        matchesUrl(url, '/api/integrations/accounting/admin/user-tenants?limit=300') &&
-        method === 'GET'
-      ) {
+      if (url.startsWith('/api/integrations/accounting/admin/user-tenants?') && method === 'GET') {
         return responseOf({
           items: [
             {
@@ -211,7 +208,10 @@ describe('IsaakForHoldedPage', () => {
             },
           ],
           total: 1,
-          filters: { q: '', status: 'all', limit: 300 },
+          page: 1,
+          pageSize: 25,
+          totalPages: 1,
+          filters: { q: '', status: 'all', sort: 'updated_desc' },
         });
       }
       if (matchesUrl(url, '/api/integrations/accounting/access-requests') && method === 'GET') {

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 export const runtime = 'nodejs';
 
 type ConnectionStatusFilter = 'all' | 'connected' | 'disconnected' | 'risk';
+type SortFilter = 'updated_desc' | 'tenant_asc' | 'tenant_desc' | 'user_asc' | 'user_desc';
 type MembershipStatusInput = 'active' | 'invited' | 'disabled';
 type MembershipRoleInput = 'company_admin' | 'operator' | 'viewer' | 'advisor_operator';
 
@@ -26,9 +27,28 @@ function parseLimit(raw: string | null) {
   return Math.min(Math.trunc(value), 500);
 }
 
+function parsePage(raw: string | null) {
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) return 1;
+  return Math.trunc(value);
+}
+
 function parseStatus(raw: string | null): ConnectionStatusFilter {
   if (raw === 'connected' || raw === 'disconnected' || raw === 'risk') return raw;
   return 'all';
+}
+
+function parseSort(raw: string | null): SortFilter {
+  if (
+    raw === 'updated_desc' ||
+    raw === 'tenant_asc' ||
+    raw === 'tenant_desc' ||
+    raw === 'user_asc' ||
+    raw === 'user_desc'
+  ) {
+    return raw;
+  }
+  return 'updated_desc';
 }
 
 function normalizeText(value: string | null | undefined) {
@@ -58,15 +78,72 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const q = (url.searchParams.get('q') || '').trim().toLowerCase();
-    const limit = parseLimit(url.searchParams.get('limit'));
+    const page = parsePage(url.searchParams.get('page'));
+    const pageSize = parseLimit(url.searchParams.get('pageSize') || url.searchParams.get('limit'));
     const statusFilter = parseStatus(url.searchParams.get('status'));
+    const sort = parseSort(url.searchParams.get('sort'));
+
+    const where: any = {
+      status: { not: 'disabled' },
+    };
+
+    if (q) {
+      where.OR = [
+        { user: { email: { contains: q, mode: 'insensitive' } } },
+        { user: { name: { contains: q, mode: 'insensitive' } } },
+        { tenant: { name: { contains: q, mode: 'insensitive' } } },
+        { tenant: { legalName: { contains: q, mode: 'insensitive' } } },
+      ];
+    }
+
+    if (statusFilter === 'connected') {
+      where.tenant = {
+        ...(where.tenant || {}),
+        externalConnections: {
+          some: { provider: 'holded', connectionStatus: 'connected' },
+        },
+      };
+    }
+
+    if (statusFilter === 'disconnected') {
+      where.tenant = {
+        ...(where.tenant || {}),
+        externalConnections: {
+          none: { provider: 'holded', connectionStatus: 'connected' },
+        },
+      };
+    }
+
+    if (statusFilter === 'risk') {
+      where.tenant = {
+        ...(where.tenant || {}),
+        externalConnections: {
+          some: { provider: 'holded', highGovernanceRisk: true },
+        },
+      };
+    }
+
+    const orderBy: any[] =
+      sort === 'tenant_asc'
+        ? [{ tenant: { name: 'asc' } }, { createdAt: 'desc' }]
+        : sort === 'tenant_desc'
+          ? [{ tenant: { name: 'desc' } }, { createdAt: 'desc' }]
+          : sort === 'user_asc'
+            ? [{ user: { email: 'asc' } }, { createdAt: 'desc' }]
+            : sort === 'user_desc'
+              ? [{ user: { email: 'desc' } }, { createdAt: 'desc' }]
+              : [{ createdAt: 'desc' }];
+
+    const total = await prisma.membership.count({ where });
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const safePage = Math.min(page, totalPages);
+    const skip = (safePage - 1) * pageSize;
 
     const memberships = await prisma.membership.findMany({
-      where: {
-        status: { not: 'disabled' },
-      },
-      orderBy: [{ createdAt: 'desc' }],
-      take: limit,
+      where,
+      orderBy,
+      skip,
+      take: pageSize,
       include: {
         user: {
           select: {
@@ -132,31 +209,18 @@ export async function GET(request: Request) {
           updatedAt: connection?.updatedAt?.toISOString?.() ?? null,
         };
       })
-      .filter((row) => {
-        if (statusFilter === 'connected' && row.connectionStatus !== 'connected') return false;
-        if (statusFilter === 'disconnected' && row.connectionStatus === 'connected') return false;
-        if (statusFilter === 'risk' && !row.highGovernanceRisk) return false;
-
-        if (!q) return true;
-        const haystack = [
-          row.userEmail,
-          row.userName,
-          row.tenantName,
-          row.tenantLegalName,
-          row.connectionStatus,
-        ]
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(q);
-      });
+      .filter((row) => (statusFilter === 'risk' ? row.highGovernanceRisk : true));
 
     return NextResponse.json({
       items: rows,
-      total: rows.length,
+      total,
+      page: safePage,
+      pageSize,
+      totalPages,
       filters: {
         q,
         status: statusFilter,
-        limit,
+        sort,
       },
     });
   } catch (error) {
@@ -179,13 +243,21 @@ export async function PATCH(request: Request) {
   try {
     const body = (await request.json().catch(() => null)) as {
       membershipId?: string;
+      membershipIds?: string[];
       role?: unknown;
       status?: unknown;
     } | null;
 
-    const membershipId = body?.membershipId?.trim();
-    if (!membershipId) {
-      return NextResponse.json({ error: 'membershipId required' }, { status: 400 });
+    const membershipId = body?.membershipId?.trim() || null;
+    const membershipIds = Array.isArray(body?.membershipIds)
+      ? body.membershipIds.map((item) => `${item}`.trim()).filter(Boolean)
+      : [];
+
+    if (!membershipId && membershipIds.length === 0) {
+      return NextResponse.json(
+        { error: 'membershipId or membershipIds required' },
+        { status: 400 }
+      );
     }
 
     const role = parseMembershipRole(body?.role);
@@ -198,29 +270,43 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const updated = await prisma.membership.update({
-      where: { id: membershipId },
-      data: {
-        role: role ?? undefined,
-        status: status ?? undefined,
-        disabledAt: status === 'disabled' ? new Date() : status === 'active' ? null : undefined,
-      },
-      select: {
-        id: true,
-        role: true,
-        status: true,
-        disabledAt: true,
-      },
+    const updateData: any = {
+      role: role ?? undefined,
+      status: status ?? undefined,
+      disabledAt: status === 'disabled' ? new Date() : status === 'active' ? null : undefined,
+    };
+
+    if (membershipId) {
+      const updated = await prisma.membership.update({
+        where: { id: membershipId },
+        data: updateData,
+        select: {
+          id: true,
+          role: true,
+          status: true,
+          disabledAt: true,
+        },
+      });
+
+      return NextResponse.json({
+        ok: true,
+        item: {
+          membershipId: updated.id,
+          role: updated.role,
+          status: updated.status,
+          disabledAt: updated.disabledAt?.toISOString?.() ?? null,
+        },
+      });
+    }
+
+    const result = await prisma.membership.updateMany({
+      where: { id: { in: membershipIds } },
+      data: updateData,
     });
 
     return NextResponse.json({
       ok: true,
-      item: {
-        membershipId: updated.id,
-        role: updated.role,
-        status: updated.status,
-        disabledAt: updated.disabledAt?.toISOString?.() ?? null,
-      },
+      affected: result.count,
     });
   } catch (error) {
     return NextResponse.json(

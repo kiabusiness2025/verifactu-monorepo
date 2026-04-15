@@ -110,6 +110,14 @@ type AdminUserTenantRow = {
   updatedAt: string | null;
 };
 
+type AdminUserTenantsResponse = {
+  items?: AdminUserTenantRow[];
+  total?: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
+};
+
 type NoticeState = {
   tone: 'success' | 'error' | 'info';
   text: string;
@@ -310,6 +318,12 @@ export default function IsaakForHoldedPage() {
     'tenant_asc' | 'tenant_desc' | 'user_asc' | 'user_desc' | 'updated_desc'
   >('updated_desc');
   const [adminRoleDrafts, setAdminRoleDrafts] = useState<Record<string, MembershipRole>>({});
+  const [adminPage, setAdminPage] = useState(1);
+  const [adminPageSize, setAdminPageSize] = useState(25);
+  const [adminTotalRows, setAdminTotalRows] = useState(0);
+  const [adminTotalPages, setAdminTotalPages] = useState(1);
+  const [adminBulkRole, setAdminBulkRole] = useState<MembershipRole>('viewer');
+  const [adminSelectedMembershipIds, setAdminSelectedMembershipIds] = useState<string[]>([]);
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
   const [membershipDrafts, setMembershipDrafts] = useState<Record<string, MembershipDraft>>({});
   const [recipientDrafts, setRecipientDrafts] = useState<Record<string, RecipientDraft>>({});
@@ -375,10 +389,19 @@ export default function IsaakForHoldedPage() {
         readJson<{ items?: RecipientDTO[] }>(recipientsRes),
         readJson<{ items?: AccessRequestDTO[] }>(accessRequestsRes),
         readJson<{ items?: ClaimCaseDTO[] }>(claimsRes),
-        readJson<{ items?: AdminUserTenantRow[] }>(
-          await fetch('/api/integrations/accounting/admin/user-tenants?limit=300', {
-            cache: 'no-store',
-          })
+        readJson<AdminUserTenantsResponse>(
+          await fetch(
+            `/api/integrations/accounting/admin/user-tenants?${new URLSearchParams({
+              page: String(adminPage),
+              pageSize: String(adminPageSize),
+              q: adminSearch,
+              status: adminStatusFilter,
+              sort: adminSort,
+            }).toString()}`,
+            {
+              cache: 'no-store',
+            }
+          )
         ),
       ]);
 
@@ -403,9 +426,17 @@ export default function IsaakForHoldedPage() {
       setClaims(nextClaims);
       const nextAdminRows = Array.isArray(adminUsersData?.items) ? adminUsersData.items : [];
       setAdminRows(nextAdminRows);
+      setAdminTotalRows(Number(adminUsersData?.total) || 0);
+      setAdminTotalPages(Math.max(1, Number(adminUsersData?.totalPages) || 1));
+      setAdminPage(Math.max(1, Number(adminUsersData?.page) || 1));
       setAdminRoleDrafts(
         Object.fromEntries(
           nextAdminRows.map((item) => [item.membershipId, item.membershipRole as MembershipRole])
+        )
+      );
+      setAdminSelectedMembershipIds((prev) =>
+        prev.filter((membershipId) =>
+          nextAdminRows.some((row) => row.membershipId === membershipId)
         )
       );
       setMembershipDrafts(
@@ -434,9 +465,15 @@ export default function IsaakForHoldedPage() {
     }
   };
 
+  // This effect runs once on mount to bootstrap all dashboard data.
   useEffect(() => {
     void load();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Server-side admin table params trigger reloads; load is intentionally stable in this scope.
+  useEffect(() => {
+    void load(true);
+  }, [adminPage, adminPageSize, adminSearch, adminStatusFilter, adminSort]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadClaimDetails = async (claimId: string) => {
     setWorkingAction(`claim-detail:${claimId}`);
@@ -492,30 +529,10 @@ export default function IsaakForHoldedPage() {
 
   const selectedClaim = claims.find((item) => item.claimId === selectedClaimId) ?? null;
   const filteredAdminRows = useMemo(() => {
-    const searchNeedle = adminSearch.trim().toLowerCase();
     const userNeedle = adminUserFilter.trim().toLowerCase();
     const tenantNeedle = adminTenantFilter.trim().toLowerCase();
 
-    const filtered = adminRows.filter((row) => {
-      if (adminStatusFilter === 'connected' && row.connectionStatus !== 'connected') return false;
-      if (adminStatusFilter === 'disconnected' && row.connectionStatus === 'connected')
-        return false;
-      if (adminStatusFilter === 'risk' && !row.highGovernanceRisk) return false;
-
-      if (searchNeedle) {
-        const searchText = [
-          row.userName,
-          row.userEmail,
-          row.tenantName,
-          row.tenantLegalName,
-          row.membershipRole,
-          row.connectionStatus,
-        ]
-          .join(' ')
-          .toLowerCase();
-        if (!searchText.includes(searchNeedle)) return false;
-      }
-
+    return adminRows.filter((row) => {
       if (userNeedle) {
         const userText = `${row.userName} ${row.userEmail}`.toLowerCase();
         if (!userText.includes(userNeedle)) return false;
@@ -528,40 +545,7 @@ export default function IsaakForHoldedPage() {
 
       return true;
     });
-
-    const sorted = [...filtered];
-    if (adminSort === 'tenant_asc') {
-      sorted.sort((a, b) =>
-        `${a.tenantName} ${a.tenantLegalName}`.localeCompare(
-          `${b.tenantName} ${b.tenantLegalName}`,
-          'es'
-        )
-      );
-    } else if (adminSort === 'tenant_desc') {
-      sorted.sort((a, b) =>
-        `${b.tenantName} ${b.tenantLegalName}`.localeCompare(
-          `${a.tenantName} ${a.tenantLegalName}`,
-          'es'
-        )
-      );
-    } else if (adminSort === 'user_asc') {
-      sorted.sort((a, b) =>
-        `${a.userName} ${a.userEmail}`.localeCompare(`${b.userName} ${b.userEmail}`, 'es')
-      );
-    } else if (adminSort === 'user_desc') {
-      sorted.sort((a, b) =>
-        `${b.userName} ${b.userEmail}`.localeCompare(`${a.userName} ${a.userEmail}`, 'es')
-      );
-    } else {
-      sorted.sort((a, b) => {
-        const left = new Date(a.updatedAt || a.lastValidatedAt || 0).getTime();
-        const right = new Date(b.updatedAt || b.lastValidatedAt || 0).getTime();
-        return right - left;
-      });
-    }
-
-    return sorted;
-  }, [adminRows, adminSearch, adminSort, adminStatusFilter, adminTenantFilter, adminUserFilter]);
+  }, [adminRows, adminTenantFilter, adminUserFilter]);
   const membershipsTotal = memberships.length;
   const recipientsTotal = recipients.length;
   const claimsOpen = claims.filter((item) =>
@@ -661,6 +645,60 @@ export default function IsaakForHoldedPage() {
       setNotice({
         tone: 'error',
         text: error instanceof Error ? error.message : 'No se pudo deshabilitar el usuario',
+      });
+    });
+  };
+
+  const toggleAdminSelection = (membershipId: string) => {
+    setAdminSelectedMembershipIds((prev) =>
+      prev.includes(membershipId)
+        ? prev.filter((id) => id !== membershipId)
+        : [...prev, membershipId]
+    );
+  };
+
+  const toggleSelectAllAdminRows = () => {
+    setAdminSelectedMembershipIds((prev) => {
+      const visibleIds = filteredAdminRows.map((row) => row.membershipId);
+      const allVisibleSelected = visibleIds.every((id) => prev.includes(id));
+      if (allVisibleSelected) return prev.filter((id) => !visibleIds.includes(id));
+      return Array.from(new Set([...prev, ...visibleIds]));
+    });
+  };
+
+  const bulkUpdateAdminRows = async (payload: {
+    role?: MembershipRole;
+    status?: 'active' | 'invited' | 'disabled';
+  }) => {
+    if (adminSelectedMembershipIds.length === 0) {
+      setNotice({ tone: 'info', text: 'Selecciona al menos una fila para aplicar una accion.' });
+      return;
+    }
+
+    await runAction('admin-bulk', async () => {
+      const response = await fetch('/api/integrations/accounting/admin/user-tenants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          membershipIds: adminSelectedMembershipIds,
+          ...payload,
+        }),
+      });
+      const data = await readJson<{ ok?: boolean; error?: string; affected?: number }>(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || 'No se pudo aplicar la accion masiva');
+      }
+
+      setNotice({
+        tone: 'success',
+        text: `Accion aplicada en ${data.affected ?? adminSelectedMembershipIds.length} filas.`,
+      });
+      setAdminSelectedMembershipIds([]);
+      await load(true);
+    }).catch((error) => {
+      setNotice({
+        tone: 'error',
+        text: error instanceof Error ? error.message : 'No se pudo aplicar la accion masiva',
       });
     });
   };
@@ -1257,7 +1295,7 @@ export default function IsaakForHoldedPage() {
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-            {filteredAdminRows.length} filas
+            {filteredAdminRows.length} filas en pagina / {adminTotalRows} total
           </div>
         </div>
 
@@ -1265,7 +1303,10 @@ export default function IsaakForHoldedPage() {
           <input
             className={fieldClasses()}
             value={adminSearch}
-            onChange={(event) => setAdminSearch(event.target.value)}
+            onChange={(event) => {
+              setAdminSearch(event.target.value);
+              setAdminPage(1);
+            }}
             placeholder="Buscar (usuario, tenant, rol, estado)"
           />
           <input
@@ -1281,13 +1322,15 @@ export default function IsaakForHoldedPage() {
             placeholder="Filtrar por tenant"
           />
           <select
+            aria-label="Filtrar por estado de conexion"
             className={fieldClasses()}
             value={adminStatusFilter}
-            onChange={(event) =>
+            onChange={(event) => {
               setAdminStatusFilter(
                 event.target.value as 'all' | 'connected' | 'disconnected' | 'risk'
-              )
-            }
+              );
+              setAdminPage(1);
+            }}
           >
             <option value="all">Todos los estados</option>
             <option value="connected">Conectado</option>
@@ -1295,9 +1338,10 @@ export default function IsaakForHoldedPage() {
             <option value="risk">Riesgo alto</option>
           </select>
           <select
+            aria-label="Orden de filas en tabla admin"
             className={fieldClasses()}
             value={adminSort}
-            onChange={(event) =>
+            onChange={(event) => {
               setAdminSort(
                 event.target.value as
                   | 'tenant_asc'
@@ -1305,8 +1349,9 @@ export default function IsaakForHoldedPage() {
                   | 'user_asc'
                   | 'user_desc'
                   | 'updated_desc'
-              )
-            }
+              );
+              setAdminPage(1);
+            }}
           >
             <option value="updated_desc">Ordenar: actividad reciente</option>
             <option value="tenant_asc">Ordenar: tenant A-Z</option>
@@ -1326,9 +1371,47 @@ export default function IsaakForHoldedPage() {
               setAdminTenantFilter('');
               setAdminStatusFilter('all');
               setAdminSort('updated_desc');
+              setAdminPage(1);
             }}
           >
             Limpiar buscar / filtrar / ordenar
+          </button>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+            Acciones masivas
+          </span>
+          <span className="text-xs text-slate-600">
+            {adminSelectedMembershipIds.length} seleccionadas
+          </span>
+          <select
+            aria-label="Rol masivo para filas seleccionadas"
+            className={fieldClasses()}
+            value={adminBulkRole}
+            onChange={(event) => setAdminBulkRole(event.target.value as MembershipRole)}
+          >
+            {membershipRoleOptions.map((role) => (
+              <option key={`bulk-role-${role}`} value={role}>
+                {getMembershipRoleLabel(role)}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className={buttonClasses()}
+            onClick={() => void bulkUpdateAdminRows({ role: adminBulkRole })}
+            disabled={adminSelectedMembershipIds.length === 0 || Boolean(workingAction)}
+          >
+            Aplicar rol a seleccionadas
+          </button>
+          <button
+            type="button"
+            className={buttonClasses()}
+            onClick={() => void bulkUpdateAdminRows({ status: 'disabled' })}
+            disabled={adminSelectedMembershipIds.length === 0 || Boolean(workingAction)}
+          >
+            Deshabilitar seleccionadas
           </button>
         </div>
 
@@ -1336,6 +1419,19 @@ export default function IsaakForHoldedPage() {
           <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-[0.08em] text-slate-500">
               <tr>
+                <th className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={
+                      filteredAdminRows.length > 0 &&
+                      filteredAdminRows.every((row) =>
+                        adminSelectedMembershipIds.includes(row.membershipId)
+                      )
+                    }
+                    onChange={toggleSelectAllAdminRows}
+                    aria-label="Seleccionar todas las filas"
+                  />
+                </th>
                 <th className="px-4 py-3">Usuario</th>
                 <th className="px-4 py-3">Tenant</th>
                 <th className="px-4 py-3">Rol</th>
@@ -1348,13 +1444,21 @@ export default function IsaakForHoldedPage() {
             <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
               {filteredAdminRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500">
+                  <td colSpan={8} className="px-4 py-6 text-center text-sm text-slate-500">
                     No hay resultados con los filtros actuales.
                   </td>
                 </tr>
               ) : (
                 filteredAdminRows.map((row) => (
                   <tr key={row.membershipId}>
+                    <td className="px-4 py-3 align-top">
+                      <input
+                        type="checkbox"
+                        checked={adminSelectedMembershipIds.includes(row.membershipId)}
+                        onChange={() => toggleAdminSelection(row.membershipId)}
+                        aria-label={`Seleccionar ${row.userEmail || row.membershipId}`}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="font-semibold text-slate-900">{row.userName || '-'}</div>
                       <div className="text-xs text-slate-500">{row.userEmail || '-'}</div>
@@ -1393,6 +1497,7 @@ export default function IsaakForHoldedPage() {
                           Abrir tenant
                         </button>
                         <select
+                          aria-label={`Seleccion de rol para ${row.userEmail || row.membershipId}`}
                           className="h-9 rounded-xl border border-slate-300 bg-white px-2 text-xs text-slate-900 outline-none"
                           value={
                             (adminRoleDrafts[row.membershipId] ||
@@ -1435,6 +1540,47 @@ export default function IsaakForHoldedPage() {
             </tbody>
           </table>
         </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs text-slate-600">
+            <span>Filas por pagina</span>
+            <select
+              aria-label="Filas por pagina en tabla admin"
+              className={fieldClasses()}
+              value={adminPageSize}
+              onChange={(event) => {
+                setAdminPageSize(Number(event.target.value));
+                setAdminPage(1);
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={buttonClasses()}
+              onClick={() => setAdminPage((prev) => Math.max(1, prev - 1))}
+              disabled={adminPage <= 1}
+            >
+              Anterior
+            </button>
+            <span className="text-xs font-semibold text-slate-700">
+              Pagina {adminPage} de {adminTotalPages}
+            </span>
+            <button
+              type="button"
+              className={buttonClasses()}
+              onClick={() => setAdminPage((prev) => Math.min(adminTotalPages, prev + 1))}
+              disabled={adminPage >= adminTotalPages}
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -1463,6 +1609,7 @@ export default function IsaakForHoldedPage() {
                 type="email"
               />
               <select
+                aria-label="Rol para invitar usuario"
                 className={fieldClasses()}
                 value={inviteRole}
                 onChange={(event) => setInviteRole(event.target.value as MembershipRole)}
@@ -1474,6 +1621,7 @@ export default function IsaakForHoldedPage() {
                 ))}
               </select>
               <select
+                aria-label="Lado de acceso para invitacion"
                 className={fieldClasses()}
                 value={inviteSide}
                 onChange={(event) => setInviteSide(event.target.value as MembershipSide)}
@@ -1537,6 +1685,7 @@ export default function IsaakForHoldedPage() {
 
                     <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto]">
                       <select
+                        aria-label={`Rol de membership para ${membership.email}`}
                         className={fieldClasses()}
                         value={draft.role}
                         onChange={(event) =>
@@ -1710,6 +1859,7 @@ export default function IsaakForHoldedPage() {
                   type="email"
                 />
                 <select
+                  aria-label="Tipo de destinatario nuevo"
                   className={fieldClasses()}
                   value={recipientType}
                   onChange={(event) => setRecipientType(event.target.value as RecipientType)}
@@ -1792,6 +1942,7 @@ export default function IsaakForHoldedPage() {
 
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
                       <select
+                        aria-label={`Tipo de destinatario para ${recipient.email}`}
                         className={fieldClasses()}
                         value={draft.recipientType}
                         onChange={(event) =>
@@ -1903,6 +2054,7 @@ export default function IsaakForHoldedPage() {
 
             <form onSubmit={createClaimAction} className="mt-5 space-y-3">
               <select
+                aria-label="Tipo de claim a crear"
                 className={fieldClasses()}
                 value={newClaimType}
                 onChange={(event) =>
