@@ -61,6 +61,13 @@ describe('OnboardingHoldedClient', () => {
     expect(continueButton).toBeDisabled();
   });
 
+  it('keeps API key first when ChatGPT flow is reset', () => {
+    render(<OnboardingHoldedClient {...defaultProps} channel="chatgpt" forceFullReset />);
+
+    expect(screen.getByText('API key de Holded')).toBeInTheDocument();
+    expect(screen.queryByText('Nombre y apellidos')).not.toBeInTheDocument();
+  });
+
   it('allows continuing from company step without NIF/CIF or razon social', () => {
     render(<OnboardingHoldedClient {...defaultProps} forceFullReset />);
 

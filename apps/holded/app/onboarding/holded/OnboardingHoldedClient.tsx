@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -89,12 +89,21 @@ function isValidEmail(value: string) {
 function isLikelyTaxId(value: string) {
   return /^[A-Z0-9][A-Z0-9-]{4,15}$/.test(value);
 }
+
 type Step2FieldErrors = {
   companyName?: string;
   contactEmail?: string;
   taxId?: string;
   legalName?: string;
 };
+
+function stepFieldClasses(hasError: boolean) {
+  return `mt-2 h-12 w-full rounded-3xl px-4 text-sm text-slate-900 outline-none transition focus:ring-4 ${
+    hasError
+      ? 'border border-rose-400 bg-rose-50 focus:border-rose-500 focus:ring-rose-100'
+      : 'border border-slate-300 bg-slate-50 focus:border-[#ff5460] focus:ring-[#ff5460]/10'
+  }`;
+}
 
 function badgeClasses(variant: UiBadge['variant']) {
   switch (variant) {
@@ -206,8 +215,8 @@ const STEP_LABELS: Record<1 | 2 | 3, string> = {
   3: 'Conexion',
 };
 
-function StepIndicator({ current }: { current: WizardStep }) {
-  const visibleSteps = [1, 2, 3] as const;
+function StepIndicator({ current, minimal }: { current: WizardStep; minimal?: boolean }) {
+  const visibleSteps = (minimal ? [3] : [1, 2, 3]) as const;
   return (
     <div className="flex items-center gap-2">
       {visibleSteps.map((s, idx) => {
@@ -255,25 +264,31 @@ export default function OnboardingHoldedClient({
 }: OnboardingHoldedClientProps) {
   const holdedApiGuideUrl =
     'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
+  const preferApiOnlyFlow = channel === 'chatgpt';
+  const shouldShowFullProfileSteps = forceFullReset && !preferApiOnlyFlow;
 
   // Wizard step
-  const [step, setStep] = useState<WizardStep>(forceFullReset ? 1 : 3);
+  const [step, setStep] = useState<WizardStep>(shouldShowFullProfileSteps ? 1 : 3);
 
   // Form state
-  const [companyName, setCompanyName] = useState(forceFullReset ? '' : initialIdentity.companyName);
-  const [legalName, setLegalName] = useState(forceFullReset ? '' : initialIdentity.legalName);
-  const [taxId, setTaxId] = useState(forceFullReset ? '' : initialIdentity.taxId);
+  const [companyName, setCompanyName] = useState(
+    shouldShowFullProfileSteps ? '' : initialIdentity.companyName
+  );
+  const [legalName, setLegalName] = useState(
+    shouldShowFullProfileSteps ? '' : initialIdentity.legalName
+  );
+  const [taxId, setTaxId] = useState(shouldShowFullProfileSteps ? '' : initialIdentity.taxId);
   const [contactFirstName, setContactFirstName] = useState(
-    forceFullReset ? '' : initialIdentity.contactFirstName
+    shouldShowFullProfileSteps ? '' : initialIdentity.contactFirstName
   );
   const [contactLastName, setContactLastName] = useState(
-    forceFullReset ? '' : initialIdentity.contactLastName
+    shouldShowFullProfileSteps ? '' : initialIdentity.contactLastName
   );
   const [contactEmail, setContactEmail] = useState(
-    forceFullReset ? '' : initialIdentity.contactEmail
+    shouldShowFullProfileSteps ? '' : initialIdentity.contactEmail
   );
   const [contactPhone, setContactPhone] = useState(
-    forceFullReset ? '' : initialIdentity.contactPhone
+    shouldShowFullProfileSteps ? '' : initialIdentity.contactPhone
   );
   const [apiKey, setApiKey] = useState('');
   const [consentChecked, setConsentChecked] = useState(false);
@@ -294,10 +309,14 @@ export default function OnboardingHoldedClient({
   const [conflictMessage, setConflictMessage] = useState('');
   const [conflictWorking, setConflictWorking] = useState(false);
   const [step2Validated, setStep2Validated] = useState(false);
+  const companyNameInputRef = useRef<HTMLInputElement | null>(null);
+  const taxIdInputRef = useRef<HTMLInputElement | null>(null);
+  const legalNameInputRef = useRef<HTMLInputElement | null>(null);
+  const contactEmailInputRef = useRef<HTMLInputElement | null>(null);
 
   // Pre-fill company data from localStorage if saved during registration
   useEffect(() => {
-    if (forceFullReset) {
+    if (shouldShowFullProfileSteps) {
       try {
         const localKeysToDelete: string[] = [];
         for (let index = 0; index < window.localStorage.length; index += 1) {
@@ -354,7 +373,7 @@ export default function OnboardingHoldedClient({
     } catch {
       // ignore localStorage errors
     }
-  }, [contactEmail, forceFullReset, initialIdentity.contactEmail]);
+  }, [contactEmail, shouldShowFullProfileSteps, initialIdentity.contactEmail]);
 
   // Normalized values
   const normalizedApiKey = useMemo(() => normalizeApiKey(apiKey), [apiKey]);
@@ -377,11 +396,11 @@ export default function OnboardingHoldedClient({
   const step2Errors = useMemo<Step2FieldErrors>(() => {
     const errors: Step2FieldErrors = {};
 
-    if (forceFullReset && normalizedCompanyName.length === 0) {
+    if (shouldShowFullProfileSteps && normalizedCompanyName.length === 0) {
       errors.companyName = 'Indica el nombre de tu empresa para continuar.';
     }
 
-    if (forceFullReset && normalizedContactEmail.length === 0) {
+    if (shouldShowFullProfileSteps && normalizedContactEmail.length === 0) {
       errors.contactEmail = 'Indica un correo de contacto para activar la conexion.';
     } else if (normalizedContactEmail.length > 0 && !isValidEmail(normalizedContactEmail)) {
       errors.contactEmail =
@@ -398,7 +417,7 @@ export default function OnboardingHoldedClient({
 
     return errors;
   }, [
-    forceFullReset,
+    shouldShowFullProfileSteps,
     normalizedCompanyName,
     normalizedContactEmail,
     normalizedTaxId,
@@ -411,7 +430,7 @@ export default function OnboardingHoldedClient({
     validatedApiKey === normalizedApiKey && Boolean(validationToken);
 
   // Per-step validation
-  const canProceed1 = forceFullReset
+  const canProceed1 = shouldShowFullProfileSteps
     ? normalizedContactFirstName.length > 0 && normalizedContactLastName.length > 0
     : true;
   const canProceed2 = true;
@@ -602,7 +621,7 @@ export default function OnboardingHoldedClient({
     2: {
       title: 'Tu empresa',
       description:
-        'Necesitamos el nombre y un correo de contacto para activar la conexion. NIF/CIF y razon social son opcionales en este paso.',
+        'Estos datos son opcionales en la conexion inicial. Puedes completarlos despues sin bloquear la activacion.',
     },
     3: {
       title: 'API key de Holded',
@@ -634,20 +653,27 @@ export default function OnboardingHoldedClient({
 
             {/* Steps overview */}
             <div className="mt-6 space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-              {(
-                [
-                  {
-                    step: '1',
-                    title: 'Tus datos',
-                    text: 'Nombre y apellidos para trazar el acceso.',
-                  },
-                  { step: '2', title: 'Empresa', text: 'Nombre, NIF/CIF y contacto principal.' },
-                  {
-                    step: '3',
-                    title: 'Conexion',
-                    text: 'API key de Holded para activar el conector.',
-                  },
-                ] as const
+              {(preferApiOnlyFlow
+                ? ([
+                    {
+                      step: '3',
+                      title: 'Conexion',
+                      text: 'Obligatorio: API key de Holded tras identificarte con OAuth.',
+                    },
+                  ] as const)
+                : ([
+                    {
+                      step: '1',
+                      title: 'Tus datos',
+                      text: 'Nombre y apellidos para trazar el acceso.',
+                    },
+                    { step: '2', title: 'Empresa', text: 'Nombre, NIF/CIF y contacto principal.' },
+                    {
+                      step: '3',
+                      title: 'Conexion',
+                      text: 'API key de Holded para activar el conector.',
+                    },
+                  ] as const)
               ).map((item) => {
                 const n = Number(item.step) as 1 | 2 | 3;
                 const done = step > n;
@@ -800,7 +826,7 @@ export default function OnboardingHoldedClient({
               <>
                 {/* Stepper */}
                 <div className="mb-6">
-                  <StepIndicator current={step} />
+                  <StepIndicator current={step} minimal={preferApiOnlyFlow} />
                 </div>
 
                 {/* ── Step 1: Tus datos ─────────────────────────────────── */}
@@ -863,13 +889,16 @@ export default function OnboardingHoldedClient({
                         <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
                           Nombre de la empresa
                           <input
+                            ref={companyNameInputRef}
                             type="text"
                             value={companyName}
                             onChange={(e) => {
                               setCompanyName(e.target.value);
                               setError(null);
                             }}
-                            className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                            className={stepFieldClasses(
+                              step2Validated && Boolean(step2Errors.companyName)
+                            )}
                             placeholder="Tu empresa"
                             autoComplete="organization"
                           />
@@ -881,13 +910,14 @@ export default function OnboardingHoldedClient({
                           NIF / CIF{' '}
                           <span className="font-normal text-slate-400">(opcional ahora)</span>
                           <input
+                            ref={taxIdInputRef}
                             type="text"
                             value={taxId}
                             onChange={(e) => {
                               setTaxId(e.target.value);
                               setError(null);
                             }}
-                            className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm uppercase text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                            className={`${stepFieldClasses(step2Validated && Boolean(step2Errors.taxId))} uppercase`}
                             placeholder="B12345678"
                             autoComplete="off"
                           />
@@ -899,13 +929,16 @@ export default function OnboardingHoldedClient({
                           Razon social{' '}
                           <span className="font-normal text-slate-400">(opcional)</span>
                           <input
+                            ref={legalNameInputRef}
                             type="text"
                             value={legalName}
                             onChange={(e) => {
                               setLegalName(e.target.value);
                               setError(null);
                             }}
-                            className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                            className={stepFieldClasses(
+                              step2Validated && Boolean(step2Errors.legalName)
+                            )}
                             placeholder="Si coincide con el nombre, dejalo vacio"
                             autoComplete="organization"
                           />
@@ -916,13 +949,16 @@ export default function OnboardingHoldedClient({
                         <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
                           Correo de contacto
                           <input
+                            ref={contactEmailInputRef}
                             type="email"
                             value={contactEmail}
                             onChange={(e) => {
                               setContactEmail(e.target.value);
                               setError(null);
                             }}
-                            className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                            className={stepFieldClasses(
+                              step2Validated && Boolean(step2Errors.contactEmail)
+                            )}
                             placeholder="nombre@empresa.com"
                             autoComplete="email"
                           />
@@ -960,6 +996,15 @@ export default function OnboardingHoldedClient({
                           setStep2Validated(true);
                           if (hasStep2BlockingErrors) {
                             setError('Revisa los campos marcados para continuar con la API key.');
+                            if (step2Errors.companyName) {
+                              companyNameInputRef.current?.focus();
+                            } else if (step2Errors.taxId) {
+                              taxIdInputRef.current?.focus();
+                            } else if (step2Errors.legalName) {
+                              legalNameInputRef.current?.focus();
+                            } else if (step2Errors.contactEmail) {
+                              contactEmailInputRef.current?.focus();
+                            }
                             return;
                           }
                           setError(null);
@@ -1124,19 +1169,21 @@ export default function OnboardingHoldedClient({
 
                     {/* Navigation */}
                     <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setStep(2);
-                          setError(null);
-                          setDuplicateConflict(null);
-                          setConflictAction(null);
-                        }}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        Anterior
-                      </button>
+                      {!preferApiOnlyFlow ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStep(2);
+                            setError(null);
+                            setDuplicateConflict(null);
+                            setConflictAction(null);
+                          }}
+                          className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                          Anterior
+                        </button>
+                      ) : null}
                       <button
                         type="submit"
                         disabled={!canSubmit}

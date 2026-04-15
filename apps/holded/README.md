@@ -58,10 +58,10 @@ En otras palabras:
 ## Flujo funcional actual
 
 1. Landing en `/`
-2. Alta o acceso en `/auth/holded`
+2. Alta o acceso en `/auth/holded` para identificar usuario del conector
 3. Continuidad de verificacion en `/gracias` y `/verificar`
 4. Entrada al flujo en `/onboarding`
-5. Conexion Holded en `/onboarding/holded`
+5. Conexion Holded en `/onboarding/holded` (bloqueo obligatorio: OAuth + API key)
 6. Transicion en `/onboarding/success`
 7. Onboarding conversacional en `/onboarding/profile`
 8. Handoff privado en `/dashboard`

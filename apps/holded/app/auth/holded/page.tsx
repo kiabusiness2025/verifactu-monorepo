@@ -179,6 +179,8 @@ function HoldedAuthContent() {
     () => buildLocalHandoffTarget(source, redirectTarget),
     [redirectTarget, source]
   );
+  const requiresFreshAuth =
+    source === 'holded_chat_requires_session' || source === 'isaak_chat_requires_session';
 
   const redirectedRef = useRef(false);
   const magicLinkCheckedRef = useRef(false);
@@ -291,7 +293,7 @@ function HoldedAuthContent() {
       }
 
       // ── Check for existing Firebase session ──────────────────────────────
-      if (source === 'isaak_chat_requires_session') {
+      if (requiresFreshAuth) {
         await resetHoldedAuthState();
         redirectedRef.current = false;
         if (!cancelled) {
@@ -345,7 +347,7 @@ function HoldedAuthContent() {
       cancelled = true;
       window.clearTimeout(stopCheckingTimer);
     };
-  }, []);
+  }, [rememberDevice, postLoginTarget, source, requiresFreshAuth]);
 
   // ── Magic link submit ─────────────────────────────────────────────────────
 

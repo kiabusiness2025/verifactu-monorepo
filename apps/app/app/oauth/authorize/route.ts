@@ -34,7 +34,7 @@ function buildCanonicalHoldedOnboardingUrl(input: {
   const holdedSiteUrl =
     process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() || 'https://holded.verifactu.business';
   const onboardingUrl = new URL('/onboarding/holded', holdedSiteUrl);
-  onboardingUrl.searchParams.set('source', 'holded_nav_global');
+  onboardingUrl.searchParams.set('source', 'holded_chatgpt_entry');
   onboardingUrl.searchParams.set('channel', 'chatgpt');
   onboardingUrl.searchParams.set('require_connection_confirmation', '1');
   onboardingUrl.searchParams.set('reset', '1');
@@ -136,7 +136,12 @@ export async function GET(request: NextRequest) {
         tenantId: tenantIdQuery,
       });
 
-      return withConnectorRequestId(NextResponse.redirect(onboardingUrl), requestId);
+      return withConnectorRequestId(
+        NextResponse.redirect(
+          buildLoginUrl(onboardingUrl.toString(), 'holded_chat_requires_session')
+        ),
+        requestId
+      );
     }
 
     const prefersOnboardingSubject = Boolean(onboardingSession?.uid);

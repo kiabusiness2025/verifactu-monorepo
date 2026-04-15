@@ -23,9 +23,10 @@ Este documento sustituye el criterio anterior que mezclaba:
 ### Base entregada (roadmap principal cerrado 2026-04-13)
 
 - branding publico del conector separado de Isaak en MCP y onboarding `channel=chatgpt`
-- `connector onboarding session` propia para evitar login clasico visible, con estado de identidad completo (`authMethod`, `emailVerified`, `firstName`, `lastName`, `verifiedAt`)
+- `connector onboarding session` propia con identidad completa (`authMethod`, `emailVerified`, `firstName`, `lastName`, `verifiedAt`)
+- login explicito en `/auth/holded` al entrar desde ChatGPT para identificar usuario antes del onboarding
 - pantalla de entrada `Google` o `Correo` como primera decision visible del conector
-- onboarding por pasos (datos, empresa, API key, exito) con stepper visual y conflicto/claims integrados
+- onboarding con activacion minima obligatoria `OAuth + API key`; datos de perfil/empresa como completado posterior
 - retorno estable al OAuth original de ChatGPT
 - persistencia channel-aware en `external_connections` con flags de gobernanza
 - panel admin operativo con gestión de memberships, recipients, claims y access requests
@@ -34,11 +35,11 @@ Este documento sustituye el criterio anterior que mezclaba:
 
 ### Nueva ola en progreso (abierta 2026-04-14)
 
-Esta nueva ola de Fase 1 ya no se define como "API key primero" sino como:
+Esta nueva ola de Fase 1 se define como:
 
-- identidad ligera primero
-- Google opcional o correo verificado
-- onboarding por pasos cortos
+- identificacion explicita de usuario en login del conector
+- OAuth del conector + API key de Holded como unico bloqueo obligatorio
+- datos de perfil en segundo momento, sin bloquear activacion
 - pantalla final de exito con tono amable
 - email final de bienvenida despues de la conexion completa
 
