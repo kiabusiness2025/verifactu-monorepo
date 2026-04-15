@@ -58,7 +58,7 @@ export default async function RootLayout({
         <GoogleTagManager />
       </head>
       <body className={`${outfit.className} dark:bg-gray-900`}>
-        <PWARegistration disabled={holdedFlow} />
+        <PWARegistration />
         <PWAInstallPrompt />
         <ErrorMonitor />
         <FirebaseAnalytics />
