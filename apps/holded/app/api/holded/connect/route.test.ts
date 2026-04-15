@@ -276,7 +276,8 @@ describe('POST /api/holded/connect', () => {
     );
     expect(mockSendHoldedConnectedCommunication).toHaveBeenCalledWith({
       name: 'Ana',
-      email: 'tenant@example.com',
+      userEmail: 'tenant@example.com',
+      companyEmail: 'tenant@example.com',
       companyName: 'Acme SL',
       supportedModules: ['invoicing', 'accounting'],
     });

@@ -720,10 +720,23 @@ export default function IsaakForHoldedPage() {
             },
             body: JSON.stringify({ reauthConfirmed: true }),
           });
-          const data = await readJson<{ error?: string }>(response);
+          const data = await readJson<{
+            error?: string;
+            reconnectPolicy?: { reconnectUrl?: string | null };
+          }>(response);
           if (!response.ok) {
             throw new Error(data?.error || 'No se pudo desconectar Holded');
           }
+
+          const reconnectUrl =
+            typeof data?.reconnectPolicy?.reconnectUrl === 'string'
+              ? data.reconnectPolicy.reconnectUrl.trim()
+              : '';
+          if (reconnectUrl) {
+            window.location.assign(reconnectUrl);
+            return;
+          }
+
           setNotice({ tone: 'success', text: 'Holded desconectado.' });
           await load(true);
         }).catch((error) => {

@@ -51,6 +51,16 @@ describe('OnboardingHoldedClient', () => {
     expect(screen.getByText(/Confirmo que puedo conectar esta empresa/i)).toBeInTheDocument();
   });
 
+  it('starts from step 1 with empty fields when reset mode is enabled', () => {
+    render(<OnboardingHoldedClient {...defaultProps} forceFullReset />);
+
+    expect(screen.getByText('Nombre y apellidos')).toBeInTheDocument();
+    expect(screen.queryByText('API key de Holded')).not.toBeInTheDocument();
+
+    const continueButton = screen.getByRole('button', { name: 'Continuar' });
+    expect(continueButton).toBeDisabled();
+  });
+
   it('enables submit when identity and api key are valid', () => {
     render(<OnboardingHoldedClient {...defaultProps} />);
 

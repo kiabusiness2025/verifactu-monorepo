@@ -29,6 +29,16 @@ import {
 
 export const runtime = 'nodejs';
 
+function buildCanonicalReconnectUrl(entryChannel: 'chatgpt' | 'dashboard') {
+  const holdedSiteUrl =
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() || 'https://holded.verifactu.business';
+  const reconnectUrl = new URL('/onboarding/holded', holdedSiteUrl);
+  reconnectUrl.searchParams.set('source', 'holded_nav_global');
+  reconnectUrl.searchParams.set('channel', entryChannel);
+  reconnectUrl.searchParams.set('reset', '1');
+  return reconnectUrl.toString();
+}
+
 function getEntryChannel(request: NextRequest) {
   const header = request.headers.get('x-isaak-entry-channel')?.trim().toLowerCase();
   return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
@@ -247,6 +257,11 @@ export async function POST(request: NextRequest) {
       ok: true,
       provider: 'holded',
       status: normalizeConnectionStatus(resolved?.status ?? 'disconnected'),
+      reconnectPolicy: {
+        mode: 'force_full_reauth',
+        reconnectUrl: buildCanonicalReconnectUrl(entryChannel),
+        cacheCleared: true,
+      },
       governanceFlags,
       availableActions: buildDefaultAvailableActions({
         status: resolved?.status ?? 'disconnected',

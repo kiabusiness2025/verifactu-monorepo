@@ -7,9 +7,9 @@ import OnboardingHoldedClient from './OnboardingHoldedClient';
 import { resolveHoldedCompletionTarget } from './completionTarget';
 
 export const metadata: Metadata = {
-  title: 'Conectar Holded | Verifactu',
+  title: 'Conectar Holded | Holded',
   description:
-    'Conecta tu cuenta de Holded con Verifactu Business mediante un flujo guiado con validacion de API key, deteccion de empresa y estados de gobernanza visibles.',
+    'Conecta tu cuenta de Holded mediante un flujo guiado con validacion de API key, deteccion de empresa y conexion inmediata.',
 };
 
 type InitialIdentity = {
@@ -33,6 +33,11 @@ function readSource(value: string | string[] | undefined) {
 function readChannel(value: string | string[] | undefined) {
   const resolved = Array.isArray(value) ? value[0] || '' : value || '';
   return resolved === 'chatgpt' ? 'chatgpt' : 'dashboard';
+}
+
+function readBooleanFlag(value: string | string[] | undefined) {
+  const resolved = readSource(value).trim().toLowerCase();
+  return resolved === '1' || resolved === 'true' || resolved === 'yes';
 }
 
 function normalizeText(value?: string | null) {
@@ -123,6 +128,7 @@ export default async function HoldedOnboardingConnectionPage({ searchParams }: P
   const resolved = (await searchParams) || {};
   const source = readSource(resolved.source) || 'holded_onboarding_connect';
   const channel = readChannel(resolved.channel);
+  const forceFullReset = readBooleanFlag(resolved.reset) || readBooleanFlag(resolved.fresh);
   const next = readSource(resolved.next);
   const onboardingToken = readSource(resolved.onboarding_token);
   const session = await getHoldedSession();
@@ -153,6 +159,7 @@ export default async function HoldedOnboardingConnectionPage({ searchParams }: P
       channel={channel}
       nextTarget={nextTarget}
       initialIdentity={initialIdentity}
+      forceFullReset={forceFullReset}
     />
   );
 }

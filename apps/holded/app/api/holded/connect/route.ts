@@ -490,6 +490,7 @@ export async function POST(request: NextRequest) {
       : [];
 
     try {
+      const userNotificationEmail = normalizeOptionalEmail(session.email);
       const [usageEventResult, communicationResult, runtimeConnectionResult] =
         await Promise.allSettled([
           recordUsageEvent({
@@ -506,15 +507,17 @@ export async function POST(request: NextRequest) {
               supportedModules: readProbeSupportedModules(probe),
             },
           }),
-          notificationEmail
+          notificationEmail || userNotificationEmail
             ? sendHoldedConnectedCommunication({
                 name:
                   identity.contactFirstName ||
                   identity.contactFullName ||
                   session.name ||
-                  notificationEmail.split('@')[0] ||
+                  notificationEmail?.split('@')[0] ||
+                  userNotificationEmail?.split('@')[0] ||
                   'Hola',
-                email: notificationEmail,
+                userEmail: userNotificationEmail || notificationEmail!,
+                companyEmail: notificationEmail || null,
                 companyName: identity.companyName || saved?.tenantName || 'tu empresa',
                 supportedModules: readProbeSupportedModules(probe),
               })

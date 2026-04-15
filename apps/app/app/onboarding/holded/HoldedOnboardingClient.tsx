@@ -205,16 +205,18 @@ function buildStoredPhoneNumber(localNumber: string, dialCode: string) {
   return `${dialCode} ${normalizedLocalNumber}`.trim();
 }
 
+function looksLikeSyntheticCompanyName(value?: string | null) {
+  const normalized = normalizeText(value).toLowerCase();
+  if (!normalized) return true;
+
+  return normalized === 'tu empresa' || normalized.endsWith(' workspace');
+}
+
 function hasResolvedCompanyData(summary: HoldedOnboardingSummary) {
   return Boolean(
-    summary.contactEmail &&
-    summary.companyTaxId &&
-    summary.companyAddress &&
-    summary.companyPostalCode &&
-    summary.companyCity &&
-    summary.companyProvince &&
-    summary.companyCountry &&
-    summary.companySectorCode
+    normalizeText(summary.companyName) &&
+    !looksLikeSyntheticCompanyName(summary.companyName) &&
+    (normalizeText(summary.companyTaxId) || normalizeText(summary.contactEmail))
   );
 }
 
@@ -528,14 +530,12 @@ export default function HoldedOnboardingClient({
     normalizeText(selectedTenantId) || normalizeText(initialTenantIdHint) || null;
   const hasResolvedCompanyProfile =
     entryChannel === 'chatgpt'
-      ? Boolean(
-          (companySetup.hasResolvedCompany || effectiveTenantIdHint) &&
-          hasResolvedCompanyData(resolvedSummary)
-        )
+      ? companySetup.hasResolvedCompany || hasResolvedCompanyData(resolvedSummary)
       : companySetup.hasResolvedCompany && hasResolvedCompanyData(resolvedSummary);
-  const forceManualReconnectFlow = isChatgptEntry;
+  const forceManualReconnectFlow = isChatgptEntry && !hasResolvedCompanyProfile;
   const reusesStoredCompanyData =
     isChatgptEntry && hasResolvedCompanyProfile && !forceManualReconnectFlow;
+  const prefersApiOnlyFlow = usesDirectStepFlow && reusesStoredCompanyData;
   const initialPhoneDialCode = resolvePhoneDialCode(
     initialCompanyDraft.contactPhone,
     initialCompanyDraft.companyCountry
@@ -583,9 +583,11 @@ export default function HoldedOnboardingClient({
   const [directStep, setDirectStep] = useState<DirectOnboardingStep>(
     requiresVerifiedIdentity && !identity.emailVerified
       ? 'identity'
-      : requiresPersonStep
-        ? 'person'
-        : 'company'
+      : prefersApiOnlyFlow
+        ? 'api'
+        : requiresPersonStep
+          ? 'person'
+          : 'company'
   );
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -760,9 +762,15 @@ export default function HoldedOnboardingClient({
     }
 
     setDirectStep((current) =>
-      current === 'identity' ? (requiresPersonStep ? 'person' : 'company') : current
+      current === 'identity'
+        ? prefersApiOnlyFlow
+          ? 'api'
+          : requiresPersonStep
+            ? 'person'
+            : 'company'
+        : current
     );
-  }, [requiresPersonStep, showIdentityGate, usesDirectStepFlow]);
+  }, [prefersApiOnlyFlow, requiresPersonStep, showIdentityGate, usesDirectStepFlow]);
 
   useEffect(() => {
     if (identityState.email && !contactEmail) {
@@ -825,7 +833,13 @@ export default function HoldedOnboardingClient({
 
     if (usesDirectStepFlow) {
       setDirectStep((current) =>
-        current === 'identity' ? (requiresPersonStep ? 'person' : 'company') : current
+        current === 'identity'
+          ? prefersApiOnlyFlow
+            ? 'api'
+            : requiresPersonStep
+              ? 'person'
+              : 'company'
+          : current
       );
     }
 
@@ -840,6 +854,7 @@ export default function HoldedOnboardingClient({
     identityState.authMethod,
     identityState.email,
     identityState.emailVerified,
+    prefersApiOnlyFlow,
     requiresPersonStep,
     usesDirectStepFlow,
   ]);
@@ -979,8 +994,8 @@ export default function HoldedOnboardingClient({
           { key: 'api', label: 'API key' },
         ];
   const completedDirectSteps: Record<'identity' | 'company' | 'api', boolean> = {
-    identity: verifiedIdentityReady && canContinuePersonStep,
-    company: canContinueCompanyStep,
+    identity: prefersApiOnlyFlow ? true : verifiedIdentityReady && canContinuePersonStep,
+    company: prefersApiOnlyFlow ? true : canContinueCompanyStep,
     api: status?.connected === true || redirecting || directStep === 'success',
   };
 
@@ -2005,7 +2020,13 @@ export default function HoldedOnboardingClient({
 
           if (usesDirectStepFlow) {
             setDirectStep((current) =>
-              current === 'identity' ? (requiresPersonStep ? 'person' : 'company') : current
+              current === 'identity'
+                ? prefersApiOnlyFlow
+                  ? 'api'
+                  : requiresPersonStep
+                    ? 'person'
+                    : 'company'
+                : current
             );
           }
           return;
@@ -2032,6 +2053,7 @@ export default function HoldedOnboardingClient({
       resolveRequestOnboardingToken,
       resolveRequestTenantIdHint,
       restartIdentityFlow,
+      prefersApiOnlyFlow,
       requiresPersonStep,
       usesDirectStepFlow,
     ]
@@ -2069,6 +2091,33 @@ export default function HoldedOnboardingClient({
 
     if (showIdentityGate) {
       setError('Debes verificar tu identidad antes de continuar.');
+      return;
+    }
+
+    if (prefersApiOnlyFlow) {
+      if (!normalizedApiKey) {
+        setFieldErrors((current) => ({ ...current, apiKey: uiCopy.errorApiKeyEmpty }));
+        setError(uiCopy.errorApiKeyEmpty);
+        return;
+      }
+
+      setSaving(true);
+      setError(null);
+      setMessage(null);
+      setFieldErrors({});
+
+      try {
+        const validation = await validateApiKey();
+        await connectValidatedApi(undefined, validation?.validationToken || null);
+        setMessage(uiCopy.successConnected);
+        setDirectStep('success');
+        goToNextStep(confirmedNextUrl);
+      } catch (submitError) {
+        setError(submitError instanceof Error ? submitError.message : uiCopy.errorConnectFailed);
+      } finally {
+        setSaving(false);
+      }
+
       return;
     }
 

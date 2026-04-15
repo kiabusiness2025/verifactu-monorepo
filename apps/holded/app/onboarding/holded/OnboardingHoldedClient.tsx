@@ -58,6 +58,7 @@ type OnboardingHoldedClientProps = {
   channel: 'dashboard' | 'chatgpt';
   nextTarget: string;
   initialIdentity: InitialIdentity;
+  forceFullReset?: boolean;
 };
 
 type UiBadge = {
@@ -237,21 +238,30 @@ export default function OnboardingHoldedClient({
   channel,
   nextTarget,
   initialIdentity,
+  forceFullReset = false,
 }: OnboardingHoldedClientProps) {
   const holdedApiGuideUrl =
     'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
 
   // Wizard step
-  const [step, setStep] = useState<WizardStep>(3);
+  const [step, setStep] = useState<WizardStep>(forceFullReset ? 1 : 3);
 
   // Form state
-  const [companyName, setCompanyName] = useState(initialIdentity.companyName);
-  const [legalName, setLegalName] = useState(initialIdentity.legalName);
-  const [taxId, setTaxId] = useState(initialIdentity.taxId);
-  const [contactFirstName, setContactFirstName] = useState(initialIdentity.contactFirstName);
-  const [contactLastName, setContactLastName] = useState(initialIdentity.contactLastName);
-  const [contactEmail, setContactEmail] = useState(initialIdentity.contactEmail);
-  const [contactPhone, setContactPhone] = useState(initialIdentity.contactPhone);
+  const [companyName, setCompanyName] = useState(forceFullReset ? '' : initialIdentity.companyName);
+  const [legalName, setLegalName] = useState(forceFullReset ? '' : initialIdentity.legalName);
+  const [taxId, setTaxId] = useState(forceFullReset ? '' : initialIdentity.taxId);
+  const [contactFirstName, setContactFirstName] = useState(
+    forceFullReset ? '' : initialIdentity.contactFirstName
+  );
+  const [contactLastName, setContactLastName] = useState(
+    forceFullReset ? '' : initialIdentity.contactLastName
+  );
+  const [contactEmail, setContactEmail] = useState(
+    forceFullReset ? '' : initialIdentity.contactEmail
+  );
+  const [contactPhone, setContactPhone] = useState(
+    forceFullReset ? '' : initialIdentity.contactPhone
+  );
   const [apiKey, setApiKey] = useState('');
   const [consentChecked, setConsentChecked] = useState(false);
 
@@ -273,6 +283,30 @@ export default function OnboardingHoldedClient({
 
   // Pre-fill company data from localStorage if saved during registration
   useEffect(() => {
+    if (forceFullReset) {
+      try {
+        const localKeysToDelete: string[] = [];
+        for (let index = 0; index < window.localStorage.length; index += 1) {
+          const key = window.localStorage.key(index);
+          if (!key) continue;
+          if (key.startsWith('verifactu_company_')) {
+            localKeysToDelete.push(key);
+          }
+        }
+
+        localKeysToDelete.push('holded_magic_link_email');
+        for (const key of localKeysToDelete) {
+          window.localStorage.removeItem(key);
+        }
+
+        window.sessionStorage.removeItem('holded_google_redirect_pending');
+      } catch {
+        // ignore storage access errors
+      }
+
+      return;
+    }
+
     const currentEmail = contactEmail || initialIdentity.contactEmail;
     if (!currentEmail) return;
     try {
@@ -306,7 +340,7 @@ export default function OnboardingHoldedClient({
     } catch {
       // ignore localStorage errors
     }
-  }, []);
+  }, [contactEmail, forceFullReset, initialIdentity.contactEmail]);
 
   // Normalized values
   const normalizedApiKey = useMemo(() => normalizeApiKey(apiKey), [apiKey]);
@@ -332,8 +366,14 @@ export default function OnboardingHoldedClient({
     validatedApiKey === normalizedApiKey && Boolean(validationToken);
 
   // Per-step validation
-  const canProceed1 = true;
-  const canProceed2 = true;
+  const canProceed1 = forceFullReset
+    ? normalizedContactFirstName.length > 0 && normalizedContactLastName.length > 0
+    : true;
+  const canProceed2 = forceFullReset
+    ? normalizedCompanyName.length > 0 &&
+      normalizedContactEmail.includes('@') &&
+      normalizedTaxId.length > 0
+    : true;
   const canSubmit = normalizedApiKey.length >= 16 && consentChecked && !isSubmitting;
 
   // Computed UI

@@ -30,7 +30,6 @@ export function deriveHoldedCompanySetupState(input: {
       : Boolean(
           normalizeText(input.tenantId) &&
           !input.tenantIsDemo &&
-          normalizeText(input.tenantNif) &&
           !looksLikeSyntheticCompanyName(input.companyName)
         );
 

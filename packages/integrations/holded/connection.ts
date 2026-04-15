@@ -111,6 +111,17 @@ function isMissingRelationError(error: unknown) {
   );
 }
 
+function isForeignKeyConstraintError(error: unknown) {
+  const code = (error as { code?: unknown })?.code;
+  const message = error instanceof Error ? error.message : String(error);
+
+  return (
+    code === 'P2003' ||
+    message.includes('Foreign key constraint failed') ||
+    message.toLowerCase().includes('foreign key constraint')
+  );
+}
+
 function getEncryptionKey() {
   const raw =
     process.env.INTEGRATIONS_SECRET_KEY?.trim() ||
@@ -525,42 +536,43 @@ export async function saveHoldedConnection(input: {
   }));
   const summary = buildHoldedProbeSummary(input.probe);
   let connectionId: string | null = null;
-  const externalConnectionUpdate = {
-    channelKey: channel,
-    originChannel: channel,
-    providerAccountId: fingerprint,
-    credentialType: 'api_key',
-    apiKeyEnc: encrypted,
-    scopesGranted: summary.supportedModules,
-    connectionStatus: 'connected',
-    ownershipStatus: 'pending_confirmation',
-    managedByThirdParty: false,
-    highGovernanceRisk: false,
-    underClaimReview: false,
-    connectedByUserId: input.userId ?? undefined,
-    technicalOperatorUserId: input.userId ?? undefined,
-    connectedAt: now,
-    lastValidatedAt: now,
-    lastSyncAt: now,
-    disconnectedAt: null,
-    revokedAt: null,
-    governanceUpdatedAt: now,
-    companyIdentityJson: {
-      companyName: metadata.companyName,
-      legalName: metadata.legalName,
-      taxId: metadata.taxId,
-      source: 'holded',
-      reliableCompanyIdentity: metadata.reliableCompanyIdentity,
-      sampleCounts: metadata.sampleCounts,
-    },
-  } as any;
-  const externalConnectionCreate = {
-    tenantId: input.tenantId,
-    provider: 'holded',
-    ...externalConnectionUpdate,
-  } as any;
 
-  try {
+  const persistPrimaryStorage = async (actorUserId?: string | null) => {
+    const externalConnectionUpdate = {
+      channelKey: channel,
+      originChannel: channel,
+      providerAccountId: fingerprint,
+      credentialType: 'api_key',
+      apiKeyEnc: encrypted,
+      scopesGranted: summary.supportedModules,
+      connectionStatus: 'connected',
+      ownershipStatus: 'pending_confirmation',
+      managedByThirdParty: false,
+      highGovernanceRisk: false,
+      underClaimReview: false,
+      connectedByUserId: actorUserId ?? undefined,
+      technicalOperatorUserId: actorUserId ?? undefined,
+      connectedAt: now,
+      lastValidatedAt: now,
+      lastSyncAt: now,
+      disconnectedAt: null,
+      revokedAt: null,
+      governanceUpdatedAt: now,
+      companyIdentityJson: {
+        companyName: metadata.companyName,
+        legalName: metadata.legalName,
+        taxId: metadata.taxId,
+        source: 'holded',
+        reliableCompanyIdentity: metadata.reliableCompanyIdentity,
+        sampleCounts: metadata.sampleCounts,
+      },
+    } as any;
+    const externalConnectionCreate = {
+      tenantId: input.tenantId,
+      provider: 'holded',
+      ...externalConnectionUpdate,
+    } as any;
+
     const txOperations = [
       ...(channel === 'dashboard'
         ? [
@@ -634,19 +646,38 @@ export async function saveHoldedConnection(input: {
     const txResults = await input.prisma.$transaction(txOperations);
     const connection = txResults[channel === 'dashboard' ? 1 : 0];
     connectionId = connection.id;
+  };
+
+  try {
+    await persistPrimaryStorage(input.userId ?? null);
   } catch (error) {
-    if (!isMissingRelationError(error)) {
-      throw error;
+    let persistenceError: unknown = error;
+
+    if (input.userId && isForeignKeyConstraintError(error)) {
+      console.warn('[holded integration] retrying connection persistence without user reference', {
+        tenantId: input.tenantId,
+        userId: input.userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      try {
+        await persistPrimaryStorage(null);
+      } catch (retryError) {
+        if (!isMissingRelationError(retryError)) {
+          throw retryError;
+        }
+        persistenceError = retryError;
+      }
+    }
+
+    if (!isMissingRelationError(persistenceError)) {
+      throw persistenceError;
     }
 
     console.warn('[holded integration] using tenant integration fallback', {
       tenantId: input.tenantId,
-      error: error instanceof Error ? error.message : String(error),
+      error:
+        persistenceError instanceof Error ? persistenceError.message : String(persistenceError),
     });
-
-    if (channel !== 'dashboard') {
-      throw error;
-    }
 
     await input.prisma.tenantIntegration.upsert({
       where: {

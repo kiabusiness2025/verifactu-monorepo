@@ -1,5 +1,6 @@
 import { sendCustomEmail } from '@/lib/email/emailService';
 import { getPreferredFirstName, getPreferredFullName } from '@/lib/personName';
+import { getAppUrl } from '@verifactu/utils';
 
 const ADMIN_NOTIFICATION_EMAIL =
   process.env.SUPPORT_NOTIFICATION_EMAIL?.trim() || 'soporte@verifactu.business';
@@ -66,6 +67,44 @@ function renderDetailLine(label: string, value?: string | null) {
   return `<p style="margin:0 0 8px 0;"><strong>${label}:</strong> ${normalized}</p>`;
 }
 
+function buildHoldedChatGptShell(input: { title: string; body: string }) {
+  const holdedLogoUrl = new URL('/brand/holded/holded-diamond-logo.png', getAppUrl()).toString();
+  const chatgptLogoUrl = new URL('/brand/chatgpt/chatgpt-logo.png', getAppUrl()).toString();
+
+  return `
+    <div style="font-family: Arial, sans-serif; color: #1b2a3a; line-height: 1.6; max-width: 640px; margin: 0 auto; padding: 24px; background: #f8fafc;">
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; box-shadow: 0 18px 40px rgba(15,23,42,0.08);">
+        <div style="padding: 20px 24px; background: linear-gradient(135deg,#fff7ed 0%,#fff1f2 52%,#eef6ff 100%); border-bottom: 1px solid #f2dbe0;">
+          <table role="presentation" width="100%" style="border-collapse: collapse;">
+            <tr>
+              <td style="vertical-align: middle; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: #7a1f2a;">Conector Holded</td>
+              <td align="right" style="vertical-align: middle; white-space: nowrap;">
+                <span style="display:inline-block;vertical-align:middle;background:#fff;border:1px solid #f1d4d9;border-radius:14px;padding:8px;">
+                  <img src="${holdedLogoUrl}" alt="Holded" width="22" height="22" style="display:block;border:0;" />
+                </span>
+                <span style="display:inline-block;vertical-align:middle;font-size:16px;font-weight:700;color:#7b8794;padding:0 8px;">+</span>
+                <span style="display:inline-block;vertical-align:middle;background:#fff;border:1px solid #dbe7ff;border-radius:14px;padding:8px;">
+                  <img src="${chatgptLogoUrl}" alt="ChatGPT" width="22" height="22" style="display:block;border:0;" />
+                </span>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div style="padding: 24px;">
+          <h2 style="color:#0d2b4a; margin:0 0 16px 0;">${input.title}</h2>
+          ${input.body}
+          <p style="margin:18px 0 0;color:#64748b;font-size:12px;">
+            Powered by <a href="https://verifactu.business" style="color:#b4233c;">verifactu.business</a> ·
+            <a href="https://holded.verifactu.business/legal" style="color:#b4233c;">Aviso legal</a> ·
+            <a href="https://holded.verifactu.business/privacy" style="color:#b4233c;">Privacidad</a> ·
+            <a href="https://holded.verifactu.business/terms" style="color:#b4233c;">Terminos</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function buildUserHtml(args: {
   userFirstName: string;
   tenantDisplayName: string;
@@ -83,16 +122,16 @@ function buildUserHtml(args: {
       ? `<div style="margin:12px 0 4px 0;">${renderDetailLine('Contacto', args.contactName)}${renderDetailLine('Correo de contacto', args.contactEmail)}${renderDetailLine('Telefono de contacto', args.contactPhone)}${renderDetailLine('Correo de empresa', args.companyEmail)}</div>`
       : '';
 
-  return `
-    <div style="font-family: Arial, sans-serif; color: #1b2a3a; line-height: 1.6;">
-      <h2 style="color:#0d2b4a; margin:0 0 16px 0;">Holded: ${actionLabel}</h2>
+  return buildHoldedChatGptShell({
+    title: `Holded: ${actionLabel}`,
+    body: `
       <p>Hola ${args.userFirstName},</p>
       <p>Te confirmamos que la ${actionLabel} para la empresa <strong>${args.tenantDisplayName}</strong> se ha realizado correctamente.</p>
       <p>Canal: <strong>${channelLabel}</strong>.</p>
       ${contactLine}
       <p>Si no reconoces este cambio, responde a este correo o escríbenos a <strong>soporte@verifactu.business</strong>.</p>
-    </div>
-  `;
+    `,
+  });
 }
 
 function buildAdminHtml(args: {
@@ -109,9 +148,9 @@ function buildAdminHtml(args: {
   const actionLabel = renderActionLabel(args.action);
   const channelLabel = renderChannelLabel(args.channel);
 
-  return `
-    <div style="font-family: Arial, sans-serif; color: #1b2a3a; line-height: 1.6;">
-      <h2 style="color:#0d2b4a; margin:0 0 16px 0;">Holded: ${actionLabel}</h2>
+  return buildHoldedChatGptShell({
+    title: `Holded: ${actionLabel}`,
+    body: `
       <p>Usuario: <strong>${args.userName}</strong> (${args.userEmail})</p>
       <p>Empresa: <strong>${args.tenantDisplayName}</strong></p>
       ${renderDetailLine('Persona de contacto', args.contactName)}
@@ -120,8 +159,8 @@ function buildAdminHtml(args: {
       ${renderDetailLine('Telefono de contacto', args.contactPhone)}
       <p>Canal: <strong>${channelLabel}</strong></p>
       <p>Evento: <strong>${args.action}</strong></p>
-    </div>
-  `;
+    `,
+  });
 }
 
 function buildWelcomeUserHtml(args: {
@@ -131,9 +170,9 @@ function buildWelcomeUserHtml(args: {
   companyEmail?: string | null;
   contactPhone?: string | null;
 }) {
-  return `
-    <div style="font-family: Arial, sans-serif; color: #1b2a3a; line-height: 1.6;">
-      <h2 style="color:#0d2b4a; margin:0 0 16px 0;">Bienvenido a Verifactu Business</h2>
+  return buildHoldedChatGptShell({
+    title: 'Bienvenido al Conector Holded',
+    body: `
       <p>Hola ${args.userFirstName},</p>
       <p>La conexion de Holded para <strong>${args.tenantDisplayName}</strong> ya esta lista.</p>
       <p>Desde este momento puedes continuar usando el conector directo con la empresa ya enlazada.</p>
@@ -142,8 +181,8 @@ function buildWelcomeUserHtml(args: {
       ${renderDetailLine('Telefono de contacto', args.contactPhone)}
       <p>Primer paso recomendado: vuelve a tu flujo en ChatGPT o entra en tu area de Verifactu para revisar que todo responde como esperas.</p>
       <p>Si necesitas ayuda, escríbenos a <strong>soporte@verifactu.business</strong>.</p>
-    </div>
-  `;
+    `,
+  });
 }
 
 function buildWelcomeAdminHtml(args: {
@@ -153,16 +192,16 @@ function buildWelcomeAdminHtml(args: {
   companyEmail?: string | null;
   contactPhone?: string | null;
 }) {
-  return `
-    <div style="font-family: Arial, sans-serif; color: #1b2a3a; line-height: 1.6;">
-      <h2 style="color:#0d2b4a; margin:0 0 16px 0;">Nueva empresa activada</h2>
+  return buildHoldedChatGptShell({
+    title: 'Nueva empresa activada',
+    body: `
       <p>Contacto principal: <strong>${args.userName}</strong> (${args.userEmail})</p>
       <p>Empresa: <strong>${args.tenantDisplayName}</strong></p>
       ${renderDetailLine('Correo de empresa', args.companyEmail)}
       ${renderDetailLine('Telefono de contacto', args.contactPhone)}
       <p>Evento: <strong>welcome</strong></p>
-    </div>
-  `;
+    `,
+  });
 }
 
 export async function sendWelcomeLifecycleEmails(args: TenantEmailContext) {

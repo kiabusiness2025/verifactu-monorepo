@@ -26,6 +26,33 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+function buildCanonicalHoldedOnboardingUrl(input: {
+  next: string;
+  onboardingToken?: string | null;
+  tenantId?: string | null;
+}) {
+  const holdedSiteUrl =
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() || 'https://holded.verifactu.business';
+  const onboardingUrl = new URL('/onboarding/holded', holdedSiteUrl);
+  onboardingUrl.searchParams.set('source', 'holded_nav_global');
+  onboardingUrl.searchParams.set('channel', 'chatgpt');
+  onboardingUrl.searchParams.set('require_connection_confirmation', '1');
+  onboardingUrl.searchParams.set('reset', '1');
+  onboardingUrl.searchParams.set('next', input.next);
+
+  const onboardingToken = input.onboardingToken?.trim();
+  if (onboardingToken) {
+    onboardingUrl.searchParams.set('onboarding_token', onboardingToken);
+  }
+
+  const tenantId = input.tenantId?.trim();
+  if (tenantId) {
+    onboardingUrl.searchParams.set('tenant_id', tenantId);
+  }
+
+  return onboardingUrl;
+}
+
 function redirectWithError(redirectUri: string, error: string, state?: string | null) {
   const url = new URL(redirectUri);
   url.searchParams.set('error', error);
@@ -103,14 +130,11 @@ export async function GET(request: NextRequest) {
       const authorizeUrl = new URL(url.toString());
       authorizeUrl.searchParams.set('onboarding_token', mintedOnboardingToken);
 
-      const onboardingUrl = new URL('/onboarding/holded', request.nextUrl.origin);
-      onboardingUrl.searchParams.set('next', authorizeUrl.toString());
-      onboardingUrl.searchParams.set('channel', 'chatgpt');
-      onboardingUrl.searchParams.set('require_connection_confirmation', '1');
-      onboardingUrl.searchParams.set('onboarding_token', mintedOnboardingToken);
-      if (tenantIdQuery) {
-        onboardingUrl.searchParams.set('tenant_id', tenantIdQuery);
-      }
+      const onboardingUrl = buildCanonicalHoldedOnboardingUrl({
+        next: authorizeUrl.toString(),
+        onboardingToken: mintedOnboardingToken,
+        tenantId: tenantIdQuery,
+      });
 
       return withConnectorRequestId(NextResponse.redirect(onboardingUrl), requestId);
     }
@@ -220,16 +244,11 @@ export async function GET(request: NextRequest) {
         authorizeUrl.searchParams.set('tenant_id', redirectTenantId);
       }
 
-      const onboardingUrl = new URL('/onboarding/holded', request.nextUrl.origin);
-      onboardingUrl.searchParams.set('next', authorizeUrl.toString());
-      onboardingUrl.searchParams.set('channel', 'chatgpt');
-      onboardingUrl.searchParams.set('require_connection_confirmation', '1');
-      if (onboardingToken) {
-        onboardingUrl.searchParams.set('onboarding_token', onboardingToken);
-      }
-      if (redirectTenantId) {
-        onboardingUrl.searchParams.set('tenant_id', redirectTenantId);
-      }
+      const onboardingUrl = buildCanonicalHoldedOnboardingUrl({
+        next: authorizeUrl.toString(),
+        onboardingToken,
+        tenantId: redirectTenantId,
+      });
 
       if (!hasHoldedConnection) {
         return withConnectorRequestId(NextResponse.redirect(onboardingUrl), requestId);

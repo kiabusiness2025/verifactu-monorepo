@@ -72,7 +72,10 @@ describe('HoldedOnboardingClient', () => {
     if (continuePersonButton) {
       fireEvent.click(continuePersonButton);
     }
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
+    const continueCompanyButton = screen.queryByRole('button', { name: 'Continuar con API key' });
+    if (continueCompanyButton) {
+      fireEvent.click(continueCompanyButton);
+    }
   };
 
   const getFetchCall = (fetchMock: jest.Mock, url: string, occurrence = 0) => {
@@ -95,11 +98,10 @@ describe('HoldedOnboardingClient', () => {
       screen.getByText('Confirma empresa y API key para volver a ChatGPT.')
     ).toBeInTheDocument();
     expect(screen.getByText('Acceso con cuenta completa.')).toBeInTheDocument();
-    expect(screen.getByText('Paso 1: completa tu perfil')).toBeInTheDocument();
-    expect(screen.getByText(/Correo verificado:/i)).toBeInTheDocument();
+    expect(screen.getByText('Paso 3: conecta Holded')).toBeInTheDocument();
     expect(
-      screen.queryByPlaceholderText('Pega aqui la API key de Holded para continuar')
-    ).not.toBeInTheDocument();
+      screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar')
+    ).toBeInTheDocument();
     expect(screen.queryByText(/Si tu empresa ya estaba preparada aqui/i)).not.toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Volver' }).length).toBeGreaterThan(0);
   });
@@ -241,10 +243,10 @@ describe('HoldedOnboardingClient', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar correo' }));
 
-    expect(await screen.findByText(/Este correo ya estaba confirmado/i)).toBeInTheDocument();
-
     await waitFor(() => {
-      expect(screen.getByText('Paso 1: completa tu perfil')).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar')
+      ).toBeInTheDocument();
     });
     expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
   });
@@ -332,7 +334,9 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Paso 1: completa tu perfil')).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar')
+      ).toBeInTheDocument();
     });
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body || '{}'))).toEqual(
       expect.objectContaining({ email: 'verified@example.com', checkOnly: true })
@@ -383,7 +387,9 @@ describe('HoldedOnboardingClient', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Paso 1: completa tu perfil')).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar')
+      ).toBeInTheDocument();
     });
     expect(screen.queryByText('Paso 1: confirma tu identidad')).not.toBeInTheDocument();
   });
@@ -499,11 +505,6 @@ describe('HoldedOnboardingClient', () => {
         })
       );
     });
-
-    expect(fetchMock).not.toHaveBeenCalledWith(
-      '/api/integrations/accounting/status?channel=chatgpt',
-      expect.anything()
-    );
 
     expect(screen.queryByRole('link', { name: 'Continuar' })).not.toBeInTheDocument();
   });
@@ -964,7 +965,10 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.change(screen.getByLabelText(/^Pagina web \(opcional\)/), {
       target: { value: 'https://empresa-demo.es' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
+    const continueCompanyButton = screen.queryByRole('button', { name: 'Continuar con API key' });
+    if (continueCompanyButton) {
+      fireEvent.click(continueCompanyButton);
+    }
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {
       target: { value: 'holded-demo-api-key-123' },
     });
@@ -1125,7 +1129,10 @@ describe('HoldedOnboardingClient', () => {
     fireEvent.change(screen.getByLabelText(/^Pagina web \(opcional\)/), {
       target: { value: 'https://empresa-demo.es' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
+    const continueCompanyButton = screen.queryByRole('button', { name: 'Continuar con API key' });
+    if (continueCompanyButton) {
+      fireEvent.click(continueCompanyButton);
+    }
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar'), {
       target: { value: 'holded-demo-api-key-123' },
     });
@@ -1140,7 +1147,7 @@ describe('HoldedOnboardingClient', () => {
     expect(redirectHref).not.toContain('onboarding-token-123');
   });
 
-  it('keeps the reconnect flow manual for chatgpt even when the previous connection was active', async () => {
+  it('uses the API-only direct flow for chatgpt when company data is already resolved', async () => {
     render(
       <HoldedOnboardingClient
         {...baseProps}
@@ -1152,15 +1159,16 @@ describe('HoldedOnboardingClient', () => {
       />
     );
 
-    expect(fetchMock).not.toHaveBeenCalledWith(
-      '/api/integrations/accounting/status?channel=chatgpt',
-      expect.anything()
-    );
-    expect(screen.getByLabelText(/^Razon social/)).toHaveValue('ALVILS ESP SL');
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
+    expect(
+      fetchMock.mock.calls.some(
+        ([requestUrl]) =>
+          String(requestUrl) === '/api/integrations/accounting/status?channel=chatgpt'
+      )
+    ).toBe(true);
     expect(
       screen.getByPlaceholderText('Pega aqui la API key de Holded para continuar')
     ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Razon social/)).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Continuar' })).not.toBeInTheDocument();
   });
 });

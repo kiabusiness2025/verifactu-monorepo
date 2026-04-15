@@ -17,7 +17,8 @@ type LeadPayload = {
 
 type ConnectedPayload = {
   name: string;
-  email: string;
+  userEmail: string;
+  companyEmail?: string | null;
   companyName: string;
   supportedModules: string[];
 };
@@ -139,7 +140,7 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
   const settingsUrl = `${appSiteUrl}/dashboard/integrations?source=holded_connected_email`;
   const customer = buildHoldedConnectedEmail({
     name: input.name,
-    email: input.email,
+    email: input.userEmail,
     companyName: input.companyName,
     chatUrl,
     settingsUrl,
@@ -147,23 +148,41 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
   });
   const admin = buildHoldedConnectedAdminEmail({
     name: input.name,
-    email: input.email,
+    email: input.userEmail,
     companyName: input.companyName,
     chatUrl,
     settingsUrl,
     supportedModules: input.supportedModules,
   });
 
-  const tasks = [
+  const tasks = [];
+  tasks.push(
     resend.emails.send({
       from,
-      to: [input.email],
+      to: [input.userEmail],
       subject: customer.subject,
       html: customer.html,
       text: customer.text,
       replyTo,
-    }),
-  ];
+    })
+  );
+
+  const normalizedCompanyEmail = cleanEnv(input.companyEmail || undefined);
+  if (
+    normalizedCompanyEmail &&
+    normalizedCompanyEmail.toLowerCase() !== input.userEmail.toLowerCase()
+  ) {
+    tasks.push(
+      resend.emails.send({
+        from,
+        to: [normalizedCompanyEmail],
+        subject: customer.subject,
+        html: customer.html,
+        text: customer.text,
+        replyTo,
+      })
+    );
+  }
 
   if (adminRecipients.length > 0) {
     tasks.push(
@@ -173,14 +192,19 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
         subject: admin.subject,
         html: admin.html,
         text: admin.text,
-        replyTo: input.email,
+        replyTo: input.userEmail,
       })
     );
   }
 
   const results = await Promise.all(tasks);
+
+  const companyEmailSent =
+    normalizedCompanyEmail &&
+    normalizedCompanyEmail.toLowerCase() !== input.userEmail.toLowerCase();
   return {
     customerEmailId: results[0]?.data?.id ?? null,
-    adminEmailId: results[1]?.data?.id ?? null,
+    companyEmailId: companyEmailSent ? (results[1]?.data?.id ?? null) : null,
+    adminEmailId: results[companyEmailSent ? 2 : 1]?.data?.id ?? null,
   };
 }

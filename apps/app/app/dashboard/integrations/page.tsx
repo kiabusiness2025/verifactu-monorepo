@@ -109,7 +109,7 @@ export default function IntegrationsPage() {
     ? 'Conecta Holded para revisar y completar tu perfil fiscal.'
     : fiscalProfilePending
       ? 'Hay revisiones pendientes. Completa tu perfil fiscal para reducir bloqueos y continuar con normalidad.'
-      : 'Perfil fiscal al dia. Puedes operar con normalidad desde Isaak for Holded.';
+      : 'Perfil fiscal al dia. Puedes operar con normalidad desde el panel del conector Holded.';
 
   useEffect(() => {
     if (searchParams?.get('holded_admin') === 'forbidden') {
@@ -169,6 +169,16 @@ export default function IntegrationsPage() {
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || 'No se pudo desconectar la integracion');
       setMessage('Integracion contable desconectada.');
+
+      const reconnectUrl =
+        typeof data?.reconnectPolicy?.reconnectUrl === 'string'
+          ? data.reconnectPolicy.reconnectUrl.trim()
+          : '';
+      if (reconnectUrl) {
+        window.location.assign(reconnectUrl);
+        return;
+      }
+
       await load();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'No se pudo desconectar la integracion');
@@ -296,7 +306,7 @@ export default function IntegrationsPage() {
               href="/dashboard/integrations/isaak-for-holded"
               className="rounded-full border border-[#0b6cfb]/30 bg-white px-4 py-2 text-xs font-semibold text-[#0b6cfb] hover:bg-[#0b6cfb]/5"
             >
-              Abrir Isaak for Holded
+              Abrir panel del conector
             </Link>
           </div>
         )}
@@ -305,10 +315,10 @@ export default function IntegrationsPage() {
       <section className="rounded-xl border border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#eef4ff_55%,#ffffff_100%)] p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Isaak for Holded</h2>
+            <h2 className="text-base font-semibold text-slate-900">Panel del conector Holded</h2>
             <p className="mt-1 max-w-2xl text-sm text-slate-600">
               Accede a una capa guiada para traducir Holded a lenguaje de negocio, consultar
-              facturas, clientes y cuentas contables, y preparar borradores desde Isaak.
+              facturas, clientes y cuentas contables, y preparar borradores con el conector.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span

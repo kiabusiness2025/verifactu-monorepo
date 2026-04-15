@@ -37,6 +37,23 @@ describe('deriveHoldedCompanySetupState', () => {
     });
   });
 
+  it('treats a non-demo tenant with real company name as resolved even if NIF is pending', () => {
+    expect(
+      deriveHoldedCompanySetupState({
+        entryChannel: 'chatgpt',
+        requireConnectionConfirmation: true,
+        tenantId: 'tenant-2',
+        tenantIsDemo: false,
+        tenantNif: null,
+        companyName: 'ALVILS ESP',
+      })
+    ).toEqual({
+      hasResolvedCompany: true,
+      needsCompanySetup: false,
+      requiresCompanyConfirmation: true,
+    });
+  });
+
   it('does not block dashboard entries with a company setup step', () => {
     expect(
       deriveHoldedCompanySetupState({

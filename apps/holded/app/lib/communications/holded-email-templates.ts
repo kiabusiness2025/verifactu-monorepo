@@ -179,15 +179,13 @@ export function buildHoldedAccessReadyEmail(input: AccessEmailInput): EmailTempl
 
 export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): EmailTemplate {
   const hello = greeting(input.name);
-  const modules = input.supportedModules.length
-    ? input.supportedModules.join(', ')
-    : 'facturacion y contabilidad';
+  const modules = input.supportedModules.join(', ') || 'sin detalle';
 
   return {
-    subject: `Holded ya esta conectado para ${input.companyName}`,
+    subject: `Holded conectado en ${input.companyName}`,
     html: cardLayout({
       label: 'Conexion activa',
-      title: 'Tu conexion con Holded esta activa',
+      title: 'Holded + ChatGPT conectados',
       body: `
         <p style="margin:0 0 14px;">${escapeHtml(hello)}</p>
         <p style="margin:0 0 14px;">La conexion de Holded para <strong>${escapeHtml(input.companyName)}</strong> ya esta activa.</p>
@@ -210,19 +208,23 @@ export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): Ema
 }
 
 export function buildHoldedConnectedAdminEmail(input: HoldedConnectedEmailInput): EmailTemplate {
+  const modules = input.supportedModules.join(', ') || 'sin detalle';
+
   return {
     subject: `Holded conectado en ${input.companyName}`,
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff;">
-        <h1 style="font-size:24px;line-height:1.2;margin:0 0 16px;">Conexion Holded activada</h1>
+    html: cardLayout({
+      label: 'Conexion activa',
+      title: 'Holded + ChatGPT conectados',
+      body: `
         <p style="margin:0 0 10px;"><strong>Empresa:</strong> ${escapeHtml(input.companyName)}</p>
         <p style="margin:0 0 10px;"><strong>Email usuario:</strong> ${escapeHtml(input.email)}</p>
-        <p style="margin:0 0 10px;"><strong>Modulos validados:</strong> ${escapeHtml(input.supportedModules.join(', ') || 'sin detalle')}</p>
+        <p style="margin:0 0 10px;"><strong>Modulos validados:</strong> ${escapeHtml(modules)}</p>
         <p style="margin:0 0 16px;">Conexion validada para uso operativo.</p>
         <a href="${escapeHtml(input.chatUrl)}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir panel</a>
-      </div>
-    `.trim(),
-    text: `Conexion Holded activada\n\nEmpresa: ${input.companyName}\nEmail usuario: ${input.email}\nModulos validados: ${input.supportedModules.join(', ') || 'sin detalle'}\n\nAbrir panel: ${input.chatUrl}`,
+      `,
+      footer: legalFooter(),
+    }),
+    text: `Conexion Holded activada\n\nEmpresa: ${input.companyName}\nEmail usuario: ${input.email}\nModulos validados: ${modules}\n\nAbrir panel: ${input.chatUrl}`,
   };
 }
 
