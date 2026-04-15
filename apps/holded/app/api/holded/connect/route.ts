@@ -156,10 +156,6 @@ function validateConnectionIdentity(identity: ReturnType<typeof resolveConnectio
     return 'Necesitamos el nombre de la empresa para crear correctamente tu espacio.';
   }
 
-  if (!identity.taxId) {
-    return 'Necesitamos el NIF/CIF de la empresa para continuar.';
-  }
-
   if (!identity.contactFirstName || !identity.contactLastName) {
     return 'Necesitamos nombre y apellidos de la persona de contacto.';
   }

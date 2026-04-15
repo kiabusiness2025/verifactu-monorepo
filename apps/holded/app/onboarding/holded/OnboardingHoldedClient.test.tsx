@@ -71,7 +71,7 @@ describe('OnboardingHoldedClient', () => {
 
     // Navigate step 1 → 2 → 3 (pre-filled data satisfies canProceed1 and canProceed2)
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
 
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
       target: { value: 'abcdefghijklmnop' },
@@ -102,7 +102,7 @@ describe('OnboardingHoldedClient', () => {
 
     // Navigate step 1 → 2 → 3
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar con API key' }));
 
     fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
       target: { value: 'abcdefghijklmnop' },

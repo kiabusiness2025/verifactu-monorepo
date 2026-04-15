@@ -337,10 +337,7 @@ export default function OnboardingHoldedClient({
 
   // Per-step validation
   const canProceed1 = normalizedContactFirstName.length > 0 && normalizedContactLastName.length > 0;
-  const canProceed2 =
-    normalizedCompanyName.length > 0 &&
-    normalizedTaxId.length > 0 &&
-    looksLikeEmail(normalizedContactEmail);
+  const canProceed2 = normalizedCompanyName.length > 0 && looksLikeEmail(normalizedContactEmail);
   const canSubmit = normalizedApiKey.length >= 16 && consentChecked && !isSubmitting;
 
   // Computed UI
@@ -362,8 +359,8 @@ export default function OnboardingHoldedClient({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!normalizedCompanyName || !normalizedTaxId) {
-      setError('Necesitamos el nombre de la empresa y su NIF/CIF para continuar.');
+    if (!normalizedCompanyName) {
+      setError('Necesitamos el nombre de la empresa para continuar.');
       return;
     }
     if (
@@ -730,6 +727,14 @@ export default function OnboardingHoldedClient({
                   </div>
                 ) : null}
 
+                {/* Perfil fiscal pendiente */}
+                {!normalizedTaxId ? (
+                  <div className="mt-5 w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-xs leading-5 text-amber-900">
+                    <span className="font-semibold">Perfil fiscal pendiente.</span> Puedes completar
+                    el NIF/CIF de tu empresa en cualquier momento desde el panel de conexiones.
+                  </div>
+                ) : null}
+
                 <div className="mt-6 flex items-center gap-2 text-sm text-slate-400">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Redirigiendo...
@@ -795,7 +800,8 @@ export default function OnboardingHoldedClient({
                         Datos de la empresa
                       </div>
                       <p className="mt-1 text-xs leading-5 text-slate-500">
-                        Usa el mismo nombre que figura en Holded para que la deteccion sea precisa.
+                        Solo necesitamos el nombre y tu correo para activar la conexion. El NIF/CIF
+                        lo puedes completar despues.
                       </p>
                       <div className="mt-4 grid gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
@@ -810,18 +816,8 @@ export default function OnboardingHoldedClient({
                           />
                         </label>
                         <label className="block text-sm font-medium text-slate-700">
-                          Razon social
-                          <input
-                            type="text"
-                            value={legalName}
-                            onChange={(e) => setLegalName(e.target.value)}
-                            className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
-                            placeholder="Opcional si coincide"
-                            autoComplete="organization"
-                          />
-                        </label>
-                        <label className="block text-sm font-medium text-slate-700">
-                          NIF / CIF
+                          NIF / CIF{' '}
+                          <span className="font-normal text-slate-400">(opcional ahora)</span>
                           <input
                             type="text"
                             value={taxId}
@@ -829,6 +825,18 @@ export default function OnboardingHoldedClient({
                             className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm uppercase text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                             placeholder="B12345678"
                             autoComplete="off"
+                          />
+                        </label>
+                        <label className="block text-sm font-medium text-slate-700">
+                          Razon social{' '}
+                          <span className="font-normal text-slate-400">(opcional)</span>
+                          <input
+                            type="text"
+                            value={legalName}
+                            onChange={(e) => setLegalName(e.target.value)}
+                            className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                            placeholder="Si coincide con el nombre, dejalo vacio"
+                            autoComplete="organization"
                           />
                         </label>
                         <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
@@ -871,7 +879,7 @@ export default function OnboardingHoldedClient({
                         onClick={() => setStep(3)}
                         className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        Continuar
+                        Continuar con API key
                       </button>
                     </div>
                   </div>
