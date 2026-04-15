@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ArrowLeft, RefreshCcw, TriangleAlert } from 'lucide-react';
 import { StatusBadge } from '@verifactu/ui';
@@ -290,6 +291,7 @@ async function readJson<T>(response: Response): Promise<T | null> {
 }
 
 export default function IsaakForHoldedPage() {
+  const router = useRouter();
   const [integration, setIntegration] = useState<IntegrationStatus | null>(null);
   const [logsSummary, setLogsSummary] = useState<LogsSummaryPayload | null>(null);
   const [memberships, setMemberships] = useState<MembershipDTO[]>([]);
@@ -298,11 +300,16 @@ export default function IsaakForHoldedPage() {
   const [claims, setClaims] = useState<ClaimCaseDTO[]>([]);
   const [claimTimeline, setClaimTimeline] = useState<ClaimResolutionDTO[]>([]);
   const [adminRows, setAdminRows] = useState<AdminUserTenantRow[]>([]);
+  const [adminSearch, setAdminSearch] = useState('');
   const [adminUserFilter, setAdminUserFilter] = useState('');
   const [adminTenantFilter, setAdminTenantFilter] = useState('');
   const [adminStatusFilter, setAdminStatusFilter] = useState<
     'all' | 'connected' | 'disconnected' | 'risk'
   >('all');
+  const [adminSort, setAdminSort] = useState<
+    'tenant_asc' | 'tenant_desc' | 'user_asc' | 'user_desc' | 'updated_desc'
+  >('updated_desc');
+  const [adminRoleDrafts, setAdminRoleDrafts] = useState<Record<string, MembershipRole>>({});
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
   const [membershipDrafts, setMembershipDrafts] = useState<Record<string, MembershipDraft>>({});
   const [recipientDrafts, setRecipientDrafts] = useState<Record<string, RecipientDraft>>({});
@@ -394,7 +401,13 @@ export default function IsaakForHoldedPage() {
       setRecipients(nextRecipients);
       setAccessRequests(nextAccessRequests);
       setClaims(nextClaims);
-      setAdminRows(Array.isArray(adminUsersData?.items) ? adminUsersData.items : []);
+      const nextAdminRows = Array.isArray(adminUsersData?.items) ? adminUsersData.items : [];
+      setAdminRows(nextAdminRows);
+      setAdminRoleDrafts(
+        Object.fromEntries(
+          nextAdminRows.map((item) => [item.membershipId, item.membershipRole as MembershipRole])
+        )
+      );
       setMembershipDrafts(
         Object.fromEntries(nextMemberships.map((item) => [item.membershipId, { role: item.role }]))
       );
@@ -479,14 +492,29 @@ export default function IsaakForHoldedPage() {
 
   const selectedClaim = claims.find((item) => item.claimId === selectedClaimId) ?? null;
   const filteredAdminRows = useMemo(() => {
+    const searchNeedle = adminSearch.trim().toLowerCase();
     const userNeedle = adminUserFilter.trim().toLowerCase();
     const tenantNeedle = adminTenantFilter.trim().toLowerCase();
 
-    return adminRows.filter((row) => {
+    const filtered = adminRows.filter((row) => {
       if (adminStatusFilter === 'connected' && row.connectionStatus !== 'connected') return false;
       if (adminStatusFilter === 'disconnected' && row.connectionStatus === 'connected')
         return false;
       if (adminStatusFilter === 'risk' && !row.highGovernanceRisk) return false;
+
+      if (searchNeedle) {
+        const searchText = [
+          row.userName,
+          row.userEmail,
+          row.tenantName,
+          row.tenantLegalName,
+          row.membershipRole,
+          row.connectionStatus,
+        ]
+          .join(' ')
+          .toLowerCase();
+        if (!searchText.includes(searchNeedle)) return false;
+      }
 
       if (userNeedle) {
         const userText = `${row.userName} ${row.userEmail}`.toLowerCase();
@@ -500,7 +528,40 @@ export default function IsaakForHoldedPage() {
 
       return true;
     });
-  }, [adminRows, adminStatusFilter, adminTenantFilter, adminUserFilter]);
+
+    const sorted = [...filtered];
+    if (adminSort === 'tenant_asc') {
+      sorted.sort((a, b) =>
+        `${a.tenantName} ${a.tenantLegalName}`.localeCompare(
+          `${b.tenantName} ${b.tenantLegalName}`,
+          'es'
+        )
+      );
+    } else if (adminSort === 'tenant_desc') {
+      sorted.sort((a, b) =>
+        `${b.tenantName} ${b.tenantLegalName}`.localeCompare(
+          `${a.tenantName} ${a.tenantLegalName}`,
+          'es'
+        )
+      );
+    } else if (adminSort === 'user_asc') {
+      sorted.sort((a, b) =>
+        `${a.userName} ${a.userEmail}`.localeCompare(`${b.userName} ${b.userEmail}`, 'es')
+      );
+    } else if (adminSort === 'user_desc') {
+      sorted.sort((a, b) =>
+        `${b.userName} ${b.userEmail}`.localeCompare(`${a.userName} ${a.userEmail}`, 'es')
+      );
+    } else {
+      sorted.sort((a, b) => {
+        const left = new Date(a.updatedAt || a.lastValidatedAt || 0).getTime();
+        const right = new Date(b.updatedAt || b.lastValidatedAt || 0).getTime();
+        return right - left;
+      });
+    }
+
+    return sorted;
+  }, [adminRows, adminSearch, adminSort, adminStatusFilter, adminTenantFilter, adminUserFilter]);
   const membershipsTotal = memberships.length;
   const recipientsTotal = recipients.length;
   const claimsOpen = claims.filter((item) =>
@@ -537,6 +598,71 @@ export default function IsaakForHoldedPage() {
     const action = confirmDialog.onConfirm;
     setConfirmDialog(null);
     await action();
+  };
+
+  const openTenantFromAdminRow = async (tenantId: string) => {
+    await runAction(`admin-open-tenant:${tenantId}`, async () => {
+      const response = await fetch('/api/session/tenant-switch', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId }),
+      });
+      const data = await readJson<{ ok?: boolean; error?: string }>(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || 'No se pudo abrir el tenant');
+      }
+      router.push('/dashboard');
+    }).catch((error) => {
+      setNotice({
+        tone: 'error',
+        text: error instanceof Error ? error.message : 'No se pudo abrir el tenant',
+      });
+    });
+  };
+
+  const saveAdminRole = async (membershipId: string) => {
+    const role = adminRoleDrafts[membershipId];
+    if (!role) return;
+    await runAction(`admin-role:${membershipId}`, async () => {
+      const response = await fetch('/api/integrations/accounting/admin/user-tenants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ membershipId, role }),
+      });
+      const data = await readJson<{ ok?: boolean; error?: string }>(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || 'No se pudo actualizar el rol en la tabla admin');
+      }
+      setNotice({ tone: 'success', text: 'Rol actualizado desde la tabla admin.' });
+      await load(true);
+    }).catch((error) => {
+      setNotice({
+        tone: 'error',
+        text: error instanceof Error ? error.message : 'No se pudo actualizar el rol',
+      });
+    });
+  };
+
+  const disableAdminMembership = async (membershipId: string) => {
+    await runAction(`admin-disable:${membershipId}`, async () => {
+      const response = await fetch('/api/integrations/accounting/admin/user-tenants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ membershipId, status: 'disabled' }),
+      });
+      const data = await readJson<{ ok?: boolean; error?: string }>(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || 'No se pudo deshabilitar el usuario');
+      }
+      setNotice({ tone: 'success', text: 'Usuario deshabilitado desde la tabla admin.' });
+      await load(true);
+    }).catch((error) => {
+      setNotice({
+        tone: 'error',
+        text: error instanceof Error ? error.message : 'No se pudo deshabilitar el usuario',
+      });
+    });
   };
 
   const disconnectIntegration = () => {
@@ -1135,12 +1261,18 @@ export default function IsaakForHoldedPage() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-4">
+        <div className="mt-4 grid gap-3 md:grid-cols-5">
+          <input
+            className={fieldClasses()}
+            value={adminSearch}
+            onChange={(event) => setAdminSearch(event.target.value)}
+            placeholder="Buscar (usuario, tenant, rol, estado)"
+          />
           <input
             className={fieldClasses()}
             value={adminUserFilter}
             onChange={(event) => setAdminUserFilter(event.target.value)}
-            placeholder="Filtrar por usuario o email"
+            placeholder="Filtrar por usuario/email"
           />
           <input
             className={fieldClasses()}
@@ -1162,16 +1294,41 @@ export default function IsaakForHoldedPage() {
             <option value="disconnected">Sin conexion</option>
             <option value="risk">Riesgo alto</option>
           </select>
+          <select
+            className={fieldClasses()}
+            value={adminSort}
+            onChange={(event) =>
+              setAdminSort(
+                event.target.value as
+                  | 'tenant_asc'
+                  | 'tenant_desc'
+                  | 'user_asc'
+                  | 'user_desc'
+                  | 'updated_desc'
+              )
+            }
+          >
+            <option value="updated_desc">Ordenar: actividad reciente</option>
+            <option value="tenant_asc">Ordenar: tenant A-Z</option>
+            <option value="tenant_desc">Ordenar: tenant Z-A</option>
+            <option value="user_asc">Ordenar: usuario A-Z</option>
+            <option value="user_desc">Ordenar: usuario Z-A</option>
+          </select>
+        </div>
+
+        <div className="mt-3 flex justify-end">
           <button
             type="button"
             className={buttonClasses()}
             onClick={() => {
+              setAdminSearch('');
               setAdminUserFilter('');
               setAdminTenantFilter('');
               setAdminStatusFilter('all');
+              setAdminSort('updated_desc');
             }}
           >
-            Limpiar filtros
+            Limpiar buscar / filtrar / ordenar
           </button>
         </div>
 
@@ -1185,12 +1342,13 @@ export default function IsaakForHoldedPage() {
                 <th className="px-4 py-3">Estado conexion</th>
                 <th className="px-4 py-3">Riesgo</th>
                 <th className="px-4 py-3">Ultima validacion</th>
+                <th className="px-4 py-3">Acciones rapidas</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
               {filteredAdminRows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
+                  <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500">
                     No hay resultados con los filtros actuales.
                   </td>
                 </tr>
@@ -1223,6 +1381,53 @@ export default function IsaakForHoldedPage() {
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600">
                       {formatDateTime(row.lastValidatedAt || row.updatedAt)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          className={buttonClasses()}
+                          onClick={() => void openTenantFromAdminRow(row.tenantId)}
+                          disabled={Boolean(workingAction)}
+                        >
+                          Abrir tenant
+                        </button>
+                        <select
+                          className="h-9 rounded-xl border border-slate-300 bg-white px-2 text-xs text-slate-900 outline-none"
+                          value={
+                            (adminRoleDrafts[row.membershipId] ||
+                              row.membershipRole) as MembershipRole
+                          }
+                          onChange={(event) =>
+                            setAdminRoleDrafts((current) => ({
+                              ...current,
+                              [row.membershipId]: event.target.value as MembershipRole,
+                            }))
+                          }
+                        >
+                          {membershipRoleOptions.map((role) => (
+                            <option key={role} value={role}>
+                              {getMembershipRoleLabel(role as MembershipDTO['role'])}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className={buttonClasses(true)}
+                          onClick={() => void saveAdminRole(row.membershipId)}
+                          disabled={Boolean(workingAction)}
+                        >
+                          Guardar rol
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-full border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => void disableAdminMembership(row.membershipId)}
+                          disabled={Boolean(workingAction) || row.membershipStatus === 'disabled'}
+                        >
+                          {row.membershipStatus === 'disabled' ? 'Deshabilitado' : 'Deshabilitar'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

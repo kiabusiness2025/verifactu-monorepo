@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Outfit } from 'next/font/google';
-import { headers } from 'next/headers';
 import './globals.css';
 
 import { FirebaseAnalytics } from '@/components/FirebaseAnalytics';
@@ -53,19 +52,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const requestHeaders = await headers();
-  const holdedFlow = requestHeaders.get('x-holded-flow') === '1';
-
   return (
     <html lang="es">
       <head>
         <GoogleTagManager />
-        {holdedFlow ? (
-          <>
-            <link rel="icon" href="/brand/holded/holded-diamond-logo.png" sizes="32x32" />
-            <link rel="shortcut icon" href="/brand/holded/holded-diamond-logo.png" />
-          </>
-        ) : null}
       </head>
       <body className={`${outfit.className} dark:bg-gray-900`}>
         <PWARegistration disabled={holdedFlow} />

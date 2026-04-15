@@ -57,6 +57,9 @@ export default function DashboardClientLayout({ children, supportMode, supportTe
   const router = useRouter();
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith('/dashboard/admin') ?? false;
+  const isHoldedConnectorAdminRoute =
+    pathname?.startsWith('/dashboard/integrations/isaak-for-holded') ?? false;
+  const minimalAdminMode = isAdminRoute || isHoldedConnectorAdminRoute;
   const enableIsaak = false;
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [demoOnlyAccess, setDemoOnlyAccess] = useState(false);
@@ -158,11 +161,13 @@ export default function DashboardClientLayout({ children, supportMode, supportTe
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
                 isDemo={isDemoMode}
+                minimalMode={minimalAdminMode}
               />
               <div className="flex min-h-screen w-full flex-col lg:pl-72">
                 <Topbar
                   onToggleSidebar={() => setSidebarOpen((v) => !v)}
                   onOpenPreferences={() => setPreferencesOpen(true)}
+                  minimalMode={minimalAdminMode}
                 />
                 <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 pb-10 sm:px-6 sm:py-8">
                   {children}

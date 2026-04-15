@@ -27,4 +27,10 @@ export const navItems: NavItem[] = [
   { label: 'Calendario', href: '/dashboard/calendar', icon: CalendarDays },
   { label: 'Configuración', href: '/dashboard/settings', icon: Settings },
   { label: 'Admin', href: '/dashboard/admin-dashboard', icon: Settings, roles: ['admin', 'owner'] },
+  {
+    label: 'Conector Holded',
+    href: '/dashboard/integrations/isaak-for-holded',
+    icon: Sparkles,
+    roles: ['admin', 'owner'],
+  },
 ];

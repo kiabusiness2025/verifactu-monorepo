@@ -13,6 +13,12 @@ jest.mock('next/link', () => ({
   ),
 }));
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
+
 function buildActions(): AvailableActionsDTO {
   return {
     reconnect: {

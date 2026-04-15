@@ -31,6 +31,7 @@ const HOLDED_SITE_URL =
 const CHATGPT_HOME_URL = 'https://chatgpt.com';
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
 const GOOGLE_REDIRECT_PENDING_KEY = 'holded_google_redirect_pending';
+const REMEMBER_DEVICE_KEY = 'holded_remember_device';
 
 function buildFallbackTarget(source: string) {
   return buildDashboardUrl(source);
@@ -200,6 +201,27 @@ function HoldedAuthContent() {
     if (nextParam) url.searchParams.set('next', nextParam);
     return url.toString();
   }, [source, nextParam]);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(REMEMBER_DEVICE_KEY);
+      if (stored === '1') {
+        setRememberDevice(true);
+      } else if (stored === '0') {
+        setRememberDevice(false);
+      }
+    } catch {
+      // ignore local storage access issues
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(REMEMBER_DEVICE_KEY, rememberDevice ? '1' : '0');
+    } catch {
+      // ignore local storage access issues
+    }
+  }, [rememberDevice]);
 
   useEffect(() => {
     let cancelled = false;

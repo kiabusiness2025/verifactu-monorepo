@@ -9,10 +9,14 @@ type SidebarProps = {
   isOpen: boolean;
   onClose: () => void;
   isDemo?: boolean;
+  minimalMode?: boolean;
 };
 
-export function Sidebar({ isOpen, onClose, isDemo = false }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, isDemo = false, minimalMode = false }: SidebarProps) {
   const pathname = usePathname() || '';
+  const visibleItems = minimalMode
+    ? navItems.filter((item) => item.href === '/dashboard/integrations/isaak-for-holded')
+    : navItems;
 
   return (
     <>
@@ -46,7 +50,7 @@ export function Sidebar({ isOpen, onClose, isDemo = false }: SidebarProps) {
 
         <nav className="px-3 py-4">
           <ul className="space-y-1">
-            {navItems.map((item) => {
+            {visibleItems.map((item) => {
               const targetHref = isDemo ? item.href.replace('/dashboard', '/demo') : item.href;
               const active =
                 targetHref === '/dashboard' || targetHref === '/demo'

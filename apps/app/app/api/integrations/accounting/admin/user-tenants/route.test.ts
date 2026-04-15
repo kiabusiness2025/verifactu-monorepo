@@ -8,11 +8,12 @@ jest.mock('@/lib/prisma', () => ({
   prisma: {
     membership: {
       findMany: jest.fn(),
+      update: jest.fn(),
     },
   },
 }));
 
-import { GET } from './route';
+import { GET, PATCH } from './route';
 import { requireAdmin } from '@/lib/adminAuth';
 import { prisma } from '@/lib/prisma';
 
@@ -86,5 +87,43 @@ describe('accounting admin user-tenants route', () => {
 
     expect(response.status).toBe(403);
     expect(payload.error).toContain('FORBIDDEN');
+  });
+
+  it('updates membership role and status through PATCH', async () => {
+    (prisma.membership.update as jest.Mock).mockResolvedValue({
+      id: 'm-1',
+      role: 'operator',
+      status: 'disabled',
+      disabledAt: new Date('2026-04-15T11:00:00.000Z'),
+    });
+
+    const response = await PATCH(
+      new Request('https://app.verifactu.business/api/integrations/accounting/admin/user-tenants', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          membershipId: 'm-1',
+          role: 'operator',
+          status: 'disabled',
+        }),
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.item).toEqual(
+      expect.objectContaining({
+        membershipId: 'm-1',
+        role: 'operator',
+        status: 'disabled',
+      })
+    );
+    expect(prisma.membership.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'm-1' },
+        data: expect.objectContaining({ role: 'operator', status: 'disabled' }),
+      })
+    );
   });
 });
