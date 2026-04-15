@@ -8,7 +8,31 @@ import {
 
 export const runtime = 'nodejs';
 
+async function retrySaveHoldedConnection(input: {
+  tenantId: string;
+  apiKey: string;
+  userId?: string | null;
+  probe: Awaited<ReturnType<typeof probeHoldedConnection>>;
+}) {
+  try {
+    return await saveHoldedConnection({
+      ...input,
+      channel: 'dashboard',
+    });
+  } catch (firstError) {
+    console.warn('[isaak holded connect] first save attempt failed, retrying', {
+      error: firstError instanceof Error ? firstError.message : String(firstError),
+    });
+
+    return saveHoldedConnection({
+      ...input,
+      channel: 'dashboard',
+    });
+  }
+}
+
 export async function POST(request: NextRequest) {
+  let stage = 'session';
   try {
     const session = await getHoldedSession();
 
@@ -26,6 +50,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Pega una API key valida de Holded.' }, { status: 400 });
     }
 
+    stage = 'probe';
     const probe = await probeHoldedConnection(apiKey);
 
     if (!probe.ok) {
@@ -39,12 +64,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const saved = await saveHoldedConnection({
+    stage = 'persist';
+    const saved = await retrySaveHoldedConnection({
       tenantId: session.tenantId,
       apiKey,
       userId: session.userId,
       probe,
-      channel: 'dashboard',
     });
 
     return NextResponse.json({
@@ -54,13 +79,14 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('[isaak holded connect] failed', {
+      stage,
       error: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json(
       {
         ok: false,
         error:
-          'La API key es valida, pero no hemos podido terminar de guardarla. Intenta de nuevo en unos segundos o escribe a soporte.',
+          'La conexion es valida, pero no hemos podido terminar de guardarla. Intenta de nuevo en unos segundos o escribe a soporte.',
       },
       { status: 500 }
     );
