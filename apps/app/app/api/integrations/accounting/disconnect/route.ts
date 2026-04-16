@@ -4,6 +4,10 @@ import {
   resolveHoldedSecurityAlertRecipients,
   sendHoldedSecurityAlertEmails,
 } from '@/lib/email/holdedSecurityAlerts';
+import {
+  assertHoldedConnectorAdminSessionAccess,
+  getHoldedConnectorAdminNotice,
+} from '@/lib/holdedConnectorAdmin';
 import { disconnectAccountingIntegration } from '@/lib/integrations/accountingStore';
 import { clearChatGptChannelIdentity } from '@/lib/integrations/channelIdentityStore';
 import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
@@ -14,18 +18,15 @@ import {
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
 import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import { resetGovernanceOnDisconnect } from '@/lib/integrations/holdedGovernanceService';
 import { forgetVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
-import {
-  assertHoldedConnectorAdminSessionAccess,
-  getHoldedConnectorAdminNotice,
-} from '@/lib/holdedConnectorAdmin';
 import prisma from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
 import {
   buildDefaultAvailableActions,
   buildGovernanceFlags,
   normalizeConnectionStatus,
 } from '@verifactu/integrations';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
@@ -130,29 +131,36 @@ export async function POST(request: NextRequest) {
   if (currentAvailableActions.disconnect.blocked) {
     logConnectorEvent(
       'api/integrations/accounting/disconnect',
-      'warn',
+      'info',
       buildConnectorEvent({
         requestId,
         tenantId: auth.tenantId,
         entryChannel,
         stage: 'guards',
-        outcome: 'blocked',
+        outcome: 'forced_disconnect',
         error: currentAvailableActions.disconnect.reason,
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json(
-        {
-          ok: false,
-          error: currentAvailableActions.disconnect.reason,
-          governanceFlags: currentGovernanceFlags,
-          availableActions: currentAvailableActions,
-          requestId,
-        },
-        { status: 409 }
-      ),
-      requestId
-    );
+  }
+
+  try {
+    await resetGovernanceOnDisconnect({
+      tenantId: auth.tenantId,
+      connectionId: current?.id ?? null,
+      channel: entryChannel,
+    });
+  } catch (governanceCleanupError) {
+    logConnectorEvent('api/integrations/accounting/disconnect', 'warn', {
+      requestId,
+      tenantId: auth.tenantId,
+      entryChannel,
+      stage: 'governance_cleanup',
+      outcome: 'cleanup_failed',
+      message:
+        governanceCleanupError instanceof Error
+          ? governanceCleanupError.message
+          : String(governanceCleanupError),
+    });
   }
 
   await disconnectAccountingIntegration(auth.tenantId, entryChannel);

@@ -744,6 +744,100 @@ export async function updateClaim(input: {
   return toClaimDto(updated);
 }
 
+export async function resetGovernanceOnDisconnect(input: {
+  tenantId: string;
+  connectionId?: string | null;
+  channel?: string | null;
+}) {
+  const connection = input.connectionId
+    ? await prismaAny.externalConnection.findFirst({
+        where: {
+          id: input.connectionId,
+          tenantId: input.tenantId,
+          provider: 'holded',
+        },
+      })
+    : await getTenantHoldedConnection(input.tenantId, input.channel);
+
+  if (!connection) {
+    return {
+      accessRequestsCancelled: 0,
+      claimsClosed: 0,
+      touchedConnection: false,
+    };
+  }
+
+  const now = new Date();
+  const openClaimStatuses = Array.from(OPEN_CLAIM_STATUSES);
+
+  return prismaAny.$transaction(async (tx: any) => {
+    const openAccessRequests = await tx.accessRequest.findMany({
+      where: {
+        connectionId: connection.id,
+        status: { in: ['submitted', 'under_review'] },
+      },
+      select: { id: true },
+    });
+
+    const openClaims = await tx.claimCase.findMany({
+      where: {
+        connectionId: connection.id,
+        status: { in: openClaimStatuses },
+      },
+      select: { id: true, status: true },
+    });
+
+    if (openAccessRequests.length > 0) {
+      await tx.accessRequest.updateMany({
+        where: { id: { in: openAccessRequests.map((item: { id: string }) => item.id) } },
+        data: {
+          status: 'cancelled',
+          resolvedByUserId: null,
+          resolvedAt: now,
+        },
+      });
+    }
+
+    if (openClaims.length > 0) {
+      await tx.claimCase.updateMany({
+        where: { id: { in: openClaims.map((item: { id: string }) => item.id) } },
+        data: {
+          status: 'closed',
+          resolvedByUserId: null,
+          resolvedAt: now,
+          outcome: 'closed_by_disconnect',
+        },
+      });
+
+      await tx.claimResolution.createMany({
+        data: openClaims.map((claim: { id: string; status: string }) => ({
+          claimCaseId: claim.id,
+          actorUserId: null,
+          action: 'claim_closed_by_disconnect',
+          previousStatus: claim.status,
+          nextStatus: 'closed',
+          notes: 'Claim closed automatically after connector disconnect reset.',
+          createdAt: now,
+        })),
+      });
+    }
+
+    await tx.externalConnection.update({
+      where: { id: connection.id },
+      data: {
+        underClaimReview: false,
+        governanceUpdatedAt: now,
+      },
+    });
+
+    return {
+      accessRequestsCancelled: openAccessRequests.length,
+      claimsClosed: openClaims.length,
+      touchedConnection: true,
+    };
+  });
+}
+
 export async function buildHoldedSummaries(input: { tenantId: string; channel?: string | null }) {
   const connection = await getTenantHoldedConnection(input.tenantId, input.channel);
   if (!connection) {

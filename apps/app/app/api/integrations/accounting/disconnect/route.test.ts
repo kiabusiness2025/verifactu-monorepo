@@ -12,6 +12,14 @@ jest.mock('@/lib/integrations/holdedConnectionResolver', () => ({
   resolveSharedHoldedConnectionStatusForTenant: jest.fn(),
 }));
 
+jest.mock('@/lib/integrations/holdedGovernanceService', () => ({
+  resetGovernanceOnDisconnect: jest.fn(async () => ({
+    accessRequestsCancelled: 0,
+    claimsClosed: 0,
+    touchedConnection: true,
+  })),
+}));
+
 jest.mock('@/lib/integrations/channelIdentityStore', () => ({
   clearChatGptChannelIdentity: jest.fn(async () => 0),
 }));
@@ -137,6 +145,7 @@ import { POST } from './route';
 import { requireTenantContext } from '@/lib/api/tenantAuth';
 import { disconnectAccountingIntegration } from '@/lib/integrations/accountingStore';
 import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import { resetGovernanceOnDisconnect } from '@/lib/integrations/holdedGovernanceService';
 import { clearChatGptChannelIdentity } from '@/lib/integrations/channelIdentityStore';
 import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
 import { forgetVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
@@ -263,6 +272,11 @@ describe('POST /api/integrations/accounting/disconnect', () => {
     expect(payload.status).toBe('disconnected');
     expect(payload.provider).toBe('holded');
     expect(payload.requestId).toEqual(expect.any(String));
+    expect(resetGovernanceOnDisconnect).toHaveBeenCalledWith({
+      tenantId: 'tenant-1',
+      connectionId: 'ext-1',
+      channel: 'dashboard',
+    });
     expect(disconnectAccountingIntegration).toHaveBeenCalledWith('tenant-1', 'dashboard');
     expect(clearChatGptChannelIdentity).toHaveBeenCalledWith({
       channelSubjectId: 'session-1',
@@ -305,28 +319,50 @@ describe('POST /api/integrations/accounting/disconnect', () => {
     });
   });
 
-  it('blocks disconnect while a claim is under review', async () => {
-    (resolveSharedHoldedConnectionStatusForTenant as jest.Mock).mockResolvedValue({
-      id: 'ext-claim-1',
-      tenantId: 'tenant-1',
-      provider: 'holded',
-      providerAccountId: 'provider-account-claim',
-      credentialType: 'api_key',
-      status: 'connected',
-      channel: 'dashboard',
-      originChannel: 'dashboard',
-      ownershipStatus: 'pending_confirmation',
-      managedByThirdParty: false,
-      clientAdminGap: false,
-      highGovernanceRisk: false,
-      underClaimReview: true,
-      technicalOperatorUserId: 'user-1',
-      connectedAt: null,
-      lastValidatedAt: null,
-      lastSyncAt: null,
-      lastError: null,
-      source: 'external_connection',
-    });
+  it('forces disconnect even while a claim is under review', async () => {
+    (resolveSharedHoldedConnectionStatusForTenant as jest.Mock)
+      .mockResolvedValueOnce({
+        id: 'ext-claim-1',
+        tenantId: 'tenant-1',
+        provider: 'holded',
+        providerAccountId: 'provider-account-claim',
+        credentialType: 'api_key',
+        status: 'connected',
+        channel: 'dashboard',
+        originChannel: 'dashboard',
+        ownershipStatus: 'pending_confirmation',
+        managedByThirdParty: false,
+        clientAdminGap: false,
+        highGovernanceRisk: false,
+        underClaimReview: true,
+        technicalOperatorUserId: 'user-1',
+        connectedAt: null,
+        lastValidatedAt: null,
+        lastSyncAt: null,
+        lastError: null,
+        source: 'external_connection',
+      })
+      .mockResolvedValueOnce({
+        id: 'ext-claim-1',
+        tenantId: 'tenant-1',
+        provider: 'holded',
+        providerAccountId: 'provider-account-claim',
+        credentialType: 'api_key',
+        status: 'disconnected',
+        channel: 'dashboard',
+        originChannel: 'dashboard',
+        ownershipStatus: 'pending_confirmation',
+        managedByThirdParty: false,
+        clientAdminGap: false,
+        highGovernanceRisk: false,
+        underClaimReview: false,
+        technicalOperatorUserId: null,
+        connectedAt: null,
+        lastValidatedAt: null,
+        lastSyncAt: null,
+        lastError: null,
+        source: 'external_connection',
+      });
 
     const response = await POST(
       new NextRequest('https://app.verifactu.business/api/integrations/accounting/disconnect', {
@@ -337,17 +373,15 @@ describe('POST /api/integrations/accounting/disconnect', () => {
     );
     const payload = await response.json();
 
-    expect(response.status).toBe(409);
-    expect(payload.ok).toBe(false);
-    expect(payload.governanceFlags).toMatchObject({
-      underClaimReview: true,
-      highGovernanceRisk: false,
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.status).toBe('disconnected');
+    expect(resetGovernanceOnDisconnect).toHaveBeenCalledWith({
+      tenantId: 'tenant-1',
+      connectionId: 'ext-claim-1',
+      channel: 'dashboard',
     });
-    expect(payload.availableActions.disconnect).toMatchObject({
-      blocked: true,
-      state: 'under_claim_review',
-    });
-    expect(disconnectAccountingIntegration).not.toHaveBeenCalled();
-    expect(sendHoldedConnectionLifecycleEmails).not.toHaveBeenCalled();
+    expect(disconnectAccountingIntegration).toHaveBeenCalledWith('tenant-1', 'dashboard');
+    expect(sendHoldedConnectionLifecycleEmails).toHaveBeenCalled();
   });
 });
