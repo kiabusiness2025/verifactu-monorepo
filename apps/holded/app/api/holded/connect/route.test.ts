@@ -127,19 +127,19 @@ jest.mock('@/app/lib/prisma', () => ({
   },
 }));
 
-import { getHoldedSession } from '@/app/lib/holded-session';
 import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
 import { sendPublicHighGovernanceRiskInternalAlertEmail } from '@/app/lib/communications/holded-governance-emails';
-import { buildConnectionStatusDto, recordUsageEvent } from '@verifactu/integrations';
-import { mintHoldedValidationToken } from '@/app/lib/holded-validation-token';
+import { writeHoldedActivity } from '@/app/lib/holded-activity';
 import {
   disconnectHoldedConnection,
   getHoldedConnection,
   probeHoldedConnection,
   saveHoldedConnection,
 } from '@/app/lib/holded-integration';
-import { writeHoldedActivity } from '@/app/lib/holded-activity';
+import { getHoldedSession } from '@/app/lib/holded-session';
+import { mintHoldedValidationToken } from '@/app/lib/holded-validation-token';
 import { prisma } from '@/app/lib/prisma';
+import { buildConnectionStatusDto, recordUsageEvent } from '@verifactu/integrations';
 import { POST } from './route';
 
 const mockGetHoldedSession = getHoldedSession as jest.Mock;
@@ -608,6 +608,25 @@ describe('POST /api/holded/connect', () => {
     expect(payload.reason).toBe('invalid_tax_id');
     expect(payload.error).toContain('NIF/CIF');
     expect(mockProbeHoldedConnection).not.toHaveBeenCalled();
+  });
+
+  it('does not block chatgpt channel when request contains stale invalid tax id', async () => {
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'chatgpt',
+          taxId: 'A123',
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(mockProbeHoldedConnection).toHaveBeenCalled();
   });
 
   it('returns 400 when contact phone is not valid for Spain', async () => {

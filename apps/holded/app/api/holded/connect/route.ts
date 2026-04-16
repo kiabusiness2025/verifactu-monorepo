@@ -408,7 +408,12 @@ export async function POST(request: NextRequest) {
     const requestedNotificationEmail = identity.notificationEmail;
     const validationToken = typeof body?.validationToken === 'string' ? body.validationToken : '';
 
-    if (identity.taxId && !isValidSpanishTaxId(identity.taxId)) {
+    // ChatGPT connector flow is API-key-first; ignore stale identity payloads from cached clients.
+    const shouldValidateIdentityFields = channel !== 'chatgpt';
+
+    // Only validate fields explicitly provided in this request — never reject pre-filled profile data
+    const explicitTaxId = normalizeTaxId(body?.taxId ?? body?.nif);
+    if (shouldValidateIdentityFields && explicitTaxId && !isValidSpanishTaxId(explicitTaxId)) {
       return withConnectorRequestId(
         NextResponse.json(
           {
@@ -428,7 +433,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (identity.contactPhone && !isLikelySpanishPhone(identity.contactPhone)) {
+    const explicitPhone = normalizeOptionalText(body?.contactPhone);
+    if (shouldValidateIdentityFields && explicitPhone && !isLikelySpanishPhone(explicitPhone)) {
       return withConnectorRequestId(
         NextResponse.json(
           {
