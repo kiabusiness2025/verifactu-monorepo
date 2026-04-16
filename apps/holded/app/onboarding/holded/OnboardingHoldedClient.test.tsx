@@ -24,6 +24,7 @@ const defaultProps = {
     taxId: 'B12345678',
     contactFirstName: 'Ana',
     contactLastName: 'Garcia',
+    contactRole: 'Administrador',
     contactEmail: 'ana@example.com',
     contactPhone: '+34600111222',
   },
@@ -51,14 +52,16 @@ describe('OnboardingHoldedClient', () => {
     expect(screen.getByText(/Confirmo que puedo conectar esta empresa/i)).toBeInTheDocument();
   });
 
-  it('starts from step 1 with empty fields when reset mode is enabled', () => {
+  it('starts from step 1 with prefilled editable fields when reset mode is enabled', () => {
     render(<OnboardingHoldedClient {...defaultProps} forceFullReset />);
 
     expect(screen.getByText('Nombre y apellidos')).toBeInTheDocument();
     expect(screen.queryByText('API key de Holded')).not.toBeInTheDocument();
 
     const continueButton = screen.getByRole('button', { name: 'Continuar' });
-    expect(continueButton).toBeDisabled();
+    expect(continueButton).toBeEnabled();
+    expect(screen.getByPlaceholderText('Tu nombre')).toHaveValue('Ana');
+    expect(screen.getByPlaceholderText('Tus apellidos')).toHaveValue('Garcia');
   });
 
   it('keeps API key first when ChatGPT flow is reset', () => {
@@ -187,6 +190,7 @@ describe('OnboardingHoldedClient', () => {
         taxId: 'B12345678',
         contactFirstName: 'Ana',
         contactLastName: 'Garcia',
+        contactRole: 'Administrador',
         contactEmail: 'ana@example.com',
         contactPhone: '+34600111222',
         notificationEmail: 'ana@example.com',

@@ -20,6 +20,8 @@ type InitialData = {
   roleInCompany: RoleValue | null;
   roleInCompanyOther: string;
   businessSector: string;
+  companySectorCode: string | null;
+  companyAddress: string;
   teamSize: string;
   website: string;
   phone: string;
@@ -53,22 +55,51 @@ const GOAL_OPTIONS: GoalValue[] = [
   'Llevar mejor la gestion diaria',
 ];
 
-const SECTOR_OPTIONS = [
-  'Servicios profesionales',
-  'Comercio',
-  'Tecnologia',
-  'Construccion',
-  'Hosteleria',
-  'Salud',
-  'Otro',
-];
+const CNAE_SECTION_OPTIONS = [
+  { value: 'A', label: 'Agricultura, ganaderia, silvicultura y pesca' },
+  { value: 'B', label: 'Industrias extractivas' },
+  { value: 'C', label: 'Industria manufacturera' },
+  { value: 'D', label: 'Suministro de energia electrica, gas, vapor y aire acondicionado' },
+  { value: 'E', label: 'Suministro de agua, saneamiento y gestion de residuos' },
+  { value: 'F', label: 'Construccion' },
+  { value: 'G', label: 'Comercio y reparacion de vehiculos de motor y motocicletas' },
+  { value: 'H', label: 'Transporte y almacenamiento' },
+  { value: 'I', label: 'Hosteleria' },
+  { value: 'J', label: 'Informacion y comunicaciones' },
+  { value: 'K', label: 'Actividades financieras y de seguros' },
+  { value: 'L', label: 'Actividades inmobiliarias' },
+  { value: 'M', label: 'Actividades profesionales, cientificas y tecnicas' },
+  { value: 'N', label: 'Actividades administrativas y servicios auxiliares' },
+  { value: 'O', label: 'Administracion publica, defensa y Seguridad Social obligatoria' },
+  { value: 'P', label: 'Educacion' },
+  { value: 'Q', label: 'Actividades sanitarias y de servicios sociales' },
+  { value: 'R', label: 'Actividades artisticas, recreativas y de entretenimiento' },
+  { value: 'S', label: 'Otros servicios' },
+  { value: 'T', label: 'Actividades de los hogares como empleadores y para uso propio' },
+  { value: 'U', label: 'Organizaciones y organismos extraterritoriales' },
+] as const;
 
 const TEAM_OPTIONS = ['Solo yo', '2-5 personas', '6-20 personas', 'Mas de 20'];
 
 const TOTAL_STEPS = 8;
+const PROGRESS_WIDTH_CLASSES = [
+  'w-[12.5%]',
+  'w-[25%]',
+  'w-[37.5%]',
+  'w-[50%]',
+  'w-[62.5%]',
+  'w-[75%]',
+  'w-[87.5%]',
+  'w-full',
+] as const;
 
 function normalizeName(value: string) {
   return value.trim().replace(/\s+/g, ' ');
+}
+
+function resolveSectorLabel(code: string | null) {
+  if (!code) return null;
+  return CNAE_SECTION_OPTIONS.find((option) => option.value === code)?.label || null;
 }
 
 function encodeHandoffPayload(value: unknown) {
@@ -183,6 +214,7 @@ export default function HoldedConversationalOnboardingClient({
   };
 
   const progress = Math.min(step + 1, TOTAL_STEPS);
+  const progressWidthClass = PROGRESS_WIDTH_CLASSES[progress - 1] || 'w-[12.5%]';
 
   const card = (content: ReactNode, optional = false) => (
     <div className="w-full max-w-3xl rounded-[2.25rem] border border-slate-200 bg-white/95 p-6 shadow-[0_35px_110px_-58px_rgba(15,23,42,0.45)] backdrop-blur sm:p-8">
@@ -198,8 +230,7 @@ export default function HoldedConversationalOnboardingClient({
       </div>
       <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-slate-100">
         <div
-          className="h-full rounded-full bg-[linear-gradient(90deg,#2361d8,#ff5460)] transition-all duration-300"
-          style={{ width: `${(progress / TOTAL_STEPS) * 100}%` }}
+          className={`h-full rounded-full bg-[linear-gradient(90deg,#2361d8,#ff5460)] transition-all duration-300 ${progressWidthClass}`}
         />
       </div>
       <div className="mt-6">{content}</div>
@@ -472,27 +503,32 @@ export default function HoldedConversationalOnboardingClient({
                                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4 text-base leading-8 text-slate-900">
                                     A que os dedicais principalmente?
                                   </div>
-                                  <div className="mt-5 flex flex-wrap gap-3">
-                                    {SECTOR_OPTIONS.map((option) => (
-                                      <button
-                                        key={option}
-                                        type="button"
-                                        onClick={() =>
-                                          setForm((current) => ({
-                                            ...current,
-                                            businessSector:
-                                              option === 'Otro' ? current.businessSector : option,
-                                          }))
-                                        }
-                                        className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
-                                          form.businessSector === option
-                                            ? 'border-[#ff5460]/25 bg-[#fff1f2] text-[#b42332]'
-                                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                                        }`}
-                                      >
-                                        {option}
-                                      </button>
-                                    ))}
+                                  <div className="mt-5">
+                                    <label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                                      Sector (CNAE base)
+                                    </label>
+                                    <select
+                                      value={form.companySectorCode || ''}
+                                      onChange={(event) => {
+                                        const selectedCode = event.target.value || null;
+                                        const selectedLabel = resolveSectorLabel(selectedCode);
+                                        setForm((current) => ({
+                                          ...current,
+                                          companySectorCode: selectedCode,
+                                          businessSector: selectedLabel || current.businessSector,
+                                        }));
+                                      }}
+                                      title="Sector de actividad"
+                                      aria-label="Sector de actividad"
+                                      className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#2361d8]"
+                                    >
+                                      <option value="">Selecciona sector</option>
+                                      {CNAE_SECTION_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                          {option.value} - {option.label}
+                                        </option>
+                                      ))}
+                                    </select>
                                   </div>
                                   <div className="mt-5">
                                     <input
@@ -567,6 +603,22 @@ export default function HoldedConversationalOnboardingClient({
                                         Ya he detectado algunos datos utiles
                                       </div>
                                       <div className="mt-5 space-y-4">
+                                        <div>
+                                          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                                            Direccion de empresa
+                                          </div>
+                                          <input
+                                            value={form.companyAddress}
+                                            onChange={(event) =>
+                                              setForm((current) => ({
+                                                ...current,
+                                                companyAddress: event.target.value,
+                                              }))
+                                            }
+                                            placeholder="Direccion fiscal o principal"
+                                            className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#2361d8]"
+                                          />
+                                        </div>
                                         <div>
                                           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                                             Web

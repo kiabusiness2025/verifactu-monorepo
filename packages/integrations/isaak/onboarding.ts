@@ -22,6 +22,8 @@ export type IsaakOnboardingProfileInput = {
   roleInCompany: IsaakRoleInCompany;
   roleInCompanyOther?: string | null;
   businessSector: string;
+  companySectorCode?: string | null;
+  companyAddress?: string | null;
   teamSize?: string | null;
   website?: string | null;
   phone?: string | null;

@@ -13,7 +13,9 @@ import {
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
 import { sendPublicHighGovernanceRiskInternalAlertEmail } from '@/app/lib/communications/holded-governance-emails';
+import { createCompanyEmailVerificationToken } from '@/app/lib/company-email-verification';
 import { verifyHoldedValidationToken } from '@/app/lib/holded-validation-token';
+import { buildProfileOnboardingUrl, HOLDED_PUBLIC_URL } from '@/app/lib/holded-navigation';
 import {
   disconnectHoldedConnection,
   getHoldedConnection,
@@ -54,6 +56,69 @@ function normalizeTaxId(value: unknown) {
   return normalized ? normalized.toUpperCase() : null;
 }
 
+function isValidSpanishTaxId(value: string) {
+  const normalized = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const nifLetters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+
+  if (/^[0-9]{8}[A-Z]$/.test(normalized)) {
+    const number = Number.parseInt(normalized.slice(0, 8), 10);
+    return nifLetters[number % 23] === normalized.slice(-1);
+  }
+
+  if (/^[XYZ][0-9]{7}[A-Z]$/.test(normalized)) {
+    const prefix = normalized[0] === 'X' ? '0' : normalized[0] === 'Y' ? '1' : '2';
+    const number = Number.parseInt(`${prefix}${normalized.slice(1, 8)}`, 10);
+    return nifLetters[number % 23] === normalized.slice(-1);
+  }
+
+  if (/^[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J]$/.test(normalized)) {
+    const letter = normalized[0];
+    const digits = normalized.slice(1, 8);
+    const control = normalized.slice(-1);
+    let sumEven = 0;
+    let sumOdd = 0;
+
+    for (let index = 0; index < digits.length; index += 1) {
+      const digit = Number.parseInt(digits[index], 10);
+      if ((index + 1) % 2 === 0) {
+        sumEven += digit;
+      } else {
+        const doubled = digit * 2;
+        sumOdd += Math.floor(doubled / 10) + (doubled % 10);
+      }
+    }
+
+    const total = sumEven + sumOdd;
+    const controlDigit = (10 - (total % 10)) % 10;
+    const controlLetter = 'JABCDEFGHI'[controlDigit];
+
+    if ('PQRSNW'.includes(letter)) {
+      return control === controlLetter;
+    }
+
+    if ('ABEH'.includes(letter)) {
+      return control === String(controlDigit);
+    }
+
+    return control === String(controlDigit) || control === controlLetter;
+  }
+
+  return false;
+}
+
+function isLikelySpanishPhone(value: string) {
+  const normalized = value.replace(/[^\d+]/g, '');
+  if (normalized.startsWith('+34')) {
+    const national = normalized.slice(3);
+    return /^[6789]\d{8}$/.test(national);
+  }
+  if (normalized.startsWith('0034')) {
+    const national = normalized.slice(4);
+    return /^[6789]\d{8}$/.test(national);
+  }
+  return /^[6789]\d{8}$/.test(normalized);
+}
+
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
@@ -92,6 +157,7 @@ async function readExistingIdentity(tenantId: string) {
           legalName: true,
           taxId: true,
           representative: true,
+          representativeRole: true,
           email: true,
           phone: true,
         },
@@ -106,7 +172,8 @@ async function readExistingIdentity(tenantId: string) {
       normalizeOptionalText(tenant?.profile?.legalName) || normalizeOptionalText(tenant?.legalName),
     taxId: normalizeTaxId(tenant?.profile?.taxId) || normalizeTaxId(tenant?.nif),
     representative: normalizeOptionalText(tenant?.profile?.representative),
-    contactEmail: normalizeOptionalEmail(tenant?.profile?.email),
+    contactRole: normalizeOptionalText(tenant?.profile?.representativeRole),
+    verifiedCompanyEmail: normalizeOptionalEmail(tenant?.profile?.email),
     contactPhone: normalizeOptionalText(tenant?.profile?.phone),
   };
 }
@@ -137,6 +204,9 @@ function resolveConnectionIdentity(input: {
     existingNameParts.lastName ||
     sessionNameParts.lastName ||
     null;
+  const contactRole = normalizeOptionalText(input.body.contactRole) || input.existing.contactRole;
+  const requestedCompanyEmail = requestedContactEmail;
+  const verifiedCompanyEmail = input.existing.verifiedCompanyEmail;
 
   return {
     companyName:
@@ -146,10 +216,11 @@ function resolveConnectionIdentity(input: {
     contactFirstName,
     contactLastName,
     contactFullName: buildFullName(contactFirstName, contactLastName),
-    contactEmail:
-      input.existing.contactEmail ||
-      requestedContactEmail ||
-      normalizeOptionalEmail(input.sessionEmail),
+    contactRole,
+    requestedCompanyEmail,
+    verifiedCompanyEmail,
+    notificationEmail:
+      requestedContactEmail || verifiedCompanyEmail || normalizeOptionalEmail(input.sessionEmail),
     contactPhone:
       normalizeOptionalText(input.body.contactPhone) || input.existing.contactPhone || null,
   };
@@ -175,7 +246,8 @@ async function persistConnectionIdentity(input: {
               legalName: input.identity.legalName || input.identity.companyName || undefined,
               taxId: input.identity.taxId || undefined,
               representative: input.identity.contactFullName || undefined,
-              email: input.identity.contactEmail || undefined,
+              representativeRole: input.identity.contactRole || undefined,
+              email: input.identity.verifiedCompanyEmail || undefined,
               phone: input.identity.contactPhone || undefined,
             },
             update: {
@@ -184,7 +256,8 @@ async function persistConnectionIdentity(input: {
               legalName: input.identity.legalName || input.identity.companyName || undefined,
               taxId: input.identity.taxId || undefined,
               representative: input.identity.contactFullName || undefined,
-              email: input.identity.contactEmail || undefined,
+              representativeRole: input.identity.contactRole || undefined,
+              email: input.identity.verifiedCompanyEmail || undefined,
               phone: input.identity.contactPhone || undefined,
             },
           },
@@ -285,8 +358,49 @@ export async function POST(request: NextRequest) {
       sessionName: session.name || null,
       sessionEmail: session.email || null,
     });
-    const requestedNotificationEmail = identity.contactEmail;
+    const requestedNotificationEmail = identity.notificationEmail;
     const validationToken = typeof body?.validationToken === 'string' ? body.validationToken : '';
+
+    if (identity.taxId && !isValidSpanishTaxId(identity.taxId)) {
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            ok: false,
+            connection: null,
+            detectedCompany: null,
+            governanceFlags: null,
+            availableActions: null,
+            warnings: [],
+            nextStep: null,
+            error: 'El NIF/CIF no es valido. Corrigelo antes de continuar.',
+            reason: 'invalid_tax_id',
+          },
+          { status: 400 }
+        ),
+        requestId
+      );
+    }
+
+    if (identity.contactPhone && !isLikelySpanishPhone(identity.contactPhone)) {
+      return withConnectorRequestId(
+        NextResponse.json(
+          {
+            ok: false,
+            connection: null,
+            detectedCompany: null,
+            governanceFlags: null,
+            availableActions: null,
+            warnings: [],
+            nextStep: null,
+            error:
+              'El telefono no tiene un formato valido de Espana. Corrigelo antes de continuar.',
+            reason: 'invalid_contact_phone',
+          },
+          { status: 400 }
+        ),
+        requestId
+      );
+    }
 
     if (!apiKey) {
       logConnectorEvent(
@@ -534,6 +648,37 @@ export async function POST(request: NextRequest) {
     }
 
     let runtimeConnection: Awaited<ReturnType<typeof getHoldedConnection>> | null = null;
+    const profileCompletionUrl = buildProfileOnboardingUrl(
+      'holded_connected_email',
+      buildProfileOnboardingUrl('holded_connected_email')
+    );
+    const mustVerifyCompanyEmail = Boolean(
+      identity.requestedCompanyEmail &&
+      identity.requestedCompanyEmail !== identity.verifiedCompanyEmail
+    );
+    const companyEmailVerificationToken = mustVerifyCompanyEmail
+      ? createCompanyEmailVerificationToken({
+          tenantId: session.tenantId,
+          email: identity.requestedCompanyEmail!,
+        })
+      : null;
+    const companyEmailVerificationUrl = companyEmailVerificationToken
+      ? `${HOLDED_PUBLIC_URL}/api/holded/company-email/verify?token=${encodeURIComponent(
+          companyEmailVerificationToken
+        )}&next=${encodeURIComponent(profileCompletionUrl)}`
+      : null;
+
+    if (mustVerifyCompanyEmail && !companyEmailVerificationUrl) {
+      logConnectorEvent('api/holded/connect', 'warn', {
+        requestId,
+        tenantId: session.tenantId,
+        userId: session.userId,
+        entryChannel: channel,
+        stage: 'notify',
+        outcome: 'company_email_verification_unavailable',
+        reason: 'missing_signing_secret',
+      });
+    }
     let connection = buildConnectionStatusDto({
       connectionId: `${session.tenantId}:${channel}`,
       tenantId: session.tenantId,
@@ -592,9 +737,12 @@ export async function POST(request: NextRequest) {
                   userNotificationEmail?.split('@')[0] ||
                   'Hola',
                 userEmail: userNotificationEmail || notificationEmail!,
-                companyEmail: notificationEmail || null,
+                companyEmail:
+                  identity.requestedCompanyEmail || identity.verifiedCompanyEmail || null,
                 companyName: identity.companyName || saved?.tenantName || 'tu empresa',
                 supportedModules: readProbeSupportedModules(probe),
+                profileCompletionUrl,
+                companyEmailVerificationUrl,
               })
             : Promise.resolve(null),
           getHoldedConnection(session.tenantId, channel),
@@ -742,6 +890,8 @@ export async function POST(request: NextRequest) {
         nextStep: warnings.length > 0 ? 'needs_additional_admin' : 'connected',
         error: null,
         notificationEmail,
+        companyEmailVerificationPending: mustVerifyCompanyEmail,
+        companyEmailVerified: !mustVerifyCompanyEmail,
         requestId,
         legacyConnection: {
           ...saved,

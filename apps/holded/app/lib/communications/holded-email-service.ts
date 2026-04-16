@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import {
+  buildHoldedCompanyEmailVerificationEmail,
   buildHoldedConnectedAdminEmail,
   buildHoldedConnectedEmail,
   buildHoldedInternalLeadEmail,
@@ -21,6 +22,8 @@ type ConnectedPayload = {
   companyEmail?: string | null;
   companyName: string;
   supportedModules: string[];
+  profileCompletionUrl?: string | null;
+  companyEmailVerificationUrl?: string | null;
 };
 
 function cleanEnv(value: string | undefined) {
@@ -136,14 +139,20 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
 
   const appSiteUrl =
     cleanEnv(process.env.NEXT_PUBLIC_APP_SITE_URL) || 'https://app.verifactu.business';
+  const holdedSiteUrl =
+    cleanEnv(process.env.NEXT_PUBLIC_HOLDED_SITE_URL) || 'https://holded.verifactu.business';
   const chatUrl = `${appSiteUrl}/dashboard?source=holded_connected_email`;
   const settingsUrl = `${appSiteUrl}/dashboard/integrations?source=holded_connected_email`;
+  const profileCompletionUrl =
+    cleanEnv(input.profileCompletionUrl || undefined) ||
+    `${holdedSiteUrl}/onboarding/profile?source=holded_connected_email`;
   const customer = buildHoldedConnectedEmail({
     name: input.name,
     email: input.userEmail,
     companyName: input.companyName,
     chatUrl,
     settingsUrl,
+    profileCompletionUrl,
     supportedModules: input.supportedModules,
   });
   const admin = buildHoldedConnectedAdminEmail({
@@ -172,13 +181,22 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
     normalizedCompanyEmail &&
     normalizedCompanyEmail.toLowerCase() !== input.userEmail.toLowerCase()
   ) {
+    const verificationTemplate =
+      input.companyEmailVerificationUrl && input.companyEmailVerificationUrl.trim().length > 0
+        ? buildHoldedCompanyEmailVerificationEmail({
+            companyName: input.companyName,
+            verificationUrl: input.companyEmailVerificationUrl,
+            profileCompletionUrl,
+          })
+        : null;
+
     tasks.push(
       resend.emails.send({
         from,
         to: [normalizedCompanyEmail],
-        subject: customer.subject,
-        html: customer.html,
-        text: customer.text,
+        subject: verificationTemplate?.subject || customer.subject,
+        html: verificationTemplate?.html || customer.html,
+        text: verificationTemplate?.text || customer.text,
         replyTo,
       })
     );

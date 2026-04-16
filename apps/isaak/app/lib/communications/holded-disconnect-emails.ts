@@ -54,11 +54,7 @@ function formatDate(value: string) {
 }
 
 function resolveSender() {
-  return (
-    cleanEnv(process.env.RESEND_FROM_HOLDED) ||
-    cleanEnv(process.env.RESEND_FROM) ||
-    'Isaak for Holded <holded@verifactu.business>'
-  );
+  return cleanEnv(process.env.RESEND_FROM_HOLDED) || 'Conector Holded <holded@verifactu.business>';
 }
 
 function resolveReplyTo() {
@@ -70,21 +66,21 @@ function buildUserEmail(input: DisconnectNotificationInput) {
   const disconnectedAt = formatDate(input.disconnectedAtIso);
 
   return {
-    subject: 'Holded se ha desconectado de Isaak',
+    subject: 'Tu conexion de Holded se ha desconectado',
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff7f7;">
         <div style="background:#ffffff;border:1px solid #fecaca;border-radius:24px;padding:28px;box-shadow:0 18px 40px rgba(15,23,42,0.06);">
           <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:#fef2f2;color:#b91c1c;font-size:12px;font-weight:700;letter-spacing:0.04em;">Aviso de seguridad</div>
-          <h1 style="font-size:28px;line-height:1.15;margin:16px 0 12px;">Holded se ha desconectado de Isaak</h1>
+          <h1 style="font-size:28px;line-height:1.15;margin:16px 0 12px;">Tu conexion de Holded se ha desconectado</h1>
           <p style="margin:0 0 14px;">${escapeHtml(greeting(input.userName))}</p>
           <p style="margin:0 0 14px;">Hemos detectado que la conexion de Holded para <strong>${escapeHtml(company)}</strong> se ha desconectado el <strong>${escapeHtml(disconnectedAt)}</strong>.</p>
-          <p style="margin:0 0 14px;">Mientras siga desconectado, Isaak perdera acceso a los datos reales de tu empresa en Holded y algunas respuestas o acciones quedaran limitadas.</p>
+          <p style="margin:0 0 14px;">Mientras siga desconectado, no podremos sincronizar los datos de tu empresa y algunas funciones quedaran limitadas.</p>
           <p style="margin:0 0 20px;">Si no has sido tu, revisa el acceso cuanto antes y vuelve a conectar Holded.</p>
-          <a href="https://isaak.verifactu.business/settings?section=connections" style="display:inline-block;background:#b91c1c;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Revisar conexion</a>
+          <a href="https://holded.verifactu.business/onboarding/holded" style="display:inline-block;background:#b91c1c;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Revisar conexion</a>
         </div>
       </div>
     `.trim(),
-    text: `${greeting(input.userName)}\n\nHemos detectado que la conexion de Holded para ${company} se ha desconectado el ${disconnectedAt}.\n\nMientras siga desconectado, Isaak perdera acceso a los datos reales de tu empresa en Holded.\n\nRevisa la conexion aqui: https://isaak.verifactu.business/settings?section=connections`,
+    text: `${greeting(input.userName)}\n\nHemos detectado que la conexion de Holded para ${company} se ha desconectado el ${disconnectedAt}.\n\nMientras siga desconectado, no podremos sincronizar los datos de tu empresa y algunas funciones quedaran limitadas.\n\nRevisa la conexion aqui: https://holded.verifactu.business/onboarding/holded`,
   };
 }
 
@@ -100,11 +96,11 @@ function buildAdminEmail(input: DisconnectNotificationInput) {
         <p style="margin:0 0 10px;"><strong>Empresa:</strong> ${escapeHtml(company)}</p>
         <p style="margin:0 0 10px;"><strong>Email usuario:</strong> ${escapeHtml(input.userEmail || 'no disponible')}</p>
         <p style="margin:0 0 10px;"><strong>Fecha:</strong> ${escapeHtml(disconnectedAt)}</p>
-        <p style="margin:0 0 16px;">Isaak deja de tener acceso a datos reales hasta que Holded vuelva a conectarse.</p>
-        <a href="https://isaak.verifactu.business/settings?section=connections" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir ajustes</a>
+        <p style="margin:0 0 16px;">La sincronizacion queda pausada hasta que Holded vuelva a conectarse.</p>
+        <a href="https://holded.verifactu.business/onboarding/holded" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir conector</a>
       </div>
     `.trim(),
-    text: `Desconexion de Holded detectada\n\nEmpresa: ${company}\nEmail usuario: ${input.userEmail || 'no disponible'}\nFecha: ${disconnectedAt}\n\nIsaak deja de tener acceso a datos reales hasta que Holded vuelva a conectarse.\n\nAjustes: https://isaak.verifactu.business/settings?section=connections`,
+    text: `Desconexion de Holded detectada\n\nEmpresa: ${company}\nEmail usuario: ${input.userEmail || 'no disponible'}\nFecha: ${disconnectedAt}\n\nLa sincronizacion queda pausada hasta que Holded vuelva a conectarse.\n\nConector: https://holded.verifactu.business/onboarding/holded`,
   };
 }
 

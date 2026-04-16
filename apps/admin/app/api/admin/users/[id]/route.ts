@@ -222,6 +222,137 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       [userId]
     );
 
+    let connectorUsage: {
+      totalConnections: number;
+      activeConnections: number;
+      firstConnectedAt: string | null;
+      lastValidatedAt: string | null;
+      usageDays: number | null;
+      approximateLocations: Array<{
+        tenantId: string;
+        tenantName: string;
+        city: string | null;
+        country: string | null;
+      }>;
+      connections: Array<{
+        connectionId: string;
+        tenantId: string;
+        tenantName: string;
+        channelKey: string;
+        originChannel: string | null;
+        connectionStatus: string;
+        connectedAt: string | null;
+        lastValidatedAt: string | null;
+        disconnectedAt: string | null;
+      }>;
+    } = {
+      totalConnections: 0,
+      activeConnections: 0,
+      firstConnectedAt: null,
+      lastValidatedAt: null,
+      usageDays: null,
+      approximateLocations: [],
+      connections: [],
+    };
+
+    try {
+      const connectorRows = await query<{
+        connection_id: string;
+        tenant_id: string;
+        tenant_name: string;
+        city: string | null;
+        country: string | null;
+        channel_key: string;
+        origin_channel: string | null;
+        connection_status: string;
+        connected_at: string | null;
+        last_validated_at: string | null;
+        disconnected_at: string | null;
+      }>(
+        `SELECT
+          ec.id as connection_id,
+          ec.tenant_id,
+          t.name as tenant_name,
+          t.city,
+          t.country,
+          ec.channel_key,
+          ec.origin_channel,
+          ec.connection_status,
+          ec.connected_at,
+          ec.last_validated_at,
+          ec.disconnected_at
+        FROM external_connections ec
+        JOIN tenants t ON t.id = ec.tenant_id
+        WHERE ec.provider = 'holded'
+          AND ec.tenant_id IN (
+            SELECT tenant_id FROM memberships WHERE user_id = $1
+          )
+        ORDER BY ec.created_at DESC`,
+        [userId]
+      );
+
+      const firstConnectedTimestamp = connectorRows
+        .map((row) => row.connected_at)
+        .filter((value): value is string => Boolean(value))
+        .map((value) => new Date(value).getTime())
+        .filter((value) => Number.isFinite(value))
+        .sort((a, b) => a - b)[0];
+
+      const lastValidatedTimestamp = connectorRows
+        .map((row) => row.last_validated_at)
+        .filter((value): value is string => Boolean(value))
+        .map((value) => new Date(value).getTime())
+        .filter((value) => Number.isFinite(value))
+        .sort((a, b) => b - a)[0];
+
+      const locationMap = new Map<
+        string,
+        { tenantId: string; tenantName: string; city: string | null; country: string | null }
+      >();
+      for (const row of connectorRows) {
+        if (!row.city && !row.country) continue;
+        const key = `${row.tenant_id}:${row.city || ''}:${row.country || ''}`;
+        if (!locationMap.has(key)) {
+          locationMap.set(key, {
+            tenantId: row.tenant_id,
+            tenantName: row.tenant_name,
+            city: row.city,
+            country: row.country,
+          });
+        }
+      }
+
+      connectorUsage = {
+        totalConnections: connectorRows.length,
+        activeConnections: connectorRows.filter((row) => row.connection_status === 'connected')
+          .length,
+        firstConnectedAt: firstConnectedTimestamp
+          ? new Date(firstConnectedTimestamp).toISOString()
+          : null,
+        lastValidatedAt: lastValidatedTimestamp
+          ? new Date(lastValidatedTimestamp).toISOString()
+          : null,
+        usageDays:
+          firstConnectedTimestamp && firstConnectedTimestamp > 0
+            ? Math.max(1, Math.ceil((Date.now() - firstConnectedTimestamp) / (1000 * 60 * 60 * 24)))
+            : null,
+        approximateLocations: Array.from(locationMap.values()),
+        connections: connectorRows.map((row) => ({
+          connectionId: row.connection_id,
+          tenantId: row.tenant_id,
+          tenantName: row.tenant_name,
+          channelKey: row.channel_key,
+          originChannel: row.origin_channel,
+          connectionStatus: row.connection_status,
+          connectedAt: row.connected_at,
+          lastValidatedAt: row.last_validated_at,
+          disconnectedAt: row.disconnected_at,
+        })),
+      };
+    } catch (connectorUsageError) {
+      console.warn('admin users[id] connector usage unavailable', connectorUsageError);
+    }
+
     return NextResponse.json({
       user,
       memberships,
@@ -234,6 +365,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       profileChanges: profileChangesResult[0] || null,
       collaborators: collaboratorsResult,
       expensesActivity: expensesActivityResult,
+      connectorUsage,
     });
   } catch (error: any) {
     console.error('Error fetching user details:', error);
@@ -313,7 +445,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
  *
  * Elimina usuario (soft delete o hard delete según configuración)
  */
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const admin = await requireAdmin(request);
 
@@ -331,15 +466,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'No puedes eliminar tu propio usuario' }, { status: 400 });
     }
 
-    const protectedEmails = (
-      [
-        'support@verifactu.business',
-        process.env.ADMIN_ALLOWED_EMAIL || '',
-        ...(process.env.ADMIN_EMAILS || '').split(','),
-      ]
-        .map((value) => value.trim().toLowerCase())
-        .filter(Boolean)
-    );
+    const protectedEmails = [
+      'support@verifactu.business',
+      process.env.ADMIN_ALLOWED_EMAIL || '',
+      ...(process.env.ADMIN_EMAILS || '').split(','),
+    ]
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
     const allowedDomain = (process.env.ADMIN_ALLOWED_DOMAIN || 'verifactu.business')
       .trim()
       .toLowerCase();

@@ -24,7 +24,14 @@ type HoldedConnectedEmailInput = {
   companyName: string;
   chatUrl: string;
   settingsUrl: string;
+  profileCompletionUrl?: string;
   supportedModules: string[];
+};
+
+type HoldedCompanyEmailVerificationInput = {
+  companyName: string;
+  verificationUrl: string;
+  profileCompletionUrl: string;
 };
 
 function escapeHtml(value: string): string {
@@ -180,6 +187,7 @@ export function buildHoldedAccessReadyEmail(input: AccessEmailInput): EmailTempl
 export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): EmailTemplate {
   const hello = greeting(input.name);
   const modules = input.supportedModules.join(', ') || 'sin detalle';
+  const profileCompletionUrl = input.profileCompletionUrl || input.settingsUrl;
 
   return {
     subject: `Holded conectado en ${input.companyName}`,
@@ -195,15 +203,35 @@ export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): Ema
           <ol style="padding-left:18px;margin:0;">
             <li style="margin:0 0 6px;">Abre tu panel principal.</li>
             <li style="margin:0 0 6px;">Revisa conexiones y estado de sincronizacion.</li>
-            <li style="margin:0;">Completa el perfil fiscal cuando te venga bien.</li>
+            <li style="margin:0;">Completa datos de empresa pendientes para dejar la empresa verificada.</li>
           </ol>
         </div>
         <a href="${escapeHtml(input.chatUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir panel</a>
-        <a href="${escapeHtml(input.settingsUrl)}" style="display:inline-block;margin-left:12px;background:#ffffff;color:#b4233c;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;border:1px solid #f3d0d7;">Revisar ajustes</a>
+        <a href="${escapeHtml(profileCompletionUrl)}" style="display:inline-block;margin-left:12px;background:#ffffff;color:#b4233c;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;border:1px solid #f3d0d7;">Completar datos</a>
       `,
       footer: legalFooter(),
     }),
-    text: `${hello}\n\nLa conexion de Holded para ${input.companyName} ya esta activa.\n\nSiguientes pasos:\n1) Abre tu panel\n2) Revisa conexiones y estado\n3) Completa perfil fiscal cuando quieras\n\nPanel: ${input.chatUrl}\nAjustes: ${input.settingsUrl}`,
+    text: `${hello}\n\nLa conexion de Holded para ${input.companyName} ya esta activa.\n\nSiguientes pasos:\n1) Abre tu panel\n2) Revisa conexiones y estado\n3) Completa datos de empresa pendientes para dejar la empresa verificada\n\nPanel: ${input.chatUrl}\nCompletar datos: ${profileCompletionUrl}`,
+  };
+}
+
+export function buildHoldedCompanyEmailVerificationEmail(
+  input: HoldedCompanyEmailVerificationInput
+): EmailTemplate {
+  return {
+    subject: `Confirma el correo de empresa de ${input.companyName}`,
+    html: cardLayout({
+      label: 'Verificacion de correo',
+      title: 'Confirma este correo para verificar la empresa',
+      body: `
+        <p style="margin:0 0 14px;">Hemos recibido este correo como correo de empresa para <strong>${escapeHtml(input.companyName)}</strong>.</p>
+        <p style="margin:0 0 18px;">Para dejar la empresa verificada, confirma este correo con el siguiente boton.</p>
+        <a href="${escapeHtml(input.verificationUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Confirmar correo de empresa</a>
+        <p style="margin:18px 0 0;color:#64748b;font-size:13px;">Despues podras completar sector CNAE y direccion de empresa aqui: <a href="${escapeHtml(input.profileCompletionUrl)}" style="color:#b4233c;">completar datos</a>.</p>
+      `,
+      footer: legalFooter(),
+    }),
+    text: `Confirma el correo de empresa de ${input.companyName}.\n\nVerificar correo: ${input.verificationUrl}\n\nCompletar datos de empresa: ${input.profileCompletionUrl}`,
   };
 }
 

@@ -46,6 +46,10 @@ async function readTenantProfileSafe(tenantId: string) {
       select: {
         tradeName: true,
         legalName: true,
+        cnaeCode: true,
+        cnaeText: true,
+        cnae: true,
+        address: true,
         representative: true,
         phone: true,
         website: true,
@@ -126,7 +130,14 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
           onboardingState.profile?.roleInCompanyOther ||
           '',
         businessSector:
-          onboardingState.draft?.businessSector || onboardingState.profile?.businessSector || '',
+          onboardingState.draft?.businessSector ||
+          onboardingState.profile?.businessSector ||
+          tenantProfile?.cnaeText ||
+          tenantProfile?.cnae ||
+          '',
+        companySectorCode:
+          onboardingState.draft?.companySectorCode || tenantProfile?.cnaeCode || null,
+        companyAddress: onboardingState.draft?.companyAddress || tenantProfile?.address || '',
         teamSize: onboardingState.draft?.teamSize || onboardingState.profile?.teamSize || '',
         website:
           onboardingState.draft?.website ||

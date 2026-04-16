@@ -3,16 +3,16 @@
 import { useToast } from '@/components/notifications/ToastNotifications';
 import { formatCurrency, formatNumber, formatShortDate } from '@/src/lib/formatters';
 import {
-    Activity,
-    ArrowLeft,
-    Building2,
-    Clock,
-    CreditCard,
-    Edit2,
-    LogIn,
-    MessageSquare,
-    Settings,
-    Users,
+  Activity,
+  ArrowLeft,
+  Building2,
+  Clock,
+  CreditCard,
+  Edit2,
+  LogIn,
+  MessageSquare,
+  Settings,
+  Users,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -95,15 +95,36 @@ interface UserDetails {
     tenant_name: string;
     created_at: string;
   }>;
+  connectorUsage: {
+    totalConnections: number;
+    activeConnections: number;
+    firstConnectedAt: string | null;
+    lastValidatedAt: string | null;
+    usageDays: number | null;
+    approximateLocations: Array<{
+      tenantId: string;
+      tenantName: string;
+      city: string | null;
+      country: string | null;
+    }>;
+    connections: Array<{
+      connectionId: string;
+      tenantId: string;
+      tenantName: string;
+      channelKey: string;
+      originChannel: string | null;
+      connectionStatus: string;
+      connectedAt: string | null;
+      lastValidatedAt: string | null;
+      disconnectedAt: string | null;
+    }>;
+  };
 }
 
 export default function UserDetailPage() {
   const params = useParams<{ id?: string | string[] }>();
-  const userId = typeof params?.id === 'string'
-    ? params.id
-    : Array.isArray(params?.id)
-      ? params.id[0]
-      : '';
+  const userId =
+    typeof params?.id === 'string' ? params.id : Array.isArray(params?.id) ? params.id[0] : '';
   const router = useRouter();
   const { success, error: showError, warning } = useToast();
   const [data, setData] = useState<UserDetails | null>(null);
@@ -205,6 +226,7 @@ export default function UserDetailPage() {
     profileChanges,
     collaborators,
     expensesActivity,
+    connectorUsage,
   } = data;
 
   return (
@@ -291,6 +313,105 @@ export default function UserDetailPage() {
             <p className="text-xs text-slate-500">{expensesActivity.length} gastos</p>
           </div>
         </div>
+      </div>
+
+      {/* Uso del Conector Holded */}
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <Clock className="h-5 w-5" />
+          Uso del Conector Holded
+        </h2>
+
+        {connectorUsage.totalConnections === 0 ? (
+          <p className="text-sm text-slate-500">Sin conexiones de Holded registradas</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs font-semibold uppercase text-slate-500">Conexiones</p>
+                <p className="mt-1 text-xl font-bold text-slate-900">
+                  {connectorUsage.totalConnections}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs font-semibold uppercase text-slate-500">Activas</p>
+                <p className="mt-1 text-xl font-bold text-emerald-700">
+                  {connectorUsage.activeConnections}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs font-semibold uppercase text-slate-500">Tiempo de uso</p>
+                <p className="mt-1 text-xl font-bold text-slate-900">
+                  {connectorUsage.usageDays ? `${connectorUsage.usageDays} dias` : 'Sin dato'}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs font-semibold uppercase text-slate-500">Ultima validacion</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {connectorUsage.lastValidatedAt
+                    ? formatShortDate(connectorUsage.lastValidatedAt)
+                    : 'Sin dato'}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-500">Ubicacion aproximada</p>
+              {connectorUsage.approximateLocations.length === 0 ? (
+                <p className="mt-2 text-sm text-slate-500">No disponible</p>
+              ) : (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {connectorUsage.approximateLocations.map((location) => (
+                    <span
+                      key={`${location.tenantId}-${location.city || 'sin-ciudad'}-${location.country || 'sin-pais'}`}
+                      className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"
+                    >
+                      {location.tenantName}:{' '}
+                      {[location.city, location.country].filter(Boolean).join(', ') || 'Sin dato'}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              {connectorUsage.connections.map((connection) => (
+                <div
+                  key={connection.connectionId}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{connection.tenantName}</p>
+                    <p className="text-xs text-slate-500">
+                      Canal: {connection.channelKey}
+                      {connection.originChannel ? ` · origen ${connection.originChannel}` : ''}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-slate-500">
+                    <p>
+                      Conectado:{' '}
+                      {connection.connectedAt
+                        ? formatShortDate(connection.connectedAt)
+                        : 'Sin dato'}
+                    </p>
+                    <p>
+                      Estado:{' '}
+                      <span
+                        className={
+                          connection.connectionStatus === 'connected'
+                            ? 'font-semibold text-emerald-700'
+                            : 'font-semibold text-slate-700'
+                        }
+                      >
+                        {connection.connectionStatus}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Empresas/Memberships */}

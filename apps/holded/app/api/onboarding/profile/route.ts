@@ -23,6 +23,19 @@ function cleanOptional(value: unknown) {
   return cleanText(value);
 }
 
+function isLikelySpanishPhone(value: string) {
+  const normalized = value.replace(/[^\d+]/g, '');
+  if (normalized.startsWith('+34')) {
+    const national = normalized.slice(3);
+    return /^[6789]\d{8}$/.test(national);
+  }
+  if (normalized.startsWith('0034')) {
+    const national = normalized.slice(4);
+    return /^[6789]\d{8}$/.test(national);
+  }
+  return /^[6789]\d{8}$/.test(normalized);
+}
+
 function parseRole(value: unknown): IsaakRoleInCompany | null {
   if (typeof value !== 'string') return null;
   if (
@@ -90,6 +103,8 @@ function buildDraft(body: Record<string, unknown>) {
     roleInCompany: parseRole(body.roleInCompany) ?? undefined,
     roleInCompanyOther: cleanOptional(body.roleInCompanyOther) ?? undefined,
     businessSector: cleanOptional(body.businessSector) ?? undefined,
+    companySectorCode: cleanOptional(body.companySectorCode) ?? undefined,
+    companyAddress: cleanOptional(body.companyAddress) ?? undefined,
     teamSize: cleanOptional(body.teamSize) ?? undefined,
     website: cleanOptional(body.website) ?? undefined,
     phone: cleanOptional(body.phone) ?? undefined,
@@ -102,23 +117,30 @@ function validateComplete(body: Record<string, unknown>): IsaakOnboardingProfile
   const companyName = cleanText(body.companyName);
   const roleInCompany = parseRole(body.roleInCompany);
   const businessSector = cleanText(body.businessSector);
+  const companySectorCode = cleanText(body.companySectorCode);
+  const companyAddress = cleanText(body.companyAddress);
+  const phone = cleanText(body.phone);
   const mainGoals = parseGoals(body.mainGoals);
 
   if (!preferredName) return 'Necesito saber como prefieres que te llame.';
   if (!companyName) return 'Necesito el nombre de tu empresa para adaptar Isaak.';
   if (!roleInCompany) return 'Elige tu rol en la empresa para continuar.';
-  if (!businessSector) return 'Indica la actividad principal de tu empresa.';
   if (mainGoals.length === 0) return 'Elige al menos una prioridad para Isaak.';
+  if (phone && !isLikelySpanishPhone(phone)) {
+    return 'El telefono no parece valido para Espana. Revisa el formato.';
+  }
 
   return {
     preferredName,
     companyName,
     roleInCompany,
     roleInCompanyOther: cleanOptional(body.roleInCompanyOther),
-    businessSector,
+    businessSector: businessSector || 'Pendiente de completar',
+    companySectorCode,
+    companyAddress,
     teamSize: cleanOptional(body.teamSize),
     website: cleanOptional(body.website),
-    phone: cleanOptional(body.phone),
+    phone,
     mainGoals,
   };
 }
@@ -164,6 +186,28 @@ export async function POST(req: Request) {
     profile: validated,
     holdedContext,
   });
+
+  try {
+    await prisma.tenantProfile.upsert({
+      where: { tenantId: session.tenantId },
+      create: {
+        tenantId: session.tenantId,
+        source: 'manual',
+        cnaeCode: validated.companySectorCode || undefined,
+        cnaeText: validated.businessSector || undefined,
+        cnae: validated.businessSector || undefined,
+        address: validated.companyAddress || undefined,
+      },
+      update: {
+        cnaeCode: validated.companySectorCode || undefined,
+        cnaeText: validated.businessSector || undefined,
+        cnae: validated.businessSector || undefined,
+        address: validated.companyAddress || undefined,
+      },
+    });
+  } catch (tenantProfileError) {
+    console.error('holded onboarding profile tenant profile sync failed', tenantProfileError);
+  }
 
   return NextResponse.json({
     ok: true,

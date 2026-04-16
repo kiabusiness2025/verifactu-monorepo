@@ -18,6 +18,7 @@ type InitialIdentity = {
   taxId: string;
   contactFirstName: string;
   contactLastName: string;
+  contactRole: string;
   contactEmail: string;
   contactPhone: string;
 };
@@ -69,31 +70,50 @@ function splitFullName(value?: string | null) {
 
 async function readInitialIdentity(
   tenantId: string,
+  userId?: string | null,
   sessionName?: string | null,
   sessionEmail?: string | null
 ) {
   try {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: {
-        name: true,
-        legalName: true,
-        nif: true,
-        profile: {
-          select: {
-            tradeName: true,
-            legalName: true,
-            taxId: true,
-            representative: true,
-            email: true,
-            phone: true,
+    const [tenant, user] = await Promise.all([
+      prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          name: true,
+          legalName: true,
+          nif: true,
+          profile: {
+            select: {
+              tradeName: true,
+              legalName: true,
+              taxId: true,
+              representative: true,
+              representativeRole: true,
+              email: true,
+              phone: true,
+            },
           },
         },
-      },
-    });
+      }),
+      userId
+        ? prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+              name: true,
+              firstName: true,
+              lastName: true,
+            },
+          })
+        : Promise.resolve(null),
+    ]);
 
-    const representative =
-      normalizeText(tenant?.profile?.representative) || normalizeText(sessionName);
+    const userFullName = normalizeText(user?.name);
+    const userNameFromParts = normalizeText(
+      [normalizeText(user?.firstName), normalizeText(user?.lastName)].filter(Boolean).join(' ')
+    );
+    const fallbackSessionName = userFullName || userNameFromParts || normalizeText(sessionName);
+
+    const representative = fallbackSessionName || normalizeText(tenant?.profile?.representative);
     const contactName = splitFullName(representative);
     const companyNameCandidate =
       normalizeText(tenant?.profile?.tradeName) || normalizeText(tenant?.name);
@@ -106,6 +126,7 @@ async function readInitialIdentity(
       taxId: normalizeText(tenant?.profile?.taxId) || normalizeText(tenant?.nif),
       contactFirstName: contactName.firstName,
       contactLastName: contactName.lastName,
+      contactRole: normalizeText(tenant?.profile?.representativeRole),
       contactEmail: normalizeText(tenant?.profile?.email) || normalizeText(sessionEmail),
       contactPhone: normalizeText(tenant?.profile?.phone),
     } satisfies InitialIdentity;
@@ -118,6 +139,7 @@ async function readInitialIdentity(
       taxId: '',
       contactFirstName: contactName.firstName,
       contactLastName: contactName.lastName,
+      contactRole: '',
       contactEmail: normalizeText(sessionEmail),
       contactPhone: '',
     } satisfies InitialIdentity;
@@ -150,6 +172,7 @@ export default async function HoldedOnboardingConnectionPage({ searchParams }: P
 
   const initialIdentity = await readInitialIdentity(
     session.tenantId,
+    session.userId,
     session.name || null,
     session.email || null
   );

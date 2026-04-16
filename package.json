@@ -62,6 +62,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-config-turbo": "^2.6.3",
     "mocha": "^11.7.5",
+    "openai": "^6.34.0",
     "pg": "^8.16.3",
     "supertest": "^7.1.4"
   },

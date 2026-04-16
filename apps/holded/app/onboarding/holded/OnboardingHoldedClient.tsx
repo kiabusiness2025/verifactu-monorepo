@@ -50,6 +50,7 @@ type InitialIdentity = {
   taxId: string;
   contactFirstName: string;
   contactLastName: string;
+  contactRole: string;
   contactEmail: string;
   contactPhone: string;
 };
@@ -271,25 +272,14 @@ export default function OnboardingHoldedClient({
   const [step, setStep] = useState<WizardStep>(shouldShowFullProfileSteps ? 1 : 3);
 
   // Form state
-  const [companyName, setCompanyName] = useState(
-    shouldShowFullProfileSteps ? '' : initialIdentity.companyName
-  );
-  const [legalName, setLegalName] = useState(
-    shouldShowFullProfileSteps ? '' : initialIdentity.legalName
-  );
-  const [taxId, setTaxId] = useState(shouldShowFullProfileSteps ? '' : initialIdentity.taxId);
-  const [contactFirstName, setContactFirstName] = useState(
-    shouldShowFullProfileSteps ? '' : initialIdentity.contactFirstName
-  );
-  const [contactLastName, setContactLastName] = useState(
-    shouldShowFullProfileSteps ? '' : initialIdentity.contactLastName
-  );
-  const [contactEmail, setContactEmail] = useState(
-    shouldShowFullProfileSteps ? '' : initialIdentity.contactEmail
-  );
-  const [contactPhone, setContactPhone] = useState(
-    shouldShowFullProfileSteps ? '' : initialIdentity.contactPhone
-  );
+  const [companyName, setCompanyName] = useState(initialIdentity.companyName);
+  const [legalName, setLegalName] = useState(initialIdentity.legalName);
+  const [taxId, setTaxId] = useState(initialIdentity.taxId);
+  const [contactFirstName, setContactFirstName] = useState(initialIdentity.contactFirstName);
+  const [contactLastName, setContactLastName] = useState(initialIdentity.contactLastName);
+  const [contactRole, setContactRole] = useState(initialIdentity.contactRole);
+  const [contactEmail, setContactEmail] = useState(initialIdentity.contactEmail);
+  const [contactPhone, setContactPhone] = useState(initialIdentity.contactPhone);
   const [apiKey, setApiKey] = useState('');
   const [consentChecked, setConsentChecked] = useState(false);
 
@@ -392,6 +382,7 @@ export default function OnboardingHoldedClient({
     () => normalizeOptionalText(contactEmail).toLowerCase(),
     [contactEmail]
   );
+  const normalizedContactRole = useMemo(() => normalizeOptionalText(contactRole), [contactRole]);
   const normalizedContactPhone = useMemo(() => normalizeOptionalText(contactPhone), [contactPhone]);
   const step2Errors = useMemo<Step2FieldErrors>(() => {
     const errors: Step2FieldErrors = {};
@@ -510,6 +501,7 @@ export default function OnboardingHoldedClient({
         taxId: normalizedTaxId,
         contactFirstName: normalizedContactFirstName,
         contactLastName: normalizedContactLastName,
+        contactRole: normalizedContactRole || undefined,
         contactEmail: normalizedContactEmail,
         contactPhone: normalizedContactPhone || undefined,
         notificationEmail: normalizedContactEmail,
@@ -665,7 +657,7 @@ export default function OnboardingHoldedClient({
                     {
                       step: '1',
                       title: 'Tus datos',
-                      text: 'Nombre y apellidos para trazar el acceso.',
+                      text: 'Datos de la persona que realiza esta conexion (editable).',
                     },
                     { step: '2', title: 'Empresa', text: 'Nombre, NIF/CIF y contacto principal.' },
                     {
@@ -835,7 +827,8 @@ export default function OnboardingHoldedClient({
                     <div>
                       <div className="text-sm font-semibold text-slate-900">Nombre y apellidos</div>
                       <p className="mt-1 text-xs leading-5 text-slate-500">
-                        Lo usamos para asociar la conexion a una persona responsable.
+                        Aqui van los datos del usuario que realiza esta conexion. Se cargan
+                        prerrellenados y puedes modificarlos antes de continuar.
                       </p>
                       <div className="mt-4 grid gap-4 sm:grid-cols-2">
                         <label className="block text-sm font-medium text-slate-700">
@@ -945,6 +938,23 @@ export default function OnboardingHoldedClient({
                           {step2Validated && step2Errors.legalName ? (
                             <p className="mt-2 text-xs text-rose-700">{step2Errors.legalName}</p>
                           ) : null}
+                        </label>
+                        <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
+                          Rol del usuario{' '}
+                          <span className="font-normal text-slate-400">(opcional)</span>
+                          <select
+                            value={contactRole}
+                            onChange={(e) => setContactRole(e.target.value)}
+                            className="mt-2 h-12 w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                          >
+                            <option value="">Selecciona tu rol</option>
+                            <option value="Owner">Owner</option>
+                            <option value="Administrador">Administrador</option>
+                            <option value="Responsable financiero">Responsable financiero</option>
+                            <option value="Contable">Contable</option>
+                            <option value="Asesor">Asesor</option>
+                            <option value="Otro">Otro</option>
+                          </select>
                         </label>
                         <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
                           Correo de contacto

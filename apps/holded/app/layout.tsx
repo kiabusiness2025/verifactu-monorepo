@@ -10,11 +10,9 @@ export const metadata: Metadata = {
   description:
     'Asistente para entender ventas, gastos y beneficio con tus datos de Holded en un flujo simple.',
   icons: {
-    icon: [{ url: 'https://app.verifactu.business/brand/app/app-icon-512.png', type: 'image/png' }],
-    shortcut: ['https://app.verifactu.business/brand/app/app-icon-512.png'],
-    apple: [
-      { url: 'https://app.verifactu.business/brand/app/app-icon-512.png', type: 'image/png' },
-    ],
+    icon: [{ url: '/brand/holded/holded-diamond-logo.png?v=20260416', type: 'image/png' }],
+    shortcut: ['/brand/holded/holded-diamond-logo.png?v=20260416'],
+    apple: [{ url: '/brand/holded/holded-diamond-logo.png?v=20260416', type: 'image/png' }],
   },
 };
 

@@ -205,7 +205,7 @@ describe('POST /api/holded/connect', () => {
       technicalOperatorUserId: 'user_1',
       tenantName: 'Acme SL',
       legalName: 'Acme Sociedad Limitada',
-      taxId: 'B12345678',
+      taxId: '12345678Z',
       apiKey: 'abcdefghijklmnop',
     });
     mockRecordUsageEvent.mockResolvedValue(undefined);
@@ -240,7 +240,7 @@ describe('POST /api/holded/connect', () => {
           channel: 'dashboard',
           companyName: 'Acme SL',
           legalName: 'Acme Sociedad Limitada',
-          taxId: 'B12345678',
+          taxId: '12345678Z',
           contactFirstName: 'Ana',
           contactLastName: 'Garcia',
           contactEmail: 'ana@example.com',
@@ -270,17 +270,19 @@ describe('POST /api/holded/connect', () => {
         data: expect.objectContaining({
           name: 'Acme SL',
           legalName: 'Acme Sociedad Limitada',
-          nif: 'B12345678',
+          nif: '12345678Z',
         }),
       })
     );
-    expect(mockSendHoldedConnectedCommunication).toHaveBeenCalledWith({
-      name: 'Ana',
-      userEmail: 'tenant@example.com',
-      companyEmail: 'tenant@example.com',
-      companyName: 'Acme SL',
-      supportedModules: ['invoicing', 'accounting'],
-    });
+    expect(mockSendHoldedConnectedCommunication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Ana',
+        userEmail: 'tenant@example.com',
+        companyEmail: 'ana@example.com',
+        companyName: 'Acme SL',
+        supportedModules: ['invoicing', 'accounting'],
+      })
+    );
     expect(sendPublicHighGovernanceRiskInternalAlertEmail).not.toHaveBeenCalled();
   });
 
@@ -305,7 +307,7 @@ describe('POST /api/holded/connect', () => {
       technicalOperatorUserId: 'user_1',
       tenantName: 'Acme SL',
       legalName: 'Acme Sociedad Limitada',
-      taxId: 'B12345678',
+      taxId: '12345678Z',
       apiKey: 'abcdefghijklmnop',
     });
 
@@ -318,7 +320,7 @@ describe('POST /api/holded/connect', () => {
           channel: 'dashboard',
           companyName: 'Acme SL',
           legalName: 'Acme Sociedad Limitada',
-          taxId: 'B12345678',
+          taxId: '12345678Z',
           contactFirstName: 'Ana',
           contactLastName: 'Garcia',
           contactEmail: 'ana@example.com',
@@ -355,7 +357,7 @@ describe('POST /api/holded/connect', () => {
           apiKey: 'abcdefghijklmnop',
           channel: 'dashboard',
           companyName: 'Acme SL',
-          taxId: 'B12345678',
+          taxId: '12345678Z',
           contactFirstName: 'Ana',
           contactLastName: 'Garcia',
           contactEmail: 'not-an-email',
@@ -412,7 +414,7 @@ describe('POST /api/holded/connect', () => {
           channel: 'dashboard',
           companyName: 'Acme SL',
           legalName: 'Acme Sociedad Limitada',
-          taxId: 'B12345678',
+          taxId: '12345678Z',
           contactFirstName: 'Ana',
           contactLastName: 'Garcia',
           contactEmail: 'ana@example.com',
@@ -516,7 +518,7 @@ describe('POST /api/holded/connect', () => {
           channel: 'dashboard',
           companyName: 'Acme SL',
           legalName: 'Acme Sociedad Limitada',
-          taxId: 'B12345678',
+          taxId: '12345678Z',
           contactFirstName: 'Ana',
           contactLastName: 'Garcia',
           contactEmail: 'ana@example.com',
@@ -558,7 +560,7 @@ describe('POST /api/holded/connect', () => {
           validationToken,
           companyName: 'Acme SL',
           legalName: 'Acme Sociedad Limitada',
-          taxId: 'B12345678',
+          taxId: '12345678Z',
           contactFirstName: 'Ana',
           contactLastName: 'Garcia',
           contactEmail: 'ana@example.com',
@@ -581,5 +583,86 @@ describe('POST /api/holded/connect', () => {
       status: 'connected',
       providerAccountId: 'provider-account-1',
     });
+  });
+
+  it('returns 400 when tax id is not a valid Spanish NIF/CIF', async () => {
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          companyName: 'Acme SL',
+          taxId: 'A123',
+          contactFirstName: 'Ana',
+          contactLastName: 'Garcia',
+          contactEmail: 'ana@example.com',
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.ok).toBe(false);
+    expect(payload.reason).toBe('invalid_tax_id');
+    expect(payload.error).toContain('NIF/CIF');
+    expect(mockProbeHoldedConnection).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when contact phone is not valid for Spain', async () => {
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          companyName: 'Acme SL',
+          taxId: '12345678Z',
+          contactFirstName: 'Ana',
+          contactLastName: 'Garcia',
+          contactEmail: 'ana@example.com',
+          contactPhone: '12345',
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.ok).toBe(false);
+    expect(payload.reason).toBe('invalid_contact_phone');
+    expect(payload.error).toContain('formato valido de Espana');
+    expect(mockProbeHoldedConnection).not.toHaveBeenCalled();
+  });
+
+  it('does not fail connect when company email verification token cannot be generated', async () => {
+    process.env.SESSION_SECRET = '';
+    delete process.env.HOLDED_COMPANY_EMAIL_VERIFY_SECRET;
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          companyName: 'Acme SL',
+          taxId: '12345678Z',
+          contactFirstName: 'Ana',
+          contactLastName: 'Garcia',
+          contactEmail: 'ana@example.com',
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(mockSendHoldedConnectedCommunication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyEmailVerificationUrl: null,
+      })
+    );
   });
 });
