@@ -1,5 +1,5 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
 import {
   buildHoldedProbeSummary,
   buildStoredHoldedConnectionSummary,
@@ -18,6 +18,7 @@ export type HoldedPrismaClient = Pick<
   PrismaClient,
   | '$transaction'
   | 'tenant'
+  | 'tenantProfile'
   | 'tenantIntegration'
   | 'externalConnection'
   | 'externalConnectionAuditLog'
@@ -879,6 +880,24 @@ export async function disconnectHoldedConnection(input: {
       },
     });
   }
+
+  // Clear company identity data sourced from Holded so reconnection starts fresh.
+  // Only clears fields that were written by the Holded sync (source='holded').
+  // Manually entered profile data (source='manual') is preserved.
+  await Promise.allSettled([
+    input.prisma.tenantProfile
+      .updateMany({
+        where: { tenantId: input.tenantId, source: 'holded' },
+        data: { taxId: null, tradeName: null, legalName: null, sourceId: null },
+      })
+      .catch(() => null),
+    input.prisma.tenant
+      .update({
+        where: { id: input.tenantId },
+        data: { nif: null },
+      })
+      .catch(() => null),
+  ]);
 
   await writeConnectionAuditLog(input.prisma, {
     tenantId: input.tenantId,
