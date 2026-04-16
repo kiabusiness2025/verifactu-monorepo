@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
-import {
-  completeIsaakOnboarding,
-  saveIsaakOnboardingDraft,
-  type HoldedContextSnapshot,
-  type IsaakMainGoal,
-  type IsaakOnboardingProfileInput,
-  type IsaakRoleInCompany,
-} from '@verifactu/integrations';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
+import {
+  completeIsaakOnboarding as completeProfileOnboarding,
+  saveIsaakOnboardingDraft as saveProfileOnboardingDraft,
+  type HoldedContextSnapshot,
+  type IsaakMainGoal as ProfileMainGoal,
+  type IsaakOnboardingProfileInput as ProfileOnboardingInput,
+  type IsaakRoleInCompany as ProfileRoleInCompany,
+} from '@verifactu/integrations';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
@@ -36,7 +36,7 @@ function isLikelySpanishPhone(value: string) {
   return /^[6789]\d{8}$/.test(normalized);
 }
 
-function parseRole(value: unknown): IsaakRoleInCompany | null {
+function parseRole(value: unknown): ProfileRoleInCompany | null {
   if (typeof value !== 'string') return null;
   if (
     value === 'autonomo' ||
@@ -50,9 +50,9 @@ function parseRole(value: unknown): IsaakRoleInCompany | null {
   return null;
 }
 
-function parseGoals(value: unknown): IsaakMainGoal[] {
+function parseGoals(value: unknown): ProfileMainGoal[] {
   if (!Array.isArray(value)) return [];
-  const allowed = new Set<IsaakMainGoal>([
+  const allowed = new Set<ProfileMainGoal>([
     'Entender mi contabilidad',
     'Resolver dudas fiscales',
     'Emitir facturas facilmente',
@@ -62,7 +62,8 @@ function parseGoals(value: unknown): IsaakMainGoal[] {
   ]);
 
   return value.filter(
-    (item): item is IsaakMainGoal => typeof item === 'string' && allowed.has(item as IsaakMainGoal)
+    (item): item is ProfileMainGoal =>
+      typeof item === 'string' && allowed.has(item as ProfileMainGoal)
   );
 }
 
@@ -112,7 +113,7 @@ function buildDraft(body: Record<string, unknown>) {
   };
 }
 
-function validateComplete(body: Record<string, unknown>): IsaakOnboardingProfileInput | string {
+function validateComplete(body: Record<string, unknown>): ProfileOnboardingInput | string {
   const preferredName = cleanText(body.preferredName);
   const companyName = cleanText(body.companyName);
   const roleInCompany = parseRole(body.roleInCompany);
@@ -123,9 +124,9 @@ function validateComplete(body: Record<string, unknown>): IsaakOnboardingProfile
   const mainGoals = parseGoals(body.mainGoals);
 
   if (!preferredName) return 'Necesito saber como prefieres que te llame.';
-  if (!companyName) return 'Necesito el nombre de tu empresa para adaptar Isaak.';
+  if (!companyName) return 'Necesito el nombre de tu empresa para continuar.';
   if (!roleInCompany) return 'Elige tu rol en la empresa para continuar.';
-  if (mainGoals.length === 0) return 'Elige al menos una prioridad para Isaak.';
+  if (mainGoals.length === 0) return 'Elige al menos una prioridad para continuar.';
   if (phone && !isLikelySpanishPhone(phone)) {
     return 'El telefono no parece valido para Espana. Revisa el formato.';
   }
@@ -153,10 +154,7 @@ export async function POST(req: Request) {
 
   const connection = await getHoldedConnection(session.tenantId, 'dashboard');
   if (!connection?.keyMasked) {
-    return NextResponse.json(
-      { error: 'Conecta Holded antes de continuar con Isaak.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Conecta Holded antes de continuar.' }, { status: 400 });
   }
 
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
@@ -165,7 +163,7 @@ export async function POST(req: Request) {
 
   if (mode === 'draft') {
     const draft = buildDraft(body);
-    await saveIsaakOnboardingDraft({
+    await saveProfileOnboardingDraft({
       prisma,
       tenantId: session.tenantId,
       userId: session.userId,
@@ -179,7 +177,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: validated }, { status: 400 });
   }
 
-  const result = await completeIsaakOnboarding({
+  const result = await completeProfileOnboarding({
     prisma,
     tenantId: session.tenantId,
     userId: session.userId,

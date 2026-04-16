@@ -1,11 +1,5 @@
 'use client';
 
-import type { User } from 'firebase/auth';
-import { ArrowLeft, Eye, EyeOff, Loader2, Mail } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { Suspense, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   clearStaleFirebaseSession,
   clearStoredMagicLinkEmail,
@@ -14,7 +8,6 @@ import {
   detectMagicLinkInUrl,
   ensureCurrentFirebaseUserStillExists,
   getStoredMagicLinkEmail,
-  MAGIC_LINK_EMAIL_KEY,
   requestPasswordReset,
   resetHoldedAuthState,
   sendMagicLinkEmail,
@@ -25,6 +18,11 @@ import {
 import { auth } from '@/app/lib/firebase';
 import { buildDashboardUrl, sanitizeHoldedReturnTarget } from '@/app/lib/holded-navigation';
 import { mintSessionCookie } from '@/app/lib/serverSession';
+import type { User } from 'firebase/auth';
+import { ArrowLeft, Eye, EyeOff, Loader2, Mail } from 'lucide-react';
+import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
 const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
@@ -66,7 +64,7 @@ function isChatgptAuthFlow(source: string, target: string) {
   const normalizedSource = source.trim().toLowerCase();
   if (
     normalizedSource.includes('chatgpt') ||
-    normalizedSource.includes('isaak_chat') ||
+    normalizedSource.includes('holded_chat') ||
     normalizedSource.includes('openai')
   ) {
     return true;
@@ -180,7 +178,7 @@ function HoldedAuthContent() {
     [redirectTarget, source]
   );
   const requiresFreshAuth =
-    source === 'holded_chat_requires_session' || source === 'isaak_chat_requires_session';
+    source === 'holded_chat_requires_session' || source === 'chat_requires_session';
 
   const redirectedRef = useRef(false);
   const magicLinkCheckedRef = useRef(false);

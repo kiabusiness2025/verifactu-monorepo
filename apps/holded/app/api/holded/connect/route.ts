@@ -1,7 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
+import { sendPublicHighGovernanceRiskInternalAlertEmail } from '@/app/lib/communications/holded-governance-emails';
+import { createCompanyEmailVerificationToken } from '@/app/lib/company-email-verification';
+import { writeHoldedActivity } from '@/app/lib/holded-activity';
 import {
-  buildConnectorEvent,
+  disconnectHoldedConnection,
+  getHoldedConnection,
+  probeHoldedConnection,
+  saveHoldedConnection,
+} from '@/app/lib/holded-integration';
+import { buildProfileOnboardingUrl, HOLDED_PUBLIC_URL } from '@/app/lib/holded-navigation';
+import { getHoldedSession } from '@/app/lib/holded-session';
+import { verifyHoldedValidationToken } from '@/app/lib/holded-validation-token';
+import { prisma } from '@/app/lib/prisma';
+import {
   buildConnectionStatusDto,
+  buildConnectorEvent,
   buildDefaultAvailableActions,
   buildDetectedCompany,
   buildGovernanceFlags,
@@ -10,20 +23,7 @@ import {
   recordUsageEvent,
   withConnectorRequestId,
 } from '@verifactu/integrations';
-import { getHoldedSession } from '@/app/lib/holded-session';
-import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
-import { sendPublicHighGovernanceRiskInternalAlertEmail } from '@/app/lib/communications/holded-governance-emails';
-import { createCompanyEmailVerificationToken } from '@/app/lib/company-email-verification';
-import { verifyHoldedValidationToken } from '@/app/lib/holded-validation-token';
-import { buildProfileOnboardingUrl, HOLDED_PUBLIC_URL } from '@/app/lib/holded-navigation';
-import {
-  disconnectHoldedConnection,
-  getHoldedConnection,
-  probeHoldedConnection,
-  saveHoldedConnection,
-} from '@/app/lib/holded-integration';
-import { writeHoldedActivity } from '@/app/lib/holded-activity';
-import { prisma } from '@/app/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
@@ -145,27 +145,22 @@ function buildFullName(firstName: string | null, lastName: string | null) {
 }
 
 async function readExistingIdentity(tenantId: string) {
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: {
-      name: true,
-      legalName: true,
-      nif: true,
-      profile: {
-        select: {
-          tradeName: true,
-          legalName: true,
-          taxId: true,
-          representative: true,
-          representativeRole: true,
-          email: true,
-          phone: true,
-        },
-      },
-    },
-  });
-
-  return {
+  const buildIdentity = (
+    tenant: {
+      name?: string | null;
+      legalName?: string | null;
+      nif?: string | null;
+      profile?: {
+        tradeName?: string | null;
+        legalName?: string | null;
+        taxId?: string | null;
+        representative?: string | null;
+        representativeRole?: string | null;
+        email?: string | null;
+        phone?: string | null;
+      } | null;
+    } | null
+  ) => ({
     companyName:
       normalizeOptionalText(tenant?.profile?.tradeName) || normalizeOptionalText(tenant?.name),
     legalName:
@@ -175,7 +170,59 @@ async function readExistingIdentity(tenantId: string) {
     contactRole: normalizeOptionalText(tenant?.profile?.representativeRole),
     verifiedCompanyEmail: normalizeOptionalEmail(tenant?.profile?.email),
     contactPhone: normalizeOptionalText(tenant?.profile?.phone),
-  };
+  });
+
+  try {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        name: true,
+        legalName: true,
+        nif: true,
+        profile: {
+          select: {
+            tradeName: true,
+            legalName: true,
+            taxId: true,
+            representative: true,
+            representativeRole: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    return buildIdentity(tenant);
+  } catch (readError) {
+    console.warn('holded connect: tenant profile read with representativeRole failed', readError);
+  }
+
+  try {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        name: true,
+        legalName: true,
+        nif: true,
+        profile: {
+          select: {
+            tradeName: true,
+            legalName: true,
+            taxId: true,
+            representative: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    return buildIdentity(tenant);
+  } catch (fallbackError) {
+    console.warn('holded connect: tenant profile fallback read failed', fallbackError);
+    return buildIdentity(null);
+  }
 }
 
 function resolveConnectionIdentity(input: {

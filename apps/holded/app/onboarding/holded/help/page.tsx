@@ -1,7 +1,7 @@
+import { ArrowLeft, ExternalLink, KeyRound, LifeBuoy } from 'lucide-react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Metadata } from 'next';
-import { ArrowLeft, ExternalLink, KeyRound, LifeBuoy } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Ayuda API de Holded | Verifactu',
@@ -12,12 +12,12 @@ export const metadata: Metadata = {
 const screenshots = [
   {
     title: 'Paso 1. Entra en Holded y abre Configuracion',
-    src: '/help/Configurar%20HOLDED_ISAAK_API_KEY/Paso%201.png',
+    src: '/help/Configurar%20HOLDED_CONNECTOR_API_KEY/Paso%201.png',
     alt: 'Pantalla de Holded con acceso al area de configuracion.',
   },
   {
     title: 'Paso 2. Abre Desarrolladores y crea una nueva API key',
-    src: '/help/Configurar%20HOLDED_ISAAK_API_KEY/Paso%202.png',
+    src: '/help/Configurar%20HOLDED_CONNECTOR_API_KEY/Paso%202.png',
     alt: 'Pantalla de Holded con el area de desarrolladores y creacion de API key.',
   },
 ];

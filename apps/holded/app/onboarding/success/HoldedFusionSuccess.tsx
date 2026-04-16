@@ -1,9 +1,9 @@
 'use client';
 
+import { ArrowRight, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowRight, Sparkles } from 'lucide-react';
 
 const HOLDed_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
@@ -11,12 +11,12 @@ const PROFILE_ONBOARDING_URL = `${HOLDed_SITE_URL}/onboarding/profile?source=hol
 
 export default function HoldedFusionSuccess() {
   const [showFusion, setShowFusion] = useState(false);
-  const [showIsaak, setShowIsaak] = useState(false);
+  const [showAssistant, setShowAssistant] = useState(false);
   const [showReady, setShowReady] = useState(false);
 
   useEffect(() => {
     const fusionTimer = window.setTimeout(() => setShowFusion(true), 900);
-    const isaakTimer = window.setTimeout(() => setShowIsaak(true), 1250);
+    const assistantTimer = window.setTimeout(() => setShowAssistant(true), 1250);
     const readyTimer = window.setTimeout(() => setShowReady(true), 1700);
     const redirectTimer = window.setTimeout(() => {
       window.location.assign(PROFILE_ONBOARDING_URL);
@@ -24,7 +24,7 @@ export default function HoldedFusionSuccess() {
 
     return () => {
       window.clearTimeout(fusionTimer);
-      window.clearTimeout(isaakTimer);
+      window.clearTimeout(assistantTimer);
       window.clearTimeout(readyTimer);
       window.clearTimeout(redirectTimer);
     };
@@ -109,14 +109,14 @@ export default function HoldedFusionSuccess() {
               />
 
               <div
-                className={`holded-fusion-isaak absolute left-1/2 top-[5.2rem] w-full max-w-[20rem] -translate-x-1/2 transition-all duration-700 ${
-                  showIsaak ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+                className={`holded-fusion-assistant absolute left-1/2 top-[5.2rem] w-full max-w-[20rem] -translate-x-1/2 transition-all duration-700 ${
+                  showAssistant ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
                 }`}
               >
                 <div className="mx-auto w-full rounded-[2rem] border border-slate-200 bg-white/95 p-4 shadow-[0_28px_80px_-42px_rgba(15,23,42,0.35)] backdrop-blur">
                   <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[#fff4f5] ring-8 ring-white">
                     <Image
-                      src="/Isaak/isaak-avatar-holded.png"
+                      src="/assistant/holded-avatar.png"
                       alt="Asistente Holded"
                       width={120}
                       height={120}

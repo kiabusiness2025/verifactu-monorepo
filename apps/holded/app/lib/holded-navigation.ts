@@ -14,21 +14,16 @@ export const HOLDED_APP_URL = getOrigin(
 export const HOLDED_PUBLIC_URL = HOLDED_APP_URL;
 export const HOLDED_ONBOARDING_URL = `${HOLDED_PUBLIC_URL}/onboarding`;
 
-export const ISAAK_PUBLIC_URL = getOrigin(
-  process.env.NEXT_PUBLIC_ISAAK_SITE_URL,
-  'https://isaak.verifactu.business'
-);
 export const APP_PUBLIC_URL = getOrigin(
   process.env.NEXT_PUBLIC_APP_SITE_URL,
   'https://app.verifactu.business'
 );
-export const ISAAK_CHAT_URL = `${ISAAK_PUBLIC_URL}/chat`;
 export const ADMIN_PUBLIC_URL = getOrigin(
   process.env.NEXT_PUBLIC_ADMIN_SITE_URL,
   'https://admin.verifactu.business'
 );
 
-const ALLOWED_RETURN_ORIGINS = new Set([HOLDED_PUBLIC_URL, ISAAK_PUBLIC_URL, APP_PUBLIC_URL]);
+const ALLOWED_RETURN_ORIGINS = new Set([HOLDED_PUBLIC_URL, APP_PUBLIC_URL]);
 
 export const buildLeadCaptureUrl = (source?: string) => {
   const base = `${HOLDED_PUBLIC_URL}/`;
@@ -40,7 +35,7 @@ export const buildLeadCaptureUrl = (source?: string) => {
 };
 
 export const buildDashboardUrl = (source = 'holded_dashboard') =>
-  `${ISAAK_CHAT_URL}?source=${encodeURIComponent(source)}`;
+  `${HOLDED_PUBLIC_URL}/dashboard?source=${encodeURIComponent(source)}`;
 
 export const buildOnboardingUrl = (source = 'holded_onboarding') =>
   `${HOLDED_ONBOARDING_URL}?source=${encodeURIComponent(source)}`;

@@ -1,8 +1,8 @@
 'use client';
 
+import { Bot, CheckCircle2, ChevronRight, Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Bot, CheckCircle2, ChevronRight, Loader2, Sparkles } from 'lucide-react';
 
 type RoleValue = 'autonomo' | 'administrador' | 'gerente' | 'financiero' | 'otro';
 
@@ -249,7 +249,7 @@ export default function HoldedConversationalOnboardingClient({
           <div className="flex justify-center lg:justify-start">
             <div className="relative h-[320px] w-[250px] sm:h-[390px] sm:w-[310px]">
               <Image
-                src="/Isaak/isaak-medio-cuerpo-holded.png"
+                src="/assistant/holded-guide.png"
                 alt="Asistente Holded"
                 fill
                 className="object-contain"

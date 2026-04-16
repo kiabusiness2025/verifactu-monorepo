@@ -1,19 +1,16 @@
 describe('resolveHoldedCompletionTarget', () => {
   const previousAppSiteUrl = process.env.NEXT_PUBLIC_APP_SITE_URL;
   const previousHoldedSiteUrl = process.env.NEXT_PUBLIC_HOLDED_SITE_URL;
-  const previousIsaakSiteUrl = process.env.NEXT_PUBLIC_ISAAK_SITE_URL;
 
   beforeEach(() => {
     jest.resetModules();
     process.env.NEXT_PUBLIC_APP_SITE_URL = 'https://app.verifactu.business';
     process.env.NEXT_PUBLIC_HOLDED_SITE_URL = 'https://holded.verifactu.business';
-    process.env.NEXT_PUBLIC_ISAAK_SITE_URL = 'https://isaak.verifactu.business';
   });
 
   afterAll(() => {
     process.env.NEXT_PUBLIC_APP_SITE_URL = previousAppSiteUrl;
     process.env.NEXT_PUBLIC_HOLDED_SITE_URL = previousHoldedSiteUrl;
-    process.env.NEXT_PUBLIC_ISAAK_SITE_URL = previousIsaakSiteUrl;
   });
 
   it('falls back to success when next points back to the intro page', async () => {

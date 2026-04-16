@@ -786,7 +786,7 @@ async function ensureOwnedTenantForUser(input: {
     return memberships[0].tenantId;
   }
 
-  const workspaceBase = input.name?.trim() || input.email?.split('@')[0]?.trim() || 'Isaak';
+  const workspaceBase = input.name?.trim() || input.email?.split('@')[0]?.trim() || 'Holded';
   const workspaceName = workspaceBase + ' Workspace';
 
   const tenant = await prisma.tenant.create({
