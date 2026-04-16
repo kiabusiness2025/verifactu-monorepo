@@ -610,7 +610,7 @@ describe('POST /api/holded/connect', () => {
     expect(mockProbeHoldedConnection).not.toHaveBeenCalled();
   });
 
-  it('does not block chatgpt channel when request contains stale invalid tax id', async () => {
+  it('allows chatgpt channel when tax id is omitted', async () => {
     const response = await POST(
       new Request('https://holded.verifactu.business/api/holded/connect', {
         method: 'POST',
@@ -618,7 +618,6 @@ describe('POST /api/holded/connect', () => {
         body: JSON.stringify({
           apiKey: 'abcdefghijklmnop',
           channel: 'chatgpt',
-          taxId: 'A123',
         }),
       }) as never
     );

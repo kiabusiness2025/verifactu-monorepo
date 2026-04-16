@@ -9,8 +9,26 @@ import {
 
 export const runtime = 'nodejs';
 
+function resolveCanonicalHoldedSiteUrl() {
+  const defaultUrl = 'https://holded.verifactu.business';
+  const raw =
+    process.env.HOLDED_PUBLIC_URL?.trim() ||
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() ||
+    defaultUrl;
+
+  try {
+    const parsed = new URL(raw);
+    if (parsed.hostname === 'app.verifactu.business') {
+      return defaultUrl;
+    }
+    return parsed.origin;
+  } catch {
+    return defaultUrl;
+  }
+}
+
 function buildFallbackUrl() {
-  return new URL('/onboarding/holded', getAppUrl());
+  return new URL('/onboarding/holded', resolveCanonicalHoldedSiteUrl());
 }
 
 function sanitizeReturnUrl(value: string | null | undefined) {
@@ -18,7 +36,7 @@ function sanitizeReturnUrl(value: string | null | undefined) {
   if (!value) return fallback;
 
   try {
-    const parsed = new URL(value, getAppUrl());
+    const parsed = new URL(value, resolveCanonicalHoldedSiteUrl());
     if (parsed.origin !== fallback.origin) return fallback;
     if (!parsed.pathname.startsWith('/onboarding/holded')) return fallback;
     return parsed;

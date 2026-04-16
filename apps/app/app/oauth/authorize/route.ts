@@ -1,15 +1,14 @@
 import { upsertChannelIdentity } from '@/lib/integrations/channelIdentityStore';
 import {
-  getHoldedOnboardingTokenFromSearchParams,
-  resolveHoldedOnboardingSession,
-} from '@/lib/integrations/holdedOnboardingSession';
-import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
-import {
   getConnectorRequestId,
   logConnectorEvent,
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
-import { getSessionPayload } from '@/lib/session';
+import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import {
+  getHoldedOnboardingTokenFromSearchParams,
+  resolveHoldedOnboardingSession,
+} from '@/lib/integrations/holdedOnboardingSession';
 import {
   buildLoginUrl,
   ensureScopesAllowed,
@@ -17,22 +16,40 @@ import {
   getMcpResourceUrl,
   isValidPkceCodeChallenge,
   mapSessionToOAuthUser,
-  mintHoldedOnboardingToken,
   mintAuthorizationCode,
+  mintHoldedOnboardingToken,
   resolveTenantForHoldedFirstSession,
   validateRedirectUri,
 } from '@/lib/oauth/mcp';
+import { getSessionPayload } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
+
+function resolveCanonicalHoldedSiteUrl() {
+  const defaultUrl = 'https://holded.verifactu.business';
+  const raw =
+    process.env.HOLDED_PUBLIC_URL?.trim() ||
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() ||
+    defaultUrl;
+
+  try {
+    const parsed = new URL(raw);
+    if (parsed.hostname === 'app.verifactu.business') {
+      return defaultUrl;
+    }
+    return parsed.origin;
+  } catch {
+    return defaultUrl;
+  }
+}
 
 function buildCanonicalHoldedOnboardingUrl(input: {
   next: string;
   onboardingToken?: string | null;
   tenantId?: string | null;
 }) {
-  const holdedSiteUrl =
-    process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() || 'https://holded.verifactu.business';
+  const holdedSiteUrl = resolveCanonicalHoldedSiteUrl();
   const onboardingUrl = new URL('/onboarding/holded', holdedSiteUrl);
   onboardingUrl.searchParams.set('source', 'holded_chatgpt_entry');
   onboardingUrl.searchParams.set('channel', 'chatgpt');
