@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { buildAuthUrl, buildOnboardingUrl } from '@/app/lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Gracias | Isaak para Holded',
+  title: 'Gracias | Holded',
   description: 'Revisa tu correo, confirma tu acceso y termina la activacion de Holded.',
 };
 

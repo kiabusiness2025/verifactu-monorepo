@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Politica de privacidad | Isaak para Holded',
+  title: 'Politica de privacidad | Holded',
   description:
     'Politica de privacidad de holded.verifactu.business y del acceso en Verifactu Business mediante API key.',
 };
@@ -19,7 +19,7 @@ export default function HoldedPrivacyPage() {
               Politica de privacidad
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-slate-950">
-              Politica de privacidad de Isaak para Holded
+              Politica de privacidad del Conector Holded
             </h1>
             <p className="max-w-3xl text-lg leading-8 text-slate-600">
               Esta pagina resume que datos tratamos, como gestionamos la conexion con Holded y que
@@ -82,7 +82,7 @@ export default function HoldedPrivacyPage() {
           <p className="mt-3 text-sm leading-7 text-slate-600">
             El usuario decide que cuenta de Holded conecta mediante una API key. Esa clave se
             almacena protegida y se utiliza para acceder a los datos de la cuenta conectada y
-            ofrecer la funcionalidad solicitada dentro de Isaak para Holded.
+            ofrecer la funcionalidad solicitada dentro del conector Holded.
           </p>
           <p className="mt-3 text-sm leading-7 text-slate-600">
             Puedes reconectar o desconectar la integracion desde el producto cuando esa opcion este

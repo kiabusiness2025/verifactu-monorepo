@@ -217,7 +217,7 @@ const STEP_LABELS: Record<1 | 2 | 3, string> = {
 };
 
 function StepIndicator({ current, minimal }: { current: WizardStep; minimal?: boolean }) {
-  const visibleSteps = (minimal ? [3] : [1, 2, 3]) as const;
+  const visibleSteps = minimal ? ([3] as const) : ([1, 2, 3] as const);
   return (
     <div className="flex items-center gap-2">
       {visibleSteps.map((s, idx) => {

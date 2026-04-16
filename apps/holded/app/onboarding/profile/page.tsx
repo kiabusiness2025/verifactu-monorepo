@@ -8,8 +8,8 @@ import { prisma } from '@/app/lib/prisma';
 import HoldedConversationalOnboardingClient from './HoldedConversationalOnboardingClient';
 
 export const metadata: Metadata = {
-  title: 'Preparar a Isaak | Holded',
-  description: 'Configura rapidamente a Isaak con el contexto minimo de tu empresa.',
+  title: 'Configuracion inicial | Holded',
+  description: 'Configura el contexto minimo de tu empresa antes del primer uso.',
 };
 
 type PageProps = {

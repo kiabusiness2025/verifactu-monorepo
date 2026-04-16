@@ -44,7 +44,7 @@ export default function HoldedHeroVisual() {
         <div className="relative mx-auto max-w-[20rem] pt-3 sm:max-w-[22rem]">
           <Image
             src="/Isaak/isaak-medio-cuerpo-holded.png"
-            alt="Isaak guiando la integracion con Holded"
+            alt="Conector Holded"
             width={620}
             height={740}
             className="h-auto w-full"

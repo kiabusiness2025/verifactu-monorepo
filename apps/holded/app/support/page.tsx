@@ -8,7 +8,7 @@ const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu
 const supportMailto = `mailto:${supportEmail}?subject=Ayuda%20con%20mi%20acceso%20a%20Holded`;
 
 export const metadata: Metadata = {
-  title: 'Soporte | Isaak para Holded',
+  title: 'Soporte | Holded',
   description: 'Ayuda rapida para acceso, verificacion, onboarding y conexion con Holded.',
 };
 
@@ -76,7 +76,7 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
             <div className="mb-5 flex justify-center rounded-3xl bg-[linear-gradient(180deg,#fff7f7_0%,#f8fbff_100%)] p-4">
               <Image
                 src="/Isaak/isaak-avatar-holded.png"
-                alt="Isaak"
+                alt="Asistente Holded"
                 width={220}
                 height={220}
                 className="h-auto w-full max-w-[8rem]"
@@ -124,7 +124,7 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <MessageSquareText className="h-4 w-4 text-[#ff5460]" />
-              Consejo practico
+              Consejo util
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
               Si ya tienes sesion iniciada, entra primero al onboarding o al dashboard. Asi podremos
@@ -137,7 +137,7 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
           <SupportAssistantClient
             source={source || 'holded_support'}
             digest={digest || undefined}
-            title="Soy Isaak y puedo ayudarte a salir del bloqueo sin iniciar sesion."
+            title="Te ayudo a salir del bloqueo sin iniciar sesion."
           />
         </div>
 

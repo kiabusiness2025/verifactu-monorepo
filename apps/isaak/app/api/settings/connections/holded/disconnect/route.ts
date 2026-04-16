@@ -40,6 +40,7 @@ export async function POST(req: Request) {
       previousSettings.company.tradeName ||
       previousSettings.company.legalName ||
       null,
+    companyEmail: session.email ?? null,
     disconnectedAtIso: new Date().toISOString(),
   }).catch((error) => {
     console.error('[isaak settings] holded disconnect notifications failed', error);

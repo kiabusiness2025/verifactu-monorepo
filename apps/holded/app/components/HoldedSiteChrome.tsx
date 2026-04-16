@@ -25,7 +25,7 @@ export default function HoldedSiteChrome({ children }: Props) {
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition group-hover:shadow-md">
               <Image
                 src="/brand/holded/holded-diamond-logo.png"
-                alt="Isaak para Holded"
+                alt="Holded"
                 width={20}
                 height={20}
                 className="h-5 w-5 object-contain"
@@ -33,7 +33,7 @@ export default function HoldedSiteChrome({ children }: Props) {
               />
             </div>
             <div className="leading-tight">
-              <div className="text-base font-semibold text-slate-900">Isaak para Holded</div>
+              <div className="text-base font-semibold text-slate-900">Holded</div>
               <div className="text-xs font-medium text-slate-600">
                 Solution Partner autorizado de Holded
               </div>
@@ -44,12 +44,12 @@ export default function HoldedSiteChrome({ children }: Props) {
             <a href="#solucion" className="hover:text-slate-900">
               Inicio
             </a>
-            <a href="#acceso-libre" className="hover:text-slate-900">
-              Acceso
-            </a>
-            <a href="#beneficios" className="hover:text-slate-900">
-              Beneficios
-            </a>
+            <Link href="/demo-recording" className="hover:text-slate-900">
+              Demo
+            </Link>
+            <Link href="/capacidades" className="hover:text-slate-900">
+              Capacidades
+            </Link>
             <a href="#faq" className="hover:text-slate-900">
               FAQ
             </a>
@@ -114,6 +114,9 @@ export default function HoldedSiteChrome({ children }: Props) {
               className="hover:text-slate-900"
             >
               Dashboard
+            </Link>
+            <Link href="/demo-recording" className="hover:text-slate-900">
+              Demo
             </Link>
             <Link href={buildAuthUrl('holded_footer_login')} className="hover:text-slate-900">
               Acceso

@@ -12,7 +12,7 @@ import HoldedHeroVisual from './components/HoldedHeroVisual';
 import { buildAuthUrl, buildRegisterUrl } from './lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Isaak para Holded | Facturas, contactos y contabilidad en claro',
+  title: 'Holded | Facturas, contactos y contabilidad en claro',
   description:
     'Consulta facturas, contactos, cuentas contables, diario y proyectos de Holded, y prepara borradores de factura con confirmacion.',
 };
@@ -53,7 +53,8 @@ const faqItems = [
   },
   {
     question: '¿Tengo que pagar ahora?',
-    answer: 'No. Esta version revisada es gratuita y no muestra planes de pago dentro del flujo.',
+    answer:
+      'No, y nunca lo sera para usuarios de ChatGPT. El conector Holded es gratis para siempre como parte del programa de conectores de ChatGPT.',
   },
   {
     question: '¿Que pasa si la API key falla?',
@@ -67,12 +68,12 @@ const faqItems = [
   {
     question: '¿Puede cambiar mis datos?',
     answer:
-      'Solo prepara borradores de factura cuando tu lo confirmas. El resto del beta publico se mantiene en lectura guiada.',
+      'Solo prepara borradores de factura cuando tu lo confirmas. Todo lo demas es lectura guiada.',
   },
   {
     question: '¿Que no conviene esperar todavia?',
     answer:
-      'Este beta publico no promete productos, usuarios, adjuntos, conciliacion bancaria ni documentos como presupuestos, pedidos o albaranes.',
+      'El conector no incluye productos, usuarios, adjuntos, conciliacion bancaria ni documentos como presupuestos, pedidos o albaranes.',
   },
 ];
 
@@ -93,9 +94,9 @@ export default function HoldedHomePage() {
               </h1>
 
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Isaak ya puede revisar facturas, contactos, cuentas contables, diario y proyectos, y
-                preparar borradores de factura con confirmacion sin obligarte a pelearte con menus
-                ni tecnicismos.
+                Ya puedes revisar facturas, contactos, cuentas contables, diario y proyectos, y
+                preparar borradores de factura con confirmacion sin pelearte con menus ni
+                tecnicismos.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -112,14 +113,23 @@ export default function HoldedHomePage() {
                 >
                   Ya tengo acceso
                 </Link>
+                <Link
+                  href="/demo-recording"
+                  className="inline-flex items-center justify-center px-2 py-3 text-sm font-semibold text-slate-500 underline-offset-4 hover:text-slate-700 hover:underline"
+                >
+                  Ver como funciona
+                </Link>
               </div>
 
               <div className="mt-8 rounded-3xl border border-[#ff5460]/20 bg-[#ff5460]/5 p-6 shadow-sm">
-                <div className="text-sm font-semibold text-slate-900">Empieza en un minuto</div>
+                <div className="text-sm font-semibold text-slate-900">
+                  Gratis para siempre · Empieza en un minuto
+                </div>
                 <div className="mt-4 flex items-start gap-2 text-sm leading-6 text-slate-700">
                   <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
                   Solo te hara falta tu correo y una API key activa de Holded. Validamos la conexion
-                  al momento y te dejamos claro desde el principio lo que esta disponible hoy.
+                  al momento. El conector es gratuito para todos los usuarios de ChatGPT, sin fecha
+                  de caducidad.
                 </div>
               </div>
             </div>
@@ -236,19 +246,19 @@ export default function HoldedHomePage() {
                 El asistente
               </div>
               <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-                Todo esto lo hace Isaak
+                Capacidades activas del conector
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                Isaak te ayuda a leer mejor IVA, gastos y parte de la caja a partir del contexto
-                contable que ya existe en Holded.
+                El conector te ayuda a leer mejor IVA, gastos y parte de la caja a partir del
+                contexto contable que ya existe en Holded.
               </p>
               <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
                 <div className="text-sm font-semibold text-slate-900">
                   No sustituye a tu asesor ni promete mas de lo que hay hoy
                 </div>
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  El beta publico se centra en facturas, contactos, contabilidad y proyectos. No
-                  prometemos productos, usuarios, adjuntos ni conciliacion bancaria en esta fase.
+                  El conector se centra en facturas, contactos, contabilidad y proyectos. No incluye
+                  productos, usuarios, adjuntos ni conciliacion bancaria.
                 </p>
               </div>
             </article>

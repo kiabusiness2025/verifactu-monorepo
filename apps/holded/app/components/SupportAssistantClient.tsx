@@ -35,7 +35,7 @@ export default function SupportAssistantClient({ source, digest, title }: Props)
         role: 'assistant' as const,
         content:
           title ||
-          'Soy Isaak en modo soporte. Puedo ayudarte con acceso, verificacion de correo, API key de Holded y errores de conexion.',
+          'Soporte Holded. Puedo ayudarte con acceso, verificacion de correo, API key de Holded y errores de conexion.',
       },
       {
         id: 'support-context',
@@ -105,7 +105,7 @@ export default function SupportAssistantClient({ source, digest, title }: Props)
     <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
         <Bot className="h-4 w-4 text-[#ff5460]" />
-        Soporte guiado con Isaak
+        Asistente de soporte
       </div>
       <p className="mt-3 text-sm leading-7 text-slate-600">
         Este chat no necesita login. Sirve para desbloquear acceso, verificacion, API key y errores
@@ -140,7 +140,7 @@ export default function SupportAssistantClient({ source, digest, title }: Props)
         ))}
         {loading ? (
           <div className="mr-8 rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
-            Isaak esta preparando una respuesta...
+            Preparando respuesta...
           </div>
         ) : null}
       </div>

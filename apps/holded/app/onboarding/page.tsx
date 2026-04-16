@@ -10,7 +10,7 @@ import {
 } from '@/app/lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Onboarding | Isaak para Holded',
+  title: 'Onboarding | Holded',
   description:
     'Resumen del alcance del conector de Holded antes de activar la conexion con tu empresa.',
 };
@@ -75,7 +75,7 @@ export default async function HoldedOnboardingPage({ searchParams }: PageProps) 
               <div className="mt-4 text-sm font-semibold text-slate-900">Facturas emitidas</div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Podras consultar facturas emitidas, entender su estado y preparar borradores de
-                factura desde Isaak con confirmacion explicita.
+                factura con confirmacion explicita.
               </p>
             </article>
             <article className="rounded-3xl border border-slate-200 bg-slate-50 p-5">

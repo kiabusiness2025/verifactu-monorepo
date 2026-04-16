@@ -221,7 +221,7 @@ export default function HoldedConversationalOnboardingClient({
       <div className="flex items-center justify-between gap-4">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2361d8]">
           <Bot className="h-3.5 w-3.5" />
-          Voy a adaptar Isaak a tu empresa
+          Voy a adaptar el asistente a tu empresa
         </div>
         <div className="text-xs font-medium text-slate-400">
           {progress} de {TOTAL_STEPS}
@@ -250,7 +250,7 @@ export default function HoldedConversationalOnboardingClient({
             <div className="relative h-[320px] w-[250px] sm:h-[390px] sm:w-[310px]">
               <Image
                 src="/Isaak/isaak-medio-cuerpo-holded.png"
-                alt="Isaak"
+                alt="Asistente Holded"
                 fill
                 className="object-contain"
                 sizes="(max-width: 1024px) 280px, 320px"
@@ -291,8 +291,7 @@ export default function HoldedConversationalOnboardingClient({
                         Ya tengo lo necesario para ayudarte mejor con tu empresa
                       </h1>
                       <p className="mt-4 text-sm leading-7 text-slate-600">
-                        Enseguida te llevo al chat principal de Isaak con tu contexto inicial
-                        preparado.
+                        Enseguida te llevo al chat principal con tu contexto inicial preparado.
                       </p>
                     </div>
                   )
@@ -306,8 +305,8 @@ export default function HoldedConversationalOnboardingClient({
                           Antes de empezar, quiero conocerte un poco mejor
                         </h1>
                         <p className="mt-4 text-sm leading-7 text-slate-600">
-                          Ya tengo tu conexion con Holded lista. Ahora voy a adaptar Isaak a tu
-                          empresa para que te ayude mejor desde el principio.
+                          Ya tengo tu conexion con Holded lista. Ahora voy a adaptar el asistente a
+                          tu empresa para que te ayude mejor desde el principio.
                         </p>
                         <button
                           type="button"
@@ -711,7 +710,7 @@ export default function HoldedConversationalOnboardingClient({
                                         {saving ? (
                                           <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : null}
-                                        Entrar en Isaak
+                                        Entrar al chat
                                         <ChevronRight className="h-4 w-4" />
                                       </button>
                                     </div>

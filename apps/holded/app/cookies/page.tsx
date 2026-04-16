@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Cookies | Isaak para Holded',
+  title: 'Cookies | Holded',
   description: 'Informacion sobre cookies y almacenamiento local en holded.verifactu.business.',
 };
 

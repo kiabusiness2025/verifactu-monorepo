@@ -43,10 +43,10 @@ export default function HoldedFusionSuccess() {
               Conexion completada
             </div>
             <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-5xl">
-              Holded y Isaak ya estan hablando entre si
+              Tu Holded ya esta conectado
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Hemos unido tu espacio de Holded con Isaak. En unos segundos terminaremos una breve
+              Hemos conectado tu espacio de Holded. En unos segundos terminaremos una breve
               preparacion para que el chat te reciba ya adaptado a tu empresa.
             </p>
 
@@ -117,14 +117,14 @@ export default function HoldedFusionSuccess() {
                   <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[#fff4f5] ring-8 ring-white">
                     <Image
                       src="/Isaak/isaak-avatar-holded.png"
-                      alt="Isaak"
+                      alt="Asistente Holded"
                       width={120}
                       height={120}
                       className="h-full w-full object-cover"
                       priority
                     />
                   </div>
-                  <div className="mt-4 text-xl font-bold text-slate-950">Isaak</div>
+                  <div className="mt-4 text-xl font-bold text-slate-950">Asistente Holded</div>
                   <div className="mt-2 text-sm leading-6 text-slate-600">
                     Preparando tu chat inicial, tus preguntas sugeridas y la lectura de tu espacio
                     de Holded.
@@ -140,14 +140,14 @@ export default function HoldedFusionSuccess() {
             >
               <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white/80 px-5 py-4 text-sm leading-6 text-slate-600 shadow-sm backdrop-blur">
                 Si prefieres no esperar, puedes entrar ya. Si no haces nada, te llevamos
-                automaticamente al chat de Isaak.
+                automaticamente al chat.
               </div>
               <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
                   href={PROFILE_ONBOARDING_URL}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  Continuar con Isaak
+                  Continuar
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link

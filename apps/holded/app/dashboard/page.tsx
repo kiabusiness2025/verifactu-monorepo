@@ -4,8 +4,8 @@ import { getHoldedSession } from '@/app/lib/holded-session';
 import { buildDashboardUrl, sanitizeHoldedReturnTarget } from '@/app/lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Redirigiendo a Isaak | Holded',
-  description: 'Tu acceso de Holded continua en el workspace principal de Isaak.',
+  title: 'Redirigiendo | Holded',
+  description: 'Tu acceso de Holded te lleva al workspace principal.',
 };
 
 type PageProps = {

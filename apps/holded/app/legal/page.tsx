@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Aviso legal | Isaak para Holded',
+  title: 'Aviso legal | Holded',
   description: 'Informacion legal y de titularidad de holded.verifactu.business.',
 };
 
@@ -28,7 +28,7 @@ export default function HoldedLegalPage() {
             </p>
             <p>
               Este sitio ofrece una version gratuita inicial de acceso, conexion mediante API key de
-              Holded y uso del dashboard con Isaak.
+              Holded y uso del dashboard del conector.
             </p>
             <p>
               Para cuestiones legales o de soporte, el canal de contacto operativo es{' '}

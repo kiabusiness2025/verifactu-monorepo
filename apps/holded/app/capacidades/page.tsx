@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { buildOnboardingUrl } from '../lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Capacidades reales | Isaak para Holded',
+  title: 'Capacidades reales | Holded',
   description:
-    'Resumen honesto de lo que Isaak ya puede hacer hoy con Holded dentro del beta publico actual.',
+    'Resumen honesto de lo que el conector puede hacer hoy con Holded. Gratis para siempre para usuarios de ChatGPT.',
 };
 
 const availableCapabilities = [
@@ -53,10 +53,10 @@ const workingPrompts = [
 ];
 
 const currentLimits = [
-  'Isaak no inventa datos: trabaja con lo que realmente existe en tu entorno.',
+  'El asistente no inventa datos: trabaja con lo que realmente existe en tu entorno.',
   'La escritura publica actual se limita a preparar borradores de factura y siempre pide confirmacion.',
   'La lectura de IVA, gastos y parte de tesoreria depende del contexto contable ya registrado en Holded.',
-  'Este beta no promete productos, usuarios, adjuntos, conciliacion bancaria ni documentos como presupuestos, pedidos o albaranes.',
+  'El conector no incluye productos, usuarios, adjuntos, conciliacion bancaria ni documentos como presupuestos, pedidos o albaranes.',
 ];
 
 export default function HoldedCapabilitiesPage() {
@@ -69,13 +69,13 @@ export default function HoldedCapabilitiesPage() {
           </div>
 
           <h1 className="mt-5 max-w-4xl text-4xl font-bold tracking-tight text-slate-950 sm:text-[3rem] sm:leading-[1.06]">
-            Lo que Isaak ya puede hacer hoy con Holded
+            Lo que puedes hacer hoy con Holded
           </h1>
 
           <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
-            Esta pagina resume capacidad real ya disponible en el beta publico. El objetivo es
-            simple: que sepas que puedes pedirle ahora mismo para ahorrar tiempo y decidir mejor,
-            sin confundirlo con areas que todavia no forman parte del conector publico.
+            Esta pagina resume la capacidad real disponible hoy. El objetivo es simple: que sepas
+            que puedes pedirle ahora mismo para ahorrar tiempo y decidir mejor, sin confundirlo con
+            areas que todavia no forman parte del conector publico.
           </p>
         </div>
       </section>
@@ -113,8 +113,8 @@ export default function HoldedCapabilitiesPage() {
               Prompts utiles para empezar
             </h2>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              Si le das objetivo, plazo y foco, Isaak responde con mas precision y accion dentro de
-              las capacidades que ya estan activas hoy.
+              Si das objetivo, plazo y foco, el asistente responde con mas precision y accion dentro
+              de las capacidades que ya estan activas hoy.
             </p>
 
             <div className="mt-6 grid gap-3 md:grid-cols-2">
