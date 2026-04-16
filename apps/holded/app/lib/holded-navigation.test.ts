@@ -24,6 +24,19 @@ describe('holded navigation return target sanitization', () => {
     ).toBe('https://app.verifactu.business/oauth/authorize?client_id=openai-chatgpt-test');
   });
 
+  it('canonicalizes stale app onboarding holded links to holded domain', async () => {
+    const { sanitizeHoldedReturnTarget } = await import('./holded-navigation');
+
+    expect(
+      sanitizeHoldedReturnTarget(
+        'https://app.verifactu.business/onboarding/holded?channel=chatgpt&login_handoff=1&tenant_id=tenant-demo',
+        'https://holded.verifactu.business/dashboard?source=fallback'
+      )
+    ).toBe(
+      'https://holded.verifactu.business/onboarding/holded?channel=chatgpt&login_handoff=1&tenant_id=tenant-demo'
+    );
+  });
+
   it('keeps relative holded paths for local handoff routes', async () => {
     const { sanitizeHoldedReturnTarget } = await import('./holded-navigation');
 

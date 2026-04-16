@@ -105,7 +105,18 @@ export const sanitizeHoldedReturnTarget = (candidate: string | undefined, fallba
     }
 
     const parsed = new URL(normalized);
-    return ALLOWED_RETURN_ORIGINS.has(parsed.origin) ? parsed.toString() : fallback;
+    if (!ALLOWED_RETURN_ORIGINS.has(parsed.origin)) {
+      return fallback;
+    }
+
+    // Canonicalize stale direct-connector links that still point to app onboarding.
+    if (parsed.origin === APP_PUBLIC_URL && parsed.pathname.startsWith('/onboarding/holded')) {
+      const canonical = new URL(parsed.pathname, HOLDED_PUBLIC_URL);
+      canonical.search = parsed.search;
+      return canonical.toString();
+    }
+
+    return parsed.toString();
   } catch {
     return fallback;
   }
