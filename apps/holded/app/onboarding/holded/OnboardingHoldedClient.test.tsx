@@ -203,6 +203,65 @@ describe('OnboardingHoldedClient', () => {
     expect(screen.getByText('Error de prueba en connect')).toBeInTheDocument();
   });
 
+  it('does not send taxId or profile fields in ChatGPT API-key-only reset flow', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: async () => ({ ok: true, validationToken: 'token-123' }),
+      })
+      .mockResolvedValueOnce({
+        status: 400,
+        ok: false,
+        json: async () => ({ ok: false, error: 'Error de prueba en connect' }),
+      });
+
+    render(
+      <OnboardingHoldedClient
+        {...defaultProps}
+        channel="chatgpt"
+        forceFullReset
+        initialIdentity={{
+          ...defaultProps.initialIdentity,
+          taxId: '??INVALID??',
+          companyName: 'Empresa Antigua',
+          legalName: 'Empresa Antigua SL',
+        }}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
+      target: { value: 'abcdefghijklmnop' },
+    });
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: /confirmo que puedo conectar esta empresa/i,
+      })
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    const connectBody = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(connectBody).toEqual(
+      expect.objectContaining({
+        apiKey: 'abcdefghijklmnop',
+        channel: 'chatgpt',
+        validationToken: 'token-123',
+        acceptedTerms: true,
+        acceptedPrivacy: true,
+        authorizationConfirmed: true,
+      })
+    );
+    expect(connectBody.taxId).toBeUndefined();
+    expect(connectBody.companyName).toBeUndefined();
+    expect(connectBody.legalName).toBeUndefined();
+    expect(connectBody.contactEmail).toBeUndefined();
+    expect(connectBody.notificationEmail).toBeUndefined();
+  });
+
   it('builds the expected reauth url for session recovery after a 401', async () => {
     expect(
       buildHoldedReauthHref({

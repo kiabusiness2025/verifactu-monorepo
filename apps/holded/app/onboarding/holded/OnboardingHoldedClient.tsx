@@ -1,7 +1,18 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { auth } from '@/app/lib/firebase';
+import { mintSessionCookie } from '@/app/lib/serverSession';
+import type {
+  DetectedCompanyDTO,
+  GovernanceFlagsDTO,
+  HoldedConnectResponse,
+} from '@verifactu/integrations/holded/contracts';
+import type { HoldedUiBanner } from '@verifactu/integrations/holded/uiState';
+import {
+  getHoldedConnectionBadge,
+  getHoldedGovernanceBadges,
+  getHoldedStatusBanners,
+} from '@verifactu/integrations/holded/uiState';
 import {
   AlertCircle,
   ArrowLeft,
@@ -13,19 +24,8 @@ import {
   Sparkles,
   TriangleAlert,
 } from 'lucide-react';
-import { auth } from '@/app/lib/firebase';
-import { mintSessionCookie } from '@/app/lib/serverSession';
-import type {
-  DetectedCompanyDTO,
-  GovernanceFlagsDTO,
-  HoldedConnectResponse,
-} from '@verifactu/integrations/holded/contracts';
-import {
-  getHoldedConnectionBadge,
-  getHoldedGovernanceBadges,
-  getHoldedStatusBanners,
-} from '@verifactu/integrations/holded/uiState';
-import type { HoldedUiBanner } from '@verifactu/integrations/holded/uiState';
+import Link from 'next/link';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type ValidationResponse = {
   ok: boolean;
@@ -492,22 +492,27 @@ export default function OnboardingHoldedClient({
 
       setPhase('connecting');
 
-      const connectResponse = await postWithSessionRetry('/api/holded/connect', {
+      const shouldSendIdentityFields = channel !== 'chatgpt' || shouldShowFullProfileSteps;
+      const connectPayload = {
         apiKey: normalizedApiKey,
         channel,
         validationToken: reusableToken || undefined,
-        companyName: normalizedCompanyName,
-        legalName: normalizedLegalName || undefined,
-        taxId: normalizedTaxId,
-        contactFirstName: normalizedContactFirstName,
-        contactLastName: normalizedContactLastName,
-        contactRole: normalizedContactRole || undefined,
-        contactEmail: normalizedContactEmail,
-        contactPhone: normalizedContactPhone || undefined,
-        notificationEmail: normalizedContactEmail,
+        companyName: shouldSendIdentityFields ? normalizedCompanyName : undefined,
+        legalName: shouldSendIdentityFields ? normalizedLegalName || undefined : undefined,
+        taxId: shouldSendIdentityFields ? normalizedTaxId : undefined,
+        contactFirstName: shouldSendIdentityFields ? normalizedContactFirstName : undefined,
+        contactLastName: shouldSendIdentityFields ? normalizedContactLastName : undefined,
+        contactRole: shouldSendIdentityFields ? normalizedContactRole || undefined : undefined,
+        contactEmail: shouldSendIdentityFields ? normalizedContactEmail : undefined,
+        contactPhone: shouldSendIdentityFields ? normalizedContactPhone || undefined : undefined,
+        notificationEmail: shouldSendIdentityFields ? normalizedContactEmail : undefined,
         acceptedTerms: true,
         acceptedPrivacy: true,
         authorizationConfirmed: true,
+      };
+
+      const connectResponse = await postWithSessionRetry('/api/holded/connect', {
+        ...connectPayload,
       });
 
       if (connectResponse.status === 401) {
