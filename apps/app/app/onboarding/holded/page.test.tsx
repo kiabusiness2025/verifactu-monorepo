@@ -253,7 +253,7 @@ describe('HoldedOnboardingPage', () => {
     expect(nextUrl.searchParams.get('tenant_id')).toBe('tenant-demo');
   });
 
-  it('does not loop login handoff when login_handoff marker is already present', async () => {
+  it('redirects direct connector login_handoff traffic to holded domain onboarding', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'session-user-1',
       email: 'demo@example.com',
@@ -270,18 +270,23 @@ describe('HoldedOnboardingPage', () => {
       },
     });
 
-    const element = await HoldedOnboardingPage({
-      searchParams: Promise.resolve({
-        next: 'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-test',
-        channel: 'chatgpt',
-        require_connection_confirmation: '1',
-        login_handoff: '1',
-        tenant_id: 'tenant-demo',
-      }),
-    });
+    await expect(
+      HoldedOnboardingPage({
+        searchParams: Promise.resolve({
+          next: 'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-test',
+          channel: 'chatgpt',
+          require_connection_confirmation: '1',
+          login_handoff: '1',
+          tenant_id: 'tenant-demo',
+        }),
+      })
+    ).rejects.toThrow('NEXT_REDIRECT:');
 
-    expect(element.props.entryChannel).toBe('chatgpt');
-    expect(redirectMock).not.toHaveBeenCalled();
+    const redirected = new URL(redirectMock.mock.calls[0][0]);
+    expect(redirected.origin).toBe('https://holded.verifactu.business');
+    expect(redirected.pathname).toBe('/onboarding/holded');
+    expect(redirected.searchParams.get('login_handoff')).toBe('1');
+    expect(redirected.searchParams.get('tenant_id')).toBe('tenant-demo');
   });
 
   it('passes tenant hints into tenant resolution and the client props', async () => {
@@ -308,7 +313,7 @@ describe('HoldedOnboardingPage', () => {
 
     const element = await HoldedOnboardingPage({
       searchParams: Promise.resolve({
-        next: 'https://app.verifactu.business/oauth/authorize?response_type=code',
+        next: 'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-test',
         channel: 'chatgpt',
         onboarding_token: 'onboarding-token-123',
         tenant_id: 'tenant-demo',

@@ -1,10 +1,10 @@
 import { requireTenantContext } from '@/lib/api/tenantAuth';
+import { maskSecret } from '@/lib/integrations/accounting';
+import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import {
   getHoldedOnboardingTokenFromSearchParams,
   resolveHoldedOnboardingSession,
 } from '@/lib/integrations/holdedOnboardingSession';
-import { maskSecret } from '@/lib/integrations/accounting';
-import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { readVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import {
   buildLoginUrl,
@@ -23,8 +23,8 @@ import {
 import { getAppUrl } from '@verifactu/utils';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { deriveHoldedCompanySetupState } from './flowState';
 import { inferHoldedEntryChannel } from './entryChannel';
+import { deriveHoldedCompanySetupState } from './flowState';
 import HoldedOnboardingClient from './HoldedOnboardingClient';
 
 export const dynamic = 'force-dynamic';
@@ -54,6 +54,30 @@ type HoldedSavedPrefill = {
 
 function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function resolveCanonicalHoldedSiteUrl() {
+  const defaultUrl = 'https://holded.verifactu.business';
+  const raw =
+    process.env.HOLDED_PUBLIC_URL?.trim() ||
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() ||
+    defaultUrl;
+
+  try {
+    const parsed = new URL(raw);
+    if (parsed.hostname === 'app.verifactu.business') {
+      return defaultUrl;
+    }
+    return parsed.origin;
+  } catch {
+    return defaultUrl;
+  }
+}
+
+function shouldRedirectDirectConnectorToHolded(params: SearchParams) {
+  const source = firstValue(params.source)?.trim().toLowerCase();
+  const loginHandoff = firstValue(params.login_handoff)?.trim() === '1';
+  return source === 'holded_chatgpt_entry' || loginHandoff;
 }
 
 function normalizeNextUrl(nextUrl: string | undefined) {
@@ -354,6 +378,21 @@ export default async function HoldedOnboardingPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+
+  if (shouldRedirectDirectConnectorToHolded(params)) {
+    const holdedOnboardingUrl = new URL('/onboarding/holded', resolveCanonicalHoldedSiteUrl());
+    for (const [key, rawValue] of Object.entries(params)) {
+      if (Array.isArray(rawValue)) {
+        for (const value of rawValue) {
+          holdedOnboardingUrl.searchParams.append(key, value);
+        }
+      } else if (typeof rawValue === 'string') {
+        holdedOnboardingUrl.searchParams.set(key, rawValue);
+      }
+    }
+    redirect(holdedOnboardingUrl.toString());
+  }
+
   const search = new URLSearchParams();
   for (const [key, rawValue] of Object.entries(params)) {
     if (Array.isArray(rawValue)) {
