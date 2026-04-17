@@ -86,6 +86,10 @@ export const HOLDED_MCP_TOOL_SCOPES: Record<string, string[]> = {
 };
 
 export const HOLDED_MCP_SUPPORTED_SCOPES = [
+  // Standard OIDC scopes — accepted as pass-through, claims returned via /oauth/userinfo
+  'openid',
+  'email',
+  'profile',
   'mcp.read',
   'holded.invoices.read',
   'holded.invoices.write',
