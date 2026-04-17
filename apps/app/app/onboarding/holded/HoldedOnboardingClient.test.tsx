@@ -804,7 +804,7 @@ describe('HoldedOnboardingClient', () => {
       expect(getFetchCall(fetchMock, '/api/integrations/accounting/validate')[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
-            'x-isaak-tenant-id': 'tenant-demo',
+            'x-holded-tenant-id': 'tenant-demo',
           }),
         })
       );
@@ -814,7 +814,7 @@ describe('HoldedOnboardingClient', () => {
       expect(getFetchCall(fetchMock, '/api/integrations/accounting/connect')[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
-            'x-isaak-tenant-id': 'tenant-demo',
+            'x-holded-tenant-id': 'tenant-demo',
           }),
         })
       );
@@ -1006,7 +1006,7 @@ describe('HoldedOnboardingClient', () => {
           method: 'POST',
           headers: expect.objectContaining({
             'x-holded-onboarding-token': 'onboarding-token-456',
-            'x-isaak-tenant-id': 'tenant-123',
+            'x-holded-tenant-id': 'tenant-123',
           }),
         })
       );
@@ -1016,7 +1016,7 @@ describe('HoldedOnboardingClient', () => {
       expect(getFetchCall(fetchMock, '/api/integrations/accounting/connect')[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
-            'x-isaak-tenant-id': 'tenant-123',
+            'x-holded-tenant-id': 'tenant-123',
             'x-holded-onboarding-token': 'onboarding-token-456',
           }),
         })

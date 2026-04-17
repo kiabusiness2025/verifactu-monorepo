@@ -45,6 +45,7 @@ jest.mock('@/lib/oauth/mcp', () => ({
 }));
 
 import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import { upsertChannelIdentity } from '@/lib/integrations/channelIdentityStore';
 import { resolveHoldedOnboardingSession } from '@/lib/integrations/holdedOnboardingSession';
 import {
   mintAuthorizationCode,
@@ -270,6 +271,61 @@ describe('oauth authorize holded flow', () => {
     expect(response.headers.get('location')).toBe(
       'https://chat.openai.com/aip/oauth/callback?error=invalid_request'
     );
+    expect(mintAuthorizationCode).not.toHaveBeenCalled();
+  });
+
+  it('records chatgpt channel identity with clientId:uid format when issuing an authorization code', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-1',
+    });
+    (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&connection_confirmed=1&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+    );
+
+    await GET(request);
+
+    expect(upsertChannelIdentity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channelType: 'chatgpt',
+        channelSubjectId: 'openai-chatgpt-test:user-1',
+        userId: 'user-db-1',
+        tenantId: 'tenant-1',
+      })
+    );
+  });
+
+  it('returns 400 JSON when tenant resolution yields no tenantId and code cannot be issued', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: null,
+    });
+    (resolveTenantForHoldedFirstSession as jest.Mock).mockResolvedValue({
+      tenantId: null,
+      resolvedUserId: null,
+    });
+    (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(false);
+    // Real mapSessionToOAuthUser returns null when tenantId is null; mirror that behaviour
+    const mcpMock = jest.requireMock('@/lib/oauth/mcp') as {
+      mapSessionToOAuthUser: jest.Mock;
+    };
+    mcpMock.mapSessionToOAuthUser.mockReturnValueOnce(null);
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&connection_confirmed=1&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+    );
+
+    const response = await GET(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe('no_tenant_selected');
     expect(mintAuthorizationCode).not.toHaveBeenCalled();
   });
 });

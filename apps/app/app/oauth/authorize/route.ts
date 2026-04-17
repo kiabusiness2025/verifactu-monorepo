@@ -315,10 +315,6 @@ export async function GET(request: NextRequest) {
         tenantId: redirectTenantId,
       });
 
-      if (!hasHoldedConnection) {
-        return withConnectorRequestId(NextResponse.redirect(onboardingUrl), requestId);
-      }
-
       return withConnectorRequestId(NextResponse.redirect(onboardingUrl), requestId);
     }
 
