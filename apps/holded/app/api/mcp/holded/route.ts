@@ -49,8 +49,9 @@ async function proxyToApp(request: NextRequest, method: string, body?: BodyInit 
     });
 
     response.headers.forEach((value, key) => {
-      // Skip transfer-encoding — Next.js sets this itself
-      if (key.toLowerCase() !== 'transfer-encoding') {
+      const lower = key.toLowerCase();
+      // fetch() auto-decompresses the body, so strip compression headers
+      if (lower !== 'transfer-encoding' && lower !== 'content-encoding') {
         proxied.headers.set(key, value);
       }
     });

@@ -38,7 +38,11 @@ async function proxy(request: NextRequest, method: string, body?: string | null)
     });
 
     res.headers.forEach((value, key) => {
-      if (key.toLowerCase() !== 'transfer-encoding') proxied.headers.set(key, value);
+      const lower = key.toLowerCase();
+      // fetch() auto-decompresses the body, so strip compression headers
+      if (lower !== 'transfer-encoding' && lower !== 'content-encoding') {
+        proxied.headers.set(key, value);
+      }
     });
 
     return proxied;
