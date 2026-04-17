@@ -4,11 +4,11 @@ import {
   getAuthorizationEndpoint,
   getAuthorizationServerMetadataUrl,
   getDefaultScopes,
+  getMcpResourceUrl,
   getRegistrationEndpoint,
   getTokenEndpoint,
   getUserInfoEndpoint,
 } from '@/lib/oauth/mcp';
-import { getAppUrl } from '@verifactu/utils';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -26,7 +26,7 @@ function buildMetadataResponse(request: NextRequest) {
     code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['none'],
     service_documentation: getAuthorizationServerMetadataUrl(),
-    resource: `${getAppUrl()}/api/mcp/holded`,
+    resource: getMcpResourceUrl(),
     default_scopes: getDefaultScopes(),
   });
 

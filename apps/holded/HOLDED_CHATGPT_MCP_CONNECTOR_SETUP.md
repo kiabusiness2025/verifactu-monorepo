@@ -85,9 +85,9 @@ Use this exact value if the UI asks for `Default scopes`:
 ### 6. OpenAI Apps challenge / domain verification
 
 - `Challenge Base URL`
-  - `https://app.verifactu.business`
+  - `https://holded.verifactu.business`
 - `Challenge Endpoint`
-  - `https://app.verifactu.business/.well-known/openai-apps-challenge`
+  - `https://holded.verifactu.business/.well-known/openai-apps-challenge`
 
 ### 7. Tool annotations: exact English justification
 
