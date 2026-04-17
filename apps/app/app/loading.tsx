@@ -18,24 +18,31 @@ export default function Loading() {
               height={20}
               className="h-5 w-5 rounded-md"
             />
-            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Isaak</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+              Holded
+            </span>
             <span className="h-1 w-1 rounded-full bg-slate-300" />
-            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">ChatGPT</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
+              ChatGPT
+            </span>
           </div>
 
           <h2 className="mt-6 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-            Cargando una experiencia mas clara para gestionar tu negocio.
+            Cargando una experiencia más clara para gestionar tu negocio.
           </h2>
 
           <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
-            Estamos preparando Isaak para que el siguiente paso sea sencillo, seguro y mucho mas útil que una pantalla de espera normal.
+            Estamos preparando el conector para que el siguiente paso sea sencillo, seguro y mucho
+            más útil que una pantalla de espera normal.
           </p>
 
           <div className="mt-8 flex items-center gap-4">
             <div className="h-2 w-28 overflow-hidden rounded-full bg-slate-200">
               <div className="h-full w-1/2 animate-[pulse_1.4s_ease-in-out_infinite] rounded-full bg-slate-950" />
             </div>
-            <span className="text-sm font-medium text-slate-500">Preparando contexto, sesión y herramientas</span>
+            <span className="text-sm font-medium text-slate-500">
+              Preparando contexto, sesión y herramientas
+            </span>
           </div>
         </div>
       </div>

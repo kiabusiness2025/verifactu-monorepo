@@ -67,22 +67,45 @@ function renderDetailLine(label: string, value?: string | null) {
   return `<p style="margin:0 0 8px 0;"><strong>${label}:</strong> ${normalized}</p>`;
 }
 
-function buildHoldedChatGptShell(input: { title: string; body: string }) {
+function buildHoldedChatGptShell(input: {
+  title: string;
+  body: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  timestamp?: string;
+}) {
   const holdedLogoUrl = new URL('/brand/holded/holded-diamond-logo.png', getAppUrl()).toString();
   const chatgptLogoUrl = new URL('/brand/chatgpt/chatgpt-logo.png', getAppUrl()).toString();
+  const timestamp =
+    input.timestamp ??
+    new Date().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
+
+  const ctaBlock =
+    input.ctaLabel && input.ctaUrl
+      ? `<div style="margin:24px 0 8px 0;text-align:left;">
+          <a href="${input.ctaUrl}"
+            style="display:inline-block;background:#ff5460;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:50px;letter-spacing:0.02em;">
+            ${input.ctaLabel}
+          </a>
+        </div>`
+      : '';
 
   return `
-    <div style="font-family: Arial, sans-serif; color: #1b2a3a; line-height: 1.6; max-width: 640px; margin: 0 auto; padding: 24px; background: #f8fafc;">
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #1b2a3a; line-height: 1.6; max-width: 640px; margin: 0 auto; padding: 24px; background: #f8fafc;">
       <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; box-shadow: 0 18px 40px rgba(15,23,42,0.08);">
-        <div style="padding: 20px 24px; background: linear-gradient(135deg,#fff7ed 0%,#fff1f2 52%,#eef6ff 100%); border-bottom: 1px solid #f2dbe0;">
+
+        <!-- Header -->
+        <div style="padding: 20px 28px; background: linear-gradient(135deg,#fff7ed 0%,#fff1f2 52%,#eef6ff 100%); border-bottom: 1px solid #f2dbe0;">
           <table role="presentation" width="100%" style="border-collapse: collapse;">
             <tr>
-              <td style="vertical-align: middle; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: #7a1f2a;">Conector Holded</td>
+              <td style="vertical-align: middle; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: #7a1f2a;">
+                Conector Holded
+              </td>
               <td align="right" style="vertical-align: middle; white-space: nowrap;">
                 <span style="display:inline-block;vertical-align:middle;background:#fff;border:1px solid #f1d4d9;border-radius:14px;padding:8px;">
                   <img src="${holdedLogoUrl}" alt="Holded" width="22" height="22" style="display:block;border:0;" />
                 </span>
-                <span style="display:inline-block;vertical-align:middle;font-size:16px;font-weight:700;color:#7b8794;padding:0 8px;">+</span>
+                <span style="display:inline-block;vertical-align:middle;font-size:15px;font-weight:700;color:#7b8794;padding:0 8px;">+</span>
                 <span style="display:inline-block;vertical-align:middle;background:#fff;border:1px solid #dbe7ff;border-radius:14px;padding:8px;">
                   <img src="${chatgptLogoUrl}" alt="ChatGPT" width="22" height="22" style="display:block;border:0;" />
                 </span>
@@ -90,14 +113,29 @@ function buildHoldedChatGptShell(input: { title: string; body: string }) {
             </tr>
           </table>
         </div>
-        <div style="padding: 24px;">
-          <h2 style="color:#0d2b4a; margin:0 0 16px 0;">${input.title}</h2>
+
+        <!-- Body -->
+        <div style="padding: 28px 28px 0 28px;">
+          <h2 style="color:#0d2b4a; margin:0 0 16px 0; font-size:20px; font-weight:700; line-height:1.3;">${input.title}</h2>
           ${input.body}
-          <p style="margin:18px 0 0;color:#64748b;font-size:12px;">
-            Powered by <a href="https://verifactu.business" style="color:#b4233c;">verifactu.business</a> ·
-            <a href="https://holded.verifactu.business/legal" style="color:#b4233c;">Aviso legal</a> ·
-            <a href="https://holded.verifactu.business/privacy" style="color:#b4233c;">Privacidad</a> ·
-            <a href="https://holded.verifactu.business/terms" style="color:#b4233c;">Terminos</a>
+          ${ctaBlock}
+        </div>
+
+        <!-- Timestamp bar -->
+        <div style="margin: 24px 28px 0 28px; padding: 12px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+          <span style="font-size:12px; color:#94a3b8;">&#128344; ${timestamp}</span>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 16px 28px 24px 28px;">
+          <p style="margin:0;color:#94a3b8;font-size:11px; line-height:1.8;">
+            Powered by <a href="https://verifactu.business" style="color:#ff5460;text-decoration:none;">verifactu.business</a>
+            &nbsp;·&nbsp;
+            <a href="https://holded.verifactu.business/legal" style="color:#94a3b8;text-decoration:none;">Aviso legal</a>
+            &nbsp;·&nbsp;
+            <a href="https://holded.verifactu.business/privacy" style="color:#94a3b8;text-decoration:none;">Privacidad</a>
+            &nbsp;·&nbsp;
+            <a href="https://holded.verifactu.business/terms" style="color:#94a3b8;text-decoration:none;">Términos</a>
           </p>
         </div>
       </div>
@@ -119,17 +157,25 @@ function buildUserHtml(args: {
   const channelLabel = renderChannelLabel(args.channel);
   const contactLine =
     normalizeText(args.contactName) || normalizeText(args.contactEmail)
-      ? `<div style="margin:12px 0 4px 0;">${renderDetailLine('Contacto', args.contactName)}${renderDetailLine('Correo de contacto', args.contactEmail)}${renderDetailLine('Telefono de contacto', args.contactPhone)}${renderDetailLine('Correo de empresa', args.companyEmail)}</div>`
+      ? `<div style="margin:16px 0 4px 0; padding:12px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">${renderDetailLine('Contacto', args.contactName)}${renderDetailLine('Correo de contacto', args.contactEmail)}${renderDetailLine('Teléfono de contacto', args.contactPhone)}${renderDetailLine('Correo de empresa', args.companyEmail)}</div>`
       : '';
+
+  const appUrl = getAppUrl();
+  const ctaLabel = args.action === 'connected' ? 'Abrir mi dashboard' : 'Reconectar Holded';
+  const ctaUrl =
+    args.action === 'connected'
+      ? new URL('/dashboard', appUrl).toString()
+      : new URL('/dashboard/integrations/holded', appUrl).toString();
 
   return buildHoldedChatGptShell({
     title: `Holded: ${actionLabel}`,
+    ctaLabel,
+    ctaUrl,
     body: `
-      <p>Hola ${args.userFirstName},</p>
-      <p>Te confirmamos que la ${actionLabel} para la empresa <strong>${args.tenantDisplayName}</strong> se ha realizado correctamente.</p>
-      <p>Canal: <strong>${channelLabel}</strong>.</p>
+      <p style="margin:0 0 12px 0;">Hola <strong>${args.userFirstName}</strong>,</p>
+      <p style="margin:0 0 12px 0;">Te confirmamos que la <strong>${actionLabel}</strong> para la empresa <strong>${args.tenantDisplayName}</strong> se ha realizado correctamente a través de <strong>${channelLabel}</strong>.</p>
       ${contactLine}
-      <p>Si no reconoces este cambio, responde a este correo o escríbenos a <strong>soporte@verifactu.business</strong>.</p>
+      <p style="margin:16px 0 0 0; font-size:13px; color:#64748b;">Si no reconoces este cambio, responde a este correo o escríbenos a <a href="mailto:soporte@verifactu.business" style="color:#ff5460;">soporte@verifactu.business</a>.</p>
     `,
   });
 }
@@ -149,16 +195,17 @@ function buildAdminHtml(args: {
   const channelLabel = renderChannelLabel(args.channel);
 
   return buildHoldedChatGptShell({
-    title: `Holded: ${actionLabel}`,
+    title: `[Admin] Holded: ${actionLabel}`,
     body: `
-      <p>Usuario: <strong>${args.userName}</strong> (${args.userEmail})</p>
-      <p>Empresa: <strong>${args.tenantDisplayName}</strong></p>
-      ${renderDetailLine('Persona de contacto', args.contactName)}
-      ${renderDetailLine('Correo de contacto', args.contactEmail)}
-      ${renderDetailLine('Correo de empresa', args.companyEmail)}
-      ${renderDetailLine('Telefono de contacto', args.contactPhone)}
-      <p>Canal: <strong>${channelLabel}</strong></p>
-      <p>Evento: <strong>${args.action}</strong></p>
+      <div style="padding:12px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:12px;">
+        ${renderDetailLine('Usuario', `${args.userName} (${args.userEmail})`)}
+        ${renderDetailLine('Empresa', args.tenantDisplayName)}
+        ${renderDetailLine('Persona de contacto', args.contactName)}
+        ${renderDetailLine('Correo de contacto', args.contactEmail)}
+        ${renderDetailLine('Correo de empresa', args.companyEmail)}
+        ${renderDetailLine('Teléfono de contacto', args.contactPhone)}
+      </div>
+      <p style="margin:0 0 8px 0;">Canal: <strong>${channelLabel}</strong> &nbsp;·&nbsp; Evento: <strong>${args.action}</strong></p>
     `,
   });
 }
@@ -170,17 +217,28 @@ function buildWelcomeUserHtml(args: {
   companyEmail?: string | null;
   contactPhone?: string | null;
 }) {
+  const appUrl = getAppUrl();
+  const dashboardUrl = new URL('/dashboard', appUrl).toString();
+
   return buildHoldedChatGptShell({
     title: 'Bienvenido al Conector Holded',
+    ctaLabel: 'Abrir mi dashboard',
+    ctaUrl: dashboardUrl,
     body: `
-      <p>Hola ${args.userFirstName},</p>
-      <p>La conexion de Holded para <strong>${args.tenantDisplayName}</strong> ya esta lista.</p>
-      <p>Desde este momento puedes continuar usando el conector directo con la empresa ya enlazada.</p>
-      ${renderDetailLine('Correo de contacto', args.contactEmail)}
-      ${renderDetailLine('Correo de empresa', args.companyEmail)}
-      ${renderDetailLine('Telefono de contacto', args.contactPhone)}
-      <p>Primer paso recomendado: vuelve a tu flujo en ChatGPT o entra en tu area de Verifactu para revisar que todo responde como esperas.</p>
-      <p>Si necesitas ayuda, escríbenos a <strong>soporte@verifactu.business</strong>.</p>
+      <p style="margin:0 0 12px 0;">Hola <strong>${args.userFirstName}</strong>,</p>
+      <p style="margin:0 0 12px 0;">La conexión de Holded para <strong>${args.tenantDisplayName}</strong> ya está lista. Desde este momento puedes usar el conector directo con la empresa ya enlazada.</p>
+      ${
+        normalizeText(args.contactEmail) ||
+        normalizeText(args.companyEmail) ||
+        normalizeText(args.contactPhone)
+          ? `<div style="margin:16px 0; padding:12px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+            ${renderDetailLine('Correo de contacto', args.contactEmail)}
+            ${renderDetailLine('Correo de empresa', args.companyEmail)}
+            ${renderDetailLine('Teléfono de contacto', args.contactPhone)}
+          </div>`
+          : ''
+      }
+      <p style="margin:16px 0 0 0; font-size:13px; color:#64748b;">Primer paso: vuelve a tu flujo en ChatGPT o entra en tu área de Verifactu para revisar que todo responde como esperas. Si necesitas ayuda escríbenos a <a href="mailto:soporte@verifactu.business" style="color:#ff5460;">soporte@verifactu.business</a>.</p>
     `,
   });
 }
@@ -193,13 +251,15 @@ function buildWelcomeAdminHtml(args: {
   contactPhone?: string | null;
 }) {
   return buildHoldedChatGptShell({
-    title: 'Nueva empresa activada',
+    title: '[Admin] Nueva empresa activada',
     body: `
-      <p>Contacto principal: <strong>${args.userName}</strong> (${args.userEmail})</p>
-      <p>Empresa: <strong>${args.tenantDisplayName}</strong></p>
-      ${renderDetailLine('Correo de empresa', args.companyEmail)}
-      ${renderDetailLine('Telefono de contacto', args.contactPhone)}
-      <p>Evento: <strong>welcome</strong></p>
+      <div style="padding:12px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+        ${renderDetailLine('Contacto principal', `${args.userName} (${args.userEmail})`)}
+        ${renderDetailLine('Empresa', args.tenantDisplayName)}
+        ${renderDetailLine('Correo de empresa', args.companyEmail)}
+        ${renderDetailLine('Teléfono de contacto', args.contactPhone)}
+      </div>
+      <p style="margin:12px 0 0 0;">Evento: <strong>welcome</strong></p>
     `,
   });
 }
