@@ -2,6 +2,7 @@ import {
   applyOpenAiCorsHeaders,
   getAdvertisedScopes,
   getAuthorizationEndpoint,
+  getAuthorizationServerIssuer,
   getAuthorizationServerMetadataUrl,
   getDefaultScopes,
   getMcpResourceUrl,
@@ -15,7 +16,7 @@ export const runtime = 'nodejs';
 
 function buildMetadataResponse(request: NextRequest) {
   const response = NextResponse.json({
-    issuer: getAppUrl(),
+    issuer: getAuthorizationServerIssuer(),
     authorization_endpoint: getAuthorizationEndpoint(),
     token_endpoint: getTokenEndpoint(),
     userinfo_endpoint: getUserInfoEndpoint(),
