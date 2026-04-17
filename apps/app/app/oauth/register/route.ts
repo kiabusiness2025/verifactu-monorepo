@@ -196,15 +196,20 @@ export async function POST(request: NextRequest) {
 
   const issuedAt = Math.floor(Date.now() / 1000);
 
-  return jsonWithCors(request, {
-    client_id: buildClientId(redirectUris),
-    client_id_issued_at: issuedAt,
-    client_name: clientName,
-    application_type: applicationType,
-    redirect_uris: redirectUris,
-    grant_types: ['authorization_code'],
-    response_types: ['code'],
-    token_endpoint_auth_method: 'none',
-    scope: requestedScope,
-  });
+  // RFC 7591 §3.2.1 requires 201 Created for a successful registration
+  return jsonWithCors(
+    request,
+    {
+      client_id: buildClientId(redirectUris),
+      client_id_issued_at: issuedAt,
+      client_name: clientName,
+      application_type: applicationType,
+      redirect_uris: redirectUris,
+      grant_types: ['authorization_code'],
+      response_types: ['code'],
+      token_endpoint_auth_method: 'none',
+      scope: requestedScope,
+    },
+    { status: 201 }
+  );
 }
