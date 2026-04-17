@@ -30,6 +30,7 @@ function getEntryChannel(request: NextRequest) {
 
 function getTenantIdHint(request: NextRequest) {
   return (
+    request.headers.get('x-holded-tenant-id')?.trim() ||
     request.headers.get('x-isaak-tenant-id')?.trim() ||
     request.nextUrl.searchParams.get('tenant_id')?.trim() ||
     null

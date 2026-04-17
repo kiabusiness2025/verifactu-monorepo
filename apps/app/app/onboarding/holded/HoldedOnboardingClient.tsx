@@ -1007,11 +1007,11 @@ export default function HoldedOnboardingClient({
         cache: 'no-store',
         signal,
         headers: {
-          'x-isaak-entry-channel': entryChannel,
+          'x-holded-entry-channel': entryChannel,
           ...(effectiveOnboardingToken
             ? { 'x-holded-onboarding-token': effectiveOnboardingToken }
             : {}),
-          ...(effectiveTenantIdHint ? { 'x-isaak-tenant-id': effectiveTenantIdHint } : {}),
+          ...(effectiveTenantIdHint ? { 'x-holded-tenant-id': effectiveTenantIdHint } : {}),
         },
       });
       const data = await res.json().catch(() => null);
@@ -1471,8 +1471,8 @@ export default function HoldedOnboardingClient({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-isaak-entry-channel': entryChannel,
-        ...(effectiveTenantIdHint ? { 'x-isaak-tenant-id': effectiveTenantIdHint } : {}),
+        'x-holded-entry-channel': entryChannel,
+        ...(effectiveTenantIdHint ? { 'x-holded-tenant-id': effectiveTenantIdHint } : {}),
         ...(effectiveOnboardingToken
           ? { 'x-holded-onboarding-token': effectiveOnboardingToken }
           : {}),
@@ -1519,8 +1519,8 @@ export default function HoldedOnboardingClient({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-isaak-entry-channel': entryChannel,
-        ...(effectiveTenantIdHint ? { 'x-isaak-tenant-id': effectiveTenantIdHint } : {}),
+        'x-holded-entry-channel': entryChannel,
+        ...(effectiveTenantIdHint ? { 'x-holded-tenant-id': effectiveTenantIdHint } : {}),
         ...(effectiveOnboardingToken
           ? { 'x-holded-onboarding-token': effectiveOnboardingToken }
           : {}),
@@ -3229,7 +3229,7 @@ export default function HoldedOnboardingClient({
                           </a>
                           {hasPendingFiscalProfile && !isChatgptEntry ? (
                             <a
-                              href="/dashboard/integrations/isaak-for-holded"
+                              href="/dashboard/integrations/holded"
                               className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
                             >
                               Completar perfil fiscal despues
