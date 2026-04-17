@@ -39,11 +39,13 @@ function getAdvertisedScopes() {
 
 function buildMetadata() {
   return {
+    // issuer stays on app.verifactu.business — that's the canonical OAuth server
     issuer: APP_PUBLIC_URL,
-    authorization_endpoint: `${APP_PUBLIC_URL}/oauth/authorize`,
-    token_endpoint: `${APP_PUBLIC_URL}/oauth/token`,
+    // All OAuth endpoints exposed on holded domain (proxied to app internally)
+    authorization_endpoint: `${HOLDED_APP_URL}/oauth/authorize`,
+    token_endpoint: `${HOLDED_APP_URL}/oauth/token`,
     userinfo_endpoint: `${APP_PUBLIC_URL}/oauth/userinfo`,
-    registration_endpoint: `${APP_PUBLIC_URL}/oauth/register`,
+    registration_endpoint: `${HOLDED_APP_URL}/oauth/register`,
     scopes_supported: getAdvertisedScopes(),
     response_types_supported: ['code'],
     grant_types_supported: ['authorization_code'],
