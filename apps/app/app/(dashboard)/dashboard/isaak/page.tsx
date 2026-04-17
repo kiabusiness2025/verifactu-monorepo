@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React, { useCallback, useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { MessageSquare, Search, Trash2, Share2, Clock, ChevronRight } from "lucide-react";
-import { formatShortDate } from "@/src/lib/formatters";
+import React, { useCallback, useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { MessageSquare, Search, Trash2, Share2, Clock, ChevronRight } from 'lucide-react';
+import { formatShortDate } from '@/src/lib/formatters';
 
 interface Conversation {
   id: string;
@@ -62,14 +62,14 @@ export default function IsaakHistoryPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [grouped, setGrouped] = useState<GroupedConversations | null>(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (search) params.set("search", search);
+      if (search) params.set('search', search);
 
       const res = await fetch(`/api/isaak/conversations?${params}`);
       if (res.ok) {
@@ -78,7 +78,7 @@ export default function IsaakHistoryPage() {
         setGrouped(groupByDate(data.conversations || []));
       }
     } catch (error) {
-      console.error("Error fetching conversations:", error);
+      console.error('Error fetching conversations:', error);
     } finally {
       setLoading(false);
     }
@@ -89,45 +89,45 @@ export default function IsaakHistoryPage() {
   }, [fetchConversations]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar esta conversación? No se puede deshacer.")) return;
+    if (!confirm('¿Eliminar esta conversación? No se puede deshacer.')) return;
 
     try {
       const res = await fetch(`/api/isaak/conversations/${id}`, {
-        method: "DELETE"
+        method: 'DELETE',
       });
 
       if (res.ok) {
         await fetchConversations();
       } else {
-        alert("Error al eliminar conversación");
+        alert('Error al eliminar conversación');
       }
     } catch (error) {
-      console.error("Error deleting:", error);
-      alert("Error al eliminar conversación");
+      console.error('Error deleting:', error);
+      alert('Error al eliminar conversación');
     }
   };
 
   const handleShare = async (id: string) => {
     try {
       const res = await fetch(`/api/isaak/conversations/${id}/share`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expiresInHours: 24 })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expiresInHours: 24 }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        
+
         // Copiar al portapapeles
         await navigator.clipboard.writeText(data.shareUrl);
-        
+
         alert(`✅ Enlace copiado al portapapeles\n\nVálido por 24 horas:\n${data.shareUrl}`);
       } else {
-        alert("Error al generar enlace");
+        alert('Error al generar enlace');
       }
     } catch (error) {
-      console.error("Error sharing:", error);
-      alert("Error al compartir conversación");
+      console.error('Error sharing:', error);
+      alert('Error al compartir conversación');
     }
   };
 
@@ -140,7 +140,7 @@ export default function IsaakHistoryPage() {
           {title}
         </h3>
         <div className="space-y-2">
-          {convs.map(conv => (
+          {convs.map((conv) => (
             <div
               key={conv.id}
               className="group relative flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
@@ -152,12 +152,10 @@ export default function IsaakHistoryPage() {
                 <MessageSquare className="mt-1 h-5 w-5 flex-shrink-0 text-blue-600" />
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-slate-900 truncate">
-                    {conv.title || "Sin título"}
+                    {conv.title || 'Sin título'}
                   </h4>
                   {conv.summary && (
-                    <p className="mt-1 text-sm text-slate-600 line-clamp-2">
-                      {conv.summary}
-                    </p>
+                    <p className="mt-1 text-sm text-slate-600 line-clamp-2">{conv.summary}</p>
                   )}
                   <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
                     <span className="flex items-center gap-1">
@@ -172,7 +170,7 @@ export default function IsaakHistoryPage() {
                 </div>
                 <ChevronRight className="h-5 w-5 text-slate-400 opacity-0 group-hover:opacity-100 transition" />
               </button>
-              
+
               <div className="ml-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
                 <button
                   onClick={(e) => {
@@ -205,9 +203,7 @@ export default function IsaakHistoryPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">
-          💬 Conversaciones con Isaak
-        </h1>
+        <h1 className="text-3xl font-bold text-slate-900">💬 Conversaciones con Isaak</h1>
         <p className="mt-2 text-slate-600">
           Historial completo de tus conversaciones. Busca, comparte o elimina.
         </p>
@@ -216,13 +212,14 @@ export default function IsaakHistoryPage() {
       <div className="mb-6 rounded-2xl border border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#eef4ff_55%,#ffffff_100%)] p-5 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-sm font-semibold text-slate-900">Isaak for Holded</div>
+            <div className="text-sm font-semibold text-slate-900">Conector Holded</div>
             <p className="mt-1 text-sm text-slate-600">
-              Accede al módulo guiado para consultar Holded desde Verifactu y preparar acciones contables con Isaak.
+              Accede al módulo guiado para consultar Holded desde Verifactu y preparar acciones
+              contables.
             </p>
           </div>
           <Link
-            href="/dashboard/integrations/isaak-for-holded"
+            href="/dashboard/integrations/holded"
             className="inline-flex h-10 items-center justify-center rounded-full bg-[#0b6cfb] px-4 text-sm font-semibold text-white hover:bg-[#095edb]"
           >
             Abrir módulo
@@ -255,9 +252,7 @@ export default function IsaakHistoryPage() {
       {!loading && conversations.length === 0 && (
         <div className="rounded-lg border-2 bordiashed border-slate-300 bg-slate-50 py-12 text-center">
           <MessageSquare className="mx-auto h-12 w-12 text-slate-400" />
-          <h3 className="mt-4 text-lg font-semibold text-slate-900">
-            Sin conversaciones aún
-          </h3>
+          <h3 className="mt-4 text-lg font-semibold text-slate-900">Sin conversaciones aún</h3>
           <p className="mt-2 text-sm text-slate-600">
             Abre el chat de Isaak y empieza a preguntar 💬
           </p>
@@ -267,11 +262,11 @@ export default function IsaakHistoryPage() {
       {/* Grouped conversations */}
       {!loading && grouped && (
         <div>
-          {renderGroup("Hoy", grouped.today)}
-          {renderGroup("Ayer", grouped.yesterday)}
-          {renderGroup("Esta semana", grouped.thisWeek)}
-          {renderGroup("Este mes", grouped.thisMonth)}
-          {renderGroup("Más antiguas", grouped.older)}
+          {renderGroup('Hoy', grouped.today)}
+          {renderGroup('Ayer', grouped.yesterday)}
+          {renderGroup('Esta semana', grouped.thisWeek)}
+          {renderGroup('Este mes', grouped.thisMonth)}
+          {renderGroup('Más antiguas', grouped.older)}
         </div>
       )}
     </div>
@@ -286,11 +281,11 @@ function formatDate(dateString: string): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 5) return "Hace un momento";
+  if (diffMins < 5) return 'Hace un momento';
   if (diffMins < 60) return `Hace ${diffMins} min`;
   if (diffHours < 24) return `Hace ${diffHours}h`;
-  if (diffDays === 1) return "Ayer";
+  if (diffDays === 1) return 'Ayer';
   if (diffDays < 7) return `Hace ${diffDays} dias`;
-  
+
   return formatShortDate(date);
 }
