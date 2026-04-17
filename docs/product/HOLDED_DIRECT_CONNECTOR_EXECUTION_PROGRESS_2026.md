@@ -14,6 +14,62 @@ Regla:
 
 ## Fase actual
 
+## Fase STAB-2026-04-16 - Disconnect hard reset + ChatGPT onboarding hardening
+
+- estado: completada
+- fecha de cierre: 2026-04-16
+
+### Objetivo de fase
+
+Eliminar friccion real en reconexion multiempresa/multiusuario y cerrar una regresion de onboarding `channel=chatgpt` que podia bloquear la conexion por `taxId` historico invalido.
+
+### Entregado
+
+- `apps/app/app/api/integrations/accounting/disconnect/route.ts`:
+  - `disconnect` pasa a modo forzado cuando governance lo marcaba como bloqueado.
+  - se mantiene trazabilidad via evento `forced_disconnect`.
+- `apps/app/lib/integrations/accountingStore.ts`:
+  - reset fuerte al desconectar:
+    - limpia credencial, operador tecnico y usuario conectado
+    - limpia metadatos de identidad legal y tiempos de sync/validacion
+    - normaliza flags de gobernanza y estado legal para reconexion limpia
+  - en `upsert`, `connected_by_user_id` deja de heredarse por `COALESCE` para evitar arrastre de identidad previa.
+- `apps/app/lib/integrations/holdedGovernanceService.ts`:
+  - nueva operacion `resetGovernanceOnDisconnect`:
+    - cancela `access_requests` abiertas
+    - cierra `claim_cases` abiertas
+    - escribe timeline en `claim_resolutions`
+    - baja `underClaimReview` en la conexion
+- `apps/holded/app/onboarding/holded/OnboardingHoldedClient.tsx`:
+  - en flujo `chatgpt` API-key-only no se envian campos de perfil (`taxId`, `companyName`, `legalName`, `contactEmail`, etc.).
+  - se evita que datos historicos prefilled bloqueen `POST /api/holded/connect` con `invalid_tax_id`.
+
+### Verificacion ejecutada
+
+- `pnpm jest app/api/integrations/accounting/disconnect/route.test.ts lib/integrations/accountingStore.test.ts --runInBand`
+- `pnpm jest lib/integrations/holdedGovernanceService.test.ts app/api/integrations/accounting/disconnect/route.test.ts lib/integrations/accountingStore.test.ts --runInBand`
+- `pnpm --filter verifactu-app exec tsc --noEmit`
+- `pnpm --filter verifactu-holded test -- --runTestsByPath app/onboarding/holded/OnboardingHoldedClient.test.tsx --runInBand`
+- `pnpm --filter verifactu-holded test -- --runTestsByPath app/api/holded/connect/route.test.ts --runInBand`
+
+### Pendiente
+
+- validar e2e en produccion controlada el caso:
+  - empresa previamente conectada
+  - `channel=chatgpt`
+  - `reset=1`
+  - reconexion con correo distinto
+- decidir politica final de retencion historica para claims cerradas por disconnect (retener timeline vs purga).
+
+### Decisiones cerradas en esta fase
+
+- governance puede bloquear UX, pero no puede impedir una desconexion de saneamiento.
+- en `chatgpt` key-only flow, la identidad de empresa no se debe reenviar implicitamente.
+
+### Riesgos abiertos
+
+- aun existen cambios locales no relacionados en el monorepo que deben revisarse por separado antes de un release global.
+
 ### Fase DB-1 - Prisma migration plan
 
 - estado: completada

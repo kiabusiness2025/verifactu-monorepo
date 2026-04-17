@@ -101,7 +101,8 @@ The current production flow remains direct:
 - no visible tenant selector
 - ChatGPT can redirect to `https://app.verifactu.business/onboarding/holded?channel=chatgpt...`
 - identity-first onboarding inside the same direct flow: Google or email verification first
-- short steps in order: user, company, Holded API key
+- short steps in order for `channel=chatgpt`: identity confirmation, Holded API key
+- the `company` step is kept for non-chatgpt flows that request full profile completion
 - final success screen + final welcome email, then return to OAuth
 
 Important:
@@ -131,10 +132,15 @@ Mobile handoff hardening:
 - connector flow now preserves `source`, `channel`, `next`, and `onboarding_token`
 - this is built through `buildConnectorIntroUrl` and `buildConnectorConnectUrl` in public navigation helpers
 
-Identity data required in public connect:
+Identity data in public connect:
 
-- company: `companyName`, `legalName` (optional), `taxId`
-- contact: `contactFirstName`, `contactLastName`, `contactEmail`, `contactPhone` (optional)
+- `channel=chatgpt` API-key-only flow:
+  - required: API key + legal consent flags
+  - not sent by default: `companyName`, `legalName`, `taxId`, `contactEmail`, `notificationEmail` and other profile fields
+  - rationale: avoid stale prefilled identity values blocking connect (for example invalid historical `taxId`)
+- full profile flow (non-chatgpt or explicit full reset path):
+  - company: `companyName`, `legalName` (optional), `taxId`
+  - contact: `contactFirstName`, `contactLastName`, `contactEmail`, `contactPhone` (optional)
 
 Persistence behavior after successful connect:
 

@@ -129,6 +129,7 @@ Campos habituales:
    - intenta inferir metadatos utiles
    - actualiza `TenantProfile`
    - registra `ExternalConnectionAuditLog`
+   - en `channel=chatgpt` API-key-only, evita reenviar campos de identidad de empresa/contacto para no bloquear reconexiones por datos historicos
 6. El onboarding conversacional escribe `IsaakOnboardingProfile`.
 7. El usuario pasa a `isaak.verifactu.business/chat`.
 8. El chat y el MCP consumen la conexion Holded ya persistida a nivel tenant.
@@ -140,6 +141,8 @@ Mientras dure el rollout:
 - `ExternalConnection` es la fuente tecnica principal
 - `apps/app/lib/integrations/accountingStore.ts` asegura compatibilidad SQL incremental
 - `apps/app/lib/integrations/holdedConnectionResolver.ts` lee columnas opcionales de forma defensiva
+- `apps/app/app/api/integrations/accounting/disconnect/route.ts` permite disconnect forzado para saneamiento operativo
+- `apps/app/lib/integrations/holdedGovernanceService.ts` puede cancelar access requests abiertas y cerrar claims abiertas en disconnect
 - `TenantIntegration` sigue como compatibilidad para `dashboard`
 - `companyNotificationEmailStore` sigue como fallback hasta activar recipients multiples
 
@@ -164,6 +167,11 @@ Conecta o reconecta Holded.
 ### `DELETE /api/holded/connect`
 
 Desconecta Holded y limpia la credencial persistida.
+
+Notas operativas:
+
+- la desconexion debe dejar el estado listo para reconexion limpia de la misma empresa con otro usuario o correo
+- se mantienen notificaciones de ciclo de vida (conexion/desconexion) y alertas de seguridad
 
 ### `GET /api/holded/status`
 
