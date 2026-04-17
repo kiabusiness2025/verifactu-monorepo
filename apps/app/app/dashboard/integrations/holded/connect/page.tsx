@@ -1,16 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  AlertCircle,
-  ArrowLeft,
-  CheckCircle2,
-  KeyRound,
-  Loader2,
-  TriangleAlert,
-} from 'lucide-react';
-import { StatusBadge } from '@verifactu/ui';
 import type { AccountingStatusResponse } from '@verifactu/integrations/holded/contracts';
 import type { HoldedUiBanner } from '@verifactu/integrations/holded/uiState';
 import {
@@ -19,6 +8,17 @@ import {
   getHoldedGovernanceBadges,
   getHoldedStatusBanners,
 } from '@verifactu/integrations/holded/uiState';
+import { StatusBadge } from '@verifactu/ui';
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  KeyRound,
+  Loader2,
+  TriangleAlert,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
 const VERIFACTU_TERMS_URL = 'https://verifactu.business/terms';
 const VERIFACTU_PRIVACY_URL = 'https://verifactu.business/privacy';

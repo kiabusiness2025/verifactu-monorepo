@@ -25,10 +25,10 @@ jest.mock('@/app/lib/prisma', () => ({
   },
 }));
 
-import { getHoldedSession } from '@/app/lib/holded-session';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
-import { completeIsaakOnboarding, saveIsaakOnboardingDraft } from '@verifactu/integrations';
+import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
+import { completeIsaakOnboarding, saveIsaakOnboardingDraft } from '@verifactu/integrations';
 import { POST } from './route';
 
 const mockGetHoldedSession = getHoldedSession as jest.Mock;

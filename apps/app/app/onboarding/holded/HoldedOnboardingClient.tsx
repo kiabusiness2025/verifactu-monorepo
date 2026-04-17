@@ -1,9 +1,8 @@
 'use client';
 
 import { auth } from '@/lib/firebase';
-import { buildFullName, getPreferredFirstName } from '@/lib/personName';
+import { buildFullName } from '@/lib/personName';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import Image from 'next/image';
 import {
   AlertCircle,
   ArrowLeft,
@@ -14,19 +13,20 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { HoldedCompanySetupState } from './flowState';
-import {
-  createCompanyDraftFromSummary,
-  createSummaryForFreshApiValidation,
-  type HoldedOnboardingSummary,
-} from './summaryState';
 import {
   CNAE_SECTION_OPTIONS,
   COMPANY_ROLE_OPTIONS,
   getCnaeSectionLabel,
   getCompanyRoleLabel,
 } from './profileOptions';
+import {
+  createCompanyDraftFromSummary,
+  createSummaryForFreshApiValidation,
+  type HoldedOnboardingSummary,
+} from './summaryState';
 
 type IntegrationStatus = {
   provider: string;

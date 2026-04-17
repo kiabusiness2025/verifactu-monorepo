@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { verifyCompanyEmailVerificationToken } from '@/app/lib/company-email-verification';
 import { buildProfileOnboardingUrl, sanitizeHoldedReturnTarget } from '@/app/lib/holded-navigation';
 import { prisma } from '@/app/lib/prisma';
-import { verifyCompanyEmailVerificationToken } from '@/app/lib/company-email-verification';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 

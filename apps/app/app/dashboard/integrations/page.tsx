@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ConfirmActionModal } from './components/ConfirmActionModal';
 
 type IntegrationStatus = {

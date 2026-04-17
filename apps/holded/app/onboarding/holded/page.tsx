@@ -1,8 +1,8 @@
-import { redirect } from 'next/navigation';
-import type { Metadata } from 'next';
+import { buildAuthUrl, buildConnectorConnectUrl } from '@/app/lib/holded-navigation';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
-import { buildAuthUrl, buildConnectorConnectUrl } from '@/app/lib/holded-navigation';
+import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import OnboardingHoldedClient from './OnboardingHoldedClient';
 import { resolveHoldedCompletionTarget } from './completionTarget';
 

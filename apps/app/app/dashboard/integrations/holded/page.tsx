@@ -1,10 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { ArrowLeft, RefreshCcw, TriangleAlert } from 'lucide-react';
-import { StatusBadge } from '@verifactu/ui';
 import type {
   AccessRequestDTO,
   AccountingStatusResponse,
@@ -24,6 +19,11 @@ import {
   type HoldedUiBadge,
   type HoldedUiBanner,
 } from '@verifactu/integrations/holded/uiState';
+import { StatusBadge } from '@verifactu/ui';
+import { ArrowLeft, RefreshCcw, TriangleAlert } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ConfirmActionModal } from '../components/ConfirmActionModal';
 import { PanelEmptyState } from '../components/PanelEmptyState';
 

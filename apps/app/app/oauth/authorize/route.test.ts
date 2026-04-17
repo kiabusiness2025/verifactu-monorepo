@@ -44,16 +44,16 @@ jest.mock('@/lib/oauth/mcp', () => ({
   verifyHoldedOnboardingToken: jest.fn(async () => null),
 }));
 
-import { NextRequest } from 'next/server';
-import { GET } from './route';
-import { resolveHoldedOnboardingSession } from '@/lib/integrations/holdedOnboardingSession';
 import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
-import { getSessionPayload } from '@/lib/session';
+import { resolveHoldedOnboardingSession } from '@/lib/integrations/holdedOnboardingSession';
 import {
   mintAuthorizationCode,
   mintHoldedOnboardingToken,
   resolveTenantForHoldedFirstSession,
 } from '@/lib/oauth/mcp';
+import { getSessionPayload } from '@/lib/session';
+import { NextRequest } from 'next/server';
+import { GET } from './route';
 
 describe('oauth authorize holded flow', () => {
   afterEach(() => {

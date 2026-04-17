@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+import { sendHoldedDisconnectNotifications } from '@/app/lib/communications/holded-disconnect-emails';
 import { disconnectHoldedConnection } from '@/app/lib/holded-integration';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { loadSettingsData, toSettingsSession } from '@/app/lib/settings';
-import { sendHoldedDisconnectNotifications } from '@/app/lib/communications/holded-disconnect-emails';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 

@@ -1,12 +1,12 @@
 ﻿import {
-  Home,
-  FileText,
-  Users,
-  Landmark,
-  FolderOpen,
   CalendarDays,
-  Sparkles,
+  FileText,
+  FolderOpen,
+  Home,
+  Landmark,
   Settings,
+  Sparkles,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 

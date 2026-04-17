@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import { requireHoldedConnectorAdminPageAccess } from '@/lib/holdedConnectorAdmin';
+import type { ReactNode } from 'react';
 
 export const dynamic = 'force-dynamic';
 

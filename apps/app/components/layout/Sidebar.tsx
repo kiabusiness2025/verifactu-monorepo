@@ -1,9 +1,8 @@
 ﻿'use client';
 
-import React from 'react';
+import { navItems } from '@/config/nav';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { navItems } from '@/config/nav';
 
 type SidebarProps = {
   isOpen: boolean;
