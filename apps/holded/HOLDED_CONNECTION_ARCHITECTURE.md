@@ -7,7 +7,7 @@ Persistir la conexion Holded por API key de forma segura, reutilizable y compati
 - onboarding publico en `holded.verifactu.business`
 - personalizacion inicial de Isaak
 - chat principal en `isaak.verifactu.business`
-- conector MCP remoto servido desde `app.verifactu.business`
+- conector MCP remoto servido desde `holded.verifactu.business` (proxy a `app.verifactu.business`)
 
 ## Documentacion relacionada
 
@@ -28,10 +28,15 @@ Persistir la conexion Holded por API key de forma segura, reutilizable y compati
 `apps/holded` no sirve:
 
 - el chat principal
-- el conector MCP de ChatGPT
-- el OAuth server del conector
+- el OAuth server del conector (authorize, token, register, userinfo)
 
-El conector ChatGPT usa la conexion ya persistida, pero el runtime MCP vive en `apps/app`.
+`apps/holded` SÍ sirve:
+
+- el endpoint MCP de ChatGPT (`/api/mcp/holded`) — como proxy a `apps/app`
+- el `.well-known/oauth-protected-resource/api/mcp/holded` con metadata que apunta al auth server en `apps/app`
+
+El runtime MCP (verificacion de tokens OAuth, resolver de conexion Holded) sigue viviendo en `apps/app`.
+El proxy en `apps/holded` reenvía todas las peticiones transparentemente para que la URL visible sea `holded.verifactu.business`.
 
 ## Modelo de datos reutilizado
 

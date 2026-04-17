@@ -135,6 +135,8 @@ async function ensureAuthorizationCodeRedemptionsTable() {
 }
 
 export function getMcpResourceUrl() {
+  const override = process.env.MCP_RESOURCE_URL?.trim();
+  if (override) return override;
   return `${getAppUrl()}${MCP_RESOURCE_PATH}`;
 }
 

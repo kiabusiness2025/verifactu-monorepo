@@ -13,7 +13,7 @@ Use these exact values in the OpenAI connector registration screen.
 - `MCP Server`
   - `Remote MCP Server`
 - `MCP Server URL`
-  - `https://app.verifactu.business/api/mcp/holded`
+  - `https://holded.verifactu.business/api/mcp/holded`
 - `Authentication`
   - `OAuth 2.0`
 
@@ -33,11 +33,11 @@ Important:
 - `Authorization Server Base`
   - `https://app.verifactu.business`
 - `Resource`
-  - `https://app.verifactu.business/api/mcp/holded`
+  - `https://holded.verifactu.business/api/mcp/holded`
 - `Userinfo URL`
   - `https://app.verifactu.business/oauth/userinfo`
 - `Protected Resource Metadata`
-  - `https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded`
+  - `https://holded.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded`
 
 ### 3. OAuth client fields
 
