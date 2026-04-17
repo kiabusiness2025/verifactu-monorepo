@@ -1,14 +1,13 @@
 /**
  * OAuth 2.0 Authorization Server Metadata (RFC 8414) — served from holded domain.
  *
- * ChatGPT discovers OAuth by fetching /.well-known/oauth-authorization-server
- * on the same origin as the MCP server.  Since the MCP proxy lives here at
- * holded.verifactu.business, this endpoint must exist here too.
+ * RFC 8414 §3.2 requires the `issuer` to match the discovery URL domain.
+ * We use HOLDED_APP_URL as the issuer so this metadata is accepted by strict validators.
  *
- * The actual authorization server (authorize/token/etc.) remains on
- * app.verifactu.business.  RFC 8414 allows the issuer to differ from the
- * discovery host when the resource server is on a different domain.
- * The `resource` field points to the canonical MCP endpoint (holded domain).
+ * All OAuth endpoints (authorize/token/register) are hosted here on holded domain
+ * as proxies to the actual implementation on app.verifactu.business.
+ * Token signing/verification uses HMAC and does not validate the issuer URL,
+ * so issuer = holded domain does not break token validation.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -39,8 +38,8 @@ function getAdvertisedScopes() {
 
 function buildMetadata() {
   return {
-    // issuer stays on app.verifactu.business — that's the canonical OAuth server
-    issuer: APP_PUBLIC_URL,
+    // issuer must match the discovery domain (RFC 8414 §3.2)
+    issuer: HOLDED_APP_URL,
     // All OAuth endpoints exposed on holded domain (proxied to app internally)
     authorization_endpoint: `${HOLDED_APP_URL}/oauth/authorize`,
     token_endpoint: `${HOLDED_APP_URL}/oauth/token`,
@@ -51,7 +50,7 @@ function buildMetadata() {
     grant_types_supported: ['authorization_code'],
     code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['none'],
-    service_documentation: `${APP_PUBLIC_URL}/.well-known/oauth-authorization-server`,
+    service_documentation: `${HOLDED_APP_URL}/.well-known/oauth-authorization-server`,
     openid_configuration: `${HOLDED_APP_URL}/.well-known/openid-configuration`,
     resource: `${HOLDED_APP_URL}${MCP_RESOURCE_PATH}`,
     default_scopes: getDefaultScopes(),

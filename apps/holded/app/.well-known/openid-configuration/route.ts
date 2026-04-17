@@ -19,9 +19,10 @@ const ADVERTISED_SCOPES = [
 
 function buildOidcConfig() {
   return {
-    issuer: APP_PUBLIC_URL,
-    authorization_endpoint: `${APP_PUBLIC_URL}/oauth/authorize`,
-    token_endpoint: `${APP_PUBLIC_URL}/oauth/token`,
+    // issuer must match the discovery domain (RFC 8414 §3.2)
+    issuer: HOLDED_APP_URL,
+    authorization_endpoint: `${HOLDED_APP_URL}/oauth/authorize`,
+    token_endpoint: `${HOLDED_APP_URL}/oauth/token`,
     userinfo_endpoint: `${APP_PUBLIC_URL}/oauth/userinfo`,
     scopes_supported: ADVERTISED_SCOPES,
     response_types_supported: ['code'],
