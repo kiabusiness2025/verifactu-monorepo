@@ -50,6 +50,7 @@ function buildMetadata() {
     code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['none'],
     service_documentation: `${APP_PUBLIC_URL}/.well-known/oauth-authorization-server`,
+    openid_configuration: `${HOLDED_APP_URL}/.well-known/openid-configuration`,
     resource: `${HOLDED_APP_URL}${MCP_RESOURCE_PATH}`,
     default_scopes: getDefaultScopes(),
   };

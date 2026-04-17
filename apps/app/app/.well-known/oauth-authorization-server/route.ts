@@ -27,6 +27,7 @@ function buildMetadataResponse(request: NextRequest) {
     code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['none'],
     service_documentation: getAuthorizationServerMetadataUrl(),
+    openid_configuration: `${getAuthorizationServerIssuer()}/.well-known/openid-configuration`,
     resource: getMcpResourceUrl(),
     default_scopes: getDefaultScopes(),
   });
