@@ -536,6 +536,7 @@ export async function saveHoldedConnection(input: {
     },
   }));
   const summary = buildHoldedProbeSummary(input.probe);
+  const shouldSyncTenantIdentity = channel !== 'chatgpt' && metadata.reliableCompanyIdentity;
   let connectionId: string | null = null;
 
   const persistPrimaryStorage = async (actorUserId?: string | null) => {
@@ -612,7 +613,7 @@ export async function saveHoldedConnection(input: {
         update: externalConnectionUpdate,
         create: externalConnectionCreate,
       }),
-      ...(metadata.reliableCompanyIdentity
+      ...(shouldSyncTenantIdentity
         ? [
             input.prisma.tenant.update({
               where: { id: input.tenantId },
@@ -706,7 +707,7 @@ export async function saveHoldedConnection(input: {
     await saveTenantMetadata(input.prisma, {
       tenantId: input.tenantId,
       fingerprint,
-      allowProfileSync: metadata.reliableCompanyIdentity,
+      allowProfileSync: shouldSyncTenantIdentity,
       metadata: {
         companyName: metadata.companyName,
         legalName: metadata.legalName,

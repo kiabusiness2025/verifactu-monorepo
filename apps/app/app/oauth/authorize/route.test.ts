@@ -159,7 +159,7 @@ describe('oauth authorize holded flow', () => {
     expect(response.status).toBe(307);
     expect(response.headers.get('x-verifactu-request-id')).toBeTruthy();
     expect(location).toContain('/onboarding/holded');
-    expect(location).toContain('require_connection_confirmation=1');
+    expect(location).toContain('channel=chatgpt');
     expect(location).not.toContain('onboarding_token=');
     expect(location).not.toContain('connection_confirmed=1');
   });

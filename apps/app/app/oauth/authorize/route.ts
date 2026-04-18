@@ -53,8 +53,6 @@ function buildCanonicalHoldedOnboardingUrl(input: {
   const onboardingUrl = new URL('/onboarding/holded', holdedSiteUrl);
   onboardingUrl.searchParams.set('source', 'holded_chatgpt_entry');
   onboardingUrl.searchParams.set('channel', 'chatgpt');
-  onboardingUrl.searchParams.set('require_connection_confirmation', '1');
-  onboardingUrl.searchParams.set('reset', '1');
   onboardingUrl.searchParams.set('next', input.next);
 
   const onboardingToken = input.onboardingToken?.trim();
