@@ -109,6 +109,21 @@ function readOAuthSecret() {
   return secret;
 }
 
+function getHoldedConnectorPublicUrl() {
+  const fallback = 'https://holded.verifactu.business';
+  const raw =
+    process.env.HOLDED_PUBLIC_URL?.trim() ||
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() ||
+    process.env.MCP_PUBLIC_CONNECTOR_URL?.trim() ||
+    fallback;
+
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return fallback;
+  }
+}
+
 function buildAuthorizationCodeIdHash(codeId: string) {
   return createHash('sha256').update(codeId).digest('hex');
 }
@@ -137,15 +152,15 @@ async function ensureAuthorizationCodeRedemptionsTable() {
 export function getMcpResourceUrl() {
   const override = process.env.MCP_RESOURCE_URL?.trim();
   if (override) return override;
-  return `${getAppUrl()}${MCP_RESOURCE_PATH}`;
+  return `${getHoldedConnectorPublicUrl()}${MCP_RESOURCE_PATH}`;
 }
 
 export function getAuthorizationEndpoint() {
-  return `${getAppUrl()}${MCP_AUTHORIZATION_PATH}`;
+  return `${getHoldedConnectorPublicUrl()}${MCP_AUTHORIZATION_PATH}`;
 }
 
 export function getTokenEndpoint() {
-  return `${getAppUrl()}${MCP_TOKEN_PATH}`;
+  return `${getHoldedConnectorPublicUrl()}${MCP_TOKEN_PATH}`;
 }
 
 export function getUserInfoEndpoint() {
@@ -153,15 +168,15 @@ export function getUserInfoEndpoint() {
 }
 
 export function getRegistrationEndpoint() {
-  return `${getAppUrl()}${MCP_REGISTRATION_PATH}`;
+  return `${getHoldedConnectorPublicUrl()}${MCP_REGISTRATION_PATH}`;
 }
 
 export function getAuthorizationServerIssuer() {
-  return getAppUrl();
+  return getHoldedConnectorPublicUrl();
 }
 
 export function getAuthorizationServerMetadataUrl() {
-  return `${getAppUrl()}${MCP_AUTH_SERVER_METADATA_PATH}`;
+  return `${getHoldedConnectorPublicUrl()}${MCP_AUTH_SERVER_METADATA_PATH}`;
 }
 
 function getProtectedResourceMetadataPath(resourcePath: string) {

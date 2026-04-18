@@ -44,7 +44,7 @@ describe('OnboardingHoldedClient', () => {
     render(<OnboardingHoldedClient {...defaultProps} />);
 
     // Always-visible header elements
-    expect(screen.getAllByText('Conector Holded')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('holded')[0]).toBeInTheDocument();
     expect(screen.getByText('Conecta tu cuenta de Holded')).toBeInTheDocument();
 
     // API key and consent are visible immediately

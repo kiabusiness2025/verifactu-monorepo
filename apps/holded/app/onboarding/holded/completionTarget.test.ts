@@ -29,13 +29,13 @@ describe('resolveHoldedCompletionTarget', () => {
     );
   });
 
-  it('keeps external app oauth callbacks as valid final targets', async () => {
+  it('canonicalizes external app oauth callbacks back to the public holded oauth endpoint', async () => {
     const { resolveHoldedCompletionTarget } = await import('./completionTarget');
 
     expect(
       resolveHoldedCompletionTarget(
         'https://app.verifactu.business/oauth/authorize?client_id=openai-chatgpt-test'
       )
-    ).toBe('https://app.verifactu.business/oauth/authorize?client_id=openai-chatgpt-test');
+    ).toBe('https://holded.verifactu.business/oauth/authorize?client_id=openai-chatgpt-test');
   });
 });

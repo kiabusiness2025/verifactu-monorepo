@@ -11,6 +11,7 @@ import {
 import { disconnectAccountingIntegration } from '@/lib/integrations/accountingStore';
 import { clearChatGptChannelIdentity } from '@/lib/integrations/channelIdentityStore';
 import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
+import { resetHoldedConnectorOperationalStateOnDisconnect } from '@/lib/integrations/holdedConnectorTraceService';
 import {
   buildConnectorEvent,
   getConnectorRequestId,
@@ -191,6 +192,31 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  let operationalReset = {
+    affectedUsers: 0,
+    deletedSessions: 0,
+    deletedMemoryFacts: 0,
+    preservedConversationHistory: 0,
+  };
+
+  try {
+    operationalReset = await resetHoldedConnectorOperationalStateOnDisconnect({
+      tenantId: auth.tenantId,
+    });
+  } catch (operationalResetError) {
+    logConnectorEvent('api/integrations/accounting/disconnect', 'error', {
+      requestId,
+      tenantId: auth.tenantId,
+      entryChannel,
+      stage: 'operational_reset',
+      outcome: 'reset_failed',
+      message:
+        operationalResetError instanceof Error
+          ? operationalResetError.message
+          : String(operationalResetError),
+    });
+  }
+
   try {
     const tenant = await prisma.tenant.findUnique({
       where: { id: auth.tenantId },
@@ -281,6 +307,7 @@ export async function POST(request: NextRequest) {
         clientAdminGap: governanceFlags.clientAdminGap,
         highGovernanceRisk: governanceFlags.highGovernanceRisk,
       }),
+      operationalReset,
       requestId,
     }),
     requestId

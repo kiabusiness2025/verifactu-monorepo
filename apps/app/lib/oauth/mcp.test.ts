@@ -58,19 +58,19 @@ describe('MCP OAuth metadata helpers', () => {
 
   it('derives the protected resource metadata URL from the MCP resource path', () => {
     expect(getProtectedResourceMetadataUrl()).toBe(
-      'https://app.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded'
+      'https://holded.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded'
     );
   });
 
   it('announces the authorization server issuer in protected resource metadata', () => {
-    expect(getAuthorizationServerIssuer()).toBe('https://app.verifactu.business');
+    expect(getAuthorizationServerIssuer()).toBe('https://holded.verifactu.business');
     expect(getPublicScopePreset()).toBe('openai_review_v2');
     expect(getSupportedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
     expect(getAdvertisedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
     expect(getDefaultScopes()).toEqual([...getHoldedMcpScopePreset('openai_review_v2')]);
     expect(getProtectedResourceMetadata()).toEqual({
-      resource: 'https://app.verifactu.business/api/mcp/holded',
-      authorization_servers: ['https://app.verifactu.business'],
+      resource: 'https://holded.verifactu.business/api/mcp/holded',
+      authorization_servers: ['https://holded.verifactu.business'],
       bearer_methods_supported: ['header'],
       scopes_supported: [...HOLDED_MCP_SUPPORTED_SCOPES],
     });
@@ -83,8 +83,8 @@ describe('MCP OAuth metadata helpers', () => {
     expect(getDefaultScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
     expect(getAdvertisedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
     expect(getProtectedResourceMetadata()).toEqual({
-      resource: 'https://app.verifactu.business/api/mcp/holded',
-      authorization_servers: ['https://app.verifactu.business'],
+      resource: 'https://holded.verifactu.business/api/mcp/holded',
+      authorization_servers: ['https://holded.verifactu.business'],
       bearer_methods_supported: ['header'],
       scopes_supported: [...HOLDED_MCP_SUPPORTED_SCOPES],
     });
@@ -97,8 +97,8 @@ describe('MCP OAuth metadata helpers', () => {
     expect(getDefaultScopes()).toEqual([...getHoldedMcpScopePreset('holded_phase2_accounting')]);
     expect(getAdvertisedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
     expect(getProtectedResourceMetadata()).toEqual({
-      resource: 'https://app.verifactu.business/api/mcp/holded',
-      authorization_servers: ['https://app.verifactu.business'],
+      resource: 'https://holded.verifactu.business/api/mcp/holded',
+      authorization_servers: ['https://holded.verifactu.business'],
       bearer_methods_supported: ['header'],
       scopes_supported: [...HOLDED_MCP_SUPPORTED_SCOPES],
     });

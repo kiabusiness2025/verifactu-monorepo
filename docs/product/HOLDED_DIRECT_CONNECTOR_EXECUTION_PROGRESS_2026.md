@@ -14,6 +14,132 @@ Regla:
 
 ## Fase actual
 
+## Fase PHASE1-2026-04-18 - Redefinicion de Fase I y auditoria end-to-end
+
+- estado: completada
+- fecha de cierre: 2026-04-18
+
+### Objetivo de fase
+
+Fijar la definicion vigente de Fase I y contrastarla contra el estado real del conector, evitando seguir operando con un contrato documental antiguo.
+
+### Entregado
+
+- redefinicion documental de Fase I en:
+  - `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md`
+  - `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md`
+- auditoria tecnica end-to-end en:
+  - `docs/engineering/HOLDED_DIRECT_CONNECTOR_PHASE1_AUDIT_2026-04-18.md`
+- actualizacion del indice documental:
+  - `docs/README.md`
+
+### Decisiones cerradas en esta fase
+
+- Fase I se mide ahora contra este alcance:
+  - `OAuth -> API key -> ChatGPT`
+  - correos reales de connect/disconnect
+  - admin con usuarios, sesiones e historial
+  - reset de memoria y relacion activa al desconectar
+- no se considera cerrada Fase I solo por tener el flujo OAuth y la conexion minima
+- el historico debe conservarse en backend, pero la memoria activa no debe sobrevivir a un disconnect
+
+### Hallazgos principales
+
+- `OAuth -> API key -> ChatGPT`: ya casi cerrado
+- connect/disconnect emails: parcial
+- admin de usuarios/tenants: disponible
+- sesiones activas: no disponible en panel Holded
+- historial de conversaciones: no disponible en panel Holded
+- reset de memoria al desconectar: no disponible todavia
+
+### Pendiente
+
+- reintroducir email post-connect en el camino publico real de ChatGPT
+- exponer sesiones activas en admin
+- exponer historial conversacional en admin
+- resetear memoria y sesiones activas al desconectar
+
+### Riesgos abiertos
+
+- dar por publicada Fase I sin cerrar sesiones/memoria
+- seguir mezclando contrato minimo del conector con backlog de producto mayor
+
+### Siguiente fase habilitada
+
+- `PHASE1-CLOSE-1`:
+  - `MAIL-1`
+  - `ADMIN-TRACE-1`
+  - `RESET-1`
+
+## Fase MVP-2026-04-18 - Public connector separation and ChatGPT flow simplification
+
+- estado: completada
+- fecha de cierre: 2026-04-18
+
+### Objetivo de fase
+
+Recortar el flujo publico `ChatGPT <-> Holded` a un MVP publicable y reforzar la separacion entre:
+
+- `apps/holded` como dominio publico del conector
+- `apps/app` como backend compartido
+- `apps/isaak` fuera del flujo publico del conector
+
+### Entregado
+
+- `apps/app/lib/oauth/mcp.ts`:
+  - issuer, authorization endpoint, token endpoint, registration endpoint y resource MCP pasan a anunciar `https://holded.verifactu.business`
+  - el backend deja de exponer `app.verifactu.business` como cara publica del conector
+- `apps/app/app/oauth/authorize/route.ts`:
+  - el retorno `next` del flujo ChatGPT vuelve por `/holded/oauth/authorize`
+  - se evita filtrar URLs internas de `/app/oauth/authorize` en el handoff publico
+- `apps/holded/app/lib/holded-navigation.ts`:
+  - canonicaliza callbacks heredados de `/app/oauth/authorize` al dominio publico `/holded`
+- `apps/holded/app/api/holded/connect/route.ts`:
+  - para `channel=chatgpt`, el flujo termina justo despues de `saveHoldedConnection`
+  - se eliminan del camino critico:
+    - persistencia manual extra de identidad
+    - verificacion de email de compania
+    - comunicaciones publicas post-connect
+    - alertas de gobernanza
+  - se reduce el riesgo del error final "la conexion es valida, pero no hemos podido terminar de guardarla"
+- limpieza de superficie visible y residual:
+  - `apps/app/lib/holdedConnectorAdmin.ts` deja de apuntar a `/dashboard/integrations/isaak-for-holded`
+  - `apps/app/lib/integrations/accounting.ts` deja de mencionar Isaak en errores de capacidades
+  - copy principal simplificado en `apps/holded/app/auth/holded/page.tsx`
+  - copy principal simplificado en `apps/holded/app/onboarding/holded/OnboardingHoldedClient.tsx`
+  - cabecera del panel privado simplificada en `apps/app/app/dashboard/integrations/holded/page.tsx`
+
+### Verificacion ejecutada
+
+- `pnpm --filter verifactu-app test -- --runInBand lib/oauth/mcp.test.ts app/oauth/authorize/route.test.ts`
+- `pnpm --filter verifactu-holded test -- --runInBand app/api/holded/connect/route.test.ts app/onboarding/holded/completionTarget.test.ts`
+- `pnpm --filter verifactu-holded test -- --runInBand app/onboarding/holded/OnboardingHoldedClient.test.tsx`
+- `pnpm --filter verifactu-app exec tsc --noEmit`
+- `pnpm --filter verifactu-holded exec tsc --noEmit`
+
+### Pendiente
+
+- smoke manual real del flujo:
+  - ChatGPT -> OAuth -> login -> API key -> callback OAuth final
+- eliminar o archivar documentacion antigua de `apps/holded` que todavia habla de handoff a Isaak
+- evaluar si el proxy `/holded/oauth/authorize` debe pasar de redirect a proxy transparente en una fase posterior
+
+### Decisiones cerradas en esta fase
+
+- la URL MCP canonica publica del conector es `https://holded.verifactu.business/api/mcp/holded`
+- `/holded` es la superficie publica del conector
+- `/app` queda como backend compartido y no como cara publica del flujo
+- el MVP publicable de ChatGPT se reduce a:
+  - login OAuth
+  - API key
+  - guardar conexion
+  - volver a ChatGPT
+
+### Riesgos abiertos
+
+- el flujo aun conserva piezas de onboarding ampliado para `dashboard`, aunque ya no formen parte del camino critico `chatgpt`
+- siguen existiendo referencias documentales antiguas a Isaak fuera del runtime critico del conector
+
 ## Fase STAB-2026-04-16 - Disconnect hard reset + ChatGPT onboarding hardening
 
 - estado: completada
@@ -1872,3 +1998,73 @@ Cada nueva fase debe anadir:
 - compatibilidad temporal vigente
 - riesgos abiertos
 - siguiente fase habilitada
+
+## Fase PHASE1-CLOSE-1 - Proxy publico, mail real, trazas admin y reset operativo
+
+- Estado: completada
+- Fecha de cierre: 2026-04-18
+
+### Objetivo de fase
+
+Cerrar los huecos reales que seguian impidiendo considerar Fase I como un MVP publicable del conector:
+
+- proxy transparente en `/holded/oauth/authorize`
+- email post-connect en el camino publico `chatgpt`
+- sesiones activas e historial conversacional visibles en admin
+- reset operativo de sesiones y memoria al desconectar sin borrar historico
+
+### Entregado
+
+- `apps/holded/app/oauth/authorize/route.ts`
+  - ya no redirige al navegador a `/app`
+  - ahora actua como proxy transparente al backend compartido OAuth
+- `apps/holded/app/api/holded/connect/route.ts`
+  - el camino `channel=chatgpt` vuelve a emitir:
+    - `HOLDED_CONNECTED` en `usage_events`
+    - email post-connect a usuario/admin con shell Holded + ChatGPT
+  - sin reintroducir persistencia pesada de identidad
+- `apps/holded/app/lib/communications/holded-email-templates.ts`
+- `apps/holded/app/lib/communications/holded-email-service.ts`
+  - CTA y copy adaptados al flujo `OAuth -> API -> ChatGPT`
+- `apps/app/app/api/integrations/accounting/admin/traces/route.ts`
+  - nueva ruta admin para:
+    - sesiones activas
+    - historial conversacional reciente
+    - conteo de memory facts activas
+- `apps/app/lib/integrations/holdedConnectorTraceService.ts`
+  - trazabilidad admin y reset operativo implementados sobre SQL directo
+- `apps/app/app/api/integrations/accounting/disconnect/route.ts`
+  - al desconectar ahora:
+    - limpia memoria activa (`isaak_memory_facts`)
+    - elimina `sessions` persistidas de usuarios del tenant
+    - conserva conversaciones como historico admin
+- `apps/app/app/dashboard/integrations/holded/page.tsx`
+  - panel admin muestra:
+    - sesiones activas
+    - historial conversacional
+
+### Verificacion
+
+- `pnpm --filter verifactu-holded test -- --runInBand app/oauth/authorize/route.test.ts app/api/holded/connect/route.test.ts`
+- `pnpm --filter verifactu-app test -- --runInBand app/api/integrations/accounting/admin/traces/route.test.ts app/api/integrations/accounting/disconnect/route.test.ts app/dashboard/integrations/isaak-for-holded/page.test.tsx`
+- `pnpm --filter verifactu-holded exec tsc --noEmit`
+- `pnpm --filter verifactu-app exec tsc --noEmit`
+
+### Compatibilidad temporal vigente
+
+- `/app` sigue siendo backend compartido de OAuth, MCP y persistencia
+- el flujo publico vive en `/holded`
+- el historico conversacional se conserva en backend aunque se resetee memoria activa
+
+### Riesgos abiertos
+
+- la invalidacion del cookie stateless de sesion del navegador sigue siendo best-effort; la limpieza fuerte aplicada en Fase I es sobre `sessions`, `channel identities` y memoria operativa persistida
+- el panel admin aun consume una pagina interna legacy `isaak-for-holded` como alias tecnico, aunque visualmente ya no expone Isaak en el conector
+
+### Siguiente fase habilitada
+
+- smoke real de Fase I en entorno publico con:
+  - `OAuth -> API -> ChatGPT`
+  - correo connect/disconnect
+  - admin traces
+  - reset operativo post-disconnect

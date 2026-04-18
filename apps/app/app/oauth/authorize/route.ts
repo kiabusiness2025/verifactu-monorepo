@@ -70,6 +70,15 @@ function buildCanonicalHoldedOnboardingUrl(input: {
   return onboardingUrl;
 }
 
+function buildCanonicalPublicAuthorizeUrl(url: URL) {
+  const holdedSiteUrl = resolveCanonicalHoldedSiteUrl();
+  const publicAuthorizeUrl = new URL('/oauth/authorize', holdedSiteUrl);
+  url.searchParams.forEach((value, key) => {
+    publicAuthorizeUrl.searchParams.set(key, value);
+  });
+  return publicAuthorizeUrl.toString();
+}
+
 function redirectWithError(redirectUri: string, error: string, state?: string | null) {
   const url = new URL(redirectUri);
   url.searchParams.set('error', error);
@@ -168,7 +177,10 @@ export async function GET(request: NextRequest) {
 
       return withConnectorRequestId(
         NextResponse.redirect(
-          buildLoginUrl(authorizeAfterLoginUrl.toString(), 'holded_chat_requires_session')
+          buildLoginUrl(
+            buildCanonicalPublicAuthorizeUrl(authorizeAfterLoginUrl),
+            'holded_chat_requires_session'
+          )
         ),
         requestId
       );
@@ -191,7 +203,7 @@ export async function GET(request: NextRequest) {
       authorizeUrl.searchParams.set('onboarding_token', mintedOnboardingToken);
 
       const onboardingUrl = buildCanonicalHoldedOnboardingUrl({
-        next: authorizeUrl.toString(),
+        next: buildCanonicalPublicAuthorizeUrl(authorizeUrl),
         onboardingToken: mintedOnboardingToken,
         tenantId: tenantIdQuery,
       });
@@ -310,7 +322,7 @@ export async function GET(request: NextRequest) {
       }
 
       const onboardingUrl = buildCanonicalHoldedOnboardingUrl({
-        next: authorizeUrl.toString(),
+        next: buildCanonicalPublicAuthorizeUrl(authorizeUrl),
         onboardingToken,
         tenantId: redirectTenantId,
       });

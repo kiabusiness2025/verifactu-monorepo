@@ -32,6 +32,15 @@ jest.mock('@/lib/integrations/companyNotificationEmailStore', () => ({
   getConfirmedCompanyNotificationEmail: jest.fn(async () => null),
 }));
 
+jest.mock('@/lib/integrations/holdedConnectorTraceService', () => ({
+  resetHoldedConnectorOperationalStateOnDisconnect: jest.fn(async () => ({
+    affectedUsers: 1,
+    deletedSessions: 2,
+    deletedMemoryFacts: 3,
+    preservedConversationHistory: 4,
+  })),
+}));
+
 jest.mock('@/lib/prisma', () => ({
   __esModule: true,
   default: {
@@ -148,6 +157,7 @@ import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations
 import { resetGovernanceOnDisconnect } from '@/lib/integrations/holdedGovernanceService';
 import { clearChatGptChannelIdentity } from '@/lib/integrations/channelIdentityStore';
 import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
+import { resetHoldedConnectorOperationalStateOnDisconnect } from '@/lib/integrations/holdedConnectorTraceService';
 import { forgetVerifiedHoldedEmailIdentity } from '@/lib/integrations/holdedVerifiedEmailIdentities';
 import prisma from '@/lib/prisma';
 import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
@@ -287,6 +297,9 @@ describe('POST /api/integrations/accounting/disconnect', () => {
       email: 'soporte@verifactu.business',
       clearAllForUid: true,
     });
+    expect(resetHoldedConnectorOperationalStateOnDisconnect).toHaveBeenCalledWith({
+      tenantId: 'tenant-1',
+    });
     expect(sendHoldedConnectionLifecycleEmails).toHaveBeenCalledWith({
       userEmail: 'soporte@verifactu.business',
       userName: 'Demo User',
@@ -316,6 +329,12 @@ describe('POST /api/integrations/accounting/disconnect', () => {
       actorName: 'Demo User',
       action: 'disconnected',
       channel: 'dashboard',
+    });
+    expect(payload.operationalReset).toEqual({
+      affectedUsers: 1,
+      deletedSessions: 2,
+      deletedMemoryFacts: 3,
+      preservedConversationHistory: 4,
     });
   });
 

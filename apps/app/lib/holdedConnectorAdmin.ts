@@ -37,7 +37,7 @@ export function assertHoldedConnectorAdminSessionAccess(
 export async function requireHoldedConnectorAdminPageAccess(input?: { nextPath?: string }) {
   const { getSessionPayload } = await import('./session');
   const session = await getSessionPayload();
-  const nextPath = input?.nextPath || '/dashboard/integrations/isaak-for-holded';
+  const nextPath = input?.nextPath || '/dashboard/integrations/holded';
 
   if (!session?.uid || !session.email) {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);

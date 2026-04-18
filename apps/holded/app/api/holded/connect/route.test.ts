@@ -618,6 +618,7 @@ describe('POST /api/holded/connect', () => {
         body: JSON.stringify({
           apiKey: 'abcdefghijklmnop',
           channel: 'chatgpt',
+          nextTarget: 'https://chatgpt.com/connector/oauth/demo',
         }),
       }) as never
     );
@@ -626,6 +627,24 @@ describe('POST /api/holded/connect', () => {
     expect(response.status).toBe(200);
     expect(payload.ok).toBe(true);
     expect(mockProbeHoldedConnection).toHaveBeenCalled();
+    expect(payload.notificationEmail).toBe('tenant@example.com');
+    expect(payload.companyEmailVerificationPending).toBe(false);
+    expect(mockSendHoldedConnectedCommunication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userEmail: 'tenant@example.com',
+        companyName: 'Acme SL',
+        channel: 'chatgpt',
+        returnUrl: 'https://chatgpt.com/connector/oauth/demo',
+      })
+    );
+    expect(mockRecordUsageEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'HOLDED_CONNECTED',
+        source: 'holded_connect_public_chatgpt',
+      })
+    );
+    expect(mockTenantUpdate).not.toHaveBeenCalled();
+    expect(mockUserUpdate).not.toHaveBeenCalled();
   });
 
   it('returns 400 when contact phone is not valid for Spain', async () => {

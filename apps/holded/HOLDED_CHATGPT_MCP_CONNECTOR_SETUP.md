@@ -2,6 +2,12 @@
 
 Guia operativa para registrar `Holded Connector for ChatGPT` como conector MCP remoto en ChatGPT.
 
+> Nota Fase I
+>
+> La superficie publica canonica del conector es `holded.verifactu.business`.
+> Si en este documento aparece alguna referencia legacy a `app.verifactu.business`
+> debe interpretarse como backend compartido interno, no como cara publica del conector.
+
 ## OpenAI screen: exact values to paste
 
 Use these exact values in the OpenAI connector registration screen.
@@ -25,13 +31,13 @@ Important:
 ### 2. OAuth fields
 
 - `Authorization URL`
-  - `https://app.verifactu.business/oauth/authorize`
+  - `https://holded.verifactu.business/oauth/authorize`
 - `Token URL`
-  - `https://app.verifactu.business/oauth/token`
+  - `https://holded.verifactu.business/oauth/token`
 - `Registration URL`
-  - `https://app.verifactu.business/oauth/register`
+  - `https://holded.verifactu.business/oauth/register`
 - `Authorization Server Base`
-  - `https://app.verifactu.business`
+  - `https://holded.verifactu.business`
 - `Resource`
   - `https://holded.verifactu.business/api/mcp/holded`
 - `Userinfo URL`
@@ -44,7 +50,7 @@ Important:
 Preferred setup:
 
 - let OpenAI use dynamic client registration against:
-  - `https://app.verifactu.business/oauth/register`
+  - `https://holded.verifactu.business/oauth/register`
 
 If the OpenAI screen asks you to manually document the current values:
 

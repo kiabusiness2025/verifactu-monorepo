@@ -496,6 +496,7 @@ export default function OnboardingHoldedClient({
       const connectPayload = {
         apiKey: normalizedApiKey,
         channel,
+        nextTarget,
         validationToken: reusableToken || undefined,
         companyName: shouldSendIdentityFields ? normalizedCompanyName : undefined,
         legalName: shouldSendIdentityFields ? normalizedLegalName || undefined : undefined,
@@ -638,7 +639,7 @@ export default function OnboardingHoldedClient({
           {/* ── LEFT: context panel ────────────────────────────────────────── */}
           <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#ff5460]">
-              Conector Holded
+              holded
             </div>
             <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
               Conecta tu cuenta de Holded
@@ -1150,7 +1151,7 @@ export default function OnboardingHoldedClient({
                             <div className="font-semibold text-slate-900">
                               {phase === 'validating'
                                 ? 'Validando la API key'
-                                : 'Activando el Conector Holded'}
+                                : 'Activando la conexion'}
                             </div>
                             <div className="mt-1">
                               {phase === 'validating'

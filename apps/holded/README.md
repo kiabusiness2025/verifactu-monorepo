@@ -1,8 +1,8 @@
 # holded.verifactu.business
 
-Aplicacion publica de captacion, acceso, conexion Holded por API key y onboarding corto antes del handoff a Isaak.
+Aplicacion publica del conector `ChatGPT <-> Holded`.
 
-Este proyecto existe para reducir friccion antes del primer valor: no es el chat principal, no es el runtime del conector MCP y no es el backoffice. Es la puerta de entrada Holded-first.
+Este proyecto es la cara publica del conector: login, conexion por API key, metadata `/.well-known/*` y endpoint MCP publico bajo `https://holded.verifactu.business/api/mcp/holded`.
 
 ## Posicion real dentro del monorepo
 
@@ -16,56 +16,50 @@ Dominios y ownership:
 
 Lo importante:
 
-- `apps/holded` no es el runtime del conector MCP de ChatGPT
-- el servidor MCP y el OAuth del conector viven en `apps/app`
-- `apps/holded` prepara al usuario, conecta Holded y entrega el contexto inicial a Isaak
+- `apps/holded` es el dominio publico del conector Holded
+- `apps/app` sigue siendo backend compartido, persistencia y parte del runtime OAuth/MCP
+- `apps/isaak` no forma parte del flujo publico del conector
 
 ## Que problema resuelve
 
 `apps/holded` debe hacer muy bien solo esta parte del recorrido:
 
-- captar al usuario adecuado
-- explicarle con claridad que necesita para conectar Holded
-- validar la API key sin generar miedo ni ruido tecnico
+- autenticar al usuario del conector
+- pedir y validar la API key de Holded
 - guardar la conexion de forma segura
-- recopilar el minimo contexto inicial para arrancar con sentido
-- entregar al usuario a Isaak con continuidad
+- devolver el flujo OAuth a ChatGPT sin friccion innecesaria
 
 ## Objetivo del producto
 
-- reducir friccion desde la landing hasta el primer valor en Isaak
+- reducir friccion desde ChatGPT hasta la conexion operativa
 - autenticar al usuario
 - conectar Holded por API key
-- recopilar el contexto inicial minimo para Isaak
-- redirigir al producto principal en `isaak.verifactu.business`
+- completar el handoff OAuth de vuelta a ChatGPT
 
-## Como encaja con el conector y con Isaak
+## Como encaja con el backend compartido
 
 La secuencia real es esta:
 
-1. El usuario llega aqui y entiende la propuesta Holded-first.
-2. Se autentica y conecta Holded con API key.
+1. ChatGPT inicia OAuth contra el conector Holded.
+2. El usuario entra en `apps/holded`, se autentica y conecta Holded con API key.
 3. La conexion se guarda server-side y se asocia al tenant.
-4. Esa misma conexion puede reutilizarse despues desde `apps/isaak`.
-5. El runtime MCP de `apps/app` puede reutilizarla tambien cuando el acceso es por OAuth o por flujo compartido.
+4. `apps/app` reutiliza esa conexion como backend compartido para OAuth, MCP y persistencia.
+5. ChatGPT recibe el callback final y usa el MCP publico del conector.
 
 En otras palabras:
 
-- `apps/holded` conecta
-- `apps/isaak` conversa y acompana
-- `apps/app` expone el conector remoto y el core operativo
+- `apps/holded` expone la cara publica del conector
+- `apps/app` soporta el backend compartido
+- `apps/isaak` queda fuera de este flujo
 
 ## Flujo funcional actual
 
-1. Landing en `/`
-2. Alta o acceso en `/auth/holded` para identificar usuario del conector
-3. Continuidad de verificacion en `/gracias` y `/verificar`
-4. Entrada al flujo en `/onboarding`
-5. Conexion Holded en `/onboarding/holded` (bloqueo obligatorio: OAuth + API key)
-6. Transicion en `/onboarding/success`
-7. Onboarding conversacional en `/onboarding/profile`
-8. Handoff privado en `/dashboard`
-9. Chat principal en `https://isaak.verifactu.business/chat`
+1. ChatGPT descubre metadata publica en `/.well-known/*`
+2. OAuth entra por `/oauth/authorize`
+3. Si hace falta sesion, el usuario pasa por `/auth/holded`
+4. Conexion minima en `/onboarding/holded`
+5. `POST /api/holded/connect`
+6. Vuelta al callback OAuth y uso del MCP en `/api/mcp/holded`
 
 ## Cuando debes tocar `apps/holded`
 
@@ -74,17 +68,17 @@ Toca esta app cuando cambias:
 - copy publico Holded-first
 - formularios de acceso o alta
 - ayuda para generar la API key de Holded
-- onboarding corto antes de Isaak
-- validacion inicial y handoff de la conexion
+- onboarding y conexion publica del conector
+- validacion inicial y handoff OAuth de la conexion
 - correos del flujo Holded
 
 No la toques si el cambio real es:
 
 - scopes, tools o schemas del conector MCP
-- endpoints OAuth o `/.well-known/*`
-- chat principal, historial o memoria de Isaak
+- logica de negocio interna del backend compartido en `apps/app`
+- producto conversacional de `apps/isaak`
 
-En esos casos, el ownership suele estar en `apps/app` o `apps/isaak`.
+En esos casos, el ownership suele estar en `apps/app` o fuera del conector.
 
 ## Lo que si vive en apps/holded
 
@@ -92,23 +86,19 @@ En esos casos, el ownership suele estar en `apps/app` o `apps/isaak`.
 - acceso y alta con Firebase Auth
 - correos del flujo Holded
 - validacion y guardado de la API key de Holded
-- onboarding conversacional inicial
-- handoff a Isaak
+- `/.well-known/*` publico del conector
+- endpoint MCP publico `/api/mcp/holded`
 - ayuda publica para conseguir la API key
 
 ## Lo que no debe vivir aqui
 
-- el chat principal de Isaak
 - el backoffice operativo definitivo
-- el servidor MCP remoto para ChatGPT
-- el OAuth server del conector MCP
-- la metadata `/.well-known/*` del conector
+- la mayor parte de la logica compartida de persistencia y OAuth
 
 Esos ownerships viven en:
 
-- `apps/isaak` para producto conversacional
 - `apps/admin` para operaciones
-- `apps/app` para el conector MCP, OAuth y el core compartido
+- `apps/app` para el backend compartido, OAuth y persistencia
 
 ## Persistencia e integracion Holded
 

@@ -124,7 +124,7 @@ Comprobar:
 
 Comprobar:
 
-1. `https://app.verifactu.business/dashboard/integrations/isaak-for-holded` carga con la cuenta admin allowlisted.
+1. `https://app.verifactu.business/dashboard/integrations/holded` carga con la cuenta admin allowlisted.
 2. Una cuenta no allowlisted recibe bloqueo del panel admin.
 3. El `status` privado devuelve `requestId`, `governanceFlags` y `availableActions`.
 4. `disconnect` exige confirmacion reforzada y bloquea cuando aplica.

@@ -118,6 +118,53 @@ type AdminUserTenantsResponse = {
   totalPages?: number;
 };
 
+type AdminTraceSessionRow = {
+  sessionId: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  expiresAt: string;
+  tenants: Array<{
+    tenantId: string;
+    tenantName: string;
+    tenantLegalName: string;
+    connectionStatus: string;
+    channelKey: string | null;
+    highGovernanceRisk: boolean;
+  }>;
+};
+
+type AdminTraceConversationRow = {
+  conversationId: string;
+  tenantId: string;
+  tenantName: string;
+  tenantLegalName: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  title: string | null;
+  context: string | null;
+  summary: string | null;
+  messageCount: number;
+  lastActivity: string;
+  recentMessages: Array<{
+    messageId: string;
+    role: string;
+    contentPreview: string;
+    createdAt: string;
+  }>;
+};
+
+type AdminTraceResponse = {
+  summary?: {
+    activeSessions: number;
+    recentConversations: number;
+    memoryFacts: number;
+  };
+  activeSessions?: AdminTraceSessionRow[];
+  recentConversations?: AdminTraceConversationRow[];
+};
+
 type NoticeState = {
   tone: 'success' | 'error' | 'info';
   text: string;
@@ -308,6 +355,7 @@ export default function HoldedConnectorPage() {
   const [claims, setClaims] = useState<ClaimCaseDTO[]>([]);
   const [claimTimeline, setClaimTimeline] = useState<ClaimResolutionDTO[]>([]);
   const [adminRows, setAdminRows] = useState<AdminUserTenantRow[]>([]);
+  const [adminTrace, setAdminTrace] = useState<AdminTraceResponse | null>(null);
   const [adminSearch, setAdminSearch] = useState('');
   const [adminUserFilter, setAdminUserFilter] = useState('');
   const [adminTenantFilter, setAdminTenantFilter] = useState('');
@@ -354,6 +402,7 @@ export default function HoldedConnectorPage() {
         recipientsRes,
         accessRequestsRes,
         claimsRes,
+        adminTraceRes,
       ] = await Promise.all([
         fetch('/api/integrations/accounting/status', { cache: 'no-store' }),
         fetch('/api/integrations/accounting/logs?mode=summary&summaryLimit=120', {
@@ -372,6 +421,9 @@ export default function HoldedConnectorPage() {
           cache: 'no-store',
           headers: { 'x-holded-entry-channel': 'dashboard' },
         }),
+        fetch('/api/integrations/accounting/admin/traces', {
+          cache: 'no-store',
+        }),
       ]);
 
       const [
@@ -381,6 +433,7 @@ export default function HoldedConnectorPage() {
         recipientsData,
         accessRequestsData,
         claimsData,
+        adminTraceData,
         adminUsersData,
       ] = await Promise.all([
         readJson<IntegrationStatus>(statusRes),
@@ -389,6 +442,7 @@ export default function HoldedConnectorPage() {
         readJson<{ items?: RecipientDTO[] }>(recipientsRes),
         readJson<{ items?: AccessRequestDTO[] }>(accessRequestsRes),
         readJson<{ items?: ClaimCaseDTO[] }>(claimsRes),
+        readJson<AdminTraceResponse>(adminTraceRes),
         readJson<AdminUserTenantsResponse>(
           await fetch(
             `/api/integrations/accounting/admin/user-tenants?${new URLSearchParams({
@@ -424,6 +478,7 @@ export default function HoldedConnectorPage() {
       setRecipients(nextRecipients);
       setAccessRequests(nextAccessRequests);
       setClaims(nextClaims);
+      setAdminTrace(adminTraceRes.ok && adminTraceData ? adminTraceData : null);
       const nextAdminRows = Array.isArray(adminUsersData?.items) ? adminUsersData.items : [];
       setAdminRows(nextAdminRows);
       setAdminTotalRows(Number(adminUsersData?.total) || 0);
@@ -1080,7 +1135,7 @@ export default function HoldedConnectorPage() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Conector Holded</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Holded</h1>
           <p className="mt-1 text-sm text-slate-600">
             Panel admin para conexion, gobernanza, usuarios, recipients y reclamaciones.
           </p>
@@ -1594,6 +1649,116 @@ export default function HoldedConnectorPage() {
             </button>
           </div>
         </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Sesiones activas</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Control operativo de usuarios con sesiones todavia activas en tenants con Holded.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+              {adminTrace?.summary?.activeSessions ?? 0} activas
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {!adminTrace?.activeSessions?.length ? (
+              <PanelEmptyState message="No hay sesiones activas registradas para el conector." />
+            ) : null}
+
+            {adminTrace?.activeSessions?.map((session) => (
+              <article key={session.sessionId} className="rounded-2xl border border-slate-200 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      {session.userName || session.userEmail}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">{session.userEmail}</div>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Expira: {formatDateTime(session.expiresAt)}
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {session.tenants.map((tenant) => (
+                    <StatusBadge
+                      key={`${session.sessionId}-${tenant.tenantId}`}
+                      label={`${tenant.tenantName} · ${tenant.connectionStatus === 'connected' ? 'Conectado' : 'Sin conexion'}`}
+                      variant={tenant.highGovernanceRisk ? 'warning' : 'info'}
+                    />
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Historial conversacional</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Las conversaciones se conservan como historico de auditoria aunque se resetee la
+                memoria operativa al desconectar.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+              {adminTrace?.summary?.recentConversations ?? 0} recientes ·{' '}
+              {adminTrace?.summary?.memoryFacts ?? 0} facts activas
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {!adminTrace?.recentConversations?.length ? (
+              <PanelEmptyState message="No hay conversaciones recientes asociadas al conector." />
+            ) : null}
+
+            {adminTrace?.recentConversations?.map((conversation) => (
+              <article
+                key={conversation.conversationId}
+                className="rounded-2xl border border-slate-200 p-4"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      {conversation.title || conversation.context || 'Conversacion sin titulo'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {conversation.tenantName} · {conversation.userName || conversation.userEmail}
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {conversation.messageCount} mensajes ·{' '}
+                    {formatDateTime(conversation.lastActivity)}
+                  </div>
+                </div>
+
+                {conversation.summary ? (
+                  <p className="mt-3 text-sm leading-6 text-slate-700">{conversation.summary}</p>
+                ) : null}
+
+                <div className="mt-3 space-y-2">
+                  {conversation.recentMessages.map((message) => (
+                    <div
+                      key={message.messageId}
+                      className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                    >
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        {message.role}
+                      </div>
+                      <div className="mt-1 text-sm text-slate-700">{message.contentPreview}</div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">

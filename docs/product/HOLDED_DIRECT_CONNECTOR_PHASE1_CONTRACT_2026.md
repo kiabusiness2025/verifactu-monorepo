@@ -18,7 +18,7 @@ Este documento sustituye el criterio anterior que mezclaba:
 - branding `Isaak for Holded`
 - propuestas de producto mas amplias que no forman parte de esta Fase 1
 
-## Estado a 2026-04-15
+## Estado a 2026-04-18
 
 ### Base entregada (roadmap principal cerrado 2026-04-13)
 
@@ -33,7 +33,26 @@ Este documento sustituye el criterio anterior que mezclaba:
 - observabilidad del flujo con `x-verifactu-request-id`
 - backend de verificacion de correo por magic link (`identity/email/start`, `holded/verify`)
 
-### Nueva ola en progreso (abierta 2026-04-14)
+### Redefinicion vigente de Fase I
+
+La Fase I vigente ya no se define como onboarding largo por pasos antes de producto.
+
+Ahora se define asi:
+
+- flujo base minimo: `OAuth -> API key -> ChatGPT`
+- `/holded` como superficie publica canonica del conector
+- `/app` solo como backend compartido
+- sin presencia de Isaak en el contrato publico del conector
+- correos operativos de connect/disconnect para usuario y admin
+- panel admin con:
+  - control de usuarios conectados / desconectados
+  - sesiones activas
+  - historial de conversaciones
+- al desconectar:
+  - se resetea la memoria activa y cualquier relacion operativa con el tenant Holded anterior
+  - el historico sigue disponible en backend y consultable por admin
+
+## Decision de producto
 
 Esta nueva ola de Fase 1 se define como:
 
@@ -49,8 +68,8 @@ La Fase 1 publica se presenta como:
 
 - un conector directo de Holded para ChatGPT
 - una conexion guiada y ligera
-- una experiencia sin login clasico visible ni dashboard visible
-- una identidad minima, verificada y contenida dentro del propio flujo del conector
+- una experiencia centrada en terminar el OAuth y volver a ChatGPT
+- una identidad minima y contenida dentro del propio flujo del conector
 
 No se presenta como:
 
@@ -79,13 +98,11 @@ No debe hablar de:
 
 ### Credenciales visibles permitidas
 
-En la Fase 1 actualizada el usuario si puede ver como parte publica del conector:
+En esta Fase I el usuario puede ver solo lo estrictamente necesario:
 
-- `Continuar con Google`
-- `Continuar con correo`
-- una pantalla de verificacion de correo si elige la via manual
-
-Eso no convierte el flujo en un login clasico de producto. Sigue siendo onboarding del conector.
+- login / identidad del conector
+- API key de Holded
+- feedback corto de conexion
 
 ### Credenciales visibles no permitidas
 
@@ -100,19 +117,13 @@ El usuario no debe ver como paso publico obligatorio:
 
 ## Flujo visible objetivo
 
-1. ChatGPT inicia OAuth contra `app.verifactu.business`.
-2. Si no existe conexion valida para el tenant/canal, Verifactu redirige al onboarding directo de Holded.
-3. El usuario elige `Google` o `Correo` dentro del propio flujo del conector.
-4. Si entra por correo, debe verificar ese correo antes de poder continuar.
-5. Una vez verificada la identidad, el onboarding se resuelve por pantallas cortas:
-   - nombre y apellidos
-   - empresa y CIF/NIF
-   - API key de Holded
-6. Verifactu valida y guarda la conexion server-side.
-7. Se muestra una pantalla final de exito, con tono amable y celebracion ligera.
-8. Se envia un email final de bienvenida y primeros pasos.
-9. El navegador vuelve al flujo OAuth original.
-10. ChatGPT completa la conexion.
+1. ChatGPT inicia OAuth contra el conector Holded.
+2. El usuario pasa por login / identidad del conector si hace falta.
+3. El usuario pega la API key de Holded.
+4. Verifactu valida y guarda la conexion server-side.
+5. Se dispara la notificacion operativa correspondiente.
+6. El navegador vuelve al flujo OAuth original.
+7. ChatGPT completa la conexion.
 
 ## Reglas de UX publica
 
@@ -126,48 +137,23 @@ El usuario no debe ver como paso publico obligatorio:
 
 ### Paso 1 - Identidad
 
-Opciones visibles:
+Permitido:
 
-- Google opcional
-- correo manual
+- login del conector
+- confirmacion de identidad minima
 
-Condicion:
-
-- la via manual requiere verificacion de correo antes del resto del onboarding
-
-### Paso 2 - Persona
-
-Campos publicos objetivo:
-
-- nombre
-- apellidos
-
-### Paso 3 - Empresa
-
-Campos publicos objetivo:
-
-- nombre de empresa
-- CIF/NIF
-
-Opcionales solo si de verdad son necesarios:
-
-- razon social
-- telefono
-
-### Paso 4 - Holded
+### Paso 2 - Holded
 
 Campo publico objetivo:
 
 - API key de Holded
 
-### Paso 5 - Exito
+### Paso 3 - Retorno
 
-La pantalla final debe:
+La UX final debe:
 
-- confirmar que la empresa ha quedado conectada
-- nombrar al usuario y a la empresa cuando ya esten disponibles
-- mostrar primeros pasos claros
-- permitir una animacion ligera tipo confetti o serpentina
+- confirmar brevemente que la conexion esta lista
+- volver al callback OAuth sin meter al usuario en un producto distinto
 
 ## Contrato interno
 
@@ -179,6 +165,7 @@ Internamente sigue estando permitido:
 - registrar `channel_identity`
 - emitir sesion temporal del conector
 - persistir trazabilidad legal y operacional
+- registrar `usage_events` del conector para analitica de adopcion y futuras campanas
 
 Eso forma parte del backend y no del contrato visible.
 
@@ -202,20 +189,41 @@ La diferencia respecto a la ola anterior es que esa sesion ya no solo transporta
 
 ## Politica de correos del flujo objetivo
 
-### Via manual por correo
-
-- enviar correo de verificacion
-- no enviar aun el correo de bienvenida final
-
-### Via Google
-
-- no enviar correo de verificacion
-
 ### Conexion completada con exito
 
-- enviar un unico correo final de bienvenida y primeros pasos
-- personalizarlo con nombre y empresa conectada
-- evitar duplicados de `welcome` antes de la conexion final
+- enviar correo al usuario
+- enviar correo / alerta al admin
+- usar shell visual Holded + ChatGPT
+
+### Desconexion completada
+
+- enviar correo al usuario
+- enviar correo / alerta al admin
+- registrar el evento para trazabilidad
+
+### Regla operativa
+
+- las notificaciones deben existir en el flujo real del conector, no solo en una ruta interna paralela
+- en `chatgpt`, el correo de conexion debe respetar el flujo `OAuth -> API -> ChatGPT`, sin empujar al usuario a otro producto
+
+## Contrato admin de Fase I
+
+El panel admin del conector debe permitir:
+
+- ver usuarios conectados y desconectados por tenant
+- ver sesiones activas
+- ver historial de conversaciones
+- revisar claims, requests, recipients y gobernanza
+
+## Politica de desconexion de Fase I
+
+Al desconectar:
+
+- se corta la conexion Holded activa
+- se corta la relacion operativa con el tenant anterior
+- se resetea la memoria activa asociada
+- se limpian sesiones persistidas del contexto afectado
+- se conservan los historicos en backend solo para consulta admin
 
 ## Lo que se mantiene intacto
 

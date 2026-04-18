@@ -110,7 +110,11 @@ export const sanitizeHoldedReturnTarget = (candidate: string | undefined, fallba
     }
 
     // Canonicalize stale direct-connector links that still point to app onboarding.
-    if (parsed.origin === APP_PUBLIC_URL && parsed.pathname.startsWith('/onboarding/holded')) {
+    if (
+      parsed.origin === APP_PUBLIC_URL &&
+      (parsed.pathname.startsWith('/onboarding/holded') ||
+        parsed.pathname.startsWith('/oauth/authorize'))
+    ) {
       const canonical = new URL(parsed.pathname, HOLDED_PUBLIC_URL);
       canonical.search = parsed.search;
       return canonical.toString();

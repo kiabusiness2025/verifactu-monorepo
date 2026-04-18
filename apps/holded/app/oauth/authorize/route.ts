@@ -1,21 +1,53 @@
 /**
- * OAuth authorize redirect.
+ * OAuth authorize transparent proxy.
  *
- * ChatGPT may discover the authorization_endpoint as holded domain.
- * This route redirects to apps/app where the full authorize logic lives
- * (session, PKCE, onboarding flow, etc.).
+ * ChatGPT must discover and navigate the public connector on the holded domain.
+ * The shared OAuth backend still lives in apps/app, but this route proxies the
+ * request instead of redirecting there so the browser does not visibly abandon
+ * holded.verifactu.business during the authorization step.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { APP_PUBLIC_URL } from '@/app/lib/holded-navigation';
 
 export const runtime = 'nodejs';
 
+function buildForwardHeaders(request: NextRequest) {
+  const headers = new Headers();
+
+  request.headers.forEach((value, key) => {
+    const normalized = key.toLowerCase();
+    if (
+      normalized === 'host' ||
+      normalized === 'connection' ||
+      normalized === 'content-length' ||
+      normalized === 'transfer-encoding'
+    ) {
+      return;
+    }
+    headers.set(key, value);
+  });
+
+  headers.set('x-forwarded-host', request.nextUrl.host);
+  headers.set('x-forwarded-proto', request.nextUrl.protocol.replace(':', ''));
+
+  return headers;
+}
+
 export async function GET(request: NextRequest) {
   const target = new URL('/oauth/authorize', APP_PUBLIC_URL);
-  // Forward all query params unchanged
   request.nextUrl.searchParams.forEach((value, key) => {
     target.searchParams.set(key, value);
   });
-  return NextResponse.redirect(target, { status: 302 });
+
+  const upstream = await fetch(target, {
+    method: 'GET',
+    headers: buildForwardHeaders(request),
+    redirect: 'manual',
+  });
+
+  return new Response(upstream.body, {
+    status: upstream.status,
+    headers: upstream.headers,
+  });
 }

@@ -26,6 +26,8 @@ type HoldedConnectedEmailInput = {
   settingsUrl: string;
   profileCompletionUrl?: string;
   supportedModules: string[];
+  channel?: 'dashboard' | 'chatgpt';
+  returnUrl?: string | null;
 };
 
 type HoldedCompanyEmailVerificationInput = {
@@ -188,6 +190,30 @@ export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): Ema
   const hello = greeting(input.name);
   const modules = input.supportedModules.join(', ') || 'sin detalle';
   const profileCompletionUrl = input.profileCompletionUrl || input.settingsUrl;
+  const isChatgptFlow = input.channel === 'chatgpt';
+  const primaryUrl = input.returnUrl || input.chatUrl;
+  const primaryLabel = isChatgptFlow ? 'Volver a ChatGPT' : 'Abrir panel';
+  const recommendedSteps = isChatgptFlow
+    ? `
+          <ol style="padding-left:18px;margin:0;">
+            <li style="margin:0 0 6px;">Vuelve a ChatGPT para terminar la autorizacion.</li>
+            <li style="margin:0 0 6px;">Prueba una consulta real con tus datos de Holded.</li>
+            <li style="margin:0;">Si mas adelante necesitas soporte, responde a este correo.</li>
+          </ol>
+        `
+    : `
+          <ol style="padding-left:18px;margin:0;">
+            <li style="margin:0 0 6px;">Abre tu panel principal.</li>
+            <li style="margin:0 0 6px;">Revisa conexiones y estado de sincronizacion.</li>
+            <li style="margin:0;">Completa datos de empresa pendientes para dejar la empresa verificada.</li>
+          </ol>
+        `;
+  const secondaryCta = isChatgptFlow
+    ? ''
+    : `<a href="${escapeHtml(profileCompletionUrl)}" style="display:inline-block;margin-left:12px;background:#ffffff;color:#b4233c;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;border:1px solid #f3d0d7;">Completar datos</a>`;
+  const nextStepsText = isChatgptFlow
+    ? `Siguientes pasos:\n1) Vuelve a ChatGPT\n2) Prueba una consulta con tus datos\n3) Si necesitas ayuda, responde a este correo`
+    : `Siguientes pasos:\n1) Abre tu panel\n2) Revisa conexiones y estado\n3) Completa datos de empresa pendientes para dejar la empresa verificada`;
 
   return {
     subject: `Holded conectado en ${input.companyName}`,
@@ -200,18 +226,14 @@ export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): Ema
         <p style="margin:0 0 18px;">Modulos validados: <strong>${escapeHtml(modules)}</strong>.</p>
         <div style="margin:0 0 18px;padding:16px;border-radius:18px;background:#f8fafc;border:1px solid #e2e8f0;">
           <div style="font-weight:700;margin:0 0 8px;">Siguientes pasos recomendados</div>
-          <ol style="padding-left:18px;margin:0;">
-            <li style="margin:0 0 6px;">Abre tu panel principal.</li>
-            <li style="margin:0 0 6px;">Revisa conexiones y estado de sincronizacion.</li>
-            <li style="margin:0;">Completa datos de empresa pendientes para dejar la empresa verificada.</li>
-          </ol>
+          ${recommendedSteps}
         </div>
-        <a href="${escapeHtml(input.chatUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir panel</a>
-        <a href="${escapeHtml(profileCompletionUrl)}" style="display:inline-block;margin-left:12px;background:#ffffff;color:#b4233c;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;border:1px solid #f3d0d7;">Completar datos</a>
+        <a href="${escapeHtml(primaryUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">${primaryLabel}</a>
+        ${secondaryCta}
       `,
       footer: legalFooter(),
     }),
-    text: `${hello}\n\nLa conexion de Holded para ${input.companyName} ya esta activa.\n\nSiguientes pasos:\n1) Abre tu panel\n2) Revisa conexiones y estado\n3) Completa datos de empresa pendientes para dejar la empresa verificada\n\nPanel: ${input.chatUrl}\nCompletar datos: ${profileCompletionUrl}`,
+    text: `${hello}\n\nLa conexion de Holded para ${input.companyName} ya esta activa.\n\n${nextStepsText}\n\n${primaryLabel}: ${primaryUrl}${isChatgptFlow ? '' : `\nCompletar datos: ${profileCompletionUrl}`}`,
   };
 }
 
@@ -237,6 +259,9 @@ export function buildHoldedCompanyEmailVerificationEmail(
 
 export function buildHoldedConnectedAdminEmail(input: HoldedConnectedEmailInput): EmailTemplate {
   const modules = input.supportedModules.join(', ') || 'sin detalle';
+  const isChatgptFlow = input.channel === 'chatgpt';
+  const primaryUrl = input.returnUrl || input.chatUrl;
+  const primaryLabel = isChatgptFlow ? 'Volver a ChatGPT' : 'Abrir panel';
 
   return {
     subject: `Holded conectado en ${input.companyName}`,
@@ -248,11 +273,11 @@ export function buildHoldedConnectedAdminEmail(input: HoldedConnectedEmailInput)
         <p style="margin:0 0 10px;"><strong>Email usuario:</strong> ${escapeHtml(input.email)}</p>
         <p style="margin:0 0 10px;"><strong>Modulos validados:</strong> ${escapeHtml(modules)}</p>
         <p style="margin:0 0 16px;">Conexion validada para uso operativo.</p>
-        <a href="${escapeHtml(input.chatUrl)}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Abrir panel</a>
+        <a href="${escapeHtml(primaryUrl)}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">${primaryLabel}</a>
       `,
       footer: legalFooter(),
     }),
-    text: `Conexion Holded activada\n\nEmpresa: ${input.companyName}\nEmail usuario: ${input.email}\nModulos validados: ${modules}\n\nAbrir panel: ${input.chatUrl}`,
+    text: `Conexion Holded activada\n\nEmpresa: ${input.companyName}\nEmail usuario: ${input.email}\nModulos validados: ${modules}\n\n${primaryLabel}: ${primaryUrl}`,
   };
 }
 

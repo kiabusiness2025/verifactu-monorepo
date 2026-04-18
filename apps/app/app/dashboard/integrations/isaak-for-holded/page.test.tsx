@@ -214,6 +214,58 @@ describe('HoldedConnectorCompatPage', () => {
           filters: { q: '', status: 'all', sort: 'updated_desc' },
         });
       }
+      if (matchesUrl(url, '/api/integrations/accounting/admin/traces') && method === 'GET') {
+        return responseOf({
+          summary: {
+            activeSessions: 1,
+            recentConversations: 1,
+            memoryFacts: 3,
+          },
+          activeSessions: [
+            {
+              sessionId: 'session-1',
+              userId: 'user-1',
+              userEmail: 'admin@cliente.es',
+              userName: 'Admin Cliente',
+              expiresAt: '2026-04-13T13:30:00.000Z',
+              tenants: [
+                {
+                  tenantId: 'tenant-1',
+                  tenantName: 'Acme SL',
+                  tenantLegalName: 'Acme Sociedad Limitada',
+                  connectionStatus: 'connected',
+                  channelKey: 'chatgpt',
+                  highGovernanceRisk: false,
+                },
+              ],
+            },
+          ],
+          recentConversations: [
+            {
+              conversationId: 'conv-1',
+              tenantId: 'tenant-1',
+              tenantName: 'Acme SL',
+              tenantLegalName: 'Acme Sociedad Limitada',
+              userId: 'user-1',
+              userEmail: 'admin@cliente.es',
+              userName: 'Admin Cliente',
+              title: 'Consulta de facturas',
+              context: null,
+              summary: 'Resumen reciente',
+              messageCount: 4,
+              lastActivity: '2026-04-13T12:40:00.000Z',
+              recentMessages: [
+                {
+                  messageId: 'msg-1',
+                  role: 'user',
+                  contentPreview: 'Necesito ver las ultimas facturas emitidas.',
+                  createdAt: '2026-04-13T12:39:00.000Z',
+                },
+              ],
+            },
+          ],
+        });
+      }
       if (matchesUrl(url, '/api/integrations/accounting/access-requests') && method === 'GET') {
         return responseOf({
           items: [
@@ -333,8 +385,12 @@ describe('HoldedConnectorCompatPage', () => {
     expect(screen.getByText('Solicitudes de acceso')).toBeInTheDocument();
     expect(screen.getByText('Claims y disputas')).toBeInTheDocument();
     expect(screen.getByText('Usuarios y tenants conectados')).toBeInTheDocument();
+    expect(screen.getByText('Sesiones activas')).toBeInTheDocument();
+    expect(screen.getByText('Historial conversacional')).toBeInTheDocument();
     expect((await screen.findAllByText('admin@cliente.es')).length).toBeGreaterThan(0);
     expect(screen.getByText('avisos@cliente.es')).toBeInTheDocument();
+    expect(screen.getByText('Consulta de facturas')).toBeInTheDocument();
+    expect(screen.getByText('Necesito ver las ultimas facturas emitidas.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Ver detalle' }));
     expect(await screen.findByText('Detalle de claim')).toBeInTheDocument();

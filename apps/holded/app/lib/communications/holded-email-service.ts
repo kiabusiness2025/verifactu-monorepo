@@ -24,6 +24,8 @@ type ConnectedPayload = {
   supportedModules: string[];
   profileCompletionUrl?: string | null;
   companyEmailVerificationUrl?: string | null;
+  channel?: 'dashboard' | 'chatgpt';
+  returnUrl?: string | null;
 };
 
 function cleanEnv(value: string | undefined) {
@@ -154,6 +156,8 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
     settingsUrl,
     profileCompletionUrl,
     supportedModules: input.supportedModules,
+    channel: input.channel,
+    returnUrl: input.returnUrl,
   });
   const admin = buildHoldedConnectedAdminEmail({
     name: input.name,
@@ -162,6 +166,8 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
     chatUrl,
     settingsUrl,
     supportedModules: input.supportedModules,
+    channel: input.channel,
+    returnUrl: input.returnUrl,
   });
 
   const tasks = [];

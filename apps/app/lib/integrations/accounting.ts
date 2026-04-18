@@ -320,7 +320,8 @@ export function summarizeHoldedProbeReadiness(
   const requiredCapabilities = [...HOLDED_PROBE_REQUIREMENTS[profile]];
   const missingCapabilities = requiredCapabilities.filter((capability) => !probe[capability]?.ok);
   const ok = missingCapabilities.length === 0;
-  const targetLabel = profile === 'chatgpt' ? 'la conexion con ChatGPT' : 'la conexion con Isaak';
+  const targetLabel =
+    profile === 'chatgpt' ? 'la conexion con ChatGPT' : 'la conexion del Conector Holded';
   const error = ok
     ? null
     : `La API key de Holded no tiene acceso suficiente para ${targetLabel}. Falta acceso a ${formatHoldedCapabilityList(missingCapabilities)}.`;

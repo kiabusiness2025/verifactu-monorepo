@@ -2,243 +2,193 @@
 
 ## Objetivo
 
-Evolucionar la Fase 1 ya entregada hacia un onboarding mas simple y mas robusto para el conector directo `ChatGPT <-> Holded`, manteniendo intacto el backend compartido.
+Cerrar la Fase I vigente del conector directo `ChatGPT <-> Holded` con este alcance:
+
+- flujo base minimo `OAuth -> API key -> ChatGPT`
+- notificaciones reales de connect/disconnect para usuario y admin
+- panel admin suficiente para operar el conector
+- reset de memoria y relacion activa al desconectar
+- conservacion del historico en backend para consulta admin
 
 Documento complementario a:
 
 - `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md`
+- `docs/engineering/HOLDED_DIRECT_CONNECTOR_PHASE1_AUDIT_2026-04-18.md`
 
 ## Principios
 
 - no se abre otro backend
 - no se duplica OAuth
-- no se cambia el modelo de datos base
-- no se rompe el dashboard ni el producto Isaak existente
-- la separacion sigue siendo publica, no de plataforma
-- Google visible pasa a ser una opcion de identidad, no un login clasico de producto
+- `/holded` es la cara publica del conector
+- `/app` se mantiene como backend compartido
+- `/isaak` queda fuera del flujo publico del conector
+- no se mezcla backlog de producto mayor con el MVP publicable
 
-## Alcance de esta nueva ola
+## Alcance vigente de Fase I
 
-Incluido ahora:
+Incluido:
 
-- actualizar el contrato documental de Fase 1
-- introducir estado de identidad verificada en la `connector onboarding session`
-- preparar Google opcional y correo verificado como punto de entrada
-- rediseñar el onboarding como secuencia de pantallas cortas
-- mover el correo final de bienvenida al momento de conexion completa
+- simplificar el flujo publico al minimo operativo
+- asegurar emails reales de connect/disconnect
+- exponer control admin de usuarios conectados / desconectados
+- exponer sesiones activas y trazabilidad conversacional
+- resetear memoria activa y sesion operativa al desconectar
 
 No incluido:
 
-- producto `Isaak Universal`
+- asesor universal
 - acceso web abierto
 - ampliaciones grandes de tools MCP
-- split de backend
-- migracion profunda de branding interno fuera del conector directo
+- rediseño completo del producto conversacional
+- Fase 2 de escritura estructurada ampliada
 
-## Fundacion ya entregada antes de esta ola
+## Estado real al 2026-04-18
 
-### F0.1 - Contrato publico directo separado de Isaak
+### Ya conseguido
+
+- `/holded` como dominio publico del conector
+- URL MCP canonica: `https://holded.verifactu.business/api/mcp/holded`
+- metadata OAuth/MCP publica alineada al dominio Holded
+- flujo publico `chatgpt` reducido a login + API key + callback OAuth
+- panel admin con:
+  - usuarios y tenants conectados
+  - memberships
+  - recipients
+  - claims
+  - access requests
+  - observabilidad por `requestId`
+
+### Parcial
+
+- emails de connect/disconnect:
+  - existen en backend compartido
+  - disconnect ya los dispara
+  - connect publico minimo no los garantiza todavia
+- relacion operativa con tenant anterior:
+  - se limpia conexion y channel identity
+  - no se limpia todavia memoria conversacional ni sesiones persistidas
+
+### Pendiente
+
+- sesiones activas en panel admin
+- historial de conversaciones en panel admin
+- reset de `IsaakConversation`
+- reset de `IsaakMemoryFact`
+- invalidacion de `Session` activas del contexto afectado
+
+## Backlog priorizado para cerrar Fase I
+
+### P0.1 - Flujo publico minimo `OAuth -> API key -> ChatGPT`
+
+Resultado esperado:
+
+- el usuario no sale a otro producto
+- la conexion termina en el callback OAuth de ChatGPT
 
 Estado:
 
-- listo
+- casi cerrado
 
-### F0.2 - `connector onboarding session`
+Pendiente:
 
-Estado:
+- smoke real end-to-end
 
-- listo
+### P0.2 - Correos reales de connect/disconnect
 
-### F0.3 - Persistencia channel-aware y retorno OAuth estable
+Resultado esperado:
 
-Estado:
-
-- listo
-
-### F0.4 - Observabilidad del flujo
+- usuario y admin reciben correos en connect y disconnect
+- shell visual coherente Holded + ChatGPT
 
 Estado:
 
-- listo
-
-## Backlog priorizado de la nueva ola
-
-### P0.1 - Actualizar documentacion canonica de Fase 1
+- cumplido en Fase I
 
 Resultado:
 
-- contrato, plan, README y guias operativas alineadas con el nuevo flujo objetivo
+- `connect` publico `chatgpt` vuelve a emitir correo real post-connect
+- `disconnect` mantiene correo a usuario y admin
+- ambos caminos usan shell visual Holded + ChatGPT
 
-Entregables:
+### P0.3 - Admin operativo del conector
 
-- `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md`
-- `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md`
-- `docs/product/HOLDED_DIRECT_CONNECTOR_EXECUTION_PROGRESS_2026.md`
-- referencias desde `docs/README.md`, `docs/INDEX.md`, `apps/app/README.md`
-- ajuste de guias tecnicas y runbooks del conector directo
+Resultado esperado:
+
+- control de usuarios conectados / desconectados
+- control de claims, requests, recipients y governance
+- sesiones activas visibles
+- historial de conversaciones visible
 
 Estado:
 
-- completado (2026-04-15)
-
-### P0.2 - Extender la sesion temporal del conector con estado de identidad
+- cumplido para Fase I
 
 Resultado:
 
-- el token de onboarding ya puede transportar metodo de identidad y verificacion sin perderse entre pasos
+- panel admin ya muestra:
+  - usuarios conectados / desconectados
+  - sesiones activas
+  - historial conversacional reciente
+  - claims, requests, recipients y governance
 
-Campos objetivo:
+### P0.4 - Reset fuerte al desconectar
 
-- `authMethod`
-- `emailVerified`
-- `verifiedAt`
-- `firstName`
-- `lastName`
-- `email`
-- `tenantId`
+Resultado esperado:
 
-Archivos candidatos:
-
-- `apps/app/lib/oauth/mcp.ts`
-- `apps/app/lib/integrations/holdedOnboardingSession.ts`
-- `apps/app/app/api/onboarding/tenant/route.ts`
-
-Aceptacion:
-
-- el token refrescado tras crear o reusar tenant conserva el estado de identidad
-- el resto del flujo puede leer ese estado sin depender de login clasico
+- se corta la conexion activa
+- se corta la relacion operativa con el tenant anterior
+- se resetea memoria activa
+- se invalidan sesiones activas del contexto
+- el historico sigue disponible en backend para admin
 
 Estado:
 
-- completado (2026-04-14)
-
-### P0.3 - Pantalla de entrada de identidad del conector
+- cumplido en su version operativa de Fase I
 
 Resultado:
 
-- primera decision visible: `Google` o `Correo`
+- se limpia conexion activa
+- se limpian `channel identities`
+- se limpian `verified email identities`
+- se eliminan `sessions` persistidas de usuarios del tenant
+- se eliminan `IsaakMemoryFact` del tenant
+- las conversaciones se conservan como historico admin
 
-Reglas:
-
-- Google es opcional
-- no hay selector de tenant ni dashboard
-- el flujo sigue siendo del conector, no del producto principal
-
-Estado:
-
-- completado (2026-04-14)
-
-### P0.4 - Verificacion obligatoria del correo manual
-
-Resultado:
-
-- la via manual no deja continuar a empresa/API key sin correo verificado
-
-Decision operativa:
-
-- preferir magic link o codigo ligero
-- evitar convertir esta fase en un alta clasica con contrasena como centro del flujo
-
-Estado:
-
-- completado (2026-04-15)
-
-### P0.5 - Onboarding por pasos conversacionales
-
-Resultado:
-
-- una pantalla por tarea, con menos friccion y menos copia repetitiva
-
-Secuencia objetivo:
-
-1. identidad
-2. nombre y apellidos
-3. empresa y CIF/NIF
-4. API key de Holded
-5. exito y celebracion
-
-Estado:
-
-- completado (2026-04-15)
-
-### P0.6 - Politica final de correos del conector directo
-
-Resultado:
-
-- paridad entre via Google y via manual
-- sin duplicados de welcome
-- correo final de bienvenida tras conexion completada
-
-Cambios previstos:
-
-- verificacion solo para la via manual
-- welcome final con nombre + empresa + primeros pasos
-- admin notification deduplicada y etiquetada por origen
-
-Estado:
-
-- completado (2026-04-15)
-
-### P1.1 - Reordenar `HoldedOnboardingClient` como flujo por estados claros
-
-Resultado:
-
-- menos riesgo de regresiones por estados mezclados
-- mas facil introducir nuevos pasos sin loops ni stale state
-
-Estado:
-
-- completado (2026-04-15)
-
-### P1.2 - Mantener retorno OAuth exacto durante la nueva UX
-
-Resultado:
-
-- el nuevo onboarding no rompe `authorize -> onboarding -> return`
-
-Estado:
-
-- completado (2026-04-15)
-
-### P1.3 - Matriz de QA de la nueva ola
+### P0.5 - QA de cierre de Fase I
 
 Casos minimos:
 
-- Google nuevo usuario
-- Google usuario ya existente
-- correo manual verificado
-- correo manual sin verificar
-- desktop y mobile/webview
-- no duplicado de correos
+- OAuth -> login -> API key -> callback ChatGPT
+- connect con correo a usuario y admin
+- disconnect con correo a usuario y admin
+- admin ve usuarios conectados / desconectados
+- admin ve sesiones activas
+- admin ve historial de conversaciones
+- disconnect resetea memoria activa pero conserva historico en backend
 
 Estado:
 
-- pendiente de pruebas manuales en entorno real
+- pendiente
 
 ## Orden recomendado de ejecucion
 
-1. `P0.1` documentacion canonica y runbooks
-2. `P0.2` sesion temporal con estado de identidad
-3. `P0.3` pantalla de entrada `Google` o `Correo`
-4. `P0.4` verificacion de correo manual
-5. `P0.5` onboarding por pasos
-6. `P0.6` welcome final y paridad de correos
-7. `P1.1` limpieza estructural del cliente
-8. `P1.2` revalidacion exhaustiva del retorno OAuth
-9. `P1.3` QA multi-camino
+1. smoke real publico del flujo ChatGPT
+2. validacion manual de correos connect/disconnect
+3. validacion admin de sesiones e historico
+4. validacion post-disconnect de reset operativo
+5. decisiones de endurecimiento para Fase II
 
 ## Riesgos
 
-- mezclar login de producto con onboarding del conector
-- reintroducir dependencias de sesion web clasica en movil
-- duplicar correos entre creacion de tenant y conexion final
-- perder el estado de identidad al refrescar el onboarding token
-- degradar el retorno OAuth al introducir pasos extra
+- considerar cerrada la Fase I sin sesiones activas ni historial admin
+- mantener emails de connect solo en un camino interno y no en el flujo publico real
+- cortar la conexion sin resetear memoria ni sesiones activas
+- volver a contaminar el conector con supuestos de Isaak o producto mayor
 
-## Criterio de exito de esta nueva ola
+## Criterio de exito de Fase I
 
-- el usuario entiende el flujo en 3 a 5 pantallas como maximo
-- Google es opcional, no obligatorio
-- la via manual exige correo verificado antes de seguir
-- el backend sigue resolviendo identidad, tenant y conexion con el stack actual
-- el correo final sale despues de la conexion completa y nombra a la empresa conectada
+- el usuario completa `OAuth -> API key -> ChatGPT` sin salir visualmente del dominio `/holded`
+- connect y disconnect dejan correo a usuario y admin
+- admin controla usuarios conectados/desconectados, sesiones e historial
+- disconnect resetea memoria activa y sesiones persistidas del tenant afectado
+- el historico permanece accesible desde backend/admin

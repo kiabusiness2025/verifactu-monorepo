@@ -51,6 +51,18 @@ function normalizeOptionalText(value: unknown) {
   return trimmed || null;
 }
 
+function normalizeOptionalUrl(value: unknown) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  try {
+    return new URL(trimmed).toString();
+  } catch {
+    return null;
+  }
+}
+
 function normalizeTaxId(value: unknown) {
   const normalized = normalizeOptionalText(value);
   return normalized ? normalized.toUpperCase() : null;
@@ -399,6 +411,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const apiKey = typeof body?.apiKey === 'string' ? normalizeApiKey(body.apiKey) : '';
     const channel = normalizeChannel(body?.channel);
+    const isChatgptFlow = channel === 'chatgpt';
+    const nextTarget = normalizeOptionalUrl(body?.nextTarget);
     const existingIdentity = await readExistingIdentity(session.tenantId);
     const identity = resolveConnectionIdentity({
       body,
@@ -697,6 +711,169 @@ export async function POST(request: NextRequest) {
       }
 
       throw persistError;
+    }
+
+    if (isChatgptFlow) {
+      const detectedCompany = buildDetectedCompany({
+        companyName: saved?.tenantName || identity.companyName,
+        legalName: saved?.legalName || identity.legalName,
+        taxId: saved?.taxId || identity.taxId,
+        source: 'holded',
+      });
+      const connection = buildConnectionStatusDto({
+        connectionId: `${session.tenantId}:${channel}`,
+        tenantId: session.tenantId,
+        status: saved?.connected ? 'connected' : 'disconnected',
+        keyMasked: saved?.keyMasked ?? null,
+        providerAccountId: saved?.providerAccountId ?? null,
+        connectedAt: saved?.connectedAt ?? null,
+        lastValidatedAt: saved?.connectedAt ?? null,
+        lastSyncAt: saved?.connectedAt ?? null,
+        lastError: null,
+        originChannel: channel,
+        supportedModules: saved?.supportedModules ?? [],
+      });
+      const governanceFlags = buildGovernanceFlags(null);
+      const availableActions = buildDefaultAvailableActions({
+        status: connection.status,
+        underClaimReview: false,
+        clientAdminGap: false,
+        highGovernanceRisk: false,
+      });
+      let notificationEmail = null;
+
+      try {
+        notificationEmail = await resolveNotificationEmail({
+          tenantId: session.tenantId,
+          sessionEmail: session.email,
+          requestedEmail: requestedNotificationEmail,
+        });
+      } catch (notificationEmailError) {
+        logConnectorEvent('api/holded/connect', 'warn', {
+          requestId,
+          tenantId: session.tenantId,
+          userId: session.userId,
+          entryChannel: channel,
+          stage: 'notify',
+          outcome: 'notification_email_resolution_failed',
+          error:
+            notificationEmailError instanceof Error
+              ? notificationEmailError.message
+              : String(notificationEmailError),
+        });
+      }
+
+      try {
+        const supportedModules = readProbeSupportedModules(probe);
+        const communicationTasks: Promise<unknown>[] = [
+          recordUsageEvent({
+            prisma,
+            tenantId: session.tenantId,
+            userId: session.userId,
+            type: 'HOLDED_CONNECTED',
+            source: 'holded_connect_public_chatgpt',
+            path: '/api/holded/connect',
+            metadataJson: {
+              provider: 'holded',
+              channel,
+              requestId,
+              supportedModules,
+              flow: 'phase1_oauth_api_chatgpt',
+              hasNotificationEmail: Boolean(notificationEmail),
+              sessionEmailPresent: Boolean(session.email),
+              nextTargetPresent: Boolean(nextTarget),
+            },
+          }),
+        ];
+
+        if (notificationEmail) {
+          communicationTasks.push(
+            sendHoldedConnectedCommunication({
+              name:
+                session.name ||
+                identity.contactFirstName ||
+                identity.contactFullName ||
+                notificationEmail.split('@')[0],
+              userEmail: notificationEmail,
+              companyEmail: identity.requestedCompanyEmail || identity.verifiedCompanyEmail || null,
+              companyName:
+                detectedCompany?.companyName ||
+                saved?.tenantName ||
+                identity.companyName ||
+                'tu empresa',
+              supportedModules,
+              channel: 'chatgpt',
+              returnUrl: nextTarget,
+            })
+          );
+        }
+
+        const results = await Promise.allSettled(communicationTasks);
+        for (const result of results) {
+          if (result.status === 'rejected') {
+            logConnectorEvent('api/holded/connect', 'error', {
+              requestId,
+              tenantId: session.tenantId,
+              userId: session.userId,
+              entryChannel: channel,
+              stage: 'notify',
+              outcome: 'post_connect_aux_failed',
+              error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+            });
+          }
+        }
+      } catch (chatgptPostConnectError) {
+        logConnectorEvent('api/holded/connect', 'error', {
+          requestId,
+          tenantId: session.tenantId,
+          userId: session.userId,
+          entryChannel: channel,
+          stage: 'notify',
+          outcome: 'post_connect_aux_failed',
+          error:
+            chatgptPostConnectError instanceof Error
+              ? chatgptPostConnectError.message
+              : String(chatgptPostConnectError),
+        });
+      }
+
+      logConnectorEvent(
+        'api/holded/connect',
+        'info',
+        buildConnectorEvent({
+          requestId,
+          tenantId: session.tenantId,
+          entryChannel: channel,
+          stage: 'persist',
+          outcome: 'connected',
+          status: connection.status,
+        })
+      );
+
+      return withConnectorRequestId(
+        NextResponse.json({
+          ok: true,
+          probe,
+          connection,
+          detectedCompany,
+          governanceFlags,
+          availableActions,
+          warnings: [],
+          nextStep: 'connected',
+          error: null,
+          notificationEmail,
+          companyEmailVerificationPending: false,
+          companyEmailVerified: true,
+          requestId,
+          legacyConnection: {
+            ...saved,
+            tenantName: detectedCompany?.companyName ?? saved?.tenantName ?? null,
+            legalName: detectedCompany?.legalName ?? saved?.legalName ?? null,
+            taxId: detectedCompany?.taxId ?? saved?.taxId ?? null,
+          },
+        }),
+        requestId
+      );
     }
 
     let notificationEmail = requestedNotificationEmail || normalizeOptionalEmail(session.email);

@@ -518,7 +518,7 @@ function HoldedAuthContent() {
         />
       </div>
       <div>
-        <div className="text-base font-bold text-slate-950">Conector Holded</div>
+        <div className="text-base font-bold text-slate-950">holded</div>
         <div className="text-xs text-slate-500">{subtitle}</div>
       </div>
     </div>

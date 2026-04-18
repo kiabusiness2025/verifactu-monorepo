@@ -32,7 +32,7 @@ No debe contener:
 
 ## Estado de implementacion actual
 
-Actualizado a 2026-04-13 tras `HARDEN-1`.
+Actualizado a 2026-04-18 tras `MVP-2026-04-18`.
 
 Ya estan adaptadas sobre rutas reales existentes:
 
@@ -77,6 +77,9 @@ Regla aplicada en esta fase:
 - las rutas privadas de gestion del panel (`memberships`, `recipients`, `claims`, `access-requests`, `rotate-key`, `disconnect`) exigen sesion admin allowlisted en superficie `dashboard`
 - `disconnect` exige `reauthConfirmed = true` en el request
 - `status` se mantiene sin guard admin duro para no romper la visibilidad de la pagina general de integraciones
+- la metadata MCP/OAuth publica del conector anuncia `holded.verifactu.business`
+- el `next` del flujo OAuth publico vuelve por `/holded/oauth/authorize`
+- `POST /api/holded/connect` en `channel=chatgpt` termina tras guardar la conexion y no ejecuta post-procesado publico adicional
 
 ## Contratos compartidos cerrados
 
@@ -196,6 +199,11 @@ Regla aplicada en esta fase:
 - detectar empresa primero
 - completar manual solo lo que falte
 - devolver flags de gobernanza desde el primer alta
+- para `channel=chatgpt`, usar modo MVP:
+  - validar API key
+  - guardar conexion
+  - devolver `connected`
+  - evitar verificacion de email, alertas y comunicaciones del onboarding largo
 
 ## `apps/holded/app/api/holded/status/route.ts`
 
@@ -458,3 +466,38 @@ devuelven `notified` como resultado real del intento de envio de emails:
 - `false` cuando la operacion principal se completa pero el envio falla
 
 El fallo de notificacion no rompe la operacion principal. Queda trazado en observabilidad estructurada con `outcome = notification_failed`.
+
+## Addendum Fase I - 2026-04-18
+
+### `/holded/oauth/authorize`
+
+- el endpoint publico ya no hace redirect visible a `/app`
+- ahora actua como proxy transparente al backend compartido OAuth
+- objetivo: que el navegador no abandone el dominio `/holded` durante el tramo publico del conector
+
+### `POST /api/holded/connect` en `channel=chatgpt`
+
+- vuelve a emitir correo real post-connect
+- registra `HOLDED_CONNECTED` en `usage_events`
+- mantiene el flujo minimo:
+  - validar
+  - guardar
+  - notificar
+  - volver a ChatGPT
+
+### `GET /api/integrations/accounting/admin/traces`
+
+- nuevo endpoint privado de admin
+- expone:
+  - `activeSessions`
+  - `recentConversations`
+  - `summary.memoryFacts`
+
+### `POST /api/integrations/accounting/disconnect`
+
+- ahora devuelve tambien `operationalReset`
+- limpia:
+  - `sessions` persistidas del tenant
+  - `isaak_memory_facts`
+- conserva:
+  - `isaak_conversations` como historico admin
