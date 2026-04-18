@@ -31,6 +31,10 @@ function buildProxyHeaders(request: NextRequest): Headers {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }
+  // Force uncompressed response from upstream so the proxy body is plain bytes.
+  // Node.js fetch sends Accept-Encoding: br by default, which causes app domain
+  // to return brotli — we can't reliably re-stream that to the client.
+  headers.set('accept-encoding', 'identity');
   return headers;
 }
 

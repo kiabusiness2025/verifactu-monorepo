@@ -21,6 +21,9 @@ function proxyHeaders(request: NextRequest): Headers {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }
+  // Force uncompressed upstream response — Node.js fetch sends Accept-Encoding: br
+  // by default and we can't reliably re-stream compressed bytes to the client.
+  headers.set('accept-encoding', 'identity');
   return headers;
 }
 
