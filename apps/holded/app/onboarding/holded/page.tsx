@@ -31,9 +31,10 @@ function readSource(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] || '' : value || '';
 }
 
-function readChannel(value: string | string[] | undefined) {
+function readChannel(value: string | string[] | undefined, source?: string) {
   const resolved = Array.isArray(value) ? value[0] || '' : value || '';
-  return resolved === 'chatgpt' ? 'chatgpt' : 'dashboard';
+  if (resolved === 'chatgpt' || source === 'holded_chatgpt_entry') return 'chatgpt';
+  return 'dashboard';
 }
 
 function readBooleanFlag(value: string | string[] | undefined) {
@@ -149,7 +150,7 @@ async function readInitialIdentity(
 export default async function HoldedOnboardingConnectionPage({ searchParams }: PageProps) {
   const resolved = (await searchParams) || {};
   const source = readSource(resolved.source) || 'holded_onboarding_connect';
-  const channel = readChannel(resolved.channel);
+  const channel = readChannel(resolved.channel, source);
   const forceFullReset = readBooleanFlag(resolved.reset) || readBooleanFlag(resolved.fresh);
   const next = readSource(resolved.next);
   const onboardingToken = readSource(resolved.onboarding_token);
