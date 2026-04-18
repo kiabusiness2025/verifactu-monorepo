@@ -16,7 +16,6 @@ import {
   buildConnectionStatusDto,
   buildConnectorEvent,
   buildDefaultAvailableActions,
-  buildDetectedCompany,
   buildGovernanceFlags,
   getConnectorRequestId,
   logConnectorEvent,
@@ -640,12 +639,7 @@ export async function POST(request: NextRequest) {
             ok: false,
             probe,
             connection: null,
-            detectedCompany: buildDetectedCompany({
-              companyName: identity.companyName,
-              legalName: identity.legalName,
-              taxId: identity.taxId,
-              source: 'manual',
-            }),
+            detectedCompany: null,
             governanceFlags: null,
             availableActions: null,
             warnings: [],
@@ -693,12 +687,7 @@ export async function POST(request: NextRequest) {
             {
               ok: false,
               connection: null,
-              detectedCompany: buildDetectedCompany({
-                companyName: identity.companyName,
-                legalName: identity.legalName,
-                taxId: identity.taxId,
-                source: 'manual',
-              }),
+              detectedCompany: null,
               governanceFlags: null,
               availableActions: null,
               warnings: [],
@@ -791,12 +780,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (isChatgptFlow) {
-      const detectedCompany = buildDetectedCompany({
-        companyName: saved?.tenantName || identity.companyName,
-        legalName: saved?.legalName || identity.legalName,
-        taxId: saved?.taxId || identity.taxId,
-        source: 'holded',
-      });
+      const detectedCompany = null;
       const connection = buildConnectionStatusDto({
         connectionId: `${session.tenantId}:${channel}`,
         tenantId: session.tenantId,
@@ -873,11 +857,7 @@ export async function POST(request: NextRequest) {
                 notificationEmail.split('@')[0],
               userEmail: notificationEmail,
               companyEmail: identity.requestedCompanyEmail || identity.verifiedCompanyEmail || null,
-              companyName:
-                detectedCompany?.companyName ||
-                saved?.tenantName ||
-                identity.companyName ||
-                'tu empresa',
+              companyName: saved?.tenantName || identity.companyName || 'tu empresa',
               supportedModules,
               channel: 'chatgpt',
               returnUrl: nextTarget,
@@ -942,12 +922,6 @@ export async function POST(request: NextRequest) {
           companyEmailVerificationPending: false,
           companyEmailVerified: true,
           requestId,
-          legacyConnection: {
-            ...saved,
-            tenantName: detectedCompany?.companyName ?? saved?.tenantName ?? null,
-            legalName: detectedCompany?.legalName ?? saved?.legalName ?? null,
-            taxId: detectedCompany?.taxId ?? saved?.taxId ?? null,
-          },
         }),
         requestId
       );
@@ -1030,12 +1004,7 @@ export async function POST(request: NextRequest) {
       clientAdminGap: governanceFlags.clientAdminGap,
       highGovernanceRisk: governanceFlags.highGovernanceRisk,
     });
-    let detectedCompany = buildDetectedCompany({
-      companyName: identity.companyName || saved?.tenantName,
-      legalName: identity.legalName || saved?.legalName,
-      taxId: identity.taxId || saved?.taxId,
-      source: runtimeConnection ? 'holded' : 'manual',
-    });
+    let detectedCompany = null;
     let warnings = governanceFlags.clientAdminGap
       ? ['Falta responsable del cliente para cerrar la gobernanza inicial.']
       : [];
@@ -1141,12 +1110,7 @@ export async function POST(request: NextRequest) {
         clientAdminGap: governanceFlags.clientAdminGap,
         highGovernanceRisk: governanceFlags.highGovernanceRisk,
       });
-      detectedCompany = buildDetectedCompany({
-        companyName: identity.companyName || saved?.tenantName,
-        legalName: identity.legalName || saved?.legalName,
-        taxId: identity.taxId || saved?.taxId,
-        source: runtimeConnection ? 'holded' : 'manual',
-      });
+      detectedCompany = null;
       warnings = governanceFlags.clientAdminGap
         ? ['Falta responsable del cliente para cerrar la gobernanza inicial.']
         : [];
@@ -1224,12 +1188,6 @@ export async function POST(request: NextRequest) {
         companyEmailVerificationPending: mustVerifyCompanyEmail,
         companyEmailVerified: !mustVerifyCompanyEmail,
         requestId,
-        legacyConnection: {
-          ...saved,
-          tenantName: identity.companyName || saved?.tenantName || null,
-          legalName: identity.legalName || saved?.legalName || null,
-          taxId: identity.taxId || saved?.taxId || null,
-        },
       }),
       requestId
     );

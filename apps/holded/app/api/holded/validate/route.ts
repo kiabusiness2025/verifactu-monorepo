@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   buildConnectorEvent,
   buildDefaultDuplicateConflict,
-  buildDetectedCompany,
   getConnectorRequestId,
   logConnectorEvent,
   withConnectorRequestId,
@@ -10,7 +9,6 @@ import {
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { probeHoldedConnection } from '@/app/lib/holded-integration';
 import { mintHoldedValidationToken } from '@/app/lib/holded-validation-token';
-import { prisma } from '@/app/lib/prisma';
 
 export const runtime = 'nodejs';
 
@@ -118,33 +116,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const [probe, tenant] = await Promise.all([
-    probeHoldedConnection(apiKey),
-    prisma.tenant.findUnique({
-      where: { id: session.tenantId },
-      select: {
-        profile: {
-          select: {
-            tradeName: true,
-            legalName: true,
-            taxId: true,
-          },
-        },
-      },
-    }),
-  ]);
-  const profileCompanyName = tenant?.profile?.tradeName || null;
-  const profileLegalName = tenant?.profile?.legalName || null;
-  const profileTaxId = tenant?.profile?.taxId || null;
-  const detectedCompany =
-    profileCompanyName || profileLegalName || profileTaxId
-      ? buildDetectedCompany({
-          companyName: profileCompanyName,
-          legalName: profileLegalName,
-          taxId: profileTaxId,
-          source: 'manual',
-        })
-      : null;
+  const probe = await probeHoldedConnection(apiKey);
+  const detectedCompany = null;
   const duplicateConflict = buildDefaultDuplicateConflict();
   const validationToken = probe.ok
     ? await mintHoldedValidationToken({

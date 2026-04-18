@@ -48,12 +48,10 @@ jest.mock('@verifactu/integrations', () => ({
 
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { probeHoldedConnection } from '@/app/lib/holded-integration';
-import { prisma } from '@/app/lib/prisma';
 import { POST } from './route';
 
 const mockGetHoldedSession = getHoldedSession as jest.Mock;
 const mockProbeHoldedConnection = probeHoldedConnection as jest.Mock;
-const mockTenantFindUnique = prisma.tenant.findUnique as jest.Mock;
 
 describe('POST /api/holded/validate', () => {
   const originalSessionSecret = process.env.SESSION_SECRET;
@@ -75,16 +73,6 @@ describe('POST /api/holded/validate', () => {
       projectsApi: { ok: false, status: 403 },
       teamApi: { ok: false, status: 403 },
       error: null,
-    });
-    mockTenantFindUnique.mockResolvedValue({
-      name: 'Acme SL',
-      legalName: 'Acme Sociedad Limitada',
-      nif: 'B12345678',
-      profile: {
-        tradeName: 'Acme SL',
-        legalName: 'Acme Sociedad Limitada',
-        taxId: 'B12345678',
-      },
     });
   });
 
@@ -110,21 +98,11 @@ describe('POST /api/holded/validate', () => {
     expect(payload.ok).toBe(true);
     expect(typeof payload.validationToken).toBe('string');
     expect(payload.validationToken.length).toBeGreaterThan(20);
-    expect(payload.detectedCompany).toMatchObject({
-      companyName: 'Acme SL',
-      taxId: 'B12345678',
-    });
+    expect(payload.detectedCompany).toBeNull();
     expect(payload.nextStep).toBe('manual_completion_required');
   });
 
   it('does not expose legacy tenant identity when profile is empty', async () => {
-    mockTenantFindUnique.mockResolvedValueOnce({
-      name: 'EMPRESA DEMO, SL',
-      legalName: 'EMPRESA DEMO, SL',
-      nif: 'B11111111',
-      profile: null,
-    });
-
     const response = await POST(
       new Request('https://holded.verifactu.business/api/holded/validate', {
         method: 'POST',

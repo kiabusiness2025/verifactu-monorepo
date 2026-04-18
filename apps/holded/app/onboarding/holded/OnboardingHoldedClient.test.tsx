@@ -142,7 +142,7 @@ describe('OnboardingHoldedClient', () => {
     expect(screen.getByRole('button', { name: 'Validar y conectar' })).toBeEnabled();
   });
 
-  it('runs validate then connect with company and contact data', async () => {
+  it('runs validate then connect with Phase I API-key-only payload', async () => {
     fetchMock
       .mockResolvedValueOnce({
         status: 200,
@@ -185,21 +185,23 @@ describe('OnboardingHoldedClient', () => {
     const connectBody = JSON.parse(fetchMock.mock.calls[1][1].body as string);
     expect(connectBody).toEqual(
       expect.objectContaining({
-        companyName: 'Acme SL',
-        legalName: 'Acme Sociedad Limitada',
-        taxId: 'B12345678',
-        contactFirstName: 'Ana',
-        contactLastName: 'Garcia',
-        contactRole: 'Administrador',
-        contactEmail: 'ana@example.com',
-        contactPhone: '+34600111222',
-        notificationEmail: 'ana@example.com',
+        apiKey: 'abcdefghijklmnop',
+        channel: 'dashboard',
         validationToken: 'token-123',
         acceptedTerms: true,
         acceptedPrivacy: true,
         authorizationConfirmed: true,
       })
     );
+    expect(connectBody.companyName).toBeUndefined();
+    expect(connectBody.legalName).toBeUndefined();
+    expect(connectBody.taxId).toBeUndefined();
+    expect(connectBody.contactFirstName).toBeUndefined();
+    expect(connectBody.contactLastName).toBeUndefined();
+    expect(connectBody.contactRole).toBeUndefined();
+    expect(connectBody.contactEmail).toBeUndefined();
+    expect(connectBody.contactPhone).toBeUndefined();
+    expect(connectBody.notificationEmail).toBeUndefined();
     expect(screen.getByText('Error de prueba en connect')).toBeInTheDocument();
   });
 

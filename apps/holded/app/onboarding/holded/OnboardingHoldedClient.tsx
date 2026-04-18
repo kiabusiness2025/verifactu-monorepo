@@ -520,7 +520,8 @@ export default function OnboardingHoldedClient({
 
       setPhase('connecting');
 
-      const shouldSendIdentityFields = channel !== 'chatgpt' || shouldShowFullProfileSteps;
+      // Phase I: connection is API-key only. Identity capture remains prebuilt for later phases.
+      const shouldSendIdentityFields = false;
       const connectPayload = {
         apiKey: normalizedApiKey,
         channel,
@@ -578,10 +579,7 @@ export default function OnboardingHoldedClient({
 
       const postConnectTarget = buildPostConnectReturnTarget({
         nextTarget: nextTarget || '/onboarding/success',
-        providerAccountId:
-          connectData.connection?.providerAccountId ??
-          connectData.legacyConnection?.providerAccountId ??
-          null,
+        providerAccountId: connectData.connection?.providerAccountId ?? null,
       });
 
       window.setTimeout(
