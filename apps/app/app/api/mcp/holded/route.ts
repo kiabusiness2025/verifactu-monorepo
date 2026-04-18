@@ -3,6 +3,7 @@ import {
   holdedMcpTools,
   type HoldedMcpToolDefinition,
 } from '@/lib/integrations/holdedMcpTools';
+import { markAccountingIntegrationRevoked } from '@/lib/integrations/accountingStore';
 import { getAllowedHoldedMcpToolNames } from '@/lib/integrations/holdedMcpScopes';
 import {
   applyOpenAiCorsHeaders,
@@ -216,6 +217,11 @@ function formatToolResult(data: unknown) {
   };
 }
 
+function isHoldedCredentialRevocationError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return /status\s+(401|403)/i.test(message);
+}
+
 async function callTool(
   access: {
     mode: 'oauth' | 'shared_secret';
@@ -243,7 +249,31 @@ async function callTool(
     mode: access.mode,
     tenantId: access.tenantId,
   });
-  const result = await callHoldedMcpTool(apiKey, name, args);
+  let result;
+  try {
+    result = await callHoldedMcpTool(apiKey, name, args);
+  } catch (error) {
+    if (access.tenantId && isHoldedCredentialRevocationError(error)) {
+      try {
+        await markAccountingIntegrationRevoked(
+          access.tenantId,
+          access.mode === 'oauth' ? 'chatgpt' : 'dashboard',
+          error instanceof Error ? error.message : String(error)
+        );
+      } catch (markError) {
+        console.warn('[MCP Holded] failed to mark revoked_api state', {
+          tenantId: access.tenantId,
+          error: markError instanceof Error ? markError.message : String(markError),
+        });
+      }
+
+      throw new Error(
+        'La API key de Holded parece revocada o sin permisos. Reconecta Holded para continuar.'
+      );
+    }
+
+    throw error;
+  }
 
   logMcpAccess({
     method: 'tools/call',

@@ -31,6 +31,45 @@ function normalizeChannel(value: unknown) {
   return value === 'chatgpt' ? 'chatgpt' : 'dashboard';
 }
 
+function resolveCanonicalDisconnectEndpoint() {
+  const appBaseUrl =
+    process.env.APP_API_INTERNAL_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    'https://app.verifactu.business';
+
+  return new URL('/api/integrations/accounting/disconnect', appBaseUrl).toString();
+}
+
+async function tryCanonicalDisconnect(request: NextRequest, channel: 'chatgpt' | 'dashboard') {
+  const cookieHeader = request.headers.get('cookie');
+
+  try {
+    const response = await fetch(resolveCanonicalDisconnectEndpoint(), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-isaak-entry-channel': channel,
+        ...(cookieHeader ? { cookie: cookieHeader } : {}),
+      },
+      body: JSON.stringify({ reauthConfirmed: true }),
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = (await response.json().catch(() => null)) as { ok?: boolean } | null;
+    if (payload?.ok !== true) {
+      return null;
+    }
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 function normalizeApiKey(value: string) {
   return value.replace(/\s+/g, '').trim();
 }
@@ -1202,6 +1241,20 @@ export async function DELETE(request: NextRequest) {
   }
 
   const channel = normalizeChannel(new URL(request.url).searchParams.get('channel'));
+
+  const canonicalDisconnect = await tryCanonicalDisconnect(request, channel);
+  if (canonicalDisconnect) {
+    return NextResponse.json({
+      ok: true,
+      connection: {
+        disconnected: true,
+        channel,
+        disconnectedAt: new Date().toISOString(),
+      },
+      canonicalDisconnect,
+    });
+  }
+
   const disconnected = await disconnectHoldedConnection({
     tenantId: session.tenantId,
     userId: session.userId,

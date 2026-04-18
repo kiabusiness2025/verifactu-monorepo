@@ -140,7 +140,7 @@ import { getHoldedSession } from '@/app/lib/holded-session';
 import { mintHoldedValidationToken } from '@/app/lib/holded-validation-token';
 import { prisma } from '@/app/lib/prisma';
 import { buildConnectionStatusDto, recordUsageEvent } from '@verifactu/integrations';
-import { POST } from './route';
+import { DELETE, POST } from './route';
 
 const mockGetHoldedSession = getHoldedSession as jest.Mock;
 const mockSendHoldedConnectedCommunication = sendHoldedConnectedCommunication as jest.Mock;
@@ -155,6 +155,7 @@ const mockTenantUpdate = prisma.tenant.update as jest.Mock;
 const mockUserUpdate = prisma.user.update as jest.Mock;
 const mockTenantProfileFindFirst = prisma.tenantProfile.findFirst as jest.Mock;
 const mockBuildConnectionStatusDto = buildConnectionStatusDto as jest.Mock;
+const originalFetch = global.fetch;
 
 describe('POST /api/holded/connect', () => {
   const originalSessionSecret = process.env.SESSION_SECRET;
@@ -228,6 +229,10 @@ describe('POST /api/holded/connect', () => {
 
   afterAll(() => {
     process.env.SESSION_SECRET = originalSessionSecret;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   it('uses the stored company email as security recipient when available', async () => {
@@ -701,5 +706,70 @@ describe('POST /api/holded/connect', () => {
         companyEmailVerificationUrl: null,
       })
     );
+  });
+
+  it('delegates disconnect to canonical app endpoint when available', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, status: 'disconnected' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    ) as typeof fetch;
+
+    const response = await DELETE(
+      new Request('https://holded.verifactu.business/api/holded/connect?channel=chatgpt', {
+        method: 'DELETE',
+        headers: { cookie: 'session=abc123' },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.connection).toMatchObject({
+      disconnected: true,
+      channel: 'chatgpt',
+    });
+    expect(payload.canonicalDisconnect).toMatchObject({ ok: true, status: 'disconnected' });
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://app.verifactu.business/api/integrations/accounting/disconnect',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'x-isaak-entry-channel': 'chatgpt',
+          cookie: 'session=abc123',
+        }),
+      })
+    );
+    expect(mockDisconnectHoldedConnection).not.toHaveBeenCalled();
+  });
+
+  it('falls back to local disconnect when canonical endpoint is unavailable', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('network down')) as typeof fetch;
+    mockDisconnectHoldedConnection.mockResolvedValue({
+      disconnected: true,
+      channel: 'dashboard',
+      disconnectedAt: '2026-04-18T00:00:00.000Z',
+    });
+
+    const response = await DELETE(
+      new Request('https://holded.verifactu.business/api/holded/connect?channel=dashboard', {
+        method: 'DELETE',
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.connection).toMatchObject({
+      disconnected: true,
+      channel: 'dashboard',
+      disconnectedAt: '2026-04-18T00:00:00.000Z',
+    });
+    expect(mockDisconnectHoldedConnection).toHaveBeenCalledWith({
+      tenantId: 'tenant_1',
+      userId: 'user_1',
+      channel: 'dashboard',
+    });
   });
 });

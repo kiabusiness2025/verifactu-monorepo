@@ -70,6 +70,10 @@ jest.mock('@/lib/integrations/holdedConnectionResolver', () => ({
   resolveSharedHoldedConnectionForTenant: jest.fn(),
 }));
 
+jest.mock('@/lib/integrations/accountingStore', () => ({
+  markAccountingIntegrationRevoked: jest.fn(),
+}));
+
 jest.mock('@/lib/session', () => ({
   getSessionPayload: jest.fn(),
 }));
@@ -108,6 +112,7 @@ import { GET, POST } from './route';
 import { applyOpenAiCorsHeaders, verifyAccessToken, hasRequiredScopes } from '@/lib/oauth/mcp';
 import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { callHoldedMcpTool } from '@/lib/integrations/holdedMcpTools';
+import { markAccountingIntegrationRevoked } from '@/lib/integrations/accountingStore';
 
 describe('MCP Holded route discovery and auth', () => {
   beforeEach(() => {
@@ -391,5 +396,47 @@ describe('MCP Holded route discovery and auth', () => {
     expect(payload.error).toMatchObject({ code: -32000 });
     expect(payload.error.message).toContain('No Holded API key configured for this OAuth tenant');
     expect(callHoldedMcpTool).not.toHaveBeenCalled();
+  });
+
+  it('marks connection as revoked when Holded returns unauthorized during tools/call', async () => {
+    (verifyAccessToken as jest.Mock).mockResolvedValue({
+      tenantId: 'tenant_123',
+      uid: 'user_123',
+      email: 'user@example.com',
+      scope: 'mcp.read holded.invoices.read',
+    });
+    (resolveSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue({
+      apiKey: 'holded-api-key-abc',
+      source: 'external_connection',
+    });
+    (callHoldedMcpTool as jest.Mock).mockRejectedValue(
+      new Error('Holded API request failed with status 401: Unauthorized')
+    );
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/mcp/holded', {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer oauth-token',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 13,
+          method: 'tools/call',
+          params: { name: 'holded_list_invoices', arguments: {} },
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.error).toMatchObject({ code: -32000 });
+    expect(payload.error.message).toContain('API key de Holded parece revocada');
+    expect(markAccountingIntegrationRevoked).toHaveBeenCalledWith(
+      'tenant_123',
+      'chatgpt',
+      expect.stringContaining('status 401')
+    );
   });
 });

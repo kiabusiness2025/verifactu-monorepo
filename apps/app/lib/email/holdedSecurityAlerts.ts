@@ -121,12 +121,6 @@ function buildSecurityAlertHtml(args: {
         <a href="https://holded.verifactu.business/legal" style="color:#b4233c;">Aviso legal</a> ·
         <a href="https://holded.verifactu.business/privacy" style="color:#b4233c;">Privacidad</a> ·
         <a href="https://holded.verifactu.business/terms" style="color:#b4233c;">Terminos</a>
-        <p style="margin:18px 0 0;color:#64748b;font-size:12px;">
-          Powered by <a href="https://verifactu.business" style="color:#b4233c;">verifactu.business</a> ·
-          <a href="https://holded.verifactu.business/legal" style="color:#b4233c;">Aviso legal</a> ·
-          <a href="https://holded.verifactu.business/privacy" style="color:#b4233c;">Privacidad</a> ·
-          <a href="https://holded.verifactu.business/terms" style="color:#b4233c;">Terminos</a>
-        </p>
       </p>
     </div>
   `;

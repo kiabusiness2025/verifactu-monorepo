@@ -694,6 +694,7 @@ export async function disconnectAccountingIntegration(
             client_admin_gap = false,
             high_governance_risk = false,
             under_claim_review = false,
+            provider_account_id = NULL,
             api_key_enc = NULL,
             connected_by_user_id = NULL,
             technical_operator_user_id = NULL,
@@ -768,6 +769,7 @@ export async function disconnectAccountingIntegration(
             client_admin_gap = false,
             high_governance_risk = false,
             under_claim_review = false,
+            provider_account_id = NULL,
             api_key_enc = NULL,
             connected_by_user_id = NULL,
             technical_operator_user_id = NULL,
@@ -803,6 +805,223 @@ export async function disconnectAccountingIntegration(
   }
 
   return saved;
+}
+
+export async function markAccountingIntegrationRevoked(
+  tenantId: string,
+  channelKey?: AccountingIntegrationChannel | null,
+  lastError?: string | null
+) {
+  const normalizedChannel = normalizeAccountingChannel(channelKey);
+
+  if (!(await hasExternalConnectionsTable())) {
+    return null;
+  }
+
+  const external = (await hasExternalConnectionsChannelColumn())
+    ? await one<{
+        id: string;
+        tenant_id: string;
+        provider: string;
+        status: string;
+        last_sync_at: string | null;
+        created_at: string;
+        updated_at: string;
+      }>(
+        `
+        INSERT INTO external_connections (
+          tenant_id,
+          provider,
+          channel_key,
+          origin_channel,
+          credential_type,
+          connection_status,
+          ownership_status,
+          managed_by_third_party,
+          client_admin_gap,
+          high_governance_risk,
+          under_claim_review,
+          technical_operator_user_id,
+          disconnected_at,
+          revoked_at,
+          governance_updated_at,
+          last_error,
+          api_key_enc,
+          provider_account_id,
+          connected_by_user_id,
+          connected_at,
+          last_validated_at,
+          last_sync_at,
+          company_identity_json,
+          legal_terms_accepted_at,
+          legal_privacy_accepted_at,
+          legal_acceptance_version
+        )
+        VALUES (
+          $1,
+          $2,
+          $3,
+          $3,
+          'api_key',
+          'revoked_api',
+          'pending_confirmation',
+          false,
+          false,
+          false,
+          false,
+          NULL,
+          now(),
+          now(),
+          now(),
+          $4,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL
+        )
+        ON CONFLICT (tenant_id, provider, channel_key)
+        DO UPDATE SET
+          origin_channel = COALESCE(external_connections.origin_channel, EXCLUDED.origin_channel),
+          connection_status = 'revoked_api',
+          ownership_status = EXCLUDED.ownership_status,
+          managed_by_third_party = false,
+          client_admin_gap = false,
+          high_governance_risk = false,
+          under_claim_review = false,
+          provider_account_id = NULL,
+          api_key_enc = NULL,
+          connected_by_user_id = NULL,
+          technical_operator_user_id = NULL,
+          connected_at = NULL,
+          last_validated_at = NULL,
+          last_sync_at = NULL,
+          disconnected_at = now(),
+          revoked_at = now(),
+          company_identity_json = NULL,
+          governance_updated_at = now(),
+          legal_terms_accepted_at = NULL,
+          legal_privacy_accepted_at = NULL,
+          legal_acceptance_version = NULL,
+          last_error = $4,
+          updated_at = now()
+        RETURNING id, tenant_id, provider, connection_status AS status, last_sync_at::text, created_at::text, updated_at::text
+        `,
+        [tenantId, SHARED_PROVIDER, normalizedChannel, lastError ?? null]
+      )
+    : await one<{
+        id: string;
+        tenant_id: string;
+        provider: string;
+        status: string;
+        last_sync_at: string | null;
+        created_at: string;
+        updated_at: string;
+      }>(
+        `
+        INSERT INTO external_connections (
+          tenant_id,
+          provider,
+          origin_channel,
+          credential_type,
+          connection_status,
+          ownership_status,
+          managed_by_third_party,
+          client_admin_gap,
+          high_governance_risk,
+          under_claim_review,
+          technical_operator_user_id,
+          disconnected_at,
+          revoked_at,
+          governance_updated_at,
+          last_error,
+          api_key_enc,
+          provider_account_id,
+          connected_by_user_id,
+          connected_at,
+          last_validated_at,
+          last_sync_at,
+          company_identity_json,
+          legal_terms_accepted_at,
+          legal_privacy_accepted_at,
+          legal_acceptance_version
+        )
+        VALUES (
+          $1,
+          $2,
+          $3,
+          'api_key',
+          'revoked_api',
+          'pending_confirmation',
+          false,
+          false,
+          false,
+          false,
+          NULL,
+          now(),
+          now(),
+          now(),
+          $4,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL
+        )
+        ON CONFLICT (tenant_id, provider)
+        DO UPDATE SET
+          origin_channel = COALESCE(external_connections.origin_channel, EXCLUDED.origin_channel),
+          connection_status = 'revoked_api',
+          ownership_status = EXCLUDED.ownership_status,
+          managed_by_third_party = false,
+          client_admin_gap = false,
+          high_governance_risk = false,
+          under_claim_review = false,
+          provider_account_id = NULL,
+          api_key_enc = NULL,
+          connected_by_user_id = NULL,
+          technical_operator_user_id = NULL,
+          connected_at = NULL,
+          last_validated_at = NULL,
+          last_sync_at = NULL,
+          disconnected_at = now(),
+          revoked_at = now(),
+          company_identity_json = NULL,
+          governance_updated_at = now(),
+          legal_terms_accepted_at = NULL,
+          legal_privacy_accepted_at = NULL,
+          legal_acceptance_version = NULL,
+          last_error = $4,
+          updated_at = now()
+        RETURNING id, tenant_id, provider, connection_status AS status, last_sync_at::text, created_at::text, updated_at::text
+        `,
+        [tenantId, SHARED_PROVIDER, normalizedChannel, lastError ?? null]
+      );
+
+  if (!external) {
+    return null;
+  }
+
+  return {
+    id: external.id,
+    tenant_id: external.tenant_id,
+    provider: PROVIDER,
+    status: external.status,
+    last_sync_at: external.last_sync_at,
+    last_error: lastError ?? null,
+    created_at: external.created_at,
+    updated_at: external.updated_at,
+  } satisfies AccountingIntegrationStatus;
 }
 
 export async function createSyncOutbox(args: {
