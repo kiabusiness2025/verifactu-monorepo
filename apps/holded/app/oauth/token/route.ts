@@ -1,12 +1,17 @@
 /**
  * OAuth token proxy.
  *
- * Proxies token exchange (authorization_code → access_token) to apps/app.
- * Needed so ChatGPT can complete the OAuth flow on the holded domain.
+ * Proxies authorization_code → access_token exchange to apps/app.
+ * ChatGPT calls this endpoint (discovered from AS metadata) after the user
+ * completes the authorize flow on the holded domain.
+ *
+ * Required env var (optional — falls back to public URL):
+ *   APP_OAUTH_INTERNAL_URL  internal base URL of apps/app OAuth endpoints
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { proxyUpstream } from '@/app/lib/oauth-proxy';
 import { APP_PUBLIC_URL } from '@/app/lib/holded-navigation';
+import { NextRequest } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,51 +20,11 @@ function getTokenUrl() {
   return `${process.env.APP_OAUTH_INTERNAL_URL?.trim() || APP_PUBLIC_URL}/oauth/token`;
 }
 
-function proxyHeaders(request: NextRequest): Headers {
-  const headers = new Headers();
-  for (const name of ['content-type', 'accept', 'origin', 'authorization']) {
-    const value = request.headers.get(name);
-    if (value) headers.set(name, value);
-  }
-  // Force uncompressed upstream response — Node.js fetch sends Accept-Encoding: br
-  // by default and we can't reliably re-stream compressed bytes to the client.
-  headers.set('accept-encoding', 'identity');
-  return headers;
-}
-
-async function proxy(request: NextRequest, method: string, body?: string | null) {
-  try {
-    const res = await fetch(getTokenUrl(), {
-      method,
-      headers: proxyHeaders(request),
-      ...(body != null ? { body } : {}),
-    });
-
-    const proxied = new NextResponse(res.body, {
-      status: res.status,
-      statusText: res.statusText,
-    });
-
-    res.headers.forEach((value, key) => {
-      const lower = key.toLowerCase();
-      // fetch() auto-decompresses the body, so strip compression headers
-      if (lower !== 'transfer-encoding' && lower !== 'content-encoding') {
-        proxied.headers.set(key, value);
-      }
-    });
-
-    return proxied;
-  } catch (err) {
-    console.error('[OAuth token proxy] upstream error', err);
-    return NextResponse.json({ error: 'server_error' }, { status: 502 });
-  }
-}
-
 export async function POST(request: NextRequest) {
   const body = await request.text();
-  return proxy(request, 'POST', body);
+  return proxyUpstream(request, getTokenUrl(), 'POST', body);
 }
 
 export async function OPTIONS(request: NextRequest) {
-  return proxy(request, 'OPTIONS');
+  return proxyUpstream(request, getTokenUrl(), 'OPTIONS');
 }

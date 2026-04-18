@@ -4,15 +4,15 @@
  * The canonical MCP endpoint for ChatGPT is:
  *   https://holded.verifactu.business/api/mcp/holded
  *
- * All requests are forwarded to the apps/app MCP runtime, which holds the
- * OAuth infrastructure and Holded connection resolver.  The Authorization
- * header is forwarded transparently so token verification happens there.
+ * All requests are transparently forwarded to the apps/app MCP runtime, which
+ * holds the OAuth token validator and the Holded connection resolver.
+ * The Authorization header is forwarded so token verification happens there.
  *
- * Required env vars:
- *   APP_MCP_INTERNAL_URL  — internal URL of apps/app MCP handler
- *                           (default: https://app.verifactu.business/api/mcp/holded)
+ * Required env var (optional — falls back to public URL):
+ *   APP_MCP_INTERNAL_URL  internal URL of apps/app MCP handler
  */
 
+import { buildUpstreamHeaders, proxyUpstream } from '@/app/lib/oauth-proxy';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -24,58 +24,34 @@ function getAppMcpUrl() {
   );
 }
 
-function buildProxyHeaders(request: NextRequest): Headers {
-  const headers = new Headers();
-  const forward = ['authorization', 'content-type', 'accept', 'origin'];
-  for (const name of forward) {
-    const value = request.headers.get(name);
-    if (value) headers.set(name, value);
-  }
-  // Force uncompressed response from upstream so the proxy body is plain bytes.
-  // Node.js fetch sends Accept-Encoding: br by default, which causes app domain
-  // to return brotli — we can't reliably re-stream that to the client.
-  headers.set('accept-encoding', 'identity');
-  return headers;
-}
-
-async function proxyToApp(request: NextRequest, method: string, body?: BodyInit | null) {
-  try {
-    const response = await fetch(getAppMcpUrl(), {
-      method,
-      headers: buildProxyHeaders(request),
-      body: body ?? null,
-    });
-
-    // Clone response and propagate all headers
-    const proxied = new NextResponse(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-    });
-
-    response.headers.forEach((value, key) => {
-      const lower = key.toLowerCase();
-      // fetch() auto-decompresses the body, so strip compression headers
-      if (lower !== 'transfer-encoding' && lower !== 'content-encoding') {
-        proxied.headers.set(key, value);
-      }
-    });
-
-    return proxied;
-  } catch (error) {
-    console.error('[MCP Holded proxy] upstream error', error);
-    return NextResponse.json({ error: 'MCP upstream unavailable' }, { status: 502 });
-  }
-}
-
 export async function GET(request: NextRequest) {
-  return proxyToApp(request, 'GET');
+  return proxyUpstream(request, getAppMcpUrl(), 'GET', null);
 }
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
-  return proxyToApp(request, 'POST', body);
+  return proxyUpstream(request, getAppMcpUrl(), 'POST', body);
 }
 
 export async function OPTIONS(request: NextRequest) {
-  return proxyToApp(request, 'OPTIONS');
+  // Pass OPTIONS through so apps/app can respond with correct CORS headers
+  const proxied = await proxyUpstream(request, getAppMcpUrl(), 'OPTIONS', null);
+
+  // Ensure holded domain also advertises the correct CORS methods
+  if (!proxied.headers.get('access-control-allow-methods')) {
+    proxied.headers.set('access-control-allow-methods', 'GET, POST, OPTIONS');
+  }
+
+  return proxied;
+}
+
+// Re-export for explicit HEAD support (returns 200 so ChatGPT knows endpoint exists)
+export async function HEAD(request: NextRequest) {
+  const headers = buildUpstreamHeaders(request);
+  try {
+    const res = await fetch(getAppMcpUrl(), { method: 'HEAD', headers });
+    return new NextResponse(null, { status: res.status });
+  } catch {
+    return new NextResponse(null, { status: 502 });
+  }
 }
