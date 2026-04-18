@@ -3,14 +3,14 @@
  *
  * Declares:
  *   resource              → https://holded.verifactu.business/api/mcp/holded
- *   authorization_servers → [https://app.verifactu.business]
+ *   authorization_servers → [https://holded.verifactu.business]
  *
- * ChatGPT discovers this document via the WWW-Authenticate header returned
- * by the MCP proxy at /api/mcp/holded when a request has no Bearer token.
+ * Must match the issuer in /.well-known/oauth-authorization-server (holded domain).
+ * ChatGPT discovers BOTH endpoints and validates that they agree on the same issuer.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { HOLDED_APP_URL, APP_PUBLIC_URL } from '@/app/lib/holded-navigation';
+import { HOLDED_APP_URL } from '@/app/lib/holded-navigation';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +29,7 @@ const SUPPORTED_SCOPES = [
 function getMetadata() {
   return {
     resource: `${HOLDED_APP_URL}${MCP_RESOURCE_PATH}`,
-    authorization_servers: [APP_PUBLIC_URL],
+    authorization_servers: [HOLDED_APP_URL],
     bearer_methods_supported: ['header'],
     scopes_supported: SUPPORTED_SCOPES,
   };
