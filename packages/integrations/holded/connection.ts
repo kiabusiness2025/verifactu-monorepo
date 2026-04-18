@@ -102,7 +102,26 @@ function resolveTrustedTenantIdentity(input: {
 }
 
 function isMissingRelationError(error: unknown) {
+  const code = (error as { code?: unknown })?.code;
   const message = error instanceof Error ? error.message : String(error);
+  const normalized = message.toLowerCase();
+
+  // Prisma P2022 appears when a column expected by newer schema is missing in prod DB.
+  // Treat it as storage schema drift so we can fall back to legacy tenantIntegration.
+  if (code === 'P2022') {
+    return true;
+  }
+
+  const looksLikeMissingColumn =
+    normalized.includes('column') &&
+    normalized.includes('does not exist') &&
+    (normalized.includes('external_connections') ||
+      normalized.includes('external_connection_audit_logs') ||
+      normalized.includes('user_onboarding'));
+
+  if (looksLikeMissingColumn) {
+    return true;
+  }
 
   return (
     message.includes('does not exist in the current database') ||
@@ -110,6 +129,26 @@ function isMissingRelationError(error: unknown) {
     message.includes('The table public.external_connection_audit_logs does not exist') ||
     message.includes('The table public.user_onboarding does not exist')
   );
+}
+
+function isPrimaryStorageAccessError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const normalized = message.toLowerCase();
+
+  return (
+    (normalized.includes('permission denied') &&
+      (normalized.includes('external_connections') ||
+        normalized.includes('external_connection_audit_logs') ||
+        normalized.includes('user_onboarding'))) ||
+    (normalized.includes('row-level security policy') &&
+      (normalized.includes('external_connections') ||
+        normalized.includes('external_connection_audit_logs') ||
+        normalized.includes('user_onboarding')))
+  );
+}
+
+function isPrimaryStorageUnavailableError(error: unknown) {
+  return isMissingRelationError(error) || isPrimaryStorageAccessError(error);
 }
 
 function isForeignKeyConstraintError(error: unknown) {
@@ -671,14 +710,14 @@ export async function saveHoldedConnection(input: {
       try {
         await persistPrimaryStorage(null);
       } catch (retryError) {
-        if (!isMissingRelationError(retryError)) {
+        if (!isPrimaryStorageUnavailableError(retryError)) {
           throw retryError;
         }
         persistenceError = retryError;
       }
     }
 
-    if (!isMissingRelationError(persistenceError)) {
+    if (!isPrimaryStorageUnavailableError(persistenceError)) {
       throw persistenceError;
     }
 

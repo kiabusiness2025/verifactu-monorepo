@@ -245,7 +245,16 @@ const STEP_LABELS: Record<1 | 2 | 3, string> = {
 };
 
 function StepIndicator({ current, minimal }: { current: WizardStep; minimal?: boolean }) {
-  const visibleSteps = minimal ? ([3] as const) : ([1, 2, 3] as const);
+  if (minimal) {
+    return (
+      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
+        <KeyRound className="h-3.5 w-3.5 text-[#ff5460]" />
+        <span className="text-xs font-semibold text-slate-700">Paso actual: API key de Holded</span>
+      </div>
+    );
+  }
+
+  const visibleSteps = [1, 2, 3] as const;
   return (
     <div className="flex items-center gap-2">
       {visibleSteps.map((s, idx) => {
@@ -685,15 +694,21 @@ export default function OnboardingHoldedClient({
 
             {/* Steps overview */}
             <div className="mt-6 space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-              {(preferApiOnlyFlow
-                ? ([
-                    {
-                      step: '3',
-                      title: 'Conexion',
-                      text: 'Obligatorio: API key de Holded tras identificarte con OAuth.',
-                    },
-                  ] as const)
-                : ([
+              {preferApiOnlyFlow ? (
+                <div className="flex gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white">
+                    <KeyRound className="h-3.5 w-3.5" />
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Clave de conexion</div>
+                    <div className="text-sm leading-6 text-slate-600">
+                      Es el unico paso de esta pantalla: pega tu API key para activar el conector.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                (
+                  [
                     {
                       step: '1',
                       title: 'Tus datos',
@@ -705,39 +720,40 @@ export default function OnboardingHoldedClient({
                       title: 'Conexion',
                       text: 'API key de Holded para activar el conector.',
                     },
-                  ] as const)
-              ).map((item) => {
-                const n = Number(item.step) as 1 | 2 | 3;
-                const done = step > n;
-                const active = step === n;
-                return (
-                  <div key={item.step} className="flex gap-3">
-                    <span
-                      className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                        done
-                          ? 'bg-emerald-500 text-white'
-                          : active
-                            ? 'bg-slate-900 text-white'
-                            : 'bg-slate-200 text-slate-500'
-                      }`}
-                    >
-                      {done ? '✓' : item.step}
-                    </span>
-                    <div>
-                      <div
-                        className={`text-sm font-semibold ${active ? 'text-slate-900' : done ? 'text-emerald-700' : 'text-slate-400'}`}
+                  ] as const
+                ).map((item) => {
+                  const n = Number(item.step) as 1 | 2 | 3;
+                  const done = step > n;
+                  const active = step === n;
+                  return (
+                    <div key={item.step} className="flex gap-3">
+                      <span
+                        className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                          done
+                            ? 'bg-emerald-500 text-white'
+                            : active
+                              ? 'bg-slate-900 text-white'
+                              : 'bg-slate-200 text-slate-500'
+                        }`}
                       >
-                        {item.title}
-                      </div>
-                      <div
-                        className={`text-sm leading-6 ${active ? 'text-slate-600' : 'text-slate-400'}`}
-                      >
-                        {item.text}
+                        {done ? '✓' : item.step}
+                      </span>
+                      <div>
+                        <div
+                          className={`text-sm font-semibold ${active ? 'text-slate-900' : done ? 'text-emerald-700' : 'text-slate-400'}`}
+                        >
+                          {item.title}
+                        </div>
+                        <div
+                          className={`text-sm leading-6 ${active ? 'text-slate-600' : 'text-slate-400'}`}
+                        >
+                          {item.text}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
 
             {/* API key guide — visible in step 3 */}

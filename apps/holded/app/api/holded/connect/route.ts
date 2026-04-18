@@ -35,15 +35,29 @@ function isIntegrationStorageSchemaError(error: unknown) {
   const message =
     error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
 
-  if (code === 'P2022') {
+  if (code === 'P2021' || code === 'P2022') {
     return true;
   }
 
-  return (
+  const referencesIntegrationStorageTables =
+    message.includes('external_connections') ||
+    message.includes('external_connection_audit_logs') ||
+    message.includes('user_onboarding');
+
+  const missingColumn =
     (message.includes('column') && message.includes('does not exist')) ||
-    message.includes('the column') ||
-    message.includes('external_connections')
-  );
+    message.includes('the column');
+
+  const missingTable =
+    message.includes('does not exist in the current database') ||
+    message.includes('the table public.external_connections does not exist') ||
+    message.includes('the table public.external_connection_audit_logs does not exist') ||
+    message.includes('the table public.user_onboarding does not exist') ||
+    message.includes('relation "external_connections" does not exist') ||
+    message.includes('relation "external_connection_audit_logs" does not exist') ||
+    message.includes('relation "user_onboarding" does not exist');
+
+  return referencesIntegrationStorageTables && (missingColumn || missingTable);
 }
 
 function resolveCanonicalDisconnectEndpoint() {
