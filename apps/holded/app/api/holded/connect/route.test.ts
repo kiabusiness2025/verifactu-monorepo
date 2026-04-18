@@ -490,6 +490,39 @@ describe('POST /api/holded/connect', () => {
     expect(payload.error).toContain('configuracion temporal');
   });
 
+  it('returns 503 with explicit reason when integration storage schema is pending update', async () => {
+    mockSaveHoldedConnection.mockRejectedValueOnce(
+      Object.assign(
+        new Error('The column `provider_account_id` does not exist in current database'),
+        {
+          code: 'P2022',
+        }
+      )
+    );
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          companyName: 'Acme SL',
+          contactFirstName: 'Ana',
+          contactLastName: 'Garcia',
+          contactEmail: 'ana@example.com',
+        }),
+      }) as never
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload.ok).toBe(false);
+    expect(payload.reason).toBe('integration_storage_update_pending');
+    expect(payload.error).toContain('actualizacion interna');
+  });
+
   it('does not fail when post-connect shaping throws after saving a valid key', async () => {
     let calls = 0;
     mockBuildConnectionStatusDto.mockImplementation((input: Record<string, unknown>) => {

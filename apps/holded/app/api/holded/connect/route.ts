@@ -31,6 +31,22 @@ function normalizeChannel(value: unknown) {
   return value === 'chatgpt' ? 'chatgpt' : 'dashboard';
 }
 
+function isIntegrationStorageSchemaError(error: unknown) {
+  const code = (error as { code?: string } | null)?.code ?? null;
+  const message =
+    error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+
+  if (code === 'P2022') {
+    return true;
+  }
+
+  return (
+    (message.includes('column') && message.includes('does not exist')) ||
+    message.includes('the column') ||
+    message.includes('external_connections')
+  );
+}
+
 function resolveCanonicalDisconnectEndpoint() {
   const appBaseUrl =
     process.env.APP_API_INTERNAL_URL?.trim() ||
@@ -749,6 +765,28 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      if (isIntegrationStorageSchemaError(persistError)) {
+        return withConnectorRequestId(
+          NextResponse.json(
+            {
+              ok: false,
+              connection: null,
+              detectedCompany: null,
+              governanceFlags: null,
+              availableActions: null,
+              warnings: [],
+              nextStep: null,
+              error:
+                'La API key es valida, pero estamos terminando una actualizacion interna del conector. Intenta de nuevo en unos minutos.',
+              reason: 'integration_storage_update_pending',
+              requestId,
+            },
+            { status: 503 }
+          ),
+          requestId
+        );
+      }
+
       throw persistError;
     }
 
@@ -1207,6 +1245,8 @@ export async function POST(request: NextRequest) {
       code: errorCode,
     });
 
+    const isSchemaError = isIntegrationStorageSchemaError(error);
+
     return withConnectorRequestId(
       NextResponse.json(
         {
@@ -1217,13 +1257,14 @@ export async function POST(request: NextRequest) {
           availableActions: null,
           warnings: [],
           nextStep: null,
-          error:
-            'La conexion es valida, pero no hemos podido terminar de guardarla. Intenta de nuevo en unos segundos o escribe a soporte.',
-          reason: 'connect_failed',
+          error: isSchemaError
+            ? 'La API key es valida, pero estamos terminando una actualizacion interna del conector. Intenta de nuevo en unos minutos.'
+            : 'La conexion es valida, pero no hemos podido terminar de guardarla. Intenta de nuevo en unos segundos o escribe a soporte.',
+          reason: isSchemaError ? 'integration_storage_update_pending' : 'connect_failed',
           debugError: process.env.NODE_ENV !== 'production' ? errorMessage : undefined,
           requestId,
         },
-        { status: 500 }
+        { status: isSchemaError ? 503 : 500 }
       ),
       requestId
     );
