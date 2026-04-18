@@ -1,10 +1,17 @@
 import {
   ArrowRight,
+  BookOpen,
+  Building2,
   CheckCircle2,
+  FileText,
+  FolderKanban,
   KeyRound,
   MessageCircleMore,
   ShieldCheck,
   Sparkles,
+  Users,
+  XCircle,
+  Zap,
 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -37,12 +44,103 @@ const solutionExamples = [
   'Prepara un borrador de factura para este cliente.',
 ];
 
-const whatItDoes = [
-  'Consultar facturas emitidas y entender su estado.',
-  'Revisar contactos, cuentas contables y libro diario.',
-  'Preparar borradores de factura con confirmacion.',
-  'Leer mejor IVA, gastos y caja desde el contexto contable.',
-  'Ordenar proyectos y tareas para priorizar trabajo.',
+const scopeModules = [
+  {
+    icon: FileText,
+    color: 'text-[#ff5460]',
+    bg: 'bg-[#ff5460]/10',
+    title: 'Facturacion',
+    badge: 'Lectura + Borrador',
+    badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    description: 'Acceso completo a facturas emitidas con capacidad de preparar borradores nuevos.',
+    capabilities: [
+      'Ver facturas emitidas por cliente, fecha o estado',
+      'Filtrar vencidas, pendientes de cobro o pagadas',
+      'Consultar importes, IVA desglosado y condiciones de pago',
+      'Revisar historial completo de facturacion',
+      'Preparar borradores de factura nuevos (siempre con tu confirmacion antes de guardar)',
+    ],
+  },
+  {
+    icon: BookOpen,
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50',
+    title: 'Contabilidad',
+    badge: 'Solo lectura',
+    badgeColor: 'bg-slate-50 text-slate-600 border-slate-200',
+    description: 'Acceso al plan contable, diario y movimientos para entender la situacion real.',
+    capabilities: [
+      'Consultar el plan contable completo',
+      'Leer el libro diario y asientos contables',
+      'Entender IVA liquidado y pendiente en lenguaje claro',
+      'Revisar gastos clasificados por cuenta contable',
+      'Analizar saldos y movimientos de caja',
+    ],
+  },
+  {
+    icon: Users,
+    color: 'text-violet-600',
+    bg: 'bg-violet-50',
+    title: 'Contactos y CRM',
+    badge: 'Solo lectura',
+    badgeColor: 'bg-slate-50 text-slate-600 border-slate-200',
+    description: 'Vista completa de contactos, clientes y oportunidades de venta.',
+    capabilities: [
+      'Ver contactos y clientes registrados en Holded',
+      'Consultar reservas y oportunidades abiertas',
+      'Revisar pipeline de ventas y estado por contacto',
+      'Identificar contactos con mayor riesgo de cobro',
+      'Buscar clientes por nombre, NIF o actividad reciente',
+    ],
+  },
+  {
+    icon: FolderKanban,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+    title: 'Proyectos y Tareas',
+    badge: 'Solo lectura',
+    badgeColor: 'bg-slate-50 text-slate-600 border-slate-200',
+    description: 'Panorama claro de proyectos activos, tareas y progreso del equipo.',
+    capabilities: [
+      'Ver todos los proyectos activos y su estado',
+      'Consultar tareas pendientes y prioridades',
+      'Priorizar trabajo segun fechas y estados',
+      'Revisar avance y tiempo registrado por proyecto',
+      'Relacionar proyectos con clientes y facturas',
+    ],
+  },
+  {
+    icon: Building2,
+    color: 'text-teal-600',
+    bg: 'bg-teal-50',
+    title: 'Equipo',
+    badge: 'Solo lectura',
+    badgeColor: 'bg-slate-50 text-slate-600 border-slate-200',
+    description: 'Informacion basica de empleados y estructura del equipo.',
+    capabilities: [
+      'Ver empleados activos y su informacion basica',
+      'Consultar estructura del equipo',
+      'Relacionar empleados con proyectos y tareas asignadas',
+    ],
+  },
+  {
+    icon: XCircle,
+    color: 'text-slate-400',
+    bg: 'bg-slate-100',
+    title: 'Fuera de scope',
+    badge: 'No incluido',
+    badgeColor: 'bg-slate-100 text-slate-500 border-slate-200',
+    description: 'Estas areas quedan fuera del conector en esta version.',
+    capabilities: [
+      'Productos e inventario',
+      'Adjuntos y documentos escaneados',
+      'Conciliacion bancaria',
+      'Presupuestos, pedidos y albaranes',
+      'Gestion de usuarios y permisos',
+      'Envio directo de facturas (solo borradores)',
+    ],
+    isLimitation: true,
+  },
 ];
 
 const faqItems = [
@@ -80,6 +178,7 @@ const faqItems = [
 export default function HoldedHomePage() {
   return (
     <main className="min-h-screen text-slate-900">
+      {/* Hero */}
       <section id="solucion" className="py-14 sm:py-18">
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
@@ -113,12 +212,6 @@ export default function HoldedHomePage() {
                 >
                   Ya tengo acceso
                 </Link>
-                <Link
-                  href="/demo-recording"
-                  className="inline-flex items-center justify-center px-2 py-3 text-sm font-semibold text-slate-500 underline-offset-4 hover:text-slate-700 hover:underline"
-                >
-                  Ver como funciona
-                </Link>
               </div>
 
               <div className="mt-8 rounded-3xl border border-[#ff5460]/20 bg-[#ff5460]/5 p-6 shadow-sm">
@@ -139,6 +232,7 @@ export default function HoldedHomePage() {
         </div>
       </section>
 
+      {/* Problema / Solucion */}
       <section id="acceso-libre" className="bg-white py-14">
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
@@ -220,52 +314,89 @@ export default function HoldedHomePage() {
         </div>
       </section>
 
-      <section id="beneficios" className="py-14">
+      {/* Capacidades detalladas por modulo */}
+      <section id="capacidades" className="py-16">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
-            <article className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                <ShieldCheck className="h-3.5 w-3.5 text-[#ff5460]" />
-                Todo conectado con tu cuenta de Holded
-              </div>
-              <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-                Lo que ya puedes consultar hoy en Holded
-              </h2>
-              <ul className="mt-6 space-y-3 text-sm text-slate-700">
-                {whatItDoes.map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </article>
+          <div className="mb-12">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm">
+              <Zap className="h-3.5 w-3.5 text-[#ff5460]" />
+              Capacidades del conector
+            </div>
+            <h2 className="mt-5 text-4xl font-bold tracking-tight text-slate-950">
+              Todo lo que puedes hacer hoy con tu Holded
+            </h2>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
+              El conector accede a la API oficial de Holded. Estas son las capacidades reales
+              disponibles desde ChatGPT, modulo a modulo.
+            </p>
+          </div>
 
-            <article className="rounded-[2rem] border border-[#ff5460]/15 bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_100%)] p-8 shadow-[0_32px_90px_-48px_rgba(255,84,96,0.35)]">
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#ff5460]">
-                El asistente
-              </div>
-              <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-                Capacidades activas del conector
-              </h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">
-                El conector te ayuda a leer mejor IVA, gastos y parte de la caja a partir del
-                contexto contable que ya existe en Holded.
-              </p>
-              <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
-                <div className="text-sm font-semibold text-slate-900">
-                  No sustituye a tu asesor ni promete mas de lo que hay hoy
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {scopeModules.map((module) => {
+              const Icon = module.icon;
+              return (
+                <article
+                  key={module.title}
+                  className={`rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm ${module.isLimitation ? 'opacity-75' : ''}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-2xl ${module.bg}`}
+                    >
+                      <Icon className={`h-5 w-5 ${module.color}`} />
+                    </div>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${module.badgeColor}`}
+                    >
+                      {module.badge}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-4 text-lg font-bold text-slate-950">{module.title}</h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">{module.description}</p>
+
+                  <ul className="mt-4 space-y-2">
+                    {module.capabilities.map((cap) => (
+                      <li key={cap} className="flex items-start gap-2 text-sm text-slate-700">
+                        {module.isLimitation ? (
+                          <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-slate-300" />
+                        ) : (
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                        )}
+                        {cap}
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
+            <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <ShieldCheck className="h-4 w-4 text-[#ff5460]" />
+                  Conexion directa con la API oficial de Holded
                 </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  El conector se centra en facturas, contactos, contabilidad y proyectos. No incluye
-                  productos, usuarios, adjuntos ni conciliacion bancaria.
+                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
+                  El conector usa tu API key de Holded directamente. Ningun dato pasa por servidores
+                  de terceros sin tu control. Puedes desconectar en cualquier momento.
                 </p>
               </div>
-            </article>
+              <Link
+                href={buildRegisterUrl('holded_capacidades_cta')}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
+              >
+                Empezar gratis
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* FAQ */}
       <section id="faq" className="bg-white py-14">
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">

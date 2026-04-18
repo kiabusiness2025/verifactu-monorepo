@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { buildAuthUrl, buildDashboardUrl, buildRegisterUrl } from '../lib/holded-navigation';
+import { buildAuthUrl, buildRegisterUrl } from '../lib/holded-navigation';
 
 type Props = {
   children: React.ReactNode;
@@ -44,18 +44,12 @@ export default function HoldedSiteChrome({ children }: Props) {
             <a href="#solucion" className="hover:text-slate-900">
               Inicio
             </a>
-            <Link href="/demo-recording" className="hover:text-slate-900">
-              Demo
-            </Link>
-            <Link href="/capacidades" className="hover:text-slate-900">
+            <a href="#capacidades" className="hover:text-slate-900">
               Capacidades
-            </Link>
+            </a>
             <a href="#faq" className="hover:text-slate-900">
               FAQ
             </a>
-            <Link href={buildDashboardUrl('holded_nav_dashboard')} className="hover:text-slate-900">
-              Dashboard
-            </Link>
           </nav>
 
           <div className="flex flex-wrap items-center gap-2">
