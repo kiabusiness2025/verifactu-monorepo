@@ -42,6 +42,14 @@ function buildLocalHandoffTarget(source: string, target: string) {
   return url.toString();
 }
 
+function buildPostLoginTarget(source: string, target: string, chatgptFlow: boolean) {
+  if (chatgptFlow) {
+    return target;
+  }
+
+  return buildLocalHandoffTarget(source, target);
+}
+
 function resolveRedirectTarget(nextParam: string, source: string) {
   return sanitizeHoldedReturnTarget(nextParam, buildFallbackTarget(source));
 }
@@ -174,8 +182,8 @@ function HoldedAuthContent() {
   );
   const exitTarget = isChatgptFlow ? CHATGPT_HOME_URL : HOLDED_SITE_URL;
   const postLoginTarget = useMemo(
-    () => buildLocalHandoffTarget(source, redirectTarget),
-    [redirectTarget, source]
+    () => buildPostLoginTarget(source, redirectTarget, isChatgptFlow),
+    [isChatgptFlow, redirectTarget, source]
   );
   const requiresFreshAuth =
     source === 'holded_chat_requires_session' || source === 'chat_requires_session';
