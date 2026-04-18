@@ -135,7 +135,6 @@ export async function GET(request: NextRequest) {
     ? requestedScope.trim()
     : getDefaultScopes().join(' ');
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
-  const connectionConfirmed = url.searchParams.get('connection_confirmed')?.trim() === '1';
   const tenantIdQuery = url.searchParams.get('tenant_id')?.trim() || null;
   const loginConfirmed = url.searchParams.get('holded_login_confirmed')?.trim() === '1';
   const isChatgptClient = isLikelyChatgptOAuthRequest({ clientId, redirectUri });
@@ -322,7 +321,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (resolved.tenantId && (!hasHoldedConnection || !connectionConfirmed)) {
+    if (resolved.tenantId && !hasHoldedConnection) {
       const authorizeUrl = new URL(url.toString());
       authorizeUrl.searchParams.delete('connection_confirmed');
       const redirectTenantId = tenantIdQuery ?? onboardingSession?.tenantId ?? resolved.tenantId;
