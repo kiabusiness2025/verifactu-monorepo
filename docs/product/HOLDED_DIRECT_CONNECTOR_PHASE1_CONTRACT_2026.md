@@ -25,10 +25,11 @@ Este documento sustituye el criterio anterior que mezclaba:
 - branding publico del conector separado de Isaak en MCP y onboarding `channel=chatgpt`
 - `connector onboarding session` propia con identidad completa (`authMethod`, `emailVerified`, `firstName`, `lastName`, `verifiedAt`)
 - login explicito en `/auth/holded` al entrar desde ChatGPT para identificar usuario antes del onboarding
-- pantalla de entrada `Google` o `Correo` como primera decision visible del conector
+- login del conector por correo (y opcion Google cuando se habilita por configuracion)
 - onboarding con activacion minima obligatoria `OAuth + API key`; datos de perfil/empresa como completado posterior
 - retorno estable al OAuth original de ChatGPT
 - persistencia channel-aware en `external_connections` con flags de gobernanza
+- hardening de persistencia: fallback canónico al backend compartido cuando el almacenamiento local falla temporalmente
 - panel admin operativo con gestión de memberships, recipients, claims y access requests
 - observabilidad del flujo con `x-verifactu-request-id`
 - backend de verificacion de correo por magic link (`identity/email/start`, `holded/verify`)
@@ -51,16 +52,6 @@ Ahora se define asi:
 - al desconectar:
   - se resetea la memoria activa y cualquier relacion operativa con el tenant Holded anterior
   - el historico sigue disponible en backend y consultable por admin
-
-## Decision de producto
-
-Esta nueva ola de Fase 1 se define como:
-
-- identificacion explicita de usuario en login del conector
-- OAuth del conector + API key de Holded como unico bloqueo obligatorio
-- datos de perfil en segundo momento, sin bloquear activacion
-- pantalla final de exito con tono amable
-- email final de bienvenida despues de la conexion completa
 
 ## Decision de producto
 
@@ -120,7 +111,7 @@ El usuario no debe ver como paso publico obligatorio:
 1. ChatGPT inicia OAuth contra el conector Holded.
 2. El usuario pasa por login / identidad del conector si hace falta.
 3. El usuario pega la API key de Holded.
-4. Verifactu valida y guarda la conexion server-side.
+4. Verifactu valida y guarda la conexion server-side (con fallback canónico al backend compartido si hay incidencia temporal de persistencia local).
 5. Se dispara la notificacion operativa correspondiente.
 6. El navegador vuelve al flujo OAuth original.
 7. ChatGPT completa la conexion.

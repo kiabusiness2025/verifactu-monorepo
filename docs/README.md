@@ -8,8 +8,9 @@ Empieza por estos documentos de entrada y luego baja al detalle tecnico:
 
 ### Conector Holded
 
-- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md) - Contrato publico canonico del conector directo `ChatGPT <-> Holded` en Fase 1, actualizado con Google opcional, correo verificado y onboarding por pasos
-- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md) - Backlog tecnico de la nueva ola: identidad ligera, verificacion manual y email final tras conexion
+- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md) - Contrato publico canonico del conector directo `ChatGPT <-> Holded` en Fase 1: login del conector + API key + retorno a ChatGPT
+- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md) - Plan tecnico de cierre de Fase 1 (flujo minimo, correos operativos, admin y reset de desconexion)
+- [engineering/HOLDED_DIRECT_CONNECTOR_PHASE1_AUDIT_2026-04-18.md](engineering/HOLDED_DIRECT_CONNECTOR_PHASE1_AUDIT_2026-04-18.md) - Auditoria end-to-end de Fase 1 y estado real de cumplimiento
 - [product/HOLDED_DIRECT_CONNECTOR_EXECUTION_PROGRESS_2026.md](product/HOLDED_DIRECT_CONNECTOR_EXECUTION_PROGRESS_2026.md) - Bitacora viva de avance por fases del conector directo: entregado, pendiente, compatibilidad temporal y siguiente fase
 - [product/HOLDED_DIRECT_CONNECTOR_BETA_CAPABILITY_MATRIX_2026-04-10.md](product/HOLDED_DIRECT_CONNECTOR_BETA_CAPABILITY_MATRIX_2026-04-10.md) - Matriz canonica del beta publico actual: lo que realmente expone el preset `openai_review_v2`
 - [product/HOLDED_DIRECT_CONNECTOR_RELEASE_NOTES_2026-04-10.md](product/HOLDED_DIRECT_CONNECTOR_RELEASE_NOTES_2026-04-10.md) - Release notes de abril 2026 con onboarding, OAuth, runtime y fixes de produccion
@@ -48,8 +49,9 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 - [../apps/holded/README.md](../apps/holded/README.md) - Proyecto publico Holded
 - [../apps/app/README.md](../apps/app/README.md) - Core compartido y conector Holded/MCP
 - [../apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md](../apps/holded/HOLDED_CONNECTION_ARCHITECTURE.md) - Arquitectura real de conexion Holded en la app publica
-- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md) - Contrato publico actual del conector directo, incluyendo la nueva ola de identidad ligera y onboarding por pasos
-- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md) - Plan de implementacion vivo de la nueva ola de Fase 1
+- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md) - Contrato publico actual del conector directo para Fase 1: login del conector + API key + callback OAuth a ChatGPT
+- [product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md](product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md) - Plan de cierre y validacion de Fase 1 en entorno real
+- [engineering/HOLDED_DIRECT_CONNECTOR_PHASE1_AUDIT_2026-04-18.md](engineering/HOLDED_DIRECT_CONNECTOR_PHASE1_AUDIT_2026-04-18.md) - Auditoria tecnica de cumplimiento de Fase 1
 - [product/HOLDED_DIRECT_CONNECTOR_EXECUTION_PROGRESS_2026.md](product/HOLDED_DIRECT_CONNECTOR_EXECUTION_PROGRESS_2026.md) - Progreso vivo de ejecucion por fases y continuidad del roadmap
 - [product/HOLDED_DIRECT_CONNECTOR_BETA_CAPABILITY_MATRIX_2026-04-10.md](product/HOLDED_DIRECT_CONNECTOR_BETA_CAPABILITY_MATRIX_2026-04-10.md) - Matriz operativa del beta publico real y sus limites
 - [product/HOLDED_DIRECT_CONNECTOR_RELEASE_NOTES_2026-04-10.md](product/HOLDED_DIRECT_CONNECTOR_RELEASE_NOTES_2026-04-10.md) - Resumen ejecutivo de todos los ajustes cerrados en abril 2026

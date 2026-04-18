@@ -16,6 +16,11 @@ Reauditar el conector directo `ChatGPT <-> Holded` contra la definicion actual d
 
 Fecha de auditoria: `2026-04-18`
 
+Actualizacion de estabilizacion: `2026-04-19`
+
+- `POST /api/holded/connect` incorpora fallback canónico al backend compartido cuando falla la persistencia local por incidencias temporales de storage.
+- si ambos caminos fallan, se mantiene respuesta controlada con motivo explicito `integration_storage_update_pending`.
+
 ## Resumen ejecutivo
 
 Estado global de Fase I: **cumplida a nivel de implementacion y lista para smoke real**.

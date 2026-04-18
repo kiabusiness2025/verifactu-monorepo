@@ -45,31 +45,30 @@ Fijar la definicion vigente de Fase I y contrastarla contra el estado real del c
 
 ### Hallazgos principales
 
-- `OAuth -> API key -> ChatGPT`: ya casi cerrado
-- connect/disconnect emails: parcial
+- `OAuth -> API key -> ChatGPT`: cerrado en implementacion
+- connect/disconnect emails: cerrados en flujo operativo
 - admin de usuarios/tenants: disponible
-- sesiones activas: no disponible en panel Holded
-- historial de conversaciones: no disponible en panel Holded
-- reset de memoria al desconectar: no disponible todavia
+- sesiones activas: disponible en panel/admin traces
+- historial de conversaciones: disponible en panel/admin traces
+- reset de memoria al desconectar: cerrado en alcance operativo de Fase I
 
 ### Pendiente
 
-- reintroducir email post-connect en el camino publico real de ChatGPT
-- exponer sesiones activas en admin
-- exponer historial conversacional en admin
-- resetear memoria y sesiones activas al desconectar
+- smoke real end-to-end del flujo publico
+- validacion manual de correos connect/disconnect en entorno publico
+- validacion manual del reset operativo y trazas admin en entorno publico
 
 ### Riesgos abiertos
 
-- dar por publicada Fase I sin cerrar sesiones/memoria
-- seguir mezclando contrato minimo del conector con backlog de producto mayor
+- dar por publicada Fase I sin ejecutar smoke real y validaciones manuales de operacion
+- reintroducir complejidad de producto mayor dentro del flujo minimo del conector
 
 ### Siguiente fase habilitada
 
-- `PHASE1-CLOSE-1`:
-  - `MAIL-1`
-  - `ADMIN-TRACE-1`
-  - `RESET-1`
+- `PHASE1-SMOKE-1`:
+  - smoke publico end-to-end
+  - validacion manual de correos operativos
+  - validacion manual de reset y trazabilidad admin
 
 ## Fase MVP-2026-04-18 - Public connector separation and ChatGPT flow simplification
 

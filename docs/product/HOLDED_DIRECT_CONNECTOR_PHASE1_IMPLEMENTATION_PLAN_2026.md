@@ -44,6 +44,11 @@ No incluido:
 
 ## Estado real al 2026-04-18
 
+Nota de estabilizacion posterior (2026-04-19):
+
+- el flujo de conexion publico ya incorpora fallback canónico al backend compartido cuando la persistencia local falla por incidencias temporales de storage
+- cuando ambos caminos fallan, se mantiene respuesta controlada con motivo explicito `integration_storage_update_pending`
+
 ### Ya conseguido
 
 - `/holded` como dominio publico del conector
@@ -57,24 +62,21 @@ No incluido:
   - claims
   - access requests
   - observabilidad por `requestId`
+  - sesiones activas
+  - historial conversacional reciente
 
-### Parcial
+- desconexion operativa reforzada:
+  - limpieza de `channel identities`
+  - limpieza de `verified email identities`
+  - limpieza de `sessions` persistidas por tenant
+  - limpieza de `IsaakMemoryFact`
+  - conservacion de `IsaakConversation` como historico admin
 
-- emails de connect/disconnect:
-  - existen en backend compartido
-  - disconnect ya los dispara
-  - connect publico minimo no los garantiza todavia
-- relacion operativa con tenant anterior:
-  - se limpia conexion y channel identity
-  - no se limpia todavia memoria conversacional ni sesiones persistidas
+### Pendiente de validacion en entorno publico
 
-### Pendiente
-
-- sesiones activas en panel admin
-- historial de conversaciones en panel admin
-- reset de `IsaakConversation`
-- reset de `IsaakMemoryFact`
-- invalidacion de `Session` activas del contexto afectado
+- smoke real end-to-end del flujo `OAuth -> API key -> ChatGPT`
+- validacion manual de correos connect/disconnect
+- validacion manual de reset operativo y trazas admin
 
 ## Backlog priorizado para cerrar Fase I
 
