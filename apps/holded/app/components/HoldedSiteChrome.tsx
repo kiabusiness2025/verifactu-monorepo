@@ -50,15 +50,12 @@ export default function HoldedSiteChrome({ children }: Props) {
             <a href="#faq" className="hover:text-slate-900">
               FAQ
             </a>
+            <a href="#Contacto" className="hover:text-slate-900">
+              Contacto
+            </a>
           </nav>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={buildRegisterUrl('holded_nav_register')}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Crear acceso
-            </Link>
             <Link
               href={buildAuthUrl('holded_nav_global')}
               className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ef4654]"

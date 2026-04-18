@@ -693,21 +693,9 @@ export default function OnboardingHoldedClient({
             ) : null}
 
             {/* Steps overview */}
-            <div className="mt-6 space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-              {preferApiOnlyFlow ? (
-                <div className="flex gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white">
-                    <KeyRound className="h-3.5 w-3.5" />
-                  </span>
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Clave de conexion</div>
-                    <div className="text-sm leading-6 text-slate-600">
-                      Es el unico paso de esta pantalla: pega tu API key para activar el conector.
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                (
+            {!preferApiOnlyFlow ? (
+              <div className="mt-6 space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                {(
                   [
                     {
                       step: '1',
@@ -752,9 +740,9 @@ export default function OnboardingHoldedClient({
                       </div>
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            ) : null}
 
             {/* API key guide — visible in step 3 */}
             {step === 3 ? (

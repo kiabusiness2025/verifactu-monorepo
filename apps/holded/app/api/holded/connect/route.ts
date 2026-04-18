@@ -81,6 +81,15 @@ function resolveCanonicalDisconnectEndpoint() {
   return new URL('/api/integrations/accounting/disconnect', appBaseUrl).toString();
 }
 
+function resolveCanonicalConnectEndpoint() {
+  const appBaseUrl =
+    process.env.APP_API_INTERNAL_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    'https://app.verifactu.business';
+
+  return new URL('/api/integrations/accounting/connect', appBaseUrl).toString();
+}
+
 async function tryCanonicalDisconnect(request: NextRequest, channel: 'chatgpt' | 'dashboard') {
   const cookieHeader = request.headers.get('cookie');
 
@@ -106,6 +115,61 @@ async function tryCanonicalDisconnect(request: NextRequest, channel: 'chatgpt' |
     }
 
     return payload;
+  } catch {
+    return null;
+  }
+}
+
+type CanonicalConnectPayload = {
+  apiKey: string;
+  validationToken?: string;
+  acceptedTerms?: boolean;
+  acceptedPrivacy?: boolean;
+  mode?: 'initial' | 'reconnect';
+};
+
+async function tryCanonicalConnect(
+  request: NextRequest,
+  channel: 'chatgpt' | 'dashboard',
+  payload: CanonicalConnectPayload
+) {
+  const cookieHeader = request.headers.get('cookie');
+
+  try {
+    const response = await fetch(resolveCanonicalConnectEndpoint(), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-isaak-entry-channel': channel,
+        ...(cookieHeader ? { cookie: cookieHeader } : {}),
+      },
+      body: JSON.stringify({
+        apiKey: payload.apiKey,
+        validationToken: payload.validationToken,
+        acceptedTerms: payload.acceptedTerms === true,
+        acceptedPrivacy: payload.acceptedPrivacy === true,
+        mode: payload.mode === 'reconnect' ? 'reconnect' : 'initial',
+      }),
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const canonicalPayload = (await response.json().catch(() => null)) as {
+      ok?: boolean;
+      connection?: unknown;
+      governanceFlags?: unknown;
+      availableActions?: unknown;
+      warnings?: unknown;
+    } | null;
+
+    if (canonicalPayload?.ok !== true || !canonicalPayload.connection) {
+      return null;
+    }
+
+    return canonicalPayload;
   } catch {
     return null;
   }
@@ -491,6 +555,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const apiKey = typeof body?.apiKey === 'string' ? normalizeApiKey(body.apiKey) : '';
     const channel = normalizeChannel(body?.channel);
+    const acceptedTerms = body?.acceptedTerms === true;
+    const acceptedPrivacy = body?.acceptedPrivacy === true;
+    const mode = body?.mode === 'reconnect' ? 'reconnect' : 'initial';
     const isChatgptFlow = channel === 'chatgpt';
     const nextTarget = normalizeOptionalUrl(body?.nextTarget);
     const existingIdentity = await readExistingIdentity(session.tenantId);
@@ -781,6 +848,46 @@ export async function POST(request: NextRequest) {
       }
 
       if (isIntegrationStorageSchemaError(persistError)) {
+        const canonicalConnection = await tryCanonicalConnect(request, channel, {
+          apiKey,
+          validationToken: validationToken || undefined,
+          acceptedTerms,
+          acceptedPrivacy,
+          mode,
+        });
+
+        if (canonicalConnection) {
+          logConnectorEvent('api/holded/connect', 'warn', {
+            requestId,
+            tenantId: session.tenantId,
+            userId: session.userId,
+            entryChannel: channel,
+            stage: 'persist_connection',
+            outcome: 'persist_fallback_canonical_success',
+          });
+
+          return withConnectorRequestId(
+            NextResponse.json(
+              {
+                ok: true,
+                connection: canonicalConnection.connection,
+                detectedCompany: null,
+                governanceFlags: canonicalConnection.governanceFlags ?? null,
+                availableActions: canonicalConnection.availableActions ?? null,
+                warnings: Array.isArray(canonicalConnection.warnings)
+                  ? canonicalConnection.warnings
+                  : [],
+                nextStep: null,
+                error: null,
+                reason: null,
+                requestId,
+              },
+              { status: 200 }
+            ),
+            requestId
+          );
+        }
+
         return withConnectorRequestId(
           NextResponse.json(
             {

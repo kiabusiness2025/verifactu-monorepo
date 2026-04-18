@@ -491,6 +491,8 @@ describe('POST /api/holded/connect', () => {
   });
 
   it('returns 503 with explicit reason when integration storage schema is pending update', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('canonical unavailable')) as typeof fetch;
+
     mockSaveHoldedConnection.mockRejectedValueOnce(
       Object.assign(
         new Error('The column `provider_account_id` does not exist in current database'),
@@ -524,6 +526,8 @@ describe('POST /api/holded/connect', () => {
   });
 
   it('returns 503 when integration storage is temporarily inaccessible by permissions', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('canonical unavailable')) as typeof fetch;
+
     mockSaveHoldedConnection.mockRejectedValueOnce(
       Object.assign(new Error('permission denied for table external_connections'), {
         code: 'P1010',
@@ -551,6 +555,78 @@ describe('POST /api/holded/connect', () => {
     expect(payload.ok).toBe(false);
     expect(payload.reason).toBe('integration_storage_update_pending');
     expect(payload.error).toContain('actualizacion interna');
+  });
+
+  it('falls back to canonical connect when local storage persistence is unavailable', async () => {
+    mockSaveHoldedConnection.mockRejectedValueOnce(
+      Object.assign(new Error('permission denied for table external_connections'), {
+        code: 'P1010',
+      })
+    );
+
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          connection: {
+            provider: 'holded',
+            status: 'connected',
+            providerAccountId: 'provider-account-canonical',
+          },
+          governanceFlags: {
+            ownershipStatus: null,
+            managedByThirdParty: false,
+            clientAdminGap: false,
+            highGovernanceRisk: false,
+            underClaimReview: false,
+          },
+          availableActions: {
+            reconnect: { blocked: false },
+          },
+          warnings: [],
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }
+      )
+    ) as typeof fetch;
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: 'session=abc123',
+        },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      }) as never
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.connection).toMatchObject({
+      provider: 'holded',
+      status: 'connected',
+      providerAccountId: 'provider-account-canonical',
+    });
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://app.verifactu.business/api/integrations/accounting/connect',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'x-isaak-entry-channel': 'dashboard',
+          cookie: 'session=abc123',
+        }),
+      })
+    );
   });
 
   it('does not fail when post-connect shaping throws after saving a valid key', async () => {
