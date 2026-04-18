@@ -881,20 +881,17 @@ export async function disconnectHoldedConnection(input: {
     });
   }
 
-  // Clear company identity data sourced from Holded so reconnection starts fresh.
-  // Only clears fields that were written by the Holded sync (source='holded').
-  // Manually entered profile data (source='manual') is preserved.
+  // Complete identity reset on disconnect so reconnection starts with a blank form.
+  // Delete the TenantProfile record entirely (it will be re-created on next connect).
+  // Also clear legalName and nif from Tenant since those were populated from Holded.
   await Promise.allSettled([
     input.prisma.tenantProfile
-      .updateMany({
-        where: { tenantId: input.tenantId, source: 'holded' },
-        data: { taxId: null, tradeName: null, legalName: null, sourceId: null },
-      })
+      .deleteMany({ where: { tenantId: input.tenantId } })
       .catch(() => null),
     input.prisma.tenant
       .update({
         where: { id: input.tenantId },
-        data: { nif: null },
+        data: { legalName: null, nif: null },
       })
       .catch(() => null),
   ]);

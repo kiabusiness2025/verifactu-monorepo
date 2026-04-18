@@ -161,11 +161,12 @@ async function readExistingIdentity(tenantId: string) {
       } | null;
     } | null
   ) => ({
-    companyName:
-      normalizeOptionalText(tenant?.profile?.tradeName) || normalizeOptionalText(tenant?.name),
-    legalName:
-      normalizeOptionalText(tenant?.profile?.legalName) || normalizeOptionalText(tenant?.legalName),
-    taxId: normalizeTaxId(tenant?.profile?.taxId) || normalizeTaxId(tenant?.nif),
+    // Only read from TenantProfile — never fall back to tenant.name/legalName/nif.
+    // Tenant fields are not cleared on disconnect (nif/legalName are cleared but name is required).
+    // Using TenantProfile as the sole source ensures a blank form after disconnect.
+    companyName: normalizeOptionalText(tenant?.profile?.tradeName),
+    legalName: normalizeOptionalText(tenant?.profile?.legalName),
+    taxId: normalizeTaxId(tenant?.profile?.taxId),
     representative: normalizeOptionalText(tenant?.profile?.representative),
     contactRole: normalizeOptionalText(tenant?.profile?.representativeRole),
     verifiedCompanyEmail: normalizeOptionalEmail(tenant?.profile?.email),
@@ -520,7 +521,7 @@ export async function POST(request: NextRequest) {
           tenantId: session.tenantId,
           channel,
           apiKey,
-        })
+        }).catch(() => null)
       : null;
 
     const probe = validated?.probe ?? (await probeHoldedConnection(apiKey));
@@ -645,8 +646,34 @@ export async function POST(request: NextRequest) {
       }
 
       if (
+        persistCode === 'P2025' ||
+        persistMessage.toLowerCase().includes('record to update not found')
+      ) {
+        return withConnectorRequestId(
+          NextResponse.json(
+            {
+              ok: false,
+              connection: null,
+              detectedCompany: null,
+              governanceFlags: null,
+              availableActions: null,
+              warnings: [],
+              nextStep: null,
+              error:
+                'No encontramos tu cuenta. Intenta cerrar sesion y volver a entrar antes de conectar.',
+              reason: 'tenant_not_found',
+              requestId,
+            },
+            { status: 404 }
+          ),
+          requestId
+        );
+      }
+
+      if (
         persistMessage.includes('INTEGRATIONS_SECRET_KEY or SESSION_SECRET is required') ||
-        persistMessage.includes('MCP_OAUTH_SECRET or SESSION_SECRET is required')
+        persistMessage.includes('MCP_OAUTH_SECRET or SESSION_SECRET is required') ||
+        persistMessage.includes('SESSION_SECRET is required')
       ) {
         return withConnectorRequestId(
           NextResponse.json(
@@ -953,12 +980,17 @@ export async function POST(request: NextRequest) {
       requestId
     );
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode = (error as { code?: string } | null)?.code ?? null;
+
     logConnectorEvent('api/holded/connect', 'error', {
       requestId,
       stage: 'exception',
       outcome: 'connect_failed',
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage,
+      code: errorCode,
     });
+
     return withConnectorRequestId(
       NextResponse.json(
         {
@@ -972,6 +1004,7 @@ export async function POST(request: NextRequest) {
           error:
             'La conexion es valida, pero no hemos podido terminar de guardarla. Intenta de nuevo en unos segundos o escribe a soporte.',
           reason: 'connect_failed',
+          debugError: process.env.NODE_ENV !== 'production' ? errorMessage : undefined,
           requestId,
         },
         { status: 500 }

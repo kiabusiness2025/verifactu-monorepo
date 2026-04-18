@@ -115,15 +115,15 @@ async function readInitialIdentity(
 
     const representative = fallbackSessionName || normalizeText(tenant?.profile?.representative);
     const contactName = splitFullName(representative);
-    const companyNameCandidate =
-      normalizeText(tenant?.profile?.tradeName) || normalizeText(tenant?.name);
-    const legalNameCandidate =
-      normalizeText(tenant?.profile?.legalName) || normalizeText(tenant?.legalName);
+    // Only pre-fill from TenantProfile — never fall back to tenant.name/legalName/nif.
+    // TenantProfile is deleted on disconnect, so these return '' after a fresh disconnect.
+    const companyNameCandidate = normalizeText(tenant?.profile?.tradeName);
+    const legalNameCandidate = normalizeText(tenant?.profile?.legalName);
 
     return {
       companyName: isPlaceholderCompany(companyNameCandidate) ? '' : companyNameCandidate,
       legalName: isPlaceholderCompany(legalNameCandidate) ? '' : legalNameCandidate,
-      taxId: normalizeText(tenant?.profile?.taxId) || normalizeText(tenant?.nif),
+      taxId: normalizeText(tenant?.profile?.taxId),
       contactFirstName: contactName.firstName,
       contactLastName: contactName.lastName,
       contactRole: normalizeText(tenant?.profile?.representativeRole),
