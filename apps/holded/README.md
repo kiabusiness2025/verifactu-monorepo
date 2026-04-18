@@ -125,7 +125,8 @@ La API key de Holded:
 Documentacion tecnica:
 
 - [Arquitectura de conexion Holded](./HOLDED_CONNECTION_ARCHITECTURE.md)
-- [Configuracion del conector ChatGPT / MCP](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)
+- [Publicacion limpia Fase I (solo conector directo)](./HOLDED_CHATGPT_DIRECT_CONNECTOR_PHASE1.md)
+- [Configuracion extendida e historica del conector ChatGPT / MCP](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)
 - [Evidencias de smoke post-release](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_POST_RELEASE_SMOKE_EVIDENCE_2026.md)
 - [Handoff y backlog posterior](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_HANDOFF_AND_BACKLOG_2026.md)
 - [Plan de evolucion posterior](../../docs/engineering/HOLDED_DIRECT_CONNECTOR_EVOLUTION_PLAN_2026.md)
@@ -134,7 +135,8 @@ Documentacion tecnica:
 
 - Quiero tocar el runtime del conector -> [../app/README.md](../app/README.md)
 - Quiero entender la conexion compartida -> [HOLDED_CONNECTION_ARCHITECTURE.md](./HOLDED_CONNECTION_ARCHITECTURE.md)
-- Quiero registrar el conector en OpenAI -> [HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)
+- Quiero publicar el conector directo Fase I en OpenAI -> [HOLDED_CHATGPT_DIRECT_CONNECTOR_PHASE1.md](./HOLDED_CHATGPT_DIRECT_CONNECTOR_PHASE1.md)
+- Quiero ver detalles extendidos o historicos del setup -> [HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)
 - Quiero entender la app principal Isaak -> [../isaak/README.md](../isaak/README.md)
 - Quiero ver el alcance de API que queremos cubrir -> [../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md](../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md)
 

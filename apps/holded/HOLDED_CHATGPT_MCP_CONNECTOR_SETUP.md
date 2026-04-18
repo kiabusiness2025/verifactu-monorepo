@@ -2,6 +2,12 @@
 
 Guia operativa para registrar `Holded Connector for ChatGPT` como conector MCP remoto en ChatGPT.
 
+> Alcance de este documento
+>
+> Este archivo conserva contenido extendido e historico para ingenieria y soporte.
+> Para publicar desde cero el conector directo Fase I sin mezcla de contexto legacy,
+> usa esta guia canonica: `apps/holded/HOLDED_CHATGPT_DIRECT_CONNECTOR_PHASE1.md`.
+
 > Nota Fase I
 >
 > La superficie publica canonica del conector es `holded.verifactu.business`.
