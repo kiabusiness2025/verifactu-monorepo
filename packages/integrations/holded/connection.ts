@@ -575,77 +575,84 @@ export async function saveHoldedConnection(input: {
       ...externalConnectionUpdate,
     } as any;
 
-    const txOperations = [
-      ...(channel === 'dashboard'
-        ? [
-            input.prisma.tenantIntegration.upsert({
-              where: {
-                tenantId_provider: {
-                  tenantId: input.tenantId,
-                  provider: 'accounting_api',
-                },
-              },
-              update: {
-                apiKeyEnc: encrypted,
-                status: 'connected',
-                lastError: null,
-                lastSyncAt: now,
-              },
-              create: {
+    const txResults = await input.prisma.$transaction(async (tx: any) => {
+      const results: any[] = [];
+
+      if (channel === 'dashboard') {
+        results.push(
+          await tx.tenantIntegration.upsert({
+            where: {
+              tenantId_provider: {
                 tenantId: input.tenantId,
                 provider: 'accounting_api',
-                apiKeyEnc: encrypted,
-                status: 'connected',
-                lastError: null,
-                lastSyncAt: now,
               },
-            }),
-          ]
-        : []),
-      input.prisma.externalConnection.upsert({
-        where: {
-          tenantId_provider_channelKey: {
-            tenantId: input.tenantId,
-            provider: 'holded',
-            channelKey: channel,
+            },
+            update: {
+              apiKeyEnc: encrypted,
+              status: 'connected',
+              lastError: null,
+              lastSyncAt: now,
+            },
+            create: {
+              tenantId: input.tenantId,
+              provider: 'accounting_api',
+              apiKeyEnc: encrypted,
+              status: 'connected',
+              lastError: null,
+              lastSyncAt: now,
+            },
+          })
+        );
+      }
+
+      results.push(
+        await tx.externalConnection.upsert({
+          where: {
+            tenantId_provider_channelKey: {
+              tenantId: input.tenantId,
+              provider: 'holded',
+              channelKey: channel,
+            },
           },
-        },
-        update: externalConnectionUpdate,
-        create: externalConnectionCreate,
-      }),
-      ...(shouldSyncTenantIdentity
-        ? [
-            input.prisma.tenant.update({
-              where: { id: input.tenantId },
-              data: {
-                name: metadata.companyName || undefined,
-                legalName: metadata.legalName || undefined,
-                nif: metadata.taxId || undefined,
-                profile: {
-                  upsert: {
-                    create: {
-                      source: 'holded',
-                      sourceId: fingerprint,
-                      legalName: metadata.legalName || metadata.companyName || undefined,
-                      tradeName: metadata.companyName || undefined,
-                      taxId: metadata.taxId || undefined,
-                    },
-                    update: {
-                      source: 'holded',
-                      sourceId: fingerprint,
-                      legalName: metadata.legalName || metadata.companyName || undefined,
-                      tradeName: metadata.companyName || undefined,
-                      taxId: metadata.taxId || undefined,
-                    },
+          update: externalConnectionUpdate,
+          create: externalConnectionCreate,
+        })
+      );
+
+      if (shouldSyncTenantIdentity) {
+        results.push(
+          await tx.tenant.update({
+            where: { id: input.tenantId },
+            data: {
+              name: metadata.companyName || undefined,
+              legalName: metadata.legalName || undefined,
+              nif: metadata.taxId || undefined,
+              profile: {
+                upsert: {
+                  create: {
+                    source: 'holded',
+                    sourceId: fingerprint,
+                    legalName: metadata.legalName || metadata.companyName || undefined,
+                    tradeName: metadata.companyName || undefined,
+                    taxId: metadata.taxId || undefined,
+                  },
+                  update: {
+                    source: 'holded',
+                    sourceId: fingerprint,
+                    legalName: metadata.legalName || metadata.companyName || undefined,
+                    tradeName: metadata.companyName || undefined,
+                    taxId: metadata.taxId || undefined,
                   },
                 },
               },
-            }),
-          ]
-        : []),
-    ];
+            },
+          })
+        );
+      }
 
-    const txResults = await input.prisma.$transaction(txOperations);
+      return results;
+    });
+
     const connection = txResults[channel === 'dashboard' ? 1 : 0];
     connectionId = connection.id;
   };
