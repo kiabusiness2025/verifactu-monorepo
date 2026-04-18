@@ -26,6 +26,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+const OAUTH_FLOW_CACHE_BUSTER = '5698a1c9';
+
 function resolveCanonicalHoldedSiteUrl() {
   const defaultUrl = 'https://holded.verifactu.business';
   const raw =
@@ -74,6 +76,7 @@ function buildCanonicalPublicAuthorizeUrl(url: URL) {
   url.searchParams.forEach((value, key) => {
     publicAuthorizeUrl.searchParams.set(key, value);
   });
+  publicAuthorizeUrl.searchParams.set('dbg', OAUTH_FLOW_CACHE_BUSTER);
   return publicAuthorizeUrl.toString();
 }
 
