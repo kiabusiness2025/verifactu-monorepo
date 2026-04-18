@@ -123,9 +123,6 @@ export async function POST(request: NextRequest) {
     prisma.tenant.findUnique({
       where: { id: session.tenantId },
       select: {
-        name: true,
-        legalName: true,
-        nif: true,
         profile: {
           select: {
             tradeName: true,
@@ -136,12 +133,18 @@ export async function POST(request: NextRequest) {
       },
     }),
   ]);
-  const detectedCompany = buildDetectedCompany({
-    companyName: tenant?.profile?.tradeName || tenant?.name || null,
-    legalName: tenant?.profile?.legalName || tenant?.legalName || null,
-    taxId: tenant?.profile?.taxId || tenant?.nif || null,
-    source: 'manual',
-  });
+  const profileCompanyName = tenant?.profile?.tradeName || null;
+  const profileLegalName = tenant?.profile?.legalName || null;
+  const profileTaxId = tenant?.profile?.taxId || null;
+  const detectedCompany =
+    profileCompanyName || profileLegalName || profileTaxId
+      ? buildDetectedCompany({
+          companyName: profileCompanyName,
+          legalName: profileLegalName,
+          taxId: profileTaxId,
+          source: 'manual',
+        })
+      : null;
   const duplicateConflict = buildDefaultDuplicateConflict();
   const validationToken = probe.ok
     ? await mintHoldedValidationToken({

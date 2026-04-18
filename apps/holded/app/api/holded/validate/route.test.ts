@@ -116,4 +116,30 @@ describe('POST /api/holded/validate', () => {
     });
     expect(payload.nextStep).toBe('manual_completion_required');
   });
+
+  it('does not expose legacy tenant identity when profile is empty', async () => {
+    mockTenantFindUnique.mockResolvedValueOnce({
+      name: 'EMPRESA DEMO, SL',
+      legalName: 'EMPRESA DEMO, SL',
+      nif: 'B11111111',
+      profile: null,
+    });
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/validate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+        }),
+      }) as never
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.detectedCompany).toBeNull();
+  });
 });

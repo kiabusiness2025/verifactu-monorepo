@@ -1086,6 +1086,7 @@ export default function OnboardingHoldedClient({
                             setApiKey(e.target.value);
                             setValidationToken(null);
                             setValidatedApiKey('');
+                            setDetectedCompany(null);
                             setDuplicateConflict(null);
                             setConflictAction(null);
                             setError(null);

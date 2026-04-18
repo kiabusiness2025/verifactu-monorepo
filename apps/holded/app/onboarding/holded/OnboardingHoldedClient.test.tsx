@@ -273,4 +273,53 @@ describe('OnboardingHoldedClient', () => {
       '/auth/holded?source=holded_onboarding_retry&next=%2Fonboarding%2Fholded%3Fchannel%3Ddashboard'
     );
   });
+
+  it('clears detected company when api key changes after a failed connect attempt', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: async () => ({
+          ok: true,
+          validationToken: 'token-123',
+          detectedCompany: {
+            companyName: 'EMPRESA DEMO, SL',
+            legalName: 'EMPRESA DEMO, SL',
+            taxId: 'B11111111',
+            source: 'manual',
+            confidence: 'high',
+            isPartial: false,
+            missingFields: [],
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        status: 400,
+        ok: false,
+        json: async () => ({ ok: false, error: 'Error de prueba en connect' }),
+      });
+
+    render(<OnboardingHoldedClient {...defaultProps} />);
+
+    const apiKeyInput = screen.getByPlaceholderText('Pega aqui la API key generada en Holded');
+    fireEvent.change(apiKeyInput, {
+      target: { value: 'abcdefghijklmnop' },
+    });
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: /confirmo que puedo conectar esta empresa/i,
+      })
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Validar y conectar' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Empresa detectada')).toBeInTheDocument();
+    });
+
+    fireEvent.change(apiKeyInput, {
+      target: { value: 'nuevaapikey123456' },
+    });
+
+    expect(screen.queryByText('Empresa detectada')).not.toBeInTheDocument();
+  });
 });
