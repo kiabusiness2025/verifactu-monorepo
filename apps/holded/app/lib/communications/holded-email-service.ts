@@ -42,6 +42,22 @@ function readOptionalEnv(name: string, fallback: string) {
   return cleanEnv(process.env[name]) || fallback;
 }
 
+function readEmailList(...values: Array<string | undefined | null>) {
+  const merged = values
+    .map((value) => cleanEnv(value || undefined))
+    .filter(Boolean)
+    .join(',');
+
+  return Array.from(
+    new Set(
+      merged
+        .split(/[\n,;]+/)
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
 function resolveLeadSender() {
   const holdedFallback = 'Holded <no-reply@holded.verifactu.business>';
   const configured =
@@ -131,13 +147,15 @@ export async function sendHoldedLeadCommunication(input: LeadPayload) {
 
 export async function sendHoldedConnectedCommunication(input: ConnectedPayload) {
   const { resend, from, replyTo } = createResendTransport();
-  const adminRecipients = readOptionalEnv(
-    'HOLDED_ADMIN_NOTIFICATION_EMAILS',
-    readOptionalEnv('HOLDED_ADMIN_EMAILS', 'soporte@verifactu.business')
-  )
-    .split(/[,\n;]+/)
-    .map((value) => value.trim())
-    .filter(Boolean);
+  const configuredAdminRecipients = readEmailList(
+    process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS,
+    process.env.HOLDED_ADMIN_EMAILS,
+    process.env.ADMIN_EMAILS
+  );
+  const adminRecipients =
+    configuredAdminRecipients.length > 0
+      ? configuredAdminRecipients
+      : ['soporte@verifactu.business'];
 
   const appSiteUrl =
     cleanEnv(process.env.NEXT_PUBLIC_APP_SITE_URL) || 'https://app.verifactu.business';

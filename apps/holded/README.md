@@ -206,7 +206,7 @@ Notas:
 
 - `NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY` es obligatoria si App Check esta activado en Firebase para la app web de Holded.
 - `NEXT_PUBLIC_HOLDED_FIREBASE_APP_CHECK_DEBUG_TOKEN` solo debe usarse en local o en una fase temporal de diagnostico.
-- si no configuras `HOLDED_ADMIN_NOTIFICATION_EMAILS` o `HOLDED_ADMIN_EMAILS`, los avisos internos caen por defecto en `soporte@verifactu.business`.
+- si no configuras `HOLDED_ADMIN_NOTIFICATION_EMAILS` ni `HOLDED_ADMIN_EMAILS`, se usa `ADMIN_EMAILS`; si tampoco existe, los avisos internos caen en `soporte@verifactu.business`.
 - `RESEND_FROM_HOLDED` permite usar un remitente propio del flujo Holded; si no existe, se reutiliza `RESEND_FROM`.
 - no guardes API keys reales ni debug tokens en el repo.
 

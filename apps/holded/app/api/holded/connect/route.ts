@@ -1086,10 +1086,7 @@ export async function POST(request: NextRequest) {
     }
 
     let runtimeConnection: Awaited<ReturnType<typeof getHoldedConnection>> | null = null;
-    const profileCompletionUrl = buildProfileOnboardingUrl(
-      'holded_connected_email',
-      buildProfileOnboardingUrl('holded_connected_email')
-    );
+    const profileCompletionUrl = buildProfileOnboardingUrl('holded_connected_email');
     const mustVerifyCompanyEmail = Boolean(
       identity.requestedCompanyEmail &&
       identity.requestedCompanyEmail !== identity.verifiedCompanyEmail
