@@ -106,24 +106,6 @@ export default function HoldedSiteChrome({ children }: Props) {
             <Link href="/terms" className="hover:text-slate-900">
               Terminos
             </Link>
-            <Link href="/cookies" className="hover:text-slate-900">
-              Cookies
-            </Link>
-            <Link
-              href={buildDashboardUrl('holded_footer_dashboard')}
-              className="hover:text-slate-900"
-            >
-              Dashboard
-            </Link>
-            <Link href="/demo-recording" className="hover:text-slate-900">
-              Demo
-            </Link>
-            <Link href={buildAuthUrl('holded_footer_login')} className="hover:text-slate-900">
-              Acceso
-            </Link>
-            <a href="#acceso-libre" className="hover:text-slate-900">
-              Conectar Holded
-            </a>
           </div>
         </div>
       </footer>
