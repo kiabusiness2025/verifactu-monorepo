@@ -523,6 +523,36 @@ describe('POST /api/holded/connect', () => {
     expect(payload.error).toContain('actualizacion interna');
   });
 
+  it('returns 503 when integration storage is temporarily inaccessible by permissions', async () => {
+    mockSaveHoldedConnection.mockRejectedValueOnce(
+      Object.assign(new Error('permission denied for table external_connections'), {
+        code: 'P1010',
+      })
+    );
+
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'dashboard',
+          companyName: 'Acme SL',
+          contactFirstName: 'Ana',
+          contactLastName: 'Garcia',
+          contactEmail: 'ana@example.com',
+        }),
+      }) as never
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload.ok).toBe(false);
+    expect(payload.reason).toBe('integration_storage_update_pending');
+    expect(payload.error).toContain('actualizacion interna');
+  });
+
   it('does not fail when post-connect shaping throws after saving a valid key', async () => {
     let calls = 0;
     mockBuildConnectionStatusDto.mockImplementation((input: Record<string, unknown>) => {

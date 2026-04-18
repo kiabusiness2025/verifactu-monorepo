@@ -35,14 +35,19 @@ function isIntegrationStorageSchemaError(error: unknown) {
   const message =
     error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
 
-  if (code === 'P2021' || code === 'P2022') {
+  if (code === 'P1010' || code === 'P2021' || code === 'P2022') {
     return true;
   }
 
   const referencesIntegrationStorageTables =
     message.includes('external_connections') ||
     message.includes('external_connection_audit_logs') ||
-    message.includes('user_onboarding');
+    message.includes('user_onboarding') ||
+    message.includes('tenant_integrations') ||
+    message.includes('externalconnection') ||
+    message.includes('externalconnectionauditlog') ||
+    message.includes('useronboarding') ||
+    message.includes('tenantintegration');
 
   const missingColumn =
     (message.includes('column') && message.includes('does not exist')) ||
@@ -53,11 +58,18 @@ function isIntegrationStorageSchemaError(error: unknown) {
     message.includes('the table public.external_connections does not exist') ||
     message.includes('the table public.external_connection_audit_logs does not exist') ||
     message.includes('the table public.user_onboarding does not exist') ||
+    message.includes('the table public.tenant_integrations does not exist') ||
     message.includes('relation "external_connections" does not exist') ||
     message.includes('relation "external_connection_audit_logs" does not exist') ||
-    message.includes('relation "user_onboarding" does not exist');
+    message.includes('relation "user_onboarding" does not exist') ||
+    message.includes('relation "tenant_integrations" does not exist');
 
-  return referencesIntegrationStorageTables && (missingColumn || missingTable);
+  const accessDenied =
+    message.includes('permission denied') ||
+    message.includes('row-level security policy') ||
+    message.includes('access denied');
+
+  return referencesIntegrationStorageTables && (missingColumn || missingTable || accessDenied);
 }
 
 function resolveCanonicalDisconnectEndpoint() {

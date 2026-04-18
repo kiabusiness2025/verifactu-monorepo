@@ -106,6 +106,11 @@ function isMissingRelationError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   const normalized = message.toLowerCase();
 
+  // Prisma P2021 appears when a table expected by schema is missing.
+  if (code === 'P2021') {
+    return true;
+  }
+
   // Prisma P2022 appears when a column expected by newer schema is missing in prod DB.
   // Treat it as storage schema drift so we can fall back to legacy tenantIntegration.
   if (code === 'P2022') {
@@ -132,18 +137,29 @@ function isMissingRelationError(error: unknown) {
 }
 
 function isPrimaryStorageAccessError(error: unknown) {
+  const code = (error as { code?: unknown })?.code;
   const message = error instanceof Error ? error.message : String(error);
   const normalized = message.toLowerCase();
 
+  if (code === 'P1010') {
+    return true;
+  }
+
+  const referencesPrimaryStorageTables =
+    normalized.includes('external_connections') ||
+    normalized.includes('external_connection_audit_logs') ||
+    normalized.includes('user_onboarding') ||
+    normalized.includes('tenant_integrations') ||
+    normalized.includes('externalconnection') ||
+    normalized.includes('externalconnectionauditlog') ||
+    normalized.includes('useronboarding') ||
+    normalized.includes('tenantintegration');
+
   return (
-    (normalized.includes('permission denied') &&
-      (normalized.includes('external_connections') ||
-        normalized.includes('external_connection_audit_logs') ||
-        normalized.includes('user_onboarding'))) ||
-    (normalized.includes('row-level security policy') &&
-      (normalized.includes('external_connections') ||
-        normalized.includes('external_connection_audit_logs') ||
-        normalized.includes('user_onboarding')))
+    referencesPrimaryStorageTables &&
+    (normalized.includes('permission denied') ||
+      normalized.includes('row-level security policy') ||
+      normalized.includes('access denied'))
   );
 }
 
