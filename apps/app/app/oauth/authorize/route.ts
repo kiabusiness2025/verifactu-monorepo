@@ -4,7 +4,10 @@ import {
   logConnectorEvent,
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
-import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import {
+  hasSharedHoldedConnectionForTenant,
+  resolveSharedHoldedConnectionStatusForTenant,
+} from '@/lib/integrations/holdedConnectionResolver';
 import {
   getHoldedOnboardingTokenFromSearchParams,
   resolveHoldedOnboardingSession,
@@ -135,6 +138,9 @@ export async function GET(request: NextRequest) {
     ? requestedScope.trim()
     : getDefaultScopes().join(' ');
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
+  const connectionConfirmed = url.searchParams.get('connection_confirmed')?.trim() === '1';
+  const connectedProviderAccountId =
+    url.searchParams.get('connected_provider_account_id')?.trim() || null;
   const tenantIdQuery = url.searchParams.get('tenant_id')?.trim() || null;
   const loginConfirmed = url.searchParams.get('holded_login_confirmed')?.trim() === '1';
   const isChatgptClient = isLikelyChatgptOAuthRequest({ clientId, redirectUri });
@@ -306,8 +312,15 @@ export async function GET(request: NextRequest) {
     }
 
     let hasHoldedConnection = false;
+    let currentProviderAccountId: string | null = null;
     if (resolved.tenantId) {
       try {
+        const snapshot = await resolveSharedHoldedConnectionStatusForTenant(
+          resolved.tenantId,
+          'chatgpt'
+        );
+        currentProviderAccountId = snapshot?.providerAccountId ?? null;
+
         hasHoldedConnection = await hasSharedHoldedConnectionForTenant(
           resolved.tenantId,
           'chatgpt'
@@ -321,9 +334,19 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (resolved.tenantId && !hasHoldedConnection) {
+    const hasProviderMismatch = Boolean(
+      connectionConfirmed &&
+      connectedProviderAccountId &&
+      connectedProviderAccountId !== (currentProviderAccountId ?? '')
+    );
+
+    if (
+      resolved.tenantId &&
+      (!hasHoldedConnection || !connectionConfirmed || hasProviderMismatch)
+    ) {
       const authorizeUrl = new URL(url.toString());
       authorizeUrl.searchParams.delete('connection_confirmed');
+      authorizeUrl.searchParams.delete('connected_provider_account_id');
       const redirectTenantId = tenantIdQuery ?? onboardingSession?.tenantId ?? resolved.tenantId;
       if (onboardingToken) {
         authorizeUrl.searchParams.set('onboarding_token', onboardingToken);

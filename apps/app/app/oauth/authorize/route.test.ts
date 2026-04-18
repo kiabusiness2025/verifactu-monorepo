@@ -13,6 +13,7 @@ jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
 
 jest.mock('@/lib/integrations/holdedConnectionResolver', () => ({
   hasSharedHoldedConnectionForTenant: jest.fn(),
+  resolveSharedHoldedConnectionStatusForTenant: jest.fn(async () => null),
 }));
 
 jest.mock('@/lib/session', () => ({
@@ -44,7 +45,10 @@ jest.mock('@/lib/oauth/mcp', () => ({
   verifyHoldedOnboardingToken: jest.fn(async () => null),
 }));
 
-import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import {
+  hasSharedHoldedConnectionForTenant,
+  resolveSharedHoldedConnectionStatusForTenant,
+} from '@/lib/integrations/holdedConnectionResolver';
 import { upsertChannelIdentity } from '@/lib/integrations/channelIdentityStore';
 import { resolveHoldedOnboardingSession } from '@/lib/integrations/holdedOnboardingSession';
 import {
@@ -227,6 +231,31 @@ describe('oauth authorize holded flow', () => {
     expect(response.headers.get('x-verifactu-request-id')).toBeTruthy();
     expect(mintAuthorizationCode).toHaveBeenCalled();
     expect(location).toBe('https://chat.openai.com/aip/oauth/callback?code=code-123&state=abc123');
+  });
+
+  it('redirects back to onboarding when confirmed provider fingerprint does not match current tenant connection', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-1',
+    });
+    (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
+    (resolveSharedHoldedConnectionStatusForTenant as jest.Mock).mockResolvedValue({
+      providerAccountId: 'legacy-fingerprint',
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&connection_confirmed=1&connected_provider_account_id=new-fingerprint&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+    );
+
+    const response = await GET(request);
+    const location = response.headers.get('location');
+
+    expect(response.status).toBe(307);
+    expect(location).toContain('/onboarding/holded');
+    expect(location).not.toContain('connected_provider_account_id=');
+    expect(mintAuthorizationCode).not.toHaveBeenCalled();
   });
 
   it('passes the selected tenant hint into the final oauth tenant resolution', async () => {

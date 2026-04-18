@@ -183,6 +183,34 @@ function redirectToHoldedReauth() {
   );
 }
 
+function buildPostConnectReturnTarget(input: {
+  nextTarget: string;
+  providerAccountId?: string | null;
+}) {
+  const fallback = input.nextTarget || '/onboarding/success';
+
+  try {
+    const base =
+      typeof window !== 'undefined' ? window.location.origin : 'https://holded.verifactu.business';
+    const parsed = new URL(fallback, base);
+    const isAuthorizePath = parsed.pathname === '/oauth/authorize';
+    if (!isAuthorizePath) {
+      return fallback;
+    }
+
+    parsed.searchParams.set('connection_confirmed', '1');
+
+    const providerAccountId = input.providerAccountId?.trim();
+    if (providerAccountId) {
+      parsed.searchParams.set('connected_provider_account_id', providerAccountId);
+    }
+
+    return parsed.toString();
+  } catch {
+    return fallback;
+  }
+}
+
 function buildStatusBadges(input: {
   governanceFlags: GovernanceFlagsDTO | null;
   connectResponse: HoldedConnectResponse | null;
@@ -548,9 +576,17 @@ export default function OnboardingHoldedClient({
           : 'Conexion activada. Continuamos con el siguiente paso.'
       );
 
+      const postConnectTarget = buildPostConnectReturnTarget({
+        nextTarget: nextTarget || '/onboarding/success',
+        providerAccountId:
+          connectData.connection?.providerAccountId ??
+          connectData.legacyConnection?.providerAccountId ??
+          null,
+      });
+
       window.setTimeout(
         () => {
-          window.location.assign(nextTarget || '/onboarding/success');
+          window.location.assign(postConnectTarget);
         },
         connectData.warnings?.length ? 1600 : 900
       );
