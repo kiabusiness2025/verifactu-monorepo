@@ -43,11 +43,9 @@ function buildLocalHandoffTarget(source: string, target: string) {
 }
 
 function buildPostLoginTarget(source: string, target: string, chatgptFlow: boolean) {
-  if (chatgptFlow) {
-    return target;
-  }
-
-  return buildLocalHandoffTarget(source, target);
+  void source;
+  void chatgptFlow;
+  return target;
 }
 
 function resolveRedirectTarget(nextParam: string, source: string) {
