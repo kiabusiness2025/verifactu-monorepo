@@ -140,6 +140,28 @@ describe('oauth authorize holded flow', () => {
     expect(mintAuthorizationCode).not.toHaveBeenCalled();
   });
 
+  it('rejects malformed url-like client_id before onboarding redirection', async () => {
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-1',
+    });
+
+    const request = new NextRequest(
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=https%3A%2F%2Fholded.verifactu.business%2Fonboarding%2Fholded&redirect_uri=https%3A%2F%2Fchatgpt.com%2Fconnector%2Foauth%2FCKsc4g2DDcon&scope=mcp.read%20holded.invoices.read&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+    );
+
+    const response = await GET(request);
+    const location = response.headers.get('location');
+
+    expect(response.status).toBe(307);
+    expect(location).toContain('https://chatgpt.com/connector/oauth/CKsc4g2DDcon');
+    expect(location).toContain('error=invalid_client');
+    expect(location).toContain('state=abc123');
+    expect(mintAuthorizationCode).not.toHaveBeenCalled();
+  });
+
   it('redirects to onboarding even when a chatgpt connection already exists until the user confirms reconnection', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'user-1',

@@ -114,6 +114,13 @@ function isLikelyChatgptOAuthRequest(input: { clientId: string; redirectUri: str
   return false;
 }
 
+function isValidOAuthClientId(clientId: string) {
+  const normalized = clientId.trim();
+  if (!normalized) return false;
+  if (normalized.includes('://')) return false;
+  return /^[A-Za-z0-9._~-]{3,200}$/.test(normalized);
+}
+
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
   const requestId = getConnectorRequestId(request);
@@ -143,6 +150,12 @@ export async function GET(request: NextRequest) {
     if (!clientId || !redirectUri) {
       return withConnectorRequestId(
         NextResponse.json({ error: 'invalid_request', requestId }, { status: 400 }),
+        requestId
+      );
+    }
+    if (!isValidOAuthClientId(clientId)) {
+      return withConnectorRequestId(
+        redirectWithError(redirectUri, 'invalid_client', state),
         requestId
       );
     }
