@@ -1,4 +1,7 @@
-import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
+import {
+  sendHoldedConnectedCommunication,
+  sendHoldedDisconnectedCommunication,
+} from '@/app/lib/communications/holded-email-service';
 import { sendPublicHighGovernanceRiskInternalAlertEmail } from '@/app/lib/communications/holded-governance-emails';
 import { createCompanyEmailVerificationToken } from '@/app/lib/company-email-verification';
 import { writeHoldedActivity } from '@/app/lib/holded-activity';
@@ -1395,11 +1398,22 @@ export async function DELETE(request: NextRequest) {
     });
   }
 
+  const existingConnection = await getHoldedConnection(session.tenantId, channel).catch(() => null);
+
   const disconnected = await disconnectHoldedConnection({
     tenantId: session.tenantId,
     userId: session.userId,
     channel,
   });
+
+  if (session.email) {
+    sendHoldedDisconnectedCommunication({
+      name: session.name || '',
+      userEmail: session.email,
+      companyName: existingConnection?.tenantName || '',
+      channel,
+    }).catch(() => {});
+  }
 
   return NextResponse.json({
     ok: true,

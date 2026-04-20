@@ -402,6 +402,94 @@ export function buildHoldedProfileCompletionEmail(input: {
   };
 }
 
+export function buildHoldedDisconnectedEmail(input: {
+  name: string;
+  companyName: string;
+  channel: 'dashboard' | 'chatgpt';
+  reconnectUrl: string;
+}): EmailTemplate {
+  const hello = greeting(input.name);
+  const company = sanitizeCompanyName(input.companyName);
+  const channelLabel = input.channel === 'chatgpt' ? 'ChatGPT' : 'el dashboard';
+
+  return {
+    subject: `Has desconectado Holded de ${channelLabel}`,
+    html: cardLayout({
+      label: 'Conexion desactivada',
+      title: `Tu Holded ya no esta conectado a ${channelLabel}`,
+      body: `
+        <p style="margin:0 0 14px;">${escapeHtml(hello)}</p>
+        <p style="margin:0 0 14px;">La conexion de <strong>${escapeHtml(company)}</strong> con ${escapeHtml(channelLabel)} ha sido desactivada correctamente. Tus datos siguen intactos en Holded; solo hemos retirado el acceso del conector.</p>
+        <div style="margin:0 0 20px;background:#f8fafc;border-radius:16px;border:1px solid #e2e8f0;padding:14px 18px;">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#0f172a;">¿Que ocurre ahora?</p>
+          <ul style="margin:0;padding-left:18px;font-size:13px;color:#475569;line-height:1.8;">
+            <li>El conector ya no puede leer datos de Holded.</li>
+            <li>Tu cuenta de Holded y todos tus datos siguen sin cambios.</li>
+            <li>Puedes volver a conectar en cualquier momento.</li>
+          </ul>
+        </div>
+        <a href="${escapeHtml(input.reconnectUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;">Volver a conectar</a>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;" />
+        <p style="font-size:12px;color:#64748b;margin:0;">Si no fuiste tu quien desconecto, responde a este correo o escribe a <a href="mailto:soporte@verifactu.business" style="color:#b4233c;">soporte@verifactu.business</a></p>
+      `,
+      footer: legalFooter(),
+    }),
+    text: `${hello}\n\nLa conexion de ${company} con ${channelLabel} ha sido desactivada.\n\nTus datos en Holded siguen intactos. Puedes volver a conectar cuando quieras:\n${input.reconnectUrl}\n\nSi no fuiste tu, escribe a soporte@verifactu.business.`,
+  };
+}
+
+export function buildHoldedDisconnectedAdminEmail(input: {
+  name: string;
+  userEmail: string;
+  companyName: string;
+  channel: 'dashboard' | 'chatgpt';
+  adminPanelUrl: string;
+}): EmailTemplate {
+  const company = sanitizeCompanyName(input.companyName);
+  const channelLabel = input.channel === 'chatgpt' ? 'ChatGPT' : 'Dashboard';
+  const now = new Date().toLocaleString('es-ES', {
+    timeZone: 'Europe/Madrid',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  });
+
+  return {
+    subject: `[Holded Admin] Desconexion — ${company} (${channelLabel})`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
+        <div style="background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,0.08);">
+          <div style="padding:22px 28px 14px;background:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);border-bottom:1px solid #e2e8f0;">
+            <span style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#64748b;">Holded Admin · Desconexion</span>
+            <h1 style="font-size:20px;margin:6px 0 0;color:#0f172a;">${escapeHtml(company)} · ${escapeHtml(channelLabel)}</h1>
+          </div>
+          <div style="padding:24px 28px;">
+            <table role="presentation" style="width:100%;border-collapse:collapse;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">
+              ${[
+                ['Empresa', company],
+                ['Email', input.userEmail],
+                ['Canal', channelLabel],
+                ['Fecha', now],
+              ]
+                .map(
+                  ([label, value]) => `
+                <tr>
+                  <td style="padding:9px 14px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #f1f5f9;width:35%;">${escapeHtml(label)}</td>
+                  <td style="padding:9px 14px;font-size:13px;color:#0f172a;border-bottom:1px solid #f1f5f9;">${escapeHtml(value)}</td>
+                </tr>`
+                )
+                .join('')}
+            </table>
+            <div style="margin-top:20px;">
+              <a href="${escapeHtml(input.adminPanelUrl)}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:700;font-size:13px;">Ver en panel de admin</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `.trim(),
+    text: `[Holded Admin] Desconexion\nEmpresa: ${company}\nEmail: ${input.userEmail}\nCanal: ${channelLabel}\nFecha: ${now}\n\nPanel: ${input.adminPanelUrl}`,
+  };
+}
+
 export function buildHoldedWeeklyAdminSummaryEmail(input: {
   weekLabel: string;
   newConnections: number;

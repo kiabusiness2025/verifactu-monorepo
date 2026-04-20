@@ -3,6 +3,8 @@ import {
   buildHoldedCompanyEmailVerificationEmail,
   buildHoldedConnectedAdminEmail,
   buildHoldedConnectedEmail,
+  buildHoldedDisconnectedAdminEmail,
+  buildHoldedDisconnectedEmail,
   buildHoldedInternalLeadEmail,
   buildHoldedOnboardingGuideEmail,
   buildHoldedProfileCompletionEmail,
@@ -289,6 +291,73 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
     customerEmailId: results[0]?.data?.id ?? null,
     companyEmailId: companyEmailSent ? (results[1]?.data?.id ?? null) : null,
     adminEmailId: results[companyEmailSent ? 2 : 1]?.data?.id ?? null,
+  };
+}
+
+export async function sendHoldedDisconnectedCommunication(input: {
+  name: string;
+  userEmail: string;
+  companyName: string;
+  channel: 'dashboard' | 'chatgpt';
+}) {
+  const { resend, from, replyTo } = createResendTransport();
+
+  const holdedSiteUrl =
+    cleanEnv(process.env.NEXT_PUBLIC_HOLDED_SITE_URL) || 'https://holded.verifactu.business';
+  const adminSiteUrl =
+    cleanEnv(process.env.ADMIN_SITE_URL) ||
+    cleanEnv(process.env.NEXT_PUBLIC_ADMIN_SITE_URL) ||
+    'https://admin.verifactu.business';
+
+  const reconnectUrl = `${holdedSiteUrl}/onboarding/holded?source=holded_disconnected_email&channel=${input.channel}`;
+  const adminPanelUrl = `${adminSiteUrl}/dashboard/admin`;
+
+  const configuredAdminRecipients = readEmailList(
+    process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS,
+    process.env.HOLDED_ADMIN_EMAILS,
+    process.env.ADMIN_EMAILS
+  );
+  const adminRecipients =
+    configuredAdminRecipients.length > 0
+      ? configuredAdminRecipients
+      : ['soporte@verifactu.business'];
+
+  const userTemplate = buildHoldedDisconnectedEmail({
+    name: input.name,
+    companyName: input.companyName,
+    channel: input.channel,
+    reconnectUrl,
+  });
+  const adminTemplate = buildHoldedDisconnectedAdminEmail({
+    name: input.name,
+    userEmail: input.userEmail,
+    companyName: input.companyName,
+    channel: input.channel,
+    adminPanelUrl,
+  });
+
+  const [userResult, adminResult] = await Promise.all([
+    resend.emails.send({
+      from,
+      to: [input.userEmail],
+      subject: userTemplate.subject,
+      html: userTemplate.html,
+      text: userTemplate.text,
+      replyTo,
+    }),
+    resend.emails.send({
+      from,
+      to: adminRecipients,
+      subject: adminTemplate.subject,
+      html: adminTemplate.html,
+      text: adminTemplate.text,
+      replyTo: input.userEmail,
+    }),
+  ]);
+
+  return {
+    userEmailId: userResult.data?.id ?? null,
+    adminEmailId: adminResult.data?.id ?? null,
   };
 }
 

@@ -1,14 +1,18 @@
 import {
   ArrowRight,
+  BarChart3,
   BookOpen,
   Building2,
   CheckCircle2,
+  Clock,
   FileText,
   FolderKanban,
   KeyRound,
   MessageCircleMore,
+  Rocket,
   ShieldCheck,
   Sparkles,
+  Star,
   Users,
   XCircle,
   Zap,
@@ -113,6 +117,22 @@ const scopeModules = [
     icon: Building2,
     color: 'text-teal-600',
     bg: 'bg-teal-50',
+    title: 'Compras y Gastos',
+    badge: 'Solo lectura',
+    badgeColor: 'bg-slate-50 text-slate-600 border-slate-200',
+    description: 'Vision completa de facturas de proveedor, gastos y pagos pendientes.',
+    capabilities: [
+      'Ver facturas de proveedor y gastos registrados',
+      'Consultar gastos por categoria o cuenta contable',
+      'Revisar estado de pagos pendientes a proveedores',
+      'Analizar gasto por proveedor o por periodo',
+      'Entender IVA soportado y deducible en lenguaje claro',
+    ],
+  },
+  {
+    icon: Users,
+    color: 'text-sky-600',
+    bg: 'bg-sky-50',
     title: 'Equipo',
     badge: 'Solo lectura',
     badgeColor: 'bg-slate-50 text-slate-600 border-slate-200',
@@ -124,22 +144,23 @@ const scopeModules = [
     ],
   },
   {
-    icon: XCircle,
-    color: 'text-slate-400',
-    bg: 'bg-slate-100',
-    title: 'Fuera de scope',
-    badge: 'No incluido',
-    badgeColor: 'bg-slate-100 text-slate-500 border-slate-200',
-    description: 'Estas areas quedan fuera del conector en esta version.',
+    icon: Rocket,
+    color: 'text-purple-600',
+    bg: 'bg-purple-50',
+    title: 'Proximamente en Isaak',
+    badge: 'Proximamente',
+    badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
+    description:
+      'Capacidades avanzadas en desarrollo para la proxima version completa del asistente Isaak.',
     capabilities: [
       'Productos e inventario',
       'Adjuntos y documentos escaneados',
       'Conciliacion bancaria',
       'Presupuestos, pedidos y albaranes',
       'Gestion de usuarios y permisos',
-      'Envio directo de facturas (solo borradores)',
+      'Envio directo de facturas',
     ],
-    isLimitation: true,
+    isComingSoon: true,
   },
 ];
 
@@ -175,9 +196,63 @@ const faqItems = [
   },
 ];
 
+const stats = [
+  {
+    icon: BarChart3,
+    value: '5 módulos',
+    label: 'Facturación, contactos, contabilidad, proyectos y equipo',
+  },
+  { icon: Star, value: '0 €', label: 'Gratis para siempre para usuarios de ChatGPT' },
+  { icon: Zap, value: '< 1 min', label: 'Conexion validada al instante con tu API key' },
+];
+
+const howItWorks = [
+  {
+    icon: KeyRound,
+    step: '1',
+    title: 'Conecta tu API key de Holded',
+    description: 'Alta con tu correo, pega la API key y validamos la conexion al momento.',
+  },
+  {
+    icon: MessageCircleMore,
+    step: '2',
+    title: 'Pregunta lo que necesites',
+    description:
+      'Consulta facturas, contactos, contabilidad y proyectos en lenguaje natural desde ChatGPT.',
+  },
+  {
+    icon: ShieldCheck,
+    step: '3',
+    title: 'Tu decides antes de cualquier cambio',
+    description:
+      'Solo preparamos borradores de factura. Nada se guarda sin tu confirmacion explicita.',
+  },
+];
+
 export default function HoldedHomePage() {
   return (
     <main className="min-h-screen text-slate-900">
+      <style>{`
+        @keyframes fadeUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes pop   { from { opacity:0; transform:scale(0.88); } to { opacity:1; transform:scale(1); } }
+        @keyframes float  { 0%,100% { transform:translateY(0) scale(1); } 50% { transform:translateY(-18px) scale(1.04); } }
+        @keyframes float2 { 0%,100% { transform:translateY(0) scale(1); } 50% { transform:translateY(14px) scale(0.97); } }
+        .anim-fade-up  { animation: fadeUp  0.65s cubic-bezier(.22,.68,0,1.2) both; }
+        .anim-fade-in  { animation: fadeIn  0.5s ease both; }
+        .anim-pop      { animation: pop     0.55s cubic-bezier(.22,.68,0,1.3) both; }
+        .anim-float    { animation: float  7s ease-in-out infinite; }
+        .anim-float2   { animation: float2 9s ease-in-out infinite; }
+        .d-0  { animation-delay: 0ms; }
+        .d-1  { animation-delay: 80ms; }
+        .d-2  { animation-delay: 160ms; }
+        .d-3  { animation-delay: 240ms; }
+        .d-4  { animation-delay: 320ms; }
+        .d-5  { animation-delay: 400ms; }
+        .d-6  { animation-delay: 480ms; }
+        .d-7  { animation-delay: 560ms; }
+      `}</style>
+
       {/* Hero */}
       <section id="solucion" className="py-14 sm:py-18">
         <div className="mx-auto max-w-6xl px-4">
@@ -228,6 +303,68 @@ export default function HoldedHomePage() {
             </div>
 
             <HoldedHeroVisual />
+          </div>
+        </div>
+      </section>
+
+      {/* Stats strip */}
+      <section className="border-y border-slate-100 bg-white py-8">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {stats.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <div
+                  key={s.value}
+                  className={`anim-pop d-${i + 1} flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4`}
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ff5460]/10">
+                    <Icon className="h-5 w-5 text-[#ff5460]" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-slate-950">{s.value}</div>
+                    <div className="mt-0.5 text-xs leading-5 text-slate-500">{s.label}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Como funciona */}
+      <section className="py-16">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-10 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm">
+              <Zap className="h-3.5 w-3.5 text-[#ff5460]" />
+              Como funciona
+            </div>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              De cero a conectado en menos de un minuto
+            </h2>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-3">
+            {howItWorks.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.step}
+                  className={`anim-fade-up d-${i + 1} relative rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm`}
+                >
+                  <div className="mb-4 flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#ff5460] text-sm font-bold text-white">
+                      {item.step}
+                    </span>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ff5460]/10">
+                      <Icon className="h-4.5 w-4.5 text-[#ff5460]" />
+                    </div>
+                  </div>
+                  <h3 className="text-base font-bold text-slate-950">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">{item.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -332,12 +469,17 @@ export default function HoldedHomePage() {
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {scopeModules.map((module) => {
+            {scopeModules.map((module, i) => {
               const Icon = module.icon;
+              const isComingSoon = 'isComingSoon' in module && module.isComingSoon;
               return (
                 <article
                   key={module.title}
-                  className={`rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm ${module.isLimitation ? 'opacity-75' : ''}`}
+                  className={`anim-fade-up d-${Math.min(i, 7)} rounded-[1.75rem] border p-6 shadow-sm ${
+                    isComingSoon
+                      ? 'border-purple-200 bg-gradient-to-br from-purple-50 to-white'
+                      : 'border-slate-200 bg-white'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div
@@ -346,8 +488,9 @@ export default function HoldedHomePage() {
                       <Icon className={`h-5 w-5 ${module.color}`} />
                     </div>
                     <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${module.badgeColor}`}
+                      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${module.badgeColor}`}
                     >
+                      {isComingSoon && <Clock className="h-3 w-3" />}
                       {module.badge}
                     </span>
                   </div>
@@ -358,8 +501,8 @@ export default function HoldedHomePage() {
                   <ul className="mt-4 space-y-2">
                     {module.capabilities.map((cap) => (
                       <li key={cap} className="flex items-start gap-2 text-sm text-slate-700">
-                        {module.isLimitation ? (
-                          <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-slate-300" />
+                        {isComingSoon ? (
+                          <Rocket className="mt-0.5 h-4 w-4 shrink-0 text-purple-400" />
                         ) : (
                           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
                         )}
@@ -397,24 +540,43 @@ export default function HoldedHomePage() {
       </section>
 
       {/* FAQ */}
+      <style>{`
+        details summary { list-style:none; cursor:pointer; }
+        details summary::-webkit-details-marker { display:none; }
+        details[open] .faq-chevron { transform:rotate(180deg); }
+        .faq-chevron { transition: transform 0.25s ease; display:inline-block; }
+      `}</style>
       <section id="faq" className="bg-white py-14">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="max-w-3xl">
+          <div className="mb-10 max-w-3xl">
             <h2 className="text-3xl font-bold tracking-tight text-slate-950">Preguntas rapidas</h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
               Todo lo necesario para empezar sin perder tiempo.
             </p>
           </div>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          <div className="mx-auto max-w-3xl space-y-3">
             {faqItems.map((item) => (
-              <article
+              <details
                 key={item.question}
-                className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+                className="group rounded-2xl border border-slate-200 bg-slate-50 px-6 py-1"
               >
-                <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{item.answer}</p>
-              </article>
+                <summary className="flex items-center justify-between gap-4 py-4 text-base font-semibold text-slate-900">
+                  {item.question}
+                  <span className="faq-chevron text-slate-400">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="M4 6l4 4 4-4"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                </summary>
+                <p className="pb-5 text-sm leading-7 text-slate-600">{item.answer}</p>
+              </details>
             ))}
           </div>
         </div>
