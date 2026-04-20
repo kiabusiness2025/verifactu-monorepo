@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
+import { callLLM } from '@verifactu/utils';
 
 /**
  * Webhook de Resend para emails entrantes
@@ -7,8 +7,6 @@ import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
  * Isaak analiza y responde automáticamente o escala a humano
  */
 
-const openAIKey = resolveOpenAIKey(process.env);
-const OPENAI_MODEL = process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'kiabusiness2025@gmail.com';
 const ISAAK_SUPPORT_ENABLED = process.env.ISAAK_SUPPORT_ENABLED === 'true';
@@ -107,19 +105,8 @@ export async function POST(request: NextRequest) {
  * Clasificar email con Isaak (OpenAI)
  */
 async function classifyEmailWithIsaak(email: IncomingEmail): Promise<EmailClassification> {
-  if (!openAIKey) {
-    return {
-      category: 'general',
-      confidence: 0,
-      needsHuman: true,
-      priority: 'medium',
-    };
-  }
-
   try {
-    const content = await callOpenAIResponses({
-      apiKey: openAIKey,
-      model: OPENAI_MODEL,
+    const { text } = await callLLM({
       instructions: `Eres Isaak, asistente de soporte de Verifactu Business (SaaS de contabilidad y facturación).
 
 Analiza el email y clasifícalo:
@@ -155,7 +142,7 @@ Clasifica este email y sugiere una respuesta si procede.`,
       responseFormat: 'json_object',
     });
 
-    const result = JSON.parse(content);
+    const result = JSON.parse(text);
 
     return {
       category: result.category || 'general',

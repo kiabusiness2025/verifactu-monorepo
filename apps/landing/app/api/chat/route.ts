@@ -1,4 +1,4 @@
-import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
+import { callLLM } from '@verifactu/utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getRequestIp } from '../../lib/security/rate-limit';
@@ -61,26 +61,21 @@ export async function POST(request: NextRequest) {
     }
 
     const { message } = validationResult.data;
-    const apiKey = resolveOpenAIKey(process.env);
 
-    if (!apiKey) {
+    try {
+      const result = await callLLM({
+        instructions: SYSTEM_PROMPT,
+        inputText: message,
+        temperature: 0.5,
+        maxOutputTokens: 450,
+      });
+      return NextResponse.json({ response: result.text });
+    } catch {
       if (process.env.NODE_ENV === 'development') {
         return NextResponse.json({ response: generateMockResponse(message) });
       }
-
       return NextResponse.json({ error: 'Servicio de chat no configurado' }, { status: 500 });
     }
-
-    const response = await callOpenAIResponses({
-      apiKey,
-      model: process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini',
-      instructions: SYSTEM_PROMPT,
-      inputText: message,
-      temperature: 0.5,
-      maxOutputTokens: 450,
-    });
-
-    return NextResponse.json({ response });
   } catch (error) {
     console.error('Error in chat:', error);
 

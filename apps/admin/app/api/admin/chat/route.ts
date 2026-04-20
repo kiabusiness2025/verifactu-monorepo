@@ -1,11 +1,9 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
-import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
+import { callLLM } from '@verifactu/utils';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/adminAuth';
 
-const openAIKey = resolveOpenAIKey(process.env);
 const USE_ISAAK = process.env.USE_ISAAK_FOR_ADMIN === 'true';
-const OPENAI_MODEL = process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini';
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,11 +33,15 @@ ${systemContext}
 
     let response: string;
 
-    if (USE_ISAAK && openAIKey) {
-      response = await callIsaakAPI(systemPrompt, messages);
-    } else if (openAIKey) {
-      response = await callOpenAI(systemPrompt, messages);
-    } else {
+    try {
+      const result = await callLLM({
+        instructions: systemPrompt,
+        messages: normalizeMessages(messages),
+        temperature: USE_ISAAK ? 0.4 : 0.7,
+        maxOutputTokens: 1000,
+      });
+      response = result.text;
+    } catch {
       response = generateSimpleResponse(messages[messages.length - 1].content, systemContext);
     }
 
@@ -72,36 +74,6 @@ async function buildSystemContext(): Promise<string> {
 **Base de datos:** PostgreSQL con Prisma
 **Servicios:** Firebase Auth, Vercel
 `.trim();
-}
-
-async function callOpenAI(systemPrompt: string, messages: any[]): Promise<string> {
-  if (!openAIKey) {
-    throw new Error('OpenAI no configurado');
-  }
-
-  return callOpenAIResponses({
-    apiKey: openAIKey,
-    model: OPENAI_MODEL,
-    instructions: systemPrompt,
-    messages: normalizeMessages(messages),
-    temperature: 0.7,
-    maxOutputTokens: 1000,
-  });
-}
-
-async function callIsaakAPI(systemPrompt: string, messages: any[]): Promise<string> {
-  if (!openAIKey) {
-    throw new Error('OpenAI no configurado');
-  }
-
-  return callOpenAIResponses({
-    apiKey: openAIKey,
-    model: OPENAI_MODEL,
-    instructions: systemPrompt,
-    messages: normalizeMessages(messages),
-    temperature: 0.4,
-    maxOutputTokens: 1000,
-  });
 }
 
 function normalizeMessages(messages: any[]) {

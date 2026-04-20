@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
+import { callLLM } from '@verifactu/utils';
 import { recordUsageEvent } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
@@ -293,24 +293,22 @@ async function buildLlmReply(input: {
   context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>;
   snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
   diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
-}) {
-  const apiKey = resolveOpenAIKey(process.env);
-  if (!apiKey) return null;
-
-  const model = process.env.ISAAK_OPENAI_MODEL?.trim() || 'gpt-4.1-mini';
-
-  return callOpenAIResponses({
-    apiKey,
-    model,
-    instructions: buildLlmInstructions({
-      context: input.context,
-      snapshot: input.snapshot,
-      diagnosticProbe: input.diagnosticProbe,
-    }),
-    messages: [{ role: 'user', content: input.message }],
-    temperature: 0.45,
-    maxOutputTokens: 420,
-  });
+}): Promise<string | null> {
+  try {
+    const result = await callLLM({
+      instructions: buildLlmInstructions({
+        context: input.context,
+        snapshot: input.snapshot,
+        diagnosticProbe: input.diagnosticProbe,
+      }),
+      messages: [{ role: 'user', content: input.message }],
+      temperature: 0.45,
+      maxOutputTokens: 420,
+    });
+    return result.text;
+  } catch {
+    return null;
+  }
 }
 
 function buildReply(input: {

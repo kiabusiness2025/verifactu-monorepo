@@ -7,7 +7,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
+import { callLLM } from '@verifactu/utils';
 
 // Habilitar telemetría de Firebase solo en runtime (no en build)
 if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
@@ -61,23 +61,14 @@ async function chatWithGemini(userMessage: string): Promise<string> {
   return result.response.text();
 }
 
-// Función para chat con GPT-4
+// Función para chat con GPT-4 / Claude (via callLLM)
 async function chatWithGPT4(userMessage: string): Promise<string> {
-  const openAIKey = resolveOpenAIKey(process.env);
-
-  if (!openAIKey) {
-    throw new Error('OpenAI no configurado');
-  }
-
-  const prompt = buildIsaakPrompt(userMessage);
-
-  return callOpenAIResponses({
-    apiKey: openAIKey,
-    model: process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini',
-    inputText: prompt,
+  const result = await callLLM({
+    inputText: buildIsaakPrompt(userMessage),
     temperature: 0.7,
     maxOutputTokens: 500,
   });
+  return result.text;
 }
 
 // Prompt base para Isaak (compartido entre modelos)

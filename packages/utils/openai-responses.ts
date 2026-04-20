@@ -1,3 +1,10 @@
+/**
+ * @deprecated Use `callLLM` from `@verifactu/utils` instead.
+ * This module is a compatibility layer kept only for `apps/app/api/chat/route.ts`
+ * which uses Vercel AI SDK streaming + tools and cannot use the standard callLLM interface.
+ * Do not add new usages.
+ */
+
 type ResponseMessage = {
   role: 'user' | 'assistant';
   content: string;

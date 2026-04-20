@@ -1,4 +1,5 @@
-import { callOpenAIResponses, resolveOpenAIKey } from '@verifactu/utils';
+import { callLLM, AIError } from '@verifactu/utils';
+import type { AIProvider } from '@verifactu/utils';
 import { NextRequest, NextResponse } from 'next/server';
 
 type RateEntry = {
@@ -61,7 +62,7 @@ function generateFallbackResponse(message: string) {
     normalized.includes('caja') ||
     normalized.includes('beneficio')
   ) {
-    return '📌 En este chat abierto no veo tus datos reales, pero sí puedo ayudarte con un plan claro: qué revisar primero, qué documentos preparar y qué decisiones tomar antes de cerrar el periodo.';
+    return '📌 En este chat abierto no veo tus datos reales, pero sí puedo ayudarte con un plan claro: qué revisar primero, qué documentar y qué decisiones tomar antes de cerrar el periodo.';
   }
 
   return '👋 Soy Isaak. Puedo ayudarte con trámites, dudas fiscales, impuestos y consejos prácticos en lenguaje claro. Cuéntame tu caso y te propongo el siguiente paso.';
@@ -90,32 +91,36 @@ Estilo de respuesta:
 - No prometas acciones sobre datos reales ni acceso a informacion privada en este chat abierto.`;
 }
 
-function logProvider(provider: 'openai' | 'fallback', messageLength: number) {
+function logProvider(provider: AIProvider | 'fallback', model: string, messageLength: number) {
   console.info('[Isaak Public Chat] provider_selected', {
     provider,
+    model,
     messageLength,
     timestamp: new Date().toISOString(),
   });
 }
 
-async function getOpenAIResponse(message: string): Promise<string | null> {
-  const apiKey = resolveOpenAIKey(process.env);
-
-  if (!apiKey) {
-    return null;
-  }
-
+async function getLLMResponse(
+  message: string
+): Promise<{ text: string; provider: AIProvider; model: string } | null> {
   try {
-    return await callOpenAIResponses({
-      apiKey,
-      model: process.env.ISAAK_OPENAI_MODEL || 'gpt-4.1-mini',
+    const result = await callLLM({
       instructions: buildSystemPrompt(),
       inputText: message,
       temperature: 0.5,
       maxOutputTokens: 450,
     });
+    return result;
   } catch (error) {
-    console.error('[Isaak Public Chat] OpenAI error:', error);
+    if (error instanceof AIError) {
+      console.error('[Isaak Public Chat] AI error:', {
+        kind: error.kind,
+        provider: error.provider,
+        message: error.message,
+      });
+    } else {
+      console.error('[Isaak Public Chat] Unexpected error:', error);
+    }
     return null;
   }
 }
@@ -143,14 +148,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Mensaje demasiado largo.' }, { status: 400 });
     }
 
-    const openAIText = await getOpenAIResponse(message);
-    if (openAIText) {
-      logProvider('openai', message.length);
-      return NextResponse.json({ response: openAIText });
+    const result = await getLLMResponse(message);
+    if (result) {
+      logProvider(result.provider, result.model, message.length);
+      return NextResponse.json({ response: result.text });
     }
 
-    logProvider('fallback', message.length);
-
+    logProvider('fallback', 'rule-based', message.length);
     return NextResponse.json({ response: generateFallbackResponse(message) });
   } catch (error) {
     console.error('[Isaak Public Chat]', error);
