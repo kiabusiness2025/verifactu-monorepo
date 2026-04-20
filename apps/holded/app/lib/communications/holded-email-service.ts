@@ -5,6 +5,8 @@ import {
   buildHoldedConnectedEmail,
   buildHoldedInternalLeadEmail,
   buildHoldedOnboardingGuideEmail,
+  buildHoldedProfileCompletionEmail,
+  buildHoldedWelcomeChatgptEmail,
   buildHoldedWelcomeEmail,
 } from './holded-email-templates';
 
@@ -26,6 +28,7 @@ type ConnectedPayload = {
   companyEmailVerificationUrl?: string | null;
   channel?: 'dashboard' | 'chatgpt';
   returnUrl?: string | null;
+  isFirstConnection?: boolean;
 };
 
 function cleanEnv(value: string | undefined) {
@@ -161,11 +164,16 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
     cleanEnv(process.env.NEXT_PUBLIC_APP_SITE_URL) || 'https://app.verifactu.business';
   const holdedSiteUrl =
     cleanEnv(process.env.NEXT_PUBLIC_HOLDED_SITE_URL) || 'https://holded.verifactu.business';
+  const adminSiteUrl =
+    cleanEnv(process.env.ADMIN_SITE_URL) ||
+    cleanEnv(process.env.NEXT_PUBLIC_ADMIN_SITE_URL) ||
+    'https://admin.verifactu.business';
   const chatUrl = `${appSiteUrl}/dashboard?source=holded_connected_email`;
   const settingsUrl = `${appSiteUrl}/dashboard/integrations?source=holded_connected_email`;
+  const adminPanelUrl = `${adminSiteUrl}/dashboard/admin`;
   const profileCompletionUrl =
     cleanEnv(input.profileCompletionUrl || undefined) ||
-    `${holdedSiteUrl}/onboarding/profile?source=holded_connected_email`;
+    `${holdedSiteUrl}/onboarding/profile?source=holded_connected_email&channel=${input.channel ?? 'chatgpt'}`;
   const customer = buildHoldedConnectedEmail({
     name: input.name,
     email: input.userEmail,
@@ -183,6 +191,7 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
     companyName: input.companyName,
     chatUrl,
     settingsUrl,
+    adminPanelUrl,
     supportedModules: input.supportedModules,
     channel: input.channel,
     returnUrl: input.returnUrl,
@@ -244,6 +253,37 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
   const companyEmailSent =
     normalizedCompanyEmail &&
     normalizedCompanyEmail.toLowerCase() !== input.userEmail.toLowerCase();
+
+  if (input.isFirstConnection && input.channel === 'chatgpt') {
+    const welcomeTemplate = buildHoldedWelcomeChatgptEmail({
+      name: input.name,
+      returnUrl: input.returnUrl,
+      profileCompletionUrl,
+    });
+    const profileTemplate = buildHoldedProfileCompletionEmail({
+      name: input.name,
+      profileCompletionUrl,
+    });
+    Promise.all([
+      resend.emails.send({
+        from,
+        to: [input.userEmail],
+        subject: welcomeTemplate.subject,
+        html: welcomeTemplate.html,
+        text: welcomeTemplate.text,
+        replyTo,
+      }),
+      resend.emails.send({
+        from,
+        to: [input.userEmail],
+        subject: profileTemplate.subject,
+        html: profileTemplate.html,
+        text: profileTemplate.text,
+        replyTo,
+      }),
+    ]).catch(() => {});
+  }
+
   return {
     customerEmailId: results[0]?.data?.id ?? null,
     companyEmailId: companyEmailSent ? (results[1]?.data?.id ?? null) : null,

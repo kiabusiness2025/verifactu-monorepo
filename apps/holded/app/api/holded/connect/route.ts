@@ -746,6 +746,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const previousConnection = await getHoldedConnection(session.tenantId, channel).catch(
+      () => null
+    );
+    const isFirstConnection = !previousConnection?.connectedAt;
+
     let saved;
     try {
       saved = await saveHoldedConnection({
@@ -990,10 +995,11 @@ export async function POST(request: NextRequest) {
                 notificationEmail.split('@')[0],
               userEmail: notificationEmail,
               companyEmail: identity.requestedCompanyEmail || identity.verifiedCompanyEmail || null,
-              companyName: saved?.tenantName || identity.companyName || 'tu empresa',
+              companyName: identity.companyName || 'tu cuenta de Holded',
               supportedModules,
               channel: 'chatgpt',
               returnUrl: nextTarget,
+              isFirstConnection,
             })
           );
         }
@@ -1169,10 +1175,15 @@ export async function POST(request: NextRequest) {
                 userEmail: userNotificationEmail || notificationEmail!,
                 companyEmail:
                   identity.requestedCompanyEmail || identity.verifiedCompanyEmail || null,
-                companyName: identity.companyName || saved?.tenantName || 'tu empresa',
+                companyName: isChatgptFlow
+                  ? identity.companyName || 'tu cuenta de Holded'
+                  : identity.companyName || saved?.tenantName || 'tu empresa',
                 supportedModules: readProbeSupportedModules(probe),
                 profileCompletionUrl,
                 companyEmailVerificationUrl,
+                channel,
+                returnUrl: nextTarget,
+                isFirstConnection,
               })
             : Promise.resolve(null),
           getHoldedConnection(session.tenantId, channel),

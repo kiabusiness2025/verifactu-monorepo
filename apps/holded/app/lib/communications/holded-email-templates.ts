@@ -28,6 +28,7 @@ type HoldedConnectedEmailInput = {
   supportedModules: string[];
   channel?: 'dashboard' | 'chatgpt';
   returnUrl?: string | null;
+  adminPanelUrl?: string | null;
 };
 
 type HoldedCompanyEmailVerificationInput = {
@@ -48,6 +49,24 @@ function escapeHtml(value: string): string {
 function greeting(name: string) {
   const trimmed = name.trim();
   return trimmed ? `Hola ${trimmed},` : 'Hola,';
+}
+
+function sanitizeCompanyName(name: string | null | undefined): string {
+  const trimmed = name?.trim() || '';
+  if (!trimmed) return 'tu cuenta de Holded';
+  const lower = trimmed.toLowerCase();
+  const placeholders = [
+    'tu empresa',
+    'demo',
+    'empresa demo',
+    'empresa de ejemplo',
+    'test company',
+    'my company',
+    'mi empresa',
+  ];
+  if (placeholders.includes(lower)) return 'tu cuenta de Holded';
+  if (lower.endsWith('- holded')) return 'tu cuenta de Holded';
+  return trimmed;
 }
 
 function holdedSiteUrl() {
@@ -188,6 +207,7 @@ export function buildHoldedAccessReadyEmail(input: AccessEmailInput): EmailTempl
 
 export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): EmailTemplate {
   const hello = greeting(input.name);
+  const company = sanitizeCompanyName(input.companyName);
   const modules = input.supportedModules.join(', ') || 'sin detalle';
   const profileCompletionUrl = input.profileCompletionUrl || input.settingsUrl;
   const isChatgptFlow = input.channel === 'chatgpt';
@@ -216,13 +236,13 @@ export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): Ema
     : `Siguientes pasos:\n1) Abre tu panel\n2) Revisa conexiones y estado\n3) Completa datos de empresa pendientes para dejar la empresa verificada`;
 
   return {
-    subject: `Holded conectado en ${input.companyName}`,
+    subject: `Holded conectado en ${company}`,
     html: cardLayout({
       label: 'Conexion activa',
       title: 'Holded + ChatGPT conectados',
       body: `
         <p style="margin:0 0 14px;">${escapeHtml(hello)}</p>
-        <p style="margin:0 0 14px;">La conexion de Holded para <strong>${escapeHtml(input.companyName)}</strong> ya esta activa.</p>
+        <p style="margin:0 0 14px;">La conexion de Holded para <strong>${escapeHtml(company)}</strong> ya esta activa.</p>
         <p style="margin:0 0 18px;">Modulos validados: <strong>${escapeHtml(modules)}</strong>.</p>
         <div style="margin:0 0 18px;padding:16px;border-radius:18px;background:#f8fafc;border:1px solid #e2e8f0;">
           <div style="font-weight:700;margin:0 0 8px;">Siguientes pasos recomendados</div>
@@ -233,7 +253,7 @@ export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): Ema
       `,
       footer: legalFooter(),
     }),
-    text: `${hello}\n\nLa conexion de Holded para ${input.companyName} ya esta activa.\n\n${nextStepsText}\n\n${primaryLabel}: ${primaryUrl}${isChatgptFlow ? '' : `\nCompletar datos: ${profileCompletionUrl}`}`,
+    text: `${hello}\n\nLa conexion de Holded para ${company} ya esta activa.\n\n${nextStepsText}\n\n${primaryLabel}: ${primaryUrl}${isChatgptFlow ? '' : `\nCompletar datos: ${profileCompletionUrl}`}`,
   };
 }
 
@@ -258,26 +278,127 @@ export function buildHoldedCompanyEmailVerificationEmail(
 }
 
 export function buildHoldedConnectedAdminEmail(input: HoldedConnectedEmailInput): EmailTemplate {
+  const company = sanitizeCompanyName(input.companyName);
   const modules = input.supportedModules.join(', ') || 'sin detalle';
   const isChatgptFlow = input.channel === 'chatgpt';
-  const primaryUrl = input.returnUrl || input.chatUrl;
-  const primaryLabel = isChatgptFlow ? 'Volver a ChatGPT' : 'Abrir panel';
+  const channelLabel = isChatgptFlow ? 'ChatGPT' : 'Dashboard';
+  const adminPanelUrl = input.adminPanelUrl || null;
+  const now = new Date().toLocaleString('es-ES', {
+    timeZone: 'Europe/Madrid',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  });
 
   return {
-    subject: `Holded conectado en ${input.companyName}`,
+    subject: `[Holded] Nueva conexion — ${company} (${channelLabel})`,
     html: cardLayout({
-      label: 'Conexion activa',
-      title: 'Holded + ChatGPT conectados',
+      label: 'Notificacion interna',
+      title: 'Nueva conexion Holded activada',
       body: `
-        <p style="margin:0 0 10px;"><strong>Empresa:</strong> ${escapeHtml(input.companyName)}</p>
-        <p style="margin:0 0 10px;"><strong>Email usuario:</strong> ${escapeHtml(input.email)}</p>
-        <p style="margin:0 0 10px;"><strong>Modulos validados:</strong> ${escapeHtml(modules)}</p>
-        <p style="margin:0 0 16px;">Conexion validada para uso operativo.</p>
-        <a href="${escapeHtml(primaryUrl)}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">${primaryLabel}</a>
+        <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 18px;">
+          <tr><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;color:#64748b;width:40%;">Empresa</td><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:600;color:#0f172a;">${escapeHtml(company)}</td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;color:#64748b;">Email usuario</td><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:600;color:#0f172a;">${escapeHtml(input.email)}</td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;color:#64748b;">Canal</td><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:600;color:#0f172a;">${escapeHtml(channelLabel)}</td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;color:#64748b;">Modulos</td><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;color:#0f172a;">${escapeHtml(modules)}</td></tr>
+          <tr><td style="padding:8px 0;font-size:13px;color:#64748b;">Fecha</td><td style="padding:8px 0;font-size:13px;color:#0f172a;">${escapeHtml(now)}</td></tr>
+        </table>
+        <a href="${escapeHtml(adminPanelUrl || 'https://admin.verifactu.business/dashboard/admin')}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;margin-right:10px;">Ver en panel admin</a>
       `,
       footer: legalFooter(),
     }),
-    text: `Conexion Holded activada\n\nEmpresa: ${input.companyName}\nEmail usuario: ${input.email}\nModulos validados: ${modules}\n\n${primaryLabel}: ${primaryUrl}`,
+    text: `[Holded] Nueva conexion activada\n\nEmpresa: ${company}\nEmail: ${input.email}\nCanal: ${channelLabel}\nModulos: ${modules}\nFecha: ${now}\n\nPanel admin: ${adminPanelUrl || 'https://admin.verifactu.business/dashboard/admin'}`,
+  };
+}
+
+const chatgptPromptExamples = [
+  '¿Que facturas debo revisar hoy para proteger mi caja?',
+  '¿Quienes son mis clientes con mayor riesgo de cobro?',
+  'Explicame el diario de esta semana en lenguaje claro.',
+  '¿Cuales son mis gastos mas grandes del mes?',
+  'Prepara un borrador de factura para [nombre del cliente].',
+];
+
+export function buildHoldedWelcomeChatgptEmail(input: {
+  name: string;
+  returnUrl?: string | null;
+  profileCompletionUrl: string;
+}): EmailTemplate {
+  const hello = greeting(input.name);
+  const primaryUrl = input.returnUrl || 'https://chatgpt.com';
+  const promptRows = chatgptPromptExamples
+    .map(
+      (p, i) =>
+        `<div style="padding:10px 16px;${i < chatgptPromptExamples.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : ''}font-size:13px;color:#334155;"><span style="color:#ff5460;font-weight:700;margin-right:8px;">›</span>${escapeHtml(p)}</div>`
+    )
+    .join('');
+
+  return {
+    subject: 'Tu Holded ya esta conectado a ChatGPT',
+    html: cardLayout({
+      label: 'Primera conexion',
+      title: 'Ya puedes usar Holded desde ChatGPT',
+      body: `
+        <p style="margin:0 0 14px;">${escapeHtml(hello)}</p>
+        <p style="margin:0 0 18px;">Tu cuenta de Holded ya esta conectada. Puedes empezar ahora mismo haciendo preguntas como estas directamente en ChatGPT:</p>
+        <div style="margin:0 0 22px;background:#f8fafc;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;">
+          ${promptRows}
+        </div>
+        <p style="margin:0 0 18px;font-size:13px;color:#64748b;">El conector accede a la API oficial de Holded. Solo prepara borradores de factura cuando tu lo confirmas explicitamente. Todo lo demas es lectura.</p>
+        <a href="${escapeHtml(primaryUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;margin-right:10px;">Ir a ChatGPT ahora</a>
+        <a href="${escapeHtml(input.profileCompletionUrl)}" style="display:inline-block;background:#ffffff;color:#b4233c;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;border:1px solid #f3d0d7;">Completar perfil</a>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;" />
+        <p style="font-size:12px;color:#64748b;margin:0;">Si necesitas ayuda, responde a este correo o escribe a <a href="mailto:soporte@verifactu.business" style="color:#b4233c;">soporte@verifactu.business</a></p>
+      `,
+      footer: legalFooter(),
+    }),
+    text: `${hello}\n\nTu cuenta de Holded ya esta conectada a ChatGPT.\n\nPreguntas que puedes hacer ahora:\n${chatgptPromptExamples.map((p) => `• ${p}`).join('\n')}\n\nIr a ChatGPT: ${primaryUrl}\nCompletar perfil: ${input.profileCompletionUrl}`,
+  };
+}
+
+export function buildHoldedProfileCompletionEmail(input: {
+  name: string;
+  profileCompletionUrl: string;
+}): EmailTemplate {
+  const hello = greeting(input.name);
+  const fields = [
+    { label: 'Tu nombre preferido', why: 'para que el conector te trate por tu nombre' },
+    { label: 'Nombre de tu empresa', why: 'para contextualizar las respuestas a tu negocio' },
+    { label: 'Tu rol en la empresa', why: 'para adaptar el nivel de detalle de las respuestas' },
+    {
+      label: 'Sector de actividad',
+      why: 'para mejorar la precision en consultas de gastos e ingresos',
+    },
+    { label: 'Tus objetivos principales', why: 'para priorizar lo mas relevante para ti' },
+  ];
+  const fieldRows = fields
+    .map(
+      (f, i) =>
+        `<tr>
+          <td style="padding:9px 0;${i < fields.length - 1 ? 'border-bottom:1px solid #f8fafc;' : ''}font-size:13px;font-weight:600;color:#0f172a;width:45%;">${escapeHtml(f.label)}</td>
+          <td style="padding:9px 0;${i < fields.length - 1 ? 'border-bottom:1px solid #f8fafc;' : ''}font-size:12px;color:#64748b;">${escapeHtml(f.why)}</td>
+        </tr>`
+    )
+    .join('');
+
+  return {
+    subject: 'Personaliza tu conector de Holded (2 minutos)',
+    html: cardLayout({
+      label: 'Mejora tu experiencia',
+      title: 'Cuentanos un poco sobre tu empresa',
+      body: `
+        <p style="margin:0 0 14px;">${escapeHtml(hello)}</p>
+        <p style="margin:0 0 16px;">Completar tu perfil ayuda al conector a darte respuestas mas precisas y relevantes para tu negocio. Solo son 2 minutos.</p>
+        <div style="margin:0 0 20px;background:#f8fafc;border-radius:16px;border:1px solid #e2e8f0;padding:6px 16px;">
+          <table role="presentation" style="width:100%;border-collapse:collapse;">
+            ${fieldRows}
+          </table>
+        </div>
+        <p style="margin:0 0 18px;font-size:13px;color:#475569;">Todos los datos son opcionales. Puedes completar solo lo que quieras y editar en cualquier momento.</p>
+        <a href="${escapeHtml(input.profileCompletionUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;">Completar perfil ahora</a>
+      `,
+      footer: legalFooter(),
+    }),
+    text: `${hello}\n\nCompletar tu perfil ayuda al conector a darte respuestas mas precisas.\n\nCampos disponibles:\n${fields.map((f) => `• ${f.label}`).join('\n')}\n\nCompletar perfil: ${input.profileCompletionUrl}`,
   };
 }
 
