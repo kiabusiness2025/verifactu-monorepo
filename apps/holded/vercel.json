@@ -3,5 +3,11 @@
   "framework": "nextjs",
   "installCommand": "cd ../.. && npx -y pnpm@10.27.0 install --frozen-lockfile",
   "buildCommand": "cd ../.. && npx -y pnpm@10.27.0 turbo run build --filter=verifactu-holded",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/admin/weekly-summary",
+      "schedule": "0 8 * * 1"
+    }
+  ]
 }

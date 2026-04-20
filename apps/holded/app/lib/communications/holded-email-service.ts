@@ -6,6 +6,7 @@ import {
   buildHoldedInternalLeadEmail,
   buildHoldedOnboardingGuideEmail,
   buildHoldedProfileCompletionEmail,
+  buildHoldedWeeklyAdminSummaryEmail,
   buildHoldedWelcomeChatgptEmail,
   buildHoldedWelcomeEmail,
 } from './holded-email-templates';
@@ -288,5 +289,48 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
     customerEmailId: results[0]?.data?.id ?? null,
     companyEmailId: companyEmailSent ? (results[1]?.data?.id ?? null) : null,
     adminEmailId: results[companyEmailSent ? 2 : 1]?.data?.id ?? null,
+  };
+}
+
+export async function sendHoldedWeeklySummaryAdminEmail(input: {
+  weekLabel: string;
+  newConnections: number;
+  newConnectionsByChannel: { chatgpt: number; dashboard: number };
+  disconnections: number;
+  totalActive: number;
+}) {
+  const { resend, from } = createResendTransport();
+  const configuredAdminRecipients = readEmailList(
+    process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS,
+    process.env.HOLDED_ADMIN_EMAILS,
+    process.env.ADMIN_EMAILS
+  );
+  const adminRecipients =
+    configuredAdminRecipients.length > 0
+      ? configuredAdminRecipients
+      : ['soporte@verifactu.business'];
+
+  const adminSiteUrl =
+    cleanEnv(process.env.ADMIN_SITE_URL) ||
+    cleanEnv(process.env.NEXT_PUBLIC_ADMIN_SITE_URL) ||
+    'https://admin.verifactu.business';
+  const adminPanelUrl = `${adminSiteUrl}/dashboard/admin`;
+
+  const template = buildHoldedWeeklyAdminSummaryEmail({ ...input, adminPanelUrl });
+
+  const result = await resend.emails.send({
+    from,
+    to: adminRecipients,
+    subject: template.subject,
+    html: template.html,
+    text: template.text,
+    replyTo: readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business'),
+  });
+
+  return {
+    success: !result.error,
+    messageId: result.data?.id ?? null,
+    error: result.error ?? null,
+    recipients: adminRecipients,
   };
 }

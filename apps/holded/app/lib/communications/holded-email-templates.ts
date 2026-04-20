@@ -402,6 +402,70 @@ export function buildHoldedProfileCompletionEmail(input: {
   };
 }
 
+export function buildHoldedWeeklyAdminSummaryEmail(input: {
+  weekLabel: string;
+  newConnections: number;
+  newConnectionsByChannel: { chatgpt: number; dashboard: number };
+  disconnections: number;
+  totalActive: number;
+  adminPanelUrl: string;
+}): EmailTemplate {
+  const {
+    weekLabel,
+    newConnections,
+    newConnectionsByChannel,
+    disconnections,
+    totalActive,
+    adminPanelUrl,
+  } = input;
+
+  const rows = [
+    { label: 'Nuevas conexiones', value: String(newConnections), highlight: newConnections > 0 },
+    { label: '— via ChatGPT', value: String(newConnectionsByChannel.chatgpt), highlight: false },
+    {
+      label: '— via Dashboard',
+      value: String(newConnectionsByChannel.dashboard),
+      highlight: false,
+    },
+    { label: 'Desconexiones', value: String(disconnections), highlight: disconnections > 0 },
+    { label: 'Conexiones activas totales', value: String(totalActive), highlight: true },
+  ];
+
+  const tableRows = rows
+    .map(
+      (r) => `
+        <tr>
+          <td style="padding:10px 14px;font-size:13px;color:${r.label.startsWith('—') ? '#64748b' : '#0f172a'};border-bottom:1px solid #f1f5f9;">${escapeHtml(r.label)}</td>
+          <td style="padding:10px 14px;font-size:14px;font-weight:${r.highlight ? '700' : '500'};color:${r.highlight ? '#ff5460' : '#475569'};text-align:right;border-bottom:1px solid #f1f5f9;">${escapeHtml(r.value)}</td>
+        </tr>`
+    )
+    .join('');
+
+  return {
+    subject: `[Holded Admin] Resumen semanal — ${weekLabel}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
+        <div style="background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,0.08);">
+          <div style="padding:22px 28px 14px;background:linear-gradient(135deg,#fff7ed 0%,#fff1f2 55%,#eef4ff 100%);border-bottom:1px solid #fde7ea;">
+            <span style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#b4233c;">Holded Admin · Resumen semanal</span>
+            <h1 style="font-size:22px;margin:6px 0 0;color:#0f172a;">${escapeHtml(weekLabel)}</h1>
+          </div>
+          <div style="padding:24px 28px;">
+            <table role="presentation" style="width:100%;border-collapse:collapse;background:#f8fafc;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+              ${tableRows}
+            </table>
+            <div style="margin-top:24px;">
+              <a href="${escapeHtml(adminPanelUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:700;font-size:13px;">Ver panel de administracion</a>
+            </div>
+            <p style="margin:18px 0 0;font-size:12px;color:#94a3b8;">Este correo se envia automaticamente cada lunes a las 09:00 CET. Responde a este correo si detectas algun problema.</p>
+          </div>
+        </div>
+      </div>
+    `.trim(),
+    text: `[Holded Admin] Resumen semanal — ${weekLabel}\n\nNuevas conexiones: ${newConnections} (ChatGPT: ${newConnectionsByChannel.chatgpt}, Dashboard: ${newConnectionsByChannel.dashboard})\nDesconexiones: ${disconnections}\nConexiones activas totales: ${totalActive}\n\nPanel de administracion: ${adminPanelUrl}`,
+  };
+}
+
 export function buildHoldedInternalLeadEmail(input: LeadInput): EmailTemplate {
   const source = input.source?.trim() || 'holded_web';
 
