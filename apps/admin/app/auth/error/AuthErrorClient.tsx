@@ -4,12 +4,11 @@ import { useSearchParams } from 'next/navigation';
 
 export default function AuthErrorClient() {
   const searchParams = useSearchParams();
-  const error = searchParams.get('error');
+  const error = searchParams?.get('error');
 
   const errorMessages: Record<string, string> = {
     Configuration: 'Error de configuración del servidor',
-    AccessDenied:
-      'Acceso denegado. Solo usuarios @verifactu.business pueden acceder',
+    AccessDenied: 'Acceso denegado. Solo usuarios @verifactu.business pueden acceder',
     Verification: 'Error de verificación',
     Default: 'Ha ocurrido un error durante la autenticación',
   };
@@ -35,9 +34,7 @@ export default function AuthErrorClient() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">
-            Error de autenticación
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Error de autenticación</h1>
           <p className="text-slate-600">{errorMessage}</p>
         </div>
 
@@ -58,12 +55,10 @@ export default function AuthErrorClient() {
                 />
               </svg>
               <div>
-                <h3 className="text-sm font-semibold text-yellow-900">
-                  Acceso restringido
-                </h3>
+                <h3 className="text-sm font-semibold text-yellow-900">Acceso restringido</h3>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Este panel es solo para miembros del equipo Verifactu Business
-                  con cuenta @verifactu.business
+                  Este panel es solo para miembros del equipo Verifactu Business con cuenta
+                  @verifactu.business
                 </p>
               </div>
             </div>

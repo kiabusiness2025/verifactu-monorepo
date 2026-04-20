@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { AccessibleButton } from "@/components/accessibility/AccessibleButton";
-import { TableSkeleton } from "@/components/accessibility/LoadingSkeleton";
-import { useToast } from "@/components/notifications/ToastNotifications";
-import { adminGet, adminPost } from "@/lib/adminApi";
-import { formatShortDate } from "@/src/lib/formatters";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
+import { TableSkeleton } from '@/components/accessibility/LoadingSkeleton';
+import { useToast } from '@/components/notifications/ToastNotifications';
+import { adminGet, adminPost } from '@/lib/adminApi';
+import { formatShortDate } from '@/src/lib/formatters';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 type TenantData = {
   id: string;
@@ -44,38 +44,38 @@ type TenantCustomer = {
 };
 
 function escapeHtml(value?: string | number | null) {
-  const source = value == null ? "" : String(value);
+  const source = value == null ? '' : String(value);
   return source
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 function buildCompanySheetHtml(tenant: TenantData) {
   const rows: Array<[string, string | number | null | undefined]> = [
-    ["Razón social", tenant.legalName],
-    ["CIF/NIF", tenant.taxId],
-    ["Dirección", tenant.address],
-    ["Código postal", tenant.postalCode],
-    ["Ciudad", tenant.city],
-    ["Provincia", tenant.province],
-    ["País", tenant.country],
-    ["CNAE", tenant.cnae],
-    ["Forma jurídica", tenant.legalForm],
-    ["Estado", tenant.profileStatus ?? tenant.status],
-    ["Web", tenant.website],
-    ["Capital social", tenant.capitalSocial],
-    ["Constitución", tenant.incorporationDate],
-    ["Representante", tenant.representative],
-    ["Email", tenant.email],
-    ["Teléfono", tenant.phone],
-    ["Empleados", tenant.employees],
-    ["Ventas", tenant.sales],
-    ["Año ventas", tenant.salesYear],
-    ["Último balance", tenant.lastBalanceDate],
-    ["Fecha alta", tenant.createdAt],
+    ['Razón social', tenant.legalName],
+    ['CIF/NIF', tenant.taxId],
+    ['Dirección', tenant.address],
+    ['Código postal', tenant.postalCode],
+    ['Ciudad', tenant.city],
+    ['Provincia', tenant.province],
+    ['País', tenant.country],
+    ['CNAE', tenant.cnae],
+    ['Forma jurídica', tenant.legalForm],
+    ['Estado', tenant.profileStatus ?? tenant.status],
+    ['Web', tenant.website],
+    ['Capital social', tenant.capitalSocial],
+    ['Constitución', tenant.incorporationDate],
+    ['Representante', tenant.representative],
+    ['Email', tenant.email],
+    ['Teléfono', tenant.phone],
+    ['Empleados', tenant.employees],
+    ['Ventas', tenant.sales],
+    ['Año ventas', tenant.salesYear],
+    ['Último balance', tenant.lastBalanceDate],
+    ['Fecha alta', tenant.createdAt],
   ];
 
   return `<!doctype html>
@@ -105,9 +105,9 @@ function buildCompanySheetHtml(tenant: TenantData) {
     ${rows
       .map(
         ([label, value]) =>
-          `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value ?? "--")}</td></tr>`
+          `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value ?? '--')}</td></tr>`
       )
-      .join("")}
+      .join('')}
   </table>
 </body>
 </html>`;
@@ -115,12 +115,12 @@ function buildCompanySheetHtml(tenant: TenantData) {
 
 export default function TenantOverviewPage() {
   const params = useParams();
-  const tenantId = params.id as string;
+  const tenantId = String(params?.id ?? '');
   const { success, error: showError } = useToast();
   const [tenant, setTenant] = useState<TenantData | null>(null);
   const [customers, setCustomers] = useState<TenantCustomer[]>([]);
   const [loading, setLoading] = useState(true);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 
   useEffect(() => {
     let mounted = true;
@@ -136,7 +136,7 @@ export default function TenantOverviewPage() {
           setCustomers(customersData.items || []);
         }
       } catch (err) {
-        showError(err instanceof Error ? err.message : "No se pudo cargar el tenant");
+        showError(err instanceof Error ? err.message : 'No se pudo cargar el tenant');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -150,33 +150,30 @@ export default function TenantOverviewPage() {
   async function setActiveTenant() {
     try {
       await adminPost(`/api/admin/tenants/${tenantId}/set-active`, {});
-      success("Tenant seleccionado");
+      success('Tenant seleccionado');
     } catch (err) {
-      showError(err instanceof Error ? err.message : "No se pudo seleccionar");
+      showError(err instanceof Error ? err.message : 'No se pudo seleccionar');
     }
   }
 
   async function startSupportSession() {
     try {
-      const res = await adminPost<{ handoffToken: string }>(
-        "/api/admin/support-sessions/start",
-        {
-          tenantId,
-          reason: "support",
-        }
-      );
+      const res = await adminPost<{ handoffToken: string }>('/api/admin/support-sessions/start', {
+        tenantId,
+        reason: 'support',
+      });
       const url = `${appUrl}/support/handoff?token=${encodeURIComponent(res.handoffToken)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-      success("Sesion de soporte iniciada");
+      window.open(url, '_blank', 'noopener,noreferrer');
+      success('Sesion de soporte iniciada');
     } catch (err) {
-      showError(err instanceof Error ? err.message : "No se pudo iniciar soporte");
+      showError(err instanceof Error ? err.message : 'No se pudo iniciar soporte');
     }
   }
 
   function printSheet() {
     if (!tenant) return;
     const html = buildCompanySheetHtml(tenant);
-    const win = window.open("", "_blank", "noopener,noreferrer");
+    const win = window.open('', '_blank', 'noopener,noreferrer');
     if (!win) return;
     win.document.open();
     win.document.write(html);
@@ -188,7 +185,7 @@ export default function TenantOverviewPage() {
   function exportPdf() {
     if (!tenant) return;
     const html = buildCompanySheetHtml(tenant);
-    const win = window.open("", "_blank", "noopener,noreferrer");
+    const win = window.open('', '_blank', 'noopener,noreferrer');
     if (!win) return;
     win.document.open();
     win.document.write(html);
@@ -200,9 +197,9 @@ export default function TenantOverviewPage() {
   async function copyCustomerId(id: string) {
     try {
       await navigator.clipboard.writeText(id);
-      success("UUID copiado");
+      success('UUID copiado');
     } catch {
-      showError("No se pudo copiar el UUID");
+      showError('No se pudo copiar el UUID');
     }
   }
 
@@ -223,8 +220,8 @@ export default function TenantOverviewPage() {
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold text-slate-900">{tenant.legalName || "Tenant"}</h1>
-            <div className="text-xs text-slate-500">{tenant.taxId || "Sin CIF"}</div>
+            <h1 className="text-lg font-semibold text-slate-900">{tenant.legalName || 'Tenant'}</h1>
+            <div className="text-xs text-slate-500">{tenant.taxId || 'Sin CIF'}</div>
           </div>
           <div className="flex flex-wrap gap-2">
             <AccessibleButton variant="secondary" size="sm" onClick={setActiveTenant}>
@@ -259,19 +256,19 @@ export default function TenantOverviewPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
           <div className="text-xs text-slate-500">Estado</div>
           <div className="mt-2 text-sm font-semibold text-slate-900">
-            {tenant.status || "active"}
+            {tenant.status || 'active'}
           </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
           <div className="text-xs text-slate-500">Alta</div>
           <div className="mt-2 text-sm font-semibold text-slate-900">
-            {tenant.createdAt ? formatShortDate(tenant.createdAt) : "--"}
+            {tenant.createdAt ? formatShortDate(tenant.createdAt) : '--'}
           </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
           <div className="text-xs text-slate-500">Direccion</div>
           <div className="mt-2 text-sm font-semibold text-slate-900">
-            {tenant.address || "Sin direccion"}
+            {tenant.address || 'Sin direccion'}
           </div>
         </div>
       </div>
@@ -280,41 +277,43 @@ export default function TenantOverviewPage() {
         <h2 className="text-sm font-semibold text-slate-900">Ficha completa</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div className="text-xs text-slate-500">Razón social</div>
-          <div className="text-sm text-slate-900">{tenant.legalName || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.legalName || '--'}</div>
           <div className="text-xs text-slate-500">CIF/NIF</div>
-          <div className="text-sm text-slate-900">{tenant.taxId || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.taxId || '--'}</div>
           <div className="text-xs text-slate-500">CNAE</div>
-          <div className="text-sm text-slate-900">{tenant.cnae || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.cnae || '--'}</div>
           <div className="text-xs text-slate-500">Forma jurídica</div>
-          <div className="text-sm text-slate-900">{tenant.legalForm || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.legalForm || '--'}</div>
           <div className="text-xs text-slate-500">Estado</div>
-          <div className="text-sm text-slate-900">{tenant.profileStatus || tenant.status || "--"}</div>
+          <div className="text-sm text-slate-900">
+            {tenant.profileStatus || tenant.status || '--'}
+          </div>
           <div className="text-xs text-slate-500">Web</div>
-          <div className="text-sm text-slate-900">{tenant.website || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.website || '--'}</div>
           <div className="text-xs text-slate-500">Representante</div>
-          <div className="text-sm text-slate-900">{tenant.representative || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.representative || '--'}</div>
           <div className="text-xs text-slate-500">Email</div>
-          <div className="text-sm text-slate-900">{tenant.email || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.email || '--'}</div>
           <div className="text-xs text-slate-500">Teléfono</div>
-          <div className="text-sm text-slate-900">{tenant.phone || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.phone || '--'}</div>
           <div className="text-xs text-slate-500">Dirección</div>
           <div className="text-sm text-slate-900">
             {[tenant.address, tenant.postalCode, tenant.city, tenant.province, tenant.country]
               .filter(Boolean)
-              .join(", ") || "--"}
+              .join(', ') || '--'}
           </div>
           <div className="text-xs text-slate-500">Capital social</div>
-          <div className="text-sm text-slate-900">{tenant.capitalSocial || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.capitalSocial || '--'}</div>
           <div className="text-xs text-slate-500">Constitución</div>
-          <div className="text-sm text-slate-900">{tenant.incorporationDate || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.incorporationDate || '--'}</div>
           <div className="text-xs text-slate-500">Empleados</div>
-          <div className="text-sm text-slate-900">{tenant.employees ?? "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.employees ?? '--'}</div>
           <div className="text-xs text-slate-500">Ventas</div>
-          <div className="text-sm text-slate-900">{tenant.sales || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.sales || '--'}</div>
           <div className="text-xs text-slate-500">Año ventas</div>
-          <div className="text-sm text-slate-900">{tenant.salesYear ?? "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.salesYear ?? '--'}</div>
           <div className="text-xs text-slate-500">Último balance</div>
-          <div className="text-sm text-slate-900">{tenant.lastBalanceDate || "--"}</div>
+          <div className="text-sm text-slate-900">{tenant.lastBalanceDate || '--'}</div>
         </div>
       </div>
 
@@ -341,8 +340,8 @@ export default function TenantOverviewPage() {
               <tbody className="divide-y divide-slate-100">
                 {customers.map((customer) => (
                   <tr key={customer.id}>
-                    <td className="px-3 py-2 text-slate-900">{customer.name || "--"}</td>
-                    <td className="px-3 py-2 text-slate-600">{customer.nif || "--"}</td>
+                    <td className="px-3 py-2 text-slate-900">{customer.name || '--'}</td>
+                    <td className="px-3 py-2 text-slate-600">{customer.nif || '--'}</td>
                     <td className="px-3 py-2">
                       <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-800">
                         {customer.id}

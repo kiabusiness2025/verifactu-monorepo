@@ -9,6 +9,7 @@ import {
   type IsaakOnboardingProfileInput as ProfileOnboardingInput,
   type IsaakRoleInCompany as ProfileRoleInCompany,
 } from '@verifactu/integrations';
+import { isLikelySpanishPhone, parseHoldedRoleValue } from '@verifactu/utils';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -23,31 +24,8 @@ function cleanOptional(value: unknown) {
   return cleanText(value);
 }
 
-function isLikelySpanishPhone(value: string) {
-  const normalized = value.replace(/[^\d+]/g, '');
-  if (normalized.startsWith('+34')) {
-    const national = normalized.slice(3);
-    return /^[6789]\d{8}$/.test(national);
-  }
-  if (normalized.startsWith('0034')) {
-    const national = normalized.slice(4);
-    return /^[6789]\d{8}$/.test(national);
-  }
-  return /^[6789]\d{8}$/.test(normalized);
-}
-
 function parseRole(value: unknown): ProfileRoleInCompany | null {
-  if (typeof value !== 'string') return null;
-  if (
-    value === 'autonomo' ||
-    value === 'administrador' ||
-    value === 'gerente' ||
-    value === 'financiero' ||
-    value === 'otro'
-  ) {
-    return value;
-  }
-  return null;
+  return parseHoldedRoleValue(value) as ProfileRoleInCompany | null;
 }
 
 function parseGoals(value: unknown): ProfileMainGoal[] {

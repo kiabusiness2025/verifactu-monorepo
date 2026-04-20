@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import Faq from './components/Faq';
 import Header from './components/Header';
+import HomeLeadSection from './components/HomeLeadSection';
 import PricingCalculatorInline from './components/PricingCalculatorInline';
 import PricingCalculatorInlineModal from './components/PricingCalculatorInlineModal';
 import { EXCESS_TEXT_LINES, EXCESS_TEXT_TITLE, getPlanCheckoutHref, PLAN_LIST } from './lib/plans';
@@ -211,6 +212,8 @@ export default function Page() {
           </div>
         </Container>
       </section>
+
+      <HomeLeadSection />
 
       <section id="para-quien" className="py-16 bg-white">
         <Container>

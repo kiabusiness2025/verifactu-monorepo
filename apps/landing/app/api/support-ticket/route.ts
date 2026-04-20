@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { prisma, SupportChannelType, SupportMessageDirection } from '@verifactu/db';
+import { isValidEmail, normalizeOptionalEmail } from '@verifactu/utils';
+import { getSessionPayloadFromRequest } from '../../lib/sessionAuth';
 
 const MAX_ATTACHMENTS = 3;
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
@@ -20,12 +23,44 @@ function toSafeString(value: FormDataEntryValue | null): string {
   return value.trim();
 }
 
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
+function parseEmailList(...values: Array<string | null | undefined>) {
+  return Array.from(
+    new Set(
+      values
+        .flatMap((value) => (value || '').split(/[;,]/))
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
+    const session = await getSessionPayloadFromRequest(request);
+
+    if (!session?.tenantId) {
+      return NextResponse.json(
+        { error: 'Necesitas iniciar sesion para crear tickets de soporte' },
+        { status: 401 }
+      );
+    }
+
+    const tenantId = session.tenantId;
 
     const name = toSafeString(formData.get('name'));
-    const email = toSafeString(formData.get('email'));
+    const email = normalizeOptionalEmail(formData.get('email')) || '';
     const company = toSafeString(formData.get('company'));
     const product = toSafeString(formData.get('product'));
     const category = toSafeString(formData.get('category'));
@@ -38,30 +73,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Completa los campos obligatorios' }, { status: 400 });
     }
 
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) {
-      console.error('RESEND_API_KEY not configured');
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Ticket received (dev mode):', {
-          name,
-          email,
-          company,
-          product,
-          category,
-          priority,
-          subject,
-          description,
-          url,
-        });
-        return NextResponse.json({
-          success: true,
-          message: 'Ticket recibido correctamente (modo desarrollo)',
-        });
-      }
-      return NextResponse.json({ error: 'Servicio de email no configurado' }, { status: 500 });
+    if (!isValidEmail(email)) {
+      return NextResponse.json({ error: 'El correo no es valido' }, { status: 400 });
     }
 
-    const attachments: { filename: string; content: string }[] = [];
+    const user = session.uid
+      ? await prisma.user.findFirst({
+          where: { authSubject: session.uid },
+          select: { id: true, email: true, name: true },
+        })
+      : await prisma.user.findUnique({
+          where: { email },
+          select: { id: true, email: true, name: true },
+        });
+
+    if (!user) {
+      return NextResponse.json({ error: 'No he podido identificar tu usuario' }, { status: 401 });
+    }
+
+    const membership = await prisma.membership.findFirst({
+      where: {
+        tenantId,
+        userId: user.id,
+        status: 'active',
+      },
+      select: { tenantId: true },
+    });
+
+    if (!membership) {
+      return NextResponse.json(
+        { error: 'No tienes acceso activo al tenant asociado a este ticket' },
+        { status: 403 }
+      );
+    }
+
+    const attachments: { filename: string; content: string; contentType?: string }[] = [];
+    const attachmentMetadata: Array<{ name: string; type: string; size: number }> = [];
     const files = formData.getAll('attachments');
     for (const entry of files.slice(0, MAX_ATTACHMENTS)) {
       if (!(entry instanceof File)) continue;
@@ -79,22 +126,71 @@ export async function POST(request: NextRequest) {
       attachments.push({
         filename: entry.name || 'adjunto',
         content: buffer.toString('base64'),
+        ...(entry.type ? { contentType: entry.type } : {}),
+      });
+      attachmentMetadata.push({
+        name: entry.name || 'adjunto',
+        type: entry.type || 'application/octet-stream',
+        size: entry.size,
       });
     }
 
-    const escapeHtml = (text: string): string => {
-      const map: Record<string, string> = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;',
-      };
-      return text.replace(/[&<>"']/g, (m) => map[m]);
-    };
+    const ticket = await prisma.$transaction(async (transaction) => {
+      const createdTicket = await transaction.supportTicket.create({
+        data: {
+          tenantId,
+          openedByUserId: user.id,
+          channelType: SupportChannelType.landing,
+          priority: priority || 'Media',
+          subject,
+          description,
+          lastMessageAt: new Date(),
+          metadataJson: {
+            source: 'landing',
+            requesterName: name,
+            requesterEmail: email,
+            company,
+            product,
+            category,
+            url,
+            attachments: attachmentMetadata,
+          },
+        },
+        select: {
+          id: true,
+          subject: true,
+          priority: true,
+          status: true,
+          createdAt: true,
+        },
+      });
+
+      await transaction.supportMessage.create({
+        data: {
+          ticketId: createdTicket.id,
+          tenantId,
+          userId: user.id,
+          direction: SupportMessageDirection.inbound,
+          channelType: SupportChannelType.landing,
+          body: description,
+          attachmentsJson: attachmentMetadata.length > 0 ? attachmentMetadata : undefined,
+        },
+      });
+
+      await transaction.user.update({
+        where: { id: user.id },
+        data: {
+          ...(user.email?.toLowerCase() === email || !user.email ? { email } : {}),
+          ...(user.name ? {} : { name }),
+        },
+      });
+
+      return createdTicket;
+    });
 
     const emailContent = `
       <h2>Nuevo ticket de soporte</h2>
+      <p><strong>Ticket:</strong> ${escapeHtml(ticket.id)}</p>
       <p><strong>Nombre:</strong> ${escapeHtml(name)}</p>
       <p><strong>Email:</strong> ${escapeHtml(email)}</p>
       ${company ? `<p><strong>Empresa:</strong> ${escapeHtml(company)}</p>` : ''}
@@ -107,20 +203,36 @@ export async function POST(request: NextRequest) {
       <p>${escapeHtml(description)}</p>
     `;
 
-    const resend = new Resend(resendApiKey);
-    const recipientEmail = process.env.SUPPORT_EMAIL || 'soporte@verifactu.business';
+    const resendApiKey = process.env.RESEND_API_KEY?.trim();
+    const supportRecipients = parseEmailList(
+      process.env.SUPPORT_EMAIL,
+      'soporte@verifactu.business'
+    );
+    const adminRecipients = parseEmailList(
+      process.env.ADMIN_NOTIFICATION_EMAIL,
+      process.env.ADMIN_EMAILS
+    );
 
-    await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'soporte@verifactu.business',
-      to: recipientEmail,
-      subject: `Ticket soporte: ${escapeHtml(subject)}`,
-      html: emailContent,
-      attachments,
-    });
+    if (resendApiKey && supportRecipients.length > 0) {
+      const resend = new Resend(resendApiKey);
+      try {
+        await resend.emails.send({
+          from: process.env.FROM_EMAIL || 'soporte@verifactu.business',
+          to: supportRecipients,
+          bcc: adminRecipients.length > 0 ? adminRecipients : undefined,
+          subject: `Ticket soporte: ${escapeHtml(subject)}`,
+          html: emailContent,
+          attachments,
+        });
+      } catch (notificationError) {
+        console.error('support ticket notification failed:', notificationError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Ticket enviado correctamente',
+      message: 'Ticket creado correctamente',
+      ticketId: ticket.id,
     });
   } catch (error) {
     console.error('Error processing ticket:', error);

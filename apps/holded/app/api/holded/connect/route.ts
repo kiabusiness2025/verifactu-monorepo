@@ -25,6 +25,16 @@ import {
   recordUsageEvent,
   withConnectorRequestId,
 } from '@verifactu/integrations';
+import {
+  buildFullName,
+  isLikelySpanishPhone,
+  isValidEmail,
+  isValidSpanishTaxId,
+  normalizeOptionalEmail,
+  normalizeOptionalText,
+  normalizeTaxId,
+  splitNameParts,
+} from '@verifactu/utils';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -186,18 +196,6 @@ function hasBasicApiKeyShape(value: string) {
   return value.length >= 16 && value.length <= 128;
 }
 
-function normalizeOptionalEmail(value: unknown) {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim().toLowerCase();
-  return trimmed || null;
-}
-
-function normalizeOptionalText(value: unknown) {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim().replace(/\s+/g, ' ');
-  return trimmed || null;
-}
-
 function normalizeOptionalUrl(value: unknown) {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -208,99 +206,6 @@ function normalizeOptionalUrl(value: unknown) {
   } catch {
     return null;
   }
-}
-
-function normalizeTaxId(value: unknown) {
-  const normalized = normalizeOptionalText(value);
-  return normalized ? normalized.toUpperCase() : null;
-}
-
-function isValidSpanishTaxId(value: string) {
-  const normalized = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const nifLetters = 'TRWAGMYFPDXBNJZSQVHLCKE';
-
-  if (/^[0-9]{8}[A-Z]$/.test(normalized)) {
-    const number = Number.parseInt(normalized.slice(0, 8), 10);
-    return nifLetters[number % 23] === normalized.slice(-1);
-  }
-
-  if (/^[XYZ][0-9]{7}[A-Z]$/.test(normalized)) {
-    const prefix = normalized[0] === 'X' ? '0' : normalized[0] === 'Y' ? '1' : '2';
-    const number = Number.parseInt(`${prefix}${normalized.slice(1, 8)}`, 10);
-    return nifLetters[number % 23] === normalized.slice(-1);
-  }
-
-  if (/^[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J]$/.test(normalized)) {
-    const letter = normalized[0];
-    const digits = normalized.slice(1, 8);
-    const control = normalized.slice(-1);
-    let sumEven = 0;
-    let sumOdd = 0;
-
-    for (let index = 0; index < digits.length; index += 1) {
-      const digit = Number.parseInt(digits[index], 10);
-      if ((index + 1) % 2 === 0) {
-        sumEven += digit;
-      } else {
-        const doubled = digit * 2;
-        sumOdd += Math.floor(doubled / 10) + (doubled % 10);
-      }
-    }
-
-    const total = sumEven + sumOdd;
-    const controlDigit = (10 - (total % 10)) % 10;
-    const controlLetter = 'JABCDEFGHI'[controlDigit];
-
-    if ('PQRSNW'.includes(letter)) {
-      return control === controlLetter;
-    }
-
-    if ('ABEH'.includes(letter)) {
-      return control === String(controlDigit);
-    }
-
-    return control === String(controlDigit) || control === controlLetter;
-  }
-
-  return false;
-}
-
-function isLikelySpanishPhone(value: string) {
-  const normalized = value.replace(/[^\d+]/g, '');
-  if (normalized.startsWith('+34')) {
-    const national = normalized.slice(3);
-    return /^[6789]\d{8}$/.test(national);
-  }
-  if (normalized.startsWith('0034')) {
-    const national = normalized.slice(4);
-    return /^[6789]\d{8}$/.test(national);
-  }
-  return /^[6789]\d{8}$/.test(normalized);
-}
-
-function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-function splitNameParts(value: string | null) {
-  const normalized = normalizeOptionalText(value);
-  if (!normalized) {
-    return { firstName: null, lastName: null };
-  }
-
-  const parts = normalized.split(' ');
-  if (parts.length === 1) {
-    return { firstName: parts[0], lastName: null };
-  }
-
-  return {
-    firstName: parts.slice(0, -1).join(' '),
-    lastName: parts.slice(-1).join(' '),
-  };
-}
-
-function buildFullName(firstName: string | null, lastName: string | null) {
-  return [firstName, lastName].filter(Boolean).join(' ').trim() || null;
 }
 
 async function readExistingIdentity(tenantId: string) {

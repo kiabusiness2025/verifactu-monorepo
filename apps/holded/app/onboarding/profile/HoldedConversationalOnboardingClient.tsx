@@ -3,8 +3,9 @@
 import { Bot, CheckCircle2, ChevronRight, Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { CNAE_SECTION_OPTIONS, HOLDED_ROLE_OPTIONS, type HoldedRoleValue } from '@verifactu/utils';
 
-type RoleValue = 'autonomo' | 'administrador' | 'gerente' | 'financiero' | 'otro';
+type RoleValue = HoldedRoleValue;
 
 type GoalValue =
   | 'Entender mi contabilidad'
@@ -38,13 +39,7 @@ type Props = {
   };
 };
 
-const ROLE_OPTIONS: Array<{ value: RoleValue; label: string }> = [
-  { value: 'autonomo', label: 'Autonomo' },
-  { value: 'administrador', label: 'Administrador' },
-  { value: 'gerente', label: 'Gerente' },
-  { value: 'financiero', label: 'Financiero' },
-  { value: 'otro', label: 'Otro' },
-];
+const ROLE_OPTIONS: Array<{ value: RoleValue; label: string }> = HOLDED_ROLE_OPTIONS;
 
 const GOAL_OPTIONS: GoalValue[] = [
   'Entender mi contabilidad',
@@ -54,30 +49,6 @@ const GOAL_OPTIONS: GoalValue[] = [
   'Entender balances y resultados',
   'Llevar mejor la gestion diaria',
 ];
-
-const CNAE_SECTION_OPTIONS = [
-  { value: 'A', label: 'Agricultura, ganaderia, silvicultura y pesca' },
-  { value: 'B', label: 'Industrias extractivas' },
-  { value: 'C', label: 'Industria manufacturera' },
-  { value: 'D', label: 'Suministro de energia electrica, gas, vapor y aire acondicionado' },
-  { value: 'E', label: 'Suministro de agua, saneamiento y gestion de residuos' },
-  { value: 'F', label: 'Construccion' },
-  { value: 'G', label: 'Comercio y reparacion de vehiculos de motor y motocicletas' },
-  { value: 'H', label: 'Transporte y almacenamiento' },
-  { value: 'I', label: 'Hosteleria' },
-  { value: 'J', label: 'Informacion y comunicaciones' },
-  { value: 'K', label: 'Actividades financieras y de seguros' },
-  { value: 'L', label: 'Actividades inmobiliarias' },
-  { value: 'M', label: 'Actividades profesionales, cientificas y tecnicas' },
-  { value: 'N', label: 'Actividades administrativas y servicios auxiliares' },
-  { value: 'O', label: 'Administracion publica, defensa y Seguridad Social obligatoria' },
-  { value: 'P', label: 'Educacion' },
-  { value: 'Q', label: 'Actividades sanitarias y de servicios sociales' },
-  { value: 'R', label: 'Actividades artisticas, recreativas y de entretenimiento' },
-  { value: 'S', label: 'Otros servicios' },
-  { value: 'T', label: 'Actividades de los hogares como empleadores y para uso propio' },
-  { value: 'U', label: 'Organizaciones y organismos extraterritoriales' },
-] as const;
 
 const TEAM_OPTIONS = ['Solo yo', '2-5 personas', '6-20 personas', 'Mas de 20'];
 

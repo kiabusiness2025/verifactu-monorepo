@@ -15,6 +15,7 @@
     "@prisma/extension-accelerate": "^3.0.1",
     "@verifactu/auth": "file:../../packages/auth",
     "@verifactu/integrations": "file:../../packages/integrations",
+    "@verifactu/utils": "file:../../packages/utils",
     "firebase": "^12.7.0",
     "firebase-admin": "^13.6.0",
     "framer-motion": "^12.23.26",

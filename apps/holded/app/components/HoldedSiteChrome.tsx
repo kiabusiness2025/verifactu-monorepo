@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { buildAuthUrl, buildRegisterUrl } from '../lib/holded-navigation';
+import { buildAuthUrl } from '../lib/holded-navigation';
 
 type Props = {
   children: React.ReactNode;

@@ -3,7 +3,13 @@ type HoldedProbeEndpointStatus = {
   status: number | null;
 };
 
-export type HoldedSupportedModule = 'invoicing' | 'accounting' | 'crm' | 'projects' | 'team';
+export type HoldedSupportedModule =
+  | 'invoicing'
+  | 'accounting'
+  | 'crm'
+  | 'projects'
+  | 'team'
+  | 'expenses';
 
 export type HoldedProbeLike = {
   invoiceApi: HoldedProbeEndpointStatus;
@@ -11,6 +17,7 @@ export type HoldedProbeLike = {
   crmApi: HoldedProbeEndpointStatus;
   projectsApi: HoldedProbeEndpointStatus;
   teamApi: HoldedProbeEndpointStatus;
+  expenseApi: HoldedProbeEndpointStatus;
 };
 
 export type HoldedProbeModuleDiagnostic = {
@@ -74,6 +81,13 @@ const MODULES: Array<{
     success: 'He podido entrar en la parte de equipo.',
     impact: 'Sin esta parte no vere informacion del equipo.',
   },
+  {
+    key: 'expenses',
+    endpoint: 'expenseApi',
+    label: 'Compras y gastos',
+    success: 'He podido entrar en compras y cuentas de gasto.',
+    impact: 'Sin esta parte no vere facturas de proveedor ni cuentas de gasto.',
+  },
 ];
 
 function joinSpanishList(values: string[]) {
@@ -92,7 +106,8 @@ function normalizeSupportedModules(values: string[]) {
       value === 'accounting' ||
       value === 'crm' ||
       value === 'projects' ||
-      value === 'team'
+      value === 'team' ||
+      value === 'expenses'
     ) {
       normalized.add(value);
     }

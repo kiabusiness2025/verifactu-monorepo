@@ -14,7 +14,6 @@ import {
   Sparkles,
   Star,
   Users,
-  XCircle,
   Zap,
 } from 'lucide-react';
 import type { Metadata } from 'next';
