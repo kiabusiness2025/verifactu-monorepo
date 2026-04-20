@@ -690,6 +690,7 @@ describe('POST /api/holded/connect', () => {
         crmApi: { ok: false, status: 403 },
         projectsApi: { ok: false, status: 403 },
         teamApi: { ok: false, status: 403 },
+        expenseApi: { ok: false, status: 403 },
         error: null,
       },
     });

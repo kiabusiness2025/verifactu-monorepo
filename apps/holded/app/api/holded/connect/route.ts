@@ -427,6 +427,7 @@ function readProbeSupportedModules(probe: Awaited<ReturnType<typeof probeHoldedC
     probe.crmApi.ok ? 'crm' : null,
     probe.projectsApi.ok ? 'projects' : null,
     probe.teamApi.ok ? 'team' : null,
+    probe.expenseApi.ok ? 'expenses' : null,
   ].filter((value): value is string => Boolean(value));
 }
 

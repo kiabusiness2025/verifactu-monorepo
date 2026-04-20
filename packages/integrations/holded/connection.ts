@@ -32,6 +32,7 @@ export type HoldedProbeResult = {
   crmApi: { ok: boolean; status: number | null };
   projectsApi: { ok: boolean; status: number | null };
   teamApi: { ok: boolean; status: number | null };
+  expenseApi: { ok: boolean; status: number | null };
   error: string | null;
 };
 
@@ -528,21 +529,24 @@ async function markOnboardingCompleted(
 export async function probeHoldedConnection(apiKey: string): Promise<HoldedProbeResult> {
   const normalized = apiKey.trim();
 
-  const [invoiceApi, accountingApi, crmApi, projectsApi, teamApi] = await Promise.all([
+  const [invoiceApi, accountingApi, crmApi, projectsApi, teamApi, expenseApi] = await Promise.all([
     probeEndpoint(normalized, '/api/invoicing/v1/documents', { limit: 1, page: 1 }),
     probeEndpoint(normalized, HOLDED_CHART_OF_ACCOUNTS_PATH, { limit: 1, page: 1 }),
     probeEndpoint(normalized, '/api/crm/v1/bookings', { limit: 1, page: 1 }),
     probeEndpoint(normalized, '/api/projects/v1/projects', { limit: 1, page: 1 }),
     probeEndpoint(normalized, '/api/team/v1/employees', { limit: 1, page: 1 }),
+    probeEndpoint(normalized, '/api/invoicing/v1/expensesaccounts', { limit: 1, page: 1 }),
   ]);
 
-  const ok = invoiceApi.ok || accountingApi.ok || crmApi.ok || projectsApi.ok || teamApi.ok;
+  const ok =
+    invoiceApi.ok || accountingApi.ok || crmApi.ok || projectsApi.ok || teamApi.ok || expenseApi.ok;
   const diagnostics = buildHoldedProbeSummary({
     invoiceApi,
     accountingApi,
     crmApi,
     projectsApi,
     teamApi,
+    expenseApi,
   });
 
   return {
@@ -552,6 +556,7 @@ export async function probeHoldedConnection(apiKey: string): Promise<HoldedProbe
     crmApi,
     projectsApi,
     teamApi,
+    expenseApi,
     error: ok ? null : `${diagnostics.summary} ${diagnostics.nextStep}`,
   };
 }
