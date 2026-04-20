@@ -198,6 +198,7 @@ function HoldedAuthContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [googleRedirecting, setGoogleRedirecting] = useState(false);
   const [existingUserChecking, setExistingUserChecking] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const allowGoogleLogin = process.env.NEXT_PUBLIC_HOLDED_ENABLE_GOOGLE_LOGIN === 'true';
 
   // Build the magic link return URL: returns to this same page so we can consume it
@@ -207,6 +208,11 @@ function HoldedAuthContent() {
     if (nextParam) url.searchParams.set('next', nextParam);
     return url.toString();
   }, [source, nextParam]);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setMounted(true), 60);
+    return () => window.clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     try {
@@ -481,7 +487,9 @@ function HoldedAuthContent() {
       </div>
       <div className="text-left">
         <div className="text-sm font-semibold text-slate-950">holded</div>
-        <div className="text-xs text-slate-500">Acceso a tu conexion</div>
+        <div className="text-xs text-slate-500">
+          {isChatgptFlow ? 'Conector ChatGPT · Holded' : 'Acceso a tu conexion'}
+        </div>
       </div>
     </div>
   );
@@ -547,8 +555,28 @@ function HoldedAuthContent() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff5f2_0%,#f8fafc_44%,#f8fafc_100%)] px-4 py-6 text-slate-900 sm:px-6">
       <div className="mx-auto flex min-h-[calc(100svh-3rem)] max-w-7xl items-center justify-center py-6">
-        <section className="flex w-full items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
-          <div className="w-full max-w-[26rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_-56px_rgba(15,23,42,0.35)]">
+        <section className="flex w-full flex-col items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
+          {isChatgptFlow ? (
+            <div
+              className={`mb-5 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-500 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Gratis para siempre
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Sin tarjeta de credito
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Conexion en menos de un minuto
+              </span>
+            </div>
+          ) : null}
+          <div
+            className={`w-full max-w-[26rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_-56px_rgba(15,23,42,0.35)] transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+          >
             {existingUserChecking ? (
               /* ── Comprobando sesión existente ──────────────────────── */
               <div className="flex flex-col items-center gap-3 px-6 py-14 sm:px-8">
@@ -572,10 +600,14 @@ function HoldedAuthContent() {
                   <div className="text-center">
                     <HoldedBadge />
                     <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
-                      Accede para continuar
+                      {isChatgptFlow
+                        ? 'Identifícate para activar tu conector'
+                        : 'Accede para continuar'}
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Elige como quieres identificarte.
+                      {isChatgptFlow
+                        ? 'En menos de un minuto conectas Holded a ChatGPT.'
+                        : 'Elige como quieres identificarte.'}
                     </p>
                   </div>
 
