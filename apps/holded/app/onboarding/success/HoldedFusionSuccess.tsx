@@ -46,8 +46,8 @@ export default function HoldedFusionSuccess() {
               Tu Holded ya esta conectado
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              Hemos conectado tu espacio de Holded. En unos segundos terminaremos una breve
-              preparacion para que el chat te reciba ya adaptado a tu empresa.
+              En unos segundos te llevamos a personalizar tu asistente para que responda con el
+              contexto exacto de tu empresa.
             </p>
 
             <div className="relative mt-12 h-[21rem] sm:h-[24rem]">
@@ -139,15 +139,15 @@ export default function HoldedFusionSuccess() {
               }`}
             >
               <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white/80 px-5 py-4 text-sm leading-6 text-slate-600 shadow-sm backdrop-blur">
-                Si prefieres no esperar, puedes entrar ya. Si no haces nada, te llevamos
-                automaticamente al chat.
+                Si prefieres no esperar, pulsa el boton. Si no haces nada, te llevamos
+                automaticamente en unos segundos.
               </div>
               <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
                   href={PROFILE_ONBOARDING_URL}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  Continuar
+                  Personalizar mi asistente
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link

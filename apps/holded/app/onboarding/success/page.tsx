@@ -2,9 +2,8 @@ import type { Metadata } from 'next';
 import HoldedFusionSuccess from './HoldedFusionSuccess';
 
 export const metadata: Metadata = {
-  title: 'Conexion lista | Verifactu',
-  description:
-    'Conexion validada correctamente. Continuamos con la preparacion final del conector.',
+  title: 'Holded conectado | Holded',
+  description: 'Tu cuenta de Holded esta conectada. Personaliza tu asistente en unos segundos.',
 };
 
 export default async function HoldedOnboardingSuccessPage() {

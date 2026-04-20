@@ -16,6 +16,7 @@ import {
 import {
   AlertCircle,
   ArrowLeft,
+  ArrowRight,
   CheckCircle2,
   FileText,
   KeyRound,
@@ -300,6 +301,11 @@ export default function OnboardingHoldedClient({
   initialIdentity,
   forceFullReset = false,
 }: OnboardingHoldedClientProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setMounted(true), 60);
+    return () => window.clearTimeout(t);
+  }, []);
   const holdedApiGuideUrl =
     'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
   const preferApiOnlyFlow = channel === 'chatgpt';
@@ -676,7 +682,9 @@ export default function OnboardingHoldedClient({
   // ── JSX ────────────────────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-[100svh] bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_42%,#f8fafc_100%)] px-3 py-4 text-slate-900 sm:px-4 sm:py-8">
+    <main
+      className={`min-h-[100svh] bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_42%,#f8fafc_100%)] px-3 py-4 text-slate-900 transition-opacity duration-500 sm:px-4 sm:py-8 ${mounted ? 'opacity-100' : 'opacity-0'}`}
+    >
       <div className="mx-auto max-w-5xl">
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-[0.85fr_1.15fr]">
           {/* ── LEFT: context panel ────────────────────────────────────────── */}
@@ -749,12 +757,28 @@ export default function OnboardingHoldedClient({
               <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-start gap-3">
                   <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#ff5460]" />
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Antes de empezar</div>
-                    <ul className="mt-2 space-y-2 text-sm leading-6 text-slate-600">
-                      <li>Necesitas una API key activa de Holded.</li>
-                      <li>Requiere plan de pago y rol Owner o Administrador.</li>
-                    </ul>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-slate-900">
+                      Como obtener tu API key
+                    </div>
+                    <ol className="mt-3 space-y-2">
+                      {[
+                        'Entra en Holded y abre Configuracion',
+                        'Ve a la seccion Desarrolladores → API Keys',
+                        'Crea una nueva key o copia una existente',
+                        'Pegala en el campo de la derecha',
+                      ].map((step, i) => (
+                        <li key={i} className="flex items-start gap-2.5">
+                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff5460]/10 text-[10px] font-bold text-[#ff5460]">
+                            {i + 1}
+                          </span>
+                          <span className="text-sm leading-6 text-slate-600">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                    <div className="mt-3 rounded-2xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                      Requiere plan de pago en Holded y rol Owner o Administrador.
+                    </div>
                     <a
                       href={holdedApiGuideUrl}
                       target="_blank"
@@ -763,6 +787,7 @@ export default function OnboardingHoldedClient({
                     >
                       <FileText className="h-4 w-4" />
                       Ver guia oficial de Holded
+                      <ArrowRight className="h-3.5 w-3.5" />
                     </a>
                   </div>
                 </div>

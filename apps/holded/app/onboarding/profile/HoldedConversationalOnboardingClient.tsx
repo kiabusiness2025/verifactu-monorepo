@@ -221,7 +221,7 @@ export default function HoldedConversationalOnboardingClient({
       <div className="flex items-center justify-between gap-4">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2361d8]">
           <Bot className="h-3.5 w-3.5" />
-          Voy a adaptar el asistente a tu empresa
+          Personalizando tu asistente
         </div>
         <div className="text-xs font-medium text-slate-400">
           {progress} de {TOTAL_STEPS}
@@ -267,7 +267,7 @@ export default function HoldedConversationalOnboardingClient({
                       Preparando tu espacio
                     </div>
                     <div className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                      Antes de empezar...
+                      Preparando tu asistente...
                     </div>
                     <div className="mt-4 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-3">
                       <span className="h-2 w-2 animate-pulse rounded-full bg-slate-400" />
@@ -302,18 +302,18 @@ export default function HoldedConversationalOnboardingClient({
                           Empezamos
                         </div>
                         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                          Antes de empezar, quiero conocerte un poco mejor
+                          Cuentame un poco sobre tu empresa
                         </h1>
                         <p className="mt-4 text-sm leading-7 text-slate-600">
-                          Ya tengo tu conexion con Holded lista. Ahora voy a adaptar el asistente a
-                          tu empresa para que te ayude mejor desde el principio.
+                          Tu Holded ya esta conectado. Unas preguntas rapidas y el asistente
+                          respondera con el contexto exacto de tu negocio desde el primer mensaje.
                         </p>
                         <button
                           type="button"
                           onClick={() => setStep(1)}
                           className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
-                          Continuar
+                          Empezamos
                           <ChevronRight className="h-4 w-4" />
                         </button>
                       </div>
