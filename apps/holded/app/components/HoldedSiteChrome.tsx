@@ -41,16 +41,16 @@ export default function HoldedSiteChrome({ children }: Props) {
           </Link>
 
           <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 md:flex">
-            <a href="#solucion" className="hover:text-slate-900">
+            <a href="/#solucion" className="hover:text-slate-900">
               Inicio
             </a>
-            <a href="#capacidades" className="hover:text-slate-900">
+            <a href="/#capacidades" className="hover:text-slate-900">
               Capacidades
             </a>
-            <a href="#faq" className="hover:text-slate-900">
+            <a href="/#faq" className="hover:text-slate-900">
               FAQ
             </a>
-            <a href="#Contacto" className="hover:text-slate-900">
+            <a href="/#contacto" className="hover:text-slate-900">
               Contacto
             </a>
           </nav>

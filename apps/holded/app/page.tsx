@@ -581,6 +581,51 @@ export default function HoldedHomePage() {
           </div>
         </div>
       </section>
+
+      {/* Contacto */}
+      <section id="contacto" className="py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="rounded-[2rem] border border-[#ff5460]/15 bg-[linear-gradient(135deg,#fff7f7_0%,#ffffff_60%,#f8fafc_100%)] px-8 py-10 shadow-[0_32px_90px_-48px_rgba(255,84,96,0.3)] sm:px-10">
+            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#ff5460]/20 bg-[#ff5460]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#ff5460]">
+                  <MessageCircleMore className="h-3.5 w-3.5" />
+                  Contacto y soporte
+                </div>
+                <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
+                  ¿Tienes alguna duda?
+                </h2>
+                <p className="mt-3 max-w-xl text-base leading-7 text-slate-600">
+                  Responde a cualquier correo que te hayamos enviado o escribenos directamente.
+                  Respondemos en menos de 24 horas.
+                </p>
+                <a
+                  href="mailto:soporte@verifactu.business"
+                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                >
+                  soporte@verifactu.business
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                <Link
+                  href={buildRegisterUrl('holded_contacto_cta')}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
+                >
+                  Conectar Holded ahora
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/support"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Chat de soporte
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
