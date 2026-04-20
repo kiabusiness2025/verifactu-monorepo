@@ -554,6 +554,70 @@ export function buildHoldedWeeklyAdminSummaryEmail(input: {
   };
 }
 
+export function buildHoldedInternalContactEmail(input: {
+  name: string;
+  email: string;
+  cif?: string;
+  sector?: string;
+  role?: string;
+  message: string;
+}): EmailTemplate {
+  const extraRows = [
+    input.cif
+      ? `<p style="margin:0 0 8px;"><strong>CIF:</strong> ${escapeHtml(input.cif)}</p>`
+      : '',
+    input.sector
+      ? `<p style="margin:0 0 8px;"><strong>Sector:</strong> ${escapeHtml(input.sector)}</p>`
+      : '',
+    input.role
+      ? `<p style="margin:0 0 8px;"><strong>Rol:</strong> ${escapeHtml(input.role)}</p>`
+      : '',
+  ].join('');
+
+  const extraText = [
+    input.cif ? `CIF: ${input.cif}` : '',
+    input.sector ? `Sector: ${input.sector}` : '',
+    input.role ? `Rol: ${input.role}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return {
+    subject: `Solicitud de contacto: ${input.name}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff;">
+        <h2 style="margin:0 0 12px;">Nueva solicitud de contacto (holded.verifactu.business)</h2>
+        <p style="margin:0 0 8px;"><strong>Nombre:</strong> ${escapeHtml(input.name)}</p>
+        <p style="margin:0 0 8px;"><strong>Email:</strong> <a href="mailto:${escapeHtml(input.email)}">${escapeHtml(input.email)}</a></p>
+        ${extraRows}
+        <p style="margin:8px 0 6px;"><strong>Mensaje:</strong></p>
+        <blockquote style="margin:0 0 0 8px;padding:10px 16px;border-left:3px solid #e2e8f0;color:#334155;font-size:14px;">${escapeHtml(input.message).replace(/\n/g, '<br>')}</blockquote>
+      </div>
+    `.trim(),
+    text: `Nueva solicitud de contacto\nNombre: ${input.name}\nEmail: ${input.email}\n${extraText}\nMensaje:\n${input.message}`,
+  };
+}
+
+export function buildHoldedContactConfirmationEmail(input: { name: string }): EmailTemplate {
+  return {
+    subject: 'Hemos recibido tu mensaje — verifactu.business',
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:0;background:#fff;">
+        <div style="background:linear-gradient(135deg,#ff5460 0%,#ef4654 100%);padding:32px 28px;border-radius:16px 16px 0 0;">
+          <h1 style="margin:0;font-size:22px;font-weight:800;color:#fff;">Hemos recibido tu mensaje</h1>
+        </div>
+        <div style="padding:28px;">
+          <p style="margin:0 0 14px;">Hola ${escapeHtml(input.name)},</p>
+          <p style="margin:0 0 14px;">Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y nos pondremos en contacto contigo lo antes posible — habitualmente en menos de 24 horas en dias laborables.</p>
+          <p style="margin:0 0 14px;">Si tienes algo urgente, puedes escribirnos directamente a <a href="mailto:info@verifactu.business" style="color:#ff5460;">info@verifactu.business</a> o contactarnos por WhatsApp al <a href="https://wa.me/34696550480" style="color:#ff5460;">+34 696 55 04 80</a>.</p>
+          <p style="margin:24px 0 0;font-size:13px;color:#64748b;">— El equipo de verifactu.business</p>
+        </div>
+      </div>
+    `.trim(),
+    text: `Hola ${input.name},\n\nHemos recibido tu mensaje y nos pondremos en contacto contigo lo antes posible.\n\nSi tienes algo urgente: info@verifactu.business o WhatsApp +34 696 55 04 80.\n\n— El equipo de verifactu.business`,
+  };
+}
+
 export function buildHoldedInternalLeadEmail(input: LeadInput): EmailTemplate {
   const source = input.source?.trim() || 'holded_web';
 

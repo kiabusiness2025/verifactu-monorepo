@@ -3,8 +3,10 @@ import {
   buildHoldedCompanyEmailVerificationEmail,
   buildHoldedConnectedAdminEmail,
   buildHoldedConnectedEmail,
+  buildHoldedContactConfirmationEmail,
   buildHoldedDisconnectedAdminEmail,
   buildHoldedDisconnectedEmail,
+  buildHoldedInternalContactEmail,
   buildHoldedInternalLeadEmail,
   buildHoldedOnboardingGuideEmail,
   buildHoldedProfileCompletionEmail,
@@ -358,6 +360,46 @@ export async function sendHoldedDisconnectedCommunication(input: {
   return {
     userEmailId: userResult.data?.id ?? null,
     adminEmailId: adminResult.data?.id ?? null,
+  };
+}
+
+export async function sendHoldedContactNotification(input: {
+  name: string;
+  email: string;
+  cif?: string;
+  sector?: string;
+  role?: string;
+  message: string;
+}) {
+  const { resend, from, replyTo } = createResendTransport();
+  const recipient = readOptionalEnv('HOLDED_CONTACT_EMAIL', 'info@verifactu.business');
+
+  const internalTemplate = buildHoldedInternalContactEmail(input);
+  const confirmationTemplate = buildHoldedContactConfirmationEmail({ name: input.name });
+
+  const [internalResult] = await Promise.all([
+    resend.emails.send({
+      from,
+      to: [recipient],
+      subject: internalTemplate.subject,
+      html: internalTemplate.html,
+      text: internalTemplate.text,
+      replyTo: input.email,
+    }),
+    resend.emails.send({
+      from,
+      to: [input.email],
+      subject: confirmationTemplate.subject,
+      html: confirmationTemplate.html,
+      text: confirmationTemplate.text,
+      replyTo,
+    }),
+  ]);
+
+  return {
+    success: !internalResult.error,
+    messageId: internalResult.data?.id ?? null,
+    error: internalResult.error ?? null,
   };
 }
 
