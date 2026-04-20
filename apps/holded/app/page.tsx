@@ -168,6 +168,11 @@ const scopeModules = [
 
 const faqItems = [
   {
+    question: '¿Que es Holded?',
+    answer:
+      'Holded es un software de gestion empresarial espanol (ERP) que integra facturacion, contabilidad, CRM, proyectos, inventario y equipo en una sola plataforma en la nube. Es especialmente popular entre autonomos, pymes y agencias que quieren centralizar su operativa sin instalar nada.',
+  },
+  {
     question: '¿Que necesito para empezar?',
     answer:
       'Tu correo y una API key activa de Holded. Validamos la conexion durante el alta para que no entres a ciegas.',
@@ -184,7 +189,7 @@ const faqItems = [
   {
     question: '¿Que puede hacer ahora mismo?',
     answer:
-      'Consultar facturas, contactos, cuentas contables, movimientos del diario, proyectos y tareas, y preparar borradores de factura con confirmacion.',
+      'Consultar facturas, contactos, cuentas contables, movimientos del diario, proyectos, compras y tareas, y preparar borradores de factura con confirmacion.',
   },
   {
     question: '¿Puede cambiar mis datos?',
@@ -592,20 +597,21 @@ export default function HoldedHomePage() {
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                   <Sparkles className="h-3.5 w-3.5 text-[#ff5460]" />
-                  Prueba gratuita
+                  Prueba gratuita personalizada
                 </div>
                 <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-                  ¿Todavía no tienes Holded?
+                  Pruébalo con datos reales de tu empresa
                 </h2>
                 <p className="mt-3 text-base leading-7 text-slate-600">
-                  Solicita acceso a la demo gratuita y sin compromiso. Te ayudamos a ver cómo
-                  funciona el conector con datos reales antes de contratar nada.
+                  Rellena el formulario y nuestro equipo prepara un entorno real con tus datos de
+                  Holded. Te hacemos una demostración en directo para que veas exactamente lo que
+                  puede hacer por tu empresa — sin instalar nada, sin compromiso.
                 </p>
-                <ul className="mt-5 space-y-2 text-sm text-slate-600">
+                <ul className="mt-5 space-y-2.5 text-sm text-slate-600">
                   {[
-                    'Totalmente gratis',
-                    'Sin tarjeta de crédito',
-                    'Configuración en menos de 1 minuto',
+                    'Activamos un entorno real con tus datos',
+                    'Demostración en directo con nuestro equipo',
+                    'Sin tarjeta de crédito ni compromiso',
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-500" />

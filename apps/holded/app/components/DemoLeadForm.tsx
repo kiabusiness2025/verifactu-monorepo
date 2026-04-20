@@ -58,7 +58,8 @@ export default function DemoLeadForm() {
         </div>
         <p className="text-base font-semibold text-green-800">Solicitud registrada</p>
         <p className="mt-1 text-sm text-green-700">
-          Te hemos enviado los próximos pasos por email. Nos pondremos en contacto contigo pronto.
+          Hemos recibido tu solicitud. Nuestro equipo se pondrá en contacto para preparar tu entorno
+          y fijar la demostración.
         </p>
       </div>
     );
@@ -144,7 +145,7 @@ export default function DemoLeadForm() {
         disabled={status === 'loading'}
         className="inline-flex w-full items-center justify-center rounded-full bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654] disabled:opacity-60"
       >
-        {status === 'loading' ? 'Enviando…' : 'Solicitar acceso gratuito'}
+        {status === 'loading' ? 'Enviando…' : 'Solicitar prueba gratuita'}
       </button>
     </form>
   );
