@@ -146,23 +146,40 @@ export function buildHoldedWelcomeEmail(input: LeadInput): EmailTemplate {
 }
 
 export function buildHoldedOnboardingGuideEmail(input: LeadInput): EmailTemplate {
+  const onboardingUrl = holdedSiteUrl();
+  const holdedDocsUrl =
+    'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
+
   return {
-    subject: 'Tus 3 pasos para conectar Holded',
+    subject: 'Como obtener tu API key de Holded (2 minutos)',
     html: cardLayout({
       label: 'Guia rapida',
-      title: 'Conecta tu Holded en 3 minutos',
+      title: 'Consigue tu API key en 2 minutos',
       body: `
-        <ol style="padding-left:18px;margin:0 0 18px;">
-          <li style="margin:0 0 8px;">Abre Holded y entra en el area de API.</li>
-          <li style="margin:0 0 8px;">Copia una API key activa de tu empresa.</li>
-          <li style="margin:0 0 8px;">Vuelve al onboarding del conector y pega la clave.</li>
-        </ol>
-        <p style="margin:0 0 16px;">En cuanto valides la clave, tendras contexto real para ventas, gastos, cobros y prioridades.</p>
-        <a href="https://holded.verifactu.business" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Ir al onboarding</a>
+        <p style="margin:0 0 14px;color:#475569;font-size:14px;">Necesitas una API key activa de Holded para completar la conexion. Sigue estos pasos dentro de tu cuenta de Holded:</p>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:16px 20px;margin:0 0 18px;">
+          <div style="margin:0 0 12px;display:flex;align-items:flex-start;gap:12px;">
+            <div style="background:#ff5460;color:#fff;border-radius:999px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;line-height:22px;text-align:center;">1</div>
+            <p style="margin:0;font-size:14px;color:#334155;">Accede a tu cuenta de Holded y ve a <strong>Configuracion → Desarrolladores → API Keys</strong>.</p>
+          </div>
+          <div style="margin:0 0 12px;display:flex;align-items:flex-start;gap:12px;">
+            <div style="background:#ff5460;color:#fff;border-radius:999px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;line-height:22px;text-align:center;">2</div>
+            <p style="margin:0;font-size:14px;color:#334155;">Pulsa <strong>Nueva API Key</strong>, dale un nombre (ej. "Conector ChatGPT") y copia la clave generada.</p>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div style="background:#ff5460;color:#fff;border-radius:999px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;line-height:22px;text-align:center;">3</div>
+            <p style="margin:0;font-size:14px;color:#334155;">Vuelve al onboarding del conector, pega la clave y validamos la conexion al instante.</p>
+          </div>
+        </div>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 16px;margin:0 0 20px;font-size:13px;color:#92400e;">
+          <strong>Requiere plan de pago en Holded</strong> y rol Owner o Administrador en la empresa para poder generar API keys.
+          <a href="${holdedDocsUrl}" style="color:#b45309;display:block;margin-top:6px;">Ver documentacion oficial de Holded →</a>
+        </div>
+        <a href="${onboardingUrl}/onboarding/holded" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;font-size:14px;">Continuar onboarding</a>
       `,
       footer: legalFooter(),
     }),
-    text: `Tus 3 pasos para conectar Holded:\n1) Abre Holded y entra en API.\n2) Copia una API key activa.\n3) Pegala en el onboarding del conector.\n\nEmpieza aqui: https://holded.verifactu.business`,
+    text: `Como obtener tu API key de Holded:\n\n1) Holded → Configuracion → Desarrolladores → API Keys\n2) Crea nueva clave y copiala\n3) Pegala en el onboarding del conector\n\nRequiere plan de pago y rol Owner/Administrador.\nDocumentacion: ${holdedDocsUrl}\n\nContinuar: ${onboardingUrl}/onboarding/holded`,
   };
 }
 

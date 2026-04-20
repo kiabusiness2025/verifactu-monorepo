@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function HoldedLegalPage() {
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_45%,#ffffff_100%)] text-slate-900">
+    <main className="page-enter min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_45%,#ffffff_100%)] text-slate-900">
       <section className="mx-auto max-w-4xl px-4 py-16">
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <div className="inline-flex rounded-full border border-[#ff5460]/20 bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold text-[#ff5460]">

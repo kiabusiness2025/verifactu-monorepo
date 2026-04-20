@@ -12,7 +12,7 @@ const VIDEO_URL = '/video/Video%20Holded%20App%201.mp4';
 
 export default function HoldedDemoRecordingPage() {
   return (
-    <main className="min-h-screen bg-[#0f172a] text-white">
+    <main className="page-enter min-h-screen bg-[#0f172a] text-white">
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-4 py-10 sm:py-16">
         {/* Brand */}
         <div className="mb-8 flex items-center gap-3">

@@ -47,7 +47,7 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
   const digest = readValue(resolved.digest);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_45%,#ffffff_100%)] text-slate-900">
+    <main className="page-enter min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_45%,#ffffff_100%)] text-slate-900">
       <section className="mx-auto max-w-5xl px-4 py-16">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">

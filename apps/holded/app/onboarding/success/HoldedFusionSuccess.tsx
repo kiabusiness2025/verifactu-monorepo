@@ -3,7 +3,7 @@
 import { ArrowRight, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const HOLDed_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
@@ -13,20 +13,33 @@ export default function HoldedFusionSuccess() {
   const [showFusion, setShowFusion] = useState(false);
   const [showAssistant, setShowAssistant] = useState(false);
   const [showReady, setShowReady] = useState(false);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+
+  const REDIRECT_MS = 5500;
 
   useEffect(() => {
     const fusionTimer = window.setTimeout(() => setShowFusion(true), 900);
     const assistantTimer = window.setTimeout(() => setShowAssistant(true), 1250);
-    const readyTimer = window.setTimeout(() => setShowReady(true), 1700);
+    const readyTimer = window.setTimeout(() => setShowReady(true), 1900);
     const redirectTimer = window.setTimeout(() => {
       window.location.assign(PROFILE_ONBOARDING_URL);
-    }, 2800);
+    }, REDIRECT_MS);
+
+    const TICK = 80;
+    let elapsed = 0;
+    const progressInterval = window.setInterval(() => {
+      elapsed += TICK;
+      if (progressBarRef.current) {
+        progressBarRef.current.style.width = `${Math.min(100, Math.round((elapsed / REDIRECT_MS) * 100))}%`;
+      }
+    }, TICK);
 
     return () => {
       window.clearTimeout(fusionTimer);
       window.clearTimeout(assistantTimer);
       window.clearTimeout(readyTimer);
       window.clearTimeout(redirectTimer);
+      window.clearInterval(progressInterval);
     };
   }, []);
 
@@ -138,9 +151,17 @@ export default function HoldedFusionSuccess() {
                 showReady ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
               }`}
             >
-              <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white/80 px-5 py-4 text-sm leading-6 text-slate-600 shadow-sm backdrop-blur">
-                Si prefieres no esperar, pulsa el boton. Si no haces nada, te llevamos
-                automaticamente en unos segundos.
+              <div className="mx-auto max-w-xl overflow-hidden rounded-3xl border border-slate-200 bg-white/80 shadow-sm backdrop-blur">
+                <div className="h-1 w-full bg-slate-100">
+                  <div
+                    ref={progressBarRef}
+                    className="h-1 w-0 rounded-full bg-[#ff5460] transition-[width] duration-75 ease-linear"
+                  />
+                </div>
+                <p className="px-5 py-3.5 text-sm leading-6 text-slate-600">
+                  Te llevamos a personalizar el asistente en unos segundos. Pulsa el boton si
+                  prefieres continuar ahora.
+                </p>
               </div>
               <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link

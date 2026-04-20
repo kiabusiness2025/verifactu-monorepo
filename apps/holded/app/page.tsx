@@ -205,8 +205,8 @@ const faqItems = [
 const stats = [
   {
     icon: BarChart3,
-    value: '5 módulos',
-    label: 'Facturación, contactos, contabilidad, proyectos y equipo',
+    value: '6 módulos',
+    label: 'Facturación, contabilidad, CRM, proyectos, compras y equipo',
   },
   { icon: Star, value: '0 €', label: 'Gratis para siempre para usuarios de ChatGPT' },
   { icon: Zap, value: '< 1 min', label: 'Conexion validada al instante con tu API key' },
@@ -237,7 +237,7 @@ const howItWorks = [
 
 export default function HoldedHomePage() {
   return (
-    <main className="min-h-screen text-slate-900">
+    <main className="page-enter min-h-screen text-slate-900">
       <style>{`
         @keyframes fadeUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
