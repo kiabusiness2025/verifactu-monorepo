@@ -1,13 +1,12 @@
 import { CheckCircle2, PlayCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import DemoLeadForm from '../components/DemoLeadForm';
-import { buildRegisterUrl } from '../lib/holded-navigation';
+import DemoRequestForm from '../components/DemoRequestForm';
 
 export const metadata: Metadata = {
   title: 'Demo guiada | Holded',
   description:
-    'Solicita una demo guiada del conector Holded y comparte ya tu perfil y el contexto de empresa para preparar una sesion util.',
+    'Solicita una demo guiada del conector Holded. Compartenos tu contexto y preparamos una sesion util con datos reales de tu empresa.',
 };
 
 const whatYouGet = [
@@ -34,13 +33,12 @@ export default function HoldedDemoPage() {
             </div>
 
             <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3rem] sm:leading-[1.02]">
-              Pruébalo con datos reales de tu empresa.
+              Pruebalo con datos reales de tu empresa.
             </h1>
 
             <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
-              Esta solicitud si debe venir mas cualificada. Por eso aqui pedimos perfil, empresa y
-              objetivo de la prueba: asi la demo se prepara con contexto y no como una sesion
-              generica.
+              Compartenos tu contexto y preparamos una sesion util, no una demo generica. Cuanto
+              mejor entendemos tu caso, mas valor sacas en 30 minutos.
             </p>
 
             <div className="mt-8 space-y-4">
@@ -89,10 +87,10 @@ export default function HoldedDemoPage() {
                 Ver demo grabada
               </Link>
               <Link
-                href={buildRegisterUrl('holded_demo_page_secondary')}
+                href="/acceso"
                 className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
               >
-                Prefiero conectar ya
+                Solicitar acceso anticipado
               </Link>
             </div>
           </section>
@@ -100,14 +98,14 @@ export default function HoldedDemoPage() {
           <section className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-[0_32px_80px_-58px_rgba(15,23,42,0.55)] sm:p-10">
             <div className="mb-6">
               <div className="text-sm font-semibold text-slate-900">
-                Formulario de prueba gratuita
+                Demo gratuita personalizada
               </div>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Este formulario recoge perfil y empresa para que el equipo prepare una sesion util
-                desde el principio.
+                Te contactamos en 24 horas para confirmar fecha y preparar la sesion con tu
+                contexto.
               </p>
             </div>
-            <DemoLeadForm />
+            <DemoRequestForm source="holded_demo_page" />
           </section>
         </div>
       </div>

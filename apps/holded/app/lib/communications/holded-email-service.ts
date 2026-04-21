@@ -7,6 +7,7 @@ import {
   buildHoldedDisconnectedAdminEmail,
   buildHoldedDisconnectedEmail,
   buildHoldedInternalContactEmail,
+  buildHoldedInternalDemoRequestEmail,
   buildHoldedInternalLeadEmail,
   buildHoldedOnboardingGuideEmail,
   buildHoldedProfileCompletionEmail,
@@ -447,5 +448,44 @@ export async function sendHoldedWeeklySummaryAdminEmail(input: {
     messageId: result.data?.id ?? null,
     error: result.error ?? null,
     recipients: adminRecipients,
+  };
+}
+
+type DemoRequestNotificationPayload = {
+  id: string;
+  name: string;
+  email: string;
+  companyName: string;
+  phone?: string;
+  taxId?: string;
+  role?: string;
+  usesHolded?: boolean;
+  objective?: string;
+  source?: string;
+};
+
+export async function sendHoldedDemoRequestNotification(
+  input: DemoRequestNotificationPayload
+): Promise<{ success: boolean; messageId: string | null; error: unknown }> {
+  const { resend, from, replyTo } = createResendTransport();
+
+  const adminEmail = readOptionalEnv('RESEND_ADMIN_EMAIL', 'soporte@verifactu.business');
+  const adminEmails = readEmailList(process.env.RESEND_ADMIN_EMAILS, adminEmail);
+
+  const template = buildHoldedInternalDemoRequestEmail(input);
+
+  const result = await resend.emails.send({
+    from,
+    to: adminEmails,
+    subject: template.subject,
+    html: template.html,
+    text: template.text,
+    replyTo: input.email || replyTo,
+  });
+
+  return {
+    success: !result.error,
+    messageId: result.data?.id ?? null,
+    error: result.error ?? null,
   };
 }

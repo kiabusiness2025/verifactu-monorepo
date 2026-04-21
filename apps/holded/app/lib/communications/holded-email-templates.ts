@@ -685,3 +685,60 @@ export function buildHoldedInternalLeadEmail(input: LeadInput): EmailTemplate {
     text: `Nuevo lead Holded\nNombre: ${input.name}\nEmail: ${input.email}\nEmpresa: ${input.companyName}\n${extraText ? `${extraText}\n` : ''}Origen: ${source}`,
   };
 }
+
+type DemoRequestEmailInput = {
+  name: string;
+  email: string;
+  companyName: string;
+  phone?: string;
+  taxId?: string;
+  role?: string;
+  usesHolded?: boolean;
+  objective?: string;
+  source?: string;
+  id: string;
+};
+
+export function buildHoldedInternalDemoRequestEmail(input: DemoRequestEmailInput): EmailTemplate {
+  const source = input.source?.trim() || 'holded_demo';
+  const extraRows = [
+    input.phone
+      ? `<p style="margin:0 0 8px;"><strong>Telefono:</strong> ${escapeHtml(input.phone)}</p>`
+      : '',
+    input.taxId
+      ? `<p style="margin:0 0 8px;"><strong>CIF / NIF:</strong> ${escapeHtml(input.taxId)}</p>`
+      : '',
+    input.role
+      ? `<p style="margin:0 0 8px;"><strong>Rol:</strong> ${escapeHtml(input.role)}</p>`
+      : '',
+    `<p style="margin:0 0 8px;"><strong>Usa Holded:</strong> ${input.usesHolded ? 'Sí' : 'No'}</p>`,
+    input.objective
+      ? `<p style="margin:8px 0 6px;"><strong>Qué quiere ver en la demo:</strong></p><blockquote style="margin:0 0 0 8px;padding:10px 16px;border-left:3px solid #ff5460;color:#334155;font-size:14px;">${escapeHtml(input.objective).replace(/\n/g, '<br>')}</blockquote>`
+      : '',
+  ].join('');
+  const extraText = [
+    input.phone ? `Telefono: ${input.phone}` : '',
+    input.taxId ? `CIF / NIF: ${input.taxId}` : '',
+    input.role ? `Rol: ${input.role}` : '',
+    `Usa Holded: ${input.usesHolded ? 'Sí' : 'No'}`,
+    input.objective ? `Objetivo de la demo:\n${input.objective}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return {
+    subject: `Nueva solicitud de demo: ${input.name} (${input.companyName})`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff;">
+        <h2 style="margin:0 0 12px;">Nueva solicitud de demo Holded</h2>
+        <p style="margin:0 0 8px;"><strong>Nombre:</strong> ${escapeHtml(input.name)}</p>
+        <p style="margin:0 0 8px;"><strong>Email:</strong> ${escapeHtml(input.email)}</p>
+        <p style="margin:0 0 8px;"><strong>Empresa:</strong> ${escapeHtml(input.companyName)}</p>
+        ${extraRows}
+        <p style="margin:0 0 8px;"><strong>Origen:</strong> ${escapeHtml(source)}</p>
+        <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;">ID solicitud: ${escapeHtml(input.id)}</p>
+      </div>
+    `.trim(),
+    text: `Nueva solicitud de demo Holded\nNombre: ${input.name}\nEmail: ${input.email}\nEmpresa: ${input.companyName}\n${extraText}\nOrigen: ${source}\nID: ${input.id}`,
+  };
+}

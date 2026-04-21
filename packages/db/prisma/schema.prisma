@@ -240,6 +240,14 @@ enum CustomIntegrationRequestStatus {
   closed
 }
 
+enum DemoRequestStatus {
+  PENDING
+  CONTACTED
+  SCHEDULED
+  COMPLETED
+  DISQUALIFIED
+}
+
 // ==================== CORE USER & AUTH ====================
 
 model User {
@@ -1767,4 +1775,33 @@ model IsaakMemoryFact {
   @@index([userId, createdAt])
   @@index([conversationId, createdAt])
   @@map("isaak_memory_facts")
+}
+
+// ==================== DEMO REQUESTS ====================
+
+model DemoRequest {
+  id          String            @id @default(cuid())
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  name        String
+  email       String
+  phone       String?
+  companyName String            @map("company_name")
+  taxId       String?           @map("tax_id")
+  role        String?
+  usesHolded  Boolean           @default(false) @map("uses_holded")
+  objective   String?
+
+  source      String?
+  consent     Boolean           @default(false)
+
+  status      DemoRequestStatus @default(PENDING)
+  notes       String?
+
+  metadataJson Json?            @map("metadata_json")
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("demo_requests")
 }
