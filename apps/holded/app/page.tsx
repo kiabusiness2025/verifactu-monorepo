@@ -1,4 +1,5 @@
 import {
+  AlertCircle,
   ArrowRight,
   BarChart3,
   BookOpen,
@@ -8,14 +9,11 @@ import {
   Clock3,
   FileText,
   FolderKanban,
-  KeyRound,
-  LifeBuoy,
   MessageCircleMore,
   PlayCircle,
   ShieldCheck,
   Sparkles,
   Users,
-  Zap,
   type LucideIcon,
 } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -24,9 +22,9 @@ import HoldedHeroVisual from './components/HoldedHeroVisual';
 import { buildAuthUrl, buildRegisterUrl } from './lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Holded | Tu operativa financiera, por fin clara',
+  title: 'Holded | Controla tu facturación y contabilidad sin complicarte',
   description:
-    'Conecta Holded a ChatGPT para leer facturas, contabilidad, CRM, proyectos y gastos en lenguaje claro, y preparar borradores de factura con confirmacion.',
+    'Consulta facturas, IVA, gastos y clientes desde Holded en lenguaje claro. Detecta qué revisar hoy, qué cobrar antes y qué hablar con tu gestor.',
 };
 
 type FeatureGroup = {
@@ -45,27 +43,63 @@ type RoleCard = {
   bullets: string[];
 };
 
-const trustHighlights = [
-  'Facturacion, contabilidad, CRM, proyectos, compras y equipo en un mismo flujo conversacional.',
-  'La unica accion de escritura publica es preparar borradores de factura, siempre con confirmacion.',
-  'Onboarding guiado, validacion real de API key y entrada directa al panel.',
+type PainItem = {
+  problem: string;
+  solution: string;
+  icon: LucideIcon;
+};
+
+const pains: PainItem[] = [
+  {
+    problem: 'No sabes qué revisar primero',
+    solution:
+      'Señala las facturas vencidas, cobros en riesgo y gastos que necesitan atención, ordenados por prioridad.',
+    icon: AlertCircle,
+  },
+  {
+    problem: 'Dependes del gestor para entender los números',
+    solution:
+      'Obtén respuestas claras sobre IVA, gastos y contabilidad sin esperar a la próxima reunión.',
+    icon: Users,
+  },
+  {
+    problem: 'Tardas demasiado en entender cobros e IVA',
+    solution:
+      'Consulta cualquier dato de Holded en lenguaje normal, sin navegar entre pantallas ni entender el ERP.',
+    icon: Clock3,
+  },
+  {
+    problem: 'Los datos están en Holded pero no los interpretas',
+    solution:
+      'Transforma los registros de tu cuenta en respuestas útiles con contexto y criterio de negocio.',
+    icon: BarChart3,
+  },
+];
+
+const useCases = [
+  'Ver qué facturas deberías revisar hoy',
+  'Detectar cobros pendientes y clientes con riesgo',
+  'Entender el IVA del trimestre sin tecnicismos',
+  'Revisar gastos por proveedor o periodo',
+  'Preparar borradores de factura con tu confirmación',
+  'Llegar a la reunión con tu gestor sabiendo qué preguntar',
 ];
 
 const metrics = [
   {
-    icon: Zap,
-    value: '< 1 min',
-    label: 'Validacion real de la conexion con tu API key de Holded.',
+    icon: ShieldCheck,
+    value: 'Sin cambios',
+    label: 'No modifica tu cuenta de Holded. Solo genera borradores con tu confirmación explícita.',
   },
   {
     icon: BarChart3,
-    value: '6 bloques',
-    label: 'Facturacion, contabilidad, CRM, proyectos, compras y equipo.',
+    value: '4 áreas',
+    label: 'Facturación, contabilidad, cobros y gastos en un mismo sitio.',
   },
   {
-    icon: ShieldCheck,
-    value: '1 accion',
-    label: 'Solo se escribe para dejar borradores de factura y siempre con tu confirmacion.',
+    icon: MessageCircleMore,
+    value: 'Lenguaje claro',
+    label: 'Respuestas en español, sin jerga contable ni tecnicismos.',
   },
   {
     icon: Sparkles,
@@ -74,133 +108,116 @@ const metrics = [
   },
 ];
 
-const valueCards = [
-  {
-    title: 'Priorizar antes de abrir diez pantallas',
-    body: 'Ves primero lo urgente: facturas vencidas, clientes con riesgo, gastos raros o proyectos que necesitan foco.',
-  },
-  {
-    title: 'Entender el dato sin traducirlo',
-    body: 'La respuesta llega en lenguaje claro, con contexto operativo y sin obligarte a leer el ERP como un tecnico.',
-  },
-  {
-    title: 'Pasar de consulta a accion controlada',
-    body: 'Cuando conviene emitir, el sistema puede dejarte un borrador preparado para que solo revises y confirmes.',
-  },
-];
-
 const featureGroups: FeatureGroup[] = [
   {
-    title: 'Facturacion',
-    badge: 'Lectura + borrador',
+    title: 'Facturación',
+    badge: 'Consulta y borradores',
     badgeClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
     icon: FileText,
     summary:
-      'Consulta lo emitido, detecta cobros en riesgo y prepara nuevos borradores sin salir del flujo.',
-    outcome: 'Ideal para saber que revisar hoy y reducir tiempo entre decision y emision.',
+      'Consulta lo emitido, detecta cobros en riesgo y prepara borradores sin salir de la conversación.',
+    outcome: 'Ideal para saber qué revisar hoy y reducir el tiempo entre decisión y emisión.',
     capabilities: [
       'Ver facturas emitidas por cliente, fecha, estado o importe.',
-      'Detectar vencidas, pendientes de cobro y anomalas de seguimiento.',
-      'Explicar una factura concreta con IVA, vencimiento y contexto de cliente.',
-      'Preparar borradores de factura nuevos con confirmacion explicita antes de guardar.',
+      'Detectar vencidas, pendientes de cobro y facturas con seguimiento pendiente.',
+      'Entender una factura concreta con IVA, vencimiento y contexto de cliente.',
+      'Preparar borradores de factura nuevos, siempre con confirmación explícita.',
+    ],
+  },
+  {
+    title: 'Gastos y compras',
+    badge: 'Solo consulta',
+    badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
+    icon: Building2,
+    summary: 'Revisa proveedores, gastos e IVA soportado para entender dónde se va el margen.',
+    outcome: 'Ayuda a controlar el gasto, pagos pendientes y estructura de proveedores.',
+    capabilities: [
+      'Consultar facturas de proveedor y gastos por categoría o cuenta.',
+      'Revisar pagos pendientes y analizar gasto por periodo o proveedor.',
+      'Entender el IVA soportado y deducible en términos claros.',
     ],
   },
   {
     title: 'Contabilidad',
-    badge: 'Solo lectura',
+    badge: 'Solo consulta',
     badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
     icon: BookOpen,
-    summary:
-      'Leer diario, cuentas contables y movimientos para convertir asientos en criterio de negocio.',
-    outcome: 'Pensado para direccion, finanzas y despachos que necesitan contexto sin tecnicismos.',
+    summary: 'Lee diario, cuentas y movimientos para convertir asientos en criterio de negocio.',
+    outcome: 'Pensado para dirección y finanzas que necesitan contexto sin tecnicismos.',
     capabilities: [
       'Consultar plan contable, libro diario y movimientos registrados.',
-      'Explicar IVA repercutido, soportado y saldos en lenguaje normal.',
-      'Ayudar a leer gastos, cuentas y tendencias desde lo ya contabilizado.',
+      'Entender IVA repercutido, soportado y saldos en lenguaje normal.',
+      'Leer gastos, cuentas y tendencias desde lo ya contabilizado.',
     ],
   },
   {
-    title: 'Contactos y CRM',
-    badge: 'Solo lectura',
+    title: 'Clientes y CRM',
+    badge: 'Solo consulta',
     badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
     icon: Users,
     summary:
-      'Cruza clientes, actividad comercial y facturacion para decidir a quien llamar o revisar primero.',
-    outcome: 'Muy util para comercial, administracion y seguimiento de cobros.',
+      'Cruza clientes, actividad comercial y facturación para saber a quién llamar o revisar primero.',
+    outcome: 'Muy útil para seguimiento de cobros y gestión comercial.',
     capabilities: [
       'Ver clientes y contactos por nombre, NIF o actividad reciente.',
-      'Identificar cuentas con mas riesgo de cobro o seguimiento.',
-      'Relacionar contactos con oportunidades y facturas pendientes.',
+      'Identificar cuentas con más riesgo de cobro o seguimiento pendiente.',
+      'Relacionar contactos con facturas pendientes y oportunidades.',
     ],
   },
   {
     title: 'Proyectos y tareas',
-    badge: 'Solo lectura',
+    badge: 'Solo consulta',
     badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
     icon: FolderKanban,
-    summary:
-      'Leer carga operativa, tareas pendientes y proyectos activos con una vista priorizada.',
-    outcome: 'Sirve para coordinar operaciones sin perder contexto financiero.',
+    summary: 'Lee carga operativa, tareas pendientes y proyectos activos con vista priorizada.',
+    outcome: 'Ayuda a coordinar operaciones sin perder el hilo financiero.',
     capabilities: [
       'Ver proyectos activos, estado, tareas y prioridades.',
-      'Cruzar proyectos con clientes y facturacion.',
-      'Detectar bloqueos y trabajo en curso con mas contexto.',
-    ],
-  },
-  {
-    title: 'Compras y gastos',
-    badge: 'Solo lectura',
-    badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
-    icon: Building2,
-    summary: 'Revisa proveedores, gastos e IVA soportado para entender donde se va el margen.',
-    outcome: 'Ayuda a controlar gasto, pagos pendientes y estructura de proveedores.',
-    capabilities: [
-      'Consultar facturas de proveedor y gastos por categoria o cuenta.',
-      'Revisar pagos pendientes y analizar gasto por periodo o proveedor.',
-      'Traducir IVA soportado y deducible a una lectura mas accionable.',
+      'Cruzar proyectos con clientes y facturación asociada.',
+      'Detectar bloqueos y trabajo en curso con más contexto.',
     ],
   },
   {
     title: 'Equipo',
-    badge: 'Solo lectura',
+    badge: 'Solo consulta',
     badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
     icon: Users,
-    summary: 'Contexto basico de empleados y estructura para entender quien esta donde.',
+    summary: 'Contexto básico de empleados y estructura para entender quién está dónde.',
     outcome: 'Aporta continuidad cuando se cruza operativa con proyectos y responsables.',
     capabilities: [
-      'Ver empleados activos y datos basicos disponibles.',
+      'Ver empleados activos y datos básicos disponibles.',
       'Relacionar personas con proyectos y tareas asignadas.',
-      'Aclarar la estructura minima del equipo desde Holded.',
+      'Entender la estructura mínima del equipo desde Holded.',
     ],
   },
 ];
 
 const roleCards: RoleCard[] = [
   {
-    title: 'Direccion y gerencia',
-    body: 'Para quien necesita una lectura rapida de ventas, cobros, caja y foco semanal sin depender siempre de una exportacion.',
+    title: 'Si llevas la gestión por tu cuenta',
+    body: 'Resuelve dudas sobre facturas, cobros, IVA y gastos sin depender de entender la contabilidad como un técnico.',
     bullets: [
-      'Que facturas deberia revisar hoy.',
-      'Que clientes concentran mas riesgo.',
-      'Como va el trimestre sin leer un informe tecnico.',
+      'Qué facturas deberías cobrar esta semana.',
+      'Cómo va el trimestre en gastos e ingresos.',
+      'Qué borradores tienes listos para revisar.',
     ],
   },
   {
-    title: 'Finanzas y administracion',
-    body: 'Reduce tiempo de consulta y da una interfaz mas usable para resolver dudas operativas con el dato de Holded.',
+    title: 'Si trabajas con gestor o asesoría',
+    body: 'Llega con contexto a cada reunión. Detecta incidencias antes y controla mejor qué revisar sin depender de informes.',
     bullets: [
-      'Aclarar IVA y diario en lenguaje normal.',
-      'Revisar gastos y pagos pendientes.',
-      'Preparar borradores sin rehacer el contexto.',
+      'Detectar puntos de revisión antes del cierre.',
+      'Entender qué hay detrás de cada movimiento.',
+      'Preparar preguntas concretas para tu gestor.',
     ],
   },
   {
-    title: 'Despachos y soporte al cliente',
-    body: 'Sirve como capa de lectura y priorizacion para explicar el dato a negocio de forma mas clara y util.',
+    title: 'Si diriges una pyme',
+    body: 'Ten una visión clara de ventas, cobros, gastos e IVA sin pedir exportaciones cada vez.',
     bullets: [
-      'Traducir contabilidad a lenguaje comprensible.',
-      'Detectar puntos de revision antes de cierre.',
-      'Acelerar conversaciones de valor con el cliente.',
+      'Lectura rápida de cobros y situación de caja.',
+      'Qué clientes concentran más riesgo.',
+      'Cómo va el negocio sin leer un informe técnico.',
     ],
   },
 ];
@@ -208,51 +225,51 @@ const roleCards: RoleCard[] = [
 const journeySteps = [
   {
     step: '01',
-    title: 'Activas acceso y validas la API key',
-    body: 'El alta ocurre en el flujo de onboarding, no dentro de la home. Asi la landing vende, y el onboarding convierte.',
+    title: 'Te conectas en menos de 1 minuto',
+    body: 'Solo necesitas tu correo y la API key de Holded. El alta es guiada y valida la conexión antes de que entres.',
   },
   {
     step: '02',
-    title: 'Entras con tu contexto real',
-    body: 'Una vez conectada la cuenta, ya puedes preguntar sobre facturas, clientes, gastos, diario o proyectos.',
+    title: 'Consultas en lenguaje claro',
+    body: 'Pregunta sobre facturas, clientes, IVA, gastos o proyectos y obtén respuestas directas con contexto de negocio.',
   },
   {
     step: '03',
-    title: 'Decides con mas claridad',
-    body: 'Primero lectura y criterio. Solo cuando conviene actuar, se propone preparar un borrador con confirmacion.',
+    title: 'Revisas antes de actuar',
+    body: 'Si necesitas preparar una factura, el sistema te muestra el borrador para que lo revises y confirmes antes de guardar nada.',
   },
 ];
 
 const faqItems = [
   {
-    question: 'Que necesito para empezar?',
+    question: '¿Qué necesito para empezar?',
     answer:
-      'Tu correo y una API key activa de Holded. Durante el flujo validamos la conexion para que no entres a ciegas.',
+      'Tu correo y una API key de Holded. El proceso de alta es guiado y valida la conexión antes de que entres.',
   },
   {
-    question: 'Puede cambiar datos dentro de Holded?',
+    question: '¿Puede cambiar datos dentro de Holded?',
     answer:
-      'La capacidad publica actual se centra en lectura y explicacion. La unica accion de escritura disponible es dejar borradores de factura y siempre requiere confirmacion explicita.',
+      'No realiza cambios en tu cuenta de Holded. El único cambio posible es generar borradores de facturas emitidas, y siempre con tu confirmación explícita antes de crear nada.',
   },
   {
-    question: 'Esto sustituye a Holded?',
+    question: '¿Esto sustituye a Holded?',
     answer:
-      'No. Holded sigue siendo el sistema origen. Esta capa esta pensada para leer mejor, priorizar mejor y trabajar mas rapido sobre tus datos reales.',
+      'No. Holded sigue siendo el sistema origen. Esta herramienta está pensada para entender mejor los datos que ya tienes allí, no para reemplazarlo.',
   },
   {
-    question: 'Que modulos no forman parte todavia del alcance?',
+    question: '¿Qué módulos no están incluidos todavía?',
     answer:
-      'Hoy no incluye productos, usuarios, adjuntos, conciliacion bancaria ni documentos como presupuestos, pedidos o albaranes.',
+      'Hoy no incluye productos, usuarios, adjuntos, conciliación bancaria ni documentos como presupuestos, pedidos o albaranes.',
   },
   {
-    question: 'Puedo ver primero una demo o hablar con alguien?',
+    question: '¿Puedo ver primero una demo?',
     answer:
-      'Si. La landing deriva a paginas especificas de demo y contacto para no meter formularios largos dentro de la home.',
+      'Sí. Puedes solicitar una demo guiada o contactar con el equipo antes de conectar tu cuenta.',
   },
   {
-    question: 'Cuanto cuesta ahora mismo?',
+    question: '¿Cuánto cuesta?',
     answer:
-      'La experiencia publica actual se presenta como acceso gratuito para usuarios de ChatGPT, con onboarding y conexion guiada.',
+      'El acceso es gratuito para usuarios de ChatGPT, con onboarding y conexión guiada incluidos.',
   },
 ];
 
@@ -281,6 +298,19 @@ function MetricCard({
       </div>
       <div className="mt-4 text-2xl font-bold tracking-tight text-slate-950">{value}</div>
       <p className="mt-2 text-sm leading-6 text-slate-600">{label}</p>
+    </article>
+  );
+}
+
+function PainCard({ item }: { item: PainItem }) {
+  const Icon = item.icon;
+  return (
+    <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.35)]">
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100">
+        <Icon className="h-5 w-5 text-slate-500" />
+      </div>
+      <h3 className="mt-4 text-base font-bold tracking-tight text-slate-900">{item.problem}</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{item.solution}</p>
     </article>
   );
 }
@@ -322,33 +352,19 @@ function FeatureAccordion({
         </span>
       </summary>
 
-      <div className="mt-6 grid gap-5 border-t border-slate-100 pt-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <div>
-          <div className="text-sm font-semibold text-slate-900">Incluye hoy</div>
-          <ul className="mt-4 space-y-3">
-            {feature.capabilities.map((capability) => (
-              <li
-                key={capability}
-                className="flex items-start gap-3 text-sm leading-6 text-slate-700"
-              >
-                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-500" />
-                {capability}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-          <div className="text-sm font-semibold text-slate-900">Valor que aporta</div>
-          <p className="mt-3 text-sm leading-6 text-slate-600">{feature.outcome}</p>
-          <Link
-            href="/capacidades"
-            className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] transition hover:text-[#ef4654]"
-          >
-            Ver capacidad real completa
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
+      <div className="mt-5 border-t border-slate-100 pt-5">
+        <ul className="space-y-2.5">
+          {feature.capabilities.map((capability) => (
+            <li
+              key={capability}
+              className="flex items-start gap-3 text-sm leading-6 text-slate-700"
+            >
+              <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-500" />
+              {capability}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-sm italic text-slate-500">{feature.outcome}</p>
       </div>
     </details>
   );
@@ -374,6 +390,7 @@ function RolePanel({ title, body, bullets }: RoleCard) {
 export default function HoldedHomePage() {
   return (
     <main className="page-enter min-h-screen text-slate-900">
+      {/* ── Hero ── */}
       <section id="solucion" className="relative overflow-hidden pb-16 pt-12 sm:pt-16">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute left-[-8rem] top-[-4rem] h-[20rem] w-[20rem] rounded-full bg-[#ff5460]/10 blur-3xl" />
@@ -386,72 +403,54 @@ export default function HoldedHomePage() {
             <div>
               <SectionPill icon={Sparkles}>Conector Holded para ChatGPT</SectionPill>
 
-              <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-[3.75rem] sm:leading-[0.98]">
-                Tu Holded, por fin claro, accionable y listo para decidir.
+              <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-[3.5rem] sm:leading-[1.0]">
+                Controla tu facturación y contabilidad sin complicarte.
               </h1>
 
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-                Consulta facturas, clientes, contabilidad, proyectos y gastos en lenguaje claro.
-                Detecta prioridades, explica el negocio sin tecnicismos y deja borradores de factura
-                listos para validar cuando toca actuar.
+              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
+                Consulta en lenguaje claro tus facturas, IVA, gastos, clientes y proyectos desde
+                Holded. Detecta qué revisar hoy, qué cobrar antes y qué hablar con tu gestor.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href={buildRegisterUrl('holded_home_primary')}
+                  href="/demo"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_18px_45px_-24px_rgba(255,84,96,0.75)] transition hover:bg-[#ef4654] hover:shadow-[0_22px_55px_-22px_rgba(255,84,96,0.78)]"
                 >
-                  Conectar Holded ahora
-                  <ArrowRight className="h-4 w-4" />
+                  Ver demo
+                  <PlayCircle className="h-4 w-4" />
                 </Link>
 
                 <Link
-                  href="/demo"
+                  href={buildRegisterUrl('holded_home_hero_secondary')}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white/85 px-6 py-3.5 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-white"
                 >
-                  Solicitar demo guiada
-                  <PlayCircle className="h-4 w-4" />
+                  Conectar Holded
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                {trustHighlights.map((item) => (
-                  <div
-                    key={item}
-                    className="rounded-[1.5rem] border border-white/70 bg-white/75 p-4 text-sm leading-6 text-slate-700 shadow-sm backdrop-blur"
-                  >
-                    {item}
-                  </div>
-                ))}
+              <div className="mt-6 flex items-start gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm leading-6 text-slate-700 backdrop-blur">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                <span>
+                  No realiza cambios en tu cuenta de Holded. Solo puede generar borradores de
+                  facturas emitidas, y siempre con tu confirmación explícita.
+                </span>
               </div>
 
-              <div className="mt-8 rounded-[1.9rem] border border-[#ff5460]/15 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,84,96,0.08))] p-6 shadow-[0_28px_70px_-48px_rgba(255,84,96,0.55)]">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                      <KeyRound className="h-4 w-4 text-[#ff5460]" />
-                      Gratis para usuarios de ChatGPT
-                    </div>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                      Solo necesitas tu correo y una API key activa de Holded. Si prefieres ver el
-                      flujo antes de entrar, puedes ir a la demo o hablar con el equipo.
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-3 sm:flex-row">
-                    <Link
-                      href={buildAuthUrl('holded_home_existing_user')}
-                      className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                    >
-                      Ya tengo acceso
-                    </Link>
-                    <Link
-                      href="/contacto"
-                      className="inline-flex items-center justify-center rounded-full border border-[#ff5460]/25 bg-[#ff5460]/10 px-5 py-3 text-sm font-semibold text-[#d83f4f] transition hover:bg-[#ff5460]/15"
-                    >
-                      Hablar con un especialista
-                    </Link>
-                  </div>
-                </div>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href={buildAuthUrl('holded_home_existing')}
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/85 px-5 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-white"
+                >
+                  Ya tengo acceso
+                </Link>
+                <Link
+                  href="/contacto"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/85 px-5 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-white"
+                >
+                  Hablar con un especialista
+                </Link>
               </div>
             </div>
 
@@ -462,6 +461,7 @@ export default function HoldedHomePage() {
         </div>
       </section>
 
+      {/* ── Métricas ── */}
       <section className="relative border-y border-slate-200/80 bg-white/80 py-8 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -472,67 +472,107 @@ export default function HoldedHomePage() {
         </div>
       </section>
 
+      {/* ── Problemas reales ── */}
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-            <article className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_100%)] p-7 shadow-[0_28px_70px_-52px_rgba(255,84,96,0.5)] sm:p-8">
-              <SectionPill icon={MessageCircleMore}>Por que esta landing existe</SectionPill>
+          <div className="max-w-2xl">
+            <SectionPill icon={AlertCircle}>Problemas que resuelve</SectionPill>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
+              Si usas Holded, probablemente ya has vivido esto.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              El problema no es no tener datos. Es tardar demasiado en entender qué mirar, qué
+              significa y qué conviene hacer ahora.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {pains.map((item) => (
+              <PainCard key={item.problem} item={item} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Qué podrás hacer ── */}
+      <section className="bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+            <div>
+              <SectionPill icon={Sparkles}>Qué podrás hacer</SectionPill>
               <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.4rem]">
-                Holded ya tiene el dato. Lo que faltaba era una capa de lectura y decision.
+                Tus datos en Holded, por fin entendibles.
               </h2>
               <p className="mt-5 text-base leading-8 text-slate-600">
-                El problema no suele ser tener informacion. El problema es tardar demasiado en
-                entender que mirar, que significa y que conviene hacer ahora. Esta experiencia esta
-                pensada para resolver justo eso.
+                No tienes que aprender a usar el ERP. Solo pregunta, y obtén la respuesta que
+                necesitas para decidir con más criterio.
               </p>
 
-              <div className="mt-7 space-y-3">
+              <div className="mt-8 space-y-3">
                 {[
-                  'Menos saltos entre menus, filtros y pantallas.',
-                  'Menos dependencia de explicar contabilidad con lenguaje tecnico.',
-                  'Mas velocidad para detectar cobros, gastos o focos de revision.',
+                  'Menos saltos entre menús, filtros y pantallas.',
+                  'Menos dependencia de explicaciones técnicas para entender tus números.',
+                  'Más velocidad para detectar cobros, gastos y focos de revisión.',
                 ].map((item) => (
                   <div
                     key={item}
-                    className="flex items-start gap-3 rounded-[1.35rem] border border-slate-200 bg-white px-4 py-4 text-sm leading-6 text-slate-700"
+                    className="flex items-start gap-3 rounded-[1.35rem] border border-slate-200 bg-slate-50/60 px-4 py-3.5 text-sm leading-6 text-slate-700"
                   >
                     <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-[#ff5460]" />
                     {item}
                   </div>
                 ))}
               </div>
-            </article>
+            </div>
 
-            <div className="grid gap-5 md:grid-cols-3">
-              {valueCards.map((card) => (
-                <article
-                  key={card.title}
-                  className="rounded-[1.8rem] border border-slate-200 bg-white p-6 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.48)]"
+            <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_100%)] p-7 shadow-[0_28px_70px_-52px_rgba(255,84,96,0.45)] sm:p-8">
+              <h3 className="text-lg font-bold tracking-tight text-slate-950">
+                Consultas que puedes hacer hoy
+              </h3>
+              <ul className="mt-5 space-y-3">
+                {useCases.map((useCase) => (
+                  <li
+                    key={useCase}
+                    className="flex items-start gap-3 text-sm leading-6 text-slate-700"
+                  >
+                    <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-500" />
+                    {useCase}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/demo"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100">
-                    <Sparkles className="h-5 w-5 text-[#ff5460]" />
-                  </div>
-                  <h3 className="mt-5 text-lg font-bold tracking-tight text-slate-950">
-                    {card.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">{card.body}</p>
-                </article>
-              ))}
+                  Ver demo
+                  <PlayCircle className="h-4 w-4" />
+                </Link>
+                <Link
+                  href={buildRegisterUrl('holded_home_usecases')}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Conectar Holded
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="capacidades" className="bg-white py-16 sm:py-20">
+      {/* ── Capacidades por área ── */}
+      <section id="capacidades" className="py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-3xl">
-            <SectionPill icon={Zap}>Capacidades en desplegables</SectionPill>
+            <SectionPill icon={FileText}>Capacidades por área</SectionPill>
             <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.7rem]">
-              Lo que puedes hacer hoy, sin inflar el alcance.
+              Lo que puedes controlar desde hoy.
             </h2>
             <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
-              La landing resume el valor. Aqui lo abrimos por bloques para que veas con honestidad
-              que entra ya en el conector y que tipo de utilidad genera en negocio.
+              Las 4 áreas principales con descripción honesta de qué puedes consultar y qué te ayuda
+              a decidir. Proyectos y equipo disponibles como áreas adicionales.
             </p>
           </div>
 
@@ -545,132 +585,27 @@ export default function HoldedHomePage() {
           <div className="mt-8 rounded-[1.9rem] border border-amber-200 bg-amber-50 p-6">
             <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
               <Clock3 className="h-4 w-4" />
-              Alcance actual, sin maquillaje
+              Alcance actual
             </div>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-amber-900">
-              Hoy no incluye productos, usuarios, adjuntos, conciliacion bancaria ni documentos como
-              presupuestos, pedidos o albaranes. Esa claridad comercial importa porque evita vender
-              algo distinto de lo que el usuario recibe.
+              Hoy no incluye productos, usuarios, adjuntos, conciliación bancaria ni documentos como
+              presupuestos, pedidos o albaranes.
             </p>
           </div>
         </div>
       </section>
 
-      <section id="recorrido" className="py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#081936_0%,#102a58_100%)] p-8 text-white shadow-[0_32px_80px_-52px_rgba(8,25,54,0.85)] sm:p-10">
-              <SectionPill icon={ShieldCheck}>Recorrido de conversion</SectionPill>
-              <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-[2.6rem]">
-                La home inspira. El formulario vive donde debe vivir.
-              </h2>
-              <p className="mt-5 max-w-2xl text-base leading-8 text-white/80">
-                Para no romper el ritmo de la landing, la captacion se deriva a paginas especificas
-                de demo y contacto. Y cuando alguien quiere conectar de verdad, salta al onboarding
-                guiado con un flujo mucho mas limpio.
-              </p>
-
-              <div className="mt-8 grid gap-4">
-                {journeySteps.map((step) => (
-                  <article
-                    key={step.step}
-                    className="rounded-[1.6rem] border border-white/12 bg-white/8 p-5 backdrop-blur"
-                  >
-                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
-                      Paso {step.step}
-                    </div>
-                    <h3 className="mt-3 text-lg font-semibold text-white">{step.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-white/75">{step.body}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-5">
-              <article className="rounded-[1.9rem] border border-slate-200 bg-white p-7 shadow-[0_22px_55px_-45px_rgba(15,23,42,0.55)]">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <PlayCircle className="h-4 w-4 text-[#ff5460]" />
-                  Demo guiada
-                </div>
-                <h3 className="mt-4 text-2xl font-bold tracking-tight text-slate-950">
-                  Ensena el caso real sin meter un formulario en mitad del scroll.
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Pagina dedicada para quien necesita ver el encaje antes de conectar. Mejor para
-                  conversion asistida y mejor para mantener la home enfocada.
-                </p>
-                <Link
-                  href="/demo"
-                  className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] transition hover:text-[#ef4654]"
-                >
-                  Ir a la demo
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </article>
-
-              <article className="rounded-[1.9rem] border border-slate-200 bg-white p-7 shadow-[0_22px_55px_-45px_rgba(15,23,42,0.55)]">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <LifeBuoy className="h-4 w-4 text-[#ff5460]" />
-                  Contacto comercial o soporte
-                </div>
-                <h3 className="mt-4 text-2xl font-bold tracking-tight text-slate-950">
-                  Una via directa para resolver dudas, activar cuenta o destrabar un onboarding.
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Tambien con pagina propia. Menos ruido en la home y una experiencia mas seria para
-                  quien quiere hablar con alguien.
-                </p>
-                <Link
-                  href="/contacto"
-                  className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] transition hover:text-[#ef4654]"
-                >
-                  Ir a contacto
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </article>
-
-              <article className="rounded-[1.9rem] border border-[#ff5460]/20 bg-[#ff5460]/5 p-7 shadow-[0_22px_55px_-45px_rgba(255,84,96,0.45)]">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <KeyRound className="h-4 w-4 text-[#ff5460]" />
-                  Conversion directa
-                </div>
-                <h3 className="mt-4 text-2xl font-bold tracking-tight text-slate-950">
-                  Si ya lo tienes claro, entra directo al onboarding.
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-slate-700">
-                  El flujo ya esta preparado para alta, verificacion, validacion de API key y
-                  entrada al panel.
-                </p>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href={buildRegisterUrl('holded_home_onboarding_card')}
-                    className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
-                  >
-                    Empezar gratis
-                  </Link>
-                  <Link
-                    href={buildAuthUrl('holded_home_onboarding_existing')}
-                    className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Ya tengo acceso
-                  </Link>
-                </div>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* ── Para quién encaja ── */}
       <section className="bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="max-w-3xl">
-            <SectionPill icon={Users}>Para quien encaja mejor</SectionPill>
+          <div className="max-w-2xl">
+            <SectionPill icon={Users}>Para quién encaja</SectionPill>
             <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
-              No es solo una integracion. Es una forma mejor de trabajar el dato que ya tienes.
+              No hace falta saber de contabilidad para sacarle partido.
             </h2>
             <p className="mt-5 text-base leading-8 text-slate-600">
-              Cuando la informacion esta dentro de Holded pero el trabajo real consiste en
-              interpretarla, priorizarla y explicarla, esta capa gana mucho valor.
+              Está pensado para quien trabaja con Holded pero quiere entender mejor sus números, no
+              para quien quiere convertirse en experto del ERP.
             </p>
           </div>
 
@@ -682,16 +617,66 @@ export default function HoldedHomePage() {
         </div>
       </section>
 
-      <section id="faq" className="py-16 sm:py-20">
+      {/* ── Cómo funciona ── */}
+      <section id="recorrido" className="py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="max-w-2xl">
+            <SectionPill icon={ShieldCheck}>Cómo funciona</SectionPill>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
+              Tres pasos, sin configuración técnica.
+            </h2>
+          </div>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {journeySteps.map((step) => (
+              <article
+                key={step.step}
+                className="rounded-[1.85rem] border border-slate-200 bg-white p-7 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.4)]"
+              >
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Paso {step.step}
+                </div>
+                <h3 className="mt-3 text-lg font-bold tracking-tight text-slate-950">
+                  {step.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{step.body}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href={buildRegisterUrl('holded_home_journey_primary')}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_18px_45px_-24px_rgba(255,84,96,0.65)] transition hover:bg-[#ef4654]"
+            >
+              Empezar gratis
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/demo"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Ver demo guiada
+              <PlayCircle className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/contacto"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Hablar con el equipo
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section id="faq" className="bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-4xl px-4">
           <div className="text-center">
             <SectionPill icon={ShieldCheck}>FAQ</SectionPill>
             <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
               Lo importante, respondido de forma directa.
             </h2>
-            <p className="mt-5 text-base leading-8 text-slate-600">
-              Sin letra pequena y sin esconder el alcance real.
-            </p>
           </div>
 
           <div className="mt-10 space-y-3">
@@ -714,19 +699,20 @@ export default function HoldedHomePage() {
         </div>
       </section>
 
+      {/* ── CTA final ── */}
       <section className="pb-16 pt-4 sm:pb-20">
         <div className="mx-auto max-w-6xl px-4">
           <div className="rounded-[2.25rem] border border-slate-200 bg-[linear-gradient(135deg,#fff7f7_0%,#ffffff_55%,#f6fbff_100%)] p-8 shadow-[0_32px_85px_-58px_rgba(15,23,42,0.58)] sm:p-10">
             <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
-                <SectionPill icon={Sparkles}>Cierre</SectionPill>
+                <SectionPill icon={Sparkles}>Empieza hoy</SectionPill>
                 <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.6rem]">
-                  Si Holded ya es tu sistema, esta es la capa que te faltaba para usarlo mejor.
+                  Si Holded ya guarda tus datos, esta es la forma más clara de entenderlos y actuar
+                  con criterio.
                 </h2>
-                <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600">
-                  Puedes entrar directo al onboarding, pedir una demo guiada o hablar con el equipo.
-                  La diferencia real no esta en conectar por conectar, sino en lo rapido que
-                  empiezas a entender mejor tu operativa.
+                <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600">
+                  Sin aprender el ERP. Sin esperar al gestor. Con respuestas claras y control sobre
+                  lo que ocurre en tu negocio.
                 </p>
               </div>
 

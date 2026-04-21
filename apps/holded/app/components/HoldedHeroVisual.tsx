@@ -11,7 +11,7 @@ type Message = {
 
 const conversations: Message[][] = [
   [
-    { role: 'user', content: 'Que facturas deberia revisar hoy?' },
+    { role: 'user', content: '¿Qué facturas debería revisar hoy?' },
     {
       role: 'assistant',
       content: (
@@ -33,23 +33,23 @@ const conversations: Message[][] = [
                 <tr>
                   <td className="px-2.5 py-1.5">Muebles Duran S.L.</td>
                   <td className="px-2.5 py-1.5 font-semibold">3.480 EUR</td>
-                  <td className="px-2.5 py-1.5 text-red-600">31 dias</td>
+                  <td className="px-2.5 py-1.5 text-red-600">31 días</td>
                 </tr>
                 <tr>
                   <td className="px-2.5 py-1.5">Acme Consulting</td>
                   <td className="px-2.5 py-1.5 font-semibold">1.210 EUR</td>
-                  <td className="px-2.5 py-1.5 text-amber-600">14 dias</td>
+                  <td className="px-2.5 py-1.5 text-amber-600">14 días</td>
                 </tr>
                 <tr>
-                  <td className="px-2.5 py-1.5">Lopez y Asociados</td>
+                  <td className="px-2.5 py-1.5">López y Asociados</td>
                   <td className="px-2.5 py-1.5 font-semibold">870 EUR</td>
-                  <td className="px-2.5 py-1.5 text-amber-600">7 dias</td>
+                  <td className="px-2.5 py-1.5 text-amber-600">7 días</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="text-slate-500">
-            Empezaria por <span className="font-medium text-slate-700">Muebles Duran</span> por
+            Empezaría por <span className="font-medium text-slate-700">Muebles Duran</span> por
             importe y retraso acumulado.
           </p>
         </div>
@@ -57,7 +57,7 @@ const conversations: Message[][] = [
     },
   ],
   [
-    { role: 'user', content: 'Cuanto IVA tengo pendiente este trimestre?' },
+    { role: 'user', content: 'Explícame el IVA de este trimestre' },
     {
       role: 'assistant',
       content: (
@@ -75,7 +75,7 @@ const conversations: Message[][] = [
               <span className="font-semibold text-green-700">- 1.247 EUR</span>
             </div>
             <div className="flex justify-between border-t border-slate-100 bg-slate-50 px-3 py-2 font-semibold text-slate-900">
-              <span>Cuota neta</span>
+              <span>Cuota neta a pagar</span>
               <span>3.576 EUR</span>
             </div>
           </div>
@@ -87,7 +87,47 @@ const conversations: Message[][] = [
     },
   ],
   [
-    { role: 'user', content: 'Prepara un borrador de factura para Acme Consulting' },
+    { role: 'user', content: '¿Qué debería revisar con mi gestor esta semana?' },
+    {
+      role: 'assistant',
+      content: (
+        <div className="space-y-2 text-xs">
+          <p className="text-slate-700">
+            Te sugiero llevar estos <span className="font-semibold text-slate-900">3 puntos</span> a
+            la reunión:
+          </p>
+          <ul className="space-y-1.5">
+            {[
+              {
+                label: 'Facturas vencidas',
+                desc: 'Muebles Duran lleva 31 días sin pagar.',
+                className: 'rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-red-700',
+              },
+              {
+                label: 'IVA T2',
+                desc: 'Cuota neta de 3.576 EUR pendiente de confirmar.',
+                className:
+                  'rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-amber-700',
+              },
+              {
+                label: 'Gastos sin categorizar',
+                desc: '4 apuntes en "pendiente" desde marzo.',
+                className:
+                  'rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-slate-600',
+              },
+            ].map((item) => (
+              <li key={item.label} className={item.className}>
+                <span className="font-semibold">{item.label}</span> — {item.desc}
+              </li>
+            ))}
+          </ul>
+          <p className="text-slate-500">Así vas con criterio, no con dudas.</p>
+        </div>
+      ),
+    },
+  ],
+  [
+    { role: 'user', content: 'Prepara un borrador para Acme Consulting' },
     {
       role: 'assistant',
       content: (
@@ -116,7 +156,7 @@ const conversations: Message[][] = [
             </div>
           </div>
           <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-amber-700">
-            Solo se guardara cuando confirmes. Todavia no se ha enviado nada.
+            Solo se guardará cuando confirmes. Aún no se ha enviado nada.
           </p>
         </div>
       ),
@@ -177,7 +217,7 @@ export default function HoldedHeroVisual() {
 
       <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] p-4">
         <div className="mb-4 flex flex-wrap gap-2">
-          {['Facturas', 'Contabilidad', 'CRM', 'Proyectos'].map((badge) => (
+          {['Facturación', 'IVA y gastos', 'Cobros', 'Clientes'].map((badge) => (
             <span
               key={badge}
               className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600"
