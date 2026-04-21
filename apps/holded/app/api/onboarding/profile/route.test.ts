@@ -26,15 +26,18 @@ jest.mock('@/app/lib/prisma', () => ({
 }));
 
 import { getHoldedConnection } from '@/app/lib/holded-integration';
+import {
+  completeHoldedOnboardingProfile,
+  saveHoldedOnboardingDraft,
+} from '@/app/lib/holded-onboarding';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
-import { completeIsaakOnboarding, saveIsaakOnboardingDraft } from '@verifactu/integrations';
 import { POST } from './route';
 
 const mockGetHoldedSession = getHoldedSession as jest.Mock;
 const mockGetHoldedConnection = getHoldedConnection as jest.Mock;
-const mockCompleteIsaakOnboarding = completeIsaakOnboarding as jest.Mock;
-const mockSaveIsaakOnboardingDraft = saveIsaakOnboardingDraft as jest.Mock;
+const mockCompleteHoldedOnboardingProfile = completeHoldedOnboardingProfile as jest.Mock;
+const mockSaveHoldedOnboardingDraft = saveHoldedOnboardingDraft as jest.Mock;
 const mockTenantProfileUpsert = prisma.tenantProfile.upsert as jest.Mock;
 
 describe('POST /api/onboarding/profile', () => {
@@ -58,12 +61,12 @@ describe('POST /api/onboarding/profile', () => {
       lastValidatedAt: '2026-04-16T10:05:00.000Z',
     });
 
-    mockCompleteIsaakOnboarding.mockResolvedValue({
+    mockCompleteHoldedOnboardingProfile.mockResolvedValue({
       profile: { preferredName: 'Ana' },
       instructions: { greeting: 'hola' },
     });
 
-    mockSaveIsaakOnboardingDraft.mockResolvedValue(undefined);
+    mockSaveHoldedOnboardingDraft.mockResolvedValue(undefined);
     mockTenantProfileUpsert.mockResolvedValue({ tenantId: 'tenant_1' });
   });
 
@@ -88,7 +91,7 @@ describe('POST /api/onboarding/profile', () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toContain('telefono no parece valido');
-    expect(mockCompleteIsaakOnboarding).not.toHaveBeenCalled();
+    expect(mockCompleteHoldedOnboardingProfile).not.toHaveBeenCalled();
   });
 
   it('stores CNAE code and company address into tenant profile on complete mode', async () => {
@@ -114,7 +117,7 @@ describe('POST /api/onboarding/profile', () => {
 
     expect(response.status).toBe(200);
     expect(payload.ok).toBe(true);
-    expect(mockCompleteIsaakOnboarding).toHaveBeenCalledWith(
+    expect(mockCompleteHoldedOnboardingProfile).toHaveBeenCalledWith(
       expect.objectContaining({
         profile: expect.objectContaining({
           companySectorCode: 'M',

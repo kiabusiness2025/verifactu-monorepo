@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       'Num Empresas',
       'Empresas',
       'Roles',
-      'Tono Isaak',
+      'Tono del canal',
       'Onboarding Completado',
     ];
 

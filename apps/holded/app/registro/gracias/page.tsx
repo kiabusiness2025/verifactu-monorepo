@@ -38,7 +38,7 @@ export default async function HoldedRegistrationThanksPage({ searchParams }: Pag
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
               {verified
-                ? 'Ya puedes entrar y seguir con la conexion de Holded y tu dashboard.'
+                ? 'Ya puedes entrar y seguir con la conexion de Holded y tu panel de acceso.'
                 : 'Te hemos enviado un correo de confirmacion y otro de bienvenida para que puedas retomar la conexion de Holded sin perderte.'}
             </p>
             {email ? (
@@ -68,7 +68,7 @@ export default async function HoldedRegistrationThanksPage({ searchParams }: Pag
                   2. Vuelve a Holded e inicia sesion con el mismo email.
                 </li>
                 <li className="rounded-2xl border border-slate-200 bg-white p-4">
-                  3. Pega tu API key de Holded y entra al dashboard.
+                  3. Pega tu API key de Holded y entra a tu panel.
                 </li>
               </ol>
             </article>
@@ -80,7 +80,7 @@ export default async function HoldedRegistrationThanksPage({ searchParams }: Pag
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-700">
                 Todo el flujo se queda dentro de holded.verifactu.business: registro, confirmacion,
-                acceso y dashboard.
+                acceso y activacion.
               </p>
               <div className="mt-5 flex flex-col gap-3">
                 <Link

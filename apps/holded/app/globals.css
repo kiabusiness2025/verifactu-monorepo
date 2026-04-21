@@ -12,8 +12,16 @@
 
 body {
   margin: 0;
-  background: linear-gradient(180deg, #ffffff 0%, #fff7f7 45%, #ffffff 100%);
+  background:
+    radial-gradient(circle at top left, rgba(255, 84, 96, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(125, 211, 252, 0.16), transparent 24%),
+    linear-gradient(180deg, #ffffff 0%, #fff7f7 45%, #ffffff 100%);
   color: var(--ink);
+}
+
+::selection {
+  background: rgba(255, 84, 96, 0.18);
+  color: #0f172a;
 }
 
 @keyframes holded-fusion-left {
@@ -107,7 +115,6 @@ body {
   }
 }
 
-/* ── Page entry animation ─────────────────────────────── */
 @keyframes pageEnter {
   from {
     opacity: 0;
@@ -123,7 +130,6 @@ body {
   animation: pageEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* ── Mobile nav slide-down ───────────────────────────── */
 @keyframes navSlideDown {
   from {
     opacity: 0;
@@ -139,23 +145,23 @@ body {
   animation: navSlideDown 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* ── FAQ chevron ─────────────────────────────────────── */
-.faq-chevron svg {
-  transition: transform 0.22s ease;
+.holded-accordion > summary {
+  list-style: none;
 }
 
-details[open] .faq-chevron svg {
-  transform: rotate(180deg);
+.holded-accordion > summary::-webkit-details-marker {
+  display: none;
 }
 
-/* ── Progress bar fill ───────────────────────────────── */
-@keyframes progressFill {
-  from {
-    width: 0%;
-  }
-  to {
-    width: 100%;
-  }
+.holded-accordion-chevron {
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease;
+}
+
+.holded-accordion[open] .holded-accordion-chevron {
+  transform: rotate(90deg);
 }
 
 a,

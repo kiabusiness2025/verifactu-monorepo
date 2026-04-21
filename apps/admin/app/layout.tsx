@@ -6,10 +6,10 @@ import PwaRegistration from '@/components/pwa/PwaRegistration';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Holded + ChatGPT Admin',
+  title: 'Holded Admin',
   description:
-    'Panel interno para observar el conector directo Holded + ChatGPT y su actividad operativa.',
-  applicationName: 'Holded + ChatGPT Admin',
+    'Panel interno para observar usuarios, tenants y actividad operativa del canal Holded.',
+  applicationName: 'Holded Admin',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,

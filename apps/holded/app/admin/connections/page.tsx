@@ -10,5 +10,5 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function HoldedAdminConnectionsPage() {
-  redirect(buildAdminRedirectUrl('/dashboard/admin/connections'));
+  redirect(buildAdminRedirectUrl('/tenants'));
 }

@@ -126,7 +126,7 @@ export const sanitizeHoldedReturnTarget = (candidate: string | undefined, fallba
   }
 };
 
-export const buildAdminRedirectUrl = (path = '/dashboard/admin') => {
+export const buildAdminRedirectUrl = (path = '/panel') => {
   const normalized = path.startsWith('/') ? path : `/${path}`;
   return `${ADMIN_PUBLIC_URL}${normalized}`;
 };

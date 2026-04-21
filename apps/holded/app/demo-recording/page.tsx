@@ -10,117 +10,6 @@ export const metadata: Metadata = {
     'Ve como funciona el conector Holded en accion: consulta de facturas, contactos, contabilidad y proyectos directamente desde el chat.',
 };
 
-/*
-  ═══════════════════════════════════════════════════════════════════════════════
-  SORA PROMPTS — generar offline y colocar en /public/demo/
-
-  Convenciones de nombre:
-    /public/demo/holded-{slug}-16x9.mp4   ← PC / landscape
-    /public/demo/holded-{slug}-9x16.mp4   ← mobile / portrait
-
-  Ajustes globales para todos los clips:
-    - Solo pantalla, sin personas ni manos
-    - Interfaz de chat minimalista, fondo blanco, modo claro
-    - Texto en español apareciendo letra a letra como si alguien escribiera
-    - Respuesta del asistente mostrándose con animación de tokens suaves
-    - Sin watermarks, sin elementos de sistema operativo, sin notificaciones
-    - Movimiento de cámara: ninguno (plano fijo sobre la pantalla)
-  ───────────────────────────────────────────────────────────────────────────────
-
-  CLIP 1 — holded-overview  (hero, 20 s)
-  ───────────────────────────────────────
-  16x9:
-  "A clean laptop screen filling the frame, 16:9. A minimal white chat interface
-  is open. A Spanish question types itself in the input field: '¿Qué facturas
-  debería revisar hoy para proteger caja?' The send button activates. A structured
-  AI response appears token by token: three invoice cards with company names,
-  euro amounts, and colored status labels — green for paid, amber for overdue.
-  The layout is clean, card-based, modern. Soft ambient light on the screen.
-  No reflections. No person visible. Static camera."
-
-  9x16:
-  "A smartphone screen filling the frame, 9:16 portrait. A minimal white chat
-  interface is open. A Spanish question types itself: '¿Qué facturas debería
-  revisar hoy para proteger caja?' A structured AI response appears token by
-  token: three invoice cards with company names, euro amounts, and colored
-  status badges — green for paid, amber for overdue. Clean mobile UI, large
-  readable font. Soft ambient light. No person visible. Static camera."
-
-  ───────────────────────────────────────
-  CLIP 2 — holded-facturas  (15 s)
-  ───────────────────────────────────────
-  16x9:
-  "A laptop screen, 16:9, showing a white minimal chat interface. The user
-  message appears typed: 'Lista las facturas pendientes con más riesgo de cobro.'
-  The AI responds with a clean list: four invoice rows showing client name,
-  invoice number, amount in euros, days overdue, and a small red urgency badge
-  on the most critical ones. Smooth token-by-token animation. No person. Static
-  camera. Light mode. No OS chrome visible."
-
-  9x16:
-  "A smartphone screen, 9:16, showing a white minimal chat interface. User
-  message types: 'Lista las facturas pendientes con más riesgo de cobro.' AI
-  responds with four invoice rows: client name, amount in euros, days overdue,
-  red urgency badge on the worst ones. Clean mobile layout, readable font.
-  Smooth token animation. No person. Static camera. Light mode."
-
-  ───────────────────────────────────────
-  CLIP 3 — holded-contactos  (15 s)
-  ───────────────────────────────────────
-  16x9:
-  "A laptop screen, 16:9, white minimal chat interface. User message types:
-  'Muéstrame los contactos con facturas vencidas y el importe total pendiente.'
-  AI responds with a clean contact list: three rows each showing company name,
-  total outstanding in euros, and a one-line collection note. Subtle color
-  coding — red for high risk, amber for medium. Smooth token animation. No
-  person. Static camera. Light mode."
-
-  9x16:
-  "A smartphone screen, 9:16, white minimal chat interface. User message types:
-  'Muéstrame los contactos con facturas vencidas y el importe total pendiente.'
-  AI responds with three contact cards: company name, total outstanding euros,
-  collection note, color badge. Smooth token animation. No person. Static
-  camera. Light mode."
-
-  ───────────────────────────────────────
-  CLIP 4 — holded-contabilidad  (15 s)
-  ───────────────────────────────────────
-  16x9:
-  "A laptop screen, 16:9, white minimal chat interface. User message types:
-  'Explícame los movimientos contables de esta semana en lenguaje claro.' AI
-  responds translating four journal entries into plain readable Spanish sentences:
-  each entry shown as a before/after pair — the raw accounting code on the left,
-  the plain language explanation on the right, separated by an arrow. Clean
-  two-column layout. Smooth animation. No person. Static camera. Light mode."
-
-  9x16:
-  "A smartphone screen, 9:16, white minimal chat interface. User message types:
-  'Explícame los movimientos contables de esta semana en lenguaje claro.' AI
-  responds with four accounting entries translated to plain Spanish — raw code
-  followed by readable explanation. Stacked mobile layout. Smooth token
-  animation. No person. Static camera. Light mode."
-
-  ───────────────────────────────────────
-  CLIP 5 — holded-proyectos  (15 s)
-  ───────────────────────────────────────
-  16x9:
-  "A laptop screen, 16:9, white minimal chat interface. User message types:
-  'Dame un resumen del estado de los proyectos activos y qué tiene más riesgo.'
-  AI responds with three project cards: project name, progress bar at different
-  fill levels, status label (green On Track / amber At Risk / red Blocked), and
-  one-line note. Clean card layout. Smooth token animation. No person. Static
-  camera. Light mode."
-
-  9x16:
-  "A smartphone screen, 9:16, white minimal chat interface. User types: 'Dame
-  un resumen del estado de los proyectos activos y qué tiene más riesgo.' AI
-  responds with three project cards: name, progress bar, status badge, one-line
-  note. Mobile-friendly stacked layout. Smooth animation. No person. Static
-  camera. Light mode."
-
-  ═══════════════════════════════════════════════════════════════════════════════
-*/
-
 const heroClip: DemoClip = {
   id: 'overview',
   slug: 'holded-overview',
@@ -168,7 +57,6 @@ const useCaseClips: DemoClip[] = [
 export default function HoldedDemoPage() {
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_40%,#ffffff_100%)] text-slate-900">
-      {/* Header */}
       <section className="mx-auto max-w-6xl px-4 pb-10 pt-14">
         <div className="inline-flex items-center gap-2 rounded-full border border-[#ff5460]/20 bg-[#ff5460]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#ff5460]">
           <Play className="h-3.5 w-3.5" />
@@ -183,10 +71,8 @@ export default function HoldedDemoPage() {
         </p>
       </section>
 
-      {/* Videos (client component — maneja fallback por onError) */}
       <DemoVideoGrid heroClip={heroClip} useCaseClips={useCaseClips} />
 
-      {/* CTA */}
       <section className="mx-auto max-w-6xl px-4 py-10">
         <div className="rounded-[2rem] border border-[#ff5460]/15 bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_100%)] px-8 py-10 shadow-[0_32px_90px_-48px_rgba(255,84,96,0.3)] sm:px-10">
           <h2 className="text-3xl font-bold tracking-tight text-slate-950">
@@ -194,7 +80,7 @@ export default function HoldedDemoPage() {
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
             Conecta tu cuenta de Holded en menos de un minuto. Pega tu API key, validamos la
-            conexion al momento y entras directamente al chat.
+            conexion al momento y entras directamente al panel.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link

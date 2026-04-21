@@ -488,7 +488,7 @@ function HoldedAuthContent() {
       <div className="text-left">
         <div className="text-sm font-semibold text-slate-950">holded</div>
         <div className="text-xs text-slate-500">
-          {isChatgptFlow ? 'Conector ChatGPT · Holded' : 'Acceso a tu conexion'}
+          {isChatgptFlow ? 'Conexion Holded para ChatGPT' : 'Acceso a tu conexion'}
         </div>
       </div>
     </div>
@@ -601,12 +601,12 @@ function HoldedAuthContent() {
                     <HoldedBadge />
                     <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
                       {isChatgptFlow
-                        ? 'Identifícate para activar tu conector'
+                        ? 'Identificate para activar tu conexion'
                         : 'Accede para continuar'}
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
                       {isChatgptFlow
-                        ? 'En menos de un minuto conectas Holded a ChatGPT.'
+                        ? 'En menos de un minuto validas tu acceso y conectas Holded.'
                         : 'Elige como quieres identificarte.'}
                     </p>
                   </div>

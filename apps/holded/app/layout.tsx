@@ -8,7 +8,7 @@ const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700
 export const metadata: Metadata = {
   title: 'Verifactu Business | Conector Holded',
   description:
-    'Asistente para entender ventas, gastos y beneficio con tus datos de Holded en un flujo simple.',
+    'Conector para entender ventas, gastos y beneficio con tus datos reales de Holded en un flujo simple.',
   icons: {
     icon: [{ url: '/brand/holded/holded-diamond-logo.png?v=20260416', type: 'image/png' }],
     shortcut: ['/brand/holded/holded-diamond-logo.png?v=20260416'],

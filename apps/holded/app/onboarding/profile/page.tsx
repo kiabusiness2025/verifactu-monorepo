@@ -1,8 +1,8 @@
 import { getHoldedConnection } from '@/app/lib/holded-integration';
+import { getHoldedOnboardingState } from '@/app/lib/holded-onboarding';
 import { buildDashboardUrl, sanitizeHoldedReturnTarget } from '@/app/lib/holded-navigation';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
-import { getIsaakOnboardingState as getOnboardingState } from '@verifactu/integrations';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import HoldedConversationalOnboardingClient from './HoldedConversationalOnboardingClient';
@@ -80,7 +80,7 @@ export default async function HoldedProfileOnboardingPage({ searchParams }: Page
     readTenantProfileSafe(session.tenantId),
   ]);
 
-  const onboardingState = await getOnboardingState({
+  const onboardingState = await getHoldedOnboardingState({
     prisma,
     tenantId: session.tenantId,
     userId: session.userId,

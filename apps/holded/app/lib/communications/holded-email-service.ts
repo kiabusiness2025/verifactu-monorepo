@@ -20,6 +20,10 @@ type LeadPayload = {
   email: string;
   companyName: string;
   phone?: string;
+  cif?: string;
+  sector?: string;
+  role?: string;
+  message?: string;
   source?: string;
 };
 
@@ -175,7 +179,7 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
     'https://admin.verifactu.business';
   const chatUrl = `${appSiteUrl}/dashboard?source=holded_connected_email`;
   const settingsUrl = `${appSiteUrl}/dashboard/integrations?source=holded_connected_email`;
-  const adminPanelUrl = `${adminSiteUrl}/dashboard/admin`;
+  const adminPanelUrl = `${adminSiteUrl}/panel`;
   const profileCompletionUrl =
     cleanEnv(input.profileCompletionUrl || undefined) ||
     `${holdedSiteUrl}/onboarding/profile?source=holded_connected_email&channel=${input.channel ?? 'chatgpt'}`;
@@ -312,7 +316,7 @@ export async function sendHoldedDisconnectedCommunication(input: {
     'https://admin.verifactu.business';
 
   const reconnectUrl = `${holdedSiteUrl}/onboarding/holded?source=holded_disconnected_email&channel=${input.channel}`;
-  const adminPanelUrl = `${adminSiteUrl}/dashboard/admin`;
+  const adminPanelUrl = `${adminSiteUrl}/panel`;
 
   const configuredAdminRecipients = readEmailList(
     process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS,
@@ -425,7 +429,7 @@ export async function sendHoldedWeeklySummaryAdminEmail(input: {
     cleanEnv(process.env.ADMIN_SITE_URL) ||
     cleanEnv(process.env.NEXT_PUBLIC_ADMIN_SITE_URL) ||
     'https://admin.verifactu.business';
-  const adminPanelUrl = `${adminSiteUrl}/dashboard/admin`;
+  const adminPanelUrl = `${adminSiteUrl}/panel`;
 
   const template = buildHoldedWeeklyAdminSummaryEmail({ ...input, adminPanelUrl });
 

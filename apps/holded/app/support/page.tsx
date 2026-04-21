@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 const supportOptions = [
   {
     title: 'Escribir a soporte',
-    body: 'Si ves un error al crear tu acceso, verificar el correo o entrar al dashboard, escribenos y te ayudamos.',
+    body: 'Si ves un error al crear tu acceso, verificar el correo o entrar al panel, escribenos y te ayudamos.',
     actionLabel: 'Enviar email',
     actionHref: supportMailto,
   },
@@ -60,14 +60,14 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-slate-600">
               Si te atascas al crear tu acceso, verificar el correo, conectar Holded o entrar al
-              dashboard, este es el punto de ayuda.
+              panel, este es el punto de ayuda.
             </p>
             <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm leading-7 text-slate-600 shadow-sm">
               Para ayudarte mas rapido, incluye en tu mensaje:
               <ul className="mt-3 space-y-1">
                 <li>- el email con el que has creado tu acceso</li>
                 <li>- una captura del error visible</li>
-                <li>- si el fallo ocurre en acceso, verificacion, onboarding o dashboard</li>
+                <li>- si el fallo ocurre en acceso, verificacion, onboarding o panel</li>
               </ul>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
             <div className="mb-5 flex justify-center rounded-3xl bg-[linear-gradient(180deg,#fff7f7_0%,#f8fbff_100%)] p-4">
               <Image
                 src="/assistant/holded-avatar.png"
-                alt="Asistente Holded"
+                alt="Soporte Holded"
                 width={220}
                 height={220}
                 className="h-auto w-full max-w-[8rem]"
@@ -87,7 +87,7 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
               Soporte en horario laboral
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Si el problema bloquea tu conexion con Holded o el acceso al dashboard, priorizamos la
+              Si el problema bloquea tu conexion con Holded o el acceso al panel, priorizamos la
               revision para que puedas completar el alta cuanto antes.
             </p>
           </div>
@@ -127,7 +127,7 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
               Consejo util
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Si ya tienes sesion iniciada, entra primero al onboarding o al dashboard. Asi podremos
+              Si ya tienes sesion iniciada, entra primero al onboarding o al panel. Asi podremos
               ubicar tu tenant y revisar el caso con mas contexto.
             </p>
           </div>
@@ -137,7 +137,7 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
           <SupportAssistantClient
             source={source || 'holded_support'}
             digest={digest || undefined}
-            title="Te ayudo a salir del bloqueo sin iniciar sesion."
+            title="Te ayudamos a salir del bloqueo sin iniciar sesion."
           />
         </div>
 

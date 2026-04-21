@@ -11,10 +11,11 @@ type Props = {
 };
 
 const navLinks = [
-  { href: '/#solucion', label: 'Inicio' },
+  { href: '/#solucion', label: 'Solucion' },
   { href: '/#capacidades', label: 'Capacidades' },
-  { href: '/#faq', label: 'FAQ' },
-  { href: '/#contacto', label: 'Contacto' },
+  { href: '/#recorrido', label: 'Recorrido' },
+  { href: '/demo', label: 'Demo' },
+  { href: '/contacto', label: 'Contacto' },
 ];
 
 export default function HoldedSiteChrome({ children }: Props) {
@@ -32,38 +33,44 @@ export default function HoldedSiteChrome({ children }: Props) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/88 backdrop-blur-xl">
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex items-center justify-between gap-4 py-4">
             <Link href="/" className="group flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition group-hover:shadow-md">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition group-hover:shadow-md">
                 <Image
                   src="/brand/holded/holded-diamond-logo.png"
                   alt="Holded"
-                  width={20}
-                  height={20}
-                  className="h-5 w-5 object-contain"
+                  width={22}
+                  height={22}
+                  className="h-[22px] w-[22px] object-contain"
                   priority
                 />
               </div>
               <div className="leading-tight">
                 <div className="text-base font-semibold text-slate-900">Holded</div>
                 <div className="text-xs font-medium text-slate-500">
-                  Solution Partner autorizado
+                  Conector conversacional para negocio real
                 </div>
               </div>
             </Link>
 
-            {/* Desktop nav */}
-            <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 md:flex">
+            <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 lg:flex">
               {navLinks.map((link) => (
-                <a key={link.href} href={link.href} className="transition hover:text-slate-900">
+                <Link key={link.href} href={link.href} className="transition hover:text-slate-900">
                   {link.label}
-                </a>
+                </Link>
               ))}
             </nav>
 
             <div className="flex items-center gap-2">
+              <Link
+                href="/demo"
+                className="hidden items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 md:inline-flex"
+              >
+                Solicitar demo
+              </Link>
+
               <Link
                 href={buildAuthUrl('holded_nav_global')}
                 className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ef4654]"
@@ -71,13 +78,12 @@ export default function HoldedSiteChrome({ children }: Props) {
                 Iniciar y conectar
               </Link>
 
-              {/* Hamburger — mobile only */}
               <button
                 type="button"
                 aria-label={menuOpen ? 'Cerrar menu' : 'Abrir menu'}
                 aria-expanded={menuOpen ? 'true' : 'false'}
-                onClick={() => setMenuOpen((v) => !v)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 md:hidden"
+                onClick={() => setMenuOpen((value) => !value)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 lg:hidden"
               >
                 {menuOpen ? (
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -102,19 +108,18 @@ export default function HoldedSiteChrome({ children }: Props) {
             </div>
           </div>
 
-          {/* Mobile menu */}
-          {menuOpen && (
-            <nav className="nav-slide-down border-t border-slate-100 pb-4 pt-3 md:hidden">
+          {menuOpen ? (
+            <nav className="nav-slide-down border-t border-slate-100 pb-4 pt-3 lg:hidden">
               <ul className="flex flex-col gap-1">
                 {navLinks.map((link) => (
                   <li key={link.href}>
-                    <a
+                    <Link
                       href={link.href}
                       onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
                 <li>
@@ -128,41 +133,56 @@ export default function HoldedSiteChrome({ children }: Props) {
                 </li>
               </ul>
             </nav>
-          )}
+          ) : null}
         </div>
       </header>
 
       {children}
 
-      <footer className="border-t border-slate-200 bg-white/95">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <div className="text-sm text-slate-600">
-              Powered by{' '}
-              <a
-                href="https://verifactu.business"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-slate-800 hover:text-[#ff5460]"
-              >
-                verifactu.business
-              </a>
+      <footer className="border-t border-slate-200 bg-white/92">
+        <div className="mx-auto max-w-6xl px-4 py-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-2">
+              <div className="text-sm text-slate-600">
+                Powered by{' '}
+                <a
+                  href="https://verifactu.business"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-slate-800 hover:text-[#ff5460]"
+                >
+                  verifactu.business
+                </a>
+              </div>
+              <div className="max-w-xl text-xs leading-5 text-slate-400">
+                Solution Partner autorizado de Holded. No somos Holded S.L. Esta experiencia usa la
+                API de Holded para ofrecer una capa de lectura y operativa mas clara.
+              </div>
             </div>
-            <div className="text-xs text-slate-400">
-              Solution Partner autorizado de Holded · No somos Holded S.L.
-            </div>
-          </div>
 
-          <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-500 sm:text-sm">
-            <Link href="/legal" className="hover:text-slate-900">
-              Aviso legal
-            </Link>
-            <Link href="/privacy" className="hover:text-slate-900">
-              Privacidad
-            </Link>
-            <Link href="/terms" className="hover:text-slate-900">
-              Terminos
-            </Link>
+            <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-500 sm:text-sm">
+              <Link href="/demo" className="hover:text-slate-900">
+                Demo
+              </Link>
+              <Link href="/contacto" className="hover:text-slate-900">
+                Contacto
+              </Link>
+              <Link href="/capacidades" className="hover:text-slate-900">
+                Capacidades
+              </Link>
+              <Link href="/demo-recording" className="hover:text-slate-900">
+                Demo grabada
+              </Link>
+              <Link href="/legal" className="hover:text-slate-900">
+                Aviso legal
+              </Link>
+              <Link href="/privacy" className="hover:text-slate-900">
+                Privacidad
+              </Link>
+              <Link href="/terms" className="hover:text-slate-900">
+                Terminos
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

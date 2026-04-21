@@ -622,7 +622,7 @@ describe('POST /api/holded/connect', () => {
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
-          'x-isaak-entry-channel': 'dashboard',
+          'x-holded-entry-channel': 'dashboard',
           cookie: 'session=abc123',
         }),
       })
@@ -876,7 +876,7 @@ describe('POST /api/holded/connect', () => {
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
           cookie: 'session=abc123',
         }),
       })

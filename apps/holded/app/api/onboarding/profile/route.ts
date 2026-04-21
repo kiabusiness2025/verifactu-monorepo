@@ -1,14 +1,14 @@
 import { getHoldedConnection } from '@/app/lib/holded-integration';
+import {
+  completeHoldedOnboardingProfile,
+  saveHoldedOnboardingDraft,
+  type HoldedContextSnapshot,
+  type HoldedOnboardingMainGoal,
+  type HoldedOnboardingProfileInput,
+  type HoldedOnboardingRoleInCompany,
+} from '@/app/lib/holded-onboarding';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
-import {
-  completeIsaakOnboarding as completeProfileOnboarding,
-  saveIsaakOnboardingDraft as saveProfileOnboardingDraft,
-  type HoldedContextSnapshot,
-  type IsaakMainGoal as ProfileMainGoal,
-  type IsaakOnboardingProfileInput as ProfileOnboardingInput,
-  type IsaakRoleInCompany as ProfileRoleInCompany,
-} from '@verifactu/integrations';
 import { isLikelySpanishPhone, parseHoldedRoleValue } from '@verifactu/utils';
 import { NextResponse } from 'next/server';
 
@@ -24,13 +24,13 @@ function cleanOptional(value: unknown) {
   return cleanText(value);
 }
 
-function parseRole(value: unknown): ProfileRoleInCompany | null {
-  return parseHoldedRoleValue(value) as ProfileRoleInCompany | null;
+function parseRole(value: unknown): HoldedOnboardingRoleInCompany | null {
+  return parseHoldedRoleValue(value) as HoldedOnboardingRoleInCompany | null;
 }
 
-function parseGoals(value: unknown): ProfileMainGoal[] {
+function parseGoals(value: unknown): HoldedOnboardingMainGoal[] {
   if (!Array.isArray(value)) return [];
-  const allowed = new Set<ProfileMainGoal>([
+  const allowed = new Set<HoldedOnboardingMainGoal>([
     'Entender mi contabilidad',
     'Resolver dudas fiscales',
     'Emitir facturas facilmente',
@@ -40,8 +40,8 @@ function parseGoals(value: unknown): ProfileMainGoal[] {
   ]);
 
   return value.filter(
-    (item): item is ProfileMainGoal =>
-      typeof item === 'string' && allowed.has(item as ProfileMainGoal)
+    (item): item is HoldedOnboardingMainGoal =>
+      typeof item === 'string' && allowed.has(item as HoldedOnboardingMainGoal)
   );
 }
 
@@ -91,7 +91,7 @@ function buildDraft(body: Record<string, unknown>) {
   };
 }
 
-function validateComplete(body: Record<string, unknown>): ProfileOnboardingInput | string {
+function validateComplete(body: Record<string, unknown>): HoldedOnboardingProfileInput | string {
   const preferredName = cleanText(body.preferredName);
   const companyName = cleanText(body.companyName);
   const roleInCompany = parseRole(body.roleInCompany);
@@ -141,7 +141,7 @@ export async function POST(req: Request) {
 
   if (mode === 'draft') {
     const draft = buildDraft(body);
-    await saveProfileOnboardingDraft({
+    await saveHoldedOnboardingDraft({
       prisma,
       tenantId: session.tenantId,
       userId: session.userId,
@@ -155,7 +155,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: validated }, { status: 400 });
   }
 
-  const result = await completeProfileOnboarding({
+  const result = await completeHoldedOnboardingProfile({
     prisma,
     tenantId: session.tenantId,
     userId: session.userId,

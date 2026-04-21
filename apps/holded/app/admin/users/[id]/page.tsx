@@ -15,5 +15,5 @@ type PageProps = {
 
 export default async function HoldedAdminUserDetailPage({ params }: PageProps) {
   const { id } = await params;
-  redirect(buildAdminRedirectUrl(`/dashboard/admin/users/${id}`));
+  redirect(buildAdminRedirectUrl(`/users/${id}`));
 }

@@ -34,10 +34,10 @@ function buildReply(input: { message: string; source?: string | null; digest?: s
     text.includes('error') ||
     text.includes('dashboard')
   ) {
-    return `Ese tipo de fallo suele quedar entre la validacion de la API key y la entrada al dashboard. Lo mas util es repetir el paso de conectar desde /onboarding/holded y, si vuelve a fallar, abrir soporte con el codigo de referencia y el email usado. ${context}`.trim();
+    return `Ese tipo de fallo suele quedar entre la validacion de la API key y la entrada al panel. Lo mas util es repetir el paso de conectar desde /onboarding/holded y, si vuelve a fallar, abrir soporte con el codigo de referencia y el email usado. ${context}`.trim();
   }
 
-  return `Puedo ayudarte mejor si me dices una de estas cuatro cosas: si el fallo es al crear acceso, al verificar el correo, al conectar Holded o al entrar al dashboard. ${context}`.trim();
+  return `Puedo ayudarte mejor si me dices una de estas cuatro cosas: si el fallo es al crear acceso, al verificar el correo, al conectar Holded o al entrar al panel. ${context}`.trim();
 }
 
 export async function POST(request: NextRequest) {

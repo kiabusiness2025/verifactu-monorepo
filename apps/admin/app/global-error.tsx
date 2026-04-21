@@ -17,7 +17,7 @@ export default function AdminGlobalError({ error, reset }: ErrorPageProps) {
               Incidencia temporal
             </div>
             <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Holded + ChatGPT Admin necesita reiniciarse
+              Holded Admin necesita reiniciarse
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
               El error se ha aislado para proteger la sesion y el estado del panel. Puedes

@@ -5,7 +5,7 @@ import { buildAuthUrl, buildOnboardingUrl } from '@/app/lib/holded-navigation';
 
 export const metadata: Metadata = {
   title: 'Verifica tu acceso | Holded',
-  description: 'Confirma tu correo y continua el onboarding gratuito de Holded.',
+  description: 'Confirma tu correo y continua la activacion de Holded.',
 };
 
 type PageProps = {
@@ -70,7 +70,7 @@ export default async function HoldedVerifyPage({ searchParams }: PageProps) {
             </div>
             <p className="mt-2">
               Tras iniciar sesion te pediremos solo una cosa: tu API key de Holded. La validamos al
-              momento y te llevamos al dashboard.
+              momento y te llevamos al panel de acceso.
             </p>
           </div>
         </section>

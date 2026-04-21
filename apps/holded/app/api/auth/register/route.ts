@@ -332,9 +332,9 @@ export async function POST(req: Request) {
               Resumen rapido: nuevos usuarios (7 dias): ${newUsersCount} · conexiones activas: ${connectedCount} · conexiones desconectadas: ${disconnectedCount}
             </p>
             <p style="margin:16px 0 0;">
-              <a href="${adminUrl.toString()}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;font-weight:700;">Abrir panel admin</a>
+              <a href="${adminUrl.toString()}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;font-weight:700;">Abrir panel de control</a>
             </p>`,
-          text: `${adminNotification.text}\n\nResumen rapido: nuevos usuarios (7 dias): ${newUsersCount} · conexiones activas: ${connectedCount} · conexiones desconectadas: ${disconnectedCount}\n\nPanel admin: ${adminUrl.toString()}`,
+          text: `${adminNotification.text}\n\nResumen rapido: nuevos usuarios (7 dias): ${newUsersCount} · conexiones activas: ${connectedCount} · conexiones desconectadas: ${disconnectedCount}\n\nPanel de control: ${adminUrl.toString()}`,
           replyTo,
         });
       } catch (notificationError) {

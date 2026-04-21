@@ -11,7 +11,7 @@ export default async function HoldedDirectUsersPage() {
       <header>
         <h1 className="text-2xl font-semibold text-slate-900">Usuarios del conector</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Estado de conexión por usuario y tenants relacionados con Holded + ChatGPT.
+          Estado de conexion por usuario y tenants relacionados con el canal Holded.
         </p>
       </header>
 

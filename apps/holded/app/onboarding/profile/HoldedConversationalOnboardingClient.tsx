@@ -192,7 +192,7 @@ export default function HoldedConversationalOnboardingClient({
       <div className="flex items-center justify-between gap-4">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#2361d8]/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2361d8]">
           <Bot className="h-3.5 w-3.5" />
-          Personalizando tu asistente
+          Configurando tu contexto
         </div>
         <div className="text-xs font-medium text-slate-400">
           {progress} de {TOTAL_STEPS}
@@ -221,7 +221,7 @@ export default function HoldedConversationalOnboardingClient({
             <div className="relative h-[320px] w-[250px] sm:h-[390px] sm:w-[310px]">
               <Image
                 src="/assistant/holded-guide.png"
-                alt="Asistente Holded"
+                alt="Guia Holded"
                 fill
                 className="object-contain"
                 sizes="(max-width: 1024px) 280px, 320px"
@@ -238,7 +238,7 @@ export default function HoldedConversationalOnboardingClient({
                       Preparando tu espacio
                     </div>
                     <div className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                      Preparando tu asistente...
+                      Preparando tu contexto...
                     </div>
                     <div className="mt-4 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-3">
                       <span className="h-2 w-2 animate-pulse rounded-full bg-slate-400" />
@@ -246,8 +246,8 @@ export default function HoldedConversationalOnboardingClient({
                       <span className="h-2 w-2 animate-pulse rounded-full bg-slate-400 [animation-delay:360ms]" />
                     </div>
                     <p className="mt-5 text-sm leading-7 text-slate-600">
-                      Quiero conocerte un poco mejor para ayudarte de forma mas util desde el primer
-                      momento.
+                      Quiero conocer mejor tu empresa para que la experiencia quede preparada desde
+                      el primer uso.
                     </p>
                   </div>
                 )
@@ -276,8 +276,8 @@ export default function HoldedConversationalOnboardingClient({
                           Cuentame un poco sobre tu empresa
                         </h1>
                         <p className="mt-4 text-sm leading-7 text-slate-600">
-                          Tu Holded ya esta conectado. Unas preguntas rapidas y el asistente
-                          respondera con el contexto exacto de tu negocio desde el primer mensaje.
+                          Tu Holded ya esta conectado. Unas preguntas rapidas y dejamos listo el
+                          contexto inicial de tu empresa para el primer uso.
                         </p>
                         <button
                           type="button"

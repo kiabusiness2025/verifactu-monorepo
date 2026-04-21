@@ -1,10 +1,12 @@
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
 
-export default async function CompanyDetailRedirectPage({
-  params,
-}: {
+export const dynamic = 'force-dynamic';
+
+type PageProps = {
   params: Promise<{ id: string }>;
-}) {
+};
+
+export default async function AdminCompanyLegacyDetailPage({ params }: PageProps) {
   const { id } = await params;
   redirect(`/tenants/${id}/overview`);
 }

@@ -6,7 +6,7 @@ import { buildOnboardingUrl } from '../lib/holded-navigation';
 export const metadata: Metadata = {
   title: 'Capacidades reales | Holded',
   description:
-    'Resumen honesto de lo que el conector puede hacer hoy con Holded. Gratis para siempre para usuarios de ChatGPT.',
+    'Resumen honesto de lo que el conector puede hacer hoy con Holded. Acceso gratuito para usuarios de ChatGPT.',
 };
 
 const availableCapabilities = [
@@ -53,7 +53,7 @@ const workingPrompts = [
 ];
 
 const currentLimits = [
-  'El asistente no inventa datos: trabaja con lo que realmente existe en tu entorno.',
+  'El conector no inventa datos: trabaja con lo que realmente existe en tu entorno.',
   'La escritura publica actual se limita a preparar borradores de factura y siempre pide confirmacion.',
   'La lectura de IVA, gastos y parte de tesoreria depende del contexto contable ya registrado en Holded.',
   'El conector no incluye productos, usuarios, adjuntos, conciliacion bancaria ni documentos como presupuestos, pedidos o albaranes.',
@@ -113,7 +113,7 @@ export default function HoldedCapabilitiesPage() {
               Prompts utiles para empezar
             </h2>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              Si das objetivo, plazo y foco, el asistente responde con mas precision y accion dentro
+              Si das objetivo, plazo y foco, el conector responde con mas precision y accion dentro
               de las capacidades que ya estan activas hoy.
             </p>
 
@@ -159,8 +159,8 @@ export default function HoldedCapabilitiesPage() {
               Listo para probarlo con tu operacion real
             </h2>
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              Conecta Holded, valida tu API key y entra al dashboard para arrancar con preguntas que
-              ya tienen respuesta hoy.
+              Conecta Holded, valida tu API key y entra al panel para arrancar con preguntas que ya
+              tienen respuesta hoy.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -175,7 +175,7 @@ export default function HoldedCapabilitiesPage() {
                 href="/dashboard"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
               >
-                Ir al dashboard
+                Abrir panel
               </Link>
             </div>
           </div>

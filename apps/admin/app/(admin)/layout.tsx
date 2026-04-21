@@ -18,18 +18,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       sidebarBrand={
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-sm font-semibold text-white">
-            H+
+            H
           </div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-slate-900">Holded + ChatGPT</div>
-            <div className="truncate text-xs text-slate-500">Panel interno del conector</div>
+            <div className="truncate text-sm font-semibold text-slate-900">Holded Admin</div>
+            <div className="truncate text-xs text-slate-500">Usuarios y tenants</div>
           </div>
         </div>
       }
       headerLeft={
         <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-slate-900">Panel del conector</div>
-          <div className="truncate text-xs text-slate-500">Holded + ChatGPT</div>
+          <div className="truncate text-sm font-semibold text-slate-900">
+            Panel del canal Holded
+          </div>
+          <div className="truncate text-xs text-slate-500">Usuarios y tenants</div>
         </div>
       }
       headerRight={<InstallPwaButton />}

@@ -59,6 +59,10 @@ export async function POST(request: NextRequest) {
     const email = normalizeString(body?.email).toLowerCase();
     const companyName = normalizeString(body?.companyName);
     const phone = normalizeString(body?.phone);
+    const cif = normalizeString(body?.cif);
+    const sector = normalizeString(body?.sector);
+    const role = normalizeString(body?.role);
+    const message = normalizeString(body?.message);
     const source = normalizeString(body?.source) || 'holded_free_plan';
     const consent = body?.consent === true;
 
@@ -86,6 +90,10 @@ export async function POST(request: NextRequest) {
       email,
       companyName,
       phone: phone || undefined,
+      cif: cif || undefined,
+      sector: sector || undefined,
+      role: role || undefined,
+      message: message || undefined,
       source,
     });
 

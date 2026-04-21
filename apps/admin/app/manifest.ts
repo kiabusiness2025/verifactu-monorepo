@@ -2,10 +2,10 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Holded + ChatGPT Admin',
+    name: 'Holded Admin',
     short_name: 'Holded Admin',
     description:
-      'Panel interno para observar usuarios conectados, tenants, conversaciones y sesiones del conector directo Holded + ChatGPT.',
+      'Panel interno para observar usuarios, tenants y actividad operativa del canal Holded.',
     start_url: '/panel',
     scope: '/',
     display: 'standalone',

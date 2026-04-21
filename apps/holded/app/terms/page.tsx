@@ -32,7 +32,7 @@ export default function HoldedTermsPage() {
               Aviso importante
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              El asistente ofrece ayuda operativa e informacion de apoyo. No sustituye a un asesor
+              El conector ofrece ayuda operativa e informacion de apoyo. No sustituye a un asesor
               fiscal, contable o legal.
             </p>
           </div>
@@ -46,7 +46,7 @@ export default function HoldedTermsPage() {
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
               La version gratuita permite crear acceso, verificar el correo, conectar Holded
-              mediante API key, entrar al dashboard y usar el chat inicial.
+              mediante API key, entrar al panel y lanzar las primeras consultas.
             </p>
           </article>
 

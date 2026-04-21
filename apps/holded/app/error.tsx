@@ -45,7 +45,7 @@ export default function HoldedErrorPage({ error, reset }: Props) {
                   href="/dashboard"
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
-                  Ir al dashboard
+                  Ir al panel
                 </Link>
                 <Link
                   href="/onboarding/holded"

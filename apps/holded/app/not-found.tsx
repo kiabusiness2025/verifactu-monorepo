@@ -15,7 +15,7 @@ export default function HoldedNotFoundPage() {
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
             Puede ser un enlace antiguo o una redireccion a medias. Vuelve al flujo principal y
-            continua desde el inicio, el acceso o el dashboard.
+            continua desde el inicio, el acceso o el panel.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
@@ -35,7 +35,7 @@ export default function HoldedNotFoundPage() {
               className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <Compass className="h-4 w-4" />
-              Abrir dashboard
+              Abrir panel
             </Link>
           </div>
         </section>

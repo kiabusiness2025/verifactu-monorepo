@@ -99,7 +99,7 @@ function buildCompanySheetHtml(tenant: TenantData) {
   <div class="header">
     <div class="brand">verifactu.business</div>
     <h1 class="title">Ficha completa de empresa</h1>
-    <div class="meta">Documento generado desde panel Admin</div>
+    <div class="meta">Documento generado desde el panel de control</div>
   </div>
   <table>
     ${rows

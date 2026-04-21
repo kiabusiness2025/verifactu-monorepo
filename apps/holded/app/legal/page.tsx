@@ -28,7 +28,7 @@ export default function HoldedLegalPage() {
             </p>
             <p>
               Este sitio ofrece una version gratuita inicial de acceso, conexion mediante API key de
-              Holded y uso del dashboard del conector.
+              Holded y uso del panel del conector.
             </p>
             <p>
               Para cuestiones legales o de soporte, el canal de contacto operativo es{' '}

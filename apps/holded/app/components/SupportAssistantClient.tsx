@@ -35,7 +35,7 @@ export default function SupportAssistantClient({ source, digest, title }: Props)
         role: 'assistant' as const,
         content:
           title ||
-          'Soporte Holded. Puedo ayudarte con acceso, verificacion de correo, API key de Holded y errores de conexion.',
+          'Canal de soporte Holded. Te guiamos con acceso, verificacion de correo, API key y errores de conexion.',
       },
       {
         id: 'support-context',
@@ -105,7 +105,7 @@ export default function SupportAssistantClient({ source, digest, title }: Props)
     <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
         <Bot className="h-4 w-4 text-[#ff5460]" />
-        Asistente de soporte
+        Soporte guiado
       </div>
       <p className="mt-3 text-sm leading-7 text-slate-600">
         Este chat no necesita login. Sirve para desbloquear acceso, verificacion, API key y errores

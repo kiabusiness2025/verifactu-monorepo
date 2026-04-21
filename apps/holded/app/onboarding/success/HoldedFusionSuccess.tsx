@@ -5,13 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
-const HOLDed_SITE_URL =
+const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
-const PROFILE_ONBOARDING_URL = `${HOLDed_SITE_URL}/onboarding/profile?source=holded_connection_complete&fresh=1`;
+const PROFILE_ONBOARDING_URL = `${HOLDED_SITE_URL}/onboarding/profile?source=holded_connection_complete&fresh=1`;
 
 export default function HoldedFusionSuccess() {
   const [showFusion, setShowFusion] = useState(false);
-  const [showAssistant, setShowAssistant] = useState(false);
+  const [showContextCard, setShowContextCard] = useState(false);
   const [showReady, setShowReady] = useState(false);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
@@ -19,7 +19,7 @@ export default function HoldedFusionSuccess() {
 
   useEffect(() => {
     const fusionTimer = window.setTimeout(() => setShowFusion(true), 900);
-    const assistantTimer = window.setTimeout(() => setShowAssistant(true), 1250);
+    const contextTimer = window.setTimeout(() => setShowContextCard(true), 1250);
     const readyTimer = window.setTimeout(() => setShowReady(true), 1900);
     const redirectTimer = window.setTimeout(() => {
       window.location.assign(PROFILE_ONBOARDING_URL);
@@ -36,7 +36,7 @@ export default function HoldedFusionSuccess() {
 
     return () => {
       window.clearTimeout(fusionTimer);
-      window.clearTimeout(assistantTimer);
+      window.clearTimeout(contextTimer);
       window.clearTimeout(readyTimer);
       window.clearTimeout(redirectTimer);
       window.clearInterval(progressInterval);
@@ -59,8 +59,8 @@ export default function HoldedFusionSuccess() {
               Tu Holded ya esta conectado
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              En unos segundos te llevamos a personalizar tu asistente para que responda con el
-              contexto exacto de tu empresa.
+              En unos segundos te llevamos a completar el contexto inicial de empresa para dejar la
+              experiencia preparada desde el primer uso.
             </p>
 
             <div className="relative mt-12 h-[21rem] sm:h-[24rem]">
@@ -122,25 +122,25 @@ export default function HoldedFusionSuccess() {
               />
 
               <div
-                className={`holded-fusion-assistant absolute left-1/2 top-[5.2rem] w-full max-w-[20rem] -translate-x-1/2 transition-all duration-700 ${
-                  showAssistant ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+                className={`absolute left-1/2 top-[5.2rem] w-full max-w-[20rem] -translate-x-1/2 transition-all duration-700 ${
+                  showContextCard ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
                 }`}
               >
                 <div className="mx-auto w-full rounded-[2rem] border border-slate-200 bg-white/95 p-4 shadow-[0_28px_80px_-42px_rgba(15,23,42,0.35)] backdrop-blur">
                   <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[#fff4f5] ring-8 ring-white">
                     <Image
                       src="/assistant/holded-avatar.png"
-                      alt="Asistente Holded"
+                      alt="Guia de configuracion Holded"
                       width={120}
                       height={120}
                       className="h-full w-full object-cover"
                       priority
                     />
                   </div>
-                  <div className="mt-4 text-xl font-bold text-slate-950">Asistente Holded</div>
+                  <div className="mt-4 text-xl font-bold text-slate-950">Contexto inicial</div>
                   <div className="mt-2 text-sm leading-6 text-slate-600">
-                    Preparando tu chat inicial, tus preguntas sugeridas y la lectura de tu espacio
-                    de Holded.
+                    Preparando tus datos de empresa, prioridades y primer acceso con la conexion ya
+                    validada.
                   </div>
                 </div>
               </div>
@@ -159,8 +159,8 @@ export default function HoldedFusionSuccess() {
                   />
                 </div>
                 <p className="px-5 py-3.5 text-sm leading-6 text-slate-600">
-                  Te llevamos a personalizar el asistente en unos segundos. Pulsa el boton si
-                  prefieres continuar ahora.
+                  Te llevamos a completar la configuracion inicial en unos segundos. Pulsa el boton
+                  si prefieres continuar ahora.
                 </p>
               </div>
               <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -168,7 +168,7 @@ export default function HoldedFusionSuccess() {
                   href={PROFILE_ONBOARDING_URL}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  Personalizar mi asistente
+                  Continuar configuracion
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link

@@ -11,13 +11,13 @@ export default async function HoldedDirectTenantsPage() {
       <header>
         <h1 className="text-2xl font-semibold text-slate-900">Tenants del conector</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Empresas con conexión o historial operativo del canal directo Holded + ChatGPT.
+          Empresas con conexion o historial operativo del canal Holded.
         </p>
       </header>
 
       <HoldedDirectTenantsSection
         title="Tenants"
-        description="Estado operativo, usuarios, conversaciones y últimas señales de sincronización."
+        description="Estado operativo por empresa, usuarios relacionados y ultima actividad visible."
         tenants={tenants}
       />
     </main>

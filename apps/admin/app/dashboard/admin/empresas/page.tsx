@@ -1,1 +1,7 @@
-export { default } from "../tenants/page";
+import { redirect } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+
+export default function AdminEmpresasLegacyPage() {
+  redirect('/tenants');
+}

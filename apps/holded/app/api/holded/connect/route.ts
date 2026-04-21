@@ -111,7 +111,7 @@ async function tryCanonicalDisconnect(request: NextRequest, channel: 'chatgpt' |
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-isaak-entry-channel': channel,
+        'x-holded-entry-channel': channel,
         ...(cookieHeader ? { cookie: cookieHeader } : {}),
       },
       body: JSON.stringify({ reauthConfirmed: true }),
@@ -153,7 +153,7 @@ async function tryCanonicalConnect(
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-isaak-entry-channel': channel,
+        'x-holded-entry-channel': channel,
         ...(cookieHeader ? { cookie: cookieHeader } : {}),
       },
       body: JSON.stringify({
