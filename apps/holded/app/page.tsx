@@ -21,7 +21,7 @@ import {
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import HoldedHeroVisual from './components/HoldedHeroVisual';
-import { buildAuthUrl, buildRegisterUrl } from './lib/holded-navigation';
+import { buildAuthUrl } from './lib/holded-navigation';
 
 export const metadata: Metadata = {
   title: 'Holded | Controla tu facturación y contabilidad sin complicarte',
@@ -485,11 +485,10 @@ export default function HoldedHomePage() {
                 </Link>
 
                 <Link
-                  href={buildRegisterUrl('holded_home_hero_secondary')}
+                  href="/acceso"
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white/85 px-6 py-3.5 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-white"
                 >
-                  Conectar Holded
-                  <ArrowRight className="h-4 w-4" />
+                  Solicitar acceso anticipado
                 </Link>
               </div>
 
@@ -613,11 +612,10 @@ export default function HoldedHomePage() {
                   <PlayCircle className="h-4 w-4" />
                 </Link>
                 <Link
-                  href={buildRegisterUrl('holded_home_usecases')}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  href="/acceso"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
-                  Conectar Holded
-                  <ArrowRight className="h-4 w-4" />
+                  Solicitar acceso anticipado
                 </Link>
               </div>
             </div>
@@ -765,10 +763,10 @@ export default function HoldedHomePage() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href={buildRegisterUrl('holded_home_journey_primary')}
+              href="/acceso"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_18px_45px_-24px_rgba(255,84,96,0.65)] transition hover:bg-[#ef4654]"
             >
-              Empezar gratis
+              Solicitar acceso anticipado
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
@@ -837,10 +835,10 @@ export default function HoldedHomePage() {
 
               <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
                 <Link
-                  href={buildRegisterUrl('holded_home_final_primary')}
+                  href="/acceso"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  Conectar Holded
+                  Solicitar acceso anticipado
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
