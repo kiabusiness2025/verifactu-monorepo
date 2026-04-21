@@ -8,10 +8,8 @@ import {
   ChevronRight,
   Clock3,
   FileText,
-  Files,
   FolderKanban,
   MessageCircleMore,
-  Package,
   PlayCircle,
   ShieldCheck,
   Sparkles,
@@ -26,7 +24,7 @@ import { buildAuthUrl } from './lib/holded-navigation';
 export const metadata: Metadata = {
   title: 'Holded | Controla tu facturación y contabilidad sin complicarte',
   description:
-    'Consulta facturas, IVA, gastos, clientes, productos y documentos desde Holded en lenguaje claro. Detecta qué revisar hoy, qué cobrar antes y qué hablar con tu gestor.',
+    'Habla con tus datos de Holded en lenguaje claro. Entiende cobros, IVA y gastos sin aprender el ERP ni esperar al gestor.',
 };
 
 type FeatureGroup = {
@@ -83,8 +81,8 @@ const useCases = [
   'Detectar cobros pendientes y clientes con riesgo',
   'Entender el IVA del trimestre sin tecnicismos',
   'Revisar gastos por proveedor o periodo',
-  'Consultar productos, precios y catálogo',
-  'Localizar presupuestos, pedidos o albaranes',
+  'Identificar clientes con seguimiento pendiente',
+  'Leer el diario contable en lenguaje claro',
   'Preparar borradores de factura con tu confirmación',
   'Llegar a la reunión con tu gestor sabiendo qué preguntar',
 ];
@@ -97,8 +95,8 @@ const metrics = [
   },
   {
     icon: BarChart3,
-    value: '8 áreas',
-    label: 'Facturación, contabilidad, cobros, productos, documentos y más.',
+    value: 'Decide hoy',
+    label: 'Detecta qué factura cobrar, qué gasto revisar y qué llevar al gestor.',
   },
   {
     icon: MessageCircleMore,
@@ -151,7 +149,7 @@ const featureGroups: FeatureGroup[] = [
     capabilities: [
       'Consultar plan contable, libro diario y movimientos registrados.',
       'Entender IVA repercutido, soportado y saldos en lenguaje normal.',
-      'Leer gastos, cuentas y tendencias desde lo ya contabilizado.',
+      'Revisar cuentas de tesorería y saldos financieros disponibles en Holded.',
     ],
   },
   {
@@ -169,36 +167,6 @@ const featureGroups: FeatureGroup[] = [
     ],
   },
   {
-    title: 'Productos',
-    badge: 'Solo consulta',
-    badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
-    icon: Package,
-    summary:
-      'Consulta el catálogo de productos, referencias, precios y datos registrados en Holded.',
-    outcome:
-      'Útil para localizar productos, confirmar precios y relacionar catálogo con pedidos o facturas.',
-    capabilities: [
-      'Ver productos y referencias con precio, descripción y categoría.',
-      'Localizar un producto concreto y consultar sus datos registrados.',
-      'Relacionar productos con facturas, pedidos y documentos comerciales.',
-    ],
-  },
-  {
-    title: 'Documentos',
-    badge: 'Solo consulta',
-    badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
-    icon: Files,
-    summary:
-      'Consulta presupuestos, pedidos y albaranes registrados en Holded con contexto de cliente y estado.',
-    outcome:
-      'Ideal para localizar documentos comerciales, revisar pendientes y preparar seguimiento.',
-    capabilities: [
-      'Ver presupuestos emitidos con estado, importe y cliente.',
-      'Consultar pedidos y albaranes por fecha, referencia o cliente.',
-      'Detectar presupuestos sin respuesta y documentos con seguimiento pendiente.',
-    ],
-  },
-  {
     title: 'Proyectos y tareas',
     badge: 'Solo consulta',
     badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
@@ -209,19 +177,6 @@ const featureGroups: FeatureGroup[] = [
       'Ver proyectos activos, estado, tareas y prioridades.',
       'Cruzar proyectos con clientes y facturación asociada.',
       'Detectar bloqueos y trabajo en curso con más contexto.',
-    ],
-  },
-  {
-    title: 'Equipo',
-    badge: 'Solo consulta',
-    badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
-    icon: Users,
-    summary: 'Contexto básico de empleados y estructura para entender quién está dónde.',
-    outcome: 'Aporta continuidad cuando se cruza operativa con proyectos y responsables.',
-    capabilities: [
-      'Ver empleados activos y datos básicos disponibles.',
-      'Relacionar personas con proyectos y tareas asignadas.',
-      'Entender la estructura mínima del equipo desde Holded.',
     ],
   },
 ];
@@ -265,7 +220,7 @@ const journeySteps = [
   {
     step: '02',
     title: 'Consultas en lenguaje claro',
-    body: 'Pregunta sobre facturas, clientes, IVA, gastos, productos o documentos y obtén respuestas directas con contexto de negocio.',
+    body: 'Pregunta sobre facturas, clientes, IVA, gastos o proyectos y obtén respuestas directas con contexto de negocio.',
   },
   {
     step: '03',
@@ -276,9 +231,9 @@ const journeySteps = [
 
 const faqItems = [
   {
-    question: '¿Qué necesito para empezar?',
+    question: '¿Qué puedo consultar?',
     answer:
-      'Tu correo y una API key de Holded. El proceso de alta es guiado y valida la conexión antes de que entres.',
+      'Facturas emitidas, gastos, contabilidad, clientes y proyectos. Puedes preguntar sobre cobros pendientes, IVA del trimestre, situación de clientes o carga de trabajo en proyectos activos. Todo en lenguaje claro, sin necesidad de conocer el ERP.',
   },
   {
     question: '¿Puede modificar datos en mi cuenta de Holded?',
@@ -286,53 +241,25 @@ const faqItems = [
       'No realiza cambios en tu cuenta de Holded. El único cambio posible es generar borradores de facturas emitidas, y siempre con tu confirmación explícita antes de crear nada.',
   },
   {
-    question: '¿Puedo consultar productos, presupuestos y documentos?',
+    question: '¿Necesito saber de contabilidad para usarlo?',
     answer:
-      'Sí. El conector soporta productos, presupuestos, pedidos, albaranes y otros documentos comerciales disponibles en la API oficial de Holded. Puedes consultar, localizar y relacionarlos con clientes y facturas.',
+      'No. Está pensado exactamente para lo contrario: que puedas entender tus números sin ser contable. Responde en lenguaje cotidiano y traduce los tecnicismos cuando aparecen.',
   },
   {
-    question: '¿Se pueden usar archivos o adjuntos?',
+    question: '¿Funciona bien si trabajo con un gestor o asesoría?',
     answer:
-      'Los adjuntos están soportados en la API de Holded. Además, ChatGPT permite trabajar con archivos cargados directamente en el chat. La disponibilidad concreta puede depender del plan de ChatGPT y del entorno de uso.',
+      'Sí, y encaja muy bien en ese flujo. Te ayuda a llegar a las reuniones con contexto: qué revisar, qué preguntar, qué incidencias hay antes del cierre. No reemplaza al gestor, lo complementa.',
   },
   {
-    question: '¿Incluye tesorería y consulta bancaria?',
+    question: '¿Puedo preparar facturas desde el chat?',
     answer:
-      'Sí. El conector incluye acceso conversacional a Tesorería para consultar cuentas y revisar información financiera disponible en Holded. El matching o conciliación automática de movimientos bancarios no está validado y no forma parte del alcance comunicado.',
+      'Sí. Puedes pedirle que prepare un borrador de factura emitida. Lo muestra para que lo revises y lo confirmes antes de crear nada. Siempre requiere tu aprobación explícita.',
   },
   {
-    question: '¿Esto sustituye a Holded?',
+    question: '¿Qué necesito para empezar y cuánto cuesta?',
     answer:
-      'No. Holded sigue siendo el sistema origen. Esta herramienta está pensada para entender mejor los datos que ya tienes allí, no para reemplazarlo.',
+      'Tu correo y una API key de Holded. El proceso de alta es guiado y gratuito. El acceso es gratuito para usuarios de ChatGPT.',
   },
-  {
-    question: '¿Puedo ver primero una demo?',
-    answer:
-      'Sí. Puedes solicitar una demo guiada o contactar con el equipo antes de conectar tu cuenta.',
-  },
-  {
-    question: '¿Cuánto cuesta?',
-    answer:
-      'El acceso es gratuito para usuarios de ChatGPT, con onboarding y conexión guiada incluidos.',
-  },
-];
-
-const scopeAvailable = [
-  'Facturas emitidas y recibidas',
-  'Contactos y clientes',
-  'Productos y catálogo',
-  'Presupuestos',
-  'Pedidos y albaranes',
-  'Empleados y equipo',
-  'Adjuntos',
-  'Contabilidad y diario',
-  'Tesorería (cuentas y saldos)',
-];
-
-const scopeChatGPT = [
-  'Carga y lectura de archivos en el chat',
-  'Documentos e imágenes en conversación',
-  'Interacción por voz (según plan)',
 ];
 
 function SectionPill({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
@@ -470,9 +397,8 @@ export default function HoldedHomePage() {
               </h1>
 
               <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-                Consulta en lenguaje claro tus facturas, IVA, gastos, clientes, productos y
-                documentos desde Holded. Detecta qué revisar hoy, qué cobrar antes y qué hablar con
-                tu gestor.
+                Habla con tus datos de Holded en lenguaje claro. Entiende cobros, IVA y gastos sin
+                aprender el ERP ni esperar al gestor.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -632,7 +558,7 @@ export default function HoldedHomePage() {
               Lo que puedes controlar desde hoy.
             </h2>
             <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
-              Ocho áreas con descripción honesta de qué puedes consultar y qué te ayuda a decidir.
+              Descripción honesta de qué puedes consultar en cada área y qué te ayuda a decidir.
             </p>
           </div>
 
@@ -642,72 +568,12 @@ export default function HoldedHomePage() {
             ))}
           </div>
 
-          {/* ── Alcance y compatibilidad ── */}
-          <div className="mt-10">
-            <div className="max-w-xl">
-              <h3 className="text-xl font-bold tracking-tight text-slate-950">
-                Alcance y compatibilidad
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Una vista clara de lo que está disponible, lo que es compatible con ChatGPT y lo que
-                está pendiente de validación.
-              </p>
-            </div>
-
-            <div className="mt-6 grid gap-5 md:grid-cols-3">
-              {/* A: Ya disponible */}
-              <div className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50 p-6">
-                <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Disponible en API Holded
-                </div>
-                <ul className="mt-4 space-y-2">
-                  {scopeAvailable.map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-sm text-emerald-900">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* B: Compatible con ChatGPT */}
-              <div className="rounded-[1.75rem] border border-sky-200 bg-sky-50 p-6">
-                <div className="flex items-center gap-2 text-sm font-semibold text-sky-800">
-                  <Sparkles className="h-4 w-4" />
-                  Compatible con ChatGPT
-                </div>
-                <ul className="mt-4 space-y-2">
-                  {scopeChatGPT.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-sky-900">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-4 text-xs leading-5 text-sky-700">
-                  Puede variar según el plan de ChatGPT y el entorno de uso.
-                </p>
-              </div>
-
-              {/* C: Con matiz */}
-              <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-6">
-                <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
-                  <Clock3 className="h-4 w-4" />
-                  Con matiz
-                </div>
-                <ul className="mt-4 space-y-2">
-                  <li className="flex items-start gap-2 text-sm text-amber-900">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                    Matching automático de movimientos bancarios
-                  </li>
-                </ul>
-                <p className="mt-4 text-xs leading-5 text-amber-700">
-                  La consulta de tesorería está disponible. El matching o conciliación automática de
-                  movimientos no está validado y no se comunica como parte del alcance operativo.
-                </p>
-              </div>
-            </div>
+          <div className="mt-8 flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600 shadow-sm">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+            <span>
+              El alcance cubre facturación, gastos, contabilidad, clientes y proyectos. La consulta
+              de tesorería está disponible para revisar cuentas y saldos registrados en Holded.
+            </span>
           </div>
         </div>
       </section>

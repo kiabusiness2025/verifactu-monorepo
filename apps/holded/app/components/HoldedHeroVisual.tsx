@@ -127,46 +127,46 @@ const conversations: Message[][] = [
     },
   ],
   [
-    { role: 'user', content: '¿Qué presupuestos siguen pendientes?' },
+    { role: 'user', content: '¿Qué clientes tienen pagos pendientes?' },
     {
       role: 'assistant',
       content: (
         <div className="space-y-2 text-xs">
           <p className="text-slate-700">
-            Tienes <span className="font-semibold text-slate-900">4 presupuestos</span> sin
-            respuesta del cliente:
+            Hay <span className="font-semibold text-slate-900">3 clientes</span> con facturas sin
+            cobrar:
           </p>
           <div className="overflow-hidden rounded-lg border border-slate-200">
             <table className="w-full text-[11px]">
               <thead>
                 <tr className="bg-slate-50 text-left text-slate-500">
                   <th className="px-2.5 py-1.5 font-medium">Cliente</th>
-                  <th className="px-2.5 py-1.5 font-medium">Importe</th>
-                  <th className="px-2.5 py-1.5 font-medium">Días</th>
+                  <th className="px-2.5 py-1.5 font-medium">Pendiente</th>
+                  <th className="px-2.5 py-1.5 font-medium">Riesgo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 <tr>
+                  <td className="px-2.5 py-1.5">Muebles Durán</td>
+                  <td className="px-2.5 py-1.5 font-semibold">4.350 EUR</td>
+                  <td className="px-2.5 py-1.5 text-red-600">Alto</td>
+                </tr>
+                <tr>
                   <td className="px-2.5 py-1.5">Grupo Ferrer</td>
-                  <td className="px-2.5 py-1.5 font-semibold">8.200 EUR</td>
-                  <td className="px-2.5 py-1.5 text-red-600">21 días</td>
+                  <td className="px-2.5 py-1.5 font-semibold">2.100 EUR</td>
+                  <td className="px-2.5 py-1.5 text-amber-600">Medio</td>
                 </tr>
                 <tr>
                   <td className="px-2.5 py-1.5">Clínica Romero</td>
-                  <td className="px-2.5 py-1.5 font-semibold">3.450 EUR</td>
-                  <td className="px-2.5 py-1.5 text-amber-600">12 días</td>
-                </tr>
-                <tr>
-                  <td className="px-2.5 py-1.5">Talleres Vega</td>
-                  <td className="px-2.5 py-1.5 font-semibold">1.890 EUR</td>
-                  <td className="px-2.5 py-1.5 text-slate-500">5 días</td>
+                  <td className="px-2.5 py-1.5 font-semibold">870 EUR</td>
+                  <td className="px-2.5 py-1.5 text-slate-500">Bajo</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="text-slate-500">
-            El de <span className="font-medium text-slate-700">Grupo Ferrer</span> lleva más tiempo
-            abierto y es el de mayor importe.
+            Empezaría por <span className="font-medium text-slate-700">Muebles Durán</span>: mayor
+            importe y más tiempo sin respuesta.
           </p>
         </div>
       ),
@@ -227,7 +227,7 @@ export default function HoldedHeroVisual() {
 
       <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] p-4">
         <div className="mb-4 flex flex-wrap gap-2">
-          {['Facturación', 'Productos', 'Documentos', 'Cobros'].map((badge) => (
+          {['Facturación', 'Clientes', 'IVA', 'Cobros'].map((badge) => (
             <span
               key={badge}
               className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600"
