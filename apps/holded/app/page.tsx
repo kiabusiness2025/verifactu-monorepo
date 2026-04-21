@@ -296,9 +296,9 @@ const faqItems = [
       'Los adjuntos están soportados en la API de Holded. Además, ChatGPT permite trabajar con archivos cargados directamente en el chat. La disponibilidad concreta puede depender del plan de ChatGPT y del entorno de uso.',
   },
   {
-    question: '¿Incluye conciliación bancaria?',
+    question: '¿Incluye tesorería y consulta bancaria?',
     answer:
-      'La conciliación bancaria está pendiente de validación específica. Por ahora no la comunicamos como parte del alcance operativo.',
+      'Sí. El conector incluye acceso conversacional a Tesorería para consultar cuentas y revisar información financiera disponible en Holded. El matching o conciliación automática de movimientos bancarios no está validado y no forma parte del alcance comunicado.',
   },
   {
     question: '¿Esto sustituye a Holded?',
@@ -326,6 +326,7 @@ const scopeAvailable = [
   'Empleados y equipo',
   'Adjuntos',
   'Contabilidad y diario',
+  'Tesorería (cuentas y saldos)',
 ];
 
 const scopeChatGPT = [
@@ -691,21 +692,21 @@ export default function HoldedHomePage() {
                 </p>
               </div>
 
-              {/* C: En validación */}
+              {/* C: Con matiz */}
               <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-6">
                 <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
                   <Clock3 className="h-4 w-4" />
-                  En validación específica
+                  Con matiz
                 </div>
                 <ul className="mt-4 space-y-2">
-                  <li className="flex items-center gap-2 text-sm text-amber-900">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                    Conciliación bancaria
+                  <li className="flex items-start gap-2 text-sm text-amber-900">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    Matching automático de movimientos bancarios
                   </li>
                 </ul>
                 <p className="mt-4 text-xs leading-5 text-amber-700">
-                  Pendiente de prueba y validación completa antes de incluir en el alcance
-                  comunicado.
+                  La consulta de tesorería está disponible. El matching o conciliación automática de
+                  movimientos no está validado y no se comunica como parte del alcance operativo.
                 </p>
               </div>
             </div>

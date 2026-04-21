@@ -56,7 +56,7 @@ const currentLimits = [
   'El conector no inventa datos: trabaja con lo que realmente existe en tu entorno.',
   'La escritura publica actual se limita a preparar borradores de factura y siempre pide confirmacion.',
   'La lectura de IVA, gastos y parte de tesoreria depende del contexto contable ya registrado en Holded.',
-  'El conector no incluye productos, usuarios, adjuntos, conciliacion bancaria ni documentos como presupuestos, pedidos o albaranes.',
+  'La consulta de tesoreria esta disponible para revisar cuentas y saldos. El matching o conciliacion automatica de movimientos bancarios no esta validado.',
 ];
 
 export default function HoldedCapabilitiesPage() {
